@@ -7,6 +7,11 @@ import base64
 from typing import Dict, Any, Optional, Tuple
 
 
+def decode_bytes(data: bytes, enc: str) -> str:
+    """Decode bytes using specified encoding with surrogatepass."""
+    return data.decode(enc, errors="surrogatepass")
+
+
 def validate_upload_content(contents: str, filename: str) -> Dict[str, Any]:
     """Validate uploaded file content"""
 
@@ -57,10 +62,11 @@ def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFr
         filename_lower = filename.lower()
 
         if filename_lower.endswith('.csv'):
-            # Try multiple encodings
+            # Try multiple encodings with surrogate handling
             for encoding in ['utf-8', 'latin-1', 'cp1252']:
                 try:
-                    df = pd.read_csv(io.StringIO(decoded.decode(encoding)))
+                    text = decode_bytes(decoded, encoding)
+                    df = pd.read_csv(io.StringIO(text))
                     return df, None
                 except UnicodeDecodeError:
                     continue
@@ -68,12 +74,18 @@ def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFr
 
         elif filename_lower.endswith('.json'):
             import json
-            json_data = json.loads(decoded.decode('utf-8'))
-            if isinstance(json_data, list):
-                df = pd.DataFrame(json_data)
-            else:
-                df = pd.DataFrame([json_data])
-            return df, None
+            for encoding in ['utf-8', 'latin-1', 'cp1252']:
+                try:
+                    text = decode_bytes(decoded, encoding)
+                    json_data = json.loads(text)
+                    if isinstance(json_data, list):
+                        df = pd.DataFrame(json_data)
+                    else:
+                        df = pd.DataFrame([json_data])
+                    return df, None
+                except UnicodeDecodeError:
+                    continue
+            return None, "Could not decode JSON with any standard encoding"
 
         elif filename_lower.endswith(('.xlsx', '.xls')):
             df = pd.read_excel(io.BytesIO(decoded))
