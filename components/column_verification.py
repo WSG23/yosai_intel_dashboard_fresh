@@ -496,7 +496,7 @@ def save_verified_mappings(filename: str, column_mappings: Dict[str, str],
 
         except Exception as ai_e:
             logger.warning(f"Failed to save to AI system: {ai_e}")
-            print(f"⚠️ AI system save failed: {ai_e}")
+            print(f"AI system save failed: {ai_e}")
 
         # Save to file-specific training data
         try:
