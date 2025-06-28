@@ -10,9 +10,9 @@ This project follows a fully modular architecture for maximum maintainability an
 yosai_intel_dashboard/
 ├── app.py                     # Main application entry point
 ├── config/                    # Configuration management
-│   ├── config_manager.py      # Simplified configuration loader
+│   ├── config.py              # Unified configuration loader
 │   ├── database_manager.py    # Database connections and pooling
-│   └── app_config.py          # Immutable configuration models
+│   └── cache_manager.py       # Simple cache interface
 ├── models/                    # Data models and business entities
 │   ├── base.py               # Base model classes
 │   ├── entities.py           # Core entities (Person, Door, Facility)
@@ -137,11 +137,11 @@ If `pandas` is missing these pages will be disabled. Ensure you run
 
 ## 🔧 Configuration
 
-This project uses **`config/config_manager.py`** for application settings. It
+This project uses **`config/config.py`** for application settings. It
 loads defaults from `config/config.yaml` and allows environment variables to
-override any value. Earlier versions included `yaml_config.py` and
-`unified_config.py`; these have been replaced by the streamlined
-`ConfigManager`.
+override any value. Earlier versions used separate modules like
+`app_config.py`, `simple_config.py` and `config_manager.py`; all of these are
+replaced by the unified `ConfigManager` in `config/config.py`.
 
 ### Database
 
@@ -212,6 +212,20 @@ YOSAI_CONFIG_FILE=/path/to/custom.yaml python app.py
 Plugins live in the `plugins/` package and are loaded by the `PluginManager` when enabled in `config/config.yaml`.
 To enable a plugin, add it under the `plugins:` section and set `enabled: true`.
 After creating the `PluginManager` in your app factory, call `load_all_plugins()` and `register_plugin_callbacks(app)` to activate them.
+
+### Migration Notes
+
+Older modules `config/app_config.py`, `config/simple_config.py` and the
+previous `config_manager.py` have been removed. Replace any imports of these
+files with:
+
+```python
+from config.config import ConfigManager, get_config
+```
+
+The new `ConfigManager` provides the combined functionality of the deprecated
+files while maintaining backwards compatible helper functions like
+`get_app_config()` and `get_database_config()`.
 
 ## 📊 Modular Components
 

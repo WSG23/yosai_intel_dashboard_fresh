@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AppConfig:
     """Application configuration"""
+    title: str = "Yōsai Intel Dashboard"
     debug: bool = True
     host: str = "127.0.0.1"
     port: int = 8050
@@ -32,6 +33,8 @@ class DatabaseConfig:
     name: str = "yosai.db"
     user: str = "user"
     password: str = ""
+    connection_pool_size: int = 10
+    connection_timeout: int = 30
     
     def get_connection_string(self) -> str:
         """Get database connection string"""
@@ -49,6 +52,8 @@ class SecurityConfig:
     secret_key: str = "dev-key-change-in-production"
     session_timeout: int = 3600
     cors_origins: List[str] = field(default_factory=list)
+    csrf_enabled: bool = True
+    max_failed_attempts: int = 5
 
 
 @dataclass
@@ -143,11 +148,12 @@ class ConfigManager:
         """Apply YAML configuration to config objects"""
         if "app" in yaml_config:
             app_data = yaml_config["app"]
+            self.config.app.title = app_data.get("title", self.config.app.title)
             self.config.app.debug = app_data.get("debug", self.config.app.debug)
             self.config.app.host = app_data.get("host", self.config.app.host)
             self.config.app.port = app_data.get("port", self.config.app.port)
             self.config.app.secret_key = app_data.get("secret_key", self.config.app.secret_key)
-        
+
         if "database" in yaml_config:
             db_data = yaml_config["database"]
             self.config.database.type = db_data.get("type", self.config.database.type)
@@ -156,12 +162,18 @@ class ConfigManager:
             self.config.database.name = db_data.get("name", self.config.database.name)
             self.config.database.user = db_data.get("user", self.config.database.user)
             self.config.database.password = db_data.get("password", self.config.database.password)
-        
+            self.config.database.connection_pool_size = db_data.get("connection_pool_size", self.config.database.connection_pool_size)
+            self.config.database.connection_timeout = db_data.get("connection_timeout", self.config.database.connection_timeout)
+
         if "security" in yaml_config:
             sec_data = yaml_config["security"]
             self.config.security.secret_key = sec_data.get("secret_key", self.config.security.secret_key)
             self.config.security.session_timeout = sec_data.get("session_timeout", self.config.security.session_timeout)
             self.config.security.cors_origins = sec_data.get("cors_origins", self.config.security.cors_origins)
+            if "csrf_enabled" in sec_data:
+                self.config.security.csrf_enabled = bool(sec_data.get("csrf_enabled"))
+            if "max_failed_attempts" in sec_data:
+                self.config.security.max_failed_attempts = int(sec_data.get("max_failed_attempts"))
     
     def _apply_env_overrides(self) -> None:
         """Apply environment variable overrides"""
@@ -175,7 +187,9 @@ class ConfigManager:
         if os.getenv("SECRET_KEY"):
             self.config.app.secret_key = os.getenv("SECRET_KEY")
             self.config.security.secret_key = os.getenv("SECRET_KEY")
-        
+        if os.getenv("APP_TITLE"):
+            self.config.app.title = os.getenv("APP_TITLE")
+
         # Database overrides
         if os.getenv("DB_TYPE"):
             self.config.database.type = os.getenv("DB_TYPE")
@@ -189,6 +203,16 @@ class ConfigManager:
             self.config.database.user = os.getenv("DB_USER")
         if os.getenv("DB_PASSWORD"):
             self.config.database.password = os.getenv("DB_PASSWORD")
+        if os.getenv("DB_POOL_SIZE"):
+            self.config.database.connection_pool_size = int(os.getenv("DB_POOL_SIZE"))
+        if os.getenv("DB_TIMEOUT"):
+            self.config.database.connection_timeout = int(os.getenv("DB_TIMEOUT"))
+
+        # Security overrides
+        if os.getenv("CSRF_ENABLED"):
+            self.config.security.csrf_enabled = os.getenv("CSRF_ENABLED", "").lower() in ("true", "1", "yes")
+        if os.getenv("MAX_FAILED_ATTEMPTS"):
+            self.config.security.max_failed_attempts = int(os.getenv("MAX_FAILED_ATTEMPTS"))
     
     def _validate_config(self) -> None:
         """Validate configuration and log warnings"""
@@ -198,12 +222,17 @@ class ConfigManager:
         if self.config.environment == "production":
             if self.config.app.secret_key in ["dev-key-change-in-production", "change-me"]:
                 warnings.append("Production requires secure SECRET_KEY")
-            
+
             if not self.config.database.password and self.config.database.type != "sqlite":
                 warnings.append("Production database requires password")
-            
+
             if self.config.app.host == "127.0.0.1":
                 warnings.append("Production should not run on localhost")
+
+        if self.config.app.debug and self.config.app.host == "0.0.0.0":
+            warnings.append("Debug mode with host 0.0.0.0 is a security risk")
+        if self.config.database.type == "postgresql" and not self.config.database.password:
+            warnings.append("PostgreSQL requires a password")
         
         # Log warnings
         for warning in warnings:
