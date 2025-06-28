@@ -1,4 +1,5 @@
-from dash import callback, Input, Output, State, callback_context, html
+from dash import Input, Output, State, callback_context, html
+from core.callback_manager import CallbackManager
 import dash_bootstrap_components as dbc
 from .analysis import (
     process_suggests_analysis_safe,
@@ -13,20 +14,6 @@ from .analysis import (
 from services.analytics_service import AnalyticsService
 
 
-@callback(
-    Output("analytics-display-area", "children"),
-    [
-        Input("security-btn", "n_clicks"),
-        Input("trends-btn", "n_clicks"),
-        Input("behavior-btn", "n_clicks"), 
-        Input("anomaly-btn", "n_clicks"),
-        Input("suggests-btn", "n_clicks"),
-        Input("quality-btn", "n_clicks"),
-        Input("unique-patterns-btn", "n_clicks")
-    ],
-    [State("analytics-data-source", "value")],
-    prevent_initial_call=True
-)
 def handle_analysis_buttons(security_n, trends_n, behavior_n, anomaly_n, suggests_n, quality_n, unique_n, data_source):
     """Handle analysis button clicks with safe text encoding"""
     
@@ -322,11 +309,6 @@ def handle_analysis_buttons(security_n, trends_n, behavior_n, anomaly_n, suggest
     except Exception as e:
         return dbc.Alert(f"Analysis failed: {str(e)}", color="danger")
 
-@callback(
-    Output("analytics-data-source", "options"),
-    Input("refresh-sources-btn", "n_clicks"),
-    prevent_initial_call=True,
-)
 def refresh_data_sources_callback(n_clicks):
     """Refresh data sources when button clicked"""
     if n_clicks:
@@ -334,11 +316,6 @@ def refresh_data_sources_callback(n_clicks):
     return get_data_source_options_safe()
 
 
-@callback(
-    Output("status-alert", "children"),
-    Input("hidden-trigger", "children"),
-    prevent_initial_call=False,
-)
 def update_status_alert(trigger):
     """Update status based on service health"""
     try:
@@ -364,11 +341,6 @@ def update_status_alert(trigger):
 # Add these helper functions for non-suggests analysis types
 # =============================================================================
 
-@callback(
-    Output('unique-patterns-output', 'children'),
-    Input('unique-patterns-card-btn', 'n_clicks'),
-    prevent_initial_call=True
-)
 def analyze_unique_patterns(n_clicks):
     """Run unique patterns analysis with proper number formatting"""
     try:
@@ -395,4 +367,48 @@ def analyze_unique_patterns(n_clicks):
             return html.P(f"Error: {results.get('message', 'Analysis failed')}")
     except Exception as e:
         return html.P(f"Error: {str(e)}")
+
+
+def register_callbacks(manager: CallbackManager) -> None:
+    """Register page callbacks using the provided manager."""
+
+    manager.callback(
+        Output("analytics-display-area", "children"),
+        [
+            Input("security-btn", "n_clicks"),
+            Input("trends-btn", "n_clicks"),
+            Input("behavior-btn", "n_clicks"),
+            Input("anomaly-btn", "n_clicks"),
+            Input("suggests-btn", "n_clicks"),
+            Input("quality-btn", "n_clicks"),
+            Input("unique-patterns-btn", "n_clicks"),
+        ],
+        [State("analytics-data-source", "value")],
+        prevent_initial_call=True,
+        callback_id="handle_analysis_buttons",
+    )(handle_analysis_buttons)
+
+    manager.callback(
+        Output("analytics-data-source", "options"),
+        Input("refresh-sources-btn", "n_clicks"),
+        prevent_initial_call=True,
+        callback_id="refresh_data_sources",
+    )(refresh_data_sources_callback)
+
+    manager.callback(
+        Output("status-alert", "children"),
+        Input("hidden-trigger", "children"),
+        prevent_initial_call=False,
+        callback_id="update_status_alert",
+    )(update_status_alert)
+
+    manager.callback(
+        Output("unique-patterns-output", "children"),
+        Input("unique-patterns-card-btn", "n_clicks"),
+        prevent_initial_call=True,
+        callback_id="analyze_unique_patterns",
+    )(analyze_unique_patterns)
+
+
+__all__ = ["register_callbacks"]
 

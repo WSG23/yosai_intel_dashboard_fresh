@@ -1,8 +1,8 @@
 """Simple manual device mapping component"""
 
 from dash import html, dcc
-from dash._callback import callback
 from dash._callback_context import callback_context
+from core.callback_manager import CallbackManager
 from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
 from typing import List, Dict, Any
@@ -364,16 +364,6 @@ def create_simple_device_modal(devices: List[str]) -> dbc.Modal:
     )
 
 
-@callback(
-    Output("simple-device-modal", "is_open"),
-    [
-        Input("open-device-mapping", "n_clicks"),
-        Input("device-modal-cancel", "n_clicks"),
-        Input("device-modal-save", "n_clicks"),
-    ],
-    [State("simple-device-modal", "is_open")],
-    prevent_initial_call=True,
-)
 def toggle_simple_device_modal(open_clicks, cancel_clicks, save_clicks, is_open):
     """Control the simple device modal open/close state"""
     ctx = callback_context
@@ -394,16 +384,6 @@ def toggle_simple_device_modal(open_clicks, cancel_clicks, save_clicks, is_open)
     return is_open
 
 
-@callback(
-    Output("device-save-status", "children"),
-    [
-        Input({"type": "device-floor", "index": ALL}, "value"),
-        Input({"type": "device-security", "index": ALL}, "value"),
-        Input({"type": "device-access", "index": ALL}, "value"),
-    ],
-    [State("current-devices-list", "data")],
-    prevent_initial_call=True,
-)
 def save_user_inputs(floors, security, access, devices):
     """Save user inputs immediately when they change"""
     global _device_ai_mappings
@@ -429,3 +409,34 @@ def save_user_inputs(floors, security, access, devices):
         }
 
     return ""
+
+
+def register_callbacks(manager: CallbackManager) -> None:
+    """Register component callbacks using the provided manager."""
+
+    manager.callback(
+        Output("simple-device-modal", "is_open"),
+        [
+            Input("open-device-mapping", "n_clicks"),
+            Input("device-modal-cancel", "n_clicks"),
+            Input("device-modal-save", "n_clicks"),
+        ],
+        [State("simple-device-modal", "is_open")],
+        prevent_initial_call=True,
+        callback_id="toggle_simple_device_modal",
+    )(toggle_simple_device_modal)
+
+    manager.callback(
+        Output("device-save-status", "children"),
+        [
+            Input({"type": "device-floor", "index": ALL}, "value"),
+            Input({"type": "device-security", "index": ALL}, "value"),
+            Input({"type": "device-access", "index": ALL}, "value"),
+        ],
+        [State("current-devices-list", "data")],
+        prevent_initial_call=True,
+        callback_id="save_user_inputs",
+    )(save_user_inputs)
+
+
+__all__ = ["register_callbacks"]

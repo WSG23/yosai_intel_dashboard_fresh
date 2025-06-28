@@ -14,8 +14,8 @@ import pandas as pd
 from typing import Optional, Dict, Any, List
 from dash import html, dcc
 from dash.dash import no_update
-from dash._callback import callback
 from dash._callback_context import callback_context
+from core.callback_manager import CallbackManager
 from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
 from services.device_learning_service import DeviceLearningService
@@ -462,11 +462,6 @@ def get_file_info() -> Dict[str, Dict[str, Any]]:
     return _uploaded_data_store.get_file_info()
 
 
-@callback(
-    Output("upload-data", "style"),
-    Input("upload-more-btn", "n_clicks"),
-    prevent_initial_call=True,
-)
 def highlight_upload_area(n_clicks):
     """Highlight upload area when 'upload more' is clicked"""
     if n_clicks:
@@ -487,36 +482,6 @@ def highlight_upload_area(n_clicks):
         "cursor": "pointer",
         "backgroundColor": "#f8f9fa",
     }
-@callback(
-    [
-        Output("upload-results", "children"),
-        Output("file-preview", "children"),
-        Output("file-info-store", "data"),
-        Output("upload-nav", "children"),
-        Output("current-file-info-store", "data"),
-        Output("column-verification-modal", "is_open"),
-        Output("device-verification-modal", "is_open"),
-    ],
-    [
-        Input("upload-data", "contents"),
-        Input("verify-columns-btn-simple", "n_clicks"),
-        Input("classify-devices-btn", "n_clicks"),
-        Input("column-verify-confirm", "n_clicks"),
-        Input("column-verify-cancel", "n_clicks"),
-        Input("device-verify-cancel", "n_clicks"),
-        Input("device-verify-confirm", "n_clicks"),
-        Input("url", "pathname"),
-    ],
-    [
-        State("upload-data", "filename"),
-        State({"type": "field-mapping", "column": ALL}, "value"),
-        State({"type": "field-mapping", "column": ALL}, "id"),
-        State("current-file-info-store", "data"),
-        State("column-verification-modal", "is_open"),
-        State("device-verification-modal", "is_open"),
-    ],
-    prevent_initial_call=False,
-)
 def consolidated_upload_callback(
     contents_list, verify_clicks, classify_clicks, confirm_clicks,
     cancel_col_clicks, cancel_dev_clicks, confirm_dev_clicks, pathname,
@@ -790,12 +755,6 @@ def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Di
         print(f"❌ Error saving training data: {e}")
 
 
-@callback(
-    [Output({"type": "column-mapping", "index": ALL}, "value")],
-    [Input("column-verify-ai-auto", "n_clicks")],
-    [State("current-file-info-store", "data")],
-    prevent_initial_call=True,
-)
 def apply_ai_suggestions(n_clicks, file_info):
     """Apply AI suggestions automatically - RESTORED"""
     if not n_clicks or not file_info:
@@ -823,12 +782,6 @@ def apply_ai_suggestions(n_clicks, file_info):
     return [suggested_values]
 
 
-@callback(
-    Output("device-modal-body", "children"),
-    Input("device-verification-modal", "is_open"),
-    State("current-file-info-store", "data"),
-    prevent_initial_call=True,
-)
 def populate_device_modal_with_learning(is_open, file_info):
     """Fixed device modal population - gets ALL devices WITH DEBUG"""
     if not is_open:
@@ -1006,12 +959,6 @@ def populate_device_modal_with_learning(is_open, file_info):
         return dbc.Alert(f"Error: {e}", color="danger")
 
 
-@callback(
-    Output("modal-body", "children"),
-    [Input("column-verification-modal", "is_open"),
-     Input("current-file-info-store", "data")],
-    prevent_initial_call=True,
-)
 def populate_modal_content(is_open, file_info):
     """RESTORED: Smart AI-driven column mapping"""
 
@@ -1118,18 +1065,6 @@ def populate_modal_content(is_open, file_info):
     ]
 
 
-@callback(
-    [Output("toast-container", "children", allow_duplicate=True),
-     Output("column-verification-modal", "is_open", allow_duplicate=True),
-     Output("device-verification-modal", "is_open", allow_duplicate=True)],
-    [Input("device-verify-confirm", "n_clicks")],
-    [State({"type": "device-floor", "index": ALL}, "value"),
-     State({"type": "device-security", "index": ALL}, "value"),
-     State({"type": "device-access", "index": ALL}, "value"),
-     State({"type": "device-special", "index": ALL}, "value"),
-     State("current-file-info-store", "data")],
-    prevent_initial_call=True,
-)
 def save_confirmed_device_mappings(confirm_clicks, floors, security, access, special, file_info):
     """Save confirmed device mappings to database"""
     if not confirm_clicks or not file_info:
@@ -1185,6 +1120,90 @@ def save_confirmed_device_mappings(confirm_clicks, floors, security, access, spe
         return error_alert, no_update, no_update
 
 
+def register_callbacks(manager: CallbackManager) -> None:
+    """Register page callbacks using the provided manager."""
+
+    manager.callback(
+        Output("upload-data", "style"),
+        Input("upload-more-btn", "n_clicks"),
+        prevent_initial_call=True,
+        callback_id="highlight_upload_area",
+    )(highlight_upload_area)
+
+    manager.callback(
+        [
+            Output("upload-results", "children"),
+            Output("file-preview", "children"),
+            Output("file-info-store", "data"),
+            Output("upload-nav", "children"),
+            Output("current-file-info-store", "data"),
+            Output("column-verification-modal", "is_open"),
+            Output("device-verification-modal", "is_open"),
+        ],
+        [
+            Input("upload-data", "contents"),
+            Input("verify-columns-btn-simple", "n_clicks"),
+            Input("classify-devices-btn", "n_clicks"),
+            Input("column-verify-confirm", "n_clicks"),
+            Input("column-verify-cancel", "n_clicks"),
+            Input("device-verify-cancel", "n_clicks"),
+            Input("device-verify-confirm", "n_clicks"),
+            Input("url", "pathname"),
+        ],
+        [
+            State("upload-data", "filename"),
+            State({"type": "field-mapping", "column": ALL}, "value"),
+            State({"type": "field-mapping", "column": ALL}, "id"),
+            State("current-file-info-store", "data"),
+            State("column-verification-modal", "is_open"),
+            State("device-verification-modal", "is_open"),
+        ],
+        prevent_initial_call=False,
+        callback_id="consolidated_upload_callback",
+    )(consolidated_upload_callback)
+
+    manager.callback(
+        [Output({"type": "column-mapping", "index": ALL}, "value")],
+        [Input("column-verify-ai-auto", "n_clicks")],
+        [State("current-file-info-store", "data")],
+        prevent_initial_call=True,
+        callback_id="apply_ai_suggestions",
+    )(apply_ai_suggestions)
+
+    manager.callback(
+        Output("device-modal-body", "children"),
+        Input("device-verification-modal", "is_open"),
+        State("current-file-info-store", "data"),
+        prevent_initial_call=True,
+        callback_id="populate_device_modal_with_learning",
+    )(populate_device_modal_with_learning)
+
+    manager.callback(
+        Output("modal-body", "children"),
+        [Input("column-verification-modal", "is_open"), Input("current-file-info-store", "data")],
+        prevent_initial_call=True,
+        callback_id="populate_modal_content",
+    )(populate_modal_content)
+
+    manager.callback(
+        [
+            Output("toast-container", "children", allow_duplicate=True),
+            Output("column-verification-modal", "is_open", allow_duplicate=True),
+            Output("device-verification-modal", "is_open", allow_duplicate=True),
+        ],
+        [Input("device-verify-confirm", "n_clicks")],
+        [
+            State({"type": "device-floor", "index": ALL}, "value"),
+            State({"type": "device-security", "index": ALL}, "value"),
+            State({"type": "device-access", "index": ALL}, "value"),
+            State({"type": "device-special", "index": ALL}, "value"),
+            State("current-file-info-store", "data"),
+        ],
+        prevent_initial_call=True,
+        callback_id="save_confirmed_device_mappings",
+    )(save_confirmed_device_mappings)
+
+
 # Export functions for integration with other modules
 __all__ = [
     "layout",
@@ -1194,6 +1213,7 @@ __all__ = [
     "get_file_info",
     "process_uploaded_file",
     "save_ai_training_data",
+    "register_callbacks",
 ]
 
 print(f"\U0001f50d FILE_UPLOAD.PY LOADED - Callbacks should be registered")

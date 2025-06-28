@@ -2,8 +2,8 @@
 
 import pandas as pd
 from dash import html, dcc
-from dash._callback import callback
 from dash.dependencies import Input, Output, State, ALL, MATCH
+from core.callback_manager import CallbackManager
 import dash
 import dash_bootstrap_components as dbc
 from typing import Dict, List, Any, Union
@@ -237,19 +237,25 @@ def create_device_verification_modal(
     )
 
 
-@callback(
-    Output({"type": "device-edited", "index": MATCH}, "data"),
-    [
-        Input({"type": "device-floor", "index": MATCH}, "value"),
-        Input({"type": "device-access", "index": MATCH}, "value"),
-        Input({"type": "device-special", "index": MATCH}, "value"),
-        Input({"type": "device-security", "index": MATCH}, "value"),
-    ],
-    prevent_initial_call=True,
-)
 def mark_device_as_edited(floor, access, special, security):
     """Mark device as manually edited when user makes changes"""
     return True  # Simplified - any change marks as edited
 
 
-__all__ = ["create_device_verification_modal"]
+def register_callbacks(manager: CallbackManager) -> None:
+    """Register component callbacks using the provided manager."""
+
+    manager.callback(
+        Output({"type": "device-edited", "index": MATCH}, "data"),
+        [
+            Input({"type": "device-floor", "index": MATCH}, "value"),
+            Input({"type": "device-access", "index": MATCH}, "value"),
+            Input({"type": "device-special", "index": MATCH}, "value"),
+            Input({"type": "device-security", "index": MATCH}, "value"),
+        ],
+        prevent_initial_call=True,
+        callback_id="mark_device_as_edited",
+    )(mark_device_as_edited)
+
+
+__all__ = ["create_device_verification_modal", "register_callbacks"]
