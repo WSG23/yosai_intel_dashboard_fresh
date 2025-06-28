@@ -6,7 +6,7 @@ Simplified configuration package - Fixed imports
 # Import the main configuration system
 from .config import (
     Config,
-    AppConfig, 
+    AppConfig,
     DatabaseConfig,
     SecurityConfig,
     ConfigManager,
@@ -16,6 +16,10 @@ from .config import (
     get_database_config, 
     get_security_config
 )
+
+# Import dynamic configuration helpers
+from .dynamic_config import dynamic_config, DynamicConfigManager
+from .constants import SecurityConstants, PerformanceConstants, CSSConstants
 
 # Try to import database manager safely
 try:
@@ -42,5 +46,10 @@ __all__ = [
     'DatabaseManager',
     'DatabaseConnection',
     'MockConnection',
-    'DATABASE_MANAGER_AVAILABLE'
+    'DATABASE_MANAGER_AVAILABLE',
+    'dynamic_config',
+    'DynamicConfigManager',
+    'SecurityConstants',
+    'PerformanceConstants',
+    'CSSConstants'
 ]

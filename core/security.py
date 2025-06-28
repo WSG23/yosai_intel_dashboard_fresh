@@ -16,6 +16,7 @@ from pathlib import Path
 import mimetypes
 
 from utils.unicode_handler import sanitize_unicode_input
+from config.dynamic_config import dynamic_config
 
 class SecurityLevel(Enum):
     """Security threat levels"""
@@ -169,7 +170,8 @@ class InputValidator:
         
         return sanitized
     
-    def validate_file_upload(self, filename: str, file_content: bytes, max_size_mb: int = 100) -> Dict[str, Any]:
+    def validate_file_upload(self, filename: str, file_content: bytes,
+                             max_size_mb: int = dynamic_config.security.max_upload_mb) -> Dict[str, Any]:
         """Validate file uploads"""
         result = {
             'valid': True,
@@ -267,7 +269,8 @@ class InputValidator:
 class RateLimiter:
     """Rate limiting to prevent abuse"""
     
-    def __init__(self, max_requests: int = 100, window_minutes: int = 1):
+    def __init__(self, max_requests: int = dynamic_config.security.rate_limit_requests,
+                 window_minutes: int = dynamic_config.security.rate_limit_window_minutes):
         self.max_requests = max_requests
         self.window_seconds = window_minutes * 60
         self.requests: Dict[str, List[float]] = {}
@@ -420,23 +423,29 @@ class SecureHashManager:
     def hash_password(password: str, salt: Optional[bytes] = None) -> Dict[str, str]:
         """Hash password with salt"""
         if salt is None:
-            salt = secrets.token_bytes(32)
+            salt = secrets.token_bytes(dynamic_config.security.salt_bytes)
         
         # Use PBKDF2 with SHA256
-        hash_bytes = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 100000)
+        hash_bytes = hashlib.pbkdf2_hmac('sha256', password.encode(), salt,
+                                         dynamic_config.security.pbkdf2_iterations)
         
         return {
             'hash': hash_bytes.hex(),
             'salt': salt.hex(),
             'algorithm': 'pbkdf2_sha256',
-            'iterations': 100000
+            'iterations': dynamic_config.security.pbkdf2_iterations
         }
     
     @staticmethod
     def verify_password(password: str, stored_hash: str, stored_salt: str) -> bool:
         """Verify password against stored hash"""
         salt = bytes.fromhex(stored_salt)
-        hash_bytes = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 100000)
+        hash_bytes = hashlib.pbkdf2_hmac(
+            'sha256',
+            password.encode(),
+            salt,
+            dynamic_config.security.pbkdf2_iterations,
+        )
         return hash_bytes.hex() == stored_hash
     
     @staticmethod

@@ -10,6 +10,8 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional, List
 
+from .dynamic_config import dynamic_config
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,7 +35,7 @@ class DatabaseConfig:
     name: str = "yosai.db"
     user: str = "user"
     password: str = ""
-    connection_pool_size: int = 10
+    connection_pool_size: int = dynamic_config.get_db_pool_size()
     connection_timeout: int = 30
     
     def get_connection_string(self) -> str:
@@ -203,8 +205,8 @@ class ConfigManager:
             self.config.database.user = os.getenv("DB_USER")
         if os.getenv("DB_PASSWORD"):
             self.config.database.password = os.getenv("DB_PASSWORD")
-        if os.getenv("DB_POOL_SIZE"):
-            self.config.database.connection_pool_size = int(os.getenv("DB_POOL_SIZE"))
+        # Pool size is loaded from DynamicConfigManager
+        self.config.database.connection_pool_size = dynamic_config.get_db_pool_size()
         if os.getenv("DB_TIMEOUT"):
             self.config.database.connection_timeout = int(os.getenv("DB_TIMEOUT"))
 
