@@ -341,34 +341,6 @@ def update_status_alert(trigger):
 # Add these helper functions for non-suggests analysis types
 # =============================================================================
 
-def analyze_unique_patterns(n_clicks):
-    """Run unique patterns analysis with proper number formatting"""
-    try:
-        analytics_service = AnalyticsService()
-        results = analytics_service.get_unique_patterns_analysis()
-
-        if results['status'] == 'success':
-            data_summary = results['data_summary']
-            user_patterns = results['user_patterns']
-            device_patterns = results['device_patterns']
-
-            return html.Div([
-                html.H4("📊 Analysis Results"),
-                html.P(f"Total Records: {data_summary.get('total_records', 0):,}"),
-                html.P(f"Unique Users: {data_summary.get('unique_entities', {}).get('users', 0):,}"),
-                html.P(f"Unique Devices: {data_summary.get('unique_entities', {}).get('devices', 0):,}"),
-                html.P(f"Power Users: {len(user_patterns.get('user_classifications', {}).get('power_users', [])):,}"),
-                html.P(
-                    f"High Traffic Devices: {len(device_patterns.get('device_classifications', {}).get('high_traffic_devices', [])):,}"
-                ),
-                html.P(f"Success Rate: {results.get('access_patterns', {}).get('overall_success_rate', 0):.1%}")
-            ])
-        else:
-            return html.P(f"Error: {results.get('message', 'Analysis failed')}")
-    except Exception as e:
-        return html.P(f"Error: {str(e)}")
-
-
 def register_callbacks(manager: CallbackManager) -> None:
     """Register page callbacks using the provided manager."""
 
@@ -402,12 +374,6 @@ def register_callbacks(manager: CallbackManager) -> None:
         callback_id="update_status_alert",
     )(update_status_alert)
 
-    manager.callback(
-        Output("unique-patterns-output", "children"),
-        Input("unique-patterns-card-btn", "n_clicks"),
-        prevent_initial_call=True,
-        callback_id="analyze_unique_patterns",
-    )(analyze_unique_patterns)
 
 
 __all__ = ["register_callbacks"]

@@ -134,19 +134,6 @@ def layout():
             ])
         ], className="mb-4")
 
-
-        simple_unique_patterns_card = dbc.Card([
-            dbc.CardHeader("Unique Patterns Analysis"),
-            dbc.CardBody([
-                dbc.Button(
-                    "Analyze Patterns",
-                    id="unique-patterns-card-btn",
-                    color="primary"
-                ),
-                html.Div(id="unique-patterns-output", className="mt-3")
-            ])
-        ])
-
         # Results display area
         results_area = html.Div(
             id="analytics-display-area",
@@ -167,7 +154,7 @@ def layout():
             html.Div(id="hidden-trigger", style={"display": "none"})
         ]
 
-        return dbc.Container([header, config_card, simple_unique_patterns_card, results_area] + stores, fluid=True)
+        return dbc.Container([header, config_card, results_area] + stores, fluid=True)
 
     except Exception as e:
         logger.error(f"Layout creation error: {e}")
