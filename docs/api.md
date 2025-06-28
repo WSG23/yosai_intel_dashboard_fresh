@@ -37,3 +37,19 @@ Represents a single access control event.
 - `person_id: str`: Person attempting access
 - `door_id: str`: Door being accessed
 - `access_result: AccessResult`: Success/failure of access
+
+## Service Container
+
+`Container` provides a simple registry for services that can be resolved by
+name. It is typically configured during application startup.
+
+```python
+from core.container import Container
+
+container = Container()
+container.register("db", DatabaseManager())
+
+# Later in the code
+if container.has("db"):
+    db = container.get("db")
+```
