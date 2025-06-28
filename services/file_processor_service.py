@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .base import BaseService
 from .protocols import FileProcessorProtocol
-from utils.file_validator import decode_bytes
+from utils.file_validator import safe_decode_with_unicode_handling
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ class FileProcessorService(BaseService):
             # Try different encodings with surrogate handling
             for encoding in ['utf-8', 'latin-1', 'cp1252']:
                 try:
-                    text = decode_bytes(content, encoding)
+                    text = safe_decode_with_unicode_handling(content, encoding)
                     return pd.read_csv(io.StringIO(text))
                 except UnicodeDecodeError:
                     continue
@@ -88,7 +88,7 @@ class FileProcessorService(BaseService):
         try:
             for encoding in ['utf-8', 'latin-1', 'cp1252']:
                 try:
-                    text = decode_bytes(content, encoding)
+                    text = safe_decode_with_unicode_handling(content, encoding)
                     return pd.read_json(io.StringIO(text))
                 except UnicodeDecodeError:
                     continue
