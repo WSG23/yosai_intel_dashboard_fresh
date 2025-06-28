@@ -3,7 +3,7 @@
 import pandas as pd
 from dash import html, dcc
 from dash.dependencies import Input, Output, State, ALL, MATCH
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.callback_manager import CallbackManager
 import dash
 import dash_bootstrap_components as dbc
 from typing import Dict, List, Any, Union
@@ -242,10 +242,10 @@ def mark_device_as_edited(floor, access, special, security):
     return True  # Simplified - any change marks as edited
 
 
-def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
-    """Register component callbacks using the provided coordinator."""
+def register_callbacks(manager: CallbackManager) -> None:
+    """Register component callbacks using the provided manager."""
 
-    manager.register_callback(
+    manager.callback(
         Output({"type": "device-edited", "index": MATCH}, "data"),
         [
             Input({"type": "device-floor", "index": MATCH}, "value"),
@@ -255,7 +255,6 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
         ],
         prevent_initial_call=True,
         callback_id="mark_device_as_edited",
-        component_name="device_verification",
     )(mark_device_as_edited)
 
 

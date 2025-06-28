@@ -4,7 +4,6 @@ Navigation bar component with grid layout using existing framework
 
 import datetime
 from typing import TYPE_CHECKING, Optional, Any, Union
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from flask_babel import lazy_gettext as _l
 from core.plugins.decorators import safe_callback
 
@@ -223,29 +222,25 @@ def _create_fallback_navbar() -> str:
 
 
 @safe_callback
-def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
+def register_navbar_callbacks(app: Any) -> None:
     """Register navbar callbacks for live updates"""
-    if not DASH_AVAILABLE or not manager:
+    if not DASH_AVAILABLE or not app:
         return
 
     try:
-        @manager.register_callback(
+        @app.callback(
             Output("live-time", "children"),
             Input("url-i18n", "pathname"),
-            callback_id="navbar_live_time",
-            component_name="navbar",
         )
         def update_live_time(pathname: str) -> str:
             """Update live time display"""
             current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             return f"Live: {current_time}"
 
-        @manager.register_callback(
+        @app.callback(
             Output("language-toggle", "children"),
             Input("language-toggle", "n_clicks"),
-            prevent_initial_call=True,
-            callback_id="navbar_toggle_language",
-            component_name="navbar",
+            prevent_initial_call=True
         )
         def toggle_language(n_clicks: Optional[int]) -> list:
             """Toggle between EN and JP languages"""
@@ -262,11 +257,9 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
                     html.Button("JP", className="language-btn"),
                 ]
 
-        @manager.register_callback(
+        @app.callback(
             Output("page-context", "children"),
             Input("url-i18n", "pathname"),
-            callback_id="navbar_page_context",
-            component_name="navbar",
         )
         def update_page_context(pathname: str) -> str:
             """Update page context based on current route"""
