@@ -4,11 +4,8 @@ Complete File Upload Page - Missing piece for consolidation
 Integrates with analytics system
 """
 import logging
-import base64
-import io
 import json
 from datetime import datetime
-from pathlib import Path
 
 import pandas as pd
 from typing import Optional, Dict, Any, List
@@ -19,6 +16,8 @@ from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
 from services.device_learning_service import DeviceLearningService
+from services.upload_service import process_uploaded_file, create_file_preview
+from utils.upload_store import uploaded_data_store as _uploaded_data_store
 
 from components.column_verification import (
     save_verified_mappings,
@@ -31,84 +30,7 @@ logger = logging.getLogger(__name__)
 learning_service = DeviceLearningService()
 
 
-# -----------------------------------------------------------------------------
-# Persistent Uploaded Data Store
-# -----------------------------------------------------------------------------
-class UploadedDataStore:
-    """Persistent uploaded data store with file system backup."""
 
-    def __init__(self) -> None:
-        self._data_store: Dict[str, pd.DataFrame] = {}
-        self._file_info_store: Dict[str, Dict[str, Any]] = {}
-        self.storage_dir = Path("temp/uploaded_data")
-        self.storage_dir.mkdir(parents=True, exist_ok=True)
-        self._load_from_disk()
-
-    # -- Internal helpers ---------------------------------------------------
-    def _get_file_path(self, filename: str) -> Path:
-        safe_name = filename.replace(" ", "_").replace("/", "_")
-        return self.storage_dir / f"{safe_name}.pkl"
-
-    def _info_path(self) -> Path:
-        return self.storage_dir / "file_info.json"
-
-    def _load_from_disk(self) -> None:
-        try:
-            if self._info_path().exists():
-                with open(self._info_path(), "r") as f:
-                    self._file_info_store = json.load(f)
-            for fname in self._file_info_store.keys():
-                fpath = self._get_file_path(fname)
-                if fpath.exists():
-                    df = pd.read_pickle(fpath)
-                    self._data_store[fname] = df
-                    logger.info(f"Loaded {fname} from disk")
-        except Exception as e:  # pragma: no cover - best effort
-            logger.error(f"Error loading uploaded data: {e}")
-
-    def _save_to_disk(self, filename: str, df: pd.DataFrame) -> None:
-        try:
-            df.to_pickle(self._get_file_path(filename))
-            self._file_info_store[filename] = {
-                "rows": len(df),
-                "columns": len(df.columns),
-                "column_names": list(df.columns),
-                "upload_time": datetime.now().isoformat(),
-                "size_mb": round(df.memory_usage(deep=True).sum() / 1024 / 1024, 2),
-            }
-            with open(self._info_path(), "w") as f:
-                json.dump(self._file_info_store, f, indent=2)
-        except Exception as e:  # pragma: no cover - best effort
-            logger.error(f"Error saving uploaded data: {e}")
-
-    # -- Public API ---------------------------------------------------------
-    def add_file(self, filename: str, df: pd.DataFrame) -> None:
-        self._data_store[filename] = df
-        self._save_to_disk(filename, df)
-
-    def get_all_data(self) -> Dict[str, pd.DataFrame]:
-        return self._data_store.copy()
-
-    def get_filenames(self) -> List[str]:
-        return list(self._data_store.keys())
-
-    def get_file_info(self) -> Dict[str, Dict[str, Any]]:
-        return self._file_info_store.copy()
-
-    def clear_all(self) -> None:
-        self._data_store.clear()
-        self._file_info_store.clear()
-        try:
-            for pkl in self.storage_dir.glob("*.pkl"):
-                pkl.unlink()
-            if self._info_path().exists():
-                self._info_path().unlink()
-        except Exception as e:  # pragma: no cover - best effort
-            logger.error(f"Error clearing uploaded data: {e}")
-
-
-# Global persistent storage
-_uploaded_data_store = UploadedDataStore()
 
 
 def analyze_device_name_with_ai(device_name):
@@ -289,133 +211,6 @@ def layout():
     )
 
 
-def process_uploaded_file(contents, filename):
-    """Process uploaded file content"""
-    try:
-        # Decode the base64 encoded file content
-        content_type, content_string = contents.split(",")
-        decoded = base64.b64decode(content_string)
-
-        # Determine file type and parse accordingly
-        if filename.endswith(".csv"):
-            df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
-        elif filename.endswith((".xlsx", ".xls")):
-            df = pd.read_excel(io.BytesIO(decoded))
-        elif filename.endswith(".json"):
-            # Fix for JSON processing to ensure DataFrame is returned
-            try:
-                json_data = json.loads(decoded.decode("utf-8"))
-
-                # Handle different JSON structures
-                if isinstance(json_data, list):
-                    df = pd.DataFrame(json_data)
-                elif isinstance(json_data, dict):
-                    if "data" in json_data:
-                        df = pd.DataFrame(json_data["data"])
-                    else:
-                        df = pd.DataFrame([json_data])
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Unsupported JSON structure: {type(json_data)}",
-                    }
-            except json.JSONDecodeError as e:
-                return {"success": False, "error": f"Invalid JSON format: {str(e)}"}
-        else:
-            return {
-                "success": False,
-                "error": f"Unsupported file type. Supported: .csv, .json, .xlsx, .xls",
-            }
-
-        # Validate the DataFrame
-        if not isinstance(df, pd.DataFrame):
-            return {
-                "success": False,
-                "error": f"Processing resulted in {type(df)} instead of DataFrame",
-            }
-
-        if df.empty:
-            return {"success": False, "error": "File contains no data"}
-
-        return {
-            "success": True,
-            "data": df,
-            "rows": len(df),
-            "columns": list(df.columns),
-            "upload_time": datetime.now(),
-        }
-
-    except Exception as e:
-        return {"success": False, "error": f"Error processing file: {str(e)}"}
-
-
-def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert:
-    """Create preview component for uploaded file"""
-    try:
-        # Basic statistics
-        num_rows, num_cols = df.shape
-
-        # Column info
-        column_info = []
-        for col in df.columns[:10]:  # Show first 10 columns
-            dtype = str(df[col].dtype)
-            null_count = df[col].isnull().sum()
-            column_info.append(f"{col} ({dtype}) - {null_count} nulls")
-
-        return dbc.Card(
-            [
-                dbc.CardHeader([html.H6(f"📄 {filename}", className="mb-0")]),
-                dbc.CardBody(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    [
-                                        html.H6(
-                                            "File Statistics:", className="text-primary"
-                                        ),
-                                        html.Ul(
-                                            [
-                                                html.Li(f"Rows: {num_rows:,}"),
-                                                html.Li(f"Columns: {num_cols}"),
-                                                html.Li(
-                                                    f"Memory usage: {df.memory_usage(deep=True).sum() / 1024:.1f} KB"
-                                                ),
-                                            ]
-                                        ),
-                                    ],
-                                    width=6,
-                                ),
-                                dbc.Col(
-                                    [
-                                        html.H6("Columns:", className="text-primary"),
-                                        html.Ul(
-                                            [html.Li(info) for info in column_info]
-                                        ),
-                                    ],
-                                    width=6,
-                                ),
-                            ]
-                        ),
-                        html.Hr(),
-                        html.H6("Sample Data:", className="text-primary mt-3"),
-                        dbc.Table.from_dataframe(  # type: ignore[attr-defined]
-                            df.head(5),
-                            striped=True,
-                            bordered=True,
-                            hover=True,
-                            responsive=True,
-                            size="sm",
-                        ),
-                    ]
-                ),
-            ],
-            className="mb-3",
-        )
-
-    except Exception as e:
-        logger.error(f"Error creating preview for {filename}: {e}")
-        return dbc.Alert(f"Error creating preview: {str(e)}", color="warning")
 
 
 def get_uploaded_data() -> Dict[str, pd.DataFrame]:
@@ -1217,7 +1012,6 @@ __all__ = [
     "get_uploaded_filenames",
     "clear_uploaded_data",
     "get_file_info",
-    "process_uploaded_file",
     "save_ai_training_data",
     "register_callbacks",
 ]
