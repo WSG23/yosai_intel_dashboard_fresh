@@ -9,6 +9,7 @@ from pathlib import Path
 
 from .base import BaseService
 from .protocols import FileProcessorProtocol
+from utils.file_validator import decode_bytes
 
 logger = logging.getLogger(__name__)
 
@@ -71,10 +72,10 @@ class FileProcessorService(BaseService):
     def _process_csv(self, content: bytes) -> pd.DataFrame:
         """Process CSV file"""
         try:
-            # Try different encodings
-            for encoding in ['utf-8', 'latin1', 'cp1252']:
+            # Try different encodings with surrogate handling
+            for encoding in ['utf-8', 'latin-1', 'cp1252']:
                 try:
-                    text = content.decode(encoding)
+                    text = decode_bytes(content, encoding)
                     return pd.read_csv(io.StringIO(text))
                 except UnicodeDecodeError:
                     continue
@@ -85,8 +86,13 @@ class FileProcessorService(BaseService):
     def _process_json(self, content: bytes) -> pd.DataFrame:
         """Process JSON file"""
         try:
-            text = content.decode('utf-8')
-            return pd.read_json(io.StringIO(text))
+            for encoding in ['utf-8', 'latin-1', 'cp1252']:
+                try:
+                    text = decode_bytes(content, encoding)
+                    return pd.read_json(io.StringIO(text))
+                except UnicodeDecodeError:
+                    continue
+            raise ValueError("Could not decode JSON with any standard encoding")
         except Exception as e:
             raise ValueError(f"Error reading JSON: {e}")
     
