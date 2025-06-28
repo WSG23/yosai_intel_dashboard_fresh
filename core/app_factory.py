@@ -8,7 +8,7 @@ import os
 from typing import Optional, Any
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, callback
-from core.callback_manager import CallbackManager
+from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 import pandas as pd
 
 # ✅ FIXED IMPORTS - Use correct config system
@@ -65,9 +65,9 @@ def _create_full_app() -> dash.Dash:
         # Set main layout
         app.layout = _create_main_layout()
 
-        # Register all callbacks using CallbackManager
-        callback_manager = CallbackManager(app)
-        _register_global_callbacks(callback_manager)
+        # Register all callbacks using UnifiedCallbackCoordinator
+        coordinator = UnifiedCallbackCoordinator(app)
+        _register_global_callbacks(coordinator)
 
         # Register page/component callbacks
         try:
@@ -75,11 +75,16 @@ def _create_full_app() -> dash.Dash:
             from components.simple_device_mapping import register_callbacks as register_simple_mapping
             from components.device_verification import register_callbacks as register_device_verification
             from pages.deep_analytics.callbacks import register_callbacks as register_deep_callbacks
+            from dashboard.layout.navbar import register_navbar_callbacks
 
-            register_upload_callbacks(callback_manager)
-            register_simple_mapping(callback_manager)
-            register_device_verification(callback_manager)
-            register_deep_callbacks(callback_manager)
+            register_upload_callbacks(coordinator)
+            register_simple_mapping(coordinator)
+            register_device_verification(coordinator)
+            register_deep_callbacks(coordinator)
+            register_navbar_callbacks(coordinator)
+
+            if config_manager.get_app_config().environment == "development":
+                coordinator.print_callback_summary()
         except Exception as e:
             logger.warning(f"Failed to register module callbacks: {e}")
 
@@ -406,14 +411,15 @@ def _get_upload_page() -> Any:
         )
 
 
-def _register_global_callbacks(manager: CallbackManager) -> None:
+def _register_global_callbacks(manager: UnifiedCallbackCoordinator) -> None:
     """Register global application callbacks"""
 
-    @manager.callback(
+    @manager.register_callback(
         Output("global-store", "data"),
         Input("clear-cache-btn", "n_clicks"),
         prevent_initial_call=True,
         callback_id="clear_cache",
+        component_name="app_factory",
     )
     def clear_cache(n_clicks):
         """Clear application cache"""
