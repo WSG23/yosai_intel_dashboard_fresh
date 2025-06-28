@@ -7,7 +7,6 @@ Feeds back to AI training data
 
 import pandas as pd
 from dash import html, dcc, callback, Input, Output, State, ALL, MATCH
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 import dash
 import dash_bootstrap_components as dbc
 from typing import Dict, List, Any
@@ -525,23 +524,16 @@ def save_verified_mappings(filename: str, column_mappings: Dict[str, str],
         print(f"❌ Error saving mappings: {e}")
         return False
 
+@callback(
+    Output({"type": "custom-field", "index": MATCH}, "style"),
+    Input({"type": "column-mapping", "index": MATCH}, "value")
+)
 def toggle_custom_field(selected_value):
     """Show custom field input when 'other' is selected"""
     if selected_value == "other":
         return {"display": "block"}
     else:
         return {"display": "none"}
-
-
-def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
-    """Register component callbacks using the coordinator."""
-
-    manager.register_callback(
-        Output({"type": "custom-field", "index": MATCH}, "style"),
-        Input({"type": "column-mapping", "index": MATCH}, "value"),
-        callback_id="toggle_custom_field",
-        component_name="column_verification",
-    )(toggle_custom_field)
 
 
 # ---------------------------------------------------------------------------
@@ -554,5 +546,4 @@ __all__ = [
     'create_column_verification_modal',
     'get_ai_column_suggestions',
     'save_verified_mappings',
-    'register_callbacks',
 ]
