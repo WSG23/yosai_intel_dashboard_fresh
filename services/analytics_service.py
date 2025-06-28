@@ -8,6 +8,8 @@ import json
 import logging
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
+
+from utils.mapping_helpers import map_and_clean
 from datetime import datetime, timedelta
 import os
 
@@ -302,16 +304,8 @@ class AnalyticsService:
                 print(f"   📄 {filename}: {len(df):,} rows")
                 print(f"      Original columns: {list(df.columns)}")
 
-                # YOUR SPECIFIC COLUMN MAPPING
-                df_processed = df.copy()
-                if 'Person ID' in df_processed.columns:
-                    df_processed = df_processed.rename(columns={
-                        'Timestamp': 'timestamp',
-                        'Person ID': 'person_id',
-                        'Device name': 'door_id',
-                        'Access result': 'access_result'
-                    })
-                    print(f"      ✅ Columns mapped: {list(df_processed.columns)}")
+                df_processed = map_and_clean(df.copy())
+                print(f"      ✅ Columns mapped: {list(df_processed.columns)}")
 
                 all_dataframes.append(df_processed)
 
@@ -384,24 +378,7 @@ class AnalyticsService:
 
     def clean_uploaded_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply standard column mappings and basic cleaning."""
-        column_mapping = {
-            'Timestamp': 'timestamp',
-            'Person ID': 'person_id',
-            'Token ID': 'token_id',
-            'Device name': 'door_id',
-            'Access result': 'access_result',
-        }
-
-        df = df.rename(columns=column_mapping)
-
-        if 'timestamp' in df.columns:
-            df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
-
-        for col in ['person_id', 'door_id', 'access_result']:
-            if col in df.columns:
-                df[col] = df[col].astype(str).str.strip()
-
-        return df
+        return map_and_clean(df)
 
     def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Create a summary dictionary from a combined DataFrame."""
@@ -632,15 +609,7 @@ class AnalyticsService:
                 # Process the first available file
                 filename, df = next(iter(uploaded_data.items()))
 
-                # Apply basic column mapping
-                column_mapping = {
-                    'Timestamp': 'timestamp',
-                    'Person ID': 'person_id',
-                    'Token ID': 'token_id',
-                    'Device name': 'door_id',
-                    'Access result': 'access_result'
-                }
-                df = df.rename(columns=column_mapping)
+                df = map_and_clean(df)
 
                 # Calculate real statistics
                 total_records = len(df)
