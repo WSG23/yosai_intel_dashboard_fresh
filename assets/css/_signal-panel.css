@@ -1,0 +1,30 @@
+/* =================================================================== */
+/* _signal-panel.css - Styling for the weak signal panel                */
+/* Mirrors the alert panel styles for a consistent look                 */
+/* =================================================================== */
+
+/* Panel Container */
+.incident-alert-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.incident-panel-header {
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--color-gray-700);
+  background: var(--surface-secondary);
+  flex-shrink: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Body */
+.incident-alert-panel .accordion {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}

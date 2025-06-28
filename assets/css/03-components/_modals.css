@@ -1,0 +1,147 @@
+/* =================================================================== */
+/* 03-components/_modals.css - Modal Component System */
+/* =================================================================== */
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--surface-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  padding: var(--space-4);
+  backdrop-filter: blur(4px);
+}
+
+.modal-overlay--enter {
+  animation: modal-overlay-enter var(--duration-normal) var(--ease-out);
+}
+
+.modal-overlay--exit {
+  animation: modal-overlay-exit var(--duration-normal) var(--ease-in);
+}
+
+@keyframes modal-overlay-enter {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(4px);
+  }
+}
+
+@keyframes modal-overlay-exit {
+  from {
+    opacity: 1;
+    backdrop-filter: blur(4px);
+  }
+  to {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+}
+
+/* Modal Container */
+.modal {
+  background: var(--surface-primary);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-gray-700);
+  box-shadow: var(--shadow-2xl);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.modal--enter {
+  animation: modal-enter var(--duration-normal) var(--ease-out);
+}
+
+.modal--exit {
+  animation: modal-exit var(--duration-normal) var(--ease-in);
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modal-exit {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+}
+
+/* Modal Sizes */
+.modal--sm { width: 24rem; }
+.modal--md { width: 32rem; }
+.modal--lg { width: 48rem; }
+.modal--xl { width: 64rem; }
+.modal--full { width: 95vw; height: 95vh; }
+
+/* Modal Sections */
+.modal__header {
+  padding: var(--space-6) var(--space-6) var(--space-4);
+  border-bottom: 1px solid var(--color-gray-700);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.modal__title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.modal__close {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  transition: all var(--duration-fast) var(--ease-out);
+  font-size: var(--text-lg);
+}
+
+.modal__close:hover {
+  color: var(--text-primary);
+  background: var(--surface-tertiary);
+}
+
+.modal__body {
+  padding: var(--space-6);
+  flex: 1;
+  overflow: auto;
+}
+
+.modal__footer {
+  padding: var(--space-4) var(--space-6) var(--space-6);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}

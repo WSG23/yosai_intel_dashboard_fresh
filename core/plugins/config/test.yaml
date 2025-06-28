@@ -1,0 +1,15 @@
+app:
+  debug: true
+  host: 127.0.0.1
+  port: 8051
+  log_level: DEBUG
+database:
+  type: mock
+cache:
+  type: memory
+  max_memory_mb: 10
+analytics:
+  cache_timeout_seconds: 1
+  max_records_per_query: 100
+monitoring:
+  health_check_enabled: false

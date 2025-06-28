@@ -1,0 +1,128 @@
+/* =================================================================== */
+/* 04-panels/_alert-panel.css - REFACTORED Alert Panel */
+/* =================================================================== */
+
+/* Alert Panel Container */
+.alert-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.alert-panel__header {
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--color-gray-700);
+  background: var(--surface-secondary);
+  flex-shrink: 0;
+}
+
+.alert-panel__title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.alert-panel__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+/* Ticket Cards */
+.ticket-card {
+  background: var(--surface-secondary);
+  border: 1px solid var(--color-gray-700);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+  overflow: hidden;
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.ticket-card:hover {
+  border-color: var(--color-gray-600);
+  box-shadow: var(--shadow-md);
+}
+
+.ticket-card__header {
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-tertiary);
+  border-bottom: 1px solid var(--color-gray-700);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+}
+
+.ticket-card__body {
+  padding: var(--space-4);
+}
+
+/* Threat Level Indicator */
+.threat-indicator {
+  margin-bottom: var(--space-3);
+}
+
+.threat-indicator__label {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-1);
+}
+
+.threat-indicator__progress {
+  height: var(--space-2);
+  background: var(--color-gray-700);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.threat-indicator__fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-success), var(--color-warning), var(--color-critical));
+  border-radius: var(--radius-full);
+  transition: width var(--duration-slow) var(--ease-out);
+  position: relative;
+}
+
+.threat-indicator__fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Ticket Details */
+.ticket-details {
+  display: grid;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.ticket-details__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.ticket-details__label {
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-medium);
+  flex-shrink: 0;
+}
+
+.ticket-details__value {
+  color: var(--text-primary);
+  text-align: right;
+  flex: 1;
+  word-break: break-word;
+}

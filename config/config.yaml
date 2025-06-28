@@ -1,0 +1,34 @@
+app:
+  name: "Yōsai Intel Dashboard"
+  version: "1.0.0"
+  debug: true
+  host: "127.0.0.1"
+  port: 8050
+  environment: "development"
+
+database:
+  type: "sqlite"
+  path: "data/yosai.db"
+  echo: false
+  pool_size: 10
+  max_overflow: 20
+
+security:
+  secret_key: "your-secret-key-here"
+  session_timeout: 3600
+  csrf_enabled: false
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/app.log"
+
+plugins:
+  json_serialization:
+    enabled: true
+    max_dataframe_rows: 1000
+    max_string_length: 10000
+    include_type_metadata: true
+    compress_large_objects: true
+    fallback_to_repr: true
+    auto_wrap_callbacks: true

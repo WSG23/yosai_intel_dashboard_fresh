@@ -1,0 +1,91 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Environment Variables
+.env
+.env.local
+.env.production
+
+# SECRET_KEY=your-secret-key-here
+AUTH0_CLIENT_ID=your-client-id
+AUTH0_CLIENT_SECRET=your-client-secret
+AUTH0_DOMAIN=your-domain.auth0.com
+AUTH0_AUDIENCE=your-api-audience
+
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dash
+assets/.webassets-cache
+
+# Data
+data/uploads/*
+!data/uploads/.gitkeep
+*.csv
+*.xlsx
+*.json
+logs/
+
+# Database
+*.db
+*.sqlite3
+
+# Cache
+.cache/
+.pytest_cache/
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Documentation
+docs/_build/
+
+# Mac
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Backup files
+*.backup
+*.bak
+
+# Secret files (auto-added)
+.env.development
+.env.staging
+*.key
+secrets/

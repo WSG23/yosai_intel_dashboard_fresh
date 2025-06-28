@@ -1,0 +1,134 @@
+/* Door Mapping Modal Styles */
+
+.door-mapping-toggle-switch .form-check-input {
+    width: 40px !important;
+    height: 20px !important;
+    border-radius: 20px !important;
+    background-color: #4B5563 !important;
+    border: none !important;
+    position: relative !important;
+    cursor: pointer !important;
+}
+
+.door-mapping-toggle-switch .form-check-input:checked {
+    background-color: #3B82F6 !important;
+    border-color: #3B82F6 !important;
+}
+
+.door-mapping-toggle-switch .form-check-input::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    width: 16px;
+    height: 16px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+}
+
+.door-mapping-toggle-switch .form-check-input:checked::before {
+    transform: translateX(20px);
+}
+
+/* Security level slider styling */
+.security-level-slider .rc-slider-track {
+    background: linear-gradient(to right, #10B981, #EF4444) !important;
+    height: 8px !important;
+}
+
+.security-level-slider .rc-slider-rail {
+    background-color: #374151 !important;
+    height: 8px !important;
+}
+
+.security-level-slider .rc-slider-handle {
+    background-color: white !important;
+    border: 2px solid #6B7280 !important;
+    width: 16px !important;
+    height: 16px !important;
+    margin-top: -4px !important;
+}
+
+.security-level-slider .rc-slider-handle:hover,
+.security-level-slider .rc-slider-handle:focus {
+    border-color: #3B82F6 !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Manual edit indicators */
+.device-row-edited {
+    border-left: 3px solid #3B82F6 !important;
+    background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+.manual-edit-indicator {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: #3B82F6;
+    border-radius: 50%;
+    margin-left: 4px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Modal responsive adjustments */
+@media (max-width: 1024px) {
+    .door-mapping-modal-content {
+        width: 95% !important;
+        max-width: none !important;
+    }
+    
+    .door-mapping-left-panel {
+        width: 100% !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .door-mapping-right-panel {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+}
+
+/* Table styling enhancements */
+.door-mapping-table th {
+    background-color: #1F2937 !important;
+    color: #D1D5DB !important;
+    font-weight: 600 !important;
+    padding: 12px 8px !important;
+    border-bottom: 2px solid #374151 !important;
+}
+
+.door-mapping-table td {
+    padding: 8px !important;
+    border-bottom: 1px solid #374151 !important;
+}
+
+.door-mapping-table tr:hover {
+    background-color: #1F2937 !important;
+}
+
+/* Confidence badge styling */
+.confidence-badge {
+    background: linear-gradient(135deg, #3B82F6, #1D4ED8) !important;
+    color: white !important;
+    font-size: 0.75rem !important;
+    padding: 2px 8px !important;
+    border-radius: 12px !important;
+    margin-left: 8px !important;
+    display: inline-block !important;
+}
+
+/* Center alignment for verify column */
+.verify-column {
+    text-align: center !important;
+}

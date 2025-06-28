@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  dashboard:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "8050:8050"
+    environment:
+      - DB_TYPE=postgresql
+      - DB_HOST=postgres
+      - DB_NAME=yosai_intel
+      - DB_USER=postgres
+    depends_on:
+      - postgres
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    secrets:
+      - db_password
+      - secret_key
+      - auth0_client_id
+      - auth0_client_secret
+      - auth0_domain
+      - auth0_audience
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: yosai_intel
+      POSTGRES_USER: postgres
+    secrets:
+      - db_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database_setup.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+secrets:
+  db_password:
+    file: ./secrets/db_password
+  secret_key:
+    file: ./secrets/secret_key
+  auth0_client_id:
+    file: ./secrets/auth0_client_id
+  auth0_client_secret:
+    file: ./secrets/auth0_client_secret
+  auth0_domain:
+    file: ./secrets/auth0_domain
+  auth0_audience:
+    file: ./secrets/auth0_audience

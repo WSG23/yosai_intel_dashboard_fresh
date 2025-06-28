@@ -1,0 +1,132 @@
+/* =================================================================== */
+/* 03-components/_chips.css - Chip Component System */
+/* =================================================================== */
+
+/* Base Chip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1-5) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--leading-tight);
+  text-align: center;
+  transition: all var(--duration-normal) var(--ease-out);
+  cursor: default;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Chip Sizes */
+.chip--xs {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+  gap: var(--space-1);
+}
+
+.chip--sm {
+  padding: var(--space-1-5) var(--space-2-5);
+  font-size: var(--text-sm);
+  gap: var(--space-1-5);
+}
+
+.chip--md {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-base);
+  gap: var(--space-2);
+}
+
+.chip--lg {
+  padding: var(--space-2-5) var(--space-4);
+  font-size: var(--text-lg);
+  gap: var(--space-2);
+}
+
+/* Chip Variants */
+.chip--default {
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--color-gray-600);
+}
+
+.chip--primary {
+  background: var(--color-primary);
+  color: var(--text-on-accent);
+}
+
+.chip--accent {
+  background: var(--color-accent);
+  color: var(--text-on-accent);
+}
+
+.chip--success {
+  background: var(--color-success);
+  color: var(--text-on-accent);
+}
+
+.chip--warning {
+  background: var(--color-warning);
+  color: var(--color-gray-900);
+}
+
+.chip--critical {
+  background: var(--color-critical);
+  color: var(--text-on-accent);
+}
+
+.chip--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--color-gray-600);
+}
+
+.chip--gold {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: var(--color-gray-900);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Interactive Chips */
+.chip--interactive {
+  cursor: pointer;
+}
+
+.chip--interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.chip--interactive:active {
+  transform: translateY(0);
+}
+
+/* Chip Icon */
+.chip__icon {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+}
+
+/* Chip Remove Button */
+.chip__remove {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.chip__remove:hover {
+  background: rgba(255, 255, 255, 0.2);
+}

@@ -1,0 +1,13 @@
+# Core dashboard requirements
+dash>=2.14.1
+dash-bootstrap-components>=1.6.0
+plotly>=5.15.0
+pandas>=2.1.1
+numpy>=2.1.0
+
+# Configuration
+PyYAML>=6.0.1
+
+# Development
+python-dotenv>=1.0.0
+pytest>=7.4.0

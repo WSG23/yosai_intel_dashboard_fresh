@@ -1,0 +1,75 @@
+/* =================================================================== */
+/* 03-components/_cards.css - Card Component System */
+/* =================================================================== */
+
+/* Base Card */
+.card {
+  background: var(--surface-primary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-gray-700);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Card Sections */
+.card__header {
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--color-gray-700);
+  background: var(--surface-secondary);
+}
+
+.card__body {
+  padding: var(--space-6);
+}
+
+.card__footer {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--color-gray-700);
+  background: var(--surface-tertiary);
+}
+
+/* Card Variants */
+.card--elevated {
+  box-shadow: var(--shadow-lg);
+  border: none;
+}
+
+.card--flat {
+  box-shadow: none;
+  border: 1px solid var(--color-gray-700);
+}
+
+.card--outline {
+  background: transparent;
+  border: 2px solid var(--color-gray-600);
+}
+
+.card--glass {
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Card Sizes */
+.card--compact .card__header,
+.card--compact .card__footer {
+  padding: var(--space-3) var(--space-4);
+}
+
+.card--compact .card__body {
+  padding: var(--space-4);
+}
+
+.card--spacious .card__header,
+.card--spacious .card__footer {
+  padding: var(--space-6) var(--space-8);
+}
+
+.card--spacious .card__body {
+  padding: var(--space-8);
+}

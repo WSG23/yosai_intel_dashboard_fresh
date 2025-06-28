@@ -1,0 +1,77 @@
+/* =================================================================== */
+/* 02-layout/_grid.css - Grid System */
+/* =================================================================== */
+
+/* Container System */
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+.container--sm { max-width: var(--breakpoint-sm); }
+.container--md { max-width: var(--breakpoint-md); }
+.container--lg { max-width: var(--breakpoint-lg); }
+.container--xl { max-width: var(--breakpoint-xl); }
+.container--2xl { max-width: var(--breakpoint-2xl); }
+.container--full { max-width: none; }
+
+/* Dashboard Layout Grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-areas: 
+    "navbar navbar navbar"
+    "left-panel map-panel right-panel"
+    "bottom-panel bottom-panel bottom-panel";
+  grid-template-columns: 20% 1fr 20%;
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.dashboard-grid__navbar { grid-area: navbar; }
+.dashboard-grid__left { grid-area: left-panel; }
+.dashboard-grid__map { grid-area: map-panel; }
+.dashboard-grid__right { grid-area: right-panel; }
+.dashboard-grid__bottom { grid-area: bottom-panel; }
+
+/* Responsive Grid */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-areas: 
+      "navbar"
+      "map-panel"
+      "left-panel"
+      "right-panel"
+      "bottom-panel";
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto auto auto;
+  }
+}
+
+/* Flex Grid System */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: calc(var(--space-4) * -0.5);
+  margin-right: calc(var(--space-4) * -0.5);
+}
+
+.col {
+  flex: 1;
+  padding-left: calc(var(--space-4) * 0.5);
+  padding-right: calc(var(--space-4) * 0.5);
+}
+
+/* Column Fractions */
+.col-1 { flex: 0 0 8.333333%; }
+.col-2 { flex: 0 0 16.666667%; }
+.col-3 { flex: 0 0 25%; }
+.col-4 { flex: 0 0 33.333333%; }
+.col-6 { flex: 0 0 50%; }
+.col-8 { flex: 0 0 66.666667%; }
+.col-9 { flex: 0 0 75%; }
+.col-12 { flex: 0 0 100%; }

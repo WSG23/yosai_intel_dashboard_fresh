@@ -1,0 +1,30 @@
+# Minimal Yosai Configuration
+app:
+  title: "Yosai Intelligence Dashboard"
+  debug: true
+  host: "127.0.0.1"
+  port: 8051
+  log_level: "INFO"
+
+database:
+  host: "localhost"
+  port: 5432
+  name: "yosai_db"
+  user: "yosai_user"
+  password: "change-me"
+
+security:
+  secret_key: "change-me"
+  session_timeout: 3600
+
+analytics:
+  enabled: true
+  batch_size: 100
+
+monitoring:
+  health_check_interval: 30
+  metrics_enabled: true
+
+cache:
+  type: "memory"
+  ttl: 300

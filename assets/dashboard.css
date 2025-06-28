@@ -1,0 +1,1475 @@
+:root {
+  --color-primary: #1B2A47;
+  --color-accent: #2196F3;
+  --color-accent-hover: #42A5F5;
+  --color-success: #2DBE6C;
+  --color-warning: #FFB020;
+  --color-critical: #E02020;
+  --color-background: #0F1419;
+  --color-surface: #1A2332;
+  --color-border: #2D3748;
+  --color-text-primary: #F7FAFC;
+  --color-text-secondary: #E2E8F0;
+  --color-text-tertiary: #A0AEC0;
+}
+
+/* Ensure all levels propagate height correctly */
+html, body, #root, .dash-app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+/* Layout Containers */
+.top-panel {
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.dashboard-layout {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 60px); /* Account for navbar */
+}
+
+/* Main 3-Column Content Area */
+.main-content {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  overflow: hidden;
+}
+
+.left-panel,
+.right-panel {
+  width: 20%;
+  overflow-y: auto;
+  padding: 1rem;
+  background-color: var(--color-surface);
+}
+
+.map-panel {
+  flex-grow: 1;
+  height: 100%;
+  min-height: 500px;
+  position: relative;
+  background-color: #0b0f14;
+}
+
+#facility-map {
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* Bottom Panel Layout */
+.bottom-panel-container {
+  border-top: 1px solid var(--color-border);
+}
+
+/* Bottom Panel Layout - Two Columns */
+.bottom-panel {
+  display: flex;
+  justify-content: space-between;
+  padding: 1.25rem 2rem;
+  background-color: #0f1419;
+  color: white;
+  font-family: 'Helvetica Neue', sans-serif;
+  border-top: 1px solid #2d3748;
+  min-height: 200px;
+}
+
+.bottom-column {
+  flex: 1;
+  margin: 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bottom-column.respond {
+  align-items: flex-start;
+  max-width: 300px;
+}
+
+.bottom-column h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  color: #f7fafc;
+}
+
+/* Chips Layout */
+.chip-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.chip {
+  padding: 8px 0;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  min-height: 36px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease-in-out;
+  cursor: default;
+  background: linear-gradient(to right, #f6c5c0, #e09ea1, #c67683, #ac515f);
+}
+
+.chip:hover {
+  box-shadow: 0 0 0 1px #f7fafc;
+  filter: brightness(1.1);
+}
+
+.chip.gold {
+  background-color: #d4af37;
+  color: #1a1a1a;
+}
+
+.chip.gray {
+  background-color: #4a5568;
+}
+
+/* Ticket Display */
+.respond-label {
+  font-size: 0.875rem;
+  color: #a0aec0;
+}
+
+.ticket-box {
+  background-color: #1a202c;
+  padding: 1rem;
+  border-radius: 6px;
+  width: 100%;
+  text-align: center;
+  font-weight: bold;
+  color: #f7fafc;
+}
+
+.complete-button {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #2dbe6c;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease-in-out;
+  width: 100%;
+}
+
+.complete-button:hover {
+  background-color: #24a55a;
+}
+
+/* Resolve Buttons */
+.resolve-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.resolve-button {
+  background-color: #2d3748;
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  text-align: left;
+}
+
+.resolve-button:hover {
+  background-color: #3e4b5e;
+}
+
+/* Checklist */
+.action-checklist {
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+
+/* Map View Toggle Buttons */
+.map-toggle-stack {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  background-color: rgba(0,0,0,0.3);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  z-index: 999;
+}
+
+.map-toggle-button {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.map-toggle-button:hover {
+  background-color: var(--color-accent-hover);
+}
+
+.map-status-badge {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  background-color: #1B2A47;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  z-index: 999;
+}
+
+
+/* Navbar */
+.navbar-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.navbar-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+/* Detection Chips */
+.detection-chip {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  margin: 0.25rem;
+  border-radius: 999px;
+  background-color: #1a1f2e;
+  color: #fff;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/* Weak Signal Feed */
+.weak-signal-panel .panel-header {
+  position: sticky;
+  top: 0;
+  background-color: var(--color-surface);
+  padding: 0.5rem 0;
+  z-index: 10;
+}
+
+.signal-card {
+  margin-bottom: 1rem;
+  background-color: #1e2936;
+  border-radius: 6px;
+}
+
+.signal-card-header {
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.signal-card-header.signal-high {
+  border-left: 4px solid var(--color-critical);
+}
+
+.signal-card-header.signal-medium {
+  border-left: 4px solid var(--color-warning);
+}
+
+.signal-card-header.signal-low {
+  border-left: 4px solid var(--color-success);
+}
+
+/* Navbar Icon Navigation - Extends existing navbar styles */
+.navbar-main {
+  background-color: var(--color-primary) !important;
+  border-bottom: 2px solid var(--color-accent);
+}
+
+.navbar-icon {
+  width: 24px;
+  height: auto; /* preserve natural aspect */
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  filter: brightness(0.9);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.navbar-icon:hover {
+  opacity: 0.8;
+  filter: brightness(1.2);
+  cursor: pointer;
+}
+
+.navbar-nav-link {
+  display: inline-block;
+  text-decoration: none !important;
+  transition: transform 0.3s ease;
+}
+
+.navbar-nav-link:hover {
+  transform: translateY(-2px);
+}
+
+.navbar-nav-link:hover .navbar-icon {
+  filter: brightness(1.25);
+  transform: scale(1.05);  /* Reduced from 1.1 to prevent distortion */
+}
+
+.language-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-tertiary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.3s ease;
+}
+
+.language-btn:hover {
+  text-decoration: underline;
+  color: var(--color-accent);
+}
+
+.language-btn.active {
+  color: var(--color-accent);
+  font-weight: bold;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .navbar-icon {
+    width: 32px;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+  }
+}
+
+/* Settings Modal - Uses existing color variables */
+.settings-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-modal-overlay.hidden {
+  display: none;
+}
+
+.settings-modal-content {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  width: 400px;
+  max-width: 90vw;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.settings-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-modal-title {
+  font-size: 1.125rem;
+  font-weight: bold;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.settings-modal-close {
+  background: none;
+  border: none;
+  color: var(--color-text-tertiary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.settings-modal-close:hover {
+  color: var(--color-text-primary);
+}
+
+.settings-modal-body {
+  padding: 1.5rem;
+}
+
+.settings-item-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-bottom: 0.5rem;
+}
+
+.settings-item:hover {
+  background-color: var(--color-primary);
+}
+
+.settings-item:last-child {
+  margin-bottom: 0;
+}
+
+.settings-item-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 0.75rem;
+  filter: brightness(0.9);
+  transition: filter 0.3s ease;
+}
+
+.settings-item:hover .settings-item-icon {
+  filter: brightness(1.1);
+}
+
+.settings-item-text {
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .settings-modal-content {
+    width: 350px;
+    margin: 1rem;
+  }
+}
+
+/* Dual Upload Box Styles - Integrates with existing variables */
+.dual-upload-container {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin: 2rem 0;
+}
+
+@media (max-width: 640px) {
+  .dual-upload-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+.upload-box {
+  width: 280px;
+  height: 200px;
+  border: 2px dashed var(--color-accent);
+  border-radius: 12px;
+  background-color: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-box:hover {
+  border-color: var(--color-accent-hover);
+  background-color: var(--color-primary);
+  transform: scale(1.02);
+}
+
+.upload-box.upload-box-active {
+  cursor: pointer;
+}
+
+.upload-box.upload-box-inactive {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.upload-box.upload-box-success {
+  border-color: var(--color-success);
+  background-color: rgba(45, 190, 108, 0.1);
+}
+
+.upload-box.upload-box-error {
+  border-color: var(--color-critical);
+  background-color: rgba(224, 32, 32, 0.1);
+}
+
+.upload-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  filter: brightness(0.9);
+}
+
+.upload-box:hover .upload-icon {
+  filter: brightness(1.1);
+  transform: scale(1.05);
+}
+
+.upload-supported-types {
+  color: var(--color-success);
+  font-size: 0.875rem;
+  text-align: center;
+  margin-top: 1rem;
+  line-height: 1.5;
+}
+
+.upload-supported-types p {
+  margin: 0.25rem 0;
+  font-weight: 500;
+}
+
+.upload-box-title {
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.upload-box-subtitle {
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* Tooltip for inactive box */
+.upload-tooltip {
+  position: absolute;
+  top: -2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+  border: 1px solid var(--color-border);
+}
+
+.upload-box:hover .upload-tooltip {
+  opacity: 1;
+}
+
+/* Upload progress overlay */
+.upload-progress-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.875rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.upload-progress-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Loading animation */
+.upload-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--color-border);
+  border-top: 2px solid var(--color-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 0.5rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* File Upload Cards - Following existing signal-card pattern */
+.file-info-card {
+  margin-bottom: 1rem;
+  background-color: #1e2936;
+  border-radius: 6px;
+  color: var(--color-text-primary);
+}
+
+.file-info-card .card-title {
+  color: var(--color-text-primary);
+}
+
+.file-info-card .card-body {
+  color: var(--color-text-primary);
+}
+
+/* =================================
+   MODAL AND DROPDOWN FIXES
+   ================================= */
+
+/* Modal base styling */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal--xl {
+  width: 1000px;
+}
+
+.modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-primary);
+}
+
+.modal__title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.modal__close {
+  background: none;
+  border: none;
+  color: var(--color-text-tertiary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.modal__close:hover {
+  color: var(--color-text-primary);
+}
+
+.modal__body {
+  padding: 1.5rem;
+  background-color: var(--color-surface);
+}
+
+.modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+/* Form styling for dark theme */
+.form-group {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-field {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  color: var(--color-text-primary);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.form-label--required::after {
+  content: " *";
+  color: var(--color-critical);
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--color-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* =================================
+   DASH DROPDOWN DARK THEME FIXES
+   ================================= */
+
+/* Fix Dash dropdown styling for dark theme */
+.form-select .Select {
+  background-color: var(--color-primary) !important;
+}
+
+.form-select .Select-control {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.form-select .Select-control:hover {
+  border-color: var(--color-accent) !important;
+}
+
+.form-select .Select-control.is-focused {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.form-select .Select-placeholder {
+  color: var(--color-text-tertiary) !important;
+}
+
+.form-select .Select-value-label {
+  color: var(--color-text-primary) !important;
+}
+
+.form-select .Select-arrow {
+  border-color: var(--color-text-tertiary) transparent transparent !important;
+}
+
+.form-select .Select-menu-outer {
+  background-color: var(--color-primary) !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+.form-select .Select-menu {
+  background-color: var(--color-primary) !important;
+}
+
+.form-select .Select-option {
+  background-color: var(--color-primary) !important;
+  color: var(--color-text-primary) !important;
+  padding: 0.75rem !important;
+}
+
+.form-select .Select-option:hover,
+.form-select .Select-option.is-focused {
+  background-color: var(--color-accent) !important;
+  color: white !important;
+}
+
+.form-select .Select-option.is-selected {
+  background-color: var(--color-accent) !important;
+  color: white !important;
+}
+
+/* Alternative CSS targeting for newer Dash versions */
+.form-select .dash-dropdown {
+  background-color: var(--color-primary) !important;
+}
+
+.form-select .dash-dropdown .Select-control {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-border) !important;
+}
+
+.form-select .dash-dropdown .Select-menu-outer {
+  background-color: var(--color-primary) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+.form-select .dash-dropdown .Select-option {
+  background-color: var(--color-primary) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.form-select .dash-dropdown .Select-option:hover {
+  background-color: var(--color-accent) !important;
+  color: white !important;
+}
+
+/* Fallback for direct CSS custom properties */
+.form-select div[class*="control"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-border) !important;
+}
+
+.form-select div[class*="menu"] {
+  background-color: var(--color-primary) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+.form-select div[class*="option"] {
+  background-color: var(--color-primary) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.form-select div[class*="option"]:hover {
+  background-color: var(--color-accent) !important;
+  color: white !important;
+}
+
+.form-select div[class*="singleValue"],
+.form-select div[class*="placeholder"] {
+  color: var(--color-text-primary) !important;
+}
+
+/* Additional fixes for form elements */
+.form-checkbox input[type="checkbox"] {
+  accent-color: var(--color-accent);
+}
+
+.form-checkbox label {
+  color: var(--color-text-primary);
+  margin-left: 0.5rem;
+}
+
+/* Button styling in modal */
+.modal__footer .form-input {
+  background-color: var(--color-accent);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.modal__footer .form-input:hover {
+  background-color: var(--color-accent-hover);
+}
+
+.modal__footer .form-input[style*="backgroundColor"] {
+  border: 1px solid var(--color-border);
+}
+
+/* File Upload Styles */
+.dual-upload-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.dual-upload-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+.upload-box {
+  border: 2px dashed #4a5568;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  position: relative;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+}
+
+.upload-box-active {
+  border-color: #4299e1;
+  background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+}
+
+.upload-box-active:hover {
+  border-color: #63b3ed;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(66, 153, 225, 0.3);
+}
+
+.upload-box-inactive {
+  border-color: #4a5568;
+  background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+  opacity: 0.7;
+}
+
+.upload-box-processing {
+  border-color: #f6ad55;
+  background: linear-gradient(135deg, #744210 0%, #975a16 100%);
+}
+
+.upload-box-success {
+  border-color: #68d391;
+  background: linear-gradient(135deg, #22543d 0%, #2f855a 100%);
+}
+
+.upload-box-error {
+  border-color: #fc8181;
+  background: linear-gradient(135deg, #742a2a 0%, #9b2c2c 100%);
+}
+
+.upload-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem auto;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.upload-box-active:hover .upload-icon {
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+.upload-box-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #e2e8f0;
+  margin-bottom: 0.5rem;
+}
+
+.upload-box-subtitle {
+  color: #a0aec0;
+  margin-bottom: 1rem;
+}
+
+.upload-supported-types {
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+.upload-supported-types p {
+  margin: 0.25rem 0;
+}
+
+.upload-progress-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border-radius: 12px;
+}
+
+.upload-progress-overlay.show {
+  display: flex;
+}
+
+.upload-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #4299e1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Modal styles */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 0.5rem;
+}
+
+.form-dropdown .Select-control {
+  background-color: #2d3748;
+  border-color: #4a5568;
+  color: #e2e8f0;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #4a5568;
+  border-radius: 6px;
+  background-color: #2d3748;
+  color: #e2e8f0;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+/* Alert styles */
+.alert {
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.alert-success {
+  background-color: #22543d;
+  border: 1px solid #2f855a;
+  color: #68d391;
+}
+
+.alert-error {
+  background-color: #742a2a;
+  border: 1px solid #9b2c2c;
+  color: #fc8181;
+}
+
+.alert-warning {
+  background-color: #744210;
+  border: 1px solid #975a16;
+  color: #f6ad55;
+}
+
+/* Button styles */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary {
+  background-color: #4299e1;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #3182ce;
+}
+
+.btn-secondary {
+  background-color: #6b7280;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #4b5563;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .dual-upload-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .upload-box {
+    min-height: 200px;
+    padding: 1.5rem;
+  }
+}
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal {
+    background: #1a202c;
+    border-radius: 12px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+.modal--xl {
+    width: 800px;
+}
+
+.modal__header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #2d3748;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.modal__title {
+    color: #e2e8f0;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.modal__subtitle {
+    color: #a0aec0;
+    margin: 0.5rem 0 0 0;
+}
+
+.modal__close {
+    background: none;
+    border: none;
+    color: #a0aec0;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal__close:hover {
+    color: #e2e8f0;
+}
+
+.modal__body {
+    padding: 1.5rem;
+}
+
+.modal__footer {
+    padding: 1.5rem;
+    border-top: 1px solid #2d3748;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-label {
+    color: #e2e8f0;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.form-label--required {
+    color: #f687b3;
+}
+
+.form-help-text {
+    color: #a0aec0;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.form-separator {
+    border: none;
+    border-top: 1px solid #2d3748;
+    margin: 1.5rem 0;
+}
+
+.form-instructions {
+    background: #2d3748;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.form-instructions-text {
+    color: #e2e8f0;
+    margin: 0 0 0.5rem 0;
+}
+
+.form-instructions-subtext {
+    color: #a0aec0;
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* Force button text colors to prevent white-on-white */
+.door-mapping-buttons button,
+#door-mapping-reset-btn,
+#door-mapping-save-btn {
+    color: #ffffff !important;
+}
+
+#door-mapping-reset-btn {
+    background-color: #4b5563 !important;
+}
+
+#door-mapping-save-btn {
+    background-color: #2563eb !important;
+}
+
+/* Ensure all modals are properly centered */
+.modal-overlay,
+.door-mapping-modal-overlay {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1rem !important;
+}
+
+/* ==============================================
+   SIMPLE TEXT VISIBILITY FIXES
+   Add these rules to the END of dashboard.css
+   ============================================== */
+
+/* Fix white text on white backgrounds */
+:root {
+    --color-text-primary: #f8f9fa !important;     /* Light gray instead of white */
+    --color-text-secondary: #e9ecef !important;   /* Slightly darker */
+    --color-text-tertiary: #adb5bd !important;    /* Medium gray */
+}
+
+/* Force readable text colors */
+.form-label,
+.modal__title,
+.settings-modal-title,
+.upload-box-title {
+    color: #f8f9fa !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Fix form inputs */
+.form-input {
+    color: #f8f9fa !important;
+    background-color: #2d3748 !important;
+    border: 1px solid #4a5568 !important;
+}
+
+.form-input::placeholder {
+    color: #a0aec0 !important;
+}
+
+/* Fix dropdown text */
+.form-select .Select-control {
+    background-color: #2d3748 !important;
+    color: #f8f9fa !important;
+}
+
+.form-select .Select-value-label {
+    color: #f8f9fa !important;
+}
+
+.form-select .Select-placeholder {
+    color: #a0aec0 !important;
+}
+
+.form-select .Select-option {
+    color: #f8f9fa !important;
+    background-color: #2d3748 !important;
+}
+
+/* Fix modal text */
+.modal__body {
+    color: #f8f9fa !important;
+}
+
+/* Fix upload box text */
+.upload-box-title {
+    color: #f8f9fa !important;
+    font-weight: 600;
+}
+
+/* Fix any remaining white text on light backgrounds */
+* {
+    text-shadow: none;
+}
+
+/* Ensure buttons have proper contrast */
+button {
+    color: #ffffff !important;
+}
+
+/* Fix table/data text if present */
+table, .data-table {
+    color: #f8f9fa !important;
+}
+
+td, th {
+    color: #f8f9fa !important;
+}
+
+/* UPLOAD BOX TEXT FIXES - Add to bottom of dashboard.css */
+
+/* Override the existing dark colors with bright ones */
+.upload-box-title {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.7) !important;
+}
+
+.upload-box-subtitle {
+  color: #f1f5f9 !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
+}
+
+.upload-supported-types {
+  color: #f8fafc !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
+}
+
+.upload-supported-types p {
+  color: #f8fafc !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
+}
+
+/* Force all text in upload areas to be bright */
+.dual-upload-wrapper,
+.dual-upload-wrapper * {
+  color: #ffffff !important;
+}
+
+.upload-box,
+.upload-box * {
+  color: #ffffff !important;
+}
+
+/* CARD BODY TEXT FIXES */
+
+.card-body {
+  color: #ffffff !important;
+}
+
+.card-title {
+  color: #ffffff !important;
+}
+
+.card-text {
+  color: #f1f5f9 !important;
+}
+
+.file-info-card .card-body {
+  color: #ffffff !important;
+}
+
+.file-info-card .card-title {
+  color: #ffffff !important;
+}
+
+.card-header {
+  color: #ffffff !important;
+}
+
+.card .card-body * {
+  color: #ffffff !important;
+}
+
+.card strong,
+.card b {
+  color: #ffffff !important;
+}
+
+.card .text-muted {
+  color: #e2e8f0 !important;
+}

@@ -1,0 +1,228 @@
+# config/production.yaml - ENHANCED: Complete production configuration
+# Complete production configuration with environment variable substitution
+app:
+  debug: false
+  host: 0.0.0.0
+  port: ${PORT:8050}
+  title: "Yōsai Intel Dashboard - Production"
+  timezone: ${TIMEZONE:UTC}
+  log_level: ${LOG_LEVEL:WARNING}
+  enable_profiling: ${ENABLE_PROFILING:false}
+
+database:
+  type: postgresql
+  host: ${DB_HOST}
+  port: ${DB_PORT:5432}
+  database: ${DB_NAME}
+  username: ${DB_USER}
+  password: ${DB_PASSWORD}
+  pool_size: ${DB_POOL_SIZE:10}
+  ssl_mode: ${DB_SSL_MODE:require}
+  connection_timeout: ${DB_TIMEOUT:30}
+  retry_attempts: ${DB_RETRY_ATTEMPTS:3}
+
+cache:
+  type: redis
+  host: ${REDIS_HOST:localhost}
+  port: ${REDIS_PORT:6379}
+  database: ${REDIS_DB:0}
+  timeout_seconds: ${CACHE_TIMEOUT:600}
+  key_prefix: ${CACHE_PREFIX:yosai:prod:}
+  compression_enabled: ${CACHE_COMPRESSION:true}
+
+security:
+  secret_key: ${SECRET_KEY}
+  session_timeout_minutes: ${SESSION_TIMEOUT:30}
+  max_file_size_mb: ${MAX_FILE_SIZE:50}
+  allowed_file_types:
+    - .csv
+    - .json
+    - .xlsx
+    - .xls
+  cors_enabled: ${CORS_ENABLED:true}
+  cors_origins:
+    - ${FRONTEND_URL:https://dashboard.yourdomain.com}
+    - ${API_URL:https://api.yourdomain.com}
+  rate_limiting_enabled: ${RATE_LIMITING:true}
+  rate_limit_per_minute: ${RATE_LIMIT:120}
+
+analytics:
+  cache_timeout_seconds: ${ANALYTICS_CACHE_TIMEOUT:600}
+  max_records_per_query: ${MAX_QUERY_RECORDS:50000}
+  enable_real_time: ${ENABLE_REAL_TIME:true}
+  batch_size: ${BATCH_SIZE:5000}
+  anomaly_detection_enabled: ${ENABLE_ANOMALY_DETECTION:true}
+  ml_models_path: ${ML_MODELS_PATH:models/ml}
+  data_retention_days: ${DATA_RETENTION_DAYS:365}
+
+monitoring:
+  health_check_enabled: true
+  metrics_enabled: true
+  health_check_interval_seconds: ${HEALTH_CHECK_INTERVAL:30}
+  performance_monitoring: ${ENABLE_PERFORMANCE_MONITORING:true}
+  error_reporting_enabled: ${ENABLE_ERROR_REPORTING:true}
+  sentry_dsn: ${SENTRY_DSN}
+  log_retention_days: ${LOG_RETENTION_DAYS:90}
+
+---
+# config/staging.yaml - NEW: Staging environment configuration
+app:
+  debug: false
+  host: 0.0.0.0
+  port: ${PORT:8050}
+  title: "Yōsai Intel Dashboard - Staging"
+  timezone: ${TIMEZONE:UTC}
+  log_level: ${LOG_LEVEL:INFO}
+  enable_profiling: ${ENABLE_PROFILING:true}
+
+database:
+  type: postgresql
+  host: ${DB_HOST:staging-db.internal}
+  port: ${DB_PORT:5432}
+  database: ${DB_NAME:yosai_staging}
+  username: ${DB_USER}
+  password: ${DB_PASSWORD}
+  pool_size: ${DB_POOL_SIZE:5}
+  ssl_mode: ${DB_SSL_MODE:prefer}
+  connection_timeout: 30
+  retry_attempts: 3
+
+cache:
+  type: redis
+  host: ${REDIS_HOST:staging-redis.internal}
+  port: ${REDIS_PORT:6379}
+  database: ${REDIS_DB:1}
+  timeout_seconds: 300
+  key_prefix: "yosai:staging:"
+  compression_enabled: false
+
+security:
+  secret_key: ${SECRET_KEY}
+  session_timeout_minutes: 60
+  max_file_size_mb: 100
+  cors_enabled: true
+  cors_origins:
+    - ${FRONTEND_URL:https://staging-dashboard.yourdomain.com}
+  rate_limiting_enabled: true
+  rate_limit_per_minute: 200
+
+analytics:
+  cache_timeout_seconds: 180
+  max_records_per_query: 25000
+  enable_real_time: true
+  batch_size: 2000
+  anomaly_detection_enabled: true
+  data_retention_days: 90
+
+monitoring:
+  health_check_enabled: true
+  metrics_enabled: true
+  performance_monitoring: true
+  error_reporting_enabled: true
+  sentry_dsn: ${SENTRY_DSN}
+  log_retention_days: 30
+
+---
+# config/config.yaml - ENHANCED: Better development defaults
+app:
+  debug: true
+  host: 127.0.0.1
+  port: 8050
+  title: "Yōsai Intel Dashboard - Development"
+  timezone: UTC
+  log_level: INFO
+  enable_profiling: false
+
+database:
+  type: mock
+  host: localhost
+  port: 5432
+  database: yosai_intel_dev
+  username: postgres
+  password: ''
+  pool_size: 5
+  ssl_mode: prefer
+  connection_timeout: 30
+  retry_attempts: 3
+
+cache:
+  type: memory
+  timeout_seconds: 300
+  max_memory_mb: 100
+  key_prefix: 'yosai:dev:'
+  compression_enabled: false
+
+security:
+  secret_key: ${SECRET_KEY}
+  session_timeout_minutes: 120
+  max_file_size_mb: 100
+  allowed_file_types:
+    - .csv
+    - .json
+    - .xlsx
+    - .xls
+    - .txt  # Extra formats for development
+  cors_enabled: false
+  cors_origins: []
+  rate_limiting_enabled: false
+  rate_limit_per_minute: 1000
+
+analytics:
+  cache_timeout_seconds: 60  # Shorter for development
+  max_records_per_query: 10000
+  enable_real_time: true
+  batch_size: 1000
+  anomaly_detection_enabled: true
+  ml_models_path: models/ml
+  data_retention_days: 30  # Shorter for development
+
+monitoring:
+  health_check_enabled: true
+  metrics_enabled: true
+  health_check_interval_seconds: 60
+  performance_monitoring: false  # Disabled for development
+  error_reporting_enabled: false
+  sentry_dsn: null
+  log_retention_days: 7
+
+---
+# config/test.yaml - ENHANCED: Complete test configuration
+app:
+  debug: true
+  host: 127.0.0.1
+  port: 8051
+  title: "Yōsai Intel Dashboard - Test"
+  log_level: DEBUG
+  enable_profiling: false
+
+database:
+  type: mock
+  connection_timeout: 5
+  retry_attempts: 1
+
+cache:
+  type: memory
+  timeout_seconds: 1  # Very short for testing
+  max_memory_mb: 10
+  key_prefix: 'yosai:test:'
+
+security:
+  secret_key: test-secret-key-for-testing-only
+  session_timeout_minutes: 5
+  max_file_size_mb: 10
+  rate_limiting_enabled: false
+
+analytics:
+  cache_timeout_seconds: 1
+  max_records_per_query: 100
+  enable_real_time: false  # Disabled for deterministic tests
+  batch_size: 10
+  anomaly_detection_enabled: false
+  data_retention_days: 1
+
+monitoring:
+  health_check_enabled: false
+  metrics_enabled: false
+  performance_monitoring: false
+  error_reporting_enabled: false
+  log_retention_days: 1
