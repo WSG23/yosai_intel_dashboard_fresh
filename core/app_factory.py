@@ -70,6 +70,13 @@ def _create_full_app() -> dash.Dash:
         # Initialize services
         _initialize_services()
 
+        # Expose basic health check endpoint
+        server = app.server
+
+        @server.route("/health", methods=["GET"])
+        def health():
+            return {"status": "ok"}, 200
+
         logger.info("✅ Complete Dash application created successfully")
         return app
 
@@ -107,6 +114,13 @@ def _create_simple_app() -> dash.Dash:
                 ),
             ]
         )
+
+        # Expose basic health check endpoint
+        server = app.server
+
+        @server.route("/health", methods=["GET"])
+        def health():
+            return {"status": "ok"}, 200
 
         logger.info("Simple Dash application created successfully")
         return app
@@ -149,6 +163,13 @@ def _create_json_safe_app() -> dash.Dash:
                 ),
             ]
         )
+
+        # Expose basic health check endpoint
+        server = app.server
+
+        @server.route("/health", methods=["GET"])
+        def health():
+            return {"status": "ok"}, 200
 
         logger.info("JSON-safe Dash application created")
         return app
