@@ -1,19 +1,14 @@
-# integration/plugin_integration.py
-"""
-Integration instructions for adding the JSON Serialization Plugin to your app
-"""
+# JSON Serialization Plugin Integration
 
-print("""
-🔌 JSON SERIALIZATION PLUGIN INTEGRATION
+This guide shows how to enable and use the built-in JSON Serialization Plugin.
 
-Step 1: Update your core/app_factory.py
-======================================
+## Step 1: Update `core/app_factory.py`
+Add the `PluginManager` after your container creation:
 
-# Add after your existing container creation:
-
+```python
 from core.plugins.manager import PluginManager
 
-# Create container with YAML config (your existing code)
+# Create container with YAML config (existing code)
 container = get_configured_container_with_yaml(config_manager)
 
 # NEW: Add plugin manager
@@ -26,16 +21,15 @@ logger.info(f"Loaded plugins: {plugin_results}")
 # Store plugin manager in app for callback registration
 app._yosai_plugin_manager = plugin_manager
 
-# In your callback registration section, add:
+# Register plugin callbacks
 plugin_callback_results = plugin_manager.register_plugin_callbacks(app)
 logger.info(f"Registered plugin callbacks: {plugin_callback_results}")
+```
 
+## Step 2: Update `config/config.yaml`
+Add the plugin configuration:
 
-Step 2: Update your config/config.yaml
-======================================
-
-# Add this section to your existing config.yaml:
-
+```yaml
 plugins:
   json_serialization:
     enabled: true
@@ -45,45 +39,39 @@ plugins:
     compress_large_objects: true
     fallback_to_repr: true
     auto_wrap_callbacks: true
+```
 
+## Step 3: Use the plugin in callbacks
+Decorate your callbacks with `safe_callback`:
 
-Step 3: Use the plugin in your callbacks
-========================================
-
-# In your pages/deep_analytics.py or any callback file:
-
+```python
 from core.plugins.decorators import safe_callback
 
 @app.callback(...)
-@safe_callback(app)  # This now uses the plugin automatically!
+@safe_callback(app)  # Plugin handles JSON serialization
 @role_required("admin")
 def your_callback_function(inputs...):
     # Your existing logic
-    # All outputs are now automatically JSON-safe
     return some_dataframe, some_function, some_complex_object
+```
 
+## Step 4: Test the plugin
+Run the tests and start the app:
 
-Step 4: Test the plugin
-======================
-
-# Run the plugin tests:
+```bash
 python -m pytest tests/test_json_serialization_plugin.py -v
-
-# Start your app:
 python3 app.py
+```
 
-# The JSON serialization errors should be completely gone!
+## Step 5: Monitor plugin health
+Expose a health endpoint:
 
-
-Step 5: Monitor plugin health
-============================
-
-# Add this endpoint to monitor plugin health:
-
+```python
 @server.route("/health/plugins")
 def plugin_health():
     if hasattr(app, '_yosai_plugin_manager'):
         health = app._yosai_plugin_manager.get_plugin_health()
         return jsonify(health)
     return jsonify({"error": "Plugin manager not available"})
+```
 

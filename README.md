@@ -4,7 +4,7 @@ An AI-powered modular security intelligence dashboard for physical access contro
 
 ## 🏗️ Modular Architecture
 
-This project follows a fully modular architecture for maximum maintainability and testability. See [docs/architecture.md](docs/architecture.md) for an overview diagram. Additional flow diagrams are provided in [docs/data_flow.md](docs/data_flow.md), [docs/plugin_architecture.md](docs/plugin_architecture.md), and the new [docs/system_diagram.md](docs/system_diagram.md):
+This project follows a fully modular architecture for maximum maintainability and testability. See [docs/architecture.md](docs/architecture.md) for an overview diagram. Additional flow diagrams are provided in [docs/data_flow.md](docs/data_flow.md), [docs/plugin_architecture.md](docs/plugin_architecture.md), [docs/plugin_integration.md](docs/plugin_integration.md), and the new [docs/system_diagram.md](docs/system_diagram.md):
 
 ```
 yosai_intel_dashboard/
