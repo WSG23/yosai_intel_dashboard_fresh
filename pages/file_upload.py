@@ -1007,103 +1007,65 @@ def populate_device_modal_with_learning(is_open, file_info):
 
 
 @callback(
-    Output("modal-body", "children", allow_duplicate=True),
-    Input("column-verification-modal", "is_open"),
-    State("current-file-info-store", "data"),
+    Output("modal-body", "children"),
+    [Input("column-verification-modal", "is_open"),
+     Input("current-file-info-store", "data")],
     prevent_initial_call=True,
 )
 def populate_modal_content(is_open, file_info):
-    """Fixed modal content population"""
+    """Merged callback - handles both modal open and file info changes"""
+
+    # Don't populate if modal is closed
     if not is_open:
         return "Modal closed"
 
     if not file_info:
         return dbc.Alert("No file information available", color="warning")
 
-    filename = file_info.get("filename", "Unknown")
+    # Simple Unicode fix
+    filename = str(file_info.get("filename", "Unknown")).replace("⛑️", "").replace("🔧", "").replace("❌", "")
     column_names = file_info.get("column_names", [])
     ai_suggestions = file_info.get("ai_suggestions", {})
 
-    print(f"🔧 Populating column modal: {filename} with {len(column_names)} columns")
-    print(f"   Columns: {column_names}")
-
-    if not column_names:
-        return dbc.Alert(f"No columns found in {filename}", color="warning")
-
-    field_options = [
-        {"label": "Person/User ID", "value": "person_id"},
-        {"label": "Door/Location ID", "value": "door_id"},
-        {"label": "Timestamp", "value": "timestamp"},
-        {"label": "Access Result", "value": "access_result"},
-        {"label": "Token/Badge ID", "value": "token_id"},
-        {"label": "Event Type", "value": "event_type"},
-        {"label": "Skip Column", "value": "ignore"},
-    ]
-
+    # Use the GOOD logic from column_verification
     table_rows = []
     for i, column in enumerate(column_names):
         ai_suggestion = ai_suggestions.get(column, {})
-        suggested_field = ai_suggestion.get("field", "")
-        confidence = ai_suggestion.get("confidence", 0.0)
+        confidence = ai_suggestion.get('confidence', 0.0)
 
         table_rows.append(
-            html.Tr(
-                [
-                    html.Td(
-                        [
-                            html.Strong(column),
-                            html.Br(),
-                            html.Small(
-                                f"AI suggests: {suggested_field or 'None'} ({confidence:.0%})",
-                                className="text-muted",
-                            ),
-                        ]
-                    ),
-                    html.Td(
-                        [
-                            dcc.Dropdown(
-                                id={"type": "field-mapping", "column": column},
-                                options=field_options,
-                                value=suggested_field if confidence > 0.5 else None,
-                                placeholder=f"Map {column} to...",
-                                className="mb-2",
-                            )
-                        ]
-                    ),
-                ]
-            )
+            html.Tr([
+                html.Td(html.Strong(column)),
+                html.Td(
+                    dcc.Dropdown(
+                        id={"type": "column-mapping", "index": i},
+                        options=[
+                            {"label": "Person ID", "value": "person_id"},
+                            {"label": "Timestamp", "value": "timestamp"},
+                            {"label": "Access Result", "value": "access_result"},
+                            {"label": "Device/Door", "value": "device_status"},
+                            {"label": "Token/Badge", "value": "token_id"},
+                            {"label": "Skip", "value": "ignore"}
+                        ],
+                        placeholder=f"Map {column} to...",
+                        value=ai_suggestion.get('field') if confidence > 0.5 else None
+                    )
+                ),
+                html.Td(f"{confidence:.0%}" if confidence > 0 else "No AI suggestion")
+            ])
         )
 
-    return html.Div(
-        [
-            html.H5(f"Map columns from {filename}"),
-            dbc.Alert(
-                [
-                    "Select how each CSV column should map to analytics fields",
-                    html.Br(),
-                    f"Your CSV columns: {', '.join(column_names)}",
-                ],
-                color="info",
-            ),
-            dbc.Table(
-                [
-                    html.Thead(
-                        [
-                            html.Tr(
-                                [
-                                    html.Th("Your CSV Column"),
-                                    html.Th("Maps To Analytics Field"),
-                                ]
-                            )
-                        ]
-                    ),
-                    html.Tbody(table_rows),
-                ],
-                striped=True,
-                className="mt-3",
-            ),
-        ]
-    )
+    return [
+        html.H5(f"Map columns from {filename}"),
+        dbc.Table([
+            html.Thead([html.Tr([
+                html.Th("Your CSV Column"),
+                html.Th("Maps To Analytics Field"),
+                html.Th("AI Confidence")
+            ])]),
+            html.Tbody(table_rows)
+        ], striped=True)
+    ]
 
 
 @callback(
