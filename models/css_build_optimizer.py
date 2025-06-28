@@ -12,7 +12,6 @@ import time
 from pathlib import Path
 from typing import Dict, List, Tuple, Any, Optional
 from dataclasses import dataclass
-from config.dynamic_config import dynamic_config
 import logging
 
 # FIXED: Configure CSS utils logging with proper error handling
@@ -57,7 +56,7 @@ class CSSQualityAnalyzer:
         main_css = self.css_dir / "main.css"
         
         if not main_css.exists():
-            return CSSMetric("bundle_size", 0, "KB", "error", dynamic_config.css.bundle_threshold_kb, "Main CSS file not found")
+            return CSSMetric("bundle_size", 0, "KB", "error", 100, "Main CSS file not found")
         
         # Calculate total size including imports
         total_size = 0
@@ -88,11 +87,11 @@ class CSSQualityAnalyzer:
         size_kb = total_size / 1024
         
         # Determine status
-        if size_kb <= dynamic_config.css.bundle_excellent_kb:
+        if size_kb <= 50:
             status = "excellent"
-        elif size_kb <= dynamic_config.css.bundle_good_kb:
+        elif size_kb <= 100:
             status = "good"
-        elif size_kb <= dynamic_config.css.bundle_warning_kb:
+        elif size_kb <= 200:
             status = "warning"
         else:
             status = "critical"
@@ -102,7 +101,7 @@ class CSSQualityAnalyzer:
             round(size_kb, 2), 
             "KB", 
             status, 
-            dynamic_config.css.bundle_threshold_kb, 
+            100, 
             f"Total CSS bundle size including all imports"
         )
     
@@ -186,7 +185,7 @@ class CSSQualityAnalyzer:
                                 
                                 specificity = (id_count * 100) + (class_count * 10) + element_count
                                 
-                                if specificity > dynamic_config.css.specificity_high:  # High specificity threshold
+                                if specificity > 30:  # High specificity threshold
                                     high_specificity_selectors.append((selector_text, specificity))
                     except Exception as e:
                         logging.warning(f"Error parsing CSS in {css_file}: {e}")

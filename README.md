@@ -215,17 +215,6 @@ YOSAI_CONFIG_FILE=/path/to/custom.yaml python app.py
 YOSAI_APP_MODE=simple python app.py
 ```
 
-#### Dynamic Constants
-
-The new `DynamicConfigManager` reads several optional environment variables to
-override security and performance defaults:
-
-- `PBKDF2_ITERATIONS` – password hashing iterations
-- `RATE_LIMIT_API` – number of requests allowed per window
-- `RATE_LIMIT_WINDOW` – rate limit window in minutes
-- `MAX_UPLOAD_MB` – maximum allowed upload size
-- `DB_POOL_SIZE` – database connection pool size
-
 ### Plugins
 
 Plugins live in the `plugins/` package and are loaded by the `PluginManager` when enabled in `config/config.yaml`.
