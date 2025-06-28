@@ -10,6 +10,8 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional, List
 
+from .dynamic_config import dynamic_config
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,7 +35,7 @@ class DatabaseConfig:
     name: str = "yosai.db"
     user: str = "user"
     password: str = ""
-    connection_pool_size: int = 10
+    connection_pool_size: int = dynamic_config.get_db_pool_size()
     connection_timeout: int = 30
     
     def get_connection_string(self) -> str:
@@ -180,39 +182,52 @@ class ConfigManager:
         # App overrides
         if os.getenv("DEBUG"):
             self.config.app.debug = os.getenv("DEBUG", "").lower() in ("true", "1", "yes")
-        if os.getenv("HOST"):
-            self.config.app.host = os.getenv("HOST")
-        if os.getenv("PORT"):
-            self.config.app.port = int(os.getenv("PORT"))
-        if os.getenv("SECRET_KEY"):
-            self.config.app.secret_key = os.getenv("SECRET_KEY")
-            self.config.security.secret_key = os.getenv("SECRET_KEY")
-        if os.getenv("APP_TITLE"):
-            self.config.app.title = os.getenv("APP_TITLE")
+        host_env = os.getenv("HOST")
+        if host_env is not None:
+            self.config.app.host = host_env
+        port_env = os.getenv("PORT")
+        if port_env is not None:
+            self.config.app.port = int(port_env)
+        secret_env = os.getenv("SECRET_KEY")
+        if secret_env is not None:
+            self.config.app.secret_key = secret_env
+            self.config.security.secret_key = secret_env
+        title_env = os.getenv("APP_TITLE")
+        if title_env is not None:
+            self.config.app.title = title_env
 
         # Database overrides
-        if os.getenv("DB_TYPE"):
-            self.config.database.type = os.getenv("DB_TYPE")
-        if os.getenv("DB_HOST"):
-            self.config.database.host = os.getenv("DB_HOST")
-        if os.getenv("DB_PORT"):
-            self.config.database.port = int(os.getenv("DB_PORT"))
-        if os.getenv("DB_NAME"):
-            self.config.database.name = os.getenv("DB_NAME")
-        if os.getenv("DB_USER"):
-            self.config.database.user = os.getenv("DB_USER")
-        if os.getenv("DB_PASSWORD"):
-            self.config.database.password = os.getenv("DB_PASSWORD")
-        if os.getenv("DB_POOL_SIZE"):
-            self.config.database.connection_pool_size = int(os.getenv("DB_POOL_SIZE"))
-        if os.getenv("DB_TIMEOUT"):
-            self.config.database.connection_timeout = int(os.getenv("DB_TIMEOUT"))
+        db_type = os.getenv("DB_TYPE")
+        if db_type is not None:
+            self.config.database.type = db_type
+        db_host = os.getenv("DB_HOST")
+        if db_host is not None:
+            self.config.database.host = db_host
+        db_port = os.getenv("DB_PORT")
+        if db_port is not None:
+            self.config.database.port = int(db_port)
+        db_name = os.getenv("DB_NAME")
+        if db_name is not None:
+            self.config.database.name = db_name
+        db_user = os.getenv("DB_USER")
+        if db_user is not None:
+            self.config.database.user = db_user
+        db_password = os.getenv("DB_PASSWORD")
+        if db_password is not None:
+            self.config.database.password = db_password
+        # Pool size is loaded from DynamicConfigManager
+        self.config.database.connection_pool_size = dynamic_config.get_db_pool_size()
+        db_timeout = os.getenv("DB_TIMEOUT")
+        if db_timeout is not None:
+            self.config.database.connection_timeout = int(db_timeout)
 
         # Security overrides
-        if os.getenv("CSRF_ENABLED"):
-            self.config.security.csrf_enabled = os.getenv("CSRF_ENABLED", "").lower() in ("true", "1", "yes")
-        if os.getenv("MAX_FAILED_ATTEMPTS"):
-            self.config.security.max_failed_attempts = int(os.getenv("MAX_FAILED_ATTEMPTS"))
+        csrf_enabled = os.getenv("CSRF_ENABLED")
+        if csrf_enabled is not None:
+            self.config.security.csrf_enabled = csrf_enabled.lower() in ("true", "1", "yes")
+        max_failed = os.getenv("MAX_FAILED_ATTEMPTS")
+        if max_failed is not None:
+            self.config.security.max_failed_attempts = int(max_failed)
     
     def _validate_config(self) -> None:
         """Validate configuration and log warnings"""
