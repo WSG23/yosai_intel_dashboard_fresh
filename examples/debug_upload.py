@@ -7,7 +7,8 @@ import logging
 from pathlib import Path
 
 # Add project root to path
-project_root = Path(__file__).parent
+# When run from the examples directory, include the repository root
+project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 
 logging.basicConfig(level=logging.INFO)
