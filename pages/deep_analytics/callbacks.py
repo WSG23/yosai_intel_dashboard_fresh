@@ -1,5 +1,5 @@
 from dash import Input, Output, State, callback_context, html
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.callback_manager import CallbackManager
 import dash_bootstrap_components as dbc
 from .analysis import (
     process_suggests_analysis_safe,
@@ -341,10 +341,10 @@ def update_status_alert(trigger):
 # Add these helper functions for non-suggests analysis types
 # =============================================================================
 
-def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
-    """Register page callbacks using the provided coordinator."""
+def register_callbacks(manager: CallbackManager) -> None:
+    """Register page callbacks using the provided manager."""
 
-    manager.register_callback(
+    manager.callback(
         Output("analytics-display-area", "children"),
         [
             Input("security-btn", "n_clicks"),
@@ -358,23 +358,20 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
         [State("analytics-data-source", "value")],
         prevent_initial_call=True,
         callback_id="handle_analysis_buttons",
-        component_name="deep_analytics",
     )(handle_analysis_buttons)
 
-    manager.register_callback(
+    manager.callback(
         Output("analytics-data-source", "options"),
         Input("refresh-sources-btn", "n_clicks"),
         prevent_initial_call=True,
         callback_id="refresh_data_sources",
-        component_name="deep_analytics",
     )(refresh_data_sources_callback)
 
-    manager.register_callback(
+    manager.callback(
         Output("status-alert", "children"),
         Input("hidden-trigger", "children"),
         prevent_initial_call=False,
         callback_id="update_status_alert",
-        component_name="deep_analytics",
     )(update_status_alert)
 
 
