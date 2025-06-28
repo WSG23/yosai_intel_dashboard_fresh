@@ -8,6 +8,7 @@ import os
 from typing import Optional, Any
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, callback
+from core.callback_manager import CallbackManager
 import pandas as pd
 
 # ✅ FIXED IMPORTS - Use correct config system
@@ -64,8 +65,23 @@ def _create_full_app() -> dash.Dash:
         # Set main layout
         app.layout = _create_main_layout()
 
-        # Register all callbacks
-        _register_global_callbacks(app)
+        # Register all callbacks using CallbackManager
+        callback_manager = CallbackManager(app)
+        _register_global_callbacks(callback_manager)
+
+        # Register page/component callbacks
+        try:
+            from pages.file_upload import register_callbacks as register_upload_callbacks
+            from components.simple_device_mapping import register_callbacks as register_simple_mapping
+            from components.device_verification import register_callbacks as register_device_verification
+            from pages.deep_analytics.callbacks import register_callbacks as register_deep_callbacks
+
+            register_upload_callbacks(callback_manager)
+            register_simple_mapping(callback_manager)
+            register_device_verification(callback_manager)
+            register_deep_callbacks(callback_manager)
+        except Exception as e:
+            logger.warning(f"Failed to register module callbacks: {e}")
 
         # Initialize services
         _initialize_services()
@@ -390,13 +406,14 @@ def _get_upload_page() -> Any:
         )
 
 
-def _register_global_callbacks(app: dash.Dash) -> None:
+def _register_global_callbacks(manager: CallbackManager) -> None:
     """Register global application callbacks"""
 
-    @app.callback(
+    @manager.callback(
         Output("global-store", "data"),
         Input("clear-cache-btn", "n_clicks"),
         prevent_initial_call=True,
+        callback_id="clear_cache",
     )
     def clear_cache(n_clicks):
         """Clear application cache"""
