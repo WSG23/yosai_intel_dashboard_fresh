@@ -10,6 +10,7 @@ from pathlib import Path
 from .base import BaseService
 from .protocols import FileProcessorProtocol
 from utils.file_validator import safe_decode_with_unicode_handling
+from utils.unicode_handler import sanitize_unicode_input
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class FileProcessorService(BaseService):
     
     def validate_file(self, filename: str, content: bytes) -> Dict[str, Any]:
         """Validate uploaded file"""
+        filename = sanitize_unicode_input(filename)
         issues = []
         
         # Check file extension
@@ -54,6 +56,7 @@ class FileProcessorService(BaseService):
     def process_file(self, file_content: bytes, filename: str) -> pd.DataFrame:
         """Process uploaded file and return DataFrame"""
         try:
+            filename = sanitize_unicode_input(filename)
             file_ext = Path(filename).suffix.lower()
             
             if file_ext == '.csv':
@@ -76,6 +79,7 @@ class FileProcessorService(BaseService):
             for encoding in ['utf-8', 'latin-1', 'cp1252']:
                 try:
                     text = safe_decode_with_unicode_handling(content, encoding)
+                    text = sanitize_unicode_input(text)
                     return pd.read_csv(io.StringIO(text))
                 except UnicodeDecodeError:
                     continue
@@ -89,6 +93,7 @@ class FileProcessorService(BaseService):
             for encoding in ['utf-8', 'latin-1', 'cp1252']:
                 try:
                     text = safe_decode_with_unicode_handling(content, encoding)
+                    text = sanitize_unicode_input(text)
                     return pd.read_json(io.StringIO(text))
                 except UnicodeDecodeError:
                     continue

@@ -1,3 +1,5 @@
 """Utility helpers for Yōsai Intel Dashboard."""
 
-__all__: list[str] = []
+from .unicode_handler import sanitize_unicode_input
+
+__all__: list[str] = ["sanitize_unicode_input"]
