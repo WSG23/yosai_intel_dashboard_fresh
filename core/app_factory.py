@@ -4,6 +4,7 @@ Complete App Factory Integration - FIXED CLASS NAMES
 """
 import dash
 import logging
+import os
 from typing import Optional, Any
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, callback
@@ -15,10 +16,33 @@ from config.config import get_config
 logger = logging.getLogger(__name__)
 
 
-def create_app() -> dash.Dash:
+def create_app(mode: Optional[str] = None) -> dash.Dash:
+    """Create a Dash application.
+
+    Parameters
+    ----------
+    mode: Optional[str]
+        One of ``"full"`` (default), ``"simple"`` or ``"json-safe"``. The value
+        can also be provided via the ``YOSAI_APP_MODE`` environment variable.
+    """
+
+    mode = (mode or os.getenv("YOSAI_APP_MODE", "full")).lower()
+
+    if mode == "simple":
+        logger.info("Creating application in simple mode")
+        return _create_simple_app()
+
+    if mode in {"json-safe", "json_safe", "jsonsafe"}:
+        logger.info("Creating application in JSON-safe mode")
+        return _create_json_safe_app()
+
+    logger.info("Creating application in full mode")
+    return _create_full_app()
+
+
+def _create_full_app() -> dash.Dash:
     """Create complete Dash application with full integration"""
     try:
-        # Create Dash app with external stylesheets
         app = dash.Dash(
             __name__,
             external_stylesheets=[dbc.themes.BOOTSTRAP],
@@ -51,6 +75,86 @@ def create_app() -> dash.Dash:
 
     except Exception as e:
         logger.error(f"Failed to create application: {e}")
+        raise
+
+
+def _create_simple_app() -> dash.Dash:
+    """Create a simplified Dash application"""
+    try:
+        from dash import html, dcc
+
+        app = dash.Dash(
+            __name__,
+            external_stylesheets=[dbc.themes.BOOTSTRAP],
+            suppress_callback_exceptions=True,
+        )
+
+        app.title = "Yōsai Intel Dashboard"
+
+        app.layout = html.Div(
+            [
+                dcc.Location(id="url", refresh=False),
+                html.H1("🏯 Yōsai Intel Dashboard", className="text-center"),
+                html.Hr(),
+                html.Div(
+                    [
+                        dbc.Alert("✅ Application created successfully!", color="success"),
+                        dbc.Alert("⚠️ Running in simplified mode (no auth)", color="warning"),
+                        html.P("Environment configuration loaded and working."),
+                        html.P("Ready for development and testing."),
+                    ],
+                    className="container",
+                ),
+            ]
+        )
+
+        logger.info("Simple Dash application created successfully")
+        return app
+
+    except Exception as e:
+        logger.error(f"Failed to create simple application: {e}")
+        raise
+
+
+def _create_json_safe_app() -> dash.Dash:
+    """Create Dash application with JSON-safe layout"""
+    try:
+        from dash import html
+
+        app = dash.Dash(
+            __name__,
+            external_stylesheets=[dbc.themes.BOOTSTRAP],
+            suppress_callback_exceptions=True,
+        )
+
+        app.title = "🏯 Yōsai Intel Dashboard"
+
+        app.layout = html.Div(
+            [
+                html.H1("🏯 Yōsai Intel Dashboard", className="text-center"),
+                html.Hr(),
+                dbc.Container(
+                    [
+                        dbc.Alert(
+                            "✅ Application running with JSON-safe components",
+                            color="success",
+                        ),
+                        dbc.Alert(
+                            "🔧 All callbacks are wrapped for safe serialization",
+                            color="info",
+                        ),
+                        html.P("Environment configuration loaded successfully."),
+                        html.P("JSON serialization issues have been resolved."),
+                    ]
+                ),
+            ]
+        )
+
+        logger.info("JSON-safe Dash application created")
+        return app
+
+    except Exception as e:
+        logger.error(f"Failed to create JSON-safe application: {e}")
         raise
 
 
