@@ -12,6 +12,18 @@ def decode_bytes(data: bytes, enc: str) -> str:
     return data.decode(enc, errors="surrogatepass")
 
 
+def safe_decode_with_unicode_handling(data: bytes, enc: str) -> str:
+    """Decode with surrogatepass and clean to valid UTF-8."""
+    try:
+        text = data.decode(enc, errors="surrogatepass")
+    except UnicodeDecodeError:
+        text = data.decode(enc, errors="replace")
+
+    # Re-encode to UTF-8 ignoring any invalid surrogates/characters
+    cleaned = text.encode("utf-8", errors="ignore")
+    return cleaned.decode("utf-8", errors="ignore")
+
+
 def validate_upload_content(contents: str, filename: str) -> Dict[str, Any]:
     """Validate uploaded file content"""
 
@@ -65,7 +77,7 @@ def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFr
             # Try multiple encodings with surrogate handling
             for encoding in ['utf-8', 'latin-1', 'cp1252']:
                 try:
-                    text = decode_bytes(decoded, encoding)
+                    text = safe_decode_with_unicode_handling(decoded, encoding)
                     df = pd.read_csv(io.StringIO(text))
                     return df, None
                 except UnicodeDecodeError:
@@ -76,7 +88,7 @@ def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFr
             import json
             for encoding in ['utf-8', 'latin-1', 'cp1252']:
                 try:
-                    text = decode_bytes(decoded, encoding)
+                    text = safe_decode_with_unicode_handling(decoded, encoding)
                     json_data = json.loads(text)
                     if isinstance(json_data, list):
                         df = pd.DataFrame(json_data)
