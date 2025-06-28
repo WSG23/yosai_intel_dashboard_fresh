@@ -2,7 +2,7 @@
 
 from dash import html, dcc
 from dash._callback_context import callback_context
-from core.callback_manager import CallbackManager
+from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
 from typing import List, Dict, Any
@@ -411,10 +411,10 @@ def save_user_inputs(floors, security, access, devices):
     return ""
 
 
-def register_callbacks(manager: CallbackManager) -> None:
-    """Register component callbacks using the provided manager."""
+def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
+    """Register component callbacks using the provided coordinator."""
 
-    manager.callback(
+    manager.register_callback(
         Output("simple-device-modal", "is_open"),
         [
             Input("open-device-mapping", "n_clicks"),
@@ -424,9 +424,10 @@ def register_callbacks(manager: CallbackManager) -> None:
         [State("simple-device-modal", "is_open")],
         prevent_initial_call=True,
         callback_id="toggle_simple_device_modal",
+        component_name="simple_device_mapping",
     )(toggle_simple_device_modal)
 
-    manager.callback(
+    manager.register_callback(
         Output("device-save-status", "children"),
         [
             Input({"type": "device-floor", "index": ALL}, "value"),
@@ -436,6 +437,7 @@ def register_callbacks(manager: CallbackManager) -> None:
         [State("current-devices-list", "data")],
         prevent_initial_call=True,
         callback_id="save_user_inputs",
+        component_name="simple_device_mapping",
     )(save_user_inputs)
 
 
