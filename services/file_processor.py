@@ -77,33 +77,20 @@ class FileProcessor:
             }
     
     def _parse_csv(self, file_path: str) -> pd.DataFrame:
-        """Parse CSV file with various delimiters"""
-        
-        # Try different delimiters
-        delimiters = [',', ';', '\t', '|']
+        """Parse CSV file using pandas automatic delimiter detection"""
 
-        # Read the header only once to determine date parsing
-        header = pd.read_csv(file_path, nrows=0).columns
-        parse_dates = ['timestamp'] if 'timestamp' in header else False
+        # Detect header with automatic delimiter detection
+        header = pd.read_csv(file_path, nrows=0, sep=None, engine="python").columns
+        parse_dates = ["timestamp"] if "timestamp" in header else False
 
-        for delimiter in delimiters:
-            try:
-                df = pd.read_csv(
-                    file_path,
-                    delimiter=delimiter,
-                    encoding='utf-8',
-                    parse_dates=parse_dates
-                )
-
-                # Check if we got reasonable columns (more than 1 column)
-                if len(df.columns) > 1:
-                    return df
-
-            except Exception:
-                continue
-        
-        # Fallback to default comma delimiter
-        return pd.read_csv(file_path, encoding='utf-8')
+        # Read the entire file once using the detected delimiter
+        return pd.read_csv(
+            file_path,
+            sep=None,
+            engine="python",
+            encoding="utf-8",
+            parse_dates=parse_dates,
+        )
     
     def _parse_json(self, file_path: str) -> pd.DataFrame:
         """Parse JSON file"""
