@@ -15,7 +15,7 @@ from typing import Optional, Dict, Any, List
 from dash import html, dcc
 from dash.dash import no_update
 from dash._callback_context import callback_context
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.callback_manager import CallbackManager
 from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
 from services.device_learning_service import DeviceLearningService
@@ -1120,18 +1120,17 @@ def save_confirmed_device_mappings(confirm_clicks, floors, security, access, spe
         return error_alert, no_update, no_update
 
 
-def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
-    """Register page callbacks using the provided coordinator."""
+def register_callbacks(manager: CallbackManager) -> None:
+    """Register page callbacks using the provided manager."""
 
-    manager.register_callback(
+    manager.callback(
         Output("upload-data", "style"),
         Input("upload-more-btn", "n_clicks"),
         prevent_initial_call=True,
         callback_id="highlight_upload_area",
-        component_name="file_upload",
     )(highlight_upload_area)
 
-    manager.register_callback(
+    manager.callback(
         [
             Output("upload-results", "children"),
             Output("file-preview", "children"),
@@ -1161,36 +1160,32 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
         ],
         prevent_initial_call=False,
         callback_id="consolidated_upload_callback",
-        component_name="file_upload",
     )(consolidated_upload_callback)
 
-    manager.register_callback(
+    manager.callback(
         [Output({"type": "column-mapping", "index": ALL}, "value")],
         [Input("column-verify-ai-auto", "n_clicks")],
         [State("current-file-info-store", "data")],
         prevent_initial_call=True,
         callback_id="apply_ai_suggestions",
-        component_name="file_upload",
     )(apply_ai_suggestions)
 
-    manager.register_callback(
+    manager.callback(
         Output("device-modal-body", "children"),
         Input("device-verification-modal", "is_open"),
         State("current-file-info-store", "data"),
         prevent_initial_call=True,
         callback_id="populate_device_modal_with_learning",
-        component_name="file_upload",
     )(populate_device_modal_with_learning)
 
-    manager.register_callback(
+    manager.callback(
         Output("modal-body", "children"),
         [Input("column-verification-modal", "is_open"), Input("current-file-info-store", "data")],
         prevent_initial_call=True,
         callback_id="populate_modal_content",
-        component_name="file_upload",
     )(populate_modal_content)
 
-    manager.register_callback(
+    manager.callback(
         [
             Output("toast-container", "children", allow_duplicate=True),
             Output("column-verification-modal", "is_open", allow_duplicate=True),
@@ -1206,7 +1201,6 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
         ],
         prevent_initial_call=True,
         callback_id="save_confirmed_device_mappings",
-        component_name="file_upload",
     )(save_confirmed_device_mappings)
 
 
