@@ -14,6 +14,7 @@ Step 1: Update your core/app_factory.py
 from core.plugins.manager import PluginManager
 
 # Create container with YAML config (your existing code)
+config_manager = get_config()
 container = get_configured_container_with_yaml(config_manager)
 
 # NEW: Add plugin manager
