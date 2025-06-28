@@ -1013,58 +1013,108 @@ def populate_device_modal_with_learning(is_open, file_info):
     prevent_initial_call=True,
 )
 def populate_modal_content(is_open, file_info):
-    """Merged callback - handles both modal open and file info changes"""
+    """RESTORED: Smart AI-driven column mapping"""
 
-    # Don't populate if modal is closed
-    if not is_open:
-        return "Modal closed"
+    if not is_open or not file_info:
+        return "Modal closed" if not is_open else dbc.Alert("No file information available", color="warning")
 
-    if not file_info:
-        return dbc.Alert("No file information available", color="warning")
-
-    # Simple Unicode fix
+    # Unicode fix
     filename = str(file_info.get("filename", "Unknown")).replace("⛑️", "").replace("🔧", "").replace("❌", "")
-    column_names = file_info.get("column_names", [])
+    columns = file_info.get("column_names", []) or file_info.get("columns", [])
     ai_suggestions = file_info.get("ai_suggestions", {})
 
-    # Use the GOOD logic from column_verification
+    if not columns:
+        return dbc.Alert(f"No columns found in {filename}", color="warning")
+
+    standard_fields = [
+        {"field": "person_id", "label": "Person/User ID", "description": "Identifies who accessed"},
+        {"field": "door_id", "label": "Door/Location ID", "description": "Identifies where access occurred"},
+        {"field": "timestamp", "label": "Timestamp", "description": "When access occurred"},
+        {"field": "access_result", "label": "Access Result", "description": "Success/failure of access"},
+        {"field": "token_id", "label": "Token/Badge ID", "description": "Badge or card identifier"},
+        {"field": "device_status", "label": "Device Status", "description": "Status of access device"},
+        {"field": "entry_type", "label": "Entry/Exit Type", "description": "Direction of access"}
+    ]
+
+    csv_column_options = [{"label": f'"{col}"', "value": col} for col in columns]
+    csv_column_options.append({"label": "Skip this field", "value": "skip"})
+
     table_rows = []
-    for i, column in enumerate(column_names):
-        ai_suggestion = ai_suggestions.get(column, {})
-        confidence = ai_suggestion.get('confidence', 0.0)
+    for standard_field in standard_fields:
+        field_name = standard_field["field"]
+
+        suggested_csv_column = None
+        ai_confidence = 0.0
+        for csv_col, suggestion in ai_suggestions.items():
+            if suggestion.get('field') == field_name:
+                suggested_csv_column = csv_col
+                ai_confidence = suggestion.get('confidence', 0.0)
+                break
 
         table_rows.append(
             html.Tr([
-                html.Td(html.Strong(column)),
-                html.Td(
+                html.Td([
+                    html.Strong(standard_field["label"]),
+                    html.Br(),
+                    html.Small(standard_field["description"], className="text-muted"),
+                    html.Br(),
+                    html.Code(field_name, className="bg-info text-white px-2 py-1 rounded small")
+                ], style={"width": "40%"}),
+                html.Td([
                     dcc.Dropdown(
-                        id={"type": "column-mapping", "index": i},
-                        options=[
-                            {"label": "Person ID", "value": "person_id"},
-                            {"label": "Timestamp", "value": "timestamp"},
-                            {"label": "Access Result", "value": "access_result"},
-                            {"label": "Device/Door", "value": "device_status"},
-                            {"label": "Token/Badge", "value": "token_id"},
-                            {"label": "Skip", "value": "ignore"}
-                        ],
-                        placeholder=f"Map {column} to...",
-                        value=ai_suggestion.get('field') if confidence > 0.5 else None
+                        id={"type": "standard-field-mapping", "field": field_name},
+                        options=csv_column_options,
+                        placeholder=f"Select CSV column for {field_name}",
+                        value=suggested_csv_column,
+                        style={"minWidth": "200px"}
                     )
-                ),
-                html.Td(f"{confidence:.0%}" if confidence > 0 else "No AI suggestion")
+                ], style={"width": "50%"}),
+                html.Td([
+                    dbc.Badge(
+                        f"AI: {ai_confidence:.0%}" if suggested_csv_column else "No AI suggestion",
+                        color="success" if ai_confidence > 0.7 else "warning" if ai_confidence > 0.4 else "secondary",
+                        className="small"
+                    )
+                ], style={"width": "10%"})
             ])
         )
 
     return [
-        html.H5(f"Map columns from {filename}"),
+        dbc.Alert([
+            html.H6(f"Map Analytics Fields to CSV Columns from {filename}", className="mb-2"),
+            html.P([
+                "Your CSV has these columns: ",
+                ", ".join([col for col in columns[:5]]),
+                f"{'...' if len(columns) > 5 else ''}"
+            ], className="mb-2"),
+            html.P([
+                html.Strong("Instructions: "),
+                "Each row below represents a field that our analytics system expects. ",
+                "Select which column from your CSV file should provide the data for each field."
+            ], className="mb-0")
+        ], color="primary", className="mb-3"),
+
         dbc.Table([
-            html.Thead([html.Tr([
-                html.Th("Your CSV Column"),
-                html.Th("Maps To Analytics Field"),
-                html.Th("AI Confidence")
-            ])]),
+            html.Thead([
+                html.Tr([
+                    html.Th("Analytics Field (Fixed)", style={"width": "40%"}),
+                    html.Th("Maps to CSV Column (Variable)", style={"width": "50%"}),
+                    html.Th("AI Confidence", style={"width": "10%"})
+                ])
+            ]),
             html.Tbody(table_rows)
-        ], striped=True)
+        ], striped=True, hover=True),
+
+        dbc.Card([
+            dbc.CardHeader(html.H6("Your CSV Columns", className="mb-0")),
+            dbc.CardBody([
+                html.P("Available columns from your uploaded file:"),
+                html.Div([
+                    dbc.Badge(col, color="light", text_color="dark", className="me-1 mb-1")
+                    for col in columns
+                ])
+            ])
+        ], className="mt-3")
     ]
 
 
