@@ -13,6 +13,9 @@ sys.path.insert(0, str(project_root))
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Ensure new deep_analytics package can be imported
+import pages.deep_analytics.layout as deep_layout
+
 def test_callback_registration():
     """Test that callbacks are properly registered"""
     

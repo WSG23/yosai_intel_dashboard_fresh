@@ -238,7 +238,7 @@ def _get_home_page() -> Any:
 def _get_analytics_page() -> Any:
     """Get analytics page with complete integration"""
     try:
-        from pages.deep_analytics import layout
+        from pages.deep_analytics.layout import layout
 
         return layout()
     except ImportError as e:
