@@ -12,7 +12,6 @@ from dataclasses import dataclass
 # ADD after existing imports
 from services.ai_device_generator import AIDeviceGenerator
 from services.consolidated_learning_service import get_learning_service
-from config.dynamic_config import dynamic_config
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +39,7 @@ class DoorMappingService:
     
     def __init__(self):
         self.ai_model_version = "v2.3"
-        self.confidence_threshold = dynamic_config.get_ai_confidence_threshold()
+        self.confidence_threshold = 75
         
     def process_uploaded_data(self, df: pd.DataFrame, client_profile: str = "auto") -> Dict[str, Any]:
         """
