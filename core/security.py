@@ -16,6 +16,11 @@ from pathlib import Path
 import mimetypes
 
 from utils.unicode_handler import sanitize_unicode_input
+from .security_patterns import (
+    SQL_INJECTION_PATTERNS,
+    XSS_PATTERNS,
+    PATH_TRAVERSAL_PATTERNS,
+)
 
 class SecurityLevel(Enum):
     """Security threat levels"""
@@ -46,42 +51,12 @@ class SecurityEvent:
 class InputValidator:
     """Comprehensive input validation system"""
     
-    # Dangerous patterns to detect
-    SQL_INJECTION_PATTERNS = [
-        r"(\b(select|insert|update|delete|drop|create|alter|exec|execute)\b)",
-        r"(\bunion\b.*\bselect\b)",
-        r"(\bor\b.*=.*\bor\b)",
-        r"(\band\b.*=.*\band\b)",
-        r"(--|\#|\/\*|\*\/)",
-        r"(\bxp_cmdshell\b|\bsp_executesql\b)"
-    ]
-    
-    XSS_PATTERNS = [
-        r"<script[^>]*>.*?</script>",
-        r"javascript:",
-        r"on\w+\s*=",
-        r"<iframe[^>]*>",
-        r"<object[^>]*>",
-        r"<embed[^>]*>",
-        r"vbscript:",
-        r"expression\s*\("
-    ]
-    
-    PATH_TRAVERSAL_PATTERNS = [
-        r"\.\.\/",
-        r"\.\.\\",
-        r"%2e%2e%2f",
-        r"%2e%2e%5c",
-        r"\.\.%2f",
-        r"\.\.%5c"
-    ]
-    
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.compiled_patterns = {
-            'sql': [re.compile(pattern, re.IGNORECASE) for pattern in self.SQL_INJECTION_PATTERNS],
-            'xss': [re.compile(pattern, re.IGNORECASE) for pattern in self.XSS_PATTERNS],
-            'path': [re.compile(pattern, re.IGNORECASE) for pattern in self.PATH_TRAVERSAL_PATTERNS]
+            'sql': [re.compile(pattern, re.IGNORECASE) for pattern in SQL_INJECTION_PATTERNS],
+            'xss': [re.compile(pattern, re.IGNORECASE) for pattern in XSS_PATTERNS],
+            'path': [re.compile(pattern, re.IGNORECASE) for pattern in PATH_TRAVERSAL_PATTERNS]
         }
     
     def validate_input(self, input_data: str, field_name: str = "unknown") -> Dict[str, Any]:
