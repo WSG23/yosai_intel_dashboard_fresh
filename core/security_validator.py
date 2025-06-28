@@ -11,6 +11,11 @@ from typing import Dict, Any, List
 from utils.unicode_handler import sanitize_unicode_input
 from dataclasses import dataclass
 from enum import Enum
+from .security_patterns import (
+    SQL_INJECTION_PATTERNS as RAW_SQL_PATTERNS,
+    XSS_PATTERNS as RAW_XSS_PATTERNS,
+    PATH_TRAVERSAL_PATTERNS as RAW_PATH_PATTERNS,
+)
 
 
 class SecurityLevel(Enum):
@@ -32,28 +37,11 @@ class SecurityValidator:
     """Comprehensive security validator"""
 
     # Compiled patterns for performance
-    SQL_PATTERNS = [
-        re.compile(r"(\bunion\b.*\bselect\b)", re.IGNORECASE),
-        re.compile(r"(\bor\b.*=.*\bor\b)", re.IGNORECASE),
-        re.compile(r"(--|\#|\/\*|\*\/)", re.IGNORECASE),
-        re.compile(r"(\bxp_cmdshell\b|\bsp_executesql\b)", re.IGNORECASE),
-        re.compile(r"(;\s*(drop|delete|truncate|alter)\b)", re.IGNORECASE)
-    ]
+    SQL_PATTERNS = [re.compile(p, re.IGNORECASE) for p in RAW_SQL_PATTERNS]
 
-    XSS_PATTERNS = [
-        re.compile(r"<script[^>]*>.*?</script>", re.IGNORECASE | re.DOTALL),
-        re.compile(r"javascript:", re.IGNORECASE),
-        re.compile(r"on\w+\s*=", re.IGNORECASE),
-        re.compile(r"<iframe[^>]*>", re.IGNORECASE),
-        re.compile(r"vbscript:", re.IGNORECASE)
-    ]
+    XSS_PATTERNS = [re.compile(p, re.IGNORECASE) for p in RAW_XSS_PATTERNS]
 
-    PATH_PATTERNS = [
-        re.compile(r"\.\.\/"),
-        re.compile(r"\.\.\\"),
-        re.compile(r"%2e%2e%2f", re.IGNORECASE),
-        re.compile(r"\.\.%2f", re.IGNORECASE)
-    ]
+    PATH_PATTERNS = [re.compile(p, re.IGNORECASE) for p in RAW_PATH_PATTERNS]
 
     def validate_input(self, value: str, field_name: str = "input") -> Dict[str, Any]:
         """Comprehensive input validation"""
