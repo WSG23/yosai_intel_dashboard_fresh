@@ -55,6 +55,9 @@ data/uploads/*
 *.json
 logs/
 
+# Temporary uploaded files
+temp/
+
 # Database
 *.db
 *.sqlite3

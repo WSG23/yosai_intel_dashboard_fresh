@@ -281,6 +281,8 @@ If you encounter an error like `"Babel" object has no attribute "localeselector"
 2. Format code with `black` and run `flake8`
 3. Follow type safety guidelines and maintain the modular architecture
 4. Add tests for new functionality and update documentation when applicable
+5. Optional debug helpers live in `examples/`. Run the upload helper with
+   `python examples/debug_upload.py` to validate environment setup
 
 ## 📄 License
 
