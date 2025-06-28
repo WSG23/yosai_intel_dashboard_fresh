@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Generator
 import pandas as pd
 
-from core.unified_container import UnifiedServiceContainer
+from core.container import Container
 from models.entities import Person, Door, AccessEvent
 from models.enums import AccessResult, DoorType
 
@@ -22,10 +22,10 @@ def temp_dir() -> Generator[Path, None, None]:
 
 
 @pytest.fixture
-def di_container() -> UnifiedServiceContainer:
+def di_container() -> Container:
     """Create DI container for tests"""
 
-    return UnifiedServiceContainer()
+    return Container()
 
 
 @pytest.fixture
