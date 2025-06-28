@@ -98,6 +98,11 @@ Docker Compose reads variables from a `.env` file in this directory. Set
 `DB_PASSWORD` **and** `SECRET_KEY` there (or export them in your shell) before
 starting the services.
 
+Alternatively you can launch the app with Gunicorn:
+```bash
+gunicorn wsgi:server
+```
+
 ## 🧪 Testing
 
 Run the complete test suite:
