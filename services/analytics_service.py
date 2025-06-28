@@ -3,6 +3,7 @@
 Analytics Service - Enhanced with Unique Patterns Analysis
 """
 import pandas as pd
+import numpy as np
 import pickle
 import json
 import logging
@@ -473,17 +474,81 @@ class AnalyticsService:
                 'total_events': 0
             }
 
+    def _create_sample_data(self) -> pd.DataFrame:
+        """Create realistic sample access control data"""
+        np.random.seed(42)
+        n_events = 1000
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=30)
+
+        timestamps = [
+            start_date + timedelta(
+                days=np.random.randint(0, 30),
+                hours=np.random.randint(0, 24),
+                minutes=np.random.randint(0, 60),
+            )
+            for _ in range(n_events)
+        ]
+
+        users = [f"USER{i:04d}" for i in range(1, 51)]
+        doors = [f"DOOR{i:03d}" for i in range(1, 6)]
+
+        data = {
+            'event_id': [f"EVT{i:06d}" for i in range(n_events)],
+            'timestamp': timestamps,
+            'person_id': np.random.choice(users, n_events),
+            'door_id': np.random.choice(doors, n_events),
+            'access_result': np.random.choice(['Granted', 'Denied'], n_events, p=[0.85, 0.15]),
+            'badge_status': np.random.choice(['Valid', 'Invalid', 'Expired'], n_events, p=[0.9, 0.08, 0.02]),
+            'device_status': np.random.choice(['normal', 'maintenance'], n_events, p=[0.95, 0.05]),
+        }
+
+        df = pd.DataFrame(data).sort_values('timestamp').reset_index(drop=True)
+        return df
+
+    def _analyze_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Analyze dataframe and return comprehensive analytics"""
+        if df.empty:
+            return {'total_events': 0}
+
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+
+        total_events = len(df)
+        unique_users = df['person_id'].nunique()
+        unique_doors = df['door_id'].nunique()
+
+        access_counts = df['access_result'].value_counts()
+        granted_count = access_counts.get('Granted', 0)
+        denied_count = access_counts.get('Denied', 0)
+        success_rate = (granted_count / total_events) * 100 if total_events else 0
+
+        date_range = {
+            'start': df['timestamp'].min().isoformat(),
+            'end': df['timestamp'].max().isoformat(),
+            'days': (df['timestamp'].max() - df['timestamp'].min()).days + 1,
+        }
+
+        hourly_dist = df['timestamp'].dt.hour.value_counts().sort_index().to_dict()
+        daily_dist = df['timestamp'].dt.day_name().value_counts().to_dict()
+
+        return {
+            'total_events': total_events,
+            'unique_users': unique_users,
+            'unique_doors': unique_doors,
+            'success_rate': round(success_rate, 2),
+            'granted_events': int(granted_count),
+            'denied_events': int(denied_count),
+            'date_range': date_range,
+            'hourly_distribution': hourly_dist,
+            'daily_distribution': daily_dist,
+        }
+
     def _generate_sample_analytics(self) -> Dict[str, Any]:
         """Generate sample analytics data"""
-        # Create sample DataFrame
-        sample_data = pd.DataFrame({
-            'user_id': ['user_001', 'user_002', 'user_003'] * 100,
-            'door_id': ['door_A', 'door_B', 'door_C'] * 100,
-            'timestamp': pd.date_range('2024-01-01', periods=300, freq='1H'),
-            'access_result': (['Granted'] * 250) + (['Denied'] * 50)
-        })
-
-        return self._generate_basic_analytics(sample_data)
+        df = self._create_sample_data()
+        basic = self._generate_basic_analytics(df)
+        basic.update(self._analyze_dataframe(df))
+        return basic
 
     def _generate_basic_analytics(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Generate basic analytics from DataFrame - JSON safe version"""
@@ -581,11 +646,75 @@ class AnalyticsService:
             return {'status': 'error', 'message': 'Database not available'}
 
         try:
-            # Implement database analytics here
+            connection = self.database_manager.get_connection()
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=7)
+
+            summary_query = """
+                SELECT event_type, status, COUNT(*) as count
+                FROM access_events
+                WHERE timestamp >= ? AND timestamp <= ?
+                GROUP BY event_type, status
+            """
+            df_summary = pd.DataFrame(connection.execute_query(summary_query, (start_date, end_date)))
+
+            if df_summary.empty:
+                total_events = 0
+                success_rate = 0.0
+                breakdown = []
+            else:
+                total_events = int(df_summary['count'].sum())
+                success_events = df_summary[df_summary['status'] == 'success']['count'].sum()
+                success_rate = round((success_events / total_events) * 100, 2) if total_events else 0
+                breakdown = df_summary.to_dict('records')
+
+            hourly_query = """
+                SELECT strftime('%H', timestamp) as hour, COUNT(*) as event_count
+                FROM access_events
+                WHERE timestamp >= ? AND timestamp <= ?
+                GROUP BY strftime('%H', timestamp)
+                ORDER BY hour
+            """
+            df_hourly = pd.DataFrame(connection.execute_query(hourly_query, (start_date, end_date)))
+            hourly_data = df_hourly.to_dict('records') if not df_hourly.empty else []
+            peak_hour = int(df_hourly.loc[df_hourly['event_count'].idxmax(), 'hour']) if not df_hourly.empty else None
+
+            location_query = """
+                SELECT location, COUNT(*) as total_events,
+                       SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as successful_events
+                FROM access_events
+                WHERE timestamp >= ? AND timestamp <= ?
+                GROUP BY location
+                ORDER BY total_events DESC
+            """
+            df_loc = pd.DataFrame(connection.execute_query(location_query, (start_date, end_date)))
+            if df_loc.empty:
+                locations = []
+                busiest_location = None
+            else:
+                df_loc['success_rate'] = (df_loc['successful_events'] / df_loc['total_events'] * 100).round(2)
+                locations = df_loc.to_dict('records')
+                busiest_location = df_loc.iloc[0]['location'] if len(df_loc) > 0 else None
+
             return {
                 'status': 'success',
-                'message': 'Database analytics not yet implemented',
-                'timestamp': datetime.now().isoformat()
+                'summary': {
+                    'total_events': total_events,
+                    'success_rate': success_rate,
+                    'event_breakdown': breakdown,
+                    'period_days': 7,
+                },
+                'hourly_patterns': {
+                    'hourly_data': hourly_data,
+                    'peak_hour': peak_hour,
+                    'total_hours_analyzed': len(hourly_data),
+                },
+                'location_stats': {
+                    'locations': locations,
+                    'busiest_location': busiest_location,
+                    'total_locations': len(locations),
+                },
+                'generated_at': datetime.now().isoformat(),
             }
         except Exception as e:
             return {'status': 'error', 'message': str(e)}
