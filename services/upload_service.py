@@ -6,6 +6,9 @@ import logging
 from datetime import datetime
 from typing import Any, Dict
 
+from utils.unicode_handler import sanitize_unicode_input
+from utils.file_validator import safe_decode_with_unicode_handling
+
 import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import html
@@ -16,16 +19,19 @@ logger = logging.getLogger(__name__)
 def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
     """Process uploaded file content into a DataFrame."""
     try:
+        filename = sanitize_unicode_input(filename)
         content_type, content_string = contents.split(",")
         decoded = base64.b64decode(content_string)
 
         if filename.endswith(".csv"):
-            df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
+            text = safe_decode_with_unicode_handling(decoded, "utf-8")
+            df = pd.read_csv(io.StringIO(text))
         elif filename.endswith((".xlsx", ".xls")):
             df = pd.read_excel(io.BytesIO(decoded))
         elif filename.endswith(".json"):
             try:
-                json_data = json.loads(decoded.decode("utf-8"))
+                text = safe_decode_with_unicode_handling(decoded, "utf-8")
+                json_data = json.loads(text)
                 if isinstance(json_data, list):
                     df = pd.DataFrame(json_data)
                 elif isinstance(json_data, dict):

@@ -7,6 +7,8 @@ import os
 import hashlib
 import secrets
 from typing import Dict, Any, List
+
+from utils.unicode_handler import sanitize_unicode_input
 from dataclasses import dataclass
 from enum import Enum
 
@@ -55,6 +57,7 @@ class SecurityValidator:
 
     def validate_input(self, value: str, field_name: str = "input") -> Dict[str, Any]:
         """Comprehensive input validation"""
+        value = sanitize_unicode_input(value)
         issues: List[SecurityIssue] = []
 
         # Check SQL injection
@@ -102,6 +105,7 @@ class SecurityValidator:
 
     def _sanitize_input(self, value: str) -> str:
         """Sanitize input by encoding dangerous characters"""
+        value = sanitize_unicode_input(value)
         # HTML entity encoding
         replacements = {
             '&': '&amp;',

@@ -6,6 +6,8 @@ import io
 import base64
 from typing import Dict, Any, Optional, Tuple
 
+from .unicode_handler import sanitize_unicode_input
+
 
 def decode_bytes(data: bytes, enc: str) -> str:
     """Decode bytes using specified encoding with surrogatepass."""
@@ -19,6 +21,7 @@ def safe_decode_with_unicode_handling(data: bytes, enc: str) -> str:
     except UnicodeDecodeError:
         text = data.decode(enc, errors="replace")
 
+    text = sanitize_unicode_input(text)
     # Re-encode to UTF-8 ignoring any invalid surrogates/characters
     cleaned = text.encode("utf-8", errors="ignore")
     return cleaned.decode("utf-8", errors="ignore")

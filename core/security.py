@@ -15,6 +15,8 @@ import logging
 from pathlib import Path
 import mimetypes
 
+from utils.unicode_handler import sanitize_unicode_input
+
 class SecurityLevel(Enum):
     """Security threat levels"""
     LOW = "low"
@@ -86,6 +88,7 @@ class InputValidator:
         """Comprehensive input validation"""
         if not isinstance(input_data, str):
             input_data = str(input_data)
+        input_data = sanitize_unicode_input(input_data)
         
         result = {
             'field': field_name,
@@ -147,6 +150,7 @@ class InputValidator:
     
     def _sanitize_input(self, data: str) -> str:
         """Sanitize input data"""
+        data = sanitize_unicode_input(data)
         # Remove null bytes
         sanitized = data.replace('\x00', '')
         
@@ -240,7 +244,8 @@ class InputValidator:
         """Check file content for security issues"""
         # Convert to string for pattern matching (first 1KB)
         try:
-            text_content = content[:1024].decode('utf-8', errors='ignore').lower()
+            text_content = content[:1024].decode('utf-8', errors='ignore')
+            text_content = sanitize_unicode_input(text_content).lower()
         except:
             return False
         
