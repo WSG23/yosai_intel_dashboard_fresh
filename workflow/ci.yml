@@ -51,7 +51,7 @@ jobs:
         run: bandit -r .
 
       - name: 📚 Safety (dependency CVE scan)
-        run: safety check --full-report || true  # do not fail build yet, surfaced in summary
+        run: safety check --full-report
 
       # ----- Tests -----
       - name: ✅ Run PyTest
