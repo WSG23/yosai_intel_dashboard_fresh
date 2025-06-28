@@ -17,8 +17,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Import your existing app factory
-from core.app_factory import YosaiApplicationFactory
+# Import the application factory
+from core.app_factory import create_app
 
 # Import the LazyString fix plugin (save the first artifact as this file)
 from plugins.lazystring_fix_plugin import (
@@ -33,7 +33,7 @@ def create_app_with_lazystring_fix():
     logger.info("Creating Yosai Intel Dashboard with LazyString fix...")
     
     # Create the app using your existing factory
-    app = YosaiApplicationFactory.create_application()
+    app = create_app()
     
     if app is None:
         logger.error("Failed to create application")
@@ -72,7 +72,7 @@ def patch_existing_app_minimal():
     """
     
     # Your existing code to create app
-    app = YosaiApplicationFactory.create_application()
+    app = create_app()
     
     # Add these 3 lines to fix LazyString:
     from plugins.lazystring_fix_plugin import initialize_lazystring_fix, LazyStringFixConfig
@@ -88,7 +88,7 @@ def create_production_app():
     
     try:
         # Create base app
-        app = YosaiApplicationFactory.create_application()
+        app = create_app()
         
         if app is None:
             raise RuntimeError("App creation failed")

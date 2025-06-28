@@ -198,6 +198,8 @@ Two optional variables control which configuration file is loaded:
   automatically load the matching file in `config/` (default: `development`).
 - `YOSAI_CONFIG_FILE` – absolute path to a custom YAML configuration file. When
   set it takes precedence over `YOSAI_ENV`.
+- `YOSAI_APP_MODE` – set to `full`, `simple` or `json-safe` to select the
+  startup mode for `create_app()` (default: `full`).
 
 Example:
 
@@ -205,6 +207,7 @@ Example:
 YOSAI_ENV=production python app.py
 # or
 YOSAI_CONFIG_FILE=/path/to/custom.yaml python app.py
+YOSAI_APP_MODE=simple python app.py
 ```
 
 ### Plugins
