@@ -1,3 +1,5 @@
+"""Low level utility for processing uploaded files."""
+
 # services/file_processor.py
 import pandas as pd
 import json

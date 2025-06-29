@@ -1,3 +1,5 @@
+"""Dash callback handlers for the deep analytics page."""
+
 from dash import Input, Output, State, callback_context, html
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 import dash_bootstrap_components as dbc
