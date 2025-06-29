@@ -15,4 +15,4 @@ app.layout = dash.html.Div([
 ])
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run(debug=False)
