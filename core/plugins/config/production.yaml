@@ -209,7 +209,7 @@ cache:
 security:
   secret_key: test-secret-key-for-testing-only
   session_timeout_minutes: 5
-  max_file_size_mb: 10
+  max_file_size_mb: 100
   rate_limiting_enabled: false
 
 analytics:
