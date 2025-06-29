@@ -10,7 +10,7 @@ import json
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Dict, List, Tuple, Any, Optional, Union
 from dataclasses import dataclass
 from config.dynamic_config import dynamic_config
 import logging
@@ -25,6 +25,46 @@ try:
 except ImportError:
     logger.info("Warning: cssutils not available - some CSS analysis features disabled")
     cssutils = None
+
+
+class CSSOptimizerError(Exception):
+    """Base exception for CSS optimizer related errors."""
+
+
+class PathValidationError(CSSOptimizerError):
+    """Raised when provided file system paths are invalid."""
+
+
+def validate_css_directory(path: Union[str, Path]) -> Path:
+    """Return a valid CSS directory as ``Path``.
+
+    Args:
+        path: Directory path as ``str`` or ``Path``.
+
+    Raises:
+        PathValidationError: If the directory does not exist or is not a directory.
+
+    """
+    css_dir = Path(path)
+    if not css_dir.exists() or not css_dir.is_dir():
+        raise PathValidationError(f"CSS directory not found: {css_dir}")
+    return css_dir
+
+
+def ensure_output_directory(output_path: Union[str, Path]) -> Path:
+    """Ensure the parent directory for ``output_path`` exists and return ``Path``."""
+    output = Path(output_path)
+    if output.parent and not output.parent.exists():
+        output.parent.mkdir(parents=True, exist_ok=True)
+    return output
+
+
+def safe_path_conversion(path: Union[str, Path]) -> str:
+    """Safely convert ``path`` to a ``str`` representation."""
+    try:
+        return str(Path(path))
+    except Exception as exc:  # pragma: no cover - defensive
+        raise PathValidationError(f"Invalid path: {path}") from exc
 
 @dataclass
 class CSSMetric:
@@ -455,27 +495,30 @@ def print_report_summary(report: Dict[str, Any]) -> None:
     
     logger.info("\n" + "=" * 60)
 
+
+def generate_css_report_safe(css_directory: Union[str, Path], output_file: Union[str, Path]) -> Dict[str, Any]:
+    """Wrapper around :func:`generate_css_report` with path validation."""
+
+    css_dir = validate_css_directory(css_directory)
+    out_file = ensure_output_directory(output_file)
+    return generate_css_report(Path(safe_path_conversion(css_dir)), Path(safe_path_conversion(out_file)))
+
 if __name__ == "__main__":
     import sys
-    
-    # Get CSS directory from command line or use default
-    if len(sys.argv) > 1:
-        css_dir = Path(sys.argv[1])
-    else:
-        css_dir = Path("assets/css")
-    
-    if not css_dir.exists():
-        logger.info(f"❌ CSS directory not found: {css_dir}")
+
+    css_arg = sys.argv[1] if len(sys.argv) > 1 else "assets/css"
+
+    try:
+        css_dir = validate_css_directory(css_arg)
+        report_file = ensure_output_directory(Path(css_dir).parent / "css-quality-report.json")
+        report = generate_css_report_safe(css_dir, report_file)
+    except PathValidationError as exc:
+        logger.info(f"❌ {exc}")
         logger.info("Usage: python css_build_optimizer.py [css_directory]")
         sys.exit(1)
-    
-    # Generate report
-    report_file = css_dir.parent / "css-quality-report.json"
-    report = generate_css_report(css_dir, report_file)  # FIXED: Pass Path object properly
-    
-    # Print summary
+
     print_report_summary(report)
-    
+
     logger.info(f"\n📋 Full report available at: {report_file}")
     logger.info("\n🚀 Next steps:")
     logger.info("1. Review recommendations and address critical issues")
@@ -483,4 +526,13 @@ if __name__ == "__main__":
     logger.info("3. Set up automated quality monitoring")
 
 # Export main functions
-__all__ = ['CSSQualityAnalyzer', 'CSSOptimizer', 'generate_css_report', 'print_report_summary']
+__all__ = [
+    'CSSQualityAnalyzer',
+    'CSSOptimizer',
+    'generate_css_report',
+    'print_report_summary',
+    'validate_css_directory',
+    'ensure_output_directory',
+    'safe_path_conversion',
+    'generate_css_report_safe',
+]
