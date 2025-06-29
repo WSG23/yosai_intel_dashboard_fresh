@@ -92,3 +92,6 @@ Desktop.ini
 .env.staging
 *.key
 secrets/
+
+# Training data
+data/training/

@@ -19,3 +19,5 @@ joblib.dump(vectorizer, 'data/column_vectorizer.joblib')
 ```
 
 These files will be loaded by `ColumnMappingService` when `learning_enabled` is enabled in the configuration.
+
+Sample training logs used for testing can be found in `docs/example_data/training/`.
