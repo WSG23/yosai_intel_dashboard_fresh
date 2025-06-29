@@ -50,6 +50,7 @@ assets/.webassets-cache
 # Data
 data/uploads/*
 !data/uploads/.gitkeep
+data/learned_mappings.pkl
 *.csv
 *.xlsx
 *.json
