@@ -22,6 +22,7 @@
 @import './03-components/_forms.css';
 @import './03-components/_navigation.css';
 @import './03-components/_modals.css';
+@import './03-components/_settings.css';
 
 /* Dashboard Panels */
 @import './04-panels/_panel-base.css';
