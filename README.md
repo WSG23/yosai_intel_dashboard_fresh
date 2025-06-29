@@ -313,6 +313,11 @@ See the [data model diagram](docs/data_model.md) for an overview of key entities
 5. Optional debug helpers live in `examples/`. Run the upload helper with
    `python examples/debug_upload.py` to validate environment setup
 
+## 📦 Versioning
+
+This project adheres to [Semantic Versioning](https://semver.org). See
+[docs/release.md](docs/release.md) for details on how releases are managed.
+
 ## 📄 License
 
 MIT License - see LICENSE file for details.
