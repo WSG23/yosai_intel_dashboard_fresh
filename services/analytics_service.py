@@ -642,9 +642,15 @@ class AnalyticsService:
 # Global service instance
 _analytics_service: Optional[AnalyticsService] = None
 
-def get_analytics_service() -> AnalyticsService:
-    """Get global analytics service instance"""
+def get_analytics_service(service: Optional[AnalyticsService] = None) -> AnalyticsService:
+    """Return a global analytics service instance.
+
+    If ``service`` is provided, it becomes the global instance.  Otherwise an
+    instance is created on first access.
+    """
     global _analytics_service
+    if service is not None:
+        _analytics_service = service
     if _analytics_service is None:
         _analytics_service = AnalyticsService()
     return _analytics_service

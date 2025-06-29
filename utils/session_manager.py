@@ -77,4 +77,30 @@ class SessionManager:
 
 
 # Global session manager instance
-session_manager = SessionManager()
+_session_manager: Optional[SessionManager] = None
+
+
+def get_session_manager(manager: Optional[SessionManager] = None) -> SessionManager:
+    """Return a global session manager instance.
+
+    If ``manager`` is provided, it becomes the global instance. Otherwise an
+    instance is created on first access.
+    """
+    global _session_manager
+    if manager is not None:
+        _session_manager = manager
+    if _session_manager is None:
+        _session_manager = SessionManager()
+    return _session_manager
+
+
+def create_session_manager() -> SessionManager:
+    """Create a new session manager instance."""
+    return SessionManager()
+
+
+__all__ = [
+    "SessionManager",
+    "get_session_manager",
+    "create_session_manager",
+]
