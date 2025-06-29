@@ -31,3 +31,23 @@ def test_map_and_clean_missing_columns():
     cleaned = map_and_clean(df)
     assert "token_id" not in cleaned.columns
     assert "door_id" not in cleaned.columns
+
+
+def test_map_and_clean_with_learned_mappings():
+    df = pd.DataFrame({
+        "Time": ["2024-01-01 12:00:00"],
+        "User": [" u2 "],
+        "Door": ["d2"],
+        "Token ID": ["t2"],
+    })
+
+    learned = {"Time": "timestamp", "User": "person_id", "Door": "door_id"}
+    cleaned = map_and_clean(df, learned)
+
+    assert list(cleaned.columns) == [
+        "timestamp",
+        "person_id",
+        "door_id",
+        "token_id",
+    ]
+    assert cleaned.loc[0, "person_id"] == "u2"
