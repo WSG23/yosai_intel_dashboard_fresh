@@ -213,6 +213,7 @@ def _create_main_layout() -> html.Div:
         [
             dcc.Location(id="url", refresh=False),
             create_navbar_layout(),
+
             html.Div(id="page-content", className="main-content p-4"),
             dcc.Store(id="global-store", data={}),
             dcc.Store(id="session-store", data={}),
