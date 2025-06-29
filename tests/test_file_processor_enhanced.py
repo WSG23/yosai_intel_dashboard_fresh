@@ -1,5 +1,8 @@
 import pandas as pd
+import base64
+
 from services.file_processor import FileProcessor
+from services.upload_service import process_uploaded_file, MAX_FILE_SIZE_BYTES
 
 
 def test_enhanced_processor(tmp_path):
@@ -25,4 +28,19 @@ def test_enhanced_processor(tmp_path):
     mapped_df = result.get("data")
     assert mapped_df is not None
     assert list(mapped_df.columns) == ["person_id", "door_id", "access_result", "timestamp"]
+
+
+def test_malicious_filename_rejected(tmp_path):
+    data = base64.b64encode(b"id,name\n1,A").decode()
+    contents = f"data:text/csv;base64,{data}"
+    result = process_uploaded_file(contents, "../../evil.csv")
+    assert result["success"] is False
+
+
+def test_oversized_file_rejected(tmp_path):
+    data = base64.b64encode(b"A" * (MAX_FILE_SIZE_BYTES + 1)).decode()
+    contents = f"data:text/csv;base64,{data}"
+    result = process_uploaded_file(contents, "big.csv")
+    assert result["success"] is False
+
 
