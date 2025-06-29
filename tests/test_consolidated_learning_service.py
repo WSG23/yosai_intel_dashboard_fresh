@@ -69,6 +69,32 @@ class TestConsolidatedLearningService:
         assert len(stats['files']) == 1
         assert stats['files'][0]['filename'] == "test.csv"
 
+    def test_persist_and_load_mappings(self):
+        """Mappings should persist to disk and load in new instance."""
+        df = pd.DataFrame({'door_id': ['door_1']})
+        mappings = {'door_1': {'floor': 1}}
+        self.service.save_complete_mapping(df, 'persist.csv', mappings)
+
+        assert self.storage_path.exists()
+
+        reloaded = ConsolidatedLearningService(str(self.storage_path))
+        learned = reloaded.get_learned_mappings(df, 'persist.csv')
+        assert learned['match_type'] == 'exact'
+        assert learned['device_mappings'] == mappings
+
+    def test_apply_to_global_store(self):
+        """Applying learned mappings should update the global store."""
+        from services.ai_mapping_store import ai_mapping_store
+
+        df = pd.DataFrame({'door_id': ['door_1']})
+        mappings = {'door_1': {'floor': 2}}
+        ai_mapping_store.clear()
+        self.service.save_complete_mapping(df, 'apply.csv', mappings)
+
+        applied = self.service.apply_to_global_store(df, 'apply.csv')
+        assert applied is True
+        assert ai_mapping_store.all() == mappings
+
     def teardown_method(self):
         if self.storage_path.exists():
             self.storage_path.unlink()
