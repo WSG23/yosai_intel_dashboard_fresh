@@ -267,6 +267,14 @@ files while maintaining backwards compatible helper functions like
 - **database_manager.py**: Connection pooling, multiple database support
 - Supports PostgreSQL, SQLite, and Mock databases
 - Type-safe connection management
+- Retry logic via `connection_retry.py` with exponential backoff
+- Safe Unicode handling with `unicode_handler.py`
+- Connection pooling through `connection_pool.py`
+```python
+from config.database_manager import EnhancedPostgreSQLManager, DatabaseConfig
+manager = EnhancedPostgreSQLManager(DatabaseConfig(type="postgresql"))
+manager.execute_query_with_retry("SELECT 1")
+```
 
 ### Models Layer (`models/`)
 - **entities.py**: Core business entities
