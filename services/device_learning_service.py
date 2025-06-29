@@ -1,3 +1,5 @@
+"""Persist and recall device mappings between uploads."""
+
 import json
 import hashlib
 import logging

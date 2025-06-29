@@ -1,3 +1,5 @@
+"""Analytics generation directly from a database connection."""
+
 import pandas as pd
 import logging
 from datetime import datetime, timedelta

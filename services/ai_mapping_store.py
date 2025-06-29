@@ -1,3 +1,5 @@
+"""Thread-safe store for device mapping results produced by AI."""
+
 import threading
 from typing import Dict, Any
 

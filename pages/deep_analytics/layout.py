@@ -1,3 +1,5 @@
+"""Layout components for the deep analytics page."""
+
 import logging
 from dash import html, dcc
 import dash_bootstrap_components as dbc
