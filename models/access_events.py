@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Union
 from .base import BaseModel
 from .enums import AccessResult, BadgeStatus
+from security.sql_validator import SQLInjectionPrevention
 
 class AccessEventModel(BaseModel):
     """Model for access control events with full type safety"""
@@ -136,19 +137,21 @@ class AccessEventModel(BaseModel):
     
     def get_hourly_distribution(self, days: int = 7) -> pd.DataFrame:
         """Get hourly access distribution for analytics"""
+        SQLInjectionPrevention.validate_query_parameter(days)
         query = """
-        SELECT 
+        SELECT
             strftime('%H', timestamp) as hour,
             COUNT(*) as event_count,
             SUM(CASE WHEN access_result = 'Granted' THEN 1 ELSE 0 END) as granted_count
-        FROM access_events 
-        WHERE timestamp >= date('now', '-{} days')
+        FROM access_events
+        WHERE timestamp >= date('now', ?)
         GROUP BY strftime('%H', timestamp)
         ORDER BY hour
-        """.format(days)
-        
+        """
+        params = (f'-{days} days',)
+
         try:
-            result = self.db.execute_query(query)
+            result = self.db.execute_query(query, params)
             return result if result is not None else pd.DataFrame()
         except Exception as e:
             logging.error(f"Error getting hourly distribution: {e}")
@@ -200,21 +203,23 @@ class AccessEventModel(BaseModel):
     
     def get_trend_analysis(self, days: int = 30) -> pd.DataFrame:
         """Get daily trend analysis"""
+        SQLInjectionPrevention.validate_query_parameter(days)
         query = """
-        SELECT 
+        SELECT
             date(timestamp) as date,
             COUNT(*) as total_events,
             SUM(CASE WHEN access_result = 'Granted' THEN 1 ELSE 0 END) as granted_events,
             COUNT(DISTINCT person_id) as unique_users,
             COUNT(DISTINCT door_id) as unique_doors
-        FROM access_events 
-        WHERE timestamp >= date('now', '-{} days')
+        FROM access_events
+        WHERE timestamp >= date('now', ?)
         GROUP BY date(timestamp)
         ORDER BY date
-        """.format(days)
+        """
+        params = (f'-{days} days',)
         
         try:
-            result = self.db.execute_query(query)
+            result = self.db.execute_query(query, params)
             if result is not None and not result.empty:
                 # Add calculated columns
                 result['denied_events'] = result['total_events'] - result['granted_events']
