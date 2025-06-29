@@ -6,7 +6,7 @@ dash-bootstrap-components==1.6.0
 dash==3.0.0
 plotly==5.15.0
 pandas==2.1.1
-numpy==2.1.0
+numpy>=1.23.2,<1.28
 Flask-Babel==4.0.0
 Flask-Login==0.6.2
 Flask-WTF==1.1.1
