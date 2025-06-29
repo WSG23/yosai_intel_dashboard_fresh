@@ -6,6 +6,9 @@ Provides specific integration instructions and replacement code for existing das
 from typing import Dict, List, Any, Optional
 import pandas as pd
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Import the new analytics controller
 from .analytics_controller import (
@@ -33,15 +36,15 @@ class DashboardAnalyticsIntegration:
         
         def on_analysis_progress(analysis_id: str, analysis_type: str, progress: float):
             # Update dashboard progress indicators
-            print(f"Analysis Progress: {analysis_type} - {progress:.1f}%")
+            logger.info(f"Analysis Progress: {analysis_type} - {progress:.1f}%")
         
         def on_analysis_complete(analysis_id: str, result):
             # Trigger dashboard refresh
-            print(f"Analysis {analysis_id} completed successfully")
+            logger.info(f"Analysis {analysis_id} completed successfully")
         
         def on_analysis_error(analysis_id: str, error):
             # Show error message in dashboard
-            print(f"Analysis {analysis_id} failed: {error}")
+            logger.info(f"Analysis {analysis_id} failed: {error}")
         
         # Register callbacks
         self.controller.register_callback('on_analysis_progress', on_analysis_progress)
@@ -224,7 +227,7 @@ def get_interactive_charts(uploaded_data: pd.DataFrame) -> Dict[str, Any]:
             return {}
             
     except Exception as e:
-        print(f"Chart generation failed: {e}")
+        logger.info(f"Chart generation failed: {e}")
         return {}
 
 
@@ -451,12 +454,12 @@ class AnalyticsModuleTester:
             'interactive_charts': self.test_interactive_charts(df)
         }
         
-        print("=== ANALYTICS MODULE TEST RESULTS ===")
+        logger.info("=== ANALYTICS MODULE TEST RESULTS ===")
         for module, success in results.items():
             status = "✅ PASS" if success else "❌ FAIL"
-            print(f"{module}: {status}")
+            logger.info(f"{module}: {status}")
             if not success and module in self.test_results:
-                print(f"  Error: {self.test_results[module]['error']}")
+                logger.info(f"  Error: {self.test_results[module]['error']}")
         
         return results
     
@@ -561,10 +564,10 @@ TESTING COMMAND:
 # Run this in your Python console to test
 tester = AnalyticsModuleTester()
 test_results = tester.test_all_modules(your_test_data)
-print("All tests passed:", all(test_results.values()))
+logger.info("All tests passed: %s", all(test_results.values()))
 """
 
-print(integration_checklist)
+logger.info(integration_checklist)
 
 # Export key functions and classes
 __all__ = [

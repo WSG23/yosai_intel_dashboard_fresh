@@ -4,6 +4,9 @@ import numpy as np
 from datetime import datetime, timedelta
 import random
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 def generate_sample_access_data(num_records=1000):
     """Generate sample access control data for testing"""
@@ -115,7 +118,7 @@ def save_sample_data():
         excel_filename = filename.replace('.csv', '.xlsx')
         df.to_excel(f'data/{excel_filename}', index=False)
         
-        print(f"Generated {filename}: {len(df)} records")
+        logger.info(f"Generated {filename}: {len(df)} records")
 
 if __name__ == "__main__":
     # Create data directory
@@ -125,11 +128,11 @@ if __name__ == "__main__":
     # Generate sample data
     save_sample_data()
     
-    print("Sample data generated successfully!")
-    print("Files created in data/ directory:")
-    print("- sample_small.csv/json/xlsx (100 records)")
-    print("- sample_medium.csv/json/xlsx (1,000 records)")  
-    print("- sample_large.csv/json/xlsx (10,000 records)")
+    logger.info("Sample data generated successfully!")
+    logger.info("Files created in data/ directory:")
+    logger.info("- sample_small.csv/json/xlsx (100 records)")
+    logger.info("- sample_medium.csv/json/xlsx (1,000 records)")  
+    logger.info("- sample_large.csv/json/xlsx (10,000 records)")
 
 # Create a simple test script
 # test_analytics.py
@@ -145,17 +148,17 @@ def test_file_upload():
     from utils.sample_data_generator import generate_sample_access_data
 
     df = generate_sample_access_data(100)
-    print(f"Generated test data: {len(df)} records")
-    print(f"Columns: {list(df.columns)}")
-    print(f"Date range: {df['timestamp'].min()} to {df['timestamp'].max()}")
+    logger.info(f"Generated test data: {len(df)} records")
+    logger.info(f"Columns: {list(df.columns)}")
+    logger.info(f"Date range: {df['timestamp'].min()} to {df['timestamp'].max()}")
 
     # Test basic analytics
-    print("\nBasic Analytics:")
-    print(f"Total events: {len(df)}")
-    print(f"Unique users: {df['person_id'].nunique()}")
-    print(f"Access results: {df['access_result'].value_counts().to_dict()}")
+    logger.info("\nBasic Analytics:")
+    logger.info(f"Total events: {len(df)}")
+    logger.info(f"Unique users: {df['person_id'].nunique()}")
+    logger.info(f"Access results: {df['access_result'].value_counts().to_dict()}")
     return True
 
 if __name__ == "__main__":
     test_file_upload()
-    print("Test completed successfully!")
+    logger.info("Test completed successfully!")

@@ -144,7 +144,7 @@ def get_analysis_type_options() -> List[Dict[str, str]]:
 def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
     """Process AI suggestions analysis for the selected data source"""
     try:
-        print(f"🔍 Processing suggests analysis for: {data_source}")
+        logger.info(f"🔍 Processing suggests analysis for: {data_source}")
 
         if not data_source or data_source == "none":
             return {"error": "No data source selected"}

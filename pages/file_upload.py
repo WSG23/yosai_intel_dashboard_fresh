@@ -39,11 +39,11 @@ def analyze_device_name_with_ai(device_name):
         mapping = ai_mapping_store.get(device_name)
         if mapping:
             if mapping.get("source") == "user_confirmed":
-                print(f"\U0001f512 Using USER CONFIRMED mapping for '{device_name}'")
+                logger.info(f"\U0001f512 Using USER CONFIRMED mapping for '{device_name}'")
                 return mapping
 
         # Only use AI if no user mapping exists
-        print(
+        logger.info(
             f"\U0001f916 No user mapping found, generating AI analysis for '{device_name}'"
         )
 
@@ -66,7 +66,7 @@ def analyze_device_name_with_ai(device_name):
         return ai_mapping
 
     except Exception as e:
-        print(f"\u274c Error in device analysis: {e}")
+        logger.info(f"\u274c Error in device analysis: {e}")
         return {
             "floor_number": 1,
             "security_level": 5,
@@ -479,16 +479,16 @@ def process_uploaded_files(
                         for device, mapping in user_mappings.items():
                             mapping["source"] = "user_confirmed"
                             ai_mapping_store.set(device, mapping)
-                        print(
+                        logger.info(
                             f"✅ Loaded {len(user_mappings)} saved mappings - AI SKIPPED"
                         )
                     else:
-                        print("🆕 First upload - AI will be used")
+                        logger.info("🆕 First upload - AI will be used")
                         from services.ai_mapping_store import ai_mapping_store
 
                         ai_mapping_store.clear()
                 except Exception as e:  # pragma: no cover - best effort
-                    print(f"⚠️ Error: {e}")
+                    logger.info(f"⚠️ Error: {e}")
 
             else:
                 upload_results.append(build_failure_alert(result["error"]))
@@ -558,7 +558,7 @@ def handle_modal_dialogs(
 def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Dict):
     """Save confirmed mappings for AI training"""
     try:
-        print(f"🤖 Saving AI training data for {filename}")
+        logger.info(f"🤖 Saving AI training data for {filename}")
 
         # Prepare training data
         training_data = {
@@ -582,9 +582,9 @@ def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Di
                 )
                 ai_mappings = {v: k for k, v in mappings.items()}
                 ai_plugin.confirm_column_mapping(ai_mappings, session_id)
-                print(f"✅ AI training data saved: {ai_mappings}")
+                logger.info(f"✅ AI training data saved: {ai_mappings}")
         except Exception as ai_e:
-            print(f"⚠️ AI training save failed: {ai_e}")
+            logger.info(f"⚠️ AI training save failed: {ai_e}")
 
         import os
 
@@ -594,10 +594,10 @@ def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Di
         ) as f:
             f.write(json.dumps(training_data) + "\n")
 
-        print(f"✅ Training data saved locally")
+        logger.info(f"✅ Training data saved locally")
 
     except Exception as e:
-        print(f"❌ Error saving training data: {e}")
+        logger.info(f"❌ Error saving training data: {e}")
 
 
 def apply_ai_suggestions(n_clicks, file_info):
@@ -608,7 +608,7 @@ def apply_ai_suggestions(n_clicks, file_info):
     ai_suggestions = file_info.get("ai_suggestions", {})
     columns = file_info.get("columns", [])
 
-    print(f"🤖 Applying AI suggestions for {len(columns)} columns")
+    logger.info(f"🤖 Applying AI suggestions for {len(columns)} columns")
 
     # Apply AI suggestions with confidence > 0.3
     suggested_values = []
@@ -619,10 +619,10 @@ def apply_ai_suggestions(n_clicks, file_info):
 
         if confidence > 0.3 and field:
             suggested_values.append(field)
-            print(f"   ✅ {column} -> {field} ({confidence:.0%})")
+            logger.info(f"   ✅ {column} -> {field} ({confidence:.0%})")
         else:
             suggested_values.append(None)
-            print(f"   ❓ {column} -> No confident suggestion ({confidence:.0%})")
+            logger.info(f"   ❓ {column} -> No confident suggestion ({confidence:.0%})")
 
     return [suggested_values]
 
@@ -632,7 +632,7 @@ def populate_device_modal_with_learning(is_open, file_info):
     if not is_open:
         return "Modal closed"
 
-    print(f"🔧 Populating device modal...")
+    logger.info(f"🔧 Populating device modal...")
 
     try:
         uploaded_data = get_uploaded_data()
@@ -643,23 +643,23 @@ def populate_device_modal_with_learning(is_open, file_info):
         device_columns = ["door_id", "device_name", "location", "door", "device"]
 
         for filename, df in uploaded_data.items():
-            print(f"📄 Processing {filename} with {len(df)} rows")
+            logger.info(f"📄 Processing {filename} with {len(df)} rows")
 
             for col in df.columns:
                 col_lower = col.lower().strip()
                 if any(device_col in col_lower for device_col in device_columns):
                     unique_vals = df[col].dropna().unique()
                     all_devices.update(str(val) for val in unique_vals)
-                    print(f"   Found {len(unique_vals)} devices in column '{col}'")
+                    logger.info(f"   Found {len(unique_vals)} devices in column '{col}'")
 
                     # ADD THIS DEBUG SECTION
-                    print(f"🔍 DEBUG - First 10 device names from '{col}':")
+                    logger.debug(f"🔍 DEBUG - First 10 device names from '{col}':")
                     sample_devices = unique_vals[:10]
                     for i, device in enumerate(sample_devices, 1):
-                        print(f"   {i:2d}. {device}")
+                        logger.debug(f"   {i:2d}. {device}")
 
                     # TEST AI on sample devices
-                    print(f"🤖 DEBUG - Testing AI on sample devices:")
+                    logger.debug(f"🤖 DEBUG - Testing AI on sample devices:")
                     try:
                         from services.ai_device_generator import AIDeviceGenerator
 
@@ -668,20 +668,20 @@ def populate_device_modal_with_learning(is_open, file_info):
                         for device in sample_devices[:5]:  # Test first 5
                             try:
                                 result = ai_gen.generate_device_attributes(str(device))
-                                print(
+                                logger.info(
                                     f"   🚪 '{device}' → Name: '{result.device_name}', Floor: {result.floor_number}, Security: {result.security_level}, Confidence: {result.confidence:.1%}"
                                 )
-                                print(
+                                logger.info(
                                     f"      Access: Entry={result.is_entry}, Exit={result.is_exit}, Elevator={result.is_elevator}"
                                 )
-                                print(f"      Reasoning: {result.ai_reasoning}")
+                                logger.info(f"      Reasoning: {result.ai_reasoning}")
                             except Exception as e:
-                                print(f"   ❌ AI error on '{device}': {e}")
+                                logger.info(f"   ❌ AI error on '{device}': {e}")
                     except Exception as e:
-                        print(f"🤖 DEBUG - AI import error: {e}")
+                        logger.debug(f"🤖 DEBUG - AI import error: {e}")
 
         actual_devices = sorted(list(all_devices))
-        print(f"🎯 Total unique devices found: {len(actual_devices)}")
+        logger.info(f"🎯 Total unique devices found: {len(actual_devices)}")
 
         # Rest of your existing function...
         if not actual_devices:
@@ -801,7 +801,7 @@ def populate_device_modal_with_learning(is_open, file_info):
         )
 
     except Exception as e:
-        print(f"❌ Error in device modal: {e}")
+        logger.info(f"❌ Error in device modal: {e}")
         return dbc.Alert(f"Error: {e}", color="danger")
 
 
@@ -1050,7 +1050,7 @@ def save_confirmed_device_mappings(
 
         ai_mapping_store.update(user_mappings)
 
-        print(
+        logger.info(
             f"\u2705 Saved {len(user_mappings)} confirmed device mappings to database"
         )
 
@@ -1065,7 +1065,7 @@ def save_confirmed_device_mappings(
         return success_alert, False, False
 
     except Exception as e:
-        print(f"\u274c Error saving device mappings: {e}")
+        logger.info(f"\u274c Error saving device mappings: {e}")
         error_alert = dbc.Toast(
             f"❌ Error saving mappings: {e}",
             header="Error",
@@ -1204,4 +1204,4 @@ __all__ = [
     "register_callbacks",
 ]
 
-print(f"\U0001f50d FILE_UPLOAD.PY LOADED - Callbacks should be registered")
+logger.info(f"\U0001f50d FILE_UPLOAD.PY LOADED - Callbacks should be registered")

@@ -23,13 +23,13 @@ def create_summary_cards(analytics_data: Dict[str, Any]) -> html.Div:
     if not analytics_data:
         return html.Div("No analytics data available")
 
-    print(f"📊 Creating summary cards from: {analytics_data.keys()}")
+    logger.info(f"📊 Creating summary cards from: {analytics_data.keys()}")
 
     cards = []
 
     # Total Events Card - FIXED
     total_events = analytics_data.get('total_events', 0)
-    print(f"   Total events: {total_events}")
+    logger.info(f"   Total events: {total_events}")
     cards.append(
         dbc.Col([
             dbc.Card([
@@ -47,7 +47,7 @@ def create_summary_cards(analytics_data: Dict[str, Any]) -> html.Div:
         analytics_data.get('unique_users', 0) or
         len(analytics_data.get('top_users', []))
     )
-    print(f"   Active users: {active_users}")
+    logger.info(f"   Active users: {active_users}")
     cards.append(
         dbc.Col([
             dbc.Card([
@@ -65,7 +65,7 @@ def create_summary_cards(analytics_data: Dict[str, Any]) -> html.Div:
         analytics_data.get('unique_doors', 0) or
         len(analytics_data.get('top_doors', []))
     )
-    print(f"   Active doors: {active_doors}")
+    logger.info(f"   Active doors: {active_doors}")
     cards.append(
         dbc.Col([
             dbc.Card([
