@@ -15,6 +15,16 @@ import logging
 from pathlib import Path
 import mimetypes
 
+# Import common security regex patterns used throughout this module.
+# These constants live in ``core/security_patterns.py`` and are reused in
+# ``core/security_validator.py``. Importing them here ensures ``InputValidator``
+# has access to the pre-defined patterns without duplicating definitions.
+from .security_patterns import (
+    SQL_INJECTION_PATTERNS,
+    XSS_PATTERNS,
+    PATH_TRAVERSAL_PATTERNS,
+)
+
 from utils.unicode_handler import sanitize_unicode_input
 from config.dynamic_config import dynamic_config
 
