@@ -293,47 +293,57 @@ class AnalyticsService:
         else:
             return {'status': 'error', 'message': f'Unknown source: {source}'}
 
-    def _process_uploaded_data_directly(self, uploaded_data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
-        """Process uploaded data directly - bypasses all other logic"""
+    def _process_uploaded_data_directly(self, uploaded_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Process uploaded CSV files or DataFrames with incremental aggregation."""
         try:
             logger.info(f"Processing {len(uploaded_data)} uploaded files directly...")
 
-            all_dataframes = []
+            from collections import Counter
 
-            for filename, df in uploaded_data.items():
-                logger.info(f"{filename}: {len(df):,} rows")
-                logger.info(f"Original columns: {list(df.columns)}")
+            total_events = 0
+            user_counts: Counter = Counter()
+            door_counts: Counter = Counter()
+            min_ts: Optional[pd.Timestamp] = None
+            max_ts: Optional[pd.Timestamp] = None
 
-                df_processed = map_and_clean(df.copy())
-                logger.info(f"Columns mapped: {list(df_processed.columns)}")
+            for filename, source in uploaded_data.items():
+                if isinstance(source, (str, Path)):
+                    reader = pd.read_csv(source, chunksize=50000)
+                else:
+                    reader = [source]
 
-                all_dataframes.append(df_processed)
+                for chunk in reader:
+                    logger.info(f"{filename} chunk rows: {len(chunk):,}")
+                    df_processed = map_and_clean(chunk)
 
-            # Combine all data
-            combined_df = pd.concat(all_dataframes, ignore_index=True)
+                    total_events += len(df_processed)
 
-            # Calculate metrics
-            total_events = len(combined_df)
-            active_users = combined_df['person_id'].nunique() if 'person_id' in combined_df.columns else 0
-            active_doors = combined_df['door_id'].nunique() if 'door_id' in combined_df.columns else 0
+                    if 'person_id' in df_processed.columns:
+                        user_counts.update(df_processed['person_id'].dropna().astype(str))
 
-            # Calculate proper date range
+                    if 'door_id' in df_processed.columns:
+                        door_counts.update(df_processed['door_id'].dropna().astype(str))
+
+                    if 'timestamp' in df_processed.columns:
+                        ts = pd.to_datetime(df_processed['timestamp'], errors='coerce').dropna()
+                        if not ts.empty:
+                            cur_min = ts.min()
+                            cur_max = ts.max()
+                            if min_ts is None or cur_min < min_ts:
+                                min_ts = cur_min
+                            if max_ts is None or cur_max > max_ts:
+                                max_ts = cur_max
+
             date_range = {'start': 'Unknown', 'end': 'Unknown'}
-            if 'timestamp' in combined_df.columns:
-                # Convert timestamp to datetime if it's not already
-                combined_df['timestamp'] = pd.to_datetime(combined_df['timestamp'], errors='coerce')
-                valid_timestamps = combined_df['timestamp'].dropna()
+            if min_ts is not None and max_ts is not None:
+                date_range = {
+                    'start': min_ts.strftime('%Y-%m-%d'),
+                    'end': max_ts.strftime('%Y-%m-%d')
+                }
+                logger.info(f"Date range: {date_range['start']} to {date_range['end']}")
 
-                if not valid_timestamps.empty:
-                    start_date = valid_timestamps.min()
-                    end_date = valid_timestamps.max()
-                    date_range = {
-                        'start': start_date.strftime('%Y-%m-%d'),
-                        'end': end_date.strftime('%Y-%m-%d')
-                    }
-                    logger.info(
-                        f"Date range: {date_range['start']} to {date_range['end']}"
-                    )
+            active_users = len(user_counts)
+            active_doors = len(door_counts)
 
             result = {
                 'status': 'success',
@@ -346,13 +356,13 @@ class AnalyticsService:
                 'date_range': date_range,
                 'top_users': [
                     {'user_id': user, 'count': int(count)}
-                    for user, count in combined_df['person_id'].value_counts().head(10).items()
-                ] if 'person_id' in combined_df.columns else [],
+                    for user, count in user_counts.most_common(10)
+                ],
                 'top_doors': [
                     {'door_id': door, 'count': int(count)}
-                    for door, count in combined_df['door_id'].value_counts().head(10).items()
-                ] if 'door_id' in combined_df.columns else [],
-                'timestamp': datetime.now().isoformat()
+                    for door, count in door_counts.most_common(10)
+                ],
+                'timestamp': datetime.now().isoformat(),
             }
 
             logger.info("Direct processing result:")

@@ -25,6 +25,7 @@ and generates summaries for the UI.
 - `get_analytics_from_uploaded_data()` – process files directly
 - `get_analytics_by_source(source)` – dispatch to uploaded, sample or database data
 - `_process_uploaded_data_directly()` – internal helper for uploaded datasets
+-   now streams CSV files in chunks using `pandas.read_csv` to reduce memory usage
 - `summarize_dataframe(df)` – build counts and distributions from a dataframe
 
 ## Data Flow
@@ -33,3 +34,10 @@ and generates summaries for the UI.
 2. `AnalyticsDataAccessor` loads mappings and cleans each file.
 3. Cleaned data is combined and handed to `AnalyticsService`.
 4. Analytics are computed and returned to the dashboard.
+
+### Incremental Processing
+
+`_process_uploaded_data_directly` no longer loads every uploaded file into
+memory at once. When file paths are supplied it uses `pandas.read_csv` with a
+`chunksize` to stream records and aggregate counts incrementally. This prevents
+excessive memory usage when processing very large CSV uploads.
