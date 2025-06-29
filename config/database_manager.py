@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """
 Database Manager - Fixed imports for streamlined architecture
 """
