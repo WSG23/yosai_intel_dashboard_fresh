@@ -4,7 +4,12 @@ Simple file validation utilities
 import pandas as pd
 import io
 import base64
+import binascii
+import json
+import logging
 from typing import Dict, Any, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 from .unicode_handler import sanitize_unicode_input
 
@@ -67,8 +72,11 @@ def safe_decode_file(contents: str) -> Optional[bytes]:
         decoded = base64.b64decode(content_string)
         return decoded
 
-    except Exception:
+    except (binascii.Error, ValueError):
         return None
+    except Exception as e:  # pragma: no cover - unexpected
+        logger.exception("Unexpected error decoding file", exc_info=e)
+        raise
 
 
 def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
@@ -109,5 +117,13 @@ def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFr
         else:
             return None, f"Unsupported file type: {filename}"
 
-    except Exception as e:
+    except (
+        UnicodeDecodeError,
+        ValueError,
+        pd.errors.ParserError,
+        json.JSONDecodeError,
+    ) as e:
         return None, f"Error processing file: {str(e)}"
+    except Exception as e:  # pragma: no cover - unexpected
+        logger.exception("Unexpected error processing file", exc_info=e)
+        raise
