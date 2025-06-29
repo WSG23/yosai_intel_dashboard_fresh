@@ -4,20 +4,20 @@ Complete Integration Tests for Analytics System
 """
 import pytest
 import pandas as pd
-from services.analytics_service import get_analytics_service
+from services.analytics_service import get_analytics_service, create_analytics_service
 from models.base import ModelFactory
 
 
 def test_analytics_service_creation():
     """Test analytics service can be created"""
-    service = get_analytics_service()
+    service = get_analytics_service(create_analytics_service())
     assert service is not None
     assert hasattr(service, 'health_check')
 
 
 def test_analytics_with_sample_data():
     """Test analytics generation with sample data"""
-    service = get_analytics_service()
+    service = get_analytics_service(create_analytics_service())
     result = service.get_analytics_by_source("sample")
 
     assert result['status'] == 'success'
@@ -40,7 +40,7 @@ def test_model_factory():
 
 def test_health_check():
     """Test service health check"""
-    service = get_analytics_service()
+    service = get_analytics_service(create_analytics_service())
     health = service.health_check()
 
     assert 'service' in health
