@@ -16,6 +16,10 @@ from .config import (
     get_database_config, 
     get_security_config
 )
+from .connection_pool import DatabaseConnectionPool
+from .connection_retry import ConnectionRetryManager, RetryConfig
+from .unicode_handler import UnicodeQueryHandler
+from .database_exceptions import DatabaseError, ConnectionRetryExhausted, ConnectionValidationFailed, UnicodeEncodingError
 
 # Import dynamic configuration helpers
 from .dynamic_config import dynamic_config, DynamicConfigManager
@@ -26,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 # Try to import database manager safely
 try:
-    from .database_manager import DatabaseManager, DatabaseConnection, MockConnection
+    from .database_manager import DatabaseManager, DatabaseConnection, MockConnection, EnhancedPostgreSQLManager
     DATABASE_MANAGER_AVAILABLE = True
 except ImportError as e:
     logger.info(f"Warning: Database manager not available: {e}")
@@ -46,6 +50,15 @@ __all__ = [
     'get_app_config',
     'get_database_config',
     'get_security_config',
+    'EnhancedPostgreSQLManager',
+    'DatabaseConnectionPool',
+    'ConnectionRetryManager',
+    'RetryConfig',
+    'UnicodeQueryHandler',
+    'DatabaseError',
+    'ConnectionRetryExhausted',
+    'ConnectionValidationFailed',
+    'UnicodeEncodingError',
     'DatabaseManager',
     'DatabaseConnection',
     'MockConnection',

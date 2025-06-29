@@ -9,14 +9,7 @@ from pathlib import Path
 from typing import Optional, Any, Dict, Protocol
 from dataclasses import dataclass
 
-logger = logging.getLogger(__name__)
-
-
-# Local exception definitions (avoid circular imports)
-class DatabaseError(Exception):
-    """Database operation errors"""
-    pass
-
+from .database_exceptions import DatabaseError, ConnectionValidationFailed
 
 @dataclass
 class DatabaseConfig:
@@ -294,4 +287,44 @@ __all__ = [
     'DatabaseManager',
     'DatabaseError',
     'create_database_manager'
+    'EnhancedPostgreSQLManager',
 ]
+
+class EnhancedPostgreSQLManager(DatabaseManager):
+    """PostgreSQL manager with retry, pooling and Unicode safety."""
+
+    def __init__(self, config: DatabaseConfig, retry_config: RetryConfig | None = None):
+        super().__init__(config)
+        from .connection_retry import ConnectionRetryManager, RetryConfig
+        from .connection_pool import DatabaseConnectionPool
+        from .unicode_handler import UnicodeQueryHandler
+
+        self.retry_manager = ConnectionRetryManager(retry_config or RetryConfig())
+        self.pool = DatabaseConnectionPool(self._create_connection, self.config.connection_pool_size, self.config.connection_timeout)
+        self.unicode_handler = UnicodeQueryHandler
+
+    def execute_query_with_retry(self, query: str, params: Optional[Dict] = None):
+        encoded_query = self.unicode_handler.safe_encode_query(query)
+        encoded_params = self.unicode_handler.safe_encode_params(params)
+
+        def run():
+            conn = self.pool.get_connection()
+            try:
+                return conn.execute_query(encoded_query, encoded_params)
+            finally:
+                self.pool.release_connection(conn)
+
+        return self.retry_manager.run_with_retry(run)
+
+    def health_check_with_retry(self) -> bool:
+        def run():
+            conn = self.pool.get_connection()
+            try:
+                if not conn.health_check():
+                    raise ConnectionValidationFailed("health check failed")
+                return True
+            finally:
+                self.pool.release_connection(conn)
+
+        return self.retry_manager.run_with_retry(run)
+
