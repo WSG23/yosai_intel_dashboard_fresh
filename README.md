@@ -85,6 +85,11 @@ following steps:
    ```bash
    pip install -r requirements.txt
    ```
+   If you encounter errors like `module 'flask' has no attribute 'helpers'`,
+   ensure there are no local directories named `flask`, `pandas`, or `yaml`
+   in the project root. These placeholder packages can shadow the real
+   libraries installed from `requirements.txt`. Delete them before running
+   the application.
 
 3. Restart your editor so Pylance picks up the correct interpreter.
 
