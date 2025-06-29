@@ -33,11 +33,11 @@ learning_service = DeviceLearningService()
 def analyze_device_name_with_ai(device_name):
     """User mappings ALWAYS override AI - FIXED"""
     try:
-        from components.simple_device_mapping import _device_ai_mappings
+        from services.ai_mapping_store import ai_mapping_store
 
         # Check for user-confirmed mapping first
-        if device_name in _device_ai_mappings:
-            mapping = _device_ai_mappings[device_name]
+        mapping = ai_mapping_store.get(device_name)
+        if mapping:
             if mapping.get("source") == "user_confirmed":
                 print(f"\U0001f512 Using USER CONFIRMED mapping for '{device_name}'")
                 return mapping
@@ -504,20 +504,20 @@ def process_uploaded_files(
                 try:
                     user_mappings = learning_service.get_user_device_mappings(filename)
                     if user_mappings:
-                        from components.simple_device_mapping import _device_ai_mappings
+                        from services.ai_mapping_store import ai_mapping_store
 
-                        _device_ai_mappings.clear()
+                        ai_mapping_store.clear()
                         for device, mapping in user_mappings.items():
                             mapping["source"] = "user_confirmed"
-                            _device_ai_mappings[device] = mapping
+                            ai_mapping_store.set(device, mapping)
                         print(
                             f"✅ Loaded {len(user_mappings)} saved mappings - AI SKIPPED"
                         )
                     else:
                         print("🆕 First upload - AI will be used")
-                        from components.simple_device_mapping import _device_ai_mappings
+                        from services.ai_mapping_store import ai_mapping_store
 
-                        _device_ai_mappings.clear()
+                        ai_mapping_store.clear()
                 except Exception as e:  # pragma: no cover - best effort
                     print(f"⚠️ Error: {e}")
 
@@ -1085,9 +1085,9 @@ def save_confirmed_device_mappings(
         learning_service.save_user_device_mappings(filename, user_mappings)
 
         # Update global mappings
-        from components.simple_device_mapping import _device_ai_mappings
+        from services.ai_mapping_store import ai_mapping_store
 
-        _device_ai_mappings.update(user_mappings)
+        ai_mapping_store.update(user_mappings)
 
         print(
             f"\u2705 Saved {len(user_mappings)} confirmed device mappings to database"

@@ -1,6 +1,6 @@
 import pytest
 from pages.file_upload import analyze_device_name_with_ai
-from components.simple_device_mapping import _device_ai_mappings
+from services.ai_mapping_store import ai_mapping_store
 from services.ai_device_generator import AIDeviceGenerator, DeviceAttributes
 
 class DummyAttrs:
@@ -18,14 +18,14 @@ class DummyAttrs:
 
 def test_learned_mapping_priority(monkeypatch):
     """Ensure learned mappings are used before invoking AI"""
-    _device_ai_mappings.clear()
-    _device_ai_mappings['door_1'] = {
+    ai_mapping_store.clear()
+    ai_mapping_store.set('door_1', {
         'floor_number': 2,
         'security_level': 7,
         'confidence': 0.95,
         'is_entry': True,
         'device_name': 'Door 1'
-    }
+    })
 
     def fail_generate(self, *args, **kwargs):
         raise AssertionError('AI should not be called')
@@ -40,7 +40,7 @@ def test_learned_mapping_priority(monkeypatch):
 
 def test_fallback_to_ai(monkeypatch):
     """If no learned mapping exists, AI generator should be used"""
-    _device_ai_mappings.clear()
+    ai_mapping_store.clear()
 
     def fake_generate(self, name):
         return DummyAttrs()

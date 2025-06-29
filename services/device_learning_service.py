@@ -138,16 +138,16 @@ class DeviceLearningService:
 
     def apply_learned_mappings_to_global_store(self, df: pd.DataFrame, filename: str):
         """Apply learned mappings to the global AI mappings store - NEW METHOD"""
-        from components.simple_device_mapping import _device_ai_mappings
+        from services.ai_mapping_store import ai_mapping_store
 
         learned_mappings = self.get_learned_mappings(df, filename)
 
         if learned_mappings:
             # Clear existing AI mappings
-            _device_ai_mappings.clear()
+            ai_mapping_store.clear()
 
             # Apply learned mappings
-            _device_ai_mappings.update(learned_mappings)
+            ai_mapping_store.update(learned_mappings)
 
             logger.info(
                 f"🤖 Applied {len(learned_mappings)} learned mappings to AI store"

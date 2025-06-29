@@ -82,15 +82,15 @@ class ConsolidatedLearningService:
     def apply_to_global_store(self, df: pd.DataFrame, filename: str) -> bool:
         """Apply learned mappings to global device mapping store."""
         try:
-            from components.simple_device_mapping import _device_ai_mappings
+            from services.ai_mapping_store import ai_mapping_store
         except ImportError:
             self.logger.warning("Could not import global device mappings store")
             return False
 
         learned = self.get_learned_mappings(df, filename)
         if learned['match_type'] != 'none' and learned['device_mappings']:
-            _device_ai_mappings.clear()
-            _device_ai_mappings.update(learned['device_mappings'])
+            ai_mapping_store.clear()
+            ai_mapping_store.update(learned['device_mappings'])
             self.logger.info(
                 f"Applied {len(learned['device_mappings'])} learned device mappings"
             )

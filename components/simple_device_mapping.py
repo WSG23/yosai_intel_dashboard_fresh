@@ -11,6 +11,7 @@ import logging
 
 # ADD after existing imports
 from services.door_mapping_service import door_mapping_service
+from services.ai_mapping_store import ai_mapping_store
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +23,6 @@ special_areas_options = [
     {"label": "Restricted", "value": "is_restricted"},
 ]
 
-# Global storage for AI device mappings
-_device_ai_mappings = {}
 
 
 def apply_learned_device_mappings(df: pd.DataFrame, filename: str) -> bool:
@@ -67,14 +66,13 @@ def save_confirmed_device_mappings(
 
 def generate_ai_device_defaults(df: pd.DataFrame, client_profile: str = "auto"):
     """Generate AI-based defaults for device mapping modal."""
-    global _device_ai_mappings
     try:
         result = door_mapping_service.process_uploaded_data(df, client_profile)
-        _device_ai_mappings.clear()
+        ai_mapping_store.clear()
         for device in result["devices"]:
-            _device_ai_mappings[device["door_id"]] = device
+            ai_mapping_store.set(device["door_id"], device)
         logger.info(
-            f"Generated AI defaults for {len(_device_ai_mappings)} devices"
+            f"Generated AI defaults for {len(ai_mapping_store)} devices"
         )
     except Exception as e:
         logger.error(f"Error generating AI device defaults: {e}")
@@ -82,7 +80,6 @@ def generate_ai_device_defaults(df: pd.DataFrame, client_profile: str = "auto"):
 
 def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
     """Create simple device mapping modal with AI learning transfer"""
-    global _device_ai_mappings
 
     if not devices:
         devices = ["lobby_door", "office_201", "server_room", "elevator_1"]
@@ -90,7 +87,7 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
     # Create rows for each device
     device_rows = []
     for i, device in enumerate(devices):
-        ai_data = _device_ai_mappings.get(device, {})
+        ai_data = ai_mapping_store.get(device)
 
         default_floor = ai_data.get("floor_number")
         default_security = ai_data.get("security_level", 5)
@@ -193,22 +190,22 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
                     "Manually assign floor numbers and security levels to devices. ",
                     (
                         html.Strong("AI suggestions have been pre-filled!")
-                        if _device_ai_mappings
+                        if len(ai_mapping_store)
                         else "Fill in device details manually."
                     ),
                 ],
-                color="info" if _device_ai_mappings else "warning",
+                color="info" if len(ai_mapping_store) else "warning",
             ),
             (
                 dbc.Alert(
                     [
                         html.Strong(f"🤖 AI Transfer: "),
-                        f"Loaded {len(_device_ai_mappings)} AI-learned device mappings as defaults",
+                        f"Loaded {len(ai_mapping_store)} AI-learned device mappings as defaults",
                     ],
                     color="light",
                     className="small",
                 )
-                if _device_ai_mappings
+                if len(ai_mapping_store)
                 else None
             ),
             dbc.Row(
@@ -386,7 +383,6 @@ def toggle_simple_device_modal(open_clicks, cancel_clicks, save_clicks, is_open)
 
 def save_user_inputs(floors, security, access, devices):
     """Save user inputs immediately when they change"""
-    global _device_ai_mappings
 
     if not devices:
         return ""
@@ -397,16 +393,19 @@ def save_user_inputs(floors, security, access, devices):
         user_security = security[i] if i < len(security) and security[i] is not None else 5
         user_access = access[i] if i < len(access) else []
 
-        _device_ai_mappings[device] = {
-            "floor_number": user_floor,
-            "security_level": user_security,
-            "is_entry": "entry" in user_access,
-            "is_exit": "exit" in user_access,
-            "confidence": 1.0,
-            "device_name": device,
-            "ai_reasoning": "User input",
-            "source": "user",
-        }
+        ai_mapping_store.set(
+            device,
+            {
+                "floor_number": user_floor,
+                "security_level": user_security,
+                "is_entry": "entry" in user_access,
+                "is_exit": "exit" in user_access,
+                "confidence": 1.0,
+                "device_name": device,
+                "ai_reasoning": "User input",
+                "source": "user",
+            },
+        )
 
     return ""
 
