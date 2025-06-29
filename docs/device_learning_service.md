@@ -29,3 +29,20 @@ when similar files are uploaded again.
    `data/device_learning/`.
 3. When a matching file is processed later, mappings are loaded and
    applied automatically.
+
+### Regenerating `learned_mappings.pkl`
+
+Older versions of the dashboard stored learned mappings in
+`data/learned_mappings.pkl`. The current service writes mappings to
+`data/learned_mappings.json` instead and will automatically migrate the
+pickle file if it exists. If you need to recreate the legacy
+`learned_mappings.pkl` for testing, run the application and save some
+device mappings, then manually convert the JSON output:
+
+```bash
+python app.py  # upload a file and confirm mappings
+cp data/learned_mappings.json data/learned_mappings.pkl
+```
+
+Alternatively, download a sample file from
+`docs/example_data/training/` and place it in the `data` directory.
