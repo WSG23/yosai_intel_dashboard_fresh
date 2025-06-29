@@ -170,7 +170,7 @@ if __name__ == "__main__":
             host = os.getenv("HOST", "127.0.0.1")
             
             logger.info(f"Starting development server on {host}:{port}")
-            app.run_server(
+            app.run(
                 debug=debug,
                 host=host,
                 port=port,

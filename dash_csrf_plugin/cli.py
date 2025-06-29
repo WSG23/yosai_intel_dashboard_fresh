@@ -126,7 +126,7 @@ def run(app_module, host, port, debug):
         
         # Run the app
         click.echo(f"🚀 Starting Dash app on {host}:{port}")
-        app.run_server(host=host, port=port, debug=debug)
+        app.run(host=host, port=port, debug=debug)
         
     except ImportError as e:
         click.echo(f"❌ Could not import module '{app_module}': {e}", err=True)

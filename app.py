@@ -99,7 +99,7 @@ def main():
 
         # Run the application
         try:
-            app.run_server(
+            app.run(
                 debug=app_config.debug, host=app_config.host, port=app_config.port
             )
         except KeyboardInterrupt:
