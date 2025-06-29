@@ -18,3 +18,13 @@ def test_concurrent_add_file(tmp_path):
     data = store.get_all_data()
     for i in range(10):
         pd.testing.assert_frame_equal(data[f"file_{i}.csv"], pd.DataFrame({"val": [i]}))
+
+    # verify files persisted to disk and can be reloaded
+    parquet_files = list(tmp_path.glob("*.parquet"))
+    assert len(parquet_files) == 10
+    reloaded = UploadedDataStore(storage_dir=tmp_path)
+    assert set(reloaded.get_filenames()) == {f"file_{i}.csv" for i in range(10)}
+    for i in range(10):
+        pd.testing.assert_frame_equal(
+            reloaded.get_all_data()[f"file_{i}.csv"], pd.DataFrame({"val": [i]})
+        )
