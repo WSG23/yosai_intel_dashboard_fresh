@@ -4,6 +4,7 @@ Simplified Services Package
 """
 import logging
 from .ai_mapping_store import ai_mapping_store
+from .data_loader import DataLoader
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,6 @@ except ImportError as e:
 __all__ = [
     'FileProcessor', 'FILE_PROCESSOR_AVAILABLE',
     'get_analytics_service', 'create_analytics_service', 'AnalyticsService',
-    'ANALYTICS_SERVICE_AVAILABLE',
+    'ANALYTICS_SERVICE_AVAILABLE', 'DataLoader',
     'ai_mapping_store'
 ]

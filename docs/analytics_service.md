@@ -13,7 +13,7 @@ and generates summaries for the UI.
 
 ## Major Classes and Methods
 
-### `AnalyticsDataAccessor`
+### `DataLoader`
 
 - `get_processed_database()` – return combined dataframe and metadata
 - `_load_consolidated_mappings()` – read saved mapping information
@@ -31,7 +31,7 @@ and generates summaries for the UI.
 ## Data Flow
 
 1. User uploads files or selects a data source.
-2. `AnalyticsDataAccessor` loads mappings and cleans each file.
+2. `DataLoader` loads mappings and cleans each file.
 3. Cleaned data is combined and handed to `AnalyticsService`.
 4. Analytics are computed and returned to the dashboard.
 

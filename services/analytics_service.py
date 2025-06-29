@@ -3,7 +3,6 @@
 Analytics Service - Enhanced with Unique Patterns Analysis
 """
 import pandas as pd
-import numpy as np
 import json
 import logging
 from pathlib import Path
@@ -11,6 +10,12 @@ from typing import Dict, Any, List, Optional, Tuple
 
 from services.file_processing_service import FileProcessingService
 from services.database_analytics_service import DatabaseAnalyticsService
+from services.data_loader import DataLoader
+from services.analytics_summary import (
+    generate_basic_analytics,
+    generate_sample_analytics,
+    summarize_dataframe,
+)
 
 from utils.mapping_helpers import map_and_clean
 from datetime import datetime, timedelta
@@ -19,151 +24,6 @@ import os
 logger = logging.getLogger(__name__)
 
 
-class AnalyticsDataAccessor:
-    """Modular data accessor for analytics processing"""
-
-    def __init__(self, base_data_path: str = "data"):
-        self.base_path = Path(base_data_path)
-        self.mappings_file = self.base_path / "learned_mappings.json"
-        self.session_storage = self.base_path.parent / "session_storage"
-
-    def get_processed_database(self) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """Get the final processed database after column/device mapping"""
-        mappings_data = self._load_consolidated_mappings()
-        uploaded_data = self._get_uploaded_data()
-
-        if not uploaded_data:
-            return pd.DataFrame(), {}
-
-        combined_df, metadata = self._apply_mappings_and_combine(uploaded_data, mappings_data)
-        return combined_df, metadata
-
-    def _load_consolidated_mappings(self) -> Dict[str, Any]:
-        """Load consolidated mappings from learned_mappings.json"""
-        try:
-            if self.mappings_file.exists():
-                with open(self.mappings_file, "r") as f:
-                    return json.load(f)
-            return {}
-        except Exception as e:
-            logger.error(f"Error loading mappings: {e}")
-            return {}
-
-    def _get_uploaded_data(self) -> Dict[str, pd.DataFrame]:
-        """Get uploaded data from file_upload module"""
-        try:
-            from pages.file_upload import get_uploaded_data
-            uploaded_data = get_uploaded_data()
-
-            if uploaded_data:
-                logger.info(f"Found {len(uploaded_data):,} uploaded files")
-                for filename, df in uploaded_data.items():
-                    logger.info(f"{filename}: {len(df):,} rows")
-                return uploaded_data
-            else:
-                logger.info("No uploaded data found")
-                return {}
-
-        except ImportError:
-            logger.error("Could not import uploaded data from file_upload")
-            return {}
-        except Exception as e:
-            logger.error(f"Error getting uploaded data: {e}")
-            return {}
-
-    def _apply_mappings_and_combine(self, uploaded_data: Dict[str, pd.DataFrame],
-                                   mappings_data: Dict[str, Any]) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """Apply learned mappings and combine all data"""
-        combined_dfs = []
-        metadata = {
-            'total_files': len(uploaded_data),
-            'processed_files': 0,
-            'total_records': 0,
-            'unique_users': set(),
-            'unique_devices': set(),
-            'date_range': {'start': None, 'end': None}
-        }
-
-        for filename, df in uploaded_data.items():
-            try:
-                mapped_df = self._apply_column_mappings(df, filename, mappings_data)
-                enriched_df = self._apply_device_mappings(mapped_df, filename, mappings_data)
-
-                enriched_df['source_file'] = filename
-                enriched_df['processed_at'] = datetime.now()
-
-                combined_dfs.append(enriched_df)
-                metadata['processed_files'] += 1
-                metadata['total_records'] += len(enriched_df)
-
-                if 'person_id' in enriched_df.columns:
-                    metadata['unique_users'].update(enriched_df['person_id'].dropna().unique())
-                if 'door_id' in enriched_df.columns:
-                    metadata['unique_devices'].update(enriched_df['door_id'].dropna().unique())
-
-                if 'timestamp' in enriched_df.columns:
-                    dates = pd.to_datetime(enriched_df['timestamp'], errors='coerce').dropna()
-                    if len(dates) > 0:
-                        if metadata['date_range']['start'] is None:
-                            metadata['date_range']['start'] = dates.min()
-                            metadata['date_range']['end'] = dates.max()
-                        else:
-                            metadata['date_range']['start'] = min(metadata['date_range']['start'], dates.min())
-                            metadata['date_range']['end'] = max(metadata['date_range']['end'], dates.max())
-
-            except Exception as e:
-                logger.error(f"Error processing {filename}: {e}")
-                continue
-
-        if combined_dfs:
-            final_df = pd.concat(combined_dfs, ignore_index=True)
-            metadata['unique_users'] = len(metadata['unique_users'])
-            metadata['unique_devices'] = len(metadata['unique_devices'])
-            return final_df, metadata
-
-        return pd.DataFrame(), metadata
-
-    def _apply_column_mappings(self, df: pd.DataFrame, filename: str,
-                              mappings_data: Dict[str, Any]) -> pd.DataFrame:
-        """Apply learned column mappings"""
-        for fingerprint, mapping_info in mappings_data.items():
-            if mapping_info.get('filename') == filename:
-                column_mappings = mapping_info.get('column_mappings', {})
-                if column_mappings:
-                    return df.rename(columns=column_mappings)
-
-        # Fallback to standard mapping patterns
-        standard_mappings = {
-            'Timestamp': 'timestamp',
-            'Person ID': 'person_id',
-            'Token ID': 'token_id',
-            'Device name': 'door_id',
-            'Access result': 'access_result'
-        }
-
-        return df.rename(columns=standard_mappings)
-
-    def _apply_device_mappings(self, df: pd.DataFrame, filename: str,
-                              mappings_data: Dict[str, Any]) -> pd.DataFrame:
-        """Apply learned device mappings"""
-        if 'door_id' not in df.columns:
-            return df
-
-        device_mappings = {}
-        for fingerprint, mapping_info in mappings_data.items():
-            if mapping_info.get('filename') == filename:
-                device_mappings = mapping_info.get('device_mappings', {})
-                break
-
-        if not device_mappings:
-            return df
-
-        device_attrs_df = pd.DataFrame.from_dict(device_mappings, orient='index')
-        device_attrs_df.index.name = 'door_id'
-        device_attrs_df.reset_index(inplace=True)
-
-        enriched_df = df.merge(device_attrs_df, on='door_id', how='left')
-        return enriched_df
 
 class AnalyticsService:
     """Complete analytics service that integrates all data sources"""
@@ -175,6 +35,7 @@ class AnalyticsService:
         self.database_analytics_service = DatabaseAnalyticsService(
             self.database_manager
         )
+        self.data_loader = DataLoader()
 
     def _initialize_database(self):
         """Initialize database connection"""
@@ -213,7 +74,7 @@ class AnalyticsService:
                 }
 
             # Generate analytics from the properly processed data
-            analytics = self._generate_basic_analytics(combined_df)
+            analytics = generate_basic_analytics(combined_df)
 
             # Add processing information
             analytics.update({
@@ -250,7 +111,7 @@ class AnalyticsService:
 
         # Original logic for when no uploaded data
         if source == "sample":
-            return self._generate_sample_analytics()
+            return generate_sample_analytics()
         elif source == "uploaded":
             return {'status': 'no_data', 'message': 'No uploaded files available'}
         elif source == "database":
@@ -359,51 +220,7 @@ class AnalyticsService:
 
     def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Create a summary dictionary from a combined DataFrame."""
-        total_events = len(df)
-        active_users = df['person_id'].nunique() if 'person_id' in df.columns else 0
-        active_doors = df['door_id'].nunique() if 'door_id' in df.columns else 0
-
-        date_range = {'start': 'Unknown', 'end': 'Unknown'}
-        if 'timestamp' in df.columns:
-            valid_timestamps = df['timestamp'].dropna()
-            if not valid_timestamps.empty:
-                date_range = {
-                    'start': str(valid_timestamps.min().date()),
-                    'end': str(valid_timestamps.max().date()),
-                }
-
-        access_patterns = {}
-        if 'access_result' in df.columns:
-            access_patterns = df['access_result'].value_counts().to_dict()
-
-        top_users = []
-        if 'person_id' in df.columns:
-            user_counts = df['person_id'].value_counts().head(10)
-            top_users = [
-                {'user_id': user_id, 'count': int(count)}
-                for user_id, count in user_counts.items()
-            ]
-
-        top_doors = []
-        if 'door_id' in df.columns:
-            door_counts = df['door_id'].value_counts().head(10)
-            top_doors = [
-                {'door_id': door_id, 'count': int(count)}
-                for door_id, count in door_counts.items()
-            ]
-
-        return {
-            'total_events': total_events,
-            'active_users': active_users,
-            'active_doors': active_doors,
-            'unique_users': active_users,
-            'unique_doors': active_doors,
-            'data_source': 'uploaded',
-            'date_range': date_range,
-            'access_patterns': access_patterns,
-            'top_users': top_users,
-            'top_doors': top_doors,
-        }
+        return summarize_dataframe(df)
 
     def _get_real_uploaded_data(self) -> Dict[str, Any]:
         """FIXED: Actually access your uploaded 395K records"""
@@ -450,119 +267,6 @@ class AnalyticsService:
                 'total_events': 0
             }
 
-    def _create_sample_data(self) -> pd.DataFrame:
-        """Create realistic sample access control data"""
-        np.random.seed(42)
-        n_events = 1000
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=30)
-
-        timestamps = [
-            start_date + timedelta(
-                days=np.random.randint(0, 30),
-                hours=np.random.randint(0, 24),
-                minutes=np.random.randint(0, 60),
-            )
-            for _ in range(n_events)
-        ]
-
-        users = [f"USER{i:04d}" for i in range(1, 51)]
-        doors = [f"DOOR{i:03d}" for i in range(1, 6)]
-
-        data = {
-            'event_id': [f"EVT{i:06d}" for i in range(n_events)],
-            'timestamp': timestamps,
-            'person_id': np.random.choice(users, n_events),
-            'door_id': np.random.choice(doors, n_events),
-            'access_result': np.random.choice(['Granted', 'Denied'], n_events, p=[0.85, 0.15]),
-            'badge_status': np.random.choice(['Valid', 'Invalid', 'Expired'], n_events, p=[0.9, 0.08, 0.02]),
-            'device_status': np.random.choice(['normal', 'maintenance'], n_events, p=[0.95, 0.05]),
-        }
-
-        df = pd.DataFrame(data).sort_values('timestamp').reset_index(drop=True)
-        return df
-
-    def _analyze_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Analyze dataframe and return comprehensive analytics"""
-        if df.empty:
-            return {'total_events': 0}
-
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
-
-        total_events = len(df)
-        unique_users = df['person_id'].nunique()
-        unique_doors = df['door_id'].nunique()
-
-        access_counts = df['access_result'].value_counts()
-        granted_count = access_counts.get('Granted', 0)
-        denied_count = access_counts.get('Denied', 0)
-        success_rate = (granted_count / total_events) * 100 if total_events else 0
-
-        date_range = {
-            'start': df['timestamp'].min().isoformat(),
-            'end': df['timestamp'].max().isoformat(),
-            'days': (df['timestamp'].max() - df['timestamp'].min()).days + 1,
-        }
-
-        hourly_dist = df['timestamp'].dt.hour.value_counts().sort_index().to_dict()
-        daily_dist = df['timestamp'].dt.day_name().value_counts().to_dict()
-
-        return {
-            'total_events': total_events,
-            'unique_users': unique_users,
-            'unique_doors': unique_doors,
-            'success_rate': round(success_rate, 2),
-            'granted_events': int(granted_count),
-            'denied_events': int(denied_count),
-            'date_range': date_range,
-            'hourly_distribution': hourly_dist,
-            'daily_distribution': daily_dist,
-        }
-
-    def _generate_sample_analytics(self) -> Dict[str, Any]:
-        """Generate sample analytics data"""
-        df = self._create_sample_data()
-        basic = self._generate_basic_analytics(df)
-        basic.update(self._analyze_dataframe(df))
-        return basic
-
-    def _generate_basic_analytics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Generate basic analytics from DataFrame - JSON safe version"""
-        try:
-            analytics = {
-                'status': 'success',
-                'total_events': len(df),  # Changed from 'total_rows' to 'total_events'
-                'total_rows': len(df),    # Keep both for compatibility
-                'total_columns': len(df.columns),
-                'summary': {},
-                'timestamp': datetime.now().isoformat(),
-            }
-
-            # Basic statistics for each column
-            for col in df.columns:
-                if pd.api.types.is_numeric_dtype(df[col]):
-                    analytics['summary'][col] = {
-                        'type': 'numeric',
-                        'mean': float(df[col].mean()),
-                        'min': float(df[col].min()),
-                        'max': float(df[col].max()),
-                        'null_count': int(df[col].isnull().sum()),
-                    }
-                else:
-                    value_counts = df[col].value_counts().head(10)
-                    analytics['summary'][col] = {
-                        'type': 'categorical',
-                        'unique_values': int(df[col].nunique()),
-                        # Ensure keys/values are JSON serialisable
-                        'top_values': {str(k): int(v) for k, v in value_counts.items()},
-                        'null_count': int(df[col].isnull().sum()),
-                    }
-
-            return analytics
-
-        except Exception as e:
-            logger.error(f"Error generating basic analytics: {e}")
-            return {'status': 'error', 'message': str(e)}
 
     def _get_analytics_with_fixed_processor(self) -> Dict[str, Any]:
         """Get analytics using the FIXED file processor"""
