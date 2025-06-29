@@ -59,11 +59,19 @@ class SecurityConfig:
 
 
 @dataclass
+class SampleFilesConfig:
+    """File paths for bundled sample datasets"""
+    csv_path: str = "data/sample_data.csv"
+    json_path: str = "data/sample_data.json"
+
+
+@dataclass
 class Config:
     """Main configuration object"""
     app: AppConfig = field(default_factory=AppConfig)
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
     security: SecurityConfig = field(default_factory=SecurityConfig)
+    sample_files: SampleFilesConfig = field(default_factory=SampleFilesConfig)
     environment: str = "development"
 
 
@@ -176,6 +184,11 @@ class ConfigManager:
                 self.config.security.csrf_enabled = bool(sec_data.get("csrf_enabled"))
             if "max_failed_attempts" in sec_data:
                 self.config.security.max_failed_attempts = int(sec_data.get("max_failed_attempts"))
+
+        if "sample_files" in yaml_config:
+            sample_data = yaml_config["sample_files"]
+            self.config.sample_files.csv_path = sample_data.get("csv_path", self.config.sample_files.csv_path)
+            self.config.sample_files.json_path = sample_data.get("json_path", self.config.sample_files.json_path)
     
     def _apply_env_overrides(self) -> None:
         """Apply environment variable overrides"""
@@ -228,6 +241,14 @@ class ConfigManager:
         max_failed = os.getenv("MAX_FAILED_ATTEMPTS")
         if max_failed is not None:
             self.config.security.max_failed_attempts = int(max_failed)
+
+        # Sample file overrides
+        sample_csv = os.getenv("SAMPLE_CSV_PATH")
+        if sample_csv is not None:
+            self.config.sample_files.csv_path = sample_csv
+        sample_json = os.getenv("SAMPLE_JSON_PATH")
+        if sample_json is not None:
+            self.config.sample_files.json_path = sample_json
     
     def _validate_config(self) -> None:
         """Validate configuration and log warnings"""
@@ -265,6 +286,10 @@ class ConfigManager:
         """Get security configuration"""
         return self.config.security
 
+    def get_sample_files_config(self) -> SampleFilesConfig:
+        """Get sample file path configuration"""
+        return self.config.sample_files
+
 
 # Global configuration instance
 _config_manager: Optional[ConfigManager] = None
@@ -301,9 +326,15 @@ def get_security_config() -> SecurityConfig:
     return get_config().get_security_config()
 
 
+def get_sample_files_config() -> SampleFilesConfig:
+    """Get sample file configuration"""
+    return get_config().get_sample_files_config()
+
+
 # Export main classes and functions
 __all__ = [
     'Config', 'AppConfig', 'DatabaseConfig', 'SecurityConfig',
-    'ConfigManager', 'get_config', 'reload_config',
-    'get_app_config', 'get_database_config', 'get_security_config'
+    'SampleFilesConfig', 'ConfigManager', 'get_config', 'reload_config',
+    'get_app_config', 'get_database_config', 'get_security_config',
+    'get_sample_files_config'
 ]

@@ -18,6 +18,10 @@ security:
   session_timeout: 3600
   csrf_enabled: false
 
+sample_files:
+  csv_path: "data/sample_data.csv"
+  json_path: "data/sample_data.json"
+
 logging:
   level: "INFO"
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

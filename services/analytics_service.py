@@ -591,8 +591,11 @@ class AnalyticsService:
     def _get_analytics_with_fixed_processor(self) -> Dict[str, Any]:
         """Get analytics using the FIXED file processor"""
 
-        csv_file = "/Users/tombrayman/Library/CloudStorage/Dropbox/1. YOSAI CODING/03_Data/Datasets/Demo3_data.csv"
-        json_file = "/Users/tombrayman/Library/CloudStorage/Dropbox/1. YOSAI CODING/03_Data/Datasets/key_fob_access_log_sample.json"
+        from config.config import get_sample_files_config
+
+        sample_cfg = get_sample_files_config()
+        csv_file = os.getenv("SAMPLE_CSV_PATH", sample_cfg.csv_path)
+        json_file = os.getenv("SAMPLE_JSON_PATH", sample_cfg.json_path)
 
         try:
             from services.file_processor import FileProcessor
