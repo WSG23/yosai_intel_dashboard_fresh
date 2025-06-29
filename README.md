@@ -268,6 +268,7 @@ files while maintaining backwards compatible helper functions like
 - **events.py**: Event and transaction models
 - **enums.py**: Type-safe enumerations
 - Full type annotations and validation
+- **Guide**: [docs/models_guide.md](docs/models_guide.md) explains each model file
 
 ### Services Layer (`services/`)
 - **analytics_service.py**: Business logic for analytics ([docs](docs/analytics_service.md))
