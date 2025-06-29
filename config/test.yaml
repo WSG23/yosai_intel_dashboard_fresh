@@ -17,6 +17,10 @@ security:
   secret_key: "change-me"
   session_timeout: 3600
 
+sample_files:
+  csv_path: "data/sample_data.csv"
+  json_path: "data/sample_data.json"
+
 analytics:
   enabled: true
   batch_size: 100
