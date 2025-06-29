@@ -4,7 +4,8 @@ Comprehensive tests for the JSON Serialization Plugin
 """
 import pytest
 
-pytest.skip("legacy DI tests skipped", allow_module_level=True)
+# Legacy DI tests were skipped previously. Run them now.
+# pytest.skip("legacy DI tests skipped", allow_module_level=True)
 
 import unittest
 import pandas as pd
@@ -13,7 +14,7 @@ import json
 import time
 from flask import Flask
 
-from plugins.builtin.json_serialization_plugin import (
+from core.json_serialization_plugin import (
     JsonSerializationPlugin,
     JsonSerializationConfig,
     JsonSerializationService,
@@ -21,6 +22,7 @@ from plugins.builtin.json_serialization_plugin import (
 )
 from core.plugins.manager import PluginManager
 from core.container import Container as DIContainer
+from config.config import ConfigManager
 
 
 class TestJsonSerializationPlugin(unittest.TestCase):
@@ -81,7 +83,7 @@ class TestJsonSerializationPlugin(unittest.TestCase):
         df = pd.DataFrame({"A": [1, 2, 3], "B": ["x", "y", "z"]})
         result = serialization_service.sanitize_for_transport(df)
 
-        self.assertEqual(result["type"], "dataframe")
+        self.assertEqual(result["__type__"], "DataFrame")
         self.assertEqual(result["shape"], (3, 2))
         self.assertEqual(len(result["data"]), 3)
 
@@ -99,7 +101,7 @@ class TestJsonSerializationPlugin(unittest.TestCase):
 
         # Should return sanitized DataFrame representation
         self.assertIsInstance(result, dict)
-        self.assertEqual(result["type"], "dataframe")
+        self.assertEqual(result["__type__"], "DataFrame")
 
     def test_error_handling(self):
         """Test error handling in callbacks"""
@@ -138,8 +140,8 @@ class TestPluginManager(unittest.TestCase):
     """Test plugin manager with JSON serialization plugin"""
 
     def setUp(self):
-        self.container = Container()
-        self.manager = PluginManager(self.container)
+        self.container = DIContainer()
+        self.manager = PluginManager(self.container, ConfigManager())
 
     def test_plugin_discovery(self):
         """Test that the JSON serialization plugin can be discovered"""
@@ -164,7 +166,7 @@ class TestPluginManager(unittest.TestCase):
 
     def test_periodic_health_snapshot(self):
         """Plugin manager updates health snapshot periodically"""
-        manager = PluginManager(DIContainer(), health_check_interval=1)
+        manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
         plugin = JsonSerializationPlugin()
         manager.load_plugin(plugin)
         time.sleep(1.5)
@@ -175,7 +177,7 @@ class TestPluginManager(unittest.TestCase):
     def test_health_endpoint_registration(self):
         """Ensure /health/plugins endpoint is registered"""
         app = Flask(__name__)
-        manager = PluginManager(DIContainer(), health_check_interval=1)
+        manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
         manager.register_health_endpoint(app)
         rules = [str(rule) for rule in app.url_map.iter_rules()]
         self.assertIn("/health/plugins", rules)

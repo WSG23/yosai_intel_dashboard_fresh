@@ -135,16 +135,49 @@ class JsonSerializationService:
         """Sanitize object for JSON transport"""
         return self.encoder._safe_serialize(obj)
 
+
+class JsonCallbackService:
+    """Wrap callbacks and sanitize their outputs using ``JsonSerializationService``."""
+
+    def __init__(self, serialization_service: JsonSerializationService):
+        self._service = serialization_service
+
+    def wrap_callback(self, func):
+        """Return a wrapper that sanitizes the callback result and catches errors."""
+
+        def wrapper(*args, **kwargs):
+            try:
+                result = func(*args, **kwargs)
+            except Exception as exc:  # pragma: no cover - simple error wrapper
+                return {"error": True, "message": str(exc)}
+            return self._service.sanitize_for_transport(result)
+
+        return wrapper
+
 class JsonSerializationPlugin:
     """Self-contained JSON Serialization Plugin"""
 
     def __init__(self):
         self.config: Optional[JsonSerializationConfig] = None
         self.serialization_service: Optional[JsonSerializationService] = None
+        self.callback_service: Optional[JsonCallbackService] = None
         self.logger = logging.getLogger(__name__)
         self._started = False
         self._original_dumps = None
         self._babel_available = False
+
+    @property
+    def metadata(self) -> Any:
+        """Basic plugin metadata used in tests."""
+        return type(
+            "_Meta",
+            (),
+            {
+                "name": "json_serialization",
+                "version": "1.0.0",
+                "enabled_by_default": True,
+            },
+        )()
 
     def _handle_babel_safely(self):
         """Handle babel imports and LazyString conversion within the plugin"""
@@ -175,19 +208,21 @@ class JsonSerializationPlugin:
         """Load the plugin with optional container and config"""
         try:
             self.logger.info("Loading JSON Serialization Plugin...")
-            
+
             # Create configuration
             config = config or {}
             self.config = JsonSerializationConfig(**config)
-            
+
             # Create services
             self.serialization_service = JsonSerializationService(self.config)
-            
+            self.callback_service = JsonCallbackService(self.serialization_service)
+
             # Register with container if provided
             if container and hasattr(container, 'register'):
                 try:
                     container.register('json_serialization_service', self.serialization_service)
                     container.register('serialization_service', self.serialization_service)
+                    container.register('json_callback_service', self.callback_service)
                 except Exception as e:
                     self.logger.warning(f"Could not register with container: {e}")
             
