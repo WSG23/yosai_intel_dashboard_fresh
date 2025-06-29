@@ -31,7 +31,7 @@ class UploadedDataStore:
     # -- Internal helpers ---------------------------------------------------
     def _get_file_path(self, filename: str) -> Path:
         safe_name = filename.replace(" ", "_").replace("/", "_")
-        return self.storage_dir / f"{safe_name}.pkl"
+        return self.storage_dir / f"{safe_name}.parquet"
 
     def _info_path(self) -> Path:
         return self.storage_dir / "file_info.json"
@@ -44,7 +44,7 @@ class UploadedDataStore:
             for fname in self._file_info_store.keys():
                 fpath = self._get_file_path(fname)
                 if fpath.exists():
-                    df = pd.read_pickle(fpath)
+                    df = pd.read_parquet(fpath)
                     self._data_store[fname] = df
                     logger.info(f"Loaded {fname} from disk")
         except Exception as e:  # pragma: no cover - best effort
@@ -53,7 +53,7 @@ class UploadedDataStore:
     def _save_to_disk(self, filename: str, df: pd.DataFrame) -> None:
         with self._lock:
             try:
-                df.to_pickle(self._get_file_path(filename))
+                df.to_parquet(self._get_file_path(filename), index=False)
                 self._file_info_store[filename] = {
                     "rows": len(df),
                     "columns": len(df.columns),
@@ -86,8 +86,8 @@ class UploadedDataStore:
             self._data_store.clear()
             self._file_info_store.clear()
             try:
-                for pkl in self.storage_dir.glob("*.pkl"):
-                    pkl.unlink()
+                for data_file in self.storage_dir.glob("*.parquet"):
+                    data_file.unlink()
                 if self._info_path().exists():
                     self._info_path().unlink()
             except Exception as e:  # pragma: no cover - best effort
