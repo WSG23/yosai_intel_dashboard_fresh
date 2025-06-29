@@ -57,10 +57,12 @@ yosai_intel_dashboard/
    imports.
 
 4. **Set up environment:**
-   ```bash
+```bash
    cp .env.example .env
    # Edit .env with your configuration (e.g. set HOST and database info)
-   ```
+```
+
+   Environment variables from `.env` are automatically loaded when running `app.py`.
 
 5. **Run the application:**
    ```bash
