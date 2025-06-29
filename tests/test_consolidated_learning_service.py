@@ -10,7 +10,7 @@ class TestConsolidatedLearningService:
 
     def setup_method(self):
         self.temp_dir = tempfile.mkdtemp()
-        self.storage_path = Path(self.temp_dir) / "test_mappings.pkl"
+        self.storage_path = Path(self.temp_dir) / "test_mappings.json"
         self.service = ConsolidatedLearningService(str(self.storage_path))
 
     def test_save_and_retrieve_exact_match(self):

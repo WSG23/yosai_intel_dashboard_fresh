@@ -38,11 +38,11 @@ def check_learning_status():
 
     # Check if storage file exists
     import os
-    storage_exists = os.path.exists("data/learned_mappings.pkl")
+    storage_exists = os.path.exists("data/learned_mappings.json")
     print(f"\n💾 Storage file exists: {storage_exists}")
 
     if storage_exists:
-        file_size = os.path.getsize("data/learned_mappings.pkl")
+        file_size = os.path.getsize("data/learned_mappings.json")
         print(f"   File size: {file_size} bytes")
 
 
