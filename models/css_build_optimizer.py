@@ -15,13 +15,15 @@ from dataclasses import dataclass
 from config.dynamic_config import dynamic_config
 import logging
 
+logger = logging.getLogger(__name__)
+
 # FIXED: Configure CSS utils logging with proper error handling
 try:
     import cssutils
     # FIXED: cssutils expects string level, not integer constant
     cssutils.log.setLevel('ERROR')  # Use string instead of logging.ERROR constant
 except ImportError:
-    print("Warning: cssutils not available - some CSS analysis features disabled")
+    logger.info("Warning: cssutils not available - some CSS analysis features disabled")
     cssutils = None
 
 @dataclass
@@ -270,7 +272,7 @@ class CSSQualityAnalyzer:
     
     def run_full_analysis(self) -> Dict[str, Any]:
         """Run complete CSS quality analysis"""
-        print("🔍 Running comprehensive CSS quality analysis...")
+        logger.info("🔍 Running comprehensive CSS quality analysis...")
         
         # Run all metric analyses
         metrics = [
@@ -324,14 +326,14 @@ class CSSOptimizer:
             minified_size = len(content)
             compression_ratio = (1 - minified_size / original_size) * 100
             
-            print(f"✅ Minified {input_file.name}: {compression_ratio:.1f}% smaller")
+            logger.info(f"✅ Minified {input_file.name}: {compression_ratio:.1f}% smaller")
             
         except Exception as e:
-            print(f"❌ Error minifying {input_file}: {e}")
+            logger.info(f"❌ Error minifying {input_file}: {e}")
     
     def build_production_css(self) -> None:
         """Build optimized CSS for production"""
-        print("🏗️ Building production CSS...")
+        logger.info("🏗️ Building production CSS...")
         
         try:
             # Create main production CSS
@@ -346,18 +348,18 @@ class CSSOptimizer:
                     with gzip.open(f"{prod_main}.gz", 'wb') as f_out:
                         f_out.write(f_in.read())
                 
-                print(f"✅ Production CSS created: {prod_main}")
-                print(f"✅ Gzipped version: {prod_main}.gz")
+                logger.info(f"✅ Production CSS created: {prod_main}")
+                logger.info(f"✅ Gzipped version: {prod_main}.gz")
             else:
-                print("❌ Main CSS file not found")
+                logger.info("❌ Main CSS file not found")
                 
         except Exception as e:
-            print(f"❌ Error building production CSS: {e}")
+            logger.info(f"❌ Error building production CSS: {e}")
 
 def generate_css_report(css_dir: Path, output_file: Optional[Path] = None) -> Dict[str, Any]:  # FIXED: Optional[Path] instead of Path
     """Generate comprehensive CSS quality report"""
     
-    print("📊 Generating comprehensive CSS quality report...")
+    logger.info("📊 Generating comprehensive CSS quality report...")
     
     # Initialize analyzer
     quality_analyzer = CSSQualityAnalyzer(css_dir)
@@ -387,9 +389,9 @@ def generate_css_report(css_dir: Path, output_file: Optional[Path] = None) -> Di
         try:
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(report, f, indent=2)
-            print(f"📋 Report saved to: {output_file}")
+            logger.info(f"📋 Report saved to: {output_file}")
         except Exception as e:
-            print(f"❌ Error saving report: {e}")
+            logger.info(f"❌ Error saving report: {e}")
     
     return report
 
@@ -416,26 +418,26 @@ def _generate_recommendations(quality_results: Dict[str, Any]) -> List[str]:
 def print_report_summary(report: Dict[str, Any]) -> None:
     """Print a formatted summary of the CSS quality report"""
     
-    print("\n" + "=" * 60)
-    print("🎯 CSS QUALITY REPORT SUMMARY")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("🎯 CSS QUALITY REPORT SUMMARY")
+    logger.info("=" * 60)
     
-    print(f"\n📊 OVERALL SCORE: {report['overall_score']:.1f}/100")
+    logger.info(f"\n📊 OVERALL SCORE: {report['overall_score']:.1f}/100")
     
     # Status indicator
     score = report['overall_score']
     if score >= 90:
-        print("🟢 EXCELLENT - World-class CSS architecture!")
+        logger.info("🟢 EXCELLENT - World-class CSS architecture!")
     elif score >= 80:
-        print("🟡 GOOD - Minor improvements needed")
+        logger.info("🟡 GOOD - Minor improvements needed")
     elif score >= 70:
-        print("🟠 WARNING - Several issues to address")
+        logger.info("🟠 WARNING - Several issues to address")
     else:
-        print("🔴 CRITICAL - Major refactoring needed")
+        logger.info("🔴 CRITICAL - Major refactoring needed")
     
-    print(f"\n📅 Generated: {report['timestamp']}")
+    logger.info(f"\n📅 Generated: {report['timestamp']}")
     
-    print(f"\n📏 QUALITY METRICS:")
+    logger.info(f"\n📏 QUALITY METRICS:")
     for metric in report['quality_metrics']:
         status_emoji = {
             "excellent": "🟢",
@@ -445,13 +447,13 @@ def print_report_summary(report: Dict[str, Any]) -> None:
             "error": "❌"
         }.get(metric['status'], "⚪")
         
-        print(f"  {status_emoji} {metric['name'].replace('_', ' ').title()}: {metric['value']}{metric['unit']}")
+        logger.info(f"  {status_emoji} {metric['name'].replace('_', ' ').title()}: {metric['value']}{metric['unit']}")
     
-    print(f"\n💡 RECOMMENDATIONS:")
+    logger.info(f"\n💡 RECOMMENDATIONS:")
     for i, rec in enumerate(report['recommendations'], 1):
-        print(f"  {i}. {rec}")
+        logger.info(f"  {i}. {rec}")
     
-    print("\n" + "=" * 60)
+    logger.info("\n" + "=" * 60)
 
 if __name__ == "__main__":
     import sys
@@ -463,8 +465,8 @@ if __name__ == "__main__":
         css_dir = Path("assets/css")
     
     if not css_dir.exists():
-        print(f"❌ CSS directory not found: {css_dir}")
-        print("Usage: python css_build_optimizer.py [css_directory]")
+        logger.info(f"❌ CSS directory not found: {css_dir}")
+        logger.info("Usage: python css_build_optimizer.py [css_directory]")
         sys.exit(1)
     
     # Generate report
@@ -474,11 +476,11 @@ if __name__ == "__main__":
     # Print summary
     print_report_summary(report)
     
-    print(f"\n📋 Full report available at: {report_file}")
-    print("\n🚀 Next steps:")
-    print("1. Review recommendations and address critical issues")
-    print("2. Run performance tests on live application")
-    print("3. Set up automated quality monitoring")
+    logger.info(f"\n📋 Full report available at: {report_file}")
+    logger.info("\n🚀 Next steps:")
+    logger.info("1. Review recommendations and address critical issues")
+    logger.info("2. Run performance tests on live application")
+    logger.info("3. Set up automated quality monitoring")
 
 # Export main functions
 __all__ = ['CSSQualityAnalyzer', 'CSSOptimizer', 'generate_css_report', 'print_report_summary']

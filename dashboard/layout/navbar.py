@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING, Optional, Any, Union
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from flask_babel import lazy_gettext as _l
 from core.plugins.decorators import safe_callback
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Type checking imports
 if TYPE_CHECKING:
@@ -23,7 +26,7 @@ try:
     from dash.dependencies import Output, Input
     DASH_AVAILABLE = True
 except ImportError:
-    print("Warning: Dash components not available")
+    logger.info("Warning: Dash components not available")
     DASH_AVAILABLE = False
     # Create stub classes for type safety
     class _StubComponent:
@@ -213,7 +216,7 @@ def create_navbar_layout() -> Optional[Any]:
         )
 
     except Exception as e:
-        print(f"Error creating navbar layout: {e}")
+        logger.info(f"Error creating navbar layout: {e}")
         return _create_fallback_navbar()
 
 
@@ -281,7 +284,7 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             return page_contexts.get(pathname, "Dashboard – Main Operations")
 
     except Exception as e:
-        print(f"Error registering navbar callbacks: {e}")
+        logger.info(f"Error registering navbar callbacks: {e}")
 
 
 # Export functions for component registry
