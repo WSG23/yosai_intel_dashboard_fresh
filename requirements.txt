@@ -1,9 +1,13 @@
 # Core dashboard requirements
-dash>=2.14.1
+dash-leaflet==1.1.3
+dash-extensions==2.0.4
+Flask==2.2.5
 dash-bootstrap-components>=1.6.0
 plotly>=5.15.0
 pandas>=2.1.1
 numpy>=2.1.0
+dash>=3.0.0
+
 
 # Configuration
 PyYAML>=6.0.1
