@@ -18,6 +18,7 @@ from services.analytics_summary import (
 )
 
 from utils.mapping_helpers import map_and_clean
+from security.dataframe_validator import DataFrameSecurityValidator
 from datetime import datetime, timedelta
 import os
 
@@ -169,6 +170,7 @@ class AnalyticsService:
         self.database_manager: Optional[Any] = None
         self._initialize_database()
         self.file_processing_service = FileProcessingService()
+        self.df_validator = DataFrameSecurityValidator()
         self.database_analytics_service = DatabaseAnalyticsService(
             self.database_manager
         )
@@ -277,6 +279,7 @@ class AnalyticsService:
 
                 for chunk in reader:
                     logger.info(f"{filename} chunk rows: {len(chunk):,}")
+                    self.df_validator.validate(chunk)
                     df_processed = map_and_clean(chunk)
 
                     total_events += len(df_processed)

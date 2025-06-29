@@ -3,31 +3,25 @@ import base64
 import io
 import json
 import logging
-import re
 from datetime import datetime
 from typing import Any, Dict
 
-from utils.unicode_handler import sanitize_unicode_input
-from utils.file_validator import safe_decode_with_unicode_handling
 from config.dynamic_config import dynamic_config
+from security.file_validator import SecureFileValidator
+from security.xss_validator import XSSPrevention
 
 import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import html
 
 logger = logging.getLogger(__name__)
-SAFE_FILENAME_RE = re.compile(r"^[A-Za-z0-9._\- ]{1,100}$")
+_validator = SecureFileValidator()
 
 
 def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
     """Process uploaded file content into a DataFrame."""
     try:
-        filename = sanitize_unicode_input(filename)
-        if not SAFE_FILENAME_RE.fullmatch(filename):
-            return {
-                "success": False,
-                "error": "Invalid filename",
-            }
+        filename = _validator.sanitize_filename(filename)
 
         content_type, content_string = contents.split(",", 1)
         decoded = base64.b64decode(content_string)
@@ -38,26 +32,8 @@ def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
                 "error": "File too large",
             }
 
-        if filename.endswith(".csv"):
-            text = safe_decode_with_unicode_handling(decoded, "utf-8")
-            df = pd.read_csv(io.StringIO(text))
-        elif filename.endswith((".xlsx", ".xls")):
-            df = pd.read_excel(io.BytesIO(decoded))
-        elif filename.endswith(".json"):
-            try:
-                text = safe_decode_with_unicode_handling(decoded, "utf-8")
-                json_data = json.loads(text)
-                if isinstance(json_data, list):
-                    df = pd.DataFrame(json_data)
-                elif isinstance(json_data, dict):
-                    if "data" in json_data:
-                        df = pd.DataFrame(json_data["data"])
-                    else:
-                        df = pd.DataFrame([json_data])
-                else:
-                    return {"success": False, "error": f"Unsupported JSON structure: {type(json_data)}"}
-            except json.JSONDecodeError as e:
-                return {"success": False, "error": f"Invalid JSON format: {str(e)}"}
+        if filename.endswith((".csv", ".xlsx", ".xls", ".json")):
+            df = _validator.validate_file_contents(contents, filename)
         else:
             return {
                 "success": False,
@@ -90,7 +66,12 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
         for col in df.columns[:10]:
             dtype = str(df[col].dtype)
             null_count = df[col].isnull().sum()
-            column_info.append(f"{col} ({dtype}) - {null_count} nulls")
+            safe_col = XSSPrevention.sanitize_html_output(str(col))
+            column_info.append(f"{safe_col} ({dtype}) - {null_count} nulls")
+
+        preview_df = df.head(5).copy()
+        preview_df.columns = [XSSPrevention.sanitize_html_output(str(c)) for c in preview_df.columns]
+        preview_df = preview_df.applymap(lambda x: XSSPrevention.sanitize_html_output(str(x)))
 
         return dbc.Card(
             [
@@ -126,7 +107,7 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
                         html.Hr(),
                         html.H6("Sample Data:", className="text-primary mt-3"),
                         dbc.Table.from_dataframe(
-                            df.head(5),
+                            preview_df,
                             striped=True,
                             bordered=True,
                             hover=True,

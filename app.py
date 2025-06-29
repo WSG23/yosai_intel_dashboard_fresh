@@ -86,8 +86,13 @@ def main():
         # Import and create the Dash application
         try:
             from core.app_factory import create_app
+            from security.validation_middleware import ValidationMiddleware
 
             app = create_app()
+            middleware = ValidationMiddleware()
+            server = app.server
+            server.before_request(middleware.validate_request)
+            server.after_request(middleware.sanitize_response)
             logger.info("✅ Application created successfully")
         except Exception as e:
             logger.error(f"❌ Failed to create application: {e}")
