@@ -175,6 +175,10 @@ PORT=8050            # Application port
 SECRET_KEY=your-key  # Change for production
 ```
 
+The secret key is not included in the default YAML files. Define
+`SECRET_KEY` in your environment or a `.env` file before starting the
+application.
+
 When `YOSAI_ENV=production` the application will refuse to start unless both
 `DB_PASSWORD` and `SECRET_KEY` are provided via environment variables or Docker
 secrets.
