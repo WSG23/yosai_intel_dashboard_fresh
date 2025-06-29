@@ -4,7 +4,6 @@ Analytics Service - Enhanced with Unique Patterns Analysis
 """
 import pandas as pd
 import numpy as np
-import pickle
 import json
 import logging
 from pathlib import Path
@@ -22,7 +21,7 @@ class AnalyticsDataAccessor:
 
     def __init__(self, base_data_path: str = "data"):
         self.base_path = Path(base_data_path)
-        self.mappings_file = self.base_path / "learned_mappings.pkl"
+        self.mappings_file = self.base_path / "learned_mappings.json"
         self.session_storage = self.base_path.parent / "session_storage"
 
     def get_processed_database(self) -> Tuple[pd.DataFrame, Dict[str, Any]]:
@@ -37,11 +36,11 @@ class AnalyticsDataAccessor:
         return combined_df, metadata
 
     def _load_consolidated_mappings(self) -> Dict[str, Any]:
-        """Load consolidated mappings from learned_mappings.pkl"""
+        """Load consolidated mappings from learned_mappings.json"""
         try:
             if self.mappings_file.exists():
-                with open(self.mappings_file, 'rb') as f:
-                    return pickle.load(f)
+                with open(self.mappings_file, "r") as f:
+                    return json.load(f)
             return {}
         except Exception as e:
             logger.error(f"Error loading mappings: {e}")

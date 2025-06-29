@@ -14,7 +14,7 @@ import logging
 class ConsolidatedLearningService:
     """Unified learning service for all mapping types."""
 
-    def __init__(self, storage_path: str = "data/learned_mappings.pkl"):
+    def __init__(self, storage_path: str = "data/learned_mappings.json"):
         self.storage_path = Path(storage_path)
         self.learned_data: Dict[str, Any] = {}
         self.logger = logging.getLogger(__name__)
@@ -170,23 +170,42 @@ class ConsolidatedLearningService:
         return df.iloc[:, 0].nunique() if len(df.columns) > 0 else 0
 
     def _load_learned_data(self):
-        """Load learned data from storage."""
+        """Load learned data from storage. Migrate legacy pickle data if needed."""
         if self.storage_path.exists():
             try:
-                with open(self.storage_path, 'rb') as f:
-                    self.learned_data = pickle.load(f)
-                self.logger.info(f"Loaded {len(self.learned_data)} learned mappings")
+                with open(self.storage_path, "r") as f:
+                    self.learned_data = json.load(f)
+                self.logger.info(
+                    f"Loaded {len(self.learned_data)} learned mappings")
             except Exception as e:
                 self.logger.warning(f"Could not load learned data: {e}")
+                self.learned_data = {}
+            return
+
+        # Legacy pickle support
+        legacy_path = self.storage_path.with_suffix('.pkl')
+        if legacy_path.exists():
+            try:
+                with open(legacy_path, "rb") as f:
+                    self.learned_data = pickle.load(f)
+                self.logger.info(
+                    f"Migrating {legacy_path} with {len(self.learned_data)} mappings")
+                self._persist_learned_data()
+                try:
+                    legacy_path.unlink()
+                except Exception:
+                    pass
+            except Exception as e:
+                self.logger.warning(f"Could not migrate legacy data: {e}")
                 self.learned_data = {}
         else:
             self.learned_data = {}
 
     def _persist_learned_data(self):
-        """Persist learned data to storage."""
+        """Persist learned data to storage using JSON."""
         try:
-            with open(self.storage_path, 'wb') as f:
-                pickle.dump(self.learned_data, f)
+            with open(self.storage_path, "w") as f:
+                json.dump(self.learned_data, f, indent=2)
         except Exception as e:
             self.logger.error(f"Could not persist learned data: {e}")
 
