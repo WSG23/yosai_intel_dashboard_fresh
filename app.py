@@ -5,6 +5,7 @@ Fixed Main Application - No import issues
 import logging
 import os
 import sys
+from dotenv import load_dotenv
 
 # Configure logging first
 logging.basicConfig(
@@ -66,6 +67,7 @@ def print_startup_info(app_config):
 
 def main():
     """Main application entry point"""
+    load_dotenv()
     try:
         # Import configuration
         try:
