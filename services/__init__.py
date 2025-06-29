@@ -3,6 +3,7 @@
 Simplified Services Package
 """
 import logging
+from .ai_mapping_store import ai_mapping_store
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,11 @@ except ImportError:
     FileProcessor = None
 
 try:
-    from .analytics_service import get_analytics_service, create_analytics_service, AnalyticsService
+    from .analytics_service import (
+        get_analytics_service,
+        create_analytics_service,
+        AnalyticsService,
+    )
     ANALYTICS_SERVICE_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Analytics service not available: {e}")
@@ -28,5 +33,6 @@ except ImportError as e:
 __all__ = [
     'FileProcessor', 'FILE_PROCESSOR_AVAILABLE',
     'get_analytics_service', 'create_analytics_service', 'AnalyticsService',
-    'ANALYTICS_SERVICE_AVAILABLE'
+    'ANALYTICS_SERVICE_AVAILABLE',
+    'ai_mapping_store'
 ]

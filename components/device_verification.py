@@ -9,7 +9,8 @@ import dash_bootstrap_components as dbc
 from typing import Dict, List, Any, Union
 import logging
 from datetime import datetime
-from components.simple_device_mapping import _device_ai_mappings, special_areas_options
+from components.simple_device_mapping import special_areas_options
+from services.ai_mapping_store import ai_mapping_store
 
 logger = logging.getLogger(__name__)
 
