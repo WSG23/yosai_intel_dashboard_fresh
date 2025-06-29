@@ -123,7 +123,7 @@ class TestJsonSerializationPlugin(unittest.TestCase):
         """Ensure LazyString objects are sanitized to plain strings"""
         try:
             from flask_babel import lazy_gettext
-        except Exception:
+        except ImportError:
             self.skipTest("flask_babel not available")
 
         self.plugin.load(self.container, self.config)
