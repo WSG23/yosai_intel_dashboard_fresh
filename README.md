@@ -300,6 +300,10 @@ If you encounter an error like `"Babel" object has no attribute "localeselector"
 
 ![Language Toggle Demo](docs/i18n_demo.gif)
 
+## 📚 Documentation
+
+See the [data model diagram](docs/data_model.md) for an overview of key entities.
+
 ## 🤝 Contributing
 
 1. Ensure all tests pass: `pytest`
