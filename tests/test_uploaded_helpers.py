@@ -39,3 +39,27 @@ def test_summarize_dataframe():
     assert summary["active_doors"] == 2
     assert summary["date_range"]["start"] == "2024-01-01"
     assert summary["date_range"]["end"] == "2024-01-02"
+
+
+def test_combine_uploaded_data():
+    service = AnalyticsService()
+    data = {
+        "a.csv": pd.DataFrame({"Person ID": ["u1"], "Device name": ["d1"], "Access result": ["Granted"], "Timestamp": ["2024-01-01"]}),
+        "b.csv": pd.DataFrame({"Person ID": ["u2"], "Device name": ["d2"], "Access result": ["Denied"], "Timestamp": ["2024-01-02"]}),
+    }
+    combined = service._combine_uploaded_data(data)
+    assert len(combined) == 2
+    assert list(combined.columns) == ["timestamp", "person_id", "access_result", "door_id"] or list(combined.columns) == ["timestamp", "person_id", "door_id", "access_result"]
+
+
+def test_summarize_direct_processing():
+    service = AnalyticsService()
+    df = pd.DataFrame({
+        "person_id": ["u1", "u2"],
+        "door_id": ["d1", "d2"],
+        "timestamp": pd.to_datetime(["2024-01-01", "2024-01-02"]),
+        "access_result": ["Granted", "Denied"],
+    })
+    summary = service._summarize_direct_processing(df)
+    assert summary["status"] == "success"
+    assert summary["total_events"] == 2

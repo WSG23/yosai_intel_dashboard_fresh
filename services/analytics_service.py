@@ -299,65 +299,16 @@ class AnalyticsService:
         try:
             print(f"📊 PROCESSING {len(uploaded_data)} uploaded files directly...")
 
-            all_dataframes = []
+            combined_df = self._combine_uploaded_data(uploaded_data)
+            if combined_df.empty:
+                return {'status': 'error', 'message': 'No data after processing'}
 
-            for filename, df in uploaded_data.items():
-                print(f"   📄 {filename}: {len(df):,} rows")
-                print(f"      Original columns: {list(df.columns)}")
+            result = self._summarize_direct_processing(combined_df)
 
-                df_processed = map_and_clean(df.copy())
-                print(f"      ✅ Columns mapped: {list(df_processed.columns)}")
-
-                all_dataframes.append(df_processed)
-
-            # Combine all data
-            combined_df = pd.concat(all_dataframes, ignore_index=True)
-
-            # Calculate metrics
-            total_events = len(combined_df)
-            active_users = combined_df['person_id'].nunique() if 'person_id' in combined_df.columns else 0
-            active_doors = combined_df['door_id'].nunique() if 'door_id' in combined_df.columns else 0
-
-            # Calculate proper date range
-            date_range = {'start': 'Unknown', 'end': 'Unknown'}
-            if 'timestamp' in combined_df.columns:
-                # Convert timestamp to datetime if it's not already
-                combined_df['timestamp'] = pd.to_datetime(combined_df['timestamp'], errors='coerce')
-                valid_timestamps = combined_df['timestamp'].dropna()
-
-                if not valid_timestamps.empty:
-                    start_date = valid_timestamps.min()
-                    end_date = valid_timestamps.max()
-                    date_range = {
-                        'start': start_date.strftime('%Y-%m-%d'),
-                        'end': end_date.strftime('%Y-%m-%d')
-                    }
-                    print(f"      📅 Date range: {date_range['start']} to {date_range['end']}")
-
-            result = {
-                'status': 'success',
-                'total_events': total_events,
-                'active_users': active_users,
-                'active_doors': active_doors,
-                'unique_users': active_users,
-                'unique_doors': active_doors,
-                'data_source': 'uploaded',
-                'date_range': date_range,
-                'top_users': [
-                    {'user_id': user, 'count': int(count)}
-                    for user, count in combined_df['person_id'].value_counts().head(10).items()
-                ] if 'person_id' in combined_df.columns else [],
-                'top_doors': [
-                    {'door_id': door, 'count': int(count)}
-                    for door, count in combined_df['door_id'].value_counts().head(10).items()
-                ] if 'door_id' in combined_df.columns else [],
-                'timestamp': datetime.now().isoformat()
-            }
-
-            print(f"🎉 DIRECT PROCESSING RESULT:")
-            print(f"   Total Events: {total_events:,}")
-            print(f"   Active Users: {active_users:,}")
-            print(f"   Active Doors: {active_doors:,}")
+            print("🎉 DIRECT PROCESSING RESULT:")
+            print(f"   Total Events: {result['total_events']:,}")
+            print(f"   Active Users: {result['active_users']:,}")
+            print(f"   Active Doors: {result['active_doors']:,}")
 
             return result
 
@@ -428,6 +379,24 @@ class AnalyticsService:
             'top_users': top_users,
             'top_doors': top_doors,
         }
+
+    def _combine_uploaded_data(self, uploaded_data: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+        """Map and merge all uploaded dataframes."""
+        frames = []
+        for filename, df in uploaded_data.items():
+            print(f"   📄 {filename}: {len(df):,} rows")
+            print(f"      Original columns: {list(df.columns)}")
+            processed = self.clean_uploaded_dataframe(df.copy())
+            print(f"      ✅ Columns mapped: {list(processed.columns)}")
+            frames.append(processed)
+
+        return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+
+    def _summarize_direct_processing(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Summarize dataframe for direct upload processing."""
+        summary = self.summarize_dataframe(df)
+        summary.update({'status': 'success', 'timestamp': datetime.now().isoformat()})
+        return summary
 
     def _get_real_uploaded_data(self) -> Dict[str, Any]:
         """FIXED: Actually access your uploaded 395K records"""
@@ -588,51 +557,55 @@ class AnalyticsService:
             logger.error(f"Error generating basic analytics: {e}")
             return {'status': 'error', 'message': str(e)}
 
+    def _load_fixed_file(self, path: str, processor: 'FileProcessor') -> Optional[pd.DataFrame]:
+        """Load and validate a fixed dataset file."""
+        if not os.path.exists(path):
+            return None
+
+        ext = Path(path).suffix.lower()
+        if ext == '.csv':
+            df = pd.read_csv(path)
+        elif ext == '.json':
+            with open(path, 'r') as f:
+                df = pd.DataFrame(json.load(f))
+        else:
+            return None
+
+        result = processor._validate_data(df)
+        if result.get('valid'):
+            return result['data']
+        return None
+
+    def _summarize_fixed_data(self, frames: List[pd.DataFrame]) -> Dict[str, Any]:
+        """Combine frames and build a summary for the fixed processor."""
+        combined = pd.concat(frames, ignore_index=True)
+        return {
+            'status': 'success',
+            'total_events': len(combined),
+            'active_users': combined['person_id'].nunique(),
+            'active_doors': combined['door_id'].nunique(),
+            'data_source': 'fixed_processor',
+            'timestamp': datetime.now().isoformat(),
+        }
+
     def _get_analytics_with_fixed_processor(self) -> Dict[str, Any]:
         """Get analytics using the FIXED file processor"""
-
         csv_file = "/Users/tombrayman/Library/CloudStorage/Dropbox/1. YOSAI CODING/03_Data/Datasets/Demo3_data.csv"
         json_file = "/Users/tombrayman/Library/CloudStorage/Dropbox/1. YOSAI CODING/03_Data/Datasets/key_fob_access_log_sample.json"
 
         try:
             from services.file_processor import FileProcessor
-            import pandas as pd
-            import json
 
             processor = FileProcessor(upload_folder="temp", allowed_extensions={'csv', 'json', 'xlsx'})
-            all_data = []
+            frames = []
 
-            # Process CSV with FIXED processor
-            if os.path.exists(csv_file):
-                df_csv = pd.read_csv(csv_file)
-                result = processor._validate_data(df_csv)
-                if result['valid']:
-                    processed_df = result['data']
-                    processed_df['source_file'] = 'csv'
-                    all_data.append(processed_df)
+            for path in (csv_file, json_file):
+                df = self._load_fixed_file(path, processor)
+                if df is not None:
+                    frames.append(df)
 
-            # Process JSON with FIXED processor
-            if os.path.exists(json_file):
-                with open(json_file, 'r') as f:
-                    json_data = json.load(f)
-                df_json = pd.DataFrame(json_data)
-                result = processor._validate_data(df_json)
-                if result['valid']:
-                    processed_df = result['data']
-                    processed_df['source_file'] = 'json'
-                    all_data.append(processed_df)
-
-            if all_data:
-                combined_df = pd.concat(all_data, ignore_index=True)
-
-                return {
-                    'status': 'success',
-                    'total_events': len(combined_df),
-                    'active_users': combined_df['person_id'].nunique(),
-                    'active_doors': combined_df['door_id'].nunique(),
-                    'data_source': 'fixed_processor',
-                    'timestamp': datetime.now().isoformat()
-                }
+            if frames:
+                return self._summarize_fixed_data(frames)
 
         except Exception as e:
             logger.error(f"Error in fixed processor analytics: {e}")
