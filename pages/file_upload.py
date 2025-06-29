@@ -30,9 +30,6 @@ logger = logging.getLogger(__name__)
 learning_service = DeviceLearningService()
 
 
-
-
-
 def analyze_device_name_with_ai(device_name):
     """User mappings ALWAYS override AI - FIXED"""
     try:
@@ -46,9 +43,12 @@ def analyze_device_name_with_ai(device_name):
                 return mapping
 
         # Only use AI if no user mapping exists
-        print(f"\U0001f916 No user mapping found, generating AI analysis for '{device_name}'")
+        print(
+            f"\U0001f916 No user mapping found, generating AI analysis for '{device_name}'"
+        )
 
         from services.ai_device_generator import AIDeviceGenerator
+
         ai_generator = AIDeviceGenerator()
         result = ai_generator.generate_device_attributes(device_name)
 
@@ -211,8 +211,6 @@ def layout():
     )
 
 
-
-
 def get_uploaded_data() -> Dict[str, pd.DataFrame]:
     """Get all uploaded data (for use by analytics)."""
     return _uploaded_data_store.get_all_data()
@@ -305,7 +303,10 @@ def restore_upload_state(pathname: str) -> Tuple[Any, Any, Any, Any, Any, Any, A
             dbc.Alert(
                 [
                     html.H6(
-                        [html.I(className="fas fa-check-circle me-2"), f"Previously uploaded: {filename}"],
+                        [
+                            html.I(className="fas fa-check-circle me-2"),
+                            f"Previously uploaded: {filename}",
+                        ],
                         className="alert-heading",
                     ),
                     html.P(f"📊 {rows:,} rows × {cols} columns"),
@@ -322,14 +323,29 @@ def restore_upload_state(pathname: str) -> Tuple[Any, Any, Any, Any, Any, Any, A
                     create_file_preview(df.head(5), filename),
                     dbc.Card(
                         [
-                            dbc.CardHeader([html.H6("📋 Data Configuration", className="mb-0")]),
+                            dbc.CardHeader(
+                                [html.H6("📋 Data Configuration", className="mb-0")]
+                            ),
                             dbc.CardBody(
                                 [
-                                    html.P("Configure your data for analysis:", className="mb-3"),
+                                    html.P(
+                                        "Configure your data for analysis:",
+                                        className="mb-3",
+                                    ),
                                     dbc.ButtonGroup(
                                         [
-                                            dbc.Button("📋 Verify Columns", id="verify-columns-btn-simple", color="primary", size="sm"),
-                                            dbc.Button("🤖 Classify Devices", id="classify-devices-btn", color="info", size="sm"),
+                                            dbc.Button(
+                                                "📋 Verify Columns",
+                                                id="verify-columns-btn-simple",
+                                                color="primary",
+                                                size="sm",
+                                            ),
+                                            dbc.Button(
+                                                "🤖 Classify Devices",
+                                                id="classify-devices-btn",
+                                                color="info",
+                                                size="sm",
+                                            ),
                                         ],
                                         className="w-100",
                                     ),
@@ -354,14 +370,26 @@ def restore_upload_state(pathname: str) -> Tuple[Any, Any, Any, Any, Any, Any, A
         [
             html.Hr(),
             html.H5("Ready to analyze?"),
-            dbc.Button("🚀 Go to Analytics", href="/analytics", color="success", size="lg"),
+            dbc.Button(
+                "🚀 Go to Analytics", href="/analytics", color="success", size="lg"
+            ),
         ]
     )
 
-    return upload_results, file_preview_components, {}, upload_nav, current_file_info, False, False
+    return (
+        upload_results,
+        file_preview_components,
+        {},
+        upload_nav,
+        current_file_info,
+        False,
+        False,
+    )
 
 
-def process_uploaded_files(contents_list: List[str] | str, filenames_list: List[str] | str) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
+def process_uploaded_files(
+    contents_list: List[str] | str, filenames_list: List[str] | str
+) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
     """Handle new uploads and store data in the upload store."""
 
     if not contents_list:
@@ -402,7 +430,10 @@ def process_uploaded_files(contents_list: List[str] | str, filenames_list: List[
                     dbc.Alert(
                         [
                             html.H6(
-                                [html.I(className="fas fa-check-circle me-2"), f"Successfully uploaded {filename}"],
+                                [
+                                    html.I(className="fas fa-check-circle me-2"),
+                                    f"Successfully uploaded {filename}",
+                                ],
                                 className="alert-heading",
                             ),
                             html.P(f"📊 {rows:,} rows × {cols} columns processed"),
@@ -419,14 +450,34 @@ def process_uploaded_files(contents_list: List[str] | str, filenames_list: List[
                             create_file_preview(preview_df, filename),
                             dbc.Card(
                                 [
-                                    dbc.CardHeader([html.H6("📋 Data Configuration", className="mb-0")]),
+                                    dbc.CardHeader(
+                                        [
+                                            html.H6(
+                                                "📋 Data Configuration",
+                                                className="mb-0",
+                                            )
+                                        ]
+                                    ),
                                     dbc.CardBody(
                                         [
-                                            html.P("Configure your data for analysis:", className="mb-3"),
+                                            html.P(
+                                                "Configure your data for analysis:",
+                                                className="mb-3",
+                                            ),
                                             dbc.ButtonGroup(
                                                 [
-                                                    dbc.Button("📋 Verify Columns", id="verify-columns-btn-simple", color="primary", size="sm"),
-                                                    dbc.Button("🤖 Classify Devices", id="classify-devices-btn", color="info", size="sm"),
+                                                    dbc.Button(
+                                                        "📋 Verify Columns",
+                                                        id="verify-columns-btn-simple",
+                                                        color="primary",
+                                                        size="sm",
+                                                    ),
+                                                    dbc.Button(
+                                                        "🤖 Classify Devices",
+                                                        id="classify-devices-btn",
+                                                        color="info",
+                                                        size="sm",
+                                                    ),
                                                 ],
                                                 className="w-100",
                                             ),
@@ -454,14 +505,18 @@ def process_uploaded_files(contents_list: List[str] | str, filenames_list: List[
                     user_mappings = learning_service.get_user_device_mappings(filename)
                     if user_mappings:
                         from components.simple_device_mapping import _device_ai_mappings
+
                         _device_ai_mappings.clear()
                         for device, mapping in user_mappings.items():
                             mapping["source"] = "user_confirmed"
                             _device_ai_mappings[device] = mapping
-                        print(f"✅ Loaded {len(user_mappings)} saved mappings - AI SKIPPED")
+                        print(
+                            f"✅ Loaded {len(user_mappings)} saved mappings - AI SKIPPED"
+                        )
                     else:
                         print("🆕 First upload - AI will be used")
                         from components.simple_device_mapping import _device_ai_mappings
+
                         _device_ai_mappings.clear()
                 except Exception as e:  # pragma: no cover - best effort
                     print(f"⚠️ Error: {e}")
@@ -488,11 +543,21 @@ def process_uploaded_files(contents_list: List[str] | str, filenames_list: List[
             [
                 html.Hr(),
                 html.H5("Ready to analyze?"),
-                dbc.Button("🚀 Go to Analytics", href="/analytics", color="success", size="lg"),
+                dbc.Button(
+                    "🚀 Go to Analytics", href="/analytics", color="success", size="lg"
+                ),
             ]
         )
 
-    return upload_results, file_preview_components, file_info_dict, upload_nav, current_file_info, no_update, no_update
+    return (
+        upload_results,
+        file_preview_components,
+        file_info_dict,
+        upload_nav,
+        current_file_info,
+        no_update,
+        no_update,
+    )
 
 
 def handle_modal_dialogs(
@@ -636,6 +701,7 @@ def populate_device_modal_with_learning(is_open, file_info):
                     print(f"🤖 DEBUG - Testing AI on sample devices:")
                     try:
                         from services.ai_device_generator import AIDeviceGenerator
+
                         ai_gen = AIDeviceGenerator()
 
                         for device in sample_devices[:5]:  # Test first 5
@@ -782,10 +848,19 @@ def populate_modal_content(is_open, file_info):
     """RESTORED: Smart AI-driven column mapping"""
 
     if not is_open or not file_info:
-        return "Modal closed" if not is_open else dbc.Alert("No file information available", color="warning")
+        return (
+            "Modal closed"
+            if not is_open
+            else dbc.Alert("No file information available", color="warning")
+        )
 
     # Unicode fix
-    filename = str(file_info.get("filename", "Unknown")).replace("⛑️", "").replace("🔧", "").replace("❌", "")
+    filename = (
+        str(file_info.get("filename", "Unknown"))
+        .replace("⛑️", "")
+        .replace("🔧", "")
+        .replace("❌", "")
+    )
     columns = file_info.get("column_names", []) or file_info.get("columns", [])
     ai_suggestions = file_info.get("ai_suggestions", {})
 
@@ -793,13 +868,41 @@ def populate_modal_content(is_open, file_info):
         return dbc.Alert(f"No columns found in {filename}", color="warning")
 
     standard_fields = [
-        {"field": "person_id", "label": "Person/User ID", "description": "Identifies who accessed"},
-        {"field": "door_id", "label": "Door/Location ID", "description": "Identifies where access occurred"},
-        {"field": "timestamp", "label": "Timestamp", "description": "When access occurred"},
-        {"field": "access_result", "label": "Access Result", "description": "Success/failure of access"},
-        {"field": "token_id", "label": "Token/Badge ID", "description": "Badge or card identifier"},
-        {"field": "device_status", "label": "Device Status", "description": "Status of access device"},
-        {"field": "entry_type", "label": "Entry/Exit Type", "description": "Direction of access"}
+        {
+            "field": "person_id",
+            "label": "Person/User ID",
+            "description": "Identifies who accessed",
+        },
+        {
+            "field": "door_id",
+            "label": "Door/Location ID",
+            "description": "Identifies where access occurred",
+        },
+        {
+            "field": "timestamp",
+            "label": "Timestamp",
+            "description": "When access occurred",
+        },
+        {
+            "field": "access_result",
+            "label": "Access Result",
+            "description": "Success/failure of access",
+        },
+        {
+            "field": "token_id",
+            "label": "Token/Badge ID",
+            "description": "Badge or card identifier",
+        },
+        {
+            "field": "device_status",
+            "label": "Device Status",
+            "description": "Status of access device",
+        },
+        {
+            "field": "entry_type",
+            "label": "Entry/Exit Type",
+            "description": "Direction of access",
+        },
     ]
 
     csv_column_options = [{"label": f'"{col}"', "value": col} for col in columns]
@@ -812,79 +915,148 @@ def populate_modal_content(is_open, file_info):
         suggested_csv_column = None
         ai_confidence = 0.0
         for csv_col, suggestion in ai_suggestions.items():
-            if suggestion.get('field') == field_name:
+            if suggestion.get("field") == field_name:
                 suggested_csv_column = csv_col
-                ai_confidence = suggestion.get('confidence', 0.0)
+                ai_confidence = suggestion.get("confidence", 0.0)
                 break
 
         table_rows.append(
-            html.Tr([
-                html.Td([
-                    html.Strong(standard_field["label"]),
-                    html.Br(),
-                    html.Small(standard_field["description"], className="text-muted"),
-                    html.Br(),
-                    html.Code(field_name, className="bg-info text-white px-2 py-1 rounded small")
-                ], style={"width": "40%"}),
-                html.Td([
-                    dcc.Dropdown(
-                        id={"type": "standard-field-mapping", "field": field_name},
-                        options=csv_column_options,
-                        placeholder=f"Select CSV column for {field_name}",
-                        value=suggested_csv_column,
-                        style={"minWidth": "200px"}
-                    )
-                ], style={"width": "50%"}),
-                html.Td([
-                    dbc.Badge(
-                        f"AI: {ai_confidence:.0%}" if suggested_csv_column else "No AI suggestion",
-                        color="success" if ai_confidence > 0.7 else "warning" if ai_confidence > 0.4 else "secondary",
-                        className="small"
-                    )
-                ], style={"width": "10%"})
-            ])
+            html.Tr(
+                [
+                    html.Td(
+                        [
+                            html.Strong(standard_field["label"]),
+                            html.Br(),
+                            html.Small(
+                                standard_field["description"], className="text-muted"
+                            ),
+                            html.Br(),
+                            html.Code(
+                                field_name,
+                                className="bg-info text-white px-2 py-1 rounded small",
+                            ),
+                        ],
+                        style={"width": "40%"},
+                    ),
+                    html.Td(
+                        [
+                            dcc.Dropdown(
+                                id={
+                                    "type": "standard-field-mapping",
+                                    "field": field_name,
+                                },
+                                options=csv_column_options,
+                                placeholder=f"Select CSV column for {field_name}",
+                                value=suggested_csv_column,
+                                style={"minWidth": "200px"},
+                            )
+                        ],
+                        style={"width": "50%"},
+                    ),
+                    html.Td(
+                        [
+                            dbc.Badge(
+                                (
+                                    f"AI: {ai_confidence:.0%}"
+                                    if suggested_csv_column
+                                    else "No AI suggestion"
+                                ),
+                                color=(
+                                    "success"
+                                    if ai_confidence > 0.7
+                                    else (
+                                        "warning"
+                                        if ai_confidence > 0.4
+                                        else "secondary"
+                                    )
+                                ),
+                                className="small",
+                            )
+                        ],
+                        style={"width": "10%"},
+                    ),
+                ]
+            )
         )
 
     return [
-        dbc.Alert([
-            html.H6(f"Map Analytics Fields to CSV Columns from {filename}", className="mb-2"),
-            html.P([
-                "Your CSV has these columns: ",
-                ", ".join([col for col in columns[:5]]),
-                f"{'...' if len(columns) > 5 else ''}"
-            ], className="mb-2"),
-            html.P([
-                html.Strong("Instructions: "),
-                "Each row below represents a field that our analytics system expects. ",
-                "Select which column from your CSV file should provide the data for each field."
-            ], className="mb-0")
-        ], color="primary", className="mb-3"),
-
-        dbc.Table([
-            html.Thead([
-                html.Tr([
-                    html.Th("Analytics Field (Fixed)", style={"width": "40%"}),
-                    html.Th("Maps to CSV Column (Variable)", style={"width": "50%"}),
-                    html.Th("AI Confidence", style={"width": "10%"})
-                ])
-            ]),
-            html.Tbody(table_rows)
-        ], striped=True, hover=True),
-
-        dbc.Card([
-            dbc.CardHeader(html.H6("Your CSV Columns", className="mb-0")),
-            dbc.CardBody([
-                html.P("Available columns from your uploaded file:"),
-                html.Div([
-                    dbc.Badge(col, color="light", text_color="dark", className="me-1 mb-1")
-                    for col in columns
-                ])
-            ])
-        ], className="mt-3")
+        dbc.Alert(
+            [
+                html.H6(
+                    f"Map Analytics Fields to CSV Columns from {filename}",
+                    className="mb-2",
+                ),
+                html.P(
+                    [
+                        "Your CSV has these columns: ",
+                        ", ".join([col for col in columns[:5]]),
+                        f"{'...' if len(columns) > 5 else ''}",
+                    ],
+                    className="mb-2",
+                ),
+                html.P(
+                    [
+                        html.Strong("Instructions: "),
+                        "Each row below represents a field that our analytics system expects. ",
+                        "Select which column from your CSV file should provide the data for each field.",
+                    ],
+                    className="mb-0",
+                ),
+            ],
+            color="primary",
+            className="mb-3",
+        ),
+        dbc.Table(
+            [
+                html.Thead(
+                    [
+                        html.Tr(
+                            [
+                                html.Th(
+                                    "Analytics Field (Fixed)", style={"width": "40%"}
+                                ),
+                                html.Th(
+                                    "Maps to CSV Column (Variable)",
+                                    style={"width": "50%"},
+                                ),
+                                html.Th("AI Confidence", style={"width": "10%"}),
+                            ]
+                        )
+                    ]
+                ),
+                html.Tbody(table_rows),
+            ],
+            striped=True,
+            hover=True,
+        ),
+        dbc.Card(
+            [
+                dbc.CardHeader(html.H6("Your CSV Columns", className="mb-0")),
+                dbc.CardBody(
+                    [
+                        html.P("Available columns from your uploaded file:"),
+                        html.Div(
+                            [
+                                dbc.Badge(
+                                    col,
+                                    color="light",
+                                    text_color="dark",
+                                    className="me-1 mb-1",
+                                )
+                                for col in columns
+                            ]
+                        ),
+                    ]
+                ),
+            ],
+            className="mt-3",
+        ),
     ]
 
 
-def save_confirmed_device_mappings(confirm_clicks, floors, security, access, special, file_info):
+def save_confirmed_device_mappings(
+    confirm_clicks, floors, security, access, special, file_info
+):
     """Save confirmed device mappings to database"""
     if not confirm_clicks or not file_info:
         return no_update, no_update, no_update
@@ -901,7 +1073,8 @@ def save_confirmed_device_mappings(confirm_clicks, floors, security, access, spe
                 "security_level": security[i] if i < len(security) else 5,
                 "is_entry": "entry" in (access[i] if i < len(access) else []),
                 "is_exit": "exit" in (access[i] if i < len(access) else []),
-                "is_restricted": "is_restricted" in (special[i] if i < len(special) else []),  # ADD THIS
+                "is_restricted": "is_restricted"
+                in (special[i] if i < len(special) else []),  # ADD THIS
                 "confidence": 1.0,
                 "device_name": device,
                 "source": "user_confirmed",
@@ -913,9 +1086,12 @@ def save_confirmed_device_mappings(confirm_clicks, floors, security, access, spe
 
         # Update global mappings
         from components.simple_device_mapping import _device_ai_mappings
+
         _device_ai_mappings.update(user_mappings)
 
-        print(f"\u2705 Saved {len(user_mappings)} confirmed device mappings to database")
+        print(
+            f"\u2705 Saved {len(user_mappings)} confirmed device mappings to database"
+        )
 
         success_alert = dbc.Toast(
             "✅ Device mappings saved to database!",
@@ -950,7 +1126,6 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
         component_name="file_upload",
     )(highlight_upload_area)
 
-
     manager.register_callback(
         [
             Output("upload-results", "children", allow_duplicate=True),
@@ -962,7 +1137,7 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             Output("device-verification-modal", "is_open", allow_duplicate=True),
         ],
         Input("url", "pathname"),
-        prevent_initial_call=False,
+        prevent_initial_call="initial_duplicate",
         allow_duplicate=True,
         callback_id="restore_upload_state",
         component_name="file_upload",
@@ -1025,7 +1200,10 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
 
     manager.register_callback(
         Output("modal-body", "children"),
-        [Input("column-verification-modal", "is_open"), Input("current-file-info-store", "data")],
+        [
+            Input("column-verification-modal", "is_open"),
+            Input("current-file-info-store", "data"),
+        ],
         prevent_initial_call=True,
         callback_id="populate_modal_content",
         component_name="file_upload",
