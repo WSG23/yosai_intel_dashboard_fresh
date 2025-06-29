@@ -260,7 +260,8 @@ files while maintaining backwards compatible helper functions like
 - Full type annotations and validation
 
 ### Services Layer (`services/`)
-- **analytics_service.py**: Business logic for analytics
+- **analytics_service.py**: Business logic for analytics ([docs](docs/analytics_service.md))
+- **device_learning_service.py**: Persists learned device mappings ([docs](docs/device_learning_service.md))
 - Caching and performance optimization
 - Modular and testable
 
