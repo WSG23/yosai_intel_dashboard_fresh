@@ -16,46 +16,46 @@ logger = logging.getLogger(__name__)
 
 def debug_imports():
     """Test all required imports"""
-    print("🔍 Testing imports...")
+    logger.info("🔍 Testing imports...")
     
     try:
         import dash
-        print(f"✅ Dash version: {dash.__version__}")
+        logger.info(f"✅ Dash version: {dash.__version__}")
     except ImportError as e:
-        print(f"❌ Dash import failed: {e}")
+        logger.info(f"❌ Dash import failed: {e}")
         return False
     
     try:
         import dash_bootstrap_components as dbc
-        print("✅ Dash Bootstrap Components imported")
+        logger.info("✅ Dash Bootstrap Components imported")
     except ImportError as e:
-        print(f"❌ DBC import failed: {e}")
+        logger.info(f"❌ DBC import failed: {e}")
         return False
     
     try:
         import pandas as pd
-        print(f"✅ Pandas version: {pd.__version__}")
+        logger.info(f"✅ Pandas version: {pd.__version__}")
     except ImportError as e:
-        print(f"❌ Pandas import failed: {e}")
+        logger.info(f"❌ Pandas import failed: {e}")
         return False
     
     try:
         from config.config import get_config
         config = get_config()
-        print("✅ Config system working")
+        logger.info("✅ Config system working")
     except Exception as e:
-        print(f"❌ Config import failed: {e}")
+        logger.info(f"❌ Config import failed: {e}")
         return False
     
     return True
 
 def debug_file_upload_module():
     """Test file upload module"""
-    print("\n🔍 Testing file upload module...")
+    logger.info("\n🔍 Testing file upload module...")
     
     try:
         import pages.file_upload as fu
-        print("✅ File upload module imported")
+        logger.info("✅ File upload module imported")
         
         # Check required functions
         required_functions = [
@@ -65,100 +65,100 @@ def debug_file_upload_module():
         
         for func_name in required_functions:
             if hasattr(fu, func_name):
-                print(f"✅ Function '{func_name}' found")
+                logger.info(f"✅ Function '{func_name}' found")
             else:
-                print(f"❌ Function '{func_name}' missing")
+                logger.info(f"❌ Function '{func_name}' missing")
                 
         return True
         
     except Exception as e:
-        print(f"❌ File upload module test failed: {e}")
+        logger.info(f"❌ File upload module test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
 
 def debug_analytics_module():
     """Test analytics module for conflicts"""
-    print("\n🔍 Testing analytics module...")
+    logger.info("\n🔍 Testing analytics module...")
     
     try:
         import pages.deep_analytics as da
-        print("✅ Deep analytics module imported")
+        logger.info("✅ Deep analytics module imported")
         
         # Check for required functions
         if hasattr(da, 'layout'):
-            print("✅ Analytics layout function found")
+            logger.info("✅ Analytics layout function found")
         else:
-            print("❌ Analytics layout function missing")
+            logger.info("❌ Analytics layout function missing")
             
         if hasattr(da, 'handle_analysis_buttons'):
-            print("✅ Analytics callback function found")
+            logger.info("✅ Analytics callback function found")
         else:
-            print("❌ Analytics callback function missing")
+            logger.info("❌ Analytics callback function missing")
             
         return True
         
     except Exception as e:
-        print(f"❌ Analytics module test failed: {e}")
+        logger.info(f"❌ Analytics module test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
 
 def debug_app_creation():
     """Test app creation and callback registration"""
-    print("\n🔍 Testing app creation...")
+    logger.info("\n🔍 Testing app creation...")
     
     try:
         from core.app_factory import create_app
         app = create_app()
-        print("✅ App created successfully")
+        logger.info("✅ App created successfully")
         
         # Check callback registration
         if hasattr(app, 'callback_map'):
             callback_count = len(app.callback_map)
-            print(f"✅ {callback_count} callbacks registered")
+            logger.info(f"✅ {callback_count} callbacks registered")
             
             # List all callbacks
-            print("\n📋 Registered callbacks:")
+            logger.info("\n📋 Registered callbacks:")
             for i, callback_id in enumerate(app.callback_map.keys(), 1):
-                print(f"  {i}. {callback_id}")
+                logger.info(f"  {i}. {callback_id}")
             
             # Check for upload-related callbacks
             upload_callbacks = [cid for cid in app.callback_map.keys() 
                               if any(term in cid.lower() for term in ['upload', 'file', 'preview'])]
             
             if upload_callbacks:
-                print(f"\n✅ {len(upload_callbacks)} upload callbacks found:")
+                logger.info(f"\n✅ {len(upload_callbacks)} upload callbacks found:")
                 for ucb in upload_callbacks:
-                    print(f"  - {ucb}")
+                    logger.info(f"  - {ucb}")
             else:
-                print("\n❌ No upload callbacks found!")
+                logger.info("\n❌ No upload callbacks found!")
                 
             # Check for duplicate analytics callbacks
             analytics_callbacks = [cid for cid in app.callback_map.keys() 
                                  if 'analytics-display-area' in cid]
             
             if len(analytics_callbacks) > 1:
-                print(f"\n❌ Duplicate analytics callbacks found: {analytics_callbacks}")
+                logger.info(f"\n❌ Duplicate analytics callbacks found: {analytics_callbacks}")
             elif len(analytics_callbacks) == 1:
-                print(f"\n✅ Single analytics callback found: {analytics_callbacks[0]}")
+                logger.info(f"\n✅ Single analytics callback found: {analytics_callbacks[0]}")
             else:
-                print("\n⚠️ No analytics callbacks found")
+                logger.info("\n⚠️ No analytics callbacks found")
                 
             return True
         else:
-            print("❌ App has no callback_map")
+            logger.info("❌ App has no callback_map")
             return False
             
     except Exception as e:
-        print(f"❌ App creation failed: {e}")
+        logger.info(f"❌ App creation failed: {e}")
         import traceback
         traceback.print_exc()
         return False
 
 def debug_file_processor():
     """Test file processing"""
-    print("\n🔍 Testing file processor...")
+    logger.info("\n🔍 Testing file processor...")
     
     try:
         from services.file_processor_service import FileProcessorService
@@ -174,25 +174,25 @@ def debug_file_processor():
         result = parse_uploaded_file(data_url, "test.csv")
         
         if result.get('success'):
-            print("✅ File processing works")
+            logger.info("✅ File processing works")
             df = result['data']
-            print(f"  - Rows: {len(df)}")
-            print(f"  - Columns: {list(df.columns)}")
+            logger.info(f"  - Rows: {len(df)}")
+            logger.info(f"  - Columns: {list(df.columns)}")
         else:
-            print(f"❌ File processing failed: {result.get('error')}")
+            logger.info(f"❌ File processing failed: {result.get('error')}")
             
         return result.get('success', False)
         
     except Exception as e:
-        print(f"❌ File processor test failed: {e}")
+        logger.info(f"❌ File processor test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
 
 def run_full_debug():
     """Run all debug tests"""
-    print("🚀 FULL UPLOAD DEBUG TEST")
-    print("=" * 50)
+    logger.info("🚀 FULL UPLOAD DEBUG TEST")
+    logger.info("=" * 50)
     
     tests = [
         ("Imports", debug_imports),
@@ -207,33 +207,33 @@ def run_full_debug():
         try:
             results[test_name] = test_func()
         except Exception as e:
-            print(f"❌ {test_name} test crashed: {e}")
+            logger.info(f"❌ {test_name} test crashed: {e}")
             results[test_name] = False
-        print("-" * 30)
+        logger.info("-" * 30)
     
     # Summary
-    print("\n📊 TEST SUMMARY")
-    print("=" * 30)
+    logger.info("\n📊 TEST SUMMARY")
+    logger.info("=" * 30)
     passed = sum(results.values())
     total = len(results)
     
     for test_name, passed_test in results.items():
         status = "✅ PASS" if passed_test else "❌ FAIL"
-        print(f"{test_name}: {status}")
+        logger.info(f"{test_name}: {status}")
     
-    print(f"\nOverall: {passed}/{total} tests passed")
+    logger.info(f"\nOverall: {passed}/{total} tests passed")
     
     if passed == total:
-        print("\n🎉 ALL TESTS PASSED!")
-        print("Upload functionality should work properly.")
-        print("\n📋 Next steps:")
-        print("1. Run: python3 test_upload.py  (create test file)")
-        print("2. Run: python3 app.py  (start app)")
-        print("3. Go to: http://127.0.0.1:8050/upload")
-        print("4. Upload the test file and check logs")
+        logger.info("\n🎉 ALL TESTS PASSED!")
+        logger.info("Upload functionality should work properly.")
+        logger.info("\n📋 Next steps:")
+        logger.info("1. Run: python3 test_upload.py  (create test file)")
+        logger.info("2. Run: python3 app.py  (start app)")
+        logger.info("3. Go to: http://127.0.0.1:8050/upload")
+        logger.info("4. Upload the test file and check logs")
     else:
-        print("\n⚠️ SOME TESTS FAILED")
-        print("Check the errors above and fix them before testing upload.")
+        logger.info("\n⚠️ SOME TESTS FAILED")
+        logger.info("Check the errors above and fix them before testing upload.")
     
     return passed == total
 

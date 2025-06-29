@@ -5,6 +5,7 @@ import os
 import uuid
 from typing import Dict, Any, Optional, Tuple, Sequence
 import logging
+logger = logging.getLogger(__name__)
 from datetime import datetime
 
 class FileProcessor:
@@ -135,38 +136,38 @@ class FileProcessor:
         # Required columns for access control data
         required_columns = ['person_id', 'door_id', 'access_result', 'timestamp']
 
-        print(f"[INFO] Validating data: {len(df)} rows, columns: {list(df.columns)}")
+        logger.info(f"[INFO] Validating data: {len(df)} rows, columns: {list(df.columns)}")
 
         # Check for exact matches first
         exact_matches = [col for col in required_columns if col in df.columns]
         missing_columns = [col for col in required_columns if col not in df.columns]
 
-        print(f"[INFO] Exact matches: {exact_matches}, Missing: {missing_columns}")
+        logger.info(f"[INFO] Exact matches: {exact_matches}, Missing: {missing_columns}")
 
         # If we have all exact matches, proceed with validation
         if len(exact_matches) == len(required_columns):
-            print("[SUCCESS] All columns found exactly, proceeding with validation")
+            logger.info("[SUCCESS] All columns found exactly, proceeding with validation")
             return self._validate_data_content(df)
 
         # Try fuzzy matching for missing columns
         if missing_columns:
-            print("[INFO] Attempting fuzzy matching...")
+            logger.info("[INFO] Attempting fuzzy matching...")
             fuzzy_matches = self._fuzzy_match_columns(list(df.columns), required_columns)
 
-            print(f"[INFO] Fuzzy matches found: {fuzzy_matches}")
+            logger.info(f"[INFO] Fuzzy matches found: {fuzzy_matches}")
 
             # Check if we found matches for all required columns
             if len(fuzzy_matches) >= len(missing_columns):
                 # Apply column mappings
-                print("[SUCCESS] Applying column mappings...")
+                logger.info("[SUCCESS] Applying column mappings...")
                 try:
                     df_mapped = df.copy()
                     # FIX: Invert the dictionary - fuzzy_matches is target->source, but rename needs source->target
                     rename_dict = {source_col: target_col for target_col, source_col in fuzzy_matches.items()}
                     df_mapped = df_mapped.rename(columns=rename_dict)
                     
-                    print(f"[SUCCESS] Applied rename dict: {rename_dict}")
-                    print(f"[INFO] New columns: {list(df_mapped.columns)}")
+                    logger.info(f"[SUCCESS] Applied rename dict: {rename_dict}")
+                    logger.info(f"[INFO] New columns: {list(df_mapped.columns)}")
                     
                     # Validate the mapped dataframe and ensure column names are preserved
                     validation_result = self._validate_data_content(df_mapped)
@@ -174,12 +175,12 @@ class FileProcessor:
                     # Force the renamed dataframe to be returned
                     if validation_result['valid']:
                         validation_result['data'] = df_mapped  # Ensure the renamed df is returned
-                        print(f"[DEBUG] Returning dataframe with columns: {list(df_mapped.columns)}")
+                        logger.info(f"[DEBUG] Returning dataframe with columns: {list(df_mapped.columns)}")
                     
                     return validation_result
 
                 except Exception as e:
-                    print(f"[ERROR] Error applying column mappings: {e}")
+                    logger.info(f"[ERROR] Error applying column mappings: {e}")
                     return {
                         'valid': False,
                         'error': f'Error applying column mappings: {str(e)}',
@@ -187,7 +188,7 @@ class FileProcessor:
                     }
             else:
                 missing_after_fuzzy = [col for col in required_columns if col not in fuzzy_matches]
-                print(f"[WARNING] Could not map all columns. Still missing: {missing_after_fuzzy}")
+                logger.info(f"[WARNING] Could not map all columns. Still missing: {missing_after_fuzzy}")
                 return {
                     'valid': False,
                     'error': f'Could not map required columns. Missing: {missing_after_fuzzy}',
@@ -203,19 +204,19 @@ class FileProcessor:
     def _validate_data_content(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Validate the actual data content after column mapping - NO EMOJIS"""
 
-        print("[INFO] Validating data content...")
+        logger.info("[INFO] Validating data content...")
         validation_errors = []
 
         # Standardize access_result values if present
         if 'access_result' in df.columns:
-            print("[INFO] Standardizing access_result values...")
+            logger.info("[INFO] Standardizing access_result values...")
             original_values = df['access_result'].unique()
-            print(f"[INFO] Original access results: {original_values}")
+            logger.info(f"[INFO] Original access results: {original_values}")
 
             # Handle your specific format: "Access Granted" -> "Granted"
             df['access_result'] = df['access_result'].astype(str).str.replace('Access ', '', regex=False)
             standardized_values = df['access_result'].unique()
-            print(f"[INFO] Standardized access results: {standardized_values}")
+            logger.info(f"[INFO] Standardized access results: {standardized_values}")
 
             # Check for valid results (be more permissive)
             valid_results = ['granted', 'denied', 'timeout', 'error', 'failed']
@@ -223,11 +224,11 @@ class FileProcessor:
                              if r not in valid_results and r != 'nan']
 
             if invalid_results:
-                print(f"[WARNING] Non-standard access results found: {invalid_results} (will be processed anyway)")
+                logger.info(f"[WARNING] Non-standard access results found: {invalid_results} (will be processed anyway)")
 
         # Validate timestamp if present
         if 'timestamp' in df.columns:
-            print("[INFO] Validating timestamp column...")
+            logger.info("[INFO] Validating timestamp column...")
             try:
                 # Try to convert to datetime if not already
                 if not pd.api.types.is_datetime64_any_dtype(df['timestamp']):
@@ -236,9 +237,9 @@ class FileProcessor:
                 # Check for invalid timestamps
                 null_timestamps = df['timestamp'].isnull().sum()
                 if null_timestamps > 0:
-                    print(f"[WARNING] Found {null_timestamps} invalid timestamps (will be processed anyway)")
+                    logger.info(f"[WARNING] Found {null_timestamps} invalid timestamps (will be processed anyway)")
             except Exception as e:
-                print(f"[WARNING] Timestamp validation error: {e} (will be processed anyway)")
+                logger.info(f"[WARNING] Timestamp validation error: {e} (will be processed anyway)")
 
         # Return validation result with the processed DataFrame
         if validation_errors:
@@ -317,13 +318,13 @@ class FileProcessor:
             if best_match:
                 suggestions[required_col] = best_match
 
-        print(f"[INFO] Fuzzy matching suggestions: {suggestions}")
+        logger.info(f"[INFO] Fuzzy matching suggestions: {suggestions}")
         return suggestions
 
     def apply_manual_mapping(self, df: pd.DataFrame, column_mapping: Dict[str, str]) -> pd.DataFrame:
         """Apply manual column mapping provided by user"""
 
-        print(f"🔧 Applying manual mapping: {column_mapping}")
+        logger.info(f"🔧 Applying manual mapping: {column_mapping}")
 
         missing_source_cols = [source for source in column_mapping.values() if source not in df.columns]
         if missing_source_cols:

@@ -20,13 +20,15 @@ from .config import (
 # Import dynamic configuration helpers
 from .dynamic_config import dynamic_config, DynamicConfigManager
 from .constants import SecurityConstants, PerformanceConstants, CSSConstants
+import logging
+logger = logging.getLogger(__name__)
 
 # Try to import database manager safely
 try:
     from .database_manager import DatabaseManager, DatabaseConnection, MockConnection
     DATABASE_MANAGER_AVAILABLE = True
 except ImportError as e:
-    print(f"Warning: Database manager not available: {e}")
+    logger.info(f"Warning: Database manager not available: {e}")
     DatabaseManager = None
     DatabaseConnection = None 
     MockConnection = None

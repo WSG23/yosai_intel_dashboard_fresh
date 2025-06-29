@@ -6,6 +6,8 @@ import csv
 import tempfile
 import os
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 def create_test_csv():
     """Create a simple test CSV file for upload testing"""
@@ -27,14 +29,14 @@ def create_test_csv():
         writer = csv.writer(csvfile)
         writer.writerows(test_data)
     
-    print(f"✅ Created test file: {test_file.absolute()}")
-    print(f"📄 File contains {len(test_data)-1} data rows")
-    print("🔧 Use this file to test the upload functionality")
-    print("\n📋 Next steps:")
-    print("1. Start the app: python3 app.py")
-    print("2. Go to: http://127.0.0.1:8050/upload")
-    print("3. Upload the test_upload_data.csv file")
-    print("4. Check logs for upload processing messages")
+    logger.info(f"✅ Created test file: {test_file.absolute()}")
+    logger.info(f"📄 File contains {len(test_data)-1} data rows")
+    logger.info("🔧 Use this file to test the upload functionality")
+    logger.info("\n📋 Next steps:")
+    logger.info("1. Start the app: python3 app.py")
+    logger.info("2. Go to: http://127.0.0.1:8050/upload")
+    logger.info("3. Upload the test_upload_data.csv file")
+    logger.info("4. Check logs for upload processing messages")
     
     return test_file
 

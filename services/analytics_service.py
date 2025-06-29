@@ -54,19 +54,19 @@ class AnalyticsDataAccessor:
             uploaded_data = get_uploaded_data()
 
             if uploaded_data:
-                print(f"📊 Found {len(uploaded_data):,} uploaded files")
+                logger.info(f"📊 Found {len(uploaded_data):,} uploaded files")
                 for filename, df in uploaded_data.items():
-                    print(f"   📄 {filename}: {len(df):,} rows")
+                    logger.info(f"   📄 {filename}: {len(df):,} rows")
                 return uploaded_data
             else:
-                print("⚠️ No uploaded data found")
+                logger.info("⚠️ No uploaded data found")
                 return {}
 
         except ImportError:
-            print("❌ Could not import uploaded data from file_upload")
+            logger.info("❌ Could not import uploaded data from file_upload")
             return {}
         except Exception as e:
-            print(f"❌ Error getting uploaded data: {e}")
+            logger.info(f"❌ Error getting uploaded data: {e}")
             return {}
 
     def _apply_mappings_and_combine(self, uploaded_data: Dict[str, pd.DataFrame],
@@ -203,7 +203,7 @@ class AnalyticsService:
             # Process each uploaded file with the FIXED processor
             for file_path in uploaded_files:
                 try:
-                    print(f"[INFO] Processing uploaded file: {file_path}")
+                    logger.info(f"[INFO] Processing uploaded file: {file_path}")
 
                     # Read the file
                     if file_path.endswith('.csv'):
@@ -227,15 +227,15 @@ class AnalyticsService:
                         all_data.append(processed_df)
                         total_records += len(processed_df)
                         processing_info.append(f"✅ {file_path}: {len(processed_df)} records")
-                        print(f"[SUCCESS] Processed {len(processed_df)} records from {file_path}")
+                        logger.info(f"[SUCCESS] Processed {len(processed_df)} records from {file_path}")
                     else:
                         error_msg = validation_result.get('error', 'Unknown error')
                         processing_info.append(f"❌ {file_path}: {error_msg}")
-                        print(f"[ERROR] Failed to process {file_path}: {error_msg}")
+                        logger.info(f"[ERROR] Failed to process {file_path}: {error_msg}")
 
                 except Exception as e:
                     processing_info.append(f"❌ {file_path}: Exception - {str(e)}")
-                    print(f"[ERROR] Exception processing {file_path}: {e}")
+                    logger.info(f"[ERROR] Exception processing {file_path}: {e}")
 
             if not all_data:
                 return {
@@ -246,7 +246,7 @@ class AnalyticsService:
 
             # Combine all successfully processed data
             combined_df = pd.concat(all_data, ignore_index=True)
-            print(f"[SUCCESS] Combined data: {len(combined_df)} total records")
+            logger.info(f"[SUCCESS] Combined data: {len(combined_df)} total records")
 
             # Generate analytics from the properly processed data
             analytics = self._generate_basic_analytics(combined_df)
@@ -278,11 +278,11 @@ class AnalyticsService:
             uploaded_data = get_uploaded_data()
 
             if uploaded_data and source in ["uploaded", "sample"]:
-                print(f"🔄 FORCING uploaded data usage (source was: {source})")
+                logger.info(f"🔄 FORCING uploaded data usage (source was: {source})")
                 return self._process_uploaded_data_directly(uploaded_data)
 
         except Exception as e:
-            print(f"⚠️ Uploaded data check failed: {e}")
+            logger.info(f"⚠️ Uploaded data check failed: {e}")
 
         # Original logic for when no uploaded data
         if source == "sample":
@@ -297,16 +297,16 @@ class AnalyticsService:
     def _process_uploaded_data_directly(self, uploaded_data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
         """Process uploaded data directly - bypasses all other logic"""
         try:
-            print(f"📊 PROCESSING {len(uploaded_data)} uploaded files directly...")
+            logger.info(f"📊 PROCESSING {len(uploaded_data)} uploaded files directly...")
 
             all_dataframes = []
 
             for filename, df in uploaded_data.items():
-                print(f"   📄 {filename}: {len(df):,} rows")
-                print(f"      Original columns: {list(df.columns)}")
+                logger.info(f"   📄 {filename}: {len(df):,} rows")
+                logger.info(f"      Original columns: {list(df.columns)}")
 
                 df_processed = map_and_clean(df.copy())
-                print(f"      ✅ Columns mapped: {list(df_processed.columns)}")
+                logger.info(f"      ✅ Columns mapped: {list(df_processed.columns)}")
 
                 all_dataframes.append(df_processed)
 
@@ -332,7 +332,7 @@ class AnalyticsService:
                         'start': start_date.strftime('%Y-%m-%d'),
                         'end': end_date.strftime('%Y-%m-%d')
                     }
-                    print(f"      📅 Date range: {date_range['start']} to {date_range['end']}")
+                    logger.info(f"      📅 Date range: {date_range['start']} to {date_range['end']}")
 
             result = {
                 'status': 'success',
@@ -354,15 +354,15 @@ class AnalyticsService:
                 'timestamp': datetime.now().isoformat()
             }
 
-            print(f"🎉 DIRECT PROCESSING RESULT:")
-            print(f"   Total Events: {total_events:,}")
-            print(f"   Active Users: {active_users:,}")
-            print(f"   Active Doors: {active_doors:,}")
+            logger.info(f"🎉 DIRECT PROCESSING RESULT:")
+            logger.info(f"   Total Events: {total_events:,}")
+            logger.info(f"   Active Users: {active_users:,}")
+            logger.info(f"   Active Doors: {active_doors:,}")
 
             return result
 
         except Exception as e:
-            print(f"❌ Direct processing failed: {e}")
+            logger.info(f"❌ Direct processing failed: {e}")
             return {'status': 'error', 'message': str(e)}
 
     # ------------------------------------------------------------------
@@ -436,20 +436,20 @@ class AnalyticsService:
             if not uploaded_data:
                 return {'status': 'no_data', 'message': 'No uploaded files available'}
 
-            print(f"🔍 Processing {len(uploaded_data)} uploaded files...")
+            logger.info(f"🔍 Processing {len(uploaded_data)} uploaded files...")
 
             all_dfs = []
             total_original_rows = 0
 
             for filename, df in uploaded_data.items():
-                print(f"📄 Processing {filename}: {len(df):,} rows")
+                logger.info(f"📄 Processing {filename}: {len(df):,} rows")
                 cleaned = self.clean_uploaded_dataframe(df)
                 all_dfs.append(cleaned)
                 total_original_rows += len(df)
 
             combined_df = pd.concat(all_dfs, ignore_index=True)
 
-            print(f"🎉 COMBINED: {len(combined_df):,} total rows")
+            logger.info(f"🎉 COMBINED: {len(combined_df):,} total rows")
 
             summary = self.summarize_dataframe(combined_df)
             summary.update({
@@ -459,10 +459,10 @@ class AnalyticsService:
                 'original_total_rows': total_original_rows,
             })
 
-            print("📊 ANALYTICS RESULT:")
-            print(f"   Total Events: {summary['total_events']:,}")
-            print(f"   Active Users: {summary['active_users']:,}")
-            print(f"   Active Doors: {summary['active_doors']:,}")
+            logger.info("📊 ANALYTICS RESULT:")
+            logger.info(f"   Total Events: {summary['total_events']:,}")
+            logger.info(f"   Active Users: {summary['active_users']:,}")
+            logger.info(f"   Active Doors: {summary['active_doors']:,}")
 
             return summary
 
@@ -818,7 +818,7 @@ class AnalyticsService:
                 return {'status': 'no_data', 'message': 'No uploaded data available'}
 
         except Exception as e:
-            print(f"❌ Error in get_unique_patterns_analysis: {e}")
+            logger.info(f"❌ Error in get_unique_patterns_analysis: {e}")
             return {'status': 'error', 'message': str(e)}
 
     def health_check(self) -> Dict[str, Any]:

@@ -25,43 +25,43 @@ def check_learning_status():
     service = get_learning_service()
     stats = service.get_learning_statistics()
 
-    print("🧠 LEARNING STATUS:")
-    print(f"   Total learned files: {stats['total_mappings']}")
-    print(f"   Total devices learned: {stats['total_devices']}")
-    print(f"   Latest save: {stats.get('latest_save', 'None')}")
+    logger.info("🧠 LEARNING STATUS:")
+    logger.info(f"   Total learned files: {stats['total_mappings']}")
+    logger.info(f"   Total devices learned: {stats['total_devices']}")
+    logger.info(f"   Latest save: {stats.get('latest_save', 'None')}")
 
-    print("\n📁 LEARNED FILES:")
+    logger.info("\n📁 LEARNED FILES:")
     for file_info in stats['files']:
-        print(f"   • {file_info['filename']} - {file_info['device_count']} devices")
-        print(f"     Fingerprint: {file_info['fingerprint']}")
-        print(f"     Saved: {file_info['saved_at']}")
+        logger.info(f"   • {file_info['filename']} - {file_info['device_count']} devices")
+        logger.info(f"     Fingerprint: {file_info['fingerprint']}")
+        logger.info(f"     Saved: {file_info['saved_at']}")
 
     # Check if storage file exists
     import os
     storage_exists = os.path.exists("data/learned_mappings.pkl")
-    print(f"\n💾 Storage file exists: {storage_exists}")
+    logger.info(f"\n💾 Storage file exists: {storage_exists}")
 
     if storage_exists:
         file_size = os.path.getsize("data/learned_mappings.pkl")
-        print(f"   File size: {file_size} bytes")
+        logger.info(f"   File size: {file_size} bytes")
 
 
 def print_startup_info(app_config):
     """Print application startup information"""
-    print("\n" + "=" * 60)
-    print("🏯 YŌSAI INTEL DASHBOARD")
-    print("=" * 60)
-    print(f"🌐 URL: http://{app_config.host}:{app_config.port}")
-    print(f"🔧 Debug Mode: {app_config.debug}")
-    print(f"🌍 Environment: {app_config.environment}")
-    print(f"📊 Analytics: http://{app_config.host}:{app_config.port}/analytics")
-    print(f"📁 Upload: http://{app_config.host}:{app_config.port}/upload")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("🏯 YŌSAI INTEL DASHBOARD")
+    logger.info("=" * 60)
+    logger.info(f"🌐 URL: http://{app_config.host}:{app_config.port}")
+    logger.info(f"🔧 Debug Mode: {app_config.debug}")
+    logger.info(f"🌍 Environment: {app_config.environment}")
+    logger.info(f"📊 Analytics: http://{app_config.host}:{app_config.port}/analytics")
+    logger.info(f"📁 Upload: http://{app_config.host}:{app_config.port}/upload")
+    logger.info("=" * 60)
 
     if app_config.debug:
-        print("⚠️  Running in DEBUG mode - do not use in production!")
+        logger.info("⚠️  Running in DEBUG mode - do not use in production!")
 
-    print("\n🚀 Dashboard starting...")
+    logger.info("\n🚀 Dashboard starting...")
 
 
 def main():
@@ -76,8 +76,8 @@ def main():
             logger.info("✅ Configuration loaded successfully")
         except Exception as e:
             logger.error(f"❌ Failed to load configuration: {e}")
-            print(f"\n❌ Configuration Error: {e}")
-            print("💡 Make sure config/config.py exists and is properly formatted")
+            logger.info(f"\n❌ Configuration Error: {e}")
+            logger.info("💡 Make sure config/config.py exists and is properly formatted")
             sys.exit(1)
 
         # Print startup information
@@ -91,8 +91,8 @@ def main():
             logger.info("✅ Application created successfully")
         except Exception as e:
             logger.error(f"❌ Failed to create application: {e}")
-            print(f"\n❌ Application Creation Error: {e}")
-            print(
+            logger.info(f"\n❌ Application Creation Error: {e}")
+            logger.info(
                 "💡 Make sure core/app_factory.py exists and dependencies are installed"
             )
             sys.exit(1)
@@ -103,16 +103,16 @@ def main():
                 debug=app_config.debug, host=app_config.host, port=app_config.port
             )
         except KeyboardInterrupt:
-            print("\n👋 Application stopped by user")
+            logger.info("\n👋 Application stopped by user")
         except Exception as e:
             logger.error(f"❌ Application runtime error: {e}")
-            print(f"\n❌ Runtime Error: {e}")
+            logger.info(f"\n❌ Runtime Error: {e}")
             sys.exit(1)
 
     except Exception as e:
         logger.error(f"❌ Unexpected error: {e}")
-        print(f"\n❌ Unexpected Error: {e}")
-        print("💡 Check logs for more details")
+        logger.info(f"\n❌ Unexpected Error: {e}")
+        logger.info("💡 Check logs for more details")
         sys.exit(1)
 
 

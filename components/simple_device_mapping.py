@@ -372,13 +372,13 @@ def toggle_simple_device_modal(open_clicks, cancel_clicks, save_clicks, is_open)
         return is_open
 
     button_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    print(f"🎯 Modal button triggered: {button_id}")
+    logger.info(f"🎯 Modal button triggered: {button_id}")
 
     if button_id == "open-device-mapping" and open_clicks:
-        print("📂 Opening device mapping modal")
+        logger.info("📂 Opening device mapping modal")
         return True
     elif button_id in ["device-modal-cancel", "device-modal-save"]:
-        print("🚪 Closing device mapping modal")
+        logger.info("🚪 Closing device mapping modal")
         return False
 
     return is_open

@@ -107,22 +107,22 @@ def test_upload_module():
         traceback.print_exc()
 
 if __name__ == "__main__":
-    print("🧪 Testing callback registration...")
-    print("=" * 50)
+    logger.info("🧪 Testing callback registration...")
+    logger.info("=" * 50)
     
     # Test 1: Upload module import
     test_upload_module()
-    print("-" * 30)
+    logger.info("-" * 30)
     
     # Test 2: App creation and callback registration
     app = test_callback_registration()
     
     if app:
-        print("✅ All tests passed! Upload should work.")
-        print("\n📋 Next steps:")
-        print("1. Run: python3 test_upload.py  (to create test file)")
-        print("2. Run: python3 app.py  (to start the app)")
-        print("3. Go to: http://127.0.0.1:8050/upload")
-        print("4. Test file upload functionality")
+        logger.info("✅ All tests passed! Upload should work.")
+        logger.info("\n📋 Next steps:")
+        logger.info("1. Run: python3 test_upload.py  (to create test file)")
+        logger.info("2. Run: python3 app.py  (to start the app)")
+        logger.info("3. Go to: http://127.0.0.1:8050/upload")
+        logger.info("4. Test file upload functionality")
     else:
-        print("❌ Tests failed. Check the errors above.")
+        logger.info("❌ Tests failed. Check the errors above.")
