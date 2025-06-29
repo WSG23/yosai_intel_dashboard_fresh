@@ -9,14 +9,13 @@ from typing import Any, Dict
 
 from utils.unicode_handler import sanitize_unicode_input
 from utils.file_validator import safe_decode_with_unicode_handling
+from config.dynamic_config import dynamic_config
 
 import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import html
 
 logger = logging.getLogger(__name__)
-
-MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
 SAFE_FILENAME_RE = re.compile(r"^[A-Za-z0-9._\- ]{1,100}$")
 
 
@@ -32,7 +31,8 @@ def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
 
         content_type, content_string = contents.split(",", 1)
         decoded = base64.b64decode(content_string)
-        if len(decoded) > MAX_FILE_SIZE_BYTES:
+        max_size = dynamic_config.security.max_upload_mb * 1024 * 1024
+        if len(decoded) > max_size:
             return {
                 "success": False,
                 "error": "File too large",
