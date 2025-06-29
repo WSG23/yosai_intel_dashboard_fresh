@@ -125,23 +125,14 @@ class AnalyticsDataAccessor:
 
     def _apply_column_mappings(self, df: pd.DataFrame, filename: str,
                               mappings_data: Dict[str, Any]) -> pd.DataFrame:
-        """Apply learned column mappings"""
-        for fingerprint, mapping_info in mappings_data.items():
+        """Apply learned column mappings and standard cleaning."""
+        column_mappings = {}
+        for mapping_info in mappings_data.values():
             if mapping_info.get('filename') == filename:
                 column_mappings = mapping_info.get('column_mappings', {})
-                if column_mappings:
-                    return df.rename(columns=column_mappings)
+                break
 
-        # Fallback to standard mapping patterns
-        standard_mappings = {
-            'Timestamp': 'timestamp',
-            'Person ID': 'person_id',
-            'Token ID': 'token_id',
-            'Device name': 'door_id',
-            'Access result': 'access_result'
-        }
-
-        return df.rename(columns=standard_mappings)
+        return map_and_clean(df, column_mappings)
 
     def _apply_device_mappings(self, df: pd.DataFrame, filename: str,
                               mappings_data: Dict[str, Any]) -> pd.DataFrame:

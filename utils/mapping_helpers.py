@@ -1,6 +1,6 @@
 """Utility functions for mapping uploaded data columns."""
 
-from typing import Dict
+from typing import Dict, Optional
 import pandas as pd
 
 # Standard column mapping used across the project
@@ -13,9 +13,25 @@ STANDARD_COLUMN_MAPPING: Dict[str, str] = {
 }
 
 
-def map_and_clean(df: pd.DataFrame) -> pd.DataFrame:
-    """Rename columns using :data:`STANDARD_COLUMN_MAPPING` and clean fields."""
-    df = df.rename(columns=STANDARD_COLUMN_MAPPING)
+def map_and_clean(
+    df: pd.DataFrame, learned_mappings: Optional[Dict[str, str]] = None
+) -> pd.DataFrame:
+    """Rename columns using provided mappings and clean fields.
+
+    Parameters
+    ----------
+    df:
+        DataFrame to clean.
+    learned_mappings:
+        Optional user or AI learned column mappings. These take precedence over
+        :data:`STANDARD_COLUMN_MAPPING`.
+    """
+
+    mappings = STANDARD_COLUMN_MAPPING.copy()
+    if learned_mappings:
+        mappings.update(learned_mappings)
+
+    df = df.rename(columns=mappings)
 
     if "timestamp" in df.columns:
         df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
