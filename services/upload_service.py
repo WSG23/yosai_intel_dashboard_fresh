@@ -3,6 +3,7 @@ import base64
 import io
 import json
 import logging
+import re
 from datetime import datetime
 from typing import Any, Dict
 
@@ -15,13 +16,27 @@ from dash import html
 
 logger = logging.getLogger(__name__)
 
+MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
+SAFE_FILENAME_RE = re.compile(r"^[A-Za-z0-9._\- ]{1,100}$")
+
 
 def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
     """Process uploaded file content into a DataFrame."""
     try:
         filename = sanitize_unicode_input(filename)
-        content_type, content_string = contents.split(",")
+        if not SAFE_FILENAME_RE.fullmatch(filename):
+            return {
+                "success": False,
+                "error": "Invalid filename",
+            }
+
+        content_type, content_string = contents.split(",", 1)
         decoded = base64.b64decode(content_string)
+        if len(decoded) > MAX_FILE_SIZE_BYTES:
+            return {
+                "success": False,
+                "error": "File too large",
+            }
 
         if filename.endswith(".csv"):
             text = safe_decode_with_unicode_handling(decoded, "utf-8")
