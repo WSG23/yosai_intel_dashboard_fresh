@@ -3,6 +3,8 @@ from __future__ import annotations
 """Auth0 OIDC integration"""
 
 import json
+import os
+import time
 from functools import wraps
 from typing import Optional, List
 from urllib.request import urlopen
@@ -36,6 +38,9 @@ class User(UserMixin):
 
 
 _users: dict[str, User] = {}
+
+# Cached JWKS per domain: {domain: (jwks_dict, fetch_timestamp)}
+_jwks_cache: dict[str, tuple[dict, float]] = {}
 
 
 @login_manager.user_loader
@@ -75,10 +80,23 @@ def init_auth(app) -> None:
     app.register_blueprint(auth_bp)
 
 
-def _decode_jwt(token: str, domain: str, audience: str, client_id: str) -> dict:
+def _get_jwks(domain: str) -> dict:
+    """Return cached JWKS for a domain if within TTL, otherwise fetch."""
+    ttl = int(os.getenv("JWKS_CACHE_TTL", "300"))
+    now = time.time()
+    cached = _jwks_cache.get(domain)
+    if cached and now - cached[1] < ttl:
+        return cached[0]
+
     jwks_url = f"https://{domain}/.well-known/jwks.json"
     with urlopen(jwks_url) as resp:
         jwks = json.load(resp)
+    _jwks_cache[domain] = (jwks, now)
+    return jwks
+
+
+def _decode_jwt(token: str, domain: str, audience: str, client_id: str) -> dict:
+    jwks = _get_jwks(domain)
     header = jwt.get_unverified_header(token)
     key = None
     for jwk in jwks["keys"]:
