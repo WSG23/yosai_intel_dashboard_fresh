@@ -1,0 +1,20 @@
+import pandas as pd
+from concurrent.futures import ThreadPoolExecutor
+
+from utils.upload_store import UploadedDataStore
+
+
+def test_concurrent_add_file(tmp_path):
+    store = UploadedDataStore(storage_dir=tmp_path)
+
+    def worker(i: int) -> None:
+        df = pd.DataFrame({"val": [i]})
+        store.add_file(f"file_{i}.csv", df)
+
+    with ThreadPoolExecutor(max_workers=5) as exc:
+        list(exc.map(worker, range(10)))
+
+    assert set(store.get_filenames()) == {f"file_{i}.csv" for i in range(10)}
+    data = store.get_all_data()
+    for i in range(10):
+        pd.testing.assert_frame_equal(data[f"file_{i}.csv"], pd.DataFrame({"val": [i]}))
