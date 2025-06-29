@@ -75,6 +75,80 @@ def analyze_device_name_with_ai(device_name):
         }
 
 
+def build_success_alert(
+    filename: str,
+    rows: int,
+    cols: int,
+    *,
+    prefix: str = "Successfully uploaded",
+    processed: bool = True,
+) -> dbc.Alert:
+    """Return a Bootstrap alert describing a successful file upload."""
+
+    details = f"\U0001F4CA {rows:,} rows × {cols} columns"
+    if processed:
+        details += " processed"
+
+    return dbc.Alert(
+        [
+            html.H6(
+                [html.I(className="fas fa-check-circle me-2"), f"{prefix} {filename}"],
+                className="alert-heading",
+            ),
+            html.P(details),
+        ],
+        color="success",
+        className="mb-3",
+    )
+
+
+def build_failure_alert(message: str) -> dbc.Alert:
+    """Return a Bootstrap alert describing a failed file upload."""
+
+    return dbc.Alert(
+        [html.H6("Upload Failed", className="alert-heading"), html.P(message)],
+        color="danger",
+    )
+
+
+def build_file_preview_component(df: pd.DataFrame, filename: str) -> html.Div:
+    """Return a preview card and configuration buttons for an uploaded file."""
+
+    return html.Div(
+        [
+            create_file_preview(df.head(5), filename),
+            dbc.Card(
+                [
+                    dbc.CardHeader([html.H6("📋 Data Configuration", className="mb-0")]),
+                    dbc.CardBody(
+                        [
+                            html.P("Configure your data for analysis:", className="mb-3"),
+                            dbc.ButtonGroup(
+                                [
+                                    dbc.Button(
+                                        "📋 Verify Columns",
+                                        id="verify-columns-btn-simple",
+                                        color="primary",
+                                        size="sm",
+                                    ),
+                                    dbc.Button(
+                                        "🤖 Classify Devices",
+                                        id="classify-devices-btn",
+                                        color="info",
+                                        size="sm",
+                                    ),
+                                ],
+                                className="w-100",
+                            ),
+                        ]
+                    ),
+                ],
+                className="mb-3",
+            ),
+        ]
+    )
+
+
 def layout():
     """File upload page layout with persistent storage"""
     return dbc.Container(
@@ -300,63 +374,16 @@ def restore_upload_state(pathname: str) -> Tuple[Any, Any, Any, Any, Any, Any, A
         cols = len(df.columns)
 
         upload_results.append(
-            dbc.Alert(
-                [
-                    html.H6(
-                        [
-                            html.I(className="fas fa-check-circle me-2"),
-                            f"Previously uploaded: {filename}",
-                        ],
-                        className="alert-heading",
-                    ),
-                    html.P(f"📊 {rows:,} rows × {cols} columns"),
-                ],
-                color="success",
-                className="mb-3",
+            build_success_alert(
+                filename,
+                rows,
+                cols,
+                prefix="Previously uploaded:",
+                processed=False,
             )
         )
 
-        preview_df = df.head(5)
-        file_preview_components.append(
-            html.Div(
-                [
-                    create_file_preview(df.head(5), filename),
-                    dbc.Card(
-                        [
-                            dbc.CardHeader(
-                                [html.H6("📋 Data Configuration", className="mb-0")]
-                            ),
-                            dbc.CardBody(
-                                [
-                                    html.P(
-                                        "Configure your data for analysis:",
-                                        className="mb-3",
-                                    ),
-                                    dbc.ButtonGroup(
-                                        [
-                                            dbc.Button(
-                                                "📋 Verify Columns",
-                                                id="verify-columns-btn-simple",
-                                                color="primary",
-                                                size="sm",
-                                            ),
-                                            dbc.Button(
-                                                "🤖 Classify Devices",
-                                                id="classify-devices-btn",
-                                                color="info",
-                                                size="sm",
-                                            ),
-                                        ],
-                                        className="w-100",
-                                    ),
-                                ]
-                            ),
-                        ],
-                        className="mb-3",
-                    ),
-                ]
-            )
-        )
+        file_preview_components.append(build_file_preview_component(df, filename))
 
         current_file_info = {
             "filename": filename,
@@ -426,68 +453,10 @@ def process_uploaded_files(
 
                 _uploaded_data_store.add_file(filename, df)
 
-                upload_results.append(
-                    dbc.Alert(
-                        [
-                            html.H6(
-                                [
-                                    html.I(className="fas fa-check-circle me-2"),
-                                    f"Successfully uploaded {filename}",
-                                ],
-                                className="alert-heading",
-                            ),
-                            html.P(f"📊 {rows:,} rows × {cols} columns processed"),
-                        ],
-                        color="success",
-                        className="mb-3",
-                    )
-                )
+                upload_results.append(build_success_alert(filename, rows, cols))
 
-                preview_df = df.head(5)
                 file_preview_components.append(
-                    html.Div(
-                        [
-                            create_file_preview(preview_df, filename),
-                            dbc.Card(
-                                [
-                                    dbc.CardHeader(
-                                        [
-                                            html.H6(
-                                                "📋 Data Configuration",
-                                                className="mb-0",
-                                            )
-                                        ]
-                                    ),
-                                    dbc.CardBody(
-                                        [
-                                            html.P(
-                                                "Configure your data for analysis:",
-                                                className="mb-3",
-                                            ),
-                                            dbc.ButtonGroup(
-                                                [
-                                                    dbc.Button(
-                                                        "📋 Verify Columns",
-                                                        id="verify-columns-btn-simple",
-                                                        color="primary",
-                                                        size="sm",
-                                                    ),
-                                                    dbc.Button(
-                                                        "🤖 Classify Devices",
-                                                        id="classify-devices-btn",
-                                                        color="info",
-                                                        size="sm",
-                                                    ),
-                                                ],
-                                                className="w-100",
-                                            ),
-                                        ]
-                                    ),
-                                ],
-                                className="mb-3",
-                            ),
-                        ]
-                    )
+                    build_file_preview_component(df, filename)
                 )
 
                 column_names = df.columns.tolist()
@@ -522,19 +491,11 @@ def process_uploaded_files(
                     print(f"⚠️ Error: {e}")
 
             else:
-                upload_results.append(
-                    dbc.Alert(
-                        [
-                            html.H6("Upload Failed", className="alert-heading"),
-                            html.P(result["error"]),
-                        ],
-                        color="danger",
-                    )
-                )
+                upload_results.append(build_failure_alert(result["error"]))
 
         except Exception as e:  # pragma: no cover - best effort
             upload_results.append(
-                dbc.Alert(f"Error processing {filename}: {str(e)}", color="danger")
+                build_failure_alert(f"Error processing {filename}: {str(e)}")
             )
 
     upload_nav = []
