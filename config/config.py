@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AppConfig:
     """Application configuration"""
+
     title: str = "Yōsai Intel Dashboard"
     debug: bool = True
     host: str = "127.0.0.1"
@@ -29,6 +30,7 @@ class AppConfig:
 @dataclass
 class DatabaseConfig:
     """Database configuration"""
+
     type: str = "sqlite"
     host: str = "localhost"
     port: int = 5432
@@ -37,7 +39,7 @@ class DatabaseConfig:
     password: str = ""
     connection_pool_size: int = dynamic_config.get_db_pool_size()
     connection_timeout: int = 30
-    
+
     def get_connection_string(self) -> str:
         """Get database connection string"""
         if self.type == "postgresql":
@@ -51,6 +53,7 @@ class DatabaseConfig:
 @dataclass
 class SecurityConfig:
     """Security configuration"""
+
     secret_key: str = "dev-key-change-in-production"
     session_timeout: int = 3600
     cors_origins: List[str] = field(default_factory=list)
@@ -61,6 +64,7 @@ class SecurityConfig:
 @dataclass
 class SampleFilesConfig:
     """File paths for bundled sample datasets"""
+
     csv_path: str = "data/sample_data.csv"
     json_path: str = "data/sample_data.json"
 
@@ -68,6 +72,7 @@ class SampleFilesConfig:
 @dataclass
 class Config:
     """Main configuration object"""
+
     app: AppConfig = field(default_factory=AppConfig)
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
     security: SecurityConfig = field(default_factory=SecurityConfig)
@@ -77,37 +82,37 @@ class Config:
 
 class ConfigManager:
     """Simple configuration manager"""
-    
+
     def __init__(self, config_path: Optional[str] = None):
         self.config_path = config_path
         self.config = Config()
         self._load_config()
-    
+
     def _load_config(self) -> None:
         """Load configuration from YAML file and environment"""
         # Load from YAML file
         yaml_config = self._load_yaml_config()
-        
+
         # Apply YAML config
         if yaml_config:
             self._apply_yaml_config(yaml_config)
-        
+
         # Apply environment overrides
         self._apply_env_overrides()
-        
+
         # Validate configuration
         self._validate_config()
-    
+
     def _load_yaml_config(self) -> Optional[Dict[str, Any]]:
         """Load configuration from YAML file"""
         config_file = self._determine_config_file()
-        
+
         if not config_file or not config_file.exists():
             logger.info("No YAML config file found, using defaults")
             return None
-        
+
         try:
-            with open(config_file, 'r') as f:
+            with open(config_file, "r") as f:
                 content = f.read()
                 # Simple environment variable substitution
                 content = self._substitute_env_vars(content)
@@ -115,45 +120,45 @@ class ConfigManager:
         except Exception as e:
             logger.warning(f"Error loading config file {config_file}: {e}")
             return None
-    
+
     def _determine_config_file(self) -> Optional[Path]:
         """Determine which config file to use"""
         # Use explicit path if provided
         if self.config_path:
             return Path(self.config_path)
-        
+
         # Check environment variable
         env_file = os.getenv("YOSAI_CONFIG_FILE")
         if env_file:
             return Path(env_file)
-        
+
         # Use environment-based config
         env = os.getenv("YOSAI_ENV", "development").lower()
         self.config.environment = env
-        
+
         config_dir = Path("config")
-        
+
         # Try environment-specific files
         env_files = {
             "production": config_dir / "production.yaml",
-            "staging": config_dir / "staging.yaml", 
+            "staging": config_dir / "staging.yaml",
             "test": config_dir / "test.yaml",
-            "development": config_dir / "config.yaml"
+            "development": config_dir / "config.yaml",
         }
-        
+
         config_file = env_files.get(env, config_dir / "config.yaml")
         return config_file if config_file.exists() else None
-    
+
     def _substitute_env_vars(self, content: str) -> str:
         """Replace ${VAR_NAME} with environment variable values"""
         import re
-        
+
         def replacer(match):
             var_name = match.group(1)
             return os.getenv(var_name, match.group(0))
-        
-        return re.sub(r'\$\{([^}]+)\}', replacer, content)
-    
+
+        return re.sub(r"\$\{([^}]+)\}", replacer, content)
+
     def _apply_yaml_config(self, yaml_config: Dict[str, Any]) -> None:
         """Apply YAML configuration to config objects"""
         if "app" in yaml_config:
@@ -162,7 +167,9 @@ class ConfigManager:
             self.config.app.debug = app_data.get("debug", self.config.app.debug)
             self.config.app.host = app_data.get("host", self.config.app.host)
             self.config.app.port = app_data.get("port", self.config.app.port)
-            self.config.app.secret_key = app_data.get("secret_key", self.config.app.secret_key)
+            self.config.app.secret_key = app_data.get(
+                "secret_key", self.config.app.secret_key
+            )
 
         if "database" in yaml_config:
             db_data = yaml_config["database"]
@@ -171,30 +178,52 @@ class ConfigManager:
             self.config.database.port = db_data.get("port", self.config.database.port)
             self.config.database.name = db_data.get("name", self.config.database.name)
             self.config.database.user = db_data.get("user", self.config.database.user)
-            self.config.database.password = db_data.get("password", self.config.database.password)
-            self.config.database.connection_pool_size = db_data.get("connection_pool_size", self.config.database.connection_pool_size)
-            self.config.database.connection_timeout = db_data.get("connection_timeout", self.config.database.connection_timeout)
+            self.config.database.password = db_data.get(
+                "password", self.config.database.password
+            )
+            self.config.database.connection_pool_size = db_data.get(
+                "connection_pool_size", self.config.database.connection_pool_size
+            )
+            self.config.database.connection_timeout = db_data.get(
+                "connection_timeout", self.config.database.connection_timeout
+            )
 
         if "security" in yaml_config:
             sec_data = yaml_config["security"]
-            self.config.security.secret_key = sec_data.get("secret_key", self.config.security.secret_key)
-            self.config.security.session_timeout = sec_data.get("session_timeout", self.config.security.session_timeout)
-            self.config.security.cors_origins = sec_data.get("cors_origins", self.config.security.cors_origins)
+            self.config.security.secret_key = sec_data.get(
+                "secret_key", self.config.security.secret_key
+            )
+            self.config.security.session_timeout = sec_data.get(
+                "session_timeout", self.config.security.session_timeout
+            )
+            self.config.security.cors_origins = sec_data.get(
+                "cors_origins", self.config.security.cors_origins
+            )
             if "csrf_enabled" in sec_data:
                 self.config.security.csrf_enabled = bool(sec_data.get("csrf_enabled"))
             if "max_failed_attempts" in sec_data:
-                self.config.security.max_failed_attempts = int(sec_data.get("max_failed_attempts"))
+                self.config.security.max_failed_attempts = int(
+                    sec_data.get("max_failed_attempts")
+                )
 
         if "sample_files" in yaml_config:
             sample_data = yaml_config["sample_files"]
-            self.config.sample_files.csv_path = sample_data.get("csv_path", self.config.sample_files.csv_path)
-            self.config.sample_files.json_path = sample_data.get("json_path", self.config.sample_files.json_path)
-    
+            self.config.sample_files.csv_path = sample_data.get(
+                "csv_path", self.config.sample_files.csv_path
+            )
+            self.config.sample_files.json_path = sample_data.get(
+                "json_path", self.config.sample_files.json_path
+            )
+
     def _apply_env_overrides(self) -> None:
         """Apply environment variable overrides"""
         # App overrides
         if os.getenv("DEBUG"):
-            self.config.app.debug = os.getenv("DEBUG", "").lower() in ("true", "1", "yes")
+            self.config.app.debug = os.getenv("DEBUG", "").lower() in (
+                "true",
+                "1",
+                "yes",
+            )
         host_env = os.getenv("HOST")
         if host_env is not None:
             self.config.app.host = host_env
@@ -237,7 +266,11 @@ class ConfigManager:
         # Security overrides
         csrf_enabled = os.getenv("CSRF_ENABLED")
         if csrf_enabled is not None:
-            self.config.security.csrf_enabled = csrf_enabled.lower() in ("true", "1", "yes")
+            self.config.security.csrf_enabled = csrf_enabled.lower() in (
+                "true",
+                "1",
+                "yes",
+            )
         max_failed = os.getenv("MAX_FAILED_ATTEMPTS")
         if max_failed is not None:
             self.config.security.max_failed_attempts = int(max_failed)
@@ -249,17 +282,25 @@ class ConfigManager:
         sample_json = os.getenv("SAMPLE_JSON_PATH")
         if sample_json is not None:
             self.config.sample_files.json_path = sample_json
-    
+
     def _validate_config(self) -> None:
         """Validate configuration and log warnings"""
         warnings = []
-        
+        errors = []
+
         # Production checks
         if self.config.environment == "production":
-            if self.config.app.secret_key in ["dev-key-change-in-production", "change-me"]:
-                warnings.append("Production requires secure SECRET_KEY")
+            if self.config.app.secret_key in [
+                "dev-key-change-in-production",
+                "change-me",
+                "",
+            ]:
+                errors.append("SECRET_KEY must be set for production")
 
-            if not self.config.database.password and self.config.database.type != "sqlite":
+            if (
+                not self.config.database.password
+                and self.config.database.type != "sqlite"
+            ):
                 warnings.append("Production database requires password")
 
             if self.config.app.host == "127.0.0.1":
@@ -267,21 +308,29 @@ class ConfigManager:
 
         if self.config.app.debug and self.config.app.host == "0.0.0.0":
             warnings.append("Debug mode with host 0.0.0.0 is a security risk")
-        if self.config.database.type == "postgresql" and not self.config.database.password:
+        if (
+            self.config.database.type == "postgresql"
+            and not self.config.database.password
+        ):
             warnings.append("PostgreSQL requires a password")
-        
+
         # Log warnings
         for warning in warnings:
             logger.warning(f"Configuration warning: {warning}")
-    
+
+        if errors:
+            error_msg = "; ".join(errors)
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
     def get_app_config(self) -> AppConfig:
         """Get app configuration"""
         return self.config.app
-    
+
     def get_database_config(self) -> DatabaseConfig:
         """Get database configuration"""
         return self.config.database
-    
+
     def get_security_config(self) -> SecurityConfig:
         """Get security configuration"""
         return self.config.security
@@ -333,8 +382,16 @@ def get_sample_files_config() -> SampleFilesConfig:
 
 # Export main classes and functions
 __all__ = [
-    'Config', 'AppConfig', 'DatabaseConfig', 'SecurityConfig',
-    'SampleFilesConfig', 'ConfigManager', 'get_config', 'reload_config',
-    'get_app_config', 'get_database_config', 'get_security_config',
-    'get_sample_files_config'
+    "Config",
+    "AppConfig",
+    "DatabaseConfig",
+    "SecurityConfig",
+    "SampleFilesConfig",
+    "ConfigManager",
+    "get_config",
+    "reload_config",
+    "get_app_config",
+    "get_database_config",
+    "get_security_config",
+    "get_sample_files_config",
 ]

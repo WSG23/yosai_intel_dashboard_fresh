@@ -1,7 +1,7 @@
 app:
   name: "Yōsai Intel Dashboard"
   version: "1.0.0"
-  debug: true
+  debug: false
   host: "127.0.0.1"
   port: 8050
   environment: "development"
@@ -14,7 +14,6 @@ database:
   max_overflow: 20
 
 security:
-  secret_key: "your-secret-key-here"
   session_timeout: 3600
   csrf_enabled: false
 
