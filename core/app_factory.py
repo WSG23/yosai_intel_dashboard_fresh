@@ -8,7 +8,7 @@ import os
 from typing import Optional, Any
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, callback
-from components.ui_settings import SettingsUIBuilder, settings_ui_manager
+from components.ui_settings import SettingsUIBuilder
 from components.unified_settings_callbacks import register_settings_callbacks
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from dashboard.layout.navbar import create_navbar_layout
@@ -206,8 +206,10 @@ def _create_json_safe_app() -> dash.Dash:
 
 def _create_main_layout() -> html.Div:
     """Create main application layout with complete integration"""
-    builder = SettingsUIBuilder(settings_ui_manager)
-    settings_modal = builder.create_settings_modal()
+    from components.ui_settings import SettingsUIBuilder
+
+    settings_builder = SettingsUIBuilder()
+    settings_modal = settings_builder.create_settings_modal(user_role="admin")
 
     return html.Div(
         [

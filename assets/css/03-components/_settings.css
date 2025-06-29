@@ -1,29 +1,191 @@
-/* Settings Modal Styles */
-.settings-modal {
-  /* wrapper styles if needed */
+/* Settings Component Styles */
+.settings-modal .modal-dialog {
+    max-width: 90vw;
+    width: 1200px;
 }
 
-.settings-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--color-border);
+.settings-modal .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
 }
 
-.settings-modal-title {
-  font-size: 1.125rem;
-  font-weight: bold;
-  margin: 0;
+/* Settings Form Styling */
+.settings-form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--color-gray-600);
 }
 
-.settings-modal-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
+.settings-form-section:last-child {
+    border-bottom: none;
 }
 
-.settings-modal-body {
-  padding: 1.5rem;
+.settings-form-section h5 {
+    color: var(--color-accent);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Settings Button in Navbar */
+.navbar-settings-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+    min-width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.navbar-settings-btn:hover {
+    color: var(--color-accent);
+    background: var(--surface-tertiary);
+    transform: translateY(-1px);
+}
+
+.navbar-settings-btn:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+/* Settings Status Messages */
+.settings-status-message {
+    margin-top: 1rem;
+}
+
+/* Settings Accordion */
+.settings-accordion .accordion-item {
+    background: var(--surface-secondary);
+    border: 1px solid var(--color-gray-600);
+    margin-bottom: 0.5rem;
+}
+
+.settings-accordion .accordion-header button {
+    background: var(--surface-tertiary);
+    color: var(--text-primary);
+    border: none;
+    font-weight: 500;
+}
+
+.settings-accordion .accordion-header button:not(.collapsed) {
+    background: var(--color-accent-subtle);
+    color: var(--color-accent);
+}
+
+.settings-accordion .accordion-body {
+    background: var(--surface-secondary);
+}
+
+/* Form Controls */
+.settings-form-control {
+    background: var(--surface-primary);
+    border: 1px solid var(--color-gray-500);
+    color: var(--text-primary);
+}
+
+.settings-form-control:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 0.2rem var(--color-accent-subtle);
+    background: var(--surface-primary);
+    color: var(--text-primary);
+}
+
+/* Settings Tabs */
+.settings-tabs .nav-link {
+    color: var(--text-secondary);
+    background: var(--surface-secondary);
+    border: 1px solid var(--color-gray-600);
+    margin-right: 0.25rem;
+}
+
+.settings-tabs .nav-link.active {
+    color: var(--color-accent);
+    background: var(--surface-primary);
+    border-color: var(--color-accent);
+}
+
+.settings-tabs .nav-link:hover {
+    color: var(--text-primary);
+    background: var(--surface-tertiary);
+}
+
+/* Checklist Styling */
+.settings-checklist .form-check-input {
+    background-color: var(--surface-secondary);
+    border-color: var(--color-gray-500);
+}
+
+.settings-checklist .form-check-input:checked {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+.settings-checklist .form-check-label {
+    color: var(--text-primary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .settings-modal .modal-dialog {
+        width: 95vw;
+        margin: 1rem auto;
+    }
+    
+    .settings-modal .modal-body {
+        padding: 1rem;
+    }
+    
+    .settings-form-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .navbar-settings-btn {
+        font-size: 1rem;
+        padding: 0.4rem;
+        min-width: 36px;
+    }
+}
+
+/* Settings Modal Animation */
+.settings-modal.show .modal-dialog {
+    animation: slideInDown 0.3s ease-out;
+}
+
+@keyframes slideInDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Form Validation States */
+.settings-form-control.is-invalid {
+    border-color: var(--color-critical);
+}
+
+.settings-form-control.is-valid {
+    border-color: var(--color-success);
+}
+
+.invalid-feedback {
+    color: var(--color-critical);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.valid-feedback {
+    color: var(--color-success);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
 }

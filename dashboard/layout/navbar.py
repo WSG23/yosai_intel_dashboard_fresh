@@ -186,9 +186,10 @@ def create_navbar_layout() -> Optional[Any]:
                                                 dbc.Button(
                                                     "Settings",
                                                     id="open-settings-btn",
-                                                    color="secondary",
+                                                    color="ghost",
                                                     size="sm",
-                                                    className="ms-3",
+                                                    className="navbar-settings-btn",
+                                                    title="Open Settings"
                                                 ),
                                             ],
                                             className="d-flex align-items-center justify-content-end",

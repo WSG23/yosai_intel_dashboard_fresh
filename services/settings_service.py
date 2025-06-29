@@ -1,102 +1,143 @@
-from dataclasses import dataclass, asdict
-from typing import Optional, Dict, Any
+#!/usr/bin/env python3
+"""
+Settings Persistence Service - Integrated with existing database system
+"""
+
 import json
+import logging
+from typing import Dict, Any, Optional
+from datetime import datetime, timezone
+from dataclasses import asdict
 
-from config.config import get_database_config
+# Use existing database manager
 from config.database_manager import DatabaseManager
+from components.ui_settings import UserSettings, AdminSettings
 
-
-@dataclass
-class UserSettings:
-    """User specific settings"""
-    theme: str = "light"
-    language: str = "en"
-
-
-@dataclass
-class AdminSettings:
-    """Administrative settings"""
-    site_name: str = "Yosai Dashboard"
-    db_retry: int = 0
-    redis_connections: int = 0
-
+logger = logging.getLogger(__name__)
 
 class SettingsPersistenceService:
-    """Persist settings using the application database"""
-
-    def __init__(self) -> None:
-        self.db_manager = DatabaseManager(get_database_config())
-        self._ensure_table()
-
-    # ------------------------------------------------------------------
-    def _ensure_table(self) -> None:
-        conn = self.db_manager.get_connection()
-        conn.execute_command(
-            "CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY, value TEXT)"
-        )
-
-    # ------------------------------------------------------------------
-    def save_settings(self, key: str, data: Dict[str, Any]) -> None:
-        conn = self.db_manager.get_connection()
-        conn.execute_command(
-            "INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)",
-            (key, json.dumps(data)),
-        )
-
-    # ------------------------------------------------------------------
-    def load_settings(self, key: str) -> Dict[str, Any]:
-        conn = self.db_manager.get_connection()
-        rows = conn.execute_query(
-            "SELECT value FROM app_settings WHERE key = ?", (key,)
-        )
-        if rows:
-            try:
-                return json.loads(rows[0]["value"])
-            except Exception:
-                return {}
-        return {}
-
-
-class SettingsManager:
-    """High level manager for user and admin settings"""
-
-    def __init__(self, persistence: Optional[SettingsPersistenceService] = None) -> None:
-        self._persistence = persistence or SettingsPersistenceService()
-        self._user_settings = UserSettings()
-        self._admin_settings = AdminSettings()
-        self.load_user_settings()
-        self.load_admin_settings()
-
-    # ------------------------------------------------------------------
-    def save_user_settings(self, settings: UserSettings) -> None:
-        self._user_settings = settings
-        self._persistence.save_settings("user", asdict(settings))
-
-    def load_user_settings(self) -> UserSettings:
-        data = self._persistence.load_settings("user")
-        if data:
-            self._user_settings = UserSettings(**data)
-        return self._user_settings
-
-    # ------------------------------------------------------------------
-    def save_admin_settings(self, settings: AdminSettings) -> None:
-        self._admin_settings = settings
-        self._persistence.save_settings("admin", asdict(settings))
-
+    """Service for persisting settings - uses existing database patterns"""
+    
+    def __init__(self):
+        self.db = DatabaseManager()
+    
+    def save_user_settings(self, user_id: str, settings: UserSettings) -> bool:
+        """Save user settings using existing database patterns"""
+        try:
+            settings_json = json.dumps(asdict(settings))
+            
+            # Use the same pattern as existing database operations
+            if self.db.config.type == "mock":
+                # For development/testing
+                logger.info(f"Mock save: User settings for {user_id}")
+                return True
+            
+            query = """
+            INSERT INTO user_settings (user_id, settings_data, updated_at)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (user_id) 
+            DO UPDATE SET 
+                settings_data = EXCLUDED.settings_data,
+                updated_at = EXCLUDED.updated_at
+            """
+            
+            with self.db.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, (
+                        user_id, 
+                        settings_json, 
+                        datetime.now(timezone.utc)
+                    ))
+                    conn.commit()
+            
+            logger.info(f"User settings saved for {user_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to save user settings: {e}")
+            return False
+    
+    def load_user_settings(self, user_id: str) -> UserSettings:
+        """Load user settings using existing database patterns"""
+        try:
+            if self.db.config.type == "mock":
+                # Return defaults for development
+                return UserSettings()
+            
+            query = "SELECT settings_data FROM user_settings WHERE user_id = %s"
+            
+            with self.db.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, (user_id,))
+                    result = cursor.fetchone()
+            
+            if result:
+                settings_data = json.loads(result[0])
+                return UserSettings(**settings_data)
+            else:
+                return UserSettings()  # Return defaults
+                
+        except Exception as e:
+            logger.error(f"Failed to load user settings: {e}")
+            return UserSettings()
+    
+    def save_admin_settings(self, settings: AdminSettings) -> bool:
+        """Save admin settings using existing patterns"""
+        try:
+            settings_json = json.dumps(asdict(settings))
+            
+            if self.db.config.type == "mock":
+                # For development/testing
+                logger.info("Mock save: Admin settings")
+                return True
+            
+            query = """
+            INSERT INTO admin_settings (settings_name, settings_data, updated_at)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (settings_name)
+            DO UPDATE SET
+                settings_data = EXCLUDED.settings_data,
+                updated_at = EXCLUDED.updated_at
+            """
+            
+            with self.db.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, (
+                        "main_config",
+                        settings_json,
+                        datetime.now(timezone.utc)
+                    ))
+                    conn.commit()
+            
+            logger.info("Admin settings saved successfully")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to save admin settings: {e}")
+            return False
+    
     def load_admin_settings(self) -> AdminSettings:
-        data = self._persistence.load_settings("admin")
-        if data:
-            self._admin_settings = AdminSettings(**data)
-        return self._admin_settings
+        """Load admin settings using existing patterns"""
+        try:
+            if self.db.config.type == "mock":
+                return AdminSettings()
+            
+            query = "SELECT settings_data FROM admin_settings WHERE settings_name = %s"
+            
+            with self.db.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, ("main_config",))
+                    result = cursor.fetchone()
+            
+            if result:
+                settings_data = json.loads(result[0])
+                return AdminSettings(**settings_data)
+            else:
+                return AdminSettings()
+                
+        except Exception as e:
+            logger.error(f"Failed to load admin settings: {e}")
+            return AdminSettings()
 
-
-# Global instance
-settings_manager = SettingsManager()
-
-__all__ = [
-    "UserSettings",
-    "AdminSettings",
-    "SettingsPersistenceService",
-    "SettingsManager",
-    "settings_manager",
-]
+# Export service class
+__all__ = ["SettingsPersistenceService"]
