@@ -50,9 +50,10 @@ yosai_intel_dashboard/
 
 3. **Install dependencies:**
    ```bash
-   pip install -r requirements.txt
+   ./scripts/setup.sh
    ```
-   Make sure all dependencies are installed **before** running Pyright or using
+   The script installs requirements from PyPI or a local `packages/` directory if
+   present. Ensure dependencies are installed **before** running Pyright or using
    the Pylance extension. Missing packages will otherwise appear as unresolved
    imports.
 
@@ -83,7 +84,7 @@ following steps:
 
 2. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   ./scripts/setup.sh
    ```
    If you encounter errors like `module 'flask' has no attribute 'helpers'`,
    ensure there are no local directories named `flask`, `pandas`, or `yaml`
