@@ -9,6 +9,9 @@ import logging
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 
+from services.file_processing_service import FileProcessingService
+from services.database_analytics_service import DatabaseAnalyticsService
+
 from utils.mapping_helpers import map_and_clean
 from datetime import datetime, timedelta
 import os
@@ -168,6 +171,10 @@ class AnalyticsService:
     def __init__(self):
         self.database_manager: Optional[Any] = None
         self._initialize_database()
+        self.file_processing_service = FileProcessingService()
+        self.database_analytics_service = DatabaseAnalyticsService(
+            self.database_manager
+        )
 
     def _initialize_database(self):
         """Initialize database connection"""
@@ -177,6 +184,9 @@ class AnalyticsService:
             db_config = get_database_config()
             self.database_manager = DatabaseManager(db_config)
             logger.info("Database manager initialized")
+            self.database_analytics_service = DatabaseAnalyticsService(
+                self.database_manager
+            )
         except Exception as e:
             logger.warning(f"Database initialization failed: {e}")
             self.database_manager = None
@@ -191,61 +201,16 @@ class AnalyticsService:
             if not uploaded_files:
                 return {'status': 'no_data', 'message': 'No uploaded files available'}
 
-            # Use the FIXED FileProcessor to process files
-            from services.file_processor import FileProcessor
-            processor = FileProcessor(upload_folder="temp", allowed_extensions={'csv', 'json', 'xlsx'})
+            combined_df, processing_info, processed_files, total_records = (
+                self.file_processing_service.process_files(uploaded_files)
+            )
 
-            all_data: List[pd.DataFrame] = []
-            processing_info: List[str] = []
-            total_records = 0
-
-            # Process each uploaded file with the FIXED processor
-            for file_path in uploaded_files:
-                try:
-                    logger.info(f"Processing uploaded file: {file_path}")
-
-                    # Read the file
-                    if file_path.endswith('.csv'):
-                        df = pd.read_csv(file_path)
-                    elif file_path.endswith('.json'):
-                        import json
-                        with open(file_path, 'r') as f:
-                            json_data = json.load(f)
-                        df = pd.DataFrame(json_data)
-                    elif file_path.endswith(('.xlsx', '.xls')):
-                        df = pd.read_excel(file_path)
-                    else:
-                        continue
-
-                    # Use the FIXED validation (which includes column mapping)
-                    validation_result = processor._validate_data(df)
-
-                    if validation_result['valid']:
-                        processed_df = validation_result.get('data', df)
-                        processed_df['source_file'] = file_path
-                        all_data.append(processed_df)
-                        total_records += len(processed_df)
-                        processing_info.append(f"✅ {file_path}: {len(processed_df)} records")
-                        logger.info(f"Processed {len(processed_df)} records from {file_path}")
-                    else:
-                        error_msg = validation_result.get('error', 'Unknown error')
-                        processing_info.append(f"❌ {file_path}: {error_msg}")
-                        logger.error(f"Failed to process {file_path}: {error_msg}")
-
-                except Exception as e:
-                    processing_info.append(f"❌ {file_path}: Exception - {str(e)}")
-                    logger.error(f"Exception processing {file_path}: {e}")
-
-            if not all_data:
+            if combined_df.empty:
                 return {
                     'status': 'error',
                     'message': 'No files could be processed successfully',
                     'processing_info': processing_info
                 }
-
-            # Combine all successfully processed data
-            combined_df = pd.concat(all_data, ignore_index=True)
-            logger.info(f"Combined data: {len(combined_df)} total records")
 
             # Generate analytics from the properly processed data
             analytics = self._generate_basic_analytics(combined_df)
@@ -253,7 +218,7 @@ class AnalyticsService:
             # Add processing information
             analytics.update({
                 'data_source': 'uploaded_files_fixed',
-                'total_files_processed': len(all_data),
+                'total_files_processed': processed_files,
                 'total_files_attempted': len(uploaded_files),
                 'processing_info': processing_info,
                 'total_events': total_records,
@@ -646,82 +611,10 @@ class AnalyticsService:
 
     def _get_database_analytics(self) -> Dict[str, Any]:
         """Get analytics from database"""
-        if not self.database_manager:
+        if not self.database_analytics_service:
             return {'status': 'error', 'message': 'Database not available'}
 
-        try:
-            connection = self.database_manager.get_connection()
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=7)
-
-            summary_query = """
-                SELECT event_type, status, COUNT(*) as count
-                FROM access_events
-                WHERE timestamp >= ? AND timestamp <= ?
-                GROUP BY event_type, status
-            """
-            df_summary = pd.DataFrame(connection.execute_query(summary_query, (start_date, end_date)))
-
-            if df_summary.empty:
-                total_events = 0
-                success_rate = 0.0
-                breakdown = []
-            else:
-                total_events = int(df_summary['count'].sum())
-                success_events = df_summary[df_summary['status'] == 'success']['count'].sum()
-                success_rate = round((success_events / total_events) * 100, 2) if total_events else 0
-                breakdown = df_summary.to_dict('records')
-
-            hourly_query = """
-                SELECT strftime('%H', timestamp) as hour, COUNT(*) as event_count
-                FROM access_events
-                WHERE timestamp >= ? AND timestamp <= ?
-                GROUP BY strftime('%H', timestamp)
-                ORDER BY hour
-            """
-            df_hourly = pd.DataFrame(connection.execute_query(hourly_query, (start_date, end_date)))
-            hourly_data = df_hourly.to_dict('records') if not df_hourly.empty else []
-            peak_hour = int(df_hourly.loc[df_hourly['event_count'].idxmax(), 'hour']) if not df_hourly.empty else None
-
-            location_query = """
-                SELECT location, COUNT(*) as total_events,
-                       SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as successful_events
-                FROM access_events
-                WHERE timestamp >= ? AND timestamp <= ?
-                GROUP BY location
-                ORDER BY total_events DESC
-            """
-            df_loc = pd.DataFrame(connection.execute_query(location_query, (start_date, end_date)))
-            if df_loc.empty:
-                locations = []
-                busiest_location = None
-            else:
-                df_loc['success_rate'] = (df_loc['successful_events'] / df_loc['total_events'] * 100).round(2)
-                locations = df_loc.to_dict('records')
-                busiest_location = df_loc.iloc[0]['location'] if len(df_loc) > 0 else None
-
-            return {
-                'status': 'success',
-                'summary': {
-                    'total_events': total_events,
-                    'success_rate': success_rate,
-                    'event_breakdown': breakdown,
-                    'period_days': 7,
-                },
-                'hourly_patterns': {
-                    'hourly_data': hourly_data,
-                    'peak_hour': peak_hour,
-                    'total_hours_analyzed': len(hourly_data),
-                },
-                'location_stats': {
-                    'locations': locations,
-                    'busiest_location': busiest_location,
-                    'total_locations': len(locations),
-                },
-                'generated_at': datetime.now().isoformat(),
-            }
-        except Exception as e:
-            return {'status': 'error', 'message': str(e)}
+        return self.database_analytics_service.get_analytics()
 
     def get_dashboard_summary(self) -> Dict[str, Any]:
         """Get a basic dashboard summary"""
