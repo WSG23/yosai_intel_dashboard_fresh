@@ -8,8 +8,6 @@ import os
 from typing import Optional, Any
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, callback
-from components.ui_settings import SettingsUIBuilder, settings_ui_manager
-from components.unified_settings_callbacks import register_settings_callbacks
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 import pandas as pd
 
@@ -84,7 +82,6 @@ def _create_full_app() -> dash.Dash:
             register_device_verification(coordinator)
             register_deep_callbacks(coordinator)
             register_navbar_callbacks(coordinator)
-            register_settings_callbacks(coordinator)
 
             if config_manager.get_app_config().environment == "development":
                 coordinator.print_callback_summary()
@@ -205,18 +202,18 @@ def _create_json_safe_app() -> dash.Dash:
 
 def _create_main_layout() -> html.Div:
     """Create main application layout with complete integration"""
-    builder = SettingsUIBuilder(settings_ui_manager)
-    settings_modal = builder.create_settings_modal()
-
     return html.Div(
         [
+            # URL routing component
             dcc.Location(id="url", refresh=False),
+            # Navigation bar
             _create_navbar(),
+            # Main content area (dynamically populated)
             html.Div(id="page-content", className="main-content p-4"),
+            # Global data stores
             dcc.Store(id="global-store", data={}),
             dcc.Store(id="session-store", data={}),
             dcc.Store(id="app-state-store", data={"initial": True}),
-            settings_modal,
         ]
     )
 
