@@ -161,7 +161,15 @@ def create_navbar_layout() -> Optional[Any]:
                                                         ),
                                                     ],
                                                     className="d-flex align-items-center",
+
                                                     style={"gap": "1rem"}  # Increased from 0.75rem
+                                                ),
+                                                dbc.Button(
+                                                    "Clear Cache",
+                                                    id="clear-cache-btn",
+                                                    color="secondary",
+                                                    size="sm",
+                                                    className="ms-3",
                                                 ),
 
                                                 # Language Toggle

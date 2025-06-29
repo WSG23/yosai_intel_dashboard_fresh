@@ -11,6 +11,7 @@ from dash import html, dcc, Input, Output, callback
 from components.ui_settings import SettingsUIBuilder, settings_ui_manager
 from components.unified_settings_callbacks import register_settings_callbacks
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from dashboard.layout.navbar import create_navbar_layout
 import pandas as pd
 
 # ✅ FIXED IMPORTS - Use correct config system
@@ -211,7 +212,8 @@ def _create_main_layout() -> html.Div:
     return html.Div(
         [
             dcc.Location(id="url", refresh=False),
-            _create_navbar(),
+            create_navbar_layout(),
+
             html.Div(id="page-content", className="main-content p-4"),
             dcc.Store(id="global-store", data={}),
             dcc.Store(id="session-store", data={}),
@@ -221,45 +223,6 @@ def _create_main_layout() -> html.Div:
     )
 
 
-def _create_navbar() -> dbc.Navbar:
-    """Create navigation bar"""
-    return dbc.Navbar(
-        [
-            dbc.Container(
-                [
-                    # Brand
-                    dbc.NavbarBrand(
-                        [
-                            html.I(className="fas fa-shield-alt me-2"),
-                            "Yōsai Intel Dashboard",
-                        ],
-                        href="/",
-                    ),
-                    # Navigation links
-                    dbc.Nav(
-                        [
-                            dbc.NavItem(dbc.NavLink("📊 Analytics", href="/analytics")),
-                            dbc.NavItem(dbc.NavLink("📁 Upload", href="/upload")),
-                            dbc.NavItem(
-                                [
-                                    dbc.Button(
-                                        "🔄 Clear Cache",
-                                        id="clear-cache-btn",
-                                        color="outline-secondary",
-                                        size="sm",
-                                    )
-                                ]
-                            ),
-                        ],
-                        navbar=True,
-                    ),
-                ]
-            )
-        ],
-        color="dark",
-        dark=True,
-        className="mb-4",
-    )
 
 
 def _create_placeholder_page(title: str, subtitle: str, message: str) -> html.Div:
