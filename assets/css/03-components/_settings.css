@@ -1,0 +1,29 @@
+/* Settings Modal Styles */
+.settings-modal {
+  /* wrapper styles if needed */
+}
+
+.settings-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-modal-title {
+  font-size: 1.125rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.settings-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.settings-modal-body {
+  padding: 1.5rem;
+}

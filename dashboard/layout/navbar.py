@@ -149,22 +149,6 @@ def create_navbar_layout() -> Optional[Any]:
                                                             className="navbar-nav-link",
                                                             title="Export"
                                                         ),
-                                                        html.Button(
-                                                            html.Img(
-                                                                src="/assets/navbar_icons/settings.png",
-                                                                className="navbar-icon",
-                                                                alt="Settings"
-                                                            ),
-                                                            id="navbar-settings-btn",
-                                                            className="navbar-nav-link",
-                                                            title="Settings",
-                                                            style={
-                                                                "background": "none",
-                                                                "border": "none",
-                                                                "padding": "0",
-                                                                "cursor": "pointer",
-                                                            },
-                                                        ),
                                                         html.A(
                                                             html.Img(
                                                                 src="/assets/navbar_icons/logout.png",
@@ -190,6 +174,13 @@ def create_navbar_layout() -> Optional[Any]:
                                                     className="d-flex align-items-center text-sm",
                                                     style={"marginLeft": "2rem"},
                                                     id="language-toggle"
+                                                ),
+                                                dbc.Button(
+                                                    "Settings",
+                                                    id="open-settings-btn",
+                                                    color="secondary",
+                                                    size="sm",
+                                                    className="ms-3",
                                                 ),
                                             ],
                                             className="d-flex align-items-center justify-content-end",
