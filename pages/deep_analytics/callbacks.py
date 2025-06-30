@@ -50,6 +50,7 @@ def run_unique_patterns_analysis(data_source: str):
         analytics_service = AnalyticsService()
         results = analytics_service.get_unique_patterns_analysis(data_source)
 
+
         if results["status"] == "success":
             data_summary = results["data_summary"]
             user_patterns = results["user_patterns"]
