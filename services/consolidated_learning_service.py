@@ -173,7 +173,7 @@ class ConsolidatedLearningService:
         """Load learned data from storage. Migrate legacy pickle data if needed."""
         if self.storage_path.exists():
             try:
-                with open(self.storage_path, "r") as f:
+                with open(self.storage_path, "r", encoding="utf-8", errors="replace") as f:
                     self.learned_data = json.load(f)
                 self.logger.info(
                     f"Loaded {len(self.learned_data)} learned mappings")
@@ -204,7 +204,7 @@ class ConsolidatedLearningService:
     def _persist_learned_data(self):
         """Persist learned data to storage using JSON."""
         try:
-            with open(self.storage_path, "w") as f:
+            with open(self.storage_path, "w", encoding="utf-8", errors="replace") as f:
                 json.dump(self.learned_data, f, indent=2)
         except Exception as e:
             self.logger.error(f"Could not persist learned data: {e}")

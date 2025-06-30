@@ -48,7 +48,7 @@ class AnalyticsDataAccessor:
         """Load consolidated mappings from learned_mappings.json"""
         try:
             if self.mappings_file.exists():
-                with open(self.mappings_file, "r") as f:
+                with open(self.mappings_file, "r", encoding="utf-8", errors="replace") as f:
                     return json.load(f)
             return {}
         except Exception as e:
@@ -436,7 +436,7 @@ class AnalyticsService:
 
             # Process JSON with FIXED processor
             if os.path.exists(json_file):
-                with open(json_file, 'r') as f:
+                with open(json_file, 'r', encoding='utf-8', errors='replace') as f:
                     json_data = json.load(f)
                 df_json = pd.DataFrame(json_data)
                 result = processor._validate_data(df_json)
