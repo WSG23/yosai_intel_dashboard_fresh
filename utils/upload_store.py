@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 
 import pandas as pd
+from file_conversion.file_converter import FileConverter
 
 logger = logging.getLogger(__name__)
 
@@ -46,12 +47,43 @@ class UploadedDataStore:
                     errors="replace",
                 ) as f:
                     self._file_info_store = json.load(f)
-            for fname in self._file_info_store.keys():
+
+            filenames = set(self._file_info_store.keys())
+            # include any legacy pickle files not tracked yet
+            for pkl_file in self.storage_dir.glob("*.pkl"):
+                filenames.add(pkl_file.stem)
+                self._file_info_store.setdefault(pkl_file.stem, {})
+
+            modified = False
+            for fname in filenames:
                 fpath = self._get_file_path(fname)
+                pkl_path = fpath.with_suffix(".pkl")
+                if pkl_path.exists():
+                    success, _ = FileConverter.pkl_to_parquet(pkl_path, fpath)
+                    if success:
+                        try:
+                            pkl_path.unlink()
+                        except Exception:  # pragma: no cover - best effort
+                            pass
+                    else:
+                        continue
                 if fpath.exists():
                     df = pd.read_parquet(fpath)
                     self._data_store[fname] = df
+                    info = self._file_info_store.get(fname, {})
+                    info.update(
+                        {
+                            "rows": len(df),
+                            "columns": len(df.columns),
+                            "column_names": list(df.columns),
+                        }
+                    )
+                    self._file_info_store[fname] = info
+                    modified = True
                     logger.info(f"Loaded {fname} from disk")
+            if modified:
+                with open(self._info_path(), "w", encoding="utf-8") as f:
+                    json.dump(self._file_info_store, f, indent=2)
         except Exception as e:  # pragma: no cover - best effort
             logger.error(f"Error loading uploaded data: {e}")
 
