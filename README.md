@@ -348,6 +348,14 @@ If you encounter an error like `"Babel" object has no attribute "localeselector"
 ## 📚 Documentation
 
 See the [data model diagram](docs/data_model.md) for an overview of key entities.
+## 📜 Data Migration
+Use the storage utilities to convert legacy pickle files to Parquet and load them:
+```python
+from file_conversion.migrate_existing_files import main
+main()
+```
+This creates `converted_data/Demo3_data_copy.csv.parquet` and prints the first rows.
+
 
 ## 🤝 Contributing
 

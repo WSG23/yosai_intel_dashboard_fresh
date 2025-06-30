@@ -20,16 +20,29 @@ def decode_bytes(data: bytes, enc: str) -> str:
 
 
 def safe_decode_with_unicode_handling(data: bytes, enc: str) -> str:
-    """Decode with surrogatepass and clean to valid UTF-8."""
+    """Decode bytes using ``enc`` and remove invalid surrogates."""
     try:
         text = data.decode(enc, errors="surrogatepass")
     except UnicodeDecodeError:
         text = data.decode(enc, errors="replace")
 
+    original_len = len(text)
     text = sanitize_unicode_input(text)
-    # Re-encode to UTF-8 ignoring any invalid surrogates/characters
-    cleaned = text.encode("utf-8", errors="ignore")
-    return cleaned.decode("utf-8", errors="ignore")
+    cleaned_len = len(text)
+
+    if cleaned_len < original_len:
+        logger.warning(
+            "Unicode sanitization reduced text from %d to %d characters",
+            original_len,
+            cleaned_len,
+        )
+
+    try:
+        cleaned = text.encode("utf-8", errors="replace")
+        return cleaned.decode("utf-8", errors="replace")
+    except Exception:  # pragma: no cover - best effort
+        cleaned = text.encode("utf-8", errors="ignore")
+        return cleaned.decode("utf-8", errors="ignore")
 
 
 def validate_upload_content(contents: str, filename: str) -> Dict[str, Any]:
@@ -88,15 +101,46 @@ def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFr
             # Try multiple encodings with surrogate handling
             for encoding in ['utf-8', 'latin-1', 'cp1252']:
                 try:
+                    logger.info("Processing CSV with %s encoding...", encoding)
                     text = safe_decode_with_unicode_handling(decoded, encoding)
-                    df = pd.read_csv(io.StringIO(text))
+
+                    logger.info("Decoded text size: %d characters", len(text))
+                    lines = text.split('\n')
+                    logger.info("Expected rows: %d", len(lines) - 1)
+
+                    df = pd.read_csv(
+                        io.StringIO(text),
+                        on_bad_lines='skip',
+                        encoding='utf-8',
+                        low_memory=False,
+                        dtype=str,
+                        keep_default_na=False,
+                    )
+
+                    logger.info("Successfully loaded %d rows from CSV", len(df))
+
+                    if len(df) == 0:
+                        logger.warning("DataFrame is empty after CSV parsing")
+                        continue
+
                     return df, None
-                except UnicodeDecodeError:
+
+                except UnicodeDecodeError as e:
+                    logger.warning("Unicode error with %s: %s", encoding, e)
                     continue
+                except pd.errors.EmptyDataError:
+                    logger.warning("Empty CSV data with %s", encoding)
+                    continue
+                except pd.errors.ParserError as e:
+                    logger.error("CSV parsing error with %s: %s", encoding, e)
+                    continue
+                except Exception as e:
+                    logger.error("Unexpected error with %s: %s", encoding, e)
+                    continue
+
             return None, "Could not decode CSV with any standard encoding"
 
         elif filename_lower.endswith('.json'):
-            import json
             for encoding in ['utf-8', 'latin-1', 'cp1252']:
                 try:
                     text = safe_decode_with_unicode_handling(decoded, encoding)
@@ -107,6 +151,9 @@ def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFr
                         df = pd.DataFrame([json_data])
                     return df, None
                 except UnicodeDecodeError:
+                    continue
+                except json.JSONDecodeError as e:
+                    logger.error("JSON decode error with %s: %s", encoding, e)
                     continue
             return None, "Could not decode JSON with any standard encoding"
 
