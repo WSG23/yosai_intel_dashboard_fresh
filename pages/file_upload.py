@@ -191,7 +191,7 @@ def layout():
                                         [
                                             dcc.Upload(
                                                 id="upload-data",
-                                                max_size=dynamic_config.security.max_upload_mb * 1024 * 1024,
+                                                max_size=dynamic_config.get_max_upload_size_bytes(),  # Updated to use new method
                                                 children=html.Div(
                                                     [
                                                         html.I(
