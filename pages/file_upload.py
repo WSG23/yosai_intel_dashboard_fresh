@@ -436,7 +436,24 @@ def process_uploaded_files(
     file_info_dict: Dict[str, Any] = {}
     current_file_info: Dict[str, Any] = {}
 
+    file_parts: Dict[str, List[str]] = {}
+
+    # Group any repeated filenames together for multi-part uploads
     for content, filename in zip(contents_list, filenames_list):
+        file_parts.setdefault(filename, []).append(content)
+
+    for filename, parts in file_parts.items():
+        # Concatenate multiple parts for the same file into a single base64 string
+        if len(parts) > 1:
+            prefix, first = parts[0].split(",", 1)
+            combined_data = first
+            for part in parts[1:]:
+                _pfx, data = part.split(",", 1)
+                combined_data += data
+            content = f"{prefix},{combined_data}"
+        else:
+            content = parts[0]
+
         try:
             result = process_uploaded_file(content, filename)
 
