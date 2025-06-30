@@ -10,10 +10,11 @@ import dash_bootstrap_components as dbc
 from .analysis import (
     process_suggests_analysis_safe,
     process_quality_analysis_safe,
-    analyze_data_with_service_safe,
+    analyze_data_with_service,
     get_initial_message_safe,
     get_data_source_options_safe,
     get_analytics_service_safe,
+    create_analysis_results_display,
     create_analysis_results_display_safe,
     AI_SUGGESTIONS_AVAILABLE,
 )
@@ -38,10 +39,10 @@ def run_quality_analysis(data_source: str):
 
 def run_service_analysis(data_source: str, analysis_type: str):
     """Return display for service based analyses (security, trends, etc.)."""
-    results = analyze_data_with_service_safe(data_source, analysis_type)
+    results = analyze_data_with_service(data_source, analysis_type)
     if isinstance(results, dict) and "error" in results:
         return dbc.Alert(str(results["error"]), color="danger")
-    return create_analysis_results_display_safe(results, analysis_type)
+    return create_analysis_results_display(results, analysis_type)
 
 
 def run_unique_patterns_analysis(data_source: str):
