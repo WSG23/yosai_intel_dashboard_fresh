@@ -62,3 +62,12 @@ class DoorType(Enum):
     RESTRICTED = "restricted"
     EMERGENCY = "emergency"
     VISITOR = "visitor"
+
+
+class AccessType(Enum):
+    """Access categories for facilities"""
+    PUBLIC = "public"
+    PRIVATE = "private"
+    EMPLOYEE = "employee"
+    VISITOR = "visitor"
+    RESTRICTED = "restricted"
