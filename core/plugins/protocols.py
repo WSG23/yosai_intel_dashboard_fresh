@@ -88,8 +88,8 @@ class CallbackPluginProtocol(PluginProtocol, Protocol):
     """Protocol for plugins that register Dash callbacks"""
 
     @abstractmethod
-    def register_callbacks(self, app: Any, container: Any) -> bool:
-        """Register Dash callbacks with the application"""
+    def register_callbacks(self, manager: Any, container: Any) -> bool:
+        """Register callbacks with the application"""
         ...
 
 

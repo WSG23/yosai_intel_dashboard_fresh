@@ -101,22 +101,23 @@ class PluginManager:
             )
             return False
 
-    def register_plugin_callbacks(self, app: Any) -> List[Any]:
+    def register_plugin_callbacks(
+        self, app: Any, manager: CallbackManager
+    ) -> List[Any]:
         """Register callbacks for all loaded plugins"""
         results = []
-        # expose health endpoint on first registration
         try:
             self.register_health_endpoint(app)
-        except Exception as exc:
+        except Exception as exc:  # pragma: no cover - log and continue
             logger.error("Failed to register plugin health endpoint: %s", exc)
         for plugin in self.plugins.values():
             if isinstance(plugin, CallbackPluginProtocol) or hasattr(
                 plugin, "register_callbacks"
             ):
                 try:
-                    result = plugin.register_callbacks(app, self.container)
+                    result = plugin.register_callbacks(manager, self.container)
                     results.append(result)
-                except Exception as exc:
+                except Exception as exc:  # pragma: no cover - log and continue
                     logger.error("Failed to register callbacks for %s: %s", plugin, exc)
                     results.append(False)
         return results

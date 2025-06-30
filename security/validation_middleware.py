@@ -1,12 +1,16 @@
 """Flask request validation middleware."""
 
 from flask import request, Response
-from typing import Callable
+from typing import Callable, Optional
+
+from core.callback_events import CallbackEvent
+from core.callback_manager import CallbackManager
 
 from config.dynamic_config import dynamic_config
 
 from .validation_exceptions import ValidationError
 from .input_validator import InputValidator, Validator
+
 
 class ValidationOrchestrator:
     """Coordinate multiple validators."""
@@ -19,12 +23,18 @@ class ValidationOrchestrator:
             data = v.validate(data)
         return data
 
+
 class ValidationMiddleware:
     """Middleware applying input validation."""
 
     def __init__(self) -> None:
         self.orchestrator = ValidationOrchestrator([InputValidator()])
         self.max_body_size = dynamic_config.security.max_upload_mb * 1024 * 1024
+
+    def register_callbacks(self, manager: CallbackManager) -> None:
+        """Register validation hooks with the callback manager."""
+        manager.register_callback(CallbackEvent.BEFORE_REQUEST, self.validate_request)
+        manager.register_callback(CallbackEvent.AFTER_REQUEST, self.sanitize_response)
 
     def validate_request(self) -> None:
         # Enforce maximum request body size

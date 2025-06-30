@@ -31,13 +31,16 @@ def check_learning_status():
     logger.info(f"   Latest save: {stats.get('latest_save', 'None')}")
 
     logger.info("\n📁 LEARNED FILES:")
-    for file_info in stats['files']:
-        logger.info(f"   • {file_info['filename']} - {file_info['device_count']} devices")
+    for file_info in stats["files"]:
+        logger.info(
+            f"   • {file_info['filename']} - {file_info['device_count']} devices"
+        )
         logger.info(f"     Fingerprint: {file_info['fingerprint']}")
         logger.info(f"     Saved: {file_info['saved_at']}")
 
     # Check if storage file exists
     import os
+
     storage_exists = os.path.exists("data/learned_mappings.json")
     logger.info(f"\n💾 Storage file exists: {storage_exists}")
 
@@ -77,7 +80,9 @@ def main():
         except Exception as e:
             logger.error(f"❌ Failed to load configuration: {e}")
             logger.info(f"\n❌ Configuration Error: {e}")
-            logger.info("💡 Make sure config/config.py exists and is properly formatted")
+            logger.info(
+                "💡 Make sure config/config.py exists and is properly formatted"
+            )
             sys.exit(1)
 
         # Print startup information
@@ -87,12 +92,38 @@ def main():
         try:
             from core.app_factory import create_app
             from security.validation_middleware import ValidationMiddleware
+            from core.callback_manager import CallbackManager
+            from core.callback_events import CallbackEvent
 
             app = create_app()
             middleware = ValidationMiddleware()
+            manager = CallbackManager()
+            middleware.register_callbacks(manager)
+
             server = app.server
-            server.before_request(middleware.validate_request)
-            server.after_request(middleware.sanitize_response)
+
+            @server.before_request
+            def _before_request():
+                for result in manager.trigger(CallbackEvent.BEFORE_REQUEST):
+                    if result is not None:
+                        return result
+
+            @server.after_request
+            def _after_request(response):
+                current = response
+                for cb in manager.get_callbacks(CallbackEvent.AFTER_REQUEST):
+                    try:
+                        r = cb[1](current)
+                        if r is not None:
+                            current = r
+                    except Exception as exc:  # pragma: no cover - log and continue
+                        logging.getLogger(__name__).exception(
+                            "after_request callback failed: %s", exc
+                        )
+                manager.trigger(CallbackEvent.AFTER_REQUEST, current)
+                return current
+
+            app._callback_manager = manager
             logger.info("✅ Application created successfully")
         except Exception as e:
             logger.error(f"❌ Failed to create application: {e}")
@@ -104,9 +135,7 @@ def main():
 
         # Run the application
         try:
-            app.run(
-                debug=app_config.debug, host=app_config.host, port=app_config.port
-            )
+            app.run(debug=app_config.debug, host=app_config.host, port=app_config.port)
         except KeyboardInterrupt:
             logger.info("\n👋 Application stopped by user")
         except Exception as e:
