@@ -92,10 +92,20 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
         default_floor = ai_data.get("floor_number")
         default_security = ai_data.get("security_level", 5)
         default_access = []
-        if ai_data.get("is_entry"):
+        if ai_data.get("is_entry", ai_data.get("entry")):
             default_access.append("entry")
-        if ai_data.get("is_exit"):
+        if ai_data.get("is_exit", ai_data.get("exit")):
             default_access.append("exit")
+
+        default_special = []
+        if ai_data.get("is_elevator", ai_data.get("elevator")):
+            default_special.append("is_elevator")
+        if ai_data.get("is_stairwell", ai_data.get("stairwell")):
+            default_special.append("is_stairwell")
+        if ai_data.get("is_fire_escape", ai_data.get("fire_escape")):
+            default_special.append("is_fire_escape")
+        if ai_data.get("is_restricted", ai_data.get("restricted")):
+            default_special.append("is_restricted")
 
         device_rows.append(
             dbc.Row(
@@ -147,12 +157,8 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
                         [
                             dbc.Checklist(
                                 id={"type": "device-special", "index": i},
-                                options=[
-                                    {"label": "Elevator", "value": "is_elevator"},
-                                    {"label": "Stairwell", "value": "is_stairwell"},
-                                    {"label": "Fire Exit", "value": "is_fire_escape"},
-                                ],
-                                value=[],
+                                options=special_areas_options,
+                                value=default_special,
                                 inline=True,
                             )
                         ],

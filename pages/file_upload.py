@@ -717,19 +717,19 @@ def populate_device_modal_with_learning(is_open, file_info):
                                     {"label": "Elevator", "value": "is_elevator"},
                                     {"label": "Stairwell", "value": "is_stairwell"},
                                     {"label": "Fire Exit", "value": "is_fire_escape"},
+                                    {"label": "Restricted", "value": "is_restricted"},
                                 ],
                                 value=[
-                                    k
-                                    for k, v in ai_attributes.items()
-                                    if k
-                                    in [
+                                    key
+                                    for key in [
                                         "is_entry",
                                         "is_exit",
                                         "is_elevator",
                                         "is_stairwell",
                                         "is_fire_escape",
+                                        "is_restricted",
                                     ]
-                                    and v
+                                    if ai_attributes.get(key, ai_attributes.get(key.replace("is_", "")))
                                 ],
                                 inline=False,
                             ),
