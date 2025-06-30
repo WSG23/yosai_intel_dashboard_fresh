@@ -112,7 +112,7 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
                                 else None
                             ),
                         ],
-                        width=3,  # CHANGED: from 4 to 3
+                        width=3,
                     ),
                     dbc.Col(
                         [
@@ -140,9 +140,8 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
                                 inline=True,
                             )
                         ],
-                        width=2,  # CHANGED: from 3 to 2
+                        width=2,
                     ),
-                    # ADD THIS COMPLETELY NEW COLUMN:
                     dbc.Col(
                         [
                             dbc.Checklist(
@@ -212,10 +211,10 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
                 [
                     dbc.Col(
                         html.Strong("Device Name"), width=3
-                    ),  # CHANGED: from 4 to 3
+                    ),
                     dbc.Col(html.Strong("Floor"), width=2),
-                    dbc.Col(html.Strong("Access"), width=2),  # CHANGED: from 3 to 2
-                    dbc.Col(html.Strong("Special Areas"), width=3),  # ADD THIS
+                    dbc.Col(html.Strong("Access"), width=2),
+                    dbc.Col(html.Strong("Special Areas"), width=3),
                     dbc.Col(html.Strong("Security (0-10)"), width=2),
                 ],
                 className="mb-2",
