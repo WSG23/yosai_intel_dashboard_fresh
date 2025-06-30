@@ -25,12 +25,11 @@ class ChunkedAnalyticsController:
             self.chunk_size = chunk_size or 10000
             self.max_workers = max_workers or 4
 
-    def process_large_dataframe(
-        self, df: pd.DataFrame, analysis_types: List[str]
-    ) -> Dict[str, Any]:
+    def process_large_dataframe(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
         """Process large DataFrame using chunked analysis."""
+        total_rows = len(df)
         logger.info(
-            f"Starting chunked analysis for {len(df)} rows with chunk size {self.chunk_size}"
+            f"Starting chunked analysis for {total_rows:,} rows with chunk size {self.chunk_size:,}"
         )
 
         aggregated_results = {
@@ -44,19 +43,29 @@ class ChunkedAnalyticsController:
             "behavioral_patterns": {},
             "temporal_patterns": {},
             "date_range": {"start": None, "end": None},
+            "rows_processed": 0,
         }
 
         chunks_processed = 0
         total_chunks = (len(df) + self.chunk_size - 1) // self.chunk_size
+
+        logger.info(f"Processing {total_chunks} chunks of size {self.chunk_size}")
 
         for chunk_df in self._chunk_dataframe(df):
             chunk_results = self._process_chunk(chunk_df, analysis_types)
             self._aggregate_chunk_results(aggregated_results, chunk_results)
 
             chunks_processed += 1
-            if chunks_processed % 10 == 0:
-                logger.info(f"Processed {chunks_processed}/{total_chunks} chunks")
+            aggregated_results["rows_processed"] += len(chunk_df)
 
+            if chunks_processed % 5 == 0:
+                logger.info(
+                    f"Processed {chunks_processed}/{total_chunks} chunks ({aggregated_results['rows_processed']:,}/{total_rows:,} rows)"
+                )
+
+        logger.info(
+            f"Chunked analysis complete: {aggregated_results['rows_processed']:,} total rows processed"
+        )
         return self._finalize_results(aggregated_results)
 
     def _chunk_dataframe(self, df: pd.DataFrame) -> Iterator[pd.DataFrame]:
