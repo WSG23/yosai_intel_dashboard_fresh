@@ -19,7 +19,7 @@ class Validator(Protocol):
 class InputValidator:
     """Simple input validator using unicode sanitization and basic patterns."""
 
-    _dangerous_pattern = re.compile(r"[<>\"']")
+    _dangerous_pattern = re.compile(r"[<>]")
 
     def validate(self, data: str) -> str:
         cleaned = sanitize_unicode_input(data)
