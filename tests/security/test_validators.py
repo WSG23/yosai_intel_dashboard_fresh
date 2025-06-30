@@ -45,6 +45,13 @@ def test_csv_injection_detection():
         validator.validate_for_upload(df)
 
 
+def test_csv_safe_dataframe_allowed():
+    df = pd.DataFrame({"a": ["cmd()", "ok"]})
+    validator = DataFrameSecurityValidator()
+    result = validator.validate_for_upload(df)
+    assert isinstance(result, pd.DataFrame)
+
+
 def _create_test_app():
     from flask import Flask
     from security.validation_middleware import ValidationMiddleware
