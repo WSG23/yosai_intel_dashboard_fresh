@@ -13,6 +13,10 @@ from dash import html, dcc
 from dash.dash import no_update
 from dash._callback_context import callback_context
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from analytics.controllers import UnifiedAnalyticsController
+import logging
+
+logger = logging.getLogger(__name__)
 from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
 from services.device_learning_service import DeviceLearningService
@@ -1115,7 +1119,10 @@ class Callbacks:
         )
 
 
-def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
+def register_callbacks(
+    manager: UnifiedCallbackCoordinator,
+    controller: UnifiedAnalyticsController | None = None,
+) -> None:
     """Instantiate :class:`Callbacks` and register its methods."""
 
     cb = Callbacks()
@@ -1234,6 +1241,12 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             component_name="file_upload",
             **extra,
         )(func)
+
+    if controller is not None:
+        controller.register_callback(
+            "on_analysis_error",
+            lambda aid, err: logger.error("File upload error: %s", err),
+        )
 
 
 # Export functions for integration with other modules

@@ -4,6 +4,10 @@ from dash import html, dcc
 from dash._callback_context import callback_context
 import dash
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from analytics.controllers import UnifiedAnalyticsController
+import logging
+
+logger = logging.getLogger(__name__)
 from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
 from typing import List, Dict, Any
@@ -456,7 +460,10 @@ def apply_ai_device_suggestions(suggestions, devices):
     return floor_values, access_values, special_values, security_values
 
 
-def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
+def register_callbacks(
+    manager: UnifiedCallbackCoordinator,
+    controller: UnifiedAnalyticsController | None = None,
+) -> None:
     """Register component callbacks using the provided coordinator."""
 
     manager.register_callback(
@@ -498,6 +505,12 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
         callback_id="apply_ai_device_suggestions",
         component_name="simple_device_mapping",
     )(apply_ai_device_suggestions)
+
+    if controller is not None:
+        controller.register_callback(
+            "on_analysis_error",
+            lambda aid, err: logger.error("Device mapping error: %s", err),
+        )
 
 
 __all__ = ["register_callbacks"]

@@ -2,6 +2,10 @@
 
 from dash import Input, Output, State, callback_context, html
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from analytics.controllers import UnifiedAnalyticsController
+import logging
+
+logger = logging.getLogger(__name__)
 import dash_bootstrap_components as dbc
 from .analysis import (
     process_suggests_analysis_safe,
@@ -497,7 +501,10 @@ class Callbacks:
 # Add these helper functions for non-suggests analysis types
 # =============================================================================
 
-def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
+def register_callbacks(
+    manager: UnifiedCallbackCoordinator,
+    controller: UnifiedAnalyticsController | None = None,
+) -> None:
     """Instantiate :class:`Callbacks` and register its methods."""
 
     cb = Callbacks()
@@ -542,6 +549,12 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             callback_id=cid,
             component_name="deep_analytics",
         )(func)
+
+    if controller is not None:
+        controller.register_callback(
+            "on_analysis_error",
+            lambda aid, err: logger.error("Deep analytics error: %s", err),
+        )
 
 
 
