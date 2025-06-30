@@ -89,14 +89,17 @@ class FileProcessor:
             try:
                 logger.info(f"Reading complete CSV file: {file_path}")
 
-                with open(file_path, "r", encoding=encoding) as f:
-                    sample = f.read(8192)
+                file_size = os.path.getsize(file_path)
+                sample_size = 8192
+                if file_size >= 50 * 1024 * 1024:  # 50MB
+                    sample_size = 65536  # read a larger chunk for delimiter detection
 
-                delimiter = None
-                for sep in [",", ";", "\t", "|"]:
-                    if sample.count(sep) > sample.count(","):
-                        delimiter = sep
-                        break
+                with open(file_path, "r", encoding=encoding) as f:
+                    sample = f.read(sample_size)
+
+                delimiters = [",", ";", "\t", "|"]
+                counts = {sep: sample.count(sep) for sep in delimiters}
+                delimiter = max(counts, key=counts.get)
 
                 header = pd.read_csv(
                     file_path, nrows=0, encoding=encoding, sep=delimiter
@@ -112,7 +115,6 @@ class FileProcessor:
                     dtype=str,
                     na_values=["", "NULL", "null", "None", "nan", "NaN"],
                     engine="python",
-                    on_bad_lines="skip",
                     chunksize=50000,
                 ):
                     chunks.append(chunk)
@@ -140,13 +142,14 @@ class FileProcessor:
         for encoding in encodings:
             try:
                 text = process_large_csv_content(content, encoding=encoding)
-                sample = text[:8192]
+                sample_size = 8192
+                if len(content) >= 50 * 1024 * 1024:
+                    sample_size = 65536
+                sample = text[:sample_size]
 
-                delimiter = None
-                for sep in [",", ";", "\t", "|"]:
-                    if sample.count(sep) > sample.count(","):
-                        delimiter = sep
-                        break
+                delimiters = [",", ";", "\t", "|"]
+                counts = {sep: sample.count(sep) for sep in delimiters}
+                delimiter = max(counts, key=counts.get)
 
                 header = pd.read_csv(StringIO(text), nrows=0, sep=delimiter).columns
                 parse_dates = ["timestamp"] if "timestamp" in header else False
@@ -158,7 +161,6 @@ class FileProcessor:
                     dtype=str,
                     na_values=["", "NULL", "null", "None", "nan", "NaN"],
                     engine="python",
-                    on_bad_lines="skip",
                 )
                 return df
             except UnicodeDecodeError:
