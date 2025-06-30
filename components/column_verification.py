@@ -8,6 +8,10 @@ Feeds back to AI training data
 import pandas as pd
 from dash import html, dcc, callback, Input, Output, State, ALL, MATCH
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from analytics.controllers import UnifiedAnalyticsController
+import logging
+
+logger = logging.getLogger(__name__)
 import dash
 import dash_bootstrap_components as dbc
 from typing import Dict, List, Any
@@ -519,7 +523,10 @@ def toggle_custom_field(selected_value):
         return {"display": "none"}
 
 
-def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
+def register_callbacks(
+    manager: UnifiedCallbackCoordinator,
+    controller: UnifiedAnalyticsController | None = None,
+) -> None:
     """Register component callbacks using the coordinator."""
 
     manager.register_callback(
@@ -528,6 +535,12 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
         callback_id="toggle_custom_field",
         component_name="column_verification",
     )(toggle_custom_field)
+
+    if controller is not None:
+        controller.register_callback(
+            "on_analysis_error",
+            lambda aid, err: logger.error("Column verification error: %s", err),
+        )
 
 
 # ---------------------------------------------------------------------------

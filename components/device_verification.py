@@ -4,6 +4,10 @@ import pandas as pd
 from dash import html, dcc
 from dash.dependencies import Input, Output, State, ALL, MATCH
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from analytics.controllers import UnifiedAnalyticsController
+import logging
+
+logger = logging.getLogger(__name__)
 import dash
 import dash_bootstrap_components as dbc
 from typing import Dict, List, Any, Union
@@ -246,7 +250,10 @@ def mark_device_as_edited(floor, access, special, security):
     return True  # Simplified - any change marks as edited
 
 
-def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
+def register_callbacks(
+    manager: UnifiedCallbackCoordinator,
+    controller: UnifiedAnalyticsController | None = None,
+) -> None:
     """Register component callbacks using the provided coordinator."""
 
     manager.register_callback(
@@ -261,6 +268,12 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
         callback_id="mark_device_as_edited",
         component_name="device_verification",
     )(mark_device_as_edited)
+
+    if controller is not None:
+        controller.register_callback(
+            "on_analysis_error",
+            lambda aid, err: logger.error("Device verification error: %s", err),
+        )
 
 
 __all__ = ["create_device_verification_modal", "register_callbacks"]

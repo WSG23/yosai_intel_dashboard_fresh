@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Callable
 import logging
 from dataclasses import dataclass
-import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import json
 
@@ -21,6 +20,8 @@ from .anomaly_detection import AnomalyDetector, create_anomaly_detector
 from .interactive_charts import SecurityChartsGenerator, create_charts_generator
 from core.callback_manager import CallbackManager
 from core.callback_events import CallbackEvent
+from core.security_validator import SecurityValidator
+from analytics.controllers import UnifiedAnalyticsController
 
 
 @dataclass
@@ -54,14 +55,16 @@ class AnalyticsResult:
     errors: List[str]
 
 
-class AnalyticsController:
+class AnalyticsController(UnifiedAnalyticsController):
     """Unified controller for all analytics operations"""
 
     def __init__(
         self,
         config: Optional[AnalyticsConfig] = None,
         callback_manager: Optional[CallbackManager] = None,
+        security_validator: Optional[SecurityValidator] = None,
     ):
+        super().__init__(callback_manager, security_validator)
         self.config = config or AnalyticsConfig()
         self.logger = logging.getLogger(__name__)
 
@@ -86,8 +89,6 @@ class AnalyticsController:
         self._cache = {}
         self._cache_timestamps = {}
 
-        self._manager = callback_manager or CallbackManager()
-
         # Thread pool for parallel processing
         self._executor = (
             ThreadPoolExecutor(max_workers=5)
@@ -95,33 +96,9 @@ class AnalyticsController:
             else None
         )
 
-    _EVENT_MAP = {
-        "on_analysis_start": CallbackEvent.ANALYSIS_START,
-        "on_analysis_progress": CallbackEvent.ANALYSIS_PROGRESS,
-        "on_analysis_complete": CallbackEvent.ANALYSIS_COMPLETE,
-        "on_analysis_error": CallbackEvent.ANALYSIS_ERROR,
-        "on_data_processed": CallbackEvent.DATA_PROCESSED,
-    }
-
-    def register_callback(self, event: str, callback: Callable) -> None:
-        """Register callback for specific events"""
-        if event not in self._EVENT_MAP:
-            raise ValueError(f"Unknown event type: {event}")
-        self._manager.register_callback(self._EVENT_MAP[event], callback)
-
-    def unregister_callback(self, event: str, callback: Callable) -> None:
-        """Unregister callback for specific events"""
-        # Simple removal by rebuilding list
-        if event not in self._EVENT_MAP:
-            return
-        mapped = self._EVENT_MAP[event]
-        self._manager.unregister_callback(mapped, callback)
-
     def _trigger_callbacks(self, event: str, *args, **kwargs) -> None:
         """Trigger all callbacks for an event"""
-        if event not in self._EVENT_MAP:
-            return
-        self._manager.trigger(self._EVENT_MAP[event], *args, **kwargs)
+        self.trigger(event, *args, **kwargs)
 
     def analyze_all(
         self, df: pd.DataFrame, analysis_id: Optional[str] = None
