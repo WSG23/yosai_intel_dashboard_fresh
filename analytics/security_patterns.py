@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Tuple
+from .security_metrics import SecurityMetrics
 from dataclasses import dataclass
 import logging
 
@@ -241,28 +242,50 @@ class SecurityPatternsAnalyzer:
             'severity': 'high' if len(critical_violations) > 0 else 'medium'
         }
     
-    def _calculate_security_score(self, df: pd.DataFrame) -> int:
-        """Calculate overall security score (0-100)"""
+    def _calculate_security_score(self, df: pd.DataFrame) -> SecurityMetrics:
+        """Calculate overall security score using weighted z-scores."""
         if df.empty:
-            return 0
-        
-        # Base score
-        score = 100
-        
-        # Deduct points for security issues
+            return SecurityMetrics(
+                score=0,
+                threat_level="low",
+                confidence_interval=(0.0, 0.0),
+                method="weighted_zscore",
+            )
+
         failed_rate = len(df[df['access_result'] == 'Denied']) / len(df)
-        score -= failed_rate * 30
-        
         badge_issue_rate = len(df[df['badge_status'] != 'Valid']) / len(df)
-        score -= badge_issue_rate * 25
-        
         after_hours_rate = len(df[df['is_after_hours']]) / len(df)
-        score -= after_hours_rate * 15
-        
         weekend_rate = len(df[df['is_weekend']]) / len(df)
-        score -= weekend_rate * 10
-        
-        return max(0, min(100, int(score)))
+
+        metrics = np.array([failed_rate, badge_issue_rate, after_hours_rate, weekend_rate])
+        means = np.array([0.05, 0.02, 0.05, 0.25])
+        stds = np.array([0.02, 0.01, 0.02, 0.05])
+        weights = np.array([0.3, 0.25, 0.2, 0.25])
+
+        z_scores = np.where(stds > 0, (metrics - means) / stds, 0)
+        penalties = np.clip(z_scores, 0, None) * weights * 100
+        score = float(max(0.0, min(100.0, 100.0 - penalties.sum())))
+
+        standard_error = metrics.std(ddof=0) / np.sqrt(len(df))
+        margin = 1.96 * standard_error * 100
+        confidence_interval = (
+            max(0.0, score - margin),
+            min(100.0, score + margin),
+        )
+
+        if score >= 90:
+            threat_level = "low"
+        elif score >= 70:
+            threat_level = "medium"
+        else:
+            threat_level = "high"
+
+        return SecurityMetrics(
+            score=score,
+            threat_level=threat_level,
+            confidence_interval=confidence_interval,
+            method="weighted_zscore",
+        )
     
     def _generate_threat_summary(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Generate comprehensive threat summary"""
@@ -394,7 +417,12 @@ class SecurityPatternsAnalyzer:
             'badge_anomalies': {'total': 0, 'issues': {}},
             'device_security_issues': {'total': 0, 'issues': {}},
             'access_violations': {'total': 0, 'violation_types': {}},
-            'security_score': 0,
+            'security_score': SecurityMetrics(
+                score=0,
+                threat_level='low',
+                confidence_interval=(0.0, 0.0),
+                method='none',
+            ),
             'threat_summary': {'threat_count': 0, 'threats': []}
         }
 
@@ -404,4 +432,4 @@ def create_security_analyzer() -> SecurityPatternsAnalyzer:
     return SecurityPatternsAnalyzer()
 
 # Export
-__all__ = ['SecurityPatternsAnalyzer', 'SecurityPattern', 'create_security_analyzer']
+__all__ = ['SecurityPatternsAnalyzer', 'SecurityPattern', 'create_security_analyzer', 'SecurityMetrics']
