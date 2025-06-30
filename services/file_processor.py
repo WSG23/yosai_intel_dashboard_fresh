@@ -120,6 +120,41 @@ class FileProcessor:
                 continue
 
         raise ValueError(f"Could not read CSV file {file_path} with any encoding")
+
+    def process_uploaded_csv_complete(self, content: bytes) -> pd.DataFrame:
+        """Decode CSV bytes using full-table processing."""
+        from io import StringIO
+        from utils import process_large_csv_content
+
+        encodings = ["utf-8", "utf-8-sig", "latin1", "cp1252"]
+        for encoding in encodings:
+            try:
+                text = process_large_csv_content(content, encoding=encoding)
+                sample = text[:8192]
+
+                delimiter = None
+                for sep in [",", ";", "\t", "|"]:
+                    if sample.count(sep) > sample.count(","):
+                        delimiter = sep
+                        break
+
+                header = pd.read_csv(StringIO(text), nrows=0, sep=delimiter).columns
+                parse_dates = ["timestamp"] if "timestamp" in header else False
+
+                df = pd.read_csv(
+                    StringIO(text),
+                    sep=delimiter,
+                    parse_dates=parse_dates,
+                    dtype=str,
+                    na_values=["", "NULL", "null", "None", "nan", "NaN"],
+                )
+                return df
+            except UnicodeDecodeError:
+                continue
+            except Exception:
+                continue
+
+        raise ValueError("Could not decode CSV content with any encoding")
     
     def _parse_json(self, file_path: str) -> pd.DataFrame:
         """Parse JSON file"""
