@@ -44,11 +44,15 @@ def run_service_analysis(data_source: str, analysis_type: str):
     return create_analysis_results_display_safe(results, analysis_type)
 
 
-def run_unique_patterns_analysis():
+def run_unique_patterns_analysis(data_source: str):
     """Run unique patterns analysis using the analytics service."""
     try:
         analytics_service = AnalyticsService()
-        results = analytics_service.get_unique_patterns_analysis()
+        try:
+            results = analytics_service.get_unique_patterns_analysis(data_source)
+        except TypeError:
+            # Backwards compatibility if service method does not accept data_source
+            results = analytics_service.get_unique_patterns_analysis()
 
         if results["status"] == "success":
             data_summary = results["data_summary"]
@@ -406,7 +410,7 @@ def dispatch_analysis(button_id: str, data_source: str):
     dispatch = {
         "suggests": lambda: run_suggests_analysis(data_source),
         "quality": lambda: run_quality_analysis(data_source),
-        "unique_patterns": run_unique_patterns_analysis,
+        "unique_patterns": lambda: run_unique_patterns_analysis(data_source),
         "security": lambda: run_service_analysis(data_source, "security"),
         "trends": lambda: run_service_analysis(data_source, "trends"),
         "behavior": lambda: run_service_analysis(data_source, "behavior"),
