@@ -1,48 +1,49 @@
-import logging
-import re
-from typing import Any
+#!/usr/bin/env python3
+"""Unicode processor with surrogate character handling."""
 
 import pandas as pd
-
+import logging
+import re
+from typing import Any, Union
 
 logger = logging.getLogger(__name__)
 
 
-def safe_unicode_encode(value: Any) -> str:
-    """Return a safe Unicode string with surrogate characters removed."""
-    if value is None:
+def sanitize_data_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """Sanitize DataFrame handling Unicode surrogates that can't be encoded in UTF-8."""
+    df_clean = df.copy()
+
+    # Process string columns for Unicode issues
+    for col in df_clean.select_dtypes(include=['object']).columns:
+        df_clean[col] = df_clean[col].apply(clean_unicode_surrogates)
+
+    return df_clean
+
+
+def clean_unicode_surrogates(text: Any) -> str:
+    """Clean Unicode surrogate characters that can't be encoded in UTF-8."""
+    if pd.isna(text):
         return ""
 
-    if isinstance(value, bytes):
-        try:
-            value = value.decode("utf-8", errors="surrogatepass")
-        except UnicodeDecodeError:
-            value = value.decode("latin-1", errors="ignore")
-    else:
-        value = str(value)
+    text_str = str(text)
 
+    # Remove Unicode surrogates (U+D800-U+DFFF)
+    text_str = re.sub(r'[\uD800-\uDFFF]', '', text_str)
+
+    # Remove other problematic Unicode ranges
+    text_str = re.sub(r'[\uFFFE\uFFFF]', '', text_str)
+
+    # Encode to UTF-8 and decode to ensure clean text
     try:
-        # Remove any surrogate characters
-        value = re.sub(r"[\uD800-\uDFFF]", "", value)
-        value = value.encode("utf-8", errors="ignore").decode("utf-8", errors="ignore")
-    except Exception as exc:  # pragma: no cover - unexpected
-        logger.warning("Unicode encoding failed: %s", exc)
-        value = value.encode("utf-8", errors="ignore").decode("utf-8", errors="ignore")
+        text_str = text_str.encode('utf-8', errors='ignore').decode('utf-8')
+    except UnicodeError:
+        logger.warning(f"Unicode encoding issue with text: {text_str[:50]}...")
+        text_str = text_str.encode('ascii', errors='ignore').decode('ascii')
 
-    return value
+    return text_str
 
 
-def sanitize_data_frame(df: pd.DataFrame) -> pd.DataFrame:
-    """Sanitize DataFrame column names and string cells."""
-    df = df.copy()
-    df.columns = [safe_unicode_encode(str(c)) for c in df.columns]
+def sanitize_unicode_input(value: Union[str, Any]) -> str:
+    """Sanitize single Unicode input value."""
+    return clean_unicode_surrogates(value)
 
-    for col in df.select_dtypes(include=["object"]).columns:
-        df[col] = df[col].apply(safe_unicode_encode)
-        # Remove potential CSV injection prefixes
-        df[col] = df[col].astype(str).str.replace(r"^[=+\-@]", "", regex=True)
-
-    return df
-
-
-__all__ = ["safe_unicode_encode", "sanitize_data_frame"]

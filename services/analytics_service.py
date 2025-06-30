@@ -273,7 +273,7 @@ class AnalyticsService:
             return {'status': 'error', 'message': f'Unknown source: {source}'}
 
     def _process_uploaded_data_directly(self, uploaded_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Process uploaded CSV files or DataFrames with incremental aggregation."""
+        """FIXED: Process ALL uploaded data without row limits."""
         try:
             logger.info(f"Processing {len(uploaded_data)} uploaded files directly...")
 
@@ -285,17 +285,19 @@ class AnalyticsService:
             min_ts: Optional[pd.Timestamp] = None
             max_ts: Optional[pd.Timestamp] = None
 
+            # FIXED: Process complete files, not chunks
             for filename, source in uploaded_data.items():
                 if isinstance(source, (str, Path)):
-                    reader = pd.read_csv(source, chunksize=50000)
-                else:
-                    reader = [source]
+                    # FIXED: Read entire file at once, not in chunks
+                    logger.info(f"Reading complete file: {filename}")
+                    df_complete = pd.read_csv(source, encoding='utf-8')
+                    logger.info(f"{filename} total rows: {len(df_complete):,}")
 
-                for chunk in reader:
-                    logger.info(f"{filename} chunk rows: {len(chunk):,}")
-                    self.df_validator.validate(chunk)
-                    df_processed = map_and_clean(chunk)
+                    # Validate and process entire dataset
+                    self.df_validator.validate(df_complete)
+                    df_processed = map_and_clean(df_complete)
 
+                    # Process ALL rows, not chunked
                     total_events += len(df_processed)
 
                     if 'person_id' in df_processed.columns:
@@ -304,6 +306,23 @@ class AnalyticsService:
                     if 'door_id' in df_processed.columns:
                         door_counts.update(df_processed['door_id'].dropna().astype(str))
 
+                    if 'timestamp' in df_processed.columns:
+                        ts = pd.to_datetime(df_processed['timestamp'], errors='coerce').dropna()
+                        if not ts.empty:
+                            cur_min = ts.min()
+                            cur_max = ts.max()
+                            if min_ts is None or cur_min < min_ts:
+                                min_ts = cur_min
+                            if max_ts is None or cur_max > max_ts:
+                                max_ts = cur_max
+                else:
+                    # Direct DataFrame processing
+                    df_processed = map_and_clean(source)
+                    total_events += len(df_processed)
+                    if 'person_id' in df_processed.columns:
+                        user_counts.update(df_processed['person_id'].dropna().astype(str))
+                    if 'door_id' in df_processed.columns:
+                        door_counts.update(df_processed['door_id'].dropna().astype(str))
                     if 'timestamp' in df_processed.columns:
                         ts = pd.to_datetime(df_processed['timestamp'], errors='coerce').dropna()
                         if not ts.empty:

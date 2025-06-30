@@ -59,15 +59,15 @@ class DataFrameSecurityValidator:
         # Clean the DataFrame first
         df = self._sanitize_dataframe(df)
 
-        # Be more conservative about chunking - only chunk very large files
-        needs_chunking = memory_usage > max_bytes or len(df) > 100000
+        # FIXED: More aggressive threshold for chunking - only chunk truly massive files
+        needs_chunking = memory_usage > max_bytes or len(df) > 500000
 
         if needs_chunking:
             logger.info(
                 f"Large DataFrame detected: {len(df)} rows, {memory_usage/1024/1024:.1f}MB. Chunked processing enabled."
             )
         else:
-            logger.info(f"Regular processing for {len(df)} rows")
+            logger.info(f"Regular processing for {len(df)} rows - FULL DATASET ANALYSIS")
 
         return df, needs_chunking
 
