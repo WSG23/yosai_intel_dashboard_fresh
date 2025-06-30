@@ -1,6 +1,6 @@
 import os
 
-from services.analytics_service import AnalyticsService
+from services import AnalyticsService
 from config.config import get_config, reload_config
 
 

@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from services.file_processor import FileProcessor
+from services import FileProcessor
 
 
 @pytest.mark.parametrize("sep", [";", "\t"])

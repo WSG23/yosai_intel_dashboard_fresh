@@ -418,7 +418,7 @@ class AnalyticsService:
         json_file = os.getenv("SAMPLE_JSON_PATH", sample_cfg.json_path)
 
         try:
-            from services.file_processor import FileProcessor
+            from services import FileProcessor
             import pandas as pd
             import json
 

@@ -4,7 +4,7 @@ Complete Integration Tests for Analytics System
 """
 import pytest
 import pandas as pd
-from services.analytics_service import get_analytics_service, create_analytics_service
+from services import get_analytics_service, create_analytics_service
 from models.base import ModelFactory
 
 

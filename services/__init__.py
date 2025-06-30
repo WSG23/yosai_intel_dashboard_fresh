@@ -1,39 +1,29 @@
 #!/usr/bin/env python3
-"""
-Simplified Services Package
-"""
+"""Simplified Services Package"""
 import logging
+
 from .ai_mapping_store import ai_mapping_store
 from .data_loader import DataLoader
+from .registry import get_service
 
 logger = logging.getLogger(__name__)
 
-# Only import existing services
-try:
-    from .file_processor import FileProcessor
-    FILE_PROCESSOR_AVAILABLE = True
-except ImportError:
-    logger.warning("File processor not available")
-    FILE_PROCESSOR_AVAILABLE = False
-    FileProcessor = None
+# Resolve optional services from the registry
+FileProcessor = get_service("FileProcessor")
+FILE_PROCESSOR_AVAILABLE = FileProcessor is not None
 
-try:
-    from .analytics_service import (
-        get_analytics_service,
-        create_analytics_service,
-        AnalyticsService,
-    )
-    ANALYTICS_SERVICE_AVAILABLE = True
-except ImportError as e:
-    logger.warning(f"Analytics service not available: {e}")
-    get_analytics_service = None
-    create_analytics_service = None
-    AnalyticsService = None
-    ANALYTICS_SERVICE_AVAILABLE = False
+get_analytics_service = get_service("get_analytics_service")
+create_analytics_service = get_service("create_analytics_service")
+AnalyticsService = get_service("AnalyticsService")
+ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
 
 __all__ = [
-    'FileProcessor', 'FILE_PROCESSOR_AVAILABLE',
-    'get_analytics_service', 'create_analytics_service', 'AnalyticsService',
-    'ANALYTICS_SERVICE_AVAILABLE', 'DataLoader',
-    'ai_mapping_store'
+    "FileProcessor",
+    "FILE_PROCESSOR_AVAILABLE",
+    "get_analytics_service",
+    "create_analytics_service",
+    "AnalyticsService",
+    "ANALYTICS_SERVICE_AVAILABLE",
+    "DataLoader",
+    "ai_mapping_store",
 ]

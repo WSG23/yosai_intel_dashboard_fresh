@@ -1,7 +1,7 @@
 import pandas as pd
 import base64
 
-from services.file_processor import FileProcessor
+from services import FileProcessor
 from services.upload_service import process_uploaded_file
 from config.dynamic_config import dynamic_config
 
