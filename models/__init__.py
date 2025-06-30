@@ -5,8 +5,8 @@ Simplified Models Package
 
 # Import core models only
 from .enums import (
-    AnomalyType, AccessResult, BadgeStatus, 
-    SeverityLevel, TicketStatus, DoorType
+    AnomalyType, AccessResult, BadgeStatus,
+    SeverityLevel, TicketStatus, DoorType, AccessType
 )
 
 from .entities import Person, Door, Facility
@@ -24,7 +24,7 @@ except ImportError:
 
 __all__ = [
     'AnomalyType', 'AccessResult', 'BadgeStatus', 'SeverityLevel',
-    'TicketStatus', 'DoorType', 'Person', 'Door', 'Facility',
+    'TicketStatus', 'DoorType', 'AccessType', 'Person', 'Door', 'Facility',
     'AccessEvent', 'AnomalyDetection', 'IncidentTicket',
     'BaseModel', 'AccessEventModel', 'AnomalyDetectionModel', 'ModelFactory',
     'BASE_MODELS_AVAILABLE'

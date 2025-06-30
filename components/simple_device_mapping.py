@@ -2,6 +2,7 @@
 
 from dash import html, dcc
 from dash._callback_context import callback_context
+import dash
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
@@ -185,11 +186,13 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
         )
 
     device_store = dcc.Store(id="current-devices-list", data=devices)
+    suggestions_store = dcc.Store(id="ai-suggestions-store", data=ai_mapping_store.all())
     status_div = html.Div(id="device-save-status")
 
     modal_body = html.Div(
         [
             device_store,
+            suggestions_store,
             status_div,
             dbc.Alert(
                 [
@@ -416,6 +419,43 @@ def save_user_inputs(floors, security, access, devices):
     return ""
 
 
+def apply_ai_device_suggestions(suggestions, devices):
+    """Populate UI inputs with AI-suggested values."""
+    if not suggestions or not devices:
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+    floor_values = []
+    access_values = []
+    special_values = []
+    security_values = []
+
+    for device in devices:
+        mapping = suggestions.get(device, {})
+
+        floor_values.append(mapping.get("floor_number"))
+        security_values.append(mapping.get("security_level"))
+
+        access_list = []
+        if mapping.get("is_entry", mapping.get("entry")):
+            access_list.append("entry")
+        if mapping.get("is_exit", mapping.get("exit")):
+            access_list.append("exit")
+        access_values.append(access_list)
+
+        special_list = []
+        if mapping.get("is_elevator", mapping.get("elevator")):
+            special_list.append("is_elevator")
+        if mapping.get("is_stairwell", mapping.get("stairwell")):
+            special_list.append("is_stairwell")
+        if mapping.get("is_fire_escape", mapping.get("fire_escape")):
+            special_list.append("is_fire_escape")
+        if mapping.get("is_restricted", mapping.get("restricted")):
+            special_list.append("is_restricted")
+        special_values.append(special_list)
+
+    return floor_values, access_values, special_values, security_values
+
+
 def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
     """Register component callbacks using the provided coordinator."""
 
@@ -444,6 +484,20 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
         callback_id="save_user_inputs",
         component_name="simple_device_mapping",
     )(save_user_inputs)
+
+    manager.register_callback(
+        [
+            Output({"type": "device-floor", "index": ALL}, "value"),
+            Output({"type": "device-access", "index": ALL}, "value"),
+            Output({"type": "device-special", "index": ALL}, "value"),
+            Output({"type": "device-security", "index": ALL}, "value"),
+        ],
+        Input("ai-suggestions-store", "data"),
+        [State("current-devices-list", "data")],
+        prevent_initial_call=True,
+        callback_id="apply_ai_device_suggestions",
+        component_name="simple_device_mapping",
+    )(apply_ai_device_suggestions)
 
 
 __all__ = ["register_callbacks"]
