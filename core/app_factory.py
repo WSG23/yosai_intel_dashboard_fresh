@@ -71,10 +71,16 @@ def _create_full_app() -> dash.Dash:
 
         # Register page/component callbacks
         try:
-            from pages.file_upload import register_callbacks as register_upload_callbacks
+            from pages.file_upload import (
+                register_callbacks as register_upload_callbacks,
+                Callbacks as UploadCallbacks,
+            )
             from components.simple_device_mapping import register_callbacks as register_simple_mapping
             from components.device_verification import register_callbacks as register_device_verification
-            from pages.deep_analytics.callbacks import register_callbacks as register_deep_callbacks
+            from pages.deep_analytics.callbacks import (
+                register_callbacks as register_deep_callbacks,
+                Callbacks as DeepAnalyticsCallbacks,
+            )
             from dashboard.layout.navbar import register_navbar_callbacks
 
             register_upload_callbacks(coordinator)
@@ -82,6 +88,10 @@ def _create_full_app() -> dash.Dash:
             register_device_verification(coordinator)
             register_deep_callbacks(coordinator)
             register_navbar_callbacks(coordinator)
+
+            # Keep references to callback managers
+            app._upload_callbacks = UploadCallbacks()
+            app._deep_analytics_callbacks = DeepAnalyticsCallbacks()
 
             if config_manager.get_app_config().environment == "development":
                 coordinator.print_callback_summary()

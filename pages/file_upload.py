@@ -333,6 +333,12 @@ def highlight_upload_area(n_clicks):
     }
 
 
+def get_trigger_id() -> str:
+    """Return the triggered callback identifier."""
+    ctx = callback_context
+    return ctx.triggered[0]["prop_id"] if ctx.triggered else ""
+
+
 def restore_upload_state(pathname: str) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
     """Return stored upload details when revisiting the upload page."""
 
@@ -512,8 +518,7 @@ def handle_modal_dialogs(
 ) -> Tuple[Any, Any, Any]:
     """Open/close verification modals and show success toasts."""
 
-    ctx = callback_context
-    trigger_id = ctx.triggered[0]["prop_id"] if ctx.triggered else ""
+    trigger_id = get_trigger_id()
 
     if "verify-columns-btn-simple" in trigger_id and verify_clicks:
         return no_update, True, no_update
@@ -1061,123 +1066,180 @@ def save_confirmed_device_mappings(
         return error_alert, no_update, no_update
 
 
+# ------------------------------------------------------------
+# Callback manager for the upload page
+# ------------------------------------------------------------
+
+class Callbacks:
+    """Container object for upload page callbacks."""
+
+    def highlight_upload_area(self, n_clicks):
+        return highlight_upload_area(n_clicks)
+
+    def restore_upload_state(self, pathname: str):
+        return restore_upload_state(pathname)
+
+    def process_uploaded_files(self, contents_list, filenames_list):
+        return process_uploaded_files(contents_list, filenames_list)
+
+    def handle_modal_dialogs(
+        self,
+        verify_clicks: int | None,
+        classify_clicks: int | None,
+        confirm_clicks: int | None,
+        cancel_col_clicks: int | None,
+        cancel_dev_clicks: int | None,
+    ):
+        return handle_modal_dialogs(
+            verify_clicks,
+            classify_clicks,
+            confirm_clicks,
+            cancel_col_clicks,
+            cancel_dev_clicks,
+        )
+
+    def apply_ai_suggestions(self, n_clicks, file_info):
+        return apply_ai_suggestions(n_clicks, file_info)
+
+    def populate_device_modal_with_learning(self, is_open, file_info):
+        return populate_device_modal_with_learning(is_open, file_info)
+
+    def populate_modal_content(self, is_open, file_info):
+        return populate_modal_content(is_open, file_info)
+
+    def save_confirmed_device_mappings(
+        self, confirm_clicks, floors, security, access, special, file_info
+    ):
+        return save_confirmed_device_mappings(
+            confirm_clicks, floors, security, access, special, file_info
+        )
+
+
 def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
-    """Register page callbacks using the provided coordinator."""
+    """Instantiate :class:`Callbacks` and register its methods."""
 
-    manager.register_callback(
-        Output("upload-data", "style"),
-        Input("upload-more-btn", "n_clicks"),
-        prevent_initial_call=True,
-        callback_id="highlight_upload_area",
-        component_name="file_upload",
-    )(highlight_upload_area)
-
-    manager.register_callback(
-        [
-            Output("upload-results", "children", allow_duplicate=True),
-            Output("file-preview", "children", allow_duplicate=True),
-            Output("file-info-store", "data", allow_duplicate=True),
-            Output("upload-nav", "children", allow_duplicate=True),
-            Output("current-file-info-store", "data", allow_duplicate=True),
-            Output("column-verification-modal", "is_open", allow_duplicate=True),
-            Output("device-verification-modal", "is_open", allow_duplicate=True),
-        ],
-        Input("url", "pathname"),
-        prevent_initial_call="initial_duplicate",
-        allow_duplicate=True,
-        callback_id="restore_upload_state",
-        component_name="file_upload",
-    )(restore_upload_state)
-
-    manager.register_callback(
-        [
-            Output("upload-results", "children", allow_duplicate=True),
-            Output("file-preview", "children", allow_duplicate=True),
-            Output("file-info-store", "data", allow_duplicate=True),
-            Output("upload-nav", "children", allow_duplicate=True),
-            Output("current-file-info-store", "data", allow_duplicate=True),
-            Output("column-verification-modal", "is_open", allow_duplicate=True),
-            Output("device-verification-modal", "is_open", allow_duplicate=True),
-        ],
-        Input("upload-data", "contents"),
-        State("upload-data", "filename"),
-        prevent_initial_call=True,
-        allow_duplicate=True,
-        callback_id="process_uploaded_files",
-        component_name="file_upload",
-    )(process_uploaded_files)
-
-    manager.register_callback(
-        [
-            Output("toast-container", "children", allow_duplicate=True),
-            Output("column-verification-modal", "is_open", allow_duplicate=True),
-            Output("device-verification-modal", "is_open", allow_duplicate=True),
-        ],
-        [
-            Input("verify-columns-btn-simple", "n_clicks"),
-            Input("classify-devices-btn", "n_clicks"),
-            Input("column-verify-confirm", "n_clicks"),
-            Input("column-verify-cancel", "n_clicks"),
-            Input("device-verify-cancel", "n_clicks"),
-        ],
-        prevent_initial_call=True,
-        allow_duplicate=True,
-        callback_id="handle_modal_dialogs",
-        component_name="file_upload",
-    )(handle_modal_dialogs)
-
-    manager.register_callback(
-        [Output({"type": "column-mapping", "index": ALL}, "value")],
-        [Input("column-verify-ai-auto", "n_clicks")],
-        [State("current-file-info-store", "data")],
-        prevent_initial_call=True,
-        callback_id="apply_ai_suggestions",
-        component_name="file_upload",
-    )(apply_ai_suggestions)
-
-    manager.register_callback(
-        Output("device-modal-body", "children"),
-        Input("device-verification-modal", "is_open"),
-        State("current-file-info-store", "data"),
-        prevent_initial_call=True,
-        callback_id="populate_device_modal_with_learning",
-        component_name="file_upload",
-    )(populate_device_modal_with_learning)
-
-    manager.register_callback(
-        Output("modal-body", "children"),
-        [
-            Input("column-verification-modal", "is_open"),
-            Input("current-file-info-store", "data"),
-        ],
-        prevent_initial_call=True,
-        callback_id="populate_modal_content",
-        component_name="file_upload",
-    )(populate_modal_content)
-
-    manager.register_callback(
-        [
-            Output("toast-container", "children", allow_duplicate=True),
-            Output("column-verification-modal", "is_open", allow_duplicate=True),
-            Output("device-verification-modal", "is_open", allow_duplicate=True),
-        ],
-        [Input("device-verify-confirm", "n_clicks")],
-        [
-            State({"type": "device-floor", "index": ALL}, "value"),
-            State({"type": "device-security", "index": ALL}, "value"),
-            State({"type": "device-access", "index": ALL}, "value"),
-            State({"type": "device-special", "index": ALL}, "value"),
+    cb = Callbacks()
+    callback_defs = [
+        (
+            cb.highlight_upload_area,
+            Output("upload-data", "style"),
+            Input("upload-more-btn", "n_clicks"),
+            None,
+            "highlight_upload_area",
+            {"prevent_initial_call": True},
+        ),
+        (
+            cb.restore_upload_state,
+            [
+                Output("upload-results", "children", allow_duplicate=True),
+                Output("file-preview", "children", allow_duplicate=True),
+                Output("file-info-store", "data", allow_duplicate=True),
+                Output("upload-nav", "children", allow_duplicate=True),
+                Output("current-file-info-store", "data", allow_duplicate=True),
+                Output("column-verification-modal", "is_open", allow_duplicate=True),
+                Output("device-verification-modal", "is_open", allow_duplicate=True),
+            ],
+            Input("url", "pathname"),
+            None,
+            "restore_upload_state",
+            {"prevent_initial_call": "initial_duplicate", "allow_duplicate": True},
+        ),
+        (
+            cb.process_uploaded_files,
+            [
+                Output("upload-results", "children", allow_duplicate=True),
+                Output("file-preview", "children", allow_duplicate=True),
+                Output("file-info-store", "data", allow_duplicate=True),
+                Output("upload-nav", "children", allow_duplicate=True),
+                Output("current-file-info-store", "data", allow_duplicate=True),
+                Output("column-verification-modal", "is_open", allow_duplicate=True),
+                Output("device-verification-modal", "is_open", allow_duplicate=True),
+            ],
+            Input("upload-data", "contents"),
+            State("upload-data", "filename"),
+            "process_uploaded_files",
+            {"prevent_initial_call": True, "allow_duplicate": True},
+        ),
+        (
+            cb.handle_modal_dialogs,
+            [
+                Output("toast-container", "children", allow_duplicate=True),
+                Output("column-verification-modal", "is_open", allow_duplicate=True),
+                Output("device-verification-modal", "is_open", allow_duplicate=True),
+            ],
+            [
+                Input("verify-columns-btn-simple", "n_clicks"),
+                Input("classify-devices-btn", "n_clicks"),
+                Input("column-verify-confirm", "n_clicks"),
+                Input("column-verify-cancel", "n_clicks"),
+                Input("device-verify-cancel", "n_clicks"),
+            ],
+            None,
+            "handle_modal_dialogs",
+            {"prevent_initial_call": True, "allow_duplicate": True},
+        ),
+        (
+            cb.apply_ai_suggestions,
+            [Output({"type": "column-mapping", "index": ALL}, "value")],
+            [Input("column-verify-ai-auto", "n_clicks")],
+            [State("current-file-info-store", "data")],
+            "apply_ai_suggestions",
+            {"prevent_initial_call": True},
+        ),
+        (
+            cb.populate_device_modal_with_learning,
+            Output("device-modal-body", "children"),
+            Input("device-verification-modal", "is_open"),
             State("current-file-info-store", "data"),
-        ],
-        prevent_initial_call=True,
-        callback_id="save_confirmed_device_mappings",
-        component_name="file_upload",
-    )(save_confirmed_device_mappings)
+            "populate_device_modal_with_learning",
+            {"prevent_initial_call": True},
+        ),
+        (
+            cb.populate_modal_content,
+            Output("modal-body", "children"),
+            [
+                Input("column-verification-modal", "is_open"),
+                Input("current-file-info-store", "data"),
+            ],
+            None,
+            "populate_modal_content",
+            {"prevent_initial_call": True},
+        ),
+        (
+            cb.save_confirmed_device_mappings,
+            [
+                Output("toast-container", "children", allow_duplicate=True),
+                Output("column-verification-modal", "is_open", allow_duplicate=True),
+                Output("device-verification-modal", "is_open", allow_duplicate=True),
+            ],
+            [Input("device-verify-confirm", "n_clicks")],
+            [
+                State({"type": "device-floor", "index": ALL}, "value"),
+                State({"type": "device-security", "index": ALL}, "value"),
+                State({"type": "device-access", "index": ALL}, "value"),
+                State({"type": "device-special", "index": ALL}, "value"),
+                State("current-file-info-store", "data"),
+            ],
+            "save_confirmed_device_mappings",
+            {"prevent_initial_call": True},
+        ),
+    ]
+
+    for func, outputs, inputs, states, cid, extra in callback_defs:
+        manager.register_callback(
+            outputs,
+            inputs,
+            states,
+            callback_id=cid,
+            component_name="file_upload",
+            **extra,
+        )(func)
 
 
 # Export functions for integration with other modules
 __all__ = [
     "layout",
+    "Callbacks",
     "get_uploaded_data",
     "get_uploaded_filenames",
     "clear_uploaded_data",
