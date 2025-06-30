@@ -48,11 +48,8 @@ def run_unique_patterns_analysis(data_source: str):
     """Run unique patterns analysis using the analytics service."""
     try:
         analytics_service = AnalyticsService()
-        try:
-            results = analytics_service.get_unique_patterns_analysis(data_source)
-        except TypeError:
-            # Backwards compatibility if service method does not accept data_source
-            results = analytics_service.get_unique_patterns_analysis()
+        results = analytics_service.get_unique_patterns_analysis(data_source)
+
 
         if results["status"] == "success":
             data_summary = results["data_summary"]

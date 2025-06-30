@@ -579,8 +579,8 @@ class AnalyticsService:
             logger.error(f"Dashboard summary failed: {e}")
             return {'status': 'error', 'message': str(e)}
 
-    def get_unique_patterns_analysis(self):
-        """FIXED: Get unique patterns analysis ensuring complete dataset processing"""
+    def get_unique_patterns_analysis(self, data_source: str | None = None):
+        """Get unique patterns analysis for the requested source."""
         import logging
         logger = logging.getLogger(__name__)
 
@@ -588,8 +588,12 @@ class AnalyticsService:
             logger.info("🎯 Starting Unique Patterns Analysis")
 
             # STEP 1: Get uploaded data with verification
-            from pages.file_upload import get_uploaded_data
-            uploaded_data = get_uploaded_data()
+            if data_source == "database":
+                df, _meta = self.data_loader.get_processed_database()
+                uploaded_data = {"database": df} if not df.empty else {}
+            else:
+                from pages.file_upload import get_uploaded_data
+                uploaded_data = get_uploaded_data()
 
             if not uploaded_data:
                 logger.warning("❌ No uploaded data found for unique patterns analysis")
