@@ -20,10 +20,10 @@ logger = logging.getLogger(__name__)
 # Import the application factory
 from core.app_factory import create_app
 
-# Import the LazyString fix plugin (save the first artifact as this file)
+# Import the LazyString fix implementation
 from plugins.lazystring_fix_plugin import (
-    initialize_lazystring_fix, 
-    LazyStringFixConfig
+    initialize_lazystring_fix,
+    LazyStringFixConfig,
 )
 
 
