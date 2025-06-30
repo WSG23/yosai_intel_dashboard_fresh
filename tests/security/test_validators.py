@@ -14,6 +14,12 @@ def test_unicode_normalization():
         validator.validate("<bad>")
 
 
+def test_json_input_allowed():
+    validator = InputValidator()
+    # Should not raise ValidationError for quotes within JSON structures
+    validator.validate('{"key":"val"}')
+
+
 def test_sql_injection_detection():
     with pytest.raises(ValidationError):
         SQLInjectionPrevention.validate_query_parameter("1; DROP TABLE users")
