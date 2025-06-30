@@ -25,3 +25,19 @@ class CSSConstants:
     bundle_warning_kb: int = 200
     bundle_threshold_kb: int = 100
     specificity_high: int = 30
+
+
+@dataclass
+class AnalyticsConstants:
+    """Analytics processing defaults"""
+    cache_timeout_seconds: int = 60
+    max_records_per_query: int = 50000
+    enable_real_time: bool = True
+    batch_size: int = 5000
+    chunk_size: int = 10000
+    enable_chunked_analysis: bool = True
+    anomaly_detection_enabled: bool = True
+    ml_models_path: str = "models/ml"
+    data_retention_days: int = 30
+    max_workers: int = 4
+    query_timeout_seconds: int = 120
