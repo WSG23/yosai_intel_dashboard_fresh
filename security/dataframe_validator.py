@@ -15,16 +15,26 @@ class DataFrameSecurityValidator:
     def __init__(self):
         try:
             from config.dynamic_config import dynamic_config
-            self.max_upload_mb = getattr(dynamic_config.security, "max_upload_mb", 100)
-            self.max_analysis_mb = getattr(dynamic_config.security, "max_analysis_mb", 200)
+            self.max_upload_mb = getattr(dynamic_config.security, "max_upload_mb", 500)
+            self.max_analysis_mb = getattr(dynamic_config.security, "max_analysis_mb", 1000)
             if hasattr(dynamic_config, 'analytics'):
-                self.chunk_size = getattr(dynamic_config.analytics, "chunk_size", 10000)
+                self.chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
             else:
-                self.chunk_size = 10000
-        except Exception:
-            self.max_upload_mb = 100
-            self.max_analysis_mb = 200
-            self.chunk_size = 10000
+                self.chunk_size = 50000
+
+            logger.info(
+                f"DataFrameValidator initialized: upload_limit={self.max_upload_mb}MB, analysis_limit={self.max_analysis_mb}MB, chunk_size={self.chunk_size}"
+            )
+        except Exception as e:
+            logger.warning(f"Config loading failed, using defaults: {e}")
+            self.max_upload_mb = 500
+            self.max_analysis_mb = 1000
+            self.chunk_size = 50000
+
+    def validate(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Generic validate method for backward compatibility."""
+        logger.info(f"Validating DataFrame with {len(df)} rows for processing")
+        return self.validate_for_upload(df)
 
     def validate_for_upload(self, df: pd.DataFrame) -> pd.DataFrame:
         """Validate DataFrame for initial upload."""
@@ -43,16 +53,22 @@ class DataFrameSecurityValidator:
         max_bytes = self.max_analysis_mb * 1024 * 1024
         memory_usage = df.memory_usage(deep=True).sum()
 
+        logger.info(
+            f"DataFrame analysis validation: {len(df)} rows, {memory_usage/1024/1024:.1f}MB memory usage"
+        )
+
         # Clean the DataFrame first
         df = self._sanitize_dataframe(df)
 
-        # Check if chunking is needed
-        needs_chunking = memory_usage > max_bytes
+        # Be more conservative about chunking - only chunk very large files
+        needs_chunking = memory_usage > max_bytes or len(df) > 100000
 
         if needs_chunking:
             logger.info(
-                f"Large DataFrame detected: {memory_usage/1024/1024:.1f}MB > {self.max_analysis_mb}MB. Chunked processing required."
+                f"Large DataFrame detected: {len(df)} rows, {memory_usage/1024/1024:.1f}MB. Chunked processing enabled."
             )
+        else:
+            logger.info(f"Regular processing for {len(df)} rows")
 
         return df, needs_chunking
 
@@ -61,12 +77,16 @@ class DataFrameSecurityValidator:
         memory_usage = df.memory_usage(deep=True).sum()
         max_bytes = self.max_analysis_mb * 1024 * 1024
 
-        if memory_usage <= max_bytes:
+        if memory_usage <= max_bytes and len(df) <= 100000:
+            logger.info(f"Small dataset: processing all {len(df)} rows at once")
             return len(df)
 
         calculated_chunk_size = int((len(df) * max_bytes) / memory_usage)
+        optimal_chunk_size = max(calculated_chunk_size, 25000)
+        final_chunk_size = min(optimal_chunk_size, self.chunk_size)
 
-        return min(calculated_chunk_size, self.chunk_size)
+        logger.info(f"Calculated chunk size: {final_chunk_size} for {len(df)} total rows")
+        return final_chunk_size
 
     def _sanitize_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """Sanitize DataFrame using shared helpers."""

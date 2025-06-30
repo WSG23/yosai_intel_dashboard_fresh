@@ -29,15 +29,15 @@ class CSSConstants:
 
 @dataclass
 class AnalyticsConstants:
-    """Analytics processing defaults"""
+    """Analytics processing defaults for large datasets"""
     cache_timeout_seconds: int = 60
-    max_records_per_query: int = 50000
+    max_records_per_query: int = 500000
     enable_real_time: bool = True
-    batch_size: int = 5000
-    chunk_size: int = 10000
+    batch_size: int = 25000
+    chunk_size: int = 50000
     enable_chunked_analysis: bool = True
     anomaly_detection_enabled: bool = True
     ml_models_path: str = "models/ml"
     data_retention_days: int = 30
     max_workers: int = 4
-    query_timeout_seconds: int = 120
+    query_timeout_seconds: int = 300

@@ -380,19 +380,63 @@ class AnalyticsService:
         """Analyze DataFrame using chunked processing for large datasets."""
         from security.dataframe_validator import DataFrameSecurityValidator
         from analytics.chunked_analytics_controller import ChunkedAnalyticsController
-        from config.dynamic_config import dynamic_config
+
+        logger.info(f"Starting analysis for {len(df):,} rows")
 
         validator = DataFrameSecurityValidator()
         df, needs_chunking = validator.validate_for_analysis(df)
 
+        logger.info(f"After validation: {len(df):,} rows, chunking needed: {needs_chunking}")
+
         if not needs_chunking:
+            logger.info("Using regular analysis (no chunking)")
             return self._regular_analysis(df, analysis_types)
 
         chunk_size = validator.get_optimal_chunk_size(df)
         chunked_controller = ChunkedAnalyticsController(chunk_size=chunk_size)
 
-        logger.info(f"Using chunked analysis with chunk size: {chunk_size}")
-        return chunked_controller.process_large_dataframe(df, analysis_types)
+        logger.info(f"Using chunked analysis with chunk size: {chunk_size:,}")
+        result = chunked_controller.process_large_dataframe(df, analysis_types)
+
+        result["processing_summary"] = {
+            "total_input_rows": len(df),
+            "rows_processed": result.get("rows_processed", len(df)),
+            "chunking_used": True,
+            "chunk_size": chunk_size,
+        }
+
+        return result
+
+    def diagnose_data_flow(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Diagnostic method to check data processing flow."""
+        logger.info("=== Data Flow Diagnosis ===")
+        logger.info(f"Input DataFrame: {len(df)} rows, {len(df.columns)} columns")
+        logger.info(f"Memory usage: {df.memory_usage(deep=True).sum() / 1024 / 1024:.1f} MB")
+
+        from security.dataframe_validator import DataFrameSecurityValidator
+        validator = DataFrameSecurityValidator()
+
+        logger.info(
+            f"Validator config: upload_mb={validator.max_upload_mb}, analysis_mb={validator.max_analysis_mb}, chunk_size={validator.chunk_size}"
+        )
+
+        cleaned_df, needs_chunking = validator.validate_for_analysis(df.copy())
+        logger.info(f"After validation: {len(cleaned_df)} rows, needs_chunking={needs_chunking}")
+
+        if needs_chunking:
+            chunk_size = validator.get_optimal_chunk_size(cleaned_df)
+            logger.info(f"Optimal chunk size: {chunk_size}")
+
+        return {
+            "input_rows": len(df),
+            "validated_rows": len(cleaned_df),
+            "needs_chunking": needs_chunking,
+            "validator_config": {
+                "max_upload_mb": validator.max_upload_mb,
+                "max_analysis_mb": validator.max_analysis_mb,
+                "chunk_size": validator.chunk_size,
+            },
+        }
 
     def _regular_analysis(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
         """Regular analysis for smaller DataFrames."""
