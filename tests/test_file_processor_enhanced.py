@@ -46,3 +46,8 @@ def test_oversized_file_rejected(tmp_path):
     assert result["success"] is False
 
 
+def test_upload_limit_allows_large_files():
+    """Default upload size should permit files of at least 50MB."""
+    assert dynamic_config.security.max_upload_mb >= 50
+
+
