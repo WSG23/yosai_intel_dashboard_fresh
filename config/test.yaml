@@ -23,7 +23,10 @@ sample_files:
 
 analytics:
   enabled: true
-  batch_size: 100
+  batch_size: 25000
+  max_records_per_query: 500000
+  chunk_size: 50000
+  query_timeout_seconds: 300
 
 monitoring:
   health_check_interval: 30

@@ -3,7 +3,6 @@
 import pandas as pd
 import logging
 from typing import Dict, Any, List, Iterator
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import numpy as np
 
 logger = logging.getLogger(__name__)
