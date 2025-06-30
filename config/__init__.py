@@ -25,19 +25,16 @@ from .database_exceptions import DatabaseError, ConnectionRetryExhausted, Connec
 from .dynamic_config import dynamic_config, DynamicConfigManager
 from .constants import SecurityConstants, PerformanceConstants, CSSConstants
 import logging
+from services.registry import get_service
 
 logger = logging.getLogger(__name__)
 
-# Try to import database manager safely
-try:
-    from .database_manager import DatabaseManager, DatabaseConnection, MockConnection, EnhancedPostgreSQLManager
-    DATABASE_MANAGER_AVAILABLE = True
-except ImportError as e:
-    logger.info(f"Warning: Database manager not available: {e}")
-    DatabaseManager = None
-    DatabaseConnection = None 
-    MockConnection = None
-    DATABASE_MANAGER_AVAILABLE = False
+# Resolve optional database manager via registry
+DatabaseManager = get_service("DatabaseManager")
+DatabaseConnection = get_service("DatabaseConnection")
+MockConnection = get_service("MockConnection")
+EnhancedPostgreSQLManager = get_service("EnhancedPostgreSQLManager")
+DATABASE_MANAGER_AVAILABLE = DatabaseManager is not None
 
 __all__ = [
     'Config',
