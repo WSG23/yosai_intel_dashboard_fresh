@@ -354,7 +354,11 @@ def create_suggests_display(suggests_data: Dict[str, Any]) -> html.Div:
 def get_analysis_buttons_section():
     """Replace the analytics-type dropdown column with this"""
     return dbc.Col([
-        html.Label("Analysis Type", className="fw-bold mb-3"),
+        html.Label(
+            "Analysis Type",
+            htmlFor="security-btn",
+            className="fw-bold mb-3",
+        ),
         dbc.Row([
             dbc.Col([
                 dbc.Button(

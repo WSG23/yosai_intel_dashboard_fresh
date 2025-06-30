@@ -38,7 +38,11 @@ def layout():
                 dbc.Row([
                     # Data source column
                     dbc.Col([
-                        html.Label("Data Source", className="fw-bold"),
+                        html.Label(
+                            "Data Source",
+                            htmlFor="analytics-data-source",
+                            className="fw-bold"
+                        ),
                         dcc.Dropdown(
                             id="analytics-data-source",
                             options=get_data_source_options_safe(),
@@ -49,7 +53,11 @@ def layout():
                     
                     # Analysis buttons column  
                     dbc.Col([
-                        html.Label("Analysis Type", className="fw-bold mb-3"),
+                        html.Label(
+                            "Analysis Type",
+                            htmlFor="security-btn",
+                            className="fw-bold mb-3"
+                        ),
                         dbc.Row([
                             dbc.Col([
                                 dbc.Button(
