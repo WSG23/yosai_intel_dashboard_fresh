@@ -89,7 +89,15 @@ def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFr
             for encoding in ['utf-8', 'latin-1', 'cp1252']:
                 try:
                     text = safe_decode_with_unicode_handling(decoded, encoding)
-                    df = pd.read_csv(io.StringIO(text))
+                    df = pd.read_csv(
+                        io.StringIO(text),
+                        on_bad_lines='skip',
+                        encoding='utf-8',
+                        low_memory=False,
+                        dtype=str,
+                        keep_default_na=False
+                    )
+                    logger.info(f"DEBUG: Loaded {len(df):,} rows from CSV")
                     return df, None
                 except UnicodeDecodeError:
                     continue
