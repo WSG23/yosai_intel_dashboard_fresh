@@ -22,6 +22,7 @@ import dash_bootstrap_components as dbc
 from services.device_learning_service import DeviceLearningService
 from services.upload_service import process_uploaded_file, create_file_preview
 from utils.upload_store import uploaded_data_store as _uploaded_data_store
+from config.dynamic_config import dynamic_config
 
 from components.column_verification import (
     save_verified_mappings,
@@ -190,6 +191,7 @@ def layout():
                                         [
                                             dcc.Upload(
                                                 id="upload-data",
+                                                max_size=dynamic_config.security.max_upload_mb * 1024 * 1024,
                                                 children=html.Div(
                                                     [
                                                         html.I(
