@@ -37,3 +37,34 @@ def test_csv_injection_detection():
     validator = DataFrameSecurityValidator()
     with pytest.raises(ValidationError):
         validator.validate(df)
+
+
+def _create_test_app():
+    from flask import Flask
+    from security.validation_middleware import ValidationMiddleware
+
+    app = Flask(__name__)
+    middleware = ValidationMiddleware()
+    app.before_request(middleware.validate_request)
+    app.after_request(middleware.sanitize_response)
+
+    @app.route("/", methods=["GET", "POST"])
+    def index():
+        return "ok"
+
+    return app
+
+
+def test_oversized_upload_rejected(monkeypatch):
+    monkeypatch.setattr("config.dynamic_config.security.max_upload_mb", 0)
+    app = _create_test_app()
+    client = app.test_client()
+    resp = client.post("/", data="A" * 1024)
+    assert resp.status_code == 413
+
+
+def test_malicious_query_rejected():
+    app = _create_test_app()
+    client = app.test_client()
+    resp = client.get("/?q=%3Cscript%3E")
+    assert resp.status_code == 400
