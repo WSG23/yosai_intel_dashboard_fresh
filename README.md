@@ -2,9 +2,15 @@
 
 An AI-powered modular security intelligence dashboard for physical access control monitoring.
 
-## 🏗️ Modular Architecture
+## Architecture Overview
 
-This project follows a fully modular architecture for maximum maintainability and testability. See [docs/architecture.md](docs/architecture.md) for an overview diagram. Additional flow diagrams are provided in [docs/data_flow.md](docs/data_flow.md), [docs/plugin_architecture.md](docs/plugin_architecture.md), and the new [docs/system_diagram.md](docs/system_diagram.md):
+This project follows a fully modular design built around a dependency injection container.  Detailed diagrams explain how the pieces fit together:
+
+- [Architecture](docs/architecture.md)
+- [Data Flow](docs/data_flow.md)
+- [System Diagram](docs/system_diagram.md)
+
+The dashboard is extensible through a lightweight plugin system. Plugins live in the `plugins/` directory and are loaded by a `PluginManager`. See [docs/plugins.md](docs/plugins.md) for discovery and configuration details.
 
 ```
 yosai_intel_dashboard/
