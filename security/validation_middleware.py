@@ -27,6 +27,8 @@ class ValidationOrchestrator:
 class ValidationMiddleware:
     """Middleware applying input validation."""
 
+    SAFE_VALIDATION_THRESHOLD = 1 * 1024 * 1024  # 1 MB
+
     def __init__(self) -> None:
         self.orchestrator = ValidationOrchestrator([InputValidator()])
         self.max_body_size = dynamic_config.security.max_upload_mb * 1024 * 1024
@@ -50,6 +52,11 @@ class ValidationMiddleware:
 
         # Validate body content
         if request.data:
+            if request.path.startswith("/_dash-update-component") or (
+                request.content_length
+                and request.content_length > self.SAFE_VALIDATION_THRESHOLD
+            ):
+                return None
             try:
                 request._cached_data = self.orchestrator.validate(
                     request.data.decode("utf-8", errors="ignore")
