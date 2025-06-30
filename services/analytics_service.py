@@ -362,6 +362,28 @@ class AnalyticsService:
         """Create a summary dictionary from a combined DataFrame."""
         return summarize_dataframe(df)
 
+    def analyze_with_chunking(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
+        """Analyze DataFrame using chunked processing for large datasets."""
+        from security.dataframe_validator import DataFrameSecurityValidator
+        from analytics.chunked_analytics_controller import ChunkedAnalyticsController
+        from config.dynamic_config import dynamic_config
+
+        validator = DataFrameSecurityValidator()
+        df, needs_chunking = validator.validate_for_analysis(df)
+
+        if not needs_chunking:
+            return self._regular_analysis(df, analysis_types)
+
+        chunk_size = validator.get_optimal_chunk_size(df)
+        chunked_controller = ChunkedAnalyticsController(chunk_size=chunk_size)
+
+        logger.info(f"Using chunked analysis with chunk size: {chunk_size}")
+        return chunked_controller.process_large_dataframe(df, analysis_types)
+
+    def _regular_analysis(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
+        """Regular analysis for smaller DataFrames."""
+        return summarize_dataframe(df)
+
     def _get_real_uploaded_data(self) -> Dict[str, Any]:
         """FIXED: Actually access your uploaded 395K records"""
         try:

@@ -15,15 +15,34 @@ database:
 
 security:
   secret_key: "${SECRET_KEY}"
-  session_timeout: 3600
+  session_timeout_minutes: 120
+  max_file_size_mb: 250
+  max_upload_mb: 500
+  max_analysis_mb: 1000
+  allowed_file_types:
+    - .csv
+    - .json
+    - .xlsx
+    - .xls
+  cors_enabled: false
+  cors_origins: []
+  rate_limiting_enabled: false
+  rate_limit_per_minute: 1000
 
 sample_files:
   csv_path: "data/sample_data.csv"
   json_path: "data/sample_data.json"
 
 analytics:
-  enabled: true
-  batch_size: 100
+  cache_timeout_seconds: 60
+  max_records_per_query: 50000
+  enable_real_time: true
+  batch_size: 5000
+  chunk_size: 10000
+  enable_chunked_analysis: true
+  anomaly_detection_enabled: true
+  ml_models_path: models/ml
+  data_retention_days: 30
 
 monitoring:
   health_check_interval: 30

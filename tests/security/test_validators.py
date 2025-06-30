@@ -35,14 +35,14 @@ def test_dataframe_memory_limit(monkeypatch):
     validator = DataFrameSecurityValidator()
     monkeypatch.setattr("config.dynamic_config.security.max_upload_mb", 0)
     with pytest.raises(ValidationError):
-        validator.validate(df)
+        validator.validate_for_upload(df)
 
 
 def test_csv_injection_detection():
     df = pd.DataFrame({"a": ["=cmd()"]})
     validator = DataFrameSecurityValidator()
     with pytest.raises(ValidationError):
-        validator.validate(df)
+        validator.validate_for_upload(df)
 
 
 def _create_test_app():
