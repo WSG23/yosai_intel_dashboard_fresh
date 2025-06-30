@@ -635,7 +635,7 @@ class AnalyticsService:
                 logger.warning(f"⚠️  Data loss detected: {total_original_rows:,} → {final_rows:,}")
 
             # STEP 5: Verify we have the expected data
-            if final_rows == 150:
+            if final_rows == 150 and total_original_rows > 150:
                 logger.error("🚨 FOUND 150 ROW LIMIT in unique patterns analysis!")
                 logger.error(f"   Original rows: {total_original_rows:,}")
                 logger.error(f"   Final rows: {final_rows:,}")
@@ -783,7 +783,7 @@ class AnalyticsService:
             logger.info("🎉 UNIQUE PATTERNS ANALYSIS COMPLETE")
             logger.info(f"   Result total_records: {result_total:,}")
 
-            if result_total == 150:
+            if result_total == 150 and result_total != total_original_rows:
                 logger.error("❌ STILL SHOWING 150 - CHECK DATA PROCESSING!")
             elif result_total == total_original_rows:
                 logger.info(f"✅ SUCCESS: Correctly showing {result_total:,} rows")
