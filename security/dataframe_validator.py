@@ -69,13 +69,17 @@ class DataFrameSecurityValidator:
 
     def _sanitize_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """Sanitize DataFrame using shared helpers."""
-        sanitized = sanitize_data_frame(df)
-
-        for col in sanitized.select_dtypes(include=["object"]).columns:
-            if sanitized[col].astype(str).str.startswith(("=", "+", "-", "@")).any():
+        # Check for potential CSV injection before sanitization
+        for col in df.select_dtypes(include=["object"]).columns:
+            if df[col].astype(str).str.startswith(("=", "+", "-", "@")).any():
                 logger.warning(
                     f"Potential CSV injection detected in column '{col}'"
                 )
+                raise ValidationError(
+                    f"Formula detected in column '{col}'"
+                )
+
+        sanitized = sanitize_data_frame(df)
 
         return sanitized
 
