@@ -19,7 +19,9 @@ import mimetypes
 # These constants live in ``core/security_patterns.py`` and are reused in
 # ``core/security_validator.py``. Importing them here ensures ``InputValidator``
 # has access to the pre-defined patterns without duplicating definitions.
-from .security_patterns import (
+# Use an absolute import so this module can run standalone without relying on
+# the package context. This prevents NameError when executed directly.
+from core.security_patterns import (
     SQL_INJECTION_PATTERNS,
     XSS_PATTERNS,
     PATH_TRAVERSAL_PATTERNS,
