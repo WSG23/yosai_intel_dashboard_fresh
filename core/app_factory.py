@@ -245,8 +245,36 @@ def _create_navbar() -> dbc.Navbar:
                     # Navigation links
                     dbc.Nav(
                         [
-                            dbc.NavItem(dbc.NavLink("📊 Analytics", href="/analytics")),
-                            dbc.NavItem(dbc.NavLink("📁 Upload", href="/upload")),
+                            dbc.NavItem(
+                                dbc.NavLink(
+                                    [html.I(className="fas fa-tachometer-alt me-1"), "Dashboard"],
+                                    href="/",
+                                )
+                            ),
+                            dbc.NavItem(
+                                dbc.NavLink(
+                                    [html.I(className="fas fa-chart-line me-1"), "Analytics"],
+                                    href="/analytics",
+                                )
+                            ),
+                            dbc.NavItem(
+                                dbc.NavLink(
+                                    [html.I(className="fas fa-chart-area me-1"), "Graphs"],
+                                    href="/graphs",
+                                )
+                            ),
+                            dbc.NavItem(
+                                dbc.NavLink(
+                                    [html.I(className="fas fa-file-upload me-1"), "Upload"],
+                                    href="/upload",
+                                )
+                            ),
+                            dbc.NavItem(
+                                dbc.NavLink(
+                                    [html.I(className="fas fa-cog me-1"), "Settings"],
+                                    href="/settings",
+                                )
+                            ),
                             dbc.NavItem(
                                 [
                                     dbc.Button(
@@ -290,12 +318,16 @@ def _create_placeholder_page(title: str, subtitle: str, message: str) -> html.Di
 
 @callback(Output("page-content", "children"), Input("url", "pathname"))
 def display_page(pathname):
-    """Route pages based on URL"""
+    """Route pages based on URL."""
     if pathname == "/analytics":
         return _get_analytics_page()
+    elif pathname == "/graphs":
+        return _get_graphs_page()
+    elif pathname == "/settings":
+        return _get_settings_page()
     elif pathname == "/upload" or pathname == "/file-upload":  # Handle both paths
         return _get_upload_page()
-    elif pathname == "/":
+    elif pathname in {"/", "/dashboard"}:
         return _get_home_page()
     else:
         return html.Div(
@@ -312,84 +344,24 @@ def display_page(pathname):
         )
 
 
-def _get_home_page() -> Any:
-    """Get home page"""
-    return dbc.Container(
-        [
-            dbc.Row(
-                [
-                    dbc.Col(
-                        [
-                            html.H1(
-                                "🏯 Welcome to Yōsai Intel Dashboard",
-                                className="text-center mb-4",
-                            ),
-                            html.P(
-                                "Advanced security analytics and monitoring platform",
-                                className="text-center text-muted mb-5",
-                            ),
-                            # Feature cards
-                            dbc.Row(
-                                [
-                                    dbc.Col(
-                                        [
-                                            dbc.Card(
-                                                [
-                                                    dbc.CardBody(
-                                                        [
-                                                            html.H4(
-                                                                "📊 Analytics",
-                                                                className="card-title",
-                                                            ),
-                                                            html.P(
-                                                                "Deep dive into security data and patterns"
-                                                            ),
-                                                            dbc.Button(
-                                                                "Go to Analytics",
-                                                                href="/analytics",
-                                                                color="primary",
-                                                            ),
-                                                        ]
-                                                    )
-                                                ]
-                                            )
-                                        ],
-                                        md=6,
-                                    ),
-                                    dbc.Col(
-                                        [
-                                            dbc.Card(
-                                                [
-                                                    dbc.CardBody(
-                                                        [
-                                                            html.H4(
-                                                                "📁 File Upload",
-                                                                className="card-title",
-                                                            ),
-                                                            html.P(
-                                                                "Upload and analyze security data files"
-                                                            ),
-                                                            dbc.Button(
-                                                                "Upload Files",
-                                                                href="/upload",
-                                                                color="secondary",
-                                                            ),
-                                                        ]
-                                                    )
-                                                ]
-                                            )
-                                        ],
-                                        md=6,
-                                    ),
-                                ]
-                            ),
-                        ]
-                    )
-                ]
-            )
-        ]
-    )
 
+def _get_home_page() -> Any:
+    """Get home page (dashboard)."""
+    return _get_dashboard_page()
+
+
+def _get_dashboard_page() -> Any:
+    """Get dashboard page with overview metrics."""
+    try:
+        from pages.dashboard import layout
+        return layout()
+    except ImportError as e:
+        logger.error(f"Dashboard page import failed: {e}")
+        return _create_placeholder_page(
+            "Dashboard",
+            "Dashboard page is being loaded...",
+            "The dashboard module is not available. Please check the installation.",
+        )
 
 def _get_analytics_page() -> Any:
     """Get analytics page with complete integration"""
@@ -405,6 +377,33 @@ def _get_analytics_page() -> Any:
             "The analytics module is not available. Please check the installation.",
         )
 
+
+def _get_graphs_page() -> Any:
+    """Get graphs page with placeholder content."""
+    try:
+        from pages.graphs import layout
+        return layout()
+    except ImportError as e:
+        logger.error(f"Graphs page import failed: {e}")
+        return _create_placeholder_page(
+            "Graphs",
+            "Graphs page is being loaded...",
+            "The graphs module is not available. Please check the installation.",
+        )
+
+
+def _get_settings_page() -> Any:
+    """Get settings page with placeholder content."""
+    try:
+        from pages.settings import layout
+        return layout()
+    except ImportError as e:
+        logger.error(f"Settings page import failed: {e}")
+        return _create_placeholder_page(
+            "Settings",
+            "Settings page is being loaded...",
+            "The settings module is not available. Please check the installation.",
+        )
 
 def _get_upload_page() -> Any:
     """Get upload page with complete integration"""

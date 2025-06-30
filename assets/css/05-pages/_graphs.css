@@ -1,0 +1,8 @@
+/* =================================================================== */
+/* 05-pages/_graphs.css - Graphs Page Styles */
+/* =================================================================== */
+
+.graphs-placeholder {
+  min-height: 300px;
+  background-color: var(--surface-section);
+}

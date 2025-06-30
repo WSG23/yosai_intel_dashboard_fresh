@@ -1,0 +1,8 @@
+/* =================================================================== */
+/* 05-pages/_settings.css - Settings Page Styles */
+/* =================================================================== */
+
+.settings-section {
+  min-height: 200px;
+  background-color: var(--surface-section);
+}

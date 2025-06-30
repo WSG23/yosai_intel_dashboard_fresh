@@ -33,6 +33,8 @@
 
 /* Page-Specific Styles */
 @import './05-pages/_dashboard.css';
+@import './05-pages/_graphs.css';
+@import './05-pages/_settings.css';
 @import './_analytics.css';
 
 /* Theme System */
