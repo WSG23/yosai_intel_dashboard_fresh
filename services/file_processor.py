@@ -8,6 +8,8 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional, Sequence, Tuple
 
+logger = logging.getLogger(__name__)
+
 import pandas as pd
 
 
@@ -87,7 +89,6 @@ class FileProcessor:
             try:
                 logger.info(f"Reading complete CSV file: {file_path}")
 
-                # Detect delimiter
                 with open(file_path, "r", encoding=encoding) as f:
                     sample = f.read(8192)
 
@@ -102,7 +103,8 @@ class FileProcessor:
                 ).columns
                 parse_dates = ["timestamp"] if "timestamp" in header else False
 
-                df = pd.read_csv(
+                chunks = []
+                for chunk in pd.read_csv(
                     file_path,
                     sep=delimiter,
                     encoding=encoding,
@@ -111,7 +113,11 @@ class FileProcessor:
                     na_values=["", "NULL", "null", "None", "nan", "NaN"],
                     engine="python",
                     on_bad_lines="skip",
-                )
+                    chunksize=50000,
+                ):
+                    chunks.append(chunk)
+
+                df = pd.concat(chunks, ignore_index=True)
 
                 logger.info(f"Successfully loaded {len(df):,} rows from {file_path}")
                 return df
