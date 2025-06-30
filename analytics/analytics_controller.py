@@ -617,11 +617,12 @@ class AnalyticsController:
 
         # Add security patterns summary
         if result.security_patterns:
-            security_score = result.security_patterns.get("security_score", 0)
+            score_obj = result.security_patterns.get("security_score", 0)
+            score_val = getattr(score_obj, "score", score_obj)
             summary_lines.extend(
                 [
                     "=== SECURITY PATTERNS ===",
-                    f"Security Score: {security_score}/100",
+                    f"Security Score: {score_val:.1f}/100",
                     f"Failed Access Events: {result.security_patterns.get('failed_access_patterns', {}).get('total', 0)}",
                     "",
                 ]

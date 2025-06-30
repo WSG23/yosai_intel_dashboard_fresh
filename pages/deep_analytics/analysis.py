@@ -656,8 +656,10 @@ def create_analysis_results_display(results: Dict[str, Any], analysis_type: str)
 
         # Create type-specific content
         if analysis_type == "security":
+            score_obj = results.get('security_score', 0)
+            score_val = getattr(score_obj, 'score', score_obj)
             specific_content = [
-                html.P(f"Security Score: {results.get('security_score', 0):.1f}/100"),
+                html.P(f"Security Score: {score_val:.1f}/100"),
                 html.P(f"Failed Attempts: {results.get('failed_attempts', 0):,}"),
                 html.P(f"Risk Level: {results.get('risk_level', 'Unknown')}")
             ]
