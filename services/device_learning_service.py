@@ -57,7 +57,12 @@ class DeviceLearningService:
         try:
             for mapping_file in self.storage_dir.glob("mapping_*.json"):
                 try:
-                    with open(mapping_file, "r") as f:
+                    with open(
+                        mapping_file,
+                        "r",
+                        encoding="utf-8",
+                        errors="replace",
+                    ) as f:
                         data = json.load(f)
                         fingerprint = mapping_file.stem.replace("mapping_", "")
                         self.learned_mappings[fingerprint] = data
@@ -72,7 +77,7 @@ class DeviceLearningService:
         try:
             for fingerprint, data in self.learned_mappings.items():
                 mapping_file = self.storage_dir / f"mapping_{fingerprint}.json"
-                with open(mapping_file, "w") as f:
+                with open(mapping_file, "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=2)
         except Exception as e:
             logger.error(f"Failed to persist learned mappings: {e}")
@@ -104,7 +109,7 @@ class DeviceLearningService:
 
             # Save to file immediately
             mapping_file = self.storage_dir / f"mapping_{fingerprint}.json"
-            with open(mapping_file, "w") as f:
+            with open(mapping_file, "w", encoding="utf-8") as f:
                 json.dump(learning_data, f, indent=2)
 
             # Update in-memory cache
