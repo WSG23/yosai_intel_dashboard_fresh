@@ -16,7 +16,7 @@ def test_run_service_analysis_success(monkeypatch):
             "success_rate": 0.9,
         }
 
-    monkeypatch.setattr(cb, "analyze_data_with_service_safe", fake_analyze)
+    monkeypatch.setattr(cb, "analyze_data_with_service", fake_analyze)
 
     result = cb.run_service_analysis("service:test", "security")
     assert isinstance(result, dbc.Card)
@@ -26,7 +26,7 @@ def test_run_service_analysis_error(monkeypatch):
     def fake_analyze(ds, at):
         return {"error": "boom"}
 
-    monkeypatch.setattr(cb, "analyze_data_with_service_safe", fake_analyze)
+    monkeypatch.setattr(cb, "analyze_data_with_service", fake_analyze)
 
     result = cb.run_service_analysis("service:test", "security")
     assert isinstance(result, dbc.Alert)
