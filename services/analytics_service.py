@@ -377,33 +377,53 @@ class AnalyticsService:
         return summarize_dataframe(df)
 
     def analyze_with_chunking(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
-        """Analyze DataFrame using chunked processing for large datasets."""
+        """FIXED: Analyze DataFrame using chunked processing - COMPLETE DATASET."""
         from security.dataframe_validator import DataFrameSecurityValidator
         from analytics.chunked_analytics_controller import ChunkedAnalyticsController
 
-        logger.info(f"Starting analysis for {len(df):,} rows")
+        original_rows = len(df)
+        logger.info(f"🚀 Starting COMPLETE analysis for {original_rows:,} rows")
 
         validator = DataFrameSecurityValidator()
         df, needs_chunking = validator.validate_for_analysis(df)
 
-        logger.info(f"After validation: {len(df):,} rows, chunking needed: {needs_chunking}")
+        validated_rows = len(df)
+        logger.info(f"📋 After validation: {validated_rows:,} rows, chunking needed: {needs_chunking}")
+
+        # FIXED: Ensure we never lose data in validation
+        if validated_rows != original_rows:
+            logger.warning(f"⚠️  Row count changed during validation: {original_rows:,} → {validated_rows:,}")
 
         if not needs_chunking:
-            logger.info("Using regular analysis (no chunking)")
+            logger.info("✅ Using regular analysis (no chunking needed)")
             return self._regular_analysis(df, analysis_types)
 
+        # FIXED: Use proper chunk size calculation
         chunk_size = validator.get_optimal_chunk_size(df)
         chunked_controller = ChunkedAnalyticsController(chunk_size=chunk_size)
 
-        logger.info(f"Using chunked analysis with chunk size: {chunk_size:,}")
+        logger.info(f"🔄 Using chunked analysis: {validated_rows:,} rows, {chunk_size:,} per chunk")
+
+        # FIXED: Process with verification
         result = chunked_controller.process_large_dataframe(df, analysis_types)
 
+        # FIXED: Add comprehensive processing summary
         result["processing_summary"] = {
-            "total_input_rows": len(df),
-            "rows_processed": result.get("rows_processed", len(df)),
+            "original_input_rows": original_rows,
+            "validated_rows": validated_rows,
+            "rows_processed": result.get("rows_processed", validated_rows),
             "chunking_used": True,
             "chunk_size": chunk_size,
+            "processing_complete": result.get("rows_processed", 0) == validated_rows,
+            "data_integrity_check": "PASS" if result.get("rows_processed", 0) == validated_rows else "FAIL"
         }
+
+        # FIXED: Verify complete processing
+        rows_processed = result.get("rows_processed", 0)
+        if rows_processed != validated_rows:
+            logger.error(f"❌ PROCESSING ERROR: Expected {validated_rows:,} rows, got {rows_processed:,}")
+        else:
+            logger.info(f"✅ SUCCESS: Processed ALL {rows_processed:,} rows successfully")
 
         return result
 

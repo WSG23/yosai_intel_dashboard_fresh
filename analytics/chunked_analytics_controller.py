@@ -1,4 +1,8 @@
-"""Chunked analytics processing for large DataFrames."""
+#!/usr/bin/env python3
+"""
+FIXED Chunked analytics processing for large DataFrames.
+Ensures ALL chunks are processed without data loss.
+"""
 
 import pandas as pd
 import logging
@@ -9,28 +13,32 @@ logger = logging.getLogger(__name__)
 
 
 class ChunkedAnalyticsController:
-    """Handle analytics processing for large DataFrames using chunking."""
+    """FIXED: Handle analytics processing for large DataFrames using chunking."""
 
     def __init__(self, chunk_size: int = None, max_workers: int = None) -> None:
         try:
             from config.dynamic_config import dynamic_config
             if hasattr(dynamic_config, 'analytics'):
-                self.chunk_size = chunk_size or getattr(dynamic_config.analytics, 'chunk_size', 10000)
+                self.chunk_size = chunk_size or getattr(dynamic_config.analytics, 'chunk_size', 50000)
                 self.max_workers = max_workers or getattr(dynamic_config.analytics, 'max_workers', 4)
             else:
-                self.chunk_size = chunk_size or 10000
+                self.chunk_size = chunk_size or 50000
                 self.max_workers = max_workers or 4
         except Exception:
-            self.chunk_size = chunk_size or 10000
+            self.chunk_size = chunk_size or 50000
             self.max_workers = max_workers or 4
 
-    def process_large_dataframe(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
-        """Process large DataFrame using chunked analysis."""
-        total_rows = len(df)
-        logger.info(
-            f"Starting chunked analysis for {total_rows:,} rows with chunk size {self.chunk_size:,}"
-        )
+        # FIXED: Ensure minimum reasonable chunk size
+        self.chunk_size = max(self.chunk_size, 10000)
+        logger.info(f"ChunkedAnalyticsController initialized: chunk_size={self.chunk_size}")
 
+    def process_large_dataframe(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
+        """FIXED: Process large DataFrame using chunked analysis - ALL CHUNKS."""
+        total_rows = len(df)
+        logger.info(f"🔄 Starting COMPLETE chunked analysis for {total_rows:,} rows")
+        logger.info(f"📊 Chunk size: {self.chunk_size:,}")
+
+        # FIXED: Initialize proper aggregated results
         aggregated_results = {
             "total_events": 0,
             "unique_users": set(),
@@ -48,32 +56,58 @@ class ChunkedAnalyticsController:
         chunks_processed = 0
         total_chunks = (len(df) + self.chunk_size - 1) // self.chunk_size
 
-        logger.info(f"Processing {total_chunks} chunks of size {self.chunk_size}")
+        logger.info(f"🎯 Will process {total_chunks} chunks to analyze ALL {total_rows:,} rows")
 
+        # FIXED: Process ALL chunks with detailed logging
         for chunk_df in self._chunk_dataframe(df):
+            chunk_size_actual = len(chunk_df)
+            logger.info(f"📦 Processing chunk {chunks_processed + 1}/{total_chunks}: {chunk_size_actual:,} rows")
+
+            # Process this chunk
             chunk_results = self._process_chunk(chunk_df, analysis_types)
+
+            # FIXED: Aggregate results properly
             self._aggregate_chunk_results(aggregated_results, chunk_results)
 
             chunks_processed += 1
-            aggregated_results["rows_processed"] += len(chunk_df)
+            aggregated_results["rows_processed"] += chunk_size_actual
 
-            if chunks_processed % 5 == 0:
-                logger.info(
-                    f"Processed {chunks_processed}/{total_chunks} chunks ({aggregated_results['rows_processed']:,}/{total_rows:,} rows)"
-                )
+            # Progress logging every chunk for debugging
+            logger.info(f"✅ Completed chunk {chunks_processed}/{total_chunks} "
+                        f"({aggregated_results['rows_processed']:,}/{total_rows:,} rows processed)")
 
-        logger.info(
-            f"Chunked analysis complete: {aggregated_results['rows_processed']:,} total rows processed"
-        )
+        # FIXED: Verify all chunks were processed
+        if aggregated_results["rows_processed"] != total_rows:
+            logger.error(f"❌ CHUNK PROCESSING ERROR: Only processed {aggregated_results['rows_processed']:,} of {total_rows:,} rows!")
+        else:
+            logger.info(f"🎉 SUCCESS: Processed ALL {aggregated_results['rows_processed']:,} rows in {chunks_processed} chunks")
+
         return self._finalize_results(aggregated_results)
 
     def _chunk_dataframe(self, df: pd.DataFrame) -> Iterator[pd.DataFrame]:
-        """Generate DataFrame chunks."""
-        for i in range(0, len(df), self.chunk_size):
-            yield df.iloc[i : i + self.chunk_size].copy()
+        """FIXED: Generate DataFrame chunks ensuring no data loss."""
+        total_rows = len(df)
+        chunks_yielded = 0
+        rows_yielded = 0
+
+        logger.info(f"🔢 Chunking {total_rows:,} rows with chunk size {self.chunk_size:,}")
+
+        for i in range(0, total_rows, self.chunk_size):
+            end_idx = min(i + self.chunk_size, total_rows)
+            chunk = df.iloc[i:end_idx].copy()
+
+            chunks_yielded += 1
+            rows_yielded += len(chunk)
+
+            logger.debug(f"📦 Yielding chunk {chunks_yielded}: rows {i:,} to {end_idx-1:,} ({len(chunk):,} rows)")
+            yield chunk
+
+        logger.info(f"✅ Chunking complete: {chunks_yielded} chunks, {rows_yielded:,} total rows")
 
     def _process_chunk(self, chunk_df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
-        """Process a single chunk for all analysis types."""
+        """FIXED: Process a single chunk for all analysis types."""
+        logger.debug(f"🔍 Processing chunk with {len(chunk_df):,} rows")
+
         results = {
             "total_events": len(chunk_df),
             "unique_users": set(),
@@ -86,19 +120,28 @@ class ChunkedAnalyticsController:
             "temporal_patterns": {},
         }
 
+        # FIXED: Better column handling
         if "person_id" in chunk_df.columns:
-            results["unique_users"] = set(chunk_df["person_id"].dropna().unique())
+            unique_users = chunk_df["person_id"].dropna().unique()
+            results["unique_users"] = set(str(u) for u in unique_users)
+            logger.debug(f"Found {len(results['unique_users'])} unique users in chunk")
 
         if "door_id" in chunk_df.columns:
-            results["unique_doors"] = set(chunk_df["door_id"].dropna().unique())
+            unique_doors = chunk_df["door_id"].dropna().unique()
+            results["unique_doors"] = set(str(d) for d in unique_doors)
+            logger.debug(f"Found {len(results['unique_doors'])} unique doors in chunk")
 
         if "access_result" in chunk_df.columns:
-            success_mask = chunk_df["access_result"].str.contains(
-                "Grant|Allow|Success", case=False, na=False
+            # FIXED: More robust success detection
+            success_patterns = ["grant", "allow", "success", "permit", "approved"]
+            success_mask = chunk_df["access_result"].str.lower().str.contains(
+                "|".join(success_patterns), case=False, na=False
             )
-            results["successful_events"] = success_mask.sum()
+            results["successful_events"] = int(success_mask.sum())
             results["failed_events"] = len(chunk_df) - results["successful_events"]
+            logger.debug(f"Chunk access results: {results['successful_events']} success, {results['failed_events']} failed")
 
+        # Process analysis types
         if "security" in analysis_types:
             results["security_issues"].extend(self._analyze_security_chunk(chunk_df))
 
@@ -111,15 +154,18 @@ class ChunkedAnalyticsController:
         if "trends" in analysis_types:
             results["temporal_patterns"] = self._analyze_trends_chunk(chunk_df)
 
+        logger.debug(f"✅ Chunk processing complete: {results['total_events']} events processed")
         return results
 
     def _analyze_security_chunk(self, chunk_df: pd.DataFrame) -> List[Dict[str, Any]]:
         """Analyze security patterns in chunk."""
         issues: List[Dict[str, Any]] = []
 
-        if "access_result" in chunk_df.columns:
-            failed_attempts = chunk_df[chunk_df["access_result"].str.contains(
-                "Deny|Fail|Block", case=False, na=False
+        if "access_result" in chunk_df.columns and "person_id" in chunk_df.columns:
+            # FIXED: Better failure detection
+            failure_patterns = ["deny", "fail", "block", "reject", "denied", "failed"]
+            failed_attempts = chunk_df[chunk_df["access_result"].str.lower().str.contains(
+                "|".join(failure_patterns), case=False, na=False
             )]
 
             if len(failed_attempts) > 0:
@@ -127,14 +173,12 @@ class ChunkedAnalyticsController:
                 high_failure_users = user_failures[user_failures >= 3]
 
                 for user_id, failure_count in high_failure_users.items():
-                    issues.append(
-                        {
-                            "type": "high_failure_rate",
-                            "user_id": user_id,
-                            "failure_count": failure_count,
-                            "severity": "high" if failure_count >= 5 else "medium",
-                        }
-                    )
+                    issues.append({
+                        "type": "high_failure_rate",
+                        "user_id": str(user_id),
+                        "failure_count": int(failure_count),
+                        "severity": "high" if failure_count >= 5 else "medium",
+                    })
 
         return issues
 
@@ -143,24 +187,25 @@ class ChunkedAnalyticsController:
         anomalies: List[Dict[str, Any]] = []
 
         if "timestamp" in chunk_df.columns and "person_id" in chunk_df.columns:
-            chunk_df["timestamp"] = pd.to_datetime(chunk_df["timestamp"], errors="coerce")
-            chunk_df = chunk_df.sort_values(["person_id", "timestamp"])
+            try:
+                chunk_df["timestamp"] = pd.to_datetime(chunk_df["timestamp"], errors="coerce")
+                chunk_df = chunk_df.dropna(subset=["timestamp"]).sort_values(["person_id", "timestamp"])
 
-            for user_id in chunk_df["person_id"].unique():
-                user_data = chunk_df[chunk_df["person_id"] == user_id]
-                if len(user_data) > 1:
-                    time_diffs = user_data["timestamp"].diff().dt.total_seconds()
-                    rapid_attempts = (time_diffs < 30).sum()
+                for user_id in chunk_df["person_id"].unique():
+                    user_data = chunk_df[chunk_df["person_id"] == user_id]
+                    if len(user_data) > 1:
+                        time_diffs = user_data["timestamp"].diff().dt.total_seconds()
+                        rapid_attempts = (time_diffs < 30).sum()
 
-                    if rapid_attempts > 2:
-                        anomalies.append(
-                            {
+                        if rapid_attempts > 2:
+                            anomalies.append({
                                 "type": "rapid_attempts",
-                                "user_id": user_id,
-                                "rapid_count": rapid_attempts,
+                                "user_id": str(user_id),
+                                "rapid_count": int(rapid_attempts),
                                 "severity": "high",
-                            }
-                        )
+                            })
+            except Exception as e:
+                logger.warning(f"Anomaly analysis failed for chunk: {e}")
 
         return anomalies
 
@@ -170,8 +215,8 @@ class ChunkedAnalyticsController:
 
         if "person_id" in chunk_df.columns:
             user_activity = chunk_df.groupby("person_id").size()
-            patterns["avg_activity"] = user_activity.mean()
-            patterns["max_activity"] = user_activity.max()
+            patterns["avg_activity"] = float(user_activity.mean()) if len(user_activity) > 0 else 0.0
+            patterns["max_activity"] = int(user_activity.max()) if len(user_activity) > 0 else 0
             patterns["active_users"] = len(user_activity)
 
         return patterns
@@ -181,72 +226,82 @@ class ChunkedAnalyticsController:
         patterns: Dict[str, Any] = {}
 
         if "timestamp" in chunk_df.columns:
-            chunk_df["timestamp"] = pd.to_datetime(chunk_df["timestamp"], errors="coerce")
-            chunk_df = chunk_df.dropna(subset=["timestamp"])
+            try:
+                chunk_df["timestamp"] = pd.to_datetime(chunk_df["timestamp"], errors="coerce")
+                chunk_df = chunk_df.dropna(subset=["timestamp"])
 
-            if len(chunk_df) > 0:
-                patterns["date_range"] = {
-                    "start": chunk_df["timestamp"].min(),
-                    "end": chunk_df["timestamp"].max(),
-                }
+                if len(chunk_df) > 0:
+                    patterns["date_range"] = {
+                        "start": chunk_df["timestamp"].min(),
+                        "end": chunk_df["timestamp"].max(),
+                    }
 
-                chunk_df["hour"] = chunk_df["timestamp"].dt.hour
-                patterns["hourly_distribution"] = chunk_df["hour"].value_counts().to_dict()
+                    chunk_df["hour"] = chunk_df["timestamp"].dt.hour
+                    patterns["hourly_distribution"] = chunk_df["hour"].value_counts().to_dict()
+            except Exception as e:
+                logger.warning(f"Trends analysis failed for chunk: {e}")
 
         return patterns
 
     def _aggregate_chunk_results(self, aggregated: Dict[str, Any], chunk_results: Dict[str, Any]) -> None:
-        """Aggregate chunk results into overall results."""
+        """FIXED: Aggregate chunk results into overall results."""
+        # Basic counts
         aggregated["total_events"] += chunk_results["total_events"]
         aggregated["successful_events"] += chunk_results["successful_events"]
         aggregated["failed_events"] += chunk_results["failed_events"]
 
+        # FIXED: Set union operations
         aggregated["unique_users"].update(chunk_results["unique_users"])
         aggregated["unique_doors"].update(chunk_results["unique_doors"])
 
+        # Lists
         aggregated["security_issues"].extend(chunk_results["security_issues"])
         aggregated["anomalies"].extend(chunk_results["anomalies"])
 
+        # FIXED: Better behavioral pattern aggregation
         if chunk_results["behavioral_patterns"]:
             for key, value in chunk_results["behavioral_patterns"].items():
                 if key not in aggregated["behavioral_patterns"]:
                     aggregated["behavioral_patterns"][key] = []
-                aggregated["behavioral_patterns"][key].append(value)
+                if isinstance(value, (int, float)):
+                    aggregated["behavioral_patterns"][key].append(value)
 
+        # FIXED: Date range aggregation
         if chunk_results["temporal_patterns"].get("date_range"):
             chunk_range = chunk_results["temporal_patterns"]["date_range"]
             if aggregated["date_range"]["start"] is None:
-                aggregated["date_range"] = chunk_range
+                aggregated["date_range"] = chunk_range.copy()
             else:
-                aggregated["date_range"]["start"] = min(
-                    aggregated["date_range"]["start"], chunk_range["start"]
-                )
-                aggregated["date_range"]["end"] = max(
-                    aggregated["date_range"]["end"], chunk_range["end"]
-                )
+                if chunk_range["start"] < aggregated["date_range"]["start"]:
+                    aggregated["date_range"]["start"] = chunk_range["start"]
+                if chunk_range["end"] > aggregated["date_range"]["end"]:
+                    aggregated["date_range"]["end"] = chunk_range["end"]
 
     def _finalize_results(self, aggregated: Dict[str, Any]) -> Dict[str, Any]:
-        """Finalize and clean up aggregated results."""
+        """FIXED: Finalize and clean up aggregated results."""
+        # Convert sets to counts
         aggregated["unique_users"] = len(aggregated["unique_users"])
         aggregated["unique_doors"] = len(aggregated["unique_doors"])
 
+        # Calculate success rate
         if aggregated["total_events"] > 0:
             aggregated["success_rate"] = aggregated["successful_events"] / aggregated["total_events"]
         else:
             aggregated["success_rate"] = 0.0
 
+        # FIXED: Behavioral pattern averaging
         if aggregated["behavioral_patterns"]:
             for key, values in aggregated["behavioral_patterns"].items():
                 if isinstance(values, list) and len(values) > 0:
-                    aggregated["behavioral_patterns"][key] = np.mean(values)
+                    aggregated["behavioral_patterns"][key] = float(np.mean(values))
 
+        # FIXED: Date range conversion
         if aggregated["date_range"]["start"]:
             aggregated["date_range"]["start"] = aggregated["date_range"]["start"].isoformat()
         if aggregated["date_range"]["end"]:
             aggregated["date_range"]["end"] = aggregated["date_range"]["end"].isoformat()
 
-        logger.info(
-            f"Chunked analysis complete: {aggregated['total_events']} total events processed"
-        )
-        return aggregated
+        logger.info(f"🎉 FINAL RESULTS: {aggregated['total_events']:,} total events, "
+                    f"{aggregated['unique_users']:,} users, {aggregated['unique_doors']:,} doors")
 
+        return aggregated
