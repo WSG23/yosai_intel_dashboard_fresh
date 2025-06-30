@@ -382,16 +382,8 @@ def run_unique_patterns_analysis():
             color="danger",
         )
 
-def handle_analysis_buttons(security_n, trends_n, behavior_n, anomaly_n, suggests_n, quality_n, unique_n, data_source):
-    """Handle analysis button clicks and dispatch to helper functions."""
-
-    if not callback_context.triggered:
-        return get_initial_message_safe()
-
-    if not data_source or data_source == "none":
-        return dbc.Alert("Please select a data source first", color="warning")
-
-    button_id = callback_context.triggered[0]["prop_id"].split(".")[0]
+def dispatch_analysis(button_id: str, data_source: str):
+    """Dispatch analysis based on clicked button."""
 
     analysis_map = {
         "security-btn": "security",
@@ -407,17 +399,32 @@ def handle_analysis_buttons(security_n, trends_n, behavior_n, anomaly_n, suggest
     if not analysis_type:
         return dbc.Alert("Unknown analysis type", color="danger")
 
+    dispatch = {
+        "suggests": lambda: run_suggests_analysis(data_source),
+        "quality": lambda: run_quality_analysis(data_source),
+        "unique_patterns": run_unique_patterns_analysis,
+        "security": lambda: run_service_analysis(data_source, "security"),
+        "trends": lambda: run_service_analysis(data_source, "trends"),
+        "behavior": lambda: run_service_analysis(data_source, "behavior"),
+        "anomaly": lambda: run_service_analysis(data_source, "anomaly"),
+    }
+
+    return dispatch[analysis_type]()
+
+
+def handle_analysis_buttons(security_n, trends_n, behavior_n, anomaly_n, suggests_n, quality_n, unique_n, data_source):
+    """Handle analysis button clicks and dispatch to helper functions."""
+
+    if not callback_context.triggered:
+        return get_initial_message_safe()
+
+    if not data_source or data_source == "none":
+        return dbc.Alert("Please select a data source first", color="warning")
+
+    button_id = callback_context.triggered[0]["prop_id"].split(".")[0]
+
     try:
-        dispatch = {
-            "suggests": lambda: run_suggests_analysis(data_source),
-            "quality": lambda: run_quality_analysis(data_source),
-            "unique_patterns": run_unique_patterns_analysis,
-            "security": lambda: run_service_analysis(data_source, "security"),
-            "trends": lambda: run_service_analysis(data_source, "trends"),
-            "behavior": lambda: run_service_analysis(data_source, "behavior"),
-            "anomaly": lambda: run_service_analysis(data_source, "anomaly"),
-        }
-        return dispatch[analysis_type]()
+        return dispatch_analysis(button_id, data_source)
     except Exception as e:  # pragma: no cover - catch unforeseen errors
         return dbc.Alert(f"Analysis failed: {str(e)}", color="danger")
 
@@ -447,6 +454,42 @@ def update_status_alert(trigger):
         return "❌ Service status unknown"
 
 
+# ------------------------------------------------------------
+# Callback manager
+# ------------------------------------------------------------
+
+class Callbacks:
+    """Container for deep analytics callbacks."""
+
+    def handle_analysis_buttons(
+        self,
+        security_n,
+        trends_n,
+        behavior_n,
+        anomaly_n,
+        suggests_n,
+        quality_n,
+        unique_n,
+        data_source,
+    ):
+        return handle_analysis_buttons(
+            security_n,
+            trends_n,
+            behavior_n,
+            anomaly_n,
+            suggests_n,
+            quality_n,
+            unique_n,
+            data_source,
+        )
+
+    def refresh_data_sources_callback(self, n_clicks):
+        return refresh_data_sources_callback(n_clicks)
+
+    def update_status_alert(self, trigger):
+        return update_status_alert(trigger)
+
+
 
 
 # =============================================================================
@@ -455,42 +498,52 @@ def update_status_alert(trigger):
 # =============================================================================
 
 def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
-    """Register page callbacks using the provided coordinator."""
+    """Instantiate :class:`Callbacks` and register its methods."""
 
-    manager.register_callback(
-        Output("analytics-display-area", "children"),
-        [
-            Input("security-btn", "n_clicks"),
-            Input("trends-btn", "n_clicks"),
-            Input("behavior-btn", "n_clicks"),
-            Input("anomaly-btn", "n_clicks"),
-            Input("suggests-btn", "n_clicks"),
-            Input("quality-btn", "n_clicks"),
-            Input("unique-patterns-btn", "n_clicks"),
-        ],
-        [State("analytics-data-source", "value")],
-        prevent_initial_call=True,
-        callback_id="handle_analysis_buttons",
-        component_name="deep_analytics",
-    )(handle_analysis_buttons)
+    cb = Callbacks()
+    callback_defs = [
+        (
+            cb.handle_analysis_buttons,
+            Output("analytics-display-area", "children"),
+            [
+                Input("security-btn", "n_clicks"),
+                Input("trends-btn", "n_clicks"),
+                Input("behavior-btn", "n_clicks"),
+                Input("anomaly-btn", "n_clicks"),
+                Input("suggests-btn", "n_clicks"),
+                Input("quality-btn", "n_clicks"),
+                Input("unique-patterns-btn", "n_clicks"),
+            ],
+            [State("analytics-data-source", "value")],
+            "handle_analysis_buttons",
+        ),
+        (
+            cb.refresh_data_sources_callback,
+            Output("analytics-data-source", "options"),
+            Input("refresh-sources-btn", "n_clicks"),
+            None,
+            "refresh_data_sources",
+        ),
+        (
+            cb.update_status_alert,
+            Output("status-alert", "children"),
+            Input("hidden-trigger", "children"),
+            None,
+            "update_status_alert",
+        ),
+    ]
 
-    manager.register_callback(
-        Output("analytics-data-source", "options"),
-        Input("refresh-sources-btn", "n_clicks"),
-        prevent_initial_call=True,
-        callback_id="refresh_data_sources",
-        component_name="deep_analytics",
-    )(refresh_data_sources_callback)
-
-    manager.register_callback(
-        Output("status-alert", "children"),
-        Input("hidden-trigger", "children"),
-        prevent_initial_call=False,
-        callback_id="update_status_alert",
-        component_name="deep_analytics",
-    )(update_status_alert)
+    for func, outputs, inputs, states, cid in callback_defs:
+        manager.register_callback(
+            outputs,
+            inputs,
+            states,
+            prevent_initial_call=True if cid != "update_status_alert" else False,
+            callback_id=cid,
+            component_name="deep_analytics",
+        )(func)
 
 
 
-__all__ = ["register_callbacks"]
+__all__ = ["Callbacks", "register_callbacks"]
 

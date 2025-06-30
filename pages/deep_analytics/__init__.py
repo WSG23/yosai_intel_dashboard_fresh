@@ -1,7 +1,7 @@
 """Initialize the deep analytics page and expose callbacks."""
 
 from .layout import layout
-from .callbacks import register_callbacks  # noqa: F401
+from .callbacks import Callbacks, register_callbacks  # noqa: F401
 from .analysis import (
     ANALYTICS_SERVICE_AVAILABLE,
     AI_SUGGESTIONS_AVAILABLE,
@@ -29,6 +29,7 @@ from .analysis import (
 
 __all__ = [
     "layout",
+    "Callbacks",
     "register_callbacks",
     "ANALYTICS_SERVICE_AVAILABLE",
     "AI_SUGGESTIONS_AVAILABLE",
