@@ -26,6 +26,7 @@ analytics:
   batch_size: 25000
   max_records_per_query: 500000
   chunk_size: 50000
+  force_full_dataset_analysis: true
   query_timeout_seconds: 300
 
 monitoring:
