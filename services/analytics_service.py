@@ -273,107 +273,88 @@ class AnalyticsService:
             return {'status': 'error', 'message': f'Unknown source: {source}'}
 
     def _process_uploaded_data_directly(self, uploaded_data: Dict[str, Any]) -> Dict[str, Any]:
-        """FIXED: Process ALL uploaded data without row limits."""
+        """Process uploaded files without chunking and track per-file info."""
         try:
-            logger.info(f"Processing {len(uploaded_data)} uploaded files directly...")
-
             from collections import Counter
 
+            logger.info(f"Processing {len(uploaded_data)} uploaded files directly...")
+
+            processing_info: Dict[str, Any] = {}
             total_events = 0
-            user_counts: Counter = Counter()
-            door_counts: Counter = Counter()
+            user_counts: Counter[str] = Counter()
+            door_counts: Counter[str] = Counter()
             min_ts: Optional[pd.Timestamp] = None
             max_ts: Optional[pd.Timestamp] = None
 
-            # FIXED: Process complete files, not chunks
             for filename, source in uploaded_data.items():
-                if isinstance(source, (str, Path)):
-                    # FIXED: Read entire file at once, not in chunks
-                    logger.info(f"Reading complete file: {filename}")
-                    df_complete = pd.read_csv(source, encoding='utf-8')
-                    logger.info(f"{filename} total rows: {len(df_complete):,}")
+                try:
+                    if isinstance(source, (str, Path)):
+                        df = pd.read_csv(source, encoding="utf-8")
+                    else:
+                        df = source
 
-                    # Validate and process entire dataset
-                    self.df_validator.validate(df_complete)
-                    df_processed = map_and_clean(df_complete)
+                    df = self.df_validator.validate(df)
+                    df = map_and_clean(df)
 
-                    # Process ALL rows, not chunked
-                    total_events += len(df_processed)
+                    processing_info[filename] = {"rows": len(df), "status": "ok"}
+                except Exception as e:  # pragma: no cover - best effort
+                    processing_info[filename] = {"rows": 0, "status": f"error: {e}"}
+                    logger.error(f"Error processing {filename}: {e}")
+                    continue
 
-                    if 'person_id' in df_processed.columns:
-                        user_counts.update(df_processed['person_id'].dropna().astype(str))
+                total_events += len(df)
 
-                    if 'door_id' in df_processed.columns:
-                        door_counts.update(df_processed['door_id'].dropna().astype(str))
+                if "person_id" in df.columns:
+                    user_counts.update(df["person_id"].dropna().astype(str))
+                if "door_id" in df.columns:
+                    door_counts.update(df["door_id"].dropna().astype(str))
+                if "timestamp" in df.columns:
+                    ts = pd.to_datetime(df["timestamp"], errors="coerce").dropna()
+                    if not ts.empty:
+                        cur_min = ts.min()
+                        cur_max = ts.max()
+                        if min_ts is None or cur_min < min_ts:
+                            min_ts = cur_min
+                        if max_ts is None or cur_max > max_ts:
+                            max_ts = cur_max
 
-                    if 'timestamp' in df_processed.columns:
-                        ts = pd.to_datetime(df_processed['timestamp'], errors='coerce').dropna()
-                        if not ts.empty:
-                            cur_min = ts.min()
-                            cur_max = ts.max()
-                            if min_ts is None or cur_min < min_ts:
-                                min_ts = cur_min
-                            if max_ts is None or cur_max > max_ts:
-                                max_ts = cur_max
-                else:
-                    # Direct DataFrame processing
-                    df_processed = map_and_clean(source)
-                    total_events += len(df_processed)
-                    if 'person_id' in df_processed.columns:
-                        user_counts.update(df_processed['person_id'].dropna().astype(str))
-                    if 'door_id' in df_processed.columns:
-                        door_counts.update(df_processed['door_id'].dropna().astype(str))
-                    if 'timestamp' in df_processed.columns:
-                        ts = pd.to_datetime(df_processed['timestamp'], errors='coerce').dropna()
-                        if not ts.empty:
-                            cur_min = ts.min()
-                            cur_max = ts.max()
-                            if min_ts is None or cur_min < min_ts:
-                                min_ts = cur_min
-                            if max_ts is None or cur_max > max_ts:
-                                max_ts = cur_max
+            if not processing_info:
+                return {"status": "error", "message": "No uploaded files processed"}
 
-            date_range = {'start': 'Unknown', 'end': 'Unknown'}
+            date_range = {"start": "Unknown", "end": "Unknown"}
             if min_ts is not None and max_ts is not None:
                 date_range = {
-                    'start': min_ts.strftime('%Y-%m-%d'),
-                    'end': max_ts.strftime('%Y-%m-%d')
+                    "start": min_ts.strftime("%Y-%m-%d"),
+                    "end": max_ts.strftime("%Y-%m-%d"),
                 }
-                logger.info(f"Date range: {date_range['start']} to {date_range['end']}")
 
             active_users = len(user_counts)
             active_doors = len(door_counts)
 
             result = {
-                'status': 'success',
-                'total_events': total_events,
-                'active_users': active_users,
-                'active_doors': active_doors,
-                'unique_users': active_users,
-                'unique_doors': active_doors,
-                'data_source': 'uploaded',
-                'date_range': date_range,
-                'top_users': [
-                    {'user_id': user, 'count': int(count)}
-                    for user, count in user_counts.most_common(10)
+                "status": "success",
+                "total_events": total_events,
+                "active_users": active_users,
+                "active_doors": active_doors,
+                "unique_users": active_users,
+                "unique_doors": active_doors,
+                "data_source": "uploaded",
+                "date_range": date_range,
+                "top_users": [
+                    {"user_id": u, "count": int(c)} for u, c in user_counts.most_common(10)
                 ],
-                'top_doors': [
-                    {'door_id': door, 'count': int(count)}
-                    for door, count in door_counts.most_common(10)
+                "top_doors": [
+                    {"door_id": d, "count": int(c)} for d, c in door_counts.most_common(10)
                 ],
-                'timestamp': datetime.now().isoformat(),
+                "timestamp": datetime.now().isoformat(),
+                "processing_info": processing_info,
             }
-
-            logger.info("Direct processing result:")
-            logger.info(f"Total Events: {total_events:,}")
-            logger.info(f"Active Users: {active_users:,}")
-            logger.info(f"Active Doors: {active_doors:,}")
 
             return result
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover - unexpected
             logger.error(f"Direct processing failed: {e}")
-            return {'status': 'error', 'message': str(e)}
+            return {"status": "error", "message": str(e)}
 
     # ------------------------------------------------------------------
     # Helper methods for processing uploaded data
