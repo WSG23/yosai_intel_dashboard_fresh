@@ -1,6 +1,6 @@
 """Monitoring utilities package."""
 
-from .performance_monitor import PerformanceMonitor
+from core.performance import PerformanceMonitor
 
 __all__ = ["PerformanceMonitor"]
 
