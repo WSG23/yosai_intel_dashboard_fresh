@@ -12,9 +12,18 @@ logger = logging.getLogger(__name__)
 class ChunkedAnalyticsController:
     """Handle analytics processing for large DataFrames using chunking."""
 
-    def __init__(self, chunk_size: int = 10000, max_workers: int = 4) -> None:
-        self.chunk_size = chunk_size
-        self.max_workers = max_workers
+    def __init__(self, chunk_size: int = None, max_workers: int = None) -> None:
+        try:
+            from config.dynamic_config import dynamic_config
+            if hasattr(dynamic_config, 'analytics'):
+                self.chunk_size = chunk_size or getattr(dynamic_config.analytics, 'chunk_size', 10000)
+                self.max_workers = max_workers or getattr(dynamic_config.analytics, 'max_workers', 4)
+            else:
+                self.chunk_size = chunk_size or 10000
+                self.max_workers = max_workers or 4
+        except Exception:
+            self.chunk_size = chunk_size or 10000
+            self.max_workers = max_workers or 4
 
     def process_large_dataframe(
         self, df: pd.DataFrame, analysis_types: List[str]

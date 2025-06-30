@@ -13,17 +13,18 @@ class DataFrameSecurityValidator:
     """Validate DataFrames for safe processing with chunked analysis support."""
 
     def __init__(self):
-        self.max_upload_mb = getattr(
-            dynamic_config.security,
-            "max_upload_mb",
-            dynamic_config.security.max_file_size_mb,
-        )
-        self.max_analysis_mb = getattr(
-            dynamic_config.security,
-            "max_analysis_mb",
-            self.max_upload_mb * 2,
-        )
-        self.chunk_size = getattr(dynamic_config.analytics, "chunk_size", 10000)
+        try:
+            from config.dynamic_config import dynamic_config
+            self.max_upload_mb = getattr(dynamic_config.security, "max_upload_mb", 100)
+            self.max_analysis_mb = getattr(dynamic_config.security, "max_analysis_mb", 200)
+            if hasattr(dynamic_config, 'analytics'):
+                self.chunk_size = getattr(dynamic_config.analytics, "chunk_size", 10000)
+            else:
+                self.chunk_size = 10000
+        except Exception:
+            self.max_upload_mb = 100
+            self.max_analysis_mb = 200
+            self.chunk_size = 10000
 
     def validate_for_upload(self, df: pd.DataFrame) -> pd.DataFrame:
         """Validate DataFrame for initial upload."""

@@ -1,6 +1,11 @@
 import os
 from typing import Dict, Any
-from .constants import SecurityConstants, PerformanceConstants, CSSConstants
+from .constants import (
+    SecurityConstants,
+    PerformanceConstants,
+    CSSConstants,
+    AnalyticsConstants,
+)
 
 class DynamicConfigManager:
     """Loads constants and applies environment overrides."""
@@ -9,7 +14,37 @@ class DynamicConfigManager:
         self.security = SecurityConstants()
         self.performance = PerformanceConstants()
         self.css = CSSConstants()
+        self.analytics = AnalyticsConstants()
+        self._load_yaml_config()
         self._apply_env_overrides()
+
+    def _load_yaml_config(self) -> None:
+        """Load configuration from YAML files."""
+        import yaml
+        from pathlib import Path
+
+        try:
+            config_env = os.getenv("YOSAI_ENV", "development")
+            config_file = os.getenv("YOSAI_CONFIG_FILE")
+
+            if config_file:
+                config_path = Path(config_file)
+            else:
+                config_path = Path(f"config/{config_env}.yaml")
+                if not config_path.exists():
+                    config_path = Path("config/production.yaml")
+
+            if config_path.exists():
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config_data = yaml.safe_load(f)
+
+                analytics_config = config_data.get("analytics", {})
+                for key, value in analytics_config.items():
+                    if hasattr(self.analytics, key):
+                        setattr(self.analytics, key, value)
+
+        except Exception:
+            pass
 
     def _apply_env_overrides(self) -> None:
         """Override defaults from environment variables with validation."""
@@ -51,6 +86,18 @@ class DynamicConfigManager:
         css_specificity = os.getenv("CSS_SPECIFICITY_HIGH")
         if css_specificity is not None:
             self.css.specificity_high = int(css_specificity)
+
+        analytics_cache = os.getenv("ANALYTICS_CACHE_TIMEOUT")
+        if analytics_cache is not None:
+            self.analytics.cache_timeout_seconds = int(analytics_cache)
+
+        chunk_size = os.getenv("ANALYTICS_CHUNK_SIZE")
+        if chunk_size is not None:
+            self.analytics.chunk_size = int(chunk_size)
+
+        batch_size = os.getenv("ANALYTICS_BATCH_SIZE")
+        if batch_size is not None:
+            self.analytics.batch_size = int(batch_size)
 
     def get_rate_limit(self) -> Dict[str, int]:
         return {

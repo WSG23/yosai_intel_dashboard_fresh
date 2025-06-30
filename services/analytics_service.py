@@ -22,6 +22,20 @@ from security.dataframe_validator import DataFrameSecurityValidator
 from datetime import datetime, timedelta
 import os
 
+
+def ensure_analytics_config():
+    """Emergency fix to ensure analytics configuration exists."""
+    try:
+        from config.dynamic_config import dynamic_config
+        if not hasattr(dynamic_config, 'analytics'):
+            from config.constants import AnalyticsConstants
+            dynamic_config.analytics = AnalyticsConstants()
+    except Exception:
+        pass
+
+
+ensure_analytics_config()
+
 logger = logging.getLogger(__name__)
 
 
