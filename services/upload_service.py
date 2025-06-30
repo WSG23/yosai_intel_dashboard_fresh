@@ -67,9 +67,13 @@ def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
 
 
 def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert:
-    """Create a preview card for an uploaded DataFrame."""
+    """Create file preview with correct row count display - FIXED"""
     try:
-        num_rows, num_cols = df.shape
+        # CRITICAL: Get actual DataFrame size
+        actual_rows, actual_cols = df.shape
+        preview_rows = min(5, actual_rows)  # Only for table display
+
+        logger.info(f"Creating preview for {filename}: {actual_rows} rows × {actual_cols} columns")
 
         column_info = []
         for col in df.columns[:10]:
@@ -78,27 +82,45 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
             safe_col = XSSPrevention.sanitize_html_output(str(col))
             column_info.append(f"{safe_col} ({dtype}) - {null_count} nulls")
 
-        preview_df = df.head(5).copy()
+        # Display sample (but show actual count in stats)
+        preview_df = df.head(preview_rows).copy()
         preview_df.columns = [XSSPrevention.sanitize_html_output(str(c)) for c in preview_df.columns]
         preview_df = preview_df.applymap(lambda x: XSSPrevention.sanitize_html_output(str(x)))
 
+        # FIXED: Clear status messaging
+        if actual_rows <= 10:
+            status_color = "warning"
+            status_message = f"⚠️ Only {actual_rows} rows found - check if file is complete"
+        else:
+            status_color = "success"
+            status_message = f"✅ Successfully loaded {actual_rows:,} rows"
+
         return dbc.Card(
             [
-                dbc.CardHeader([html.H6(f"\U0001F4C4 {filename}", className="mb-0")]),
+                dbc.CardHeader([
+                    html.H6(f"📄 {filename}", className="mb-0"),
+                    dbc.Badge(f"{actual_rows:,} rows total", color="info", className="ms-2")
+                ]),
                 dbc.CardBody(
                     [
+                        # CRITICAL: Show actual processing status
+                        dbc.Alert(
+                            status_message,
+                            color=status_color,
+                            className="mb-3"
+                        ),
+
                         dbc.Row(
                             [
                                 dbc.Col(
                                     [
-                                        html.H6("File Statistics:", className="text-primary"),
+                                        html.H6("Processing Statistics:", className="text-primary"),
                                         html.Ul(
                                             [
-                                                html.Li(f"Rows: {num_rows:,}"),
-                                                html.Li(f"Columns: {num_cols}"),
-                                                html.Li(
-                                                    f"Memory usage: {df.memory_usage(deep=True).sum() / 1024:.1f} KB"
-                                                ),
+                                                html.Li(f"Total Rows: {actual_rows:,}"),
+                                                html.Li(f"Columns: {actual_cols}"),
+                                                html.Li(f"Memory: {df.memory_usage(deep=True).sum() / 1024:.1f} KB"),
+                                                html.Li(f"Status: Complete")
                                             ]
                                         ),
                                     ],
@@ -114,7 +136,7 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
                             ]
                         ),
                         html.Hr(),
-                        html.H6("Sample Data:", className="text-primary mt-3"),
+                        html.H6(f"Sample Data (first {preview_rows} rows):", className="text-primary mt-3"),
                         dbc.Table.from_dataframe(
                             preview_df,
                             striped=True,
@@ -123,12 +145,20 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
                             responsive=True,
                             size="sm",
                         ),
+
+                        # ADDITIONAL: Clear indication of processing vs display
+                        dbc.Alert(
+                            f"📊 Processing Summary: {actual_rows:,} rows will be available for analytics. "
+                            f"Above table shows first {preview_rows} rows for preview only.",
+                            color="info",
+                            className="mt-3"
+                        )
                     ]
                 ),
             ],
             className="mb-3",
         )
-    except Exception as e:  # pragma: no cover - best effort
+    except Exception as e:
         logger.error(f"Error creating preview for {filename}: {e}")
         return dbc.Alert(f"Error creating preview: {str(e)}", color="warning")
 
