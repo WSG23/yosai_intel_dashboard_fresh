@@ -2,7 +2,7 @@
 
 import pandas as pd
 from config.dynamic_config import dynamic_config
-from utils.unicode_handler import sanitize_unicode_input
+from utils.unicode_processor import sanitize_data_frame
 from .validation_exceptions import ValidationError
 import logging
 
@@ -68,13 +68,14 @@ class DataFrameSecurityValidator:
         return min(calculated_chunk_size, self.chunk_size)
 
     def _sanitize_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Sanitize DataFrame columns and detect injection attempts."""
-        df.columns = [sanitize_unicode_input(str(c)) for c in df.columns]
+        """Sanitize DataFrame using shared helpers."""
+        sanitized = sanitize_data_frame(df)
 
-        for col in df.select_dtypes(include=["object"]).columns:
-            if df[col].astype(str).str.startswith(("=", "+", "-", "@")).any():
-                logger.warning(f"Potential CSV injection detected in column '{col}'")
-                df[col] = df[col].astype(str).str.replace(r"^[=+\-@]", "", regex=True)
+        for col in sanitized.select_dtypes(include=["object"]).columns:
+            if sanitized[col].astype(str).str.startswith(("=", "+", "-", "@")).any():
+                logger.warning(
+                    f"Potential CSV injection detected in column '{col}'"
+                )
 
-        return df
+        return sanitized
 
