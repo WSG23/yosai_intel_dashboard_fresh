@@ -70,9 +70,9 @@ def create_device_verification_modal(
                                     {"label": "Exit", "value": "is_exit"},
                                 ],
                                 value=[
-                                    k
-                                    for k, v in attributes.items()
-                                    if k in ["is_entry", "is_exit"] and v
+                                    key
+                                    for key in ["is_entry", "is_exit"]
+                                    if attributes.get(key, attributes.get(key.replace("is_", "")))
                                 ],
                                 inline=True,
                             )
@@ -86,11 +86,14 @@ def create_device_verification_modal(
                                 id={"type": "device-special", "index": i},
                                 options=special_areas_options,
                                 value=[
-                                    k
-                                    for k, v in attributes.items()
-                                    if k
-                                    in ["is_elevator", "is_stairwell", "is_fire_escape"]
-                                    and v
+                                    key
+                                    for key in [
+                                        "is_elevator",
+                                        "is_stairwell",
+                                        "is_fire_escape",
+                                        "is_restricted",
+                                    ]
+                                    if attributes.get(key, attributes.get(key.replace("is_", "")))
                                 ],
                                 inline=False,
                                 className="small",

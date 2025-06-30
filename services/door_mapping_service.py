@@ -22,11 +22,12 @@ class DeviceAttributeData:
     """Device attribute data structure"""
     door_id: str
     name: str
-    entry: bool = False
-    exit: bool = False
-    elevator: bool = False
-    stairwell: bool = False
-    fire_escape: bool = False
+    is_entry: bool = False
+    is_exit: bool = False
+    is_elevator: bool = False
+    is_stairwell: bool = False
+    is_fire_escape: bool = False
+    is_restricted: bool = False
     other: bool = False
     security_level: int = 50
     confidence: Optional[int] = None
@@ -111,15 +112,16 @@ class DoorMappingService:
         # Convert confidence from 0.0-1.0 scale to 0-100 scale
         confidence_percentage = int(ai_attributes.confidence * 100)
 
-        # Convert to existing DeviceAttributeData format
+        # Convert to DeviceAttributeData with standardized keys
         return DeviceAttributeData(
             door_id=ai_attributes.device_id,
             name=ai_attributes.device_name,
-            entry=ai_attributes.is_entry,
-            exit=ai_attributes.is_exit,
-            elevator=ai_attributes.is_elevator,
-            stairwell=ai_attributes.is_stairwell,
-            fire_escape=ai_attributes.is_fire_escape,
+            is_entry=ai_attributes.is_entry,
+            is_exit=ai_attributes.is_exit,
+            is_elevator=ai_attributes.is_elevator,
+            is_stairwell=ai_attributes.is_stairwell,
+            is_fire_escape=ai_attributes.is_fire_escape,
+            is_restricted=getattr(ai_attributes, "is_restricted", False),
             other=not any(
                 [
                     ai_attributes.is_entry,
@@ -349,9 +351,9 @@ class DoorMappingService:
                     "confidence": ai_attrs.confidence,
                     "reasoning": ai_attrs.ai_reasoning,
                     "access_types": {
-                        "entry": ai_attrs.is_entry,
-                        "exit": ai_attrs.is_exit,
-                        "elevator": ai_attrs.is_elevator,
+                        "is_entry": ai_attrs.is_entry,
+                        "is_exit": ai_attrs.is_exit,
+                        "is_elevator": ai_attrs.is_elevator,
                     },
                 }
             except Exception as e:
@@ -375,11 +377,12 @@ class DoorMappingService:
                         "device_name": device.get("name", ""),
                         "floor_number": device.get("floor_number", 1),
                         "security_level": device.get("security_level", 50),
-                        "is_entry": device.get("entry", False),
-                        "is_exit": device.get("exit", False),
-                        "is_elevator": device.get("elevator", False),
-                        "is_stairwell": device.get("stairwell", False),
-                        "is_fire_escape": device.get("fire_escape", False),
+                        "is_entry": device.get("is_entry", device.get("entry", False)),
+                        "is_exit": device.get("is_exit", device.get("exit", False)),
+                        "is_elevator": device.get("is_elevator", device.get("elevator", False)),
+                        "is_stairwell": device.get("is_stairwell", device.get("stairwell", False)),
+                        "is_fire_escape": device.get("is_fire_escape", device.get("fire_escape", False)),
+                        "is_restricted": device.get("is_restricted", device.get("restricted", False)),
                     }
 
             learning_service = get_learning_service()
