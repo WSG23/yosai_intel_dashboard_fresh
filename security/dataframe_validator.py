@@ -72,19 +72,35 @@ class DataFrameSecurityValidator:
         return df, needs_chunking
 
     def get_optimal_chunk_size(self, df: pd.DataFrame) -> int:
-        """Calculate optimal chunk size based on DataFrame characteristics."""
+        """FIXED: Calculate optimal chunk size ensuring reasonable processing."""
         memory_usage = df.memory_usage(deep=True).sum()
         max_bytes = self.max_analysis_mb * 1024 * 1024
 
-        if memory_usage <= max_bytes and len(df) <= 100000:
-            logger.info(f"Small dataset: processing all {len(df)} rows at once")
-            return len(df)
+        total_rows = len(df)
+        logger.info(f"🔢 Calculating chunk size for {total_rows:,} rows ({memory_usage/1024/1024:.1f}MB)")
 
-        calculated_chunk_size = int((len(df) * max_bytes) / memory_usage)
-        optimal_chunk_size = max(calculated_chunk_size, 25000)
-        final_chunk_size = min(optimal_chunk_size, self.chunk_size)
+        # FIXED: For datasets under 100k rows, process all at once
+        if memory_usage <= max_bytes and total_rows <= 100000:
+            logger.info(f"✅ Small dataset: processing all {total_rows:,} rows at once")
+            return total_rows
 
-        logger.info(f"Calculated chunk size: {final_chunk_size} for {len(df)} total rows")
+        # FIXED: Calculate reasonable chunk size with minimum threshold
+        calculated_chunk_size = int((total_rows * max_bytes) / memory_usage)
+
+        # FIXED: Ensure chunk size is reasonable (minimum 5000, maximum 100000)
+        optimal_chunk_size = max(calculated_chunk_size, 5000)
+        optimal_chunk_size = min(optimal_chunk_size, 100000)
+
+        # FIXED: Use our calculated size, not config limit
+        final_chunk_size = optimal_chunk_size
+
+        # FIXED: Ensure we don't have tiny chunks for small datasets
+        if total_rows < 10000:
+            final_chunk_size = total_rows
+
+        logger.info(f"📊 Chunk size calculation: {total_rows:,} rows → {final_chunk_size:,} per chunk")
+        logger.info(f"📈 Will create {(total_rows + final_chunk_size - 1) // final_chunk_size} chunks")
+
         return final_chunk_size
 
     def _sanitize_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
