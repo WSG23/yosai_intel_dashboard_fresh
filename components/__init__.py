@@ -10,6 +10,7 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
+from config.dynamic_config import dynamic_config
 
 logger = logging.getLogger(__name__)
 
@@ -268,6 +269,7 @@ def create_file_uploader() -> html.Div:
             html.H5("📁 Upload Data Files", className="mb-3"),
             dcc.Upload(
                 id='upload-data',
+                max_size=dynamic_config.security.max_upload_mb * 1024 * 1024,
                 children=html.Div([
                     html.I(className="fas fa-cloud-upload-alt fa-3x mb-3 text-primary"),
                     html.H6("Drag and Drop or Click to Select Files"),
