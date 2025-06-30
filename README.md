@@ -117,6 +117,11 @@ gunicorn wsgi:server
 
 ## 🧪 Testing
 
+Install dependencies before running the tests:
+```bash
+./scripts/setup.sh  # or `pip install -r requirements.txt`
+```
+
 Run the complete test suite:
 ```bash
 # Run all unit and integration tests
