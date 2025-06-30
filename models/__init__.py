@@ -11,16 +11,13 @@ from .enums import (
 
 from .entities import Person, Door, Facility
 from .events import AccessEvent, AnomalyDetection, IncidentTicket
+from services.registry import get_service
 
-try:
-    from .base import BaseModel, AccessEventModel, AnomalyDetectionModel, ModelFactory
-    BASE_MODELS_AVAILABLE = True
-except ImportError:
-    BASE_MODELS_AVAILABLE = False
-    BaseModel = None
-    AccessEventModel = None
-    AnomalyDetectionModel = None
-    ModelFactory = None
+BaseModel = get_service("BaseModel")
+AccessEventModel = get_service("AccessEventModel")
+AnomalyDetectionModel = get_service("AnomalyDetectionModel")
+ModelFactory = get_service("ModelFactory")
+BASE_MODELS_AVAILABLE = BaseModel is not None
 
 __all__ = [
     'AnomalyType', 'AccessResult', 'BadgeStatus', 'SeverityLevel',

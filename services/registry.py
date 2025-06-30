@@ -46,3 +46,13 @@ register_service("FileProcessor", "services.file_processor:FileProcessor")
 register_service("get_analytics_service", "services.analytics_service:get_analytics_service")
 register_service("create_analytics_service", "services.analytics_service:create_analytics_service")
 register_service("AnalyticsService", "services.analytics_service:AnalyticsService")
+
+# Optional model and database classes
+register_service("BaseModel", "models.base:BaseModel")
+register_service("AccessEventModel", "models.base:AccessEventModel")
+register_service("AnomalyDetectionModel", "models.base:AnomalyDetectionModel")
+register_service("ModelFactory", "models.base:ModelFactory")
+register_service("DatabaseManager", "config.database_manager:DatabaseManager")
+register_service("DatabaseConnection", "config.database_manager:DatabaseConnection")
+register_service("MockConnection", "config.database_manager:MockConnection")
+register_service("EnhancedPostgreSQLManager", "config.database_manager:EnhancedPostgreSQLManager")

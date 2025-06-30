@@ -5,7 +5,7 @@ Complete Integration Tests for Analytics System
 import pytest
 import pandas as pd
 from services import get_analytics_service, create_analytics_service
-from models.base import ModelFactory
+from models import ModelFactory
 
 
 def test_analytics_service_creation():
@@ -36,6 +36,24 @@ def test_model_factory():
     models = ModelFactory.create_models_from_dataframe(df)
     assert 'access' in models
     assert 'anomaly' in models
+
+
+def test_model_factory_absent(monkeypatch):
+    """ModelFactory gracefully handles missing registry entry"""
+    from importlib import reload
+    import services.registry as reg
+    original = reg.get_service
+
+    def fake_get_service(name: str):
+        if name in {"ModelFactory", "BaseModel", "AccessEventModel", "AnomalyDetectionModel"}:
+            return None
+        return original(name)
+
+    monkeypatch.setattr(reg, "get_service", fake_get_service)
+    import models as models_pkg
+    reload(models_pkg)
+    assert models_pkg.ModelFactory is None
+    assert not models_pkg.BASE_MODELS_AVAILABLE
 
 
 def test_health_check():
