@@ -11,14 +11,15 @@ from .base import BaseService
 from .protocols import FileProcessorProtocol
 from utils.file_validator import safe_decode_with_unicode_handling
 from utils.unicode_handler import sanitize_unicode_input
+from config.dynamic_config import dynamic_config
 
 logger = logging.getLogger(__name__)
 
 class FileProcessorService(BaseService):
     """File processing service implementation"""
-    
+
     ALLOWED_EXTENSIONS = {'.csv', '.json', '.xlsx', '.xls'}
-    MAX_FILE_SIZE_MB = 100
+    MAX_FILE_SIZE_MB = dynamic_config.get_max_upload_size_mb()
     
     def __init__(self):
         super().__init__("file_processor")
@@ -73,16 +74,33 @@ class FileProcessorService(BaseService):
             raise
     
     def _process_csv(self, content: bytes) -> pd.DataFrame:
-        """Process CSV file"""
+        """Process CSV file with enhanced Unicode handling"""
         try:
-            # Try different encodings with surrogate handling
-            for encoding in ['utf-8', 'latin-1', 'cp1252']:
+            # Enhanced encoding detection and Unicode handling
+            encodings = ['utf-8', 'utf-8-sig', 'latin-1', 'cp1252', 'iso-8859-1']
+
+            for encoding in encodings:
                 try:
-                    text = safe_decode_with_unicode_handling(content, encoding)
-                    text = sanitize_unicode_input(text)
-                    return pd.read_csv(io.StringIO(text))
-                except UnicodeDecodeError:
+                    # Handle Unicode surrogates
+                    if encoding == 'utf-8':
+                        text = content.decode(encoding, errors='surrogateescape')
+                    else:
+                        text = content.decode(encoding)
+
+                    # Remove Unicode surrogate characters that can't be encoded in UTF-8
+                    text = ''.join(char for char in text if not (0xD800 <= ord(char) <= 0xDFFF))
+
+                    # Parse with optimizations for large files
+                    df = pd.read_csv(
+                        io.StringIO(text),
+                        low_memory=False,  # Better for large files
+                        dtype=str  # Preserve data integrity
+                    )
+                    return df
+
+                except (UnicodeDecodeError, pd.errors.EmptyDataError):
                     continue
+
             raise ValueError("Could not decode CSV file with any standard encoding")
         except Exception as e:
             raise ValueError(f"Error reading CSV: {e}")

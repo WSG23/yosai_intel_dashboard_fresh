@@ -12,7 +12,7 @@ class DynamicConfigManager:
         self._apply_env_overrides()
 
     def _apply_env_overrides(self) -> None:
-        """Override defaults from environment variables."""
+        """Override defaults from environment variables with validation."""
         iterations = os.getenv("PBKDF2_ITERATIONS")
         if iterations is not None:
             self.security.pbkdf2_iterations = int(iterations)
@@ -27,7 +27,14 @@ class DynamicConfigManager:
 
         max_upload = os.getenv("MAX_UPLOAD_MB")
         if max_upload is not None:
-            self.security.max_upload_mb = int(max_upload)
+            value = int(max_upload)
+            if value < 50:  # Prevent accidentally setting too small
+                print(
+                    f"WARNING: MAX_UPLOAD_MB={value} is too small for large files. Using 50MB minimum."
+                )
+                value = 50
+            self.security.max_upload_mb = value
+            self.security.max_file_size_mb = value  # Keep them in sync
 
         db_pool = os.getenv("DB_POOL_SIZE")
         if db_pool is not None:
@@ -69,5 +76,41 @@ class DynamicConfigManager:
     def get_ai_confidence_threshold(self) -> int:
         return self.performance.ai_confidence_threshold
 
+    def get_max_upload_size_mb(self) -> int:
+        """Get maximum upload size in MB."""
+        return getattr(self.security, 'max_upload_mb', 100)
+
+    def get_max_upload_size_bytes(self) -> int:
+        """Get maximum upload size in bytes."""
+        return self.get_max_upload_size_mb() * 1024 * 1024
+
+    def validate_large_file_support(self) -> bool:
+        """Check if configuration supports 50MB+ files."""
+        return self.get_max_upload_size_mb() >= 50
+
 # Global instance
 dynamic_config = DynamicConfigManager()
+
+
+def diagnose_upload_config():
+    """Diagnostic function to check upload configuration"""
+    from config.dynamic_config import dynamic_config
+    import os
+
+    print("=== Upload Configuration Diagnosis ===")
+    print(f"Environment MAX_UPLOAD_MB: {os.getenv('MAX_UPLOAD_MB', 'Not Set')}")
+    print(f"Dynamic Config max_upload_mb: {dynamic_config.security.max_upload_mb}MB")
+    print(f"Calculated max bytes: {dynamic_config.get_max_upload_size_bytes():,}")
+    print(f"Supports 50MB+ files: {dynamic_config.validate_large_file_support()}")
+
+    if hasattr(dynamic_config.security, 'max_file_size_mb'):
+        print(f"max_file_size_mb: {dynamic_config.security.max_file_size_mb}MB")
+
+    # Check if environment is overriding to small value
+    env_value = os.getenv('MAX_UPLOAD_MB')
+    if env_value and int(env_value) < 50:
+        print(f"\u26A0\uFE0F  WARNING: Environment variable MAX_UPLOAD_MB={env_value} is too small!")
+        print("   Run: unset MAX_UPLOAD_MB")
+
+
+diagnose_upload_config()

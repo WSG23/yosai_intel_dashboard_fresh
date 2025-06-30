@@ -19,17 +19,24 @@ _validator = SecureFileValidator()
 
 
 def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
-    """Process uploaded file content into a DataFrame."""
+    """Process uploaded file content with enhanced size handling."""
     try:
         filename = _validator.sanitize_filename(filename)
 
         content_type, content_string = contents.split(",", 1)
         decoded = base64.b64decode(content_string)
-        max_size = dynamic_config.security.max_upload_mb * 1024 * 1024
-        if len(decoded) > max_size:
+
+        # Enhanced size validation with better error messages
+        file_size_mb = len(decoded) / (1024 * 1024)
+        max_size_mb = dynamic_config.get_max_upload_size_mb()
+        max_size_bytes = dynamic_config.get_max_upload_size_bytes()
+
+        if len(decoded) > max_size_bytes:
             return {
                 "success": False,
-                "error": "File too large",
+                "error": f"File too large: {file_size_mb:.1f}MB exceeds limit of {max_size_mb}MB",
+                "file_size_mb": file_size_mb,
+                "max_allowed_mb": max_size_mb
             }
 
         if filename.endswith((".csv", ".xlsx", ".xls", ".json")):
@@ -51,9 +58,11 @@ def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
             "data": df,
             "rows": len(df),
             "columns": list(df.columns),
+            "file_size_mb": file_size_mb,
             "upload_time": datetime.now(),
         }
-    except Exception as e:  # pragma: no cover - best effort
+    except Exception as e:
+        logger.error(f"Error processing file {filename}: {e}")
         return {"success": False, "error": f"Error processing file: {str(e)}"}
 
 
