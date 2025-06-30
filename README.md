@@ -356,6 +356,9 @@ main()
 ```
 This creates `converted_data/Demo3_data_copy.csv.parquet` and prints the first rows.
 
+Legacy `.pkl` files placed in `temp/uploaded_data` are automatically converted
+to Parquet the next time the application starts.
+
 
 ## 🤝 Contributing
 
