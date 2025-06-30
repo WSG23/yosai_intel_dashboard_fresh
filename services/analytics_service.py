@@ -580,97 +580,224 @@ class AnalyticsService:
             return {'status': 'error', 'message': str(e)}
 
     def get_unique_patterns_analysis(self):
-        """Get unique patterns analysis with all required fields including date_range"""
+        """FIXED: Get unique patterns analysis ensuring complete dataset processing"""
+        import logging
+        logger = logging.getLogger(__name__)
+
         try:
+            logger.info("🎯 Starting Unique Patterns Analysis")
+
+            # STEP 1: Get uploaded data with verification
             from pages.file_upload import get_uploaded_data
             uploaded_data = get_uploaded_data()
 
-            if uploaded_data:
-                # Process the first available file
-                filename, df = next(iter(uploaded_data.items()))
-
-                df = map_and_clean(df)
-
-                # Calculate real statistics
-                total_records = len(df)
-                unique_users = df['person_id'].nunique() if 'person_id' in df.columns else 0
-                unique_devices = df['door_id'].nunique() if 'door_id' in df.columns else 0
-
-                # Calculate date range
-                if 'timestamp' in df.columns:
-                    df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
-                    valid_dates = df['timestamp'].dropna()
-                    if len(valid_dates) > 0:
-                        date_span = (valid_dates.max() - valid_dates.min()).days
-                    else:
-                        date_span = 0
-                else:
-                    date_span = 0
-
-                # Analyze user patterns
-                if 'person_id' in df.columns:
-                    user_stats = df.groupby('person_id').size()
-                    power_users = user_stats[user_stats > user_stats.quantile(0.8)].index.tolist()
-                    regular_users = user_stats[user_stats.between(user_stats.quantile(0.2), user_stats.quantile(0.8))].index.tolist()
-                else:
-                    power_users = []
-                    regular_users = []
-
-                # Analyze device patterns
-                if 'door_id' in df.columns:
-                    device_stats = df.groupby('door_id').size()
-                    high_traffic_devices = device_stats[device_stats > device_stats.quantile(0.8)].index.tolist()
-                else:
-                    high_traffic_devices = []
-
-                # Calculate success rate
-                if 'access_result' in df.columns:
-                    success_rate = (df['access_result'].str.lower().isin(['granted', 'success'])).mean()
-                else:
-                    success_rate = 0.95
-
-                # Return ALL required fields including date_range
+            if not uploaded_data:
+                logger.warning("❌ No uploaded data found for unique patterns analysis")
                 return {
-                    'status': 'success',
-                    'data_summary': {
-                        'total_records': total_records,
-                        'date_range': {
-                            'span_days': date_span
-                        },
-                        'unique_entities': {
-                            'users': unique_users,
-                            'devices': unique_devices
-                        }
-                    },
-                    'user_patterns': {
-                        'user_classifications': {
-                            'power_users': power_users[:10],
-                            'regular_users': regular_users[:10]
-                        }
-                    },
-                    'device_patterns': {
-                        'device_classifications': {
-                            'high_traffic_devices': high_traffic_devices[:10]
-                        }
-                    },
-                    'interaction_patterns': {
-                        'total_unique_interactions': unique_users * unique_devices
-                    },
-                    'temporal_patterns': {
-                        'peak_hours': [8, 9, 17],
-                        'peak_days': ['Monday', 'Tuesday']
-                    },
-                    'access_patterns': {
-                        'overall_success_rate': success_rate
-                    },
-                    'recommendations': []
+                    'status': 'no_data',
+                    'message': 'No uploaded files available',
+                    'data_summary': {'total_records': 0}
                 }
+
+            # STEP 2: Process the uploaded data
+            logger.info(f"📁 Found {len(uploaded_data)} uploaded files")
+
+            # Get the first file (or combine all files)
+            all_dfs = []
+            total_original_rows = 0
+
+            for filename, df in uploaded_data.items():
+                original_rows = len(df)
+                total_original_rows += original_rows
+                logger.info(f"   {filename}: {original_rows:,} rows")
+
+                # Clean and map the dataframe
+                cleaned_df = self.clean_uploaded_dataframe(df)
+                all_dfs.append(cleaned_df)
+
+                logger.info(f"   After cleaning: {len(cleaned_df):,} rows")
+
+            # STEP 3: Combine all dataframes
+            if len(all_dfs) == 1:
+                combined_df = all_dfs[0]
             else:
-                return {'status': 'no_data', 'message': 'No uploaded data available'}
+                combined_df = pd.concat(all_dfs, ignore_index=True)
+
+            final_rows = len(combined_df)
+            logger.info(f"📊 COMBINED DATASET: {final_rows:,} total rows")
+
+            # STEP 4: Check for data loss
+            if final_rows != total_original_rows:
+                logger.warning(f"⚠️  Data loss detected: {total_original_rows:,} → {final_rows:,}")
+
+            # STEP 5: Verify we have the expected data
+            if final_rows == 150:
+                logger.error("🚨 FOUND 150 ROW LIMIT in unique patterns analysis!")
+                logger.error(f"   Original rows: {total_original_rows:,}")
+                logger.error(f"   Final rows: {final_rows:,}")
+                # Continue processing but log the issue
+            elif final_rows > 1000:
+                logger.info(f"✅ Processing large dataset: {final_rows:,} rows")
+
+            # STEP 6: Calculate statistics
+            total_records = len(combined_df)
+            unique_users = combined_df['person_id'].nunique() if 'person_id' in combined_df.columns else 0
+            unique_devices = combined_df['door_id'].nunique() if 'door_id' in combined_df.columns else 0
+
+            logger.info("📈 STATISTICS:")
+            logger.info(f"   Total records: {total_records:,}")
+            logger.info(f"   Unique users: {unique_users:,}")
+            logger.info(f"   Unique devices: {unique_devices:,}")
+
+            # STEP 7: Calculate date range
+            date_span = 0
+            if 'timestamp' in combined_df.columns:
+                combined_df['timestamp'] = pd.to_datetime(combined_df['timestamp'], errors='coerce')
+                valid_dates = combined_df['timestamp'].dropna()
+                if len(valid_dates) > 0:
+                    date_span = (valid_dates.max() - valid_dates.min()).days
+                    logger.info(f"   Date span: {date_span} days")
+
+            # STEP 8: Analyze user patterns
+            power_users = []
+            regular_users = []
+            occasional_users = []
+
+            if 'person_id' in combined_df.columns and unique_users > 0:
+                user_stats = combined_df.groupby('person_id').size()
+
+                if len(user_stats) > 0:
+                    # Calculate thresholds
+                    q80 = user_stats.quantile(0.8)
+                    q20 = user_stats.quantile(0.2)
+
+                    power_users = user_stats[user_stats > q80].index.tolist()
+                    regular_users = user_stats[user_stats.between(q20, q80)].index.tolist()
+                    occasional_users = user_stats[user_stats < q20].index.tolist()
+
+                    logger.info(f"   Power users: {len(power_users)}")
+                    logger.info(f"   Regular users: {len(regular_users)}")
+                    logger.info(f"   Occasional users: {len(occasional_users)}")
+
+            # STEP 9: Analyze device patterns
+            high_traffic_devices = []
+            moderate_traffic_devices = []
+            low_traffic_devices = []
+
+            if 'door_id' in combined_df.columns and unique_devices > 0:
+                device_stats = combined_df.groupby('door_id').size()
+
+                if len(device_stats) > 0:
+                    # Calculate thresholds
+                    q80 = device_stats.quantile(0.8)
+                    q20 = device_stats.quantile(0.2)
+
+                    high_traffic_devices = device_stats[device_stats > q80].index.tolist()
+                    moderate_traffic_devices = device_stats[device_stats.between(q20, q80)].index.tolist()
+                    low_traffic_devices = device_stats[device_stats < q20].index.tolist()
+
+                    logger.info(f"   High traffic devices: {len(high_traffic_devices)}")
+                    logger.info(f"   Moderate traffic devices: {len(moderate_traffic_devices)}")
+                    logger.info(f"   Low traffic devices: {len(low_traffic_devices)}")
+
+            # STEP 10: Calculate interactions
+            total_interactions = 0
+            if 'person_id' in combined_df.columns and 'door_id' in combined_df.columns:
+                interaction_pairs = combined_df.groupby(['person_id', 'door_id']).size()
+                total_interactions = len(interaction_pairs)
+                logger.info(f"   Total unique interactions: {total_interactions:,}")
+
+            # STEP 11: Calculate success rate
+            success_rate = 0.0
+            if 'access_result' in combined_df.columns:
+                success_mask = combined_df['access_result'].str.lower().str.contains(
+                    'grant|allow|success|permit', case=False, na=False
+                )
+                success_rate = success_mask.mean()
+                logger.info(f"   Success rate: {success_rate:.2%}")
+
+            # STEP 12: Build the complete result
+            result = {
+                'status': 'success',
+                'analysis_timestamp': datetime.now().isoformat(),
+
+                # CRITICAL: This is what shows in the "Database Overview" card
+                'data_summary': {
+                    'total_records': total_records,  # This MUST be your actual row count
+                    'unique_entities': {
+                        'users': unique_users,
+                        'devices': unique_devices,
+                        'interactions': total_interactions
+                    },
+                    'date_range': {
+                        'span_days': date_span
+                    }
+                },
+
+                'user_patterns': {
+                    'total_unique_users': unique_users,
+                    'user_classifications': {
+                        'power_users': power_users[:10],  # Limit for display
+                        'regular_users': regular_users[:10],
+                        'occasional_users': occasional_users[:10]
+                    }
+                },
+
+                'device_patterns': {
+                    'total_unique_devices': unique_devices,
+                    'device_classifications': {
+                        'high_traffic_devices': high_traffic_devices[:10],
+                        'moderate_traffic_devices': moderate_traffic_devices[:10],
+                        'low_traffic_devices': low_traffic_devices[:10],
+                        'secure_devices': [],  # Placeholder
+                        'popular_devices': high_traffic_devices[:5],
+                        'problematic_devices': []  # Placeholder
+                    }
+                },
+
+                'interaction_patterns': {
+                    'total_unique_interactions': total_interactions,
+                    'interaction_statistics': {
+                        'unique_pairs': total_interactions
+                    }
+                },
+
+                'temporal_patterns': {
+                    'date_span_days': date_span
+                },
+
+                'access_patterns': {
+                    'overall_success_rate': success_rate,
+                    'success_percentage': success_rate * 100
+                },
+
+                'recommendations': []  # Placeholder
+            }
+
+            # STEP 13: Final verification log
+            result_total = result['data_summary']['total_records']
+            logger.info("🎉 UNIQUE PATTERNS ANALYSIS COMPLETE")
+            logger.info(f"   Result total_records: {result_total:,}")
+
+            if result_total == 150:
+                logger.error("❌ STILL SHOWING 150 - CHECK DATA PROCESSING!")
+            elif result_total == total_original_rows:
+                logger.info(f"✅ SUCCESS: Correctly showing {result_total:,} rows")
+            else:
+                logger.warning(f"⚠️  Unexpected count: {result_total:,} (expected {total_original_rows:,})")
+
+            return result
 
         except Exception as e:
-            logger.error(f"Error in get_unique_patterns_analysis: {e}")
-            return {'status': 'error', 'message': str(e)}
+            logger.error(f"❌ Unique patterns analysis failed: {e}")
+            import traceback
+            traceback.print_exc()
+
+            return {
+                'status': 'error',
+                'message': f'Unique patterns analysis failed: {str(e)}',
+                'data_summary': {'total_records': 0}
+            }
 
     def health_check(self) -> Dict[str, Any]:
         """Check service health"""
