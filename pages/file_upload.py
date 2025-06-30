@@ -15,7 +15,7 @@ from dash._callback_context import callback_context
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
-from services.door_mapping_service import door_mapping_service
+from services.device_learning_service import DeviceLearningService
 from services.upload_service import process_uploaded_file, create_file_preview
 from utils.upload_store import uploaded_data_store as _uploaded_data_store
 
@@ -26,6 +26,9 @@ from services.ai_suggestions import generate_column_suggestions
 
 
 logger = logging.getLogger(__name__)
+
+# Initialize device learning service
+learning_service = DeviceLearningService()
 
 
 def analyze_device_name_with_ai(device_name):
@@ -450,9 +453,17 @@ def process_uploaded_files(
                 current_file_info = file_info_dict[filename]
 
                 try:
-                    applied = door_mapping_service.apply_learned_mappings(df, filename)
-                    if applied:
-                        logger.info("✅ Loaded saved mappings - AI SKIPPED")
+                    user_mappings = learning_service.get_user_device_mappings(filename)
+                    if user_mappings:
+                        from services.ai_mapping_store import ai_mapping_store
+
+                        ai_mapping_store.clear()
+                        for device, mapping in user_mappings.items():
+                            mapping["source"] = "user_confirmed"
+                            ai_mapping_store.set(device, mapping)
+                        logger.info(
+                            f"✅ Loaded {len(user_mappings)} saved mappings - AI SKIPPED"
+                        )
                     else:
                         logger.info("🆕 First upload - AI will be used")
                         from services.ai_mapping_store import ai_mapping_store
@@ -989,44 +1000,40 @@ def populate_modal_content(is_open, file_info):
 def save_confirmed_device_mappings(
     confirm_clicks, floors, security, access, special, file_info
 ):
-    """Save confirmed device mappings and persist learning"""
+    """Save confirmed device mappings to database"""
     if not confirm_clicks or not file_info:
-        return no_update, no_update, no_update, no_update
+        return no_update, no_update, no_update
 
     try:
         devices = file_info.get("devices", [])
         filename = file_info.get("filename", "")
 
-        df = get_uploaded_data().get(filename)
-
-        if df is None:
-            raise ValueError("Uploaded data not found")
-
-        devices_list = []
+        # Create user mappings from inputs
+        user_mappings = {}
         for i, device in enumerate(devices):
-            mapping = {
+            user_mappings[device] = {
                 "floor_number": floors[i] if i < len(floors) else 1,
                 "security_level": security[i] if i < len(security) else 5,
                 "is_entry": "entry" in (access[i] if i < len(access) else []),
                 "is_exit": "exit" in (access[i] if i < len(access) else []),
-                "is_restricted": "is_restricted" in (special[i] if i < len(special) else []),
+                "is_restricted": "is_restricted"
+                in (special[i] if i < len(special) else []),  # ADD THIS
                 "confidence": 1.0,
                 "device_name": device,
                 "source": "user_confirmed",
                 "saved_at": datetime.now().isoformat(),
             }
-            devices_list.append({"door_id": device, **mapping})
 
-        fingerprint = door_mapping_service.save_confirmed_mappings(
-            df, filename, devices_list
-        )
+        # Save to learning service database
+        learning_service.save_user_device_mappings(filename, user_mappings)
 
+        # Update global mappings
         from services.ai_mapping_store import ai_mapping_store
 
-        ai_mapping_store.update({d["door_id"]: d for d in devices_list})
+        ai_mapping_store.update(user_mappings)
 
         logger.info(
-            f"\u2705 Saved {len(devices_list)} confirmed device mappings to database"
+            f"\u2705 Saved {len(user_mappings)} confirmed device mappings to database"
         )
 
         success_alert = dbc.Toast(
@@ -1037,7 +1044,7 @@ def save_confirmed_device_mappings(
             duration=3000,
         )
 
-        return success_alert, False, False, fingerprint
+        return success_alert, False, False
 
     except Exception as e:
         logger.info(f"\u274c Error saving device mappings: {e}")
@@ -1150,7 +1157,6 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             Output("toast-container", "children", allow_duplicate=True),
             Output("column-verification-modal", "is_open", allow_duplicate=True),
             Output("device-verification-modal", "is_open", allow_duplicate=True),
-            Output("current-session-id", "data", allow_duplicate=True),
         ],
         [Input("device-verify-confirm", "n_clicks")],
         [
