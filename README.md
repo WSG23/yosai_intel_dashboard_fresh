@@ -146,6 +146,7 @@ dashboard. Key entry points include `tests/test_integration.py`,
 - **Type-Safe**: Full type annotations and validation
 - **CSRF Protection Plugin**: Optional production-ready CSRF middleware for Dash
 - **Machine-Learned Column Mapping**: Trainable model for smarter CSV header recognition
+- **Hardened SQL Injection Prevention**: Uses `sqlparse` and `bleach` to validate queries
 
 **Note:** The file upload and column mapping functionality relies on `pandas`.
 If `pandas` is missing these pages will be disabled. Ensure you run
@@ -299,6 +300,23 @@ manager.execute_query_with_retry("SELECT 1")
 - Reusable UI components
 - Independent and testable
 - Type-safe prop interfaces
+
+### SQL Injection Prevention
+Use `security.SQLInjectionPrevention` to sanitize query parameters in both Flask and Dash routes. Example:
+
+```python
+from security.sql_validator import SQLInjectionPrevention
+
+validator = SQLInjectionPrevention()
+
+@app.route('/search')
+def search():
+    term = validator.validate_query_parameter(request.args.get('q', ''))
+    validator.enforce_parameterization(
+        'SELECT * FROM records WHERE name=?', (term,)
+    )
+    return query_db(term)
+```
 
 ## 🔐 Authentication & Secrets
 
