@@ -28,7 +28,12 @@ class DataLoader:
     def _load_consolidated_mappings(self) -> Dict[str, Any]:
         try:
             if self.mappings_file.exists():
-                with open(self.mappings_file, "r") as fh:
+                with open(
+                    self.mappings_file,
+                    "r",
+                    encoding="utf-8",
+                    errors="replace",
+                ) as fh:
                     return json.load(fh)
             return {}
         except Exception as exc:  # pragma: no cover - best effort

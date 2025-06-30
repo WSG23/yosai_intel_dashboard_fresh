@@ -23,7 +23,12 @@ class FileProcessingService:
         if path.endswith(".csv"):
             return pd.read_csv(path)
         if path.endswith(".json"):
-            with open(path, "r") as f:
+            with open(
+                path,
+                "r",
+                encoding="utf-8",
+                errors="replace",
+            ) as f:
                 data = json.load(f)
             return pd.DataFrame(data)
         if path.endswith(('.xlsx', '.xls')):

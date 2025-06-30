@@ -39,7 +39,12 @@ class UploadedDataStore:
     def _load_from_disk(self) -> None:
         try:
             if self._info_path().exists():
-                with open(self._info_path(), "r") as f:
+                with open(
+                    self._info_path(),
+                    "r",
+                    encoding="utf-8",
+                    errors="replace",
+                ) as f:
                     self._file_info_store = json.load(f)
             for fname in self._file_info_store.keys():
                 fpath = self._get_file_path(fname)
@@ -61,7 +66,7 @@ class UploadedDataStore:
                     "upload_time": datetime.now().isoformat(),
                     "size_mb": round(df.memory_usage(deep=True).sum() / 1024 / 1024, 2),
                 }
-                with open(self._info_path(), "w") as f:
+                with open(self._info_path(), "w", encoding="utf-8") as f:
                     json.dump(self._file_info_store, f, indent=2)
             except Exception as e:  # pragma: no cover - best effort
                 logger.error(f"Error saving uploaded data: {e}")
