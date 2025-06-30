@@ -5,6 +5,7 @@ Fixed Main Application - No import issues
 import logging
 import os
 import sys
+import importlib
 
 # Configure logging first
 logging.basicConfig(
@@ -49,6 +50,22 @@ def check_learning_status():
         logger.info(f"   File size: {file_size} bytes")
 
 
+def verify_dependencies() -> None:
+    """Ensure critical third-party libraries are available."""
+    required = ["bleach", "pandas"]
+    missing = []
+    for pkg in required:
+        try:
+            importlib.import_module(pkg)
+        except ImportError:
+            missing.append(pkg)
+
+    if missing:
+        logger.error("Missing required dependencies: %s", ", ".join(missing))
+        logger.info("\n💡 Run ./scripts/setup.sh to install them")
+        sys.exit(1)
+
+
 def print_startup_info(app_config):
     """Print application startup information"""
     logger.info("\n" + "=" * 60)
@@ -77,6 +94,7 @@ def main():
             config = get_config()
             app_config = config.get_app_config()
             logger.info("✅ Configuration loaded successfully")
+            verify_dependencies()
         except Exception as e:
             logger.error(f"❌ Failed to load configuration: {e}")
             logger.info(f"\n❌ Configuration Error: {e}")
