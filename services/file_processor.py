@@ -79,20 +79,47 @@ class FileProcessor:
             }
     
     def _parse_csv(self, file_path: str) -> pd.DataFrame:
-        """Parse CSV file using pandas automatic delimiter detection"""
+        """Parse CSV file - FIXED to read complete dataset."""
 
-        # Detect header with automatic delimiter detection
-        header = pd.read_csv(file_path, nrows=0, sep=None, engine="python").columns
-        parse_dates = ["timestamp"] if "timestamp" in header else False
+        # Unicode handling with fallback encodings
+        encodings = ['utf-8', 'utf-8-sig', 'latin1', 'cp1252']
 
-        # Read the entire file once using the detected delimiter
-        return pd.read_csv(
-            file_path,
-            sep=None,
-            engine="python",
-            encoding="utf-8",
-            parse_dates=parse_dates,
-        )
+        for encoding in encodings:
+            try:
+                logger.info(f"Reading complete CSV file: {file_path}")
+
+                # Detect delimiter
+                with open(file_path, 'r', encoding=encoding) as f:
+                    sample = f.read(8192)
+
+                delimiter = None
+                for sep in [',', ';', '\t', '|']:
+                    if sample.count(sep) > sample.count(','):
+                        delimiter = sep
+                        break
+
+                header = pd.read_csv(file_path, nrows=0, encoding=encoding, sep=delimiter).columns
+                parse_dates = ['timestamp'] if 'timestamp' in header else False
+
+                df = pd.read_csv(
+                    file_path,
+                    sep=delimiter,
+                    encoding=encoding,
+                    parse_dates=parse_dates,
+                    dtype=str,
+                    na_values=['', 'NULL', 'null', 'None', 'nan', 'NaN']
+                )
+
+                logger.info(f"Successfully loaded {len(df):,} rows from {file_path}")
+                return df
+
+            except UnicodeDecodeError:
+                continue
+            except Exception as e:
+                logger.warning(f"Failed to read {file_path} with {encoding}: {e}")
+                continue
+
+        raise ValueError(f"Could not read CSV file {file_path} with any encoding")
     
     def _parse_json(self, file_path: str) -> pd.DataFrame:
         """Parse JSON file"""
