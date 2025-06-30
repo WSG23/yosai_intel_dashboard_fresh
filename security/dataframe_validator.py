@@ -14,7 +14,6 @@ class DataFrameSecurityValidator:
 
     def __init__(self):
         try:
-            from config.dynamic_config import dynamic_config
             self.max_upload_mb = getattr(dynamic_config.security, "max_upload_mb", 500)
             self.max_analysis_mb = getattr(dynamic_config.security, "max_analysis_mb", 1000)
             if hasattr(dynamic_config, 'analytics'):

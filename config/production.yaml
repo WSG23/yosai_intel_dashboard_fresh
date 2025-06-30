@@ -35,14 +35,15 @@ sample_files:
 
 analytics:
   cache_timeout_seconds: 60
-  max_records_per_query: 50000
+  max_records_per_query: 500000
   enable_real_time: true
-  batch_size: 5000
-  chunk_size: 10000
+  batch_size: 25000
+  chunk_size: 50000
   enable_chunked_analysis: true
   anomaly_detection_enabled: true
   ml_models_path: models/ml
   data_retention_days: 30
+  query_timeout_seconds: 300
 
 monitoring:
   health_check_interval: 30
