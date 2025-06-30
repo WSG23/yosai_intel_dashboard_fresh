@@ -465,114 +465,38 @@ def get_initial_message():
 
 
 def analyze_data_with_service(data_source: str, analysis_type: str) -> Dict[str, Any]:
-    """Generate different analysis based on type"""
+    """Generate analysis using the analytics service with chunked processing."""
     try:
         service = get_analytics_service_safe()
         if not service:
             return {"error": "Analytics service not available"}
 
-        # Convert data source format
         if data_source.startswith("upload:") or data_source == "service:uploaded":
-            source_name = "uploaded"
-        elif data_source.startswith("service:"):
-            source_name = data_source.replace("service:", "")
+            from pages.file_upload import get_uploaded_data
+
+            uploaded_files = get_uploaded_data()
+            if not uploaded_files:
+                return {"error": "No uploaded files found"}
+
+            if data_source.startswith("upload:"):
+                filename = data_source.replace("upload:", "")
+            else:
+                filename = list(uploaded_files.keys())[0]
+
+            df = uploaded_files.get(filename)
+            if df is None:
+                return {"error": f"File {filename} not found"}
         else:
-            source_name = data_source
+            df, _ = service.data_loader.get_processed_database()
+            if df.empty:
+                return {"error": "No data available"}
 
-        # Get base analytics
-        analytics_results = service.get_analytics_by_source(source_name)
+        analysis_types = [analysis_type]
+        results = service.analyze_with_chunking(df, analysis_types)
 
-        if analytics_results.get('status') == 'error':
-            return {"error": analytics_results.get('message', 'Unknown error')}
-
-        # Get base metrics
-        total_events = analytics_results.get('total_events', 0)
-        unique_users = analytics_results.get('unique_users', 0)
-        unique_doors = analytics_results.get('unique_doors', 0)
-        success_rate = analytics_results.get('success_rate', 0)
-
-        # Fix success rate if needed
-        if success_rate == 0 and 'successful_events' in analytics_results:
-            successful_events = analytics_results.get('successful_events', 0)
-            if total_events > 0:
-                success_rate = successful_events / total_events
-
-        # Generate DIFFERENT results based on analysis type
-        if analysis_type == "security":
-            return {
-                "analysis_type": "Security Patterns",
-                "data_source": data_source,
-                "total_events": total_events,
-                "unique_users": unique_users,
-                "unique_doors": unique_doors,
-                "success_rate": success_rate,
-                "security_score": min(100, success_rate * 100 + 20),
-                "failed_attempts": total_events - int(total_events * success_rate),
-                "risk_level": "Low" if success_rate > 0.9 else "Medium" if success_rate > 0.7 else "High",
-                "date_range": analytics_results.get('date_range', {}),
-                "analysis_focus": "Security threats, failed access attempts, and unauthorized access patterns",
-            }
-
-        elif analysis_type == "trends":
-            return {
-                "analysis_type": "Access Trends",
-                "data_source": data_source,
-                "total_events": total_events,
-                "unique_users": unique_users,
-                "unique_doors": unique_doors,
-                "success_rate": success_rate,
-                "daily_average": total_events / 30,  # Assume 30 days
-                "peak_usage": "High activity detected",
-                "trend_direction": "Increasing" if total_events > 100000 else "Stable",
-                "date_range": analytics_results.get('date_range', {}),
-                "analysis_focus": "Usage patterns, peak times, and access frequency trends over time",
-            }
-
-        elif analysis_type == "behavior":
-            return {
-                "analysis_type": "User Behavior",
-                "data_source": data_source,
-                "total_events": total_events,
-                "unique_users": unique_users,
-                "unique_doors": unique_doors,
-                "success_rate": success_rate,
-                "avg_accesses_per_user": total_events / unique_users if unique_users > 0 else 0,
-                "heavy_users": int(unique_users * 0.1),  # Top 10%
-                "behavior_score": "Normal" if success_rate > 0.8 else "Unusual",
-                "date_range": analytics_results.get('date_range', {}),
-                "analysis_focus": "Individual user patterns, frequency analysis, and behavioral anomalies",
-            }
-
-        elif analysis_type == "anomaly":
-            return {
-                "analysis_type": "Anomaly Detection",
-                "data_source": data_source,
-                "total_events": total_events,
-                "unique_users": unique_users,
-                "unique_doors": unique_doors,
-                "success_rate": success_rate,
-                "anomalies_detected": int(total_events * (1 - success_rate)),
-                "threat_level": "Critical" if success_rate < 0.5 else "Warning" if success_rate < 0.8 else "Normal",
-                "suspicious_activities": "Multiple failed attempts detected" if success_rate < 0.9 else "No major issues",
-                "date_range": analytics_results.get('date_range', {}),
-                "analysis_focus": "Suspicious access patterns, security breaches, and abnormal behaviors",
-            }
-
-        else:
-            # Default fallback
-            return {
-                "analysis_type": analysis_type,
-                "data_source": data_source,
-                "total_events": total_events,
-                "unique_users": unique_users,
-                "unique_doors": unique_doors,
-                "success_rate": success_rate,
-                "date_range": analytics_results.get('date_range', {}),
-                "analysis_focus": f"General {analysis_type} analysis",
-            }
-
+        return results
     except Exception as e:
-        return {"error": f"Service analysis failed: {str(e)}"}
+        return {"error": f"Analysis failed: {str(e)}"}
 
 
 def create_data_quality_display_corrected(data_source: str) -> html.Div:
