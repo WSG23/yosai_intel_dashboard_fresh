@@ -22,6 +22,7 @@ from utils.upload_store import uploaded_data_store as _uploaded_data_store
 from components.column_verification import (
     save_verified_mappings,
 )
+from services.ai_suggestions import generate_column_suggestions
 
 
 logger = logging.getLogger(__name__)
@@ -301,27 +302,8 @@ def clear_uploaded_data():
     logger.info("Uploaded data cleared")
 
 
-def get_ai_column_suggestions(columns: List[str]) -> Dict[str, Dict[str, Any]]:
-    """Generate AI suggestions for column mapping"""
-    suggestions = {}
 
-    for col in columns:
-        col_lower = col.lower().strip()
 
-        if any(word in col_lower for word in ["time", "date", "stamp"]):
-            suggestions[col] = {"field": "timestamp", "confidence": 0.8}
-        elif any(word in col_lower for word in ["person", "user", "employee"]):
-            suggestions[col] = {"field": "person_id", "confidence": 0.7}
-        elif any(word in col_lower for word in ["door", "location", "device"]):
-            suggestions[col] = {"field": "door_id", "confidence": 0.7}
-        elif any(word in col_lower for word in ["access", "result", "status"]):
-            suggestions[col] = {"field": "access_result", "confidence": 0.6}
-        elif any(word in col_lower for word in ["token", "badge", "card"]):
-            suggestions[col] = {"field": "token_id", "confidence": 0.6}
-        else:
-            suggestions[col] = {"field": "", "confidence": 0.0}
-
-    return suggestions
 
 
 def get_file_info() -> Dict[str, Dict[str, Any]]:
@@ -390,7 +372,7 @@ def restore_upload_state(pathname: str) -> Tuple[Any, Any, Any, Any, Any, Any, A
             "rows": rows,
             "columns": cols,
             "column_names": df.columns.tolist(),
-            "ai_suggestions": get_ai_column_suggestions(df.columns.tolist()),
+            "ai_suggestions": generate_column_suggestions(df.columns.tolist()),
         }
 
     upload_nav = html.Div(
@@ -466,7 +448,7 @@ def process_uploaded_files(
                     "columns": cols,
                     "column_names": column_names,
                     "upload_time": result["upload_time"].isoformat(),
-                    "ai_suggestions": get_ai_column_suggestions(column_names),
+                    "ai_suggestions": generate_column_suggestions(column_names),
                 }
                 current_file_info = file_info_dict[filename]
 

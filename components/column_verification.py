@@ -15,6 +15,7 @@ import logging
 from datetime import datetime
 import json
 import re
+from services.ai_suggestions import generate_column_suggestions
 
 logger = logging.getLogger(__name__)
 
@@ -425,22 +426,7 @@ def _analyze_sample_data(sample_values: List[str], column_name: str) -> Dict[str
 
 def _get_fallback_suggestions(columns: List[str]) -> Dict[str, Dict[str, Any]]:
     """Fallback column suggestions using simple heuristics"""
-    suggestions = {}
-    for column in columns:
-        column_lower = column.lower()
-        suggestion = {'field': '', 'confidence': 0.0}
-        if any(keyword in column_lower for keyword in ['person', 'user', 'employee', 'name']):
-            suggestion = {'field': 'person_id', 'confidence': 0.7}
-        elif any(keyword in column_lower for keyword in ['door', 'location', 'device', 'room']):
-            suggestion = {'field': 'door_id', 'confidence': 0.7}
-        elif any(keyword in column_lower for keyword in ['time', 'date', 'stamp']):
-            suggestion = {'field': 'timestamp', 'confidence': 0.8}
-        elif any(keyword in column_lower for keyword in ['result', 'status', 'access']):
-            suggestion = {'field': 'access_result', 'confidence': 0.7}
-        elif any(keyword in column_lower for keyword in ['token', 'badge', 'card']):
-            suggestion = {'field': 'token_id', 'confidence': 0.6}
-        suggestions[column] = suggestion
-    return suggestions
+    return generate_column_suggestions(columns)
 
 def save_verified_mappings(filename: str, column_mappings: Dict[str, str], 
                           metadata: Dict[str, Any]) -> bool:
