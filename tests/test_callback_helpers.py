@@ -34,7 +34,7 @@ def test_run_service_analysis_error(monkeypatch):
 
 def test_run_unique_patterns_analysis(monkeypatch):
     class FakeService:
-        def get_unique_patterns_analysis(self):
+        def get_unique_patterns_analysis(self, data_source):
             return {
                 "status": "success",
                 "data_summary": {
@@ -83,15 +83,15 @@ def test_run_unique_patterns_analysis(monkeypatch):
             }
 
     monkeypatch.setattr(cb, "AnalyticsService", lambda: FakeService())
-    result = cb.run_unique_patterns_analysis()
+    result = cb.run_unique_patterns_analysis("service:test")
     assert isinstance(result, html.Div)
 
 
 def test_run_unique_patterns_analysis_no_data(monkeypatch):
     class FakeService:
-        def get_unique_patterns_analysis(self):
+        def get_unique_patterns_analysis(self, data_source):
             return {"status": "no_data"}
 
     monkeypatch.setattr(cb, "AnalyticsService", lambda: FakeService())
-    result = cb.run_unique_patterns_analysis()
+    result = cb.run_unique_patterns_analysis("service:test")
     assert isinstance(result, dbc.Alert)
