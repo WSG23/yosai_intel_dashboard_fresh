@@ -74,11 +74,13 @@ class SecurityPatternsAnalyzer:
             'event_id': 'count',
             'door_id': 'nunique',
             'timestamp': ['min', 'max']
-        }).flatten()
+        })
+        # Flatten the MultiIndex columns
+        failure_by_person.columns = ['event_count', 'unique_doors', 'first_ts', 'last_ts']
         
         # Identify high-risk patterns
         high_failure_users = failure_by_person[
-            failure_by_person['event_id'] >= 5
+            failure_by_person['event_count'] >= 5
         ].index.tolist()
         
         # Analyze failure timing patterns
