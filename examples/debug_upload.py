@@ -161,8 +161,7 @@ def debug_file_processor():
     logger.info("\n🔍 Testing file processor...")
     
     try:
-        from services.file_processor_service import FileProcessorService
-        from services.upload_utils import parse_uploaded_file
+        from services.upload_service import process_uploaded_file
         
         # Create a simple test CSV content
         test_csv = "name,value\ntest1,123\ntest2,456"
@@ -170,8 +169,8 @@ def debug_file_processor():
         encoded = base64.b64encode(test_csv.encode('utf-8')).decode('utf-8')
         data_url = f"data:text/csv;base64,{encoded}"
         
-        # Test parsing
-        result = parse_uploaded_file(data_url, "test.csv")
+        # Test parsing using the main upload service
+        result = process_uploaded_file(data_url, "test.csv")
         
         if result.get('success'):
             logger.info("✅ File processing works")
