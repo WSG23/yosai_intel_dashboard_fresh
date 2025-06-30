@@ -13,7 +13,7 @@ from .analysis import (
     create_analysis_results_display_safe,
     AI_SUGGESTIONS_AVAILABLE,
 )
-from services.analytics_service import AnalyticsService
+from services import AnalyticsService
 
 
 def run_suggests_analysis(data_source: str):

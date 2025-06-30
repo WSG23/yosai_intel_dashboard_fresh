@@ -22,15 +22,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # Add this import
-from services.analytics_service import AnalyticsService
+from services import AnalyticsService
 
 # Internal service imports with CORRECTED paths
-try:
-    from services.analytics_service import AnalyticsService
-
-    ANALYTICS_SERVICE_AVAILABLE = True
-except ImportError:
-    ANALYTICS_SERVICE_AVAILABLE = False
+ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
 
 try:
     from components.column_verification import get_ai_suggestions_for_file
@@ -67,12 +62,11 @@ logger = logging.getLogger(__name__)
 
 
 def get_analytics_service_safe():
-    """Safely get analytics service"""
-    try:
-        from services.analytics_service import AnalyticsService
-        return AnalyticsService()
-    except ImportError:
+    """Safely instantiate the analytics service if available."""
+    if AnalyticsService is None:
         return None
+    try:
+        return AnalyticsService()
     except Exception:
         return None
 

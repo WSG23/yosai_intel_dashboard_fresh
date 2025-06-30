@@ -1,5 +1,5 @@
 import pandas as pd
-from services.analytics_service import AnalyticsService
+from services import AnalyticsService
 
 
 def test_process_uploaded_data_directly_chunked(tmp_path):

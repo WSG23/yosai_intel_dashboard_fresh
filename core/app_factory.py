@@ -451,7 +451,7 @@ def _initialize_services() -> None:
     """Initialize all application services"""
     try:
         # Initialize analytics service
-        from services.analytics_service import get_analytics_service
+        from services import get_analytics_service
 
         analytics_service = get_analytics_service()
         health = analytics_service.health_check()

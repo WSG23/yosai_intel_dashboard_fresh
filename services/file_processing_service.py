@@ -5,7 +5,7 @@ import json
 import logging
 from typing import List, Tuple
 
-from services.file_processor import FileProcessor
+from services import FileProcessor
 
 logger = logging.getLogger(__name__)
 

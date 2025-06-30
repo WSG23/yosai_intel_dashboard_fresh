@@ -1,5 +1,5 @@
 import pandas as pd
-from services.analytics_service import AnalyticsService
+from services import AnalyticsService
 
 
 def test_load_uploaded_data(monkeypatch):
