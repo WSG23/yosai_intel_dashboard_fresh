@@ -4,7 +4,7 @@ from .auth_service import SecurityService
 from .input_validator import InputValidator, Validator
 from .file_validator import SecureFileValidator
 from .dataframe_validator import DataFrameSecurityValidator
-from .sql_validator import SQLInjectionPrevention
+from .sql_validator import SQLInjectionPrevention, SQLSecurityConfig
 from .xss_validator import XSSPrevention
 from .business_logic_validator import BusinessLogicValidator
 from .validation_middleware import ValidationMiddleware, ValidationOrchestrator
@@ -17,6 +17,7 @@ __all__ = [
     "Validator",
     "SecureFileValidator",
     "DataFrameSecurityValidator",
+    "SQLSecurityConfig",
     "SQLInjectionPrevention",
     "XSSPrevention",
     "BusinessLogicValidator",

@@ -13,10 +13,11 @@ from utils.unicode_handler import sanitize_unicode_input
 from dataclasses import dataclass
 from enum import Enum
 from .security_patterns import (
-    SQL_INJECTION_PATTERNS as RAW_SQL_PATTERNS,
     XSS_PATTERNS as RAW_XSS_PATTERNS,
     PATH_TRAVERSAL_PATTERNS as RAW_PATH_PATTERNS,
 )
+from security.sql_validator import SQLInjectionPrevention
+from security.validation_exceptions import ValidationError
 
 
 class SecurityLevel(Enum):
@@ -47,8 +48,6 @@ class SecurityValidator:
         self.logger = logging.getLogger(__name__)
 
     # Compiled patterns for performance
-    SQL_PATTERNS = [re.compile(p, re.IGNORECASE) for p in RAW_SQL_PATTERNS]
-
     XSS_PATTERNS = [re.compile(p, re.IGNORECASE) for p in RAW_XSS_PATTERNS]
 
     PATH_PATTERNS = [re.compile(p, re.IGNORECASE) for p in RAW_PATH_PATTERNS]
@@ -98,19 +97,19 @@ class SecurityValidator:
         self, value: str, field_name: str
     ) -> List[SecurityIssue]:
         """Check for SQL injection patterns."""
-        issues = []
-        for pattern in self.SQL_PATTERNS:
-            if pattern.search(value):
-                issues.append(
-                    self._create_security_issue(
-                        SecurityLevel.CRITICAL,
-                        "Potential SQL injection detected",
-                        field_name,
-                        "Use parameterized queries and input sanitization",
-                    )
+        validator = SQLInjectionPrevention()
+        try:
+            validator.validate_query_parameter(value)
+            return []
+        except ValidationError:
+            return [
+                self._create_security_issue(
+                    SecurityLevel.CRITICAL,
+                    "Potential SQL injection detected",
+                    field_name,
+                    "Use parameterized queries and input sanitization",
                 )
-                break
-        return issues
+            ]
 
     def _validate_xss_patterns(
         self, value: str, field_name: str

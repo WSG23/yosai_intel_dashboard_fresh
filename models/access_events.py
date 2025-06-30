@@ -12,6 +12,8 @@ from .base import BaseModel
 from .enums import AccessResult, BadgeStatus
 from security.sql_validator import SQLInjectionPrevention
 
+_sql_validator = SQLInjectionPrevention()
+
 class AccessEventModel(BaseModel):
     """Model for access control events with full type safety"""
     
@@ -137,7 +139,7 @@ class AccessEventModel(BaseModel):
     
     def get_hourly_distribution(self, days: int = 7) -> pd.DataFrame:
         """Get hourly access distribution for analytics"""
-        SQLInjectionPrevention.validate_query_parameter(days)
+        _sql_validator.validate_query_parameter(days)
         query = """
         SELECT
             strftime('%H', timestamp) as hour,
@@ -203,7 +205,7 @@ class AccessEventModel(BaseModel):
     
     def get_trend_analysis(self, days: int = 30) -> pd.DataFrame:
         """Get daily trend analysis"""
-        SQLInjectionPrevention.validate_query_parameter(days)
+        _sql_validator.validate_query_parameter(days)
         query = """
         SELECT
             date(timestamp) as date,
