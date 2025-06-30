@@ -572,7 +572,10 @@ def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Di
 
         os.makedirs("data/training", exist_ok=True)
         with open(
-            f"data/training/mappings_{datetime.now().strftime('%Y%m%d')}.jsonl", "a"
+            f"data/training/mappings_{datetime.now().strftime('%Y%m%d')}.jsonl",
+            "a",
+            encoding="utf-8",
+            errors="replace",
         ) as f:
             f.write(json.dumps(training_data) + "\n")
 
