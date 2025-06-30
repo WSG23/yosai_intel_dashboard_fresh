@@ -159,7 +159,6 @@ def layout():
 
         # Hidden stores
         stores = [
-            dcc.Store(id="analytics-results-store", data={}),
             dcc.Store(id="service-health-store", data={}),
             html.Div(id="hidden-trigger", style={"display": "none"})
         ]
