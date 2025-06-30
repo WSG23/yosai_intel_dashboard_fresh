@@ -81,19 +81,17 @@ def analyze_device_name_with_ai(device_name):
         }
 
 
-def build_success_alert(
-    filename: str,
-    rows: int,
-    cols: int,
-    *,
-    prefix: str = "Successfully uploaded",
-    processed: bool = True,
-) -> dbc.Alert:
-    """Return a Bootstrap alert describing a successful file upload."""
+def build_success_alert(filename: str, rows: int, cols: int, prefix: str = "Successfully uploaded", processed: bool = True) -> dbc.Alert:
+    """Create success alert with current data - FIXED to show actual counts"""
 
-    details = f"\U0001F4CA {rows:,} rows × {cols} columns"
+    # CRITICAL: Use actual current data, not cached values
+    details = f"📊 {rows:,} rows × {cols} columns"
     if processed:
         details += " processed"
+
+    # Clear timestamp to avoid showing stale data
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%H:%M:%S")
 
     return dbc.Alert(
         [
@@ -101,7 +99,11 @@ def build_success_alert(
                 [html.I(className="fas fa-check-circle me-2"), f"{prefix} {filename}"],
                 className="alert-heading",
             ),
-            html.P(details),
+            html.P([
+                details,
+                html.Br(),
+                html.Small(f"Processed at {timestamp}", className="text-muted")
+            ]),
         ],
         color="success",
         className="mb-3",

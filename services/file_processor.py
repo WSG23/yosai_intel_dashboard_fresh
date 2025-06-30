@@ -300,69 +300,67 @@ class FileProcessor:
         return validation_result
 
     def _validate_data_content(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Validate the actual data content after column mapping - NO EMOJIS"""
+        """Validate data content - FIXED to not remove rows during validation"""
 
-        logger.info("[INFO] Validating data content...")
-        validation_errors = []
+        logger.info(f"[INFO] Validating data content for {len(df)} rows...")
+        original_row_count = len(df)
 
-        # Standardize access_result values if present
+        # Instead of removing rows, just log warnings about data issues
+        validation_warnings = []
+
+        # Standardize access_result values (but don't remove rows)
         if "access_result" in df.columns:
             logger.info("[INFO] Standardizing access_result values...")
             original_values = df["access_result"].unique()
             logger.info(f"[INFO] Original access results: {original_values}")
 
-            # Handle your specific format: "Access Granted" -> "Granted"
+            # Clean up the values but keep all rows
             df["access_result"] = (
                 df["access_result"].astype(str).str.replace("Access ", "", regex=False)
             )
-            standardized_values = df["access_result"].unique()
-            logger.info(f"[INFO] Standardized access results: {standardized_values}")
 
-            # Check for valid results (be more permissive)
+            # Check for unusual values but don't remove them
             valid_results = ["granted", "denied", "timeout", "error", "failed"]
-            invalid_results = [
-                r
-                for r in df["access_result"].str.lower().unique()
-                if r not in valid_results and r != "nan"
+            unusual_results = [
+                r for r in df["access_result"].str.lower().unique()
+                if r not in valid_results and r not in ["nan", ""]
             ]
 
-            if invalid_results:
-                logger.info(
-                    f"[WARNING] Non-standard access results found: {invalid_results} (will be processed anyway)"
-                )
+            if unusual_results:
+                validation_warnings.append(f"Unusual access results found: {unusual_results}")
 
-        # Validate timestamp if present
+        # Validate timestamp but don't remove rows
         if "timestamp" in df.columns:
             logger.info("[INFO] Validating timestamp column...")
             try:
-                # Try to convert to datetime if not already
-                if not pd.api.types.is_datetime64_any_dtype(df["timestamp"]):
-                    df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
+                # Try to parse timestamps, but keep rows even if parsing fails
+                parsed_timestamps = pd.to_datetime(df["timestamp"], errors='coerce')
+                invalid_timestamps = parsed_timestamps.isna().sum()
 
-                # Check for invalid timestamps
-                null_timestamps = df["timestamp"].isnull().sum()
-                if null_timestamps > 0:
-                    logger.info(
-                        f"[WARNING] Found {null_timestamps} invalid timestamps (will be processed anyway)"
-                    )
+                if invalid_timestamps > 0:
+                    validation_warnings.append(f"{invalid_timestamps} rows have invalid timestamps")
+
             except Exception as e:
-                logger.info(
-                    f"[WARNING] Timestamp validation error: {e} (will be processed anyway)"
-                )
+                validation_warnings.append(f"Timestamp validation error: {e}")
 
-        # Return validation result with the processed DataFrame
-        if validation_errors:
-            return {
-                "valid": False,
-                "error": "; ".join(validation_errors),
-                "data": df,  # Still return the DataFrame even if there are errors
-            }
-        else:
-            return {
-                "valid": True,
-                "data": df,  # CRITICAL: Return the processed DataFrame
-                "message": "Data validation successful",
-            }
+        # CRITICAL: Return ALL rows, just log any issues
+        final_row_count = len(df)
+
+        logger.info(f"[SUCCESS] Data validation complete: {final_row_count} rows retained")
+
+        if validation_warnings:
+            logger.info("[WARNINGS] Data quality issues found:")
+            for warning in validation_warnings:
+                logger.info(f"  - {warning}")
+
+        # FIXED: Always return the complete DataFrame
+        return {
+            "valid": True,  # Always valid, we just log warnings
+            "data": df,     # Return complete dataset
+            "warnings": validation_warnings,
+            "original_rows": original_row_count,
+            "final_rows": final_row_count
+        }
 
     def _fuzzy_match_columns(
         self, available_columns: Sequence[str], required_columns: Sequence[str]
