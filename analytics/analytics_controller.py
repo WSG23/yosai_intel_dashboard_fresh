@@ -104,7 +104,6 @@ class AnalyticsController(UnifiedAnalyticsController):
         self, df: pd.DataFrame, analysis_id: Optional[str] = None
     ) -> AnalyticsResult:
         """Run complete analytics analysis"""
-
         start_time = datetime.now()
         analysis_id = analysis_id or f"analysis_{int(start_time.timestamp())}"
         errors = []
@@ -113,60 +112,30 @@ class AnalyticsController(UnifiedAnalyticsController):
             # Trigger start callbacks
             self._trigger_callbacks("on_analysis_start", analysis_id, df)
 
-            # Check cache first
-            if self.config.cache_results:
-                cached_result = self._get_cached_result(df)
-                if cached_result:
-                    self.logger.info("Returning cached analytics result")
-                    return cached_result
+            cached = self._check_cache(df)
+            if cached:
+                return cached
 
-            # Validate and prepare data
             df_processed = self._prepare_data(df)
             data_summary = self._generate_data_summary(df_processed)
-
             self._trigger_callbacks("on_data_processed", analysis_id, data_summary)
 
-            # Run analytics
-            if self.config.parallel_processing and self._executor:
-                results = self._run_parallel_analysis(df_processed, analysis_id)
-            else:
-                results = self._run_sequential_analysis(df_processed, analysis_id)
+            results = self._run_analyses(df_processed, analysis_id)
 
-            # Create final result
-            processing_time = (datetime.now() - start_time).total_seconds()
+            analytics_result = self._build_result(results, data_summary, start_time, errors)
 
-            analytics_result = AnalyticsResult(
-                security_patterns=results.get("security_patterns", {}),
-                access_trends=results.get("access_trends", {}),
-                user_behavior=results.get("user_behavior", {}),
-                anomaly_detection=results.get("anomaly_detection", {}),
-                interactive_charts=results.get("interactive_charts", {}),
-                processing_time=processing_time,
-                data_summary=data_summary,
-                generated_at=start_time,
-                status="success",
-                errors=errors,
-            )
-
-            # Cache result
             if self.config.cache_results:
                 self._cache_result(df, analytics_result)
 
-            # Trigger completion callbacks
-            self._trigger_callbacks(
-                "on_analysis_complete", analysis_id, analytics_result
-            )
-
+            self._trigger_callbacks("on_analysis_complete", analysis_id, analytics_result)
             return analytics_result
 
         except Exception as e:
             self.logger.error(f"Analytics analysis failed: {e}")
             errors.append(str(e))
 
-            # Trigger error callbacks
             self._trigger_callbacks("on_analysis_error", analysis_id, e)
 
-            # Return error result
             return AnalyticsResult(
                 security_patterns={},
                 access_trends={},
@@ -244,6 +213,44 @@ class AnalyticsController(UnifiedAnalyticsController):
             self.logger.error(f"Specific analysis failed: {e}")
             self._trigger_callbacks("on_analysis_error", analysis_id, e)
             return {}
+
+    def _check_cache(self, df: pd.DataFrame) -> Optional[AnalyticsResult]:
+        """Return cached result if available"""
+        if not self.config.cache_results:
+            return None
+        cached_result = self._get_cached_result(df)
+        if cached_result:
+            self.logger.info("Returning cached analytics result")
+            return cached_result
+        return None
+
+    def _run_analyses(self, df: pd.DataFrame, analysis_id: str) -> Dict[str, Any]:
+        """Run analytics either in parallel or sequentially"""
+        if self.config.parallel_processing and self._executor:
+            return self._run_parallel_analysis(df, analysis_id)
+        return self._run_sequential_analysis(df, analysis_id)
+
+    def _build_result(
+        self,
+        results: Dict[str, Any],
+        data_summary: Dict[str, Any],
+        start_time: datetime,
+        errors: List[str],
+    ) -> AnalyticsResult:
+        """Construct AnalyticsResult object"""
+        processing_time = (datetime.now() - start_time).total_seconds()
+        return AnalyticsResult(
+            security_patterns=results.get("security_patterns", {}),
+            access_trends=results.get("access_trends", {}),
+            user_behavior=results.get("user_behavior", {}),
+            anomaly_detection=results.get("anomaly_detection", {}),
+            interactive_charts=results.get("interactive_charts", {}),
+            processing_time=processing_time,
+            data_summary=data_summary,
+            generated_at=start_time,
+            status="success",
+            errors=errors,
+        )
 
     def _run_parallel_analysis(
         self, df: pd.DataFrame, analysis_id: str
