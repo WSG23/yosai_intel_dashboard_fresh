@@ -16,9 +16,10 @@ from services.analytics_summary import (
     generate_sample_analytics,
     summarize_dataframe,
 )
+from services.data_validation import DataValidationService
+from services.data_loading_service import DataLoadingService
 
 from utils.mapping_helpers import map_and_clean
-from security.dataframe_validator import DataFrameSecurityValidator
 from datetime import datetime, timedelta
 import os
 
@@ -246,7 +247,8 @@ class AnalyticsService:
         self.database_manager: Optional[Any] = None
         self._initialize_database()
         self.file_processing_service = FileProcessingService()
-        self.df_validator = DataFrameSecurityValidator()
+        self.validation_service = DataValidationService()
+        self.data_loading_service = DataLoadingService(self.validation_service)
         self.database_analytics_service = DatabaseAnalyticsService(
             self.database_manager
         )
@@ -381,24 +383,11 @@ class AnalyticsService:
 
     def _load_uploaded_dataframe(self, source: Any) -> pd.DataFrame:
         """Load and clean a single uploaded file or DataFrame."""
-        if isinstance(source, (str, Path)):
-            df = pd.read_csv(source, encoding="utf-8")
-        else:
-            df = source
-
-        df = self.df_validator.validate(df)
-        df = map_and_clean(df)
-        return df
+        return self.data_loading_service.load_dataframe(source)
 
     def _stream_uploaded_file(self, source: Any, chunksize: int = 50000):
         """Yield cleaned DataFrame chunks from a file or DataFrame."""
-        if isinstance(source, (str, Path)):
-            for chunk in pd.read_csv(source, chunksize=chunksize, encoding="utf-8"):
-                chunk = self.df_validator.validate(chunk)
-                yield map_and_clean(chunk)
-        else:
-            df = self.df_validator.validate(source)
-            yield map_and_clean(df)
+        yield from self.data_loading_service.stream_file(source, chunksize)
 
     def _update_counts(
         self, df: pd.DataFrame, user_counts: "Counter[str]", door_counts: "Counter[str]"
@@ -537,13 +526,12 @@ class AnalyticsService:
 
     def analyze_with_chunking(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
         """FIXED: Analyze DataFrame using chunked processing - COMPLETE DATASET."""
-        from security.dataframe_validator import DataFrameSecurityValidator
         from analytics.chunked_analytics_controller import ChunkedAnalyticsController
 
         original_rows = len(df)
         logger.info(f"🚀 Starting COMPLETE analysis for {original_rows:,} rows")
 
-        validator = DataFrameSecurityValidator()
+        validator = self.validation_service
         df, needs_chunking = validator.validate_for_analysis(df)
 
         validated_rows = len(df)
@@ -592,8 +580,7 @@ class AnalyticsService:
         logger.info(f"Input DataFrame: {len(df)} rows, {len(df.columns)} columns")
         logger.info(f"Memory usage: {df.memory_usage(deep=True).sum() / 1024 / 1024:,.1f} MB")
 
-        from security.dataframe_validator import DataFrameSecurityValidator
-        validator = DataFrameSecurityValidator()
+        validator = self.validation_service
 
         logger.info(
             f"Validator config: upload_mb={validator.max_upload_mb}, analysis_mb={validator.max_analysis_mb}, chunk_size={validator.chunk_size}"
