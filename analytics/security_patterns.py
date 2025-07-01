@@ -8,6 +8,7 @@ import numpy as np
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Tuple
 from .security_metrics import SecurityMetrics
+from .security_score_calculator import SecurityScoreCalculator
 from dataclasses import dataclass
 import logging
 
@@ -24,25 +25,11 @@ class SecurityPattern:
 
 class SecurityPatternsAnalyzer:
     """Advanced security patterns analysis"""
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+        self.score_calculator = SecurityScoreCalculator()
 
-    def _sanitize_text_input(self, text_series: pd.Series) -> pd.Series:
-        """Handle Unicode surrogate characters safely"""
-        import unicodedata
-
-        def clean_text(text):
-            if not isinstance(text, str):
-                return str(text)
-            try:
-                normalized = unicodedata.normalize('NFKD', text)
-                return normalized.encode('utf-8', errors='ignore').decode('utf-8')
-            except (UnicodeDecodeError, UnicodeEncodeError):
-                return ''.join(char for char in text if ord(char) < 128)
-
-        return text_series.apply(clean_text)
-        
     def analyze_patterns(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Main analysis function for security patterns"""
         try:
@@ -265,17 +252,15 @@ class SecurityPatternsAnalyzer:
         }
     
     def _calculate_security_score(self, df: pd.DataFrame) -> SecurityMetrics:
-        """Calculate security score using fixed mathematical methods"""
-        from security_score_fixed import create_security_calculator
 
-        calculator = create_security_calculator()
-        result = calculator.calculate_security_score_fixed(df)
-
+        """Calculate overall security score using external calculator."""
+        result = self.score_calculator.calculate_security_score_fixed(df)
         return SecurityMetrics(
-            score=result['score'],
-            threat_level=result['threat_level'],
-            confidence_interval=result['confidence_interval'],
-            method=result['method']
+            score=result.get("score", 0.0),
+            threat_level=result.get("threat_level", "low"),
+            confidence_interval=result.get("confidence_interval", (0.0, 0.0)),
+            method=result.get("method", "none"),
+
         )
     
     def _generate_threat_summary(self, df: pd.DataFrame) -> Dict[str, Any]:
