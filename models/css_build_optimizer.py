@@ -7,7 +7,6 @@ for Yōsai Intel Dashboard - FIXED version with proper type safety
 import os
 import re
 import json
-import subprocess
 import time
 from pathlib import Path
 from typing import Dict, List, Tuple, Any, Optional, Union
