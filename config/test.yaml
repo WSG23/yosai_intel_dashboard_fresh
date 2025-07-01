@@ -11,10 +11,10 @@ database:
   port: 5432
   name: "yosai_db"
   user: "yosai_user"
-  password: "change-me"
+  password: "${DB_PASSWORD}"
 
 security:
-  secret_key: "change-me"
+  secret_key: "${SECRET_KEY}"
   session_timeout: 3600
 
 sample_files:
