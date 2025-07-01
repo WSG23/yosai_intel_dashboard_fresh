@@ -42,6 +42,20 @@ class PluginManager:
         )
         self._health_thread.start()
 
+    def __enter__(self):
+        """Start the health monitor when entering the context."""
+        if not self._health_thread.is_alive():
+            self._health_monitor_active = True
+            self._health_thread = threading.Thread(
+                target=self._health_monitor_loop, daemon=True
+            )
+            self._health_thread.start()
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        """Ensure the health monitor thread is stopped on exit."""
+        self.stop_health_monitor()
+
     def load_all_plugins(self) -> List[Any]:
         """Dynamically load all plugins from the configured package."""
         try:

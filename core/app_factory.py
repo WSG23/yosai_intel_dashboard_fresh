@@ -9,6 +9,8 @@ from typing import Optional, Any
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, callback
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.container import Container as DIContainer
+from core.plugins.manager import PluginManager
 import pandas as pd
 
 # ✅ FIXED IMPORTS - Use correct config system
@@ -56,11 +58,15 @@ def _create_full_app() -> dash.Dash:
         # ✅ FIXED: Use the working config system
         config_manager = get_config()
 
-        # ✅ FIXED: Skip plugin system for now (causing import issues)
-        # We'll add this back after core functionality is working
-        # plugin_manager = PluginManager(container, config_manager)
-        # plugin_results = plugin_manager.load_all_plugins()
-        # app._yosai_plugin_manager = plugin_manager
+        # Initialize plugin system
+        container = DIContainer()
+        plugin_manager = PluginManager(container, config_manager)
+        plugin_manager.load_all_plugins()
+        app._yosai_plugin_manager = plugin_manager
+
+        @app.server.teardown_appcontext  # type: ignore[attr-defined]
+        def _shutdown_plugin_manager(exc=None):
+            plugin_manager.stop_health_monitor()
 
         # Set main layout
         app.layout = _create_main_layout()
