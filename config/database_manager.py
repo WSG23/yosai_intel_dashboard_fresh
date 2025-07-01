@@ -325,7 +325,8 @@ __all__ = [
     "DatabaseManager",
     "ThreadSafeDatabaseManager",
     "DatabaseError",
-    "create_database_manager" "EnhancedPostgreSQLManager",
+    "create_database_manager",
+    "EnhancedPostgreSQLManager",
 ]
 
 
