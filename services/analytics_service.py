@@ -350,14 +350,7 @@ class AnalyticsService:
 
             for filename, source in uploaded_data.items():
                 try:
-                    if isinstance(source, (str, Path)):
-                        df = pd.read_csv(source, encoding="utf-8")
-                    else:
-                        df = source
-
-                    df = self.df_validator.validate(df)
-                    df = map_and_clean(df)
-
+                    df = self._load_uploaded_dataframe(source)
                     processing_info[filename] = {"rows": len(df), "status": "ok"}
                 except Exception as e:  # pragma: no cover - best effort
                     processing_info[filename] = {"rows": 0, "status": f"error: {e}"}
@@ -365,52 +358,17 @@ class AnalyticsService:
                     continue
 
                 total_events += len(df)
-
-                if "person_id" in df.columns:
-                    user_counts.update(df["person_id"].dropna().astype(str))
-                if "door_id" in df.columns:
-                    door_counts.update(df["door_id"].dropna().astype(str))
-                if "timestamp" in df.columns:
-                    ts = pd.to_datetime(df["timestamp"], errors="coerce").dropna()
-                    if not ts.empty:
-                        cur_min = ts.min()
-                        cur_max = ts.max()
-                        if min_ts is None or cur_min < min_ts:
-                            min_ts = cur_min
-                        if max_ts is None or cur_max > max_ts:
-                            max_ts = cur_max
+                self._update_counts(df, user_counts, door_counts)
+                min_ts, max_ts = self._update_timestamp_range(df, min_ts, max_ts)
 
             if not processing_info:
                 return {"status": "error", "message": "No uploaded files processed"}
 
-            date_range = {"start": "Unknown", "end": "Unknown"}
-            if min_ts is not None and max_ts is not None:
-                date_range = {
-                    "start": min_ts.strftime("%Y-%m-%d"),
-                    "end": max_ts.strftime("%Y-%m-%d"),
-                }
+            date_range = self._calculate_date_range(min_ts, max_ts)
 
-            active_users = len(user_counts)
-            active_doors = len(door_counts)
-
-            result = {
-                "status": "success",
-                "total_events": total_events,
-                "active_users": active_users,
-                "active_doors": active_doors,
-                "unique_users": active_users,
-                "unique_doors": active_doors,
-                "data_source": "uploaded",
-                "date_range": date_range,
-                "top_users": [
-                    {"user_id": u, "count": int(c)} for u, c in user_counts.most_common(10)
-                ],
-                "top_doors": [
-                    {"door_id": d, "count": int(c)} for d, c in door_counts.most_common(10)
-                ],
-                "timestamp": datetime.now().isoformat(),
-                "processing_info": processing_info,
-            }
+            result = self._build_uploaded_result(
+                total_events, user_counts, door_counts, date_range, processing_info
+            )
 
             return result
 
@@ -421,6 +379,120 @@ class AnalyticsService:
     # ------------------------------------------------------------------
     # Helper methods for processing uploaded data
     # ------------------------------------------------------------------
+
+    def _load_uploaded_dataframe(self, source: Any) -> pd.DataFrame:
+        """Load and clean a single uploaded file or DataFrame."""
+        if isinstance(source, (str, Path)):
+            df = pd.read_csv(source, encoding="utf-8")
+        else:
+            df = source
+
+        df = self.df_validator.validate(df)
+        df = map_and_clean(df)
+        return df
+
+    def _update_counts(
+        self, df: pd.DataFrame, user_counts: "Counter[str]", door_counts: "Counter[str]"
+    ) -> None:
+        """Update user and door counters using a DataFrame."""
+        if "person_id" in df.columns:
+            user_counts.update(df["person_id"].dropna().astype(str))
+        if "door_id" in df.columns:
+            door_counts.update(df["door_id"].dropna().astype(str))
+
+    def _update_timestamp_range(
+        self,
+        df: pd.DataFrame,
+        min_ts: Optional[pd.Timestamp],
+        max_ts: Optional[pd.Timestamp],
+    ) -> Tuple[Optional[pd.Timestamp], Optional[pd.Timestamp]]:
+        """Update min and max timestamps from a DataFrame."""
+        if "timestamp" in df.columns:
+            ts = pd.to_datetime(df["timestamp"], errors="coerce").dropna()
+            if not ts.empty:
+                cur_min = ts.min()
+                cur_max = ts.max()
+                if min_ts is None or cur_min < min_ts:
+                    min_ts = cur_min
+                if max_ts is None or cur_max > max_ts:
+                    max_ts = cur_max
+        return min_ts, max_ts
+
+    def _calculate_date_range(
+        self, min_ts: Optional[pd.Timestamp], max_ts: Optional[pd.Timestamp]
+    ) -> Dict[str, str]:
+        """Return a date range dictionary from timestamp bounds."""
+        if min_ts is not None and max_ts is not None:
+            return {
+                "start": min_ts.strftime("%Y-%m-%d"),
+                "end": max_ts.strftime("%Y-%m-%d"),
+            }
+        return {"start": "Unknown", "end": "Unknown"}
+
+    def _build_uploaded_result(
+        self,
+        total_events: int,
+        user_counts: "Counter[str]",
+        door_counts: "Counter[str]",
+        date_range: Dict[str, str],
+        processing_info: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Assemble the final result dictionary for uploaded data."""
+        active_users = len(user_counts)
+        active_doors = len(door_counts)
+
+        return {
+            "status": "success",
+            "total_events": total_events,
+            "active_users": active_users,
+            "active_doors": active_doors,
+            "unique_users": active_users,
+            "unique_doors": active_doors,
+            "data_source": "uploaded",
+            "date_range": date_range,
+            "top_users": [
+                {"user_id": u, "count": int(c)} for u, c in user_counts.most_common(10)
+            ],
+            "top_doors": [
+                {"door_id": d, "count": int(c)} for d, c in door_counts.most_common(10)
+            ],
+            "timestamp": datetime.now().isoformat(),
+            "processing_info": processing_info,
+        }
+
+    def _prepare_regular_result(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Create the base result structure for regular analysis."""
+        return {
+            "total_events": len(df),
+            "columns": list(df.columns),
+            "analysis_type": "regular",
+            "processing_summary": {
+                "total_input_rows": len(df),
+                "rows_processed": len(df),
+                "chunking_used": False,
+            },
+        }
+
+    def _apply_regular_analysis(
+        self, df: pd.DataFrame, analysis_types: List[str]
+    ) -> Dict[str, Any]:
+        """Run selected analysis sections for regular analysis."""
+        result: Dict[str, Any] = {}
+
+        if "basic" in analysis_types:
+            result["basic_stats"] = self._calculate_basic_stats(df)
+
+        if "temporal" in analysis_types or "time" in analysis_types:
+            result["temporal_analysis"] = self._calculate_temporal_stats_safe(df)
+
+        if "user" in analysis_types:
+            result["user_analysis"] = self._calculate_user_stats(df)
+
+        if "access" in analysis_types:
+            result["access_analysis"] = self._calculate_access_stats(df)
+
+        return result
+
     def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
         """Load uploaded data from the file upload page."""
         try:
@@ -528,28 +600,8 @@ class AnalyticsService:
         # CRITICAL FIX: Ensure datetime columns are properly parsed
         df = ensure_datetime_columns(df)
 
-        result = {
-            "total_events": len(df),
-            "columns": list(df.columns),
-            "analysis_type": "regular",
-            "processing_summary": {
-                "total_input_rows": len(df),
-                "rows_processed": len(df),
-                "chunking_used": False,
-            },
-        }
-
-        if "basic" in analysis_types:
-            result["basic_stats"] = self._calculate_basic_stats(df)
-
-        if "temporal" in analysis_types or "time" in analysis_types:
-            result["temporal_analysis"] = self._calculate_temporal_stats_safe(df)
-
-        if "user" in analysis_types:
-            result["user_analysis"] = self._calculate_user_stats(df)
-
-        if "access" in analysis_types:
-            result["access_analysis"] = self._calculate_access_stats(df)
+        result = self._prepare_regular_result(df)
+        result.update(self._apply_regular_analysis(df, analysis_types))
 
         logger.info(f"✅ Regular analysis completed for {len(df):,} rows")
         return result
