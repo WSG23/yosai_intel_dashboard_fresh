@@ -363,6 +363,8 @@ If you encounter an error like `"Babel" object has no attribute "localeselector"
 ## 📚 Documentation
 
 See the [data model diagram](docs/data_model.md) for an overview of key entities.
+The running application exposes Swagger-based API docs at `http://<host>:<port>/api/docs`.
+Update the spec by running `python tools/generate_openapi.py`.
 ## 📜 Data Migration
 Use the storage utilities to convert legacy pickle files to Parquet and load them:
 ```python

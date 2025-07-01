@@ -6,6 +6,7 @@ import dash
 import logging
 import os
 from typing import Optional, Any
+from flasgger import Swagger
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
@@ -82,8 +83,12 @@ def _create_full_app() -> dash.Dash:
                 register_callbacks as register_upload_callbacks,
                 Callbacks as UploadCallbacks,
             )
-            from components.simple_device_mapping import register_callbacks as register_simple_mapping
-            from components.device_verification import register_callbacks as register_device_verification
+            from components.simple_device_mapping import (
+                register_callbacks as register_simple_mapping,
+            )
+            from components.device_verification import (
+                register_callbacks as register_device_verification,
+            )
             from pages.deep_analytics.callbacks import (
                 register_callbacks as register_deep_callbacks,
                 Callbacks as DeepAnalyticsCallbacks,
@@ -108,11 +113,28 @@ def _create_full_app() -> dash.Dash:
         # Initialize services
         _initialize_services()
 
-        # Expose basic health check endpoint
+        # Expose basic health check endpoint and Swagger docs
         server = app.server
+        _configure_swagger(server)
 
         @server.route("/health", methods=["GET"])
         def health():
+            """Basic health check.
+            ---
+            get:
+              description: Return service health
+              responses:
+                200:
+                  description: Health status
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: ok
+            """
             return {"status": "ok"}, 200
 
         logger.info("✅ Complete Dash application created successfully")
@@ -143,8 +165,12 @@ def _create_simple_app() -> dash.Dash:
                 html.Hr(),
                 html.Div(
                     [
-                        dbc.Alert("✅ Application created successfully!", color="success"),
-                        dbc.Alert("⚠️ Running in simplified mode (no auth)", color="warning"),
+                        dbc.Alert(
+                            "✅ Application created successfully!", color="success"
+                        ),
+                        dbc.Alert(
+                            "⚠️ Running in simplified mode (no auth)", color="warning"
+                        ),
                         html.P("Environment configuration loaded and working."),
                         html.P("Ready for development and testing."),
                     ],
@@ -153,11 +179,28 @@ def _create_simple_app() -> dash.Dash:
             ]
         )
 
-        # Expose basic health check endpoint
+        # Expose basic health check endpoint and Swagger docs
         server = app.server
+        _configure_swagger(server)
 
         @server.route("/health", methods=["GET"])
         def health():
+            """Basic health check.
+            ---
+            get:
+              description: Return service health
+              responses:
+                200:
+                  description: Health status
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: ok
+            """
             return {"status": "ok"}, 200
 
         logger.info("Simple Dash application created successfully")
@@ -202,11 +245,28 @@ def _create_json_safe_app() -> dash.Dash:
             ]
         )
 
-        # Expose basic health check endpoint
+        # Expose basic health check endpoint and Swagger docs
         server = app.server
+        _configure_swagger(server)
 
         @server.route("/health", methods=["GET"])
         def health():
+            """Basic health check.
+            ---
+            get:
+              description: Return service health
+              responses:
+                200:
+                  description: Health status
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: ok
+            """
             return {"status": "ok"}, 200
 
         logger.info("JSON-safe Dash application created")
@@ -254,25 +314,37 @@ def _create_navbar() -> dbc.Navbar:
                         [
                             dbc.NavItem(
                                 dbc.NavLink(
-                                    [html.I(className="fas fa-tachometer-alt me-1"), "Dashboard"],
+                                    [
+                                        html.I(className="fas fa-tachometer-alt me-1"),
+                                        "Dashboard",
+                                    ],
                                     href="/",
                                 )
                             ),
                             dbc.NavItem(
                                 dbc.NavLink(
-                                    [html.I(className="fas fa-chart-line me-1"), "Analytics"],
+                                    [
+                                        html.I(className="fas fa-chart-line me-1"),
+                                        "Analytics",
+                                    ],
                                     href="/analytics",
                                 )
                             ),
                             dbc.NavItem(
                                 dbc.NavLink(
-                                    [html.I(className="fas fa-chart-area me-1"), "Graphs"],
+                                    [
+                                        html.I(className="fas fa-chart-area me-1"),
+                                        "Graphs",
+                                    ],
                                     href="/graphs",
                                 )
                             ),
                             dbc.NavItem(
                                 dbc.NavLink(
-                                    [html.I(className="fas fa-file-upload me-1"), "Upload"],
+                                    [
+                                        html.I(className="fas fa-file-upload me-1"),
+                                        "Upload",
+                                    ],
                                     href="/upload",
                                 )
                             ),
@@ -323,7 +395,6 @@ def _create_placeholder_page(title: str, subtitle: str, message: str) -> html.Di
     )
 
 
-
 def _register_router_callbacks(manager: UnifiedCallbackCoordinator) -> None:
     """Register page routing callbacks."""
 
@@ -358,7 +429,6 @@ def _register_router_callbacks(manager: UnifiedCallbackCoordinator) -> None:
         )
 
 
-
 def _get_home_page() -> Any:
     """Get home page (dashboard)."""
     return _get_dashboard_page()
@@ -368,6 +438,7 @@ def _get_dashboard_page() -> Any:
     """Get dashboard page with overview metrics."""
     try:
         from pages.dashboard import layout
+
         return layout()
     except ImportError as e:
         logger.error(f"Dashboard page import failed: {e}")
@@ -376,6 +447,7 @@ def _get_dashboard_page() -> Any:
             "Dashboard page is being loaded...",
             "The dashboard module is not available. Please check the installation.",
         )
+
 
 def _get_analytics_page() -> Any:
     """Get analytics page with complete integration"""
@@ -396,6 +468,7 @@ def _get_graphs_page() -> Any:
     """Get graphs page with placeholder content."""
     try:
         from pages.graphs import layout
+
         return layout()
     except ImportError as e:
         logger.error(f"Graphs page import failed: {e}")
@@ -410,6 +483,7 @@ def _get_settings_page() -> Any:
     """Get settings page with placeholder content."""
     try:
         from pages.settings import layout
+
         return layout()
     except ImportError as e:
         logger.error(f"Settings page import failed: {e}")
@@ -418,6 +492,7 @@ def _get_settings_page() -> Any:
             "Settings page is being loaded...",
             "The settings module is not available. Please check the installation.",
         )
+
 
 def _get_upload_page() -> Any:
     """Get upload page with complete integration"""
@@ -487,6 +562,19 @@ def _initialize_services() -> None:
 
     except Exception as e:
         logger.warning(f"Service initialization completed with warnings: {e}")
+
+
+def _configure_swagger(server: Any) -> None:
+    """Initialize Swagger UI for API documentation."""
+    server.config.setdefault("SWAGGER", {"uiversion": 3})
+    template = {
+        "openapi": "3.0.2",
+        "info": {
+            "title": "Yōsai Intel Dashboard API",
+            "version": "1.0.0",
+        },
+    }
+    Swagger(server, template=template, config={"specs_route": "/api/docs"})
 
 
 # Export the main function

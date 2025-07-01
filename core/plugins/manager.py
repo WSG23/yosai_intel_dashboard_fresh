@@ -172,4 +172,16 @@ class PluginManager:
 
         @server.route("/health/plugins", methods=["GET"])
         def plugin_health():
+            """Plugin health snapshot.
+            ---
+            get:
+              description: Aggregated plugin health
+              responses:
+                200:
+                  description: Plugin health data
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+            """
             return self.health_snapshot or self.get_plugin_health()
