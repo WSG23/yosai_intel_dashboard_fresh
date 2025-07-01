@@ -7,7 +7,7 @@ import logging
 import os
 from typing import Optional, Any
 import dash_bootstrap_components as dbc
-from dash import html, dcc, Input, Output, callback
+from dash import html, dcc, Input, Output
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 import pandas as pd
 
@@ -67,6 +67,7 @@ def _create_full_app() -> dash.Dash:
 
         # Register all callbacks using UnifiedCallbackCoordinator
         coordinator = UnifiedCallbackCoordinator(app)
+        _register_router_callbacks(coordinator)
         _register_global_callbacks(coordinator)
 
         # Register page/component callbacks
@@ -316,20 +317,27 @@ def _create_placeholder_page(title: str, subtitle: str, message: str) -> html.Di
     )
 
 
-@callback(Output("page-content", "children"), Input("url", "pathname"))
-def display_page(pathname):
-    """Route pages based on URL."""
-    if pathname == "/analytics":
-        return _get_analytics_page()
-    elif pathname == "/graphs":
-        return _get_graphs_page()
-    elif pathname == "/settings":
-        return _get_settings_page()
-    elif pathname == "/upload" or pathname == "/file-upload":  # Handle both paths
-        return _get_upload_page()
-    elif pathname in {"/", "/dashboard"}:
-        return _get_home_page()
-    else:
+
+def _register_router_callbacks(manager: UnifiedCallbackCoordinator) -> None:
+    """Register page routing callbacks."""
+
+    @manager.register_callback(
+        Output("page-content", "children"),
+        Input("url", "pathname"),
+        callback_id="display_page",
+        component_name="app_factory",
+    )
+    def display_page(pathname: str):
+        if pathname == "/analytics":
+            return _get_analytics_page()
+        elif pathname == "/graphs":
+            return _get_graphs_page()
+        elif pathname == "/settings":
+            return _get_settings_page()
+        elif pathname in {"/upload", "/file-upload"}:
+            return _get_upload_page()
+        elif pathname in {"/", "/dashboard"}:
+            return _get_home_page()
         return html.Div(
             [
                 html.H1("Page Not Found", className="text-center mt-5"),
@@ -451,7 +459,7 @@ def _register_global_callbacks(manager: UnifiedCallbackCoordinator) -> None:
     # Register device learning callbacks
     from services.device_learning_service import create_learning_callbacks
 
-    create_learning_callbacks()
+    create_learning_callbacks(manager)
 
     logger.info("✅ Global callbacks registered successfully")
 
