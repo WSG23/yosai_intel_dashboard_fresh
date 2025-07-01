@@ -256,8 +256,10 @@ this folder, for example `plugins/my_plugin/plugin.py` defining a
 `plugins:` in `config/config.yaml` and setting `enabled: true` plus any plugin
 options. In your app factory create a `PluginManager`, call
 `load_all_plugins()` and then `register_plugin_callbacks(app)` to activate all
-enabled plugins. See [docs/plugins.md](docs/plugins.md) for a detailed overview
-of discovery, configuration and the plugin lifecycle.
+ enabled plugins. See [docs/plugins.md](docs/plugins.md) for a detailed overview
+ of discovery, configuration and the plugin lifecycle. For step-by-step
+ instructions on writing your own plugin check
+ [docs/plugin_development.md](docs/plugin_development.md).
 
 ### Migration Notes
 
