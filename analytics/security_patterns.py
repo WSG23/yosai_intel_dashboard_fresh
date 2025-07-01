@@ -29,7 +29,7 @@ class SecurityPatternsAnalyzer:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.score_calculator = SecurityScoreCalculator()
-        
+
     def analyze_patterns(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Main analysis function for security patterns"""
         try:
@@ -59,10 +59,15 @@ class SecurityPatternsAnalyzer:
         """Prepare and validate data for analysis"""
         df = df.copy()
         df['timestamp'] = pd.to_datetime(df['timestamp'])
+        # Validate and add missing temporal columns
+        if 'is_after_hours' not in df.columns:
+            hour = df['timestamp'].dt.hour
+            df['is_after_hours'] = (hour < 8) | (hour >= 18)
+
+        if 'is_weekend' not in df.columns:
+            df['is_weekend'] = df['timestamp'].dt.weekday >= 5
         df['hour'] = df['timestamp'].dt.hour
         df['day_of_week'] = df['timestamp'].dt.day_name()
-        df['is_weekend'] = df['timestamp'].dt.weekday >= 5
-        df['is_after_hours'] = (df['hour'] < 6) | (df['hour'] > 22)
         return df
     
     def _analyze_failed_access(self, df: pd.DataFrame) -> Dict[str, Any]:
@@ -247,6 +252,7 @@ class SecurityPatternsAnalyzer:
         }
     
     def _calculate_security_score(self, df: pd.DataFrame) -> SecurityMetrics:
+
         """Calculate overall security score using external calculator."""
         result = self.score_calculator.calculate_security_score_fixed(df)
         return SecurityMetrics(
@@ -254,6 +260,7 @@ class SecurityPatternsAnalyzer:
             threat_level=result.get("threat_level", "low"),
             confidence_interval=result.get("confidence_interval", (0.0, 0.0)),
             method=result.get("method", "none"),
+
         )
     
     def _generate_threat_summary(self, df: pd.DataFrame) -> Dict[str, Any]:

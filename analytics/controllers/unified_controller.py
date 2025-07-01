@@ -63,6 +63,11 @@ class UnifiedAnalyticsController:
             self._EVENT_MAP[event], callback, priority=priority
         )
 
+    def register_security_callbacks(self, callback_dict: Dict[str, callable]):
+        """Consolidated callback registration for security analysis"""
+        for event_name, callback_func in callback_dict.items():
+            self.register_callback(event_name, callback_func, secure=True)
+
     # ------------------------------------------------------------------
     def unregister_callback(self, event: str, callback: Callable[..., Any]) -> None:
         """Remove a previously registered callback."""
