@@ -42,6 +42,23 @@ class SecretsValidator:
             raise ConfigurationError(f"Missing required secrets: {', '.join(missing)}")
         return secrets
 
+    def validate_production_secrets(self) -> list[str]:
+        """Validate quality of secrets for production environment.
+
+        Returns a list of secret keys that failed validation."""
+        from security.secrets_validator import SecretsValidator as QualityValidator
+
+        secrets = self.validate_all_secrets()
+        quality = QualityValidator()
+        invalid: list[str] = []
+
+        for name, value in secrets.items():
+            result = quality.validate_secret(value, environment="production")
+            if result["errors"]:
+                invalid.append(name)
+
+        return invalid
+
 
 def validate_all_secrets(manager: Optional[SecretManager] = None) -> Dict[str, str]:
     """Convenience wrapper for :class:`SecretsValidator`."""
@@ -49,4 +66,8 @@ def validate_all_secrets(manager: Optional[SecretManager] = None) -> Dict[str, s
     return validator.validate_all_secrets()
 
 
-__all__ = ["SecretsValidator", "validate_all_secrets"]
+__all__ = [
+    "SecretsValidator",
+    "validate_all_secrets",
+    "validate_production_secrets",
+]

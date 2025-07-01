@@ -336,8 +336,14 @@ class ConfigManager:
         warnings = []
         errors = []
 
+        validator = SecretsValidator()
+
+        invalid_secrets: List[str] = []
+
         # Production checks
         if self.config.environment == "production":
+            invalid_secrets = validator.validate_production_secrets()
+
             if self.config.app.secret_key in [
                 "dev-key-change-in-production",
                 "change-me",
@@ -365,6 +371,11 @@ class ConfigManager:
         # Log warnings
         for warning in warnings:
             logger.warning(f"Configuration warning: {warning}")
+
+        if invalid_secrets:
+            secret_list = ", ".join(invalid_secrets)
+            logger.error(f"Invalid production secrets: {secret_list}")
+            raise ValueError(f"Invalid secrets: {secret_list}")
 
         if errors:
             error_msg = "; ".join(errors)
