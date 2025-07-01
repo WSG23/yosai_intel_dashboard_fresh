@@ -39,3 +39,25 @@ def test_summarize_dataframe():
     assert summary["active_doors"] == 2
     assert summary["date_range"]["start"] == "2024-01-01"
     assert summary["date_range"]["end"] == "2024-01-02"
+
+
+def test_count_and_date_helpers():
+    from collections import Counter
+
+    df = pd.DataFrame(
+        {
+            "person_id": ["u1", "u2", "u1"],
+            "door_id": ["d1", "d1", "d2"],
+            "timestamp": ["2024-01-01", "2024-01-03", "2024-01-02"],
+        }
+    )
+    service = AnalyticsService()
+    u_counts, d_counts = Counter(), Counter()
+    service._update_counts(df, u_counts, d_counts)
+    assert u_counts["u1"] == 2
+    assert d_counts["d1"] == 2
+
+    min_ts, max_ts = service._update_timestamp_range(df, None, None)
+    dr = service._calculate_date_range(min_ts, max_ts)
+    assert dr["start"] == "2024-01-01"
+    assert dr["end"] == "2024-01-03"
