@@ -2,6 +2,7 @@ import base64
 import pandas as pd
 
 from pages import file_upload
+from pages.file_upload import Callbacks
 from utils.upload_store import UploadedDataStore
 
 
@@ -23,7 +24,8 @@ def test_process_uploaded_files_split(monkeypatch, tmp_path):
     store = UploadedDataStore(storage_dir=tmp_path)
     monkeypatch.setattr(file_upload, "_uploaded_data_store", store)
 
-    result = file_upload.process_uploaded_files(contents_list, filenames_list)
+    cb = Callbacks()
+    result = cb.process_uploaded_files(contents_list, filenames_list)
     info = result[2]
 
     assert info["big.csv"]["rows"] == len(df)
