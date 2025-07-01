@@ -133,7 +133,14 @@ def login():
 
 @auth_bp.route("/callback")
 def callback():
-    """Handle OAuth provider callback."""
+    """Handle OAuth provider callback.
+    ---
+    get:
+      description: Process login response and sign in user
+      responses:
+        302:
+          description: Redirect to dashboard
+    """
     auth0 = auth_bp.auth0
     token = auth0.authorize_access_token()
     id_token = token.get("id_token")
