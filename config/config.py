@@ -137,7 +137,14 @@ class ConfigManager:
 
         # Use environment-based config
         env = os.getenv("YOSAI_ENV", "development").lower()
-        self.config.environment = env
+
+        # Allow shorthand like "stage" to load staging configuration
+        if env.startswith("stag"):
+            env_key = "staging"
+        else:
+            env_key = env
+
+        self.config.environment = env_key
 
         config_dir = Path("config")
 
@@ -149,7 +156,7 @@ class ConfigManager:
             "development": config_dir / "config.yaml",
         }
 
-        config_file = env_files.get(env, config_dir / "config.yaml")
+        config_file = env_files.get(env_key, config_dir / "config.yaml")
         return config_file if config_file.exists() else None
 
     def _substitute_env_vars(self, content: str) -> str:

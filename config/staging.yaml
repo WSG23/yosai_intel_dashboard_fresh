@@ -1,7 +1,9 @@
-# Minimal Yosai Configuration
+# Minimal Yosai Configuration for Staging
+# secret_validation.severity is set to "medium" in this environment
+# to allow easier testing while still flagging potential issues.
 app:
-  title: "Yosai Intelligence Dashboard"
-  debug: false
+  title: "Yosai Intelligence Dashboard (Staging)"
+  debug: true
   host: "127.0.0.1"
   port: 8050
   log_level: "INFO"
@@ -24,9 +26,9 @@ security:
     - .json
     - .xlsx
     - .xls
-  cors_enabled: false
+  cors_enabled: true
   cors_origins: []
-  rate_limiting_enabled: false
+  rate_limiting_enabled: true
   rate_limit_per_minute: 1000
 
 sample_files:
@@ -55,4 +57,4 @@ cache:
   ttl: 300
 
 secret_validation:
-  severity: high  # Production environment severity
+  severity: medium  # Staging environment severity
