@@ -374,25 +374,56 @@ class CSSOptimizer:
     def build_production_css(self) -> None:
         """Build optimized CSS for production"""
         logger.info("🏗️ Building production CSS...")
-        
+
         try:
-            # Create main production CSS
-            main_css = self.css_dir / "main.css"
-            if main_css.exists():
-                prod_main = self.output_dir / "main.min.css"
-                self.minify_css(main_css, prod_main)
-                
-                # Create gzipped version
-                import gzip
-                with open(prod_main, 'rb') as f_in:
-                    with gzip.open(f"{prod_main}.gz", 'wb') as f_out:
-                        f_out.write(f_in.read())
-                
-                logger.info(f"✅ Production CSS created: {prod_main}")
-                logger.info(f"✅ Gzipped version: {prod_main}.gz")
+            css_files = list(self.css_dir.glob("*.css"))
+
+            if not css_files:
+                logger.info("❌ No CSS files found")
+                return
+
+            # Determine if we should run in parallel
+            use_threads = len(css_files) > 1
+            tasks = {}
+
+            if use_threads:
+                from concurrent.futures import ThreadPoolExecutor
+
+                with ThreadPoolExecutor() as executor:
+                    for css_file in css_files:
+                        out = self.output_dir / f"{css_file.stem}.min.css"
+                        tasks[executor.submit(self.minify_css, css_file, out)] = (
+                            css_file,
+                            out,
+                        )
+
+                    for future, (css_file, out) in tasks.items():
+                        try:
+                            future.result()
+                            import gzip
+
+                            with open(out, "rb") as f_in:
+                                with gzip.open(f"{out}.gz", "wb") as f_out:
+                                    f_out.write(f_in.read())
+
+                            logger.info(f"✅ Production CSS created: {out}")
+                            logger.info(f"✅ Gzipped version: {out}.gz")
+                        except Exception as e:
+                            logger.error(f"❌ Error building {css_file}: {e}")
             else:
-                logger.info("❌ Main CSS file not found")
-                
+                css_file = css_files[0]
+                out = self.output_dir / f"{css_file.stem}.min.css"
+                self.minify_css(css_file, out)
+
+                import gzip
+
+                with open(out, "rb") as f_in:
+                    with gzip.open(f"{out}.gz", "wb") as f_out:
+                        f_out.write(f_in.read())
+
+                logger.info(f"✅ Production CSS created: {out}")
+                logger.info(f"✅ Gzipped version: {out}.gz")
+
         except Exception as e:
             logger.info(f"❌ Error building production CSS: {e}")
 
