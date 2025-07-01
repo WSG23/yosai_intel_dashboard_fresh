@@ -115,6 +115,14 @@ Alternatively you can launch the app with Gunicorn:
 gunicorn wsgi:server
 ```
 
+### Production Build
+
+Build optimized CSS assets before deployment:
+```bash
+python tools/build_css.py
+```
+This generates `assets/dist/main.min.css` and `assets/dist/main.min.css.gz`.
+
 ## 🧪 Testing
 
 Install dependencies before running the tests:
