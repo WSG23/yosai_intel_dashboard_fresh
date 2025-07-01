@@ -1,8 +1,10 @@
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, TYPE_CHECKING
 
 from core.exceptions import ConfigurationError
-from .config import Config
+
+if TYPE_CHECKING:  # pragma: no cover - used for type hints only
+    from .config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +15,7 @@ class ConfigValidator:
     REQUIRED_SECTIONS = {"app", "database", "security"}
 
     @classmethod
-    def validate(cls, data: Dict[str, Any]) -> Config:
+    def validate(cls, data: Dict[str, Any]) -> 'Config':
         """Validate config data and return a Config object."""
         if not isinstance(data, dict):
             raise ConfigurationError("Configuration data must be a mapping")
@@ -24,6 +26,7 @@ class ConfigValidator:
                 "Missing configuration sections: " + ", ".join(sorted(missing))
             )
 
+        from .config import Config
         config = Config()
         for section in ["app", "database", "security", "sample_files"]:
             if section in data:
