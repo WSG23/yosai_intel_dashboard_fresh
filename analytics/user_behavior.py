@@ -401,27 +401,49 @@ class UserBehaviorAnalyzer:
     
     def _generate_behavior_summary(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Generate comprehensive behavior summary"""
-        
+
         total_users = df['person_id'].nunique()
-        
+
+        if total_users == 0:
+            return {
+                'total_unique_users': 0,
+                'avg_events_per_user': 0,
+                'overall_success_rate': 0,
+                'behavior_diversity': {
+                    'avg_hour_diversity': 0,
+                    'avg_door_diversity': 0
+                },
+                'activity_distribution': {
+                    'weekend_active_users': 0,
+                    'after_hours_users': 0,
+                    'weekend_participation_rate': 0,
+                    'after_hours_participation_rate': 0
+                },
+                'risk_indicators': {
+                    'high_failure_users': 0,
+                    'risk_user_percentage': 0
+                },
+                'key_insights': []
+            }
+
         # Overall behavior metrics
         avg_events_per_user = len(df) / total_users
         overall_success_rate = (df['access_result'] == 'Granted').mean() * 100
-        
+
         # Behavior diversity
         user_hour_diversity = df.groupby('person_id')['hour'].nunique().mean()
         user_door_diversity = df.groupby('person_id')['door_id'].nunique().mean()
-        
+
         # Activity patterns
         weekend_users = df[df['is_weekend']]['person_id'].nunique()
         after_hours_users = df[~df['is_business_hours']]['person_id'].nunique()
-        
+
         # Risk indicators
         high_failure_users = df.groupby('person_id').agg({
             'access_result': lambda x: (x == 'Denied').sum()
         })
         risky_users = len(high_failure_users[high_failure_users['access_result'] >= 5])
-        
+
         return {
             'total_unique_users': total_users,
             'avg_events_per_user': avg_events_per_user,
