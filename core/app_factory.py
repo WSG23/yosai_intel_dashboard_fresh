@@ -13,6 +13,7 @@ from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from core.container import Container as DIContainer
 from core.plugins.manager import PluginManager
 from core.secret_manager import validate_secrets
+from dash_csrf_plugin import setup_enhanced_csrf_protection, CSRFMode
 import pandas as pd
 
 # ✅ FIXED IMPORTS - Use correct config system
@@ -59,6 +60,17 @@ def _create_full_app() -> dash.Dash:
 
         # ✅ FIXED: Use the working config system
         config_manager = get_config()
+
+        if (
+            config_manager.get_security_config().csrf_enabled
+            and config_manager.get_app_config().environment == "production"
+        ):
+            try:
+                app._csrf_plugin = setup_enhanced_csrf_protection(
+                    app, CSRFMode.PRODUCTION
+                )
+            except Exception as e:  # pragma: no cover - best effort
+                logger.warning(f"Failed to initialize CSRF plugin: {e}")
 
         # Initialize plugin system
         container = DIContainer()
