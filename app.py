@@ -7,6 +7,8 @@ import os
 import sys
 import importlib
 
+from dotenv import load_dotenv
+
 from core.exceptions import ConfigurationError
 
 # Configure logging first
@@ -89,6 +91,7 @@ def print_startup_info(app_config):
 def main():
     """Main application entry point"""
     try:
+        load_dotenv()
         # Import configuration
         try:
             from config.config import get_config

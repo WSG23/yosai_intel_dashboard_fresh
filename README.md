@@ -72,6 +72,7 @@ yosai_intel_dashboard/
    ```
 
 5. **Run the application:**
+   The app now loads variables from `.env` automatically.
    ```bash
    python app.py
    ```
