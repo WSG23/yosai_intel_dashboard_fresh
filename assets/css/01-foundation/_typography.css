@@ -2,6 +2,10 @@
 /* 01-foundation/_typography.css - Typography System */
 /* =================================================================== */
 
+/* Font Families */
+.font-sans { font-family: var(--font-family-system); }
+.font-mono { font-family: var(--font-family-mono); }
+
 /* Heading Scale */
 .text-2xs { font-size: var(--text-2xs); }
 .text-xs { font-size: var(--text-xs); }
