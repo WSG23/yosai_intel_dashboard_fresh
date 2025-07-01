@@ -18,9 +18,11 @@ class DummyPlugin:
     def __init__(self):
         self.loaded = False
         self.started = False
+        self.load_config = None
 
     def load(self, container, config):
         self.loaded = True
+        self.load_config = config
         return True
 
     def configure(self, config):
@@ -58,9 +60,13 @@ class NoHealthPlugin:
 
 
 def test_load_plugin_success(tmp_path):
-    manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+    cfg_mgr = ConfigManager()
+    cfg_mgr.config.plugins = {"dummy": {"flag": 1}}
+    manager = PluginManager(DIContainer(), cfg_mgr, health_check_interval=1)
     plugin = DummyPlugin()
     result = manager.load_plugin(plugin)
+
+    assert plugin.load_config == {"flag": 1}
 
     assert result is True
     assert plugin.started
@@ -80,9 +86,12 @@ def test_load_plugin_failure_missing_health():
 
 
 def test_get_plugin_health(monkeypatch):
-    manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+    cfg_mgr = ConfigManager()
+    cfg_mgr.config.plugins = {"dummy": {"health": True}}
+    manager = PluginManager(DIContainer(), cfg_mgr, health_check_interval=1)
     plugin = DummyPlugin()
     manager.load_plugin(plugin)
+    assert plugin.load_config == {"health": True}
 
     health = manager.get_plugin_health()
     assert "dummy" in health
@@ -100,7 +109,10 @@ def test_load_all_plugins(tmp_path, monkeypatch):
 class Plugin:
     class metadata:
         name = 'plug_a'
+    def __init__(self):
+        self.cfg = None
     def load(self, c, conf):
+        self.cfg = conf
         return True
     def configure(self, conf):
         return True
@@ -117,10 +129,13 @@ def create_plugin():
     )
     sys.path.insert(0, str(tmp_path))
     try:
-        manager = PluginManager(DIContainer(), ConfigManager(), package="testplugins", health_check_interval=1)
+        cfg_mgr = ConfigManager()
+        cfg_mgr.config.plugins = {"plug_a": {"test": 1}}
+        manager = PluginManager(DIContainer(), cfg_mgr, package="testplugins", health_check_interval=1)
         plugins = manager.load_all_plugins()
         assert len(plugins) == 1
         assert "plug_a" in manager.plugins
+        assert plugins[0].cfg == {"test": 1}
     finally:
         sys.path.remove(str(tmp_path))
         manager.stop_health_monitor()

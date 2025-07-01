@@ -96,6 +96,14 @@ class PluginManager:
             else:
                 name = plugin.__class__.__name__
 
+            # Pull plugin specific configuration if available
+            try:
+                plugins_cfg = getattr(self.config_manager.config, "plugins", {})
+                if isinstance(plugins_cfg, dict):
+                    config = plugins_cfg.get(name, {})
+            except Exception as exc:  # pragma: no cover - log and continue
+                logger.error("Failed retrieving config for plugin %s: %s", name, exc)
+
             if not callable(getattr(plugin, "health_check", None)):
                 logger.error("Plugin %s does not implement health_check", name)
                 self.plugin_status[name] = PluginStatus.FAILED

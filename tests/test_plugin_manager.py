@@ -13,8 +13,10 @@ class SimplePlugin:
 
     def __init__(self):
         self.started = False
+        self.load_config = None
 
     def load(self, container, config):
+        self.load_config = config
         container.register("simple_service", object())
         return True
 
@@ -34,9 +36,12 @@ class SimplePlugin:
 
 
 def test_load_plugin_registers_plugin(tmp_path):
-    manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+    cfg_manager = ConfigManager()
+    cfg_manager.config.plugins = {"simple": {"enabled": True}}
+    manager = PluginManager(DIContainer(), cfg_manager, health_check_interval=1)
     plugin = SimplePlugin()
     assert manager.load_plugin(plugin) is True
+    assert plugin.load_config == {"enabled": True}
     assert "simple" in manager.plugins
     health = manager.get_plugin_health()
     assert health["simple"]["health"] == {"healthy": True}
@@ -53,7 +58,10 @@ def test_load_all_plugins(tmp_path):
 class Plug:
     class metadata:
         name = 'auto'
+    def __init__(self):
+        self.config = None
     def load(self, c, conf):
+        self.config = conf
         return True
     def configure(self, conf):
         return True
@@ -70,19 +78,25 @@ def create_plugin():
     )
     sys.path.insert(0, str(tmp_path))
     try:
-        manager = PluginManager(DIContainer(), ConfigManager(), package="sampleplugins", health_check_interval=1)
+        cfg_mgr = ConfigManager()
+        cfg_mgr.config.plugins = {"auto": {"flag": 1}}
+        manager = PluginManager(DIContainer(), cfg_mgr, package="sampleplugins", health_check_interval=1)
         plugins = manager.load_all_plugins()
         assert len(plugins) == 1
         assert "auto" in manager.plugins
+        assert plugins[0].config == {"flag": 1}
     finally:
         sys.path.remove(str(tmp_path))
         manager.stop_health_monitor()
 
 
 def test_get_plugin_health_snapshot():
-    manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+    cfg_mgr = ConfigManager()
+    cfg_mgr.config.plugins = {"simple": {"x": 2}}
+    manager = PluginManager(DIContainer(), cfg_mgr, health_check_interval=1)
     plugin = SimplePlugin()
     manager.load_plugin(plugin)
+    assert plugin.load_config == {"x": 2}
     time.sleep(1.2)
     snapshot = manager.health_snapshot
     assert "simple" in snapshot
