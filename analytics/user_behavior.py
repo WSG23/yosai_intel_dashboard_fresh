@@ -13,6 +13,8 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from scipy import stats
 
+from file_conversion.unicode_handler import UnicodeCleaner
+
 @dataclass
 class UserProfile:
     """User behavior profile data structure"""
@@ -55,8 +57,12 @@ class UserBehaviorAnalyzer:
             return self._empty_result()
     
     def _prepare_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Prepare and validate data for behavior analysis"""
-        df = df.copy()
+        """Prepare and validate data for behavior analysis.
+
+        Text columns are sanitized using ``UnicodeCleaner.clean_dataframe`` to
+        remove invalid Unicode surrogates before temporal fields are derived.
+        """
+        df = UnicodeCleaner.clean_dataframe(df)
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         df['date'] = df['timestamp'].dt.date
         df['hour'] = df['timestamp'].dt.hour
