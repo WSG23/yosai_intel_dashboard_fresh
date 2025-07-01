@@ -2,6 +2,7 @@ import importlib
 import sys
 import types
 from pathlib import Path
+import pytest
 
 from core.plugins.manager import PluginManager
 from core.container import Container as DIContainer
@@ -121,6 +122,147 @@ def create_plugin():
         plugins = manager.load_all_plugins()
         assert len(plugins) == 1
         assert "plug_a" in manager.plugins
+    finally:
+        sys.path.remove(str(tmp_path))
+        manager.stop_health_monitor()
+
+
+def test_dependency_sorting(tmp_path):
+    pkg_dir = tmp_path / "depplugins"
+    pkg_dir.mkdir()
+    (pkg_dir / "__init__.py").write_text("")
+
+    (pkg_dir / "plugin_c.py").write_text(
+        """
+from core.plugins.protocols import PluginMetadata
+
+class Plugin:
+    metadata = PluginMetadata(name='plug_c', version='1', description='', author='t')
+    def load(self, c, conf):
+        return True
+    def configure(self, conf):
+        return True
+    def start(self):
+        return True
+    def stop(self):
+        return True
+    def health_check(self):
+        return {'healthy': True}
+
+def create_plugin():
+    return Plugin()
+"""
+    )
+
+    (pkg_dir / "plugin_b.py").write_text(
+        """
+from core.plugins.protocols import PluginMetadata
+
+class Plugin:
+    metadata = PluginMetadata(name='plug_b', version='1', description='', author='t', dependencies=['plug_c'])
+    def load(self, c, conf):
+        return True
+    def configure(self, conf):
+        return True
+    def start(self):
+        return True
+    def stop(self):
+        return True
+    def health_check(self):
+        return {'healthy': True}
+
+def create_plugin():
+    return Plugin()
+"""
+    )
+
+    (pkg_dir / "plugin_a.py").write_text(
+        """
+from core.plugins.protocols import PluginMetadata
+
+class Plugin:
+    metadata = PluginMetadata(name='plug_a', version='1', description='', author='t', dependencies=['plug_b'])
+    def load(self, c, conf):
+        return True
+    def configure(self, conf):
+        return True
+    def start(self):
+        return True
+    def stop(self):
+        return True
+    def health_check(self):
+        return {'healthy': True}
+
+def create_plugin():
+    return Plugin()
+"""
+    )
+
+    sys.path.insert(0, str(tmp_path))
+    try:
+        manager = PluginManager(DIContainer(), ConfigManager(), package="depplugins", health_check_interval=1)
+        plugins = manager.load_all_plugins()
+        names = [p.metadata.name for p in plugins]
+        assert names == ["plug_c", "plug_b", "plug_a"]
+    finally:
+        sys.path.remove(str(tmp_path))
+        manager.stop_health_monitor()
+
+
+def test_circular_dependency_error(tmp_path):
+    pkg_dir = tmp_path / "cycleplugins"
+    pkg_dir.mkdir()
+    (pkg_dir / "__init__.py").write_text("")
+
+    (pkg_dir / "a.py").write_text(
+        """
+from core.plugins.protocols import PluginMetadata
+
+class Plugin:
+    metadata = PluginMetadata(name='a', version='1', description='', author='t', dependencies=['b'])
+    def load(self, c, conf):
+        return True
+    def configure(self, conf):
+        return True
+    def start(self):
+        return True
+    def stop(self):
+        return True
+    def health_check(self):
+        return {'healthy': True}
+
+def create_plugin():
+    return Plugin()
+"""
+    )
+
+    (pkg_dir / "b.py").write_text(
+        """
+from core.plugins.protocols import PluginMetadata
+
+class Plugin:
+    metadata = PluginMetadata(name='b', version='1', description='', author='t', dependencies=['a'])
+    def load(self, c, conf):
+        return True
+    def configure(self, conf):
+        return True
+    def start(self):
+        return True
+    def stop(self):
+        return True
+    def health_check(self):
+        return {'healthy': True}
+
+def create_plugin():
+    return Plugin()
+"""
+    )
+
+    sys.path.insert(0, str(tmp_path))
+    try:
+        manager = PluginManager(DIContainer(), ConfigManager(), package="cycleplugins", health_check_interval=1)
+        with pytest.raises(Exception):
+            manager.load_all_plugins()
     finally:
         sys.path.remove(str(tmp_path))
         manager.stop_health_monitor()

@@ -82,3 +82,23 @@ plugins:
 The provided configuration dictionary is passed to `configure()` during plugin
 initialisation. Disabling a plugin is as simple as setting `enabled: false`.
 
+## Dependencies
+
+Plugins can depend on other plugins. Declare these using the `dependencies`
+field of `PluginMetadata`. When `load_all_plugins()` is called, the
+`PluginDependencyResolver` sorts the discovered plugins so that each plugin is
+loaded only after all of its dependencies.
+
+```python
+class MyPlugin(PluginProtocol):
+    metadata = PluginMetadata(
+        name="my_plugin",
+        version="1.0.0",
+        description="",
+        author="you",
+        dependencies=["other_plugin"],
+    )
+```
+
+If a cycle is detected between plugins, loading will fail with a clear error.
+

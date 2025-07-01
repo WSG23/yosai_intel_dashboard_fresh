@@ -5,6 +5,8 @@ import threading
 import time
 from typing import List, Any, Dict
 
+from .dependency_resolver import PluginDependencyResolver, CircularDependencyError
+
 from core.callback_manager import CallbackManager
 from core.plugins.protocols import (
     PluginProtocol,
@@ -65,7 +67,7 @@ class PluginManager:
             logger.info("Plugins package '%s' not found", self.package)
             return []
 
-        results = []
+        discovered = []
         for loader, name, is_pkg in pkgutil.iter_modules(pkg.__path__):
             module_name = f"{self.package}.{name}"
             try:
@@ -79,12 +81,26 @@ class PluginManager:
                     plugin = module.init_plugin(self.container, self.config_manager)
 
                 if plugin:
-                    self.load_plugin(plugin)
-                    results.append(plugin)
+                    discovered.append(plugin)
                 self.loaded_plugins.append(module)
                 logger.info("Loaded plugin %s", module_name)
             except Exception as exc:
                 logger.error("Failed to load plugin %s: %s", module_name, exc)
+
+        if not discovered:
+            return []
+
+        resolver = PluginDependencyResolver(discovered)
+        try:
+            ordered_plugins = resolver.resolve_dependencies()
+        except CircularDependencyError as exc:
+            logger.error(str(exc))
+            raise
+
+        results = []
+        for plugin in ordered_plugins:
+            if self.load_plugin(plugin):
+                results.append(plugin)
         return results
 
     def load_plugin(self, plugin: PluginProtocol) -> bool:
