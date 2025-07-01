@@ -402,6 +402,8 @@ to Parquet the next time the application starts.
 6. The example CSRF scripts in `examples/` read `SECRET_KEY` from the
    environment using the `SecretManager`. Set this variable in your shell or
    `.env` file before running them.
+7. A legacy `lazystring` fix plugin sample is kept in
+   `examples/legacy_lazystring_fix_plugin.py` for reference only.
 
 ## 📦 Versioning
 
