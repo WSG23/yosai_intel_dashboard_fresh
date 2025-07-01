@@ -1,7 +1,7 @@
 import base64
 import pandas as pd
 
-from pages.file_upload import process_uploaded_files, _uploaded_data_store
+from pages.file_upload import Callbacks, _uploaded_data_store
 
 
 def test_multi_part_upload_row_count():
@@ -16,7 +16,8 @@ def test_multi_part_upload_row_count():
     part1 = prefix + b64[:mid]
     part2 = prefix + b64[mid:]
 
-    res = process_uploaded_files([part1, part2], ["sample.csv", "sample.csv"])
+    cb = Callbacks()
+    res = cb.process_uploaded_files([part1, part2], ["sample.csv", "sample.csv"])
     info = res[2]
     assert info["sample.csv"]["rows"] == len(df)
     stored = _uploaded_data_store.get_all_data()["sample.csv"]

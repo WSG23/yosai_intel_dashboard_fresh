@@ -418,48 +418,6 @@ def dispatch_analysis(button_id: str, data_source: str):
     return dispatch[analysis_type]()
 
 
-def handle_analysis_buttons(security_n, trends_n, behavior_n, anomaly_n, suggests_n, quality_n, unique_n, data_source):
-    """Handle analysis button clicks and dispatch to helper functions."""
-
-    if not callback_context.triggered:
-        return get_initial_message_safe()
-
-    if not data_source or data_source == "none":
-        return dbc.Alert("Please select a data source first", color="warning")
-
-    button_id = callback_context.triggered[0]["prop_id"].split(".")[0]
-
-    try:
-        return dispatch_analysis(button_id, data_source)
-    except Exception as e:  # pragma: no cover - catch unforeseen errors
-        return dbc.Alert(f"Analysis failed: {str(e)}", color="danger")
-
-
-def refresh_data_sources_callback(n_clicks):
-    """Refresh data sources when button clicked"""
-    if n_clicks:
-        return get_data_source_options_safe()
-    return get_data_source_options_safe()
-
-
-def update_status_alert(trigger):
-    """Update status based on service health"""
-    try:
-        service = get_analytics_service_safe()
-        suggests_available = AI_SUGGESTIONS_AVAILABLE
-
-        if service and suggests_available:
-            return "✅ All services available - Full functionality enabled"
-        elif suggests_available:
-            return "⚠️ Analytics service limited - AI suggestions available"
-        elif service:
-            return "⚠️ AI suggestions unavailable - Analytics service available"
-        else:
-            return "🔄 Running in limited mode - Some features may be unavailable"
-    except Exception:
-        return "❌ Service status unknown"
-
-
 # ------------------------------------------------------------
 # Callback manager
 # ------------------------------------------------------------
@@ -478,25 +436,43 @@ class Callbacks:
         unique_n,
         data_source,
     ):
-        return handle_analysis_buttons(
-            security_n,
-            trends_n,
-            behavior_n,
-            anomaly_n,
-            suggests_n,
-            quality_n,
-            unique_n,
-            data_source,
-        )
+        """Handle analysis button clicks and dispatch to helper functions."""
+
+        if not callback_context.triggered:
+            return get_initial_message_safe()
+
+        if not data_source or data_source == "none":
+            return dbc.Alert("Please select a data source first", color="warning")
+
+        button_id = callback_context.triggered[0]["prop_id"].split(".")[0]
+
+        try:
+            return dispatch_analysis(button_id, data_source)
+        except Exception as e:  # pragma: no cover - catch unforeseen errors
+            return dbc.Alert(f"Analysis failed: {str(e)}", color="danger")
 
     def refresh_data_sources_callback(self, n_clicks):
-        return refresh_data_sources_callback(n_clicks)
+        """Refresh data sources when button clicked."""
+        if n_clicks:
+            return get_data_source_options_safe()
+        return get_data_source_options_safe()
 
     def update_status_alert(self, trigger):
-        return update_status_alert(trigger)
+        """Update status based on service health."""
+        try:
+            service = get_analytics_service_safe()
+            suggests_available = AI_SUGGESTIONS_AVAILABLE
 
-
-
+            if service and suggests_available:
+                return "✅ All services available - Full functionality enabled"
+            elif suggests_available:
+                return "⚠️ Analytics service limited - AI suggestions available"
+            elif service:
+                return "⚠️ AI suggestions unavailable - Analytics service available"
+            else:
+                return "🔄 Running in limited mode - Some features may be unavailable"
+        except Exception:
+            return "❌ Service status unknown"
 
 # =============================================================================
 # SECTION 7: HELPER DISPLAY FUNCTIONS
