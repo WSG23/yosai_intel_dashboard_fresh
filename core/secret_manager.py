@@ -8,7 +8,6 @@ from typing import Optional, Dict, Any, List
 
 from core.exceptions import SecurityError
 
-from config.config import get_config
 
 
 class SecretManager:
@@ -62,6 +61,8 @@ def validate_secrets() -> Dict[str, Any]:
     required if the application is running in a production environment
     or if they are needed for authentication.
     """
+
+    from config.config import get_config
 
     config = get_config()
     env = config.get_app_config().environment
