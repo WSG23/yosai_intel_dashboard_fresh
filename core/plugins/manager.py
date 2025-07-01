@@ -99,7 +99,11 @@ class PluginManager:
             except Exception as exc:
                 logger.error("Failed to load plugin %s: %s", module_name, exc)
 
-        ordered = self._resolver.resolve(discovered)
+        try:
+            ordered = self._resolver.resolve(discovered)
+        except Exception as exc:
+            logger.error("Failed to resolve plugin dependencies: %s", exc)
+            return []
         ordered.sort(key=self._get_priority)
 
         results: List[PluginProtocol] = []
