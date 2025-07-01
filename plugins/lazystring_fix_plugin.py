@@ -6,7 +6,7 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
-from utils.unicode_handler import handle_surrogate_characters
+from utils.unicode_utils import handle_surrogate_characters
 
 # Optional Babel import
 try:

@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-from .unicode_handler import sanitize_unicode_input
+from .unicode_utils import handle_surrogate_characters
 
 
 def decode_bytes(data: bytes, enc: str) -> str:
@@ -26,8 +26,7 @@ def safe_decode_with_unicode_handling(data: bytes, enc: str) -> str:
     except UnicodeDecodeError:
         text = data.decode(enc, errors="replace")
 
-    text = sanitize_unicode_input(text)
-    # Re-encode to UTF-8 ignoring any invalid surrogates/characters
+    text = handle_surrogate_characters(text)
     cleaned = text.encode("utf-8", errors="ignore")
     return cleaned.decode("utf-8", errors="ignore")
 
