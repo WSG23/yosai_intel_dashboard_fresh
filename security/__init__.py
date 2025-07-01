@@ -10,6 +10,7 @@ from .business_logic_validator import BusinessLogicValidator
 from .validation_middleware import ValidationMiddleware, ValidationOrchestrator
 from .attack_detection import AttackDetection
 from .validation_exceptions import ValidationError, SecurityViolation
+from .secrets_validator import SecretsValidator, register_health_endpoint
 
 __all__ = [
     "SecurityService",
@@ -26,4 +27,6 @@ __all__ = [
     "AttackDetection",
     "ValidationError",
     "SecurityViolation",
+    "SecretsValidator",
+    "register_health_endpoint",
 ]
