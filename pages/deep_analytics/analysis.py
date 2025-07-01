@@ -23,6 +23,7 @@ import plotly.graph_objects as go
 
 # Add this import
 from services import AnalyticsService
+from utils.unicode_handler import sanitize_unicode_input, safe_format_number
 
 # Internal service imports with CORRECTED paths
 ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
@@ -53,6 +54,17 @@ except ImportError:
 
 # Logger setup
 logger = logging.getLogger(__name__)
+
+# Helper for display titles
+def _get_display_title(analysis_type: str) -> str:
+    """Get proper display title for analysis type"""
+    title_map = {
+        'security': 'Security Results',
+        'trends': 'Trends Results',
+        'behavior': 'Behavior Results',
+        'anomaly': 'Anomaly Results'
+    }
+    return title_map.get(analysis_type.lower(), f"{analysis_type.title()} Results")
 
 # =============================================================================
 # SECTION 2: SAFE SERVICE UTILITIES
@@ -645,25 +657,81 @@ def process_quality_analysis(data_source: str) -> Dict[str, Any]:
         return {"error": f"Quality analysis error: {str(e)}"}
 
 
+# Helper extraction functions for results processing
+def _extract_counts(results: Dict[str, Any]) -> Dict[str, int]:
+    """Extract proper counts from results handling sets and other data types"""
+    total_events = results.get('total_events', 0)
+
+    unique_users_raw = results.get('unique_users', 0)
+    if isinstance(unique_users_raw, (set, list)):
+        unique_users = len(unique_users_raw)
+    else:
+        unique_users = int(unique_users_raw) if unique_users_raw else 0
+
+    unique_doors_raw = results.get('unique_doors', 0)
+    if isinstance(unique_doors_raw, (set, list)):
+        unique_doors = len(unique_doors_raw)
+    else:
+        unique_doors = int(unique_doors_raw) if unique_doors_raw else 0
+
+    success_rate = results.get('success_rate', 0)
+    if success_rate == 0:
+        successful = results.get('successful_events', 0)
+        failed = results.get('failed_events', 0)
+        if (successful + failed) > 0:
+            success_rate = successful / (successful + failed)
+
+    return {
+        'total_events': total_events,
+        'unique_users': unique_users,
+        'unique_doors': unique_doors,
+        'success_rate': success_rate,
+    }
+
+
+def _extract_security_metrics(results: Dict[str, Any]) -> Dict[str, Any]:
+    """Extract security-specific metrics from results"""
+    security_score_raw = results.get('security_score', {})
+
+    if hasattr(security_score_raw, 'score'):
+        score_val = float(security_score_raw.score)
+        risk_level = security_score_raw.threat_level.title()
+    elif isinstance(security_score_raw, dict):
+        score_val = float(security_score_raw.get('score', 0.0))
+        risk_level = security_score_raw.get('threat_level', 'unknown').title()
+    else:
+        score_val = float(security_score_raw) if security_score_raw else 0.0
+        risk_level = 'Unknown'
+
+    failed_attempts = results.get('failed_attempts', 0)
+    if failed_attempts == 0:
+        failed_attempts = results.get('failed_events', 0)
+
+    return {
+        'score': score_val,
+        'risk_level': risk_level,
+        'failed_attempts': failed_attempts,
+    }
+
 def create_analysis_results_display(results: Dict[str, Any], analysis_type: str) -> html.Div:
     """Create display for different analysis types"""
     try:
-        total_events = results.get('total_events', 0)
-        unique_users = results.get('unique_users', 0)
-        unique_doors = results.get('unique_doors', 0)
-        success_rate = results.get('success_rate', 0)
+        counts = _extract_counts(results)
+        total_events = counts['total_events']
+        unique_users = counts['unique_users']
+        unique_doors = counts['unique_doors']
+        success_rate = counts['success_rate']
         analysis_focus = results.get('analysis_focus', '')
 
         # Create type-specific content
         if analysis_type == "security":
-            score_obj = results.get('security_score', 0)
-            score_val = getattr(score_obj, 'score', score_obj)
+            sec_metrics = _extract_security_metrics(results)
             specific_content = [
-                html.P(f"Security Score: {score_val:.1f}/100"),
-                html.P(f"Failed Attempts: {results.get('failed_attempts', 0):,}"),
-                html.P(f"Risk Level: {results.get('risk_level', 'Unknown')}")
+                html.P(f"Security Score: {sec_metrics['score']:.1f}/100"),
+                html.P(f"Failed Attempts: {sec_metrics['failed_attempts']:,}"),
+                html.P(f"Risk Level: {sec_metrics['risk_level']}")
             ]
-            color = "danger" if results.get('risk_level') == "High" else "warning" if results.get('risk_level') == "Medium" else "success"
+            color = "danger" if sec_metrics['risk_level'] == "High" else "warning" if sec_metrics['risk_level'] == "Medium" else "success"
 
         elif analysis_type == "trends":
             specific_content = [
@@ -693,17 +761,22 @@ def create_analysis_results_display(results: Dict[str, Any], analysis_type: str)
             specific_content = [html.P("Standard analysis completed")]
             color = "info"
 
+        title_safe = sanitize_unicode_input(_get_display_title(analysis_type))
+        events_safe = safe_format_number(total_events)
+        users_safe = safe_format_number(unique_users)
+        doors_safe = safe_format_number(unique_doors)
+
         return dbc.Card([
             dbc.CardHeader([
-                html.H5(f"📊 {results.get('analysis_type', analysis_type)} Results")
+                html.H5(f"📊 {title_safe}")
             ]),
             dbc.CardBody([
                 dbc.Row([
                     dbc.Col([
                         html.H6("📈 Summary"),
-                        html.P(f"Total Events: {total_events:,}"),
-                        html.P(f"Unique Users: {unique_users:,}"),
-                        html.P(f"Unique Doors: {unique_doors:,}"),
+                        html.P(f"Total Events: {events_safe}"),
+                        html.P(f"Unique Users: {users_safe}"),
+                        html.P(f"Unique Doors: {doors_safe}"),
                         dbc.Progress(
                             value=success_rate * 100,
                             label=f"Success Rate: {success_rate:.1%}",

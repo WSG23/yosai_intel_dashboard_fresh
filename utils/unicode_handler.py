@@ -1,52 +1,44 @@
-"""Enhanced Unicode handling with surrogate character support."""
+#!/usr/bin/env python3
+"""Unicode surrogate character handler for UTF-8 encoding safety."""
 
-import logging
 import unicodedata
-import re
-
-logger = logging.getLogger(__name__)
+from typing import Union, Any
 
 
-def safe_decode_with_unicode_handling(content: bytes, encoding: str = "utf-8") -> str:
-    """Safely decode bytes with comprehensive Unicode handling."""
+def sanitize_unicode_input(text: Union[str, Any], replacement: str = '?') -> str:
+    """
+    Sanitize text input to handle Unicode surrogate characters.
+    
+    Args:
+        text: Input text or any object that can be converted to string
+        replacement: Character to replace problematic Unicode with
+        
+    Returns:
+        Safe UTF-8 encoded string
+    """
+    if text is None:
+        return ''
+    
+    if not isinstance(text, str):
+        text = str(text)
+
     try:
-        text = content.decode(encoding, errors="replace")
-        text = handle_surrogate_characters(text)
-        return text
-    except Exception as e:
-        logger.warning(f"Unicode decode failed with {encoding}: {e}")
-        return content.decode("latin-1", errors="replace")
-
-
-def handle_surrogate_characters(text: str) -> str:
-    """Handle Unicode surrogate characters that can't be encoded in UTF-8."""
-    try:
-        text = re.sub(r"[\uD800-\uDFFF]", "�", text)
-        text = unicodedata.normalize("NFKC", text)
-        text = text.encode("utf-8", errors="replace").decode("utf-8")
-        return text
-    except Exception as e:
-        logger.warning(f"Surrogate character handling failed: {e}")
-        return text.encode("utf-8", errors="replace").decode("utf-8")
-
-
-def sanitize_unicode_input(value: str) -> str:
-    """Return ``value`` encoded with replacement handling for invalid characters."""
-    try:
-        if not isinstance(value, str):
-            value = str(value)
-
-        cleaned = value.encode("utf-8", errors="replace").decode("utf-8", errors="replace")
-
-        for char in cleaned:
-            if 0xD800 <= ord(char) <= 0xDFFF:
-                cleaned = cleaned.replace(char, "\ufffd")
-
+        cleaned = text.encode('utf-8', errors='ignore').decode('utf-8')
+        cleaned = unicodedata.normalize('NFKC', cleaned)
+        cleaned = ''.join(
+            char for char in cleaned
+            if unicodedata.category(char)[0] != 'C' or char in '\t\n\r'
+        )
         return cleaned
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.warning("Unicode sanitization failed: %s", exc)
-        try:
-            return repr(value).encode("ascii", "replace").decode("ascii", "replace")
-        except Exception:
-            return "?"
+    except (UnicodeError, UnicodeDecodeError, UnicodeEncodeError):
+        return ''.join(char for char in str(text) if ord(char) < 127)
 
+
+def safe_format_number(value: Union[int, float], default: str = '0') -> str:
+    """Safely format numbers with Unicode safety."""
+    try:
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return f"{value:,}"
+        return default
+    except (ValueError, TypeError):
+        return default
