@@ -27,3 +27,5 @@ class TestSecurityVulnerabilities:
         result = sanitize_unicode_input(lone_surrogate)
         assert "\uD800" not in result
         assert "\uD801" not in result
+        # New logic replaces invalid characters with '?' ensuring ASCII output
+        assert result == "??"

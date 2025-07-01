@@ -77,7 +77,9 @@ class SecurityValidator:
         return self._compile_validation_results(issues, sanitized)
 
     def _sanitize_input(self, value: str) -> str:
-        """Sanitize input by encoding dangerous characters"""
+        """Sanitize input by encoding dangerous characters."""
+        # ``sanitize_unicode_input`` normalizes to ASCII-friendly text so that
+        # further HTML encoding operates on safe characters only.
         value = sanitize_unicode_input(value)
         # HTML entity encoding
         replacements = {
