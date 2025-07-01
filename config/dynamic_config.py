@@ -1,4 +1,5 @@
 import os
+import logging
 from typing import Dict, Any
 from .constants import (
     SecurityConstants,
@@ -43,8 +44,10 @@ class DynamicConfigManager:
                     if hasattr(self.analytics, key):
                         setattr(self.analytics, key, value)
 
-        except Exception:
-            pass
+        except Exception as exc:
+            logging.getLogger(__name__).warning(
+                "Failed to load %s: %s", config_path, exc
+            )
 
     def _apply_env_overrides(self) -> None:
         """Override defaults from environment variables with validation."""
