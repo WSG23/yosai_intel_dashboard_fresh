@@ -1,6 +1,8 @@
 import os
 import logging
 from typing import Dict, Any
+
+from .environment import select_config_file
 from .constants import (
     SecurityConstants,
     PerformanceConstants,
@@ -22,20 +24,11 @@ class DynamicConfigManager:
     def _load_yaml_config(self) -> None:
         """Load configuration from YAML files."""
         import yaml
-        from pathlib import Path
 
         try:
-            config_env = os.getenv("YOSAI_ENV", "development")
-            config_file = os.getenv("YOSAI_CONFIG_FILE")
+            config_path = select_config_file()
 
-            if config_file:
-                config_path = Path(config_file)
-            else:
-                config_path = Path(f"config/{config_env}.yaml")
-                if not config_path.exists():
-                    config_path = Path("config/production.yaml")
-
-            if config_path.exists():
+            if config_path and config_path.exists():
                 with open(config_path, 'r', encoding='utf-8') as f:
                     config_data = yaml.safe_load(f)
 
