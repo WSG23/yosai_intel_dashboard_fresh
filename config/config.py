@@ -25,7 +25,7 @@ class AppConfig:
     debug: bool = True
     host: str = "127.0.0.1"
     port: int = 8050
-    secret_key: str = "dev-key-change-in-production"
+    secret_key: str = field(default_factory=lambda: os.getenv("SECRET_KEY", ""))
     environment: str = "development"
 
 
@@ -59,7 +59,7 @@ class DatabaseConfig:
 class SecurityConfig:
     """Security configuration"""
 
-    secret_key: str = "dev-key-change-in-production"
+    secret_key: str = field(default_factory=lambda: os.getenv("SECRET_KEY", ""))
     session_timeout: int = 3600
     cors_origins: List[str] = field(default_factory=list)
     csrf_enabled: bool = True

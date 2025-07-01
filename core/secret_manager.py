@@ -3,7 +3,10 @@ from __future__ import annotations
 """Secret management abstraction"""
 
 import os
+import secrets
 from typing import Optional, Dict, Any, List
+
+from core.exceptions import SecurityError
 
 from config.config import get_config
 
@@ -27,6 +30,21 @@ class SecretManager:
         if value is None and default is None:
             raise KeyError(f"Secret '{key}' not found")
         return value
+
+    @staticmethod
+    def generate_secret_key(length: int = 32) -> str:
+        """Generate a cryptographically secure secret key."""
+        return secrets.token_urlsafe(length)
+
+    @staticmethod
+    def get_secret_key() -> str:
+        """Retrieve SECRET_KEY from the environment and validate it."""
+        key = os.environ.get("SECRET_KEY")
+        if not key:
+            raise SecurityError("SECRET_KEY environment variable required")
+        if len(key) < 32:
+            raise SecurityError("SECRET_KEY must be at least 32 characters")
+        return key
 
     def _get_aws_secret(self, key: str) -> Optional[str]:
         raise NotImplementedError("AWS secrets backend not configured")

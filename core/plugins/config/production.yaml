@@ -207,7 +207,7 @@ cache:
   key_prefix: 'yosai:test:'
 
 security:
-  secret_key: test-secret-key-for-testing-only
+  secret_key: ${SECRET_KEY}
   session_timeout_minutes: 5
   max_file_size_mb: 100
   rate_limiting_enabled: false
