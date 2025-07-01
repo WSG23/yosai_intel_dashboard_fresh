@@ -85,7 +85,11 @@
 }
 
 .chip--gold {
-  background: linear-gradient(135deg, #FFD700, #FFA500);
+  /*
+   * Use the warning palette to maintain sufficient contrast
+   * between the gradient background and the text color.
+   */
+  background: linear-gradient(135deg, #FFD700, var(--color-warning));
   color: var(--color-gray-900);
   font-weight: var(--font-weight-semibold);
 }

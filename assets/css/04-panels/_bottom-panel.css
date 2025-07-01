@@ -68,7 +68,11 @@
 
 /* Detection Chip Variants */
 .detection-chip--active {
-  background: linear-gradient(135deg, #FFD700, #FFA500);
+  /*
+   * Warning gradient indicates active detection status.
+   * The text color has sufficient contrast for accessibility.
+   */
+  background: linear-gradient(135deg, #FFD700, var(--color-warning));
   color: var(--color-gray-900);
   box-shadow: var(--shadow-sm);
 }
