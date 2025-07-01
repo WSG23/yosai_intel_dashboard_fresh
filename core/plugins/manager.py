@@ -1,22 +1,21 @@
 import importlib
-import pkgutil
 import logging
+import pkgutil
 import threading
 import time
-from typing import List, Any, Dict
+from typing import Any, Dict, List
 
-from core.callback_manager import CallbackManager
-from core.plugins.protocols import (
-    PluginProtocol,
-    CallbackPluginProtocol,
-    PluginStatus,
-    PluginPriority,
-)
-from .dependency_resolver import PluginDependencyResolver
-
-from core.container import Container as DIContainer
 from config.config import ConfigManager
+from core.callback_manager import CallbackManager
+from core.container import Container as DIContainer
+from core.plugins.protocols import (
+    CallbackPluginProtocol,
+    PluginPriority,
+    PluginProtocol,
+    PluginStatus,
+)
 
+from .dependency_resolver import PluginDependencyResolver
 
 logger = logging.getLogger(__name__)
 
@@ -124,11 +123,14 @@ class PluginManager:
 
             success = plugin.load(self.container, config)
             if success:
-                plugin.start()
-                self.plugins[name] = plugin
-                self.plugin_status[name] = PluginStatus.STARTED
-                logger.info("Loaded plugin %s", name)
-                return True
+                started = plugin.start()
+                if started:
+                    self.plugins[name] = plugin
+                    self.plugin_status[name] = PluginStatus.STARTED
+                    logger.info("Loaded plugin %s", name)
+                    return True
+                self.plugin_status[name] = PluginStatus.FAILED
+                return False
             self.plugin_status[name] = PluginStatus.FAILED
             return False
         except Exception as exc:

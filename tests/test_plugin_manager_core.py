@@ -1,12 +1,15 @@
 import importlib
+import json
 import sys
 import types
 from pathlib import Path
 
-from core.plugins.manager import PluginManager
-from core.container import Container as DIContainer
+from flask import Flask
+
 from config.config import ConfigManager
-from core.plugins.protocols import PluginStatus, PluginMetadata
+from core.container import Container as DIContainer
+from core.plugins.manager import PluginManager
+from core.plugins.protocols import PluginMetadata, PluginStatus
 
 
 class DummyPlugin:
@@ -131,7 +134,12 @@ def create_plugin():
     )
     sys.path.insert(0, str(tmp_path))
     try:
-        manager = PluginManager(DIContainer(), ConfigManager(), package="testplugins", health_check_interval=1)
+        manager = PluginManager(
+            DIContainer(),
+            ConfigManager(),
+            package="testplugins",
+            health_check_interval=1,
+        )
         plugins = manager.load_all_plugins()
         assert len(plugins) == 1
         assert "plug_a" in manager.plugins
@@ -169,4 +177,56 @@ def test_stop_all_plugins_handles_errors():
     manager.stop_all_plugins()
 
     assert manager.plugin_status["failstop"] == PluginStatus.FAILED
+    manager.stop_health_monitor()
+
+
+class FailingLoadPlugin(DummyPlugin):
+    class metadata:
+        name = "failload"
+
+    def load(self, container, config):
+        return False
+
+
+class FailingStartPlugin(DummyPlugin):
+    class metadata:
+        name = "failstart"
+
+    def start(self):
+        return False
+
+
+def test_load_plugin_load_failure():
+    manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+    plugin = FailingLoadPlugin()
+    result = manager.load_plugin(plugin)
+
+    assert result is False
+    assert manager.plugin_status["failload"] == PluginStatus.FAILED
+    manager.stop_health_monitor()
+
+
+def test_load_plugin_start_failure():
+    manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+    plugin = FailingStartPlugin()
+    result = manager.load_plugin(plugin)
+
+    assert result is False
+    assert manager.plugin_status["failstart"] == PluginStatus.FAILED
+    manager.stop_health_monitor()
+
+
+def test_health_endpoint_returns_data():
+    app = Flask(__name__)
+    manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+    plugin = DummyPlugin()
+    manager.load_plugin(plugin)
+    manager.register_health_endpoint(app)
+
+    client = app.test_client()
+    resp = client.get("/health/plugins")
+    data = json.loads(resp.data)
+
+    assert resp.status_code == 200
+    assert "dummy" in data
     manager.stop_health_monitor()
