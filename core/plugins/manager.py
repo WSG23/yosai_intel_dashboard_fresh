@@ -166,6 +166,19 @@ class PluginManager:
         if self._health_thread.is_alive():
             self._health_thread.join(timeout=1)
 
+    def stop_all_plugins(self) -> None:
+        """Stop all loaded plugins gracefully."""
+        for name, plugin in self.plugins.items():
+            try:
+                result = plugin.stop()
+                if result:
+                    self.plugin_status[name] = PluginStatus.STOPPED
+                else:
+                    self.plugin_status[name] = PluginStatus.FAILED
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.error("Failed to stop plugin %s: %s", name, exc)
+                self.plugin_status[name] = PluginStatus.FAILED
+
     def register_health_endpoint(self, app: Any) -> None:
         """Expose aggregated plugin health via /health/plugins"""
         server = app.server if hasattr(app, "server") else app

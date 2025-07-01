@@ -124,3 +124,35 @@ def create_plugin():
     finally:
         sys.path.remove(str(tmp_path))
         manager.stop_health_monitor()
+
+
+def test_stop_all_plugins_calls_stop():
+    manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+    plugin = DummyPlugin()
+    manager.load_plugin(plugin)
+
+    assert plugin.started
+    manager.stop_all_plugins()
+
+    assert not plugin.started
+    assert manager.plugin_status["dummy"] == PluginStatus.STOPPED
+    manager.stop_health_monitor()
+
+
+class FailingStopPlugin(DummyPlugin):
+    class metadata:
+        name = "failstop"
+
+    def stop(self):  # pragma: no cover - error path checked
+        raise RuntimeError("boom")
+
+
+def test_stop_all_plugins_handles_errors():
+    manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+    plugin = FailingStopPlugin()
+    manager.load_plugin(plugin)
+
+    manager.stop_all_plugins()
+
+    assert manager.plugin_status["failstop"] == PluginStatus.FAILED
+    manager.stop_health_monitor()
