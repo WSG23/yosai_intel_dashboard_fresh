@@ -3,7 +3,9 @@ from __future__ import annotations
 """Secret management abstraction"""
 
 import os
-from typing import Optional
+from typing import Optional, Dict, Any, List
+
+from config.config import get_config
 
 
 class SecretManager:
@@ -33,4 +35,42 @@ class SecretManager:
         raise NotImplementedError("Vault secrets backend not configured")
 
 
-__all__ = ["SecretManager"]
+def validate_secrets() -> Dict[str, Any]:
+    """Return summary of required secret availability.
+
+    This checks common environment-based secrets without exposing
+    their actual values. The summary includes whether each secret is
+    present and a list of any missing secrets. Secrets are considered
+    required if the application is running in a production environment
+    or if they are needed for authentication.
+    """
+
+    config = get_config()
+    env = config.get_app_config().environment
+
+    required: List[str] = ["SECRET_KEY"]
+    if env == "production":
+        required.append("DB_PASSWORD")
+
+    # Auth0 secrets are optional but included in the report
+    optional = [
+        "AUTH0_CLIENT_ID",
+        "AUTH0_CLIENT_SECRET",
+        "AUTH0_DOMAIN",
+        "AUTH0_AUDIENCE",
+    ]
+
+    summary = {"environment": env, "checks": {}, "missing": []}
+
+    for key in required + optional:
+        value = os.getenv(key)
+        present = value is not None and value != ""
+        summary["checks"][key] = present
+        if key in required and not present:
+            summary["missing"].append(key)
+
+    summary["valid"] = len(summary["missing"]) == 0
+    return summary
+
+
+__all__ = ["SecretManager", "validate_secrets"]

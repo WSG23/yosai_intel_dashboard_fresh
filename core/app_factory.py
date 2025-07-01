@@ -12,6 +12,7 @@ from dash import html, dcc, Input, Output
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from core.container import Container as DIContainer
 from core.plugins.manager import PluginManager
+from core.secret_manager import validate_secrets
 import pandas as pd
 
 # ✅ FIXED IMPORTS - Use correct config system
@@ -137,6 +138,11 @@ def _create_full_app() -> dash.Dash:
             """
             return {"status": "ok"}, 200
 
+        @server.route("/health/secrets", methods=["GET"])
+        def health_secrets():
+            """Return validation summary for required secrets"""
+            return validate_secrets(), 200
+
         logger.info("✅ Complete Dash application created successfully")
         return app
 
@@ -203,6 +209,11 @@ def _create_simple_app() -> dash.Dash:
             """
             return {"status": "ok"}, 200
 
+        @server.route("/health/secrets", methods=["GET"])
+        def health_secrets():
+            """Return validation summary for required secrets"""
+            return validate_secrets(), 200
+
         logger.info("Simple Dash application created successfully")
         return app
 
@@ -268,6 +279,11 @@ def _create_json_safe_app() -> dash.Dash:
                             example: ok
             """
             return {"status": "ok"}, 200
+
+        @server.route("/health/secrets", methods=["GET"])
+        def health_secrets():
+            """Return validation summary for required secrets"""
+            return validate_secrets(), 200
 
         logger.info("JSON-safe Dash application created")
         return app
