@@ -14,6 +14,17 @@ def test_unicode_normalization():
         validator.validate("<bad>")
 
 
+def test_html_js_injection_attempts():
+    validator = InputValidator()
+    payloads = [
+        "<script>alert('xss')</script>",
+        "<img src=x onerror=alert(1)>",
+    ]
+    for payload in payloads:
+        with pytest.raises(ValidationError):
+            validator.validate(payload)
+
+
 def test_json_input_allowed():
     validator = InputValidator()
     # Should not raise ValidationError for quotes within JSON structures
