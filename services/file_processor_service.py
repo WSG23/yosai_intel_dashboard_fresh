@@ -11,6 +11,7 @@ from .base import BaseService
 from .protocols import FileProcessorProtocol
 from utils.file_validator import safe_decode_with_unicode_handling
 from utils.unicode_handler import sanitize_unicode_input
+from utils.unicode_utils import safe_unicode_encode
 from config.dynamic_config import dynamic_config
 
 logger = logging.getLogger(__name__)
@@ -87,8 +88,8 @@ class FileProcessorService(BaseService):
                     else:
                         text = content.decode(encoding)
 
-                    # Remove Unicode surrogate characters that can't be encoded in UTF-8
-                    text = ''.join(char for char in text if not (0xD800 <= ord(char) <= 0xDFFF))
+                    # Remove Unicode surrogate characters
+                    text = safe_unicode_encode(text)
 
                     # Parse with optimizations for large files
                     df = pd.read_csv(
