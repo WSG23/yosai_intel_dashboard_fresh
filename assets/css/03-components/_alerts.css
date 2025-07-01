@@ -6,11 +6,12 @@
 .alert {
   padding: var(--space-4);
   border-radius: var(--radius-lg);
-  border: 1px solid;
+  border: 1px solid transparent;
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
   position: relative;
+  margin-bottom: 1rem;
 }
 
 /* Alert Content */
@@ -74,4 +75,23 @@
 
 .alert--spacious {
   padding: var(--space-6);
+}
+
+/* Legacy alert utility classes */
+.alert-success {
+  color: #155724;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.alert-danger {
+  color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+}
+
+.alert-warning {
+  color: #856404;
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
 }
