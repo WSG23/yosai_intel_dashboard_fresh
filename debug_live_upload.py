@@ -91,4 +91,3 @@ def add_debug_hooks():
 if __name__ == "__main__":
     add_debug_hooks()
     logger.info("🚀 Upload debugging hooks installed. Upload a file and check the logs!")
-    
