@@ -122,6 +122,9 @@ Alternatively you can launch the app with Gunicorn:
 gunicorn wsgi:server
 ```
 
+When `YOSAI_ENV=production` and CSRF protection is enabled, the application
+initializes the `DashCSRFPlugin` to enforce strict CSRF checks.
+
 ### Production Build
 
 Build optimized CSS assets before deployment:
