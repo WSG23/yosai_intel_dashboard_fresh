@@ -59,6 +59,8 @@ class DatabaseConnectionPool:
 
     def get_connection(self) -> DatabaseConnection:
         self._shrink_idle_connections()
+        # Check if pool usage is high before handing out a connection
+        self._maybe_expand()
 
         if self._pool:
             conn, _ = self._pool.pop()
@@ -70,7 +72,6 @@ class DatabaseConnectionPool:
             conn = self._factory()
             self._active += 1
 
-        self._maybe_expand()
         return conn
 
     def release_connection(self, conn: DatabaseConnection) -> None:
