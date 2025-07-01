@@ -61,3 +61,45 @@ def test_count_and_date_helpers():
     dr = service._calculate_date_range(min_ts, max_ts)
     assert dr["start"] == "2024-01-01"
     assert dr["end"] == "2024-01-03"
+
+
+def test_stream_uploaded_file(tmp_path):
+    df = pd.DataFrame({
+        "Timestamp": ["2024-01-01 10:00:00"],
+        "Person ID": ["u1"],
+        "Device name": ["d1"],
+    })
+    path = tmp_path / "x.csv"
+    df.to_csv(path, index=False)
+    service = AnalyticsService()
+    chunks = list(service._stream_uploaded_file(path, chunksize=1))
+    assert len(chunks) == 1
+    assert list(chunks[0].columns) == ["timestamp", "person_id", "door_id"]
+
+
+def test_aggregate_counts():
+    from collections import Counter
+
+    df1 = pd.DataFrame({
+        "person_id": ["u1", "u2"],
+        "door_id": ["d1", "d2"],
+        "timestamp": ["2024-01-01", "2024-01-02"],
+    })
+    df2 = pd.DataFrame({
+        "person_id": ["u1"],
+        "door_id": ["d1"],
+        "timestamp": ["2024-01-03"],
+    })
+
+    service = AnalyticsService()
+    u_counts, d_counts = Counter(), Counter()
+    total, min_ts, max_ts = service._aggregate_counts(
+        [df1, df2], u_counts, d_counts, None, None
+    )
+
+    assert total == 3
+    assert u_counts["u1"] == 2
+    assert d_counts["d1"] == 2
+    dr = service._calculate_date_range(min_ts, max_ts)
+    assert dr["start"] == "2024-01-01"
+    assert dr["end"] == "2024-01-03"

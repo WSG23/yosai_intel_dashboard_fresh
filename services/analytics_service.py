@@ -335,7 +335,7 @@ class AnalyticsService:
             return {'status': 'error', 'message': f'Unknown source: {source}'}
 
     def _process_uploaded_data_directly(self, uploaded_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Process uploaded files without chunking and track per-file info."""
+        """Process uploaded files using chunked streaming."""
         try:
             from collections import Counter
 
@@ -350,23 +350,22 @@ class AnalyticsService:
 
             for filename, source in uploaded_data.items():
                 try:
-                    df = self._load_uploaded_dataframe(source)
-                    processing_info[filename] = {"rows": len(df), "status": "ok"}
+                    chunks = self._stream_uploaded_file(source)
+                    file_events, min_ts, max_ts = self._aggregate_counts(
+                        chunks, user_counts, door_counts, min_ts, max_ts
+                    )
+                    processing_info[filename] = {"rows": file_events, "status": "ok"}
+                    total_events += file_events
                 except Exception as e:  # pragma: no cover - best effort
                     processing_info[filename] = {"rows": 0, "status": f"error: {e}"}
                     logger.error(f"Error processing {filename}: {e}")
-                    continue
-
-                total_events += len(df)
-                self._update_counts(df, user_counts, door_counts)
-                min_ts, max_ts = self._update_timestamp_range(df, min_ts, max_ts)
 
             if not processing_info:
                 return {"status": "error", "message": "No uploaded files processed"}
 
             date_range = self._calculate_date_range(min_ts, max_ts)
 
-            result = self._build_uploaded_result(
+            result = self._build_result(
                 total_events, user_counts, door_counts, date_range, processing_info
             )
 
@@ -390,6 +389,16 @@ class AnalyticsService:
         df = self.df_validator.validate(df)
         df = map_and_clean(df)
         return df
+
+    def _stream_uploaded_file(self, source: Any, chunksize: int = 50000):
+        """Yield cleaned DataFrame chunks from a file or DataFrame."""
+        if isinstance(source, (str, Path)):
+            for chunk in pd.read_csv(source, chunksize=chunksize, encoding="utf-8"):
+                chunk = self.df_validator.validate(chunk)
+                yield map_and_clean(chunk)
+        else:
+            df = self.df_validator.validate(source)
+            yield map_and_clean(df)
 
     def _update_counts(
         self, df: pd.DataFrame, user_counts: "Counter[str]", door_counts: "Counter[str]"
@@ -418,6 +427,22 @@ class AnalyticsService:
                     max_ts = cur_max
         return min_ts, max_ts
 
+    def _aggregate_counts(
+        self,
+        frames,
+        user_counts: "Counter[str]",
+        door_counts: "Counter[str]",
+        min_ts: Optional[pd.Timestamp],
+        max_ts: Optional[pd.Timestamp],
+    ) -> Tuple[int, Optional[pd.Timestamp], Optional[pd.Timestamp]]:
+        """Aggregate counters and timestamps from streamed frames."""
+        total = 0
+        for df in frames:
+            total += len(df)
+            self._update_counts(df, user_counts, door_counts)
+            min_ts, max_ts = self._update_timestamp_range(df, min_ts, max_ts)
+        return total, min_ts, max_ts
+
     def _calculate_date_range(
         self, min_ts: Optional[pd.Timestamp], max_ts: Optional[pd.Timestamp]
     ) -> Dict[str, str]:
@@ -429,7 +454,7 @@ class AnalyticsService:
             }
         return {"start": "Unknown", "end": "Unknown"}
 
-    def _build_uploaded_result(
+    def _build_result(
         self,
         total_events: int,
         user_counts: "Counter[str]",
