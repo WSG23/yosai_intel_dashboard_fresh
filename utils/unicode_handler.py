@@ -36,18 +36,21 @@ def sanitize_unicode_input(value: str) -> str:
         if not isinstance(value, str):
             value = str(value)
 
-        # Remove lone surrogates that can't be encoded
-        cleaned = value.encode("utf-8", errors="ignore").decode("utf-8")
+        # Encode to ASCII with replacement to ensure the result contains
+        # only safe characters.  Non-ASCII characters will be substituted with
+        # ``?`` so the decoded text remains readable and length is preserved.
+        cleaned = value.encode("ascii", errors="replace").decode("ascii")
 
-        # Validate surrogate pairs and replace invalid ones with the
-        # Unicode replacement character.  ``errors="ignore"`` above will
-        # drop lone surrogates, but malformed pairs may still exist when
-        # ``surrogatepass`` decoding was used earlier.
+        # Validate surrogate pairs and replace any remaining invalid ones with
+        # the Unicode replacement character. ``errors="replace"`` above should
+        # handle most cases but this is a defensive check.
         for char in cleaned:
             if 0xD800 <= ord(char) <= 0xDFFF:
                 cleaned = cleaned.replace(char, "\ufffd")
 
         return cleaned
-    except (UnicodeError, UnicodeDecodeError):  # pragma: no cover - safety
-        return "\ufffd"
+    except (UnicodeError, UnicodeDecodeError) as exc:  # pragma: no cover - safety
+        logger.warning("Unicode sanitization failed: %s", exc)
+        # Fall back to ASCII-safe text if UTF-8 processing fails
+        return value.encode("ascii", errors="replace").decode("ascii")
 
