@@ -66,6 +66,8 @@ yosai_intel_dashboard/
 4. **Set up environment:**
    ```bash
    cp .env.example .env
+   # Generate random development secrets
+   python scripts/generate_dev_secrets.py >> .env
    # Edit .env with your configuration (e.g. set HOST and database info)
    ```
 
