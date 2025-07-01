@@ -3,6 +3,12 @@
 Fixed Main Application - No import issues
 """
 import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    encoding="utf-8",
+    errors="replace",
+)
 import os
 import sys
 import importlib
@@ -10,11 +16,6 @@ import importlib
 from dotenv import load_dotenv
 
 from core.exceptions import ConfigurationError
-
-# Configure logging first
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 
 logger = logging.getLogger(__name__)
 
