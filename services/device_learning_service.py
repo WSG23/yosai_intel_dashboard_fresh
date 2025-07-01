@@ -8,8 +8,8 @@ from pathlib import Path
 from datetime import datetime
 import pandas as pd
 from dash import html
-from dash._callback import callback
 from dash.dependencies import Input, Output
+from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from services.consolidated_learning_service import get_learning_service
 from dash._callback_context import callback_context
 
@@ -225,16 +225,18 @@ def get_device_learning_service() -> DeviceLearningService:
     return _device_learning_service
 
 
-def create_learning_callbacks():
-    """Updated callback using consolidated learning service."""
+def create_learning_callbacks(manager: UnifiedCallbackCoordinator) -> None:
+    """Register device learning callback with coordinator."""
 
-    @callback(
+    @manager.register_callback(
         Output("device-learning-status", "children"),
         [
             Input("file-upload-store", "data"),
             Input("device-mappings-confirmed", "data"),
         ],
         prevent_initial_call=True,
+        callback_id="device_learning",
+        component_name="device_learning_service",
     )
     def handle_device_learning(upload_data, confirmed_mappings):
         """Handle learning using consolidated service."""

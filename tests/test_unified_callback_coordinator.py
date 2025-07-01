@@ -1,7 +1,12 @@
 import pytest
 from dash import Dash, Input, Output
 
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.unified_callback_coordinator import (
+    UnifiedCallbackCoordinator,
+)
+from core.callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
+from core.callback_migration import UnifiedCallbackCoordinatorWrapper
 
 
 def test_duplicate_callback_registration():
@@ -87,4 +92,58 @@ def test_callback_registration_to_app():
 
     assert 'out.children' in app.callback_map
     assert 'reg' in coord.registered_callbacks
+
+
+def test_get_callback_conflicts():
+    app = Dash(__name__)
+    coord = UnifiedCallbackCoordinator(app)
+
+    @coord.register_callback(
+        Output('out', 'children'),
+        Input('a', 'value'),
+        callback_id='c1',
+        component_name='test1'
+    )
+    def _c1(v):
+        return v
+
+    @coord.register_callback(
+        Output('out', 'children'),
+        Input('b', 'value'),
+        callback_id='c2',
+        component_name='test2',
+        allow_duplicate=True
+    )
+    def _c2(v):
+        return v
+
+    conflicts = coord.get_callback_conflicts()
+    assert conflicts['out.children'] == ['c1', 'c2']
+
+
+def test_wrapper_event_registration():
+    app = Dash(__name__)
+    manager = CallbackManager()
+    wrapper = UnifiedCallbackCoordinatorWrapper(app, manager)
+
+    results = []
+
+    def _event(arg):
+        results.append(arg)
+
+    wrapper.register_event(CallbackEvent.BEFORE_REQUEST, _event, priority=10)
+    manager.trigger(CallbackEvent.BEFORE_REQUEST, 1)
+    assert results == [1]
+
+    @wrapper.register_callback(
+        Output('o', 'children'),
+        Input('i', 'value'),
+        callback_id='cb',
+        component_name='wrapper'
+    )
+    def _cb(v):
+        return v
+
+    assert 'o.children' in app.callback_map
+    assert 'cb' in wrapper.registered_callbacks
 
