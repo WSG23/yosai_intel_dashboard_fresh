@@ -80,6 +80,7 @@ def _create_full_app() -> dash.Dash:
 
         @app.server.teardown_appcontext  # type: ignore[attr-defined]
         def _shutdown_plugin_manager(exc=None):
+            plugin_manager.stop_all_plugins()
             plugin_manager.stop_health_monitor()
 
         # Set main layout
