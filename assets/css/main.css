@@ -10,7 +10,7 @@
 
 /* Layout System */
 @import './02-layout/_grid.css';
-@import './_containers.css';
+@import './02-layout/_containers.css';
 @import './07-utilities/_spacing.css';
 @import './07-utilities/_positioning.css';
 
@@ -27,15 +27,15 @@
 @import './04-panels/_panel-base.css';
 @import './04-panels/_map-panel.css';
 @import './04-panels/_alert-panel.css';
-@import './_signal-panel.css';
+@import './04-panels/_signal-panel.css';
 @import './04-panels/_bottom-panel.css';
-@import './_navbar.css';
+@import './04-panels/_navbar.css';
 
 /* Page-Specific Styles */
 @import './05-pages/_dashboard.css';
 @import './05-pages/_graphs.css';
 @import './05-pages/_settings.css';
-@import './_analytics.css';
+@import './05-pages/_analytics.css';
 
 /* Theme System */
 @import './06-themes/_dark-theme.css';
