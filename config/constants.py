@@ -17,7 +17,7 @@ class SecurityLimits:
 class DataProcessingLimits:
     """Data processing and memory management limits."""
 
-    MAX_DATAFRAME_PROCESSING_ROWS_ROWS: int = 2_000_000
+    MAX_DATAFRAME_PROCESSING_ROWS: int = 2_000_000
     """Maximum DataFrame rows processed in a single operation.
 
     Range: 100_000-5_000_000. Higher values risk memory exhaustion; lower
