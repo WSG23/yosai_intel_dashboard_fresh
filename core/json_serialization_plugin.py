@@ -11,6 +11,8 @@ from datetime import datetime, date
 from dataclasses import dataclass, is_dataclass, asdict
 from typing import Any, Dict, List, Optional, Union
 
+from core.serialization import SafeJSONSerializer
+
 from core.plugins.protocols import PluginMetadata
 
 # Optional Babel support
@@ -119,22 +121,25 @@ class YosaiJSONEncoder(json.JSONEncoder):
 
 class JsonSerializationService:
     """Self-contained JSON serialization service"""
-    
+
     def __init__(self, config: Optional[JsonSerializationConfig] = None):
         self.config = config or JsonSerializationConfig()
         self.encoder = YosaiJSONEncoder(self.config)
+        self._sanitizer = SafeJSONSerializer()
     
     def serialize(self, obj: Any) -> str:
         """Serialize object to JSON string"""
+        sanitized = self._sanitizer.serialize(obj)
         try:
-            return json.dumps(obj, cls=YosaiJSONEncoder, config=self.config, ensure_ascii=False)
+            return json.dumps(sanitized, cls=YosaiJSONEncoder, config=self.config, ensure_ascii=False)
         except Exception as e:
             logger.warning(f"Serialization failed, using fallback: {e}")
-            return json.dumps({"error": "Serialization failed", "repr": str(obj)})
+            return json.dumps({"error": "Serialization failed", "repr": str(sanitized)})
     
     def sanitize_for_transport(self, obj: Any) -> Any:
         """Sanitize object for JSON transport"""
-        return self.encoder._safe_serialize(obj)
+        sanitized = self._sanitizer.serialize(obj)
+        return self.encoder._safe_serialize(sanitized)
 
 
 class JsonCallbackService:

@@ -347,6 +347,12 @@ def search():
     return query_db(term)
 ```
 
+### Safe JSON Serialization
+`SafeJSONSerializer` in `core/serialization/safe_json.py` normalizes `LazyString`,
+`Markup`, and problematic Unicode surrogate characters before any JSON encoding.
+`JsonSerializationService` uses this helper to ensure consistent results across
+Flask and Dash applications.
+
 ## 🔐 Authentication & Secrets
 
 This project uses Auth0 for OIDC login. Configure the following environment
