@@ -116,6 +116,14 @@ def _decode_jwt(token: str, domain: str, audience: str, client_id: str) -> dict:
 
 @auth_bp.route("/login")
 def login():
+    """Begin OAuth login flow.
+    ---
+    get:
+      description: Redirect user to Auth0 login
+      responses:
+        302:
+          description: Redirect to Auth0
+    """
     auth0 = auth_bp.auth0
     return auth0.authorize_redirect(
         redirect_uri=url_for("auth.callback", _external=True),
@@ -125,6 +133,7 @@ def login():
 
 @auth_bp.route("/callback")
 def callback():
+    """Handle OAuth provider callback."""
     auth0 = auth_bp.auth0
     token = auth0.authorize_access_token()
     id_token = token.get("id_token")
@@ -149,6 +158,14 @@ def callback():
 @auth_bp.route("/logout")
 @login_required
 def logout():
+    """Log the user out.
+    ---
+    get:
+      description: Terminate session and redirect
+      responses:
+        302:
+          description: Redirect to login page
+    """
     manager = SecretManager()
     domain = manager.get("AUTH0_DOMAIN")
     logout_user()
@@ -167,6 +184,7 @@ def role_required(role: str):
             if role not in roles:
                 try:
                     from dash.exceptions import PreventUpdate
+
                     raise PreventUpdate
                 except Exception:
                     return "Forbidden", 403

@@ -1,5 +1,13 @@
 # API Documentation
 
+The Flask routes expose a minimal API used by the dashboard. A Swagger UI is
+available at `/api/docs` when the application is running. To regenerate the
+OpenAPI specification run:
+
+```bash
+python tools/generate_openapi.py
+```
+
 ## Database Manager
 
 ### `DatabaseManager`
