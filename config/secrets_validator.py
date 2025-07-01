@@ -11,7 +11,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +66,11 @@ class SecretsValidator:
     """Validate secrets according to environment specific rules."""
 
     _entropy_threshold = 3.5
+    REQUIRED_PRODUCTION_SECRETS = [
+        "SECRET_KEY",
+        "DB_PASSWORD",
+        "AUTH0_CLIENT_SECRET",
+    ]
 
     def __init__(self, environment: str = "development") -> None:
         self.environment = environment
@@ -131,6 +136,28 @@ class SecretsValidator:
         for i in range(len(secret_bytes)):
             secret_bytes[i] = 0
         return SecretValidationResult(is_valid, issues, severity, recommendations)
+
+    def validate_production_secrets(
+        self, source: Optional[SecretSource] = None
+    ) -> Dict[str, str]:
+        """Validate critical secrets for a production environment.
+
+        Raises a ``ValueError`` if any required secret is missing or insecure.
+        """
+        source = source or EnvSecretSource()
+        missing: List[str] = []
+        secrets: Dict[str, str] = {}
+        for key in self.REQUIRED_PRODUCTION_SECRETS:
+            value = source.get_secret(key)
+            if not value or len(value) < 32 or value.startswith("test-"):
+                missing.append(key)
+            else:
+                secrets[key] = value
+        if missing:
+            raise ValueError(
+                "Invalid production secrets: " + ", ".join(missing)
+            )
+        return secrets
 
     @staticmethod
     def check_rotation_needed(last_rotated: datetime, rotation_days: int) -> bool:
