@@ -77,6 +77,11 @@ yosai_intel_dashboard/
 6. **Access the dashboard:**
    Open http://127.0.0.1:8050 in your browser
 
+## Developer Onboarding
+
+For a more detailed walkthrough of the environment setup and testing workflow,
+see [developer_onboarding.md](docs/developer_onboarding.md).
+
 ### Troubleshooting
 
 If Pylance shows unresolved imports or type errors, your editor may not be
