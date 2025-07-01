@@ -104,6 +104,34 @@ class ChunkedAnalyticsController:
 
         logger.info(f"✅ Chunking complete: {chunks_yielded} chunks, {rows_yielded:,} total rows")
 
+    def _validate_timestamp_column(self, df: pd.DataFrame, column: str = "timestamp") -> pd.DataFrame:
+        """Validate and clean timestamp column in DataFrame.
+
+        Converts the column to ``datetime`` and removes any rows with malformed or
+        out-of-range timestamps. A warning is logged when invalid values are
+        encountered.
+        """
+
+        if column not in df.columns:
+            return df
+
+        df = df.copy()
+        df[column] = pd.to_datetime(df[column], errors="coerce")
+
+        invalid_mask = df[column].isna()
+        if invalid_mask.any():
+            logger.warning(
+                f"{invalid_mask.sum()} malformed timestamps removed from column '{column}'"
+            )
+            df = df[~invalid_mask]
+
+        try:
+            df = df[(df[column] >= pd.Timestamp("1970-01-01")) & (df[column] <= pd.Timestamp("2100-12-31"))]
+        except Exception as e:  # pragma: no cover - best effort
+            logger.debug(f"Timestamp range filter failed: {e}")
+
+        return df
+
     def _process_chunk(self, chunk_df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
         """FIXED: Process a single chunk for all analysis types."""
         logger.debug(f"🔍 Processing chunk with {len(chunk_df):,} rows")
@@ -188,8 +216,12 @@ class ChunkedAnalyticsController:
 
         if "timestamp" in chunk_df.columns and "person_id" in chunk_df.columns:
             try:
-                chunk_df["timestamp"] = pd.to_datetime(chunk_df["timestamp"], errors="coerce")
-                chunk_df = chunk_df.dropna(subset=["timestamp"]).sort_values(["person_id", "timestamp"])
+                chunk_df = self._validate_timestamp_column(chunk_df)
+                if chunk_df.empty:
+                    logger.warning("Chunk has no valid timestamps for anomaly analysis")
+                    return anomalies
+
+                chunk_df = chunk_df.sort_values(["person_id", "timestamp"])
 
                 for user_id in chunk_df["person_id"].unique():
                     user_data = chunk_df[chunk_df["person_id"] == user_id]
@@ -227,8 +259,7 @@ class ChunkedAnalyticsController:
 
         if "timestamp" in chunk_df.columns:
             try:
-                chunk_df["timestamp"] = pd.to_datetime(chunk_df["timestamp"], errors="coerce")
-                chunk_df = chunk_df.dropna(subset=["timestamp"])
+                chunk_df = self._validate_timestamp_column(chunk_df)
 
                 if len(chunk_df) > 0:
                     patterns["date_range"] = {
