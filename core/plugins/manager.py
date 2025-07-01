@@ -10,7 +10,9 @@ from core.plugins.protocols import (
     PluginProtocol,
     CallbackPluginProtocol,
     PluginStatus,
+    PluginPriority,
 )
+from .dependency_resolver import PluginDependencyResolver
 
 from core.container import Container as DIContainer
 from config.config import ConfigManager
@@ -32,6 +34,7 @@ class PluginManager:
         self.container = container
         self.config_manager = config_manager
         self.package = package
+        self._resolver = PluginDependencyResolver()
         self.loaded_plugins: List[Any] = []
         self.plugins: Dict[str, PluginProtocol] = {}
         self.plugin_status: Dict[str, PluginStatus] = {}
@@ -57,6 +60,17 @@ class PluginManager:
         """Ensure the health monitor thread is stopped on exit."""
         self.stop_health_monitor()
 
+    @staticmethod
+    def _get_priority(plugin: PluginProtocol) -> int:
+        """Return numeric priority value for sorting."""
+        try:
+            pr = getattr(plugin.metadata, "priority", PluginPriority.NORMAL)
+            if isinstance(pr, PluginPriority):
+                return pr.value
+            return int(pr)
+        except Exception:
+            return PluginPriority.NORMAL.value
+
     def load_all_plugins(self) -> List[Any]:
         """Dynamically load all plugins from the configured package."""
         try:
@@ -65,7 +79,7 @@ class PluginManager:
             logger.info("Plugins package '%s' not found", self.package)
             return []
 
-        results = []
+        discovered: List[PluginProtocol] = []
         for loader, name, is_pkg in pkgutil.iter_modules(pkg.__path__):
             module_name = f"{self.package}.{name}"
             try:
@@ -79,12 +93,19 @@ class PluginManager:
                     plugin = module.init_plugin(self.container, self.config_manager)
 
                 if plugin:
-                    self.load_plugin(plugin)
-                    results.append(plugin)
+                    discovered.append(plugin)
                 self.loaded_plugins.append(module)
                 logger.info("Loaded plugin %s", module_name)
             except Exception as exc:
                 logger.error("Failed to load plugin %s: %s", module_name, exc)
+
+        ordered = self._resolver.resolve(discovered)
+        ordered.sort(key=self._get_priority)
+
+        results: List[PluginProtocol] = []
+        for plugin in ordered:
+            if self.load_plugin(plugin):
+                results.append(plugin)
         return results
 
     def load_plugin(self, plugin: PluginProtocol) -> bool:
