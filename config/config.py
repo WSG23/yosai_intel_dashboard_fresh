@@ -11,6 +11,8 @@ from dataclasses import dataclass, field
 from typing import Dict, Any, Optional, List
 
 from .dynamic_config import dynamic_config
+from core.secrets_validator import SecretsValidator
+from core.exceptions import ConfigurationError
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +91,7 @@ class ConfigManager:
     def __init__(self, config_path: Optional[str] = None):
         self.config_path = config_path
         self.config = Config()
+        self.validated_secrets: Dict[str, str] = {}
         self._load_config()
 
     def _load_config(self) -> None:
@@ -102,6 +105,11 @@ class ConfigManager:
 
         # Apply environment overrides
         self._apply_env_overrides()
+
+        # Validate secrets and store values
+        validator = SecretsValidator()
+        self.validated_secrets = validator.validate_all_secrets()
+        self._apply_validated_secrets()
 
         # Validate configuration
         self._validate_config()
@@ -311,6 +319,18 @@ class ConfigManager:
         if sample_json is not None:
             self.config.sample_files.json_path = sample_json
 
+    def _apply_validated_secrets(self) -> None:
+        """Apply secrets validated by SecretsValidator."""
+        if "SECRET_KEY" in self.validated_secrets:
+            secret = self.validated_secrets["SECRET_KEY"]
+            self.config.app.secret_key = secret
+            self.config.security.secret_key = secret
+            os.environ.setdefault("SECRET_KEY", secret)
+        if "DB_PASSWORD" in self.validated_secrets:
+            pwd = self.validated_secrets["DB_PASSWORD"]
+            self.config.database.password = pwd
+            os.environ.setdefault("DB_PASSWORD", pwd)
+
     def _validate_config(self) -> None:
         """Validate configuration and log warnings"""
         warnings = []
@@ -349,7 +369,7 @@ class ConfigManager:
         if errors:
             error_msg = "; ".join(errors)
             logger.error(error_msg)
-            raise ValueError(error_msg)
+            raise ConfigurationError(error_msg)
 
     def get_app_config(self) -> AppConfig:
         """Get app configuration"""

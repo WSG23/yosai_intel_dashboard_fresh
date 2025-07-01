@@ -7,6 +7,8 @@ import os
 import sys
 import importlib
 
+from core.exceptions import ConfigurationError
+
 # Configure logging first
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -105,6 +107,17 @@ def main():
 
         # Print startup information
         print_startup_info(app_config)
+
+        try:
+            from core.secrets_validator import validate_all_secrets
+
+            validated = validate_all_secrets()
+            for k, v in validated.items():
+                os.environ.setdefault(k, v)
+            logger.info("✅ Secrets validated successfully")
+        except ConfigurationError as e:
+            logger.error(f"❌ Secret validation failed: {e}")
+            sys.exit(1)
 
         # Import and create the Dash application
         try:
