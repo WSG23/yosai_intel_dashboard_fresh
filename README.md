@@ -211,6 +211,9 @@ When `YOSAI_ENV=production` the application will refuse to start unless both
 `DB_PASSWORD` and `SECRET_KEY` are provided via environment variables or Docker
 secrets.
 
+Configuration validation runs automatically at startup and logs any missing
+critical settings.
+
 ### Environment Overrides
 
 `ConfigManager` loads YAML files from `config/` and then checks for
@@ -354,6 +357,11 @@ All secrets can be provided via the `SecretManager` which supports `env`,
 `aws`, and `vault` backends. Place these values in `.env` or mount them as
 Docker secrets. See the [architecture diagram](docs/auth_flow.png) for
 implementation details.
+
+The configuration loader performs a validation step on startup to ensure
+required secrets are set. See
+[docs/secret_management.md](docs/secret_management.md) for rotation
+procedures, Docker/cloud secret usage, and incident handling guidance.
 
 ## 🌐 Language Toggle
 
