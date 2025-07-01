@@ -595,15 +595,22 @@ def _initialize_services() -> None:
 
 def _configure_swagger(server: Any) -> None:
     """Initialize Swagger UI for API documentation."""
-    server.config.setdefault("SWAGGER", {"uiversion": 3})
-    template = {
-        "openapi": "3.0.2",
-        "info": {
-            "title": "Yōsai Intel Dashboard API",
-            "version": "1.0.0",
-        },
-    }
-    Swagger(server, template=template, config={"specs_route": "/api/docs"})
+    try:
+        server.config.setdefault("SWAGGER", {"uiversion": 3})
+        template = {
+            "openapi": "3.0.2",
+            "info": {
+                "title": "Yōsai Intel Dashboard API",
+                "version": "1.0.0",
+            },
+        }
+        Swagger(server, template=template)
+        logger.info("✅ Swagger configured successfully")
+    except Exception as e:
+        logger.warning(
+            f"Swagger configuration failed, continuing without it: {e}"
+        )
+        # Don't crash the app if Swagger fails
 
 
 # Export the main function
