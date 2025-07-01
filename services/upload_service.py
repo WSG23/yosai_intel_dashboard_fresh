@@ -119,7 +119,7 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
                                             [
                                                 html.Li(f"Total Rows: {actual_rows:,}"),
                                                 html.Li(f"Columns: {actual_cols}"),
-                                                html.Li(f"Memory: {df.memory_usage(deep=True).sum() / 1024:.1f} KB"),
+                                                html.Li(f"Memory: {df.memory_usage(deep=True).sum() / (1024 * 1024):,.1f} MB"),
                                                 html.Li(f"Status: Complete")
                                             ]
                                         ),
