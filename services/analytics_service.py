@@ -590,7 +590,7 @@ class AnalyticsService:
         """Diagnostic method to check data processing flow."""
         logger.info("=== Data Flow Diagnosis ===")
         logger.info(f"Input DataFrame: {len(df)} rows, {len(df.columns)} columns")
-        logger.info(f"Memory usage: {df.memory_usage(deep=True).sum() / 1024 / 1024:.1f} MB")
+        logger.info(f"Memory usage: {df.memory_usage(deep=True).sum() / 1024 / 1024:,.1f} MB")
 
         from security.dataframe_validator import DataFrameSecurityValidator
         validator = DataFrameSecurityValidator()

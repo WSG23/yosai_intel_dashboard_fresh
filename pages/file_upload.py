@@ -124,7 +124,7 @@ def build_file_preview_component(df: pd.DataFrame, filename: str) -> html.Div:
 
     return html.Div(
         [
-            create_file_preview(df.head(5), filename),
+            create_file_preview(df, filename),
             dbc.Card(
                 [
                     dbc.CardHeader([html.H6("📋 Data Configuration", className="mb-0")]),
