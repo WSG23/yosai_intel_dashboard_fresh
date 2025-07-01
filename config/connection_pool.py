@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+import threading
 from typing import Callable, List, Tuple
 
 from .database_exceptions import ConnectionValidationFailed
@@ -19,6 +20,7 @@ class DatabaseConnectionPool:
         shrink_timeout: int,
         threshold: float = 0.8,
     ) -> None:
+        self._lock = threading.RLock()
         self._factory = factory
         self._initial_size = initial_size
         self._max_pool_size = max(max_size, initial_size)
@@ -36,71 +38,75 @@ class DatabaseConnectionPool:
             self._active += 1
 
     def _maybe_expand(self) -> None:
-        if self._max_size == 0:
-            return
-        usage = (self._active - len(self._pool)) / self._max_size
-        if usage >= self._threshold and self._max_size < self._max_pool_size:
-            self._max_size = min(self._max_size * 2, self._max_pool_size)
+        with self._lock:
+            if self._max_size == 0:
+                return
+            usage = (self._active - len(self._pool)) / self._max_size
+            if usage >= self._threshold and self._max_size < self._max_pool_size:
+                self._max_size = min(self._max_size * 2, self._max_pool_size)
 
     def _shrink_idle_connections(self) -> None:
-        now = time.time()
-        new_pool: List[Tuple[DatabaseConnection, float]] = []
-        for conn, ts in self._pool:
-            if (
-                now - ts > self._shrink_timeout
-                and self._max_size > self._initial_size
-            ):
-                conn.close()
-                self._active -= 1
-                self._max_size -= 1
-            else:
-                new_pool.append((conn, ts))
-        self._pool = new_pool
+        with self._lock:
+            now = time.time()
+            new_pool: List[Tuple[DatabaseConnection, float]] = []
+            for conn, ts in self._pool:
+                if (
+                    now - ts > self._shrink_timeout
+                    and self._max_size > self._initial_size
+                ):
+                    conn.close()
+                    self._active -= 1
+                    self._max_size -= 1
+                else:
+                    new_pool.append((conn, ts))
+            self._pool = new_pool
 
     def get_connection(self) -> DatabaseConnection:
-        self._shrink_idle_connections()
-        # Check if pool usage is high before handing out a connection
-        self._maybe_expand()
+        with self._lock:
+            self._shrink_idle_connections()
+            # Check if pool usage is high before handing out a connection
+            self._maybe_expand()
 
-        if self._pool:
-            conn, _ = self._pool.pop()
-            if not conn.health_check():
-                conn.close()
-                self._active -= 1
-                return self.get_connection()
-        else:
-            conn = self._factory()
-            self._active += 1
+            if self._pool:
+                conn, _ = self._pool.pop()
+                if not conn.health_check():
+                    conn.close()
+                    self._active -= 1
+                    return self.get_connection()
+            else:
+                conn = self._factory()
+                self._active += 1
 
-        return conn
+            return conn
 
     def release_connection(self, conn: DatabaseConnection) -> None:
-        self._shrink_idle_connections()
-        if not conn.health_check():
-            conn.close()
-            self._active -= 1
-            return
-
-        if len(self._pool) >= self._max_size:
-            conn.close()
-            self._active -= 1
-        else:
-            self._pool.append((conn, time.time()))
-
-    def health_check(self) -> bool:
-        temp: List[Tuple[DatabaseConnection, float]] = []
-        healthy = True
-        while self._pool:
-            conn, ts = self._pool.pop()
+        with self._lock:
+            self._shrink_idle_connections()
             if not conn.health_check():
-                healthy = False
                 conn.close()
                 self._active -= 1
-                if self._max_size > self._initial_size:
-                    self._max_size -= 1
-            else:
-                temp.append((conn, ts))
-        for item in temp:
-            self.release_connection(item[0])
-        return healthy
+                return
 
+            if len(self._pool) >= self._max_size:
+                conn.close()
+                self._active -= 1
+            else:
+                self._pool.append((conn, time.time()))
+
+    def health_check(self) -> bool:
+        with self._lock:
+            temp: List[Tuple[DatabaseConnection, float]] = []
+            healthy = True
+            while self._pool:
+                conn, ts = self._pool.pop()
+                if not conn.health_check():
+                    healthy = False
+                    conn.close()
+                    self._active -= 1
+                    if self._max_size > self._initial_size:
+                        self._max_size -= 1
+                else:
+                    temp.append((conn, ts))
+            for item in temp:
+                self.release_connection(item[0])
+            return healthy
