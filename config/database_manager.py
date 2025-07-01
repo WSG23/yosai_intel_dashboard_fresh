@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+
 """
 Database Manager - Fixed imports for streamlined architecture
 """
 import logging
 import os
 import sqlite3
+import threading
 from pathlib import Path
 from typing import Optional, Any, Dict, Protocol
 from dataclasses import dataclass
 
 from .database_exceptions import DatabaseError, ConnectionValidationFailed
 
+
 @dataclass
 class DatabaseConfig:
     """Database configuration dataclass"""
+
     type: str = "sqlite"
     host: str = "localhost"
     port: int = 5432
@@ -162,9 +166,11 @@ class PostgreSQLConnection:
                 database=self.config.name,
                 user=self.config.user,
                 password=self.config.password,
-                cursor_factory=RealDictCursor
+                cursor_factory=RealDictCursor,
             )
-            logger.info(f"PostgreSQL connection created: {self.config.host}:{self.config.port}")
+            logger.info(
+                f"PostgreSQL connection created: {self.config.host}:{self.config.port}"
+            )
         except ImportError:
             raise DatabaseError("psycopg2 not installed - cannot connect to PostgreSQL")
         except Exception as e:
@@ -267,9 +273,40 @@ class DatabaseManager:
 
     def close(self) -> None:
         """Close database connection"""
-        if self._connection and hasattr(self._connection, 'close'):
+        if self._connection and hasattr(self._connection, "close"):
             self._connection.close()
             self._connection = None
+
+
+class ThreadSafeDatabaseManager(DatabaseManager):
+    """DatabaseManager with thread-safe lazy pool creation."""
+
+    def __init__(self, config: DatabaseConfig) -> None:
+        super().__init__(config)
+        self._lock = threading.RLock()
+        self._pool: Optional[Any] = None
+
+    def _create_pool(self) -> "DatabaseConnectionPool":
+        from .connection_pool import DatabaseConnectionPool
+
+        return DatabaseConnectionPool(
+            self._create_connection,
+            getattr(self.config, "initial_pool_size", 1),
+            getattr(self.config, "max_pool_size", 1),
+            getattr(self.config, "connection_timeout", 30),
+            getattr(self.config, "shrink_timeout", 60),
+        )
+
+    def get_connection(self) -> DatabaseConnection:  # type: ignore[override]
+        with self._lock:
+            if self._pool is None:
+                self._pool = self._create_pool()
+            return self._pool.get_connection()
+
+    def release_connection(self, conn: DatabaseConnection) -> None:
+        with self._lock:
+            if self._pool:
+                self._pool.release_connection(conn)
 
 
 # Factory function
@@ -280,16 +317,17 @@ def create_database_manager(config: DatabaseConfig) -> DatabaseManager:
 
 # Export main classes
 __all__ = [
-    'DatabaseConfig',
-    'DatabaseConnection', 
-    'MockConnection',
-    'SQLiteConnection',
-    'PostgreSQLConnection',
-    'DatabaseManager',
-    'DatabaseError',
-    'create_database_manager'
-    'EnhancedPostgreSQLManager',
+    "DatabaseConfig",
+    "DatabaseConnection",
+    "MockConnection",
+    "SQLiteConnection",
+    "PostgreSQLConnection",
+    "DatabaseManager",
+    "ThreadSafeDatabaseManager",
+    "DatabaseError",
+    "create_database_manager" "EnhancedPostgreSQLManager",
 ]
+
 
 class EnhancedPostgreSQLManager(DatabaseManager):
     """PostgreSQL manager with retry, pooling and Unicode safety."""
@@ -334,4 +372,3 @@ class EnhancedPostgreSQLManager(DatabaseManager):
                 self.pool.release_connection(conn)
 
         return self.retry_manager.run_with_retry(run)
-
