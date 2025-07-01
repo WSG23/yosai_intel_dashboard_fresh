@@ -6,11 +6,12 @@ Replaces: config/yaml_config.py, config/unified_config.py, config/validator.py
 import os
 import yaml
 import logging
-from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional, List
 
 from .dynamic_config import dynamic_config
+from .environment import get_environment, select_config_file
+from .config_validator import ConfigValidator
 from core.secrets_validator import SecretsValidator
 from core.exceptions import ConfigurationError
 
@@ -96,12 +97,13 @@ class ConfigManager:
 
     def _load_config(self) -> None:
         """Load configuration from YAML file and environment"""
+        self.config.environment = get_environment()
         # Load from YAML file
         yaml_config = self._load_yaml_config()
 
         # Apply YAML config
         if yaml_config:
-            self._apply_yaml_config(yaml_config)
+            self.config = ConfigValidator.validate(yaml_config)
 
         # Apply environment overrides
         self._apply_env_overrides()
@@ -116,7 +118,7 @@ class ConfigManager:
 
     def _load_yaml_config(self) -> Optional[Dict[str, Any]]:
         """Load configuration from YAML file"""
-        config_file = self._determine_config_file()
+        config_file = select_config_file(self.config_path)
 
         if not config_file or not config_file.exists():
             logger.info("No YAML config file found, using defaults")
@@ -132,40 +134,6 @@ class ConfigManager:
             logger.warning(f"Error loading config file {config_file}: {e}")
             return None
 
-    def _determine_config_file(self) -> Optional[Path]:
-        """Determine which config file to use"""
-        # Use explicit path if provided
-        if self.config_path:
-            return Path(self.config_path)
-
-        # Check environment variable
-        env_file = os.getenv("YOSAI_CONFIG_FILE")
-        if env_file:
-            return Path(env_file)
-
-        # Use environment-based config
-        env = os.getenv("YOSAI_ENV", "development").lower()
-
-        # Allow shorthand like "stage" to load staging configuration
-        if env.startswith("stag"):
-            env_key = "staging"
-        else:
-            env_key = env
-
-        self.config.environment = env_key
-
-        config_dir = Path("config")
-
-        # Try environment-specific files
-        env_files = {
-            "production": config_dir / "production.yaml",
-            "staging": config_dir / "staging.yaml",
-            "test": config_dir / "test.yaml",
-            "development": config_dir / "config.yaml",
-        }
-
-        config_file = env_files.get(env_key, config_dir / "config.yaml")
-        return config_file if config_file.exists() else None
 
     def _substitute_env_vars(self, content: str) -> str:
         """Replace ${VAR_NAME} with environment variable values"""

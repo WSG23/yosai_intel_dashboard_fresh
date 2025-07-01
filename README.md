@@ -216,7 +216,8 @@ When `YOSAI_ENV=production` the application will refuse to start unless both
 secrets.
 
 Configuration validation runs automatically at startup and logs any missing
-critical settings.
+critical settings. The new `ConfigValidator` checks that the `app`, `database`
+and `security` sections exist before the server starts.
 
 ### Environment Overrides
 
@@ -241,7 +242,8 @@ These values override `database.host`, `database.username`, `cache.host` and
 
 ### Additional Environment Variables
 
-Two optional variables control which configuration file is loaded:
+The helper functions in `config/environment.py` pick the correct YAML file.
+They look at two variables:
 
 - `YOSAI_ENV` – set to `development`, `staging`, `production` or `test` to
   automatically load the matching file in `config/` (default: `development`).
