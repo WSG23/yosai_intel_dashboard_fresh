@@ -3,6 +3,8 @@
 import logging
 from typing import Dict, Any, Optional, List
 
+from core.plugins.protocols import PluginMetadata
+
 from .config import AIClassificationConfig, get_ai_config
 from .services.csv_processor import CSVProcessorService
 from .services.column_mapper import ColumnMappingService
@@ -16,6 +18,13 @@ logger = logging.getLogger(__name__)
 
 class AIClassificationPlugin:
     """Enhanced plugin implementing CSV related services"""
+
+    metadata = PluginMetadata(
+        name="ai_classification",
+        version="1.0.0",
+        description="AI classification and CSV processing services",
+        author="Yōsai",
+    )
 
     def __init__(self, config: Optional[AIClassificationConfig] = None) -> None:
         self.config = config or get_ai_config()

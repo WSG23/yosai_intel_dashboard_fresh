@@ -6,6 +6,8 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
+from core.plugins.protocols import PluginMetadata
+
 from utils.unicode_utils import handle_surrogate_characters
 
 # Optional Babel import
@@ -32,6 +34,13 @@ class LazyStringFixConfig:
 
 class LazyStringFixPlugin:
     """Minimal plugin object returned by :func:`initialize_lazystring_fix`."""
+
+    metadata = PluginMetadata(
+        name="lazystring_fix",
+        version="1.0.0",
+        description="Sanitize LazyString objects and patch JSON handling",
+        author="Yōsai",
+    )
 
     def __init__(self, config: LazyStringFixConfig) -> None:
         self.config = config

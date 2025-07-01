@@ -5,11 +5,16 @@ from pathlib import Path
 from core.plugins.manager import PluginManager
 from core.container import Container as DIContainer
 from config.config import ConfigManager
+from core.plugins.protocols import PluginMetadata
 
 
 class SimplePlugin:
-    class metadata:
-        name = "simple"
+    metadata = PluginMetadata(
+        name="simple",
+        version="0.1",
+        description="test plugin",
+        author="tester",
+    )
 
     def __init__(self):
         self.started = False
@@ -50,9 +55,15 @@ def test_load_all_plugins(tmp_path):
     plugin_file = pkg_dir / "plug.py"
     plugin_file.write_text(
         """
+from core.plugins.protocols import PluginMetadata
+
 class Plug:
-    class metadata:
-        name = 'auto'
+    metadata = PluginMetadata(
+        name='auto',
+        version='0.1',
+        description='auto plugin',
+        author='tester',
+    )
     def load(self, c, conf):
         return True
     def configure(self, conf):

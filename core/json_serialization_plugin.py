@@ -8,9 +8,10 @@ import json
 import logging
 import pandas as pd
 from datetime import datetime, date
-from dataclasses import is_dataclass, asdict
+from dataclasses import dataclass, is_dataclass, asdict
 from typing import Any, Dict, List, Optional, Union
-from dataclasses import dataclass
+
+from core.plugins.protocols import PluginMetadata
 
 # Optional Babel support
 try:
@@ -166,18 +167,12 @@ class JsonSerializationPlugin:
         self._original_dumps = None
         self._babel_available = False
 
-    @property
-    def metadata(self) -> Any:
-        """Basic plugin metadata used in tests."""
-        return type(
-            "_Meta",
-            (),
-            {
-                "name": "json_serialization",
-                "version": "1.0.0",
-                "enabled_by_default": True,
-            },
-        )()
+    metadata = PluginMetadata(
+        name="json_serialization",
+        version="1.0.0",
+        description="Self-contained JSON serialization utilities",
+        author="Yōsai",
+    )
 
     def _handle_babel_safely(self):
         """Handle babel imports and LazyString conversion within the plugin"""
