@@ -2,6 +2,8 @@
 """
 Updated app.py with LazyString Fix Integration
 This shows how to modify your existing app.py to fix the LazyString error
+This script is kept as a legacy sample plugin for reference and is not used by the application.
+
 """
 
 import os
