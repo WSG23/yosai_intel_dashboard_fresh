@@ -369,7 +369,7 @@ to Parquet the next time the application starts.
 3. Follow type safety guidelines and maintain the modular architecture
 4. Add tests for new functionality and update documentation when applicable
 5. Optional debug helpers live in `examples/`. Run the upload helper with
-   `python examples/debug_upload.py` to validate environment setup
+   `python examples/debug_live_upload.py` to validate environment setup
 6. The example CSRF scripts in `examples/` read `SECRET_KEY` from the
    environment using the `SecretManager`. Set this variable in your shell or
    `.env` file before running them.
