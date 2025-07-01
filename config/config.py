@@ -39,6 +39,9 @@ class DatabaseConfig:
     password: str = ""
     connection_pool_size: int = dynamic_config.get_db_pool_size()
     connection_timeout: int = 30
+    initial_pool_size: int = dynamic_config.get_db_pool_size()
+    max_pool_size: int = dynamic_config.get_db_pool_size()
+    shrink_timeout: int = 60
 
     def get_connection_string(self) -> str:
         """Get database connection string"""
@@ -187,6 +190,15 @@ class ConfigManager:
             self.config.database.connection_timeout = db_data.get(
                 "connection_timeout", self.config.database.connection_timeout
             )
+            self.config.database.initial_pool_size = db_data.get(
+                "initial_pool_size", self.config.database.initial_pool_size
+            )
+            self.config.database.max_pool_size = db_data.get(
+                "max_pool_size", self.config.database.max_pool_size
+            )
+            self.config.database.shrink_timeout = db_data.get(
+                "shrink_timeout", self.config.database.shrink_timeout
+            )
 
         if "security" in yaml_config:
             sec_data = yaml_config["security"]
@@ -262,6 +274,15 @@ class ConfigManager:
         db_timeout = os.getenv("DB_TIMEOUT")
         if db_timeout is not None:
             self.config.database.connection_timeout = int(db_timeout)
+        init_pool = os.getenv("DB_INITIAL_POOL_SIZE")
+        if init_pool is not None:
+            self.config.database.initial_pool_size = int(init_pool)
+        max_pool = os.getenv("DB_MAX_POOL_SIZE")
+        if max_pool is not None:
+            self.config.database.max_pool_size = int(max_pool)
+        shrink_timeout = os.getenv("DB_SHRINK_TIMEOUT")
+        if shrink_timeout is not None:
+            self.config.database.shrink_timeout = int(shrink_timeout)
 
         # Security overrides
         csrf_enabled = os.getenv("CSRF_ENABLED")

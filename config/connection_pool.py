@@ -1,51 +1,105 @@
 from __future__ import annotations
 
 import time
-from queue import LifoQueue
-from typing import Callable
+from typing import Callable, List, Tuple
 
 from .database_exceptions import ConnectionValidationFailed
 from .database_manager import DatabaseConnection
 
 
 class DatabaseConnectionPool:
-    """Simple connection pool with health checks and timeout."""
+    """Connection pool that can grow and shrink based on usage."""
 
-    def __init__(self, factory: Callable[[], DatabaseConnection], size: int, timeout: int) -> None:
+    def __init__(
+        self,
+        factory: Callable[[], DatabaseConnection],
+        initial_size: int,
+        max_size: int,
+        timeout: int,
+        shrink_timeout: int,
+        threshold: float = 0.8,
+    ) -> None:
         self._factory = factory
-        self._size = size
+        self._initial_size = initial_size
+        self._max_pool_size = max(max_size, initial_size)
+        self._max_size = initial_size
         self._timeout = timeout
-        self._pool: LifoQueue[DatabaseConnection] = LifoQueue(maxsize=size)
+        self._shrink_timeout = shrink_timeout
+        self._threshold = threshold
+
+        self._pool: List[Tuple[DatabaseConnection, float]] = []
+        self._active = 0
+
+        for _ in range(initial_size):
+            conn = self._factory()
+            self._pool.append((conn, time.time()))
+            self._active += 1
+
+    def _maybe_expand(self) -> None:
+        if self._max_size == 0:
+            return
+        usage = (self._active - len(self._pool)) / self._max_size
+        if usage >= self._threshold and self._max_size < self._max_pool_size:
+            self._max_size = min(self._max_size * 2, self._max_pool_size)
+
+    def _shrink_idle_connections(self) -> None:
+        now = time.time()
+        new_pool: List[Tuple[DatabaseConnection, float]] = []
+        for conn, ts in self._pool:
+            if (
+                now - ts > self._shrink_timeout
+                and self._max_size > self._initial_size
+            ):
+                conn.close()
+                self._active -= 1
+                self._max_size -= 1
+            else:
+                new_pool.append((conn, ts))
+        self._pool = new_pool
 
     def get_connection(self) -> DatabaseConnection:
-        try:
-            conn = self._pool.get_nowait()
+        self._shrink_idle_connections()
+
+        if self._pool:
+            conn, _ = self._pool.pop()
             if not conn.health_check():
                 conn.close()
-                raise ConnectionValidationFailed("stale connection")
-            return conn
-        except Exception:
-            return self._factory()
+                self._active -= 1
+                return self.get_connection()
+        else:
+            conn = self._factory()
+            self._active += 1
+
+        self._maybe_expand()
+        return conn
 
     def release_connection(self, conn: DatabaseConnection) -> None:
+        self._shrink_idle_connections()
         if not conn.health_check():
             conn.close()
+            self._active -= 1
             return
-        try:
-            self._pool.put_nowait(conn)
-        except Exception:
+
+        if len(self._pool) >= self._max_size:
             conn.close()
+            self._active -= 1
+        else:
+            self._pool.append((conn, time.time()))
 
     def health_check(self) -> bool:
-        temp = []
+        temp: List[Tuple[DatabaseConnection, float]] = []
         healthy = True
-        while not self._pool.empty():
-            conn = self._pool.get_nowait()
+        while self._pool:
+            conn, ts = self._pool.pop()
             if not conn.health_check():
                 healthy = False
                 conn.close()
-            temp.append(conn)
-        for c in temp:
-            self.release_connection(c)
+                self._active -= 1
+                if self._max_size > self._initial_size:
+                    self._max_size -= 1
+            else:
+                temp.append((conn, ts))
+        for item in temp:
+            self.release_connection(item[0])
         return healthy
 
