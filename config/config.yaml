@@ -29,8 +29,8 @@ logging:
 plugins:
   json_serialization:
     enabled: true
-    max_dataframe_rows: 2000000
-    max_string_length: 50000
+    max_dataframe_rows: 2000000  # see JsonSerializationLimits.MAX_DATAFRAME_PROCESSING_ROWS_ROWS
+    max_string_length: 50000  # see JsonSerializationLimits.MAX_INPUT_STRING_LENGTH_CHARACTERS
     include_type_metadata: true
     compress_large_objects: true
     fallback_to_repr: true
