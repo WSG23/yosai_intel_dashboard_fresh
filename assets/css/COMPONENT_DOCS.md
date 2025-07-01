@@ -126,5 +126,8 @@
 - `chips--secondary`
 - `chips--small`
 - `chips--large`
+- `chip--gold` – uses a gradient with `--color-warning` to remain readable
+
+When customizing colors, ensure a minimum contrast ratio of 4.5:1 for text within chips.
 
 ---
