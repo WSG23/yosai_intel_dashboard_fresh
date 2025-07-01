@@ -35,7 +35,7 @@ sample_files:
 
 analytics:
   cache_timeout_seconds: 60
-  max_records_per_query: 2000000
+  max_records_per_query: 2000000  # see DataProcessingLimits.MAX_DATAFRAME_PROCESSING_ROWS_ROWS
   enable_real_time: true
   batch_size: 25000
   chunk_size: 100000

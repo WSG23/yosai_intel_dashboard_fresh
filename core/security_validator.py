@@ -9,6 +9,8 @@ import os
 import secrets
 from typing import Dict, Any, List, Callable
 
+from config.constants import FileProcessingLimits
+
 from utils.unicode_handler import sanitize_unicode_input
 from dataclasses import dataclass
 from enum import Enum
@@ -221,7 +223,9 @@ class SecurityValidator:
 
     @staticmethod
     def validate_file_upload(
-        filename: str, content: bytes, max_size_mb: int = 10
+        filename: str,
+        content: bytes,
+        max_size_mb: int = FileProcessingLimits.MAX_FILE_UPLOAD_SIZE_MB,
     ) -> Dict[str, Any]:
         """Validate file uploads for security"""
         issues: List[str] = []

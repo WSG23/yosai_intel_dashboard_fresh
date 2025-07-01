@@ -1,6 +1,7 @@
 import pytest
 
 from plugins.lazystring_fix_plugin import sanitize_lazystring
+from config.constants import SecurityLimits
 
 
 def _contains_surrogate(text: str) -> bool:
@@ -45,6 +46,6 @@ def test_nested_structures_and_types():
 
 
 def test_long_string_performance():
-    text = "a" * 50000
+    text = "a" * SecurityLimits.MAX_INPUT_STRING_LENGTH_CHARACTERS
     result = sanitize_lazystring(text)
     assert result == text
