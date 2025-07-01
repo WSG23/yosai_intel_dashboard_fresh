@@ -5,6 +5,7 @@ import threading
 import time
 from typing import List, Any, Dict
 
+from core.callback_manager import CallbackManager
 from core.plugins.protocols import (
     PluginProtocol,
     CallbackPluginProtocol,
