@@ -28,12 +28,18 @@ def test_pool_health_check():
 
 def test_pool_expands_and_shrinks():
     pool = DatabaseConnectionPool(factory, initial_size=1, max_size=3, timeout=10, shrink_timeout=0)
+
     c1 = pool.get_connection()
+    # First connection should not trigger expansion
+    assert pool._max_size == 1
+
     c2 = pool.get_connection()
+    # Requesting a second concurrent connection should expand the pool
     assert pool._max_size >= 2
+
     pool.release_connection(c1)
     pool.release_connection(c2)
-    time.sleep(0.01)
-    _ = pool.get_connection()
+
+    # Shrink happens immediately due to shrink_timeout=0
     assert pool._max_size == 1
 
