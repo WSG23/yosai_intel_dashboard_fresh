@@ -301,7 +301,13 @@ class EnhancedPostgreSQLManager(DatabaseManager):
         from .unicode_handler import UnicodeQueryHandler
 
         self.retry_manager = ConnectionRetryManager(retry_config or RetryConfig())
-        self.pool = DatabaseConnectionPool(self._create_connection, self.config.connection_pool_size, self.config.connection_timeout)
+        self.pool = DatabaseConnectionPool(
+            self._create_connection,
+            self.config.initial_pool_size,
+            self.config.max_pool_size,
+            self.config.connection_timeout,
+            self.config.shrink_timeout,
+        )
         self.unicode_handler = UnicodeQueryHandler
 
     def execute_query_with_retry(self, query: str, params: Optional[Dict] = None):

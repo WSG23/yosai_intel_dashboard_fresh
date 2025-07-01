@@ -1,6 +1,7 @@
+import time
+
 from config.connection_pool import DatabaseConnectionPool
 from config.database_manager import MockConnection
-from config.database_exceptions import ConnectionValidationFailed
 
 
 def factory():
@@ -8,7 +9,7 @@ def factory():
 
 
 def test_pool_reuse():
-    pool = DatabaseConnectionPool(factory, size=2, timeout=10)
+    pool = DatabaseConnectionPool(factory, initial_size=2, max_size=4, timeout=10, shrink_timeout=1)
     c1 = pool.get_connection()
     pool.release_connection(c1)
     c2 = pool.get_connection()
@@ -17,10 +18,22 @@ def test_pool_reuse():
 
 
 def test_pool_health_check():
-    pool = DatabaseConnectionPool(factory, size=1, timeout=10)
+    pool = DatabaseConnectionPool(factory, initial_size=1, max_size=2, timeout=10, shrink_timeout=1)
     conn = pool.get_connection()
     conn.close()
     pool.release_connection(conn)
     healthy = pool.health_check()
-assert not healthy
+    assert not healthy
+
+
+def test_pool_expands_and_shrinks():
+    pool = DatabaseConnectionPool(factory, initial_size=1, max_size=3, timeout=10, shrink_timeout=0)
+    c1 = pool.get_connection()
+    c2 = pool.get_connection()
+    assert pool._max_size >= 2
+    pool.release_connection(c1)
+    pool.release_connection(c2)
+    time.sleep(0.01)
+    _ = pool.get_connection()
+    assert pool._max_size == 1
 
