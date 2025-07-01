@@ -31,23 +31,22 @@ def handle_surrogate_characters(text: str) -> str:
 
 
 def sanitize_unicode_input(value: str) -> str:
-    """Handle Unicode surrogate characters safely."""
+    """Return ``value`` encoded with replacement handling for invalid characters."""
     try:
         if not isinstance(value, str):
             value = str(value)
 
-        # Remove lone surrogates that can't be encoded
-        cleaned = value.encode("utf-8", errors="ignore").decode("utf-8")
+        cleaned = value.encode("utf-8", errors="replace").decode("utf-8", errors="replace")
 
-        # Validate surrogate pairs and replace invalid ones with the
-        # Unicode replacement character.  ``errors="ignore"`` above will
-        # drop lone surrogates, but malformed pairs may still exist when
-        # ``surrogatepass`` decoding was used earlier.
         for char in cleaned:
             if 0xD800 <= ord(char) <= 0xDFFF:
                 cleaned = cleaned.replace(char, "\ufffd")
 
         return cleaned
-    except (UnicodeError, UnicodeDecodeError):  # pragma: no cover - safety
-        return "\ufffd"
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("Unicode sanitization failed: %s", exc)
+        try:
+            return repr(value).encode("ascii", "replace").decode("ascii", "replace")
+        except Exception:
+            return "?"
 

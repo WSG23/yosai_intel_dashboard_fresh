@@ -27,3 +27,15 @@ class TestSecurityVulnerabilities:
         result = sanitize_unicode_input(lone_surrogate)
         assert "\uD800" not in result
         assert "\uD801" not in result
+        assert "\ufffd" in result
+
+    def test_sanitize_unicode_input_ascii_fallback(self):
+        """Ensure ASCII-safe text is returned on failure."""
+        from utils.unicode_handler import sanitize_unicode_input
+
+        class BadStr:
+            def __str__(self) -> str:
+                raise UnicodeError("boom")
+
+        result = sanitize_unicode_input(BadStr())
+        assert result.isascii()
