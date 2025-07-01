@@ -4,6 +4,9 @@ import logging
 
 from .ai_mapping_store import ai_mapping_store
 from .data_loader import DataLoader
+from .data_validation import DataValidationService
+from .analytics_generator import AnalyticsGenerator
+from .data_loading_service import DataLoadingService
 from .registry import get_service
 
 logger = logging.getLogger(__name__)
@@ -25,5 +28,8 @@ __all__ = [
     "AnalyticsService",
     "ANALYTICS_SERVICE_AVAILABLE",
     "DataLoader",
+    "DataValidationService",
+    "AnalyticsGenerator",
+    "DataLoadingService",
     "ai_mapping_store",
 ]
