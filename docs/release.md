@@ -12,3 +12,21 @@ To create a new release:
 
 See the [CHANGELOG](../CHANGELOG.md) for a list of changes.
 
+## Dependency updates
+
+This repository uses [Dependabot](https://docs.github.com/en/code-security/dependabot)
+to automatically propose updates for packages listed in
+`requirements.txt` and `requirements_ui.txt`. Dependabot runs weekly and
+opens pull requests with updated pins.
+
+If Dependabot is disabled or you need to update dependencies manually,
+run `pip list --outdated` in a virtual environment and bump the versions
+in the requirement files accordingly:
+
+```bash
+pip list --outdated
+pip install --upgrade <package>
+# update requirements*.txt with the new versions and commit the changes
+```
+
+
