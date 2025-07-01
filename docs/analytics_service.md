@@ -38,6 +38,9 @@ and generates summaries for the UI.
 ### Incremental Processing
 
 `_process_uploaded_data_directly` no longer loads every uploaded file into
-memory at once. When file paths are supplied it uses `pandas.read_csv` with a
-`chunksize` to stream records and aggregate counts incrementally. This prevents
-excessive memory usage when processing very large CSV uploads.
+memory at once. When file paths are supplied it uses the helper
+`_stream_uploaded_file` which wraps `pandas.read_csv` with a `chunksize`
+parameter. The yielded chunks are passed to `_aggregate_counts` to update user
+and door statistics.  The final dictionary is assembled by `_build_result`.
+This incremental approach prevents excessive memory usage when processing very
+large CSV uploads.
