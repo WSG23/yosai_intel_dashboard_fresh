@@ -160,4 +160,5 @@ def diagnose_upload_config():
         print("   Run: unset MAX_UPLOAD_MB")
 
 
-diagnose_upload_config()
+if __name__ == "__main__":
+    diagnose_upload_config()
