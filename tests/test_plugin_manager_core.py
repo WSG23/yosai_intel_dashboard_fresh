@@ -6,14 +6,18 @@ from pathlib import Path
 from core.plugins.manager import PluginManager
 from core.container import Container as DIContainer
 from config.config import ConfigManager
-from core.plugins.protocols import PluginStatus
+from core.plugins.protocols import PluginStatus, PluginMetadata
 
 
 class DummyPlugin:
     """Simple plugin for testing"""
 
-    class metadata:
-        name = "dummy"
+    metadata = PluginMetadata(
+        name="dummy",
+        version="0.1",
+        description="dummy plugin",
+        author="tester",
+    )
 
     def __init__(self):
         self.loaded = False
@@ -41,8 +45,12 @@ class DummyPlugin:
 class NoHealthPlugin:
     """Plugin missing health_check"""
 
-    class metadata:
-        name = "nohealth"
+    metadata = PluginMetadata(
+        name="nohealth",
+        version="0.1",
+        description="no health plugin",
+        author="tester",
+    )
 
     def load(self, container, config):
         return True
@@ -97,9 +105,15 @@ def test_load_all_plugins(tmp_path, monkeypatch):
     plugin_module = pkg_dir / "plugin_a.py"
     plugin_module.write_text(
         """
+from core.plugins.protocols import PluginMetadata
+
 class Plugin:
-    class metadata:
-        name = 'plug_a'
+    metadata = PluginMetadata(
+        name='plug_a',
+        version='0.1',
+        description='plug a',
+        author='tester',
+    )
     def load(self, c, conf):
         return True
     def configure(self, conf):

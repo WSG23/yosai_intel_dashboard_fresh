@@ -12,7 +12,18 @@ plugin exposes a `create_plugin()` factory that returns an object implementing
 
 ```python
 # plugins/my_plugin.py
-from core.plugins.protocols import PluginProtocol, CallbackPluginProtocol, PluginMetadata
+from dataclasses import dataclass
+from core.plugins.protocols import (
+    PluginProtocol,
+    CallbackPluginProtocol,
+    PluginMetadata,
+)
+
+
+@dataclass
+class MyPluginConfig:
+    greeting: str = "hello"
+
 
 class MyPlugin(CallbackPluginProtocol):
     metadata = PluginMetadata(
@@ -22,7 +33,8 @@ class MyPlugin(CallbackPluginProtocol):
         author="You",
     )
 
-    def __init__(self) -> None:
+    def __init__(self, config: MyPluginConfig) -> None:
+        self.config = config
         self.started = False
 
     def load(self, container, config):
