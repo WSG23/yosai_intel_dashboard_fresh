@@ -9,6 +9,7 @@ from typing import Any
 from core.plugins.protocols import PluginMetadata
 
 from utils.unicode_utils import handle_surrogate_characters
+from core.serialization import SafeJSONSerializer
 
 # Optional Babel import
 try:
@@ -52,6 +53,7 @@ class LazyStringFixPlugin:
 
 # Global plugin instance used by sanitize_lazystring
 _plugin: LazyStringFixPlugin | None = None
+_serializer = SafeJSONSerializer()
 
 
 def _is_lazy_string(obj: Any) -> bool:
@@ -72,20 +74,11 @@ def sanitize_lazystring(obj: Any) -> Any:
     config = _plugin.config if _plugin else LazyStringFixConfig()
 
     try:
-        if _is_lazy_string(obj):
-            result = _sanitize_text(str(obj))
-            if _plugin:
-                _plugin.conversion_count += 1
+        if _is_lazy_string(obj) and _plugin:
+            _plugin.conversion_count += 1
             if config.log_conversions:
-                logger.debug("Converted LazyString %r -> %r", obj, result)
-            return result
-
-        if config.deep_sanitize and isinstance(obj, dict):
-            return {k: sanitize_lazystring(v) for k, v in obj.items()}
-        if config.deep_sanitize and isinstance(obj, list):
-            return [sanitize_lazystring(v) for v in obj]
-        if config.deep_sanitize and isinstance(obj, tuple):
-            return tuple(sanitize_lazystring(v) for v in obj)
+                logger.debug("Converted LazyString %r", obj)
+        return _serializer.serialize(obj)
     except Exception as exc:  # pragma: no cover - defensive
         if config.log_conversions:
             logger.error("LazyString sanitization failed: %s", exc)
@@ -101,7 +94,7 @@ def initialize_lazystring_fix(app, config: LazyStringFixConfig) -> LazyStringFix
 
     class SanitizingJSONProvider(app.json_provider_class):
         def dumps(self, obj, **kwargs):
-            obj = sanitize_lazystring(obj)
+            obj = _serializer.serialize(obj)
             return super().dumps(obj, **kwargs)
 
     app.json_provider_class = SanitizingJSONProvider
