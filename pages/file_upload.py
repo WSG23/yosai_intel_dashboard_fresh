@@ -679,19 +679,21 @@ class Callbacks:
             logger.info(f"🎯 Total unique devices found: {len(actual_devices)}")
 
             file_info = file_info or {}
-            file_info["devices"] = []
-            return (
-                dbc.Alert(
-                    [
-                        html.H6("No devices detected"),
-                        html.P(
-                            "No device/door columns found in uploaded data. Expected columns: door_id, device_name, location, etc."
-                        ),
-                    ],
-                    color="warning",
-                ),
-                file_info,
-            )
+
+            if not actual_devices:
+                file_info["devices"] = []
+                return (
+                    dbc.Alert(
+                        [
+                            html.H6("No devices detected"),
+                            html.P(
+                                "No device/door columns found in uploaded data. Expected columns: door_id, device_name, location, etc."
+                            ),
+                        ],
+                        color="warning",
+                    ),
+                    file_info,
+                )
 
             table_rows = []
             for i, device_name in enumerate(actual_devices):
