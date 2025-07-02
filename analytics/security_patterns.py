@@ -174,7 +174,7 @@ class SecurityPatternsAnalyzer:
             for user_id, data in high_failure_users.iterrows():
                 n_attempts = data['count']
                 n_failures = int(n_attempts * data['failure_rate'])
-                p_value = stats.binom_test(n_failures, n_attempts, overall_failure_rate)
+                p_value = stats.binomtest(n_failures, n_attempts, overall_failure_rate).pvalue
                 
                 if p_value < 0.05:
                     confidence = 1 - p_value
@@ -186,14 +186,14 @@ class SecurityPatternsAnalyzer:
                         confidence=confidence,
                         description=f"User {user_id} has unusually high failure rate: {data['failure_rate']:.2%}",
                         evidence={
-                            'user_id': user_id,
+                            'user_id': str(user_id),
                             'failure_rate': data['failure_rate'],
                             'attempts': n_attempts,
                             'p_value': p_value,
                             'baseline_rate': overall_failure_rate
                         },
                         timestamp=datetime.now(),
-                        affected_entities=[user_id]
+                        affected_entities=[str(user_id)]
                     ))
         except Exception as e:
             self.logger.warning(f"Failure rate anomaly detection failed: {e}")
@@ -219,7 +219,8 @@ class SecurityPatternsAnalyzer:
                 high_freq_users = user_access_counts[z_scores > 3]
                 
                 for user_id, access_count in high_freq_users.items():
-                    confidence = min(0.99, (z_scores[user_id] - 3) / 3)
+                    z_score_val = float(z_scores.loc[str(user_id)])
+                    confidence = min(0.99, (z_score_val - 3) / 3)
                     
                     threats.append(ThreatIndicator(
                         threat_type='excessive_access_frequency',
@@ -227,13 +228,13 @@ class SecurityPatternsAnalyzer:
                         confidence=confidence,
                         description=f"User {user_id} has excessive access frequency: {access_count} events",
                         evidence={
-                            'user_id': user_id,
+                            'user_id': str(user_id),
                             'access_count': access_count,
-                            'z_score': z_scores[user_id],
+                            'z_score': z_score_val,
                             'baseline_mean': mean_access
                         },
                         timestamp=datetime.now(),
-                        affected_entities=[user_id]
+                        affected_entities=[str(user_id)]
                     ))
         except Exception as e:
             self.logger.warning(f"Frequency anomaly detection failed: {e}")
@@ -283,13 +284,13 @@ class SecurityPatternsAnalyzer:
                             confidence=confidence,
                             description=f"User {user_id} made {count} rapid access attempts",
                             evidence={
-                                'user_id': user_id,
+                                'user_id': str(user_id),
                                 'rapid_attempts': count,
                                 'failure_rate': failure_rate,
                                 'time_window': 'within_30_seconds'
                             },
                             timestamp=datetime.now(),
-                            affected_entities=[user_id]
+                            affected_entities=[str(user_id)]
                         ))
         except Exception as e:
             self.logger.warning(f"Rapid attempts detection failed: {e}")
@@ -307,7 +308,7 @@ class SecurityPatternsAnalyzer:
                 return threats
                 
             # Users with excessive after-hours access
-            user_after_hours = after_hours_data.groupby('person_id').size()
+            user_after_hours = after_hours_data.groupby('person_id').size().astype(float)
             
             # Statistical threshold for after-hours access
             threshold = user_after_hours.quantile(0.9)
@@ -325,13 +326,13 @@ class SecurityPatternsAnalyzer:
                         confidence=min(0.9, after_hours_rate),
                         description=f"User {user_id} has excessive after-hours access: {count} events ({after_hours_rate:.1%})",
                         evidence={
-                            'user_id': user_id,
+                            'user_id': str(user_id),
                             'after_hours_count': count,
                             'after_hours_rate': after_hours_rate,
                             'total_events': user_total
                         },
                         timestamp=datetime.now(),
-                        affected_entities=[user_id]
+                        affected_entities=[str(user_id)]
                     ))
         except Exception as e:
             self.logger.warning(f"After-hours anomaly detection failed: {e}")
