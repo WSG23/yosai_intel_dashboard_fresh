@@ -125,11 +125,15 @@ class AccessTrendsAnalyzer:
     def _analyze_overall_trend(self, ts_data: pd.DataFrame) -> Dict[str, Any]:
         """Analyze overall trend using multiple methods"""
         
-        y = ts_data['total_events'].values
+        y = ts_data['total_events'].to_numpy(dtype=float)
         x = np.arange(len(y))
-        
+
         if len(y) > 1:
-            slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
+            result = stats.linregress(x, y)
+            slope = float(result.slope)
+            r_value = float(result.rvalue)
+            p_value = float(result.pvalue)
+            std_err = float(result.stderr)
             
             # Mann-Kendall test for monotonic trend
             mk_trend, mk_p_value = self._mann_kendall_test(y)
@@ -170,6 +174,7 @@ class AccessTrendsAnalyzer:
     
     def _mann_kendall_test(self, data: np.ndarray) -> Tuple[str, float]:
         """Mann-Kendall test for monotonic trend"""
+        data = np.asarray(data, dtype=float)
         n = len(data)
         if n < 3:
             return 'insufficient_data', 1.0
@@ -195,7 +200,7 @@ class AccessTrendsAnalyzer:
             Z = 0
         
         # Calculate p-value (two-tailed test)
-        p_value = 2 * (1 - stats.norm.cdf(abs(Z)))
+        p_value = float(2 * (1 - stats.norm.cdf(abs(Z))))
         
         # Determine trend
         if p_value < 0.05:
@@ -210,14 +215,14 @@ class AccessTrendsAnalyzer:
     
     def _calculate_volatility(self, ts_data: pd.DataFrame) -> float:
         """Calculate volatility of the time series"""
-        y = ts_data['total_events'].values
+        y = ts_data['total_events'].to_numpy(dtype=float)
         
         if len(y) < 2:
             return 0.0
         
         # Calculate coefficient of variation
-        mean_val = np.mean(y)
-        std_val = np.std(y)
+        mean_val = float(np.mean(y))
+        std_val = float(np.std(y))
         
         if mean_val == 0:
             return 0.0
@@ -230,14 +235,14 @@ class AccessTrendsAnalyzer:
         anomalies = []
         
         try:
-            y = ts_data['total_events'].values
+            y = ts_data['total_events'].to_numpy(dtype=float)
             
             if len(y) < 7:
                 return anomalies
             
             # Use IQR method for outlier detection
-            Q1 = np.percentile(y, 25)
-            Q3 = np.percentile(y, 75)
+            Q1 = float(np.percentile(y, 25))
+            Q3 = float(np.percentile(y, 75))
             IQR = Q3 - Q1
             
             lower_bound = Q1 - 1.5 * IQR
@@ -247,11 +252,11 @@ class AccessTrendsAnalyzer:
             anomaly_indices = np.where((y < lower_bound) | (y > upper_bound))[0]
             
             for idx in anomaly_indices:
-                date = ts_data.index[idx]
+                date = pd.Timestamp(ts_data.index[idx])
                 value = y[idx]
                 
                 anomaly_type = 'spike' if value > upper_bound else 'drop'
-                severity = 'high' if abs(value - np.median(y)) > 2 * IQR else 'medium'
+                severity = 'high' if abs(value - float(np.median(y))) > 2 * IQR else 'medium'
                 
                 anomalies.append({
                     'date': date.strftime('%Y-%m-%d'),
@@ -259,7 +264,7 @@ class AccessTrendsAnalyzer:
                     'value': value,
                     'expected_range': (lower_bound, upper_bound),
                     'severity': severity,
-                    'deviation': abs(value - np.median(y)) / max(IQR, 1)
+                    'deviation': abs(value - float(np.median(y))) / max(IQR, 1)
                 })
                 
         except Exception as e:
