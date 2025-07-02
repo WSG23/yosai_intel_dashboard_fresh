@@ -5,9 +5,12 @@ from __future__ import annotations
 import json
 import os
 import time
+import logging
+import socket
 from functools import wraps
 from typing import Optional, List
 from urllib.request import urlopen
+from urllib.error import URLError
 
 from flask import Blueprint, redirect, url_for, session, current_app, request
 from flask_login import (
@@ -27,6 +30,7 @@ from .secret_manager import SecretManager
 auth_bp = Blueprint("auth", __name__)
 login_manager = LoginManager()
 oauth = OAuth()
+logger = logging.getLogger(__name__)
 
 
 class User(UserMixin):
@@ -89,8 +93,15 @@ def _get_jwks(domain: str) -> dict:
         return cached[0]
 
     jwks_url = f"https://{domain}/.well-known/jwks.json"
-    with urlopen(jwks_url) as resp:
-        jwks = json.load(resp)
+    timeout = int(os.getenv("JWKS_TIMEOUT", "5"))
+    try:
+        with urlopen(jwks_url, timeout=timeout) as resp:
+            jwks = json.load(resp)
+    except (URLError, socket.timeout) as exc:
+        logger.warning("Failed to fetch JWKS from %s: %s", jwks_url, exc)
+        if cached:
+            return cached[0]
+        raise
     _jwks_cache[domain] = (jwks, now)
     return jwks
 
