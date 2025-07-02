@@ -78,9 +78,11 @@ class DeviceLearningService:
             for fingerprint, data in self.learned_mappings.items():
                 mapping_file = self.storage_dir / f"mapping_{fingerprint}.json"
                 with open(mapping_file, "w", encoding="utf-8") as f:
-                    json.dump(data, f, indent=2)
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+            return True
         except Exception as e:
             logger.error(f"Failed to persist learned mappings: {e}")
+            raise  # Re-raise the exception instead of swallowing it
 
     def save_device_mappings(
         self, df: pd.DataFrame, filename: str, device_mappings: Dict[str, Dict]
@@ -192,7 +194,7 @@ class DeviceLearningService:
             }
 
             self.learned_mappings[fingerprint] = mapping_data
-            self._persist_learned_mappings()
+            self._persist_learned_mappings()  # This will now raise exception if it fails
 
             logger.info(
                 f"✅ Saved user device mappings for {filename}: {len(user_mappings)} devices"
@@ -201,6 +203,9 @@ class DeviceLearningService:
 
         except Exception as e:
             logger.error(f"❌ Failed to save user device mappings: {e}")
+            # Also log the actual exception details
+            import traceback
+            logger.error(f"Full error details: {traceback.format_exc()}")
             return False
 
     def get_user_device_mappings(self, filename: str) -> Dict[str, Any]:
