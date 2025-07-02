@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from security.input_validator import InputValidator
+from core.input_validation import InputValidator
 from security.dataframe_validator import DataFrameSecurityValidator
 from security.sql_validator import SQLInjectionPrevention
 from security.xss_validator import XSSPrevention

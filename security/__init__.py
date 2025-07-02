@@ -1,7 +1,7 @@
 """Security package exposing validation utilities."""
 
 from .auth_service import SecurityService
-from .input_validator import InputValidator, Validator
+from core.input_validation import InputValidator, Validator
 from .file_validator import SecureFileValidator
 from .dataframe_validator import DataFrameSecurityValidator
 from .sql_validator import SQLInjectionPrevention, SQLSecurityConfig
