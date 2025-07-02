@@ -127,21 +127,18 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
         if ai_data.get("is_restricted", ai_data.get("restricted")):
             default_special.append("is_restricted")
 
+        col_children = [html.Strong(device)]
+        if ai_data:
+            col_children.append(html.Br())
+            col_children.append(
+                dbc.Badge("AI Suggested", color="info", className="small")
+            )
+
         device_rows.append(
             dbc.Row(
                 [
                     dbc.Col(
-                        [
-                            html.Strong(device),
-                            html.Br() if ai_data else None,
-                            (
-                                dbc.Badge(
-                                    "AI Suggested", color="info", className="small"
-                                )
-                                if ai_data
-                                else None
-                            ),
-                        ],
+                        col_children,
                         width=3,  # CHANGED: from 4 to 3
                     ),
                     dbc.Col(

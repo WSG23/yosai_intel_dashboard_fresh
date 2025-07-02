@@ -162,12 +162,12 @@ class AnomalyDetector:
             if len(user_access_counts) < 3:
                 return anomalies
                 
-            z_scores = np.abs(stats.zscore(user_access_counts))
+            z_scores = np.abs(stats.zscore(user_access_counts.to_numpy()))
             
             outlier_users = user_access_counts[z_scores > z_threshold]
             
             for user_id, access_count in outlier_users.items():
-                z_score = z_scores[user_access_counts.index == user_id].iloc[0]
+                z_score = float(z_scores[user_access_counts.index == user_id].iloc[0])
                 
                 mean_access = user_access_counts.mean()
                 anomaly_type = 'excessive_access_frequency' if access_count > mean_access else 'insufficient_access_frequency'
@@ -275,7 +275,7 @@ class AnomalyDetector:
                 outlier_doors = door_usage[np.abs(modified_z_scores) > mad_threshold]
                 
                 for door_id, usage_count in outlier_doors.items():
-                    z_score = abs(modified_z_scores[door_id])
+                    z_score = float(abs(modified_z_scores[door_id]))
                     
                     anomaly_type = 'door_overuse' if usage_count > median_usage else 'door_underuse'
                     severity = self._calculate_severity_from_zscore(z_score)
@@ -526,7 +526,7 @@ class AnomalyDetector:
             
             for idx in anomaly_indices:
                 original_idx = features_df.index[idx]
-                anomaly_score = abs(anomaly_scores[idx])
+                anomaly_score = float(abs(anomaly_scores[idx]))
                 
                 # Calculate confidence
                 confidence = min(0.95, anomaly_score / 2)
