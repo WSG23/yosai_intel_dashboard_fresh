@@ -45,7 +45,9 @@ def analyze_device_name_with_ai(device_name):
         mapping = ai_mapping_store.get(device_name)
         if mapping:
             if mapping.get("source") == "user_confirmed":
-                logger.info(f"\U0001f512 Using USER CONFIRMED mapping for '{device_name}'")
+                logger.info(
+                    f"\U0001f512 Using USER CONFIRMED mapping for '{device_name}'"
+                )
                 return mapping
 
         # Only use AI if no user mapping exists
@@ -81,7 +83,13 @@ def analyze_device_name_with_ai(device_name):
         }
 
 
-def build_success_alert(filename: str, rows: int, cols: int, prefix: str = "Successfully uploaded", processed: bool = True) -> dbc.Alert:
+def build_success_alert(
+    filename: str,
+    rows: int,
+    cols: int,
+    prefix: str = "Successfully uploaded",
+    processed: bool = True,
+) -> dbc.Alert:
     """Create a success alert showing current row and column counts."""
 
     # CRITICAL: Use actual current data, not cached values
@@ -91,6 +99,7 @@ def build_success_alert(filename: str, rows: int, cols: int, prefix: str = "Succ
 
     # Clear timestamp to avoid showing stale data
     from datetime import datetime
+
     timestamp = datetime.now().strftime("%H:%M:%S")
 
     return dbc.Alert(
@@ -99,11 +108,13 @@ def build_success_alert(filename: str, rows: int, cols: int, prefix: str = "Succ
                 [html.I(className="fas fa-check-circle me-2"), f"{prefix} {filename}"],
                 className="alert-heading",
             ),
-            html.P([
-                details,
-                html.Br(),
-                html.Small(f"Processed at {timestamp}", className="text-muted")
-            ]),
+            html.P(
+                [
+                    details,
+                    html.Br(),
+                    html.Small(f"Processed at {timestamp}", className="text-muted"),
+                ]
+            ),
         ],
         color="success",
         className="mb-3",
@@ -147,10 +158,14 @@ def build_file_preview_component(df: pd.DataFrame, filename: str) -> html.Div:
             create_file_preview(df, filename),
             dbc.Card(
                 [
-                    dbc.CardHeader([html.H6("📋 Data Configuration", className="mb-0")]),
+                    dbc.CardHeader(
+                        [html.H6("📋 Data Configuration", className="mb-0")]
+                    ),
                     dbc.CardBody(
                         [
-                            html.P("Configure your data for analysis:", className="mb-3"),
+                            html.P(
+                                "Configure your data for analysis:", className="mb-3"
+                            ),
                             dbc.ButtonGroup(
                                 [
                                     dbc.Button(
@@ -330,10 +345,6 @@ def clear_uploaded_data():
     logger.info("Uploaded data cleared")
 
 
-
-
-
-
 def get_file_info() -> Dict[str, Dict[str, Any]]:
     """Get information about uploaded files."""
     return _uploaded_data_store.get_file_info()
@@ -479,9 +490,7 @@ class Callbacks:
 
                     _uploaded_data_store.add_file(filename, df)
 
-                    upload_results.append(
-                        build_success_alert(filename, rows, cols)
-                    )
+                    upload_results.append(build_success_alert(filename, rows, cols))
 
                     file_preview_components.append(
                         build_file_preview_component(df, filename)
@@ -500,7 +509,9 @@ class Callbacks:
 
                     try:
                         learning_service = get_device_learning_service()
-                        user_mappings = learning_service.get_user_device_mappings(filename)
+                        user_mappings = learning_service.get_user_device_mappings(
+                            filename
+                        )
                         if user_mappings:
                             from services.ai_mapping_store import ai_mapping_store
 
@@ -536,7 +547,10 @@ class Callbacks:
                     html.Hr(),
                     html.H5("Ready to analyze?"),
                     dbc.Button(
-                        "🚀 Go to Analytics", href="/analytics", color="success", size="lg"
+                        "🚀 Go to Analytics",
+                        href="/analytics",
+                        color="success",
+                        size="lg",
                     ),
                 ]
             )
@@ -570,14 +584,7 @@ class Callbacks:
             return no_update, no_update, True
 
         if "column-verify-confirm" in trigger_id and confirm_clicks:
-            success_alert = dbc.Toast(
-                [html.P("✅ Column mappings saved!")],
-                header="Saved",
-                is_open=True,
-                dismissable=True,
-                duration=3000,
-            )
-            return success_alert, False, no_update
+            return no_update, False, no_update
 
         if "column-verify-cancel" in trigger_id or "device-verify-cancel" in trigger_id:
             return no_update, False, False
@@ -605,14 +612,16 @@ class Callbacks:
                 logger.info(f"   ✅ {column} -> {field} ({confidence:.0%})")
             else:
                 suggested_values.append(None)
-                logger.info(f"   ❓ {column} -> No confident suggestion ({confidence:.0%})")
+                logger.info(
+                    f"   ❓ {column} -> No confident suggestion ({confidence:.0%})"
+                )
 
         return [suggested_values]
 
     def populate_device_modal_with_learning(self, is_open, file_info):
         """Populate the device modal with learned or AI-suggested data."""
         if not is_open:
-            return "Modal closed"
+            return "Modal closed", file_info
 
         logger.info("🔧 Populating device modal...")
 
@@ -632,7 +641,9 @@ class Callbacks:
                     if any(device_col in col_lower for device_col in device_columns):
                         unique_vals = df[col].dropna().unique()
                         all_devices.update(str(val) for val in unique_vals)
-                        logger.info(f"   Found {len(unique_vals)} devices in column '{col}'")
+                        logger.info(
+                            f"   Found {len(unique_vals)} devices in column '{col}'"
+                        )
 
                         logger.debug(f"🔍 DEBUG - First 10 device names from '{col}':")
                         sample_devices = unique_vals[:10]
@@ -647,14 +658,18 @@ class Callbacks:
 
                             for device in sample_devices[:5]:
                                 try:
-                                    result = ai_gen.generate_device_attributes(str(device))
+                                    result = ai_gen.generate_device_attributes(
+                                        str(device)
+                                    )
                                     logger.info(
                                         f"   🚪 '{device}' → Name: '{result.device_name}', Floor: {result.floor_number}, Security: {result.security_level}, Confidence: {result.confidence:.1%}"
                                     )
                                     logger.info(
                                         f"      Access: Entry={result.is_entry}, Exit={result.is_exit}, Elevator={result.is_elevator}"
                                     )
-                                    logger.info(f"      Reasoning: {result.ai_reasoning}")
+                                    logger.info(
+                                        f"      Reasoning: {result.ai_reasoning}"
+                                    )
                                 except Exception as e:
                                     logger.info(f"   ❌ AI error on '{device}': {e}")
                         except Exception as e:
@@ -663,8 +678,10 @@ class Callbacks:
             actual_devices = sorted(list(all_devices))
             logger.info(f"🎯 Total unique devices found: {len(actual_devices)}")
 
-            if not actual_devices:
-                return dbc.Alert(
+            file_info = file_info or {}
+            file_info["devices"] = []
+            return (
+                dbc.Alert(
                     [
                         html.H6("No devices detected"),
                         html.P(
@@ -672,7 +689,9 @@ class Callbacks:
                         ),
                     ],
                     color="warning",
-                )
+                ),
+                file_info,
+            )
 
             table_rows = []
             for i, device_name in enumerate(actual_devices):
@@ -712,8 +731,14 @@ class Callbacks:
                                         {"label": "Exit", "value": "is_exit"},
                                         {"label": "Elevator", "value": "is_elevator"},
                                         {"label": "Stairwell", "value": "is_stairwell"},
-                                        {"label": "Fire Exit", "value": "is_fire_escape"},
-                                        {"label": "Restricted", "value": "is_restricted"},
+                                        {
+                                            "label": "Fire Exit",
+                                            "value": "is_fire_escape",
+                                        },
+                                        {
+                                            "label": "Restricted",
+                                            "value": "is_restricted",
+                                        },
                                     ],
                                     value=[
                                         key
@@ -725,7 +750,10 @@ class Callbacks:
                                             "is_fire_escape",
                                             "is_restricted",
                                         ]
-                                        if ai_attributes.get(key, ai_attributes.get(key.replace("is_", "")))
+                                        if ai_attributes.get(
+                                            key,
+                                            ai_attributes.get(key.replace("is_", "")),
+                                        )
                                     ],
                                     inline=False,
                                 )
@@ -745,41 +773,47 @@ class Callbacks:
                     )
                 )
 
-            return dbc.Container(
-                [
-                    dbc.Alert(
-                        [
-                            html.Strong("🤖 AI Analysis: "),
-                            f"Analyzed {len(actual_devices)} devices. Check console for detailed AI debug info.",
-                        ],
-                        color="info",
-                        className="mb-3",
-                    ),
-                    dbc.Table(
-                        [
-                            html.Thead(
-                                [
-                                    html.Tr(
-                                        [
-                                            html.Th("Device Name"),
-                                            html.Th("Floor"),
-                                            html.Th("Access Types"),
-                                            html.Th("Security Level"),
-                                        ]
-                                    )
-                                ]
-                            ),
-                            html.Tbody(table_rows),
-                        ],
-                        striped=True,
-                        hover=True,
-                    ),
-                ]
+            file_info = file_info or {}
+            file_info["devices"] = actual_devices
+
+            return (
+                dbc.Container(
+                    [
+                        dbc.Alert(
+                            [
+                                html.Strong("🤖 AI Analysis: "),
+                                f"Analyzed {len(actual_devices)} devices. Check console for detailed AI debug info.",
+                            ],
+                            color="info",
+                            className="mb-3",
+                        ),
+                        dbc.Table(
+                            [
+                                html.Thead(
+                                    [
+                                        html.Tr(
+                                            [
+                                                html.Th("Device Name"),
+                                                html.Th("Floor"),
+                                                html.Th("Access Types"),
+                                                html.Th("Security Level"),
+                                            ]
+                                        )
+                                    ]
+                                ),
+                                html.Tbody(table_rows),
+                            ],
+                            striped=True,
+                            hover=True,
+                        ),
+                    ]
+                ),
+                file_info,
             )
 
         except Exception as e:  # pragma: no cover - safety net
             logger.info(f"❌ Error in device modal: {e}")
-            return dbc.Alert(f"Error: {e}", color="danger")
+            return dbc.Alert(f"Error: {e}", color="danger"), file_info
 
     def populate_modal_content(self, is_open, file_info):
         """Generate the column mapping modal content."""
@@ -804,13 +838,41 @@ class Callbacks:
             return dbc.Alert(f"No columns found in {filename}", color="warning")
 
         standard_fields = [
-            {"field": "person_id", "label": "Person/User ID", "description": "Identifies who accessed"},
-            {"field": "door_id", "label": "Door/Location ID", "description": "Identifies where access occurred"},
-            {"field": "timestamp", "label": "Timestamp", "description": "When access occurred"},
-            {"field": "access_result", "label": "Access Result", "description": "Success/failure of access"},
-            {"field": "token_id", "label": "Token/Badge ID", "description": "Badge or card identifier"},
-            {"field": "device_status", "label": "Device Status", "description": "Status of access device"},
-            {"field": "entry_type", "label": "Entry/Exit Type", "description": "Direction of access"},
+            {
+                "field": "person_id",
+                "label": "Person/User ID",
+                "description": "Identifies who accessed",
+            },
+            {
+                "field": "door_id",
+                "label": "Door/Location ID",
+                "description": "Identifies where access occurred",
+            },
+            {
+                "field": "timestamp",
+                "label": "Timestamp",
+                "description": "When access occurred",
+            },
+            {
+                "field": "access_result",
+                "label": "Access Result",
+                "description": "Success/failure of access",
+            },
+            {
+                "field": "token_id",
+                "label": "Token/Badge ID",
+                "description": "Badge or card identifier",
+            },
+            {
+                "field": "device_status",
+                "label": "Device Status",
+                "description": "Status of access device",
+            },
+            {
+                "field": "entry_type",
+                "label": "Entry/Exit Type",
+                "description": "Direction of access",
+            },
         ]
 
         csv_column_options: List[Dict[str, str]] = [
@@ -837,16 +899,25 @@ class Callbacks:
                             [
                                 html.Strong(standard_field["label"]),
                                 html.Br(),
-                                html.Small(standard_field["description"], className="text-muted"),
+                                html.Small(
+                                    standard_field["description"],
+                                    className="text-muted",
+                                ),
                                 html.Br(),
-                                html.Code(field_name, className="bg-info text-white px-2 py-1 rounded small"),
+                                html.Code(
+                                    field_name,
+                                    className="bg-info text-white px-2 py-1 rounded small",
+                                ),
                             ],
                             style={"width": "40%"},
                         ),
                         html.Td(
                             [
                                 dcc.Dropdown(
-                                    id={"type": "standard-field-mapping", "field": field_name},
+                                    id={
+                                        "type": "standard-field-mapping",
+                                        "field": field_name,
+                                    },
                                     options=csv_column_options,
                                     placeholder=f"Select CSV column for {field_name}",
                                     value=suggested_csv_column,
@@ -858,11 +929,19 @@ class Callbacks:
                         html.Td(
                             [
                                 dbc.Badge(
-                                    (f"AI: {ai_confidence:.0%}" if suggested_csv_column else "No AI suggestion"),
+                                    (
+                                        f"AI: {ai_confidence:.0%}"
+                                        if suggested_csv_column
+                                        else "No AI suggestion"
+                                    ),
                                     color=(
                                         "success"
                                         if ai_confidence > 0.7
-                                        else ("warning" if ai_confidence > 0.4 else "secondary")
+                                        else (
+                                            "warning"
+                                            if ai_confidence > 0.4
+                                            else "secondary"
+                                        )
                                     ),
                                     className="small",
                                 )
@@ -877,7 +956,8 @@ class Callbacks:
             dbc.Alert(
                 [
                     html.H6(
-                        f"Map Analytics Fields to CSV Columns from {filename}", className="mb-2"
+                        f"Map Analytics Fields to CSV Columns from {filename}",
+                        className="mb-2",
                     ),
                     html.P(
                         [
@@ -905,8 +985,14 @@ class Callbacks:
                         [
                             html.Tr(
                                 [
-                                    html.Th("Analytics Field (Fixed)", style={"width": "40%"}),
-                                    html.Th("Maps to CSV Column (Variable)", style={"width": "50%"}),
+                                    html.Th(
+                                        "Analytics Field (Fixed)",
+                                        style={"width": "40%"},
+                                    ),
+                                    html.Th(
+                                        "Maps to CSV Column (Variable)",
+                                        style={"width": "50%"},
+                                    ),
                                     html.Th("AI Confidence", style={"width": "10%"}),
                                 ]
                             )
@@ -960,7 +1046,8 @@ class Callbacks:
                     "security_level": security[i] if i < len(security) else 5,
                     "is_entry": "entry" in (access[i] if i < len(access) else []),
                     "is_exit": "exit" in (access[i] if i < len(access) else []),
-                    "is_restricted": "is_restricted" in (special[i] if i < len(special) else []),
+                    "is_restricted": "is_restricted"
+                    in (special[i] if i < len(special) else []),
                     "confidence": 1.0,
                     "device_name": device,
                     "source": "user_confirmed",
@@ -968,7 +1055,8 @@ class Callbacks:
                 }
 
             learning_service = get_device_learning_service()
-            learning_service.save_user_device_mappings(filename, user_mappings)
+            df = _uploaded_data_store.get_all_data().get(filename)
+            learning_service.save_user_device_mappings(df, filename, user_mappings)
 
             from services.ai_mapping_store import ai_mapping_store
 
@@ -999,17 +1087,58 @@ class Callbacks:
             )
             return error_alert, no_update, no_update
 
+    def save_verified_column_mappings(
+        self, confirm_clicks, values, ids, file_info
+    ) -> Any:
+        """Persist verified column mappings using learning service."""
+
+        if not confirm_clicks or not file_info:
+            return no_update
+
+        try:
+            filename = file_info.get("filename", "")
+            column_mappings = {}
+            for comp_id, val in zip(ids, values):
+                field = comp_id.get("field") if isinstance(comp_id, dict) else None
+                if field and val and val != "skip":
+                    column_mappings[field] = val
+
+            save_verified_mappings(filename, column_mappings, file_info)
+
+            try:
+                from services.consolidated_learning_service import get_learning_service
+
+                df = _uploaded_data_store.get_all_data().get(filename)
+                if df is not None:
+                    get_learning_service().save_complete_mapping(
+                        df, filename, {}, column_mappings
+                    )
+            except Exception as e:
+                logger.debug(f"Learning service save failed: {e}")
+
+            return dbc.Toast(
+                "✅ Column mappings saved!",
+                header="Saved",
+                is_open=True,
+                dismissable=True,
+                duration=3000,
+            )
+
+        except Exception as e:
+            logger.info(f"❌ Error saving column mappings: {e}")
+            return dbc.Toast(
+                f"❌ Error saving mappings: {e}",
+                header="Error",
+                is_open=True,
+                dismissable=True,
+                duration=5000,
+            )
+
 
 def get_trigger_id() -> str:
     """Return the triggered callback identifier."""
     ctx = callback_context
     return ctx.triggered[0]["prop_id"] if ctx.triggered else ""
-
-
-
-
-
-
 
 
 def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Dict):
@@ -1060,18 +1189,9 @@ def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Di
         logger.info(f"❌ Error saving training data: {e}")
 
 
-
-
-
-
-
-
-
-
 # ------------------------------------------------------------
 # Callback manager for the upload page
 # ------------------------------------------------------------
-
 
 
 def register_callbacks(
@@ -1150,11 +1270,14 @@ def register_callbacks(
         ),
         (
             cb.populate_device_modal_with_learning,
-            Output("device-modal-body", "children"),
+            [
+                Output("device-modal-body", "children"),
+                Output("current-file-info-store", "data", allow_duplicate=True),
+            ],
             Input("device-verification-modal", "is_open"),
             State("current-file-info-store", "data"),
             "populate_device_modal_with_learning",
-            {"prevent_initial_call": True},
+            {"prevent_initial_call": True, "allow_duplicate": True},
         ),
         (
             cb.populate_modal_content,
@@ -1184,6 +1307,18 @@ def register_callbacks(
             ],
             "save_confirmed_device_mappings",
             {"prevent_initial_call": True},
+        ),
+        (
+            cb.save_verified_column_mappings,
+            Output("toast-container", "children", allow_duplicate=True),
+            [Input("column-verify-confirm", "n_clicks")],
+            [
+                State({"type": "standard-field-mapping", "field": ALL}, "value"),
+                State({"type": "standard-field-mapping", "field": ALL}, "id"),
+                State("current-file-info-store", "data"),
+            ],
+            "save_verified_column_mappings",
+            {"prevent_initial_call": True, "allow_duplicate": True},
         ),
     ]
 
