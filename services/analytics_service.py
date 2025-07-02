@@ -38,8 +38,10 @@ def ensure_analytics_config():
     """Emergency fix to ensure analytics configuration exists."""
     try:
         from config.dynamic_config import dynamic_config
-        if not hasattr(dynamic_config, 'analytics'):
+
+        if not hasattr(dynamic_config, "analytics"):
             from config.constants import AnalyticsConstants
+
             dynamic_config.analytics = AnalyticsConstants()
     except Exception:
         pass
@@ -69,6 +71,7 @@ class AnalyticsService:
         try:
             from config.database_manager import DatabaseManager
             from config.config import get_database_config
+
             db_config = get_database_config()
             self.database_manager = DatabaseManager(db_config)
             logger.info("Database manager initialized")
@@ -84,10 +87,11 @@ class AnalyticsService:
         try:
             # Get uploaded file paths (not pre-processed data)
             from pages.file_upload import get_uploaded_filenames
+
             uploaded_files = get_uploaded_filenames()
 
             if not uploaded_files:
-                return {'status': 'no_data', 'message': 'No uploaded files available'}
+                return {"status": "no_data", "message": "No uploaded files available"}
 
             combined_df, processing_info, processed_files, total_records = (
                 self.file_processing_service.process_files(uploaded_files)
@@ -95,31 +99,41 @@ class AnalyticsService:
 
             if combined_df.empty:
                 return {
-                    'status': 'error',
-                    'message': 'No files could be processed successfully',
-                    'processing_info': processing_info
+                    "status": "error",
+                    "message": "No files could be processed successfully",
+                    "processing_info": processing_info,
                 }
 
             # Generate analytics from the properly processed data
             analytics = generate_basic_analytics(combined_df)
 
             # Add processing information
-            analytics.update({
-                'data_source': 'uploaded_files_fixed',
-                'total_files_processed': processed_files,
-                'total_files_attempted': len(uploaded_files),
-                'processing_info': processing_info,
-                'total_events': total_records,
-                'active_users': combined_df['person_id'].nunique() if 'person_id' in combined_df.columns else 0,
-                'active_doors': combined_df['door_id'].nunique() if 'door_id' in combined_df.columns else 0,
-                'timestamp': datetime.now().isoformat()
-            })
+            analytics.update(
+                {
+                    "data_source": "uploaded_files_fixed",
+                    "total_files_processed": processed_files,
+                    "total_files_attempted": len(uploaded_files),
+                    "processing_info": processing_info,
+                    "total_events": total_records,
+                    "active_users": (
+                        combined_df["person_id"].nunique()
+                        if "person_id" in combined_df.columns
+                        else 0
+                    ),
+                    "active_doors": (
+                        combined_df["door_id"].nunique()
+                        if "door_id" in combined_df.columns
+                        else 0
+                    ),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
             return analytics
 
         except Exception as e:
             logger.error(f"Error getting analytics from uploaded data: {e}")
-            return {'status': 'error', 'message': str(e)}
+            return {"status": "error", "message": str(e)}
 
     def get_analytics_by_source(self, source: str) -> Dict[str, Any]:
         """Get analytics from specified source with forced uploaded data check"""
@@ -127,6 +141,7 @@ class AnalyticsService:
         # FORCE CHECK: If uploaded data exists, use it regardless of source
         try:
             from pages.file_upload import get_uploaded_data
+
             uploaded_data = get_uploaded_data()
 
             if uploaded_data and source in ["uploaded", "sample"]:
@@ -140,13 +155,15 @@ class AnalyticsService:
         if source == "sample":
             return generate_sample_analytics()
         elif source == "uploaded":
-            return {'status': 'no_data', 'message': 'No uploaded files available'}
+            return {"status": "no_data", "message": "No uploaded files available"}
         elif source == "database":
             return self._get_database_analytics()
         else:
-            return {'status': 'error', 'message': f'Unknown source: {source}'}
+            return {"status": "error", "message": f"Unknown source: {source}"}
 
-    def _process_uploaded_data_directly(self, uploaded_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_uploaded_data_directly(
+        self, uploaded_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Process uploaded files using chunked streaming."""
         try:
             from collections import Counter
@@ -187,7 +204,6 @@ class AnalyticsService:
             logger.error(f"Direct processing failed: {e}")
             return {"status": "error", "message": str(e)}
 
-
     def _prepare_regular_result(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Create the base result structure for regular analysis."""
         return {
@@ -225,6 +241,7 @@ class AnalyticsService:
         """Load uploaded data from the file upload page."""
         try:
             from pages.file_upload import get_uploaded_data
+
             return get_uploaded_data() or {}
         except Exception as e:  # pragma: no cover - best effort
             logger.error(f"Error loading uploaded data: {e}")
@@ -238,7 +255,9 @@ class AnalyticsService:
         """Create a summary dictionary from a combined DataFrame."""
         return summarize_dataframe(df)
 
-    def analyze_with_chunking(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
+    def analyze_with_chunking(
+        self, df: pd.DataFrame, analysis_types: List[str]
+    ) -> Dict[str, Any]:
         """Analyze a DataFrame using chunked processing."""
         from analytics.chunked_analytics_controller import ChunkedAnalyticsController
 
@@ -249,11 +268,15 @@ class AnalyticsService:
         df, needs_chunking = validator.validate_for_analysis(df)
 
         validated_rows = len(df)
-        logger.info(f"📋 After validation: {validated_rows:,} rows, chunking needed: {needs_chunking}")
+        logger.info(
+            f"📋 After validation: {validated_rows:,} rows, chunking needed: {needs_chunking}"
+        )
 
         # Warn if validation changes the row count
         if validated_rows != original_rows:
-            logger.warning(f"⚠️  Row count changed during validation: {original_rows:,} → {validated_rows:,}")
+            logger.warning(
+                f"⚠️  Row count changed during validation: {original_rows:,} → {validated_rows:,}"
+            )
 
         if not needs_chunking:
             logger.info("✅ Using regular analysis (no chunking needed)")
@@ -263,7 +286,9 @@ class AnalyticsService:
         chunk_size = validator.get_optimal_chunk_size(df)
         chunked_controller = ChunkedAnalyticsController(chunk_size=chunk_size)
 
-        logger.info(f"🔄 Using chunked analysis: {validated_rows:,} rows, {chunk_size:,} per chunk")
+        logger.info(
+            f"🔄 Using chunked analysis: {validated_rows:,} rows, {chunk_size:,} per chunk"
+        )
 
         # Process the DataFrame in chunks
         result = chunked_controller.process_large_dataframe(df, analysis_types)
@@ -276,15 +301,21 @@ class AnalyticsService:
             "chunking_used": True,
             "chunk_size": chunk_size,
             "processing_complete": result.get("rows_processed", 0) == validated_rows,
-            "data_integrity_check": "PASS" if result.get("rows_processed", 0) == validated_rows else "FAIL"
+            "data_integrity_check": (
+                "PASS" if result.get("rows_processed", 0) == validated_rows else "FAIL"
+            ),
         }
 
         # Verify that all rows were processed
         rows_processed = result.get("rows_processed", 0)
         if rows_processed != validated_rows:
-            logger.error(f"❌ PROCESSING ERROR: Expected {validated_rows:,} rows, got {rows_processed:,}")
+            logger.error(
+                f"❌ PROCESSING ERROR: Expected {validated_rows:,} rows, got {rows_processed:,}"
+            )
         else:
-            logger.info(f"✅ SUCCESS: Processed ALL {rows_processed:,} rows successfully")
+            logger.info(
+                f"✅ SUCCESS: Processed ALL {rows_processed:,} rows successfully"
+            )
 
         return result
 
@@ -292,7 +323,9 @@ class AnalyticsService:
         """Diagnostic method to check data processing flow."""
         logger.info("=== Data Flow Diagnosis ===")
         logger.info(f"Input DataFrame: {len(df)} rows, {len(df.columns)} columns")
-        logger.info(f"Memory usage: {df.memory_usage(deep=True).sum() / 1024 / 1024:,.1f} MB")
+        logger.info(
+            f"Memory usage: {df.memory_usage(deep=True).sum() / 1024 / 1024:,.1f} MB"
+        )
 
         validator = self.validation_service
 
@@ -301,7 +334,9 @@ class AnalyticsService:
         )
 
         cleaned_df, needs_chunking = validator.validate_for_analysis(df.copy())
-        logger.info(f"After validation: {len(cleaned_df)} rows, needs_chunking={needs_chunking}")
+        logger.info(
+            f"After validation: {len(cleaned_df)} rows, needs_chunking={needs_chunking}"
+        )
 
         if needs_chunking:
             chunk_size = validator.get_optimal_chunk_size(cleaned_df)
@@ -318,10 +353,12 @@ class AnalyticsService:
             },
         }
 
-    def _regular_analysis(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
+    def _regular_analysis(
+        self, df: pd.DataFrame, analysis_types: List[str]
+    ) -> Dict[str, Any]:
         """Regular analysis for smaller DataFrames with datetime fixes."""
 
-        logger.info(f"\U0001F4CA Starting regular analysis for {len(df):,} rows")
+        logger.info(f"\U0001f4ca Starting regular analysis for {len(df):,} rows")
 
         # CRITICAL FIX: Ensure datetime columns are properly parsed
         df = ensure_datetime_columns(df)
@@ -366,7 +403,9 @@ class AnalyticsService:
                 temporal_stats["hourly_distribution"] = hours.value_counts().to_dict()
 
             if weekdays is not None:
-                temporal_stats["weekday_distribution"] = weekdays.value_counts().to_dict()
+                temporal_stats["weekday_distribution"] = (
+                    weekdays.value_counts().to_dict()
+                )
 
             temporal_stats["total_events"] = len(df)
 
@@ -428,7 +467,8 @@ class AnalyticsService:
 
             total_events = len(df)
             access_stats["access_percentages"] = {
-                result: (count / total_events) * 100 for result, count in access_counts.items()
+                result: (count / total_events) * 100
+                for result, count in access_counts.items()
             }
 
         if "door_id" in df.columns:
@@ -442,7 +482,7 @@ class AnalyticsService:
         try:
             uploaded_data = self.load_uploaded_data()
             if not uploaded_data:
-                return {'status': 'no_data', 'message': 'No uploaded files available'}
+                return {"status": "no_data", "message": "No uploaded files available"}
 
             logger.info(f"Processing {len(uploaded_data)} uploaded files...")
 
@@ -460,12 +500,14 @@ class AnalyticsService:
             logger.info(f"Combined: {len(combined_df):,} total rows")
 
             summary = self.summarize_dataframe(combined_df)
-            summary.update({
-                'status': 'success',
-                'timestamp': datetime.now().isoformat(),
-                'files_processed': len(uploaded_data),
-                'original_total_rows': total_original_rows,
-            })
+            summary.update(
+                {
+                    "status": "success",
+                    "timestamp": datetime.now().isoformat(),
+                    "files_processed": len(uploaded_data),
+                    "original_total_rows": total_original_rows,
+                }
+            )
 
             logger.info("Analytics result:")
             logger.info(f"Total Events: {summary['total_events']:,}")
@@ -477,11 +519,10 @@ class AnalyticsService:
         except Exception as e:
             logger.error(f"Error processing uploaded data: {e}")
             return {
-                'status': 'error',
-                'message': f'Error processing uploaded data: {str(e)}',
-                'total_events': 0
+                "status": "error",
+                "message": f"Error processing uploaded data: {str(e)}",
+                "total_events": 0,
             }
-
 
     def _get_analytics_with_fixed_processor(self) -> Dict[str, Any]:
         """Get analytics using the sample file processor."""
@@ -497,51 +538,53 @@ class AnalyticsService:
             import pandas as pd
             import json
 
-            processor = FileProcessor(upload_folder="temp", allowed_extensions={'csv', 'json', 'xlsx'})
+            processor = FileProcessor(
+                upload_folder="temp", allowed_extensions={"csv", "json", "xlsx"}
+            )
             all_data = []
 
             # Process CSV file
             if os.path.exists(csv_file):
                 df_csv = pd.read_csv(csv_file)
                 result = processor._validate_data(df_csv)
-                if result['valid']:
-                    processed_df = result['data']
-                    processed_df['source_file'] = 'csv'
+                if result["valid"]:
+                    processed_df = result["data"]
+                    processed_df["source_file"] = "csv"
                     all_data.append(processed_df)
 
             # Process JSON file
             if os.path.exists(json_file):
-                with open(json_file, 'r', encoding='utf-8', errors='replace') as f:
+                with open(json_file, "r", encoding="utf-8", errors="replace") as f:
                     json_data = json.load(f)
                 df_json = pd.DataFrame(json_data)
                 result = processor._validate_data(df_json)
-                if result['valid']:
-                    processed_df = result['data']
-                    processed_df['source_file'] = 'json'
+                if result["valid"]:
+                    processed_df = result["data"]
+                    processed_df["source_file"] = "json"
                     all_data.append(processed_df)
 
             if all_data:
                 combined_df = pd.concat(all_data, ignore_index=True)
 
                 return {
-                    'status': 'success',
-                    'total_events': len(combined_df),
-                    'active_users': combined_df['person_id'].nunique(),
-                    'active_doors': combined_df['door_id'].nunique(),
-                    'data_source': 'fixed_processor',
-                    'timestamp': datetime.now().isoformat()
+                    "status": "success",
+                    "total_events": len(combined_df),
+                    "active_users": combined_df["person_id"].nunique(),
+                    "active_doors": combined_df["door_id"].nunique(),
+                    "data_source": "fixed_processor",
+                    "timestamp": datetime.now().isoformat(),
                 }
 
         except Exception as e:
             logger.error(f"Error in fixed processor analytics: {e}")
-            return {'status': 'error', 'message': str(e)}
+            return {"status": "error", "message": str(e)}
 
-        return {'status': 'no_data', 'message': 'Files not available'}
+        return {"status": "no_data", "message": "Files not available"}
 
     def _get_database_analytics(self) -> Dict[str, Any]:
         """Get analytics from database"""
         if not self.database_analytics_service:
-            return {'status': 'error', 'message': 'Database not available'}
+            return {"status": "error", "message": "Database not available"}
 
         return self.database_analytics_service.get_analytics()
 
@@ -552,269 +595,333 @@ class AnalyticsService:
             return summary
         except Exception as e:
             logger.error(f"Dashboard summary failed: {e}")
-            return {'status': 'error', 'message': str(e)}
+            return {"status": "error", "message": str(e)}
+
+    def _load_patterns_data(self, data_source: str | None) -> Tuple[pd.DataFrame, int]:
+        """Load and clean data for unique patterns analysis."""
+        logger = logging.getLogger(__name__)
+
+        if data_source == "database":
+            df, _meta = self.data_loader.get_processed_database()
+            uploaded_data = {"database": df} if not df.empty else {}
+        else:
+            uploaded_data = self.load_uploaded_data()
+
+        if not uploaded_data:
+            return pd.DataFrame(), 0
+
+        all_dfs: List[pd.DataFrame] = []
+        total_original_rows = 0
+
+        logger.info(f"📁 Found {len(uploaded_data)} uploaded files")
+
+        for filename, df in uploaded_data.items():
+            original_rows = len(df)
+            total_original_rows += original_rows
+            logger.info(f"   {filename}: {original_rows:,} rows")
+
+            cleaned_df = self.clean_uploaded_dataframe(df)
+            all_dfs.append(cleaned_df)
+            logger.info(f"   After cleaning: {len(cleaned_df):,} rows")
+
+        combined_df = (
+            all_dfs[0] if len(all_dfs) == 1 else pd.concat(all_dfs, ignore_index=True)
+        )
+
+        return combined_df, total_original_rows
+
+    def _verify_combined_data(self, df: pd.DataFrame, original_rows: int) -> None:
+        """Log sanity checks for the combined dataframe."""
+        logger = logging.getLogger(__name__)
+
+        final_rows = len(df)
+        logger.info(f"📊 COMBINED DATASET: {final_rows:,} total rows")
+
+        if final_rows != original_rows:
+            logger.warning(f"⚠️  Data loss detected: {original_rows:,} → {final_rows:,}")
+
+        if final_rows == 150 and original_rows > 150:
+            logger.error("🚨 FOUND 150 ROW LIMIT in unique patterns analysis!")
+            logger.error(f"   Original rows: {original_rows:,}")
+            logger.error(f"   Final rows: {final_rows:,}")
+        elif final_rows > 1000:
+            logger.info(f"✅ Processing large dataset: {final_rows:,} rows")
+
+    def _calculate_pattern_stats(self, df: pd.DataFrame) -> Tuple[int, int, int, int]:
+        """Calculate record, user, device and date span statistics."""
+        logger = logging.getLogger(__name__)
+
+        total_records = len(df)
+        unique_users = df["person_id"].nunique() if "person_id" in df.columns else 0
+        unique_devices = df["door_id"].nunique() if "door_id" in df.columns else 0
+
+        date_span = 0
+        if "timestamp" in df.columns:
+            df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
+            valid_dates = df["timestamp"].dropna()
+            if len(valid_dates) > 0:
+                date_span = (valid_dates.max() - valid_dates.min()).days
+
+        logger.info("📈 STATISTICS:")
+        logger.info(f"   Total records: {total_records:,}")
+        logger.info(f"   Unique users: {unique_users:,}")
+        logger.info(f"   Unique devices: {unique_devices:,}")
+        if date_span:
+            logger.info(f"   Date span: {date_span} days")
+
+        return total_records, unique_users, unique_devices, date_span
+
+    def _analyze_user_patterns(
+        self, df: pd.DataFrame, unique_users: int
+    ) -> Tuple[List[str], List[str], List[str]]:
+        """Classify users by activity level."""
+        logger = logging.getLogger(__name__)
+
+        power_users: List[str] = []
+        regular_users: List[str] = []
+        occasional_users: List[str] = []
+
+        if "person_id" in df.columns and unique_users > 0:
+            user_stats = df.groupby("person_id").size()
+            if len(user_stats) > 0:
+                q80 = user_stats.quantile(0.8)
+                q20 = user_stats.quantile(0.2)
+                power_users = user_stats[user_stats > q80].index.tolist()
+                regular_users = user_stats[user_stats.between(q20, q80)].index.tolist()
+                occasional_users = user_stats[user_stats < q20].index.tolist()
+
+        logger.info(f"   Power users: {len(power_users)}")
+        logger.info(f"   Regular users: {len(regular_users)}")
+        logger.info(f"   Occasional users: {len(occasional_users)}")
+
+        return power_users, regular_users, occasional_users
+
+    def _analyze_device_patterns(
+        self, df: pd.DataFrame, unique_devices: int
+    ) -> Tuple[List[str], List[str], List[str]]:
+        """Classify devices by activity level."""
+        logger = logging.getLogger(__name__)
+
+        high_traffic: List[str] = []
+        moderate_traffic: List[str] = []
+        low_traffic: List[str] = []
+
+        if "door_id" in df.columns and unique_devices > 0:
+            device_stats = df.groupby("door_id").size()
+            if len(device_stats) > 0:
+                q80 = device_stats.quantile(0.8)
+                q20 = device_stats.quantile(0.2)
+                high_traffic = device_stats[device_stats > q80].index.tolist()
+                moderate_traffic = device_stats[
+                    device_stats.between(q20, q80)
+                ].index.tolist()
+                low_traffic = device_stats[device_stats < q20].index.tolist()
+
+        logger.info(f"   High traffic devices: {len(high_traffic)}")
+        logger.info(f"   Moderate traffic devices: {len(moderate_traffic)}")
+        logger.info(f"   Low traffic devices: {len(low_traffic)}")
+
+        return high_traffic, moderate_traffic, low_traffic
+
+    def _count_interactions(self, df: pd.DataFrame) -> int:
+        """Count unique user-device interactions."""
+        if "person_id" in df.columns and "door_id" in df.columns:
+            interaction_pairs = df.groupby(["person_id", "door_id"]).size()
+            return len(interaction_pairs)
+        return 0
+
+    def _calculate_success_rate(self, df: pd.DataFrame) -> float:
+        """Calculate overall access success rate."""
+        if "access_result" in df.columns:
+            success_mask = (
+                df["access_result"]
+                .str.lower()
+                .str.contains("grant|allow|success|permit", case=False, na=False)
+            )
+            return success_mask.mean()
+        return 0.0
+
+    def _format_patterns_result(
+        self,
+        total_records: int,
+        unique_users: int,
+        unique_devices: int,
+        date_span: int,
+        power_users: List[str],
+        regular_users: List[str],
+        occasional_users: List[str],
+        high_traffic: List[str],
+        moderate_traffic: List[str],
+        low_traffic: List[str],
+        total_interactions: int,
+        success_rate: float,
+    ) -> Dict[str, Any]:
+        """Build the final unique patterns analysis result."""
+        return {
+            "status": "success",
+            "analysis_timestamp": datetime.now().isoformat(),
+            "data_summary": {
+                "total_records": total_records,
+                "unique_entities": {
+                    "users": unique_users,
+                    "devices": unique_devices,
+                    "interactions": total_interactions,
+                },
+                "date_range": {"span_days": date_span},
+            },
+            "user_patterns": {
+                "total_unique_users": unique_users,
+                "user_classifications": {
+                    "power_users": power_users[:10],
+                    "regular_users": regular_users[:10],
+                    "occasional_users": occasional_users[:10],
+                },
+            },
+            "device_patterns": {
+                "total_unique_devices": unique_devices,
+                "device_classifications": {
+                    "high_traffic_devices": high_traffic[:10],
+                    "moderate_traffic_devices": moderate_traffic[:10],
+                    "low_traffic_devices": low_traffic[:10],
+                    "secure_devices": [],
+                    "popular_devices": high_traffic[:5],
+                    "problematic_devices": [],
+                },
+            },
+            "interaction_patterns": {
+                "total_unique_interactions": total_interactions,
+                "interaction_statistics": {"unique_pairs": total_interactions},
+            },
+            "temporal_patterns": {"date_span_days": date_span},
+            "access_patterns": {
+                "overall_success_rate": success_rate,
+                "success_percentage": success_rate * 100,
+            },
+            "recommendations": [],
+        }
 
     def get_unique_patterns_analysis(self, data_source: str | None = None):
         """Get unique patterns analysis for the requested source."""
         import logging
+
         logger = logging.getLogger(__name__)
 
         try:
             logger.info("🎯 Starting Unique Patterns Analysis")
 
-            # STEP 1: Get uploaded data with verification
-            if data_source == "database":
-                df, _meta = self.data_loader.get_processed_database()
-                uploaded_data = {"database": df} if not df.empty else {}
-            else:
-                from pages.file_upload import get_uploaded_data
-                uploaded_data = get_uploaded_data()
-
-            if not uploaded_data:
+            df, original_rows = self._load_patterns_data(data_source)
+            if df.empty:
                 logger.warning("❌ No uploaded data found for unique patterns analysis")
                 return {
-                    'status': 'no_data',
-                    'message': 'No uploaded files available',
-                    'data_summary': {'total_records': 0}
+                    "status": "no_data",
+                    "message": "No uploaded files available",
+                    "data_summary": {"total_records": 0},
                 }
 
-            # STEP 2: Process the uploaded data
-            logger.info(f"📁 Found {len(uploaded_data)} uploaded files")
+            self._verify_combined_data(df, original_rows)
 
-            # Get the first file (or combine all files)
-            all_dfs = []
-            total_original_rows = 0
+            (
+                total_records,
+                unique_users,
+                unique_devices,
+                date_span,
+            ) = self._calculate_pattern_stats(df)
 
-            for filename, df in uploaded_data.items():
-                original_rows = len(df)
-                total_original_rows += original_rows
-                logger.info(f"   {filename}: {original_rows:,} rows")
+            power_users, regular_users, occasional_users = self._analyze_user_patterns(
+                df, unique_users
+            )
+            (
+                high_traffic_devices,
+                moderate_traffic_devices,
+                low_traffic_devices,
+            ) = self._analyze_device_patterns(df, unique_devices)
 
-                # Clean and map the dataframe
-                cleaned_df = self.clean_uploaded_dataframe(df)
-                all_dfs.append(cleaned_df)
+            total_interactions = self._count_interactions(df)
+            success_rate = self._calculate_success_rate(df)
 
-                logger.info(f"   After cleaning: {len(cleaned_df):,} rows")
+            result = self._format_patterns_result(
+                total_records,
+                unique_users,
+                unique_devices,
+                date_span,
+                power_users,
+                regular_users,
+                occasional_users,
+                high_traffic_devices,
+                moderate_traffic_devices,
+                low_traffic_devices,
+                total_interactions,
+                success_rate,
+            )
 
-            # STEP 3: Combine all dataframes
-            if len(all_dfs) == 1:
-                combined_df = all_dfs[0]
-            else:
-                combined_df = pd.concat(all_dfs, ignore_index=True)
-
-            final_rows = len(combined_df)
-            logger.info(f"📊 COMBINED DATASET: {final_rows:,} total rows")
-
-            # STEP 4: Check for data loss
-            if final_rows != total_original_rows:
-                logger.warning(f"⚠️  Data loss detected: {total_original_rows:,} → {final_rows:,}")
-
-            # STEP 5: Verify we have the expected data
-            if final_rows == 150 and total_original_rows > 150:
-                logger.error("🚨 FOUND 150 ROW LIMIT in unique patterns analysis!")
-                logger.error(f"   Original rows: {total_original_rows:,}")
-                logger.error(f"   Final rows: {final_rows:,}")
-                # Continue processing but log the issue
-            elif final_rows > 1000:
-                logger.info(f"✅ Processing large dataset: {final_rows:,} rows")
-
-            # STEP 6: Calculate statistics
-            total_records = len(combined_df)
-            unique_users = combined_df['person_id'].nunique() if 'person_id' in combined_df.columns else 0
-            unique_devices = combined_df['door_id'].nunique() if 'door_id' in combined_df.columns else 0
-
-            logger.info("📈 STATISTICS:")
-            logger.info(f"   Total records: {total_records:,}")
-            logger.info(f"   Unique users: {unique_users:,}")
-            logger.info(f"   Unique devices: {unique_devices:,}")
-
-            # STEP 7: Calculate date range
-            date_span = 0
-            if 'timestamp' in combined_df.columns:
-                combined_df['timestamp'] = pd.to_datetime(combined_df['timestamp'], errors='coerce')
-                valid_dates = combined_df['timestamp'].dropna()
-                if len(valid_dates) > 0:
-                    date_span = (valid_dates.max() - valid_dates.min()).days
-                    logger.info(f"   Date span: {date_span} days")
-
-            # STEP 8: Analyze user patterns
-            power_users = []
-            regular_users = []
-            occasional_users = []
-
-            if 'person_id' in combined_df.columns and unique_users > 0:
-                user_stats = combined_df.groupby('person_id').size()
-
-                if len(user_stats) > 0:
-                    # Calculate thresholds
-                    q80 = user_stats.quantile(0.8)
-                    q20 = user_stats.quantile(0.2)
-
-                    power_users = user_stats[user_stats > q80].index.tolist()
-                    regular_users = user_stats[user_stats.between(q20, q80)].index.tolist()
-                    occasional_users = user_stats[user_stats < q20].index.tolist()
-
-                    logger.info(f"   Power users: {len(power_users)}")
-                    logger.info(f"   Regular users: {len(regular_users)}")
-                    logger.info(f"   Occasional users: {len(occasional_users)}")
-
-            # STEP 9: Analyze device patterns
-            high_traffic_devices = []
-            moderate_traffic_devices = []
-            low_traffic_devices = []
-
-            if 'door_id' in combined_df.columns and unique_devices > 0:
-                device_stats = combined_df.groupby('door_id').size()
-
-                if len(device_stats) > 0:
-                    # Calculate thresholds
-                    q80 = device_stats.quantile(0.8)
-                    q20 = device_stats.quantile(0.2)
-
-                    high_traffic_devices = device_stats[device_stats > q80].index.tolist()
-                    moderate_traffic_devices = device_stats[device_stats.between(q20, q80)].index.tolist()
-                    low_traffic_devices = device_stats[device_stats < q20].index.tolist()
-
-                    logger.info(f"   High traffic devices: {len(high_traffic_devices)}")
-                    logger.info(f"   Moderate traffic devices: {len(moderate_traffic_devices)}")
-                    logger.info(f"   Low traffic devices: {len(low_traffic_devices)}")
-
-            # STEP 10: Calculate interactions
-            total_interactions = 0
-            if 'person_id' in combined_df.columns and 'door_id' in combined_df.columns:
-                interaction_pairs = combined_df.groupby(['person_id', 'door_id']).size()
-                total_interactions = len(interaction_pairs)
-                logger.info(f"   Total unique interactions: {total_interactions:,}")
-
-            # STEP 11: Calculate success rate
-            success_rate = 0.0
-            if 'access_result' in combined_df.columns:
-                success_mask = combined_df['access_result'].str.lower().str.contains(
-                    'grant|allow|success|permit', case=False, na=False
-                )
-                success_rate = success_mask.mean()
-                logger.info(f"   Success rate: {success_rate:.2%}")
-
-            # STEP 12: Build the complete result
-            result = {
-                'status': 'success',
-                'analysis_timestamp': datetime.now().isoformat(),
-
-                # CRITICAL: This is what shows in the "Database Overview" card
-                'data_summary': {
-                    'total_records': total_records,  # This MUST be your actual row count
-                    'unique_entities': {
-                        'users': unique_users,
-                        'devices': unique_devices,
-                        'interactions': total_interactions
-                    },
-                    'date_range': {
-                        'span_days': date_span
-                    }
-                },
-
-                'user_patterns': {
-                    'total_unique_users': unique_users,
-                    'user_classifications': {
-                        'power_users': power_users[:10],  # Limit for display
-                        'regular_users': regular_users[:10],
-                        'occasional_users': occasional_users[:10]
-                    }
-                },
-
-                'device_patterns': {
-                    'total_unique_devices': unique_devices,
-                    'device_classifications': {
-                        'high_traffic_devices': high_traffic_devices[:10],
-                        'moderate_traffic_devices': moderate_traffic_devices[:10],
-                        'low_traffic_devices': low_traffic_devices[:10],
-                        'secure_devices': [],  # Placeholder
-                        'popular_devices': high_traffic_devices[:5],
-                        'problematic_devices': []  # Placeholder
-                    }
-                },
-
-                'interaction_patterns': {
-                    'total_unique_interactions': total_interactions,
-                    'interaction_statistics': {
-                        'unique_pairs': total_interactions
-                    }
-                },
-
-                'temporal_patterns': {
-                    'date_span_days': date_span
-                },
-
-                'access_patterns': {
-                    'overall_success_rate': success_rate,
-                    'success_percentage': success_rate * 100
-                },
-
-                'recommendations': []  # Placeholder
-            }
-
-            # STEP 13: Final verification log
-            result_total = result['data_summary']['total_records']
+            result_total = result["data_summary"]["total_records"]
             logger.info("🎉 UNIQUE PATTERNS ANALYSIS COMPLETE")
             logger.info(f"   Result total_records: {result_total:,}")
 
-            if result_total == 150 and result_total != total_original_rows:
+            if result_total == 150 and result_total != original_rows:
                 logger.error("❌ STILL SHOWING 150 - CHECK DATA PROCESSING!")
-            elif result_total == total_original_rows:
+            elif result_total == original_rows:
                 logger.info(f"✅ SUCCESS: Correctly showing {result_total:,} rows")
             else:
-                logger.warning(f"⚠️  Unexpected count: {result_total:,} (expected {total_original_rows:,})")
+                logger.warning(
+                    f"⚠️  Unexpected count: {result_total:,} (expected {original_rows:,})"
+                )
 
             return result
 
         except Exception as e:
             logger.error(f"❌ Unique patterns analysis failed: {e}")
             import traceback
+
             traceback.print_exc()
 
             return {
-                'status': 'error',
-                'message': f'Unique patterns analysis failed: {str(e)}',
-                'data_summary': {'total_records': 0}
+                "status": "error",
+                "message": f"Unique patterns analysis failed: {str(e)}",
+                "data_summary": {"total_records": 0},
             }
 
     def health_check(self) -> Dict[str, Any]:
         """Check service health"""
-        health = {
-            'service': 'healthy',
-            'timestamp': datetime.now().isoformat()
-        }
+        health = {"service": "healthy", "timestamp": datetime.now().isoformat()}
 
         # Check database
         if self.database_manager:
             try:
-                health['database'] = 'healthy' if self.database_manager.health_check() else 'unhealthy'
+                health["database"] = (
+                    "healthy" if self.database_manager.health_check() else "unhealthy"
+                )
             except:
-                health['database'] = 'unhealthy'
+                health["database"] = "unhealthy"
         else:
-            health['database'] = 'not_configured'
+            health["database"] = "not_configured"
 
         # Check file upload
         try:
             from pages.file_upload import get_uploaded_filenames
-            health['uploaded_files'] = len(get_uploaded_filenames())
+
+            health["uploaded_files"] = len(get_uploaded_filenames())
         except ImportError:
-            health['uploaded_files'] = 'not_available'
+            health["uploaded_files"] = "not_available"
 
         return health
 
     def get_data_source_options(self) -> List[Dict[str, str]]:
         """Get available data source options"""
-        options = [
-            {"label": "Sample Data", "value": "sample"}
-        ]
+        options = [{"label": "Sample Data", "value": "sample"}]
 
         # Check for uploaded data
         try:
             from pages.file_upload import get_uploaded_filenames
+
             uploaded_files = get_uploaded_filenames()
             if uploaded_files:
-                options.append({"label": f"Uploaded Files ({len(uploaded_files)})", "value": "uploaded"})
+                options.append(
+                    {
+                        "label": f"Uploaded Files ({len(uploaded_files)})",
+                        "value": "uploaded",
+                    }
+                )
         except ImportError:
             pass
 
@@ -827,31 +934,37 @@ class AnalyticsService:
     def get_date_range_options(self) -> Dict[str, str]:
         """Get default date range options"""
         from datetime import datetime, timedelta
+
         return {
-            'start': (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d'),
-            'end': datetime.now().strftime('%Y-%m-%d')
+            "start": (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d"),
+            "end": datetime.now().strftime("%Y-%m-%d"),
         }
 
     def get_analytics_status(self) -> Dict[str, Any]:
         """Get current analytics status"""
         status = {
-            'timestamp': datetime.now().isoformat(),
-            'data_sources_available': len(self.get_data_source_options()),
-            'service_health': self.health_check()
+            "timestamp": datetime.now().isoformat(),
+            "data_sources_available": len(self.get_data_source_options()),
+            "service_health": self.health_check(),
         }
 
         try:
             from pages.file_upload import get_uploaded_filenames
-            status['uploaded_files'] = len(get_uploaded_filenames())
+
+            status["uploaded_files"] = len(get_uploaded_filenames())
         except ImportError:
-            status['uploaded_files'] = 0
+            status["uploaded_files"] = 0
 
         return status
+
 
 # Global service instance
 _analytics_service: Optional[AnalyticsService] = None
 
-def get_analytics_service(service: Optional[AnalyticsService] = None) -> AnalyticsService:
+
+def get_analytics_service(
+    service: Optional[AnalyticsService] = None,
+) -> AnalyticsService:
     """Return a global analytics service instance.
 
     If ``service`` is provided, it becomes the global instance.  Otherwise an
@@ -864,8 +977,10 @@ def get_analytics_service(service: Optional[AnalyticsService] = None) -> Analyti
         _analytics_service = AnalyticsService()
     return _analytics_service
 
+
 def create_analytics_service() -> AnalyticsService:
     """Create new analytics service instance"""
     return AnalyticsService()
 
-__all__ = ['AnalyticsService', 'get_analytics_service', 'create_analytics_service']
+
+__all__ = ["AnalyticsService", "get_analytics_service", "create_analytics_service"]
