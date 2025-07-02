@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-"""
-Analytics Service - Enhanced with Unique Patterns Analysis
+"""Analytics Service - Enhanced with Unique Patterns Analysis
+
+Uploaded files are validated with :class:`services.input_validator.InputValidator`
+before processing to ensure they are present, non-empty and within the configured
+size limits.
 """
 import pandas as pd
 import json
@@ -62,6 +65,8 @@ class AnalyticsService:
         self.file_processing_service = FileProcessingService()
         self.validation_service = DataValidationService()
         self.data_loading_service = DataLoadingService(self.validation_service)
+        from services.input_validator import InputValidator
+        self.input_validator = InputValidator()
         self.database_analytics_service = DatabaseAnalyticsService(
             self.database_manager
         )
@@ -94,9 +99,27 @@ class AnalyticsService:
             if not uploaded_files:
                 return {"status": "no_data", "message": "No uploaded files available"}
 
-            combined_df, processing_info, processed_files, total_records = (
-                self.file_processing_service.process_files(uploaded_files)
+            valid_files: List[str] = []
+            processing_info: Dict[str, Any] = {}
+            for path in uploaded_files:
+                result = self.input_validator.validate_file_upload(path)
+                if result.valid:
+                    valid_files.append(path)
+                else:
+                    processing_info[path] = f"invalid: {result.message}"
+
+            if not valid_files:
+                return {
+                    "status": "error",
+                    "message": "No valid files to process",
+                    "processing_info": processing_info,
+                }
+
+            combined_df, info, processed_files, total_records = (
+                self.file_processing_service.process_files(valid_files)
             )
+            if isinstance(info, list):
+                processing_info["logs"] = info
 
             if combined_df.empty:
                 return {
@@ -179,6 +202,14 @@ class AnalyticsService:
             max_ts: Optional[pd.Timestamp] = None
 
             for filename, source in uploaded_data.items():
+                validation = self.input_validator.validate_file_upload(source)
+                if not validation.valid:
+                    processing_info[filename] = {
+                        "rows": 0,
+                        "status": f"invalid: {validation.message}",
+                    }
+                    continue
+
                 try:
                     chunks = stream_uploaded_file(self.data_loading_service, source)
                     file_events, min_ts, max_ts = aggregate_counts(
