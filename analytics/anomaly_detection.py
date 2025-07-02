@@ -767,29 +767,53 @@ class AnomalyDetector:
     def _detect_frequency_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
         """Detect frequency-based anomalies"""
         
-        anomalies = []
-        
         # Sudden burst of activity
+        df = df.copy()
         df['hour_window'] = df['timestamp'].dt.floor('H')
-        hourly_counts = df.groupby(['person_id', 'hour_window'])['event_id'].count()
-        
-        # Find users with unusually high activity in single hours
-        for (user_id, hour_window), count in hourly_counts.items():
-            user_hourly_avg = hourly_counts[user_id].mean()
-            
-            if count > user_hourly_avg * 5 and count > 10:  # 5x average and at least 10 events
-                anomalies.append({
-                    'type': 'activity_burst',
-                    'severity': 'medium',
-                    'confidence': 0.7,
-                    'user_id': user_id,
-                    'hour_window': hour_window,
-                    'event_count': count,
-                    'avg_hourly': user_hourly_avg,
-                    'description': f'User {user_id} had activity burst: {count} events in hour {hour_window}'
-                })
-        
-        return anomalies
+        hourly_counts = (
+            df.groupby(['person_id', 'hour_window'])['event_id']
+            .count()
+            .reset_index(name='event_count')
+        )
+
+        user_hourly_avg = (
+            hourly_counts.groupby('person_id')['event_count']
+            .mean()
+            .rename('avg_hourly')
+        )
+        hourly_counts = hourly_counts.join(user_hourly_avg, on='person_id')
+
+        bursts = hourly_counts[
+            (hourly_counts['event_count'] > hourly_counts['avg_hourly'] * 5)
+            & (hourly_counts['event_count'] > 10)
+        ]
+
+        if bursts.empty:
+            return []
+
+        bursts['type'] = 'activity_burst'
+        bursts['severity'] = 'medium'
+        bursts['confidence'] = 0.7
+        bursts['description'] = bursts.apply(
+            lambda r: (
+                f"User {r['person_id']} had activity burst: {r['event_count']} "
+                f"events in hour {r['hour_window']}"
+            ),
+            axis=1,
+        )
+
+        return bursts[
+            [
+                'type',
+                'severity',
+                'confidence',
+                'person_id',
+                'hour_window',
+                'event_count',
+                'avg_hourly',
+                'description',
+            ]
+        ].rename(columns={'person_id': 'user_id'}).to_dict('records')
     
     def _calculate_pattern_similarity(self, pattern1: pd.Series, 
                                       pattern2: pd.Series) -> float:

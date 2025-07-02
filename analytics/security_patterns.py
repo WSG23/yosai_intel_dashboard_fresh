@@ -303,21 +303,25 @@ class SecurityPatternsAnalyzer:
     # Helper methods
     def _extract_failure_patterns(self, failed_attempts: pd.DataFrame) -> List[Dict]:
         """Extract specific failure patterns"""
-        patterns = []
-        
         # Repeated failures by same user
-        user_failures = failed_attempts.groupby('person_id').size()
-        repeat_users = user_failures[user_failures >= 3]
-        
-        for user, count in repeat_users.items():
-            patterns.append({
-                'type': 'repeated_failures',
-                'user': user,
-                'count': count,
-                'severity': 'high' if count >= 5 else 'medium'
-            })
-        
-        return patterns
+        repeat_users = (
+            failed_attempts.groupby('person_id')
+            .size()
+            .loc[lambda s: s >= 3]
+            .reset_index(name='count')
+        )
+
+        if repeat_users.empty:
+            return []
+
+        repeat_users['type'] = 'repeated_failures'
+        repeat_users['severity'] = repeat_users['count'].apply(
+            lambda c: 'high' if c >= 5 else 'medium'
+        )
+
+        return repeat_users.rename(columns={'person_id': 'user'})[
+            ['type', 'user', 'count', 'severity']
+        ].to_dict('records')
     
     def _assess_failure_risk(self, failures: int, total: int) -> str:
         """Assess risk level based on failure rate"""
@@ -345,20 +349,23 @@ class SecurityPatternsAnalyzer:
     
     def _identify_timing_patterns(self, df: pd.DataFrame) -> List[Dict]:
         """Identify suspicious timing patterns"""
-        patterns = []
-        
         # Users accessing at unusual times
-        after_hours_users = df[df['is_after_hours']].groupby('person_id').size()
-        frequent_after_hours = after_hours_users[after_hours_users >= 5]
-        
-        for user, count in frequent_after_hours.items():
-            patterns.append({
-                'type': 'frequent_after_hours',
-                'user': user,
-                'count': count
-            })
-        
-        return patterns
+        frequent_after_hours = (
+            df[df['is_after_hours']]
+            .groupby('person_id')
+            .size()
+            .loc[lambda s: s >= 5]
+            .reset_index(name='count')
+        )
+
+        if frequent_after_hours.empty:
+            return []
+
+        frequent_after_hours['type'] = 'frequent_after_hours'
+
+        return frequent_after_hours.rename(columns={'person_id': 'user'})[
+            ['type', 'user', 'count']
+        ].to_dict('records')
     
     def _assess_badge_severity(self, badge_issues: pd.DataFrame, df: pd.DataFrame) -> str:
         """Assess severity of badge issues"""
