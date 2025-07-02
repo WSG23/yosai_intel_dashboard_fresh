@@ -14,7 +14,6 @@ from dash.dash import no_update
 from dash._callback_context import callback_context
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from analytics.controllers import UnifiedAnalyticsController
-import logging
 
 logger = logging.getLogger(__name__)
 from dash.dependencies import Input, Output, State, ALL
