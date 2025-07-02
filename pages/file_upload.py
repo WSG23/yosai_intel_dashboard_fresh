@@ -19,7 +19,10 @@ import logging
 logger = logging.getLogger(__name__)
 from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
-from services.device_learning_service import DeviceLearningService
+from services.device_learning_service import (
+    DeviceLearningService,
+    get_device_learning_service,
+)
 from services.upload_service import process_uploaded_file, create_file_preview
 from utils.upload_store import uploaded_data_store as _uploaded_data_store
 from config.dynamic_config import dynamic_config
@@ -31,9 +34,6 @@ from services.ai_suggestions import generate_column_suggestions
 
 
 logger = logging.getLogger(__name__)
-
-# Initialize device learning service
-learning_service = DeviceLearningService()
 
 
 def analyze_device_name_with_ai(device_name):
@@ -117,6 +117,26 @@ def build_failure_alert(message: str) -> dbc.Alert:
         [html.H6("Upload Failed", className="alert-heading"), html.P(message)],
         color="danger",
     )
+
+
+def auto_apply_learned_mappings(df: pd.DataFrame, filename: str) -> bool:
+    """Auto-apply any learned mappings for this file type"""
+    try:
+        learning_service = get_device_learning_service()
+
+        learned_mappings = learning_service.get_learned_mappings(df, filename)
+
+        if learned_mappings:
+            learning_service.apply_learned_mappings_to_global_store(df, filename)
+            logger.info(
+                f"🤖 Auto-applied {len(learned_mappings)} learned device mappings"
+            )
+            return True
+        return False
+
+    except Exception as e:
+        logger.error(f"Failed to auto-apply learned mappings: {e}")
+        return False
 
 
 def build_file_preview_component(df: pd.DataFrame, filename: str) -> html.Div:
@@ -479,6 +499,7 @@ class Callbacks:
                     current_file_info = file_info_dict[filename]
 
                     try:
+                        learning_service = get_device_learning_service()
                         user_mappings = learning_service.get_user_device_mappings(filename)
                         if user_mappings:
                             from services.ai_mapping_store import ai_mapping_store
@@ -495,6 +516,8 @@ class Callbacks:
                             from services.ai_mapping_store import ai_mapping_store
 
                             ai_mapping_store.clear()
+                            # Try to auto-apply learned mappings
+                            auto_apply_learned_mappings(df, filename)
                     except Exception as e:  # pragma: no cover - best effort
                         logger.info(f"⚠️ Error: {e}")
 
@@ -944,6 +967,7 @@ class Callbacks:
                     "saved_at": datetime.now().isoformat(),
                 }
 
+            learning_service = get_device_learning_service()
             learning_service.save_user_device_mappings(filename, user_mappings)
 
             from services.ai_mapping_store import ai_mapping_store

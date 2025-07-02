@@ -222,6 +222,48 @@ class DeviceLearningService:
             logger.error(f"Error getting user device mappings: {e}")
             return {}
 
+    def get_device_mapping_by_name(self, device_name: str) -> Dict[str, Any]:
+        """Get consistent mapping for a device name across all learned files"""
+        try:
+            for fingerprint, data in self.learned_mappings.items():
+                mappings = data.get("device_mappings", {})
+                if device_name in mappings:
+                    device_mapping = mappings[device_name].copy()
+                    device_mapping["source_file"] = data.get("filename")
+                    device_mapping["confidence"] = 1.0
+                    return device_mapping
+
+            for fingerprint, data in self.learned_mappings.items():
+                mappings = data.get("device_mappings", {})
+                for stored_name, stored_mapping in mappings.items():
+                    if self._device_names_similar(device_name, stored_name):
+                        similar_mapping = stored_mapping.copy()
+                        similar_mapping["source_file"] = data.get("filename")
+                        similar_mapping["confidence"] = 0.8
+                        return similar_mapping
+
+            return {}
+
+        except Exception as e:
+            logger.error(f"Error getting device mapping by name: {e}")
+            return {}
+
+    def _device_names_similar(self, name1: str, name2: str) -> bool:
+        """Check if two device names are similar enough to share mappings"""
+        clean1 = name1.lower().replace("_", " ").replace("-", " ")
+        clean2 = name2.lower().replace("_", " ").replace("-", " ")
+
+        words1 = set(clean1.split())
+        words2 = set(clean2.split())
+
+        if not words1 or not words2:
+            return False
+
+        overlap = len(words1 & words2)
+        total = len(words1 | words2)
+
+        return overlap / total >= 0.6
+
 
 _device_learning_service = DeviceLearningService()
 

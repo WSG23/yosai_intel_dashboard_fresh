@@ -17,6 +17,7 @@ import logging
 # ADD after existing imports
 from services.door_mapping_service import door_mapping_service
 from services.ai_mapping_store import ai_mapping_store
+from services.device_learning_service import get_device_learning_service
 
 logger = logging.getLogger(__name__)
 
@@ -70,15 +71,28 @@ def save_confirmed_device_mappings(
 
 
 def generate_ai_device_defaults(df: pd.DataFrame, client_profile: str = "auto"):
-    """Generate AI-based defaults for device mapping modal."""
+    """Generate AI-based defaults, prioritizing learned mappings"""
     try:
+        learning_service = get_device_learning_service()
+
+        if learning_service.apply_learned_mappings_to_global_store(
+            df, "current_upload"
+        ):
+            logger.info("🎯 Applied learned mappings as defaults")
+            return
+
         result = door_mapping_service.process_uploaded_data(df, client_profile)
         ai_mapping_store.clear()
         for device in result["devices"]:
-            ai_mapping_store.set(device["door_id"], device)
-        logger.info(
-            f"Generated AI defaults for {len(ai_mapping_store)} devices"
-        )
+            learned_mapping = learning_service.get_device_mapping_by_name(
+                device["door_id"]
+            )
+            if learned_mapping:
+                ai_mapping_store.set(device["door_id"], learned_mapping)
+                logger.info(f"🎓 Used learned mapping for {device['door_id']}")
+            else:
+                ai_mapping_store.set(device["door_id"], device)
+                logger.info(f"🤖 Generated AI mapping for {device['door_id']}")
     except Exception as e:
         logger.error(f"Error generating AI device defaults: {e}")
 
