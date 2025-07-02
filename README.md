@@ -116,7 +116,7 @@ following steps:
 
 Using Docker Compose:
 ```bash
-docker-compose up -d
+docker-compose -f docker-compose.prod.yml up -d
 ```
 Docker Compose reads variables from a `.env` file in this directory. Set
 `DB_PASSWORD` **and** `SECRET_KEY` there (or export them in your shell) before
