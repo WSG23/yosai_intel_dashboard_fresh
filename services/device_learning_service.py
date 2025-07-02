@@ -145,26 +145,55 @@ class DeviceLearningService:
         )
         return {}
 
-    def apply_learned_mappings_to_global_store(self, df: pd.DataFrame, filename: str):
-        """Apply learned mappings to the global AI mappings store - NEW METHOD"""
-        from services.ai_mapping_store import ai_mapping_store
-
-        learned_mappings = self.get_learned_mappings(df, filename)
-
-        if learned_mappings:
-            # Clear existing AI mappings
-            ai_mapping_store.clear()
-
-            # Apply learned mappings
-            ai_mapping_store.update(learned_mappings)
-
-            logger.info(
-                f"🤖 Applied {len(learned_mappings)} learned mappings to AI store"
-            )
-            return True
-
-        return False
-
+    def apply_learned_mappings_to_global_store(self, df: pd.DataFrame, filename: str) -> bool:
+        """Apply learned mappings to the global AI mappings store with validation."""
+        
+        # DETAILED DEBUG
+        logger.info(f"🔍 DEBUG apply_learned_mappings_to_global_store called:")
+        logger.info(f"🔍 DEBUG - filename: {filename}")
+        
+        try:
+            from services.ai_mapping_store import ai_mapping_store
+            
+            learned_mappings = self.get_learned_mappings(df, filename)
+            logger.info(f"🔍 DEBUG - learned_mappings returned: {len(learned_mappings)} items")
+            
+            if learned_mappings:
+                logger.info(f"🔍 DEBUG - Sample devices from learned_mappings: {list(learned_mappings.keys())[:3]}")
+                logger.info(f"🔍 DEBUG - Sample mapping content: {list(learned_mappings.values())[0] if learned_mappings else 'None'}")
+                
+                # Check store before clearing
+                store_before = ai_mapping_store.all()
+                logger.info(f"🔍 DEBUG - Store BEFORE clear: {len(store_before)} items")
+                
+                # Clear existing AI mappings
+                ai_mapping_store.clear()
+                
+                # Check store after clearing
+                store_after_clear = ai_mapping_store.all()
+                logger.info(f"🔍 DEBUG - Store AFTER clear: {len(store_after_clear)} items")
+                
+                # Apply learned mappings
+                ai_mapping_store.update(learned_mappings)
+                
+                # Check store after update
+                store_after_update = ai_mapping_store.all()
+                logger.info(f"🔍 DEBUG - Store AFTER update: {len(store_after_update)} items")
+                logger.info(f"🔍 DEBUG - Store keys after update: {list(store_after_update.keys())[:3]}")
+                
+                logger.info(f"🤖 Applied {len(learned_mappings)} learned mappings to AI store")
+                return True
+            else:
+                logger.info(f"🔍 DEBUG - No learned mappings found to apply")
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error applying learned mappings to global store: {e}")
+            import traceback
+            logger.error(f"Full error details: {traceback.format_exc()}")
+            return False
+        
     def get_learning_summary(self) -> Dict[str, Any]:
         """Get summary of all learned mappings"""
         return {
@@ -183,6 +212,16 @@ class DeviceLearningService:
         self, df: pd.DataFrame, filename: str, user_mappings: Dict[str, Any]
     ) -> bool:
         """Save user-confirmed device mappings to database"""
+        logger.info(f"🔍 DEBUG save_user_device_mappings called:")
+        logger.info(f"🔍 DEBUG - filename: {filename}")
+        logger.info(f"🔍 DEBUG - user_mappings type: {type(user_mappings)}")
+        logger.info(f"🔍 DEBUG - user_mappings length: {len(user_mappings) if user_mappings else 'None'}")
+        if user_mappings:
+            logger.info(f"🔍 DEBUG - first 3 devices: {list(user_mappings.keys())[:3]}")
+            logger.info(f"🔍 DEBUG - sample mapping: {list(user_mappings.values())[0] if user_mappings else 'None'}")
+        else:
+            logger.info(f"🔍 DEBUG - user_mappings is empty or None!")
+        
         try:
             fingerprint = self._get_file_fingerprint(df, filename)
 

@@ -626,195 +626,196 @@ class Callbacks:
         logger.info("🔧 Populating device modal...")
 
         try:
+            # First try to get devices from global store (saved mappings)
+            from services.ai_mapping_store import ai_mapping_store
+            store_devices = ai_mapping_store.all()
+            
+            if store_devices:
+                logger.info(f"📋 Found {len(store_devices)} saved devices - using SAVED mappings!")
+                
+                # Create editable rows using saved mappings
+                table_rows = []
+                for i, (device_name, mapping) in enumerate(store_devices.items()):
+                    floor = mapping.get('floor_number', 1)
+                    security = mapping.get('security_level', 5)
+                    is_entry = mapping.get('is_entry', False)
+                    is_exit = mapping.get('is_exit', False)
+                    is_elevator = mapping.get('is_elevator', False)
+                    is_restricted = mapping.get('is_restricted', False)
+                    
+                    # Create the same interactive row structure as original
+                    row = html.Tr([
+                        html.Td(html.Strong(device_name)),
+                        html.Td([
+                            dbc.Input(
+                                id={"type": "device-floor", "index": i},
+                                type="number",
+                                value=floor,  # Pre-populate with saved value
+                                min=0, max=50, size="sm"
+                            )
+                        ]),
+                        html.Td([
+                            dbc.Checklist(
+                                id={"type": "device-access", "index": i},
+                                options=[
+                                    {"label": "Entry", "value": "entry"},
+                                    {"label": "Exit", "value": "exit"},
+                                ],
+                                value=[
+                                    "entry" if is_entry else "",
+                                    "exit" if is_exit else ""
+                                ],
+                                inline=True,
+                            )
+                        ]),
+                        html.Td([
+                            dbc.Checklist(
+                                id={"type": "device-special", "index": i},
+                                options=[
+                                    {"label": "Elevator", "value": "is_elevator"},
+                                    {"label": "Restricted", "value": "is_restricted"},
+                                ],
+                                value=[
+                                    "is_elevator" if is_elevator else "",
+                                    "is_restricted" if is_restricted else ""
+                                ],
+                                inline=True,
+                            )
+                        ]),
+                        html.Td([
+                            dbc.Input(
+                                id={"type": "device-security", "index": i},
+                                type="number",
+                                value=security,  # Pre-populate with saved value
+                                min=0, max=10, size="sm"
+                            )
+                        ]),
+                    ])
+                    table_rows.append(row)
+                
+                # Store device list for callback
+                file_info["devices"] = list(store_devices.keys())
+                
+                return html.Div([
+                    dbc.Alert([
+                        html.Strong("📋 SAVED MAPPINGS LOADED! "),
+                        f"Pre-filled {len(store_devices)} devices with your confirmed settings. You can edit and re-save."
+                    ], color="success", className="mb-3"),
+                    dbc.Table([
+                        html.Thead([
+                            html.Tr([
+                                html.Th("Device Name"),
+                                html.Th("Floor"),
+                                html.Th("Access"),
+                                html.Th("Special"),
+                                html.Th("Security (0-10)"),
+                            ])
+                        ]),
+                        html.Tbody(table_rows),
+                    ], striped=True, hover=True),
+                ]), file_info
+
+            # Fallback: Generate AI analysis if no saved mappings (original logic)
             uploaded_data = get_uploaded_data()
             if not uploaded_data:
-                return dbc.Alert("No uploaded data found", color="warning")
+                return dbc.Alert("No uploaded data found", color="warning"), file_info
 
             all_devices = set()
-            device_columns = ["door_id", "device_name", "location", "door", "device"]
+            device_columns = ["door_id", "device_name", "DeviceName", "location", "door", "device"]
 
             for filename, df in uploaded_data.items():
                 logger.info(f"📄 Processing {filename} with {len(df)} rows")
-
                 for col in df.columns:
                     col_lower = col.lower().strip()
-                    if any(device_col in col_lower for device_col in device_columns):
+                    if any(device_col.lower() in col_lower for device_col in device_columns):
                         unique_vals = df[col].dropna().unique()
                         all_devices.update(str(val) for val in unique_vals)
-                        logger.info(
-                            f"   Found {len(unique_vals)} devices in column '{col}'"
-                        )
+                        logger.info(f"   Found {len(unique_vals)} devices in column '{col}'")
+                        # Log AI analysis details
+                        for device in unique_vals:
+                            ai_analysis = analyze_device_name_with_ai(device)
+                            logger.info(f"   🚪 '{device}' → Floor: {ai_analysis.get('floor_number', 1)}, Security: {ai_analysis.get('security_level', 5)}")
+                        break
 
-                        logger.debug(f"🔍 DEBUG - First 10 device names from '{col}':")
-                        sample_devices = unique_vals[:10]
-                        for i, device in enumerate(sample_devices, 1):
-                            logger.debug(f"   {i:2d}. {device}")
-
-                        logger.debug("🤖 DEBUG - Testing AI on sample devices:")
-                        try:
-                            from services.ai_device_generator import AIDeviceGenerator
-
-                            ai_gen = AIDeviceGenerator()
-
-                            for device in sample_devices[:5]:
-                                try:
-                                    result = ai_gen.generate_device_attributes(
-                                        str(device)
-                                    )
-                                    logger.info(
-                                        f"   🚪 '{device}' → Name: '{result.device_name}', Floor: {result.floor_number}, Security: {result.security_level}, Confidence: {result.confidence:.1%}"
-                                    )
-                                    logger.info(
-                                        f"      Access: Entry={result.is_entry}, Exit={result.is_exit}, Elevator={result.is_elevator}"
-                                    )
-                                    logger.info(
-                                        f"      Reasoning: {result.ai_reasoning}"
-                                    )
-                                except Exception as e:
-                                    logger.info(f"   ❌ AI error on '{device}': {e}")
-                        except Exception as e:
-                            logger.debug(f"🤖 DEBUG - AI import error: {e}")
-
-            actual_devices = sorted(list(all_devices))
-            logger.info(f"🎯 Total unique devices found: {len(actual_devices)}")
-
-            file_info = file_info or {}
-
-            if not actual_devices:
-                file_info["devices"] = []
-                return (
-                    dbc.Alert(
-                        [
-                            html.H6("No devices detected"),
-                            html.P(
-                                "No device/door columns found in uploaded data. Expected columns: door_id, device_name, location, etc."
-                            ),
-                        ],
-                        color="warning",
-                    ),
-                    file_info,
-                )
-
+            # Generate AI-populated interactive rows
             table_rows = []
-            for i, device_name in enumerate(actual_devices):
-                ai_attributes = analyze_device_name_with_ai(device_name)
-
-                table_rows.append(
-                    html.Tr(
-                        [
-                            html.Td(
-                                [
-                                    html.Strong(device_name),
-                                    html.Br(),
-                                    html.Small(
-                                        f"AI Confidence: {ai_attributes.get('confidence', 0.5):.0%}",
-                                        className="text-success",
-                                    ),
-                                ]
-                            ),
-                            html.Td(
-                                [
-                                    dbc.Input(
-                                        id={"type": "device-floor", "index": i},
-                                        type="number",
-                                        min=0,
-                                        max=50,
-                                        value=ai_attributes.get("floor_number", 1),
-                                        placeholder="Floor",
-                                        size="sm",
-                                    )
-                                ]
-                            ),
-                            html.Td(
-                                dbc.Checklist(
-                                    id={"type": "device-access", "index": i},
-                                    options=[
-                                        {"label": "Entry", "value": "is_entry"},
-                                        {"label": "Exit", "value": "is_exit"},
-                                        {"label": "Elevator", "value": "is_elevator"},
-                                        {"label": "Stairwell", "value": "is_stairwell"},
-                                        {
-                                            "label": "Fire Exit",
-                                            "value": "is_fire_escape",
-                                        },
-                                        {
-                                            "label": "Restricted",
-                                            "value": "is_restricted",
-                                        },
-                                    ],
-                                    value=[
-                                        key
-                                        for key in [
-                                            "is_entry",
-                                            "is_exit",
-                                            "is_elevator",
-                                            "is_stairwell",
-                                            "is_fire_escape",
-                                            "is_restricted",
-                                        ]
-                                        if ai_attributes.get(
-                                            key,
-                                            ai_attributes.get(key.replace("is_", "")),
-                                        )
-                                    ],
-                                    inline=False,
-                                )
-                            ),
-                            html.Td(
-                                dbc.Input(
-                                    id={"type": "device-security", "index": i},
-                                    type="number",
-                                    min=0,
-                                    max=10,
-                                    value=ai_attributes.get("security_level", 5),
-                                    placeholder="0-10",
-                                    size="sm",
-                                )
-                            ),
-                        ]
-                    )
-                )
-
-            file_info = file_info or {}
-            file_info["devices"] = actual_devices
-
-            return (
-                dbc.Container(
-                    [
-                        dbc.Alert(
-                            [
-                                html.Strong("🤖 AI Analysis: "),
-                                f"Analyzed {len(actual_devices)} devices. Check console for detailed AI debug info.",
+            device_list = sorted(list(all_devices))
+            file_info["devices"] = device_list
+            
+            for i, device_name in enumerate(device_list):
+                ai_analysis = analyze_device_name_with_ai(device_name)
+                
+                row = html.Tr([
+                    html.Td(html.Strong(device_name)),
+                    html.Td([
+                        dbc.Input(
+                            id={"type": "device-floor", "index": i},
+                            type="number",
+                            value=ai_analysis.get("floor_number", 1),
+                            min=0, max=50, size="sm"
+                        )
+                    ]),
+                    html.Td([
+                        dbc.Checklist(
+                            id={"type": "device-access", "index": i},
+                            options=[
+                                {"label": "Entry", "value": "entry"},
+                                {"label": "Exit", "value": "exit"},
                             ],
-                            color="info",
-                            className="mb-3",
-                        ),
-                        dbc.Table(
-                            [
-                                html.Thead(
-                                    [
-                                        html.Tr(
-                                            [
-                                                html.Th("Device Name"),
-                                                html.Th("Floor"),
-                                                html.Th("Access Types"),
-                                                html.Th("Security Level"),
-                                            ]
-                                        )
-                                    ]
-                                ),
-                                html.Tbody(table_rows),
+                            value=[
+                                "entry" if ai_analysis.get('is_entry') else "",
+                                "exit" if ai_analysis.get('is_exit') else ""
                             ],
-                            striped=True,
-                            hover=True,
-                        ),
-                    ]
-                ),
-                file_info,
-            )
+                            inline=True,
+                        )
+                    ]),
+                    html.Td([
+                        dbc.Checklist(
+                            id={"type": "device-special", "index": i},
+                            options=[
+                                {"label": "Elevator", "value": "is_elevator"},
+                                {"label": "Restricted", "value": "is_restricted"},
+                            ],
+                            value=[
+                                "is_elevator" if ai_analysis.get('is_elevator') else "",
+                                "is_restricted" if ai_analysis.get('is_restricted') else ""
+                            ],
+                            inline=True,
+                        )
+                    ]),
+                    html.Td([
+                        dbc.Input(
+                            id={"type": "device-security", "index": i},
+                            type="number",
+                            value=ai_analysis.get("security_level", 5),
+                            min=0, max=10, size="sm"
+                        )
+                    ]),
+                ])
+                table_rows.append(row)
 
-        except Exception as e:  # pragma: no cover - safety net
-            logger.info(f"❌ Error in device modal: {e}")
+            return html.Div([
+                dbc.Alert([
+                    html.Strong("🤖 AI Analysis: "),
+                    f"Generated mappings for {len(device_list)} devices. ",
+                    "Check console for detailed AI debug info.",
+                ], color="info", className="mb-3"),
+                dbc.Table([
+                    html.Thead([
+                        html.Tr([
+                            html.Th("Device Name"),
+                            html.Th("Floor"),
+                            html.Th("Access"),
+                            html.Th("Special"),
+                            html.Th("Security (0-10)"),
+                        ])
+                    ]),
+                    html.Tbody(table_rows),
+                ], striped=True, hover=True),
+            ]), file_info
+
+        except Exception as e:
+            logger.error(f"❌ Error in device modal: {e}")
             return dbc.Alert(f"Error: {e}", color="danger"), file_info
 
     def populate_modal_content(self, is_open, file_info):
