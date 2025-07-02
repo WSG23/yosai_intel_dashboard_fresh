@@ -641,6 +641,8 @@ class Callbacks:
                     is_entry = mapping.get('is_entry', False)
                     is_exit = mapping.get('is_exit', False)
                     is_elevator = mapping.get('is_elevator', False)
+                    is_stairwell = mapping.get('is_stairwell', False)
+                    is_fire_escape = mapping.get('is_fire_escape', False)
                     is_restricted = mapping.get('is_restricted', False)
                     
                     # Create the same interactive row structure as original
@@ -673,10 +675,14 @@ class Callbacks:
                                 id={"type": "device-special", "index": i},
                                 options=[
                                     {"label": "Elevator", "value": "is_elevator"},
+                                    {"label": "Stairwell", "value": "is_stairwell"},
+                                    {"label": "Fire Exit", "value": "is_fire_escape"},
                                     {"label": "Restricted", "value": "is_restricted"},
                                 ],
                                 value=[
                                     "is_elevator" if is_elevator else "",
+                                    "is_stairwell" if is_stairwell else "",
+                                    "is_fire_escape" if is_fire_escape else "",
                                     "is_restricted" if is_restricted else ""
                                 ],
                                 inline=True,
@@ -744,6 +750,10 @@ class Callbacks:
             
             for i, device_name in enumerate(device_list):
                 ai_analysis = analyze_device_name_with_ai(device_name)
+                is_elevator_ai = ai_analysis.get('is_elevator', False)
+                is_stairwell_ai = ai_analysis.get('is_stairwell', False)
+                is_fire_escape_ai = ai_analysis.get('is_fire_escape', False)
+                is_restricted_ai = ai_analysis.get('is_restricted', False)
                 
                 row = html.Tr([
                     html.Td(html.Strong(device_name)),
@@ -774,11 +784,15 @@ class Callbacks:
                             id={"type": "device-special", "index": i},
                             options=[
                                 {"label": "Elevator", "value": "is_elevator"},
+                                {"label": "Stairwell", "value": "is_stairwell"},
+                                {"label": "Fire Exit", "value": "is_fire_escape"},
                                 {"label": "Restricted", "value": "is_restricted"},
                             ],
                             value=[
-                                "is_elevator" if ai_analysis.get('is_elevator') else "",
-                                "is_restricted" if ai_analysis.get('is_restricted') else ""
+                                "is_elevator" if is_elevator_ai else "",
+                                "is_stairwell" if is_stairwell_ai else "",
+                                "is_fire_escape" if is_fire_escape_ai else "",
+                                "is_restricted" if is_restricted_ai else ""
                             ],
                             inline=True,
                         )
