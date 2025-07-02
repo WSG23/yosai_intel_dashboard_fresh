@@ -1,50 +1,138 @@
 """
-Analytics Controller Module
-Consolidated controller for all analytics modules with unified callbacks
+Enhanced Analytics Controller
+Replace the entire content of analytics/analytics_controller.py with this code
 """
 
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Any, Optional, Callable
 import logging
 from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
-import json
+from enum import Enum
+import threading
 
-from config.constants import CacheConstants
-
-# Import all analytics modules
+# Import enhanced analyzers
 from .security_patterns import SecurityPatternsAnalyzer, create_security_analyzer
 from .access_trends import AccessTrendsAnalyzer, create_trends_analyzer
 from .user_behavior import UserBehaviorAnalyzer, create_behavior_analyzer
 from .anomaly_detection import AnomalyDetector, create_anomaly_detector
-from .interactive_charts import SecurityChartsGenerator, create_charts_generator
-from core.callback_manager import CallbackManager
-from core.callback_events import CallbackEvent
-from core.security_validator import SecurityValidator
-from analytics.controllers import UnifiedAnalyticsController
 
+# Consolidated Callback System
+class CallbackEvent(Enum):
+    """Standardized callback events"""
+    ANALYSIS_START = "analysis_start"
+    ANALYSIS_PROGRESS = "analysis_progress" 
+    ANALYSIS_COMPLETE = "analysis_complete"
+    ANALYSIS_ERROR = "analysis_error"
+    SECURITY_THREAT_DETECTED = "security_threat_detected"
+    ANOMALY_DETECTED = "anomaly_detected"
+    TREND_CHANGE_DETECTED = "trend_change_detected"
+    BEHAVIOR_RISK_IDENTIFIED = "behavior_risk_identified"
+
+@dataclass
+class CallbackData:
+    """Standardized callback data structure"""
+    event_type: CallbackEvent
+    analysis_id: str
+    timestamp: str
+    data: Dict[str, Any]
+    metadata: Optional[Dict[str, Any]] = None
+
+class ConsolidatedCallbackManager:
+    """Thread-safe consolidated callback manager"""
+    
+    def __init__(self, logger: Optional[logging.Logger] = None):
+        self.logger = logger or logging.getLogger(__name__)
+        self._callbacks: Dict[CallbackEvent, List[Callable]] = {}
+        self._lock = threading.RLock()
+        
+    def register_callback(self, event: CallbackEvent, callback: Callable[[CallbackData], None]):
+        """Register callback for specific event type"""
+        with self._lock:
+            if event not in self._callbacks:
+                self._callbacks[event] = []
+            self._callbacks[event].append(callback)
+            
+    def unregister_callback(self, event: CallbackEvent, callback: Callable):
+        """Unregister specific callback"""
+        with self._lock:
+            if event in self._callbacks and callback in self._callbacks[event]:
+                self._callbacks[event].remove(callback)
+                
+    def trigger_callback(self, event: CallbackEvent, analysis_id: str, data: Dict[str, Any], 
+                        metadata: Optional[Dict[str, Any]] = None):
+        """Trigger all callbacks for event type"""
+        callback_data = CallbackData(
+            event_type=event,
+            analysis_id=analysis_id,
+            timestamp=pd.Timestamp.now().isoformat(),
+            data=data,
+            metadata=metadata
+        )
+        
+        with self._lock:
+            callbacks = self._callbacks.get(event, [])
+            
+        for callback in callbacks:
+            try:
+                callback(callback_data)
+            except Exception as e:
+                self.logger.error(f"Callback error for {event}: {e}")
+                
+    def clear_callbacks(self, event: Optional[CallbackEvent] = None):
+        """Clear callbacks for specific event or all events"""
+        with self._lock:
+            if event:
+                self._callbacks[event] = []
+            else:
+                self._callbacks.clear()
+
+# Unicode Handler
+class UnicodeHandler:
+    """Robust Unicode handling for problematic characters"""
+    
+    @staticmethod
+    def clean_unicode_string(text: str) -> str:
+        """Clean string of problematic Unicode characters"""
+        if not isinstance(text, str):
+            text = str(text)
+        
+        try:
+            text.encode('utf-8')
+            return text
+        except UnicodeEncodeError:
+            cleaned = text.encode('utf-8', errors='ignore').decode('utf-8')
+            return cleaned
+    
+    @staticmethod
+    def clean_dataframe_unicode(df: pd.DataFrame) -> pd.DataFrame:
+        """Clean all string columns in DataFrame"""
+        df_clean = df.copy()
+        
+        string_columns = df_clean.select_dtypes(include=['object']).columns
+        for col in string_columns:
+            df_clean[col] = df_clean[col].apply(UnicodeHandler.clean_unicode_string)
+            
+        return df_clean
 
 @dataclass
 class AnalyticsConfig:
     """Configuration for analytics processing"""
-
     enable_security_patterns: bool = True
     enable_access_trends: bool = True
     enable_user_behavior: bool = True
     enable_anomaly_detection: bool = True
-    enable_interactive_charts: bool = True
+    enable_interactive_charts: bool = False
     anomaly_sensitivity: float = 0.95
     parallel_processing: bool = True
     cache_results: bool = True
     cache_duration_minutes: int = 30
 
-
 @dataclass
 class AnalyticsResult:
     """Complete analytics result structure"""
-
     security_patterns: Dict[str, Any]
     access_trends: Dict[str, Any]
     user_behavior: Dict[str, Any]
@@ -56,88 +144,174 @@ class AnalyticsResult:
     status: str
     errors: List[str]
 
-
-class AnalyticsController(UnifiedAnalyticsController):
-    """Unified controller for all analytics operations"""
-
-    def __init__(
-        self,
-        config: Optional[AnalyticsConfig] = None,
-        callback_manager: Optional[CallbackManager] = None,
-        security_validator: Optional[SecurityValidator] = None,
-    ):
-        super().__init__(callback_manager, security_validator)
+class AnalyticsController:
+    """Enhanced analytics controller with consolidated callbacks"""
+    
+    def __init__(self, 
+                 config: Optional[AnalyticsConfig] = None,
+                 callback_manager: Optional[ConsolidatedCallbackManager] = None):
         self.config = config or AnalyticsConfig()
+        self.callback_manager = callback_manager or ConsolidatedCallbackManager()
         self.logger = logging.getLogger(__name__)
-
-        # Initialize analyzers
-        self.security_analyzer = (
-            create_security_analyzer() if self.config.enable_security_patterns else None
-        )
-        self.trends_analyzer = (
-            create_trends_analyzer() if self.config.enable_access_trends else None
-        )
-        self.behavior_analyzer = (
-            create_behavior_analyzer() if self.config.enable_user_behavior else None
-        )
-        self.anomaly_detector = (
-            create_anomaly_detector() if self.config.enable_anomaly_detection else None
-        )
-        self.charts_generator = (
-            create_charts_generator() if self.config.enable_interactive_charts else None
-        )
-
-        # Cache for results
-        self._cache = {}
-        self._cache_timestamps = {}
-
+        
+        # Initialize enhanced analyzers
+        self.security_analyzer = create_security_analyzer() if self.config.enable_security_patterns else None
+        self.trends_analyzer = create_trends_analyzer() if self.config.enable_access_trends else None
+        self.behavior_analyzer = create_behavior_analyzer() if self.config.enable_user_behavior else None
+        self.anomaly_detector = create_anomaly_detector() if self.config.enable_anomaly_detection else None
+        
         # Thread pool for parallel processing
-        self._executor = (
-            ThreadPoolExecutor(max_workers=5)
-            if self.config.parallel_processing
-            else None
-        )
-
-    def _trigger_callbacks(self, event: str, *args, **kwargs) -> None:
-        """Trigger all callbacks for an event"""
-        self.trigger(event, *args, **kwargs)
-
-    def analyze_all(
-        self, df: pd.DataFrame, analysis_id: Optional[str] = None
-    ) -> AnalyticsResult:
-        """Run complete analytics analysis"""
+        if self.config.parallel_processing:
+            self._executor = ThreadPoolExecutor(max_workers=4)
+        else:
+            self._executor = None
+    
+    def analyze(self, df: pd.DataFrame, analysis_id: Optional[str] = None) -> AnalyticsResult:
+        """Run complete enhanced analytics with consolidated callbacks"""
         start_time = datetime.now()
-        analysis_id = analysis_id or f"analysis_{int(start_time.timestamp())}"
-        errors = []
-
+        analysis_id = analysis_id or f"enhanced_{int(start_time.timestamp())}"
+        
         try:
-            # Trigger start callbacks
-            self._trigger_callbacks("on_analysis_start", analysis_id, df)
-
-            cached = self._check_cache(df)
-            if cached:
-                return cached
-
-            df_processed = self._prepare_data(df)
-            data_summary = self._generate_data_summary(df_processed)
-            self._trigger_callbacks("on_data_processed", analysis_id, data_summary)
-
-            results = self._run_analyses(df_processed, analysis_id)
-
-            analytics_result = self._build_result(results, data_summary, start_time, errors)
-
-            if self.config.cache_results:
-                self._cache_result(df, analytics_result)
-
-            self._trigger_callbacks("on_analysis_complete", analysis_id, analytics_result)
-            return analytics_result
-
+            # Clean Unicode issues
+            df_clean = UnicodeHandler.clean_dataframe_unicode(df)
+            
+            # Trigger start callback
+            self.callback_manager.trigger_callback(
+                CallbackEvent.ANALYSIS_START,
+                analysis_id,
+                {'total_records': len(df_clean), 'start_time': start_time.isoformat()}
+            )
+            
+            # Run enhanced analytics
+            results = {}
+            errors = []
+            
+            if self.security_analyzer:
+                try:
+                    security_result = self.security_analyzer.analyze_patterns(df_clean)
+                    results['security_patterns'] = security_result
+                    
+                    # Trigger threat detection callbacks if needed
+                    if isinstance(security_result, dict):
+                        risk_level = security_result.get('risk_level', 'low')
+                        if risk_level in ['critical', 'high']:
+                            self.callback_manager.trigger_callback(
+                                CallbackEvent.SECURITY_THREAT_DETECTED,
+                                analysis_id,
+                                {'risk_level': risk_level, 'score': security_result.get('security_score', 0)}
+                            )
+                            
+                except Exception as e:
+                    self.logger.error(f"Security analysis failed: {e}")
+                    results['security_patterns'] = {}
+                    errors.append(f"Security analysis: {str(e)}")
+            
+            if self.trends_analyzer:
+                try:
+                    trends_result = self.trends_analyzer.analyze_trends(df_clean)
+                    results['access_trends'] = trends_result
+                    
+                    # Trigger trend change callbacks if needed
+                    if isinstance(trends_result, dict):
+                        trend = trends_result.get('overall_trend', 'stable')
+                        if trend == 'decreasing':
+                            strength = trends_result.get('trend_strength', 0)
+                            if strength > 0.7:
+                                self.callback_manager.trigger_callback(
+                                    CallbackEvent.TREND_CHANGE_DETECTED,
+                                    analysis_id,
+                                    {'trend': trend, 'strength': strength}
+                                )
+                        
+                except Exception as e:
+                    self.logger.error(f"Trends analysis failed: {e}")
+                    results['access_trends'] = {}
+                    errors.append(f"Trends analysis: {str(e)}")
+            
+            if self.behavior_analyzer:
+                try:
+                    behavior_result = self.behavior_analyzer.analyze_behavior(df_clean)
+                    results['user_behavior'] = behavior_result
+                    
+                    # Trigger behavior risk callbacks if needed
+                    if isinstance(behavior_result, dict):
+                        high_risk_count = behavior_result.get('high_risk_users', 0)
+                        if high_risk_count > 0:
+                            self.callback_manager.trigger_callback(
+                                CallbackEvent.BEHAVIOR_RISK_IDENTIFIED,
+                                analysis_id,
+                                {'high_risk_count': high_risk_count}
+                            )
+                        
+                except Exception as e:
+                    self.logger.error(f"Behavior analysis failed: {e}")
+                    results['user_behavior'] = {}
+                    errors.append(f"Behavior analysis: {str(e)}")
+            
+            if self.anomaly_detector:
+                try:
+                    anomaly_result = self.anomaly_detector.detect_anomalies(df_clean, self.config.anomaly_sensitivity)
+                    results['anomaly_detection'] = anomaly_result
+                    
+                    # Trigger anomaly detection callbacks if needed
+                    if isinstance(anomaly_result, dict):
+                        total_anomalies = anomaly_result.get('anomalies_detected', 0)
+                        threat_level = anomaly_result.get('threat_level', 'low')
+                        if total_anomalies > 0 and threat_level in ['critical', 'high']:
+                            self.callback_manager.trigger_callback(
+                                CallbackEvent.ANOMALY_DETECTED,
+                                analysis_id,
+                                {'total_anomalies': total_anomalies, 'threat_level': threat_level}
+                            )
+                        
+                except Exception as e:
+                    self.logger.error(f"Anomaly analysis failed: {e}")
+                    results['anomaly_detection'] = {}
+                    errors.append(f"Anomaly analysis: {str(e)}")
+            
+            # Charts placeholder
+            results['interactive_charts'] = {}
+            
+            # Calculate processing time
+            processing_time = (datetime.now() - start_time).total_seconds()
+            
+            # Generate data summary
+            data_summary = self._generate_data_summary(df_clean)
+            
+            # Trigger completion callback
+            self.callback_manager.trigger_callback(
+                CallbackEvent.ANALYSIS_COMPLETE,
+                analysis_id,
+                {
+                    'processing_time': processing_time,
+                    'modules_completed': list(results.keys()),
+                    'total_records_processed': len(df_clean)
+                }
+            )
+            
+            return AnalyticsResult(
+                security_patterns=results.get('security_patterns', {}),
+                access_trends=results.get('access_trends', {}),
+                user_behavior=results.get('user_behavior', {}),
+                anomaly_detection=results.get('anomaly_detection', {}),
+                interactive_charts=results.get('interactive_charts', {}),
+                processing_time=processing_time,
+                data_summary=data_summary,
+                generated_at=start_time,
+                status='success' if not errors else 'partial_success',
+                errors=errors
+            )
+            
         except Exception as e:
-            self.logger.error(f"Analytics analysis failed: {e}")
-            errors.append(str(e))
-
-            self._trigger_callbacks("on_analysis_error", analysis_id, e)
-
+            self.logger.error(f"Enhanced analytics failed: {e}")
+            
+            # Trigger error callback
+            self.callback_manager.trigger_callback(
+                CallbackEvent.ANALYSIS_ERROR,
+                analysis_id,
+                {'error': str(e), 'error_type': type(e).__name__}
+            )
+            
             return AnalyticsResult(
                 security_patterns={},
                 access_trends={},
@@ -145,540 +319,106 @@ class AnalyticsController(UnifiedAnalyticsController):
                 anomaly_detection={},
                 interactive_charts={},
                 processing_time=(datetime.now() - start_time).total_seconds(),
-                data_summary=self._generate_data_summary(df),
+                data_summary={},
                 generated_at=start_time,
-                status="error",
-                errors=errors,
+                status='error',
+                errors=[str(e)]
             )
-
-    def analyze_specific(
-        self,
-        df: pd.DataFrame,
-        analysis_types: List[str],
-        analysis_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
-        """Run specific analytics only"""
-
-        start_time = datetime.now()
-        analysis_id = analysis_id or f"specific_{int(start_time.timestamp())}"
-        results = {}
-
-        try:
-            self._trigger_callbacks("on_analysis_start", analysis_id, df)
-
-            df_processed = self._prepare_data(df)
-
-            # Run only requested analytics
-            for analysis_type in analysis_types:
-                try:
-                    self._trigger_callbacks(
-                        "on_analysis_progress", analysis_id, analysis_type, 0
-                    )
-
-                    if analysis_type == "security_patterns" and self.security_analyzer:
-                        results[analysis_type] = (
-                            self.security_analyzer.analyze_patterns(df_processed)
-                        )
-                    elif analysis_type == "access_trends" and self.trends_analyzer:
-                        results[analysis_type] = self.trends_analyzer.analyze_trends(
-                            df_processed
-                        )
-                    elif analysis_type == "user_behavior" and self.behavior_analyzer:
-                        results[analysis_type] = (
-                            self.behavior_analyzer.analyze_behavior(df_processed)
-                        )
-                    elif analysis_type == "anomaly_detection" and self.anomaly_detector:
-                        results[analysis_type] = self.anomaly_detector.detect_anomalies(
-                            df_processed, self.config.anomaly_sensitivity
-                        )
-                    elif (
-                        analysis_type == "interactive_charts" and self.charts_generator
-                    ):
-                        results[analysis_type] = (
-                            self.charts_generator.generate_all_charts(df_processed)
-                        )
-                    else:
-                        results[analysis_type] = {}
-
-                    self._trigger_callbacks(
-                        "on_analysis_progress", analysis_id, analysis_type, 100
-                    )
-
-                except Exception as e:
-                    self.logger.error(f"Analysis {analysis_type} failed: {e}")
-                    results[analysis_type] = {}
-
-            self._trigger_callbacks("on_analysis_complete", analysis_id, results)
-            return results
-
-        except Exception as e:
-            self.logger.error(f"Specific analysis failed: {e}")
-            self._trigger_callbacks("on_analysis_error", analysis_id, e)
-            return {}
-
-    def _check_cache(self, df: pd.DataFrame) -> Optional[AnalyticsResult]:
-        """Return cached result if available"""
-        if not self.config.cache_results:
-            return None
-        cached_result = self._get_cached_result(df)
-        if cached_result:
-            self.logger.info("Returning cached analytics result")
-            return cached_result
-        return None
-
-    def _run_analyses(self, df: pd.DataFrame, analysis_id: str) -> Dict[str, Any]:
-        """Run analytics either in parallel or sequentially"""
-        if self.config.parallel_processing and self._executor:
-            return self._run_parallel_analysis(df, analysis_id)
-        return self._run_sequential_analysis(df, analysis_id)
-
-    def _build_result(
-        self,
-        results: Dict[str, Any],
-        data_summary: Dict[str, Any],
-        start_time: datetime,
-        errors: List[str],
-    ) -> AnalyticsResult:
-        """Construct AnalyticsResult object"""
-        processing_time = (datetime.now() - start_time).total_seconds()
-        return AnalyticsResult(
-            security_patterns=results.get("security_patterns", {}),
-            access_trends=results.get("access_trends", {}),
-            user_behavior=results.get("user_behavior", {}),
-            anomaly_detection=results.get("anomaly_detection", {}),
-            interactive_charts=results.get("interactive_charts", {}),
-            processing_time=processing_time,
-            data_summary=data_summary,
-            generated_at=start_time,
-            status="success",
-            errors=errors,
-        )
-
-    def _run_parallel_analysis(
-        self, df: pd.DataFrame, analysis_id: str
-    ) -> Dict[str, Any]:
-        """Run analytics in parallel using thread pool"""
-
-        futures = {}
-        results = {}
-
-        # Submit all enabled analytics to thread pool
-        if self.security_analyzer:
-            futures["security_patterns"] = self._executor.submit(
-                self.security_analyzer.analyze_patterns, df
-            )
-
-        if self.trends_analyzer:
-            futures["access_trends"] = self._executor.submit(
-                self.trends_analyzer.analyze_trends, df
-            )
-
-        if self.behavior_analyzer:
-            futures["user_behavior"] = self._executor.submit(
-                self.behavior_analyzer.analyze_behavior, df
-            )
-
-        if self.anomaly_detector:
-            futures["anomaly_detection"] = self._executor.submit(
-                self.anomaly_detector.detect_anomalies,
-                df,
-                self.config.anomaly_sensitivity,
-            )
-
-        if self.charts_generator:
-            futures["interactive_charts"] = self._executor.submit(
-                self.charts_generator.generate_all_charts, df
-            )
-
-        # Collect results as they complete
-        total_tasks = len(futures)
-        completed_tasks = 0
-
-        for analysis_type, future in futures.items():
-            try:
-                results[analysis_type] = future.result(timeout=300)  # 5 minute timeout
-                completed_tasks += 1
-                progress = (completed_tasks / total_tasks) * 100
-                self._trigger_callbacks(
-                    "on_analysis_progress", analysis_id, analysis_type, progress
-                )
-
-            except Exception as e:
-                self.logger.error(f"Parallel analysis {analysis_type} failed: {e}")
-                results[analysis_type] = {}
-
-        return results
-
-    def _run_sequential_analysis(
-        self, df: pd.DataFrame, analysis_id: str
-    ) -> Dict[str, Any]:
-        """Run analytics sequentially"""
-
-        results = {}
-        analyses = []
-
-        # Build list of enabled analyses
-        if self.security_analyzer:
-            analyses.append(
-                ("security_patterns", self.security_analyzer.analyze_patterns)
-            )
-        if self.trends_analyzer:
-            analyses.append(("access_trends", self.trends_analyzer.analyze_trends))
-        if self.behavior_analyzer:
-            analyses.append(("user_behavior", self.behavior_analyzer.analyze_behavior))
-        if self.anomaly_detector:
-            analyses.append(
-                (
-                    "anomaly_detection",
-                    lambda df: self.anomaly_detector.detect_anomalies(
-                        df, self.config.anomaly_sensitivity
-                    ),
-                )
-            )
-        if self.charts_generator:
-            analyses.append(
-                ("interactive_charts", self.charts_generator.generate_all_charts)
-            )
-
-        # Run each analysis sequentially
-        total_analyses = len(analyses)
-        for i, (analysis_type, analyzer_func) in enumerate(analyses):
-            try:
-                progress = (i / total_analyses) * 100
-                self._trigger_callbacks(
-                    "on_analysis_progress", analysis_id, analysis_type, progress
-                )
-
-                results[analysis_type] = analyzer_func(df)
-
-                progress = ((i + 1) / total_analyses) * 100
-                self._trigger_callbacks(
-                    "on_analysis_progress", analysis_id, analysis_type, progress
-                )
-
-            except Exception as e:
-                self.logger.error(f"Sequential analysis {analysis_type} failed: {e}")
-                results[analysis_type] = {}
-
-        return results
-
-    def _prepare_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Prepare and validate data for analytics"""
-
-        if df.empty:
-            raise ValueError("DataFrame is empty")
-
-        # Required columns check
-        required_columns = [
-            "event_id",
-            "timestamp",
-            "person_id",
-            "door_id",
-            "access_result",
-        ]
-        missing_columns = [col for col in required_columns if col not in df.columns]
-
-        if missing_columns:
-            raise ValueError(f"Missing required columns: {missing_columns}")
-
-        # Data type conversions
-        df = df.copy()
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
-
-        # Sort by timestamp
-        df = df.sort_values("timestamp").reset_index(drop=True)
-
-        # Remove duplicates
-        df = df.drop_duplicates(subset=["event_id"], keep="first")
-
-        return df
-
+    
     def _generate_data_summary(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Generate summary of data for analytics"""
-
-        if df.empty:
+        """Generate summary of the input data"""
+        try:
             return {
-                "total_events": 0,
-                "date_range": {"start": None, "end": None},
-                "unique_users": 0,
-                "unique_doors": 0,
-                "data_quality": "empty",
+                'total_records': len(df),
+                'unique_users': df['person_id'].nunique() if 'person_id' in df.columns else 0,
+                'unique_doors': df['door_id'].nunique() if 'door_id' in df.columns else 0,
+                'date_range': {
+                    'start': df['timestamp'].min().isoformat() if 'timestamp' in df.columns else None,
+                    'end': df['timestamp'].max().isoformat() if 'timestamp' in df.columns else None
+                },
+                'success_rate': (df['access_result'] == 'Granted').mean() if 'access_result' in df.columns else 0
             }
-
-        return {
-            "total_events": len(df),
-            "date_range": {
-                "start": (
-                    df["timestamp"].min().isoformat()
-                    if "timestamp" in df.columns
-                    else None
-                ),
-                "end": (
-                    df["timestamp"].max().isoformat()
-                    if "timestamp" in df.columns
-                    else None
-                ),
-            },
-            "unique_users": df["person_id"].nunique(),
-            "unique_doors": df["door_id"].nunique(),
-            "access_success_rate": (
-                (df["access_result"] == "Granted").mean() * 100
-                if "access_result" in df.columns
-                else 0
-            ),
-            "data_quality": self._assess_data_quality(df),
+        except Exception as e:
+            self.logger.warning(f"Data summary generation failed: {e}")
+            return {'total_records': len(df)}
+    
+    def register_callback(self, event: CallbackEvent, callback):
+        """Register callback with the callback manager"""
+        self.callback_manager.register_callback(event, callback)
+    
+    def unregister_callback(self, event: CallbackEvent, callback):
+        """Unregister callback from the callback manager"""
+        self.callback_manager.unregister_callback(event, callback)
+    
+    # Legacy compatibility methods
+    def analyze_specific(self, df: pd.DataFrame, analysis_types: List[str], analysis_id: Optional[str] = None) -> Dict[str, Any]:
+        """Run specific analytics only - legacy compatibility"""
+        
+        # Map legacy analysis types to new system
+        type_mapping = {
+            'security_patterns': 'security_patterns',
+            'access_trends': 'access_trends', 
+            'user_behavior': 'user_behavior',
+            'anomaly_detection': 'anomaly_detection'
         }
-
-    def _assess_data_quality(self, df: pd.DataFrame) -> str:
-        """Assess quality of data"""
-
-        if df.empty:
-            return "empty"
-
-        # Check for missing values in critical columns
-        critical_columns = ["timestamp", "person_id", "door_id", "access_result"]
-        missing_rates = []
-
-        for col in critical_columns:
-            if col in df.columns:
-                missing_rate = df[col].isnull().mean()
-                missing_rates.append(missing_rate)
-
-        if not missing_rates:
-            return "poor"
-
-        avg_missing_rate = np.mean(missing_rates)
-
-        if avg_missing_rate < 0.01:
-            return "excellent"
-        elif avg_missing_rate < 0.05:
-            return "good"
-        elif avg_missing_rate < 0.1:
-            return "fair"
-        else:
-            return "poor"
-
-    def _get_cache_key(self, df: pd.DataFrame) -> str:
-        """Generate cache key for DataFrame"""
-
-        # Create hash based on data shape and content sample
-        data_hash = hash(
-            (
-                len(df),
-                df.shape[1],
-                df["timestamp"].min() if "timestamp" in df.columns else 0,
-                df["timestamp"].max() if "timestamp" in df.columns else 0,
-                df["person_id"].nunique() if "person_id" in df.columns else 0,
-            )
-        )
-
-        return str(data_hash)
-
-    def _get_cached_result(self, df: pd.DataFrame) -> Optional[AnalyticsResult]:
-        """Get cached result if available and valid"""
-
-        cache_key = self._get_cache_key(df)
-
-        if cache_key in self._cache:
-            cached_time = self._cache_timestamps.get(cache_key)
-            if cached_time:
-                age_minutes = (datetime.now() - cached_time).total_seconds() / 60
-                if age_minutes < self.config.cache_duration_minutes:
-                    return self._cache[cache_key]
-                else:
-                    # Cache expired, remove it
-                    del self._cache[cache_key]
-                    del self._cache_timestamps[cache_key]
-
-        return None
-
-    def _cache_result(self, df: pd.DataFrame, result: AnalyticsResult):
-        """Cache analytics result"""
-
-        cache_key = self._get_cache_key(df)
-        self._cache[cache_key] = result
-        self._cache_timestamps[cache_key] = datetime.now()
-
-        # Limit cache size
-        if len(self._cache) > CacheConstants.max_items:
-            # Remove oldest entries
-            oldest_keys = sorted(
-                self._cache_timestamps.keys(), key=lambda k: self._cache_timestamps[k]
-            )[:CacheConstants.purge_count]
-
-            for key in oldest_keys:
-                del self._cache[key]
-                del self._cache_timestamps[key]
-
-    def clear_cache(self):
-        """Clear analytics cache"""
-        self._cache.clear()
-        self._cache_timestamps.clear()
-
-    def get_analytics_status(self) -> Dict[str, Any]:
-        """Get status of analytics modules"""
-
-        return {
-            "modules_enabled": {
-                "security_patterns": self.config.enable_security_patterns,
-                "access_trends": self.config.enable_access_trends,
-                "user_behavior": self.config.enable_user_behavior,
-                "anomaly_detection": self.config.enable_anomaly_detection,
-                "interactive_charts": self.config.enable_interactive_charts,
-            },
-            "modules_loaded": {
-                "security_patterns": self.security_analyzer is not None,
-                "access_trends": self.trends_analyzer is not None,
-                "user_behavior": self.behavior_analyzer is not None,
-                "anomaly_detection": self.anomaly_detector is not None,
-                "interactive_charts": self.charts_generator is not None,
-            },
-            "configuration": {
-                "parallel_processing": self.config.parallel_processing,
-                "cache_enabled": self.config.cache_results,
-                "cache_duration_minutes": self.config.cache_duration_minutes,
-                "anomaly_sensitivity": self.config.anomaly_sensitivity,
-            },
-            "cache_stats": {
-                "cached_results": len(self._cache),
-                "cache_memory_usage": sum(
-                    len(str(result)) for result in self._cache.values()
-                ),
-            },
-            "callback_counts": {
-                event.name: len(self._manager.get_callbacks(event))
-                for event in CallbackEvent
-            },
+        
+        # Temporarily disable modules not requested
+        original_config = {
+            'enable_security_patterns': self.config.enable_security_patterns,
+            'enable_access_trends': self.config.enable_access_trends,
+            'enable_user_behavior': self.config.enable_user_behavior,
+            'enable_anomaly_detection': self.config.enable_anomaly_detection
         }
-
-    def export_results(
-        self, result: AnalyticsResult, export_format: str = "json"
-    ) -> str:
-        """Export analytics results in specified format"""
-
-        if export_format.lower() == "json":
-            return self._export_to_json(result)
-        elif export_format.lower() == "summary":
-            return self._export_to_summary(result)
-        else:
-            raise ValueError(f"Unsupported export format: {export_format}")
-
-    def _export_to_json(self, result: AnalyticsResult) -> str:
-        """Export results to JSON format"""
-
-        # Convert to serializable format
-        export_data = {
-            "metadata": {
-                "generated_at": result.generated_at.isoformat(),
-                "processing_time": result.processing_time,
-                "status": result.status,
-                "errors": result.errors,
-            },
-            "data_summary": result.data_summary,
-            "security_patterns": result.security_patterns,
-            "access_trends": result.access_trends,
-            "user_behavior": result.user_behavior,
-            "anomaly_detection": result.anomaly_detection,
-            # Note: interactive_charts excluded due to Plotly figures not being JSON serializable
+        
+        # Disable all, then enable only requested
+        self.config.enable_security_patterns = 'security_patterns' in analysis_types
+        self.config.enable_access_trends = 'access_trends' in analysis_types
+        self.config.enable_user_behavior = 'user_behavior' in analysis_types
+        self.config.enable_anomaly_detection = 'anomaly_detection' in analysis_types
+        
+        try:
+            # Run analysis
+            result = self.analyze(df, analysis_id)
+            
+            # Extract only requested results
+            filtered_results = {}
+            for analysis_type in analysis_types:
+                if analysis_type in type_mapping:
+                    mapped_type = type_mapping[analysis_type]
+                    filtered_results[mapped_type] = getattr(result, mapped_type, {})
+            
+            return filtered_results
+            
+        finally:
+            # Restore original configuration
+            self.config.enable_security_patterns = original_config['enable_security_patterns']
+            self.config.enable_access_trends = original_config['enable_access_trends']
+            self.config.enable_user_behavior = original_config['enable_user_behavior']
+            self.config.enable_anomaly_detection = original_config['enable_anomaly_detection']
+    
+    def _trigger_callbacks(self, event_name: str, analysis_id: str, *args):
+        """Legacy callback trigger method for backward compatibility"""
+        
+        # Map legacy event names to new events
+        event_mapping = {
+            'on_analysis_start': CallbackEvent.ANALYSIS_START,
+            'on_analysis_progress': CallbackEvent.ANALYSIS_PROGRESS,
+            'on_analysis_complete': CallbackEvent.ANALYSIS_COMPLETE,
+            'on_analysis_error': CallbackEvent.ANALYSIS_ERROR
         }
+        
+        if event_name in event_mapping:
+            event = event_mapping[event_name]
+            data = {'legacy_args': args} if args else {}
+            self.callback_manager.trigger_callback(event, analysis_id, data)
 
-        return json.dumps(export_data, indent=2, default=str)
-
-    def _export_to_summary(self, result: AnalyticsResult) -> str:
-        """Export results to human-readable summary"""
-
-        summary_lines = [
-            f"Analytics Report Generated: {result.generated_at}",
-            f"Processing Time: {result.processing_time:.2f} seconds",
-            f"Status: {result.status}",
-            "",
-            "=== DATA SUMMARY ===",
-            f"Total Events: {result.data_summary.get('total_events', 0):,}",
-            f"Unique Users: {result.data_summary.get('unique_users', 0)}",
-            f"Unique Doors: {result.data_summary.get('unique_doors', 0)}",
-            f"Success Rate: {result.data_summary.get('access_success_rate', 0):.1f}%",
-            f"Data Quality: {result.data_summary.get('data_quality', 'unknown')}",
-            "",
-        ]
-
-        # Add security patterns summary
-        if result.security_patterns:
-            score_obj = result.security_patterns.get("security_score", 0)
-            score_val = getattr(score_obj, "score", score_obj)
-            summary_lines.extend(
-                [
-                    "=== SECURITY PATTERNS ===",
-                    f"Security Score: {score_val:.1f}/100",
-                    f"Failed Access Events: {result.security_patterns.get('failed_access_patterns', {}).get('total', 0)}",
-                    "",
-                ]
-            )
-
-        # Add anomaly detection summary
-        if result.anomaly_detection:
-            anomaly_summary = result.anomaly_detection.get("anomaly_summary", {})
-            summary_lines.extend(
-                [
-                    "=== ANOMALY DETECTION ===",
-                    f"Total Anomalies: {anomaly_summary.get('total_anomalies', 0)}",
-                    f"Risk Level: {result.anomaly_detection.get('risk_assessment', {}).get('risk_level', 'unknown')}",
-                    "",
-                ]
-            )
-
-        if result.errors:
-            summary_lines.extend(["=== ERRORS ===", *result.errors, ""])
-
-        return "\n".join(summary_lines)
-
-    def __del__(self):
-        """Cleanup resources"""
-        if self._executor:
-            self._executor.shutdown(wait=True)
-
-
-# Convenience factory functions
-def create_analytics_controller(
-    config: Optional[AnalyticsConfig] = None,
-) -> AnalyticsController:
-    """Create analytics controller with default or custom configuration"""
-    return AnalyticsController(config)
-
-
-def create_default_controller() -> AnalyticsController:
-    """Create analytics controller with default settings"""
-    return AnalyticsController()
-
-
-def create_performance_controller() -> AnalyticsController:
-    """Create analytics controller optimized for performance"""
-    config = AnalyticsConfig(
-        parallel_processing=True, cache_results=True, cache_duration_minutes=60
-    )
-    return AnalyticsController(config)
-
-
-def create_minimal_controller() -> AnalyticsController:
-    """Create analytics controller with minimal features for testing"""
-    config = AnalyticsConfig(
-        enable_security_patterns=True,
-        enable_access_trends=True,
-        enable_user_behavior=False,
-        enable_anomaly_detection=False,
-        enable_interactive_charts=False,
-        parallel_processing=False,
-        cache_results=False,
-    )
-    return AnalyticsController(config)
-
-
-# Export all classes and functions
+# Export classes for compatibility
 __all__ = [
-    "AnalyticsController",
-    "AnalyticsConfig",
-    "AnalyticsResult",
-    "create_analytics_controller",
-    "create_default_controller",
-    "create_performance_controller",
-    "create_minimal_controller",
+    'AnalyticsController', 
+    'AnalyticsConfig', 
+    'AnalyticsResult',
+    'ConsolidatedCallbackManager',
+    'CallbackEvent',
+    'CallbackData',
+    'UnicodeHandler'
 ]

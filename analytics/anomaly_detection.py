@@ -1,930 +1,673 @@
 """
-Anomaly Detection Analytics Module
-Advanced anomaly detection using multiple algorithms and techniques
+Enhanced Anomaly Detection Module
+Replace the entire content of analytics/anomaly_detection.py with this code
 """
 
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Tuple
-from dataclasses import dataclass
-import logging
-from scipy import stats
+from typing import Dict, List, Any, Tuple, Optional
+from datetime import datetime
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import OneClassSVM
+from scipy import stats
+import logging
+from dataclasses import dataclass
 import warnings
 warnings.filterwarnings('ignore')
 
 @dataclass
-class Anomaly:
-    """Anomaly data structure"""
-    anomaly_id: str
-    anomaly_type: str
-    severity: str  # 'critical', 'high', 'medium', 'low'
-    confidence: float  # 0-1
-    description: str
-    affected_entities: List[str]
-    timestamp: datetime
-    context: Dict[str, Any]
-    recommended_action: str
+class AnomalyAnalysis:
+    """Comprehensive anomaly analysis result"""
+    total_anomalies: int
+    severity_distribution: Dict[str, int]
+    detection_summary: Dict[str, Any]
+    risk_assessment: Dict[str, Any]
+    recommendations: List[str]
 
 class AnomalyDetector:
-    """Advanced anomaly detection with multiple algorithms"""
+    """Enhanced anomaly detector using multiple algorithms and statistical methods"""
     
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
-        self.scaler = StandardScaler()
+    def __init__(self,
+                 contamination: float = 0.1,
+                 sensitivity: float = 0.95,
+                 logger: Optional[logging.Logger] = None):
+        self.contamination = contamination
+        self.sensitivity = sensitivity
+        self.logger = logger or logging.getLogger(__name__)
         
-    def detect_anomalies(self, df: pd.DataFrame, 
-                         sensitivity: float = 0.95) -> Dict[str, Any]:
-        """Main anomaly detection function using multiple approaches"""
+        # Initialize ML models
+        self.isolation_forest = IsolationForest(
+            contamination=contamination,
+            random_state=42,
+            n_estimators=100
+        )
+        self.scaler = StandardScaler()
+    
+    def detect_anomalies(self, df: pd.DataFrame, sensitivity: Optional[float] = None) -> Dict[str, Any]:
+        """Main anomaly detection method with legacy compatibility"""
         try:
-            if df.empty:
-                return self._empty_result()
+            result = self.analyze_anomalies(df, sensitivity)
+            return self._convert_to_legacy_format(result)
+        except Exception as e:
+            self.logger.error(f"Anomaly detection failed: {e}")
+            return self._empty_legacy_result()
+    
+    def analyze_anomalies(self, df: pd.DataFrame, sensitivity: Optional[float] = None) -> AnomalyAnalysis:
+        """Enhanced anomaly detection method"""
+        try:
+            # Use provided sensitivity or default
+            detection_sensitivity = sensitivity or self.sensitivity
             
-            df = self._prepare_data(df)
+            # Prepare data for anomaly detection
+            df_clean = self._prepare_anomaly_data(df)
             
-            anomalies = {
-                'statistical_anomalies': self._detect_statistical_anomalies(df, sensitivity),
-                'temporal_anomalies': self._detect_temporal_anomalies(df),
-                'behavioral_anomalies': self._detect_behavioral_anomalies(df),
-                'security_anomalies': self._detect_security_anomalies(df),
-                'pattern_anomalies': self._detect_pattern_anomalies(df),
-                'machine_learning_anomalies': self._detect_ml_anomalies(df, sensitivity),
-                'anomaly_summary': {},
-                'risk_assessment': {}
-            }
+            if len(df_clean) < 10:
+                return self._insufficient_data_result()
             
-            # Generate comprehensive summary
-            all_anomalies = self._consolidate_anomalies(anomalies)
-            anomalies['anomaly_summary'] = self._generate_anomaly_summary(all_anomalies)
-            anomalies['risk_assessment'] = self._assess_overall_risk(all_anomalies)
+            # Multi-method anomaly detection
+            all_anomalies = []
             
-            return anomalies
+            # Statistical anomaly detection
+            statistical_anomalies = self._detect_statistical_anomalies(df_clean, detection_sensitivity)
+            all_anomalies.extend(statistical_anomalies)
+            
+            # Pattern-based anomaly detection
+            pattern_anomalies = self._detect_pattern_anomalies(df_clean, detection_sensitivity)
+            all_anomalies.extend(pattern_anomalies)
+            
+            # ML-based anomaly detection
+            ml_anomalies = self._detect_ml_anomalies(df_clean, detection_sensitivity)
+            all_anomalies.extend(ml_anomalies)
+            
+            # Remove duplicates
+            unique_anomalies = self._deduplicate_anomalies(all_anomalies)
+            
+            # Generate analysis summaries
+            severity_distribution = self._calculate_severity_distribution(unique_anomalies)
+            detection_summary = self._generate_detection_summary(unique_anomalies)
+            risk_assessment = self._assess_overall_risk(unique_anomalies)
+            recommendations = self._generate_recommendations(unique_anomalies, risk_assessment)
+            
+            return AnomalyAnalysis(
+                total_anomalies=len(unique_anomalies),
+                severity_distribution=severity_distribution,
+                detection_summary=detection_summary,
+                risk_assessment=risk_assessment,
+                recommendations=recommendations
+            )
             
         except Exception as e:
             self.logger.error(f"Anomaly detection failed: {e}")
-            return self._empty_result()
+            return self._empty_anomaly_analysis()
     
-    def _prepare_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Prepare and validate data for anomaly detection"""
-        df = df.copy()
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
-        df['date'] = df['timestamp'].dt.date
-        df['hour'] = df['timestamp'].dt.hour
-        df['minute'] = df['timestamp'].dt.minute
-        df['day_of_week'] = df['timestamp'].dt.day_name()
-        df['is_weekend'] = df['timestamp'].dt.weekday >= 5
-        df['is_business_hours'] = (df['hour'] >= 8) & (df['hour'] <= 18)
-        df['time_of_day'] = df['hour'] + df['minute'] / 60.0
+    def _prepare_anomaly_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Prepare and clean data for anomaly detection"""
+        df_clean = df.copy()
         
-        # Sort by timestamp for sequential analysis
-        df = df.sort_values('timestamp').reset_index(drop=True)
+        # Handle Unicode issues
+        string_columns = df_clean.select_dtypes(include=['object']).columns
+        for col in string_columns:
+            df_clean[col] = df_clean[col].astype(str).apply(
+                lambda x: x.encode('utf-8', errors='ignore').decode('utf-8')
+            )
         
-        return df
+        # Ensure required columns
+        required_cols = ['timestamp', 'person_id', 'door_id', 'access_result']
+        missing_cols = [col for col in required_cols if col not in df_clean.columns]
+        if missing_cols:
+            raise ValueError(f"Missing required columns: {missing_cols}")
+        
+        # Convert timestamp
+        if not pd.api.types.is_datetime64_any_dtype(df_clean['timestamp']):
+            df_clean['timestamp'] = pd.to_datetime(df_clean['timestamp'])
+        
+        # Add derived features
+        df_clean['hour'] = df_clean['timestamp'].dt.hour
+        df_clean['day_of_week'] = df_clean['timestamp'].dt.dayofweek
+        df_clean['is_weekend'] = df_clean['day_of_week'].isin([5, 6])
+        df_clean['is_after_hours'] = df_clean['hour'].isin(list(range(0, 6)) + list(range(22, 24)))
+        df_clean['access_granted'] = (df_clean['access_result'] == 'Granted').astype(int)
+        
+        return df_clean
     
-    def _detect_statistical_anomalies(self, df: pd.DataFrame, 
-                                      sensitivity: float) -> List[Dict[str, Any]]:
-        """Detect anomalies using statistical methods"""
-        
+    def _detect_statistical_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
+        """Detect statistical anomalies using multiple methods"""
         anomalies = []
         
-        # Volume anomalies (Z-score based)
-        daily_volumes = df.groupby('date')['event_id'].count()
-        if len(daily_volumes) > 2:
-            z_scores = np.abs(stats.zscore(daily_volumes))
-            threshold = stats.norm.ppf(sensitivity)
-            
-            for date, z_score in zip(daily_volumes.index, z_scores):
-                if z_score > threshold:
-                    anomalies.append({
-                        'type': 'volume_anomaly',
-                        'severity': 'high' if z_score > 3 else 'medium',
-                        'confidence': min(0.99, z_score / 4),
-                        'date': str(date),
-                        'volume': daily_volumes[date],
-                        'z_score': z_score,
-                        'description': f'Unusual daily volume: {daily_volumes[date]} events (z-score: {z_score:.2f})'
-                    })
+        # Z-score based outlier detection
+        z_score_anomalies = self._detect_zscore_anomalies(df, sensitivity)
+        anomalies.extend(z_score_anomalies)
         
-        # Success rate anomalies
-        daily_success_rates = df.groupby('date').agg({
-            'access_result': lambda x: (x == 'Granted').mean()
-        })['access_result']
+        # IQR outlier detection
+        iqr_anomalies = self._detect_iqr_anomalies(df, sensitivity)
+        anomalies.extend(iqr_anomalies)
         
-        if len(daily_success_rates) > 2:
-            sr_z_scores = np.abs(stats.zscore(daily_success_rates))
-            sr_threshold = stats.norm.ppf(sensitivity)
-            
-            for date, z_score in zip(daily_success_rates.index, sr_z_scores):
-                if z_score > sr_threshold and daily_success_rates[date] < 0.8:
-                    anomalies.append({
-                        'type': 'success_rate_anomaly',
-                        'severity': 'critical' if daily_success_rates[date] < 0.5 else 'high',
-                        'confidence': min(0.99, z_score / 4),
-                        'date': str(date),
-                        'success_rate': daily_success_rates[date],
-                        'z_score': z_score,
-                        'description': f'Unusually low success rate: {daily_success_rates[date]*100:.1f}%'
-                    })
-        
-        # User activity anomalies
-        user_activity = df.groupby('person_id')['event_id'].count()
-        if len(user_activity) > 2:
-            user_z_scores = np.abs(stats.zscore(user_activity))
-            user_threshold = stats.norm.ppf(sensitivity)
-            
-            # Focus on unusually high activity (potential security risk)
-            high_activity_users = user_activity[user_z_scores > user_threshold]
-            for user_id, activity in high_activity_users.items():
-                z_score = user_z_scores[user_id]
-                anomalies.append({
-                    'type': 'user_activity_anomaly',
-                    'severity': 'high' if z_score > 3 else 'medium',
-                    'confidence': min(0.99, z_score / 4),
-                    'user_id': user_id,
-                    'activity_count': activity,
-                    'z_score': z_score,
-                    'description': f'User {user_id} has unusually high activity: {activity} events'
-                })
+        # Modified Z-score (MAD) detection
+        mad_anomalies = self._detect_mad_anomalies(df, sensitivity)
+        anomalies.extend(mad_anomalies)
         
         return anomalies
     
-    def _detect_temporal_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Detect temporal pattern anomalies"""
-        
+    def _detect_zscore_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
+        """Detect anomalies using Z-score method"""
         anomalies = []
         
-        # After-hours access spikes
-        after_hours_daily = df[~df['is_business_hours']].groupby('date')['event_id'].count()
-        if len(after_hours_daily) > 0:
-            avg_after_hours = after_hours_daily.mean()
-            std_after_hours = after_hours_daily.std()
+        # Threshold based on sensitivity
+        z_threshold = 3.0 - (sensitivity - 0.5) * 2  # Range: 2.0 to 3.0
+        
+        try:
+            # Analyze user access frequencies
+            user_access_counts = df.groupby('person_id').size()
             
-            for date, count in after_hours_daily.items():
-                if count > avg_after_hours + 2 * std_after_hours and count > 10:
-                    anomalies.append({
-                        'type': 'after_hours_spike',
-                        'severity': 'high',
-                        'confidence': 0.85,
-                        'date': str(date),
-                        'after_hours_count': count,
-                        'description': f'Unusual after-hours activity on {date}: {count} events'
-                    })
-        
-        # Weekend activity anomalies
-        weekend_activity = df[df['is_weekend']].groupby('date')['event_id'].count()
-        if len(weekend_activity) > 0:
-            avg_weekend = weekend_activity.mean()
+            if len(user_access_counts) < 3:
+                return anomalies
+                
+            z_scores = np.abs(stats.zscore(user_access_counts))
             
-            for date, count in weekend_activity.items():
-                if count > avg_weekend * 3 and count > 20:
-                    anomalies.append({
-                        'type': 'weekend_activity_spike',
-                        'severity': 'medium',
-                        'confidence': 0.75,
-                        'date': str(date),
-                        'weekend_count': count,
-                        'description': f'High weekend activity on {date}: {count} events'
-                    })
-        
-        # Time clustering anomalies (unusual time patterns)
-        time_anomalies = self._detect_time_clustering_anomalies(df)
-        anomalies.extend(time_anomalies)
-        
-        # Sequential time anomalies
-        sequential_anomalies = self._detect_sequential_anomalies(df)
-        anomalies.extend(sequential_anomalies)
-        
-        return anomalies
-    
-    def _detect_behavioral_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Detect behavioral pattern anomalies"""
-        
-        anomalies = []
-        
-        # Rapid repeated attempts
-        df_sorted = df.sort_values(['person_id', 'timestamp'])
-        df_sorted['time_diff'] = df_sorted.groupby('person_id')['timestamp'].diff()
-        
-        rapid_attempts = df_sorted[df_sorted['time_diff'] < pd.Timedelta(seconds=30)]
-        if len(rapid_attempts) > 0:
-            for user_id in rapid_attempts['person_id'].unique():
-                user_rapid = rapid_attempts[rapid_attempts['person_id'] == user_id]
-                anomalies.append({
-                    'type': 'rapid_attempts',
-                    'severity': 'high',
-                    'confidence': 0.9,
-                    'user_id': user_id,
-                    'attempt_count': len(user_rapid),
-                    'description': f'User {user_id} made {len(user_rapid)} rapid access attempts'
-                })
-        
-        # Door hopping (multiple doors in short time)
-        door_hopping_anomalies = self._detect_door_hopping(df_sorted)
-        anomalies.extend(door_hopping_anomalies)
-        
-        # Unusual location patterns
-        location_anomalies = self._detect_location_anomalies(df)
-        anomalies.extend(location_anomalies)
-        
-        # Deviation from normal behavior patterns
-        pattern_deviation_anomalies = self._detect_pattern_deviations(df)
-        anomalies.extend(pattern_deviation_anomalies)
-        
-        return anomalies
-    
-    def _detect_security_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Detect security-specific anomalies"""
-        
-        anomalies = []
-        
-        # Failed access clustering
-        failed_attempts = df[df['access_result'] == 'Denied']
-        if len(failed_attempts) > 0:
+            outlier_users = user_access_counts[z_scores > z_threshold]
             
-            # Multiple failures by same user
-            user_failures = failed_attempts.groupby('person_id')['event_id'].count()
-            high_failure_users = user_failures[user_failures >= 5]
-            
-            for user_id, failure_count in high_failure_users.items():
-                user_failed_data = failed_attempts[failed_attempts['person_id'] == user_id]
-                doors_failed = user_failed_data['door_id'].nunique()
+            for user_id, access_count in outlier_users.items():
+                z_score = z_scores[user_access_counts.index == user_id].iloc[0]
+                
+                mean_access = user_access_counts.mean()
+                anomaly_type = 'excessive_access_frequency' if access_count > mean_access else 'insufficient_access_frequency'
+                
+                severity = self._calculate_severity_from_zscore(z_score)
+                confidence = min(0.99, (z_score - z_threshold) / z_threshold)
                 
                 anomalies.append({
-                    'type': 'repeated_access_failures',
-                    'severity': 'critical' if failure_count >= 10 else 'high',
-                    'confidence': 0.95,
-                    'user_id': user_id,
-                    'failure_count': failure_count,
-                    'doors_affected': doors_failed,
-                    'description': f'User {user_id} has {failure_count} failed access attempts across {doors_failed} doors'
+                    'type': anomaly_type,
+                    'severity': severity,
+                    'confidence': confidence,
+                    'description': f"User {user_id} has anomalous access frequency: {access_count} (Z-score: {z_score:.2f})",
+                    'affected_entities': [user_id],
+                    'evidence': {
+                        'user_id': user_id,
+                        'access_count': access_count,
+                        'z_score': z_score,
+                        'threshold': z_threshold,
+                        'mean_access': mean_access
+                    },
+                    'timestamp': datetime.now()
                 })
-            
-            # Door-specific failure spikes
-            door_failures = failed_attempts.groupby('door_id')['event_id'].count()
-            for door_id, failure_count in door_failures.items():
-                total_door_attempts = len(df[df['door_id'] == door_id])
-                failure_rate = failure_count / total_door_attempts
                 
-                if failure_rate > 0.3 and failure_count >= 5:
-                    anomalies.append({
-                        'type': 'door_failure_spike',
-                        'severity': 'high',
-                        'confidence': 0.85,
-                        'door_id': door_id,
-                        'failure_count': failure_count,
-                        'failure_rate': failure_rate,
-                        'description': f'Door {door_id} has high failure rate: {failure_rate*100:.1f}% ({failure_count} failures)'
-                    })
-        
-        # Badge status anomalies
-        if 'badge_status' in df.columns:
-            badge_anomalies = self._detect_badge_anomalies(df)
-            anomalies.extend(badge_anomalies)
-        
-        # Device status anomalies
-        if 'device_status' in df.columns:
-            device_anomalies = self._detect_device_anomalies(df)
-            anomalies.extend(device_anomalies)
-        
-        # Tailgating detection
-        tailgating_anomalies = self._detect_tailgating(df)
-        anomalies.extend(tailgating_anomalies)
+        except Exception as e:
+            self.logger.warning(f"Z-score anomaly detection failed: {e}")
         
         return anomalies
     
-    def _detect_pattern_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Detect anomalies in access patterns"""
-        
+    def _detect_iqr_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
+        """Detect anomalies using Interquartile Range method"""
         anomalies = []
         
-        # Unusual access sequences
-        sequence_anomalies = self._detect_sequence_anomalies(df)
-        anomalies.extend(sequence_anomalies)
+        # IQR multiplier based on sensitivity
+        iqr_multiplier = 2.5 - sensitivity  # Range: 1.5 to 2.0
         
-        # Break in routine patterns
-        routine_break_anomalies = self._detect_routine_breaks(df)
-        anomalies.extend(routine_break_anomalies)
-        
-        # Frequency anomalies
-        frequency_anomalies = self._detect_frequency_anomalies(df)
-        anomalies.extend(frequency_anomalies)
+        try:
+            # Daily access volume anomalies
+            daily_access = df.groupby(df['timestamp'].dt.date).size()
+            
+            if len(daily_access) < 3:
+                return anomalies
+            
+            Q1 = daily_access.quantile(0.25)
+            Q3 = daily_access.quantile(0.75)
+            IQR = Q3 - Q1
+            
+            lower_bound = Q1 - iqr_multiplier * IQR
+            upper_bound = Q3 + iqr_multiplier * IQR
+            
+            outlier_days = daily_access[(daily_access < lower_bound) | (daily_access > upper_bound)]
+            
+            for date, access_count in outlier_days.items():
+                anomaly_type = 'daily_access_spike' if access_count > upper_bound else 'daily_access_drop'
+                
+                if access_count > upper_bound:
+                    deviation = (access_count - upper_bound) / max(IQR, 1)
+                else:
+                    deviation = (lower_bound - access_count) / max(IQR, 1)
+                
+                severity = self._calculate_severity_from_deviation(deviation)
+                confidence = min(0.95, deviation / 3)
+                
+                anomalies.append({
+                    'type': anomaly_type,
+                    'severity': severity,
+                    'confidence': confidence,
+                    'description': f"Anomalous daily access volume on {date}: {access_count} events",
+                    'affected_entities': [str(date)],
+                    'evidence': {
+                        'date': str(date),
+                        'access_count': access_count,
+                        'expected_range': (lower_bound, upper_bound),
+                        'iqr_multiplier': iqr_multiplier,
+                        'deviation': deviation
+                    },
+                    'timestamp': datetime.now()
+                })
+                
+        except Exception as e:
+            self.logger.warning(f"IQR anomaly detection failed: {e}")
         
         return anomalies
     
-    def _detect_ml_anomalies(self, df: pd.DataFrame, 
-                             sensitivity: float) -> List[Dict[str, Any]]:
-        """Detect anomalies using machine learning algorithms"""
-        
+    def _detect_mad_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
+        """Detect anomalies using Modified Z-score (Median Absolute Deviation)"""
         anomalies = []
         
         try:
-            # Prepare features for ML algorithms
-            features = self._extract_ml_features(df)
+            # MAD threshold based on sensitivity
+            mad_threshold = 4.0 - (sensitivity - 0.5) * 2  # Range: 3.0 to 4.5
             
-            if len(features) < 10:  # Not enough data for ML
+            # Analyze door usage frequencies
+            door_usage = df.groupby('door_id').size()
+            
+            if len(door_usage) < 3:
                 return anomalies
             
-            # Isolation Forest
-            isolation_anomalies = self._isolation_forest_detection(features, sensitivity)
-            anomalies.extend(isolation_anomalies)
+            # Calculate Modified Z-score using MAD
+            median_usage = door_usage.median()
+            mad = np.median(np.abs(door_usage - median_usage))
             
-            # One-Class SVM
-            svm_anomalies = self._oneclass_svm_detection(features, sensitivity)
-            anomalies.extend(svm_anomalies)
+            if mad > 0:
+                modified_z_scores = 0.6745 * (door_usage - median_usage) / mad
+                
+                outlier_doors = door_usage[np.abs(modified_z_scores) > mad_threshold]
+                
+                for door_id, usage_count in outlier_doors.items():
+                    z_score = abs(modified_z_scores[door_id])
+                    
+                    anomaly_type = 'door_overuse' if usage_count > median_usage else 'door_underuse'
+                    severity = self._calculate_severity_from_zscore(z_score)
+                    confidence = min(0.95, (z_score - mad_threshold) / mad_threshold)
+                    
+                    anomalies.append({
+                        'type': anomaly_type,
+                        'severity': severity,
+                        'confidence': confidence,
+                        'description': f"Door {door_id} shows anomalous usage pattern: {usage_count} events (MAD Z-score: {z_score:.2f})",
+                        'affected_entities': [door_id],
+                        'evidence': {
+                            'door_id': door_id,
+                            'usage_count': usage_count,
+                            'modified_z_score': z_score,
+                            'threshold': mad_threshold,
+                            'median_usage': median_usage
+                        },
+                        'timestamp': datetime.now()
+                    })
+                    
+        except Exception as e:
+            self.logger.warning(f"MAD anomaly detection failed: {e}")
+        
+        return anomalies
+    
+    def _detect_pattern_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
+        """Detect pattern-based anomalies"""
+        anomalies = []
+        
+        # Rapid successive access attempts
+        rapid_access_anomalies = self._detect_rapid_access_patterns(df, sensitivity)
+        anomalies.extend(rapid_access_anomalies)
+        
+        # Badge status anomalies
+        badge_anomalies = self._detect_badge_anomalies(df, sensitivity)
+        anomalies.extend(badge_anomalies)
+        
+        # Time-based anomalies
+        temporal_anomalies = self._detect_temporal_anomalies(df, sensitivity)
+        anomalies.extend(temporal_anomalies)
+        
+        return anomalies
+    
+    def _detect_rapid_access_patterns(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
+        """Detect rapid successive access attempts"""
+        anomalies = []
+        
+        # Time threshold based on sensitivity
+        time_threshold = 60 - (sensitivity - 0.5) * 60  # Range: 30-60 seconds
+        
+        try:
+            df_sorted = df.sort_values(['person_id', 'timestamp'])
+            df_sorted['time_diff'] = df_sorted.groupby('person_id')['timestamp'].diff().dt.total_seconds()
+            
+            # Find rapid attempts
+            rapid_attempts = df_sorted[df_sorted['time_diff'] < time_threshold]
+            
+            if len(rapid_attempts) > 0:
+                user_rapid_counts = rapid_attempts.groupby('person_id').size()
+                
+                for user_id, count in user_rapid_counts.items():
+                    if count >= 2:
+                        user_rapid_data = rapid_attempts[rapid_attempts['person_id'] == user_id]
+                        failure_rate = 1 - user_rapid_data['access_granted'].mean()
+                        
+                        severity = 'critical' if failure_rate > 0.8 else 'high' if failure_rate > 0.5 else 'medium'
+                        confidence = min(0.95, count / 10)
+                        
+                        anomalies.append({
+                            'type': 'rapid_access_attempts',
+                            'severity': severity,
+                            'confidence': confidence,
+                            'description': f"User {user_id} made {count} rapid access attempts within {time_threshold}s",
+                            'affected_entities': [user_id],
+                            'evidence': {
+                                'user_id': user_id,
+                                'rapid_attempts': count,
+                                'failure_rate': failure_rate,
+                                'time_threshold': time_threshold,
+                                'attempts_details': user_rapid_data[['timestamp', 'door_id', 'access_result']].to_dict('records')
+                            },
+                            'timestamp': datetime.now()
+                        })
+                        
+        except Exception as e:
+            self.logger.warning(f"Rapid access pattern detection failed: {e}")
+        
+        return anomalies
+    
+    def _detect_badge_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
+        """Detect badge-related anomalies"""
+        anomalies = []
+        
+        if 'badge_status' not in df.columns:
+            return anomalies
+        
+        try:
+            # High invalid badge rate per user
+            user_badge_stats = df.groupby('person_id')['badge_status'].agg(['count', lambda x: (x != 'Valid').mean()])
+            user_badge_stats.columns = ['total_events', 'invalid_rate']
+            
+            # Filter users with significant activity and high invalid rate
+            problematic_users = user_badge_stats[
+                (user_badge_stats['total_events'] >= 5) & 
+                (user_badge_stats['invalid_rate'] > 0.2)
+            ]
+            
+            for user_id, stats in problematic_users.iterrows():
+                severity = 'critical' if stats['invalid_rate'] > 0.5 else 'high'
+                confidence = min(0.95, stats['invalid_rate'])
+                
+                anomalies.append({
+                    'type': 'high_invalid_badge_rate',
+                    'severity': severity,
+                    'confidence': confidence,
+                    'description': f"User {user_id} has high invalid badge rate: {stats['invalid_rate']:.1%}",
+                    'affected_entities': [user_id],
+                    'evidence': {
+                        'user_id': user_id,
+                        'invalid_rate': stats['invalid_rate'],
+                        'total_events': stats['total_events']
+                    },
+                    'timestamp': datetime.now()
+                })
+                
+        except Exception as e:
+            self.logger.warning(f"Badge anomaly detection failed: {e}")
+        
+        return anomalies
+    
+    def _detect_temporal_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
+        """Detect temporal anomalies in access patterns"""
+        anomalies = []
+        
+        try:
+            # Unusual hour activity
+            hour_counts = df['hour'].value_counts()
+            hour_mean = hour_counts.mean()
+            hour_std = hour_counts.std()
+            
+            if hour_std > 0:
+                for hour, count in hour_counts.items():
+                    z_score = abs(count - hour_mean) / hour_std
+                    if z_score > 2.5:  # Significant deviation
+                        anomalies.append({
+                            'type': 'unusual_hour_activity',
+                            'severity': 'high' if z_score > 3 else 'medium',
+                            'confidence': min(0.9, z_score / 3),
+                            'description': f"Unusual activity at hour {hour}: {count} events (Z-score: {z_score:.2f})",
+                            'affected_entities': [f"hour_{hour}"],
+                            'evidence': {
+                                'hour': hour,
+                                'event_count': count,
+                                'z_score': z_score,
+                                'mean_hourly': hour_mean,
+                                'std_hourly': hour_std
+                            },
+                            'timestamp': datetime.now()
+                        })
+                        
+        except Exception as e:
+            self.logger.warning(f"Temporal anomaly detection failed: {e}")
+        
+        return anomalies
+    
+    def _detect_ml_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
+        """Detect anomalies using machine learning methods"""
+        anomalies = []
+        
+        try:
+            # Prepare features for ML detection
+            features_df = self._prepare_ml_features(df)
+            
+            if len(features_df) < 10:
+                return anomalies
+            
+            # Isolation Forest detection
+            isolation_anomalies = self._isolation_forest_detection(features_df, sensitivity, df)
+            anomalies.extend(isolation_anomalies)
             
         except Exception as e:
             self.logger.warning(f"ML anomaly detection failed: {e}")
         
         return anomalies
     
-    def _extract_ml_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract features for machine learning anomaly detection"""
+    def _prepare_ml_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Prepare features for ML-based anomaly detection"""
         
-        # Aggregate features by time windows (hourly)
-        df['hour_window'] = df['timestamp'].dt.floor('H')
+        # Event-level features
+        event_features = []
         
-        features = df.groupby('hour_window').agg({
-            'event_id': 'count',
-            'person_id': 'nunique',
-            'door_id': 'nunique',
-            'access_result': lambda x: (x == 'Granted').mean(),
-            'hour': 'mean',
-            'is_weekend': 'mean',
-            'is_business_hours': 'mean'
-        })
-        
-        # Add temporal features
-        features['hour_sin'] = np.sin(2 * np.pi * features['hour'] / 24)
-        features['hour_cos'] = np.cos(2 * np.pi * features['hour'] / 24)
-        
-        # Add lag features
-        features['event_count_lag1'] = features['event_id'].shift(1)
-        features['success_rate_lag1'] = features['access_result'].shift(1)
-        
-        # Fill missing values
-        features = features.fillna(features.mean())
-        
-        return features
-    
-    def _isolation_forest_detection(self, features: pd.DataFrame, 
-                                    sensitivity: float) -> List[Dict[str, Any]]:
-        """Detect anomalies using Isolation Forest"""
-        
-        anomalies = []
-        
-        # Configure contamination based on sensitivity
-        contamination = 1 - sensitivity
-        
-        # Fit Isolation Forest
-        iso_forest = IsolationForest(
-            contamination=contamination,
-            random_state=42,
-            n_estimators=100
-        )
-        
-        # Scale features
-        features_scaled = self.scaler.fit_transform(features)
-        
-        # Predict anomalies
-        predictions = iso_forest.fit_predict(features_scaled)
-        anomaly_scores = iso_forest.decision_function(features_scaled)
-        
-        # Extract anomalies
-        anomaly_indices = np.where(predictions == -1)[0]
-        
-        for idx in anomaly_indices:
-            timestamp = features.index[idx]
-            score = anomaly_scores[idx]
-            confidence = min(0.99, abs(score) / 2)  # Normalize score to confidence
+        for idx, row in df.iterrows():
+            # Temporal features
+            hour_norm = row['hour'] / 24.0
+            dow_norm = row['day_of_week'] / 7.0
             
-            anomalies.append({
-                'type': 'ml_isolation_forest',
-                'severity': 'medium',
-                'confidence': confidence,
-                'timestamp': timestamp,
-                'anomaly_score': score,
-                'description': f'Isolation Forest detected anomaly at {timestamp}'
+            # User-based features
+            user_data = df[df['person_id'] == row['person_id']]
+            user_event_count = len(user_data)
+            user_success_rate = user_data['access_granted'].mean()
+            
+            # Door-based features
+            door_data = df[df['door_id'] == row['door_id']]
+            door_usage_frequency = len(door_data)
+            door_success_rate = door_data['access_granted'].mean()
+            
+            event_features.append({
+                'hour_norm': hour_norm,
+                'dow_norm': dow_norm,
+                'is_weekend': float(row['is_weekend']),
+                'is_after_hours': float(row['is_after_hours']),
+                'access_granted': float(row['access_granted']),
+                'user_event_count': user_event_count,
+                'user_success_rate': user_success_rate,
+                'door_usage_frequency': door_usage_frequency,
+                'door_success_rate': door_success_rate
             })
         
-        return anomalies
-    
-    def _oneclass_svm_detection(self, features: pd.DataFrame, 
-                                sensitivity: float) -> List[Dict[str, Any]]:
-        """Detect anomalies using One-Class SVM"""
+        features_df = pd.DataFrame(event_features)
+        features_df.index = df.index  # Maintain original index
         
+        return features_df.fillna(0)
+    
+    def _isolation_forest_detection(self, features_df: pd.DataFrame, sensitivity: float, original_df: pd.DataFrame) -> List[Dict[str, Any]]:
+        """Detect anomalies using Isolation Forest"""
         anomalies = []
         
         try:
-            # Configure nu parameter based on sensitivity
-            nu = 1 - sensitivity
+            # Adjust contamination based on sensitivity
+            contamination = 0.05 + (1 - sensitivity) * 0.15  # Range: 0.05 to 0.20
             
-            # Fit One-Class SVM
-            svm = OneClassSVM(nu=nu, kernel='rbf', gamma='scale')
+            isolation_forest = IsolationForest(
+                contamination=contamination,
+                random_state=42,
+                n_estimators=100
+            )
             
             # Scale features
-            features_scaled = self.scaler.fit_transform(features)
+            features_scaled = self.scaler.fit_transform(features_df)
             
-            # Predict anomalies
-            predictions = svm.fit_predict(features_scaled)
+            # Detect outliers
+            outlier_predictions = isolation_forest.fit_predict(features_scaled)
+            anomaly_scores = isolation_forest.decision_function(features_scaled)
             
-            # Extract anomalies
-            anomaly_indices = np.where(predictions == -1)[0]
+            # Process anomalies
+            anomaly_indices = np.where(outlier_predictions == -1)[0]
             
             for idx in anomaly_indices:
-                timestamp = features.index[idx]
+                original_idx = features_df.index[idx]
+                anomaly_score = abs(anomaly_scores[idx])
                 
-                anomalies.append({
-                    'type': 'ml_oneclass_svm',
-                    'severity': 'medium',
-                    'confidence': 0.8,
-                    'timestamp': timestamp,
-                    'description': f'One-Class SVM detected anomaly at {timestamp}'
-                })
-        
+                # Calculate confidence
+                confidence = min(0.95, anomaly_score / 2)
+                
+                if confidence >= 0.5:  # Only high-confidence anomalies
+                    severity = self._calculate_severity_from_score(anomaly_score)
+                    
+                    # Get original row data
+                    original_row = original_df.loc[original_idx]
+                    
+                    anomalies.append({
+                        'type': 'ml_behavioral_anomaly',
+                        'severity': severity,
+                        'confidence': confidence,
+                        'description': "Isolation Forest detected anomalous behavior pattern",
+                        'affected_entities': [f"event_{original_idx}"],
+                        'evidence': {
+                            'event_index': original_idx,
+                            'anomaly_score': anomaly_score,
+                            'contamination': contamination,
+                            'person_id': original_row['person_id'],
+                            'door_id': original_row['door_id'],
+                            'timestamp': original_row['timestamp'].isoformat(),
+                            'features': features_df.loc[original_idx].to_dict()
+                        },
+                        'timestamp': datetime.now()
+                    })
+                    
         except Exception as e:
-            self.logger.warning(f"One-Class SVM detection failed: {e}")
+            self.logger.warning(f"Isolation Forest detection failed: {e}")
         
         return anomalies
     
-    # Helper methods for specific anomaly types
+    def _calculate_severity_from_zscore(self, z_score: float) -> str:
+        """Calculate severity level from Z-score"""
+        if z_score >= 4.0:
+            return 'critical'
+        elif z_score >= 3.5:
+            return 'high'
+        elif z_score >= 3.0:
+            return 'medium'
+        else:
+            return 'low'
     
-    def _detect_time_clustering_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Detect unusual time clustering patterns"""
-        
-        anomalies = []
-        
-        # Look for unusual clustering of events in short time windows
-        df['time_window'] = df['timestamp'].dt.floor('15min')
-        window_counts = df.groupby('time_window')['event_id'].count()
-        
-        # Statistical threshold
-        if len(window_counts) > 10:
-            threshold = window_counts.mean() + 3 * window_counts.std()
-            
-            unusual_windows = window_counts[window_counts > threshold]
-            for window, count in unusual_windows.items():
-                anomalies.append({
-                    'type': 'time_clustering',
-                    'severity': 'medium',
-                    'confidence': 0.75,
-                    'time_window': window,
-                    'event_count': count,
-                    'description': f'Unusual clustering of {count} events in 15-minute window at {window}'
-                })
-        
-        return anomalies
+    def _calculate_severity_from_deviation(self, deviation: float) -> str:
+        """Calculate severity level from IQR deviation"""
+        if deviation >= 3.0:
+            return 'critical'
+        elif deviation >= 2.0:
+            return 'high'
+        elif deviation >= 1.0:
+            return 'medium'
+        else:
+            return 'low'
     
-    def _detect_sequential_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Detect sequential pattern anomalies"""
-        
-        anomalies = []
-        
-        # Look for unusual gaps in sequential access
-        df_sorted = df.sort_values('timestamp')
-        df_sorted['time_gap'] = df_sorted['timestamp'].diff()
-        
-        # Very large gaps (potential system issues)
-        large_gaps = df_sorted[df_sorted['time_gap'] > pd.Timedelta(hours=6)]
-        for _, row in large_gaps.iterrows():
-            anomalies.append({
-                'type': 'sequential_gap',
-                'severity': 'low',
-                'confidence': 0.6,
-                'gap_duration': row['time_gap'],
-                'timestamp': row['timestamp'],
-                'description': f'Large time gap in access sequence: {row["time_gap"]}'
-            })
-        
-        return anomalies
+    def _calculate_severity_from_score(self, score: float) -> str:
+        """Calculate severity level from anomaly score"""
+        if score >= 0.8:
+            return 'critical'
+        elif score >= 0.6:
+            return 'high'
+        elif score >= 0.4:
+            return 'medium'
+        else:
+            return 'low'
     
-    def _detect_door_hopping(self, df_sorted: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Detect door hopping behavior"""
+    def _deduplicate_anomalies(self, anomalies: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Remove duplicate and similar anomalies"""
+        if not anomalies:
+            return anomalies
         
-        anomalies = []
+        # Simple deduplication based on type and affected entities
+        seen_combinations = set()
+        unique_anomalies = []
         
-        # Look for rapid movement between different doors
-        for user_id in df_sorted['person_id'].unique():
-            user_data = df_sorted[df_sorted['person_id'] == user_id].copy()
-            user_data['door_change'] = user_data['door_id'] != user_data['door_id'].shift()
-            user_data['time_diff'] = user_data['timestamp'].diff()
+        for anomaly in anomalies:
+            # Create a key for deduplication
+            entities_key = tuple(sorted(anomaly['affected_entities']))
+            dedup_key = (anomaly['type'], entities_key)
             
-            # Rapid door changes (< 5 minutes)
-            rapid_changes = user_data[
-                (user_data['door_change']) & 
-                (user_data['time_diff'] < pd.Timedelta(minutes=5))
-            ]
-            
-            if len(rapid_changes) > 3:  # More than 3 rapid door changes
-                anomalies.append({
-                    'type': 'door_hopping',
-                    'severity': 'medium',
-                    'confidence': 0.8,
-                    'user_id': user_id,
-                    'rapid_changes': len(rapid_changes),
-                    'description': f'User {user_id} showed door hopping behavior with {len(rapid_changes)} rapid door changes'
-                })
+            if dedup_key not in seen_combinations:
+                seen_combinations.add(dedup_key)
+                unique_anomalies.append(anomaly)
         
-        return anomalies
+        return unique_anomalies
     
-    def _detect_location_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Detect unusual location access patterns"""
+    def _calculate_severity_distribution(self, anomalies: List[Dict[str, Any]]) -> Dict[str, int]:
+        """Calculate distribution of anomalies by severity"""
+        severity_counts = {'critical': 0, 'high': 0, 'medium': 0, 'low': 0}
         
-        anomalies = []
+        for anomaly in anomalies:
+            severity = anomaly.get('severity', 'low')
+            severity_counts[severity] += 1
         
-        # Users accessing unusual number of doors
-        user_door_counts = df.groupby('person_id')['door_id'].nunique()
-        
-        # Statistical threshold for high door diversity
-        if len(user_door_counts) > 1:
-            threshold = user_door_counts.mean() + 2 * user_door_counts.std()
-            
-            high_diversity_users = user_door_counts[user_door_counts > threshold]
-            for user_id, door_count in high_diversity_users.items():
-                anomalies.append({
-                    'type': 'high_location_diversity',
-                    'severity': 'low',
-                    'confidence': 0.7,
-                    'user_id': user_id,
-                    'door_count': door_count,
-                    'description': f'User {user_id} accessed unusually high number of doors: {door_count}'
-                })
-        
-        return anomalies
+        return severity_counts
     
-    def _detect_pattern_deviations(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Detect deviations from established patterns"""
-        
-        anomalies = []
-        
-        # For each user, compare recent behavior to historical
-        for user_id in df['person_id'].unique():
-            user_data = df[df['person_id'] == user_id].sort_values('timestamp')
-            
-            if len(user_data) < 10:  # Need sufficient data
-                continue
-            
-            # Split into historical and recent
-            split_point = int(len(user_data) * 0.7)
-            historical = user_data.iloc[:split_point]
-            recent = user_data.iloc[split_point:]
-            
-            if len(recent) < 3:
-                continue
-            
-            # Compare hour patterns
-            hist_hours = historical['hour'].value_counts(normalize=True)
-            recent_hours = recent['hour'].value_counts(normalize=True)
-            
-            # Calculate pattern similarity (using Hellinger distance)
-            similarity = self._calculate_pattern_similarity(hist_hours, recent_hours)
-            
-            if similarity < 0.5:  # Significant pattern change
-                anomalies.append({
-                    'type': 'pattern_deviation',
-                    'severity': 'medium',
-                    'confidence': 0.75,
-                    'user_id': user_id,
-                    'similarity_score': similarity,
-                    'description': f'User {user_id} showed significant deviation from historical patterns'
-                })
-        
-        return anomalies
-    
-    def _detect_badge_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Detect badge-related anomalies"""
-        
-        anomalies = []
-        
-        invalid_badge_events = df[df['badge_status'] != 'Valid']
-        
-        if len(invalid_badge_events) > 0:
-            # High rate of invalid badges
-            invalid_rate = len(invalid_badge_events) / len(df)
-            
-            if invalid_rate > 0.1:  # More than 10% invalid
-                anomalies.append({
-                    'type': 'high_invalid_badge_rate',
-                    'severity': 'high',
-                    'confidence': 0.9,
-                    'invalid_rate': invalid_rate,
-                    'invalid_count': len(invalid_badge_events),
-                    'description': f'High rate of invalid badge usage: {invalid_rate*100:.1f}%'
-                })
-            
-            # Users with frequent invalid badge usage
-            user_invalid_counts = invalid_badge_events.groupby('person_id')['event_id'].count()
-            frequent_invalid_users = user_invalid_counts[user_invalid_counts >= 3]
-            
-            for user_id, count in frequent_invalid_users.items():
-                anomalies.append({
-                    'type': 'frequent_invalid_badge',
-                    'severity': 'medium',
-                    'confidence': 0.85,
-                    'user_id': user_id,
-                    'invalid_count': count,
-                    'description': f'User {user_id} has frequent invalid badge usage: {count} instances'
-                })
-        
-        return anomalies
-    
-    def _detect_device_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Detect device status anomalies"""
-        
-        anomalies = []
-        
-        device_issues = df[df['device_status'] != 'normal']
-        
-        if len(device_issues) > 0:
-            # Group by door to find problematic devices
-            door_device_issues = device_issues.groupby('door_id').agg({
-                'event_id': 'count',
-                'device_status': lambda x: list(x.unique())
-            })
-            
-            for door_id, row in door_device_issues.iterrows():
-                if row['event_id'] >= 3:  # Multiple device issues
-                    anomalies.append({
-                        'type': 'device_malfunction',
-                        'severity': 'medium',
-                        'confidence': 0.8,
-                        'door_id': door_id,
-                        'issue_count': row['event_id'],
-                        'device_statuses': row['device_status'],
-                        'description': f'Device at door {door_id} showing issues: {row["event_id"]} events with status {row["device_status"]}'
-                    })
-        
-        return anomalies
-    
-    def _detect_tailgating(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Detect potential tailgating events"""
-        
-        anomalies = []
-        
-        # Look for multiple successful accesses at same door within short time
-        df_sorted = df.sort_values(['door_id', 'timestamp'])
-        
-        for door_id in df['door_id'].unique():
-            door_data = df_sorted[df_sorted['door_id'] == door_id]
-            granted_access = door_data[door_data['access_result'] == 'Granted']
-            
-            if len(granted_access) < 2:
-                continue
-            
-            granted_access = granted_access.copy()
-            granted_access['time_diff'] = granted_access['timestamp'].diff()
-            
-            # Multiple accesses within 30 seconds
-            rapid_accesses = granted_access[granted_access['time_diff'] < pd.Timedelta(seconds=30)]
-            
-            if len(rapid_accesses) > 0:
-                for _, row in rapid_accesses.iterrows():
-                    anomalies.append({
-                        'type': 'potential_tailgating',
-                        'severity': 'medium',
-                        'confidence': 0.6,
-                        'door_id': door_id,
-                        'timestamp': row['timestamp'],
-                        'time_gap': row['time_diff'],
-                        'description': f'Potential tailgating at door {door_id}: access {row["time_diff"]} after previous'
-                    })
-        
-        return anomalies
-    
-    def _detect_sequence_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Detect unusual access sequences"""
-        
-        anomalies = []
-        
-        # Analyze door access sequences for each user
-        for user_id in df['person_id'].unique():
-            user_data = df[df['person_id'] == user_id].sort_values('timestamp')
-            
-            if len(user_data) < 3:
-                continue
-            
-            # Look for impossible sequences (e.g., being at two distant doors too quickly)
-            # This would require door location data, so we'll use a simple heuristic
-            user_data = user_data.copy()
-            user_data['door_change'] = user_data['door_id'] != user_data['door_id'].shift()
-            user_data['time_diff'] = user_data['timestamp'].diff()
-            
-            # Very rapid door changes (< 1 minute) might be suspicious
-            rapid_sequences = user_data[
-                (user_data['door_change']) & 
-                (user_data['time_diff'] < pd.Timedelta(minutes=1))
-            ]
-            
-            if len(rapid_sequences) > 2:
-                anomalies.append({
-                    'type': 'rapid_sequence',
-                    'severity': 'low',
-                    'confidence': 0.5,
-                    'user_id': user_id,
-                    'sequence_count': len(rapid_sequences),
-                    'description': f'User {user_id} has rapid door sequence changes'
-                })
-        
-        return anomalies
-    
-    def _detect_routine_breaks(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Detect breaks in routine patterns"""
-        
-        anomalies = []
-        
-        # This is a simplified version - in practice, you'd need more sophisticated pattern analysis
-        for user_id in df['person_id'].unique():
-            user_data = df[df['person_id'] == user_id]
-            
-            if len(user_data) < 7:  # Need at least a week of data
-                continue
-            
-            # Check for sudden changes in daily activity level
-            daily_activity = user_data.groupby('date')['event_id'].count()
-            
-            if len(daily_activity) > 3:
-                recent_avg = daily_activity.tail(3).mean()
-                historical_avg = daily_activity.head(-3).mean()
-                
-                # Significant change in activity level
-                if abs(recent_avg - historical_avg) > historical_avg:
-                    change_type = 'increase' if recent_avg > historical_avg else 'decrease'
-                    anomalies.append({
-                        'type': 'routine_break',
-                        'severity': 'low',
-                        'confidence': 0.6,
-                        'user_id': user_id,
-                        'change_type': change_type,
-                        'historical_avg': historical_avg,
-                        'recent_avg': recent_avg,
-                        'description': f'User {user_id} shows {change_type} in activity level'
-                    })
-        
-        return anomalies
-    
-    def _detect_frequency_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Detect frequency-based anomalies"""
-        
-        # Sudden burst of activity
-        df = df.copy()
-        df['hour_window'] = df['timestamp'].dt.floor('H')
-        hourly_counts = (
-            df.groupby(['person_id', 'hour_window'])['event_id']
-            .count()
-            .reset_index(name='event_count')
-        )
-
-        user_hourly_avg = (
-            hourly_counts.groupby('person_id')['event_count']
-            .mean()
-            .rename('avg_hourly')
-        )
-        hourly_counts = hourly_counts.join(user_hourly_avg, on='person_id')
-
-        bursts = hourly_counts[
-            (hourly_counts['event_count'] > hourly_counts['avg_hourly'] * 5)
-            & (hourly_counts['event_count'] > 10)
-        ]
-
-        if bursts.empty:
-            return []
-
-        bursts['type'] = 'activity_burst'
-        bursts['severity'] = 'medium'
-        bursts['confidence'] = 0.7
-        bursts['description'] = bursts.apply(
-            lambda r: (
-                f"User {r['person_id']} had activity burst: {r['event_count']} "
-                f"events in hour {r['hour_window']}"
-            ),
-            axis=1,
-        )
-
-        return bursts[
-            [
-                'type',
-                'severity',
-                'confidence',
-                'person_id',
-                'hour_window',
-                'event_count',
-                'avg_hourly',
-                'description',
-            ]
-        ].rename(columns={'person_id': 'user_id'}).to_dict('records')
-    
-    def _calculate_pattern_similarity(self, pattern1: pd.Series, 
-                                      pattern2: pd.Series) -> float:
-        """Calculate similarity between two patterns using Hellinger distance"""
-        
-        # Align indices
-        all_indices = pattern1.index.union(pattern2.index)
-        p1 = pattern1.reindex(all_indices, fill_value=0)
-        p2 = pattern2.reindex(all_indices, fill_value=0)
-        
-        # Calculate Hellinger distance
-        hellinger = np.sqrt(0.5 * np.sum((np.sqrt(p1) - np.sqrt(p2)) ** 2))
-        
-        # Convert to similarity (1 - distance)
-        similarity = 1 - hellinger
-        
-        return max(0, similarity)
-    
-    def _consolidate_anomalies(self, anomaly_dict: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Consolidate all anomalies into a single list"""
-        
-        all_anomalies = []
-        
-        for category, anomalies in anomaly_dict.items():
-            if category in ['anomaly_summary', 'risk_assessment']:
-                continue
-            
-            if isinstance(anomalies, list):
-                for anomaly in anomalies:
-                    anomaly['category'] = category
-                    all_anomalies.append(anomaly)
-        
-        return all_anomalies
-    
-    def _generate_anomaly_summary(self, all_anomalies: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Generate comprehensive anomaly summary"""
-        
-        if not all_anomalies:
-            return {
-                'total_anomalies': 0,
-                'severity_breakdown': {},
-                'type_breakdown': {},
-                'confidence_stats': {},
-                'top_anomalies': []
-            }
-        
-        # Severity breakdown
-        severity_counts = {}
-        for anomaly in all_anomalies:
-            severity = anomaly.get('severity', 'unknown')
-            severity_counts[severity] = severity_counts.get(severity, 0) + 1
+    def _generate_detection_summary(self, anomalies: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Generate detection summary"""
+        if not anomalies:
+            return {'total_anomalies': 0, 'message': 'No anomalies detected'}
         
         # Type breakdown
         type_counts = {}
-        for anomaly in all_anomalies:
+        for anomaly in anomalies:
             anomaly_type = anomaly.get('type', 'unknown')
             type_counts[anomaly_type] = type_counts.get(anomaly_type, 0) + 1
         
         # Confidence statistics
-        confidences = [anomaly.get('confidence', 0) for anomaly in all_anomalies]
-        confidence_stats = {
-            'mean': np.mean(confidences),
-            'median': np.median(confidences),
-            'min': np.min(confidences),
-            'max': np.max(confidences)
-        }
-        
-        # Top anomalies by severity and confidence
-        sorted_anomalies = sorted(
-            all_anomalies,
-            key=lambda x: (
-                {'critical': 4, 'high': 3, 'medium': 2, 'low': 1}.get(x.get('severity', 'low'), 1),
-                x.get('confidence', 0)
-            ),
-            reverse=True
-        )
-        
-        top_anomalies = sorted_anomalies[:10]  # Top 10
+        confidences = [anomaly.get('confidence', 0) for anomaly in anomalies]
         
         return {
-            'total_anomalies': len(all_anomalies),
-            'severity_breakdown': severity_counts,
+            'total_anomalies': len(anomalies),
             'type_breakdown': type_counts,
-            'confidence_stats': confidence_stats,
-            'top_anomalies': top_anomalies
+            'confidence_stats': {
+                'mean': np.mean(confidences),
+                'max': np.max(confidences),
+                'min': np.min(confidences)
+            },
+            'detection_methods': list(set([a.get('type', 'unknown') for a in anomalies]))
         }
     
-    def _assess_overall_risk(self, all_anomalies: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _assess_overall_risk(self, anomalies: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Assess overall risk based on detected anomalies"""
-        
-        if not all_anomalies:
+        if not anomalies:
             return {
                 'risk_level': 'low',
                 'risk_score': 0,
-                'risk_factors': [],
-                'recommendations': []
+                'risk_factors': []
             }
         
         # Calculate risk score
         risk_score = 0
-        risk_factors = []
-        
-        # Severity-based scoring
         severity_weights = {'critical': 10, 'high': 5, 'medium': 2, 'low': 1}
-        for anomaly in all_anomalies:
+        
+        for anomaly in anomalies:
             severity = anomaly.get('severity', 'low')
             confidence = anomaly.get('confidence', 0.5)
             risk_score += severity_weights[severity] * confidence
         
         # Normalize risk score
-        max_possible_score = len(all_anomalies) * 10  # All critical with full confidence
+        max_possible_score = len(anomalies) * 10
         normalized_risk_score = min(100, (risk_score / max_possible_score) * 100) if max_possible_score > 0 else 0
         
         # Determine risk level
@@ -937,139 +680,127 @@ class AnomalyDetector:
         else:
             risk_level = 'low'
         
-        # Identify key risk factors
-        critical_anomalies = [a for a in all_anomalies if a.get('severity') == 'critical']
-        high_anomalies = [a for a in all_anomalies if a.get('severity') == 'high']
-        
-        if critical_anomalies:
-            risk_factors.append(f"{len(critical_anomalies)} critical security anomalies detected")
-        if high_anomalies:
-            risk_factors.append(f"{len(high_anomalies)} high-severity anomalies detected")
-        
-        # Generate recommendations
-        recommendations = self._generate_risk_recommendations(all_anomalies, risk_level)
-        
         return {
             'risk_level': risk_level,
             'risk_score': normalized_risk_score,
-            'risk_factors': risk_factors,
-            'recommendations': recommendations,
-            'anomaly_impact_analysis': self._analyze_anomaly_impact(all_anomalies)
+            'risk_factors': [a['type'] for a in anomalies if a.get('severity') in ['critical', 'high']]
         }
     
-    def _generate_risk_recommendations(self, all_anomalies: List[Dict[str, Any]], 
-                                       risk_level: str) -> List[str]:
-        """Generate risk mitigation recommendations"""
-        
+    def _generate_recommendations(self, anomalies: List[Dict[str, Any]], 
+                                risk_assessment: Dict[str, Any]) -> List[str]:
+        """Generate recommendations based on anomalies"""
         recommendations = []
         
+        if not anomalies:
+            recommendations.append("No anomalies detected. System appears to be functioning normally.")
+            return recommendations
+        
+        # Risk-based recommendations
+        risk_level = risk_assessment.get('risk_level', 'low')
+        if risk_level in ['critical', 'high']:
+            recommendations.append(
+                f"URGENT: {risk_level.upper()} risk level detected. "
+                "Immediate investigation and response required."
+            )
+        
         # Type-specific recommendations
-        anomaly_types = set(anomaly.get('type', '') for anomaly in all_anomalies)
+        anomaly_types = [a['type'] for a in anomalies]
+        if 'rapid_access_attempts' in anomaly_types:
+            recommendations.append(
+                "Rapid access attempts detected. Consider implementing rate limiting "
+                "and reviewing user access patterns."
+            )
         
-        if 'repeated_access_failures' in anomaly_types:
-            recommendations.append("Investigate users with repeated access failures for potential security threats")
+        if 'excessive_access_frequency' in anomaly_types:
+            recommendations.append(
+                "Users with excessive access frequency identified. "
+                "Review user roles and access requirements."
+            )
         
-        if 'rapid_attempts' in anomaly_types:
-            recommendations.append("Review rapid access attempts for possible unauthorized access attempts")
-        
-        if 'after_hours_spike' in anomaly_types:
-            recommendations.append("Implement additional monitoring for after-hours access activities")
-        
-        if 'door_failure_spike' in anomaly_types:
-            recommendations.append("Check door hardware and access control systems for malfunctions")
+        if 'daily_access_spike' in anomaly_types:
+            recommendations.append(
+                "Unusual daily access spikes detected. Investigate potential system issues "
+                "or security incidents."
+            )
         
         if 'high_invalid_badge_rate' in anomaly_types:
-            recommendations.append("Review badge management procedures and user training")
+            recommendations.append(
+                "High invalid badge rates detected. Review badge management and replacement procedures."
+            )
         
-        # Risk level specific recommendations
-        if risk_level in ['critical', 'high']:
-            recommendations.append("Conduct immediate security audit and review")
-            recommendations.append("Consider temporary access restrictions for high-risk users")
+        if 'ml_behavioral_anomaly' in anomaly_types:
+            recommendations.append(
+                "Machine learning models detected behavioral anomalies. "
+                "Review flagged events for potential security concerns."
+            )
         
-        if risk_level == 'critical':
-            recommendations.append("Alert security team immediately for urgent investigation")
+        # General recommendation
+        if len(recommendations) == 0:
+            recommendations.append("Monitor detected anomalies and investigate as needed.")
         
         return recommendations
     
-    def _analyze_anomaly_impact(self, all_anomalies: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Analyze the impact of detected anomalies"""
-        
-        # Affected entities
-        affected_users = set()
-        affected_doors = set()
-        
-        for anomaly in all_anomalies:
-            if 'user_id' in anomaly:
-                affected_users.add(anomaly['user_id'])
-            if 'door_id' in anomaly:
-                affected_doors.add(anomaly['door_id'])
-        
-        # Temporal impact
-        anomaly_dates = []
-        for anomaly in all_anomalies:
-            if 'date' in anomaly:
-                anomaly_dates.append(anomaly['date'])
-            elif 'timestamp' in anomaly:
-                if isinstance(anomaly['timestamp'], str):
-                    anomaly_dates.append(anomaly['timestamp'][:10])  # Extract date part
-        
-        unique_dates = len(set(anomaly_dates))
-        
+    def _convert_to_legacy_format(self, result: AnomalyAnalysis) -> Dict[str, Any]:
+        """Convert AnomalyAnalysis to legacy dictionary format"""
         return {
-            'affected_users_count': len(affected_users),
-            'affected_doors_count': len(affected_doors),
-            'affected_dates_count': unique_dates,
-            'security_impact_level': self._calculate_security_impact(all_anomalies)
+            'anomalies_detected': result.total_anomalies,
+            'threat_level': result.risk_assessment.get('risk_level', 'low'),
+            'severity_distribution': result.severity_distribution,
+            'detection_summary': result.detection_summary,
+            'risk_assessment': result.risk_assessment,
+            'recommendations': result.recommendations,
+            # Legacy compatibility fields
+            'statistical_anomalies': [a for a in result.detection_summary.get('type_breakdown', {}).keys() if 'zscore' in a or 'iqr' in a or 'mad' in a],
+            'pattern_anomalies': [a for a in result.detection_summary.get('type_breakdown', {}).keys() if 'rapid' in a or 'badge' in a],
+            'ml_anomalies': [a for a in result.detection_summary.get('type_breakdown', {}).keys() if 'ml' in a],
+            'anomaly_count': result.total_anomalies,
+            'confidence_mean': result.detection_summary.get('confidence_stats', {}).get('mean', 0)
         }
     
-    def _calculate_security_impact(self, all_anomalies: List[Dict[str, Any]]) -> str:
-        """Calculate the security impact level"""
-        
-        security_types = [
-            'repeated_access_failures',
-            'door_failure_spike',
-            'high_invalid_badge_rate',
-            'rapid_attempts',
-            'potential_tailgating'
-        ]
-        
-        security_anomalies = [a for a in all_anomalies if a.get('type') in security_types]
-        critical_security = [a for a in security_anomalies if a.get('severity') == 'critical']
-        
-        if len(critical_security) >= 3:
-            return 'severe'
-        elif len(security_anomalies) >= 5:
-            return 'significant'
-        elif len(security_anomalies) >= 2:
-            return 'moderate'
-        else:
-            return 'minimal'
+    def _insufficient_data_result(self) -> AnomalyAnalysis:
+        """Return result for insufficient data"""
+        return AnomalyAnalysis(
+            total_anomalies=0,
+            severity_distribution={},
+            detection_summary={'total_anomalies': 0, 'message': 'Insufficient data for anomaly detection'},
+            risk_assessment={'risk_level': 'unknown', 'risk_score': 0},
+            recommendations=['Collect more data for meaningful anomaly detection']
+        )
     
-    def _empty_result(self) -> Dict[str, Any]:
-        """Return empty result structure"""
+    def _empty_anomaly_analysis(self) -> AnomalyAnalysis:
+        """Return empty anomaly analysis for error cases"""
+        return AnomalyAnalysis(
+            total_anomalies=0,
+            severity_distribution={},
+            detection_summary={'total_anomalies': 0, 'message': 'Error in anomaly detection'},
+            risk_assessment={'risk_level': 'error', 'risk_score': 0},
+            recommendations=['Unable to perform anomaly detection due to data issues']
+        )
+    
+    def _empty_legacy_result(self) -> Dict[str, Any]:
+        """Return empty result in legacy format"""
         return {
+            'anomalies_detected': 0,
+            'threat_level': 'unknown',
+            'severity_distribution': {},
+            'detection_summary': {'total_anomalies': 0, 'message': 'Error in anomaly detection'},
+            'risk_assessment': {'risk_level': 'error', 'risk_score': 0},
+            'recommendations': ['Unable to perform anomaly detection due to data issues'],
             'statistical_anomalies': [],
-            'temporal_anomalies': [],
-            'behavioral_anomalies': [],
-            'security_anomalies': [],
             'pattern_anomalies': [],
-            'machine_learning_anomalies': [],
-            'anomaly_summary': {
-                'total_anomalies': 0,
-                'severity_breakdown': {},
-                'type_breakdown': {}
-            },
-            'risk_assessment': {
-                'risk_level': 'low',
-                'risk_score': 0,
-                'risk_factors': []
-            }
+            'ml_anomalies': [],
+            'anomaly_count': 0,
+            'confidence_mean': 0
         }
 
-# Factory function
-def create_anomaly_detector() -> AnomalyDetector:
-    """Create anomaly detector instance"""
-    return AnomalyDetector()
+# Factory function for compatibility
+def create_anomaly_detector(**kwargs) -> AnomalyDetector:
+    """Factory function to create anomaly detector"""
+    return AnomalyDetector(**kwargs)
 
-# Export
-__all__ = ['AnomalyDetector', 'Anomaly', 'create_anomaly_detector']
+# Alias for enhanced version
+EnhancedAnomalyDetector = AnomalyDetector
+create_enhanced_anomaly_detector = create_anomaly_detector
+
+# Export for compatibility
+__all__ = ['AnomalyDetector', 'create_anomaly_detector', 'EnhancedAnomalyDetector']
