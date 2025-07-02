@@ -62,22 +62,30 @@ class DatabaseConnectionPool:
             self._pool = new_pool
 
     def get_connection(self) -> DatabaseConnection:
-        with self._lock:
-            self._shrink_idle_connections()
-            # Check if pool usage is high before handing out a connection
-            self._maybe_expand()
+        deadline = time.time() + self._timeout
+        while True:
+            with self._lock:
+                self._shrink_idle_connections()
+                # Check if pool usage is high before handing out a connection
+                self._maybe_expand()
 
-            if self._pool:
-                conn, _ = self._pool.pop()
-                if not conn.health_check():
-                    conn.close()
-                    self._active -= 1
-                    return self.get_connection()
-            else:
-                conn = self._factory()
-                self._active += 1
+                if self._pool:
+                    conn, _ = self._pool.pop()
+                    if not conn.health_check():
+                        conn.close()
+                        self._active -= 1
+                        continue
+                    return conn
 
-            return conn
+                if self._active < self._max_size:
+                    conn = self._factory()
+                    self._active += 1
+                    return conn
+
+            if time.time() >= deadline:
+                raise TimeoutError("No available connection in pool")
+
+            time.sleep(0.05)
 
     def release_connection(self, conn: DatabaseConnection) -> None:
         with self._lock:

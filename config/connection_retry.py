@@ -17,6 +17,8 @@ class RetryConfig:
     max_attempts: int = 3
     base_delay: float = 0.5
     jitter: bool = True
+    backoff_factor: float = 2.0
+    max_delay: float = 60.0
 
 
 class RetryCallbacks(Protocol):
@@ -30,7 +32,11 @@ class RetryCallbacks(Protocol):
 class ConnectionRetryManager:
     """Utility to retry a callable with exponential backoff."""
 
-    def __init__(self, config: Optional[RetryConfig] = None, callbacks: Optional[RetryCallbacks] = None) -> None:
+    def __init__(
+        self,
+        config: Optional[RetryConfig] = None,
+        callbacks: Optional[RetryCallbacks] = None,
+    ) -> None:
         self.config = config or RetryConfig()
         self.callbacks = callbacks
 
@@ -46,12 +52,16 @@ class ConnectionRetryManager:
                 if attempt >= self.config.max_attempts:
                     if self.callbacks and hasattr(self.callbacks, "on_failure"):
                         self.callbacks.on_failure()
-                    raise ConnectionRetryExhausted("maximum retry attempts reached") from exc
-                delay = self.config.base_delay * (2 ** (attempt - 1))
+                    raise ConnectionRetryExhausted(
+                        "maximum retry attempts reached"
+                    ) from exc
+                delay = self.config.base_delay * (
+                    self.config.backoff_factor ** (attempt - 1)
+                )
                 if self.config.jitter:
                     delay += random.uniform(0, self.config.base_delay)
+                delay = min(delay, self.config.max_delay)
                 if self.callbacks and hasattr(self.callbacks, "on_retry"):
                     self.callbacks.on_retry(attempt, delay)
                 time.sleep(delay)
                 attempt += 1
-
