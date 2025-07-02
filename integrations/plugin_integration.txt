@@ -4,7 +4,7 @@ Integration instructions for adding the JSON Serialization Plugin to your app
 """
 
 print("""
-🔌 JSON SERIALIZATION PLUGIN INTEGRATION
+ JSON SERIALIZATION PLUGIN INTEGRATION
 
 Step 1: Update your core/app_factory.py
 ======================================

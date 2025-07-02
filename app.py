@@ -36,7 +36,7 @@ def check_learning_status():
     logger.info(f"   Total devices learned: {stats['total_devices']}")
     logger.info(f"   Latest save: {stats.get('latest_save', 'None')}")
 
-    logger.info("\n📁 LEARNED FILES:")
+    logger.info("\n LEARNED FILES:")
     for file_info in stats["files"]:
         logger.info(
             f"   • {file_info['filename']} - {file_info['device_count']} devices"
@@ -48,7 +48,7 @@ def check_learning_status():
     import os
 
     storage_exists = os.path.exists("data/learned_mappings.json")
-    logger.info(f"\n💾 Storage file exists: {storage_exists}")
+    logger.info(f"\n Storage file exists: {storage_exists}")
 
     if storage_exists:
         file_size = os.path.getsize("data/learned_mappings.json")
@@ -67,26 +67,26 @@ def verify_dependencies() -> None:
 
     if missing:
         logger.error("Missing required dependencies: %s", ", ".join(missing))
-        logger.info("\n💡 Run ./scripts/setup.sh to install them")
+        logger.info("\n Run ./scripts/setup.sh to install them")
         sys.exit(1)
 
 
 def print_startup_info(app_config):
     """Print application startup information"""
     logger.info("\n" + "=" * 60)
-    logger.info("🏯 YŌSAI INTEL DASHBOARD")
+    logger.info(" YŌSAI INTEL DASHBOARD")
     logger.info("=" * 60)
-    logger.info(f"🌐 URL: http://{app_config.host}:{app_config.port}")
-    logger.info(f"🔧 Debug Mode: {app_config.debug}")
-    logger.info(f"🌍 Environment: {app_config.environment}")
-    logger.info(f"📊 Analytics: http://{app_config.host}:{app_config.port}/analytics")
-    logger.info(f"📁 Upload: http://{app_config.host}:{app_config.port}/upload")
+    logger.info(f" URL: http://{app_config.host}:{app_config.port}")
+    logger.info(f" Debug Mode: {app_config.debug}")
+    logger.info(f" Environment: {app_config.environment}")
+    logger.info(f" Analytics: http://{app_config.host}:{app_config.port}/analytics")
+    logger.info(f" Upload: http://{app_config.host}:{app_config.port}/upload")
     logger.info("=" * 60)
 
     if app_config.debug:
-        logger.info("⚠️  Running in DEBUG mode - do not use in production!")
+        logger.info("  Running in DEBUG mode - do not use in production!")
 
-    logger.info("\n🚀 Dashboard starting...")
+    logger.info("\n Dashboard starting...")
 
 
 def main():
@@ -100,13 +100,13 @@ def main():
 
             config = get_config()
             app_config = config.get_app_config()
-            logger.info("✅ Configuration loaded successfully")
+            logger.info(" Configuration loaded successfully")
             verify_dependencies()
         except Exception as e:
-            logger.error(f"❌ Failed to load configuration: {e}")
-            logger.info(f"\n❌ Configuration Error: {e}")
+            logger.error(f" Failed to load configuration: {e}")
+            logger.info(f"\n Configuration Error: {e}")
             logger.info(
-                "💡 Make sure config/config.py exists and is properly formatted"
+                " Make sure config/config.py exists and is properly formatted"
             )
             sys.exit(1)
 
@@ -119,9 +119,9 @@ def main():
             validated = validate_all_secrets()
             for k, v in validated.items():
                 os.environ.setdefault(k, v)
-            logger.info("✅ Secrets validated successfully")
+            logger.info(" Secrets validated successfully")
         except ConfigurationError as e:
-            logger.error(f"❌ Secret validation failed: {e}")
+            logger.error(f" Secret validation failed: {e}")
             sys.exit(1)
 
         # Import and create the Dash application
@@ -160,12 +160,12 @@ def main():
                 return current
 
             app._callback_manager = manager
-            logger.info("✅ Application created successfully")
+            logger.info(" Application created successfully")
         except Exception as e:
-            logger.error(f"❌ Failed to create application: {e}")
-            logger.info(f"\n❌ Application Creation Error: {e}")
+            logger.error(f" Failed to create application: {e}")
+            logger.info(f"\n Application Creation Error: {e}")
             logger.info(
-                "💡 Make sure core/app_factory.py exists and dependencies are installed"
+                " Make sure core/app_factory.py exists and dependencies are installed"
             )
             sys.exit(1)
 
@@ -173,16 +173,16 @@ def main():
         try:
             app.run(debug=app_config.debug, host=app_config.host, port=app_config.port)
         except KeyboardInterrupt:
-            logger.info("\n👋 Application stopped by user")
+            logger.info("\n Application stopped by user")
         except Exception as e:
-            logger.error(f"❌ Application runtime error: {e}")
-            logger.info(f"\n❌ Runtime Error: {e}")
+            logger.error(f" Application runtime error: {e}")
+            logger.info(f"\n Runtime Error: {e}")
             sys.exit(1)
 
     except Exception as e:
-        logger.error(f"❌ Unexpected error: {e}")
-        logger.info(f"\n❌ Unexpected Error: {e}")
-        logger.info("💡 Check logs for more details")
+        logger.error(f" Unexpected error: {e}")
+        logger.info(f"\n Unexpected Error: {e}")
+        logger.info(" Check logs for more details")
         sys.exit(1)
 
 

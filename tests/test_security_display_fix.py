@@ -19,6 +19,6 @@ def test_security_display_fix():
     display = create_analysis_results_display(mock_results, 'security')
     assert isinstance(display, dbc.Card)
     assert "Security Results" in str(display)
-    print("✅ Header fix validated")
-    print("✅ Statistics extraction validated")
+    print(" Header fix validated")
+    print(" Statistics extraction validated")
 

@@ -243,27 +243,27 @@ class AnalyticsService:
         from analytics.chunked_analytics_controller import ChunkedAnalyticsController
 
         original_rows = len(df)
-        logger.info(f"🚀 Starting COMPLETE analysis for {original_rows:,} rows")
+        logger.info(f" Starting COMPLETE analysis for {original_rows:,} rows")
 
         validator = self.validation_service
         df, needs_chunking = validator.validate_for_analysis(df)
 
         validated_rows = len(df)
-        logger.info(f"📋 After validation: {validated_rows:,} rows, chunking needed: {needs_chunking}")
+        logger.info(f" After validation: {validated_rows:,} rows, chunking needed: {needs_chunking}")
 
         # FIXED: Ensure we never lose data in validation
         if validated_rows != original_rows:
-            logger.warning(f"⚠️  Row count changed during validation: {original_rows:,} → {validated_rows:,}")
+            logger.warning(f"  Row count changed during validation: {original_rows:,} → {validated_rows:,}")
 
         if not needs_chunking:
-            logger.info("✅ Using regular analysis (no chunking needed)")
+            logger.info(" Using regular analysis (no chunking needed)")
             return self._regular_analysis(df, analysis_types)
 
         # FIXED: Use proper chunk size calculation
         chunk_size = validator.get_optimal_chunk_size(df)
         chunked_controller = ChunkedAnalyticsController(chunk_size=chunk_size)
 
-        logger.info(f"🔄 Using chunked analysis: {validated_rows:,} rows, {chunk_size:,} per chunk")
+        logger.info(f" Using chunked analysis: {validated_rows:,} rows, {chunk_size:,} per chunk")
 
         # FIXED: Process with verification
         result = chunked_controller.process_large_dataframe(df, analysis_types)
@@ -282,9 +282,9 @@ class AnalyticsService:
         # FIXED: Verify complete processing
         rows_processed = result.get("rows_processed", 0)
         if rows_processed != validated_rows:
-            logger.error(f"❌ PROCESSING ERROR: Expected {validated_rows:,} rows, got {rows_processed:,}")
+            logger.error(f" PROCESSING ERROR: Expected {validated_rows:,} rows, got {rows_processed:,}")
         else:
-            logger.info(f"✅ SUCCESS: Processed ALL {rows_processed:,} rows successfully")
+            logger.info(f" SUCCESS: Processed ALL {rows_processed:,} rows successfully")
 
         return result
 
@@ -329,7 +329,7 @@ class AnalyticsService:
         result = self._prepare_regular_result(df)
         result.update(self._apply_regular_analysis(df, analysis_types))
 
-        logger.info(f"✅ Regular analysis completed for {len(df):,} rows")
+        logger.info(f" Regular analysis completed for {len(df):,} rows")
         return result
 
     def _calculate_temporal_stats_safe(self, df: pd.DataFrame) -> Dict[str, Any]:
@@ -560,7 +560,7 @@ class AnalyticsService:
         logger = logging.getLogger(__name__)
 
         try:
-            logger.info("🎯 Starting Unique Patterns Analysis")
+            logger.info(" Starting Unique Patterns Analysis")
 
             # STEP 1: Get uploaded data with verification
             if data_source == "database":
@@ -571,7 +571,7 @@ class AnalyticsService:
                 uploaded_data = get_uploaded_data()
 
             if not uploaded_data:
-                logger.warning("❌ No uploaded data found for unique patterns analysis")
+                logger.warning(" No uploaded data found for unique patterns analysis")
                 return {
                     'status': 'no_data',
                     'message': 'No uploaded files available',
@@ -579,7 +579,7 @@ class AnalyticsService:
                 }
 
             # STEP 2: Process the uploaded data
-            logger.info(f"📁 Found {len(uploaded_data)} uploaded files")
+            logger.info(f" Found {len(uploaded_data)} uploaded files")
 
             # Get the first file (or combine all files)
             all_dfs = []
@@ -603,27 +603,27 @@ class AnalyticsService:
                 combined_df = pd.concat(all_dfs, ignore_index=True)
 
             final_rows = len(combined_df)
-            logger.info(f"📊 COMBINED DATASET: {final_rows:,} total rows")
+            logger.info(f" COMBINED DATASET: {final_rows:,} total rows")
 
             # STEP 4: Check for data loss
             if final_rows != total_original_rows:
-                logger.warning(f"⚠️  Data loss detected: {total_original_rows:,} → {final_rows:,}")
+                logger.warning(f"  Data loss detected: {total_original_rows:,} → {final_rows:,}")
 
             # STEP 5: Verify we have the expected data
             if final_rows == 150 and total_original_rows > 150:
-                logger.error("🚨 FOUND 150 ROW LIMIT in unique patterns analysis!")
+                logger.error(" FOUND 150 ROW LIMIT in unique patterns analysis!")
                 logger.error(f"   Original rows: {total_original_rows:,}")
                 logger.error(f"   Final rows: {final_rows:,}")
                 # Continue processing but log the issue
             elif final_rows > 1000:
-                logger.info(f"✅ Processing large dataset: {final_rows:,} rows")
+                logger.info(f" Processing large dataset: {final_rows:,} rows")
 
             # STEP 6: Calculate statistics
             total_records = len(combined_df)
             unique_users = combined_df['person_id'].nunique() if 'person_id' in combined_df.columns else 0
             unique_devices = combined_df['door_id'].nunique() if 'door_id' in combined_df.columns else 0
 
-            logger.info("📈 STATISTICS:")
+            logger.info(" STATISTICS:")
             logger.info(f"   Total records: {total_records:,}")
             logger.info(f"   Unique users: {unique_users:,}")
             logger.info(f"   Unique devices: {unique_devices:,}")
@@ -755,20 +755,20 @@ class AnalyticsService:
 
             # STEP 13: Final verification log
             result_total = result['data_summary']['total_records']
-            logger.info("🎉 UNIQUE PATTERNS ANALYSIS COMPLETE")
+            logger.info(" UNIQUE PATTERNS ANALYSIS COMPLETE")
             logger.info(f"   Result total_records: {result_total:,}")
 
             if result_total == 150 and result_total != total_original_rows:
-                logger.error("❌ STILL SHOWING 150 - CHECK DATA PROCESSING!")
+                logger.error(" STILL SHOWING 150 - CHECK DATA PROCESSING!")
             elif result_total == total_original_rows:
-                logger.info(f"✅ SUCCESS: Correctly showing {result_total:,} rows")
+                logger.info(f" SUCCESS: Correctly showing {result_total:,} rows")
             else:
-                logger.warning(f"⚠️  Unexpected count: {result_total:,} (expected {total_original_rows:,})")
+                logger.warning(f"  Unexpected count: {result_total:,} (expected {total_original_rows:,})")
 
             return result
 
         except Exception as e:
-            logger.error(f"❌ Unique patterns analysis failed: {e}")
+            logger.error(f" Unique patterns analysis failed: {e}")
             import traceback
             traceback.print_exc()
 

@@ -78,11 +78,11 @@ class DataFrameSecurityValidator:
         max_bytes = self.max_analysis_mb * 1024 * 1024
 
         total_rows = len(df)
-        logger.info(f"🔢 Calculating chunk size for {total_rows:,} rows ({memory_usage/1024/1024:.1f}MB)")
+        logger.info(f"Calculating chunk size for {total_rows:,} rows ({memory_usage/1024/1024:.1f}MB)")
 
         # FIXED: For datasets under 100k rows, process all at once
         if memory_usage <= max_bytes and total_rows <= DataProcessingLimits.SMALL_DATASET_ROW_THRESHOLD:
-            logger.info(f"✅ Small dataset: processing all {total_rows:,} rows at once")
+            logger.info(f"Small dataset: processing all {total_rows:,} rows at once")
             return total_rows
 
         # FIXED: Calculate reasonable chunk size with minimum threshold
@@ -99,8 +99,8 @@ class DataFrameSecurityValidator:
         if total_rows < DataProcessingLimits.SMALL_DATA_CHUNK_ROWS:
             final_chunk_size = total_rows
 
-        logger.info(f"📊 Chunk size calculation: {total_rows:,} rows → {final_chunk_size:,} per chunk")
-        logger.info(f"📈 Will create {(total_rows + final_chunk_size - 1) // final_chunk_size} chunks")
+        logger.info(f"Chunk size calculation: {total_rows:,} rows → {final_chunk_size:,} per chunk")
+        logger.info(f"Will create {(total_rows + final_chunk_size - 1) // final_chunk_size} chunks")
 
         return final_chunk_size
 

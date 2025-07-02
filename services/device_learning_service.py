@@ -116,14 +116,14 @@ class DeviceLearningService:
             self.learned_mappings[fingerprint] = learning_data
 
             logger.info(
-                f"✅ Saved {len(device_mappings)} device mappings for {filename}"
+                f" Saved {len(device_mappings)} device mappings for {filename}"
             )
-            logger.info(f"📁 File: {mapping_file}")
+            logger.info(f" File: {mapping_file}")
 
             return fingerprint
 
         except Exception as e:
-            logger.error(f"❌ Failed to save device mappings: {e}")
+            logger.error(f" Failed to save device mappings: {e}")
             raise
 
     def get_learned_mappings(self, df: pd.DataFrame, filename: str) -> Dict[str, Dict]:
@@ -134,7 +134,7 @@ class DeviceLearningService:
         if fingerprint in self.learned_mappings:
             learned_data = self.learned_mappings[fingerprint]
             logger.info(
-                f"🔄 Loaded {len(learned_data.get('mappings', {}))} learned mappings for {filename}"
+                f" Loaded {len(learned_data.get('mappings', {}))} learned mappings for {filename}"
             )
             return learned_data.get("mappings", {})
 
@@ -157,7 +157,7 @@ class DeviceLearningService:
             ai_mapping_store.update(learned_mappings)
 
             logger.info(
-                f"🤖 Applied {len(learned_mappings)} learned mappings to AI store"
+                f" Applied {len(learned_mappings)} learned mappings to AI store"
             )
             return True
 
@@ -195,12 +195,12 @@ class DeviceLearningService:
             self._persist_learned_mappings()
 
             logger.info(
-                f"✅ Saved user device mappings for {filename}: {len(user_mappings)} devices"
+                f" Saved user device mappings for {filename}: {len(user_mappings)} devices"
             )
             return True
 
         except Exception as e:
-            logger.error(f"❌ Failed to save user device mappings: {e}")
+            logger.error(f" Failed to save user device mappings: {e}")
             return False
 
     def get_user_device_mappings(self, filename: str) -> Dict[str, Any]:

@@ -17,48 +17,48 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: ⚙️  Set up Python
+      - name:   Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
 
-      - name: 📦 Install deps
+      - name:  Install deps
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install black flake8 mypy bandit pytest pytest-cov safety
 
-      - name: 🔤 Extract translations
+      - name:  Extract translations
         run: pybabel extract -F babel.cfg -o messages.pot .
 
-      - name: 🌐 Compile translations
+      - name:  Compile translations
         run: pybabel compile -d translations
 
-      - name: 📝 Check missing translations
+      - name:  Check missing translations
         run: python scripts/check_missing_translations.py
 
       # ----- Lint & static analysis -----
-      - name: 🧹 Black (format check)
+      - name:  Black (format check)
         run: black --check --diff .
 
-      - name: 🔍 Flake8
+      - name:  Flake8
         run: flake8 .
 
-      - name: 🧐 Mypy (type check)
+      - name:  Mypy (type check)
         run: mypy --strict .
 
-      - name: 🛡️  Bandit (security scan)
+      - name:   Bandit (security scan)
         run: bandit -r .
 
-      - name: 📚 Safety (dependency CVE scan)
+      - name:  Safety (dependency CVE scan)
         run: safety check --full-report
 
       # ----- Tests -----
-      - name: ✅ Run PyTest
+      - name:  Run PyTest
         run: pytest -q --cov=.
 
-      - name: ⬆️  Upload coverage to Codecov
+      - name:   Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           fail_ci_if_error: true
@@ -71,14 +71,14 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🔐 Login to Docker registry
+      - name:  Login to Docker registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🏗️  Build & push image
+      - name:   Build & push image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -87,7 +87,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: ✅ Image digest
+      - name:  Image digest
         run: echo "Image built: ${{ steps.build-and-push.outputs.digest }}"
 
   release-notes:
@@ -98,7 +98,7 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 📝 Generate release
+      - name:  Generate release
         uses: softprops/action-gh-release@v1
         with:
           generate_release_notes: true

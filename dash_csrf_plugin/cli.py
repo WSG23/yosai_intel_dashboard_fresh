@@ -29,7 +29,7 @@ def cli():
 @click.option('--verbose', '-v', is_flag=True, help='Verbose output')
 def check_csrf(config_file, secret_key, mode, verbose):
     """Check CSRF configuration and security"""
-    click.echo("🛡️  Dash CSRF Protection Plugin - Security Check")
+    click.echo("  Dash CSRF Protection Plugin - Security Check")
     click.echo("=" * 50)
     
     try:
@@ -55,33 +55,33 @@ def check_csrf(config_file, secret_key, mode, verbose):
         
         # Security issues
         if issues['errors']:
-            click.echo("❌ Critical Issues:")
+            click.echo(" Critical Issues:")
             for error in issues['errors']:
                 click.echo(f"  • {error}", err=True)
             click.echo()
         
         if issues['warnings']:
-            click.echo("⚠️  Warnings:")
+            click.echo("  Warnings:")
             for warning in issues['warnings']:
                 click.echo(f"  • {warning}")
             click.echo()
         
         if issues['recommendations']:
-            click.echo("💡 Recommendations:")
+            click.echo(" Recommendations:")
             for rec in issues['recommendations']:
                 click.echo(f"  • {rec}")
             click.echo()
         
         # Overall status
         if not issues['errors']:
-            click.echo("✅ CSRF configuration looks good!")
+            click.echo(" CSRF configuration looks good!")
             sys.exit(0)
         else:
-            click.echo("❌ CSRF configuration has issues that need attention")
+            click.echo(" CSRF configuration has issues that need attention")
             sys.exit(1)
             
     except Exception as e:
-        click.echo(f"❌ Error checking CSRF configuration: {e}", err=True)
+        click.echo(f" Error checking CSRF configuration: {e}", err=True)
         sys.exit(1)
 
 
@@ -90,10 +90,10 @@ def check_csrf(config_file, secret_key, mode, verbose):
 def generate_key(length):
     """Generate a secure secret key"""
     key = CSRFUtils.generate_secret_key(length)
-    click.echo("🔑 Generated Secret Key:")
+    click.echo(" Generated Secret Key:")
     click.echo(key)
     click.echo()
-    click.echo("💡 Store this key securely and set it as your SECRET_KEY environment variable:")
+    click.echo(" Store this key securely and set it as your SECRET_KEY environment variable:")
     click.echo(f"export SECRET_KEY='{key}'")
 
 
@@ -114,25 +114,25 @@ def run(app_module, host, port, debug):
         elif hasattr(module, 'application'):
             app = module.application
         else:
-            click.echo("❌ Could not find 'app' or 'application' in module", err=True)
+            click.echo(" Could not find 'app' or 'application' in module", err=True)
             sys.exit(1)
         
         # Check if CSRF plugin is configured
         if hasattr(app, '_plugins') and 'csrf' in app._plugins:
             csrf_plugin = app._plugins['csrf']
-            click.echo(f"✅ CSRF Plugin detected (Mode: {csrf_plugin.mode.value})")
+            click.echo(f" CSRF Plugin detected (Mode: {csrf_plugin.mode.value})")
         else:
-            click.echo("⚠️  No CSRF plugin detected in app")
+            click.echo("  No CSRF plugin detected in app")
         
         # Run the app
-        click.echo(f"🚀 Starting Dash app on {host}:{port}")
+        click.echo(f" Starting Dash app on {host}:{port}")
         app.run(host=host, port=port, debug=debug)
         
     except ImportError as e:
-        click.echo(f"❌ Could not import module '{app_module}': {e}", err=True)
+        click.echo(f" Could not import module '{app_module}': {e}", err=True)
         sys.exit(1)
     except Exception as e:
-        click.echo(f"❌ Error running app: {e}", err=True)
+        click.echo(f" Error running app: {e}", err=True)
         sys.exit(1)
 
 
@@ -165,12 +165,12 @@ def init_config(output_file, mode, secret_key):
         with open(output_file, 'w') as f:
             json.dump(config_dict, f, indent=2)
         
-        click.echo(f"✅ Configuration file created: {output_file}")
-        click.echo(f"📋 Mode: {mode}")
-        click.echo(f"🔐 Secret key included in file - keep it secure!")
+        click.echo(f" Configuration file created: {output_file}")
+        click.echo(f" Mode: {mode}")
+        click.echo(f" Secret key included in file - keep it secure!")
         
     except Exception as e:
-        click.echo(f"❌ Error creating configuration: {e}", err=True)
+        click.echo(f" Error creating configuration: {e}", err=True)
         sys.exit(1)
 
 

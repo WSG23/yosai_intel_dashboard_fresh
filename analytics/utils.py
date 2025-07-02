@@ -27,9 +27,9 @@ def ensure_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
                 try:
                     logger.info("Converting column '%s' to datetime", col)
                     df[col] = pd.to_datetime(df[col], errors="coerce")
-                    logger.info("✅ Successfully converted '%s' to datetime", col)
+                    logger.info(" Successfully converted '%s' to datetime", col)
                 except Exception as exc:  # pragma: no cover - best effort
-                    logger.warning("⚠️ Could not convert '%s' to datetime: %s", col, exc)
+                    logger.warning(" Could not convert '%s' to datetime: %s", col, exc)
     return df
 
 

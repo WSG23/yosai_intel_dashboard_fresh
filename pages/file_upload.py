@@ -85,7 +85,7 @@ def build_success_alert(filename: str, rows: int, cols: int, prefix: str = "Succ
     """Create success alert with current data - FIXED to show actual counts"""
 
     # CRITICAL: Use actual current data, not cached values
-    details = f"📊 {rows:,} rows × {cols} columns"
+    details = f" {rows:,} rows × {cols} columns"
     if processed:
         details += " processed"
 
@@ -127,20 +127,20 @@ def build_file_preview_component(df: pd.DataFrame, filename: str) -> html.Div:
             create_file_preview(df, filename),
             dbc.Card(
                 [
-                    dbc.CardHeader([html.H6("📋 Data Configuration", className="mb-0")]),
+                    dbc.CardHeader([html.H6(" Data Configuration", className="mb-0")]),
                     dbc.CardBody(
                         [
                             html.P("Configure your data for analysis:", className="mb-3"),
                             dbc.ButtonGroup(
                                 [
                                     dbc.Button(
-                                        "📋 Verify Columns",
+                                        " Verify Columns",
                                         id="verify-columns-btn-simple",
                                         color="primary",
                                         size="sm",
                                     ),
                                     dbc.Button(
-                                        "🤖 Classify Devices",
+                                        " Classify Devices",
                                         id="classify-devices-btn",
                                         color="info",
                                         size="sm",
@@ -166,7 +166,7 @@ def layout():
                 [
                     dbc.Col(
                         [
-                            html.H1("📁 File Upload", className="text-primary mb-2"),
+                            html.H1(" File Upload", className="text-primary mb-2"),
                             html.P(
                                 "Upload CSV, Excel, or JSON files for analysis",
                                 className="text-muted mb-4",
@@ -185,7 +185,7 @@ def layout():
                                     dbc.CardHeader(
                                         [
                                             html.H5(
-                                                "📤 Upload Data Files", className="mb-0"
+                                                " Upload Data Files", className="mb-0"
                                             )
                                         ]
                                     ),
@@ -390,7 +390,7 @@ class Callbacks:
                 html.Hr(),
                 html.H5("Ready to analyze?"),
                 dbc.Button(
-                    "🚀 Go to Analytics", href="/analytics", color="success", size="lg"
+                    " Go to Analytics", href="/analytics", color="success", size="lg"
                 ),
             ]
         )
@@ -488,7 +488,7 @@ class Callbacks:
                                 mapping["source"] = "user_confirmed"
                                 ai_mapping_store.set(device, mapping)
                             logger.info(
-                                f"✅ Loaded {len(user_mappings)} saved mappings - AI SKIPPED"
+                                f" Loaded {len(user_mappings)} saved mappings - AI SKIPPED"
                             )
                         else:
                             logger.info("🆕 First upload - AI will be used")
@@ -496,7 +496,7 @@ class Callbacks:
 
                             ai_mapping_store.clear()
                     except Exception as e:  # pragma: no cover - best effort
-                        logger.info(f"⚠️ Error: {e}")
+                        logger.info(f" Error: {e}")
 
                 else:
                     upload_results.append(build_failure_alert(result["error"]))
@@ -513,7 +513,7 @@ class Callbacks:
                     html.Hr(),
                     html.H5("Ready to analyze?"),
                     dbc.Button(
-                        "🚀 Go to Analytics", href="/analytics", color="success", size="lg"
+                        " Go to Analytics", href="/analytics", color="success", size="lg"
                     ),
                 ]
             )
@@ -548,7 +548,7 @@ class Callbacks:
 
         if "column-verify-confirm" in trigger_id and confirm_clicks:
             success_alert = dbc.Toast(
-                [html.P("✅ Column mappings saved!")],
+                [html.P(" Column mappings saved!")],
                 header="Saved",
                 is_open=True,
                 dismissable=True,
@@ -569,7 +569,7 @@ class Callbacks:
         ai_suggestions = file_info.get("ai_suggestions", {})
         columns = file_info.get("columns", [])
 
-        logger.info(f"🤖 Applying AI suggestions for {len(columns)} columns")
+        logger.info(f" Applying AI suggestions for {len(columns)} columns")
 
         suggested_values = []
         for column in columns:
@@ -579,7 +579,7 @@ class Callbacks:
 
             if confidence > 0.3 and field:
                 suggested_values.append(field)
-                logger.info(f"   ✅ {column} -> {field} ({confidence:.0%})")
+                logger.info(f"    {column} -> {field} ({confidence:.0%})")
             else:
                 suggested_values.append(None)
                 logger.info(f"   ❓ {column} -> No confident suggestion ({confidence:.0%})")
@@ -591,7 +591,7 @@ class Callbacks:
         if not is_open:
             return "Modal closed"
 
-        logger.info("🔧 Populating device modal...")
+        logger.info(" Populating device modal...")
 
         try:
             uploaded_data = get_uploaded_data()
@@ -602,7 +602,7 @@ class Callbacks:
             device_columns = ["door_id", "device_name", "location", "door", "device"]
 
             for filename, df in uploaded_data.items():
-                logger.info(f"📄 Processing {filename} with {len(df)} rows")
+                logger.info(f" Processing {filename} with {len(df)} rows")
 
                 for col in df.columns:
                     col_lower = col.lower().strip()
@@ -611,12 +611,12 @@ class Callbacks:
                         all_devices.update(str(val) for val in unique_vals)
                         logger.info(f"   Found {len(unique_vals)} devices in column '{col}'")
 
-                        logger.debug(f"🔍 DEBUG - First 10 device names from '{col}':")
+                        logger.debug(f" DEBUG - First 10 device names from '{col}':")
                         sample_devices = unique_vals[:10]
                         for i, device in enumerate(sample_devices, 1):
                             logger.debug(f"   {i:2d}. {device}")
 
-                        logger.debug("🤖 DEBUG - Testing AI on sample devices:")
+                        logger.debug(" DEBUG - Testing AI on sample devices:")
                         try:
                             from services.ai_device_generator import AIDeviceGenerator
 
@@ -626,19 +626,19 @@ class Callbacks:
                                 try:
                                     result = ai_gen.generate_device_attributes(str(device))
                                     logger.info(
-                                        f"   🚪 '{device}' → Name: '{result.device_name}', Floor: {result.floor_number}, Security: {result.security_level}, Confidence: {result.confidence:.1%}"
+                                        f"    '{device}' → Name: '{result.device_name}', Floor: {result.floor_number}, Security: {result.security_level}, Confidence: {result.confidence:.1%}"
                                     )
                                     logger.info(
                                         f"      Access: Entry={result.is_entry}, Exit={result.is_exit}, Elevator={result.is_elevator}"
                                     )
                                     logger.info(f"      Reasoning: {result.ai_reasoning}")
                                 except Exception as e:
-                                    logger.info(f"   ❌ AI error on '{device}': {e}")
+                                    logger.info(f"    AI error on '{device}': {e}")
                         except Exception as e:
-                            logger.debug(f"🤖 DEBUG - AI import error: {e}")
+                            logger.debug(f" DEBUG - AI import error: {e}")
 
             actual_devices = sorted(list(all_devices))
-            logger.info(f"🎯 Total unique devices found: {len(actual_devices)}")
+            logger.info(f" Total unique devices found: {len(actual_devices)}")
 
             if not actual_devices:
                 return dbc.Alert(
@@ -726,7 +726,7 @@ class Callbacks:
                 [
                     dbc.Alert(
                         [
-                            html.Strong("🤖 AI Analysis: "),
+                            html.Strong(" AI Analysis: "),
                             f"Analyzed {len(actual_devices)} devices. Check console for detailed AI debug info.",
                         ],
                         color="info",
@@ -755,7 +755,7 @@ class Callbacks:
             )
 
         except Exception as e:  # pragma: no cover - safety net
-            logger.info(f"❌ Error in device modal: {e}")
+            logger.info(f" Error in device modal: {e}")
             return dbc.Alert(f"Error: {e}", color="danger")
 
     def populate_modal_content(self, is_open, file_info):
@@ -770,9 +770,9 @@ class Callbacks:
 
         filename = (
             str(file_info.get("filename", "Unknown"))
-            .replace("⛑️", "")
-            .replace("🔧", "")
-            .replace("❌", "")
+            .replace("", "")
+            .replace("", "")
+            .replace("", "")
         )
         columns = file_info.get("column_names", []) or file_info.get("columns", [])
         ai_suggestions = file_info.get("ai_suggestions", {})
@@ -953,7 +953,7 @@ class Callbacks:
             )
 
             success_alert = dbc.Toast(
-                "✅ Device mappings saved to database!",
+                " Device mappings saved to database!",
                 header="Confirmed & Saved",
                 is_open=True,
                 dismissable=True,
@@ -965,7 +965,7 @@ class Callbacks:
         except Exception as e:
             logger.info(f"\u274c Error saving device mappings: {e}")
             error_alert = dbc.Toast(
-                f"❌ Error saving mappings: {e}",
+                f" Error saving mappings: {e}",
                 header="Error",
                 is_open=True,
                 dismissable=True,
@@ -989,7 +989,7 @@ def get_trigger_id() -> str:
 def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Dict):
     """Save confirmed mappings for AI training"""
     try:
-        logger.info(f"🤖 Saving AI training data for {filename}")
+        logger.info(f" Saving AI training data for {filename}")
 
         # Prepare training data
         training_data = {
@@ -1013,9 +1013,9 @@ def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Di
                 )
                 ai_mappings = {v: k for k, v in mappings.items()}
                 ai_plugin.confirm_column_mapping(ai_mappings, session_id)
-                logger.info(f"✅ AI training data saved: {ai_mappings}")
+                logger.info(f" AI training data saved: {ai_mappings}")
         except Exception as ai_e:
-            logger.info(f"⚠️ AI training save failed: {ai_e}")
+            logger.info(f" AI training save failed: {ai_e}")
 
         import os
 
@@ -1028,10 +1028,10 @@ def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Di
         ) as f:
             f.write(json.dumps(training_data) + "\n")
 
-        logger.info(f"✅ Training data saved locally")
+        logger.info(f" Training data saved locally")
 
     except Exception as e:
-        logger.info(f"❌ Error saving training data: {e}")
+        logger.info(f" Error saving training data: {e}")
 
 
 

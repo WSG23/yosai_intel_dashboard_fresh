@@ -16,7 +16,7 @@ from core.secret_manager import validate_secrets
 from dash_csrf_plugin import setup_enhanced_csrf_protection, CSRFMode
 import pandas as pd
 
-# ✅ FIXED IMPORTS - Use correct config system
+#  FIXED IMPORTS - Use correct config system
 from config.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ def _create_full_app() -> dash.Dash:
 
         app.title = "Yōsai Intel Dashboard"
 
-        # ✅ FIXED: Use the working config system
+        #  FIXED: Use the working config system
         config_manager = get_config()
 
         if (
@@ -156,7 +156,7 @@ def _create_full_app() -> dash.Dash:
             """Return validation summary for required secrets"""
             return validate_secrets(), 200
 
-        logger.info("✅ Complete Dash application created successfully")
+        logger.info(" Complete Dash application created successfully")
         return app
 
     except Exception as e:
@@ -180,15 +180,15 @@ def _create_simple_app() -> dash.Dash:
         app.layout = html.Div(
             [
                 dcc.Location(id="url", refresh=False),
-                html.H1("🏯 Yōsai Intel Dashboard", className="text-center"),
+                html.H1(" Yōsai Intel Dashboard", className="text-center"),
                 html.Hr(),
                 html.Div(
                     [
                         dbc.Alert(
-                            "✅ Application created successfully!", color="success"
+                            " Application created successfully!", color="success"
                         ),
                         dbc.Alert(
-                            "⚠️ Running in simplified mode (no auth)", color="warning"
+                            " Running in simplified mode (no auth)", color="warning"
                         ),
                         html.P("Environment configuration loaded and working."),
                         html.P("Ready for development and testing."),
@@ -246,20 +246,20 @@ def _create_json_safe_app() -> dash.Dash:
             suppress_callback_exceptions=True,
         )
 
-        app.title = "🏯 Yōsai Intel Dashboard"
+        app.title = " Yōsai Intel Dashboard"
 
         app.layout = html.Div(
             [
-                html.H1("🏯 Yōsai Intel Dashboard", className="text-center"),
+                html.H1(" Yōsai Intel Dashboard", className="text-center"),
                 html.Hr(),
                 dbc.Container(
                     [
                         dbc.Alert(
-                            "✅ Application running with JSON-safe components",
+                            " Application running with JSON-safe components",
                             color="success",
                         ),
                         dbc.Alert(
-                            "🔧 All callbacks are wrapped for safe serialization",
+                            " All callbacks are wrapped for safe serialization",
                             color="info",
                         ),
                         html.P("Environment configuration loaded successfully."),
@@ -386,7 +386,7 @@ def _create_navbar() -> dbc.Navbar:
                             dbc.NavItem(
                                 [
                                     dbc.Button(
-                                        "🔄 Clear Cache",
+                                        " Clear Cache",
                                         id="clear-cache-btn",
                                         color="outline-secondary",
                                         size="sm",
@@ -487,7 +487,7 @@ def _get_analytics_page() -> Any:
     except ImportError as e:
         logger.error(f"Analytics page import failed: {e}")
         return _create_placeholder_page(
-            "📊 Analytics",
+            " Analytics",
             "Analytics page is being loaded...",
             "The analytics module is not available. Please check the installation.",
         )
@@ -532,7 +532,7 @@ def _get_upload_page() -> Any:
     except ImportError as e:
         logger.error(f"Upload page import failed: {e}")
         return _create_placeholder_page(
-            "📁 File Upload",
+            " File Upload",
             "File upload page is being loaded...",
             "The file upload module is not available. Please check the installation.",
         )
@@ -571,7 +571,7 @@ def _register_global_callbacks(manager: UnifiedCallbackCoordinator) -> None:
 
     create_learning_callbacks(manager)
 
-    logger.info("✅ Global callbacks registered successfully")
+    logger.info(" Global callbacks registered successfully")
 
 
 def _initialize_services() -> None:
@@ -605,7 +605,7 @@ def _configure_swagger(server: Any) -> None:
             },
         }
         Swagger(server, template=template)
-        logger.info("✅ Swagger configured successfully")
+        logger.info(" Swagger configured successfully")
     except Exception as e:
         logger.warning(
             f"Swagger configuration failed, continuing without it: {e}"

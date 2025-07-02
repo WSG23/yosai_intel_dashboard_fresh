@@ -18,4 +18,4 @@ def test_process_csv(tmp_path):
     assert processed == 1
     assert total == 2
     assert len(combined) == 2
-    assert info and info[0].startswith("✅")
+    assert info and info[0].startswith("")

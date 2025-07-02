@@ -475,7 +475,7 @@ class FileProcessor:
     ) -> pd.DataFrame:
         """Apply manual column mapping provided by user"""
 
-        logger.info(f"🔧 Applying manual mapping: {column_mapping}")
+        logger.info(f" Applying manual mapping: {column_mapping}")
 
         missing_source_cols = [
             source for source in column_mapping.values() if source not in df.columns

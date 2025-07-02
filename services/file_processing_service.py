@@ -58,11 +58,11 @@ class FileProcessingService:
                     all_data.append(processed_df)
                     total_records += len(processed_df)
                     processed_files += 1
-                    info.append(f"✅ {path}: {len(processed_df)} records")
+                    info.append(f" {path}: {len(processed_df)} records")
                 else:
-                    info.append(f"❌ {path}: {result.get('error', 'Unknown error')}")
+                    info.append(f" {path}: {result.get('error', 'Unknown error')}")
             except Exception as e:  # pragma: no cover - best effort
-                info.append(f"❌ {path}: Exception - {e}")
+                info.append(f" {path}: Exception - {e}")
                 logger.error(f"Exception processing {path}: {e}")
 
         combined = pd.concat(all_data, ignore_index=True) if all_data else pd.DataFrame()
