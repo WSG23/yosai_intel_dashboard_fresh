@@ -837,6 +837,29 @@ class Callbacks:
         columns = file_info.get("column_names", []) or file_info.get("columns", [])
         ai_suggestions = file_info.get("ai_suggestions", {})
 
+        # ADD THIS BLOCK HERE - Check for saved column mappings
+        try:
+            df = _uploaded_data_store.get_all_data().get(filename)
+            if df is not None:
+                from services.consolidated_learning_service import get_learning_service
+                learned = get_learning_service().get_learned_mappings(df, filename)
+                saved_column_mappings = learned.get('column_mappings', {})
+                
+                if saved_column_mappings:
+                    logger.info(f"📋 Found {len(saved_column_mappings)} saved column mappings for {filename}")
+                    
+                    # Inject saved mappings as high-confidence AI suggestions
+                    for standard_field, csv_column in saved_column_mappings.items():
+                        ai_suggestions[csv_column] = {
+                            'field': standard_field,
+                            'confidence': 1.0,
+                            'source': 'saved'
+                        }
+                    logger.info(f"📋 Pre-filled saved mappings: {saved_column_mappings}")
+        except Exception as e:
+            logger.debug(f"No saved mappings: {e}")
+        # END OF ADDITION
+
         if not columns:
             return dbc.Alert(f"No columns found in {filename}", color="warning")
 
@@ -1097,6 +1120,12 @@ class Callbacks:
 
         if not confirm_clicks or not file_info:
             return no_update
+        # DEBUG: Log what we're saving
+        logger.info(f"🔍 DEBUG save_verified_column_mappings called:")
+        logger.info(f"🔍 DEBUG - confirm_clicks: {confirm_clicks}")
+        logger.info(f"🔍 DEBUG - values: {values}")
+        logger.info(f"🔍 DEBUG - ids: {ids}")
+        logger.info(f"🔍 DEBUG - file_info filename: {file_info.get('filename', 'N/A')}")
 
         try:
             filename = file_info.get("filename", "")
