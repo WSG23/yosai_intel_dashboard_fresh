@@ -246,7 +246,7 @@ class CSRFManager:
         </head>
         <body>
             <div class="error-container">
-                <div class="error-icon">🛡️</div>
+                <div class="error-icon"></div>
                 <h1>Security Token Error</h1>
                 <div class="error-message">
                     <strong>Security Protection Activated</strong><br>

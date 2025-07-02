@@ -168,8 +168,8 @@ msgstr "東京本社"
 msgid "Main Entrance - Last access: OK"
 msgstr "正面玄関 - 最終アクセス: OK"
 
-msgid "🟢 All systems operational"
-msgstr "🟢 すべて正常稼働"
+msgid " All systems operational"
+msgstr " すべて正常稼働"
 
 # Deep analytics
 msgid "Advanced data analysis and visualization for security intelligence"

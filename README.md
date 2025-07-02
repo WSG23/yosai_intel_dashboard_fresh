@@ -39,7 +39,7 @@ yosai_intel_dashboard/
     └── css/                  # Modular CSS architecture
 ```
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Development Setup
 
@@ -160,7 +160,7 @@ dashboard. Key entry points include `tests/test_integration.py`,
 `tests/test_analytics_integration.py`, `tests/test_ai_device_generator.py` and
 `tests/test_security_service.py`.
 
-## 📋 Features
+##  Features
 
 - **Real-time Security Monitoring**: Live access control event monitoring
 - **AI-Powered Anomaly Detection**: Advanced pattern recognition
@@ -177,7 +177,7 @@ dashboard. Key entry points include `tests/test_integration.py`,
 If `pandas` is missing these pages will be disabled. Ensure you run
 `pip install -r requirements.txt` to install all dependencies.
 
-## 🔧 Configuration
+##  Configuration
 
 This project uses **`config/config.py`** for application settings. It
 loads defaults from `config/config.yaml` and allows environment variables to
@@ -300,7 +300,7 @@ The new `ConfigManager` provides the combined functionality of the deprecated
 files while maintaining backwards compatible helper functions like
 `get_app_config()` and `get_database_config()`.
 
-## 📊 Modular Components
+##  Modular Components
 
 ### Database Layer (`config/`)
 - **database_manager.py**: Connection pooling, multiple database support
@@ -356,7 +356,7 @@ def search():
 `JsonSerializationService` uses this helper to ensure consistent results across
 Flask and Dash applications.
 
-## 🔐 Authentication & Secrets
+##  Authentication & Secrets
 
 This project uses Auth0 for OIDC login. Configure the following environment
 variables or Docker secrets:
@@ -376,19 +376,19 @@ required secrets are set. See
 [docs/secret_management.md](docs/secret_management.md) for rotation
 procedures, Docker/cloud secret usage, and incident handling guidance.
 
-## 🌐 Language Toggle
+##  Language Toggle
 
 Internationalization is built in with Flask-Babel. Click the language dropdown in the navigation bar to switch between English and Japanese. No additional environment variables are required.
 If you encounter an error like `"Babel" object has no attribute "localeselector"` when starting the app, ensure that the `Flask-Babel` package is installed and up to date (version 4 or later). The application now falls back to the new `locale_selector_func` API when needed.
 
 ![Language Toggle Demo](docs/i18n_demo.gif)
 
-## 📚 Documentation
+##  Documentation
 
 See the [data model diagram](docs/data_model.md) for an overview of key entities.
 The running application exposes Swagger-based API docs at `http://<host>:<port>/api/docs`.
 Update the spec by running `python tools/generate_openapi.py` which writes `docs/openapi.json` for the UI.
-## 📜 Data Migration
+##  Data Migration
 Use the storage utilities to convert legacy pickle files to Parquet and load them:
 ```python
 from file_conversion.migrate_existing_files import main
@@ -414,11 +414,11 @@ to Parquet the next time the application starts.
 7. A legacy `lazystring` fix plugin sample is kept in
    `examples/legacy_lazystring_fix_plugin.py` for reference only.
 
-## 📦 Versioning
+##  Versioning
 
 This project adheres to [Semantic Versioning](https://semver.org). See
 [docs/release.md](docs/release.md) for details on how releases are managed.
 
-## 📄 License
+##  License
 
 MIT License - see LICENSE file for details.

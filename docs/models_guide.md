@@ -18,7 +18,7 @@ is organized and consistent.
 FILE-BY-FILE BREAKDOWN
 ======================
 
-📋 models/enums.py - "The Dropdown Lists"
+ models/enums.py - "The Dropdown Lists"
 ------------------------------------------
 WHAT IT DOES:
 This file defines all the fixed choices/options used throughout the system.
@@ -63,7 +63,7 @@ def resolve_ticket(ticket_id, resolution_type):
 ```
 
 
-👤 models/entities.py - "The People, Places, and Things"
+ models/entities.py - "The People, Places, and Things"
 --------------------------------------------------------
 WHAT IT DOES:
 Defines the main "things" in your security system - people, doors, and buildings.
@@ -187,7 +187,7 @@ def create_security_ticket(anomaly, threat_level):
 ```
 
 
-🏗️ models/base.py - "The Foundation Rules"
+ models/base.py - "The Foundation Rules"
 -------------------------------------------
 WHAT IT DOES:
 Sets up the basic rules that all data access models must follow.
@@ -228,7 +228,7 @@ def get_model_summary(model: BaseDataModel):
 ```
 
 
-📊 models/access_event.py - "The Door Activity Tracker"
+ models/access_event.py - "The Door Activity Tracker"
 -------------------------------------------------------
 WHAT IT DOES:
 Handles all database operations for access control events. When someone swipes 
@@ -280,7 +280,7 @@ def search_person_activity(db_connection, person_id, start_date):
 ```
 
 
-🚨 models/anomaly.py - "The Threat Detector"
+ models/anomaly.py - "The Threat Detector"
 --------------------------------------------
 WHAT IT DOES:
 Manages all the suspicious activities and security anomalies detected by AI.

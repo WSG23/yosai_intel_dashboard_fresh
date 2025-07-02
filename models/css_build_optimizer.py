@@ -311,7 +311,7 @@ class CSSQualityAnalyzer:
     
     def run_full_analysis(self) -> Dict[str, Any]:
         """Run complete CSS quality analysis"""
-        logger.info("🔍 Running comprehensive CSS quality analysis...")
+        logger.info(" Running comprehensive CSS quality analysis...")
         
         # Run all metric analyses
         metrics = [
@@ -365,20 +365,20 @@ class CSSOptimizer:
             minified_size = len(content)
             compression_ratio = (1 - minified_size / original_size) * 100
             
-            logger.info(f"✅ Minified {input_file.name}: {compression_ratio:.1f}% smaller")
+            logger.info(f" Minified {input_file.name}: {compression_ratio:.1f}% smaller")
             
         except Exception as e:
-            logger.info(f"❌ Error minifying {input_file}: {e}")
+            logger.info(f" Error minifying {input_file}: {e}")
     
     def build_production_css(self) -> None:
         """Build optimized CSS for production"""
-        logger.info("🏗️ Building production CSS...")
+        logger.info(" Building production CSS...")
 
         try:
             css_files = list(self.css_dir.glob("*.css"))
 
             if not css_files:
-                logger.info("❌ No CSS files found")
+                logger.info(" No CSS files found")
                 return
 
             # Determine if we should run in parallel
@@ -405,10 +405,10 @@ class CSSOptimizer:
                                 with gzip.open(f"{out}.gz", "wb") as f_out:
                                     f_out.write(f_in.read())
 
-                            logger.info(f"✅ Production CSS created: {out}")
-                            logger.info(f"✅ Gzipped version: {out}.gz")
+                            logger.info(f" Production CSS created: {out}")
+                            logger.info(f" Gzipped version: {out}.gz")
                         except Exception as e:
-                            logger.error(f"❌ Error building {css_file}: {e}")
+                            logger.error(f" Error building {css_file}: {e}")
             else:
                 css_file = css_files[0]
                 out = self.output_dir / f"{css_file.stem}.min.css"
@@ -420,16 +420,16 @@ class CSSOptimizer:
                     with gzip.open(f"{out}.gz", "wb") as f_out:
                         f_out.write(f_in.read())
 
-                logger.info(f"✅ Production CSS created: {out}")
-                logger.info(f"✅ Gzipped version: {out}.gz")
+                logger.info(f" Production CSS created: {out}")
+                logger.info(f" Gzipped version: {out}.gz")
 
         except Exception as e:
-            logger.info(f"❌ Error building production CSS: {e}")
+            logger.info(f" Error building production CSS: {e}")
 
 def generate_css_report(css_dir: Path, output_file: Optional[Path] = None) -> Dict[str, Any]:  # FIXED: Optional[Path] instead of Path
     """Generate comprehensive CSS quality report"""
     
-    logger.info("📊 Generating comprehensive CSS quality report...")
+    logger.info(" Generating comprehensive CSS quality report...")
     
     # Initialize analyzer
     quality_analyzer = CSSQualityAnalyzer(css_dir)
@@ -459,9 +459,9 @@ def generate_css_report(css_dir: Path, output_file: Optional[Path] = None) -> Di
         try:
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(report, f, indent=2)
-            logger.info(f"📋 Report saved to: {output_file}")
+            logger.info(f" Report saved to: {output_file}")
         except Exception as e:
-            logger.info(f"❌ Error saving report: {e}")
+            logger.info(f" Error saving report: {e}")
     
     return report
 
@@ -489,37 +489,37 @@ def print_report_summary(report: Dict[str, Any]) -> None:
     """Print a formatted summary of the CSS quality report"""
     
     logger.info("\n" + "=" * 60)
-    logger.info("🎯 CSS QUALITY REPORT SUMMARY")
+    logger.info(" CSS QUALITY REPORT SUMMARY")
     logger.info("=" * 60)
     
-    logger.info(f"\n📊 OVERALL SCORE: {report['overall_score']:.1f}/100")
+    logger.info(f"\n OVERALL SCORE: {report['overall_score']:.1f}/100")
     
     # Status indicator
     score = report['overall_score']
     if score >= 90:
-        logger.info("🟢 EXCELLENT - World-class CSS architecture!")
+        logger.info(" EXCELLENT - World-class CSS architecture!")
     elif score >= 80:
-        logger.info("🟡 GOOD - Minor improvements needed")
+        logger.info(" GOOD - Minor improvements needed")
     elif score >= 70:
         logger.info("🟠 WARNING - Several issues to address")
     else:
-        logger.info("🔴 CRITICAL - Major refactoring needed")
+        logger.info(" CRITICAL - Major refactoring needed")
     
-    logger.info(f"\n📅 Generated: {report['timestamp']}")
+    logger.info(f"\n Generated: {report['timestamp']}")
     
-    logger.info(f"\n📏 QUALITY METRICS:")
+    logger.info(f"\n QUALITY METRICS:")
     for metric in report['quality_metrics']:
         status_emoji = {
-            "excellent": "🟢",
-            "good": "🟡", 
+            "excellent": "",
+            "good": "", 
             "warning": "🟠",
-            "critical": "🔴",
-            "error": "❌"
+            "critical": "",
+            "error": ""
         }.get(metric['status'], "⚪")
         
         logger.info(f"  {status_emoji} {metric['name'].replace('_', ' ').title()}: {metric['value']}{metric['unit']}")
     
-    logger.info(f"\n💡 RECOMMENDATIONS:")
+    logger.info(f"\n RECOMMENDATIONS:")
     for i, rec in enumerate(report['recommendations'], 1):
         logger.info(f"  {i}. {rec}")
     
@@ -543,14 +543,14 @@ if __name__ == "__main__":
         report_file = ensure_output_directory(Path(css_dir).parent / "css-quality-report.json")
         report = generate_css_report_safe(css_dir, report_file)
     except PathValidationError as exc:
-        logger.info(f"❌ {exc}")
+        logger.info(f" {exc}")
         logger.info("Usage: python css_build_optimizer.py [css_directory]")
         sys.exit(1)
 
     print_report_summary(report)
 
-    logger.info(f"\n📋 Full report available at: {report_file}")
-    logger.info("\n🚀 Next steps:")
+    logger.info(f"\n Full report available at: {report_file}")
+    logger.info("\n Next steps:")
     logger.info("1. Review recommendations and address critical issues")
     logger.info("2. Run performance tests on live application")
     logger.info("3. Set up automated quality monitoring")

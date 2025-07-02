@@ -55,7 +55,7 @@ def lazystring_safe_json_dumps(obj: Any, **kwargs) -> str:
 def apply_lazystring_patch():
     """Apply the LazyString monkey patch to json.dumps"""
     json.dumps = lazystring_safe_json_dumps
-    logger.info("✅ LazyString monkey patch applied to json.dumps")
+    logger.info(" LazyString monkey patch applied to json.dumps")
 
 
 def remove_lazystring_patch():

@@ -196,7 +196,7 @@ class JsonSerializationPlugin:
                         return str(result)  # Convert to string immediately
 
                     flask_babel.lazy_gettext = safe_lazy_gettext
-                    self.logger.info("✅ Patched flask_babel.lazy_gettext to return strings")
+                    self.logger.info(" Patched flask_babel.lazy_gettext to return strings")
             except Exception as e:
                 self.logger.warning(f"Could not patch flask_babel: {e}")
 
@@ -267,7 +267,7 @@ class JsonSerializationPlugin:
             self._patch_dash_serialization()
             
             self._started = True
-            self.logger.info("✅ JSON Serialization Plugin started with babel handling")
+            self.logger.info(" JSON Serialization Plugin started with babel handling")
             return True
             
         except Exception as e:

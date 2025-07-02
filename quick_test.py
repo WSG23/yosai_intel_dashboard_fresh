@@ -42,15 +42,15 @@ def test_datetime_parsing():
     # Test datetime operations
     if hasattr(df_fixed['timestamp'].dt, 'date'):
         dates = df_fixed['timestamp'].dt.date
-        print(f"✅ Successfully extracted dates: {dates.min()} to {dates.max()}")
+        print(f" Successfully extracted dates: {dates.min()} to {dates.max()}")
         return True
     else:
-        print("❌ Datetime conversion failed")
+        print(" Datetime conversion failed")
         return False
 
 # Test analytics service with the fix
 def test_analytics_service():
-    print("🔬 Testing AnalyticsService...")
+    print(" Testing AnalyticsService...")
     
     try:
         from services.analytics_service import AnalyticsService
@@ -62,15 +62,15 @@ def test_analytics_service():
         result = service.analyze_with_chunking(df, ["basic"])
         
         rows_processed = result.get("processing_summary", {}).get("rows_processed", 0)
-        print(f"✅ Analytics completed: {rows_processed} rows processed")
+        print(f" Analytics completed: {rows_processed} rows processed")
         return rows_processed == len(df)
         
     except Exception as e:
-        print(f"❌ Analytics test failed: {e}")
+        print(f" Analytics test failed: {e}")
         return False
 
 def main():
-    print("🚀 QUICK DATETIME FIX TEST")
+    print(" QUICK DATETIME FIX TEST")
     print("=" * 40)
     
     # Test 1: Datetime parsing
@@ -82,15 +82,15 @@ def main():
     analytics_ok = test_analytics_service()
     
     print("\n" + "=" * 40)
-    print("📊 RESULTS:")
-    print(f"  Datetime parsing: {'✅ PASS' if datetime_ok else '❌ FAIL'}")
-    print(f"  Analytics service: {'✅ PASS' if analytics_ok else '❌ FAIL'}")
+    print(" RESULTS:")
+    print(f"  Datetime parsing: {' PASS' if datetime_ok else ' FAIL'}")
+    print(f"  Analytics service: {' PASS' if analytics_ok else ' FAIL'}")
     
     if datetime_ok and analytics_ok:
-        print("\n🎉 ALL TESTS PASSED! The datetime fix is working.")
+        print("\n ALL TESTS PASSED! The datetime fix is working.")
         print("Your system should now process complete datasets correctly.")
     else:
-        print("\n⚠️ Some tests failed. Check the error messages above.")
+        print("\n Some tests failed. Check the error messages above.")
     
     return datetime_ok and analytics_ok
 

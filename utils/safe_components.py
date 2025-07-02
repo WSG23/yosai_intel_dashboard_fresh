@@ -12,7 +12,7 @@ def safe_navbar():
     """Safe navbar component"""
     return dbc.Navbar([
         dbc.Container([
-            html.H3("🏯 Yōsai Intel Dashboard", className="text-white mb-0"),
+            html.H3(" Yōsai Intel Dashboard", className="text-white mb-0"),
             dbc.Nav([
                 dbc.NavItem(dbc.NavLink("Dashboard", href="/", external_link=True)),
                 dbc.NavItem(dbc.NavLink("File Upload", href="/file-upload", external_link=True)),
@@ -27,8 +27,8 @@ def safe_map_panel():
     """Safe map panel component"""
     return dbc.Card([
         dbc.CardHeader([
-            html.H4("🗺️ Security Map", className="mb-0"),
-            dbc.Badge("🟢 All systems operational", color="success")
+            html.H4(" Security Map", className="mb-0"),
+            dbc.Badge(" All systems operational", color="success")
         ]),
         dbc.CardBody([
             html.Div([
@@ -43,7 +43,7 @@ def safe_map_panel():
 def safe_bottom_panel():
     """Safe bottom panel component"""
     return dbc.Card([
-        dbc.CardHeader("📊 Analytics Panel"),
+        dbc.CardHeader(" Analytics Panel"),
         dbc.CardBody([
             html.P("Analytics panel is running safely"),
             html.Div("All components are JSON serializable", className="alert alert-success")
@@ -54,7 +54,7 @@ def safe_bottom_panel():
 def safe_incident_alerts():
     """Safe incident alerts component"""
     return dbc.Card([
-        dbc.CardHeader("🚨 Incident Alerts"),
+        dbc.CardHeader(" Incident Alerts"),
         dbc.CardBody([
             dbc.Alert("No active incidents", color="success"),
             html.P("System is operating normally"),
@@ -66,7 +66,7 @@ def safe_incident_alerts():
 def safe_weak_signal():
     """Safe weak signal panel component"""
     return dbc.Card([
-        dbc.CardHeader("📡 Weak Signal Analysis"),
+        dbc.CardHeader(" Weak Signal Analysis"),
         dbc.CardBody([
             html.P("Weak signal analysis is running"),
             html.P("All data is properly serialized", className="text-info")

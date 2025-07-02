@@ -90,15 +90,15 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
         # FIXED: Clear status messaging
         if actual_rows <= 10:
             status_color = "warning"
-            status_message = f"⚠️ Only {actual_rows} rows found - check if file is complete"
+            status_message = f" Only {actual_rows} rows found - check if file is complete"
         else:
             status_color = "success"
-            status_message = f"✅ Successfully loaded {actual_rows:,} rows"
+            status_message = f" Successfully loaded {actual_rows:,} rows"
 
         return dbc.Card(
             [
                 dbc.CardHeader([
-                    html.H6(f"📄 {filename}", className="mb-0"),
+                    html.H6(f" {filename}", className="mb-0"),
                     dbc.Badge(f"{actual_rows:,} rows total", color="info", className="ms-2")
                 ]),
                 dbc.CardBody(
@@ -148,7 +148,7 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
 
                         # ADDITIONAL: Clear indication of processing vs display
                         dbc.Alert(
-                            f"📊 Processing Summary: {actual_rows:,} rows will be available for analytics. "
+                            f" Processing Summary: {actual_rows:,} rows will be available for analytics. "
                             f"Above table shows first {preview_rows} rows for preview only.",
                             color="info",
                             className="mt-3"

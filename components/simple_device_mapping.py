@@ -212,7 +212,7 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
             (
                 dbc.Alert(
                     [
-                        html.Strong(f"🤖 AI Transfer: "),
+                        html.Strong(f" AI Transfer: "),
                         f"Loaded {len(ai_mapping_store)} AI-learned device mappings as defaults",
                     ],
                     color="light",
@@ -382,13 +382,13 @@ def toggle_simple_device_modal(open_clicks, cancel_clicks, save_clicks, is_open)
         return is_open
 
     button_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    logger.info(f"🎯 Modal button triggered: {button_id}")
+    logger.info(f" Modal button triggered: {button_id}")
 
     if button_id == "open-device-mapping" and open_clicks:
-        logger.info("📂 Opening device mapping modal")
+        logger.info(" Opening device mapping modal")
         return True
     elif button_id in ["device-modal-cancel", "device-modal-save"]:
-        logger.info("🚪 Closing device mapping modal")
+        logger.info(" Closing device mapping modal")
         return False
 
     return is_open

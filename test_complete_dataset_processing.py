@@ -27,7 +27,7 @@ sys.path.append(str(Path(__file__).parent))
 def create_large_test_dataset(rows: int = 2500) -> pd.DataFrame:
     """Create a test dataset larger than typical batch limits"""
     
-    logger.info(f"🏗️  Creating test dataset with {rows:,} rows")
+    logger.info(f"  Creating test dataset with {rows:,} rows")
     
     data = []
     base_date = datetime(2024, 1, 1)
@@ -48,7 +48,7 @@ def create_large_test_dataset(rows: int = 2500) -> pd.DataFrame:
         })
     
     df = pd.DataFrame(data)
-    logger.info(f"✅ Dataset created: {len(df):,} rows × {len(df.columns)} columns")
+    logger.info(f" Dataset created: {len(df):,} rows × {len(df.columns)} columns")
     
     # Verify dataset properties
     assert len(df) == rows, f"Expected {rows} rows, got {len(df)}"
@@ -82,14 +82,14 @@ def test_csv_processing_pipeline(df: pd.DataFrame) -> dict:
             df_raw = pd.read_csv(csv_path)
             step1_rows = len(df_raw)
             results['steps_completed'].append(f"Step 1 - Raw read: {step1_rows:,} rows")
-            logger.info(f"✅ Step 1: Read {step1_rows:,} rows")
+            logger.info(f" Step 1: Read {step1_rows:,} rows")
             
             if step1_rows != results['input_rows']:
                 results['errors'].append(f"Step 1: Row count mismatch - expected {results['input_rows']}, got {step1_rows}")
                 
         except Exception as e:
             results['errors'].append(f"Step 1 failed: {e}")
-            logger.error(f"❌ Step 1 failed: {e}")
+            logger.error(f" Step 1 failed: {e}")
             return results
         
         # Step 2: Test FileProcessor (if available)
@@ -106,7 +106,7 @@ def test_csv_processing_pipeline(df: pd.DataFrame) -> dict:
             if processor_result.get('success'):
                 step2_rows = processor_result.get('rows', 0)
                 results['steps_completed'].append(f"Step 2 - FileProcessor: {step2_rows:,} rows")
-                logger.info(f"✅ Step 2: FileProcessor processed {step2_rows:,} rows")
+                logger.info(f" Step 2: FileProcessor processed {step2_rows:,} rows")
                 
                 if step2_rows != step1_rows:
                     results['errors'].append(f"Step 2: Row count changed - was {step1_rows}, now {step2_rows}")
@@ -115,10 +115,10 @@ def test_csv_processing_pipeline(df: pd.DataFrame) -> dict:
                 
         except ImportError:
             results['steps_completed'].append("Step 2 - FileProcessor: SKIPPED (not available)")
-            logger.info("⏭️  Step 2: FileProcessor not available, skipping")
+            logger.info("  Step 2: FileProcessor not available, skipping")
         except Exception as e:
             results['errors'].append(f"Step 2 failed: {e}")
-            logger.error(f"❌ Step 2 failed: {e}")
+            logger.error(f" Step 2 failed: {e}")
         
         # Step 3: Test DataFrameValidator
         logger.info("Step 3: Testing DataFrameValidator...")
@@ -130,17 +130,17 @@ def test_csv_processing_pipeline(df: pd.DataFrame) -> dict:
             step3_rows = len(validated_df)
             
             results['steps_completed'].append(f"Step 3 - Validator: {step3_rows:,} rows (chunking: {needs_chunking})")
-            logger.info(f"✅ Step 3: Validator processed {step3_rows:,} rows, chunking: {needs_chunking}")
+            logger.info(f" Step 3: Validator processed {step3_rows:,} rows, chunking: {needs_chunking}")
             
             if step3_rows < step1_rows * 0.95:  # More than 5% data loss
                 results['errors'].append(f"Step 3: Significant data loss - {step1_rows - step3_rows} rows removed")
                 
         except ImportError:
             results['steps_completed'].append("Step 3 - Validator: SKIPPED (not available)")
-            logger.info("⏭️  Step 3: DataFrameValidator not available, skipping")
+            logger.info("  Step 3: DataFrameValidator not available, skipping")
         except Exception as e:
             results['errors'].append(f"Step 3 failed: {e}")
-            logger.error(f"❌ Step 3 failed: {e}")
+            logger.error(f" Step 3 failed: {e}")
         
         # Step 4: Test AnalyticsService (if available)
         logger.info("Step 4: Testing AnalyticsService...")
@@ -156,16 +156,16 @@ def test_csv_processing_pipeline(df: pd.DataFrame) -> dict:
             step4_rows = result.get("processing_summary", {}).get("rows_processed", "UNKNOWN")
             
             results['steps_completed'].append(f"Step 4 - Analytics: {step4_rows} rows processed")
-            logger.info(f"✅ Step 4: Analytics processed {step4_rows} rows")
+            logger.info(f" Step 4: Analytics processed {step4_rows} rows")
             
             results['final_row_count'] = step4_rows if isinstance(step4_rows, int) else len(test_df)
             
         except ImportError:
             results['steps_completed'].append("Step 4 - Analytics: SKIPPED (not available)")
-            logger.info("⏭️  Step 4: AnalyticsService not available, skipping")
+            logger.info("  Step 4: AnalyticsService not available, skipping")
         except Exception as e:
             results['errors'].append(f"Step 4 failed: {e}")
-            logger.error(f"❌ Step 4 failed: {e}")
+            logger.error(f" Step 4 failed: {e}")
     
     finally:
         # Clean up temporary file
@@ -180,7 +180,7 @@ def test_csv_processing_pipeline(df: pd.DataFrame) -> dict:
 def verify_configuration():
     """Verify that configuration supports large dataset processing"""
     
-    logger.info("⚙️  VERIFYING CONFIGURATION")
+    logger.info("  VERIFYING CONFIGURATION")
     
     try:
         from config.dynamic_config import dynamic_config
@@ -216,23 +216,23 @@ def verify_configuration():
                     config_issues.append(f"security.max_upload_mb too low: {security.max_upload_mb}")
         
         if config_issues:
-            logger.warning("⚠️  Configuration issues found:")
+            logger.warning("  Configuration issues found:")
             for issue in config_issues:
                 logger.warning(f"    • {issue}")
         else:
-            logger.info("✅ Configuration looks good for large dataset processing")
+            logger.info(" Configuration looks good for large dataset processing")
             
         return len(config_issues) == 0
         
     except ImportError:
-        logger.warning("⚠️  Could not import dynamic_config for verification")
+        logger.warning("  Could not import dynamic_config for verification")
         return False
 
 
 def main():
     """Run complete test suite"""
     
-    logger.info("🚀 COMPLETE DATASET PROCESSING TEST")
+    logger.info(" COMPLETE DATASET PROCESSING TEST")
     logger.info("=" * 70)
     
     # Step 1: Verify configuration
@@ -249,7 +249,7 @@ def main():
     results = test_csv_processing_pipeline(test_df)
     
     logger.info("\n" + "=" * 70)
-    logger.info("📊 TEST RESULTS SUMMARY")
+    logger.info(" TEST RESULTS SUMMARY")
     logger.info("=" * 70)
     
     logger.info(f"Input rows: {results['input_rows']:,}")
@@ -257,24 +257,24 @@ def main():
     
     logger.info("\nSteps completed:")
     for step in results['steps_completed']:
-        logger.info(f"  ✅ {step}")
+        logger.info(f"   {step}")
     
     if results['errors']:
-        logger.warning(f"\n❌ {len(results['errors'])} errors found:")
+        logger.warning(f"\n {len(results['errors'])} errors found:")
         for error in results['errors']:
             logger.warning(f"  • {error}")
     else:
-        logger.info("\n🎉 No errors found!")
+        logger.info("\n No errors found!")
     
     # Final assessment
     success_rate = results['final_row_count'] / results['input_rows'] if results['final_row_count'] else 0
     
     if success_rate >= 0.99:  # 99% or more rows processed
-        logger.info(f"🎯 SUCCESS! {success_rate:.1%} of data processed correctly")
+        logger.info(f" SUCCESS! {success_rate:.1%} of data processed correctly")
     elif success_rate >= 0.90:
-        logger.warning(f"⚠️  PARTIAL SUCCESS: {success_rate:.1%} of data processed (some data loss)")
+        logger.warning(f"  PARTIAL SUCCESS: {success_rate:.1%} of data processed (some data loss)")
     else:
-        logger.error(f"❌ FAILURE: Only {success_rate:.1%} of data processed")
+        logger.error(f" FAILURE: Only {success_rate:.1%} of data processed")
     
     return success_rate >= 0.99
 

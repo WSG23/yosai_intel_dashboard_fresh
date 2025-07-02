@@ -24,7 +24,7 @@ def create_summary_cards(analytics_data: Dict[str, Any]) -> html.Div:
     if not analytics_data:
         return html.Div("No analytics data available")
 
-    logger.info(f"📊 Creating summary cards from: {analytics_data.keys()}")
+    logger.info(f" Creating summary cards from: {analytics_data.keys()}")
 
     cards = []
 
@@ -232,7 +232,7 @@ def create_data_preview(df: pd.DataFrame, filename: str = "") -> html.Div:
     
     return dbc.Card([
         dbc.CardHeader([
-            html.H5(f"📄 Data Preview: {filename}", className="mb-0")
+            html.H5(f" Data Preview: {filename}", className="mb-0")
         ]),
         dbc.CardBody([
             html.P(f"Shape: {num_rows:,} rows × {num_cols} columns", className="text-muted"),
@@ -266,7 +266,7 @@ def create_file_uploader() -> html.Div:
     """Create file upload component"""
     return dbc.Card([
         dbc.CardBody([
-            html.H5("📁 Upload Data Files", className="mb-3"),
+            html.H5(" Upload Data Files", className="mb-3"),
             dcc.Upload(
                 id='upload-data',
                 max_size=dynamic_config.security.max_upload_mb * 1024 * 1024,
@@ -305,7 +305,7 @@ def create_loading_spinner(text: str = "Loading...") -> html.Div:
 def create_error_alert(message: str, title: str = "Error") -> dbc.Alert:
     """Create error alert component"""
     return dbc.Alert([
-        html.H6(f"⚠️ {title}", className="alert-heading"),
+        html.H6(f" {title}", className="alert-heading"),
         html.P(message, className="mb-0")
     ], color="danger")
 
@@ -313,7 +313,7 @@ def create_error_alert(message: str, title: str = "Error") -> dbc.Alert:
 def create_success_alert(message: str, title: str = "Success") -> dbc.Alert:
     """Create success alert component"""
     return dbc.Alert([
-        html.H6(f"✅ {title}", className="alert-heading"),
+        html.H6(f" {title}", className="alert-heading"),
         html.P(message, className="mb-0")
     ], color="success")
 
@@ -321,7 +321,7 @@ def create_success_alert(message: str, title: str = "Success") -> dbc.Alert:
 def create_info_alert(message: str, title: str = "Info") -> dbc.Alert:
     """Create info alert component"""
     return dbc.Alert([
-        html.H6(f"ℹ️ {title}", className="alert-heading"),
+        html.H6(f" {title}", className="alert-heading"),
         html.P(message, className="mb-0")
     ], color="info")
 

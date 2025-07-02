@@ -10,12 +10,12 @@ import os
 def investigate_data():
     """Check what data the system actually has"""
     
-    print("🔍 INVESTIGATING DATA SITUATION")
+    print(" INVESTIGATING DATA SITUATION")
     print("=" * 50)
     
     # Check upload directory
     upload_dir = Path("temp/uploaded_data")
-    print(f"\n📁 Upload Directory: {upload_dir}")
+    print(f"\n Upload Directory: {upload_dir}")
     
     if upload_dir.exists():
         files = list(upload_dir.glob("*"))
@@ -24,12 +24,12 @@ def investigate_data():
             size = f.stat().st_size if f.is_file() else 0
             print(f"  {f.name}: {size:,} bytes ({size/1024:.1f} KB)")
     else:
-        print("❌ Upload directory doesn't exist")
+        print(" Upload directory doesn't exist")
     
     # Check file_info.json
     info_file = upload_dir / "file_info.json"
     if info_file.exists():
-        print(f"\n📋 file_info.json contents:")
+        print(f"\n file_info.json contents:")
         with open(info_file, 'r') as f:
             info = json.load(f)
         for filename, details in info.items():
@@ -41,7 +41,7 @@ def investigate_data():
     # Try to load the parquet file directly
     parquet_file = upload_dir / "Demo3_data_copy.csv.parquet"
     if parquet_file.exists():
-        print(f"\n📊 Loading parquet file directly...")
+        print(f"\n Loading parquet file directly...")
         try:
             df = pd.read_parquet(parquet_file)
             print(f"  Actual rows in parquet: {len(df):,}")
@@ -50,14 +50,14 @@ def investigate_data():
             print(f"  Memory usage: {df.memory_usage(deep=True).sum()/1024:.1f} KB")
             
             # Show first few rows
-            print(f"\n📋 First 3 rows:")
+            print(f"\n First 3 rows:")
             print(df.head(3).to_string())
             
         except Exception as e:
-            print(f"  ❌ Error loading parquet: {e}")
+            print(f"   Error loading parquet: {e}")
     
     # Search for large .pkl files in project
-    print(f"\n🔍 Searching for .pkl files in project...")
+    print(f"\n Searching for .pkl files in project...")
     project_root = Path(".")
     pkl_files = list(project_root.rglob("*.pkl"))
     
@@ -71,7 +71,7 @@ def investigate_data():
         print("  No .pkl files found in project")
     
     # Search for any large files
-    print(f"\n🔍 Searching for files > 5MB...")
+    print(f"\n Searching for files > 5MB...")
     large_files = []
     for root, dirs, files in os.walk("."):
         for file in files:
@@ -91,7 +91,7 @@ def investigate_data():
         print("  No large files found")
     
     print("\n" + "=" * 50)
-    print("🎯 SUMMARY:")
+    print(" SUMMARY:")
     print("1. Check the .pkl file locations above")
     print("2. The parquet file contains the actual loaded data")
     print("3. If you find your 17MB .pkl file, we can convert it")

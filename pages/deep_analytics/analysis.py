@@ -132,12 +132,12 @@ def get_latest_uploaded_source_value() -> Optional[str]:
 def get_analysis_type_options() -> List[Dict[str, str]]:
     """Get available analysis types including suggests analysis"""
     return [
-        {"label": "🔒 Security Patterns", "value": "security"},
-        {"label": "📈 Access Trends", "value": "trends"},
-        {"label": "👤 User Behavior", "value": "behavior"},
-        {"label": "🚨 Anomaly Detection", "value": "anomaly"},
-        {"label": "🤖 AI Column Suggestions", "value": "suggests"},
-        {"label": "📊 Data Quality", "value": "quality"},
+        {"label": " Security Patterns", "value": "security"},
+        {"label": " Access Trends", "value": "trends"},
+        {"label": " User Behavior", "value": "behavior"},
+        {"label": " Anomaly Detection", "value": "anomaly"},
+        {"label": " AI Column Suggestions", "value": "suggests"},
+        {"label": " Data Quality", "value": "quality"},
     ]
 
 
@@ -150,7 +150,7 @@ def get_analysis_type_options() -> List[Dict[str, str]]:
 def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
     """Process AI suggestions analysis for the selected data source"""
     try:
-        logger.info(f"🔍 Processing suggests analysis for: {data_source}")
+        logger.info(f" Processing suggests analysis for: {data_source}")
 
         if not data_source or data_source == "none":
             return {"error": "No data source selected"}
@@ -191,9 +191,9 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
                         confidence = suggestion.get("confidence", 0.0)
 
                         status = (
-                            "🟢 High"
+                            " High"
                             if confidence >= 0.7
-                            else "🟡 Medium" if confidence >= 0.4 else "🔴 Low"
+                            else " Medium" if confidence >= 0.4 else " Low"
                         )
 
                         try:
@@ -272,7 +272,7 @@ def create_suggests_display(suggests_data: Dict[str, Any]) -> html.Div:
         # Summary card
         summary_card = dbc.Card([
             dbc.CardHeader([
-                html.H5(f"🤖 AI Column Mapping Analysis - {filename}")
+                html.H5(f" AI Column Mapping Analysis - {filename}")
             ]),
             dbc.CardBody([
                 dbc.Row([
@@ -323,7 +323,7 @@ def create_suggests_display(suggests_data: Dict[str, Any]) -> html.Div:
 
             suggestions_table = dbc.Card([
                 dbc.CardHeader([
-                    html.H6("📋 Column Mapping Suggestions")
+                    html.H6(" Column Mapping Suggestions")
                 ]),
                 dbc.CardBody([
                     dbc.Table([
@@ -368,7 +368,7 @@ def get_analysis_buttons_section():
         dbc.Row([
             dbc.Col([
                 dbc.Button(
-                    "🔒 Security Analysis",
+                    " Security Analysis",
                     id="security-btn",
                     color="danger",
                     outline=True,
@@ -378,7 +378,7 @@ def get_analysis_buttons_section():
             ], width=6),
             dbc.Col([
                 dbc.Button(
-                    "📈 Trends Analysis",
+                    " Trends Analysis",
                     id="trends-btn",
                     color="info",
                     outline=True,
@@ -388,7 +388,7 @@ def get_analysis_buttons_section():
             ], width=6),
             dbc.Col([
                 dbc.Button(
-                    "👤 Behavior Analysis",
+                    " Behavior Analysis",
                     id="behavior-btn",
                     color="warning",
                     outline=True,
@@ -398,7 +398,7 @@ def get_analysis_buttons_section():
             ], width=6),
             dbc.Col([
                 dbc.Button(
-                    "🚨 Anomaly Detection",
+                    " Anomaly Detection",
                     id="anomaly-btn",
                     color="dark",
                     outline=True,
@@ -408,7 +408,7 @@ def get_analysis_buttons_section():
             ], width=6),
             dbc.Col([
                 dbc.Button(
-                    "🤖 AI Suggestions",
+                    " AI Suggestions",
                     id="suggests-btn",
                     color="success",
                     outline=True,
@@ -418,7 +418,7 @@ def get_analysis_buttons_section():
             ], width=6),
             dbc.Col([
                 dbc.Button(
-                    "💰 Data Quality",
+                    " Data Quality",
                     id="quality-btn",
                     color="secondary",
                     outline=True,
@@ -444,7 +444,7 @@ def get_updated_button_group():
     """Replace the generate analytics button group with this"""
     return dbc.ButtonGroup([
         dbc.Button(
-            "🔄 Refresh Data Sources",
+            " Refresh Data Sources",
             id="refresh-sources-btn",
             color="outline-secondary",
             size="lg"
@@ -455,7 +455,7 @@ def get_updated_button_group():
 def get_initial_message():
     """Initial message when no button clicked"""
     return dbc.Alert([
-        html.H6("👈 Get Started"),
+        html.H6(" Get Started"),
         html.P("1. Select a data source from dropdown"),
         html.P("2. Click any analysis button to run immediately"),
         html.P("Each button runs its analysis type automatically")
@@ -551,7 +551,7 @@ def create_data_quality_display_corrected(data_source: str) -> html.Div:
                 return dbc.Card(
                     [
                         dbc.CardHeader(
-                            [html.H5(f"📊 Data Quality Analysis - {filename}")]
+                            [html.H5(f" Data Quality Analysis - {filename}")]
                         ),
                         dbc.CardBody(
                             [
@@ -768,12 +768,12 @@ def create_analysis_results_display(results: Dict[str, Any], analysis_type: str)
 
         return dbc.Card([
             dbc.CardHeader([
-                html.H5(f"📊 {title_safe}")
+                html.H5(f" {title_safe}")
             ]),
             dbc.CardBody([
                 dbc.Row([
                     dbc.Col([
-                        html.H6("📈 Summary"),
+                        html.H6(" Summary"),
                         html.P(f"Total Events: {events_safe}"),
                         html.P(f"Unique Users: {users_safe}"),
                         html.P(f"Unique Doors: {doors_safe}"),
@@ -784,7 +784,7 @@ def create_analysis_results_display(results: Dict[str, Any], analysis_type: str)
                         )
                     ], width=6),
                     dbc.Col([
-                        html.H6(f"🎯 {analysis_type.title()} Specific"),
+                        html.H6(f" {analysis_type.title()} Specific"),
                         html.Div(specific_content)
                     ], width=6)
                 ]),
@@ -803,7 +803,7 @@ def create_limited_analysis_display(data_source: str, analysis_type: str) -> htm
     """Create limited analysis display when service unavailable"""
     return dbc.Card(
         [
-            dbc.CardHeader([html.H5(f"⚠️ Limited {analysis_type.title()} Analysis")]),
+            dbc.CardHeader([html.H5(f" Limited {analysis_type.title()} Analysis")]),
             dbc.CardBody(
                 [
                     dbc.Alert(
@@ -842,7 +842,7 @@ def create_data_quality_display(data_source: str) -> html.Div:
 
                 return dbc.Card(
                     [
-                        dbc.CardHeader([html.H5("📊 Data Quality Analysis")]),
+                        dbc.CardHeader([html.H5(" Data Quality Analysis")]),
                         dbc.CardBody(
                             [
                                 dbc.Row(

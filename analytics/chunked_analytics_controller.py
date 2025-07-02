@@ -37,8 +37,8 @@ class ChunkedAnalyticsController:
     def process_large_dataframe(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
         """FIXED: Process large DataFrame using chunked analysis - ALL CHUNKS."""
         total_rows = len(df)
-        logger.info(f"🔄 Starting COMPLETE chunked analysis for {total_rows:,} rows")
-        logger.info(f"📊 Chunk size: {self.chunk_size:,}")
+       logger.info(f"Starting COMPLETE chunked analysis for {total_rows:,} rows")
+       logger.info(f"Chunk size: {self.chunk_size:,}")
 
         # FIXED: Initialize proper aggregated results
         aggregated_results = {
@@ -58,12 +58,12 @@ class ChunkedAnalyticsController:
         chunks_processed = 0
         total_chunks = (len(df) + self.chunk_size - 1) // self.chunk_size
 
-        logger.info(f"🎯 Will process {total_chunks} chunks to analyze ALL {total_rows:,} rows")
+        logger.info(f" Will process {total_chunks} chunks to analyze ALL {total_rows:,} rows")
 
         # FIXED: Process ALL chunks with detailed logging
         for chunk_df in self._chunk_dataframe(df):
             chunk_size_actual = len(chunk_df)
-            logger.info(f"📦 Processing chunk {chunks_processed + 1}/{total_chunks}: {chunk_size_actual:,} rows")
+           logger.info(f"Processing chunk {chunks_processed + 1}/{total_chunks}: {chunk_size_actual:,} rows")
 
             # Process this chunk
             chunk_results = self._process_chunk(chunk_df, analysis_types)
@@ -75,14 +75,14 @@ class ChunkedAnalyticsController:
             aggregated_results["rows_processed"] += chunk_size_actual
 
             # Progress logging every chunk for debugging
-            logger.info(f"✅ Completed chunk {chunks_processed}/{total_chunks} "
+           logger.info(f"Completed chunk {chunks_processed}/{total_chunks} "
                         f"({aggregated_results['rows_processed']:,}/{total_rows:,} rows processed)")
 
         # FIXED: Verify all chunks were processed
         if aggregated_results["rows_processed"] != total_rows:
-            logger.error(f"❌ CHUNK PROCESSING ERROR: Only processed {aggregated_results['rows_processed']:,} of {total_rows:,} rows!")
+            logger.error(f" CHUNK PROCESSING ERROR: Only processed {aggregated_results['rows_processed']:,} of {total_rows:,} rows!")
         else:
-            logger.info(f"🎉 SUCCESS: Processed ALL {aggregated_results['rows_processed']:,} rows in {chunks_processed} chunks")
+           logger.info(f"SUCCESS: Processed ALL {aggregated_results['rows_processed']:,} rows in {chunks_processed} chunks")
 
         return self._finalize_results(aggregated_results)
 
@@ -92,7 +92,7 @@ class ChunkedAnalyticsController:
         chunks_yielded = 0
         rows_yielded = 0
 
-        logger.info(f"🔢 Chunking {total_rows:,} rows with chunk size {self.chunk_size:,}")
+       logger.info(f"Chunking {total_rows:,} rows with chunk size {self.chunk_size:,}")
 
         for i in range(0, total_rows, self.chunk_size):
             end_idx = min(i + self.chunk_size, total_rows)
@@ -101,10 +101,10 @@ class ChunkedAnalyticsController:
             chunks_yielded += 1
             rows_yielded += len(chunk)
 
-            logger.debug(f"📦 Yielding chunk {chunks_yielded}: rows {i:,} to {end_idx-1:,} ({len(chunk):,} rows)")
+            logger.debug(f" Yielding chunk {chunks_yielded}: rows {i:,} to {end_idx-1:,} ({len(chunk):,} rows)")
             yield chunk
 
-        logger.info(f"✅ Chunking complete: {chunks_yielded} chunks, {rows_yielded:,} total rows")
+       logger.info(f"Chunking complete: {chunks_yielded} chunks, {rows_yielded:,} total rows")
 
     def _validate_timestamp_column(self, df: pd.DataFrame, column: str = "timestamp") -> pd.DataFrame:
         """Validate and clean timestamp column in DataFrame.
@@ -136,7 +136,7 @@ class ChunkedAnalyticsController:
 
     def _process_chunk(self, chunk_df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
         """FIXED: Process a single chunk for all analysis types."""
-        logger.debug(f"🔍 Processing chunk with {len(chunk_df):,} rows")
+        logger.debug(f" Processing chunk with {len(chunk_df):,} rows")
 
         results = {
             "total_events": len(chunk_df),
@@ -184,7 +184,7 @@ class ChunkedAnalyticsController:
         if "trends" in analysis_types:
             results["temporal_patterns"] = self._analyze_trends_chunk(chunk_df)
 
-        logger.debug(f"✅ Chunk processing complete: {results['total_events']} events processed")
+        logger.debug(f" Chunk processing complete: {results['total_events']} events processed")
         return results
 
     def _analyze_security_chunk(self, chunk_df: pd.DataFrame) -> List[Dict[str, Any]]:
@@ -334,7 +334,7 @@ class ChunkedAnalyticsController:
         if aggregated["date_range"]["end"]:
             aggregated["date_range"]["end"] = aggregated["date_range"]["end"].isoformat()
 
-        logger.info(f"🎉 FINAL RESULTS: {aggregated['total_events']:,} total events, "
+       logger.info(f"FINAL RESULTS: {aggregated['total_events']:,} total events, "
                     f"{aggregated['unique_users']:,} users, {aggregated['unique_doors']:,} doors")
 
         return aggregated

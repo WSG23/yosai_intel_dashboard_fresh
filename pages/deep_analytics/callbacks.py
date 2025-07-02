@@ -464,15 +464,15 @@ class Callbacks:
             suggests_available = AI_SUGGESTIONS_AVAILABLE
 
             if service and suggests_available:
-                return "✅ All services available - Full functionality enabled"
+                return " All services available - Full functionality enabled"
             elif suggests_available:
-                return "⚠️ Analytics service limited - AI suggestions available"
+                return " Analytics service limited - AI suggestions available"
             elif service:
-                return "⚠️ AI suggestions unavailable - Analytics service available"
+                return " AI suggestions unavailable - Analytics service available"
             else:
-                return "🔄 Running in limited mode - Some features may be unavailable"
+                return " Running in limited mode - Some features may be unavailable"
         except Exception:
-            return "❌ Service status unknown"
+            return " Service status unknown"
 
 # =============================================================================
 # SECTION 7: HELPER DISPLAY FUNCTIONS
