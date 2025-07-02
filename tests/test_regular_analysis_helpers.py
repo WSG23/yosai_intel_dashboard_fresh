@@ -1,11 +1,13 @@
 import pandas as pd
-from services import AnalyticsService
+from services.result_formatting import (
+    prepare_regular_result,
+    apply_regular_analysis,
+)
 
 
 def test_prepare_regular_result():
     df = pd.DataFrame({"a": [1, 2]})
-    service = AnalyticsService()
-    res = service._prepare_regular_result(df)
+    res = prepare_regular_result(df)
     assert res["total_events"] == 2
     assert res["columns"] == ["a"]
     assert res["processing_summary"]["chunking_used"] is False
@@ -20,7 +22,6 @@ def test_apply_regular_analysis():
             "timestamp": pd.to_datetime(["2024-01-01", "2024-01-01", "2024-01-02"]),
         }
     )
-    service = AnalyticsService()
-    res = service._apply_regular_analysis(df, ["basic", "user"])
+    res = apply_regular_analysis(df, ["basic", "user"])
     assert "basic_stats" in res
     assert res["user_analysis"]["active_users"] == 2
