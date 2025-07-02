@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Complete Models Base System - FIXED VERSION
-"""
+"""Base classes for data models used throughout the application."""
 import logging
 import pandas as pd
 from typing import Dict, Any, List, Optional

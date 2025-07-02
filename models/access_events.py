@@ -1,4 +1,4 @@
-# models/access_events.py - FIXED: Type-safe, modular access events model
+# models/access_events.py - Type-safe, modular access events model
 """
 Access Events Data Model for Yōsai Intel Dashboard
 Handles all database operations for access control events

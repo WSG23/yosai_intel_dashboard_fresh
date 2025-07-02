@@ -80,7 +80,7 @@ class AnalyticsService:
             self.database_manager = None
 
     def get_analytics_from_uploaded_data(self) -> Dict[str, Any]:
-        """Get analytics from uploaded files using the FIXED file processor"""
+        """Get analytics from uploaded files using the file processor."""
         try:
             # Get uploaded file paths (not pre-processed data)
             from pages.file_upload import get_uploaded_filenames
@@ -239,7 +239,7 @@ class AnalyticsService:
         return summarize_dataframe(df)
 
     def analyze_with_chunking(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
-        """FIXED: Analyze DataFrame using chunked processing - COMPLETE DATASET."""
+        """Analyze a DataFrame using chunked processing."""
         from analytics.chunked_analytics_controller import ChunkedAnalyticsController
 
         original_rows = len(df)
@@ -251,7 +251,7 @@ class AnalyticsService:
         validated_rows = len(df)
         logger.info(f"📋 After validation: {validated_rows:,} rows, chunking needed: {needs_chunking}")
 
-        # FIXED: Ensure we never lose data in validation
+        # Warn if validation changes the row count
         if validated_rows != original_rows:
             logger.warning(f"⚠️  Row count changed during validation: {original_rows:,} → {validated_rows:,}")
 
@@ -259,16 +259,16 @@ class AnalyticsService:
             logger.info("✅ Using regular analysis (no chunking needed)")
             return self._regular_analysis(df, analysis_types)
 
-        # FIXED: Use proper chunk size calculation
+        # Determine chunk size using the validator
         chunk_size = validator.get_optimal_chunk_size(df)
         chunked_controller = ChunkedAnalyticsController(chunk_size=chunk_size)
 
         logger.info(f"🔄 Using chunked analysis: {validated_rows:,} rows, {chunk_size:,} per chunk")
 
-        # FIXED: Process with verification
+        # Process the DataFrame in chunks
         result = chunked_controller.process_large_dataframe(df, analysis_types)
 
-        # FIXED: Add comprehensive processing summary
+        # Attach a processing summary to the result
         result["processing_summary"] = {
             "original_input_rows": original_rows,
             "validated_rows": validated_rows,
@@ -279,7 +279,7 @@ class AnalyticsService:
             "data_integrity_check": "PASS" if result.get("rows_processed", 0) == validated_rows else "FAIL"
         }
 
-        # FIXED: Verify complete processing
+        # Verify that all rows were processed
         rows_processed = result.get("rows_processed", 0)
         if rows_processed != validated_rows:
             logger.error(f"❌ PROCESSING ERROR: Expected {validated_rows:,} rows, got {rows_processed:,}")
@@ -438,7 +438,7 @@ class AnalyticsService:
         return access_stats
 
     def _get_real_uploaded_data(self) -> Dict[str, Any]:
-        """FIXED: Actually access your uploaded 395K records"""
+        """Load and summarize all uploaded records."""
         try:
             uploaded_data = self.load_uploaded_data()
             if not uploaded_data:
@@ -484,7 +484,7 @@ class AnalyticsService:
 
 
     def _get_analytics_with_fixed_processor(self) -> Dict[str, Any]:
-        """Get analytics using the FIXED file processor"""
+        """Get analytics using the sample file processor."""
 
         from config.config import get_sample_files_config
 
@@ -500,7 +500,7 @@ class AnalyticsService:
             processor = FileProcessor(upload_folder="temp", allowed_extensions={'csv', 'json', 'xlsx'})
             all_data = []
 
-            # Process CSV with FIXED processor
+            # Process CSV file
             if os.path.exists(csv_file):
                 df_csv = pd.read_csv(csv_file)
                 result = processor._validate_data(df_csv)
@@ -509,7 +509,7 @@ class AnalyticsService:
                     processed_df['source_file'] = 'csv'
                     all_data.append(processed_df)
 
-            # Process JSON with FIXED processor
+            # Process JSON file
             if os.path.exists(json_file):
                 with open(json_file, 'r', encoding='utf-8', errors='replace') as f:
                     json_data = json.load(f)

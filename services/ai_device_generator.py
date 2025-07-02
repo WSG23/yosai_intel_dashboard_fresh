@@ -31,7 +31,7 @@ class AIDeviceGenerator:
         
         # Floor extraction patterns - UPDATED for F01A, F02B format
         self.floor_patterns = [
-            # Your specific format: F01A, F02B, F03C, etc. - FIXED REGEX
+            # Pattern for formats like F01A, F02B, F03C
             (r'[Ff]0*(\d+)[A-Z]', lambda m: int(m.group(1))),  # F01A → 1, F02B → 2
             (r'[Ff](\d{2,3})[A-Z]', lambda m: int(m.group(1)[:1]) if len(m.group(1)) >= 2 else int(m.group(1))),  # F10A → 1 (first digit)
             

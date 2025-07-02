@@ -82,7 +82,7 @@ class FileProcessor:
             return {"success": False, "error": f"Error processing file: {str(e)}"}
 
     def _parse_csv(self, file_path: str) -> pd.DataFrame:
-        """Parse CSV file - FIXED to read complete dataset."""
+        """Parse a CSV file reading the entire dataset."""
 
         # Unicode handling with fallback encodings
         encodings = ["utf-8", "utf-8-sig", "latin1", "cp1252"]
@@ -304,7 +304,7 @@ class FileProcessor:
         return validation_result
 
     def _validate_data_content(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Validate data content - FIXED to not remove rows during validation"""
+        """Validate data content without dropping rows."""
 
         logger.info(f"[INFO] Validating data content for {len(df)} rows...")
         original_row_count = len(df)
@@ -357,7 +357,7 @@ class FileProcessor:
             for warning in validation_warnings:
                 logger.info(f"  - {warning}")
 
-        # FIXED: Always return the complete DataFrame
+        # Always return the complete DataFrame
         return {
             "valid": True,  # Always valid, we just log warnings
             "data": df,     # Return complete dataset

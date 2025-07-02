@@ -67,7 +67,7 @@ def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
 
 
 def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert:
-    """Create file preview with correct row count display - FIXED"""
+    """Create a preview card showing the correct row count."""
     try:
         # CRITICAL: Get actual DataFrame size
         actual_rows, actual_cols = df.shape
@@ -87,7 +87,7 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
         preview_df.columns = [XSSPrevention.sanitize_html_output(str(c)) for c in preview_df.columns]
         preview_df = preview_df.applymap(lambda x: XSSPrevention.sanitize_html_output(str(x)))
 
-        # FIXED: Clear status messaging
+        # Display status messaging based on file size
         if actual_rows <= 10:
             status_color = "warning"
             status_message = f"⚠️ Only {actual_rows} rows found - check if file is complete"

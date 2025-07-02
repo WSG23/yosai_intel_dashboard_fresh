@@ -85,7 +85,7 @@ class DeviceLearningService:
     def save_device_mappings(
         self, df: pd.DataFrame, filename: str, device_mappings: Dict[str, Dict]
     ) -> str:
-        """Save device mappings with enhanced persistence - FIXED"""
+        """Persist device mappings with additional metadata."""
         try:
             fingerprint = self._get_file_fingerprint(df, filename)
 
@@ -127,7 +127,7 @@ class DeviceLearningService:
             raise
 
     def get_learned_mappings(self, df: pd.DataFrame, filename: str) -> Dict[str, Dict]:
-        """Get learned mappings for a file - FIXED to actually return learned data"""
+        """Retrieve learned mappings for a file."""
         fingerprint = self._get_file_fingerprint(df, filename)
 
         # Check if we have learned mappings for this file

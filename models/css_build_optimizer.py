@@ -1,7 +1,7 @@
-# models/css_build_optimizer.py - FIXED: Type-safe CSS build and optimization
+# models/css_build_optimizer.py - Type-safe CSS build and optimization
 """
 Comprehensive CSS Quality Assurance & Performance Testing Suite
-for Yōsai Intel Dashboard - FIXED version with proper type safety
+for Yōsai Intel Dashboard with strict type safety
 """
 
 import os
@@ -16,10 +16,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# FIXED: Configure CSS utils logging with proper error handling
+# Configure CSS utils logging with proper error handling
 try:
     import cssutils
-    # FIXED: cssutils expects string level, not integer constant
+    # cssutils expects string level, not integer constant
     cssutils.log.setLevel('ERROR')  # Use string instead of logging.ERROR constant
 except ImportError:
     logger.info("Warning: cssutils not available - some CSS analysis features disabled")
@@ -426,7 +426,7 @@ class CSSOptimizer:
         except Exception as e:
             logger.info(f"❌ Error building production CSS: {e}")
 
-def generate_css_report(css_dir: Path, output_file: Optional[Path] = None) -> Dict[str, Any]:  # FIXED: Optional[Path] instead of Path
+def generate_css_report(css_dir: Path, output_file: Optional[Path] = None) -> Dict[str, Any]:
     """Generate comprehensive CSS quality report"""
     
     logger.info("📊 Generating comprehensive CSS quality report...")
@@ -454,7 +454,7 @@ def generate_css_report(css_dir: Path, output_file: Optional[Path] = None) -> Di
         "recommendations": _generate_recommendations(quality_results)
     }
     
-    # FIXED: Save report with proper null checking
+    # Save report only when a path is provided
     if output_file is not None:
         try:
             with open(output_file, 'w', encoding='utf-8') as f:
