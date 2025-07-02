@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Complete App Factory Integration - FIXED CLASS NAMES
-"""
+"""Complete application factory integration."""
 import dash
 import logging
 import os
@@ -16,7 +14,7 @@ from core.secret_manager import validate_secrets
 from dash_csrf_plugin import setup_enhanced_csrf_protection, CSRFMode
 import pandas as pd
 
-# ✅ FIXED IMPORTS - Use correct config system
+# Use the config system from the project
 from config.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -58,7 +56,7 @@ def _create_full_app() -> dash.Dash:
 
         app.title = "Yōsai Intel Dashboard"
 
-        # ✅ FIXED: Use the working config system
+        # Use the working config system
         config_manager = get_config()
 
         if (

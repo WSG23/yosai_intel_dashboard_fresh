@@ -56,7 +56,7 @@ class EntryClassificationService:
         r"\b(\d+)(?:st|nd|rd|th)?\s*fl(?:oor)?\b",  # "2nd floor", "3 fl"
         r"\bfl(?:oor)?\s*(\d+)\b",  # "floor 2", "fl 3"
         r"\blevel[\s\-_]*(\d+)\b",  # "level 2", "level-3"
-        # F-prefix patterns (FIXED for F03, F04, etc.)
+        # F-prefix patterns that handle codes like F03, F04, etc.
         r"\bf(\d+)\b",  # "f2", "f10", "f03", "f04"
         r"\b(\d+)f\b",  # "2f", "10f"
         # Building room patterns

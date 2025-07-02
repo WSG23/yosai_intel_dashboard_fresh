@@ -60,7 +60,7 @@ class DataFrameSecurityValidator:
         # Clean the DataFrame first
         df = self._sanitize_dataframe(df)
 
-        # FIXED: More aggressive threshold for chunking - only chunk truly massive files
+        # Only use chunked processing for very large data sets
         needs_chunking = memory_usage > max_bytes or len(df) > DataProcessingLimits.CHUNKING_ROW_THRESHOLD
 
         if needs_chunking:
@@ -73,29 +73,29 @@ class DataFrameSecurityValidator:
         return df, needs_chunking
 
     def get_optimal_chunk_size(self, df: pd.DataFrame) -> int:
-        """FIXED: Calculate optimal chunk size ensuring reasonable processing."""
+        """Calculate an optimal chunk size for processing."""
         memory_usage = df.memory_usage(deep=True).sum()
         max_bytes = self.max_analysis_mb * 1024 * 1024
 
         total_rows = len(df)
         logger.info(f"🔢 Calculating chunk size for {total_rows:,} rows ({memory_usage/1024/1024:.1f}MB)")
 
-        # FIXED: For datasets under 100k rows, process all at once
+        # For small datasets process everything at once
         if memory_usage <= max_bytes and total_rows <= DataProcessingLimits.SMALL_DATASET_ROW_THRESHOLD:
             logger.info(f"✅ Small dataset: processing all {total_rows:,} rows at once")
             return total_rows
 
-        # FIXED: Calculate reasonable chunk size with minimum threshold
+        # Calculate a chunk size based on memory usage
         calculated_chunk_size = int((total_rows * max_bytes) / memory_usage)
 
-        # FIXED: Ensure chunk size is within defined limits
+        # Clamp chunk size to allowed limits
         optimal_chunk_size = max(calculated_chunk_size, DataProcessingLimits.MIN_CHUNK_SIZE)
         optimal_chunk_size = min(optimal_chunk_size, DataProcessingLimits.MAX_CHUNK_SIZE)
 
-        # FIXED: Use our calculated size, not config limit
+        # Use the calculated size rather than the configuration default
         final_chunk_size = optimal_chunk_size
 
-        # FIXED: Ensure we don't have tiny chunks for small datasets
+        # Avoid tiny chunks for small datasets
         if total_rows < DataProcessingLimits.SMALL_DATA_CHUNK_ROWS:
             final_chunk_size = total_rows
 

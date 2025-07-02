@@ -37,7 +37,7 @@ learning_service = DeviceLearningService()
 
 
 def analyze_device_name_with_ai(device_name):
-    """User mappings ALWAYS override AI - FIXED"""
+    """Return AI-generated device info unless a user mapping exists."""
     try:
         from services.ai_mapping_store import ai_mapping_store
 
@@ -82,7 +82,7 @@ def analyze_device_name_with_ai(device_name):
 
 
 def build_success_alert(filename: str, rows: int, cols: int, prefix: str = "Successfully uploaded", processed: bool = True) -> dbc.Alert:
-    """Create success alert with current data - FIXED to show actual counts"""
+    """Create a success alert showing current row and column counts."""
 
     # CRITICAL: Use actual current data, not cached values
     details = f"📊 {rows:,} rows × {cols} columns"

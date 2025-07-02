@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""
-FIXED Chunked analytics processing for large DataFrames.
-Ensures ALL chunks are processed without data loss.
+"""Chunked analytics processing for large DataFrames.
+
+Ensures that all chunks are processed without data loss.
 """
 
 import pandas as pd
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class ChunkedAnalyticsController:
-    """FIXED: Handle analytics processing for large DataFrames using chunking."""
+    """Handle analytics processing for large DataFrames using chunking."""
 
     def __init__(self, chunk_size: int = None, max_workers: int = None) -> None:
         try:
@@ -30,17 +30,17 @@ class ChunkedAnalyticsController:
             self.chunk_size = chunk_size or 50000
             self.max_workers = max_workers or 4
 
-        # FIXED: Ensure minimum reasonable chunk size
+        # Ensure chunk size is at least the configured minimum
         self.chunk_size = max(self.chunk_size, AnalyticsConstants.min_chunk_size)
         logger.info(f"ChunkedAnalyticsController initialized: chunk_size={self.chunk_size}")
 
     def process_large_dataframe(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
-        """FIXED: Process large DataFrame using chunked analysis - ALL CHUNKS."""
+        """Process a large DataFrame using chunked analysis."""
         total_rows = len(df)
         logger.info(f"🔄 Starting COMPLETE chunked analysis for {total_rows:,} rows")
         logger.info(f"📊 Chunk size: {self.chunk_size:,}")
 
-        # FIXED: Initialize proper aggregated results
+        # Initialize aggregated results
         aggregated_results = {
             "total_events": 0,
             "unique_users": set(),
@@ -60,7 +60,7 @@ class ChunkedAnalyticsController:
 
         logger.info(f"🎯 Will process {total_chunks} chunks to analyze ALL {total_rows:,} rows")
 
-        # FIXED: Process ALL chunks with detailed logging
+        # Process all chunks with detailed logging
         for chunk_df in self._chunk_dataframe(df):
             chunk_size_actual = len(chunk_df)
             logger.info(f"📦 Processing chunk {chunks_processed + 1}/{total_chunks}: {chunk_size_actual:,} rows")
@@ -68,7 +68,7 @@ class ChunkedAnalyticsController:
             # Process this chunk
             chunk_results = self._process_chunk(chunk_df, analysis_types)
 
-            # FIXED: Aggregate results properly
+            # Aggregate results from this chunk
             self._aggregate_chunk_results(aggregated_results, chunk_results)
 
             chunks_processed += 1
@@ -78,7 +78,7 @@ class ChunkedAnalyticsController:
             logger.info(f"✅ Completed chunk {chunks_processed}/{total_chunks} "
                         f"({aggregated_results['rows_processed']:,}/{total_rows:,} rows processed)")
 
-        # FIXED: Verify all chunks were processed
+        # Verify all chunks were processed
         if aggregated_results["rows_processed"] != total_rows:
             logger.error(f"❌ CHUNK PROCESSING ERROR: Only processed {aggregated_results['rows_processed']:,} of {total_rows:,} rows!")
         else:
@@ -87,7 +87,7 @@ class ChunkedAnalyticsController:
         return self._finalize_results(aggregated_results)
 
     def _chunk_dataframe(self, df: pd.DataFrame) -> Iterator[pd.DataFrame]:
-        """FIXED: Generate DataFrame chunks ensuring no data loss."""
+        """Generate DataFrame chunks ensuring no data loss."""
         total_rows = len(df)
         chunks_yielded = 0
         rows_yielded = 0
@@ -135,7 +135,7 @@ class ChunkedAnalyticsController:
         return df
 
     def _process_chunk(self, chunk_df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
-        """FIXED: Process a single chunk for all analysis types."""
+        """Process a single chunk for all analysis types."""
         logger.debug(f"🔍 Processing chunk with {len(chunk_df):,} rows")
 
         results = {
@@ -150,7 +150,7 @@ class ChunkedAnalyticsController:
             "temporal_patterns": {},
         }
 
-        # FIXED: Better column handling
+        # Handle typical column names
         if "person_id" in chunk_df.columns:
             unique_users = chunk_df["person_id"].dropna().unique()
             results["unique_users"] = set(str(u) for u in unique_users)
@@ -162,7 +162,7 @@ class ChunkedAnalyticsController:
             logger.debug(f"Found {len(results['unique_doors'])} unique doors in chunk")
 
         if "access_result" in chunk_df.columns:
-            # FIXED: More robust success detection
+            # Detect successful events using several patterns
             success_patterns = ["grant", "allow", "success", "permit", "approved"]
             success_mask = chunk_df["access_result"].str.lower().str.contains(
                 "|".join(success_patterns), case=False, na=False
@@ -192,7 +192,7 @@ class ChunkedAnalyticsController:
         issues: List[Dict[str, Any]] = []
 
         if "access_result" in chunk_df.columns and "person_id" in chunk_df.columns:
-            # FIXED: Better failure detection
+            # Identify users with repeated failures
             failure_patterns = ["deny", "fail", "block", "reject", "denied", "failed"]
             failed_attempts = chunk_df[chunk_df["access_result"].str.lower().str.contains(
                 "|".join(failure_patterns), case=False, na=False
@@ -277,13 +277,13 @@ class ChunkedAnalyticsController:
         return patterns
 
     def _aggregate_chunk_results(self, aggregated: Dict[str, Any], chunk_results: Dict[str, Any]) -> None:
-        """FIXED: Aggregate chunk results into overall results."""
+        """Aggregate chunk results into overall results."""
         # Basic counts
         aggregated["total_events"] += chunk_results["total_events"]
         aggregated["successful_events"] += chunk_results["successful_events"]
         aggregated["failed_events"] += chunk_results["failed_events"]
 
-        # FIXED: Set union operations
+        # Combine user and door sets
         aggregated["unique_users"].update(chunk_results["unique_users"])
         aggregated["unique_doors"].update(chunk_results["unique_doors"])
 
@@ -291,7 +291,7 @@ class ChunkedAnalyticsController:
         aggregated["security_issues"].extend(chunk_results["security_issues"])
         aggregated["anomalies"].extend(chunk_results["anomalies"])
 
-        # FIXED: Better behavioral pattern aggregation
+        # Aggregate behavioral pattern metrics
         if chunk_results["behavioral_patterns"]:
             for key, value in chunk_results["behavioral_patterns"].items():
                 if key not in aggregated["behavioral_patterns"]:
@@ -299,7 +299,7 @@ class ChunkedAnalyticsController:
                 if isinstance(value, (int, float)):
                     aggregated["behavioral_patterns"][key].append(value)
 
-        # FIXED: Date range aggregation
+        # Merge chunk date ranges
         if chunk_results["temporal_patterns"].get("date_range"):
             chunk_range = chunk_results["temporal_patterns"]["date_range"]
             if aggregated["date_range"]["start"] is None:
@@ -311,7 +311,7 @@ class ChunkedAnalyticsController:
                     aggregated["date_range"]["end"] = chunk_range["end"]
 
     def _finalize_results(self, aggregated: Dict[str, Any]) -> Dict[str, Any]:
-        """FIXED: Finalize and clean up aggregated results."""
+        """Finalize and clean up aggregated results."""
         # Convert sets to counts
         aggregated["unique_users"] = len(aggregated["unique_users"])
         aggregated["unique_doors"] = len(aggregated["unique_doors"])
@@ -322,13 +322,13 @@ class ChunkedAnalyticsController:
         else:
             aggregated["success_rate"] = 0.0
 
-        # FIXED: Behavioral pattern averaging
+        # Average behavioral pattern values
         if aggregated["behavioral_patterns"]:
             for key, values in aggregated["behavioral_patterns"].items():
                 if isinstance(values, list) and len(values) > 0:
                     aggregated["behavioral_patterns"][key] = float(np.mean(values))
 
-        # FIXED: Date range conversion
+        # Convert date range values to ISO strings
         if aggregated["date_range"]["start"]:
             aggregated["date_range"]["start"] = aggregated["date_range"]["start"].isoformat()
         if aggregated["date_range"]["end"]:
