@@ -9,6 +9,8 @@ import logging
 from typing import Dict, Any, List, Iterator
 import numpy as np
 
+from config.constants import AnalyticsConstants, AnalysisThresholds
+
 logger = logging.getLogger(__name__)
 
 
@@ -29,7 +31,7 @@ class ChunkedAnalyticsController:
             self.max_workers = max_workers or 4
 
         # FIXED: Ensure minimum reasonable chunk size
-        self.chunk_size = max(self.chunk_size, 10000)
+        self.chunk_size = max(self.chunk_size, AnalyticsConstants.min_chunk_size)
         logger.info(f"ChunkedAnalyticsController initialized: chunk_size={self.chunk_size}")
 
     def process_large_dataframe(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
@@ -198,14 +200,14 @@ class ChunkedAnalyticsController:
 
             if len(failed_attempts) > 0:
                 user_failures = failed_attempts.groupby("person_id").size()
-                high_failure_users = user_failures[user_failures >= 3]
+                high_failure_users = user_failures[user_failures >= AnalysisThresholds.failed_attempt_threshold]
 
                 for user_id, failure_count in high_failure_users.items():
                     issues.append({
                         "type": "high_failure_rate",
                         "user_id": str(user_id),
                         "failure_count": int(failure_count),
-                        "severity": "high" if failure_count >= 5 else "medium",
+                        "severity": "high" if failure_count >= AnalysisThresholds.high_failure_severity else "medium",
                     })
 
         return issues
@@ -227,9 +229,9 @@ class ChunkedAnalyticsController:
                     user_data = chunk_df[chunk_df["person_id"] == user_id]
                     if len(user_data) > 1:
                         time_diffs = user_data["timestamp"].diff().dt.total_seconds()
-                        rapid_attempts = (time_diffs < 30).sum()
+                        rapid_attempts = (time_diffs < AnalysisThresholds.rapid_attempt_seconds).sum()
 
-                        if rapid_attempts > 2:
+                        if rapid_attempts > AnalysisThresholds.rapid_attempt_threshold:
                             anomalies.append({
                                 "type": "rapid_attempts",
                                 "user_id": str(user_id),
