@@ -1,6 +1,16 @@
 from pathlib import Path
 import json
-from flasgger import Swagger
+import sys
+
+try:
+    from flasgger import Swagger
+except ImportError as exc:
+    print(
+        "Flasgger is required to generate the OpenAPI specification.\n"
+        "Install it with 'pip install flasgger'."
+    )
+    sys.exit(1)
+
 from core.app_factory import create_app
 
 
