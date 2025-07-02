@@ -79,7 +79,8 @@ def get_analytics_service_safe():
         return None
     try:
         return AnalyticsService()
-    except Exception:
+    except Exception as e:
+        logger.exception("Failed to initialize AnalyticsService: %s", e)
         return None
 
 
@@ -106,8 +107,8 @@ def get_data_source_options_safe():
                     "label": f"Service: {source_dict.get('label', 'Unknown')}",
                     "value": f"service:{source_dict.get('value', 'unknown')}"
                 })
-    except Exception:
-        pass
+    except Exception as e:
+        logger.exception("Error getting service data sources: %s", e)
     if not options:
         options.append({
             "label": "No data sources available - Upload files first",
@@ -125,8 +126,10 @@ def get_latest_uploaded_source_value() -> Optional[str]:
             # most recently uploaded file because the underlying store
             # preserves insertion order.
             return f"upload:{filenames[-1]}"
-    except Exception:
-        pass
+    except ImportError as e:
+        logger.error("File upload utilities missing: %s", e)
+    except Exception as e:
+        logger.exception("Failed to get latest uploaded source value: %s", e)
     return None
 
 def get_analysis_type_options() -> List[Dict[str, str]]:
@@ -200,7 +203,11 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
                             sample_data = (
                                 df[column].dropna().head(3).astype(str).tolist()
                             )
-                        except Exception:
+                        except KeyError:
+                            logger.warning("Column %s missing when sampling data", column)
+                            sample_data = ["N/A"]
+                        except Exception as e:
+                            logger.exception("Error sampling data for column %s: %s", column, e)
                             sample_data = ["N/A"]
 
                         processed_suggestions.append(
@@ -223,7 +230,8 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
 
                     try:
                         data_preview = df.head(5).to_dict("records")
-                    except Exception:
+                    except Exception as e:
+                        logger.exception("Failed to build data preview: %s", e)
                         data_preview = []
 
                     return {
@@ -238,6 +246,7 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
                     }
 
                 except Exception as e:
+                    logger.exception("AI suggestions failed: %s", e)
                     return {"error": f"AI suggestions failed: {str(e)}"}
             else:
                 return {"error": "AI suggestions service not available"}
@@ -247,6 +256,7 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
             }
 
     except Exception as e:
+        logger.exception("Failed to process suggests: %s", e)
         return {"error": f"Failed to process suggests: {str(e)}"}
 
 
@@ -349,6 +359,7 @@ def create_suggests_display(suggests_data: Dict[str, Any]) -> html.Div:
         ])
 
     except Exception as e:
+        logger.exception("Error creating suggests display: %s", e)
         return dbc.Alert(f"Error creating display: {str(e)}", color="danger")
 
 
@@ -508,6 +519,7 @@ def analyze_data_with_service(data_source: str, analysis_type: str) -> Dict[str,
 
         return results
     except Exception as e:
+        logger.exception("Analysis failed: %s", e)
         return {"error": f"Analysis failed: {str(e)}"}
 
 
@@ -602,6 +614,7 @@ def create_data_quality_display_corrected(data_source: str) -> html.Div:
             "Data quality analysis only available for uploaded files", color="info"
         )
     except Exception as e:
+        logger.exception("Quality analysis display error: %s", e)
         return dbc.Alert(f"Quality analysis error: {str(e)}", color="danger")
 
 
@@ -654,6 +667,7 @@ def process_quality_analysis(data_source: str) -> Dict[str, Any]:
 
         return {"error": "Data quality analysis only available for uploaded files"}
     except Exception as e:
+        logger.exception("Quality analysis processing error: %s", e)
         return {"error": f"Quality analysis error: {str(e)}"}
 
 
@@ -796,6 +810,7 @@ def create_analysis_results_display(results: Dict[str, Any], analysis_type: str)
             ])
         ])
     except Exception as e:
+        logger.exception("Error displaying results: %s", e)
         return dbc.Alert(f"Error displaying results: {str(e)}", color="danger")
 
 
@@ -895,6 +910,7 @@ def create_data_quality_display(data_source: str) -> html.Div:
             "Data quality analysis only available for uploaded files", color="info"
         )
     except Exception as e:
+        logger.exception("Quality analysis error: %s", e)
         return dbc.Alert(f"Quality analysis error: {str(e)}", color="danger")
 
 def get_initial_message_safe():
@@ -939,6 +955,7 @@ def process_suggests_analysis_safe(data_source):
             }
         return {"error": "AI suggestions only available for uploaded files"}
     except Exception as e:
+        logger.exception("AI analysis error: %s", e)
         return {"error": f"AI analysis error: {str(e)}"}
 
 
@@ -970,6 +987,7 @@ def process_quality_analysis_safe(data_source):
             }
         return {"error": "Data quality analysis only available for uploaded files"}
     except Exception as e:
+        logger.exception("Quality analysis error: %s", e)
         return {"error": f"Quality analysis error: {str(e)}"}
 
 
@@ -992,6 +1010,7 @@ def analyze_data_with_service_safe(data_source, analysis_type):
             "status": "completed"
         }
     except Exception as e:
+        logger.exception("Service analysis failed: %s", e)
         return {"error": f"Service analysis failed: {str(e)}"}
 
 
@@ -1033,6 +1052,7 @@ def create_analysis_results_display_safe(results, analysis_type):
             dbc.CardBody(content)
         ])
     except Exception as e:
+        logger.exception("Display error: %s", e)
         return dbc.Alert(f"Display error: {str(e)}", color="danger")
 
 
