@@ -790,7 +790,9 @@ class Callbacks:
             {"field": "entry_type", "label": "Entry/Exit Type", "description": "Direction of access"},
         ]
 
-        csv_column_options = [{"label": f'"{col}"', "value": col} for col in columns]
+        csv_column_options: List[Dict[str, str]] = [
+            {"label": f'"{col}"', "value": col} for col in columns
+        ]
         csv_column_options.append({"label": "Skip this field", "value": "skip"})
 
         table_rows = []
