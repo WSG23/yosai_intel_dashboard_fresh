@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
 from typing import List, Dict, Any
+from dash.development.base_component import Component
 import pandas as pd
 import logging
 
@@ -207,34 +208,37 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
     suggestions_store = dcc.Store(id="ai-suggestions-store", data=ai_mapping_store.all())
     status_div = html.Div(id="device-save-status")
 
-    modal_body = html.Div(
-        [
-            device_store,
-            suggestions_store,
-            status_div,
+    modal_children: List[Component] = [
+        device_store,
+        suggestions_store,
+        status_div,
+        dbc.Alert(
+            [
+                "Manually assign floor numbers and security levels to devices. ",
+                (
+                    html.Strong("AI suggestions have been pre-filled!")
+                    if len(ai_mapping_store)
+                    else "Fill in device details manually."
+                ),
+            ],
+            color="info" if len(ai_mapping_store) else "warning",
+        ),
+    ]
+
+    if len(ai_mapping_store):
+        modal_children.append(
             dbc.Alert(
                 [
-                    "Manually assign floor numbers and security levels to devices. ",
-                    (
-                        html.Strong("AI suggestions have been pre-filled!")
-                        if len(ai_mapping_store)
-                        else "Fill in device details manually."
-                    ),
+                    html.Strong("🤖 AI Transfer: "),
+                    f"Loaded {len(ai_mapping_store)} AI-learned device mappings as defaults",
                 ],
-                color="info" if len(ai_mapping_store) else "warning",
-            ),
-            (
-                dbc.Alert(
-                    [
-                        html.Strong(f"🤖 AI Transfer: "),
-                        f"Loaded {len(ai_mapping_store)} AI-learned device mappings as defaults",
-                    ],
-                    color="light",
-                    className="small",
-                )
-                if len(ai_mapping_store)
-                else None
-            ),
+                color="light",
+                className="small",
+            )
+        )
+
+    modal_children.extend(
+        [
             dbc.Row(
                 [
                     dbc.Col(
@@ -260,6 +264,8 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
             ),
         ]
     )
+
+    modal_body = html.Div(modal_children)
 
     return dbc.Modal(
         [

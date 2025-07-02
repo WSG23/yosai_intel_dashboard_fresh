@@ -83,7 +83,7 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
             column_info.append(f"{safe_col} ({dtype}) - {null_count} nulls")
 
         # Display sample (but show actual count in stats)
-        preview_df = df.head(preview_rows).copy()
+        preview_df: pd.DataFrame = df.head(preview_rows).copy()
         preview_df.columns = [
             XSSPrevention.sanitize_html_output(str(c)) for c in preview_df.columns
         ]
@@ -143,14 +143,14 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
                         ),
                         html.Hr(),
                         html.H6(f"Sample Data (first {preview_rows} rows):", className="text-primary mt-3"),
-                        dbc.Table.from_dataframe(
+                        dbc.Table.from_dataframe(  # pyright: ignore[reportAttributeAccessIssue]
                             preview_df,
                             striped=True,
                             bordered=True,
                             hover=True,
                             responsive=True,
                             size="sm",
-                        ),  # type: ignore[attr-defined]
+                        ),
 
                         # ADDITIONAL: Clear indication of processing vs display
                         dbc.Alert(
