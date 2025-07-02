@@ -31,6 +31,18 @@ class UploadedDataStore:
 
     # -- Internal helpers ---------------------------------------------------
     def _get_file_path(self, filename: str) -> Path:
+        """Return a sanitized path for the given ``filename``.
+
+        Filenames may contain regular characters, spaces or forward slashes,
+        which will be replaced by underscores. Any filename containing ``..``
+        or a backslash is rejected with :class:`ValueError` to avoid directory
+        traversal. The sanitized filename will be stored as ``<name>.parquet``
+        inside :attr:`storage_dir`.
+        """
+
+        if ".." in filename or "\\" in filename:
+            raise ValueError(f"Unsafe filename: {filename}")
+
         safe_name = filename.replace(" ", "_").replace("/", "_")
         return self.storage_dir / f"{safe_name}.parquet"
 
