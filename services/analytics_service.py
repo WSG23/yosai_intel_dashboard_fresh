@@ -17,13 +17,12 @@ from services.analytics_summary import (
 )
 from services.data_validation import DataValidationService
 from services.data_loading_service import DataLoadingService
-from services.chunked_analysis import analyze_with_chunking
-from services.result_formatting import regular_analysis
 
 from utils.mapping_helpers import map_and_clean
 from datetime import datetime, timedelta
 import os
 
+from analytics.utils import ensure_datetime_columns, safe_datetime_operation
 from analytics.db_interface import AnalyticsDataAccessor
 from analytics.file_processing_utils import (
     stream_uploaded_file,
@@ -205,6 +204,38 @@ class AnalyticsService:
             logger.error(f"Direct processing failed: {e}")
             return {"status": "error", "message": str(e)}
 
+    def _prepare_regular_result(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Create the base result structure for regular analysis."""
+        return {
+            "total_events": len(df),
+            "columns": list(df.columns),
+            "analysis_type": "regular",
+            "processing_summary": {
+                "total_input_rows": len(df),
+                "rows_processed": len(df),
+                "chunking_used": False,
+            },
+        }
+
+    def _apply_regular_analysis(
+        self, df: pd.DataFrame, analysis_types: List[str]
+    ) -> Dict[str, Any]:
+        """Run selected analysis sections for regular analysis."""
+        result: Dict[str, Any] = {}
+
+        if "basic" in analysis_types:
+            result["basic_stats"] = self._calculate_basic_stats(df)
+
+        if "temporal" in analysis_types or "time" in analysis_types:
+            result["temporal_analysis"] = self._calculate_temporal_stats_safe(df)
+
+        if "user" in analysis_types:
+            result["user_analysis"] = self._calculate_user_stats(df)
+
+        if "access" in analysis_types:
+            result["access_analysis"] = self._calculate_access_stats(df)
+
+        return result
 
     def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
         """Load uploaded data from the file upload page."""
@@ -228,7 +259,65 @@ class AnalyticsService:
         self, df: pd.DataFrame, analysis_types: List[str]
     ) -> Dict[str, Any]:
         """Analyze a DataFrame using chunked processing."""
-        return analyze_with_chunking(df, self.validation_service, analysis_types)
+        from analytics.chunked_analytics_controller import ChunkedAnalyticsController
+
+        original_rows = len(df)
+        logger.info(f"🚀 Starting COMPLETE analysis for {original_rows:,} rows")
+
+        validator = self.validation_service
+        df, needs_chunking = validator.validate_for_analysis(df)
+
+        validated_rows = len(df)
+        logger.info(
+            f"📋 After validation: {validated_rows:,} rows, chunking needed: {needs_chunking}"
+        )
+
+        # Warn if validation changes the row count
+        if validated_rows != original_rows:
+            logger.warning(
+                f"⚠️  Row count changed during validation: {original_rows:,} → {validated_rows:,}"
+            )
+
+        if not needs_chunking:
+            logger.info("✅ Using regular analysis (no chunking needed)")
+            return self._regular_analysis(df, analysis_types)
+
+        # Determine chunk size using the validator
+        chunk_size = validator.get_optimal_chunk_size(df)
+        chunked_controller = ChunkedAnalyticsController(chunk_size=chunk_size)
+
+        logger.info(
+            f"🔄 Using chunked analysis: {validated_rows:,} rows, {chunk_size:,} per chunk"
+        )
+
+        # Process the DataFrame in chunks
+        result = chunked_controller.process_large_dataframe(df, analysis_types)
+
+        # Attach a processing summary to the result
+        result["processing_summary"] = {
+            "original_input_rows": original_rows,
+            "validated_rows": validated_rows,
+            "rows_processed": result.get("rows_processed", validated_rows),
+            "chunking_used": True,
+            "chunk_size": chunk_size,
+            "processing_complete": result.get("rows_processed", 0) == validated_rows,
+            "data_integrity_check": (
+                "PASS" if result.get("rows_processed", 0) == validated_rows else "FAIL"
+            ),
+        }
+
+        # Verify that all rows were processed
+        rows_processed = result.get("rows_processed", 0)
+        if rows_processed != validated_rows:
+            logger.error(
+                f"❌ PROCESSING ERROR: Expected {validated_rows:,} rows, got {rows_processed:,}"
+            )
+        else:
+            logger.info(
+                f"✅ SUCCESS: Processed ALL {rows_processed:,} rows successfully"
+            )
+
+        return result
 
     def diagnose_data_flow(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Diagnostic method to check data processing flow."""
@@ -264,6 +353,129 @@ class AnalyticsService:
             },
         }
 
+    def _regular_analysis(
+        self, df: pd.DataFrame, analysis_types: List[str]
+    ) -> Dict[str, Any]:
+        """Regular analysis for smaller DataFrames with datetime fixes."""
+
+        logger.info(f"\U0001f4ca Starting regular analysis for {len(df):,} rows")
+
+        # CRITICAL FIX: Ensure datetime columns are properly parsed
+        df = ensure_datetime_columns(df)
+
+        result = self._prepare_regular_result(df)
+        result.update(self._apply_regular_analysis(df, analysis_types))
+
+        logger.info(f"✅ Regular analysis completed for {len(df):,} rows")
+        return result
+
+    def _calculate_temporal_stats_safe(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate temporal statistics with safe datetime handling."""
+
+        temporal_stats: Dict[str, Any] = {}
+
+        timestamp_col = None
+        for col in ["timestamp", "datetime", "date", "time"]:
+            if col in df.columns:
+                timestamp_col = col
+                break
+
+        if not timestamp_col:
+            logger.warning("No timestamp column found for temporal analysis")
+            return {"error": "No timestamp column found"}
+
+        try:
+            if df[timestamp_col].dtype == "object":
+                df[timestamp_col] = pd.to_datetime(df[timestamp_col], errors="coerce")
+
+            dates = safe_datetime_operation(df, timestamp_col, "date")
+            hours = safe_datetime_operation(df, timestamp_col, "hour")
+            weekdays = safe_datetime_operation(df, timestamp_col, "weekday")
+
+            if dates is not None:
+                temporal_stats["date_range"] = {
+                    "start": str(dates.min()),
+                    "end": str(dates.max()),
+                    "total_days": (dates.max() - dates.min()).days,
+                }
+
+            if hours is not None:
+                temporal_stats["hourly_distribution"] = hours.value_counts().to_dict()
+
+            if weekdays is not None:
+                temporal_stats["weekday_distribution"] = (
+                    weekdays.value_counts().to_dict()
+                )
+
+            temporal_stats["total_events"] = len(df)
+
+        except Exception as e:  # pragma: no cover - unexpected
+            logger.error(f"Error in temporal analysis: {e}")
+            temporal_stats["error"] = str(e)
+
+        return temporal_stats
+
+    def _calculate_basic_stats(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate basic statistics safely."""
+
+        stats = {
+            "total_rows": len(df),
+            "total_columns": len(df.columns),
+            "memory_usage_mb": df.memory_usage(deep=True).sum() / 1024 / 1024,
+        }
+
+        key_columns = ["person_id", "door_id", "badge_id", "user_id", "access_result"]
+
+        for col in key_columns:
+            if col in df.columns:
+                stats[f"unique_{col}"] = df[col].nunique()
+                stats[f"total_{col}"] = df[col].count()
+
+        if "access_result" in df.columns:
+            stats["access_distribution"] = df["access_result"].value_counts().to_dict()
+
+        return stats
+
+    def _calculate_user_stats(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate user-related statistics."""
+
+        user_stats: Dict[str, Any] = {}
+
+        user_col = None
+        for col in ["person_id", "user_id", "employee_id"]:
+            if col in df.columns:
+                user_col = col
+                break
+
+        if user_col:
+            user_stats["active_users"] = df[user_col].nunique()
+            user_stats["total_user_events"] = df[user_col].count()
+            user_stats["top_users"] = df[user_col].value_counts().head(10).to_dict()
+        else:
+            user_stats["error"] = "No user identifier column found"
+
+        return user_stats
+
+    def _calculate_access_stats(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate access-related statistics."""
+
+        access_stats: Dict[str, Any] = {}
+
+        if "access_result" in df.columns:
+            access_counts = df["access_result"].value_counts()
+            access_stats["access_results"] = access_counts.to_dict()
+
+            total_events = len(df)
+            access_stats["access_percentages"] = {
+                result: (count / total_events) * 100
+                for result, count in access_counts.items()
+            }
+
+        if "door_id" in df.columns:
+            access_stats["active_doors"] = df["door_id"].nunique()
+            access_stats["door_usage"] = df["door_id"].value_counts().head(10).to_dict()
+
+        return access_stats
 
     def _get_real_uploaded_data(self) -> Dict[str, Any]:
         """Load and summarize all uploaded records."""
