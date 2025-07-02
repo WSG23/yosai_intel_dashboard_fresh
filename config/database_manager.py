@@ -14,6 +14,8 @@ from dataclasses import dataclass
 
 from .database_exceptions import DatabaseError, ConnectionValidationFailed
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class DatabaseConfig:
@@ -72,8 +74,9 @@ class MockConnection:
 class SQLiteConnection:
     """SQLite database connection"""
 
-    def __init__(self, db_path: str):
-        self.db_path = db_path
+    def __init__(self, config: DatabaseConfig):
+        self.config = config
+        self.db_path = config.name
         self._connection: Optional[sqlite3.Connection] = None
         self._connect()
 
@@ -84,7 +87,9 @@ class SQLiteConnection:
             db_file = Path(self.db_path)
             db_file.parent.mkdir(parents=True, exist_ok=True)
 
-            self._connection = sqlite3.connect(self.db_path)
+            self._connection = sqlite3.connect(
+                self.db_path, timeout=self.config.connection_timeout
+            )
             self._connection.row_factory = sqlite3.Row  # Enable dict-like access
             logger.info(f"SQLite connection created: {self.db_path}")
         except Exception as e:
@@ -167,6 +172,7 @@ class PostgreSQLConnection:
                 user=self.config.user,
                 password=self.config.password,
                 cursor_factory=RealDictCursor,
+                connect_timeout=self.config.connection_timeout,
             )
             logger.info(
                 f"PostgreSQL connection created: {self.config.host}:{self.config.port}"
@@ -254,7 +260,7 @@ class DatabaseManager:
             return MockConnection()
 
         elif db_type == "sqlite":
-            return SQLiteConnection(self.config.name)
+            return SQLiteConnection(self.config)
 
         elif db_type in ["postgresql", "postgres"]:
             return PostgreSQLConnection(self.config)
