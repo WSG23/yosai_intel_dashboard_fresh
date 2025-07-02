@@ -190,7 +190,7 @@ class DeviceLearningService:
                 "filename": filename,
                 "fingerprint": fingerprint,
                 "saved_at": datetime.now().isoformat(),
-                "device_mappings": user_mappings,
+                "mappings": user_mappings,
                 "source": "user_confirmed",
                 "device_count": len(user_mappings),
             }
