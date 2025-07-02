@@ -33,7 +33,7 @@ def test_datetime_parsing():
     print(f"Created test data: {len(df)} rows")
     
     # Test the ensure_datetime_columns function
-    from services.analytics_service import ensure_datetime_columns
+    from analytics.utils import ensure_datetime_columns
     
     print(f"Before: timestamp dtype = {df['timestamp'].dtype}")
     df_fixed = ensure_datetime_columns(df)

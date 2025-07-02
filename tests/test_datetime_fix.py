@@ -1,5 +1,6 @@
 import pandas as pd
-from services.analytics_service import AnalyticsService, ensure_datetime_columns
+from services.analytics_service import AnalyticsService
+from analytics.utils import ensure_datetime_columns
 
 
 def create_test_data(rows=100):

@@ -5,7 +5,6 @@ Analytics Service - Enhanced with Unique Patterns Analysis
 import pandas as pd
 import json
 import logging
-from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 
 from services.file_processing_service import FileProcessingService
@@ -23,6 +22,17 @@ from utils.mapping_helpers import map_and_clean
 from datetime import datetime, timedelta
 import os
 
+from analytics.utils import ensure_datetime_columns, safe_datetime_operation
+from analytics.db_interface import AnalyticsDataAccessor
+from analytics.file_processing_utils import (
+    stream_uploaded_file,
+    update_counts,
+    update_timestamp_range,
+    aggregate_counts,
+    calculate_date_range,
+    build_result,
+)
+
 
 def ensure_analytics_config():
     """Emergency fix to ensure analytics configuration exists."""
@@ -38,206 +48,6 @@ def ensure_analytics_config():
 ensure_analytics_config()
 
 logger = logging.getLogger(__name__)
-
-
-def ensure_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Ensure timestamp columns are properly parsed as datetime objects."""
-
-    df = df.copy()
-
-    timestamp_columns = [
-        "timestamp",
-        "datetime",
-        "date",
-        "time",
-        "created_at",
-        "updated_at",
-    ]
-
-    for col in df.columns:
-        if col.lower() in timestamp_columns or "time" in col.lower() or "date" in col.lower():
-            if df[col].dtype == "object":
-                try:
-                    logger.info(f"Converting column '{col}' to datetime")
-                    df[col] = pd.to_datetime(df[col], errors="coerce")
-                    logger.info(f"✅ Successfully converted '{col}' to datetime")
-                except Exception as e:  # pragma: no cover - best effort
-                    logger.warning(f"⚠️ Could not convert '{col}' to datetime: {e}")
-
-    return df
-
-
-def safe_datetime_operation(df: pd.DataFrame, column: str, operation: str):
-    """Safely perform datetime operations with proper error handling."""
-
-    if column not in df.columns:
-        logger.warning(f"Column '{column}' not found in DataFrame")
-        return None
-
-    if df[column].dtype == "object":
-        logger.info(f"Converting '{column}' to datetime for operation '{operation}'")
-        df[column] = pd.to_datetime(df[column], errors="coerce")
-
-    try:
-        if operation == "date":
-            return df[column].dt.date
-        if operation == "hour":
-            return df[column].dt.hour
-        if operation == "day":
-            return df[column].dt.day
-        if operation == "month":
-            return df[column].dt.month
-        if operation == "year":
-            return df[column].dt.year
-        if operation == "dayofweek":
-            return df[column].dt.dayofweek
-        if operation == "weekday":
-            return df[column].dt.day_name()
-        logger.warning(f"Unknown datetime operation: {operation}")
-        return None
-    except Exception as e:  # pragma: no cover - best effort
-        logger.error(
-            f"Error performing datetime operation '{operation}' on column '{column}': {e}"
-        )
-        return None
-
-
-class AnalyticsDataAccessor:
-    """Modular data accessor for analytics processing"""
-
-    def __init__(self, base_data_path: str = "data"):
-        self.base_path = Path(base_data_path)
-        self.mappings_file = self.base_path / "learned_mappings.json"
-        self.session_storage = self.base_path.parent / "session_storage"
-
-    def get_processed_database(self) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """Get the final processed database after column/device mapping"""
-        mappings_data = self._load_consolidated_mappings()
-        uploaded_data = self._get_uploaded_data()
-
-        if not uploaded_data:
-            return pd.DataFrame(), {}
-
-        combined_df, metadata = self._apply_mappings_and_combine(uploaded_data, mappings_data)
-        return combined_df, metadata
-
-    def _load_consolidated_mappings(self) -> Dict[str, Any]:
-        """Load consolidated mappings from learned_mappings.json"""
-        try:
-            if self.mappings_file.exists():
-                with open(self.mappings_file, "r", encoding="utf-8", errors="replace") as f:
-                    return json.load(f)
-            return {}
-        except Exception as e:
-            logger.error(f"Error loading mappings: {e}")
-            return {}
-
-    def _get_uploaded_data(self) -> Dict[str, pd.DataFrame]:
-        """Get uploaded data from file_upload module"""
-        try:
-            from pages.file_upload import get_uploaded_data
-            uploaded_data = get_uploaded_data()
-
-            if uploaded_data:
-                logger.info(f"Found {len(uploaded_data):,} uploaded files")
-                for filename, df in uploaded_data.items():
-                    logger.info(f"{filename}: {len(df):,} rows")
-                return uploaded_data
-            else:
-                logger.info("No uploaded data found")
-                return {}
-
-        except ImportError:
-            logger.error("Could not import uploaded data from file_upload")
-            return {}
-        except Exception as e:
-            logger.error(f"Error getting uploaded data: {e}")
-            return {}
-
-    def _apply_mappings_and_combine(self, uploaded_data: Dict[str, pd.DataFrame],
-                                   mappings_data: Dict[str, Any]) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """Apply learned mappings and combine all data"""
-        combined_dfs = []
-        metadata = {
-            'total_files': len(uploaded_data),
-            'processed_files': 0,
-            'total_records': 0,
-            'unique_users': set(),
-            'unique_devices': set(),
-            'date_range': {'start': None, 'end': None}
-        }
-
-        for filename, df in uploaded_data.items():
-            try:
-                mapped_df = self._apply_column_mappings(df, filename, mappings_data)
-                enriched_df = self._apply_device_mappings(mapped_df, filename, mappings_data)
-
-                enriched_df['source_file'] = filename
-                enriched_df['processed_at'] = datetime.now()
-
-                combined_dfs.append(enriched_df)
-                metadata['processed_files'] += 1
-                metadata['total_records'] += len(enriched_df)
-
-                if 'person_id' in enriched_df.columns:
-                    metadata['unique_users'].update(enriched_df['person_id'].dropna().unique())
-                if 'door_id' in enriched_df.columns:
-                    metadata['unique_devices'].update(enriched_df['door_id'].dropna().unique())
-
-                if 'timestamp' in enriched_df.columns:
-                    dates = pd.to_datetime(enriched_df['timestamp'], errors='coerce').dropna()
-                    if len(dates) > 0:
-                        if metadata['date_range']['start'] is None:
-                            metadata['date_range']['start'] = dates.min()
-                            metadata['date_range']['end'] = dates.max()
-                        else:
-                            metadata['date_range']['start'] = min(metadata['date_range']['start'], dates.min())
-                            metadata['date_range']['end'] = max(metadata['date_range']['end'], dates.max())
-
-            except Exception as e:
-                logger.error(f"Error processing {filename}: {e}")
-                continue
-
-        if combined_dfs:
-            final_df = pd.concat(combined_dfs, ignore_index=True)
-            metadata['unique_users'] = len(metadata['unique_users'])
-            metadata['unique_devices'] = len(metadata['unique_devices'])
-            return final_df, metadata
-
-        return pd.DataFrame(), metadata
-
-    def _apply_column_mappings(self, df: pd.DataFrame, filename: str,
-                              mappings_data: Dict[str, Any]) -> pd.DataFrame:
-        """Apply learned column mappings and standard cleaning."""
-        column_mappings = {}
-        for mapping_info in mappings_data.values():
-            if mapping_info.get('filename') == filename:
-                column_mappings = mapping_info.get('column_mappings', {})
-                break
-
-        return map_and_clean(df, column_mappings)
-
-    def _apply_device_mappings(self, df: pd.DataFrame, filename: str,
-                              mappings_data: Dict[str, Any]) -> pd.DataFrame:
-        """Apply learned device mappings"""
-        if 'door_id' not in df.columns:
-            return df
-
-        device_mappings = {}
-        for fingerprint, mapping_info in mappings_data.items():
-            if mapping_info.get('filename') == filename:
-                device_mappings = mapping_info.get('device_mappings', {})
-                break
-
-        if not device_mappings:
-            return df
-
-        device_attrs_df = pd.DataFrame.from_dict(device_mappings, orient='index')
-        device_attrs_df.index.name = 'door_id'
-        device_attrs_df.reset_index(inplace=True)
-
-        enriched_df = df.merge(device_attrs_df, on='door_id', how='left')
-        return enriched_df
 
 
 class AnalyticsService:
@@ -352,8 +162,8 @@ class AnalyticsService:
 
             for filename, source in uploaded_data.items():
                 try:
-                    chunks = self._stream_uploaded_file(source)
-                    file_events, min_ts, max_ts = self._aggregate_counts(
+                    chunks = stream_uploaded_file(self.data_loading_service, source)
+                    file_events, min_ts, max_ts = aggregate_counts(
                         chunks, user_counts, door_counts, min_ts, max_ts
                     )
                     processing_info[filename] = {"rows": file_events, "status": "ok"}
@@ -365,9 +175,9 @@ class AnalyticsService:
             if not processing_info:
                 return {"status": "error", "message": "No uploaded files processed"}
 
-            date_range = self._calculate_date_range(min_ts, max_ts)
+            date_range = calculate_date_range(min_ts, max_ts)
 
-            result = self._build_result(
+            result = build_result(
                 total_events, user_counts, door_counts, date_range, processing_info
             )
 
@@ -377,102 +187,6 @@ class AnalyticsService:
             logger.error(f"Direct processing failed: {e}")
             return {"status": "error", "message": str(e)}
 
-    # ------------------------------------------------------------------
-    # Helper methods for processing uploaded data
-    # ------------------------------------------------------------------
-
-    def _load_uploaded_dataframe(self, source: Any) -> pd.DataFrame:
-        """Load and clean a single uploaded file or DataFrame."""
-        return self.data_loading_service.load_dataframe(source)
-
-    def _stream_uploaded_file(self, source: Any, chunksize: int = 50000):
-        """Yield cleaned DataFrame chunks from a file or DataFrame."""
-        yield from self.data_loading_service.stream_file(source, chunksize)
-
-    def _update_counts(
-        self, df: pd.DataFrame, user_counts: "Counter[str]", door_counts: "Counter[str]"
-    ) -> None:
-        """Update user and door counters using a DataFrame."""
-        if "person_id" in df.columns:
-            user_counts.update(df["person_id"].dropna().astype(str))
-        if "door_id" in df.columns:
-            door_counts.update(df["door_id"].dropna().astype(str))
-
-    def _update_timestamp_range(
-        self,
-        df: pd.DataFrame,
-        min_ts: Optional[pd.Timestamp],
-        max_ts: Optional[pd.Timestamp],
-    ) -> Tuple[Optional[pd.Timestamp], Optional[pd.Timestamp]]:
-        """Update min and max timestamps from a DataFrame."""
-        if "timestamp" in df.columns:
-            ts = pd.to_datetime(df["timestamp"], errors="coerce").dropna()
-            if not ts.empty:
-                cur_min = ts.min()
-                cur_max = ts.max()
-                if min_ts is None or cur_min < min_ts:
-                    min_ts = cur_min
-                if max_ts is None or cur_max > max_ts:
-                    max_ts = cur_max
-        return min_ts, max_ts
-
-    def _aggregate_counts(
-        self,
-        frames,
-        user_counts: "Counter[str]",
-        door_counts: "Counter[str]",
-        min_ts: Optional[pd.Timestamp],
-        max_ts: Optional[pd.Timestamp],
-    ) -> Tuple[int, Optional[pd.Timestamp], Optional[pd.Timestamp]]:
-        """Aggregate counters and timestamps from streamed frames."""
-        total = 0
-        for df in frames:
-            total += len(df)
-            self._update_counts(df, user_counts, door_counts)
-            min_ts, max_ts = self._update_timestamp_range(df, min_ts, max_ts)
-        return total, min_ts, max_ts
-
-    def _calculate_date_range(
-        self, min_ts: Optional[pd.Timestamp], max_ts: Optional[pd.Timestamp]
-    ) -> Dict[str, str]:
-        """Return a date range dictionary from timestamp bounds."""
-        if min_ts is not None and max_ts is not None:
-            return {
-                "start": min_ts.strftime("%Y-%m-%d"),
-                "end": max_ts.strftime("%Y-%m-%d"),
-            }
-        return {"start": "Unknown", "end": "Unknown"}
-
-    def _build_result(
-        self,
-        total_events: int,
-        user_counts: "Counter[str]",
-        door_counts: "Counter[str]",
-        date_range: Dict[str, str],
-        processing_info: Dict[str, Any],
-    ) -> Dict[str, Any]:
-        """Assemble the final result dictionary for uploaded data."""
-        active_users = len(user_counts)
-        active_doors = len(door_counts)
-
-        return {
-            "status": "success",
-            "total_events": total_events,
-            "active_users": active_users,
-            "active_doors": active_doors,
-            "unique_users": active_users,
-            "unique_doors": active_doors,
-            "data_source": "uploaded",
-            "date_range": date_range,
-            "top_users": [
-                {"user_id": u, "count": int(c)} for u, c in user_counts.most_common(10)
-            ],
-            "top_doors": [
-                {"door_id": d, "count": int(c)} for d, c in door_counts.most_common(10)
-            ],
-            "timestamp": datetime.now().isoformat(),
-            "processing_info": processing_info,
-        }
 
     def _prepare_regular_result(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Create the base result structure for regular analysis."""

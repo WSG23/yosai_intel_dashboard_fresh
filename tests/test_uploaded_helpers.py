@@ -1,5 +1,12 @@
 import pandas as pd
 from services import AnalyticsService
+from analytics.file_processing_utils import (
+    update_counts,
+    update_timestamp_range,
+    calculate_date_range,
+    stream_uploaded_file,
+    aggregate_counts,
+)
 
 
 def test_load_uploaded_data(monkeypatch):
@@ -53,12 +60,12 @@ def test_count_and_date_helpers():
     )
     service = AnalyticsService()
     u_counts, d_counts = Counter(), Counter()
-    service._update_counts(df, u_counts, d_counts)
+    update_counts(df, u_counts, d_counts)
     assert u_counts["u1"] == 2
     assert d_counts["d1"] == 2
 
-    min_ts, max_ts = service._update_timestamp_range(df, None, None)
-    dr = service._calculate_date_range(min_ts, max_ts)
+    min_ts, max_ts = update_timestamp_range(df, None, None)
+    dr = calculate_date_range(min_ts, max_ts)
     assert dr["start"] == "2024-01-01"
     assert dr["end"] == "2024-01-03"
 
@@ -72,7 +79,7 @@ def test_stream_uploaded_file(tmp_path):
     path = tmp_path / "x.csv"
     df.to_csv(path, index=False)
     service = AnalyticsService()
-    chunks = list(service._stream_uploaded_file(path, chunksize=1))
+    chunks = list(stream_uploaded_file(service.data_loading_service, path, chunksize=1))
     assert len(chunks) == 1
     assert list(chunks[0].columns) == ["timestamp", "person_id", "door_id"]
 
@@ -93,13 +100,13 @@ def test_aggregate_counts():
 
     service = AnalyticsService()
     u_counts, d_counts = Counter(), Counter()
-    total, min_ts, max_ts = service._aggregate_counts(
+    total, min_ts, max_ts = aggregate_counts(
         [df1, df2], u_counts, d_counts, None, None
     )
 
     assert total == 3
     assert u_counts["u1"] == 2
     assert d_counts["d1"] == 2
-    dr = service._calculate_date_range(min_ts, max_ts)
+    dr = calculate_date_range(min_ts, max_ts)
     assert dr["start"] == "2024-01-01"
     assert dr["end"] == "2024-01-03"

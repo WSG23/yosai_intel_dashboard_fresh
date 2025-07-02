@@ -8,4 +8,7 @@ __all__ = [
     'unique_patterns_analyzer',
     'security_metrics',
     'security_score_calculator',
+    'db_interface',
+    'file_processing_utils',
+    'utils',
 ]

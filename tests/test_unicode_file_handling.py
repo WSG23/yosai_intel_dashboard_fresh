@@ -4,7 +4,7 @@ from datetime import datetime
 import pandas as pd
 
 from services.consolidated_learning_service import ConsolidatedLearningService
-from services.analytics_service import AnalyticsDataAccessor
+from analytics.db_interface import AnalyticsDataAccessor
 from pages import file_upload
 
 
