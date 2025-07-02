@@ -11,6 +11,8 @@ This project follows a fully modular design built around a dependency injection 
 - [System Diagram](docs/system_diagram.md)
 - [Deployment Diagram](docs/deployment_diagram.md)
 - [Analytics Upload Sequence](docs/analytics_sequence.md)
+- [Roadmap](docs/roadmap.md)
+- [Sequence Diagrams](docs/sequence_diagrams.md)
 
 The dashboard is extensible through a lightweight plugin system. Plugins live in the `plugins/` directory and are loaded by a `PluginManager`. See [docs/plugins.md](docs/plugins.md) for discovery, configuration details and a simple **Hello World** example.
 
