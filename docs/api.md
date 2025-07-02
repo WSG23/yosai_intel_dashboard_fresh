@@ -8,6 +8,9 @@ OpenAPI specification run:
 python tools/generate_openapi.py
 ```
 
+The script writes `docs/openapi.json`. Once generated, this file can be served
+by Swagger UI to display the complete API reference.
+
 ## Database Manager
 
 ### `DatabaseManager`
