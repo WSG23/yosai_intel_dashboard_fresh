@@ -8,6 +8,8 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional, Sequence, Tuple
 
+from config.constants import FileProcessingLimits
+
 logger = logging.getLogger(__name__)
 
 import pandas as pd
@@ -90,9 +92,9 @@ class FileProcessor:
                 logger.info(f"Reading complete CSV file: {file_path}")
 
                 file_size = os.path.getsize(file_path)
-                sample_size = 8192
-                if file_size >= 50 * 1024 * 1024:  # 50MB
-                    sample_size = 65536  # read a larger chunk for delimiter detection
+                sample_size = FileProcessingLimits.CSV_SAMPLE_SIZE_SMALL
+                if file_size >= FileProcessingLimits.LARGE_FILE_THRESHOLD_MB * 1024 * 1024:
+                    sample_size = FileProcessingLimits.CSV_SAMPLE_SIZE_LARGE
 
                 with open(file_path, "r", encoding=encoding) as f:
                     sample = f.read(sample_size)
@@ -142,9 +144,9 @@ class FileProcessor:
         for encoding in encodings:
             try:
                 text = process_large_csv_content(content, encoding=encoding)
-                sample_size = 8192
-                if len(content) >= 50 * 1024 * 1024:
-                    sample_size = 65536
+                sample_size = FileProcessingLimits.CSV_SAMPLE_SIZE_SMALL
+                if len(content) >= FileProcessingLimits.LARGE_FILE_THRESHOLD_MB * 1024 * 1024:
+                    sample_size = FileProcessingLimits.CSV_SAMPLE_SIZE_LARGE
                 sample = text[:sample_size]
 
                 delimiters = [",", ";", "\t", "|"]
