@@ -59,9 +59,23 @@ def ensure_output_directory(output_path: Union[str, Path]) -> Path:
 
 
 def safe_path_conversion(path: Union[str, Path]) -> str:
-    """Safely convert ``path`` to a ``str`` representation."""
+    """Safely convert path to ``str`` representation with Unicode handling."""
     try:
-        return str(Path(path))
+        # Encode using surrogateescape to preserve any undecodable bytes and then
+        # decode back to a normal UTF-8 string. This mirrors how Python's
+        # filesystem encoding handles arbitrary bytes on POSIX systems.
+        return (
+            str(path)
+            .encode("utf-8", errors="surrogateescape")
+            .decode("utf-8", errors="replace")
+        )
+    except (UnicodeEncodeError, UnicodeDecodeError) as e:
+        logger.warning(f"Unicode conversion error for path {path}: {e}")
+        return (
+            str(path)
+            .encode("ascii", errors="replace")
+            .decode("ascii")
+        )
     except Exception as exc:  # pragma: no cover - defensive
         raise PathValidationError(f"Invalid path: {path}") from exc
 
