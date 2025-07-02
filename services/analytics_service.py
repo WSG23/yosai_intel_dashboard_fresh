@@ -429,9 +429,36 @@ class AnalyticsService:
 
     def _load_patterns_data(self, data_source: str | None) -> Tuple[pd.DataFrame, int]:
         """Load and clean data for unique patterns analysis."""
-        from services.pattern_analysis import load_patterns_data
+        logger = logging.getLogger(__name__)
 
-        return load_patterns_data(self, data_source)
+        if data_source == "database":
+            df, _meta = self.data_loader.get_processed_database()
+            uploaded_data = {"database": df} if not df.empty else {}
+        else:
+            uploaded_data = self.load_uploaded_data()
+
+        if not uploaded_data:
+            return pd.DataFrame(), 0
+
+        all_dfs: List[pd.DataFrame] = []
+        total_original_rows = 0
+
+        logger.info(f"📁 Found {len(uploaded_data)} uploaded files")
+
+        for filename, df in uploaded_data.items():
+            original_rows = len(df)
+            total_original_rows += original_rows
+            logger.info(f"   {filename}: {original_rows:,} rows")
+
+            cleaned_df = self.clean_uploaded_dataframe(df)
+            all_dfs.append(cleaned_df)
+            logger.info(f"   After cleaning: {len(cleaned_df):,} rows")
+
+        combined_df = (
+            all_dfs[0] if len(all_dfs) == 1 else pd.concat(all_dfs, ignore_index=True)
+        )
+
+        return combined_df, total_original_rows
 
     def _verify_combined_data(self, df: pd.DataFrame, original_rows: int) -> None:
         """Log sanity checks for the combined dataframe."""
@@ -452,17 +479,27 @@ class AnalyticsService:
 
     def _calculate_pattern_stats(self, df: pd.DataFrame) -> Tuple[int, int, int, int]:
         """Calculate record, user, device and date span statistics."""
-        from services.pattern_analysis import calculate_pattern_stats
-
-        stats = calculate_pattern_stats(df)
         logger = logging.getLogger(__name__)
+
+        total_records = len(df)
+        unique_users = df["person_id"].nunique() if "person_id" in df.columns else 0
+        unique_devices = df["door_id"].nunique() if "door_id" in df.columns else 0
+
+        date_span = 0
+        if "timestamp" in df.columns:
+            df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
+            valid_dates = df["timestamp"].dropna()
+            if len(valid_dates) > 0:
+                date_span = (valid_dates.max() - valid_dates.min()).days
+
         logger.info("📈 STATISTICS:")
-        logger.info(f"   Total records: {stats[0]:,}")
-        logger.info(f"   Unique users: {stats[1]:,}")
-        logger.info(f"   Unique devices: {stats[2]:,}")
-        if stats[3]:
-            logger.info(f"   Date span: {stats[3]} days")
-        return stats
+        logger.info(f"   Total records: {total_records:,}")
+        logger.info(f"   Unique users: {unique_users:,}")
+        logger.info(f"   Unique devices: {unique_devices:,}")
+        if date_span:
+            logger.info(f"   Date span: {date_span} days")
+
+        return total_records, unique_users, unique_devices, date_span
 
     def _analyze_user_patterns(
         self, df: pd.DataFrame, unique_users: int
@@ -523,9 +560,14 @@ class AnalyticsService:
 
     def _calculate_success_rate(self, df: pd.DataFrame) -> float:
         """Calculate overall access success rate."""
-        from services.pattern_analysis import calculate_success_rate
-
-        return calculate_success_rate(df)
+        if "access_result" in df.columns:
+            success_mask = (
+                df["access_result"]
+                .str.lower()
+                .str.contains("grant|allow|success|permit", case=False, na=False)
+            )
+            return success_mask.mean()
+        return 0.0
 
     def _format_patterns_result(
         self,
