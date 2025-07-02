@@ -209,7 +209,7 @@ SECRET_KEY=your-key  # Change for production
 ```
 
 The secret key is not included in the default YAML files. Define
-`SECRET_KEY` in your environment or a `.env` file before starting the
+`SECRET_KEY` in a `.env` file or via Docker secrets before starting the
 application. The example scripts under `examples/` also rely on this
 variable through the `SecretManager` helper.
 
@@ -367,9 +367,11 @@ variables or Docker secrets:
 - `AUTH0_DOMAIN`
 - `AUTH0_AUDIENCE`
 
-All secrets can be provided via the `SecretManager` which supports `env`,
-`aws`, and `vault` backends. Place these values in `.env` or mount them as
-Docker secrets. See the [architecture diagram](docs/auth_flow.png) for
+All secrets **must** be provided via `.env` files or Docker secrets. The
+`SecretManager` supports `env`, `aws`, and `vault` backends so you can mount
+files under `/run/secrets` or rely on environment variables. Default
+credentials have been removed, so missing variables will now trigger a
+warning during startup. See the [architecture diagram](docs/auth_flow.png) for
 implementation details.
 
 The configuration loader performs a validation step on startup to ensure

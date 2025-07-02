@@ -54,7 +54,7 @@ class CSRFConfig:
         defaults = {
             'enabled': False,
             'ssl_strict': False,
-            'secret_key': 'change-me'
+            'secret_key': None
         }
         defaults.update(kwargs)
         return cls(**defaults)
@@ -149,10 +149,15 @@ class EnhancedCSRFManager:
     def _configure_server(self) -> None:
         """Configure Flask server for CSRF protection"""
         server = self.app.server
-        
+
         # Set secret key if not present
         if not server.config.get('SECRET_KEY'):
-            server.config['SECRET_KEY'] = self.config.secret_key or 'change-me'
+            if self.config.secret_key:
+                server.config['SECRET_KEY'] = self.config.secret_key
+            else:
+                logger.warning(
+                    "SECRET_KEY is not set; CSRF protection may be disabled"
+                )
         
         # Configure CSRF based on mode
         if self.mode in [CSRFMode.ENABLED, CSRFMode.PRODUCTION]:
