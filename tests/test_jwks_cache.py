@@ -3,6 +3,8 @@ import json
 import io
 import sys
 import types
+import logging
+import socket
 
 import pytest
 
@@ -75,4 +77,20 @@ def test_jwks_cache_expired(monkeypatch):
     current["t"] = base_time + 2
     auth._decode_jwt("t", "example.com", "aud", "cid")
     assert count["calls"] == 2
+
+
+def test_jwks_fetch_timeout(monkeypatch, caplog):
+    auth = setup_auth(monkeypatch)
+
+    def fake_urlopen(url, timeout=None):
+        raise socket.timeout("timed out")
+
+    monkeypatch.setattr(auth, "urlopen", fake_urlopen)
+    auth._jwks_cache.clear()
+
+    with caplog.at_level("WARNING"):
+        with pytest.raises(socket.timeout):
+            auth._get_jwks("example.com")
+
+    assert any("Failed to fetch JWKS" in r.getMessage() for r in caplog.records)
 
