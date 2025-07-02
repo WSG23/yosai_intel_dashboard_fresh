@@ -24,6 +24,17 @@ class DataProcessingLimits:
     reduces functionality.
     """
 
+    CHUNKING_ROW_THRESHOLD: int = 500_000
+    """Row count above which chunked analysis is triggered."""
+
+    SMALL_DATASET_ROW_THRESHOLD: int = 100_000
+    """Upper row count limit considered a small dataset."""
+
+    MIN_CHUNK_SIZE: int = 5_000
+    MAX_CHUNK_SIZE: int = 100_000
+    SMALL_DATA_CHUNK_ROWS: int = 10_000
+    DEFAULT_QUERY_LIMIT: int = 10_000
+
 
 class FileProcessingLimits:
     """File upload and processing limits."""
@@ -34,6 +45,15 @@ class FileProcessingLimits:
     Range: 1-500. Higher values risk denial of service; lower may block
     legitimate uploads.
     """
+
+    LARGE_FILE_THRESHOLD_MB: int = 50
+    """File size threshold considered large in megabytes."""
+
+    CSV_SAMPLE_SIZE_SMALL: int = 8192
+    """Default sample size for delimiter detection in bytes."""
+
+    CSV_SAMPLE_SIZE_LARGE: int = 65536
+    """Larger sample size for big files in bytes."""
 
 
 @dataclass
@@ -77,10 +97,29 @@ class AnalyticsConstants:
     enable_real_time: bool = True
     batch_size: int = 25000
     chunk_size: int = 50000
+    min_chunk_size: int = 10000
     enable_chunked_analysis: bool = True
     anomaly_detection_enabled: bool = True
     ml_models_path: str = "models/ml"
     data_retention_days: int = 30
     max_workers: int = 4
     query_timeout_seconds: int = 300
+
+
+@dataclass
+class AnalysisThresholds:
+    """Threshold values used in analytics calculations."""
+
+    failed_attempt_threshold: int = 3
+    high_failure_severity: int = 5
+    rapid_attempt_seconds: int = 30
+    rapid_attempt_threshold: int = 2
+
+
+@dataclass
+class CacheConstants:
+    """Settings for analytics result caching."""
+
+    max_items: int = 100
+    purge_count: int = 50
 

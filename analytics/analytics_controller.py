@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
 import json
 
+from config.constants import CacheConstants
+
 # Import all analytics modules
 from .security_patterns import SecurityPatternsAnalyzer, create_security_analyzer
 from .access_trends import AccessTrendsAnalyzer, create_trends_analyzer
@@ -498,11 +500,11 @@ class AnalyticsController(UnifiedAnalyticsController):
         self._cache_timestamps[cache_key] = datetime.now()
 
         # Limit cache size
-        if len(self._cache) > 100:
+        if len(self._cache) > CacheConstants.max_items:
             # Remove oldest entries
             oldest_keys = sorted(
                 self._cache_timestamps.keys(), key=lambda k: self._cache_timestamps[k]
-            )[:50]
+            )[:CacheConstants.purge_count]
 
             for key in oldest_keys:
                 del self._cache[key]

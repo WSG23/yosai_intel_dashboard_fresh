@@ -91,6 +91,10 @@ class DynamicConfigManager:
         if chunk_size is not None:
             self.analytics.chunk_size = int(chunk_size)
 
+        min_chunk_size = os.getenv("ANALYTICS_MIN_CHUNK_SIZE")
+        if min_chunk_size is not None:
+            self.analytics.min_chunk_size = int(min_chunk_size)
+
         batch_size = os.getenv("ANALYTICS_BATCH_SIZE")
         if batch_size is not None:
             self.analytics.batch_size = int(batch_size)

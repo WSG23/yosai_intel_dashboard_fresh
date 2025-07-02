@@ -11,6 +11,7 @@ from typing import Dict, List, Any, Optional, Union
 from .base import BaseModel
 from .enums import AccessResult, BadgeStatus
 from security.sql_validator import SQLInjectionPrevention
+from config.constants import DataProcessingLimits
 
 _sql_validator = SQLInjectionPrevention()
 
@@ -63,7 +64,7 @@ class AccessEventModel(BaseModel):
             base_query += " AND access_result = ?"
             params.append(filters['access_result'])
         
-        base_query += " ORDER BY timestamp DESC LIMIT 10000"
+        base_query += f" ORDER BY timestamp DESC LIMIT {DataProcessingLimits.DEFAULT_QUERY_LIMIT}"
         
         try:
             df = self.db.execute_query(base_query, tuple(params) if params else None)
