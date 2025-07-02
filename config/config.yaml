@@ -36,3 +36,5 @@ plugins:
     fallback_to_repr: true
     auto_wrap_callbacks: true
     force_complete_analysis: true
+  hello_world:
+    enabled: false  # example plugin shown in docs/plugins.md

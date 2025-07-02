@@ -19,6 +19,44 @@ plugins:
     max_dataframe_rows: 1000
 ```
 
+## Hello World Example
+
+A very small plugin can simply register a Dash callback. The module must expose
+a `create_plugin()` function so the `PluginManager` can instantiate it.
+
+```python
+# plugins/hello_world.py
+from dash import Input, Output
+from core.plugins.protocols import CallbackPluginProtocol, PluginMetadata
+
+
+class HelloWorldPlugin(CallbackPluginProtocol):
+    metadata = PluginMetadata(
+        name="hello_world",
+        version="1.0.0",
+        description="Example plugin",
+        author="Example",
+    )
+
+    def register_callbacks(self, manager, container):
+        @manager.app.callback(Output("hello-output", "children"), Input("hello-btn", "n_clicks"))
+        def _say_hello(_):
+            return "Hello World!"
+        return True
+
+
+def create_plugin() -> HelloWorldPlugin:
+    return HelloWorldPlugin()
+```
+
+Enable the plugin in `config/config.yaml`:
+
+```yaml
+plugins:
+  hello_world:
+    enabled: true
+```
+
 ## Lifecycle
 
 For each enabled plugin the manager calls these methods:
