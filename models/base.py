@@ -236,6 +236,11 @@ class ModelFactory:
             return {}
 
     @staticmethod
+    def create_all_models(df: pd.DataFrame) -> Dict[str, BaseModel]:
+        """Alias for ``create_models_from_dataframe`` for backward compatibility."""
+        return ModelFactory.create_models_from_dataframe(df)
+
+    @staticmethod
     def get_analytics_from_models(models: Dict[str, BaseModel]) -> Dict[str, Any]:
         """Extract analytics from all models"""
         analytics = {}
