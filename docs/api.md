@@ -48,14 +48,15 @@ Represents a single access control event.
 
 ## Service Container
 
-`Container` provides a simple registry for services that can be resolved by
-name. It is typically configured during application startup.
+`ServiceContainer` in `core.enhanced_container` offers a more capable
+dependency injection mechanism. It resolves services by name and caches
+instances created by registered factories.
 
 ```python
-from core.container import Container
+from core.enhanced_container import ServiceContainer
 
-container = Container()
-container.register("db", DatabaseManager())
+container = ServiceContainer()
+container.register_factory("db", DatabaseManager)
 
 # Later in the code
 if container.has("db"):
