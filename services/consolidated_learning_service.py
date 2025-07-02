@@ -4,7 +4,6 @@ Replaces services/device_learning_service.py
 """
 import hashlib
 import json
-import pickle
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from datetime import datetime
@@ -170,7 +169,7 @@ class ConsolidatedLearningService:
         return df.iloc[:, 0].nunique() if len(df.columns) > 0 else 0
 
     def _load_learned_data(self):
-        """Load learned data from storage. Migrate legacy pickle data if needed."""
+        """Load learned data from storage using JSON only."""
         if self.storage_path.exists():
             try:
                 with open(self.storage_path, "r", encoding="utf-8", errors="replace") as f:
@@ -179,24 +178,6 @@ class ConsolidatedLearningService:
                     f"Loaded {len(self.learned_data)} learned mappings")
             except Exception as e:
                 self.logger.warning(f"Could not load learned data: {e}")
-                self.learned_data = {}
-            return
-
-        # Legacy pickle support
-        legacy_path = self.storage_path.with_suffix('.pkl')
-        if legacy_path.exists():
-            try:
-                with open(legacy_path, "rb") as f:
-                    self.learned_data = pickle.load(f)
-                self.logger.info(
-                    f"Migrating {legacy_path} with {len(self.learned_data)} mappings")
-                self._persist_learned_data()
-                try:
-                    legacy_path.unlink()
-                except Exception:
-                    pass
-            except Exception as e:
-                self.logger.warning(f"Could not migrate legacy data: {e}")
                 self.learned_data = {}
         else:
             self.learned_data = {}

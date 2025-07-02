@@ -98,3 +98,31 @@ class TestConsolidatedLearningService:
     def teardown_method(self):
         if self.storage_path.exists():
             self.storage_path.unlink()
+
+    def test_ignore_legacy_pickle(self):
+        """Service should not migrate or delete legacy pickle files."""
+        import pickle
+
+        pkl_path = self.storage_path.with_suffix(".pkl")
+        with open(pkl_path, "wb") as fh:
+            pickle.dump({"old": "data"}, fh)
+
+        service = ConsolidatedLearningService(str(self.storage_path))
+        assert service.learned_data == {}
+        assert pkl_path.exists()
+
+    def test_json_precedence_over_pickle(self):
+        import pickle, json
+
+        json_content = {"foo": "bar"}
+        with open(self.storage_path, "w", encoding="utf-8") as fh:
+            json.dump(json_content, fh)
+
+        pkl_path = self.storage_path.with_suffix(".pkl")
+        with open(pkl_path, "wb") as fh:
+            pickle.dump({"legacy": True}, fh)
+
+        service = ConsolidatedLearningService(str(self.storage_path))
+        assert service.learned_data == json_content
+        assert pkl_path.exists()
+
