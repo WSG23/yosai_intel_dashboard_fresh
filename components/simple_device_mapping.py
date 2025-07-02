@@ -474,11 +474,44 @@ def apply_ai_device_suggestions(suggestions, devices):
     return floor_values, access_values, special_values, security_values
 
 
+def populate_simple_device_modal(is_open):
+    """Populate modal with actual devices from uploaded data."""
+    if not is_open:
+        return dash.no_update
+
+    # Get uploaded data
+    from pages.file_upload import get_uploaded_data
+    uploaded_data = get_uploaded_data()
+
+    if not uploaded_data:
+        return create_simple_device_modal_with_ai([])
+
+    # Extract devices from all uploaded files
+    all_devices = set()
+    for filename, df in uploaded_data.items():
+        if 'door_id' in df.columns:
+            devices = df['door_id'].dropna().unique()
+            all_devices.update(str(d) for d in devices)
+
+    device_list = sorted(list(all_devices))
+    logger.info(f"\U0001F4CB Found {len(device_list)} devices for manual mapping")
+
+    return create_simple_device_modal_with_ai(device_list)
+
+
 def register_callbacks(
     manager: UnifiedCallbackCoordinator,
     controller: UnifiedAnalyticsController | None = None,
 ) -> None:
     """Register component callbacks using the provided coordinator."""
+
+    manager.register_callback(
+        Output("simple-device-modal", "children"),
+        Input("simple-device-modal", "is_open"),
+        prevent_initial_call=True,
+        callback_id="populate_simple_device_modal",
+        component_name="simple_device_mapping",
+    )(populate_simple_device_modal)
 
     manager.register_callback(
         Output("simple-device-modal", "is_open"),
