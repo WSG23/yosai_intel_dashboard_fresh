@@ -17,12 +17,19 @@ from .attack_detection import AttackDetection
 from .validation_exceptions import ValidationError
 
 
+class SQLSecurityLimits:
+    """Default bounds for SQL security checks."""
+
+    MAX_PARAMETER_LENGTH: int = 2048
+    MAX_QUERY_LENGTH: int = 4096
+
+
 @dataclass
 class SQLSecurityConfig:
     """Configuration for SQL injection safeguards."""
 
     allowed_characters: str = r"[\w\s,._@()-]"
-    max_length: int = 2048
+    max_length: int = SQLSecurityLimits.MAX_PARAMETER_LENGTH
 
 
 class SQLInjectionPrevention:
@@ -96,4 +103,4 @@ class SQLInjectionPrevention:
             raise ValidationError("Mismatch between SQL placeholders and parameters")
 
 
-__all__ = ["SQLSecurityConfig", "SQLInjectionPrevention"]
+__all__ = ["SQLSecurityLimits", "SQLSecurityConfig", "SQLInjectionPrevention"]
