@@ -19,8 +19,8 @@ when similar files are uploaded again.
 - `get_learned_mappings(df, filename)` – fetch mappings by fingerprint
 - `apply_learned_mappings_to_global_store(df, filename)` – update the
   global mapping store used by the UI components
- - `save_user_device_mappings(df, filename, user_mappings)` – persist manual
-   corrections provided by users using a unified file fingerprint
+- `save_user_device_mappings(filename, user_mappings)` – persist manual
+  corrections provided by users
 
 ## Data Flow
 
