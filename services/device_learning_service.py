@@ -179,10 +179,12 @@ class DeviceLearningService:
             ],
         }
 
-    def save_user_device_mappings(self, filename: str, user_mappings: Dict[str, Any]) -> bool:
+    def save_user_device_mappings(
+        self, df: pd.DataFrame, filename: str, user_mappings: Dict[str, Any]
+    ) -> bool:
         """Save user-confirmed device mappings to database"""
         try:
-            fingerprint = f"user_devices_{filename}_{len(user_mappings)}"
+            fingerprint = self._get_file_fingerprint(df, filename)
 
             mapping_data = {
                 "filename": filename,
@@ -205,6 +207,7 @@ class DeviceLearningService:
             logger.error(f"❌ Failed to save user device mappings: {e}")
             # Also log the actual exception details
             import traceback
+
             logger.error(f"Full error details: {traceback.format_exc()}")
             return False
 
@@ -212,7 +215,10 @@ class DeviceLearningService:
         """Get user-confirmed device mappings for a filename"""
         try:
             for fingerprint, data in self.learned_mappings.items():
-                if data.get("filename") == filename and data.get("source") == "user_confirmed":
+                if (
+                    data.get("filename") == filename
+                    and data.get("source") == "user_confirmed"
+                ):
                     return data.get("device_mappings", {})
 
             logger.info(f"No user device mappings found for {filename}")
