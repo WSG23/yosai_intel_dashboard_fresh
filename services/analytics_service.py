@@ -75,11 +75,19 @@ class AnalyticsService:
     def _initialize_database(self):
         """Initialize database connection"""
         try:
-            from config.database_manager import DatabaseManager
+            from config.database_manager import DatabaseManager, DatabaseConfig as ManagerConfig
             from config.config import get_database_config
 
-            db_config = get_database_config()
-            self.database_manager = DatabaseManager(db_config)
+            cfg = get_database_config()
+            manager_cfg = ManagerConfig(
+                type=cfg.type,
+                host=cfg.host,
+                port=cfg.port,
+                name=cfg.name,
+                user=cfg.user,
+                password=cfg.password,
+            )
+            self.database_manager = DatabaseManager(manager_cfg)
             logger.info("Database manager initialized")
             self.database_analytics_service = DatabaseAnalyticsService(
                 self.database_manager
@@ -357,6 +365,9 @@ class AnalyticsService:
             import pandas as pd
             import json
 
+            if FileProcessor is None:
+                raise RuntimeError("FileProcessor service not available")
+
             processor = FileProcessor(
                 upload_folder="temp", allowed_extensions={"csv", "json", "xlsx"}
             )
@@ -503,11 +514,11 @@ class AnalyticsService:
         if "person_id" in df.columns and unique_users > 0:
             user_stats = df.groupby("person_id").size()
             if len(user_stats) > 0:
-                q80 = user_stats.quantile(0.8)
-                q20 = user_stats.quantile(0.2)
-                power_users = user_stats[user_stats > q80].index.tolist()
+                q80 = float(user_stats.quantile(0.8))
+                q20 = float(user_stats.quantile(0.2))
+                power_users = user_stats[user_stats.gt(q80)].index.tolist()
                 regular_users = user_stats[user_stats.between(q20, q80)].index.tolist()
-                occasional_users = user_stats[user_stats < q20].index.tolist()
+                occasional_users = user_stats[user_stats.lt(q20)].index.tolist()
 
         logger.info(f"   Power users: {len(power_users)}")
         logger.info(f"   Regular users: {len(regular_users)}")
@@ -528,13 +539,11 @@ class AnalyticsService:
         if "door_id" in df.columns and unique_devices > 0:
             device_stats = df.groupby("door_id").size()
             if len(device_stats) > 0:
-                q80 = device_stats.quantile(0.8)
-                q20 = device_stats.quantile(0.2)
-                high_traffic = device_stats[device_stats > q80].index.tolist()
-                moderate_traffic = device_stats[
-                    device_stats.between(q20, q80)
-                ].index.tolist()
-                low_traffic = device_stats[device_stats < q20].index.tolist()
+                q80 = float(device_stats.quantile(0.8))
+                q20 = float(device_stats.quantile(0.2))
+                high_traffic = device_stats[device_stats.gt(q80)].index.tolist()
+                moderate_traffic = device_stats[device_stats.between(q20, q80)].index.tolist()
+                low_traffic = device_stats[device_stats.lt(q20)].index.tolist()
 
         logger.info(f"   High traffic devices: {len(high_traffic)}")
         logger.info(f"   Moderate traffic devices: {len(moderate_traffic)}")
@@ -702,7 +711,10 @@ class AnalyticsService:
 
     def health_check(self) -> Dict[str, Any]:
         """Check service health"""
-        health = {"service": "healthy", "timestamp": datetime.now().isoformat()}
+        health: Dict[str, Any] = {
+            "service": "healthy",
+            "timestamp": datetime.now().isoformat(),
+        }
 
         # Check database
         if self.database_manager:

@@ -28,13 +28,15 @@ from utils.unicode_handler import sanitize_unicode_input, safe_format_number
 # Internal service imports with CORRECTED paths
 ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
 
-try:
-    from components.column_verification import get_ai_suggestions_for_file
-    AI_SUGGESTIONS_AVAILABLE = True
-except ImportError:
-    # Fallback AI suggestions function
-    def get_ai_suggestions_for_file(df, filename):
-        suggestions = {}
+from services.ai_suggestions import generate_column_suggestions
+
+
+def get_ai_suggestions_for_file(df: pd.DataFrame, filename: str) -> Dict[str, Dict[str, Any]]:
+    """Return AI column suggestions for ``df`` columns."""
+    try:
+        return generate_column_suggestions(list(df.columns))
+    except Exception:
+        suggestions: Dict[str, Dict[str, Any]] = {}
         for col in df.columns:
             col_lower = col.lower().strip()
             if any(word in col_lower for word in ["time", "date", "stamp"]):
@@ -50,7 +52,9 @@ except ImportError:
             else:
                 suggestions[col] = {"field": "", "confidence": 0.0}
         return suggestions
-    AI_SUGGESTIONS_AVAILABLE = True
+
+
+AI_SUGGESTIONS_AVAILABLE = True
 
 # Logger setup
 logger = logging.getLogger(__name__)
@@ -266,7 +270,7 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
 # =============================================================================
 
 
-def create_suggests_display(suggests_data: Dict[str, Any]) -> html.Div:
+def create_suggests_display(suggests_data: Dict[str, Any]) -> html.Div | dbc.Card | dbc.Alert:
     """Create suggests analysis display components (fixed version)"""
     if "error" in suggests_data:
         return dbc.Alert(f"Error: {suggests_data['error']}", color="danger")
@@ -523,7 +527,7 @@ def analyze_data_with_service(data_source: str, analysis_type: str) -> Dict[str,
         return {"error": f"Analysis failed: {str(e)}"}
 
 
-def create_data_quality_display_corrected(data_source: str) -> html.Div:
+def create_data_quality_display_corrected(data_source: str) -> html.Div | dbc.Card | dbc.Alert:
     """Data quality analysis with proper imports"""
     try:
         # Handle BOTH upload formats
@@ -727,7 +731,7 @@ def _extract_security_metrics(results: Dict[str, Any]) -> Dict[str, Any]:
         'failed_attempts': failed_attempts,
     }
 
-def create_analysis_results_display(results: Dict[str, Any], analysis_type: str) -> html.Div:
+def create_analysis_results_display(results: Dict[str, Any], analysis_type: str) -> html.Div | dbc.Card | dbc.Alert:
     """Create display for different analysis types"""
     try:
         counts = _extract_counts(results)
@@ -814,7 +818,7 @@ def create_analysis_results_display(results: Dict[str, Any], analysis_type: str)
         return dbc.Alert(f"Error displaying results: {str(e)}", color="danger")
 
 
-def create_limited_analysis_display(data_source: str, analysis_type: str) -> html.Div:
+def create_limited_analysis_display(data_source: str, analysis_type: str) -> html.Div | dbc.Card:
     """Create limited analysis display when service unavailable"""
     return dbc.Card(
         [
@@ -837,14 +841,14 @@ def create_limited_analysis_display(data_source: str, analysis_type: str) -> htm
     )
 
 
-def create_data_quality_display(data_source: str) -> html.Div:
+def create_data_quality_display(data_source: str) -> html.Div | dbc.Card | dbc.Alert:
     """Create data quality analysis display"""
     try:
         if data_source.startswith("upload:"):
             filename = data_source.replace("upload:", "")
-            from components.file_upload import get_uploaded_data_store
+            from utils.upload_store import uploaded_data_store
 
-            uploaded_files = get_uploaded_data_store()
+            uploaded_files = uploaded_data_store.get_all_data()
 
             if filename in uploaded_files:
                 df = uploaded_files[filename]

@@ -84,8 +84,14 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
 
         # Display sample (but show actual count in stats)
         preview_df = df.head(preview_rows).copy()
-        preview_df.columns = [XSSPrevention.sanitize_html_output(str(c)) for c in preview_df.columns]
-        preview_df = preview_df.applymap(lambda x: XSSPrevention.sanitize_html_output(str(x)))
+        preview_df.columns = [
+            XSSPrevention.sanitize_html_output(str(c)) for c in preview_df.columns
+        ]
+
+        def _sanitize(value: Any) -> str:
+            return XSSPrevention.sanitize_html_output(str(value))
+
+        preview_df = preview_df.applymap(_sanitize)
 
         # Display status messaging based on file size
         if actual_rows <= 10:
@@ -144,7 +150,7 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
                             hover=True,
                             responsive=True,
                             size="sm",
-                        ),
+                        ),  # type: ignore[attr-defined]
 
                         # ADDITIONAL: Clear indication of processing vs display
                         dbc.Alert(
