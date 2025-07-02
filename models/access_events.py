@@ -12,12 +12,14 @@ from .base import BaseModel
 from .enums import AccessResult, BadgeStatus
 from security.sql_validator import SQLInjectionPrevention
 from config.constants import DataProcessingLimits
+from core.query_optimizer import monitor_query_performance
 
 _sql_validator = SQLInjectionPrevention()
 
 class AccessEventModel(BaseModel):
     """Model for access control events with full type safety"""
-    
+
+    @monitor_query_performance()
     def get_data(self, filters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
         """Get access events with optional filtering"""
         
@@ -97,6 +99,7 @@ class AccessEventModel(BaseModel):
             logging.error(f"Error processing DataFrame: {e}")
             return df
     
+    @monitor_query_performance()
     def get_summary_stats(self) -> Dict[str, Any]:
         """Get comprehensive summary statistics"""
         query = """
@@ -133,11 +136,13 @@ class AccessEventModel(BaseModel):
             logging.error(f"Error getting summary stats: {e}")
             return {}
     
+    @monitor_query_performance()
     def get_recent_events(self, hours: int = 24) -> pd.DataFrame:
         """Get recent events for real-time monitoring"""
         cutoff_time = datetime.now() - timedelta(hours=hours)
         return self.get_data({'start_date': cutoff_time})
     
+    @monitor_query_performance()
     def get_hourly_distribution(self, days: int = 7) -> pd.DataFrame:
         """Get hourly access distribution for analytics"""
         _sql_validator.validate_query_parameter(days)
@@ -160,6 +165,7 @@ class AccessEventModel(BaseModel):
             logging.error(f"Error getting hourly distribution: {e}")
             return pd.DataFrame()
     
+    @monitor_query_performance()
     def get_user_activity(self, limit: int = 20) -> pd.DataFrame:
         """Get top active users"""
         query = """
@@ -182,6 +188,7 @@ class AccessEventModel(BaseModel):
             logging.error(f"Error getting user activity: {e}")
             return pd.DataFrame()
     
+    @monitor_query_performance()
     def get_door_activity(self, limit: int = 20) -> pd.DataFrame:
         """Get most accessed doors"""
         query = """
@@ -204,6 +211,7 @@ class AccessEventModel(BaseModel):
             logging.error(f"Error getting door activity: {e}")
             return pd.DataFrame()
     
+    @monitor_query_performance()
     def get_trend_analysis(self, days: int = 30) -> pd.DataFrame:
         """Get daily trend analysis"""
         _sql_validator.validate_query_parameter(days)
@@ -263,6 +271,7 @@ class AccessEventModel(BaseModel):
             logging.error(f"Data validation failed: {e}")
             return False
     
+    @monitor_query_performance()
     def create_event(self, event_data: Dict[str, Any]) -> bool:
         """Create a new access event"""
         required_fields = ['event_id', 'timestamp', 'person_id', 'door_id', 'access_result']
