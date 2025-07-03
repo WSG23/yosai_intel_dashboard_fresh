@@ -9,6 +9,7 @@ from flasgger import Swagger
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output
 from dashboard.layout.navbar import create_navbar_layout
+from utils import check_navbar_assets, debug_dash_asset_serving
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from core.container import Container as DIContainer
 from core.plugins.manager import PluginManager
@@ -62,6 +63,17 @@ def _create_full_app() -> dash.Dash:
             suppress_callback_exceptions=True,
             assets_folder="assets",
         )
+        check_navbar_assets(
+            [
+                "dashboard.png",
+                "analytics.png",
+                "upload.png",
+                "print.png",
+                "settings.png",
+                "logout.png",
+            ]
+        )
+        debug_dash_asset_serving(app)
         Compress(app.server)
 
         app.title = "Yōsai Intel Dashboard"
@@ -577,9 +589,7 @@ def _configure_swagger(server: Any) -> None:
         Swagger(server, template=template)
         logger.info("✅ Swagger configured successfully")
     except Exception as e:
-        logger.warning(
-            f"Swagger configuration failed, continuing without it: {e}"
-        )
+        logger.warning(f"Swagger configuration failed, continuing without it: {e}")
         # Don't crash the app if Swagger fails
 
 

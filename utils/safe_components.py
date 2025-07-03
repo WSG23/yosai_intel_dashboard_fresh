@@ -6,6 +6,7 @@ Provides safe fallback components that are guaranteed to be JSON serializable
 
 from dash import html, dcc
 import dash_bootstrap_components as dbc
+from .assets_debug import navbar_icon
 
 
 def safe_navbar():
@@ -28,11 +29,7 @@ def safe_navbar():
                         [
                             dbc.NavItem(
                                 dbc.NavLink(
-                                    html.Img(
-                                        src="/assets/navbar_icons/dashboard.png",
-                                        className="navbar-icon",
-                                        alt="Dashboard",
-                                    ),
+                                    navbar_icon("dashboard.png", "Dashboard", "🏠"),
                                     href="/",
                                     external_link=True,
                                     title="Dashboard",
@@ -40,11 +37,7 @@ def safe_navbar():
                             ),
                             dbc.NavItem(
                                 dbc.NavLink(
-                                    html.Img(
-                                        src="/assets/navbar_icons/upload.png",
-                                        className="navbar-icon",
-                                        alt="Upload",
-                                    ),
+                                    navbar_icon("upload.png", "Upload", "⬆️"),
                                     href="/file-upload",
                                     external_link=True,
                                     title="Upload",
@@ -52,10 +45,8 @@ def safe_navbar():
                             ),
                             dbc.NavItem(
                                 dbc.NavLink(
-                                    html.Img(
-                                        src="/assets/navbar_icons/analytics.png",
-                                        className="navbar-icon",
-                                        alt="Deep Analytics Page",
+                                    navbar_icon(
+                                        "analytics.png", "Deep Analytics Page", "📊"
                                     ),
                                     href="/analytics",
                                     external_link=True,
@@ -65,7 +56,9 @@ def safe_navbar():
                         ],
                         navbar=True,
                     ),
-                    html.Span("Logged in as: HQ Tower - East Wing", className="text-light"),
+                    html.Span(
+                        "Logged in as: HQ Tower - East Wing", className="text-light"
+                    ),
                 ]
             )
         ],
@@ -77,65 +70,86 @@ def safe_navbar():
 
 def safe_map_panel():
     """Safe map panel component"""
-    return dbc.Card([
-        dbc.CardHeader([
-            html.H4("🗺️ Security Map", className="mb-0"),
-            dbc.Badge("🟢 All systems operational", color="success")
-        ]),
-        dbc.CardBody([
-            html.Div(
+    return dbc.Card(
+        [
+            dbc.CardHeader(
                 [
-                    html.P("Interactive security map"),
-                    html.P("Real-time monitoring active"),
-                    dbc.Progress(value=100, color="success"),
-                ],
-                className="safe-map-placeholder",
-            )
-        ])
-    ])
+                    html.H4("🗺️ Security Map", className="mb-0"),
+                    dbc.Badge("🟢 All systems operational", color="success"),
+                ]
+            ),
+            dbc.CardBody(
+                [
+                    html.Div(
+                        [
+                            html.P("Interactive security map"),
+                            html.P("Real-time monitoring active"),
+                            dbc.Progress(value=100, color="success"),
+                        ],
+                        className="safe-map-placeholder",
+                    )
+                ]
+            ),
+        ]
+    )
 
 
 def safe_bottom_panel():
     """Safe bottom panel component"""
-    return dbc.Card([
-        dbc.CardHeader("📊 Analytics Panel"),
-        dbc.CardBody([
-            html.P("Analytics panel is running safely"),
-            html.Div("All components are JSON serializable", className="alert alert-success")
-        ])
-    ])
+    return dbc.Card(
+        [
+            dbc.CardHeader("📊 Analytics Panel"),
+            dbc.CardBody(
+                [
+                    html.P("Analytics panel is running safely"),
+                    html.Div(
+                        "All components are JSON serializable",
+                        className="alert alert-success",
+                    ),
+                ]
+            ),
+        ]
+    )
 
 
 def safe_incident_alerts():
     """Safe incident alerts component"""
-    return dbc.Card([
-        dbc.CardHeader("🚨 Incident Alerts"),
-        dbc.CardBody([
-            dbc.Alert("No active incidents", color="success"),
-            html.P("System is operating normally"),
-            dbc.Button("View All Incidents", color="primary", size="sm")
-        ])
-    ])
+    return dbc.Card(
+        [
+            dbc.CardHeader("🚨 Incident Alerts"),
+            dbc.CardBody(
+                [
+                    dbc.Alert("No active incidents", color="success"),
+                    html.P("System is operating normally"),
+                    dbc.Button("View All Incidents", color="primary", size="sm"),
+                ]
+            ),
+        ]
+    )
 
 
 def safe_weak_signal():
     """Safe weak signal panel component"""
-    return dbc.Card([
-        dbc.CardHeader("📡 Weak Signal Analysis"),
-        dbc.CardBody([
-            html.P("Weak signal analysis is running"),
-            html.P("All data is properly serialized", className="text-info")
-        ])
-    ])
+    return dbc.Card(
+        [
+            dbc.CardHeader("📡 Weak Signal Analysis"),
+            dbc.CardBody(
+                [
+                    html.P("Weak signal analysis is running"),
+                    html.P("All data is properly serialized", className="text-info"),
+                ]
+            ),
+        ]
+    )
 
 
 # Component registry mapping
 SAFE_COMPONENTS = {
-    'navbar': safe_navbar,
-    'map_panel': safe_map_panel, 
-    'bottom_panel': safe_bottom_panel,
-    'incident_alerts': safe_incident_alerts,
-    'weak_signal': safe_weak_signal,
+    "navbar": safe_navbar,
+    "map_panel": safe_map_panel,
+    "bottom_panel": safe_bottom_panel,
+    "incident_alerts": safe_incident_alerts,
+    "weak_signal": safe_weak_signal,
 }
 
 
