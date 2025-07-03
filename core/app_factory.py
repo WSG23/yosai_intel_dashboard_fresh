@@ -7,6 +7,7 @@ from typing import Optional, Any
 from flasgger import Swagger
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output
+from dashboard.layout.navbar import layout as navbar_layout
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from core.container import Container as DIContainer
 from core.plugins.manager import PluginManager
@@ -324,54 +325,41 @@ def _create_main_layout() -> html.Div:
 
 def _create_navbar() -> dbc.Navbar:
     """Create navigation bar"""
+    nav = navbar_layout()
+    if nav is not None:
+        return nav
+    # Fallback to previous static navbar when Dash components aren't available
     return dbc.Navbar(
         [
             dbc.Container(
                 [
-                    # Brand
                     dbc.NavbarBrand(
-                        [
-                            html.I(className="fas fa-shield-alt me-2"),
-                            "Yōsai Intel Dashboard",
-                        ],
+                        [html.I(className="fas fa-shield-alt me-2"), "Yōsai Intel Dashboard"],
                         href="/",
                     ),
-                    # Navigation links
                     dbc.Nav(
                         [
                             dbc.NavItem(
                                 dbc.NavLink(
-                                    [
-                                        html.I(className="fas fa-tachometer-alt me-1"),
-                                        "Dashboard",
-                                    ],
+                                    [html.I(className="fas fa-tachometer-alt me-1"), "Dashboard"],
                                     href="/",
                                 )
                             ),
                             dbc.NavItem(
                                 dbc.NavLink(
-                                    [
-                                        html.I(className="fas fa-chart-line me-1"),
-                                        "Analytics",
-                                    ],
+                                    [html.I(className="fas fa-chart-line me-1"), "Analytics"],
                                     href="/analytics",
                                 )
                             ),
                             dbc.NavItem(
                                 dbc.NavLink(
-                                    [
-                                        html.I(className="fas fa-chart-area me-1"),
-                                        "Graphs",
-                                    ],
+                                    [html.I(className="fas fa-chart-area me-1"), "Graphs"],
                                     href="/graphs",
                                 )
                             ),
                             dbc.NavItem(
                                 dbc.NavLink(
-                                    [
-                                        html.I(className="fas fa-file-upload me-1"),
-                                        "Upload",
-                                    ],
+                                    [html.I(className="fas fa-file-upload me-1"), "Upload"],
                                     href="/upload",
                                 )
                             ),
