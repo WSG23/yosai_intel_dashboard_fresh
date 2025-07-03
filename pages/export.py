@@ -3,7 +3,7 @@
 
 from dash import html, dcc
 import dash_bootstrap_components as dbc
-from utils.unicode_handler import sanitize_unicode_input
+from utils.unicode_utils import sanitize_unicode_input
 
 
 def _instructions() -> dbc.Card:

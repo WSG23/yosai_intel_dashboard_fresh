@@ -3,7 +3,7 @@
 import pandas as pd
 from config.dynamic_config import dynamic_config
 from config.constants import DataProcessingLimits
-from utils.unicode_processor import sanitize_data_frame
+from utils.unicode_utils import sanitize_data_frame
 from .validation_exceptions import ValidationError
 import logging
 

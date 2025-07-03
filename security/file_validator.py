@@ -7,7 +7,7 @@ from typing import Any
 import pandas as pd
 
 from utils.file_validator import safe_decode_file, process_dataframe
-from utils.unicode_handler import sanitize_unicode_input
+from utils.unicode_utils import sanitize_unicode_input
 from config.dynamic_config import dynamic_config
 
 from .validation_exceptions import ValidationError

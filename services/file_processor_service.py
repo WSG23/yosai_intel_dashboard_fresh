@@ -10,8 +10,7 @@ from pathlib import Path
 from .base import BaseService
 from .protocols import FileProcessorProtocol
 from utils.file_validator import safe_decode_with_unicode_handling
-from utils.unicode_handler import sanitize_unicode_input
-from utils.unicode_utils import safe_unicode_encode
+from utils.unicode_utils import sanitize_unicode_input, safe_unicode_encode
 from config.dynamic_config import dynamic_config
 
 logger = logging.getLogger(__name__)

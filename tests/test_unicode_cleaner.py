@@ -1,6 +1,6 @@
 import pandas as pd
 from file_conversion.unicode_handler import UnicodeCleaner
-from utils.unicode_processor import safe_unicode_encode
+from utils.unicode_utils import safe_unicode_encode
 
 
 def test_clean_dataframe_removes_surrogates():

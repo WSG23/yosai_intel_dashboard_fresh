@@ -23,7 +23,7 @@ import plotly.graph_objects as go
 
 # Add this import
 from services import AnalyticsService, get_analytics_service
-from utils.unicode_handler import sanitize_unicode_input, safe_format_number
+from utils.unicode_utils import sanitize_unicode_input, safe_format_number
 
 # Internal service imports with CORRECTED paths
 ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
