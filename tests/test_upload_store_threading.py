@@ -14,6 +14,8 @@ def test_concurrent_add_file(tmp_path):
     with ThreadPoolExecutor(max_workers=5) as exc:
         list(exc.map(worker, range(10)))
 
+    store.wait_for_pending_saves()
+
     assert set(store.get_filenames()) == {f"file_{i}.csv" for i in range(10)}
     data = store.get_all_data()
     for i in range(10):

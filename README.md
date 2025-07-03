@@ -449,6 +449,10 @@ This creates `converted_data/Demo3_data_copy.csv.parquet` and prints the first r
 Legacy `.pkl` files placed in `temp/uploaded_data` are automatically converted
 to Parquet the next time the application starts.
 
+Uploaded files are now **lazy loaded**. Only the `file_info.json` metadata is
+read at startup; Parquet files are opened on demand when analytics or previews
+require them. This keeps startup fast even with many large uploads.
+
 
 ## 🤝 Contributing
 
