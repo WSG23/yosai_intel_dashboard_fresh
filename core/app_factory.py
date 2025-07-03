@@ -7,6 +7,7 @@ from typing import Optional, Any
 from flasgger import Swagger
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output
+from dashboard.layout.navbar import create_navbar_layout
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from core.container import Container as DIContainer
 from core.plugins.manager import PluginManager
@@ -323,84 +324,8 @@ def _create_main_layout() -> html.Div:
 
 
 def _create_navbar() -> dbc.Navbar:
-    """Create navigation bar"""
-    return dbc.Navbar(
-        [
-            dbc.Container(
-                [
-                    # Brand
-                    dbc.NavbarBrand(
-                        [
-                            html.I(className="fas fa-shield-alt me-2"),
-                            "Yōsai Intel Dashboard",
-                        ],
-                        href="/",
-                    ),
-                    # Navigation links
-                    dbc.Nav(
-                        [
-                            dbc.NavItem(
-                                dbc.NavLink(
-                                    [
-                                        html.I(className="fas fa-tachometer-alt me-1"),
-                                        "Dashboard",
-                                    ],
-                                    href="/",
-                                )
-                            ),
-                            dbc.NavItem(
-                                dbc.NavLink(
-                                    [
-                                        html.I(className="fas fa-chart-line me-1"),
-                                        "Analytics",
-                                    ],
-                                    href="/analytics",
-                                )
-                            ),
-                            dbc.NavItem(
-                                dbc.NavLink(
-                                    [
-                                        html.I(className="fas fa-chart-area me-1"),
-                                        "Graphs",
-                                    ],
-                                    href="/graphs",
-                                )
-                            ),
-                            dbc.NavItem(
-                                dbc.NavLink(
-                                    [
-                                        html.I(className="fas fa-file-upload me-1"),
-                                        "Upload",
-                                    ],
-                                    href="/upload",
-                                )
-                            ),
-                            dbc.NavItem(
-                                dbc.NavLink(
-                                    [html.I(className="fas fa-cog me-1"), "Settings"],
-                                    href="/settings",
-                                )
-                            ),
-                            dbc.NavItem(
-                                [
-                                    dbc.Button(
-                                        "🔄 Clear Cache",
-                                        id="clear-cache-btn",
-                                        color="outline-secondary",
-                                        size="sm",
-                                    )
-                                ]
-                            ),
-                        ],
-                        navbar=True,
-                    ),
-                ]
-            )
-        ],
-        color="dark",
-        dark=True,
-        className="mb-4",
-    )
+    """Wrapper to create the navigation bar layout."""
+    return create_navbar_layout()
 
 
 def _create_placeholder_page(title: str, subtitle: str, message: str) -> html.Div:

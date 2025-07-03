@@ -184,6 +184,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                             className="navbar-nav-link",
                                                             title="Logout"
                                                         ),
+                                                        dbc.Button("🔄 Clear Cache", id="clear-cache-btn", color="outline-light", size="sm", className="ms-1"),
                                                     ],
                                                     className="d-flex align-items-center",
                                                     style={"gap": "1rem"}  # Increased from 0.75rem
