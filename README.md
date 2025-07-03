@@ -134,6 +134,12 @@ following steps:
 
 3. Restart your editor so Pylance picks up the correct interpreter.
 
+4. If the dashboard starts with a blank page, required packages are
+   likely missing. Install them before launching the app:
+   ```bash
+   pip install -r requirements.txt  # or ./scripts/setup.sh
+   ```
+
 ### Production Deployment
 
 Using Docker Compose:

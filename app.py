@@ -13,7 +13,14 @@ import os
 import sys
 import importlib
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    logging.error("Required package 'python-dotenv' is missing.")
+    logging.error(
+        "Run `pip install -r requirements.txt` or `./scripts/setup.sh` to install dependencies."
+    )
+    sys.exit(1)
 
 from core.exceptions import ConfigurationError
 from utils import debug_dash_asset_serving
@@ -55,7 +62,7 @@ def check_learning_status():
 
 def verify_dependencies() -> None:
     """Ensure critical third-party libraries are available."""
-    required = ["bleach", "pandas"]
+    required = ["bleach", "pandas", "dash", "flask", "dotenv"]
     missing = []
     for pkg in required:
         try:
@@ -65,7 +72,9 @@ def verify_dependencies() -> None:
 
     if missing:
         logger.error("Missing required dependencies: %s", ", ".join(missing))
-        logger.info("\n💡 Run ./scripts/setup.sh to install them")
+        logger.info(
+            "\n💡 Run `pip install -r requirements.txt` or `./scripts/setup.sh` to install them"
+        )
         sys.exit(1)
 
 
