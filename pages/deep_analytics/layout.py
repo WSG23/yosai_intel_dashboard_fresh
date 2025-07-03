@@ -14,22 +14,13 @@ logger = logging.getLogger(__name__)
 def layout():
     """Fixed layout without problematic Unicode characters"""
     try:
-        # Header section - using safe ASCII characters
-        header = dbc.Row([
-            dbc.Col([
-                html.H1("Deep Analytics", className="text-primary"),
-                html.P(
-                    "Advanced data analysis with AI-powered column mapping suggestions",
-                    className="lead text-muted"
-                ),
-                dbc.Alert(
-                    "UI components loaded successfully",
-                    color="success",
-                    dismissable=True,
-                    id="status-alert"
-                )
-            ])
-        ], className="mb-4")
+        status_alert = dbc.Alert(
+            "UI components loaded successfully",
+            color="success",
+            dismissable=True,
+            id="status-alert",
+            className="mb-3",
+        )
 
         # Configuration section
         config_card = dbc.Card([
@@ -163,7 +154,7 @@ def layout():
             html.Div(id="hidden-trigger", className="hidden")
         ]
 
-        return dbc.Container([header, config_card, results_area] + stores, fluid=True)
+        return dbc.Container([status_alert, config_card, results_area] + stores, fluid=True)
 
     except Exception as e:
         logger.error(f"Layout creation error: {e}")

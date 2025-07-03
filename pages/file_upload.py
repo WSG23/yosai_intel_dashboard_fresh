@@ -53,20 +53,7 @@ def layout():
     """File upload page layout with persistent storage"""
     return dbc.Container(
         [
-            # Page header
-            dbc.Row(
-                [
-                    dbc.Col(
-                        [
-                            html.H1("📁 File Upload", className="text-primary mb-2"),
-                            html.P(
-                                "Upload CSV, Excel, or JSON files for analysis",
-                                className="text-muted mb-4",
-                            ),
-                        ]
-                    )
-                ]
-            ),
+            # Removed redundant page header
             # Upload area
             dbc.Row(
                 [
@@ -77,7 +64,7 @@ def layout():
                                     dbc.CardHeader(
                                         [
                                             html.H5(
-                                                "📤 Upload Data Files", className="mb-0"
+                                                "Upload Data Files", className="mb-0"
                                             )
                                         ]
                                     ),

@@ -8,18 +8,6 @@ from utils.unicode_handler import sanitize_unicode_input
 
 def layout() -> dbc.Container:
     """Graphs page layout."""
-    header = dbc.Row(
-        dbc.Col(
-            [
-                html.H1("Graphs", className="text-primary mb-4"),
-                html.P(
-                    "Interactive charts will be integrated here.",
-                    className="text-muted",
-                ),
-            ]
-        )
-    )
-
     tabs = dbc.Tabs(
         [
             dbc.Tab(label=sanitize_unicode_input("Line Charts"), tab_id="line"),
@@ -33,7 +21,7 @@ def layout() -> dbc.Container:
 
     placeholder = html.Div("Chart placeholders", className="graphs-placeholder")
 
-    return dbc.Container([header, tabs, placeholder], fluid=True)
+    return dbc.Container([tabs, placeholder], fluid=True)
 
 
 __all__ = ["layout"]

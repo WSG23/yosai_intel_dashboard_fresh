@@ -22,18 +22,6 @@ def _settings_section(title: str) -> dbc.Card:
 
 def layout() -> dbc.Container:
     """Settings page layout."""
-    header = dbc.Row(
-        dbc.Col(
-            [
-                html.H1("Settings", className="text-primary mb-4"),
-                html.P(
-                    "Manage dashboard configuration.",
-                    className="text-muted",
-                ),
-            ]
-        )
-    )
-
     sections = dbc.Row(
         [
             dbc.Col(_settings_section("User Preferences"), md=6),
@@ -41,7 +29,7 @@ def layout() -> dbc.Container:
         ]
     )
 
-    return dbc.Container([header, sections], fluid=True)
+    return dbc.Container([sections], fluid=True)
 
 
 __all__ = ["layout"]

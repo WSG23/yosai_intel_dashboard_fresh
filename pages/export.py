@@ -8,19 +8,7 @@ from utils.unicode_handler import sanitize_unicode_input
 
 def layout() -> dbc.Container:
     """Simple export page layout."""
-    header = dbc.Row(
-        dbc.Col(
-            [
-                html.H1("Export", className="text-primary mb-4"),
-                html.P(
-                    "Use the export menu in the navigation bar to download enhanced data.",
-                    className="text-muted",
-                ),
-            ]
-        )
-    )
-
-    return dbc.Container([header], fluid=True)
+    return dbc.Container([], fluid=True)
 
 
 __all__ = ["layout"]
