@@ -104,7 +104,8 @@ directory as long as their paths match the references in
    uwsgi --module wsgi:server
    ```
 7. **Access the dashboard:**
-   Open http://127.0.0.1:8050 in your browser
+   Open http://127.0.0.1:8050 in your browser. The application runs over
+   plain HTTP by default; configure a reverse proxy with TLS if you need HTTPS.
 
 ## Developer Onboarding
 
@@ -139,6 +140,11 @@ following steps:
    ```bash
    pip install -r requirements.txt  # or ./scripts/setup.sh
    ```
+5. If you accidentally open the app with `https://` instead of `http://`,
+   your browser may cache a service worker or enforce HSTS, preventing the
+   plain HTTP version from loading. Use the browser's development settings to
+   clear site data, including service workers and caches, and remove any HSTS
+   entries before reloading the page.
 
 ### Production Deployment
 
