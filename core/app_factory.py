@@ -18,7 +18,7 @@ import pandas as pd
 from flask_babel import Babel
 from flask import session
 from flask_compress import Compress
-from core.theme_manager import apply_theme_settings, DEFAULT_THEME
+from core.theme_manager import apply_theme_settings, DEFAULT_THEME, sanitize_theme
 from config.config import get_config
 
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
@@ -368,7 +368,7 @@ def _create_json_safe_app() -> dash.Dash:
 
 def _create_main_layout() -> html.Div:
     """Create main application layout with complete integration"""
-    theme = os.getenv("YOSAI_THEME", "dark")
+    theme = sanitize_theme(os.getenv("YOSAI_THEME", DEFAULT_THEME))
     return html.Div(
         [
             # URL routing component
