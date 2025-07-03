@@ -12,17 +12,23 @@ class AISuggestionService:
     def analyze_device_name_with_ai(self, device_name: str) -> Dict[str, Any]:
         try:
             from services.ai_mapping_store import ai_mapping_store
+
+            # Check for any cached mapping first
             mapping = ai_mapping_store.get(device_name)
-            if mapping and mapping.get("source") == "user_confirmed":
-                logger.info("🔐 Using USER CONFIRMED mapping for '%s'", device_name)
+            if mapping:
+                src = mapping.get("source", "cached")
+                if src == "user_confirmed":
+                    logger.info("🔐 Using USER CONFIRMED mapping for '%s'", device_name)
+                else:
+                    logger.info("📦 Using cached mapping for '%s'", device_name)
                 return mapping
 
-            logger.info("🤖 No user mapping found, generating AI analysis for '%s'", device_name)
+            logger.info("🤖 Generating AI analysis for '%s'", device_name)
             from services.ai_device_generator import AIDeviceGenerator
 
             ai_generator = AIDeviceGenerator()
             result = ai_generator.generate_device_attributes(device_name)
-            return {
+            mapping = {
                 "floor_number": result.floor_number,
                 "security_level": result.security_level,
                 "confidence": result.confidence,
@@ -32,6 +38,9 @@ class AISuggestionService:
                 "ai_reasoning": result.ai_reasoning,
                 "source": "ai_generated",
             }
+            # Cache the result for future calls
+            ai_mapping_store.set(device_name, mapping)
+            return mapping
         except Exception as exc:
             logger.info("❌ Error in device analysis: %s", exc)
             return {

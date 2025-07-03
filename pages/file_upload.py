@@ -38,6 +38,14 @@ from services.upload import (
 
 logger = logging.getLogger(__name__)
 
+# Initialize a shared AI suggestion service for module-level helpers
+_ai_service = AISuggestionService()
+
+
+def analyze_device_name_with_ai(device_name: str) -> Dict[str, Any]:
+    """Helper exposing device analysis for tests and other modules."""
+    return _ai_service.analyze_device_name_with_ai(device_name)
+
 
 
 
@@ -429,6 +437,8 @@ class Callbacks:
             all_devices = set()
             device_columns = ["door_id", "device_name", "DeviceName", "location", "door", "device"]
 
+            from services.ai_mapping_store import ai_mapping_store
+
             for filename, df in uploaded_data.items():
                 logger.info(f"📄 Processing {filename} with {len(df)} rows")
                 for col in df.columns:
@@ -437,19 +447,29 @@ class Callbacks:
                         unique_vals = df[col].dropna().unique()
                         all_devices.update(str(val) for val in unique_vals)
                         logger.info(f"   Found {len(unique_vals)} devices in column '{col}'")
-                        # Log AI analysis details
+                        # Pre-cache AI analyses for new devices
                         for device in unique_vals:
-                            ai_analysis = self.ai.analyze_device_name_with_ai(device)
-                            logger.info(f"   🚪 '{device}' → Floor: {ai_analysis.get('floor_number', 1)}, Security: {ai_analysis.get('security_level', 5)}")
+                            if not ai_mapping_store.get(device):
+                                ai_analysis = self.ai.analyze_device_name_with_ai(device)
+                                ai_mapping_store.set(device, ai_analysis)
+                                logger.info(
+                                    f"   🚪 '{device}' → Floor: {ai_analysis.get('floor_number', 1)}, Security: {ai_analysis.get('security_level', 5)}"
+                                )
                         break
 
             # Generate AI-populated interactive rows
             table_rows = []
             device_list = sorted(list(all_devices))
             file_info["devices"] = device_list
-            
+
+            cached_mappings = ai_mapping_store.all()
+            for device_name in device_list:
+                if device_name not in cached_mappings:
+                    ai_mapping_store.set(device_name, self.ai.analyze_device_name_with_ai(device_name))
+            cached_mappings = ai_mapping_store.all()
+
             for i, device_name in enumerate(device_list):
-                ai_analysis = self.ai.analyze_device_name_with_ai(device_name)
+                ai_analysis = cached_mappings.get(device_name, {})
                 is_elevator_ai = ai_analysis.get('is_elevator', False)
                 is_stairwell_ai = ai_analysis.get('is_stairwell', False)
                 is_fire_escape_ai = ai_analysis.get('is_fire_escape', False)
