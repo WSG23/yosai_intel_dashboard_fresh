@@ -205,8 +205,11 @@ class SecurityScoreCalculator:
         lower_bound = max(0.0, center - margin)
         upper_bound = min(1.0, center + margin)
 
-        score_lower = max(0.0, 100.0 * (1.0 - upper_bound * 10))
-        score_upper = min(100.0, 100.0 * (1.0 - lower_bound * 5))
+        score_lower = 100.0 * (1.0 - upper_bound)
+        score_upper = 100.0 * (1.0 - lower_bound)
+
+        score_lower = max(0.0, min(100.0, score_lower))
+        score_upper = max(0.0, min(100.0, score_upper))
 
         return (score_lower, score_upper)
 
