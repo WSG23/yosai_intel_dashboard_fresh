@@ -83,7 +83,8 @@ def create_navbar_layout() -> Optional[Any]:
                                     [
                                         html.A(
                                             html.Img(
-                                                src="/assets/yosai_logo_name_black.png",
+                                                id="navbar-logo",
+                                                src="/assets/yosai_logo_name_white.png" if DEFAULT_THEME in ("dark", "high-contrast") else "/assets/yosai_logo_name_black.png",
                                                 height="46px",  # Increased from 45px (2% larger)
                                                 className="navbar__logo",
                                                 alt="logo",
@@ -369,6 +370,18 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             Output("theme-dummy-output", "children"),
             Input("theme-store", "data"),
         )
+
+        @manager.register_callback(
+            Output("navbar-logo", "src"),
+            Input("theme-store", "data"),
+            callback_id="navbar_logo_theme",
+            component_name="navbar",
+        )
+        def update_logo(theme: Optional[str]) -> str:
+            theme = sanitize_theme(theme)
+            if theme in ("dark", "high-contrast"):
+                return "/assets/yosai_logo_name_white.png"
+            return "/assets/yosai_logo_name_black.png"
 
         @manager.register_callback(
             Output("download-csv", "data"),
