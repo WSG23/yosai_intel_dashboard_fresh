@@ -5,8 +5,10 @@ Enums and constants for the Yōsai Intel system
 
 from enum import Enum
 
+
 class AnomalyType(Enum):
     """Types of anomalies that can be detected"""
+
     NO_ACCESS = "no-access-anomaly"
     CRITICAL_DOOR = "critical-door-anomaly"
     PROBABLE_TAILGATE = "probable-tailgate-anomaly"
@@ -24,29 +26,37 @@ class AnomalyType(Enum):
     UNACCOMPANIED_VISITOR = "unaccompanied-visitor-anomaly"
     COMPOSITE_SCORE = "composite-anomaly-score"
 
+
 class AccessResult(Enum):
     """Access control results"""
+
     GRANTED = "Granted"
     DENIED = "Denied"
     TIMEOUT = "Timeout"
     ERROR = "Error"
 
+
 class BadgeStatus(Enum):
     """Badge status values"""
+
     VALID = "Valid"
     INVALID = "Invalid"
     EXPIRED = "Expired"
     SUSPENDED = "Suspended"
 
+
 class SeverityLevel(Enum):
     """Severity levels for incidents and anomalies"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
 
+
 class TicketStatus(Enum):
     """Incident ticket status values"""
+
     NEW = "ticket-new"
     OPEN = "ticket-open"
     LOCKED = "ticket-locked"
@@ -55,8 +65,10 @@ class TicketStatus(Enum):
     RESOLVED_NORMAL = "resolved-normal"
     DISMISSED = "dismissed"
 
+
 class DoorType(Enum):
     """Types of doors/access points"""
+
     STANDARD = "standard"
     CRITICAL = "critical"
     RESTRICTED = "restricted"
@@ -66,6 +78,7 @@ class DoorType(Enum):
 
 class AccessType(Enum):
     """Access categories for facilities"""
+
     PUBLIC = "public"
     PRIVATE = "private"
     EMPLOYEE = "employee"

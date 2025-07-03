@@ -6,10 +6,12 @@ from services.upload import UploadProcessingService
 
 
 def test_multi_part_upload_row_count():
-    df = pd.DataFrame({
-        "A": [1, 2, 3, 4],
-        "B": ["a", "b", "c", "d"],
-    })
+    df = pd.DataFrame(
+        {
+            "A": [1, 2, 3, 4],
+            "B": ["a", "b", "c", "d"],
+        }
+    )
     csv = df.to_csv(index=False)
     b64 = base64.b64encode(csv.encode()).decode()
     prefix = "data:text/csv;base64,"

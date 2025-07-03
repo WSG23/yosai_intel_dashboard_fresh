@@ -1,4 +1,5 @@
 """Conversion helpers for .pkl DataFrames to .parquet with Unicode cleanup."""
+
 from __future__ import annotations
 
 import logging
@@ -29,5 +30,6 @@ class FileConverter:
         except Exception as exc:  # pragma: no cover - best effort
             _logger.error("Conversion failed: %s", exc)
             return False, str(exc)
+
 
 __all__ = ["FileConverter"]

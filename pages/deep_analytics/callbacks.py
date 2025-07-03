@@ -52,7 +52,6 @@ def run_unique_patterns_analysis(data_source: str):
             return dbc.Alert("Analytics service not available", color="danger")
         results = analytics_service.get_unique_patterns_analysis(data_source)
 
-
         if results["status"] == "success":
             data_summary = results["data_summary"]
             user_patterns = results["user_patterns"]
@@ -162,7 +161,9 @@ def run_unique_patterns_analysis(data_source: str):
                             dbc.Col(
                                 dbc.Card(
                                     [
-                                        dbc.CardHeader(html.H4("User Pattern Analysis")),
+                                        dbc.CardHeader(
+                                            html.H4("User Pattern Analysis")
+                                        ),
                                         dbc.CardBody(
                                             html.Div(
                                                 dbc.Row(
@@ -186,7 +187,9 @@ def run_unique_patterns_analysis(data_source: str):
                                                         ),
                                                         dbc.Col(
                                                             [
-                                                                html.H5("Access Patterns"),
+                                                                html.H5(
+                                                                    "Access Patterns"
+                                                                ),
                                                                 html.P(
                                                                     f"Single-Door Users: {len(user_patterns.get('user_classifications', {}).get('single_door_users', []))}"
                                                                 ),
@@ -210,7 +213,9 @@ def run_unique_patterns_analysis(data_source: str):
                             dbc.Col(
                                 dbc.Card(
                                     [
-                                        dbc.CardHeader(html.H4("Device Pattern Analysis")),
+                                        dbc.CardHeader(
+                                            html.H4("Device Pattern Analysis")
+                                        ),
                                         dbc.CardBody(
                                             html.Div(
                                                 dbc.Row(
@@ -234,7 +239,9 @@ def run_unique_patterns_analysis(data_source: str):
                                                         ),
                                                         dbc.Col(
                                                             [
-                                                                html.H5("Security Status"),
+                                                                html.H5(
+                                                                    "Security Status"
+                                                                ),
                                                                 html.P(
                                                                     f"Secure Devices: {len(device_patterns.get('device_classifications', {}).get('secure_devices', []))}"
                                                                 ),
@@ -280,7 +287,10 @@ def run_unique_patterns_analysis(data_source: str):
                                                             className="badge badge-secondary me-1",
                                                         )
                                                         for hour, count in sorted(
-                                                            temporal_patterns.get('hourly_distribution', {}).items()
+                                                            temporal_patterns.get(
+                                                                "hourly_distribution",
+                                                                {},
+                                                            ).items()
                                                         )
                                                     ]
                                                 ),
@@ -334,9 +344,11 @@ def run_unique_patterns_analysis(data_source: str):
                                             className="mb-0",
                                         ),
                                     ],
-                                    color="warning"
-                                    if rec["priority"] == "High"
-                                    else "info",
+                                    color=(
+                                        "warning"
+                                        if rec["priority"] == "High"
+                                        else "info"
+                                    ),
                                 )
                                 for rec in recommendations
                             ]
@@ -389,6 +401,7 @@ def run_unique_patterns_analysis(data_source: str):
             color="danger",
         )
 
+
 def dispatch_analysis(button_id: str, data_source: str):
     """Dispatch analysis based on clicked button."""
 
@@ -422,6 +435,7 @@ def dispatch_analysis(button_id: str, data_source: str):
 # ------------------------------------------------------------
 # Callback manager
 # ------------------------------------------------------------
+
 
 class Callbacks:
     """Container for deep analytics callbacks."""
@@ -475,10 +489,12 @@ class Callbacks:
         except Exception:
             return "❌ Service status unknown"
 
+
 # =============================================================================
 # SECTION 7: HELPER DISPLAY FUNCTIONS
 # Add these helper functions for non-suggests analysis types
 # =============================================================================
+
 
 def register_callbacks(
     manager: UnifiedCallbackCoordinator,
@@ -536,6 +552,4 @@ def register_callbacks(
         )
 
 
-
 __all__ = ["Callbacks", "register_callbacks"]
-

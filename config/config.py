@@ -134,7 +134,6 @@ class ConfigManager:
             logger.warning(f"Error loading config file {config_file}: {e}")
             return None
 
-
     def _substitute_env_vars(self, content: str) -> str:
         """Replace ${VAR_NAME} with environment variable values"""
         import re

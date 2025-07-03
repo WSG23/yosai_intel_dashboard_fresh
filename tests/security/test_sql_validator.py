@@ -53,4 +53,6 @@ def test_enforce_parameterization():
         validator.enforce_parameterization("SELECT * FROM t WHERE id=?", None)
     with pytest.raises(ValidationError):
         validator.enforce_parameterization("SELECT * FROM t", ("a",))
-    validator.enforce_parameterization("SELECT * FROM t WHERE id=? AND name=?", ("1", "a"))
+    validator.enforce_parameterization(
+        "SELECT * FROM t WHERE id=? AND name=?", ("1", "a")
+    )

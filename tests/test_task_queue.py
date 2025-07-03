@@ -18,4 +18,3 @@ def test_task_queue_basic():
     assert status.get("done") is True
     assert status.get("result") == "ok"
     clear_task(tid)
-

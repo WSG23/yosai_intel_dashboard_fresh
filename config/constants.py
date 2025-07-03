@@ -122,4 +122,3 @@ class CacheConstants:
 
     max_items: int = 100
     purge_count: int = 50
-

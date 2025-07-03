@@ -51,7 +51,7 @@ class SQLInjectionPrevention:
             raise ValidationError("SQL parameter exceeds maximum length")
 
         # Whitelist allowed characters only
-        cleaned = ''.join(ch for ch in text if self._allowed_char_re.match(ch))
+        cleaned = "".join(ch for ch in text if self._allowed_char_re.match(ch))
         sanitized = bleach.clean(cleaned, strip=True)
         return sanitized
 
@@ -80,7 +80,10 @@ class SQLInjectionPrevention:
 
         stmt = statements[0]
         for token in stmt.flatten():
-            if token.ttype in {T.Keyword.DDL, T.Keyword.DML} and token.value.upper() in {
+            if token.ttype in {
+                T.Keyword.DDL,
+                T.Keyword.DML,
+            } and token.value.upper() in {
                 "DROP",
                 "DELETE",
                 "TRUNCATE",
@@ -92,7 +95,9 @@ class SQLInjectionPrevention:
         return sanitized
 
     # ------------------------------------------------------------------
-    def enforce_parameterization(self, statement: str, params: Optional[Tuple[Any, ...]]) -> None:
+    def enforce_parameterization(
+        self, statement: str, params: Optional[Tuple[Any, ...]]
+    ) -> None:
         """Ensure that placeholders and parameters match."""
         placeholder_count = statement.count("?")
         if placeholder_count == 0 and params:

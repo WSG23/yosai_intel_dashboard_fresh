@@ -4,11 +4,13 @@ from pathlib import Path
 from dataclasses import dataclass
 from enum import Enum
 
+
 class QualityLevel(Enum):
     EXCELLENT = "excellent"
     GOOD = "good"
     NEEDS_IMPROVEMENT = "needs_improvement"
     POOR = "poor"
+
 
 class IssueType(Enum):
     STYLE = "style"
@@ -19,6 +21,7 @@ class IssueType(Enum):
     DOCUMENTATION = "documentation"
     TESTING = "testing"
 
+
 @dataclass
 class QualityIssue:
     file_path: str
@@ -28,6 +31,7 @@ class QualityIssue:
     message: str
     rule: str
     suggestion: str = None
+
 
 class BaseAnalyzer(ABC):
     """Base class for all code analyzers"""

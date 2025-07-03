@@ -14,7 +14,9 @@ def test_async_security_and_error_logging(caplog):
     controller.register_callback("on_analysis_start", cb, secure=True)
 
     with caplog.at_level("ERROR"):
-        asyncio.run(controller.trigger_async("on_analysis_start", "<script>bad</script>"))
+        asyncio.run(
+            controller.trigger_async("on_analysis_start", "<script>bad</script>")
+        )
     # should not execute callback due to validation failure
     assert results == []
     assert any("Security validation failed" in r.getMessage() for r in caplog.records)

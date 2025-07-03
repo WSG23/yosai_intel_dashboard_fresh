@@ -44,12 +44,9 @@ logger = logging.getLogger(__name__)
 _ai_service = AISuggestionService()
 
 
-
 def analyze_device_name_with_ai(device_name: str) -> Dict[str, Any]:
     """Helper exposing device analysis for tests and other modules."""
     return _ai_service.analyze_device_name_with_ai(device_name)
-
-
 
 
 def layout():
@@ -65,11 +62,7 @@ def layout():
                             dbc.Card(
                                 [
                                     dbc.CardHeader(
-                                        [
-                                            html.H5(
-                                                "Upload Data Files", className="mb-0"
-                                            )
-                                        ]
+                                        [html.H5("Upload Data Files", className="mb-0")]
                                     ),
                                     dbc.CardBody(
                                         [
@@ -82,7 +75,9 @@ def layout():
                                                             [
                                                                 html.I(
                                                                     className="fas fa-cloud-upload-alt fa-4x mb-3 text-primary",
-                                                                    **{"aria-hidden": "true"},
+                                                                    **{
+                                                                        "aria-hidden": "true"
+                                                                    },
                                                                 ),
                                                                 html.Span(
                                                                     "Upload icon",
@@ -113,7 +108,22 @@ def layout():
             ),
             # Upload results area
             dbc.Row([dbc.Col([html.Div(id="upload-results")])], className="mb-4"),
-            dbc.Row([dbc.Col([dbc.Progress(id="upload-progress", value=0, label="0%", striped=True, animated=True)])], className="mb-3"),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        [
+                            dbc.Progress(
+                                id="upload-progress",
+                                value=0,
+                                label="0%",
+                                striped=True,
+                                animated=True,
+                            )
+                        ]
+                    )
+                ],
+                className="mb-3",
+            ),
             dcc.Interval(id="upload-progress-interval", interval=1000, disabled=True),
             # Data preview area
             dbc.Row([dbc.Col([html.Div(id="file-preview")])]),
@@ -126,7 +136,6 @@ def layout():
                 [
                     dbc.Button("", id="verify-columns-btn-simple", className="hidden"),
                     dbc.Button("", id="classify-devices-btn", className="hidden"),
-
                 ],
                 className="hidden",
             ),
@@ -283,7 +292,6 @@ class Callbacks:
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
         return self.processing.process_files(contents_list, filenames_list)
 
-
     def start_upload_background(
         self, contents_list: List[str] | str, filenames_list: List[str] | str
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, int, str, bool, str]:
@@ -394,98 +402,144 @@ class Callbacks:
         try:
             # First try to get devices from global store (saved mappings)
             from services.ai_mapping_store import ai_mapping_store
+
             store_devices = ai_mapping_store.all()
-            
+
             if store_devices:
-                logger.info(f"📋 Found {len(store_devices)} saved devices - using SAVED mappings!")
-                
+                logger.info(
+                    f"📋 Found {len(store_devices)} saved devices - using SAVED mappings!"
+                )
+
                 # Create editable rows using saved mappings
                 table_rows = []
                 for i, (device_name, mapping) in enumerate(store_devices.items()):
-                    floor = mapping.get('floor_number', 1)
-                    security = mapping.get('security_level', 5)
-                    is_entry = mapping.get('is_entry', False)
-                    is_exit = mapping.get('is_exit', False)
-                    is_elevator = mapping.get('is_elevator', False)
-                    is_stairwell = mapping.get('is_stairwell', False)
-                    is_fire_escape = mapping.get('is_fire_escape', False)
-                    is_restricted = mapping.get('is_restricted', False)
-                    
+                    floor = mapping.get("floor_number", 1)
+                    security = mapping.get("security_level", 5)
+                    is_entry = mapping.get("is_entry", False)
+                    is_exit = mapping.get("is_exit", False)
+                    is_elevator = mapping.get("is_elevator", False)
+                    is_stairwell = mapping.get("is_stairwell", False)
+                    is_fire_escape = mapping.get("is_fire_escape", False)
+                    is_restricted = mapping.get("is_restricted", False)
+
                     # Create the same interactive row structure as original
-                    row = html.Tr([
-                        html.Td(html.Strong(device_name)),
-                        html.Td([
-                            dbc.Input(
-                                id={"type": "device-floor", "index": i},
-                                type="number",
-                                value=floor,  # Pre-populate with saved value
-                                min=0, max=50, size="sm"
-                            )
-                        ]),
-                        html.Td([
-                            dbc.Checklist(
-                                id={"type": "device-access", "index": i},
-                                options=[
-                                    {"label": "Entry", "value": "entry"},
-                                    {"label": "Exit", "value": "exit"},
-                                ],
-                                value=[
-                                    "entry" if is_entry else "",
-                                    "exit" if is_exit else ""
-                                ],
-                                inline=True,
-                            )
-                        ]),
-                        html.Td([
-                            dbc.Checklist(
-                                id={"type": "device-special", "index": i},
-                                options=[
-                                    {"label": "Elevator", "value": "is_elevator"},
-                                    {"label": "Stairwell", "value": "is_stairwell"},
-                                    {"label": "Fire Exit", "value": "is_fire_escape"},
-                                    {"label": "Restricted", "value": "is_restricted"},
-                                ],
-                                value=[
-                                    "is_elevator" if is_elevator else "",
-                                    "is_stairwell" if is_stairwell else "",
-                                    "is_fire_escape" if is_fire_escape else "",
-                                    "is_restricted" if is_restricted else ""
-                                ],
-                                inline=True,
-                            )
-                        ]),
-                        html.Td([
-                            dbc.Input(
-                                id={"type": "device-security", "index": i},
-                                type="number",
-                                value=security,  # Pre-populate with saved value
-                                min=0, max=10, size="sm"
-                            )
-                        ]),
-                    ])
+                    row = html.Tr(
+                        [
+                            html.Td(html.Strong(device_name)),
+                            html.Td(
+                                [
+                                    dbc.Input(
+                                        id={"type": "device-floor", "index": i},
+                                        type="number",
+                                        value=floor,  # Pre-populate with saved value
+                                        min=0,
+                                        max=50,
+                                        size="sm",
+                                    )
+                                ]
+                            ),
+                            html.Td(
+                                [
+                                    dbc.Checklist(
+                                        id={"type": "device-access", "index": i},
+                                        options=[
+                                            {"label": "Entry", "value": "entry"},
+                                            {"label": "Exit", "value": "exit"},
+                                        ],
+                                        value=[
+                                            "entry" if is_entry else "",
+                                            "exit" if is_exit else "",
+                                        ],
+                                        inline=True,
+                                    )
+                                ]
+                            ),
+                            html.Td(
+                                [
+                                    dbc.Checklist(
+                                        id={"type": "device-special", "index": i},
+                                        options=[
+                                            {
+                                                "label": "Elevator",
+                                                "value": "is_elevator",
+                                            },
+                                            {
+                                                "label": "Stairwell",
+                                                "value": "is_stairwell",
+                                            },
+                                            {
+                                                "label": "Fire Exit",
+                                                "value": "is_fire_escape",
+                                            },
+                                            {
+                                                "label": "Restricted",
+                                                "value": "is_restricted",
+                                            },
+                                        ],
+                                        value=[
+                                            "is_elevator" if is_elevator else "",
+                                            "is_stairwell" if is_stairwell else "",
+                                            "is_fire_escape" if is_fire_escape else "",
+                                            "is_restricted" if is_restricted else "",
+                                        ],
+                                        inline=True,
+                                    )
+                                ]
+                            ),
+                            html.Td(
+                                [
+                                    dbc.Input(
+                                        id={"type": "device-security", "index": i},
+                                        type="number",
+                                        value=security,  # Pre-populate with saved value
+                                        min=0,
+                                        max=10,
+                                        size="sm",
+                                    )
+                                ]
+                            ),
+                        ]
+                    )
                     table_rows.append(row)
-                
+
                 # Store device list for callback
                 file_info["devices"] = list(store_devices.keys())
-                
-                return html.Div([
-                    dbc.Alert([
-                        html.Strong("📋 SAVED MAPPINGS LOADED! "),
-                        f"Pre-filled {len(store_devices)} devices with your confirmed settings. You can edit and re-save."
-                    ], color="success", className="mb-3"),
-                    dbc.Table([
-                        html.Thead([
-                            html.Tr([
-                                html.Th("Device Name"),
-                                html.Th("Floor"),
-                                html.Th("Access"),
-                                html.Th("Special"),
-                                html.Th("Security (0-10)"),
-                            ])
-                        ]),
-                        html.Tbody(table_rows),
-                    ], striped=True, hover=True),
-                ]), file_info
+
+                return (
+                    html.Div(
+                        [
+                            dbc.Alert(
+                                [
+                                    html.Strong("📋 SAVED MAPPINGS LOADED! "),
+                                    f"Pre-filled {len(store_devices)} devices with your confirmed settings. You can edit and re-save.",
+                                ],
+                                color="success",
+                                className="mb-3",
+                            ),
+                            dbc.Table(
+                                [
+                                    html.Thead(
+                                        [
+                                            html.Tr(
+                                                [
+                                                    html.Th("Device Name"),
+                                                    html.Th("Floor"),
+                                                    html.Th("Access"),
+                                                    html.Th("Special"),
+                                                    html.Th("Security (0-10)"),
+                                                ]
+                                            )
+                                        ]
+                                    ),
+                                    html.Tbody(table_rows),
+                                ],
+                                striped=True,
+                                hover=True,
+                            ),
+                        ]
+                    ),
+                    file_info,
+                )
 
             # Fallback: Generate AI analysis if no saved mappings (original logic)
             uploaded_data = get_uploaded_data()
@@ -493,7 +547,14 @@ class Callbacks:
                 return dbc.Alert("No uploaded data found", color="warning"), file_info
 
             all_devices = set()
-            device_columns = ["door_id", "device_name", "DeviceName", "location", "door", "device"]
+            device_columns = [
+                "door_id",
+                "device_name",
+                "DeviceName",
+                "location",
+                "door",
+                "device",
+            ]
 
             from services.ai_mapping_store import ai_mapping_store
 
@@ -501,14 +562,20 @@ class Callbacks:
                 logger.info(f"📄 Processing {filename} with {len(df)} rows")
                 for col in df.columns:
                     col_lower = col.lower().strip()
-                    if any(device_col.lower() in col_lower for device_col in device_columns):
+                    if any(
+                        device_col.lower() in col_lower for device_col in device_columns
+                    ):
                         unique_vals = df[col].dropna().unique()
                         all_devices.update(str(val) for val in unique_vals)
-                        logger.info(f"   Found {len(unique_vals)} devices in column '{col}'")
+                        logger.info(
+                            f"   Found {len(unique_vals)} devices in column '{col}'"
+                        )
                         # Pre-cache AI analyses for new devices
                         for device in unique_vals:
                             if not ai_mapping_store.get(device):
-                                ai_analysis = self.ai.analyze_device_name_with_ai(device)
+                                ai_analysis = self.ai.analyze_device_name_with_ai(
+                                    device
+                                )
                                 ai_mapping_store.set(device, ai_analysis)
                                 logger.info(
                                     f"   🚪 '{device}' → Floor: {ai_analysis.get('floor_number', 1)}, Security: {ai_analysis.get('security_level', 5)}"
@@ -523,88 +590,127 @@ class Callbacks:
             cached_mappings = ai_mapping_store.all()
             for device_name in device_list:
                 if device_name not in cached_mappings:
-                    ai_mapping_store.set(device_name, self.ai.analyze_device_name_with_ai(device_name))
+                    ai_mapping_store.set(
+                        device_name, self.ai.analyze_device_name_with_ai(device_name)
+                    )
             cached_mappings = ai_mapping_store.all()
 
             for i, device_name in enumerate(device_list):
                 ai_analysis = cached_mappings.get(device_name, {})
-                is_elevator_ai = ai_analysis.get('is_elevator', False)
-                is_stairwell_ai = ai_analysis.get('is_stairwell', False)
-                is_fire_escape_ai = ai_analysis.get('is_fire_escape', False)
-                is_restricted_ai = ai_analysis.get('is_restricted', False)
-                
-                row = html.Tr([
-                    html.Td(html.Strong(device_name)),
-                    html.Td([
-                        dbc.Input(
-                            id={"type": "device-floor", "index": i},
-                            type="number",
-                            value=ai_analysis.get("floor_number", 1),
-                            min=0, max=50, size="sm"
-                        )
-                    ]),
-                    html.Td([
-                        dbc.Checklist(
-                            id={"type": "device-access", "index": i},
-                            options=[
-                                {"label": "Entry", "value": "entry"},
-                                {"label": "Exit", "value": "exit"},
-                            ],
-                            value=[
-                                "entry" if ai_analysis.get('is_entry') else "",
-                                "exit" if ai_analysis.get('is_exit') else ""
-                            ],
-                            inline=True,
-                        )
-                    ]),
-                    html.Td([
-                        dbc.Checklist(
-                            id={"type": "device-special", "index": i},
-                            options=[
-                                {"label": "Elevator", "value": "is_elevator"},
-                                {"label": "Stairwell", "value": "is_stairwell"},
-                                {"label": "Fire Exit", "value": "is_fire_escape"},
-                                {"label": "Restricted", "value": "is_restricted"},
-                            ],
-                            value=[
-                                "is_elevator" if is_elevator_ai else "",
-                                "is_stairwell" if is_stairwell_ai else "",
-                                "is_fire_escape" if is_fire_escape_ai else "",
-                                "is_restricted" if is_restricted_ai else ""
-                            ],
-                            inline=True,
-                        )
-                    ]),
-                    html.Td([
-                        dbc.Input(
-                            id={"type": "device-security", "index": i},
-                            type="number",
-                            value=ai_analysis.get("security_level", 5),
-                            min=0, max=10, size="sm"
-                        )
-                    ]),
-                ])
+                is_elevator_ai = ai_analysis.get("is_elevator", False)
+                is_stairwell_ai = ai_analysis.get("is_stairwell", False)
+                is_fire_escape_ai = ai_analysis.get("is_fire_escape", False)
+                is_restricted_ai = ai_analysis.get("is_restricted", False)
+
+                row = html.Tr(
+                    [
+                        html.Td(html.Strong(device_name)),
+                        html.Td(
+                            [
+                                dbc.Input(
+                                    id={"type": "device-floor", "index": i},
+                                    type="number",
+                                    value=ai_analysis.get("floor_number", 1),
+                                    min=0,
+                                    max=50,
+                                    size="sm",
+                                )
+                            ]
+                        ),
+                        html.Td(
+                            [
+                                dbc.Checklist(
+                                    id={"type": "device-access", "index": i},
+                                    options=[
+                                        {"label": "Entry", "value": "entry"},
+                                        {"label": "Exit", "value": "exit"},
+                                    ],
+                                    value=[
+                                        "entry" if ai_analysis.get("is_entry") else "",
+                                        "exit" if ai_analysis.get("is_exit") else "",
+                                    ],
+                                    inline=True,
+                                )
+                            ]
+                        ),
+                        html.Td(
+                            [
+                                dbc.Checklist(
+                                    id={"type": "device-special", "index": i},
+                                    options=[
+                                        {"label": "Elevator", "value": "is_elevator"},
+                                        {"label": "Stairwell", "value": "is_stairwell"},
+                                        {
+                                            "label": "Fire Exit",
+                                            "value": "is_fire_escape",
+                                        },
+                                        {
+                                            "label": "Restricted",
+                                            "value": "is_restricted",
+                                        },
+                                    ],
+                                    value=[
+                                        "is_elevator" if is_elevator_ai else "",
+                                        "is_stairwell" if is_stairwell_ai else "",
+                                        "is_fire_escape" if is_fire_escape_ai else "",
+                                        "is_restricted" if is_restricted_ai else "",
+                                    ],
+                                    inline=True,
+                                )
+                            ]
+                        ),
+                        html.Td(
+                            [
+                                dbc.Input(
+                                    id={"type": "device-security", "index": i},
+                                    type="number",
+                                    value=ai_analysis.get("security_level", 5),
+                                    min=0,
+                                    max=10,
+                                    size="sm",
+                                )
+                            ]
+                        ),
+                    ]
+                )
                 table_rows.append(row)
 
-            return html.Div([
-                dbc.Alert([
-                    html.Strong("🤖 AI Analysis: "),
-                    f"Generated mappings for {len(device_list)} devices. ",
-                    "Check console for detailed AI debug info.",
-                ], color="info", className="mb-3"),
-                dbc.Table([
-                    html.Thead([
-                        html.Tr([
-                            html.Th("Device Name"),
-                            html.Th("Floor"),
-                            html.Th("Access"),
-                            html.Th("Special"),
-                            html.Th("Security (0-10)"),
-                        ])
-                    ]),
-                    html.Tbody(table_rows),
-                ], striped=True, hover=True),
-            ]), file_info
+            return (
+                html.Div(
+                    [
+                        dbc.Alert(
+                            [
+                                html.Strong("🤖 AI Analysis: "),
+                                f"Generated mappings for {len(device_list)} devices. ",
+                                "Check console for detailed AI debug info.",
+                            ],
+                            color="info",
+                            className="mb-3",
+                        ),
+                        dbc.Table(
+                            [
+                                html.Thead(
+                                    [
+                                        html.Tr(
+                                            [
+                                                html.Th("Device Name"),
+                                                html.Th("Floor"),
+                                                html.Th("Access"),
+                                                html.Th("Special"),
+                                                html.Th("Security (0-10)"),
+                                            ]
+                                        )
+                                    ]
+                                ),
+                                html.Tbody(table_rows),
+                            ],
+                            striped=True,
+                            hover=True,
+                        ),
+                    ]
+                ),
+                file_info,
+            )
 
         except Exception as e:
             logger.error(f"❌ Error in device modal: {e}")
@@ -634,20 +740,25 @@ class Callbacks:
             df = _uploaded_data_store.load_dataframe(filename)
             if df is not None:
                 from services.consolidated_learning_service import get_learning_service
+
                 learned = get_learning_service().get_learned_mappings(df, filename)
-                saved_column_mappings = learned.get('column_mappings', {})
-                
+                saved_column_mappings = learned.get("column_mappings", {})
+
                 if saved_column_mappings:
-                    logger.info(f"📋 Found {len(saved_column_mappings)} saved column mappings for {filename}")
-                    
+                    logger.info(
+                        f"📋 Found {len(saved_column_mappings)} saved column mappings for {filename}"
+                    )
+
                     # Inject saved mappings as high-confidence AI suggestions
                     for standard_field, csv_column in saved_column_mappings.items():
                         ai_suggestions[csv_column] = {
-                            'field': standard_field,
-                            'confidence': 1.0,
-                            'source': 'saved'
+                            "field": standard_field,
+                            "confidence": 1.0,
+                            "source": "saved",
                         }
-                    logger.info(f"📋 Pre-filled saved mappings: {saved_column_mappings}")
+                    logger.info(
+                        f"📋 Pre-filled saved mappings: {saved_column_mappings}"
+                    )
         except Exception as e:
             logger.debug(f"No saved mappings: {e}")
         # END OF ADDITION
@@ -920,7 +1031,9 @@ class Callbacks:
         logger.info(f"🔍 DEBUG - confirm_clicks: {confirm_clicks}")
         logger.info(f"🔍 DEBUG - values: {values}")
         logger.info(f"🔍 DEBUG - ids: {ids}")
-        logger.info(f"🔍 DEBUG - file_info filename: {file_info.get('filename', 'N/A')}")
+        logger.info(
+            f"🔍 DEBUG - file_info filename: {file_info.get('filename', 'N/A')}"
+        )
 
         try:
             filename = file_info.get("filename", "")

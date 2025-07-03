@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 # Safe import for Flask-Babel
 try:
     from flask_babel import LazyString
+
     BABEL_AVAILABLE = True
 except ImportError:  # pragma: no cover - optional dependency
     LazyString = None  # type: ignore
@@ -26,11 +27,11 @@ def is_lazy_string(obj: Any) -> bool:
 
     # Check by class name for different Babel versions
     class_name = str(obj.__class__)
-    if 'LazyString' in class_name or 'lazy_string' in class_name.lower():
+    if "LazyString" in class_name or "lazy_string" in class_name.lower():
         return True
 
     # Check for lazy evaluation pattern
-    if hasattr(obj, '_func') and hasattr(obj, '_args'):
+    if hasattr(obj, "_func") and hasattr(obj, "_args"):
         return True
 
     return False
@@ -65,7 +66,7 @@ def sanitize_json_data(data: Any) -> Any:
         return data
     except (TypeError, ValueError):
         # If not serializable and has LazyString attributes, sanitize them
-        if hasattr(data, '__dict__'):
+        if hasattr(data, "__dict__"):
             sanitized_dict = {}
             for key, value in data.__dict__.items():
                 if is_lazy_string(value):
@@ -74,10 +75,7 @@ def sanitize_json_data(data: Any) -> Any:
                     sanitized_dict[key] = sanitize_json_data(value)
 
             # Return sanitized representation
-            return {
-                'type': data.__class__.__name__,
-                'attributes': sanitized_dict
-            }
+            return {"type": data.__class__.__name__, "attributes": sanitized_dict}
 
         # Fallback to string representation
         return str(data)
@@ -94,8 +92,8 @@ def test_json_serialization(data: Any) -> Union[str, None]:
 
 # Export for easy importing
 __all__ = [
-    'is_lazy_string',
-    'force_string_conversion',
-    'sanitize_json_data',
-    'test_json_serialization'
+    "is_lazy_string",
+    "force_string_conversion",
+    "sanitize_json_data",
+    "test_json_serialization",
 ]

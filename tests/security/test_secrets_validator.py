@@ -48,7 +48,9 @@ def test_pattern_matching():
     insecure = "change-me-now"
     validator = SecretsValidator(DummyManager(insecure))
     result = validator.validate_secret(insecure, environment="production")
-    assert any("pattern" in e or "pattern" in w for e in result["errors"] + result["warnings"])
+    assert any(
+        "pattern" in e or "pattern" in w for e in result["errors"] + result["warnings"]
+    )
 
 
 def test_health_endpoint():

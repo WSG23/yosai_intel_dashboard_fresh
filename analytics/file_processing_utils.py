@@ -17,7 +17,9 @@ def stream_uploaded_file(data_loader, source: Any, chunksize: int = 50000):
     yield from data_loader.stream_file(source, chunksize)
 
 
-def update_counts(df: pd.DataFrame, user_counts: Counter[str], door_counts: Counter[str]) -> None:
+def update_counts(
+    df: pd.DataFrame, user_counts: Counter[str], door_counts: Counter[str]
+) -> None:
     """Update ``user_counts`` and ``door_counts`` using values from ``df``."""
     if "person_id" in df.columns:
         user_counts.update(df["person_id"].dropna().astype(str))
@@ -59,10 +61,15 @@ def aggregate_counts(
     return total, min_ts, max_ts
 
 
-def calculate_date_range(min_ts: pd.Timestamp | None, max_ts: pd.Timestamp | None) -> Dict[str, str]:
+def calculate_date_range(
+    min_ts: pd.Timestamp | None, max_ts: pd.Timestamp | None
+) -> Dict[str, str]:
     """Return a dictionary representing the processed date range."""
     if min_ts is not None and max_ts is not None:
-        return {"start": min_ts.strftime("%Y-%m-%d"), "end": max_ts.strftime("%Y-%m-%d")}
+        return {
+            "start": min_ts.strftime("%Y-%m-%d"),
+            "end": max_ts.strftime("%Y-%m-%d"),
+        }
     return {"start": "Unknown", "end": "Unknown"}
 
 
@@ -85,8 +92,12 @@ def build_result(
         "unique_doors": active_doors,
         "data_source": "uploaded",
         "date_range": date_range,
-        "top_users": [{"user_id": u, "count": int(c)} for u, c in user_counts.most_common(10)],
-        "top_doors": [{"door_id": d, "count": int(c)} for d, c in door_counts.most_common(10)],
+        "top_users": [
+            {"user_id": u, "count": int(c)} for u, c in user_counts.most_common(10)
+        ],
+        "top_doors": [
+            {"door_id": d, "count": int(c)} for d, c in door_counts.most_common(10)
+        ],
         "timestamp": datetime.now().isoformat(),
         "processing_info": processing_info,
     }

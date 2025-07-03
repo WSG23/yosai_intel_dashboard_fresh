@@ -4,6 +4,7 @@ from analyzers.ast_analyzer import ASTAnalyzer
 from analyzers.style_analyzer import StyleAnalyzer
 from analyzers.base_analyzer import IssueType
 
+
 class TestASTAnalyzer:
     """Isolated tests for AST analyzer"""
 
@@ -49,6 +50,7 @@ def function1(): pass
 
         assert metrics["functions"] == 3  # 2 methods + 1 function
         assert metrics["classes"] == 1
+
 
 class TestStyleAnalyzer:
     """Isolated tests for style analyzer"""

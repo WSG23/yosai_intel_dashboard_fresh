@@ -5,8 +5,13 @@ Simplified Models Package
 
 # Import core models only
 from .enums import (
-    AnomalyType, AccessResult, BadgeStatus,
-    SeverityLevel, TicketStatus, DoorType, AccessType
+    AnomalyType,
+    AccessResult,
+    BadgeStatus,
+    SeverityLevel,
+    TicketStatus,
+    DoorType,
+    AccessType,
 )
 
 from .entities import Person, Door, Facility
@@ -26,7 +31,12 @@ def __getattr__(name: str):
     registry when first accessed. The resolved value is cached in ``globals`` to
     avoid repeated lookups.
     """
-    if name in {"BaseModel", "AccessEventModel", "AnomalyDetectionModel", "ModelFactory"}:
+    if name in {
+        "BaseModel",
+        "AccessEventModel",
+        "AnomalyDetectionModel",
+        "ModelFactory",
+    }:
         service = registry.get_service(name)
         globals()[name] = service
         if name == "BaseModel":
@@ -34,10 +44,24 @@ def __getattr__(name: str):
         return service
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
+
 __all__ = [
-    'AnomalyType', 'AccessResult', 'BadgeStatus', 'SeverityLevel',
-    'TicketStatus', 'DoorType', 'AccessType', 'Person', 'Door', 'Facility',
-    'AccessEvent', 'AnomalyDetection', 'IncidentTicket',
-    'BaseModel', 'AccessEventModel', 'AnomalyDetectionModel', 'ModelFactory',
-    'BASE_MODELS_AVAILABLE'
+    "AnomalyType",
+    "AccessResult",
+    "BadgeStatus",
+    "SeverityLevel",
+    "TicketStatus",
+    "DoorType",
+    "AccessType",
+    "Person",
+    "Door",
+    "Facility",
+    "AccessEvent",
+    "AnomalyDetection",
+    "IncidentTicket",
+    "BaseModel",
+    "AccessEventModel",
+    "AnomalyDetectionModel",
+    "ModelFactory",
+    "BASE_MODELS_AVAILABLE",
 ]

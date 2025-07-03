@@ -9,7 +9,6 @@ from typing import Optional, Dict, Any, List
 from core.exceptions import SecurityError
 
 
-
 class SecretManager:
     """Retrieve secrets from various backends."""
 

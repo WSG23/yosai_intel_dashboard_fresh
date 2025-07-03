@@ -4,6 +4,7 @@ import html
 
 from .validation_exceptions import ValidationError
 
+
 class XSSPrevention:
     """Provides HTML sanitization"""
 

@@ -14,6 +14,7 @@ from core.serialization import SafeJSONSerializer
 # Optional Babel import
 try:
     from flask_babel import LazyString
+
     BABEL_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
     LazyString = None  # type: ignore

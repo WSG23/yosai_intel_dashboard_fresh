@@ -54,7 +54,9 @@ class ColumnMappingService:
         ],
     }
 
-    def __init__(self, repository: CSVStorageRepository, config: ColumnMappingConfig) -> None:
+    def __init__(
+        self, repository: CSVStorageRepository, config: ColumnMappingConfig
+    ) -> None:
         self.repository = repository
         self.config = config
         self.logger = logger
@@ -106,13 +108,15 @@ class ColumnMappingService:
             self.logger.error("mapping confirmation failed: %s", exc)
             return False
 
-    def get_enhanced_mapping_with_fallbacks(self, headers: List[str], session_id: str) -> Dict[str, Any]:
+    def get_enhanced_mapping_with_fallbacks(
+        self, headers: List[str], session_id: str
+    ) -> Dict[str, Any]:
         """Enhanced mapping with intelligent fallbacks for common issues"""
 
         # First, get AI predictions
         ai_result = self.map_columns(headers, session_id)
-        suggested_mapping = ai_result.get('suggested_mapping', {})
-        confidence_scores = ai_result.get('confidence_scores', {})
+        suggested_mapping = ai_result.get("suggested_mapping", {})
+        confidence_scores = ai_result.get("confidence_scores", {})
 
         # Apply intelligent fallbacks for unmapped critical columns
         enhanced_mapping = suggested_mapping.copy()
@@ -120,10 +124,10 @@ class ColumnMappingService:
 
         # Critical column fallbacks
         critical_mappings = {
-            'person_id': ['user_name', 'person_name', 'badge_holder', 'employee_name'],
-            'door_id': ['access_location', 'location_name', 'door_name', 'entry_point'],
-            'access_result': ['result', 'status', 'outcome'],
-            'timestamp': ['event_time', 'datetime', 'time_stamp']
+            "person_id": ["user_name", "person_name", "badge_holder", "employee_name"],
+            "door_id": ["access_location", "location_name", "door_name", "entry_point"],
+            "access_result": ["result", "status", "outcome"],
+            "timestamp": ["event_time", "datetime", "time_stamp"],
         }
 
         for target_field, candidate_headers in critical_mappings.items():
@@ -132,8 +136,12 @@ class ColumnMappingService:
                 for header in headers:
                     if header.lower() in [c.lower() for c in candidate_headers]:
                         enhanced_mapping[header] = target_field
-                        enhanced_confidence[header] = 0.85  # High confidence for direct matches
-                        self.logger.info(f"Applied fallback mapping: '{header}' -> '{target_field}'")
+                        enhanced_confidence[header] = (
+                            0.85  # High confidence for direct matches
+                        )
+                        self.logger.info(
+                            f"Applied fallback mapping: '{header}' -> '{target_field}'"
+                        )
                         break
 
         # Store enhanced mapping
@@ -154,7 +162,7 @@ class ColumnMappingService:
             "confidence_scores": enhanced_confidence,
             "requires_confirmation": True,
             "ai_enhanced": True,
-            "fallbacks_applied": len(enhanced_mapping) - len(suggested_mapping)
+            "fallbacks_applied": len(enhanced_mapping) - len(suggested_mapping),
         }
 
     def _predict_field_type_heuristic(self, header: str) -> Tuple[Optional[str], float]:
@@ -189,4 +197,3 @@ class ColumnMappingService:
         if self.classifier and self.classifier.is_ready():
             return self._predict_field_type_ml(header)
         return self._predict_field_type_heuristic(header)
-

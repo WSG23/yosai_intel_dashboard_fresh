@@ -63,7 +63,9 @@ class SecurityService:
         valid = len(issues) == 0
         return {"valid": valid, "issues": issues}
 
-    def log_file_processing_event(self, filename: str, success: bool, error: str | None = None) -> None:
+    def log_file_processing_event(
+        self, filename: str, success: bool, error: str | None = None
+    ) -> None:
         event = {
             "filename": filename,
             "success": success,
@@ -84,4 +86,3 @@ class SecurityService:
 
 
 __all__ = ["SecurityService"]
-

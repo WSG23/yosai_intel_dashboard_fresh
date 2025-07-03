@@ -12,6 +12,7 @@ from config.dynamic_config import dynamic_config
 
 from .validation_exceptions import ValidationError
 
+
 class SecureFileValidator:
     """Validate uploaded files."""
 

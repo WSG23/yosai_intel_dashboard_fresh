@@ -66,6 +66,7 @@ class AnalyticsService:
         self.validation_service = DataValidationService()
         self.data_loading_service = DataLoadingService(self.validation_service)
         from services.input_validator import InputValidator
+
         self.input_validator = InputValidator()
         self.database_analytics_service = DatabaseAnalyticsService(
             self.database_manager
@@ -75,7 +76,10 @@ class AnalyticsService:
     def _initialize_database(self):
         """Initialize database connection"""
         try:
-            from config.database_manager import DatabaseManager, DatabaseConfig as ManagerConfig
+            from config.database_manager import (
+                DatabaseManager,
+                DatabaseConfig as ManagerConfig,
+            )
             from config.config import get_database_config
 
             cfg = get_database_config()
@@ -244,7 +248,6 @@ class AnalyticsService:
             logger.error(f"Direct processing failed: {e}")
             return {"status": "error", "message": str(e)}
 
-
     def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
         """Load uploaded data from the file upload page."""
         try:
@@ -302,7 +305,6 @@ class AnalyticsService:
                 "chunk_size": validator.chunk_size,
             },
         }
-
 
     def _get_real_uploaded_data(self) -> Dict[str, Any]:
         """Load and summarize all uploaded records."""
@@ -542,7 +544,9 @@ class AnalyticsService:
                 q80 = float(device_stats.quantile(0.8))
                 q20 = float(device_stats.quantile(0.2))
                 high_traffic = device_stats[device_stats.gt(q80)].index.tolist()
-                moderate_traffic = device_stats[device_stats.between(q20, q80)].index.tolist()
+                moderate_traffic = device_stats[
+                    device_stats.between(q20, q80)
+                ].index.tolist()
                 low_traffic = device_stats[device_stats.lt(q20)].index.tolist()
 
         logger.info(f"   High traffic devices: {len(high_traffic)}")

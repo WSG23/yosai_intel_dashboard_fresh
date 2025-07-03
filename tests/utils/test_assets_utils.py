@@ -16,5 +16,3 @@ def test_get_nav_icon_existing(monkeypatch):
 def test_get_nav_icon_missing(monkeypatch):
     app = _make_app(monkeypatch)
     assert get_nav_icon(app, "missing_icon_xyz") is None
-
-

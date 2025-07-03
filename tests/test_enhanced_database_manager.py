@@ -13,4 +13,3 @@ def test_health_check_with_retry(monkeypatch):
     cfg = DatabaseConfig(type="mock")
     manager = EnhancedPostgreSQLManager(cfg)
     assert manager.health_check_with_retry() is True
-

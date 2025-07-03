@@ -154,9 +154,7 @@ class SecretsValidator:
             else:
                 secrets[key] = value
         if missing:
-            raise ValueError(
-                "Invalid production secrets: " + ", ".join(missing)
-            )
+            raise ValueError("Invalid production secrets: " + ", ".join(missing))
         return secrets
 
     @staticmethod

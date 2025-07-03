@@ -31,7 +31,7 @@ class FileProcessingService:
             ) as f:
                 data = json.load(f)
             return pd.DataFrame(data)
-        if path.endswith(('.xlsx', '.xls')):
+        if path.endswith((".xlsx", ".xls")):
             return pd.read_excel(path)
         raise ValueError(f"Unsupported file type: {path}")
 
@@ -65,5 +65,7 @@ class FileProcessingService:
                 info.append(f"❌ {path}: Exception - {e}")
                 logger.error(f"Exception processing {path}: {e}")
 
-        combined = pd.concat(all_data, ignore_index=True) if all_data else pd.DataFrame()
+        combined = (
+            pd.concat(all_data, ignore_index=True) if all_data else pd.DataFrame()
+        )
         return combined, info, processed_files, total_records

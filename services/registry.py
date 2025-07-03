@@ -1,9 +1,11 @@
 """Simple registry for optional services."""
+
 from importlib import import_module
 from typing import Any, Dict, Optional
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class ServiceRegistry:
     """Registry mapping service names to import paths."""
@@ -43,8 +45,12 @@ get_service = registry.get_service
 
 # Register built-in optional services
 register_service("FileProcessor", "services.file_processor:FileProcessor")
-register_service("get_analytics_service", "services.analytics_service:get_analytics_service")
-register_service("create_analytics_service", "services.analytics_service:create_analytics_service")
+register_service(
+    "get_analytics_service", "services.analytics_service:get_analytics_service"
+)
+register_service(
+    "create_analytics_service", "services.analytics_service:create_analytics_service"
+)
 register_service("AnalyticsService", "services.analytics_service:AnalyticsService")
 
 # Optional model and database classes
@@ -55,4 +61,6 @@ register_service("ModelFactory", "models.base:ModelFactory")
 register_service("DatabaseManager", "config.database_manager:DatabaseManager")
 register_service("DatabaseConnection", "config.database_manager:DatabaseConnection")
 register_service("MockConnection", "config.database_manager:MockConnection")
-register_service("EnhancedPostgreSQLManager", "config.database_manager:EnhancedPostgreSQLManager")
+register_service(
+    "EnhancedPostgreSQLManager", "config.database_manager:EnhancedPostgreSQLManager"
+)

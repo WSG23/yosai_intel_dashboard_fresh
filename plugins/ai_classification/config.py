@@ -9,12 +9,14 @@ import os
 class CSVProcessingConfig:
     sample_size: int = 1000
     max_file_size_mb: int = 100
-    supported_encodings: List[str] = field(default_factory=lambda: [
-        "utf-8",
-        "shift_jis",
-        "euc-jp",
-        "iso-2022-jp",
-    ])
+    supported_encodings: List[str] = field(
+        default_factory=lambda: [
+            "utf-8",
+            "shift_jis",
+            "euc-jp",
+            "iso-2022-jp",
+        ]
+    )
     chunk_size: int = 10000
 
 
@@ -63,8 +65,12 @@ class AIClassificationConfig:
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
     csv_processing: CSVProcessingConfig = field(default_factory=CSVProcessingConfig)
     column_mapping: ColumnMappingConfig = field(default_factory=ColumnMappingConfig)
-    floor_estimation: FloorEstimationConfig = field(default_factory=FloorEstimationConfig)
-    entry_classification: EntryClassificationConfig = field(default_factory=EntryClassificationConfig)
+    floor_estimation: FloorEstimationConfig = field(
+        default_factory=FloorEstimationConfig
+    )
+    entry_classification: EntryClassificationConfig = field(
+        default_factory=EntryClassificationConfig
+    )
     japanese: JapaneseConfig = field(default_factory=JapaneseConfig)
 
 

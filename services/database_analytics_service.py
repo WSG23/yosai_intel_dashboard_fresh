@@ -41,7 +41,9 @@ class DatabaseAnalyticsService:
                     "count"
                 ].sum()
                 success_rate = (
-                    round((success_events / total_events) * 100, 2) if total_events else 0
+                    round((success_events / total_events) * 100, 2)
+                    if total_events
+                    else 0
                 )
                 breakdown = df_summary.to_dict("records")
 
@@ -81,7 +83,9 @@ class DatabaseAnalyticsService:
                     df_loc["successful_events"] / df_loc["total_events"] * 100
                 ).round(2)
                 locations = df_loc.to_dict("records")
-                busiest_location = df_loc.iloc[0]["location"] if len(df_loc) > 0 else None
+                busiest_location = (
+                    df_loc.iloc[0]["location"] if len(df_loc) > 0 else None
+                )
 
             return {
                 "status": "success",

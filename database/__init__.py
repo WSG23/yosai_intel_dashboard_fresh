@@ -4,4 +4,4 @@
 from config.database_manager import DatabaseManager, MockConnection
 
 # Re-export for compatibility
-__all__ = ['DatabaseManager', 'MockConnection']
+__all__ = ["DatabaseManager", "MockConnection"]

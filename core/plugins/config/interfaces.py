@@ -4,13 +4,16 @@ from abc import ABC, abstractmethod
 from typing import Any, Optional, Dict, List
 from dataclasses import dataclass
 
+
 @dataclass
 class ConnectionResult:
     """Standard connection result"""
+
     success: bool
     connection: Any
     error_message: Optional[str] = None
     connection_type: Optional[str] = None
+
 
 class IDatabaseManager(ABC):
     """Database manager interface for dependency injection"""
@@ -34,6 +37,7 @@ class IDatabaseManager(ABC):
     def execute_query(self, query: str, params: Optional[Dict] = None) -> Any:
         """Execute database query"""
         pass
+
 
 class ICacheManager(ABC):
     """Cache manager interface for dependency injection"""
@@ -67,6 +71,7 @@ class ICacheManager(ABC):
     def stop(self) -> None:
         """Stop cache"""
         pass
+
 
 class IConfigurationManager(ABC):
     """Configuration manager interface"""

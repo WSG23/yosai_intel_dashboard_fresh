@@ -4,6 +4,7 @@ from typing import Any
 
 from .validation_exceptions import ValidationError
 
+
 class BusinessLogicValidator:
     """Validate domain specific rules."""
 

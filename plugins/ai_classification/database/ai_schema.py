@@ -1,5 +1,6 @@
 """Placeholder AI schema"""
 
+
 class AIClassificationSchema:
     def __init__(self, path: str) -> None:
         self.path = path

@@ -26,4 +26,3 @@ def test_build_production_css_bundle(tmp_path):
     assert "@import" not in text
     assert ".a{color:red}" in text
     assert ".b{margin:0}" in text
-

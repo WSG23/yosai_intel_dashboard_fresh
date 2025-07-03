@@ -19,11 +19,11 @@ def lazystring_safe_json_dumps(obj: Any, **kwargs) -> str:
 
     def safe_default(o):
         # Handle LazyString objects
-        if hasattr(o, '__class__') and 'LazyString' in str(o.__class__):
+        if hasattr(o, "__class__") and "LazyString" in str(o.__class__):
             return str(o)
 
         # Handle Babel lazy objects
-        if hasattr(o, '_func') and hasattr(o, '_args'):
+        if hasattr(o, "_func") and hasattr(o, "_args"):
             try:
                 return str(o)
             except Exception:
@@ -37,19 +37,21 @@ def lazystring_safe_json_dumps(obj: Any, **kwargs) -> str:
         return str(o)
 
     # If no default serializer provided, use our safe one
-    if 'default' not in kwargs:
-        kwargs['default'] = safe_default
+    if "default" not in kwargs:
+        kwargs["default"] = safe_default
 
     try:
         return _original_json_dumps(obj, **kwargs)
     except Exception as e:
         logger.warning(f"JSON serialization failed, using safe fallback: {e}")
         # Ultimate fallback
-        return _original_json_dumps({
-            'error': 'Serialization failed',
-            'message': str(e),
-            'safe_repr': str(obj)[:200]
-        })
+        return _original_json_dumps(
+            {
+                "error": "Serialization failed",
+                "message": str(e),
+                "safe_repr": str(obj)[:200],
+            }
+        )
 
 
 def apply_lazystring_patch():

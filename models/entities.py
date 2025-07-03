@@ -10,9 +10,11 @@ from utils.result_types import Result, success, failure
 from .enums import DoorType
 from .events import AccessEvent
 
+
 @dataclass(frozen=True)
 class Person:
     """Immutable Person entity with validation"""
+
     person_id: str
     name: Optional[str] = None
     employee_id: Optional[str] = None
@@ -33,17 +35,17 @@ class Person:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
-            'person_id': self.person_id,
-            'name': self.name,
-            'employee_id': self.employee_id,
-            'department': self.department,
-            'clearance_level': self.clearance_level,
-            'access_groups': self.access_groups,
-            'is_visitor': self.is_visitor,
-            'host_person_id': self.host_person_id,
-            'created_at': self.created_at,
-            'last_active': self.last_active,
-            'risk_score': self.risk_score
+            "person_id": self.person_id,
+            "name": self.name,
+            "employee_id": self.employee_id,
+            "department": self.department,
+            "clearance_level": self.clearance_level,
+            "access_groups": self.access_groups,
+            "is_visitor": self.is_visitor,
+            "host_person_id": self.host_person_id,
+            "created_at": self.created_at,
+            "last_active": self.last_active,
+            "risk_score": self.risk_score,
         }
 
     def validate(self) -> Result[bool, str]:
@@ -57,7 +59,7 @@ class Person:
             return failure("visitors must have a host_person_id")
         return success(True)
 
-    def with_updated_risk_score(self, new_score: float) -> 'Person':
+    def with_updated_risk_score(self, new_score: float) -> "Person":
         return Person(
             person_id=self.person_id,
             name=self.name,
@@ -72,9 +74,11 @@ class Person:
             risk_score=new_score,
         )
 
+
 @dataclass
 class Door:
     """Door/Access Point entity model"""
+
     door_id: str
     door_name: str
     facility_id: str
@@ -87,27 +91,29 @@ class Door:
     device_id: Optional[str] = None
     is_active: bool = True
     created_at: datetime = field(default_factory=datetime.now)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
-            'door_id': self.door_id,
-            'door_name': self.door_name,
-            'facility_id': self.facility_id,
-            'area_id': self.area_id,
-            'floor': self.floor,
-            'door_type': self.door_type.value,
-            'required_clearance': self.required_clearance,
-            'is_critical': self.is_critical,
-            'location_coordinates': self.location_coordinates,
-            'device_id': self.device_id,
-            'is_active': self.is_active,
-            'created_at': self.created_at
+            "door_id": self.door_id,
+            "door_name": self.door_name,
+            "facility_id": self.facility_id,
+            "area_id": self.area_id,
+            "floor": self.floor,
+            "door_type": self.door_type.value,
+            "required_clearance": self.required_clearance,
+            "is_critical": self.is_critical,
+            "location_coordinates": self.location_coordinates,
+            "device_id": self.device_id,
+            "is_active": self.is_active,
+            "created_at": self.created_at,
         }
+
 
 @dataclass
 class Facility:
     """Facility entity model"""
+
     facility_id: str
     facility_name: str
     campus_id: Optional[str] = None
@@ -117,25 +123,26 @@ class Facility:
     security_level: int = 1
     is_active: bool = True
     created_at: datetime = field(default_factory=datetime.now)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
-            'facility_id': self.facility_id,
-            'facility_name': self.facility_name,
-            'campus_id': self.campus_id,
-            'address': self.address,
-            'timezone': self.timezone,
-            'operating_hours': self.operating_hours,
-            'security_level': self.security_level,
-            'is_active': self.is_active,
-            'created_at': self.created_at
+            "facility_id": self.facility_id,
+            "facility_name": self.facility_name,
+            "campus_id": self.campus_id,
+            "address": self.address,
+            "timezone": self.timezone,
+            "operating_hours": self.operating_hours,
+            "security_level": self.security_level,
+            "is_active": self.is_active,
+            "created_at": self.created_at,
         }
+
 
 # Re-export AccessEvent for backwards compatibility
 __all__ = [
-    'Person',
-    'Door',
-    'Facility',
-    'AccessEvent',
+    "Person",
+    "Door",
+    "Facility",
+    "AccessEvent",
 ]

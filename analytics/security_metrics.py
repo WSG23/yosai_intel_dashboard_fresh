@@ -1,4 +1,5 @@
 """Security metrics data structure."""
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Tuple
@@ -28,7 +29,9 @@ class SecurityMetrics:
             or not 0 <= self.confidence_interval[0] <= 100
             or not 0 <= self.confidence_interval[1] <= 100
         ):
-            raise ValueError("confidence_interval must be two ascending values between 0 and 100")
+            raise ValueError(
+                "confidence_interval must be two ascending values between 0 and 100"
+            )
 
         if not self.method:
             raise ValueError("method cannot be empty")

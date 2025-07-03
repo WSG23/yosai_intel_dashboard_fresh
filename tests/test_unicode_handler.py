@@ -13,4 +13,3 @@ def test_safe_encode_params_nested():
     params = {"a": ["b", {"c": "d" + chr(0xDCFF)}]}
     encoded = UnicodeQueryHandler.safe_encode_params(params)
     assert encoded["a"][1]["c"].endswith("\ufffd")
-

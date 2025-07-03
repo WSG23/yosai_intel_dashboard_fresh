@@ -9,4 +9,3 @@ def get_nav_icon(app, name: str) -> str | None:
     if png_path.is_file():
         return app.get_asset_url(f"navbar_icons/{name}.png")
     return None
-

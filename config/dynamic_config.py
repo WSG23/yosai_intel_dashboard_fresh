@@ -10,6 +10,7 @@ from .constants import (
     AnalyticsConstants,
 )
 
+
 class DynamicConfigManager:
     """Loads constants and applies environment overrides."""
 
@@ -29,7 +30,7 @@ class DynamicConfigManager:
             config_path = select_config_file()
 
             if config_path and config_path.exists():
-                with open(config_path, 'r', encoding='utf-8') as f:
+                with open(config_path, "r", encoding="utf-8") as f:
                     config_data = yaml.safe_load(f)
 
                 analytics_config = config_data.get("analytics", {})
@@ -125,7 +126,7 @@ class DynamicConfigManager:
 
     def get_max_upload_size_mb(self) -> int:
         """Get maximum upload size in MB."""
-        return getattr(self.security, 'max_upload_mb', 100)
+        return getattr(self.security, "max_upload_mb", 100)
 
     def get_max_upload_size_bytes(self) -> int:
         """Get maximum upload size in bytes."""
@@ -134,6 +135,7 @@ class DynamicConfigManager:
     def validate_large_file_support(self) -> bool:
         """Check if configuration supports 50MB+ files."""
         return self.get_max_upload_size_mb() >= 50
+
 
 # Global instance
 dynamic_config = DynamicConfigManager()
@@ -150,13 +152,15 @@ def diagnose_upload_config():
     print(f"Calculated max bytes: {dynamic_config.get_max_upload_size_bytes():,}")
     print(f"Supports 50MB+ files: {dynamic_config.validate_large_file_support()}")
 
-    if hasattr(dynamic_config.security, 'max_file_size_mb'):
+    if hasattr(dynamic_config.security, "max_file_size_mb"):
         print(f"max_file_size_mb: {dynamic_config.security.max_file_size_mb}MB")
 
     # Check if environment is overriding to small value
-    env_value = os.getenv('MAX_UPLOAD_MB')
+    env_value = os.getenv("MAX_UPLOAD_MB")
     if env_value and int(env_value) < 50:
-        print(f"\u26A0\uFE0F  WARNING: Environment variable MAX_UPLOAD_MB={env_value} is too small!")
+        print(
+            f"\u26a0\ufe0f  WARNING: Environment variable MAX_UPLOAD_MB={env_value} is too small!"
+        )
         print("   Run: unset MAX_UPLOAD_MB")
 
 

@@ -35,7 +35,7 @@ def create_device_verification_modal(
         table_rows.append(
             html.Tr(
                 [
-                # Device name and confidence
+                    # Device name and confidence
                     html.Td(
                         [
                             html.Strong(device_name),
@@ -78,7 +78,9 @@ def create_device_verification_modal(
                                 value=[
                                     key
                                     for key in ["is_entry", "is_exit"]
-                                    if attributes.get(key, attributes.get(key.replace("is_", "")))
+                                    if attributes.get(
+                                        key, attributes.get(key.replace("is_", ""))
+                                    )
                                 ],
                                 inline=True,
                             )
@@ -99,7 +101,9 @@ def create_device_verification_modal(
                                         "is_fire_escape",
                                         "is_restricted",
                                     ]
-                                    if attributes.get(key, attributes.get(key.replace("is_", "")))
+                                    if attributes.get(
+                                        key, attributes.get(key.replace("is_", ""))
+                                    )
                                 ],
                                 inline=False,
                                 className="small",
@@ -134,7 +138,6 @@ def create_device_verification_modal(
                         ],
                         className="hidden",
                         style={"width": "0%"},
-
                     ),
                 ],
                 tabIndex=0,
@@ -158,11 +161,26 @@ def create_device_verification_modal(
                         [
                             html.Tr(
                                 [
-                                    html.Th("Device Name", className="device-verification__col--name"),
-                                    html.Th("Floor", className="device-verification__col--floor"),
-                                    html.Th("Access Type", className="device-verification__col--access"),
-                                    html.Th("Special Areas", className="device-verification__col--special"),
-                                    html.Th("Security (0-10)", className="device-verification__col--security"),
+                                    html.Th(
+                                        "Device Name",
+                                        className="device-verification__col--name",
+                                    ),
+                                    html.Th(
+                                        "Floor",
+                                        className="device-verification__col--floor",
+                                    ),
+                                    html.Th(
+                                        "Access Type",
+                                        className="device-verification__col--access",
+                                    ),
+                                    html.Th(
+                                        "Special Areas",
+                                        className="device-verification__col--special",
+                                    ),
+                                    html.Th(
+                                        "Security (0-10)",
+                                        className="device-verification__col--security",
+                                    ),
                                 ]
                             )
                         ]

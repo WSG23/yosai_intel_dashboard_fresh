@@ -15,7 +15,7 @@ class ConfigValidator:
     REQUIRED_SECTIONS = {"app", "database", "security"}
 
     @classmethod
-    def validate(cls, data: Dict[str, Any]) -> 'Config':
+    def validate(cls, data: Dict[str, Any]) -> "Config":
         """Validate config data and return a Config object."""
         if not isinstance(data, dict):
             raise ConfigurationError("Configuration data must be a mapping")
@@ -27,6 +27,7 @@ class ConfigValidator:
             )
 
         from .config import Config
+
         config = Config()
         for section in ["app", "database", "security", "sample_files"]:
             if section in data:

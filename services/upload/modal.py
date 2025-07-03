@@ -31,4 +31,5 @@ class ModalService:
 
         return no_update, no_update, no_update
 
+
 __all__ = ["ModalService"]

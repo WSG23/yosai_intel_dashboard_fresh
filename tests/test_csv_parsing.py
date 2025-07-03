@@ -24,4 +24,3 @@ def test_parse_csv_with_various_delimiters(tmp_path, sep):
     expected["timestamp"] = pd.to_datetime(expected["timestamp"])
 
     pd.testing.assert_frame_equal(parsed, expected)
-

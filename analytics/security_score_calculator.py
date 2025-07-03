@@ -14,6 +14,7 @@ import unicodedata
 @dataclass
 class SecurityCalculationConfig:
     """Configuration for security calculations with validation"""
+
     baseline_failed_rate: float = 0.05
     baseline_badge_issue_rate: float = 0.02
     baseline_after_hours_rate: float = 0.05
@@ -177,7 +178,8 @@ class SecurityScoreCalculator:
         penalties = {
             "failed": max(0, z_scores["failed"]) * self.config.weight_failed,
             "badge": max(0, z_scores["badge"]) * self.config.weight_badge,
-            "after_hours": max(0, z_scores["after_hours"]) * self.config.weight_after_hours,
+            "after_hours": max(0, z_scores["after_hours"])
+            * self.config.weight_after_hours,
             "weekend": max(0, z_scores["weekend"]) * self.config.weight_weekend,
         }
 

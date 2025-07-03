@@ -78,9 +78,15 @@ class AnalyticsGenerator:
             "timestamp": timestamps,
             "person_id": np.random.choice(users, n_events),
             "door_id": np.random.choice(doors, n_events),
-            "access_result": np.random.choice(["Granted", "Denied"], n_events, p=[0.85, 0.15]),
-            "badge_status": np.random.choice(["Valid", "Invalid", "Expired"], n_events, p=[0.9, 0.08, 0.02]),
-            "device_status": np.random.choice(["normal", "maintenance"], n_events, p=[0.95, 0.05]),
+            "access_result": np.random.choice(
+                ["Granted", "Denied"], n_events, p=[0.85, 0.15]
+            ),
+            "badge_status": np.random.choice(
+                ["Valid", "Invalid", "Expired"], n_events, p=[0.9, 0.08, 0.02]
+            ),
+            "device_status": np.random.choice(
+                ["normal", "maintenance"], n_events, p=[0.95, 0.05]
+            ),
         }
         df = pd.DataFrame(data).sort_values("timestamp").reset_index(drop=True)
         return df

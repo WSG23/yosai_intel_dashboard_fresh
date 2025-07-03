@@ -3,10 +3,10 @@ from .ast_analyzer import ASTAnalyzer
 from .style_analyzer import StyleAnalyzer
 
 __all__ = [
-    'BaseAnalyzer',
-    'QualityIssue',
-    'QualityLevel',
-    'IssueType',
-    'ASTAnalyzer',
-    'StyleAnalyzer',
+    "BaseAnalyzer",
+    "QualityIssue",
+    "QualityLevel",
+    "IssueType",
+    "ASTAnalyzer",
+    "StyleAnalyzer",
 ]

@@ -16,4 +16,3 @@ class Container:
     def has(self, name: str) -> bool:
         """Check if a service with the given name exists."""
         return name in self._services
-

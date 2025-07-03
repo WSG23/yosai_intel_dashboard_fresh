@@ -4,9 +4,9 @@ from utils.unicode_utils import safe_unicode_encode
 
 
 def test_clean_dataframe_removes_surrogates():
-    df = pd.DataFrame({
-        "bad" + chr(0xD800) + "col": ["A" + chr(0xDC00), "B" + chr(0xDFFF)]
-    })
+    df = pd.DataFrame(
+        {"bad" + chr(0xD800) + "col": ["A" + chr(0xDC00), "B" + chr(0xDFFF)]}
+    )
     cleaned = UnicodeCleaner.clean_dataframe(df)
     assert list(cleaned.columns) == ["badcol"]
     assert list(cleaned.iloc[:, 0]) == ["A", "B"]

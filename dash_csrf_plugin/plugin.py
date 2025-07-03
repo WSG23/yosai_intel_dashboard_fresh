@@ -92,7 +92,9 @@ class DashCSRFPlugin:
     def get_status(self) -> Dict[str, str]:
         return {
             "initialized": self._initialized,
-            "mode": self.mode.value if isinstance(self.mode, CSRFMode) else str(self.mode),
+            "mode": (
+                self.mode.value if isinstance(self.mode, CSRFMode) else str(self.mode)
+            ),
         }
 
     @property

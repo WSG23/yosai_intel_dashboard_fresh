@@ -22,7 +22,11 @@ def ensure_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
         "updated_at",
     ]
     for col in df.columns:
-        if col.lower() in timestamp_columns or "time" in col.lower() or "date" in col.lower():
+        if (
+            col.lower() in timestamp_columns
+            or "time" in col.lower()
+            or "date" in col.lower()
+        ):
             if df[col].dtype == "object":
                 try:
                     logger.info("Converting column '%s' to datetime", col)

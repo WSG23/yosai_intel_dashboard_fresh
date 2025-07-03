@@ -3,6 +3,7 @@
 import threading
 from typing import Dict, Any
 
+
 class AIMappingStore:
     """Thread-safe store for device AI mappings."""
 
@@ -33,6 +34,7 @@ class AIMappingStore:
     def __len__(self) -> int:
         with self._lock:
             return len(self._mappings)
+
 
 ai_mapping_store = AIMappingStore()
 

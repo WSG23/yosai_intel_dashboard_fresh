@@ -75,4 +75,3 @@ class IDoorRepository(ABC):
     @abstractmethod
     async def get_critical_doors(self) -> List[Door]:
         pass
-

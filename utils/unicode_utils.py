@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def handle_surrogate_characters(text: str) -> str:
     """Return ``text`` with problematic surrogate characters sanitized."""
     try:
-        cleaned = re.sub(r"[\uD800-\uDFFF]", "\uFFFD", text)
+        cleaned = re.sub(r"[\uD800-\uDFFF]", "\ufffd", text)
         cleaned = unicodedata.normalize("NFKC", cleaned)
         return cleaned.encode("utf-8", "replace").decode("utf-8")
     except Exception as exc:  # pragma: no cover - best effort
@@ -83,7 +83,8 @@ def sanitize_unicode_input(text: Union[str, Any], replacement: str = "\ufffd") -
         cleaned = text.encode("utf-8", errors="ignore").decode("utf-8")
         cleaned = unicodedata.normalize("NFKC", cleaned)
         cleaned = "".join(
-            char for char in cleaned
+            char
+            for char in cleaned
             if unicodedata.category(char)[0] != "C" or char in "\t\n\r"
         )
         cleaned = re.sub(r"[\ud800-\udfff]", replacement, cleaned)
@@ -92,7 +93,9 @@ def sanitize_unicode_input(text: Union[str, Any], replacement: str = "\ufffd") -
         return "".join(char for char in str(text) if ord(char) < 127)
 
 
-def process_large_csv_content(content: bytes, encoding: str = "utf-8", *, chunk_size: int = 1024 * 1024) -> str:
+def process_large_csv_content(
+    content: bytes, encoding: str = "utf-8", *, chunk_size: int = 1024 * 1024
+) -> str:
     """Decode potentially large CSV content in chunks and sanitize."""
     pieces: list[str] = []
     mv = memoryview(content)

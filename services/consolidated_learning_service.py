@@ -2,6 +2,7 @@
 Consolidated learning service for device and column mappings.
 Replaces services/device_learning_service.py
 """
+
 import hashlib
 import json
 from pathlib import Path
@@ -9,6 +10,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import pandas as pd
 import logging
+
 
 class ConsolidatedLearningService:
     """Unified learning service for all mapping types."""
@@ -21,23 +23,27 @@ class ConsolidatedLearningService:
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
         self._load_learned_data()
 
-    def save_complete_mapping(self, df: pd.DataFrame, filename: str,
-                              device_mappings: Dict[str, Any],
-                              column_mappings: Optional[Dict[str, str]] = None) -> str:
+    def save_complete_mapping(
+        self,
+        df: pd.DataFrame,
+        filename: str,
+        device_mappings: Dict[str, Any],
+        column_mappings: Optional[Dict[str, str]] = None,
+    ) -> str:
         """Save device and column mappings for future use."""
         fingerprint = self._generate_fingerprint(df, filename)
 
         mapping_data = {
-            'filename': filename,
-            'fingerprint': fingerprint,
-            'saved_at': datetime.now().isoformat(),
-            'device_mappings': device_mappings,
-            'column_mappings': column_mappings or {},
-            'file_stats': {
-                'rows': len(df),
-                'columns': list(df.columns),
-                'device_count': self._count_unique_devices(df)
-            }
+            "filename": filename,
+            "fingerprint": fingerprint,
+            "saved_at": datetime.now().isoformat(),
+            "device_mappings": device_mappings,
+            "column_mappings": column_mappings or {},
+            "file_stats": {
+                "rows": len(df),
+                "columns": list(df.columns),
+                "device_count": self._count_unique_devices(df),
+            },
         }
 
         self.learned_data[fingerprint] = mapping_data
@@ -53,29 +59,29 @@ class ConsolidatedLearningService:
             learned = self.learned_data[fingerprint]
             self.logger.info(f"Found exact match for {filename}")
             return {
-                'device_mappings': learned['device_mappings'],
-                'column_mappings': learned['column_mappings'],
-                'match_type': 'exact',
-                'saved_at': learned['saved_at'],
-                'confidence': 1.0
+                "device_mappings": learned["device_mappings"],
+                "column_mappings": learned["column_mappings"],
+                "match_type": "exact",
+                "saved_at": learned["saved_at"],
+                "confidence": 1.0,
             }
 
         similar = self._find_similar_mapping(df)
         if similar:
             self.logger.info(f"Found similar mapping for {filename}")
             return {
-                'device_mappings': similar['device_mappings'],
-                'column_mappings': similar['column_mappings'],
-                'match_type': 'similar',
-                'confidence': similar['similarity_score'],
-                'source_file': similar['filename']
+                "device_mappings": similar["device_mappings"],
+                "column_mappings": similar["column_mappings"],
+                "match_type": "similar",
+                "confidence": similar["similarity_score"],
+                "source_file": similar["filename"],
             }
 
         return {
-            'device_mappings': {},
-            'column_mappings': {},
-            'match_type': 'none',
-            'confidence': 0.0
+            "device_mappings": {},
+            "column_mappings": {},
+            "match_type": "none",
+            "confidence": 0.0,
         }
 
     def apply_to_global_store(self, df: pd.DataFrame, filename: str) -> bool:
@@ -87,9 +93,9 @@ class ConsolidatedLearningService:
             return False
 
         learned = self.get_learned_mappings(df, filename)
-        if learned['match_type'] != 'none' and learned['device_mappings']:
+        if learned["match_type"] != "none" and learned["device_mappings"]:
             ai_mapping_store.clear()
-            ai_mapping_store.update(learned['device_mappings'])
+            ai_mapping_store.update(learned["device_mappings"])
             self.logger.info(
                 f"Applied {len(learned['device_mappings'])} learned device mappings"
             )
@@ -99,43 +105,40 @@ class ConsolidatedLearningService:
     def get_learning_statistics(self) -> Dict[str, Any]:
         """Get comprehensive learning statistics."""
         if not self.learned_data:
-            return {
-                'total_mappings': 0,
-                'total_devices': 0,
-                'files': []
-            }
+            return {"total_mappings": 0, "total_devices": 0, "files": []}
 
         total_devices = sum(
-            data['file_stats']['device_count']
-            for data in self.learned_data.values()
+            data["file_stats"]["device_count"] for data in self.learned_data.values()
         )
 
-        latest_save = max(
-            data['saved_at'] for data in self.learned_data.values()
-        ) if self.learned_data else None
+        latest_save = (
+            max(data["saved_at"] for data in self.learned_data.values())
+            if self.learned_data
+            else None
+        )
 
         return {
-            'total_mappings': len(self.learned_data),
-            'total_devices': total_devices,
-            'latest_save': latest_save,
-            'files': [
+            "total_mappings": len(self.learned_data),
+            "total_devices": total_devices,
+            "latest_save": latest_save,
+            "files": [
                 {
-                    'filename': data['filename'],
-                    'fingerprint': data['fingerprint'][:8],
-                    'device_count': data['file_stats']['device_count'],
-                    'saved_at': data['saved_at']
+                    "filename": data["filename"],
+                    "fingerprint": data["fingerprint"][:8],
+                    "device_count": data["file_stats"]["device_count"],
+                    "saved_at": data["saved_at"],
                 }
                 for data in self.learned_data.values()
-            ]
+            ],
         }
 
     def _generate_fingerprint(self, df: pd.DataFrame, filename: str) -> str:
         """Generate unique fingerprint for data structure."""
         structure = {
-            'filename': filename,
-            'columns': sorted(df.columns.tolist()),
-            'row_count': len(df),
-            'column_count': len(df.columns)
+            "filename": filename,
+            "columns": sorted(df.columns.tolist()),
+            "row_count": len(df),
+            "column_count": len(df.columns),
         }
         content = json.dumps(structure, sort_keys=True)
         return hashlib.md5(content.encode()).hexdigest()
@@ -148,21 +151,21 @@ class ConsolidatedLearningService:
         similarity_threshold = 0.7
 
         for data in self.learned_data.values():
-            stored_columns = set(data['file_stats']['columns'])
+            stored_columns = set(data["file_stats"]["columns"])
             intersection = len(current_columns & stored_columns)
             union = len(current_columns | stored_columns)
             similarity = intersection / union if union > 0 else 0.0
             if similarity > best_score and similarity >= similarity_threshold:
                 best_score = similarity
                 best_match = data.copy()
-                best_match['similarity_score'] = similarity
+                best_match["similarity_score"] = similarity
         return best_match
 
     def _count_unique_devices(self, df: pd.DataFrame) -> int:
         """Count unique devices in dataframe."""
         if df.empty:
             return 0
-        device_columns = ['door_id', 'device_id', 'device_name', 'device']
+        device_columns = ["door_id", "device_id", "device_name", "device"]
         for col in device_columns:
             if col in df.columns:
                 return df[col].nunique()
@@ -172,10 +175,11 @@ class ConsolidatedLearningService:
         """Load learned data from storage using JSON only."""
         if self.storage_path.exists():
             try:
-                with open(self.storage_path, "r", encoding="utf-8", errors="replace") as f:
+                with open(
+                    self.storage_path, "r", encoding="utf-8", errors="replace"
+                ) as f:
                     self.learned_data = json.load(f)
-                self.logger.info(
-                    f"Loaded {len(self.learned_data)} learned mappings")
+                self.logger.info(f"Loaded {len(self.learned_data)} learned mappings")
             except Exception as e:
                 self.logger.warning(f"Could not load learned data: {e}")
                 self.learned_data = {}
@@ -192,6 +196,7 @@ class ConsolidatedLearningService:
 
 
 _learning_service: Optional[ConsolidatedLearningService] = None
+
 
 def get_learning_service() -> ConsolidatedLearningService:
     """Get global learning service instance."""

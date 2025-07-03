@@ -52,7 +52,9 @@ def test_get_real_uploaded_data(monkeypatch):
     df1 = _make_df().iloc[:2]
     df2 = _make_df().iloc[1:]
     service = AnalyticsService()
-    monkeypatch.setattr(service, "load_uploaded_data", lambda: {"a.csv": df1, "b.csv": df2})
+    monkeypatch.setattr(
+        service, "load_uploaded_data", lambda: {"a.csv": df1, "b.csv": df2}
+    )
     summary = service._get_real_uploaded_data()
     assert summary["status"] == "success"
     assert summary["files_processed"] == 2

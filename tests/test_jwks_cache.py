@@ -93,4 +93,3 @@ def test_jwks_fetch_timeout(monkeypatch, caplog):
             auth._get_jwks("example.com")
 
     assert any("Failed to fetch JWKS" in r.getMessage() for r in caplog.records)
-

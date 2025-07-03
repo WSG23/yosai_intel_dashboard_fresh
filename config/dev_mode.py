@@ -19,4 +19,3 @@ def setup_dev_mode():
             if not os.getenv(key):
                 os.environ[key] = value
                 logger.info(f"\ud83d\udd27 Set dev default: {key}")
-

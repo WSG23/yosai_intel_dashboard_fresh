@@ -74,9 +74,7 @@ class UnifiedCallbackCoordinator:
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             with self._lock:
                 if callback_id in self._registrations:
-                    raise ValueError(
-                        f"Callback ID '{callback_id}' already registered"
-                    )
+                    raise ValueError(f"Callback ID '{callback_id}' already registered")
 
                 allow_dup_global = kwargs.get("allow_duplicate", False)
                 for o in outputs_tuple:
@@ -146,6 +144,3 @@ class UnifiedCallbackCoordinator:
                         f"{o.component_id}.{o.component_property}" for o in reg.outputs
                     )
                     logger.info("  %s -> %s", cid, outputs_str)
-
-
-

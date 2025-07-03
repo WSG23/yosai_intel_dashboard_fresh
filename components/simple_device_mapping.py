@@ -31,7 +31,6 @@ special_areas_options = [
 ]
 
 
-
 def apply_learned_device_mappings(df: pd.DataFrame, filename: str) -> bool:
     """
     Apply learned device mappings using the door mapping service
@@ -66,9 +65,7 @@ def save_confirmed_device_mappings(
         device_data.update(mapping)
         devices_list.append(device_data)
 
-    return door_mapping_service.save_confirmed_mappings(
-        df, filename, devices_list
-    )
+    return door_mapping_service.save_confirmed_mappings(df, filename, devices_list)
 
 
 def generate_ai_device_defaults(df: pd.DataFrame, client_profile: str = "auto"):
@@ -202,7 +199,9 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
         )
 
     device_store = dcc.Store(id="current-devices-list", data=devices)
-    suggestions_store = dcc.Store(id="ai-suggestions-store", data=ai_mapping_store.all())
+    suggestions_store = dcc.Store(
+        id="ai-suggestions-store", data=ai_mapping_store.all()
+    )
     status_div = html.Div(id="device-save-status")
 
     modal_children: List[Component] = [
@@ -420,7 +419,9 @@ def save_user_inputs(floors, security, access, devices):
     # Update global mappings with user inputs
     for i, device in enumerate(devices):
         user_floor = floors[i] if i < len(floors) and floors[i] is not None else 1
-        user_security = security[i] if i < len(security) and security[i] is not None else 5
+        user_security = (
+            security[i] if i < len(security) and security[i] is not None else 5
+        )
         user_access = access[i] if i < len(access) else []
 
         ai_mapping_store.set(
@@ -481,42 +482,55 @@ def populate_simple_device_modal(is_open):
     """Populate modal with actual devices from uploaded data and global store."""
     if not is_open:
         return dash.no_update
-    
+
     # First try to get devices from global store (preferred)
     try:
         from services.ai_mapping_store import ai_mapping_store
+
         store_devices = ai_mapping_store.all()
-        
+
         if store_devices:
             device_list = sorted(list(store_devices.keys()))
-            logger.info(f"📋 Found {len(device_list)} devices from global store for manual mapping")
+            logger.info(
+                f"📋 Found {len(device_list)} devices from global store for manual mapping"
+            )
             return create_simple_device_modal_with_ai(device_list)
     except Exception as e:
         logger.warning(f"Failed to get devices from global store: {e}")
-    
+
     # Fallback: Get devices from uploaded data
     from pages.file_upload import get_uploaded_data
+
     uploaded_data = get_uploaded_data()
-    
+
     if not uploaded_data:
         logger.info("📋 No uploaded data found, using sample devices")
         return create_simple_device_modal_with_ai([])
-    
+
     # Extract devices from all uploaded files - check multiple column names
     all_devices = set()
-    device_columns = ["door_id", "device_name", "DeviceName", "location", "door", "device"]
-    
+    device_columns = [
+        "door_id",
+        "device_name",
+        "DeviceName",
+        "location",
+        "door",
+        "device",
+    ]
+
     for filename, df in uploaded_data.items():
         for col in df.columns:
             if any(device_col.lower() in col.lower() for device_col in device_columns):
                 devices = df[col].dropna().unique()
                 all_devices.update(str(d) for d in devices)
-                logger.info(f"📋 Found {len(devices)} devices in column '{col}' from {filename}")
+                logger.info(
+                    f"📋 Found {len(devices)} devices in column '{col}' from {filename}"
+                )
                 break  # Use first matching column
-    
+
     device_list = sorted(list(all_devices))
     logger.info(f"📋 Found {len(device_list)} total devices for manual mapping")
-    
+
     return create_simple_device_modal_with_ai(device_list)
 
 

@@ -10,13 +10,17 @@ def create_test_data(rows=100):
     data = []
     base_date = datetime(2024, 1, 1)
     for i in range(rows):
-        data.append({
-            "person_id": f"USER_{(i % 150) + 1:03d}",
-            "door_id": f"DOOR_{(i % 25) + 1:02d}",
-            "access_result": random.choice(["Granted", "Granted", "Granted", "Denied"]),
-            "timestamp": (base_date + timedelta(minutes=i)).isoformat(),
-            "badge_id": f"BADGE_{i % 200:04d}",
-        })
+        data.append(
+            {
+                "person_id": f"USER_{(i % 150) + 1:03d}",
+                "door_id": f"DOOR_{(i % 25) + 1:02d}",
+                "access_result": random.choice(
+                    ["Granted", "Granted", "Granted", "Denied"]
+                ),
+                "timestamp": (base_date + timedelta(minutes=i)).isoformat(),
+                "badge_id": f"BADGE_{i % 200:04d}",
+            }
+        )
     return pd.DataFrame(data)
 
 
@@ -33,4 +37,3 @@ def test_analyze_with_datetime_fix():
     result = service.analyze_with_chunking(df, ["basic"])
     summary = result.get("processing_summary", {})
     assert summary.get("rows_processed") == len(df)
-

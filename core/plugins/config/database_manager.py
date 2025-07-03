@@ -11,6 +11,7 @@ from .interfaces import IDatabaseManager, ConnectionResult
 
 logger = logging.getLogger(__name__)
 
+
 class MockDatabaseManager(IDatabaseManager):
     """Mock database manager for testing and development"""
 
@@ -23,9 +24,7 @@ class MockDatabaseManager(IDatabaseManager):
         """Get mock database connection"""
         self._connected = True
         return ConnectionResult(
-            success=True,
-            connection="mock_connection",
-            connection_type="mock"
+            success=True, connection="mock_connection", connection_type="mock"
         )
 
     def test_connection(self) -> bool:
@@ -42,6 +41,7 @@ class MockDatabaseManager(IDatabaseManager):
         logger.debug(f"Mock query executed: {query}")
         return f"Mock result for: {query}"
 
+
 class PostgreSQLDatabaseManager(IDatabaseManager):
     """PostgreSQL database manager"""
 
@@ -52,21 +52,34 @@ class PostgreSQLDatabaseManager(IDatabaseManager):
     def get_connection(self) -> ConnectionResult:
         """Get PostgreSQL connection"""
         if self.connection is not None:
-            return ConnectionResult(success=True, connection=self.connection, connection_type="postgresql")
+            return ConnectionResult(
+                success=True, connection=self.connection, connection_type="postgresql"
+            )
         try:
             logger.info("Creating PostgreSQL connection")
             self.connection = psycopg2.connect(
                 host=getattr(self.config, "host", "localhost"),
                 port=getattr(self.config, "port", 5432),
-                dbname=getattr(self.config, "name", getattr(self.config, "database", "postgres")),
-                user=getattr(self.config, "user", getattr(self.config, "username", "postgres")),
+                dbname=getattr(
+                    self.config, "name", getattr(self.config, "database", "postgres")
+                ),
+                user=getattr(
+                    self.config, "user", getattr(self.config, "username", "postgres")
+                ),
                 password=getattr(self.config, "password", ""),
                 cursor_factory=RealDictCursor,
             )
-            return ConnectionResult(success=True, connection=self.connection, connection_type="postgresql")
+            return ConnectionResult(
+                success=True, connection=self.connection, connection_type="postgresql"
+            )
         except Exception as e:
             logger.error("PostgreSQL connection failed: %s", e)
-            return ConnectionResult(success=False, connection=None, error_message=str(e), connection_type="postgresql")
+            return ConnectionResult(
+                success=False,
+                connection=None,
+                error_message=str(e),
+                connection_type="postgresql",
+            )
 
     def test_connection(self) -> bool:
         """Test PostgreSQL connection"""
@@ -95,7 +108,9 @@ class PostgreSQLDatabaseManager(IDatabaseManager):
         """Execute PostgreSQL query and return pandas DataFrame or affected rows"""
         result = self.get_connection()
         if not result.success or not result.connection:
-            raise ConnectionError(result.error_message or "PostgreSQL connection not available")
+            raise ConnectionError(
+                result.error_message or "PostgreSQL connection not available"
+            )
         conn = result.connection
         try:
             with conn.cursor() as cur:
@@ -111,6 +126,7 @@ class PostgreSQLDatabaseManager(IDatabaseManager):
             conn.rollback()
             raise
 
+
 class SQLiteDatabaseManager(IDatabaseManager):
     """SQLite database manager"""
 
@@ -121,16 +137,27 @@ class SQLiteDatabaseManager(IDatabaseManager):
     def get_connection(self) -> ConnectionResult:
         """Get SQLite connection"""
         if self.connection is not None:
-            return ConnectionResult(success=True, connection=self.connection, connection_type="sqlite")
+            return ConnectionResult(
+                success=True, connection=self.connection, connection_type="sqlite"
+            )
         try:
             logger.info("Creating SQLite connection")
-            db_path = getattr(self.config, "database", getattr(self.config, "name", ":memory:"))
+            db_path = getattr(
+                self.config, "database", getattr(self.config, "name", ":memory:")
+            )
             self.connection = sqlite3.connect(db_path)
             self.connection.row_factory = sqlite3.Row
-            return ConnectionResult(success=True, connection=self.connection, connection_type="sqlite")
+            return ConnectionResult(
+                success=True, connection=self.connection, connection_type="sqlite"
+            )
         except Exception as e:
             logger.error("SQLite connection failed: %s", e)
-            return ConnectionResult(success=False, connection=None, error_message=str(e), connection_type="sqlite")
+            return ConnectionResult(
+                success=False,
+                connection=None,
+                error_message=str(e),
+                connection_type="sqlite",
+            )
 
     def test_connection(self) -> bool:
         """Test SQLite connection"""
@@ -160,7 +187,9 @@ class SQLiteDatabaseManager(IDatabaseManager):
         """Execute SQLite query"""
         result = self.get_connection()
         if not result.success or not result.connection:
-            raise ConnectionError(result.error_message or "SQLite connection not available")
+            raise ConnectionError(
+                result.error_message or "SQLite connection not available"
+            )
         conn = result.connection
         try:
             cur = conn.cursor()
@@ -175,4 +204,5 @@ class SQLiteDatabaseManager(IDatabaseManager):
             logger.error("SQLite query failed: %s", e)
             raise
 
-__all__ = ['MockDatabaseManager', 'PostgreSQLDatabaseManager', 'SQLiteDatabaseManager']
+
+__all__ = ["MockDatabaseManager", "PostgreSQLDatabaseManager", "SQLiteDatabaseManager"]

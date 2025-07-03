@@ -2,6 +2,7 @@ import pandas as pd
 from services.door_mapping_service import DoorMappingService
 from services.ai_device_generator import AIDeviceGenerator, DeviceAttributes
 
+
 def test_standardized_output(monkeypatch):
     dummy = DeviceAttributes(
         device_id="d1",
@@ -27,4 +28,3 @@ def test_standardized_output(monkeypatch):
     device = result["devices"][0]
     assert device["is_entry"] is True
     assert "entry" not in device
-

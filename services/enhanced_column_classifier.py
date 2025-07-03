@@ -2,6 +2,7 @@
 Enhanced ML column classifier with heuristic fallbacks.
 Replaces plugins/ai_classification/services/column_mapper.py
 """
+
 from typing import Dict, List, Tuple, Optional, Any
 import joblib
 import numpy as np
@@ -9,11 +10,15 @@ import re
 import logging
 from pathlib import Path
 
+
 class EnhancedColumnClassifier:
     """ML-powered column classifier with heuristic fallbacks."""
 
-    def __init__(self, model_path: str = "data/column_model.joblib",
-                 confidence_threshold: float = 0.7):
+    def __init__(
+        self,
+        model_path: str = "data/column_model.joblib",
+        confidence_threshold: float = 0.7,
+    ):
         self.model_path = Path(model_path)
         self.vectorizer_path = Path("data/column_vectorizer.joblib")
         self.confidence_threshold = confidence_threshold
@@ -23,12 +28,12 @@ class EnhancedColumnClassifier:
 
         # Standard field patterns for heuristic fallback
         self.field_patterns = {
-            'device_id': [r'door', r'device', r'reader', r'panel', r'id'],
-            'timestamp': [r'time', r'date', r'when', r'stamp', r'created'],
-            'user_id': [r'user', r'person', r'employee', r'card', r'token'],
-            'event_type': [r'event', r'action', r'type', r'status', r'result'],
-            'floor': [r'floor', r'level', r'story'],
-            'location': [r'location', r'place', r'area', r'zone']
+            "device_id": [r"door", r"device", r"reader", r"panel", r"id"],
+            "timestamp": [r"time", r"date", r"when", r"stamp", r"created"],
+            "user_id": [r"user", r"person", r"employee", r"card", r"token"],
+            "event_type": [r"event", r"action", r"type", r"status", r"result"],
+            "floor": [r"floor", r"level", r"story"],
+            "location": [r"location", r"place", r"area", r"zone"],
         }
 
         # Try to load ML model
@@ -76,7 +81,9 @@ class EnhancedColumnClassifier:
                     mappings[header] = predicted_field
                     confidence_scores[header] = confidence
                 else:
-                    heuristic_field, heuristic_conf = self._predict_heuristic_single(header)
+                    heuristic_field, heuristic_conf = self._predict_heuristic_single(
+                        header
+                    )
                     if heuristic_field:
                         mappings[header] = heuristic_field
                         confidence_scores[header] = heuristic_conf
@@ -85,10 +92,10 @@ class EnhancedColumnClassifier:
             return self._predict_heuristic_batch(headers)
 
         return {
-            'mappings': mappings,
-            'confidence_scores': confidence_scores,
-            'method': method,
-            'ml_available': True
+            "mappings": mappings,
+            "confidence_scores": confidence_scores,
+            "method": method,
+            "ml_available": True,
         }
 
     def _predict_heuristic_batch(self, headers: List[str]) -> Dict[str, Any]:
@@ -103,10 +110,10 @@ class EnhancedColumnClassifier:
                 confidence_scores[header] = confidence
 
         return {
-            'mappings': mappings,
-            'confidence_scores': confidence_scores,
-            'method': 'heuristic_only',
-            'ml_available': False
+            "mappings": mappings,
+            "confidence_scores": confidence_scores,
+            "method": "heuristic_only",
+            "ml_available": False,
         }
 
     def _predict_heuristic_single(self, header: str) -> Tuple[Optional[str], float]:

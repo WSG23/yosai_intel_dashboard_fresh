@@ -85,16 +85,14 @@ class DataLoader:
                 meta["total_records"] += len(enriched)
 
                 if "person_id" in enriched.columns:
-                    meta["unique_users"].update(
-                        enriched["person_id"].dropna().unique()
-                    )
+                    meta["unique_users"].update(enriched["person_id"].dropna().unique())
                 if "door_id" in enriched.columns:
-                    meta["unique_devices"].update(
-                        enriched["door_id"].dropna().unique()
-                    )
+                    meta["unique_devices"].update(enriched["door_id"].dropna().unique())
 
                 if "timestamp" in enriched.columns:
-                    dates = pd.to_datetime(enriched["timestamp"], errors="coerce").dropna()
+                    dates = pd.to_datetime(
+                        enriched["timestamp"], errors="coerce"
+                    ).dropna()
                     if not dates.empty:
                         if meta["date_range"]["start"] is None:
                             meta["date_range"]["start"] = dates.min()

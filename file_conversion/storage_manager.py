@@ -1,4 +1,5 @@
 """Manage Parquet file storage with metadata tracking."""
+
 from __future__ import annotations
 
 import json
@@ -83,5 +84,6 @@ class StorageManager:
         except Exception as exc:  # pragma: no cover - best effort
             _logger.error("Failed to load DataFrame: %s", exc)
             return None, str(exc)
+
 
 __all__ = ["StorageManager"]

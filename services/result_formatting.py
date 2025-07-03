@@ -127,7 +127,9 @@ def calculate_temporal_stats_safe(df: pd.DataFrame) -> Dict[str, Any]:
     return temporal_stats
 
 
-def apply_regular_analysis(df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
+def apply_regular_analysis(
+    df: pd.DataFrame, analysis_types: List[str]
+) -> Dict[str, Any]:
     """Run selected analysis sections for regular analysis."""
     result: Dict[str, Any] = {}
 

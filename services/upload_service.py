@@ -1,4 +1,5 @@
 """Utilities for processing uploaded files and creating previews."""
+
 import base64
 import io
 import logging
@@ -37,7 +38,7 @@ def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
                 "success": False,
                 "error": f"File too large: {file_size_mb:.1f}MB exceeds limit of {max_size_mb}MB",
                 "file_size_mb": file_size_mb,
-                "max_allowed_mb": max_size_mb
+                "max_allowed_mb": max_size_mb,
             }
 
         validator = DataValidationService()
@@ -79,7 +80,10 @@ def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
             }
 
         if not isinstance(df, pd.DataFrame):
-            return {"success": False, "error": f"Processing resulted in {type(df)} instead of DataFrame"}
+            return {
+                "success": False,
+                "error": f"Processing resulted in {type(df)} instead of DataFrame",
+            }
 
         if df.empty:
             return {"success": False, "error": "File contains no data"}
@@ -104,7 +108,9 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
         actual_rows, actual_cols = df.shape
         preview_rows = min(5, actual_rows)  # Only for table display
 
-        logger.info(f"Creating preview for {filename}: {actual_rows} rows × {actual_cols} columns")
+        logger.info(
+            f"Creating preview for {filename}: {actual_rows} rows × {actual_cols} columns"
+        )
 
         column_info = []
         for col in df.columns[:10]:
@@ -127,37 +133,45 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
         # Display status messaging based on file size
         if actual_rows <= 10:
             status_color = "warning"
-            status_message = f"⚠️ Only {actual_rows} rows found - check if file is complete"
+            status_message = (
+                f"⚠️ Only {actual_rows} rows found - check if file is complete"
+            )
         else:
             status_color = "success"
             status_message = f"✅ Successfully loaded {actual_rows:,} rows"
 
         return dbc.Card(
             [
-                dbc.CardHeader([
-                    html.H6(f"📄 {filename}", className="mb-0"),
-                    dbc.Badge(f"{actual_rows:,} rows total", color="info", className="ms-2")
-                ]),
+                dbc.CardHeader(
+                    [
+                        html.H6(f"📄 {filename}", className="mb-0"),
+                        dbc.Badge(
+                            f"{actual_rows:,} rows total",
+                            color="info",
+                            className="ms-2",
+                        ),
+                    ]
+                ),
                 dbc.CardBody(
                     [
                         # CRITICAL: Show actual processing status
-                        dbc.Alert(
-                            status_message,
-                            color=status_color,
-                            className="mb-3"
-                        ),
-
+                        dbc.Alert(status_message, color=status_color, className="mb-3"),
                         dbc.Row(
                             [
                                 dbc.Col(
                                     [
-                                        html.H6("Processing Statistics:", className="text-primary"),
+                                        html.H6(
+                                            "Processing Statistics:",
+                                            className="text-primary",
+                                        ),
                                         html.Ul(
                                             [
                                                 html.Li(f"Total Rows: {actual_rows:,}"),
                                                 html.Li(f"Columns: {actual_cols}"),
-                                                html.Li(f"Memory: {df.memory_usage(deep=True).sum() / (1024 * 1024):,.1f} MB"),
-                                                html.Li(f"Status: Complete")
+                                                html.Li(
+                                                    f"Memory: {df.memory_usage(deep=True).sum() / (1024 * 1024):,.1f} MB"
+                                                ),
+                                                html.Li(f"Status: Complete"),
                                             ]
                                         ),
                                     ],
@@ -166,14 +180,19 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
                                 dbc.Col(
                                     [
                                         html.H6("Columns:", className="text-primary"),
-                                        html.Ul([html.Li(info) for info in column_info]),
+                                        html.Ul(
+                                            [html.Li(info) for info in column_info]
+                                        ),
                                     ],
                                     width=6,
                                 ),
                             ]
                         ),
                         html.Hr(),
-                        html.H6(f"Sample Data (first {preview_rows} rows):", className="text-primary mt-3"),
+                        html.H6(
+                            f"Sample Data (first {preview_rows} rows):",
+                            className="text-primary mt-3",
+                        ),
                         dbc.Table.from_dataframe(  # pyright: ignore[reportAttributeAccessIssue]
                             preview_df,
                             striped=True,
@@ -182,14 +201,13 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
                             responsive=True,
                             size="sm",
                         ),
-
                         # ADDITIONAL: Clear indication of processing vs display
                         dbc.Alert(
                             f"📊 Processing Summary: {actual_rows:,} rows will be available for analytics. "
                             f"Above table shows first {preview_rows} rows for preview only.",
                             color="info",
-                            className="mt-3"
-                        )
+                            className="mt-3",
+                        ),
                     ]
                 ),
             ],
