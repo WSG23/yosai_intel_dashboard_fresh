@@ -71,9 +71,10 @@ def create_navbar_layout() -> Optional[Any]:
                                     [
                                         html.A(
                                             html.Img(
-                                                src="/assets/yosai_logo_name_white.png",
+                                                src="/assets/yosai_logo_name_black.png",
                                                 height="46px",  # Increased from 45px (2% larger)
                                                 className="navbar__logo",
+                                                alt="logo",
                                             ),
                                             href="/",
                                             style={"textDecoration": "none"},
@@ -137,11 +138,11 @@ def create_navbar_layout() -> Optional[Any]:
                                                             html.Img(
                                                                 src="/assets/navbar_icons/analytics.png",
                                                                 className="navbar-icon",
-                                                                alt="Analytics",
+                                                                alt="Deep Analytics Page",
                                                             ),
                                                             href="/analytics",
                                                             className="navbar-nav-link",
-                                                            title="Analytics",
+                                                            title="Deep Analytics Page",
                                                         ),
                                                         html.A(
                                                             html.Img(
@@ -151,7 +152,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                             ),
                                                             href="/file-upload",
                                                             className="navbar-nav-link",
-                                                            title="File Upload",
+                                                            title="Upload",
                                                         ),
                                                         dbc.DropdownMenu(
                                                             [
@@ -253,6 +254,7 @@ def create_navbar_layout() -> Optional[Any]:
             dark=True,
             sticky="top",
             className="navbar-main",
+            style={"backgroundColor": "#1B2A47"},
         )
 
     except Exception as e:

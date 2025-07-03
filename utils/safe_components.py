@@ -10,17 +10,70 @@ import dash_bootstrap_components as dbc
 
 def safe_navbar():
     """Safe navbar component"""
-    return dbc.Navbar([
-        dbc.Container([
-            html.H3("🏯 Yōsai Intel Dashboard", className="text-white mb-0"),
-            dbc.Nav([
-                dbc.NavItem(dbc.NavLink("Dashboard", href="/", external_link=True)),
-                dbc.NavItem(dbc.NavLink("File Upload", href="/file-upload", external_link=True)),
-                dbc.NavItem(dbc.NavLink("Analytics", href="/analytics", external_link=True)),
-            ], navbar=True),
-            html.Span("Logged in as: HQ Tower - East Wing", className="text-light")
-        ])
-    ], color="dark", dark=True, className="mb-3")
+    return dbc.Navbar(
+        [
+            dbc.Container(
+                [
+                    html.A(
+                        html.Img(
+                            src="/assets/yosai_logo_name_black.png",
+                            height="46px",
+                            className="navbar__logo",
+                            alt="logo",
+                        ),
+                        href="/",
+                        style={"textDecoration": "none"},
+                    ),
+                    dbc.Nav(
+                        [
+                            dbc.NavItem(
+                                dbc.NavLink(
+                                    html.Img(
+                                        src="/assets/navbar_icons/dashboard.png",
+                                        className="navbar-icon",
+                                        alt="Dashboard",
+                                    ),
+                                    href="/",
+                                    external_link=True,
+                                    title="Dashboard",
+                                )
+                            ),
+                            dbc.NavItem(
+                                dbc.NavLink(
+                                    html.Img(
+                                        src="/assets/navbar_icons/upload.png",
+                                        className="navbar-icon",
+                                        alt="Upload",
+                                    ),
+                                    href="/file-upload",
+                                    external_link=True,
+                                    title="Upload",
+                                )
+                            ),
+                            dbc.NavItem(
+                                dbc.NavLink(
+                                    html.Img(
+                                        src="/assets/navbar_icons/analytics.png",
+                                        className="navbar-icon",
+                                        alt="Deep Analytics Page",
+                                    ),
+                                    href="/analytics",
+                                    external_link=True,
+                                    title="Deep Analytics Page",
+                                )
+                            ),
+                        ],
+                        navbar=True,
+                    ),
+                    html.Span("Logged in as: HQ Tower - East Wing", className="text-light"),
+                ]
+            )
+        ],
+        color="dark",
+        dark=True,
+        className="mb-3",
+        style={"backgroundColor": "#1B2A47"},
+    )
 
 
 def safe_map_panel():
