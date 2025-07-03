@@ -77,7 +77,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                 alt="logo",
                                             ),
                                             href="/",
-                                            style={"textDecoration": "none"},
+                                            className="navbar-logo-link",
                                         )
                                     ],
                                     width=3,
@@ -182,14 +182,8 @@ def create_navbar_layout() -> Optional[Any]:
                                                                 alt="Settings",
                                                             ),
                                                             id="navbar-settings-btn",
-                                                            className="navbar-nav-link",
+                                                            className="navbar-nav-link navbar-icon-btn",
                                                             title="Settings",
-                                                            style={
-                                                                "background": "none",
-                                                                "border": "none",
-                                                                "padding": "0",
-                                                                "cursor": "pointer",
-                                                            },
                                                         ),
                                                         html.A(
                                                             html.Img(
@@ -209,10 +203,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                             className="ms-1",
                                                         ),
                                                     ],
-                                                    className="d-flex align-items-center",
-                                                    style={
-                                                        "gap": "1rem"
-                                                    },  # Increased from 0.75rem
+                                                    className="d-flex align-items-center navbar-icon-group",
                                                 ),
                                                 dcc.Download(id="download-csv"),
                                                 dcc.Download(id="download-json"),
@@ -231,8 +222,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                             className="language-btn",
                                                         ),
                                                     ],
-                                                    className="d-flex align-items-center text-sm",
-                                                    style={"marginLeft": "2rem"},
+                                                    className="d-flex align-items-center text-sm navbar-language-toggle",
                                                     id="language-toggle",
                                                 ),
                                             ],
@@ -243,8 +233,7 @@ def create_navbar_layout() -> Optional[Any]:
                                     className="d-flex align-items-center justify-content-end pr-4",
                                 ),
                             ],
-                            className="w-100 align-items-center",
-                            style={"minHeight": "60px"},
+                            className="w-100 align-items-center navbar-row",
                         ),
                     ],
                     fluid=True,
@@ -254,7 +243,6 @@ def create_navbar_layout() -> Optional[Any]:
             dark=True,
             sticky="top",
             className="navbar-main",
-            style={"backgroundColor": "#1B2A47"},
         )
 
     except Exception as e:

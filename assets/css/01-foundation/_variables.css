@@ -47,7 +47,7 @@
   --radius-full: 9999px;
   
   /* Typography */
-  --font-family-system: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  --font-family-system: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
   --font-family-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --text-xs: 0.75rem;     /* 12px */

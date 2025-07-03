@@ -125,6 +125,7 @@ def layout():
                 [
                     dbc.Button("", id="verify-columns-btn-simple", className="hidden"),
                     dbc.Button("", id="classify-devices-btn", className="hidden"),
+
                 ],
                 className="hidden",
             ),

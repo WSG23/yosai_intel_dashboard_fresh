@@ -191,58 +191,7 @@ class CSRFManager:
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Security Error</title>
-            <style>
-                body {
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    margin: 0;
-                    padding: 40px;
-                    background: #f8f9fa;
-                    color: #343a40;
-                }
-                .error-container {
-                    max-width: 600px;
-                    margin: 0 auto;
-                    background: white;
-                    padding: 40px;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                }
-                .error-icon {
-                    font-size: 48px;
-                    color: #dc3545;
-                    text-align: center;
-                    margin-bottom: 20px;
-                }
-                h1 {
-                    color: #dc3545;
-                    text-align: center;
-                    margin-bottom: 20px;
-                }
-                .error-message {
-                    background: #f8d7da;
-                    border: 1px solid #f5c6cb;
-                    color: #721c24;
-                    padding: 15px;
-                    border-radius: 5px;
-                    margin: 20px 0;
-                }
-                .action-buttons {
-                    text-align: center;
-                    margin-top: 30px;
-                }
-                .btn {
-                    background: #007bff;
-                    color: white;
-                    padding: 10px 20px;
-                    text-decoration: none;
-                    border-radius: 5px;
-                    margin: 0 10px;
-                    display: inline-block;
-                }
-                .btn:hover {
-                    background: #0056b3;
-                }
-            </style>
+            <link rel="stylesheet" href="/assets/styles/csrf_error.css">
         </head>
         <body>
             <div class="error-container">
