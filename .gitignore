@@ -102,5 +102,9 @@ data/training/
 # Node
 node_modules/
 
+# Exclude raw CSS partials but keep the compiled bundle
+assets/css/*
+!assets/dist/main.min.css
+
 # Compiled translations
 translations/**/*.mo

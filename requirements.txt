@@ -10,7 +10,8 @@ numpy>=1.24.0
 Flask-Babel==4.0.0
 Flask-Login==0.6.2
 Flask-WTF==1.1.1
-Flask-Compress==1.13
+Flask-Compress~=1.14
+Flask-Talisman==1.1.0
 authlib==1.2.1
 python-jose==3.3.0
 cssutils==2.8.0
