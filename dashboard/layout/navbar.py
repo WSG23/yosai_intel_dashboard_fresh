@@ -117,10 +117,9 @@ def create_navbar_layout() -> Optional[Any]:
                                                 html.Div(
                                                     id="facility-header",
                                                     children=[
-                                                        html.H5(
-                                                            str(_l("Dashboard")),
+                                                        html.Span(
                                                             id="navbar-title",
-                                                            className="navbar-title text-primary",
+                                                            className="text-primary",
                                                         ),
                                                         html.Small(
                                                             str(
@@ -319,11 +318,7 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             return f"Live: {current_time}"
 
-        manager.app.clientside_callback(
-            "function(pathname){const map={\"/\":\"Dashboard\",\"/dashboard\":\"Dashboard\",\"/analytics\":\"Deep Analytics\",\"/graphs\":\"Graphs\",\"/export\":\"Export\",\"/settings\":\"Settings\",\"/upload\":\"File Upload\",\"/file-upload\":\"File Upload\",\"/login\":\"Login\"};return map[pathname]||'Dashboard';}",
-            Output("navbar-title", "children"),
-            Input("url-i18n", "pathname"),
-        )
+
 
         @manager.register_callback(
             Output("language-toggle", "children"),
