@@ -37,11 +37,12 @@ def generate_theme_script() -> str:
         const saved = sanitize(localStorage.getItem('app-theme'));
         const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         const initial = saved || sanitize(system);
-        document.documentElement.dataset.theme = initial;
+        const target = document.querySelector("[data-theme]") || document.documentElement;
+        target.dataset.theme = initial;
         document.dispatchEvent(new CustomEvent('themeChange', {{ detail: initial }}));
         window.setAppTheme = function(theme) {{
             const clean = sanitize(theme);
-            document.documentElement.dataset.theme = clean;
+            target.dataset.theme = clean;
             localStorage.setItem('app-theme', clean);
             document.dispatchEvent(new CustomEvent('themeChange', {{ detail: clean }}));
         }};
