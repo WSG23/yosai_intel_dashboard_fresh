@@ -69,6 +69,7 @@ def _create_full_app() -> dash.Dash:
             assets_folder=str(ASSETS_DIR),
             assets_ignore=assets_ignore,
         )
+        app.config.assets_ignore = r"^\..*|.*\.txt$"
 
         app.index_string = f"""
 <!DOCTYPE html>
@@ -260,6 +261,8 @@ def _create_simple_app() -> dash.Dash:
             suppress_callback_exceptions=True,
             assets_ignore=assets_ignore,
         )
+        app.config.assets_ignore = r"^\..*|.*\.txt$"
+
 
         app.index_string = f"""
 <!DOCTYPE html>
@@ -368,6 +371,8 @@ def _create_json_safe_app() -> dash.Dash:
             suppress_callback_exceptions=True,
             assets_ignore=assets_ignore,
         )
+        app.config.assets_ignore = r"^\..*|.*\.txt$"
+
 
         app.index_string = f"""
 <!DOCTYPE html>
