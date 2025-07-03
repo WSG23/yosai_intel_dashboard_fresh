@@ -45,10 +45,12 @@ def navbar_icon(filename: str, alt: str, fallback_text: str):
     path = NAVBAR_ICON_DIR / filename
     if path.is_file():
         return html.Img(
-            src=f"/assets/navbar_icons/{filename}", className="navbar-icon", alt=alt
+            src=f"/assets/navbar_icons/{filename}",
+            className="nav-icon",
+            alt=alt,
         )
     logger.warning("Missing navbar icon: %s", safe_unicode_encode(filename))
-    return html.Span(fallback_text, className="navbar-icon-fallback")
+    return html.Span(fallback_text, className="nav-icon")
 
 
 __all__ = [

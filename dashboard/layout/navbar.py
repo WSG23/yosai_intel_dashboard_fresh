@@ -184,7 +184,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                                 "⚙️",
                                                             ),
                                                             id="navbar-settings-btn",
-                                                            className="navbar-nav-link navbar-icon-btn",
+                                                            className="navbar-nav-link nav-icon-btn",
                                                             title="Settings",
                                                         ),
                                                         html.A(
@@ -226,7 +226,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                             style={"width": "120px"},
                                                         ),
                                                     ],
-                                                    className="d-flex align-items-center navbar-icon-group",
+                                                    className="d-flex align-items-center nav-icon-group",
                                                 ),
                                                 dcc.Download(id="download-csv"),
                                                 dcc.Download(id="download-json"),
