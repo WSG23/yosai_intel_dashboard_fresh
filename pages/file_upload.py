@@ -101,14 +101,7 @@ def layout():
                                                         ),
                                                     ]
                                                 ),
-                                                style={
-                                                    "width": "100%",
-                                                    "border": "2px dashed #007bff",
-                                                    "borderRadius": "8px",
-                                                    "textAlign": "center",
-                                                    "cursor": "pointer",
-                                                    "backgroundColor": "#f8f9fa",
-                                                },
+                                                className="file-upload-area",
                                                 multiple=True,
                                             )
                                         ]
@@ -127,19 +120,12 @@ def layout():
             dbc.Row([dbc.Col([html.Div(id="upload-nav")])]),
             # Container for toast notifications
             html.Div(id="toast-container"),
-            # CRITICAL: Hidden placeholder buttons to prevent callback errors
+            # CRITICAL: Hidden placeholder buttons (using `.hidden` utility) to prevent callback errors
             html.Div(
                 [
-                    dbc.Button(
-                        "",
-                        id="verify-columns-btn-simple",
-                        className="hidden",
-                    ),
-                    dbc.Button(
-                        "",
-                        id="classify-devices-btn",
-                        className="hidden",
-                    ),
+                    dbc.Button("", id="verify-columns-btn-simple", className="hidden"),
+                    dbc.Button("", id="classify-devices-btn", className="hidden"),
+
                 ],
                 className="hidden",
             ),
@@ -222,23 +208,8 @@ class Callbacks:
     def highlight_upload_area(self, n_clicks):
         """Highlight upload area when 'upload more' is clicked."""
         if n_clicks:
-            return {
-                "width": "100%",
-                "border": "3px dashed #28a745",
-                "borderRadius": "8px",
-                "textAlign": "center",
-                "cursor": "pointer",
-                "backgroundColor": "#d4edda",
-                "animation": "pulse 1s infinite",
-            }
-        return {
-            "width": "100%",
-            "border": "2px dashed #007bff",
-            "borderRadius": "8px",
-            "textAlign": "center",
-            "cursor": "pointer",
-            "backgroundColor": "#f8f9fa",
-        }
+            return "file-upload-area file-upload-area--highlight"
+        return "file-upload-area"
 
     def restore_upload_state(self, pathname: str):
         """Return stored upload details when revisiting the upload page."""
@@ -673,7 +644,7 @@ class Callbacks:
                                     className="bg-info text-white px-2 py-1 rounded small",
                                 ),
                             ],
-                            style={"width": "40%"},
+                            className="csv-mapping-field-col",
                         ),
                         html.Td(
                             [
@@ -685,10 +656,10 @@ class Callbacks:
                                     options=csv_column_options,
                                     placeholder=f"Select CSV column for {field_name}",
                                     value=suggested_csv_column,
-                                    style={"minWidth": "200px"},
+                                    className="csv-mapping-dropdown",
                                 )
                             ],
-                            style={"width": "50%"},
+                            className="csv-mapping-column-col",
                         ),
                         html.Td(
                             [
@@ -710,7 +681,7 @@ class Callbacks:
                                     className="small",
                                 )
                             ],
-                            style={"width": "10%"},
+                            className="csv-mapping-ai-col",
                         ),
                     ]
                 )
@@ -751,13 +722,16 @@ class Callbacks:
                                 [
                                     html.Th(
                                         "Analytics Field (Fixed)",
-                                        style={"width": "40%"},
+                                        className="csv-mapping-field-col",
                                     ),
                                     html.Th(
                                         "Maps to CSV Column (Variable)",
-                                        style={"width": "50%"},
+                                        className="csv-mapping-column-col",
                                     ),
-                                    html.Th("AI Confidence", style={"width": "10%"}),
+                                    html.Th(
+                                        "AI Confidence",
+                                        className="csv-mapping-ai-col",
+                                    ),
                                 ]
                             )
                         ]
@@ -974,7 +948,7 @@ def register_callbacks(
     callback_defs = [
         (
             cb.highlight_upload_area,
-            Output("upload-data", "style"),
+            Output("upload-data", "className"),
             Input("upload-more-btn", "n_clicks"),
             None,
             "highlight_upload_area",
