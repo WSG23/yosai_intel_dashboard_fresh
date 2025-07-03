@@ -36,6 +36,7 @@
 @import './05-pages/_graphs.css';
 @import './05-pages/_settings.css';
 @import './05-pages/_analytics.css';
+@import './05-pages/_file_upload.css';
 
 /* Theme System */
 @import './06-themes/_dark-theme.css';

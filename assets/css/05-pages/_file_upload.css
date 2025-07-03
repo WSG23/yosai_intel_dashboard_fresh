@@ -1,0 +1,34 @@
+/* =================================================================== */
+/* 05-pages/_file_upload.css - File Upload Page Styles */
+/* =================================================================== */
+
+.file-upload-area {
+  width: 100%;
+  border: 2px dashed #007bff;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  background-color: #f8f9fa;
+}
+
+.file-upload-area--highlight {
+  border: 3px dashed #28a745;
+  background-color: #d4edda;
+  animation: pulse 1s infinite;
+}
+
+.csv-mapping-field-col {
+  width: 40%;
+}
+
+.csv-mapping-column-col {
+  width: 50%;
+}
+
+.csv-mapping-ai-col {
+  width: 10%;
+}
+
+.csv-mapping-dropdown {
+  min-width: 200px;
+}
