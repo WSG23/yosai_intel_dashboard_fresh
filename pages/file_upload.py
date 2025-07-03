@@ -75,8 +75,17 @@ def layout():
                                                 max_size=dynamic_config.get_max_upload_size_bytes(),  # Updated to use new method
                                                 children=html.Div(
                                                     [
-                                                        html.I(
-                                                            className="fas fa-cloud-upload-alt fa-4x mb-3 text-primary"
+                                                        html.Span(
+                                                            [
+                                                                html.I(
+                                                                    className="fas fa-cloud-upload-alt fa-4x mb-3 text-primary",
+                                                                    **{"aria-hidden": "true"},
+                                                                ),
+                                                                html.Span(
+                                                                    "Upload icon",
+                                                                    className="sr-only",
+                                                                ),
+                                                            ]
                                                         ),
                                                         html.H5(
                                                             "Drag and Drop or Click to Upload",
