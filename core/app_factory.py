@@ -518,31 +518,6 @@ def _get_upload_page() -> Any:
 def _register_global_callbacks(manager: UnifiedCallbackCoordinator) -> None:
     """Register global application callbacks"""
 
-    @manager.register_callback(
-        Output("global-store", "data"),
-        Input("clear-cache-btn", "n_clicks"),
-        prevent_initial_call=True,
-        callback_id="clear_cache",
-        component_name="app_factory",
-    )
-    def clear_cache(n_clicks):
-        """Clear application cache"""
-        if n_clicks:
-            try:
-                # Clear uploaded data
-                from pages.file_upload import clear_uploaded_data
-
-                clear_uploaded_data()
-                logger.info("Application cache cleared")
-                return {
-                    "cache_cleared": True,
-                    "timestamp": pd.Timestamp.now().isoformat(),
-                }
-            except ImportError:
-                logger.warning("Could not clear uploaded data - module not available")
-                return {"cache_cleared": False}
-        return {}
-
     # Register device learning callbacks
     from services.device_learning_service import create_learning_callbacks
 

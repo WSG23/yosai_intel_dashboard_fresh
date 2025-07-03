@@ -76,7 +76,9 @@ def create_navbar_layout() -> Optional[Any]:
     try:
         check_navbar_assets(
             [
+                "dashboard.png",
                 "analytics.png",
+                "graphs.png",
                 "upload.png",
                 "print.png",
                 "settings.png",
@@ -152,6 +154,16 @@ def create_navbar_layout() -> Optional[Any]:
                                                     [
                                                         html.A(
                                                             navbar_icon(
+                                                                "dashboard.png",
+                                                                "Dashboard",
+                                                                "🏠",
+                                                            ),
+                                                            href="/dashboard",
+                                                            className="navbar-nav-link",
+                                                            title="Dashboard",
+                                                        ),
+                                                        html.A(
+                                                            navbar_icon(
                                                                 "analytics.png",
                                                                 "Deep Analytics Page",
                                                                 "📊",
@@ -159,6 +171,16 @@ def create_navbar_layout() -> Optional[Any]:
                                                             href="/analytics",
                                                             className="navbar-nav-link",
                                                             title="Deep Analytics Page",
+                                                        ),
+                                                        html.A(
+                                                            navbar_icon(
+                                                                "graphs.png",
+                                                                "Graphs",
+                                                                "📈",
+                                                            ),
+                                                            href="/graphs",
+                                                            className="navbar-nav-link",
+                                                            title="Graphs",
                                                         ),
                                                         html.A(
                                                             navbar_icon(
@@ -191,53 +213,40 @@ def create_navbar_layout() -> Optional[Any]:
                                                             toggle_class_name="navbar-nav-link",
                                                             menu_variant="dark",
                                                         ),
-                                                        html.Button(
-                                                            navbar_icon(
+                                                        dbc.DropdownMenu(
+                                                            [
+                                                                dbc.DropdownMenuItem(
+                                                                    dcc.Link(
+                                                                        "Settings",
+                                                                        href="/settings",
+                                                                        className="dropdown-item",
+                                                                    )
+                                                                ),
+                                                                dbc.DropdownMenuItem(
+                                                                    dcc.Dropdown(
+                                                                        id="theme-dropdown",
+                                                                        options=[
+                                                                            {"label": "Dark", "value": "dark"},
+                                                                            {"label": "Light", "value": "light"},
+                                                                            {"label": "High Contrast", "value": "high-contrast"},
+                                                                        ],
+                                                                        value=DEFAULT_THEME,
+                                                                        clearable=False,
+                                                                        className="theme-dropdown",
+                                                                        style={"width": "120px"},
+                                                                    ),
+                                                                    className="px-2",
+                                                                ),
+                                                            ],
+                                                            nav=True,
+                                                            in_navbar=True,
+                                                            label=navbar_icon(
                                                                 "settings.png",
                                                                 "Settings",
                                                                 "⚙️",
                                                             ),
-                                                            id="navbar-settings-btn",
-                                                            className="navbar-nav-link nav-icon-btn",
-                                                            title="Settings",
-                                                        ),
-                                                        html.A(
-                                                            navbar_icon(
-                                                                "logout.png",
-                                                                "Logout",
-                                                                "🚪",
-                                                            ),
-                                                            href="/login",  # Changed from /logout to /login
-                                                            className="navbar-nav-link",
-                                                            title="Logout",
-                                                        ),
-                                                        dbc.Button(
-                                                            "🔄 Clear Cache",
-                                                            id="clear-cache-btn",
-                                                            color="outline-light",
-                                                            size="sm",
-                                                            className="ms-1",
-                                                        ),
-                                                        dcc.Dropdown(
-                                                            id="theme-dropdown",
-                                                            options=[
-                                                                {
-                                                                    "label": "Dark",
-                                                                    "value": "dark",
-                                                                },
-                                                                {
-                                                                    "label": "Light",
-                                                                    "value": "light",
-                                                                },
-                                                                {
-                                                                    "label": "High Contrast",
-                                                                    "value": "high-contrast",
-                                                                },
-                                                            ],
-                                                            value=DEFAULT_THEME,
-                                                            clearable=False,
-                                                            className="ms-1 theme-dropdown",
-                                                            style={"width": "120px"},
+                                                            toggle_class_name="navbar-nav-link",
+                                                            menu_variant="dark",
                                                         ),
                                                     ],
                                                     className="d-flex align-items-center nav-icon-group",
@@ -269,6 +278,16 @@ def create_navbar_layout() -> Optional[Any]:
                                                     ],
                                                     className="d-flex align-items-center text-sm navbar-language-toggle",
                                                     id="language-toggle",
+                                                ),
+                                                html.A(
+                                                    navbar_icon(
+                                                        "logout.png",
+                                                        "Logout",
+                                                        "🚪",
+                                                    ),
+                                                    href="/login",  # Changed from /logout to /login
+                                                    className="navbar-nav-link",
+                                                    title="Logout",
                                                 ),
                                             ],
                                             className="d-flex align-items-center justify-content-end",
