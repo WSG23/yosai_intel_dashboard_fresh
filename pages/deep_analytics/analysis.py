@@ -105,11 +105,18 @@ def get_data_source_options_safe():
     try:
         service = get_analytics_service_safe()
         if service:
-            service_sources = service.get_available_sources()
+            service_sources = service.get_data_source_options()
             for source_dict in service_sources:
+                if isinstance(source_dict, dict):
+                    label = source_dict.get("label", "Unknown")
+                    value = source_dict.get("value", "unknown")
+                else:
+                    # Backwards compatibility if service returns strings
+                    label = str(source_dict)
+                    value = str(source_dict)
                 options.append({
-                    "label": f"Service: {source_dict.get('label', 'Unknown')}",
-                    "value": f"service:{source_dict.get('value', 'unknown')}"
+                    "label": f"Service: {label}",
+                    "value": f"service:{value}"
                 })
     except Exception as e:
         logger.exception("Error getting service data sources: %s", e)
