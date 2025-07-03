@@ -27,6 +27,7 @@ class DatabaseConfig:
     name: str = "yosai.db"
     user: str = "user"
     password: str = ""
+    connection_timeout: float = 5.0
 
 
 class DatabaseConnection(Protocol):

@@ -762,6 +762,10 @@ class AnalyticsService:
 
         return options
 
+    def get_available_sources(self) -> list[str]:
+        """Return identifiers for available data sources."""
+        return [opt.get("value", "") for opt in self.get_data_source_options()]
+
     def get_date_range_options(self) -> Dict[str, str]:
         """Get default date range options"""
         from datetime import datetime, timedelta

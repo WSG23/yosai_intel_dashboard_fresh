@@ -19,11 +19,8 @@ from core.exceptions import ConfigurationError
 
 logger = logging.getLogger(__name__)
 
-# Initialize global device learning service
-from services.device_learning_service import DeviceLearningService
+# Consolidated learning service utilities
 from services.consolidated_learning_service import get_learning_service
-
-learning_service = DeviceLearningService()
 
 
 def check_learning_status():

@@ -91,7 +91,7 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
         def _sanitize(value: Any) -> str:
             return XSSPrevention.sanitize_html_output(str(value))
 
-        preview_df = preview_df.applymap(_sanitize)
+        preview_df = preview_df.map(_sanitize)
 
         # Display status messaging based on file size
         if actual_rows <= 10:
