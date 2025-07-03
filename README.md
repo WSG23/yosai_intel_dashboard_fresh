@@ -15,7 +15,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Sequence Diagrams](docs/sequence_diagrams.md)
 - [Validation Overview](docs/validation_overview.md)
 
-The dashboard is extensible through a lightweight plugin system. Plugins live in the `plugins/` directory and are loaded by a `PluginManager`. See [docs/plugins.md](docs/plugins.md) for discovery, configuration details and a simple **Hello World** example.
+The dashboard is extensible through a lightweight plugin system. Plugins live in the `plugins/` directory and are loaded by a `PluginManager`. See [docs/plugins.md](docs/plugins.md) for discovery, configuration details and a simple **Hello World** example. The [plugin lifecycle diagram](docs/plugin_lifecycle.md) illustrates how plugins are discovered, dependencies resolved and health checks performed.
 
 ```
 yosai_intel_dashboard/
@@ -289,6 +289,7 @@ options. In your app factory create a `PluginManager`, call
  of discovery, configuration and the plugin lifecycle. For step-by-step
  instructions on writing your own plugin check
  [docs/plugin_development.md](docs/plugin_development.md).
+For a diagram of the full process see [docs/plugin_lifecycle.md](docs/plugin_lifecycle.md).
 The same document includes a minimal **Hello World** plugin showcasing
 `create_plugin()` and callback registration.
 

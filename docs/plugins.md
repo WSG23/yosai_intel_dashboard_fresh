@@ -66,3 +66,5 @@ For each enabled plugin the manager calls these methods:
 3. `start()` – perform any runtime initialization.
 
 After all plugins are loaded call `register_plugin_callbacks(app)` so callback plugins can hook into Dash. Plugins implement `health_check()` and `stop()`. The manager periodically gathers health data and exposes it via `/health/plugins`.
+
+For a visual overview of discovery, dependency resolution and the lifecycle calls see [plugin_lifecycle.md](plugin_lifecycle.md).
