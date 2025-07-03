@@ -8,6 +8,7 @@ from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from flask_babel import lazy_gettext as _l
 from core.plugins.decorators import safe_callback
 from core.theme_manager import DEFAULT_THEME, sanitize_theme
+from utils import check_navbar_assets, navbar_icon
 
 import logging
 
