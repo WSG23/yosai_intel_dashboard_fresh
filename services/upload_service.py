@@ -1,7 +1,6 @@
 """Utilities for processing uploaded files and creating previews."""
 import base64
 import io
-import json
 import logging
 from datetime import datetime
 from typing import Any, Dict
@@ -9,6 +8,8 @@ from typing import Any, Dict
 from config.dynamic_config import dynamic_config
 from security.file_validator import SecureFileValidator
 from security.xss_validator import XSSPrevention
+from services.data_validation import DataValidationService
+from utils.mapping_helpers import map_and_clean
 
 import pandas as pd
 import dash_bootstrap_components as dbc
@@ -39,8 +40,38 @@ def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
                 "max_allowed_mb": max_size_mb
             }
 
-        if filename.endswith((".csv", ".xlsx", ".xls", ".json")):
-            df = _validator.validate_file_contents(contents, filename)
+        validator = DataValidationService()
+
+        if filename.lower().endswith(".csv"):
+            chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
+            stream = io.BytesIO(decoded)
+            header = None
+            chunks = []
+            for chunk in pd.read_csv(stream, chunksize=chunk_size, encoding="utf-8"):
+                if header is None:
+                    header = list(chunk.columns)
+                duplicate = (chunk.astype(str) == header).all(axis=1)
+                chunk = chunk[~duplicate]
+                chunk = validator.validate(chunk)
+                chunk = map_and_clean(chunk)
+                chunks.append(chunk)
+            df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+        elif filename.lower().endswith(".json"):
+            chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
+            stream = io.BytesIO(decoded)
+            try:
+                chunks = []
+                for chunk in pd.read_json(stream, lines=True, chunksize=chunk_size):
+                    chunk = validator.validate(chunk)
+                    chunks.append(map_and_clean(chunk))
+                df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+            except ValueError:
+                stream.seek(0)
+                df = pd.read_json(stream)
+                df = map_and_clean(validator.validate(df))
+        elif filename.lower().endswith((".xlsx", ".xls")):
+            df = pd.read_excel(io.BytesIO(decoded))
+            df = map_and_clean(validator.validate(df))
         else:
             return {
                 "success": False,
