@@ -17,8 +17,8 @@ html, body {
 body {
   line-height: 1.5;
   font-family: var(--font-family-system);
-  color: var(--color-text-primary);
-  background-color: var(--color-background);
+  color: var(--color-text);
+  background-color: var(--color-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
