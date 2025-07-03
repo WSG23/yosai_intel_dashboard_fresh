@@ -16,6 +16,7 @@ import importlib
 from dotenv import load_dotenv
 
 from core.exceptions import ConfigurationError
+from utils import debug_dash_asset_serving
 
 logger = logging.getLogger(__name__)
 
@@ -157,6 +158,12 @@ def main():
                 return current
 
             app._callback_manager = manager
+            # Validate that Dash can serve static assets after request hooks
+            # have been registered. This avoids triggering a request before the
+            # hooks are in place, which previously caused Flask to raise a
+            # setup error.
+            if not debug_dash_asset_serving(app):
+                logger.warning("Dash asset serving validation failed")
             logger.info("✅ Application created successfully")
         except Exception as e:
             logger.error(f"❌ Failed to create application: {e}")
