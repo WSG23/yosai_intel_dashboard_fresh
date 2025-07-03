@@ -66,6 +66,10 @@ def _create_full_app() -> dash.Dash:
             suppress_callback_exceptions=True,
             assets_folder=str(ASSETS_DIR),
         )
+
+        if not debug_dash_asset_serving(app):
+            logger.warning("Dash asset serving validation failed")
+
         apply_theme_settings(app)
         Compress(app.server)
 
@@ -358,8 +362,7 @@ def _create_main_layout() -> html.Div:
             dcc.Store(id="session-store", data={}),
             dcc.Store(id="app-state-store", data={"initial": True}),
         ],
-        **{"data-theme": theme}
-
+        **{"data-theme": theme},
     )
 
 
