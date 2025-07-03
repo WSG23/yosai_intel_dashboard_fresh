@@ -27,169 +27,18 @@ from services.upload_service import process_uploaded_file, create_file_preview
 from utils.upload_store import uploaded_data_store as _uploaded_data_store
 from config.dynamic_config import dynamic_config
 
-from components.column_verification import (
-    save_verified_mappings,
-)
+from components.column_verification import save_verified_mappings
 from services.ai_suggestions import generate_column_suggestions
+from services.upload import (
+    UploadProcessingService,
+    AISuggestionService,
+    ModalService,
+)
 
 
 logger = logging.getLogger(__name__)
 
 
-def analyze_device_name_with_ai(device_name):
-    """Return AI-generated device info unless a user mapping exists."""
-    try:
-        from services.ai_mapping_store import ai_mapping_store
-
-        # Check for user-confirmed mapping first
-        mapping = ai_mapping_store.get(device_name)
-        if mapping:
-            if mapping.get("source") == "user_confirmed":
-                logger.info(
-                    f"\U0001f512 Using USER CONFIRMED mapping for '{device_name}'"
-                )
-                return mapping
-
-        # Only use AI if no user mapping exists
-        logger.info(
-            f"\U0001f916 No user mapping found, generating AI analysis for '{device_name}'"
-        )
-
-        from services.ai_device_generator import AIDeviceGenerator
-
-        ai_generator = AIDeviceGenerator()
-        result = ai_generator.generate_device_attributes(device_name)
-
-        ai_mapping = {
-            "floor_number": result.floor_number,
-            "security_level": result.security_level,
-            "confidence": result.confidence,
-            "is_entry": result.is_entry,
-            "is_exit": result.is_exit,
-            "device_name": result.device_name,
-            "ai_reasoning": result.ai_reasoning,
-            "source": "ai_generated",
-        }
-
-        return ai_mapping
-
-    except Exception as e:
-        logger.info(f"\u274c Error in device analysis: {e}")
-        return {
-            "floor_number": 1,
-            "security_level": 5,
-            "confidence": 0.1,
-            "source": "fallback",
-        }
-
-
-def build_success_alert(
-    filename: str,
-    rows: int,
-    cols: int,
-    prefix: str = "Successfully uploaded",
-    processed: bool = True,
-) -> dbc.Alert:
-    """Create a success alert showing current row and column counts."""
-
-    # CRITICAL: Use actual current data, not cached values
-    details = f"📊 {rows:,} rows × {cols} columns"
-    if processed:
-        details += " processed"
-
-    # Clear timestamp to avoid showing stale data
-    from datetime import datetime
-
-    timestamp = datetime.now().strftime("%H:%M:%S")
-
-    return dbc.Alert(
-        [
-            html.H6(
-                [html.I(className="fas fa-check-circle me-2"), f"{prefix} {filename}"],
-                className="alert-heading",
-            ),
-            html.P(
-                [
-                    details,
-                    html.Br(),
-                    html.Small(f"Processed at {timestamp}", className="text-muted"),
-                ]
-            ),
-        ],
-        color="success",
-        className="mb-3",
-    )
-
-
-def build_failure_alert(message: str) -> dbc.Alert:
-    """Return a Bootstrap alert describing a failed file upload."""
-
-    return dbc.Alert(
-        [html.H6("Upload Failed", className="alert-heading"), html.P(message)],
-        color="danger",
-    )
-
-
-def auto_apply_learned_mappings(df: pd.DataFrame, filename: str) -> bool:
-    """Auto-apply any learned mappings for this file type"""
-    try:
-        learning_service = get_device_learning_service()
-
-        learned_mappings = learning_service.get_learned_mappings(df, filename)
-
-        if learned_mappings:
-            learning_service.apply_learned_mappings_to_global_store(df, filename)
-            logger.info(
-                f"🤖 Auto-applied {len(learned_mappings)} learned device mappings"
-            )
-            return True
-        return False
-
-    except Exception as e:
-        logger.error(f"Failed to auto-apply learned mappings: {e}")
-        return False
-
-
-def build_file_preview_component(df: pd.DataFrame, filename: str) -> html.Div:
-    """Return a preview card and configuration buttons for an uploaded file."""
-
-    return html.Div(
-        [
-            create_file_preview(df, filename),
-            dbc.Card(
-                [
-                    dbc.CardHeader(
-                        [html.H6("📋 Data Configuration", className="mb-0")]
-                    ),
-                    dbc.CardBody(
-                        [
-                            html.P(
-                                "Configure your data for analysis:", className="mb-3"
-                            ),
-                            dbc.ButtonGroup(
-                                [
-                                    dbc.Button(
-                                        "📋 Verify Columns",
-                                        id="verify-columns-btn-simple",
-                                        color="primary",
-                                        size="sm",
-                                    ),
-                                    dbc.Button(
-                                        "🤖 Classify Devices",
-                                        id="classify-devices-btn",
-                                        color="info",
-                                        size="sm",
-                                    ),
-                                ],
-                                className="w-100",
-                            ),
-                        ]
-                    ),
-                ],
-                className="mb-3",
-            ),
-        ]
-    )
 
 
 def layout():
@@ -353,6 +202,11 @@ def get_file_info() -> Dict[str, Dict[str, Any]]:
 class Callbacks:
     """Container object for upload page callbacks."""
 
+    def __init__(self):
+        self.processing = UploadProcessingService(_uploaded_data_store)
+        self.ai = AISuggestionService()
+        self.modal = ModalService()
+
     def highlight_upload_area(self, n_clicks):
         """Highlight upload area when 'upload more' is clicked."""
         if n_clicks:
@@ -397,7 +251,7 @@ class Callbacks:
             cols = len(df.columns)
 
             upload_results.append(
-                build_success_alert(
+                self.processing.build_success_alert(
                     filename,
                     rows,
                     cols,
@@ -406,7 +260,9 @@ class Callbacks:
                 )
             )
 
-            file_preview_components.append(build_file_preview_component(df, filename))
+            file_preview_components.append(
+                self.processing.build_file_preview_component(df, filename)
+            )
 
             current_file_info = {
                 "filename": filename,
@@ -439,131 +295,7 @@ class Callbacks:
     def process_uploaded_files(
         self, contents_list: List[str] | str, filenames_list: List[str] | str
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
-        """Handle new uploads and store data in the upload store."""
-
-        if not contents_list:
-            return (
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-            )
-
-        _uploaded_data_store.clear_all()
-
-        if not isinstance(contents_list, list):
-            contents_list = [contents_list]
-        if not isinstance(filenames_list, list):
-            filenames_list = [filenames_list]
-
-        upload_results: List[Any] = []
-        file_preview_components: List[Any] = []
-        file_info_dict: Dict[str, Any] = {}
-        current_file_info: Dict[str, Any] = {}
-
-        file_parts: Dict[str, List[str]] = {}
-
-        for content, filename in zip(contents_list, filenames_list):
-            file_parts.setdefault(filename, []).append(content)
-
-        for filename, parts in file_parts.items():
-            if len(parts) > 1:
-                prefix, first = parts[0].split(",", 1)
-                combined_data = first
-                for part in parts[1:]:
-                    _pfx, data = part.split(",", 1)
-                    combined_data += data
-                content = f"{prefix},{combined_data}"
-            else:
-                content = parts[0]
-
-            try:
-                result = process_uploaded_file(content, filename)
-
-                if result["success"]:
-                    df = result["data"]
-                    rows = len(df)
-                    cols = len(df.columns)
-
-                    _uploaded_data_store.add_file(filename, df)
-
-                    upload_results.append(build_success_alert(filename, rows, cols))
-
-                    file_preview_components.append(
-                        build_file_preview_component(df, filename)
-                    )
-
-                    column_names = df.columns.tolist()
-                    file_info_dict[filename] = {
-                        "filename": filename,
-                        "rows": rows,
-                        "columns": cols,
-                        "column_names": column_names,
-                        "upload_time": result["upload_time"].isoformat(),
-                        "ai_suggestions": generate_column_suggestions(column_names),
-                    }
-                    current_file_info = file_info_dict[filename]
-
-                    try:
-                        learning_service = get_device_learning_service()
-                        user_mappings = learning_service.get_user_device_mappings(
-                            filename
-                        )
-                        if user_mappings:
-                            from services.ai_mapping_store import ai_mapping_store
-
-                            ai_mapping_store.clear()
-                            for device, mapping in user_mappings.items():
-                                mapping["source"] = "user_confirmed"
-                                ai_mapping_store.set(device, mapping)
-                            logger.info(
-                                f"✅ Loaded {len(user_mappings)} saved mappings - AI SKIPPED"
-                            )
-                        else:
-                            logger.info("🆕 First upload - AI will be used")
-                            from services.ai_mapping_store import ai_mapping_store
-
-                            ai_mapping_store.clear()
-                            # Try to auto-apply learned mappings
-                            auto_apply_learned_mappings(df, filename)
-                    except Exception as e:  # pragma: no cover - best effort
-                        logger.info(f"⚠️ Error: {e}")
-
-                else:
-                    upload_results.append(build_failure_alert(result["error"]))
-
-            except Exception as e:  # pragma: no cover - best effort
-                upload_results.append(
-                    build_failure_alert(f"Error processing {filename}: {str(e)}")
-                )
-
-        upload_nav = []
-        if file_info_dict:
-            upload_nav = html.Div(
-                [
-                    html.Hr(),
-                    html.H5("Ready to analyze?"),
-                    dbc.Button(
-                        "🚀 Go to Analytics",
-                        href="/analytics",
-                        color="success",
-                        size="lg",
-                    ),
-                ]
-            )
-
-        return (
-            upload_results,
-            file_preview_components,
-            file_info_dict,
-            upload_nav,
-            current_file_info,
-            no_update,
-            no_update,
-        )
+        return self.processing.process_files(contents_list, filenames_list)
 
     def handle_modal_dialogs(
         self,
@@ -573,50 +305,18 @@ class Callbacks:
         cancel_col_clicks: int | None,
         cancel_dev_clicks: int | None,
     ) -> Tuple[Any, Any, Any]:
-        """Open/close verification modals and show success toasts."""
-
         trigger_id = get_trigger_id()
-
-        if "verify-columns-btn-simple" in trigger_id and verify_clicks:
-            return no_update, True, no_update
-
-        if "classify-devices-btn" in trigger_id and classify_clicks:
-            return no_update, no_update, True
-
-        if "column-verify-confirm" in trigger_id and confirm_clicks:
-            return no_update, False, no_update
-
-        if "column-verify-cancel" in trigger_id or "device-verify-cancel" in trigger_id:
-            return no_update, False, False
-
-        return no_update, no_update, no_update
+        return self.modal.handle_dialogs(
+            verify_clicks,
+            classify_clicks,
+            confirm_clicks,
+            cancel_col_clicks,
+            cancel_dev_clicks,
+            trigger_id,
+        )
 
     def apply_ai_suggestions(self, n_clicks, file_info):
-        """Apply AI suggestions automatically."""
-        if not n_clicks or not file_info:
-            return [no_update]
-
-        ai_suggestions = file_info.get("ai_suggestions", {})
-        columns = file_info.get("columns", [])
-
-        logger.info(f"🤖 Applying AI suggestions for {len(columns)} columns")
-
-        suggested_values = []
-        for column in columns:
-            suggestion = ai_suggestions.get(column, {})
-            confidence = suggestion.get("confidence", 0.0)
-            field = suggestion.get("field", "")
-
-            if confidence > 0.3 and field:
-                suggested_values.append(field)
-                logger.info(f"   ✅ {column} -> {field} ({confidence:.0%})")
-            else:
-                suggested_values.append(None)
-                logger.info(
-                    f"   ❓ {column} -> No confident suggestion ({confidence:.0%})"
-                )
-
-        return [suggested_values]
+        return self.ai.apply_ai_suggestions(n_clicks, file_info)
 
     def populate_device_modal_with_learning(self, is_open, file_info):
         """Populate the device modal with learned or AI-suggested data."""
@@ -739,7 +439,7 @@ class Callbacks:
                         logger.info(f"   Found {len(unique_vals)} devices in column '{col}'")
                         # Log AI analysis details
                         for device in unique_vals:
-                            ai_analysis = analyze_device_name_with_ai(device)
+                            ai_analysis = self.ai.analyze_device_name_with_ai(device)
                             logger.info(f"   🚪 '{device}' → Floor: {ai_analysis.get('floor_number', 1)}, Security: {ai_analysis.get('security_level', 5)}")
                         break
 
@@ -749,7 +449,7 @@ class Callbacks:
             file_info["devices"] = device_list
             
             for i, device_name in enumerate(device_list):
-                ai_analysis = analyze_device_name_with_ai(device_name)
+                ai_analysis = self.ai.analyze_device_name_with_ai(device_name)
                 is_elevator_ai = ai_analysis.get('is_elevator', False)
                 is_stairwell_ai = ai_analysis.get('is_stairwell', False)
                 is_fire_escape_ai = ai_analysis.get('is_fire_escape', False)
