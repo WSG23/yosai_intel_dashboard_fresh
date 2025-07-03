@@ -271,7 +271,6 @@ def create_navbar_layout() -> Optional[Any]:
                     fluid=True,
                 )
             ],
-            color="primary",
             dark=True,
             sticky="top",
             className="navbar-main",
