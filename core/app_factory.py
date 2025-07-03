@@ -18,10 +18,12 @@ import pandas as pd
 from flask_babel import Babel
 from flask import session
 from flask_compress import Compress
+from flask_talisman import Talisman
 from core.theme_manager import apply_theme_settings, DEFAULT_THEME, sanitize_theme
 from config.config import get_config
 
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
+BUNDLE = "/assets/dist/main.min.css"
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +69,24 @@ def _create_full_app() -> dash.Dash:
             assets_folder=str(ASSETS_DIR),
             assets_ignore=assets_ignore,
         )
+        app.config.assets_ignore = "*"
+
+        app.index_string = f"""
+<!DOCTYPE html>
+<html>
+  <head>
+    {{%metas%}}
+    <title>Yōsai Intel Dashboard</title>
+    <link rel=\"stylesheet\" href=\"{BUNDLE}\" />
+    {{%favicon%}}
+    {{%css%}}
+  </head>
+  <body>
+    {{%app_entry%}}
+    <footer>{{%config%}}{{%scripts%}}</footer>
+  </body>
+</html>
+"""
 
         # Set a temporary layout so Dash can handle requests during
         # the asset serving check without raising ``NoLayoutException``.
@@ -80,6 +100,15 @@ def _create_full_app() -> dash.Dash:
 
         apply_theme_settings(app)
         Compress(app.server)
+        Talisman(app.server, content_security_policy=None)
+
+        @app.server.after_request  # type: ignore[misc]
+        def add_cache_headers(resp):
+            if resp.mimetype and resp.mimetype.startswith(
+                ("text/", "application/javascript", "image/")
+            ):
+                resp.headers["Cache-Control"] = "public,max-age=31536000,immutable"
+            return resp
 
         app.title = "Yōsai Intel Dashboard"
 
@@ -125,8 +154,16 @@ def _create_full_app() -> dash.Dash:
             plugin_manager.stop_all_plugins()
             plugin_manager.stop_health_monitor()
 
-        # Set main layout
-        app.layout = _create_main_layout()
+        # Set main layout with caching to avoid repeated JSON encoding
+        layout_snapshot = None
+
+        def _serve_layout():
+            nonlocal layout_snapshot
+            if layout_snapshot is None:
+                layout_snapshot = _create_main_layout()
+            return layout_snapshot
+
+        app.layout = _serve_layout
 
         # Register all callbacks using UnifiedCallbackCoordinator
         coordinator = UnifiedCallbackCoordinator(app)
@@ -224,8 +261,36 @@ def _create_simple_app() -> dash.Dash:
             suppress_callback_exceptions=True,
             assets_ignore=assets_ignore,
         )
+        app.config.assets_ignore = "*"
+
+        app.index_string = f"""
+<!DOCTYPE html>
+<html>
+  <head>
+    {{%metas%}}
+    <title>Yōsai Intel Dashboard</title>
+    <link rel=\"stylesheet\" href=\"{BUNDLE}\" />
+    {{%favicon%}}
+    {{%css%}}
+  </head>
+  <body>
+    {{%app_entry%}}
+    <footer>{{%config%}}{{%scripts%}}</footer>
+  </body>
+</html>
+"""
+
         apply_theme_settings(app)
         Compress(app.server)
+        Talisman(app.server, content_security_policy=None)
+
+        @app.server.after_request  # type: ignore[misc]
+        def add_cache_headers(resp):
+            if resp.mimetype and resp.mimetype.startswith(
+                ("text/", "application/javascript", "image/")
+            ):
+                resp.headers["Cache-Control"] = "public,max-age=31536000,immutable"
+            return resp
 
         app.title = "Yōsai Intel Dashboard"
 
@@ -305,8 +370,36 @@ def _create_json_safe_app() -> dash.Dash:
             suppress_callback_exceptions=True,
             assets_ignore=assets_ignore,
         )
+        app.config.assets_ignore = "*"
+
+        app.index_string = f"""
+<!DOCTYPE html>
+<html>
+  <head>
+    {{%metas%}}
+    <title>Yōsai Intel Dashboard</title>
+    <link rel=\"stylesheet\" href=\"{BUNDLE}\" />
+    {{%favicon%}}
+    {{%css%}}
+  </head>
+  <body>
+    {{%app_entry%}}
+    <footer>{{%config%}}{{%scripts%}}</footer>
+  </body>
+</html>
+"""
+
         apply_theme_settings(app)
         Compress(app.server)
+        Talisman(app.server, content_security_policy=None)
+
+        @app.server.after_request  # type: ignore[misc]
+        def add_cache_headers(resp):
+            if resp.mimetype and resp.mimetype.startswith(
+                ("text/", "application/javascript", "image/")
+            ):
+                resp.headers["Cache-Control"] = "public,max-age=31536000,immutable"
+            return resp
 
         app.title = "🏯 Yōsai Intel Dashboard"
 
