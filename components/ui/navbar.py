@@ -209,11 +209,11 @@ def create_navbar_layout() -> Optional[Any]:
                                                         dbc.DropdownMenu(
                                                             [
                                                                 dbc.DropdownMenuItem(
-                                                                    _l("Export CSV"),
+                                                                    str(_l("Export CSV")),
                                                                     id="nav-export-csv",
                                                                 ),
                                                                 dbc.DropdownMenuItem(
-                                                                    _l("Export JSON"),
+                                                                    str(_l("Export JSON")),
                                                                     id="nav-export-json",
                                                                 ),
                                                             ],
@@ -231,7 +231,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                             [
                                                                 dbc.DropdownMenuItem(
                                                                     dcc.Link(
-                                                                        _l("Settings"),
+                                                                        str(_l("Settings")),
                                                                         href="/settings",
                                                                         className="dropdown-item",
                                                                     )
@@ -241,21 +241,15 @@ def create_navbar_layout() -> Optional[Any]:
                                                                         id="theme-dropdown",
                                                                         options=[
                                                                             {
-                                                                                "label": _l(
-                                                                                    "Dark"
-                                                                                ),
+                                                                                "label": str(_l("Dark")),
                                                                                 "value": "dark",
                                                                             },
                                                                             {
-                                                                                "label": _l(
-                                                                                    "Light"
-                                                                                ),
+                                                                                "label": str(_l("Light")),
                                                                                 "value": "light",
                                                                             },
                                                                             {
-                                                                                "label": _l(
-                                                                                    "High Contrast"
-                                                                                ),
+                                                                                "label": str(_l("High Contrast")),
                                                                                 "value": "high-contrast",
                                                                             },
                                                                         ],
