@@ -25,23 +25,31 @@ try:
     from dash import html, dcc
     from dash._callback import callback
     from dash.dependencies import Output, Input
+
     DASH_AVAILABLE = True
 except ImportError:
     logger.info("Warning: Dash components not available")
     DASH_AVAILABLE = False
-    # Create stub classes for type safety
-    class _StubComponent:
-        def __init__(self, *args, **kwargs):
-            pass
-        def __call__(self, *args, **kwargs):
-            return None
-    
-    dbc = _StubComponent()
-    html = _StubComponent()
-    dcc = _StubComponent()
-    callback = None
-    Output = None
-    Input = None
+    from typing import Any
+
+    class _StubModule:
+        """Return callable stubs for any requested attribute."""
+
+        def __getattr__(self, name: str) -> Any:  # pragma: no cover - dynamic
+            def _stub_component(*args: Any, **kwargs: Any) -> None:
+                return None
+
+            return _stub_component
+
+    def _stub_callable(*args: Any, **kwargs: Any) -> None:  # pragma: no cover
+        return None
+
+    dbc: Any = _StubModule()
+    html: Any = _StubModule()
+    dcc: Any = _StubModule()
+    callback: Any = _stub_callable
+    Output: Any = _stub_callable
+    Input: Any = _stub_callable
 
 
 def create_navbar_layout() -> Optional[Any]:
@@ -68,13 +76,12 @@ def create_navbar_layout() -> Optional[Any]:
                                                 className="navbar__logo",
                                             ),
                                             href="/",
-                                            style={"textDecoration": "none"}
+                                            style={"textDecoration": "none"},
                                         )
                                     ],
                                     width=3,
                                     className="d-flex align-items-center pl-4",
                                 ),
-
                                 # Center Column: Header & Context
                                 dbc.Col(
                                     [
@@ -84,11 +91,15 @@ def create_navbar_layout() -> Optional[Any]:
                                                     id="facility-header",
                                                     children=[
                                                         html.H5(
-                                                            _l("Main Panel"),
+                                                            str(_l("Main Panel")),
                                                             className="navbar-title text-primary",
                                                         ),
                                                         html.Small(
-                                                            _l("Logged in as: HQ Tower - East Wing"),
+                                                            str(
+                                                                _l(
+                                                                    "Logged in as: HQ Tower - East Wing"
+                                                                )
+                                                            ),
                                                             className="navbar-subtitle text-secondary",
                                                         ),
                                                         html.Small(
@@ -104,7 +115,6 @@ def create_navbar_layout() -> Optional[Any]:
                                     width=6,
                                     className="d-flex align-items-center justify-content-center",
                                 ),
-
                                 # Right Column: Navigation Icons + Language Toggle
                                 dbc.Col(
                                     [
@@ -117,36 +127,42 @@ def create_navbar_layout() -> Optional[Any]:
                                                             html.Img(
                                                                 src="/assets/navbar_icons/dashboard.png",
                                                                 className="navbar-icon",
-                                                                alt="Dashboard"
+                                                                alt="Dashboard",
                                                             ),
                                                             href="/",
                                                             className="navbar-nav-link",
-                                                            title="Dashboard"
+                                                            title="Dashboard",
                                                         ),
                                                         html.A(
                                                             html.Img(
                                                                 src="/assets/navbar_icons/analytics.png",
                                                                 className="navbar-icon",
-                                                                alt="Analytics"
+                                                                alt="Analytics",
                                                             ),
                                                             href="/analytics",
                                                             className="navbar-nav-link",
-                                                            title="Analytics"
+                                                            title="Analytics",
                                                         ),
                                                         html.A(
                                                             html.Img(
                                                                 src="/assets/navbar_icons/upload.png",
                                                                 className="navbar-icon",
-                                                                alt="Upload"
+                                                                alt="Upload",
                                                             ),
                                                             href="/file-upload",
                                                             className="navbar-nav-link",
-                                                            title="File Upload"
+                                                            title="File Upload",
                                                         ),
                                                         dbc.DropdownMenu(
                                                             [
-                                                                dbc.DropdownMenuItem("Export CSV", id="nav-export-csv"),
-                                                                dbc.DropdownMenuItem("Export JSON", id="nav-export-json"),
+                                                                dbc.DropdownMenuItem(
+                                                                    "Export CSV",
+                                                                    id="nav-export-csv",
+                                                                ),
+                                                                dbc.DropdownMenuItem(
+                                                                    "Export JSON",
+                                                                    id="nav-export-json",
+                                                                ),
                                                             ],
                                                             nav=True,
                                                             in_navbar=True,
@@ -162,7 +178,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                             html.Img(
                                                                 src="/assets/navbar_icons/settings.png",
                                                                 className="navbar-icon",
-                                                                alt="Settings"
+                                                                alt="Settings",
                                                             ),
                                                             id="navbar-settings-btn",
                                                             className="navbar-nav-link",
@@ -178,30 +194,45 @@ def create_navbar_layout() -> Optional[Any]:
                                                             html.Img(
                                                                 src="/assets/navbar_icons/logout.png",
                                                                 className="navbar-icon",
-                                                                alt="Logout"
+                                                                alt="Logout",
                                                             ),
                                                             href="/login",  # Changed from /logout to /login
                                                             className="navbar-nav-link",
-                                                            title="Logout"
+                                                            title="Logout",
                                                         ),
-                                                        dbc.Button("🔄 Clear Cache", id="clear-cache-btn", color="outline-light", size="sm", className="ms-1"),
+                                                        dbc.Button(
+                                                            "🔄 Clear Cache",
+                                                            id="clear-cache-btn",
+                                                            color="outline-light",
+                                                            size="sm",
+                                                            className="ms-1",
+                                                        ),
                                                     ],
                                                     className="d-flex align-items-center",
-                                                    style={"gap": "1rem"}  # Increased from 0.75rem
+                                                    style={
+                                                        "gap": "1rem"
+                                                    },  # Increased from 0.75rem
                                                 ),
                                                 dcc.Download(id="download-csv"),
                                                 dcc.Download(id="download-json"),
-
                                                 # Language Toggle
                                                 html.Div(
                                                     [
-                                                        html.Button("EN", className="language-btn active"),
-                                                        html.Span("|", className="mx-1"),
-                                                        html.Button("JP", className="language-btn"),
+                                                        html.Button(
+                                                            "EN",
+                                                            className="language-btn active",
+                                                        ),
+                                                        html.Span(
+                                                            "|", className="mx-1"
+                                                        ),
+                                                        html.Button(
+                                                            "JP",
+                                                            className="language-btn",
+                                                        ),
                                                     ],
                                                     className="d-flex align-items-center text-sm",
                                                     style={"marginLeft": "2rem"},
-                                                    id="language-toggle"
+                                                    id="language-toggle",
                                                 ),
                                             ],
                                             className="d-flex align-items-center justify-content-end",
@@ -212,7 +243,7 @@ def create_navbar_layout() -> Optional[Any]:
                                 ),
                             ],
                             className="w-100 align-items-center",
-                            style={"minHeight": "60px"}
+                            style={"minHeight": "60px"},
                         ),
                     ],
                     fluid=True,
@@ -221,7 +252,7 @@ def create_navbar_layout() -> Optional[Any]:
             color="primary",
             dark=True,
             sticky="top",
-            className="navbar-main"
+            className="navbar-main",
         )
 
     except Exception as e:
@@ -241,6 +272,7 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
         return
 
     try:
+
         @manager.register_callback(
             Output("live-time", "children"),
             Input("url-i18n", "pathname"),
@@ -322,7 +354,7 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
                 "/file-upload": "File Upload – Data Management",
                 "/export": "Export – Report Generation",
                 "/settings": "Settings – System Configuration",
-                "/login": "Login – Authentication"
+                "/login": "Login – Authentication",
             }
             return page_contexts.get(pathname, "Dashboard – Main Operations")
 
