@@ -135,12 +135,11 @@ initializes the `DashCSRFPlugin` to enforce strict CSRF checks.
 
 Build optimized CSS assets before deployment:
 ```bash
-python tools/build_css.py
+npm run build-css
 ```
-The build script bundles the files referenced by `assets/css/main.css`,
-minifies the result and writes `assets/dist/main.min.css`. A gzipped version
-(`main.min.css.gz`) is always produced and a Brotli file (`main.min.css.br`) is
-created when the `brotli` module is available.
+The script reads `assets/css/main.css` and generates
+`assets/dist/main.min.css`. Gzip or Brotli compression is automatically handled
+at runtime by `flask-compress`.
 
 ## 🧪 Testing
 
