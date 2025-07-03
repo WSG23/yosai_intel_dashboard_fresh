@@ -22,7 +22,7 @@ def safe_navbar():
                             alt="logo",
                         ),
                         href="/",
-                        style={"textDecoration": "none"},
+                        className="no-underline",
                     ),
                     dbc.Nav(
                         [
@@ -71,8 +71,7 @@ def safe_navbar():
         ],
         color="dark",
         dark=True,
-        className="mb-3",
-        style={"backgroundColor": "#1B2A47"},
+        className="mb-3 safe-navbar",
     )
 
 
@@ -84,11 +83,14 @@ def safe_map_panel():
             dbc.Badge("🟢 All systems operational", color="success")
         ]),
         dbc.CardBody([
-            html.Div([
-                html.P("Interactive security map"),
-                html.P("Real-time monitoring active"),
-                dbc.Progress(value=100, color="success")
-            ], style={"height": "300px", "textalign": "center", "padding": "50px"})
+            html.Div(
+                [
+                    html.P("Interactive security map"),
+                    html.P("Real-time monitoring active"),
+                    dbc.Progress(value=100, color="success"),
+                ],
+                className="safe-map-placeholder",
+            )
         ])
     ])
 

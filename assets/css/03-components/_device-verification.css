@@ -1,0 +1,10 @@
+/* =================================================================== */
+/* 03-components/_device-verification.css - Device Verification Table */
+/* =================================================================== */
+
+.device-verification__col--name { width: 25%; }
+.device-verification__col--floor { width: 10%; }
+.device-verification__col--access { width: 15%; }
+.device-verification__col--special { width: 20%; }
+.device-verification__col--security { width: 10%; }
+.device-verification__col--hidden { width: 0%; display: none; }
