@@ -2,7 +2,18 @@
 """Unicode surrogate character handler for UTF-8 encoding safety."""
 
 import unicodedata
+import re
 from typing import Union, Any
+
+
+def handle_surrogate_characters(text: str) -> str:
+    """Return ``text`` with surrogate characters replaced."""
+    try:
+        cleaned = re.sub(r"[\uD800-\uDFFF]", "\uFFFD", text)
+        cleaned = unicodedata.normalize("NFKC", cleaned)
+        return cleaned.encode("utf-8", "replace").decode("utf-8")
+    except Exception:
+        return text.encode("utf-8", "replace").decode("utf-8")
 
 
 def sanitize_unicode_input(text: Union[str, Any], replacement: str = '?') -> str:
