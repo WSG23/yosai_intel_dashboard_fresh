@@ -131,13 +131,17 @@ def layout():
             html.Div(
                 [
                     dbc.Button(
-                        "", id="verify-columns-btn-simple", style={"display": "none"}
+                        "",
+                        id="verify-columns-btn-simple",
+                        className="hidden",
                     ),
                     dbc.Button(
-                        "", id="classify-devices-btn", style={"display": "none"}
+                        "",
+                        id="classify-devices-btn",
+                        className="hidden",
                     ),
                 ],
-                style={"display": "none"},
+                className="hidden",
             ),
             # Store for uploaded data info
             dcc.Store(id="file-info-store", data={}),

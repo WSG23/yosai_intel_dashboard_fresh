@@ -160,7 +160,7 @@ def layout():
         # Hidden stores
         stores = [
             dcc.Store(id="service-health-store", data={}),
-            html.Div(id="hidden-trigger", style={"display": "none"})
+            html.Div(id="hidden-trigger", className="hidden")
         ]
 
         return dbc.Container([header, config_card, results_area] + stores, fluid=True)

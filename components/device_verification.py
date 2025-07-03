@@ -130,7 +130,8 @@ def create_device_verification_modal(
                                 id={"type": "device-edited", "index": i}, data=False
                             ),
                         ],
-                        style={"width": "0%", "display": "none"},
+                        className="hidden",
+                        style={"width": "0%"},
                     ),
                 ]
             )
