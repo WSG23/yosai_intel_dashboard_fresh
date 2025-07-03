@@ -5,7 +5,8 @@ Navigation bar component with grid layout using existing framework
 import datetime
 from typing import TYPE_CHECKING, Optional, Any, Union
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
-from flask_babel import lazy_gettext as _l
+from flask_babel import lazy_gettext as _l, refresh
+from flask import session
 from core.plugins.decorators import safe_callback
 from core.theme_manager import DEFAULT_THEME, sanitize_theme
 from utils import check_navbar_assets, navbar_icon
@@ -56,15 +57,15 @@ except ImportError:
 
 
 PAGE_TITLES = {
-    "/": "Dashboard",
-    "/dashboard": "Dashboard",
-    "/analytics": "Deep Analytics",
-    "/graphs": "Graphs",
-    "/export": "Export",
-    "/settings": "Settings",
-    "/upload": "File Upload",
-    "/file-upload": "File Upload",
-    "/login": "Login",
+    "/": _l("Dashboard"),
+    "/dashboard": _l("Dashboard"),
+    "/analytics": _l("Deep Analytics"),
+    "/graphs": _l("Graphs"),
+    "/export": _l("Export"),
+    "/settings": _l("Settings"),
+    "/upload": _l("File Upload"),
+    "/file-upload": _l("File Upload"),
+    "/login": _l("Login"),
 }
 
 
@@ -99,7 +100,12 @@ def create_navbar_layout() -> Optional[Any]:
                                         html.A(
                                             html.Img(
                                                 id="navbar-logo",
-                                                src="/assets/yosai_logo_name_white.png" if DEFAULT_THEME in ("dark", "high-contrast") else "/assets/yosai_logo_name_black.png",
+                                                src=(
+                                                    "/assets/yosai_logo_name_white.png"
+                                                    if DEFAULT_THEME
+                                                    in ("dark", "high-contrast")
+                                                    else "/assets/yosai_logo_name_black.png"
+                                                ),
                                                 height="46px",  # Increased from 45px (2% larger)
                                                 className="navbar__logo",
                                                 alt="logo",
@@ -155,51 +161,59 @@ def create_navbar_layout() -> Optional[Any]:
                                                         html.A(
                                                             navbar_icon(
                                                                 "dashboard.png",
-                                                                "Dashboard",
+                                                                str(_l("Dashboard")),
                                                                 "🏠",
                                                             ),
                                                             href="/dashboard",
                                                             className="navbar-nav-link",
-                                                            title="Dashboard",
+                                                            title=str(_l("Dashboard")),
                                                         ),
                                                         html.A(
                                                             navbar_icon(
                                                                 "analytics.png",
-                                                                "Deep Analytics Page",
+                                                                str(
+                                                                    _l(
+                                                                        "Deep Analytics Page"
+                                                                    )
+                                                                ),
                                                                 "📊",
                                                             ),
                                                             href="/analytics",
                                                             className="navbar-nav-link",
-                                                            title="Deep Analytics Page",
+                                                            title=str(
+                                                                _l(
+                                                                    "Deep Analytics Page"
+                                                                )
+                                                            ),
                                                         ),
                                                         html.A(
                                                             navbar_icon(
                                                                 "graphs.png",
-                                                                "Graphs",
+                                                                str(_l("Graphs")),
                                                                 "📈",
                                                             ),
                                                             href="/graphs",
                                                             className="navbar-nav-link",
-                                                            title="Graphs",
+                                                            title=str(_l("Graphs")),
                                                         ),
                                                         html.A(
                                                             navbar_icon(
                                                                 "upload.png",
-                                                                "Upload",
+                                                                str(_l("Upload")),
                                                                 "⬆️",
                                                             ),
                                                             href="/file-upload",
                                                             className="navbar-nav-link",
-                                                            title="Upload",
+                                                            title=str(_l("Upload")),
                                                         ),
                                                         dbc.DropdownMenu(
                                                             [
                                                                 dbc.DropdownMenuItem(
-                                                                    "Export CSV",
+                                                                    _l("Export CSV"),
                                                                     id="nav-export-csv",
                                                                 ),
                                                                 dbc.DropdownMenuItem(
-                                                                    "Export JSON",
+                                                                    _l("Export JSON"),
                                                                     id="nav-export-json",
                                                                 ),
                                                             ],
@@ -207,7 +221,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                             in_navbar=True,
                                                             label=navbar_icon(
                                                                 "print.png",
-                                                                "Export",
+                                                                str(_l("Export")),
                                                                 "🖨️",
                                                             ),
                                                             toggle_class_name="navbar-nav-link",
@@ -217,7 +231,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                             [
                                                                 dbc.DropdownMenuItem(
                                                                     dcc.Link(
-                                                                        "Settings",
+                                                                        _l("Settings"),
                                                                         href="/settings",
                                                                         className="dropdown-item",
                                                                     )
@@ -226,14 +240,31 @@ def create_navbar_layout() -> Optional[Any]:
                                                                     dcc.Dropdown(
                                                                         id="theme-dropdown",
                                                                         options=[
-                                                                            {"label": "Dark", "value": "dark"},
-                                                                            {"label": "Light", "value": "light"},
-                                                                            {"label": "High Contrast", "value": "high-contrast"},
+                                                                            {
+                                                                                "label": _l(
+                                                                                    "Dark"
+                                                                                ),
+                                                                                "value": "dark",
+                                                                            },
+                                                                            {
+                                                                                "label": _l(
+                                                                                    "Light"
+                                                                                ),
+                                                                                "value": "light",
+                                                                            },
+                                                                            {
+                                                                                "label": _l(
+                                                                                    "High Contrast"
+                                                                                ),
+                                                                                "value": "high-contrast",
+                                                                            },
                                                                         ],
                                                                         value=DEFAULT_THEME,
                                                                         clearable=False,
                                                                         className="theme-dropdown",
-                                                                        style={"width": "120px"},
+                                                                        style={
+                                                                            "width": "120px"
+                                                                        },
                                                                     ),
                                                                     className="px-2",
                                                                 ),
@@ -242,7 +273,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                             in_navbar=True,
                                                             label=navbar_icon(
                                                                 "settings.png",
-                                                                "Settings",
+                                                                str(_l("Settings")),
                                                                 "⚙️",
                                                             ),
                                                             toggle_class_name="navbar-nav-link",
@@ -282,12 +313,12 @@ def create_navbar_layout() -> Optional[Any]:
                                                 html.A(
                                                     navbar_icon(
                                                         "logout.png",
-                                                        "Logout",
+                                                        str(_l("Logout")),
                                                         "🚪",
                                                     ),
                                                     href="/login",  # Changed from /logout to /login
                                                     className="navbar-nav-link",
-                                                    title="Logout",
+                                                    title=str(_l("Logout")),
                                                 ),
                                             ],
                                             className="d-flex align-items-center justify-content-end",
@@ -337,8 +368,6 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             return f"Live: {current_time}"
 
-
-
         @manager.register_callback(
             Output("language-toggle", "children"),
             Input("language-toggle", "n_clicks"),
@@ -349,6 +378,8 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
         def toggle_language(n_clicks: Optional[int]) -> list:
             """Toggle between EN and JP languages"""
             if n_clicks and n_clicks % 2 == 1:
+                session["locale"] = "ja"
+                refresh()
                 return [
                     html.Button(
                         "EN",
@@ -369,6 +400,8 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
                     ),
                 ]
             else:
+                session["locale"] = "en"
+                refresh()
                 return [
                     html.Button(
                         "EN",
@@ -459,14 +492,14 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
         def update_page_context(pathname: str) -> str:
             """Update page context based on current route"""
             page_contexts = {
-                "/": "Analytics – Data Intelligence",
-                "/analytics": "Analytics – Data Intelligence",
-                "/file-upload": "File Upload – Data Management",
-                "/export": "Export – Report Generation",
-                "/settings": "Settings – System Configuration",
-                "/login": "Login – Authentication",
+                "/": _l("Analytics – Data Intelligence"),
+                "/analytics": _l("Analytics – Data Intelligence"),
+                "/file-upload": _l("File Upload – Data Management"),
+                "/export": _l("Export – Report Generation"),
+                "/settings": _l("Settings – System Configuration"),
+                "/login": _l("Login – Authentication"),
             }
-            return page_contexts.get(pathname, "Analytics – Data Intelligence")
+            return str(page_contexts.get(pathname, _l("Analytics – Data Intelligence")))
 
     except Exception as e:
         logger.info(f"Error registering navbar callbacks: {e}")
