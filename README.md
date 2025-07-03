@@ -91,10 +91,16 @@ directory as long as their paths match the references in
    npm run build-css  # or `python tools/build_css.py`
    ```
 
-6. **Run the application:**
+6. **Run the application (development only):**
    The app now loads variables from `.env` automatically.
    ```bash
-   python app.py
+   python app.py  # use only for local development
+   ```
+   For production deployments start a WSGI server instead:
+   ```bash
+   gunicorn wsgi:server
+   # or
+   uwsgi --module wsgi:server
    ```
 7. **Access the dashboard:**
    Open http://127.0.0.1:8050 in your browser
@@ -138,9 +144,12 @@ Docker Compose reads variables from a `.env` file in this directory. Set
 `DB_PASSWORD` **and** `SECRET_KEY` there (or export them in your shell) before
 starting the services.
 
-Alternatively you can launch the app with Gunicorn:
+Alternatively you can launch the app with Gunicorn or uWSGI. This is the
+recommended approach for any production deployment:
 ```bash
 gunicorn wsgi:server
+# or
+uwsgi --module wsgi:server
 ```
 
 When `YOSAI_ENV=production` and CSRF protection is enabled, the application
