@@ -138,9 +138,12 @@ Build optimized CSS assets before deployment:
 ```bash
 npm run build-css
 ```
-The script reads `assets/css/main.css` and generates
-`assets/dist/main.min.css`. Gzip or Brotli compression is automatically handled
-at runtime by `flask-compress`.
+The script reads `assets/css/main.css` and generates `assets/dist/main.min.css`.
+Any changes to files under `assets/css/` won't be reflected until you rebuild
+the bundle with `npm run build-css` (or `python tools/build_css.py`). When the
+minified file exists, the application loads `assets/dist/main.min.css` instead
+of the source CSS. Gzip or Brotli compression is automatically handled at
+runtime by `flask-compress`.
 
 ## 🧪 Testing
 
