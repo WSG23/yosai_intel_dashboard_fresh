@@ -3,6 +3,7 @@ import pandas as pd
 
 from pages import file_upload
 from pages.file_upload import Callbacks
+from services.upload import UploadProcessingService
 from utils.upload_store import UploadedDataStore
 
 
@@ -25,6 +26,7 @@ def test_process_uploaded_files_split(monkeypatch, tmp_path):
     monkeypatch.setattr(file_upload, "_uploaded_data_store", store)
 
     cb = Callbacks()
+    cb.processing = UploadProcessingService(store)
     result = cb.process_uploaded_files(contents_list, filenames_list)
     info = result[2]
 
