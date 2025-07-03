@@ -12,6 +12,11 @@
   --color-critical: #E02020;
   --color-background: #0F1419;
   --color-surface: #1A2332;
+  /* Default surface layers before a theme is applied */
+  --surface-app: var(--color-surface);
+  --surface-primary: var(--color-surface);
+  --surface-secondary: var(--color-surface);
+  --surface-tertiary: var(--color-surface);
   --color-border: #2D3748;
   --color-text-primary: #F7FAFC;
   --color-text-secondary: #E2E8F0;
