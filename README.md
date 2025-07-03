@@ -35,7 +35,7 @@ yosai_intel_dashboard/
 │   └── analytics_service.py  # Analytics and data processing
 ├── components/               # UI components
 │   ├── analytics/            # Analytics-specific components
-│   ├── navbar.py             # Navigation component
+│   ├── ui/                   # Shared UI components
 │   └── map_panel.py          # Map visualization
 ├── pages/                    # Multi-page application pages
 │   └── deep_analytics.py     # Analytics page
@@ -50,7 +50,7 @@ Store PNG images for the navigation bar in `assets/navbar_icons/`. The
 application expects the files `dashboard.png`, `analytics.png`, `graphs.png`,
 `upload.png`, `print.png`, `settings.png` and `logout.png`. Additional icons can live in the same
 directory as long as their paths match the references in
-`dashboard/layout/navbar.py`.
+`components/ui/navbar.py`.
 
 ## 🚀 Quick Start
 

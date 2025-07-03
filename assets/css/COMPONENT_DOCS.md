@@ -1,5 +1,10 @@
 # Yōsai Intel CSS Component Documentation
 
+Design tokens in `01-foundation/_variables.css` establish a consistent spacing
+scale, border radius and shadow system modeled after Apple's Human Interface
+Guidelines. All components rely on these custom properties to ensure uniform
+metrics across the dashboard.
+
 ## Component Library
 
 
@@ -129,5 +134,33 @@
 - `chip--gold` – uses a gradient with `--color-warning` to remain readable
 
 When customizing colors, ensure a minimum contrast ratio of 4.5:1 for text within chips.
+
+---
+
+### Navbar Component
+
+**File:** `components/ui/navbar.py`
+
+The navigation bar consolidates common links and the theme toggle into a shared
+component. Below is a minimal Dash example using the `create_navbar_layout`
+factory. In development you can preview components interactively using a
+Storybook-style setup with `dash`:
+
+```python
+from dash import Dash, html
+from components.ui.navbar import create_navbar_layout
+
+app = Dash(__name__)
+app.layout = html.Div([
+    create_navbar_layout(),
+    html.Div("Preview Area", className="p-4")
+])
+
+if __name__ == "__main__":
+    app.run_server(debug=True)
+```
+
+The navbar respects the design tokens defined in `_variables.css` for spacing,
+rounded corners and shadows to match Apple-style metrics.
 
 ---

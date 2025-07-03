@@ -8,7 +8,7 @@ from typing import Optional, Any
 from flasgger import Swagger
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output
-from dashboard.layout.navbar import create_navbar_layout
+from components.ui.navbar import create_navbar_layout
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from core.container import Container as DIContainer
 from core.plugins.manager import PluginManager
@@ -137,7 +137,7 @@ def _create_full_app() -> dash.Dash:
                 register_callbacks as register_deep_callbacks,
                 Callbacks as DeepAnalyticsCallbacks,
             )
-            from dashboard.layout.navbar import register_navbar_callbacks
+            from components.ui.navbar import register_navbar_callbacks
 
             register_upload_callbacks(coordinator)
             register_simple_mapping(coordinator)
