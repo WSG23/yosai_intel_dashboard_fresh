@@ -436,6 +436,8 @@ def _register_router_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             return _get_analytics_page()
         elif pathname == "/graphs":
             return _get_graphs_page()
+        elif pathname == "/export":
+            return _get_export_page()
         elif pathname == "/settings":
             return _get_settings_page()
         elif pathname in {"/upload", "/file-upload"}:
@@ -503,6 +505,21 @@ def _get_graphs_page() -> Any:
             "Graphs",
             "Graphs page is being loaded...",
             "The graphs module is not available. Please check the installation.",
+        )
+
+
+def _get_export_page() -> Any:
+    """Get export page."""
+    try:
+        from pages.export import layout
+
+        return layout()
+    except ImportError as e:
+        logger.error(f"Export page import failed: {e}")
+        return _create_placeholder_page(
+            "Export",
+            "Export page is being loaded...",
+            "The export module is not available. Please check the installation.",
         )
 
 
