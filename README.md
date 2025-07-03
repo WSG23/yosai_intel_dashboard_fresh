@@ -14,6 +14,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Roadmap](docs/roadmap.md)
 - [Sequence Diagrams](docs/sequence_diagrams.md)
 - [UI Flows](docs/ui_flows.md)
+- [UI Design Assets](docs/ui_design/README.md)
 - [Validation Overview](docs/validation_overview.md)
 
 The dashboard is extensible through a lightweight plugin system. Plugins live in the `plugins/` directory and are loaded by a `PluginManager`. See [docs/plugins.md](docs/plugins.md) for discovery, configuration details and a simple **Hello World** example. The [plugin lifecycle diagram](docs/plugin_lifecycle.md) illustrates how plugins are discovered, dependencies resolved and health checks performed.
