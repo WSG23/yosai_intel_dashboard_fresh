@@ -137,7 +137,10 @@ Build optimized CSS assets before deployment:
 ```bash
 python tools/build_css.py
 ```
-This generates `assets/dist/main.min.css` and `assets/dist/main.min.css.gz`.
+The build script bundles the files referenced by `assets/css/main.css`,
+minifies the result and writes `assets/dist/main.min.css`. A gzipped version
+(`main.min.css.gz`) is always produced and a Brotli file (`main.min.css.br`) is
+created when the `brotli` module is available.
 
 ## 🧪 Testing
 

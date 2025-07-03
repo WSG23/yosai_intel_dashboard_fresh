@@ -385,57 +385,59 @@ class CSSOptimizer:
             logger.info(f"❌ Error minifying {input_file}: {e}")
     
     def build_production_css(self) -> None:
-        """Build optimized CSS for production"""
+        """Bundle, minify and compress main CSS file for production."""
         logger.info("🏗️ Building production CSS...")
 
         try:
-            css_files = list(self.css_dir.glob("*.css"))
-
-            if not css_files:
-                logger.info("❌ No CSS files found")
+            main_css = self.css_dir / "main.css"
+            if not main_css.exists():
+                logger.info("❌ main.css not found")
                 return
 
-            # Determine if we should run in parallel
-            use_threads = len(css_files) > 1
-            tasks = {}
+            imports: List[str] = []
+            remaining_lines: List[str] = []
 
-            if use_threads:
-                from concurrent.futures import ThreadPoolExecutor
+            for line in main_css.read_text(encoding="utf-8").splitlines(True):
+                m = re.match(r"\s*@import\s+[\'\"]([^\'\"]+)[\'\"]", line)
+                if m:
+                    imports.append(m.group(1))
+                else:
+                    remaining_lines.append(line)
 
-                with ThreadPoolExecutor() as executor:
-                    for css_file in css_files:
-                        out = self.output_dir / f"{css_file.stem}.min.css"
-                        tasks[executor.submit(self.minify_css, css_file, out)] = (
-                            css_file,
-                            out,
-                        )
+            bundle = "".join(remaining_lines)
+            for rel in imports:
+                try:
+                    path = main_css.parent / rel
+                    bundle += path.read_text(encoding="utf-8")
+                except Exception as exc:
+                    logger.error(f"❌ Error reading {path}: {exc}")
 
-                    for future, (css_file, out) in tasks.items():
-                        try:
-                            future.result()
-                            import gzip
+            out = self.output_dir / "main.min.css"
+            tmp = out.with_suffix(".tmp.css")
+            tmp.write_text(bundle, encoding="utf-8")
 
-                            with open(out, "rb") as f_in:
-                                with gzip.open(f"{out}.gz", "wb") as f_out:
-                                    f_out.write(f_in.read())
+            self.minify_css(tmp, out)
+            tmp.unlink(missing_ok=True)
 
-                            logger.info(f"✅ Production CSS created: {out}")
-                            logger.info(f"✅ Gzipped version: {out}.gz")
-                        except Exception as e:
-                            logger.error(f"❌ Error building {css_file}: {e}")
-            else:
-                css_file = css_files[0]
-                out = self.output_dir / f"{css_file.stem}.min.css"
-                self.minify_css(css_file, out)
+            import gzip
 
-                import gzip
+            with open(out, "rb") as f_in:
+                with gzip.open(f"{out}.gz", "wb") as f_out:
+                    f_out.write(f_in.read())
+
+            try:
+                import brotli  # type: ignore
 
                 with open(out, "rb") as f_in:
-                    with gzip.open(f"{out}.gz", "wb") as f_out:
-                        f_out.write(f_in.read())
+                    compressed = brotli.compress(f_in.read())
+                    with open(f"{out}.br", "wb") as f_out:
+                        f_out.write(compressed)
+                logger.info(f"✅ Brotli version: {out}.br")
+            except Exception:
+                logger.info("ℹ️ Brotli compression skipped")
 
-                logger.info(f"✅ Production CSS created: {out}")
-                logger.info(f"✅ Gzipped version: {out}.gz")
+            logger.info(f"✅ Production CSS created: {out}")
+            logger.info(f"✅ Gzipped version: {out}.gz")
 
         except Exception as e:
             logger.info(f"❌ Error building production CSS: {e}")
