@@ -9,6 +9,7 @@ from flasgger import Swagger
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output
 from dashboard.layout.navbar import create_navbar_layout
+from utils import check_navbar_assets, debug_dash_asset_serving
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from core.container import Container as DIContainer
 from core.plugins.manager import PluginManager
@@ -64,7 +65,7 @@ def _create_full_app() -> dash.Dash:
             assets_folder="assets",
         )
         apply_theme_settings(app)
-        Compress(app.server)
+app.server)
 
         app.title = "Yōsai Intel Dashboard"
 

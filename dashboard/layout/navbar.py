@@ -8,6 +8,7 @@ from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from flask_babel import lazy_gettext as _l
 from core.plugins.decorators import safe_callback
 from core.theme_manager import DEFAULT_THEME, sanitize_theme
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -59,6 +60,16 @@ def create_navbar_layout() -> Optional[Any]:
         return None
 
     try:
+        check_navbar_assets(
+            [
+                "dashboard.png",
+                "analytics.png",
+                "upload.png",
+                "print.png",
+                "settings.png",
+                "logout.png",
+            ]
+        )
         return dbc.Navbar(
             [
                 dbc.Container(
@@ -126,30 +137,30 @@ def create_navbar_layout() -> Optional[Any]:
                                                 html.Div(
                                                     [
                                                         html.A(
-                                                            html.Img(
-                                                                src="/assets/navbar_icons/dashboard.png",
-                                                                className="navbar-icon",
-                                                                alt="Dashboard",
+                                                            navbar_icon(
+                                                                "dashboard.png",
+                                                                "Dashboard",
+                                                                "🏠",
                                                             ),
                                                             href="/",
                                                             className="navbar-nav-link",
                                                             title="Dashboard",
                                                         ),
                                                         html.A(
-                                                            html.Img(
-                                                                src="/assets/navbar_icons/analytics.png",
-                                                                className="navbar-icon",
-                                                                alt="Deep Analytics Page",
+                                                            navbar_icon(
+                                                                "analytics.png",
+                                                                "Deep Analytics Page",
+                                                                "📊",
                                                             ),
                                                             href="/analytics",
                                                             className="navbar-nav-link",
                                                             title="Deep Analytics Page",
                                                         ),
                                                         html.A(
-                                                            html.Img(
-                                                                src="/assets/navbar_icons/upload.png",
-                                                                className="navbar-icon",
-                                                                alt="Upload",
+                                                            navbar_icon(
+                                                                "upload.png",
+                                                                "Upload",
+                                                                "⬆️",
                                                             ),
                                                             href="/file-upload",
                                                             className="navbar-nav-link",
@@ -168,29 +179,29 @@ def create_navbar_layout() -> Optional[Any]:
                                                             ],
                                                             nav=True,
                                                             in_navbar=True,
-                                                            label=html.Img(
-                                                                src="/assets/navbar_icons/print.png",
-                                                                className="navbar-icon",
-                                                                alt="Export",
+                                                            label=navbar_icon(
+                                                                "print.png",
+                                                                "Export",
+                                                                "🖨️",
                                                             ),
                                                             toggle_class_name="navbar-nav-link",
                                                             menu_variant="dark",
                                                         ),
                                                         html.Button(
-                                                            html.Img(
-                                                                src="/assets/navbar_icons/settings.png",
-                                                                className="navbar-icon",
-                                                                alt="Settings",
+                                                            navbar_icon(
+                                                                "settings.png",
+                                                                "Settings",
+                                                                "⚙️",
                                                             ),
                                                             id="navbar-settings-btn",
                                                             className="navbar-nav-link navbar-icon-btn",
                                                             title="Settings",
                                                         ),
                                                         html.A(
-                                                            html.Img(
-                                                                src="/assets/navbar_icons/logout.png",
-                                                                className="navbar-icon",
-                                                                alt="Logout",
+                                                            navbar_icon(
+                                                                "logout.png",
+                                                                "Logout",
+                                                                "🚪",
                                                             ),
                                                             href="/login",  # Changed from /logout to /login
                                                             className="navbar-nav-link",
