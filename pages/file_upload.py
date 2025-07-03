@@ -231,7 +231,8 @@ class Callbacks:
         file_preview_components: List[Any] = []
         current_file_info: Dict[str, Any] = {}
 
-        for filename, df in _uploaded_data_store.get_all_data().items():
+        for filename in _uploaded_data_store.get_filenames():
+            df = _uploaded_data_store.load_dataframe(filename)
             rows = len(df)
             cols = len(df.columns)
 
@@ -630,7 +631,7 @@ class Callbacks:
 
         # ADD THIS BLOCK HERE - Check for saved column mappings
         try:
-            df = _uploaded_data_store.get_all_data().get(filename)
+            df = _uploaded_data_store.load_dataframe(filename)
             if df is not None:
                 from services.consolidated_learning_service import get_learning_service
                 learned = get_learning_service().get_learned_mappings(df, filename)
@@ -875,7 +876,7 @@ class Callbacks:
                 }
 
             learning_service = get_device_learning_service()
-            df = _uploaded_data_store.get_all_data().get(filename)
+            df = _uploaded_data_store.load_dataframe(filename)
             learning_service.save_user_device_mappings(df, filename, user_mappings)
 
             from services.ai_mapping_store import ai_mapping_store
@@ -934,7 +935,7 @@ class Callbacks:
             try:
                 from services.consolidated_learning_service import get_learning_service
 
-                df = _uploaded_data_store.get_all_data().get(filename)
+                df = _uploaded_data_store.load_dataframe(filename)
                 if df is not None:
                     get_learning_service().save_complete_mapping(
                         df, filename, {}, column_mappings

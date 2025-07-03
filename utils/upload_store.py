@@ -2,6 +2,7 @@
 import json
 import logging
 import threading
+from concurrent.futures import ThreadPoolExecutor, Future
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -25,9 +26,11 @@ class UploadedDataStore:
         self._lock = threading.Lock()
         self._data_store: Dict[str, pd.DataFrame] = {}
         self._file_info_store: Dict[str, Dict[str, Any]] = {}
+        self._executor = ThreadPoolExecutor(max_workers=2)
+        self._save_futures: Dict[str, Future] = {}
         self.storage_dir = Path(storage_dir or "temp/uploaded_data")
         self.storage_dir.mkdir(parents=True, exist_ok=True)
-        self._load_from_disk()
+        self._load_info_from_disk()
 
     # -- Internal helpers ---------------------------------------------------
     def _get_file_path(self, filename: str) -> Path:
@@ -49,7 +52,7 @@ class UploadedDataStore:
     def _info_path(self) -> Path:
         return self.storage_dir / "file_info.json"
 
-    def _load_from_disk(self) -> None:
+    def _load_info_from_disk(self) -> None:
         try:
             if self._info_path().exists():
                 with open(
@@ -71,61 +74,78 @@ class UploadedDataStore:
                 fpath = self._get_file_path(fname)
                 pkl_path = fpath.with_suffix(".pkl")
                 if pkl_path.exists():
-                    success, _ = FileConverter.pkl_to_parquet(pkl_path, fpath)
+                    success, df = FileConverter.pkl_to_parquet(pkl_path, fpath)
                     if success:
                         try:
                             pkl_path.unlink()
                         except Exception:  # pragma: no cover - best effort
                             pass
-                    else:
-                        continue
-                if fpath.exists():
-                    df = pd.read_parquet(fpath)
-                    self._data_store[fname] = df
-                    info = self._file_info_store.get(fname, {})
-                    info.update(
-                        {
+                        self._file_info_store[fname] = {
+                            **self._file_info_store.get(fname, {}),
                             "rows": len(df),
                             "columns": len(df.columns),
                             "column_names": list(df.columns),
+                            "upload_time": datetime.now().isoformat(),
+                            "size_mb": round(
+                                df.memory_usage(deep=True).sum() / 1024 / 1024, 2
+                            ),
                         }
-                    )
-                    self._file_info_store[fname] = info
-                    modified = True
-                    logger.info(f"Loaded {fname} from disk")
+                        modified = True
+                    else:
+                        continue
             if modified:
                 with open(self._info_path(), "w", encoding="utf-8") as f:
                     json.dump(self._file_info_store, f, indent=2)
         except Exception as e:  # pragma: no cover - best effort
-            logger.error(f"Error loading uploaded data: {e}")
+            logger.error(f"Error loading uploaded data info: {e}")
 
     def _save_to_disk(self, filename: str, df: pd.DataFrame) -> None:
-        with self._lock:
-            try:
-                df.to_parquet(self._get_file_path(filename), index=False)
+        try:
+            df.to_parquet(self._get_file_path(filename), index=False)
+            with self._lock:
                 self._file_info_store[filename] = {
                     "rows": len(df),
                     "columns": len(df.columns),
                     "column_names": list(df.columns),
                     "upload_time": datetime.now().isoformat(),
-                    "size_mb": round(df.memory_usage(deep=True).sum() / 1024 / 1024, 2),
+                    "size_mb": round(
+                        df.memory_usage(deep=True).sum() / 1024 / 1024, 2
+                    ),
                 }
                 with open(self._info_path(), "w", encoding="utf-8") as f:
                     json.dump(self._file_info_store, f, indent=2)
-            except Exception as e:  # pragma: no cover - best effort
-                logger.error(f"Error saving uploaded data: {e}")
+        except Exception as e:  # pragma: no cover - best effort
+            logger.error(f"Error saving uploaded data: {e}")
 
     # -- Public API ---------------------------------------------------------
     def add_file(self, filename: str, df: pd.DataFrame) -> None:
         with self._lock:
             self._data_store[filename] = df
-        self._save_to_disk(filename, df)
+        future = self._executor.submit(self._save_to_disk, filename, df)
+        self._save_futures[filename] = future
+
+    def load_dataframe(self, filename: str) -> pd.DataFrame:
+        with self._lock:
+            df = self._data_store.get(filename)
+            future = self._save_futures.get(filename)
+        if future is not None:
+            future.result()
+            with self._lock:
+                self._save_futures.pop(filename, None)
+        if df is not None:
+            return df
+        df = pd.read_parquet(self._get_file_path(filename))
+        with self._lock:
+            self._data_store[filename] = df
+        return df
 
     def get_all_data(self) -> Dict[str, pd.DataFrame]:
-        return self._data_store.copy()
+        return {fname: self.load_dataframe(fname) for fname in self.get_filenames()}
 
     def get_filenames(self) -> List[str]:
-        return list(self._data_store.keys())
+        with self._lock:
+            names = set(self._file_info_store.keys()) | set(self._data_store.keys())
+        return list(names)
 
     def get_file_info(self) -> Dict[str, Dict[str, Any]]:
         return self._file_info_store.copy()
@@ -141,6 +161,12 @@ class UploadedDataStore:
                     self._info_path().unlink()
             except Exception as e:  # pragma: no cover - best effort
                 logger.error(f"Error clearing uploaded data: {e}")
+
+    def wait_for_pending_saves(self) -> None:
+        """Block until all background save tasks have completed."""
+        for fut in list(self._save_futures.values()):
+            fut.result()
+        self._save_futures.clear()
 
 
 # Global persistent storage instance

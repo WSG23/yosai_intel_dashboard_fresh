@@ -855,11 +855,9 @@ def create_data_quality_display(data_source: str) -> html.Div | dbc.Card | dbc.A
             filename = data_source.replace("upload:", "")
             from utils.upload_store import uploaded_data_store
 
-            uploaded_files = uploaded_data_store.get_all_data()
-
-            if filename in uploaded_files:
-                df = uploaded_files[filename]
-
+            if filename in uploaded_data_store.get_filenames():
+                df = uploaded_data_store.load_dataframe(filename)
+                
                 # Basic quality metrics
                 total_rows = len(df)
                 total_cols = len(df.columns)
