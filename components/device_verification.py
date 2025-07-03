@@ -47,7 +47,7 @@ def create_device_verification_modal(
                                 ),
                             ),
                         ],
-                        style={"width": "25%"},
+                        className="device-verification__col--name",
                     ),
                     # Floor number
                     html.Td(
@@ -62,7 +62,7 @@ def create_device_verification_modal(
                                 size="sm",
                             )
                         ],
-                        style={"width": "10%"},
+                        className="device-verification__col--floor",
                     ),
                     # Entry/Exit checkboxes
                     html.Td(
@@ -81,7 +81,7 @@ def create_device_verification_modal(
                                 inline=True,
                             )
                         ],
-                        style={"width": "15%"},
+                        className="device-verification__col--access",
                     ),
                     # Special areas
                     html.Td(
@@ -103,7 +103,7 @@ def create_device_verification_modal(
                                 className="small",
                             )
                         ],
-                        style={"width": "20%"},
+                        className="device-verification__col--special",
                     ),
                     # Security level
                     html.Td(
@@ -118,7 +118,7 @@ def create_device_verification_modal(
                                 size="sm",
                             )
                         ],
-                        style={"width": "10%"},
+                        className="device-verification__col--security",
                     ),
                     # Manually edited flag (hidden input)
                     html.Td(
@@ -132,6 +132,7 @@ def create_device_verification_modal(
                         ],
                         className="hidden",
                         style={"width": "0%"},
+
                     ),
                 ]
             )
@@ -154,11 +155,11 @@ def create_device_verification_modal(
                         [
                             html.Tr(
                                 [
-                                    html.Th("Device Name", style={"width": "25%"}),
-                                    html.Th("Floor", style={"width": "10%"}),
-                                    html.Th("Access Type", style={"width": "15%"}),
-                                    html.Th("Special Areas", style={"width": "20%"}),
-                                    html.Th("Security (0-10)", style={"width": "10%"}),
+                                    html.Th("Device Name", className="device-verification__col--name"),
+                                    html.Th("Floor", className="device-verification__col--floor"),
+                                    html.Th("Access Type", className="device-verification__col--access"),
+                                    html.Th("Special Areas", className="device-verification__col--special"),
+                                    html.Th("Security (0-10)", className="device-verification__col--security"),
                                 ]
                             )
                         ]

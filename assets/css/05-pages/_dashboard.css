@@ -73,3 +73,35 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ------------------------------------------------------------------- */
+/* Navbar Custom Classes                                                */
+/* ------------------------------------------------------------------- */
+
+.navbar-main {
+  background-color: var(--color-primary);
+  border-bottom: 2px solid var(--color-accent);
+}
+
+.navbar-logo-link {
+  text-decoration: none;
+}
+
+.navbar-icon-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.navbar-icon-group {
+  gap: var(--space-4);
+}
+
+.navbar-language-toggle {
+  margin-left: var(--space-8);
+}
+
+.navbar-row {
+  min-height: 60px;
+}
