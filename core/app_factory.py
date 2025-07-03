@@ -9,7 +9,6 @@ from flasgger import Swagger
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output
 from dashboard.layout.navbar import create_navbar_layout
-from utils import check_navbar_assets
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from core.container import Container as DIContainer
 from core.plugins.manager import PluginManager
@@ -19,11 +18,9 @@ import pandas as pd
 from flask_babel import Babel
 from flask_compress import Compress
 from core.theme_manager import apply_theme_settings, DEFAULT_THEME
+from config.config import get_config
 
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
-
-# Use the config system from the project
-from config.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -57,14 +54,17 @@ def _create_full_app() -> dash.Dash:
     try:
         external_stylesheets = [dbc.themes.BOOTSTRAP]
         built_css = ASSETS_DIR / "dist" / "main.min.css"
+        assets_ignore = r".*\.map|css/_.*"
         if built_css.exists():
             external_stylesheets.append("/assets/dist/main.min.css")
+            assets_ignore += r"|css/main\.css"
 
         app = dash.Dash(
             __name__,
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
             assets_folder=str(ASSETS_DIR),
+            assets_ignore=assets_ignore,
         )
 
         # Set a temporary layout so Dash can handle requests during
@@ -201,13 +201,16 @@ def _create_simple_app() -> dash.Dash:
 
         external_stylesheets = [dbc.themes.BOOTSTRAP]
         built_css = ASSETS_DIR / "dist" / "main.min.css"
+        assets_ignore = r".*\.map|css/_.*"
         if built_css.exists():
             external_stylesheets.append("/assets/dist/main.min.css")
+            assets_ignore += r"|css/main\.css"
 
         app = dash.Dash(
             __name__,
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
+            assets_ignore=assets_ignore,
         )
         apply_theme_settings(app)
         Compress(app.server)
@@ -279,13 +282,16 @@ def _create_json_safe_app() -> dash.Dash:
 
         external_stylesheets = [dbc.themes.BOOTSTRAP]
         built_css = ASSETS_DIR / "dist" / "main.min.css"
+        assets_ignore = r".*\.map|css/_.*"
         if built_css.exists():
             external_stylesheets.append("/assets/dist/main.min.css")
+            assets_ignore += r"|css/main\.css"
 
         app = dash.Dash(
             __name__,
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
+            assets_ignore=assets_ignore,
         )
         apply_theme_settings(app)
         Compress(app.server)
