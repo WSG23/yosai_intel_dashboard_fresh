@@ -13,6 +13,7 @@ from core.plugins.manager import PluginManager
 from core.secret_manager import validate_secrets
 from dash_csrf_plugin import setup_enhanced_csrf_protection, CSRFMode
 import pandas as pd
+from flask_babel import Babel
 
 # Use the config system from the project
 from config.config import get_config
@@ -55,6 +56,12 @@ def _create_full_app() -> dash.Dash:
         )
 
         app.title = "Yōsai Intel Dashboard"
+
+        # Initialize Flask-Babel before any layouts use gettext
+        try:
+            Babel(app.server)
+        except Exception as e:  # pragma: no cover - optional dependency
+            logger.warning(f"Failed to initialize Babel: {e}")
 
         # Use the working config system
         config_manager = get_config()

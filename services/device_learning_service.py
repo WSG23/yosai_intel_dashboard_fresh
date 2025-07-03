@@ -310,10 +310,14 @@ class DeviceLearningService:
         return overlap / total >= 0.6
 
 
-_device_learning_service = DeviceLearningService()
+_device_learning_service: Optional[DeviceLearningService] = None
 
 
 def get_device_learning_service() -> DeviceLearningService:
+    """Return a singleton instance of :class:`DeviceLearningService`."""
+    global _device_learning_service
+    if _device_learning_service is None:
+        _device_learning_service = DeviceLearningService()
     return _device_learning_service
 
 
