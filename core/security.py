@@ -27,7 +27,7 @@ from core.security_patterns import (
     PATH_TRAVERSAL_PATTERNS,
 )
 
-from utils.unicode_handler import sanitize_unicode_input
+from utils.unicode_utils import sanitize_unicode_input
 from config.dynamic_config import dynamic_config
 
 

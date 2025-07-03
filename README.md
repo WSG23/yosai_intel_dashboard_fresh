@@ -350,7 +350,7 @@ files while maintaining backwards compatible helper functions like
 - Supports PostgreSQL, SQLite, and Mock databases
 - Type-safe connection management
 - Retry logic via `connection_retry.py` with exponential backoff
-- Safe Unicode handling with `unicode_handler.py`
+- Safe Unicode handling with `unicode_utils.py`
 - Connection pooling through `connection_pool.py`
 ```python
 from config.database_manager import EnhancedPostgreSQLManager, DatabaseConfig

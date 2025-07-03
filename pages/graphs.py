@@ -3,7 +3,7 @@
 
 from dash import html, dcc
 import dash_bootstrap_components as dbc
-from utils.unicode_handler import sanitize_unicode_input
+from utils.unicode_utils import sanitize_unicode_input
 from services.analytics_summary import create_sample_data
 from analytics.interactive_charts import create_charts_generator
 

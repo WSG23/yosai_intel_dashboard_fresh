@@ -62,7 +62,7 @@ def test_stages(test_df):
     # Stage 2: Test Unicode cleaning
     print(f"\n🧹 STAGE 2: Unicode Processing")
     try:
-        from utils.unicode_processor import sanitize_data_frame
+        from utils.unicode_utils import sanitize_data_frame
         cleaned_df = sanitize_data_frame(test_df)
         print(f"   After unicode cleaning: {len(cleaned_df):,} rows")
         if len(cleaned_df) != len(test_df):

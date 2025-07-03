@@ -1,5 +1,5 @@
 import pandas as pd
-from utils.unicode_processor import safe_unicode_encode, sanitize_data_frame
+from utils.unicode_utils import safe_unicode_encode, sanitize_data_frame
 
 
 def test_safe_unicode_encode_surrogates():

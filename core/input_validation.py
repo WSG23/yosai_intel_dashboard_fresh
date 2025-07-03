@@ -7,7 +7,7 @@ from typing import Any, Protocol, Dict
 
 import bleach
 
-from utils.unicode_handler import sanitize_unicode_input
+from utils.unicode_utils import sanitize_unicode_input
 from security.validation_exceptions import ValidationError
 from core.security import InputValidator as _ComprehensiveValidator
 
