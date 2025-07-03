@@ -39,6 +39,13 @@ except ImportError as e:
     _pages["graphs"] = None
 
 try:
+    from . import export
+    _pages["export"] = export
+except ImportError as e:
+    logger.warning(f"Export page not available: {e}")
+    _pages["export"] = None
+
+try:
     from . import settings
     _pages["settings"] = settings
 except ImportError as e:
