@@ -6,6 +6,7 @@ Integrates with analytics system
 import logging
 import json
 from datetime import datetime
+from threading import Thread
 
 import pandas as pd
 from typing import Optional, Dict, Any, List, Tuple
@@ -40,6 +41,13 @@ logger = logging.getLogger(__name__)
 
 # Initialize a shared AI suggestion service for module-level helpers
 _ai_service = AISuggestionService()
+
+# Simple in-memory task tracker for background uploads
+_upload_task: Dict[str, Any] = {
+    "progress": 0,
+    "result": None,
+    "running": False,
+}
 
 
 def analyze_device_name_with_ai(device_name: str) -> Dict[str, Any]:
@@ -110,6 +118,8 @@ def layout():
             ),
             # Upload results area
             dbc.Row([dbc.Col([html.Div(id="upload-results")])], className="mb-4"),
+            dbc.Row([dbc.Col([dbc.Progress(id="upload-progress", value=0, label="0%", striped=True, animated=True)])], className="mb-3"),
+            dcc.Interval(id="upload-progress-interval", interval=1000, disabled=True),
             # Data preview area
             dbc.Row([dbc.Col([html.Div(id="file-preview")])]),
             # Navigation to analytics
@@ -275,6 +285,95 @@ class Callbacks:
         self, contents_list: List[str] | str, filenames_list: List[str] | str
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
         return self.processing.process_files(contents_list, filenames_list)
+
+    def _run_background_processing(self, contents_list: List[str], filenames_list: List[str]) -> None:
+        """Execute file processing in a background thread."""
+        try:
+            _upload_task["progress"] = 50
+            result = self.processing.process_files(contents_list, filenames_list)
+            _upload_task["result"] = result
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.error("Background upload error: %s", exc)
+            _upload_task["result"] = (
+                [self.processing.build_failure_alert(str(exc))],
+                [],
+                {},
+                [],
+                {},
+                no_update,
+                no_update,
+            )
+        finally:
+            _upload_task["progress"] = 100
+            _upload_task["running"] = False
+
+    def start_upload_background(
+        self, contents_list: List[str] | str, filenames_list: List[str] | str
+    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, int, str, bool]:
+        """Kick off background upload processing and enable progress polling."""
+        if not contents_list:
+            return (
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                0,
+                "0%",
+                True,
+            )
+
+        if not isinstance(contents_list, list):
+            contents_list = [contents_list]
+        if not isinstance(filenames_list, list):
+            filenames_list = [filenames_list]
+
+        if not _upload_task["running"]:
+            _upload_task.update({"progress": 0, "result": None, "running": True})
+            Thread(
+                target=self._run_background_processing,
+                args=(contents_list, filenames_list),
+                daemon=True,
+            ).start()
+
+        return (
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            0,
+            "0%",
+            False,
+        )
+
+    def check_upload_progress(
+        self, _n: int
+    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, int, str, bool]:
+        """Poll background processing status and emit results when ready."""
+        progress = int(_upload_task.get("progress", 0))
+        result = _upload_task.get("result")
+
+        if progress >= 100 and result is not None:
+            _upload_task["result"] = None
+            return (*result, 100, "100%", True)
+
+        return (
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            progress,
+            f"{progress}%",
+            False,
+        )
 
     def handle_modal_dialogs(
         self,
@@ -967,7 +1066,7 @@ def register_callbacks(
             {"prevent_initial_call": "initial_duplicate", "allow_duplicate": True},
         ),
         (
-            cb.process_uploaded_files,
+            cb.start_upload_background,
             [
                 Output("upload-results", "children", allow_duplicate=True),
                 Output("file-preview", "children", allow_duplicate=True),
@@ -976,10 +1075,32 @@ def register_callbacks(
                 Output("current-file-info-store", "data", allow_duplicate=True),
                 Output("column-verification-modal", "is_open", allow_duplicate=True),
                 Output("device-verification-modal", "is_open", allow_duplicate=True),
+                Output("upload-progress", "value"),
+                Output("upload-progress", "label"),
+                Output("upload-progress-interval", "disabled"),
             ],
             Input("upload-data", "contents"),
             State("upload-data", "filename"),
-            "process_uploaded_files",
+            "start_upload_background",
+            {"prevent_initial_call": True, "allow_duplicate": True},
+        ),
+        (
+            cb.check_upload_progress,
+            [
+                Output("upload-results", "children", allow_duplicate=True),
+                Output("file-preview", "children", allow_duplicate=True),
+                Output("file-info-store", "data", allow_duplicate=True),
+                Output("upload-nav", "children", allow_duplicate=True),
+                Output("current-file-info-store", "data", allow_duplicate=True),
+                Output("column-verification-modal", "is_open", allow_duplicate=True),
+                Output("device-verification-modal", "is_open", allow_duplicate=True),
+                Output("upload-progress", "value"),
+                Output("upload-progress", "label"),
+                Output("upload-progress-interval", "disabled"),
+            ],
+            Input("upload-progress-interval", "n_intervals"),
+            None,
+            "check_upload_progress",
             {"prevent_initial_call": True, "allow_duplicate": True},
         ),
         (
