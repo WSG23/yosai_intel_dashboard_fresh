@@ -47,9 +47,9 @@ yosai_intel_dashboard/
 ### Navbar Icons
 
 Store PNG images for the navigation bar in `assets/navbar_icons/`. The
-application expects the files `dashboard.png`, `analytics.png`, `upload.png`,
-`print.png`, `settings.png` and `logout.png`. Additional icons can live in the
-same directory as long as their paths match the references in
+application expects the files `analytics.png`, `upload.png`, `print.png`,
+`settings.png` and `logout.png`. Additional icons can live in the same
+directory as long as their paths match the references in
 `dashboard/layout/navbar.py`.
 
 ## 🚀 Quick Start

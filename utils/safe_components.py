@@ -29,14 +29,6 @@ def safe_navbar():
                         [
                             dbc.NavItem(
                                 dbc.NavLink(
-                                    navbar_icon("dashboard.png", "Dashboard", "🏠"),
-                                    href="/",
-                                    external_link=True,
-                                    title="Dashboard",
-                                )
-                            ),
-                            dbc.NavItem(
-                                dbc.NavLink(
                                     navbar_icon("upload.png", "Upload", "⬆️"),
                                     href="/file-upload",
                                     external_link=True,
