@@ -213,6 +213,10 @@ def create_navbar_layout() -> Optional[Any]:
                                                         html.Button(
                                                             "EN",
                                                             className="language-btn active",
+                                                            **{
+                                                                "aria-label": "Switch to English",
+                                                                "aria-pressed": "true",
+                                                            },
                                                         ),
                                                         html.Span(
                                                             "|", className="mx-1"
@@ -220,6 +224,10 @@ def create_navbar_layout() -> Optional[Any]:
                                                         html.Button(
                                                             "JP",
                                                             className="language-btn",
+                                                            **{
+                                                                "aria-label": "Switch to Japanese",
+                                                                "aria-pressed": "false",
+                                                            },
                                                         ),
                                                     ],
                                                     className="d-flex align-items-center text-sm navbar-language-toggle",
@@ -285,15 +293,43 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             """Toggle between EN and JP languages"""
             if n_clicks and n_clicks % 2 == 1:
                 return [
-                    html.Button("EN", className="language-btn"),
+                    html.Button(
+                        "EN",
+                        className="language-btn",
+                        **{
+                            "aria-label": "Switch to English",
+                            "aria-pressed": "false",
+                        },
+                    ),
                     html.Span("|", className="mx-1"),
-                    html.Button("JP", className="language-btn active"),
+                    html.Button(
+                        "JP",
+                        className="language-btn active",
+                        **{
+                            "aria-label": "Switch to Japanese",
+                            "aria-pressed": "true",
+                        },
+                    ),
                 ]
             else:
                 return [
-                    html.Button("EN", className="language-btn active"),
+                    html.Button(
+                        "EN",
+                        className="language-btn active",
+                        **{
+                            "aria-label": "Switch to English",
+                            "aria-pressed": "true",
+                        },
+                    ),
                     html.Span("|", className="mx-1"),
-                    html.Button("JP", className="language-btn"),
+                    html.Button(
+                        "JP",
+                        className="language-btn",
+                        **{
+                            "aria-label": "Switch to Japanese",
+                            "aria-pressed": "false",
+                        },
+                    ),
                 ]
 
         @manager.register_callback(
