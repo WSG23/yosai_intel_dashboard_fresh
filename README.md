@@ -44,6 +44,10 @@ yosai_intel_dashboard/
     └── css/                  # Modular CSS architecture
 ```
 
+**Note:** Navbar icons live under `assets/navbar_icons/` and are loaded by Dash
+components using relative paths such as `/assets/navbar_icons/dashboard.png`.
+Keep this directory structure intact to avoid broken links.
+
 ## 🚀 Quick Start
 
 ### Development Setup

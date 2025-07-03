@@ -2,6 +2,9 @@
 Navigation bar component with grid layout using existing framework
 """
 
+# Icons for the navigation bar are stored in ``assets/navbar_icons/`` and
+# referenced below via relative paths like ``/assets/navbar_icons/dashboard.png``.
+
 import datetime
 from typing import TYPE_CHECKING, Optional, Any, Union
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
