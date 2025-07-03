@@ -1,9 +1,12 @@
 """Test configuration and fixtures"""
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import pytest
 import tempfile
 import shutil
-from pathlib import Path
 from typing import Generator
 import pandas as pd
 

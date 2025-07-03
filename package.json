@@ -8,9 +8,11 @@
     "postcss": "^8.4.24",
     "postcss-cli": "^10.1.0",
     "postcss-import": "^15.1.0",
-    "@fullhuman/postcss-purgecss": "^5.1.0"
+    "@fullhuman/postcss-purgecss": "^5.1.0",
+    "pa11y": "^9.0.0"
   },
   "scripts": {
-    "build-css": "postcss assets/css/main.css -o assets/dist/main.min.css"
+    "build-css": "postcss assets/css/main.css -o assets/dist/main.min.css",
+    "lint:a11y": "pa11y http://localhost:8050"
   }
 }
