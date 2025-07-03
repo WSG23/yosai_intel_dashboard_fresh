@@ -71,11 +71,9 @@ def create_navbar_layout() -> Optional[Any]:
                                     [
                                         html.A(
                                             html.Img(
-                                                src="/assets/icons/logos/yosai_logo_name_white.png",
+                                                src="/assets/yosai_logo_name_white.png",
                                                 height="46px",  # Increased from 45px (2% larger)
                                                 className="navbar__logo",
-                                                alt="Yosai Logo",
-                                                title="Yosai Logo",
                                             ),
                                             href="/",
                                             style={"textDecoration": "none"},
@@ -127,33 +125,33 @@ def create_navbar_layout() -> Optional[Any]:
                                                     [
                                                         html.A(
                                                             html.Img(
-                                                                src="/assets/icons/navbar/dashboard.png",
+                                                                src="/assets/navbar_icons/dashboard.png",
                                                                 className="navbar-icon",
-                                                                alt="Dashboard Page",
-                                                                title="Dashboard Page",
+                                                                alt="Dashboard",
                                                             ),
                                                             href="/",
                                                             className="navbar-nav-link",
+                                                            title="Dashboard",
                                                         ),
                                                         html.A(
                                                             html.Img(
-                                                                src="/assets/icons/navbar/analytics.png",
+                                                                src="/assets/navbar_icons/analytics.png",
                                                                 className="navbar-icon",
-                                                                alt="Deep Analytics",
-                                                                title="Deep Analytics",
+                                                                alt="Analytics",
                                                             ),
                                                             href="/analytics",
                                                             className="navbar-nav-link",
+                                                            title="Analytics",
                                                         ),
                                                         html.A(
                                                             html.Img(
-                                                                src="/assets/icons/navbar/upload.png",
+                                                                src="/assets/navbar_icons/upload.png",
                                                                 className="navbar-icon",
-                                                                alt="Upload Page",
-                                                                title="Upload Page",
+                                                                alt="Upload",
                                                             ),
                                                             href="/file-upload",
                                                             className="navbar-nav-link",
+                                                            title="File Upload",
                                                         ),
                                                         dbc.DropdownMenu(
                                                             [
@@ -169,33 +167,38 @@ def create_navbar_layout() -> Optional[Any]:
                                                             nav=True,
                                                             in_navbar=True,
                                                             label=html.Img(
-                                                                src="/assets/icons/navbar/print.png",
+                                                                src="/assets/navbar_icons/print.png",
                                                                 className="navbar-icon",
                                                                 alt="Export",
-                                                                title="Export",
                                                             ),
                                                             toggle_class_name="navbar-nav-link",
                                                             menu_variant="dark",
                                                         ),
-                                                        html.A(
+                                                        html.Button(
                                                             html.Img(
-                                                                src="/assets/icons/navbar/settings.png",
+                                                                src="/assets/navbar_icons/settings.png",
                                                                 className="navbar-icon",
                                                                 alt="Settings",
-                                                                title="Settings",
                                                             ),
-                                                            href="/settings",
+                                                            id="navbar-settings-btn",
                                                             className="navbar-nav-link",
+                                                            title="Settings",
+                                                            style={
+                                                                "background": "none",
+                                                                "border": "none",
+                                                                "padding": "0",
+                                                                "cursor": "pointer",
+                                                            },
                                                         ),
                                                         html.A(
                                                             html.Img(
-                                                                src="/assets/icons/navbar/logout.png",
+                                                                src="/assets/navbar_icons/logout.png",
                                                                 className="navbar-icon",
                                                                 alt="Logout",
-                                                                title="Logout",
                                                             ),
                                                             href="/login",  # Changed from /logout to /login
                                                             className="navbar-nav-link",
+                                                            title="Logout",
                                                         ),
                                                         dbc.Button(
                                                             "🔄 Clear Cache",
