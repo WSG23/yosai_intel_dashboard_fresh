@@ -9,7 +9,7 @@ from flask_babel import lazy_gettext as _l, refresh
 from flask import session
 from core.plugins.decorators import safe_callback
 from core.theme_manager import DEFAULT_THEME, sanitize_theme
-from utils import check_navbar_assets, navbar_icon
+from utils.assets_utils import get_nav_icon
 
 import logging
 
@@ -68,6 +68,34 @@ PAGE_TITLES = {
     "/login": _l("Login"),
 }
 
+# Font-Awesome glyphs used when a PNG icon is unavailable
+fallback_icons = {
+    "dashboard": "fas fa-home",
+    "analytics": "fas fa-chart-bar",
+    "graphs": "fas fa-chart-line",
+    "upload": "fas fa-cloud-upload-alt",
+    "print": "fas fa-print",
+    "settings": "fas fa-cog",
+    "logout": "fas fa-sign-out-alt",
+}
+
+
+def nav_icon(name: str, alt: str) -> Any:
+    """Return ``Img`` tag or Font-Awesome fallback for the given icon name."""
+    try:
+        import dash  # Imported here to avoid ImportError in safe mode
+
+        app = dash.get_app()
+        url = get_nav_icon(app, name)
+    except Exception:  # pragma: no cover - graceful fallback
+        url = None
+
+    if url:
+        return html.Img(src=url, className="nav-icon", alt=alt)
+
+    glyph = fallback_icons.get(name, "fas fa-circle")
+    return html.I(className=f"{glyph} nav-icon", **{"aria-hidden": "true"})
+
 
 def create_navbar_layout() -> Optional[Any]:
     """Create navbar layout with responsive grid design"""
@@ -75,17 +103,6 @@ def create_navbar_layout() -> Optional[Any]:
         return None
 
     try:
-        check_navbar_assets(
-            [
-                "dashboard.png",
-                "analytics.png",
-                "analytics.png",
-                "upload.png",
-                "print.png",
-                "settings.png",
-                "logout.png",
-            ]
-        )
         return dbc.Navbar(
             [
                 dbc.Container(
@@ -159,24 +176,19 @@ def create_navbar_layout() -> Optional[Any]:
                                                 html.Div(
                                                     [
                                                         html.A(
-                                                            navbar_icon(
-                                                                "dashboard.png",
-                                                                str(_l("Dashboard")),
-                                                                "🏠",
-                                                            ),
+                                                            nav_icon("dashboard", str(_l("Dashboard"))),
                                                             href="/dashboard",
                                                             className="navbar-nav-link",
                                                             title=str(_l("Dashboard")),
                                                         ),
                                                         html.A(
-                                                            navbar_icon(
-                                                                "analytics.png",
+                                                            nav_icon(
+                                                                "analytics",
                                                                 str(
                                                                     _l(
                                                                         "Deep Analytics Page"
                                                                     )
                                                                 ),
-                                                                "📊",
                                                             ),
                                                             href="/analytics",
                                                             className="navbar-nav-link",
@@ -187,20 +199,18 @@ def create_navbar_layout() -> Optional[Any]:
                                                             ),
                                                         ),
                                                         html.A(
-                                                            navbar_icon(
-                                                                "analytics.png",
+                                                            nav_icon(
+                                                                "graphs",
                                                                 str(_l("Graphs")),
-                                                                "📈",
                                                             ),
                                                             href="/graphs",
                                                             className="navbar-nav-link",
                                                             title=str(_l("Graphs")),
                                                         ),
                                                         html.A(
-                                                            navbar_icon(
-                                                                "upload.png",
+                                                            nav_icon(
+                                                                "upload",
                                                                 str(_l("Upload")),
-                                                                "⬆️",
                                                             ),
                                                             href="/file-upload",
                                                             className="navbar-nav-link",
@@ -219,10 +229,9 @@ def create_navbar_layout() -> Optional[Any]:
                                                             ],
                                                             nav=True,
                                                             in_navbar=True,
-                                                            label=navbar_icon(
-                                                                "print.png",
+                                                            label=nav_icon(
+                                                                "print",
                                                                 str(_l("Export")),
-                                                                "🖨️",
                                                             ),
                                                             toggle_class_name="navbar-nav-link",
                                                             menu_variant="dark",
@@ -265,10 +274,9 @@ def create_navbar_layout() -> Optional[Any]:
                                                             ],
                                                             nav=True,
                                                             in_navbar=True,
-                                                            label=navbar_icon(
-                                                                "settings.png",
+                                                            label=nav_icon(
+                                                                "settings",
                                                                 str(_l("Settings")),
-                                                                "⚙️",
                                                             ),
                                                             toggle_class_name="navbar-nav-link",
                                                             menu_variant="dark",
@@ -305,10 +313,9 @@ def create_navbar_layout() -> Optional[Any]:
                                                     id="language-toggle",
                                                 ),
                                                 html.A(
-                                                    navbar_icon(
-                                                        "logout.png",
+                                                    nav_icon(
+                                                        "logout",
                                                         str(_l("Logout")),
-                                                        "🚪",
                                                     ),
                                                     href="/login",  # Changed from /logout to /login
                                                     className="navbar-nav-link",
