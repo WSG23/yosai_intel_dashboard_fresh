@@ -419,7 +419,6 @@ Internationalization is built in with Flask-Babel. Click the language dropdown i
 If you encounter an error like `"Babel" object has no attribute "localeselector"` when starting the app, ensure that the `Flask-Babel` package is installed and up to date (version 4 or later). The application now falls back to the new `locale_selector_func` API when needed.
 The compiled `.mo` files in `translations/` must exist at runtime. After editing any `.po` files run `pybabel compile -d translations` and commit the generated files.
 
-![Language Toggle Demo](docs/i18n_demo.gif)
 
 ## 🎨 Theme Support
 
