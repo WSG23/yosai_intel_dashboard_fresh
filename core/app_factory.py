@@ -9,7 +9,7 @@ from flasgger import Swagger
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output
 from dashboard.layout.navbar import create_navbar_layout
-from utils import check_navbar_assets, debug_dash_asset_serving
+from utils import check_navbar_assets
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from core.container import Container as DIContainer
 from core.plugins.manager import PluginManager
@@ -72,8 +72,10 @@ def _create_full_app() -> dash.Dash:
         # The final layout is assigned later once all plugins are loaded.
         app.layout = html.Div()
 
-        if not debug_dash_asset_serving(app):
-            logger.warning("Dash asset serving validation failed")
+        # Asset serving check has been moved out of the factory to ensure
+        # request handlers can be registered before the first request is
+        # processed.  The server can still be validated after creation by
+        # calling :func:`utils.assets_debug.debug_dash_asset_serving`.
 
         apply_theme_settings(app)
         Compress(app.server)
