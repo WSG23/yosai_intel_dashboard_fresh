@@ -104,3 +104,4 @@ node_modules/
 
 # Compiled translations
 translations/**/*.mo
+translations/**/LC_MESSAGES/*.mo
