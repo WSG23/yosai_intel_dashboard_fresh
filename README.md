@@ -44,6 +44,14 @@ yosai_intel_dashboard/
     └── css/                  # Modular CSS architecture
 ```
 
+### Navbar Icons
+
+Store PNG images for the navigation bar in `assets/navbar_icons/`. The
+application expects the files `dashboard.png`, `analytics.png`, `upload.png`,
+`print.png`, `settings.png` and `logout.png`. Additional icons can live in the
+same directory as long as their paths match the references in
+`dashboard/layout/navbar.py`.
+
 ## 🚀 Quick Start
 
 ### Development Setup
@@ -396,6 +404,13 @@ Internationalization is built in with Flask-Babel. Click the language dropdown i
 If you encounter an error like `"Babel" object has no attribute "localeselector"` when starting the app, ensure that the `Flask-Babel` package is installed and up to date (version 4 or later). The application now falls back to the new `locale_selector_func` API when needed.
 
 ![Language Toggle Demo](docs/i18n_demo.gif)
+
+## 🎨 Theme Support
+
+The dashboard provides light, dark and high‑contrast themes. The current
+selection is saved in the browser and applied before CSS loads to avoid a flash
+of unstyled content. Use the new dropdown on the right side of the navbar to
+switch themes at runtime.
 
 ## 📚 Documentation
 

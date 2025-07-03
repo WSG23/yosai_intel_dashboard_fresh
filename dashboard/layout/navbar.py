@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Optional, Any, Union
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from flask_babel import lazy_gettext as _l
 from core.plugins.decorators import safe_callback
+from core.theme_manager import DEFAULT_THEME, sanitize_theme
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -58,6 +60,16 @@ def create_navbar_layout() -> Optional[Any]:
         return None
 
     try:
+        check_navbar_assets(
+            [
+                "dashboard.png",
+                "analytics.png",
+                "upload.png",
+                "print.png",
+                "settings.png",
+                "logout.png",
+            ]
+        )
         return dbc.Navbar(
             [
                 dbc.Container(
@@ -125,30 +137,30 @@ def create_navbar_layout() -> Optional[Any]:
                                                 html.Div(
                                                     [
                                                         html.A(
-                                                            html.Img(
-                                                                src="/assets/navbar_icons/dashboard.png",
-                                                                className="navbar-icon",
-                                                                alt="Dashboard",
+                                                            navbar_icon(
+                                                                "dashboard.png",
+                                                                "Dashboard",
+                                                                "🏠",
                                                             ),
                                                             href="/",
                                                             className="navbar-nav-link",
                                                             title="Dashboard",
                                                         ),
                                                         html.A(
-                                                            html.Img(
-                                                                src="/assets/navbar_icons/analytics.png",
-                                                                className="navbar-icon",
-                                                                alt="Deep Analytics Page",
+                                                            navbar_icon(
+                                                                "analytics.png",
+                                                                "Deep Analytics Page",
+                                                                "📊",
                                                             ),
                                                             href="/analytics",
                                                             className="navbar-nav-link",
                                                             title="Deep Analytics Page",
                                                         ),
                                                         html.A(
-                                                            html.Img(
-                                                                src="/assets/navbar_icons/upload.png",
-                                                                className="navbar-icon",
-                                                                alt="Upload",
+                                                            navbar_icon(
+                                                                "upload.png",
+                                                                "Upload",
+                                                                "⬆️",
                                                             ),
                                                             href="/file-upload",
                                                             className="navbar-nav-link",
@@ -167,29 +179,29 @@ def create_navbar_layout() -> Optional[Any]:
                                                             ],
                                                             nav=True,
                                                             in_navbar=True,
-                                                            label=html.Img(
-                                                                src="/assets/navbar_icons/print.png",
-                                                                className="navbar-icon",
-                                                                alt="Export",
+                                                            label=navbar_icon(
+                                                                "print.png",
+                                                                "Export",
+                                                                "🖨️",
                                                             ),
                                                             toggle_class_name="navbar-nav-link",
                                                             menu_variant="dark",
                                                         ),
                                                         html.Button(
-                                                            html.Img(
-                                                                src="/assets/navbar_icons/settings.png",
-                                                                className="navbar-icon",
-                                                                alt="Settings",
+                                                            navbar_icon(
+                                                                "settings.png",
+                                                                "Settings",
+                                                                "⚙️",
                                                             ),
                                                             id="navbar-settings-btn",
                                                             className="navbar-nav-link navbar-icon-btn",
                                                             title="Settings",
                                                         ),
                                                         html.A(
-                                                            html.Img(
-                                                                src="/assets/navbar_icons/logout.png",
-                                                                className="navbar-icon",
-                                                                alt="Logout",
+                                                            navbar_icon(
+                                                                "logout.png",
+                                                                "Logout",
+                                                                "🚪",
                                                             ),
                                                             href="/login",  # Changed from /logout to /login
                                                             className="navbar-nav-link",
@@ -201,6 +213,27 @@ def create_navbar_layout() -> Optional[Any]:
                                                             color="outline-light",
                                                             size="sm",
                                                             className="ms-1",
+                                                        ),
+                                                        dcc.Dropdown(
+                                                            id="theme-dropdown",
+                                                            options=[
+                                                                {
+                                                                    "label": "Dark",
+                                                                    "value": "dark",
+                                                                },
+                                                                {
+                                                                    "label": "Light",
+                                                                    "value": "light",
+                                                                },
+                                                                {
+                                                                    "label": "High Contrast",
+                                                                    "value": "high-contrast",
+                                                                },
+                                                            ],
+                                                            value=DEFAULT_THEME,
+                                                            clearable=False,
+                                                            className="ms-1 theme-dropdown",
+                                                            style={"width": "120px"},
                                                         ),
                                                     ],
                                                     className="d-flex align-items-center navbar-icon-group",
@@ -331,6 +364,21 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
                         },
                     ),
                 ]
+
+        @manager.register_callback(
+            Output("theme-store", "data"),
+            Input("theme-dropdown", "value"),
+            callback_id="navbar_select_theme",
+            component_name="navbar",
+        )
+        def update_theme_store(value: Optional[str]):
+            return sanitize_theme(value)
+
+        manager.app.clientside_callback(
+            "function(data){if(window.setAppTheme&&data){window.setAppTheme(data);} return '';}",
+            Output("theme-dummy-output", "children"),
+            Input("theme-store", "data"),
+        )
 
         @manager.register_callback(
             Output("download-csv", "data"),
