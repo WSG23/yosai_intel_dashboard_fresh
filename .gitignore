@@ -101,3 +101,6 @@ data/training/
 
 # Node
 node_modules/
+
+# Compiled translations
+translations/**/*.mo

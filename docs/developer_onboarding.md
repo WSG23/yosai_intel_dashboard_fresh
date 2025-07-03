@@ -27,21 +27,26 @@ This guide walks new contributors through setting up a local development environ
    ./scripts/setup.sh
    ```
 
-4. **Configure environment variables:**
+4. **Compile translations:**
+   ```bash
+   pybabel compile -d translations
+   ```
+
+5. **Configure environment variables:**
    ```bash
    cp .env.example .env
    # Edit .env as needed
    ```
 
-5. **(Optional) Initialize the database or load sample data.**
+6. **(Optional) Initialize the database or load sample data.**
    Prepare your PostgreSQL database and populate it with any example data if desired.
 
-6. **Run the test suite:**
+7. **Run the test suite:**
    ```bash
    pytest --cov
    ```
 
-7. **Start the application:**
+8. **Start the application:**
    ```bash
    python app.py
    ```
