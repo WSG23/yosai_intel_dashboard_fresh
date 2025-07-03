@@ -1,0 +1,20 @@
+/* =================================================================== */
+/* 03-components/_language-toggle.css - Navbar language switch styles  */
+/* =================================================================== */
+
+.language-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0 var(--space-1);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+}
+
+.language-btn.active {
+  color: var(--text-primary);
+}
+
+.navbar-language-toggle {
+  margin-left: var(--space-3);
+}
