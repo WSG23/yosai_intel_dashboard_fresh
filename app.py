@@ -13,6 +13,7 @@ logging.basicConfig(
 import os
 import sys
 import importlib
+from flask import request
 
 try:
     from dotenv import load_dotenv
@@ -150,6 +151,7 @@ def main():
 
             @server.before_request
             def _before_request():
+                logger.debug("Incoming request scheme: %s", request.scheme)
                 for result in manager.trigger(CallbackEvent.BEFORE_REQUEST):
                     if result is not None:
                         return result
