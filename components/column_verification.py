@@ -58,7 +58,8 @@ def create_column_verification_modal(file_info: Dict[str, Any]) -> dbc.Modal:
         default_value = suggested_field if suggested_field else None
 
         table_rows.append(
-            html.Tr([
+            html.Tr(
+                [
                 html.Td([
                     html.Strong(column),
                     html.Br(),
@@ -72,10 +73,14 @@ def create_column_verification_modal(file_info: Dict[str, Any]) -> dbc.Modal:
                         id={"type": "column-mapping", "index": i},
                         options=STANDARD_FIELD_OPTIONS,
                         placeholder=f"Map {column} to...",
-                        value=default_value
+                        value=default_value,
+                        autoFocus=True if i == 0 else False,
+                        tabIndex=0
                     )
                 )
-            ])
+                ],
+                tabIndex=0,
+            )
         )
 
     modal_body = html.Div([
@@ -147,6 +152,7 @@ def create_column_verification_modal(file_info: Dict[str, Any]) -> dbc.Modal:
     id="column-verification-modal",
     size="xl",
     is_open=False,
+    autofocus=True,
     )
 
 def create_verification_interface(columns: List[str], sample_data: Dict, ai_suggestions: Dict) -> html.Div:
@@ -166,7 +172,8 @@ def create_verification_interface(columns: List[str], sample_data: Dict, ai_sugg
 
         # Simple row for each standard field
         mapping_rows.append(
-            dbc.Row([
+            dbc.Row(
+                [
                 # Standard field name
                 dbc.Col([
                     dbc.Label(f"Map '{column}' to:", className="fw-bold")
@@ -190,7 +197,10 @@ def create_verification_interface(columns: List[str], sample_data: Dict, ai_sugg
                              color="success" if confidence > 0.7 else "warning" if confidence > 0.4 else "secondary")
                 ], width=2)
 
-            ], className="mb-3")
+                ],
+                className="mb-3",
+                tabIndex=0,
+            )
         )
 
     return html.Div([
