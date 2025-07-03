@@ -1,1 +1,6 @@
 /* Analytics styles */
+
+/* Utility class for toggling visibility on analytics page */
+.hidden {
+  display: none;
+}
