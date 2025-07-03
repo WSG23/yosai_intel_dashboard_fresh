@@ -65,7 +65,7 @@ def _create_full_app() -> dash.Dash:
             assets_folder="assets",
         )
         apply_theme_settings(app)
-app.server)
+        Compress(app.server)
 
         app.title = "Yōsai Intel Dashboard"
 
