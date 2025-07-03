@@ -38,6 +38,12 @@ def check_navbar_assets(
 def debug_dash_asset_serving(app: Any, icon: str = "analytics.png") -> bool:
     """Check if Dash server can serve an icon from the assets directory."""
     path = f"/assets/navbar_icons/{icon}"
+
+    # Skip probe when the icon file is missing.  This avoids unnecessary
+    # network requests during startup when optional icons have been removed.
+    if not (NAVBAR_ICON_DIR / icon).is_file():  # pragma: no cover - early exit
+        return False
+
     try:
         client = app.server.test_client()
         res = client.get(path)
