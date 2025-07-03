@@ -85,13 +85,18 @@ directory as long as their paths match the references in
    # Edit .env with your configuration (e.g. set HOST and database info)
    ```
 
-5. **Run the application:**
+5. **Build the CSS bundle:**
+   Ensure `node` and `npm` are available if you use the npm command.
+   ```bash
+   npm run build-css  # or `python tools/build_css.py`
+   ```
+
+6. **Run the application:**
    The app now loads variables from `.env` automatically.
    ```bash
    python app.py
    ```
-
-6. **Access the dashboard:**
+7. **Access the dashboard:**
    Open http://127.0.0.1:8050 in your browser
 
 ## Developer Onboarding
