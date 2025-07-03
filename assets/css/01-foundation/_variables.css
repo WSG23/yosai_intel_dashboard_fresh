@@ -16,6 +16,16 @@
   --color-text-primary: #F7FAFC;
   --color-text-secondary: #E2E8F0;
   --color-text-tertiary: #A0AEC0;
+
+  /* Additional text colors used by utilities */
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --text-tertiary: var(--color-text-tertiary);
+  --text-disabled: var(--color-text-tertiary);
+  --text-inverse: var(--color-background);
+
+  /* Semantic color */
+  --color-info: #3FA7D6;
   
   /* Spacing system (8pt grid) */
   --space-0: 0;
@@ -38,7 +48,8 @@
   
   /* Typography */
   --font-family-system: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-  --text-2xs: 0.625rem;   /* 10px */
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
   --text-xs: 0.75rem;     /* 12px */
   --text-sm: 0.875rem;    /* 14px */
   --text-base: 1rem;      /* 16px */
@@ -49,6 +60,8 @@
   --text-4xl: 2.25rem;    /* 36px */
   --text-5xl: 3rem;       /* 48px */
   --text-6xl: 3.75rem;    /* 60px */
+  --text-2xs: 0.625rem;   /* 10px */
+
   
   /* Font weights */
   --font-weight-normal: 400;
