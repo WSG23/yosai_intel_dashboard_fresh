@@ -166,7 +166,7 @@ def main():
                 manager.trigger(CallbackEvent.AFTER_REQUEST, current)
                 return current
 
-            app._callback_manager = manager
+            app._callback_manager = manager  # type: ignore[attr-defined]
             # Validate that Dash can serve static assets after request hooks
             # have been registered. This avoids triggering a request before the
             # hooks are in place, which previously caused Flask to raise a
