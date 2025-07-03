@@ -418,7 +418,6 @@ procedures, Docker/cloud secret usage, and incident handling guidance.
 Internationalization is built in with Flask-Babel. Click the language dropdown in the navigation bar to switch between English and Japanese. No additional environment variables are required.
 If you encounter an error like `"Babel" object has no attribute "localeselector"` when starting the app, ensure that the `Flask-Babel` package is installed and up to date (version 4 or later). The application now falls back to the new `locale_selector_func` API when needed.
 
-![Language Toggle Demo](docs/i18n_demo.gif)
 
 ## 🎨 Theme Support
 
