@@ -63,7 +63,6 @@ def create_navbar_layout() -> Optional[Any]:
     try:
         check_navbar_assets(
             [
-                "dashboard.png",
                 "analytics.png",
                 "upload.png",
                 "print.png",
@@ -137,16 +136,6 @@ def create_navbar_layout() -> Optional[Any]:
                                                 # Navigation Icons
                                                 html.Div(
                                                     [
-                                                        html.A(
-                                                            navbar_icon(
-                                                                "dashboard.png",
-                                                                "Dashboard",
-                                                                "🏠",
-                                                            ),
-                                                            href="/",
-                                                            className="navbar-nav-link",
-                                                            title="Dashboard",
-                                                        ),
                                                         html.A(
                                                             navbar_icon(
                                                                 "analytics.png",
@@ -424,14 +413,14 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
         def update_page_context(pathname: str) -> str:
             """Update page context based on current route"""
             page_contexts = {
-                "/": "Dashboard – Main Operations",
+                "/": "Analytics – Data Intelligence",
                 "/analytics": "Analytics – Data Intelligence",
                 "/file-upload": "File Upload – Data Management",
                 "/export": "Export – Report Generation",
                 "/settings": "Settings – System Configuration",
                 "/login": "Login – Authentication",
             }
-            return page_contexts.get(pathname, "Dashboard – Main Operations")
+            return page_contexts.get(pathname, "Analytics – Data Intelligence")
 
     except Exception as e:
         logger.info(f"Error registering navbar callbacks: {e}")

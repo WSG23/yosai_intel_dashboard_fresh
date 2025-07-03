@@ -422,23 +422,8 @@ def _register_router_callbacks(manager: UnifiedCallbackCoordinator) -> None:
 
 
 def _get_home_page() -> Any:
-    """Get home page (dashboard)."""
-    return _get_dashboard_page()
-
-
-def _get_dashboard_page() -> Any:
-    """Get dashboard page with overview metrics."""
-    try:
-        from pages.dashboard import layout
-
-        return layout()
-    except ImportError as e:
-        logger.error(f"Dashboard page import failed: {e}")
-        return _create_placeholder_page(
-            "Dashboard",
-            "Dashboard page is being loaded...",
-            "The dashboard module is not available. Please check the installation.",
-        )
+    """Get default home page."""
+    return _get_analytics_page()
 
 
 def _get_analytics_page() -> Any:

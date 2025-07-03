@@ -24,12 +24,6 @@ except ImportError as e:
     logger.warning(f"File upload page not available: {e}")
     _pages["file_upload"] = None
 
-try:
-    from . import dashboard
-    _pages["dashboard"] = dashboard
-except ImportError as e:
-    logger.warning(f"Dashboard page not available: {e}")
-    _pages["dashboard"] = None
 
 try:
     from . import graphs
