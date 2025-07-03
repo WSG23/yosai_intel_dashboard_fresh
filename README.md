@@ -120,6 +120,7 @@ Using Docker Compose:
 ```bash
 docker-compose -f docker-compose.prod.yml up -d
 ```
+Whenever you modify the code, rebuild the Docker image with `docker-compose build` (or `docker-compose up --build`) so the running container picks up your changes.
 Docker Compose reads variables from a `.env` file in this directory. Set
 `DB_PASSWORD` **and** `SECRET_KEY` there (or export them in your shell) before
 starting the services.
