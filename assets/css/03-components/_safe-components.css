@@ -1,0 +1,6 @@
+/* =================================================================== */
+/* 03-components/_safe-components.css - Styles for fallback UI elements */
+/* =================================================================== */
+
+.safe-navbar { background-color: #1B2A47; }
+.safe-map-placeholder { height: 300px; text-align: center; padding: 50px; }
