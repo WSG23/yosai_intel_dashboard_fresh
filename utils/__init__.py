@@ -15,6 +15,7 @@ try:
         debug_dash_asset_serving,
         navbar_icon,
     )
+    from .assets_utils import get_nav_icon
 except Exception:  # pragma: no cover - fallback when utils unavailable
     from .unicode_utils import (
         safe_unicode_encode,
@@ -30,6 +31,7 @@ except Exception:  # pragma: no cover - fallback when utils unavailable
         debug_dash_asset_serving,
         navbar_icon,
     )
+    from .assets_utils import get_nav_icon
 
 __all__: list[str] = [
     "sanitize_unicode_input",
@@ -42,4 +44,5 @@ __all__: list[str] = [
     "check_navbar_assets",
     "debug_dash_asset_serving",
     "navbar_icon",
+    "get_nav_icon",
 ]
