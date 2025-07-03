@@ -3,30 +3,24 @@
 /* =================================================================== */
 
 :root {
-  /* Light mode */
-  --color-bg: #F4F6F8;
-  --color-surface: #FFFFFF;
-  --color-accent: #0078C8;
-  --color-text: #1C1C1C;
-  --color-text-muted: #697077;
+  /* Extracted from existing dashboard.css */
+  --color-primary: #1B2A47;
+  --color-accent: #2196F3;
+  --color-accent-hover: #42A5F5;
   --color-success: #2DBE6C;
   --color-warning: #FFB020;
-  --color-danger: #E02020;
-  --color-border: #D0D5DA;
-  --color-hover: #E2E6EC;
-  /* Legacy variables */
-  --color-primary: #1B2A47;
-  --color-accent-hover: #42A5F5;
-  --color-critical: var(--color-danger);
-  --color-background: var(--color-bg);
+  --color-critical: #E02020;
+  --color-background: #0F1419;
+  --color-surface: #1A2332;
   /* Default surface layers before a theme is applied */
   --surface-app: var(--color-surface);
   --surface-primary: var(--color-surface);
   --surface-secondary: var(--color-surface);
   --surface-tertiary: var(--color-surface);
-  --color-text-primary: var(--color-text);
-  --color-text-secondary: var(--color-text-muted);
-  --color-text-tertiary: var(--color-text-muted);
+  --color-border: #2D3748;
+  --color-text-primary: #F7FAFC;
+  --color-text-secondary: #E2E8F0;
+  --color-text-tertiary: #A0AEC0;
 
   /* Additional text colors used by utilities */
   --text-primary: var(--color-text-primary);
