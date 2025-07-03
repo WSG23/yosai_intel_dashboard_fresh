@@ -136,16 +136,20 @@ def layout():
         ], className="mb-4")
 
         # Results display area
-        results_area = html.Div(
-            id="analytics-display-area",
-            children=[
-                dbc.Alert([
-                    html.H6("Get Started"),
-                    html.P("1. Select a data source from the dropdown"),
-                    html.P("2. Click any analysis button to run immediately"),
-                    html.P("Each button runs its analysis type automatically")
-                ], color="info")
-            ]
+        results_area = dcc.Loading(
+            id="analytics-loading",
+            type="circle",
+            children=html.Div(
+                id="analytics-display-area",
+                children=[
+                    dbc.Alert([
+                        html.H6("Get Started"),
+                        html.P("1. Select a data source from the dropdown"),
+                        html.P("2. Click any analysis button to run immediately"),
+                        html.P("Each button runs its analysis type automatically")
+                    ], color="info")
+                ]
+            )
         )
 
         # Hidden stores

@@ -369,7 +369,11 @@ def _create_main_layout() -> html.Div:
                 className="top-panel",
             ),
             # Main content area (dynamically populated)
-            html.Main(id="page-content", className="main-content p-4"),
+            dcc.Loading(
+                id="page-loading",
+                type="circle",
+                children=html.Main(id="page-content", className="main-content p-4"),
+            ),
             # Global data stores
             dcc.Store(id="global-store", data={}),
             dcc.Store(id="session-store", data={}),

@@ -4,3 +4,8 @@
 .hidden {
   display: none;
 }
+
+/* Page transition effect */
+.main-content {
+  animation: fade-slide-in 0.4s ease-out;
+}

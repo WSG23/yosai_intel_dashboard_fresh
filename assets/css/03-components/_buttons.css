@@ -32,6 +32,8 @@
   outline-offset: 2px;
 }
 
+/* General hover effect for all buttons */
+
 /* Button Sizes */
 .btn--xs {
   padding: var(--space-1) var(--space-2);
@@ -137,6 +139,16 @@
 
 .btn--critical:hover:not(:disabled) {
   background: var(--color-critical-hover);
+}
+
+/* General hover effect for all buttons */
+.btn:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-2px);
+}
+
+.btn:active {
+  transform: translateY(0);
 }
 
 /* Legacy button utility classes */

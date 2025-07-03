@@ -10,10 +10,12 @@
   overflow: hidden;
   box-shadow: var(--shadow-sm);
   transition: all var(--duration-normal) var(--ease-out);
+  animation: fade-slide-in 0.3s ease-out;
 }
 
 .card:hover {
   box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
 }
 
 /* Card Sections */
