@@ -16,6 +16,7 @@ from core.secret_manager import validate_secrets
 from dash_csrf_plugin import setup_enhanced_csrf_protection, CSRFMode
 import pandas as pd
 from flask_babel import Babel
+from flask import session
 from flask_compress import Compress
 from core.theme_manager import apply_theme_settings, DEFAULT_THEME
 from config.config import get_config
@@ -84,7 +85,16 @@ def _create_full_app() -> dash.Dash:
 
         # Initialize Flask-Babel before any layouts use gettext
         try:
-            Babel(app.server)
+            babel = Babel(app.server)
+
+            def _select_locale() -> str:
+                return session.get("locale", "en")
+
+            try:
+                babel.localeselector(_select_locale)  # Flask-Babel <4
+            except AttributeError:  # pragma: no cover - fallback for >=4
+                babel.locale_selector_func(_select_locale)
+            app.server.babel = babel
         except Exception as e:  # pragma: no cover - optional dependency
             logger.warning(f"Failed to initialize Babel: {e}")
 
