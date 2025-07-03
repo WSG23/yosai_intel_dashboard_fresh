@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 # Type checking imports
 if TYPE_CHECKING:
-    import dash
     import dash_bootstrap_components as dbc
     from dash import html, dcc
     from dash._callback import callback
@@ -143,20 +142,15 @@ def create_navbar_layout() -> Optional[Any]:
                                                             className="navbar-nav-link",
                                                             title="File Upload"
                                                         ),
-                                                        dbc.DropdownMenu(
-                                                            [
-                                                                dbc.DropdownMenuItem("Export CSV", id="nav-export-csv"),
-                                                                dbc.DropdownMenuItem("Export JSON", id="nav-export-json"),
-                                                            ],
-                                                            nav=True,
-                                                            in_navbar=True,
-                                                            label=html.Img(
+                                                        html.A(
+                                                            html.Img(
                                                                 src="/assets/navbar_icons/print.png",
                                                                 className="navbar-icon",
-                                                                alt="Export",
+                                                                alt="Export"
                                                             ),
-                                                            toggle_class_name="navbar-nav-link",
-                                                            menu_variant="dark",
+                                                            href="/export",
+                                                            className="navbar-nav-link",
+                                                            title="Export"
                                                         ),
                                                         html.Button(
                                                             html.Img(
@@ -188,8 +182,6 @@ def create_navbar_layout() -> Optional[Any]:
                                                     className="d-flex align-items-center",
                                                     style={"gap": "1rem"}  # Increased from 0.75rem
                                                 ),
-                                                dcc.Download(id="download-csv"),
-                                                dcc.Download(id="download-json"),
 
                                                 # Language Toggle
                                                 html.Div(
@@ -272,40 +264,6 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
                     html.Span("|", className="mx-1"),
                     html.Button("JP", className="language-btn"),
                 ]
-
-        @manager.register_callback(
-            Output("download-csv", "data"),
-            Input("nav-export-csv", "n_clicks"),
-            prevent_initial_call=True,
-            callback_id="navbar_export_csv",
-            component_name="navbar",
-        )
-        def export_csv(n_clicks: Optional[int]):
-            """Export enhanced data as CSV file."""
-            import services.export_service as export_service
-
-            data = export_service.get_enhanced_data()
-            csv_str = export_service.to_csv_string(data)
-            if not csv_str:
-                return dash.no_update
-            return dict(content=csv_str, filename="enhanced_data.csv")
-
-        @manager.register_callback(
-            Output("download-json", "data"),
-            Input("nav-export-json", "n_clicks"),
-            prevent_initial_call=True,
-            callback_id="navbar_export_json",
-            component_name="navbar",
-        )
-        def export_json(n_clicks: Optional[int]):
-            """Export enhanced data as JSON file."""
-            import services.export_service as export_service
-
-            data = export_service.get_enhanced_data()
-            json_str = export_service.to_json_string(data)
-            if not json_str:
-                return dash.no_update
-            return dict(content=json_str, filename="enhanced_data.json")
 
         @manager.register_callback(
             Output("page-context", "children"),
