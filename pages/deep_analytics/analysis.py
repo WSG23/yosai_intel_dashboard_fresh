@@ -22,7 +22,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # Add this import
-from services import AnalyticsService
+from services import AnalyticsService, get_analytics_service
 from utils.unicode_handler import sanitize_unicode_input, safe_format_number
 
 # Internal service imports with CORRECTED paths
@@ -78,11 +78,11 @@ def _get_display_title(analysis_type: str) -> str:
 
 
 def get_analytics_service_safe():
-    """Safely instantiate the analytics service if available."""
-    if AnalyticsService is None:
+    """Safely return the shared analytics service instance."""
+    if get_analytics_service is None:
         return None
     try:
-        return AnalyticsService()
+        return get_analytics_service()
     except Exception as e:
         logger.exception("Failed to initialize AnalyticsService: %s", e)
         return None
