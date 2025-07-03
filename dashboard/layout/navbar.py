@@ -55,6 +55,19 @@ except ImportError:
     Input: Any = _stub_callable
 
 
+PAGE_TITLES = {
+    "/": "Dashboard",
+    "/dashboard": "Dashboard",
+    "/analytics": "Deep Analytics",
+    "/graphs": "Graphs",
+    "/export": "Export",
+    "/settings": "Settings",
+    "/upload": "File Upload",
+    "/file-upload": "File Upload",
+    "/login": "Login",
+}
+
+
 def create_navbar_layout() -> Optional[Any]:
     """Create navbar layout with responsive grid design"""
     if not DASH_AVAILABLE:
@@ -105,7 +118,8 @@ def create_navbar_layout() -> Optional[Any]:
                                                     id="facility-header",
                                                     children=[
                                                         html.H5(
-                                                            str(_l("Main Panel")),
+                                                            str(_l("Dashboard")),
+                                                            id="navbar-title",
                                                             className="navbar-title text-primary",
                                                         ),
                                                         html.Small(
@@ -304,6 +318,12 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             """Update live time display"""
             current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             return f"Live: {current_time}"
+
+        manager.app.clientside_callback(
+            "function(pathname){const map={\"/\":\"Dashboard\",\"/dashboard\":\"Dashboard\",\"/analytics\":\"Deep Analytics\",\"/graphs\":\"Graphs\",\"/export\":\"Export\",\"/settings\":\"Settings\",\"/upload\":\"File Upload\",\"/file-upload\":\"File Upload\",\"/login\":\"Login\"};return map[pathname]||'Dashboard';}",
+            Output("navbar-title", "children"),
+            Input("url-i18n", "pathname"),
+        )
 
         @manager.register_callback(
             Output("language-toggle", "children"),
