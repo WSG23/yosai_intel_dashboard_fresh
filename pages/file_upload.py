@@ -6,7 +6,7 @@ Integrates with analytics system
 import logging
 import json
 from datetime import datetime
-from threading import Thread
+import asyncio
 
 import pandas as pd
 from typing import Optional, Dict, Any, List, Tuple
@@ -35,6 +35,7 @@ from services.upload import (
     AISuggestionService,
     ModalService,
 )
+from services.task_queue import create_task, get_status, clear_task
 
 
 logger = logging.getLogger(__name__)
@@ -42,12 +43,6 @@ logger = logging.getLogger(__name__)
 # Initialize a shared AI suggestion service for module-level helpers
 _ai_service = AISuggestionService()
 
-# Simple in-memory task tracker for background uploads
-_upload_task: Dict[str, Any] = {
-    "progress": 0,
-    "result": None,
-    "running": False,
-}
 
 
 def analyze_device_name_with_ai(device_name: str) -> Dict[str, Any]:
@@ -139,6 +134,7 @@ def layout():
             dcc.Store(id="file-info-store", data={}),
             dcc.Store(id="current-file-info-store"),
             dcc.Store(id="current-session-id", data="session_123"),
+            dcc.Store(id="upload-task-id"),
             dbc.Modal(
                 [
                     dbc.ModalHeader(dbc.ModalTitle("Column Mapping")),
@@ -286,30 +282,10 @@ class Callbacks:
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
         return self.processing.process_files(contents_list, filenames_list)
 
-    def _run_background_processing(self, contents_list: List[str], filenames_list: List[str]) -> None:
-        """Execute file processing in a background thread."""
-        try:
-            _upload_task["progress"] = 50
-            result = self.processing.process_files(contents_list, filenames_list)
-            _upload_task["result"] = result
-        except Exception as exc:  # pragma: no cover - best effort
-            logger.error("Background upload error: %s", exc)
-            _upload_task["result"] = (
-                [self.processing.build_failure_alert(str(exc))],
-                [],
-                {},
-                [],
-                {},
-                no_update,
-                no_update,
-            )
-        finally:
-            _upload_task["progress"] = 100
-            _upload_task["running"] = False
 
     def start_upload_background(
         self, contents_list: List[str] | str, filenames_list: List[str] | str
-    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, int, str, bool]:
+    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, int, str, bool, str]:
         """Kick off background upload processing and enable progress polling."""
         if not contents_list:
             return (
@@ -323,6 +299,7 @@ class Callbacks:
                 0,
                 "0%",
                 True,
+                "",
             )
 
         if not isinstance(contents_list, list):
@@ -330,13 +307,10 @@ class Callbacks:
         if not isinstance(filenames_list, list):
             filenames_list = [filenames_list]
 
-        if not _upload_task["running"]:
-            _upload_task.update({"progress": 0, "result": None, "running": True})
-            Thread(
-                target=self._run_background_processing,
-                args=(contents_list, filenames_list),
-                daemon=True,
-            ).start()
+        async_coro = asyncio.to_thread(
+            self.processing.process_files, contents_list, filenames_list
+        )
+        task_id = create_task(async_coro)
 
         return (
             no_update,
@@ -349,18 +323,30 @@ class Callbacks:
             0,
             "0%",
             False,
+            task_id,
         )
 
     def check_upload_progress(
-        self, _n: int
-    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, int, str, bool]:
+        self, _n: int, task_id: str
+    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, int, str, bool, str]:
         """Poll background processing status and emit results when ready."""
-        progress = int(_upload_task.get("progress", 0))
-        result = _upload_task.get("result")
+        status = get_status(task_id)
+        progress = int(status.get("progress", 0))
+        result = status.get("result")
 
-        if progress >= 100 and result is not None:
-            _upload_task["result"] = None
-            return (*result, 100, "100%", True)
+        if status.get("done") and result is not None:
+            clear_task(task_id)
+            if isinstance(result, Exception):
+                result = (
+                    [self.processing.build_failure_alert(str(result))],
+                    [],
+                    {},
+                    [],
+                    {},
+                    no_update,
+                    no_update,
+                )
+            return (*result, 100, "100%", True, task_id)
 
         return (
             no_update,
@@ -373,6 +359,7 @@ class Callbacks:
             progress,
             f"{progress}%",
             False,
+            task_id,
         )
 
     def handle_modal_dialogs(
@@ -1078,6 +1065,7 @@ def register_callbacks(
                 Output("upload-progress", "value", allow_duplicate=True),
                 Output("upload-progress", "label", allow_duplicate=True),
                 Output("upload-progress-interval", "disabled", allow_duplicate=True),
+                Output("upload-task-id", "data", allow_duplicate=True),
             ],
             Input("upload-data", "contents"),
             State("upload-data", "filename"),
@@ -1097,9 +1085,10 @@ def register_callbacks(
                 Output("upload-progress", "value", allow_duplicate=True),
                 Output("upload-progress", "label", allow_duplicate=True),
                 Output("upload-progress-interval", "disabled", allow_duplicate=True),
+                Output("upload-task-id", "data", allow_duplicate=True),
             ],
             Input("upload-progress-interval", "n_intervals"),
-            None,
+            State("upload-task-id", "data"),
             "check_upload_progress",
             {"prevent_initial_call": True, "allow_duplicate": True},
         ),
