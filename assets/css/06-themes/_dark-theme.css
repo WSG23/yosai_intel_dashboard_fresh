@@ -4,44 +4,27 @@
 
 /* Dark theme is the default, but we can override for other themes */
 [data-theme="dark"] {
-  --color-bg: #0E1726;
-  --color-surface: #1B2A47;
-  --color-accent: #0078C8;
-  --color-text: #E0E6ED;
-  --color-text-muted: #A3B1C6;
-  --color-success: #2DBE6C;
-  --color-warning: #FFB020;
-  --color-danger: #E02020;
-  --color-border: #2F3A52;
-  --color-hover: #253657;
-  --surface-app: var(--color-surface);
-  --surface-primary: var(--color-surface);
-  --surface-secondary: var(--color-surface);
-  --surface-tertiary: var(--color-surface);
-  --text-primary: var(--color-text);
-  --text-secondary: var(--color-text-muted);
-  --text-tertiary: var(--color-text-muted);
+  --surface-app: var(--color-gray-850);       /* was 900 */
+  --surface-primary: var(--color-gray-800);   /* was 850 */
+  --surface-secondary: var(--color-gray-750); /* was 800 */
+  --surface-tertiary: var(--color-gray-700);  /* was 750 */
+  --text-primary: var(--color-gray-100);   /* was 50 */
+  --text-secondary: var(--color-gray-300); /* was 200 */
+  --text-tertiary: var(--color-gray-500);  /* was 400 */
 }
 
 /* Light theme overrides */
 [data-theme="light"] {
-  --color-bg: #F4F6F8;
-  --color-surface: #FFFFFF;
-  --color-accent: #0078C8;
-  --color-text: #1C1C1C;
-  --color-text-muted: #697077;
-  --color-success: #2DBE6C;
-  --color-warning: #FFB020;
-  --color-danger: #E02020;
-  --color-border: #D0D5DA;
-  --color-hover: #E2E6EC;
-  --surface-app: var(--color-surface);
-  --surface-primary: var(--color-surface);
-  --surface-secondary: var(--color-surface);
-  --surface-tertiary: var(--color-surface);
-  --text-primary: var(--color-text);
-  --text-secondary: var(--color-text-muted);
-  --text-tertiary: var(--color-text-muted);
+  --surface-app: var(--color-white);
+  --surface-primary: var(--color-gray-50);
+  --surface-secondary: var(--color-gray-100);
+  --surface-tertiary: var(--color-gray-200);
+  --text-primary: var(--color-gray-900);
+  --text-secondary: var(--color-gray-700);
+  --text-tertiary: var(--color-gray-500);
+  
+  /* Adjust borders for light theme */
+  --color-border: var(--color-gray-300);
 }
 
 /* High contrast theme */
