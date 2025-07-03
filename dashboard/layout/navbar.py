@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING, Optional, Any, Union
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from flask_babel import lazy_gettext as _l
 from core.plugins.decorators import safe_callback
-from utils import navbar_icon, check_navbar_assets
+from core.theme_manager import DEFAULT_THEME, sanitize_theme
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -213,6 +214,27 @@ def create_navbar_layout() -> Optional[Any]:
                                                             size="sm",
                                                             className="ms-1",
                                                         ),
+                                                        dcc.Dropdown(
+                                                            id="theme-dropdown",
+                                                            options=[
+                                                                {
+                                                                    "label": "Dark",
+                                                                    "value": "dark",
+                                                                },
+                                                                {
+                                                                    "label": "Light",
+                                                                    "value": "light",
+                                                                },
+                                                                {
+                                                                    "label": "High Contrast",
+                                                                    "value": "high-contrast",
+                                                                },
+                                                            ],
+                                                            value=DEFAULT_THEME,
+                                                            clearable=False,
+                                                            className="ms-1 theme-dropdown",
+                                                            style={"width": "120px"},
+                                                        ),
                                                     ],
                                                     className="d-flex align-items-center navbar-icon-group",
                                                 ),
@@ -342,6 +364,21 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
                         },
                     ),
                 ]
+
+        @manager.register_callback(
+            Output("theme-store", "data"),
+            Input("theme-dropdown", "value"),
+            callback_id="navbar_select_theme",
+            component_name="navbar",
+        )
+        def update_theme_store(value: Optional[str]):
+            return sanitize_theme(value)
+
+        manager.app.clientside_callback(
+            "function(data){if(window.setAppTheme&&data){window.setAppTheme(data);} return '';}",
+            Output("theme-dummy-output", "children"),
+            Input("theme-store", "data"),
+        )
 
         @manager.register_callback(
             Output("download-csv", "data"),

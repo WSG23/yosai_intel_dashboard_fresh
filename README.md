@@ -405,6 +405,13 @@ If you encounter an error like `"Babel" object has no attribute "localeselector"
 
 ![Language Toggle Demo](docs/i18n_demo.gif)
 
+## 🎨 Theme Support
+
+The dashboard provides light, dark and high‑contrast themes. The current
+selection is saved in the browser and applied before CSS loads to avoid a flash
+of unstyled content. Use the new dropdown on the right side of the navbar to
+switch themes at runtime.
+
 ## 📚 Documentation
 
 See the [data model diagram](docs/data_model.md) for an overview of key entities.

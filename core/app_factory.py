@@ -18,6 +18,7 @@ from dash_csrf_plugin import setup_enhanced_csrf_protection, CSRFMode
 import pandas as pd
 from flask_babel import Babel
 from flask_compress import Compress
+from core.theme_manager import apply_theme_settings
 
 # Use the config system from the project
 from config.config import get_config
@@ -63,18 +64,8 @@ def _create_full_app() -> dash.Dash:
             suppress_callback_exceptions=True,
             assets_folder="assets",
         )
-        check_navbar_assets(
-            [
-                "dashboard.png",
-                "analytics.png",
-                "upload.png",
-                "print.png",
-                "settings.png",
-                "logout.png",
-            ]
-        )
-        debug_dash_asset_serving(app)
-        Compress(app.server)
+        apply_theme_settings(app)
+app.server)
 
         app.title = "Yōsai Intel Dashboard"
 
@@ -205,6 +196,7 @@ def _create_simple_app() -> dash.Dash:
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
         )
+        apply_theme_settings(app)
         Compress(app.server)
 
         app.title = "Yōsai Intel Dashboard"
@@ -282,6 +274,7 @@ def _create_json_safe_app() -> dash.Dash:
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
         )
+        apply_theme_settings(app)
         Compress(app.server)
 
         app.title = "🏯 Yōsai Intel Dashboard"
@@ -361,6 +354,8 @@ def _create_main_layout() -> html.Div:
             dcc.Store(id="global-store", data={}),
             dcc.Store(id="session-store", data={}),
             dcc.Store(id="app-state-store", data={"initial": True}),
+            dcc.Store(id="theme-store"),
+            html.Div(id="theme-dummy-output", style={"display": "none"}),
         ]
     )
 
