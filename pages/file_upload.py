@@ -1050,22 +1050,6 @@ def register_callbacks(
             {"prevent_initial_call": True},
         ),
         (
-            cb.restore_upload_state,
-            [
-                Output("upload-results", "children", allow_duplicate=True),
-                Output("file-preview", "children", allow_duplicate=True),
-                Output("file-info-store", "data", allow_duplicate=True),
-                Output("upload-nav", "children", allow_duplicate=True),
-                Output("current-file-info-store", "data", allow_duplicate=True),
-                Output("column-verification-modal", "is_open", allow_duplicate=True),
-                Output("device-verification-modal", "is_open", allow_duplicate=True),
-            ],
-            Input("url", "pathname"),
-            None,
-            "restore_upload_state",
-            {"prevent_initial_call": "initial_duplicate", "allow_duplicate": True},
-        ),
-        (
             cb.start_upload_background,
             [
                 Output("upload-results", "children", allow_duplicate=True),
@@ -1083,6 +1067,22 @@ def register_callbacks(
             State("upload-data", "filename"),
             "start_upload_background",
             {"prevent_initial_call": True, "allow_duplicate": True},
+        ),
+        (
+            cb.restore_upload_state,
+            [
+                Output("upload-results", "children", allow_duplicate=True),
+                Output("file-preview", "children", allow_duplicate=True),
+                Output("file-info-store", "data", allow_duplicate=True),
+                Output("upload-nav", "children", allow_duplicate=True),
+                Output("current-file-info-store", "data", allow_duplicate=True),
+                Output("column-verification-modal", "is_open", allow_duplicate=True),
+                Output("device-verification-modal", "is_open", allow_duplicate=True),
+            ],
+            Input("url", "pathname"),
+            None,
+            "restore_upload_state",
+            {"prevent_initial_call": "initial_duplicate", "allow_duplicate": True},
         ),
         (
             cb.check_upload_progress,
