@@ -338,10 +338,13 @@ def _create_main_layout() -> html.Div:
         [
             # URL routing component
             dcc.Location(id="url", refresh=False),
-            # Navigation bar
-            _create_navbar(),
+            # Navigation bar wrapped in semantic <nav> element
+            html.Nav(
+                _create_navbar(),
+                className="top-panel",
+            ),
             # Main content area (dynamically populated)
-            html.Div(id="page-content", className="main-content p-4"),
+            html.Main(id="page-content", className="main-content p-4"),
             # Global data stores
             dcc.Store(id="global-store", data={}),
             dcc.Store(id="session-store", data={}),
