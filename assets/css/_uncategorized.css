@@ -1,0 +1,39 @@
+/* =================================================================== */
+/* _uncategorized.css - Rules that need manual categorization */
+/* =================================================================== */
+
+
+
+/* Ensure all levels propagate height correctly */
+html, body, #root, .dash-app 
+
+
+#facility-map 
+
+
+.bottom-column 
+
+
+.bottom-column.respond 
+
+
+.bottom-column h4 
+
+
+/* Ticket Display */
+.respond-label 
+
+
+.ticket-box 
+
+
+/* Checklist */
+.action-checklist 
+
+
+
+/* Map View Toggle Buttons */
+.map-toggle-stack 
+
+
+.map-status-badge 
