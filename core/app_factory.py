@@ -18,7 +18,7 @@ from dash_csrf_plugin import setup_enhanced_csrf_protection, CSRFMode
 import pandas as pd
 from flask_babel import Babel
 from flask_compress import Compress
-from core.theme_manager import apply_theme_settings
+from core.theme_manager import apply_theme_settings, DEFAULT_THEME
 
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 
@@ -368,6 +368,8 @@ def _create_main_layout() -> html.Div:
             dcc.Store(id="global-store", data={}),
             dcc.Store(id="session-store", data={}),
             dcc.Store(id="app-state-store", data={"initial": True}),
+            dcc.Store(id="theme-store", data=DEFAULT_THEME),
+            html.Div(id="theme-dummy-output", style={"display": "none"}),
         ],
         **{"data-theme": theme},
     )
