@@ -106,6 +106,8 @@ directory as long as their paths match the references in
 7. **Access the dashboard:**
    Open http://127.0.0.1:8050 in your browser. The application runs over
    plain HTTP by default; configure a reverse proxy with TLS if you need HTTPS.
+   The development server does not support HTTPS, so be sure to visit
+   `http://<host>:<port>` rather than `https://` when testing locally.
 
 ## Developer Onboarding
 

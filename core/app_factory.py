@@ -103,7 +103,14 @@ def _create_full_app() -> dash.Dash:
 
         apply_theme_settings(app)
         Compress(app.server)
-        Talisman(app.server, content_security_policy=None)
+        config_manager = get_config()
+        https_only = config_manager.get_app_config().environment == "production"
+        Talisman(
+            app.server,
+            content_security_policy=None,
+            force_https=https_only,
+            force_https_permanent=https_only,
+        )
 
         @app.server.after_request  # type: ignore[misc]
         def add_cache_headers(resp):
@@ -133,7 +140,6 @@ def _create_full_app() -> dash.Dash:
             logger.warning(f"Failed to initialize Babel: {e}")
 
         # Use the working config system
-        config_manager = get_config()
 
         if (
             config_manager.get_security_config().csrf_enabled
@@ -284,7 +290,14 @@ def _create_simple_app() -> dash.Dash:
 
         apply_theme_settings(app)
         Compress(app.server)
-        Talisman(app.server, content_security_policy=None)
+        cfg = get_config()
+        https_only = cfg.get_app_config().environment == "production"
+        Talisman(
+            app.server,
+            content_security_policy=None,
+            force_https=https_only,
+            force_https_permanent=https_only,
+        )
 
         @app.server.after_request  # type: ignore[misc]
         def add_cache_headers(resp):
@@ -392,7 +405,14 @@ def _create_json_safe_app() -> dash.Dash:
 
         apply_theme_settings(app)
         Compress(app.server)
-        Talisman(app.server, content_security_policy=None)
+        cfg = get_config()
+        https_only = cfg.get_app_config().environment == "production"
+        Talisman(
+            app.server,
+            content_security_policy=None,
+            force_https=https_only,
+            force_https_permanent=https_only,
+        )
 
         @app.server.after_request  # type: ignore[misc]
         def add_cache_headers(resp):
