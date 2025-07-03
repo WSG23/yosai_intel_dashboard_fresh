@@ -67,6 +67,11 @@ def _create_full_app() -> dash.Dash:
             assets_folder=str(ASSETS_DIR),
         )
 
+        # Set a temporary layout so Dash can handle requests during
+        # the asset serving check without raising ``NoLayoutException``.
+        # The final layout is assigned later once all plugins are loaded.
+        app.layout = html.Div()
+
         if not debug_dash_asset_serving(app):
             logger.warning("Dash asset serving validation failed")
 
