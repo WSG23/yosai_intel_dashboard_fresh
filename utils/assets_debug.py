@@ -7,7 +7,7 @@ from dash import html  # type: ignore
 
 logger = logging.getLogger(__name__)
 
-ASSETS_DIR = Path("assets")
+ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 NAVBAR_ICON_DIR = ASSETS_DIR / "navbar_icons"
 
 

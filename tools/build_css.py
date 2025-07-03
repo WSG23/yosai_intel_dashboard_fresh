@@ -1,13 +1,15 @@
 from pathlib import Path
 from models import css_build_optimizer
 
+ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
+
 # Alias to maintain naming from documentation
 CSSBuildOptimizer = css_build_optimizer.CSSOptimizer
 
 
 def main() -> None:
-    css_dir = Path("assets/css")
-    output_dir = Path("assets/dist")
+    css_dir = ASSETS_DIR / "css"
+    output_dir = ASSETS_DIR / "dist"
     optimizer = CSSBuildOptimizer(css_dir, output_dir)
     optimizer.build_production_css()
 

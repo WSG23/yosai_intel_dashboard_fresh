@@ -20,6 +20,8 @@ from flask_babel import Babel
 from flask_compress import Compress
 from core.theme_manager import apply_theme_settings
 
+ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
+
 # Use the config system from the project
 from config.config import get_config
 
@@ -54,7 +56,7 @@ def _create_full_app() -> dash.Dash:
     """Create complete Dash application with full integration"""
     try:
         external_stylesheets = [dbc.themes.BOOTSTRAP]
-        built_css = Path("assets/dist/main.min.css")
+        built_css = ASSETS_DIR / "dist" / "main.min.css"
         if built_css.exists():
             external_stylesheets.append("/assets/dist/main.min.css")
 
@@ -62,7 +64,7 @@ def _create_full_app() -> dash.Dash:
             __name__,
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
-            assets_folder="assets",
+            assets_folder=str(ASSETS_DIR),
         )
         apply_theme_settings(app)
         Compress(app.server)
@@ -187,7 +189,7 @@ def _create_simple_app() -> dash.Dash:
         from dash import html, dcc
 
         external_stylesheets = [dbc.themes.BOOTSTRAP]
-        built_css = Path("assets/dist/main.min.css")
+        built_css = ASSETS_DIR / "dist" / "main.min.css"
         if built_css.exists():
             external_stylesheets.append("/assets/dist/main.min.css")
 
@@ -265,7 +267,7 @@ def _create_json_safe_app() -> dash.Dash:
         from dash import html
 
         external_stylesheets = [dbc.themes.BOOTSTRAP]
-        built_css = Path("assets/dist/main.min.css")
+        built_css = ASSETS_DIR / "dist" / "main.min.css"
         if built_css.exists():
             external_stylesheets.append("/assets/dist/main.min.css")
 
