@@ -54,6 +54,7 @@ data/learned_mappings.json
 *.csv
 *.xlsx
 *.json
+!package.json
 logs/
 
 # Temporary uploaded files
@@ -97,3 +98,6 @@ secrets/
 # Training data
 data/training/
 .venv/
+
+# Node
+node_modules/

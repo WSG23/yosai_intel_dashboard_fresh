@@ -3,6 +3,7 @@
 import dash
 import logging
 import os
+from pathlib import Path
 from typing import Optional, Any
 from flasgger import Swagger
 import dash_bootstrap_components as dbc
@@ -15,6 +16,7 @@ from core.secret_manager import validate_secrets
 from dash_csrf_plugin import setup_enhanced_csrf_protection, CSRFMode
 import pandas as pd
 from flask_babel import Babel
+from flask_compress import Compress
 
 # Use the config system from the project
 from config.config import get_config
@@ -49,12 +51,18 @@ def create_app(mode: Optional[str] = None) -> dash.Dash:
 def _create_full_app() -> dash.Dash:
     """Create complete Dash application with full integration"""
     try:
+        external_stylesheets = [dbc.themes.BOOTSTRAP]
+        built_css = Path("assets/dist/main.min.css")
+        if built_css.exists():
+            external_stylesheets.append("/assets/dist/main.min.css")
+
         app = dash.Dash(
             __name__,
-            external_stylesheets=[dbc.themes.BOOTSTRAP],
+            external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
             assets_folder="assets",
         )
+        Compress(app.server)
 
         app.title = "Yōsai Intel Dashboard"
 
@@ -175,11 +183,17 @@ def _create_simple_app() -> dash.Dash:
     try:
         from dash import html, dcc
 
+        external_stylesheets = [dbc.themes.BOOTSTRAP]
+        built_css = Path("assets/dist/main.min.css")
+        if built_css.exists():
+            external_stylesheets.append("/assets/dist/main.min.css")
+
         app = dash.Dash(
             __name__,
-            external_stylesheets=[dbc.themes.BOOTSTRAP],
+            external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
         )
+        Compress(app.server)
 
         app.title = "Yōsai Intel Dashboard"
 
@@ -246,11 +260,17 @@ def _create_json_safe_app() -> dash.Dash:
     try:
         from dash import html
 
+        external_stylesheets = [dbc.themes.BOOTSTRAP]
+        built_css = Path("assets/dist/main.min.css")
+        if built_css.exists():
+            external_stylesheets.append("/assets/dist/main.min.css")
+
         app = dash.Dash(
             __name__,
-            external_stylesheets=[dbc.themes.BOOTSTRAP],
+            external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
         )
+        Compress(app.server)
 
         app.title = "🏯 Yōsai Intel Dashboard"
 
