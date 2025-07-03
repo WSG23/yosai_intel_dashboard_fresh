@@ -18,7 +18,6 @@ from .analysis import (
     create_analysis_results_display_safe,
     AI_SUGGESTIONS_AVAILABLE,
 )
-from services import AnalyticsService
 
 
 def run_suggests_analysis(data_source: str):
@@ -48,7 +47,9 @@ def run_service_analysis(data_source: str, analysis_type: str):
 def run_unique_patterns_analysis(data_source: str):
     """Run unique patterns analysis using the analytics service."""
     try:
-        analytics_service = AnalyticsService()
+        analytics_service = get_analytics_service_safe()
+        if not analytics_service:
+            return dbc.Alert("Analytics service not available", color="danger")
         results = analytics_service.get_unique_patterns_analysis(data_source)
 
 
