@@ -38,7 +38,6 @@
 @import './05-pages/_analytics.css';
 
 /* Theme System */
-@import './06-themes/_base-theme.css';
 @import './06-themes/_dark-theme.css';
 
 /* Utility Classes */

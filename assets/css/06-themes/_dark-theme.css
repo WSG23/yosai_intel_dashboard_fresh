@@ -1,10 +1,17 @@
 /* =================================================================== */
 /* 06-themes/_dark-theme.css - Dark Theme Implementation */
-@import './_base-theme.css';
 /* =================================================================== */
 
-/* Dark theme variables are provided by the base theme */
-[data-theme="dark"] {}
+/* Dark theme is the default, but we can override for other themes */
+[data-theme="dark"] {
+  --surface-app: var(--color-gray-850);       /* was 900 */
+  --surface-primary: var(--color-gray-800);   /* was 850 */
+  --surface-secondary: var(--color-gray-750); /* was 800 */
+  --surface-tertiary: var(--color-gray-700);  /* was 750 */
+  --text-primary: var(--color-gray-100);   /* was 50 */
+  --text-secondary: var(--color-gray-300); /* was 200 */
+  --text-tertiary: var(--color-gray-500);  /* was 400 */
+}
 
 /* Light theme overrides */
 [data-theme="light"] {
@@ -44,4 +51,11 @@
   --color-success: #00CC44;
   --color-warning: #FF9900;
   --color-critical: #FF3333;
+}
+
+/* Theme transition animations */
+* {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-out);
 }
