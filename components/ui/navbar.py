@@ -79,7 +79,7 @@ def create_navbar_layout() -> Optional[Any]:
             [
                 "dashboard.png",
                 "analytics.png",
-                "graphs.png",
+                "analytics.png",
                 "upload.png",
                 "print.png",
                 "settings.png",
@@ -188,7 +188,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                         ),
                                                         html.A(
                                                             navbar_icon(
-                                                                "graphs.png",
+                                                                "analytics.png",
                                                                 str(_l("Graphs")),
                                                                 "📈",
                                                             ),
