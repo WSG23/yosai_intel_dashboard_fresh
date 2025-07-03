@@ -86,7 +86,7 @@ def _create_full_app() -> dash.Dash:
   </head>
   <body>
     {{%app_entry%}}
-    <footer>{{%config%}}{{%scripts%}}</footer>
+    <footer>{{%config%}}{{%scripts%}}{{%renderer%}}</footer>
   </body>
 </html>
 """
@@ -283,7 +283,7 @@ def _create_simple_app() -> dash.Dash:
   </head>
   <body>
     {{%app_entry%}}
-    <footer>{{%config%}}{{%scripts%}}</footer>
+    <footer>{{%config%}}{{%scripts%}}{{%renderer%}}</footer>
   </body>
 </html>
 """
@@ -398,7 +398,7 @@ def _create_json_safe_app() -> dash.Dash:
   </head>
   <body>
     {{%app_entry%}}
-    <footer>{{%config%}}{{%scripts%}}</footer>
+    <footer>{{%config%}}{{%scripts%}}{{%renderer%}}</footer>
   </body>
 </html>
 """
