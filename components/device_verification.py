@@ -35,7 +35,7 @@ def create_device_verification_modal(
         table_rows.append(
             html.Tr(
                 [
-                    # Device name and confidence
+                # Device name and confidence
                     html.Td(
                         [
                             html.Strong(device_name),
@@ -60,6 +60,8 @@ def create_device_verification_modal(
                                 value=attributes.get("floor_number"),
                                 placeholder="Floor #",
                                 size="sm",
+                                autoFocus=True if i == 0 else False,
+                                tabIndex=0,
                             )
                         ],
                         className="device-verification__col--floor",
@@ -134,7 +136,8 @@ def create_device_verification_modal(
                         style={"width": "0%"},
 
                     ),
-                ]
+                ],
+                tabIndex=0,
             )
         )
 
@@ -244,6 +247,7 @@ def create_device_verification_modal(
         size="xl",
         is_open=False,
         scrollable=True,
+        autofocus=True,
     )
 
 
