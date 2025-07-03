@@ -32,7 +32,7 @@ def create_database_connection() -> DatabaseConnection:
     # Create database manager with existing config
     db_manager = DatabaseManager(
         db_type=db_config.type,
-        connection_string=getattr(db_config, 'connection_string', ''),
+        connection_string=getattr(db_config, "connection_string", ""),
         **db_config.__dict__
     )
 
@@ -40,4 +40,9 @@ def create_database_connection() -> DatabaseConnection:
 
 
 # For compatibility with existing imports
-__all__ = ['DatabaseConnection', 'create_database_connection', 'DatabaseManager', 'MockConnection']
+__all__ = [
+    "DatabaseConnection",
+    "create_database_connection",
+    "DatabaseManager",
+    "MockConnection",
+]

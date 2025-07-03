@@ -8,7 +8,10 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from pages import file_upload
-from pages.deep_analytics import layout as analytics_layout, register_callbacks as register_analytics_callbacks
+from pages.deep_analytics import (
+    layout as analytics_layout,
+    register_callbacks as register_analytics_callbacks,
+)
 
 
 def _create_upload_app():
@@ -34,7 +37,9 @@ def test_upload_process_and_layout(dash_duo, tmp_path):
     dash_duo.start_server(app)
     file_input = dash_duo.find_element("#upload-data input")
     file_input.send_keys(str(csv))
-    dash_duo.wait_for_text_to_contain("#upload-results", "Successfully uploaded", timeout=10)
+    dash_duo.wait_for_text_to_contain(
+        "#upload-results", "Successfully uploaded", timeout=10
+    )
 
 
 def test_analytics_refresh_sources(dash_duo):
@@ -42,7 +47,9 @@ def test_analytics_refresh_sources(dash_duo):
     dash_duo.start_server(app)
     dash_duo.find_element("#refresh-sources-btn").click()
     dropdown = dash_duo.find_element("#analytics-data-source")
-    length = dash_duo.driver.execute_script("return arguments[0].options.length;", dropdown)
+    length = dash_duo.driver.execute_script(
+        "return arguments[0].options.length;", dropdown
+    )
     assert length >= 1
 
 
@@ -52,5 +59,7 @@ def test_accessibility_linting(dash_duo):
     pa11y = shutil.which("pa11y")
     if not pa11y:
         pytest.skip("pa11y not installed")
-    result = subprocess.run([pa11y, dash_duo.server_url], capture_output=True, text=True)
+    result = subprocess.run(
+        [pa11y, dash_duo.server_url], capture_output=True, text=True
+    )
     assert result.returncode == 0, result.stdout + result.stderr

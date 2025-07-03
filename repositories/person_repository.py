@@ -1,4 +1,5 @@
 """Repository pattern for Person data access"""
+
 from typing import List, Optional, Protocol
 from dataclasses import dataclass
 
@@ -7,14 +8,11 @@ from utils.result_types import Result, success, failure
 
 
 class PersonRepositoryProtocol(Protocol):
-    def find_by_id(self, person_id: str) -> Result[Optional[Person], str]:
-        ...
+    def find_by_id(self, person_id: str) -> Result[Optional[Person], str]: ...
 
-    def find_by_department(self, department: str) -> Result[List[Person], str]:
-        ...
+    def find_by_department(self, department: str) -> Result[List[Person], str]: ...
 
-    def save(self, person: Person) -> Result[Person, str]:
-        ...
+    def save(self, person: Person) -> Result[Person, str]: ...
 
 
 class InMemoryPersonRepository(PersonRepositoryProtocol):

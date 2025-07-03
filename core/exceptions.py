@@ -40,4 +40,3 @@ class FileProcessingError(YosaiBaseException):
 
 class ServiceUnavailableError(YosaiBaseException):
     """Service unavailable errors"""
-

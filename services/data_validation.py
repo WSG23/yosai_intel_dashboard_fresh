@@ -23,4 +23,3 @@ class DataValidationService:
 
     def validate_for_analysis(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, bool]:
         return self._validator.validate_for_analysis(df)
-

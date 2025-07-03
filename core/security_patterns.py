@@ -7,7 +7,7 @@ SQL_INJECTION_PATTERNS = [
     r"(\band\b.*=.*\band\b)",
     r"(--|\#|\/\*|\*\/)",
     r"(\bxp_cmdshell\b|\bsp_executesql\b)",
-    r"(;\s*(drop|delete|truncate|alter)\b)"
+    r"(;\s*(drop|delete|truncate|alter)\b)",
 ]
 
 XSS_PATTERNS = [
@@ -18,7 +18,7 @@ XSS_PATTERNS = [
     r"<object[^>]*>",
     r"<embed[^>]*>",
     r"vbscript:",
-    r"expression\s*\("
+    r"expression\s*\(",
 ]
 
 PATH_TRAVERSAL_PATTERNS = [
@@ -27,7 +27,7 @@ PATH_TRAVERSAL_PATTERNS = [
     r"%2e%2e%2f",
     r"%2e%2e%5c",
     r"\.\.%2f",
-    r"\.\.%5c"
+    r"\.\.%5c",
 ]
 
 __all__ = [

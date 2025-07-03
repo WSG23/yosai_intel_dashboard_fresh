@@ -67,7 +67,9 @@ def cached(ttl: int = 300, key_func: Optional[Callable] = None) -> Callable:
             if key_func:
                 cache_key = key_func(*args, **kwargs)
             else:
-                cache_key = f"{func.__name__}:{hash(str(args) + str(sorted(kwargs.items())))}"
+                cache_key = (
+                    f"{func.__name__}:{hash(str(args) + str(sorted(kwargs.items())))}"
+                )
 
             result = cache.get(cache_key)
             if result is not None:
@@ -81,4 +83,3 @@ def cached(ttl: int = 300, key_func: Optional[Callable] = None) -> Callable:
         return wrapper
 
     return decorator
-

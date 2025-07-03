@@ -32,8 +32,7 @@ csv_content = export_service.to_csv_string(data)
                                 "`export_service.get_enhanced_data()`"
                             ),
                             html.Li(
-                                "Convert to CSV or JSON using the helper "
-                                "functions",
+                                "Convert to CSV or JSON using the helper " "functions",
                             ),
                             html.Li(
                                 "Return the string through a `dcc.Download` "
@@ -53,9 +52,7 @@ csv_content = export_service.to_csv_string(data)
 
 def layout() -> dbc.Container:
     """Export page layout with usage instructions."""
-    return dbc.Container([
-        _instructions()
-    ], fluid=True)
+    return dbc.Container([_instructions()], fluid=True)
 
 
 __all__ = ["layout"]

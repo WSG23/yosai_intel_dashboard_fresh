@@ -2,6 +2,7 @@
 
 import logging
 
+
 class AttackDetection:
     """Log detected attacks"""
 

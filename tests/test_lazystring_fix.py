@@ -25,9 +25,9 @@ def test_lone_surrogate_removed():
 
 def test_unicode_normalization():
     # Angstrom sign -> Latin capital A with ring above
-    text = "\u212B"
+    text = "\u212b"
     result = serializer.serialize(text)
-    assert result == "\u00C5"
+    assert result == "\u00c5"
 
 
 def test_nested_structures_and_types():

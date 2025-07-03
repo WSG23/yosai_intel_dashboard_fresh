@@ -93,7 +93,10 @@ class FileProcessor:
 
                 file_size = os.path.getsize(file_path)
                 sample_size = FileProcessingLimits.CSV_SAMPLE_SIZE_SMALL
-                if file_size >= FileProcessingLimits.LARGE_FILE_THRESHOLD_MB * 1024 * 1024:
+                if (
+                    file_size
+                    >= FileProcessingLimits.LARGE_FILE_THRESHOLD_MB * 1024 * 1024
+                ):
                     sample_size = FileProcessingLimits.CSV_SAMPLE_SIZE_LARGE
 
                 with open(file_path, "r", encoding=encoding) as f:
@@ -145,7 +148,10 @@ class FileProcessor:
             try:
                 text = process_large_csv_content(content, encoding=encoding)
                 sample_size = FileProcessingLimits.CSV_SAMPLE_SIZE_SMALL
-                if len(content) >= FileProcessingLimits.LARGE_FILE_THRESHOLD_MB * 1024 * 1024:
+                if (
+                    len(content)
+                    >= FileProcessingLimits.LARGE_FILE_THRESHOLD_MB * 1024 * 1024
+                ):
                     sample_size = FileProcessingLimits.CSV_SAMPLE_SIZE_LARGE
                 sample = text[:sample_size]
 
@@ -326,23 +332,28 @@ class FileProcessor:
             # Check for unusual values but don't remove them
             valid_results = ["granted", "denied", "timeout", "error", "failed"]
             unusual_results = [
-                r for r in df["access_result"].str.lower().unique()
+                r
+                for r in df["access_result"].str.lower().unique()
                 if r not in valid_results and r not in ["nan", ""]
             ]
 
             if unusual_results:
-                validation_warnings.append(f"Unusual access results found: {unusual_results}")
+                validation_warnings.append(
+                    f"Unusual access results found: {unusual_results}"
+                )
 
         # Validate timestamp but don't remove rows
         if "timestamp" in df.columns:
             logger.info("[INFO] Validating timestamp column...")
             try:
                 # Try to parse timestamps, but keep rows even if parsing fails
-                parsed_timestamps = pd.to_datetime(df["timestamp"], errors='coerce')
+                parsed_timestamps = pd.to_datetime(df["timestamp"], errors="coerce")
                 invalid_timestamps = parsed_timestamps.isna().sum()
 
                 if invalid_timestamps > 0:
-                    validation_warnings.append(f"{invalid_timestamps} rows have invalid timestamps")
+                    validation_warnings.append(
+                        f"{invalid_timestamps} rows have invalid timestamps"
+                    )
 
             except Exception as e:
                 validation_warnings.append(f"Timestamp validation error: {e}")
@@ -350,7 +361,9 @@ class FileProcessor:
         # CRITICAL: Return ALL rows, just log any issues
         final_row_count = len(df)
 
-        logger.info(f"[SUCCESS] Data validation complete: {final_row_count} rows retained")
+        logger.info(
+            f"[SUCCESS] Data validation complete: {final_row_count} rows retained"
+        )
 
         if validation_warnings:
             logger.info("[WARNINGS] Data quality issues found:")
@@ -360,10 +373,10 @@ class FileProcessor:
         # Always return the complete DataFrame
         return {
             "valid": True,  # Always valid, we just log warnings
-            "data": df,     # Return complete dataset
+            "data": df,  # Return complete dataset
             "warnings": validation_warnings,
             "original_rows": original_row_count,
-            "final_rows": final_row_count
+            "final_rows": final_row_count,
         }
 
     def _fuzzy_match_columns(

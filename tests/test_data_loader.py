@@ -5,11 +5,13 @@ from services.data_loader import DataLoader
 def test_get_processed_database_basic(monkeypatch):
     loader = DataLoader()
     uploaded = {
-        "sample.csv": pd.DataFrame({
-            "ts": ["2024-01-01"],
-            "door_id": ["d1"],
-            "person_id": ["u1"],
-        })
+        "sample.csv": pd.DataFrame(
+            {
+                "ts": ["2024-01-01"],
+                "door_id": ["d1"],
+                "person_id": ["u1"],
+            }
+        )
     }
     mappings = {
         "fp": {

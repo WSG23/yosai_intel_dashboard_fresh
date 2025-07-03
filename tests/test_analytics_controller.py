@@ -88,8 +88,12 @@ def test_generate_data_summary():
 def test_analyze_all_triggers_callbacks_and_cache():
     controller = create_controller(cache_results=True)
     events = []
-    controller.register_callback("on_analysis_start", lambda aid, df: events.append("start"))
-    controller.register_callback("on_analysis_complete", lambda aid, res: events.append("complete"))
+    controller.register_callback(
+        "on_analysis_start", lambda aid, df: events.append("start")
+    )
+    controller.register_callback(
+        "on_analysis_complete", lambda aid, res: events.append("complete")
+    )
 
     df = sample_df()
     result1 = controller.analyze_all(df)

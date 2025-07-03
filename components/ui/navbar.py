@@ -10,6 +10,7 @@ from flask import session
 from core.plugins.decorators import safe_callback
 from core.theme_manager import DEFAULT_THEME, sanitize_theme
 from utils.assets_utils import get_nav_icon
+from utils.assets_debug import check_navbar_assets
 
 import logging
 
@@ -80,21 +81,26 @@ fallback_icons = {
 }
 
 
-def nav_icon(name: str, alt: str) -> Any:
+def _nav_icon(app: Any, name: str, alt: str) -> Any:
     """Return ``Img`` tag or Font-Awesome fallback for the given icon name."""
-    try:
-        import dash  # Imported here to avoid ImportError in safe mode
-
-        app = dash.get_app()
-        url = get_nav_icon(app, name)
-    except Exception:  # pragma: no cover - graceful fallback
-        url = None
-
+    url = get_nav_icon(app, name)
     if url:
         return html.Img(src=url, className="nav-icon", alt=alt)
 
     glyph = fallback_icons.get(name, "fas fa-circle")
     return html.I(className=f"{glyph} nav-icon", **{"aria-hidden": "true"})
+
+
+def nav_icon(name: str, alt: str) -> Any:
+    """Wrapper that infers the Dash app from ``dash.get_app``."""
+    try:
+        import dash
+
+        app = dash.get_app()
+        return _nav_icon(app, name, alt)
+    except Exception:  # pragma: no cover - graceful fallback
+        glyph = fallback_icons.get(name, "fas fa-circle")
+        return html.I(className=f"{glyph} nav-icon", **{"aria-hidden": "true"})
 
 
 def create_navbar_layout() -> Optional[Any]:
@@ -103,6 +109,22 @@ def create_navbar_layout() -> Optional[Any]:
         return None
 
     try:
+        import dash
+
+        app = dash.get_app()
+        check_navbar_assets(
+            [
+                "dashboard",
+                "analytics",
+                "graphs",
+                "upload",
+                "print",
+                "settings",
+                "logout",
+            ],
+            warn=False,
+        )
+
         return dbc.Navbar(
             [
                 dbc.Container(
@@ -176,13 +198,18 @@ def create_navbar_layout() -> Optional[Any]:
                                                 html.Div(
                                                     [
                                                         html.A(
-                                                            nav_icon("dashboard", str(_l("Dashboard"))),
+                                                            _nav_icon(
+                                                                app,
+                                                                "dashboard",
+                                                                str(_l("Dashboard")),
+                                                            ),
                                                             href="/dashboard",
                                                             className="navbar-nav-link",
                                                             title=str(_l("Dashboard")),
                                                         ),
                                                         html.A(
-                                                            nav_icon(
+                                                            _nav_icon(
+                                                                app,
                                                                 "analytics",
                                                                 str(
                                                                     _l(
@@ -199,7 +226,8 @@ def create_navbar_layout() -> Optional[Any]:
                                                             ),
                                                         ),
                                                         html.A(
-                                                            nav_icon(
+                                                            _nav_icon(
+                                                                app,
                                                                 "graphs",
                                                                 str(_l("Graphs")),
                                                             ),
@@ -208,7 +236,8 @@ def create_navbar_layout() -> Optional[Any]:
                                                             title=str(_l("Graphs")),
                                                         ),
                                                         html.A(
-                                                            nav_icon(
+                                                            _nav_icon(
+                                                                app,
                                                                 "upload",
                                                                 str(_l("Upload")),
                                                             ),
@@ -219,17 +248,24 @@ def create_navbar_layout() -> Optional[Any]:
                                                         dbc.DropdownMenu(
                                                             [
                                                                 dbc.DropdownMenuItem(
-                                                                    str(_l("Export CSV")),
+                                                                    str(
+                                                                        _l("Export CSV")
+                                                                    ),
                                                                     id="nav-export-csv",
                                                                 ),
                                                                 dbc.DropdownMenuItem(
-                                                                    str(_l("Export JSON")),
+                                                                    str(
+                                                                        _l(
+                                                                            "Export JSON"
+                                                                        )
+                                                                    ),
                                                                     id="nav-export-json",
                                                                 ),
                                                             ],
                                                             nav=True,
                                                             in_navbar=True,
-                                                            label=nav_icon(
+                                                            label=_nav_icon(
+                                                                app,
                                                                 "print",
                                                                 str(_l("Export")),
                                                             ),
@@ -240,7 +276,11 @@ def create_navbar_layout() -> Optional[Any]:
                                                             [
                                                                 dbc.DropdownMenuItem(
                                                                     dcc.Link(
-                                                                        str(_l("Settings")),
+                                                                        str(
+                                                                            _l(
+                                                                                "Settings"
+                                                                            )
+                                                                        ),
                                                                         href="/settings",
                                                                         className="dropdown-item",
                                                                     )
@@ -250,15 +290,27 @@ def create_navbar_layout() -> Optional[Any]:
                                                                         id="theme-dropdown",
                                                                         options=[
                                                                             {
-                                                                                "label": str(_l("Dark")),
+                                                                                "label": str(
+                                                                                    _l(
+                                                                                        "Dark"
+                                                                                    )
+                                                                                ),
                                                                                 "value": "dark",
                                                                             },
                                                                             {
-                                                                                "label": str(_l("Light")),
+                                                                                "label": str(
+                                                                                    _l(
+                                                                                        "Light"
+                                                                                    )
+                                                                                ),
                                                                                 "value": "light",
                                                                             },
                                                                             {
-                                                                                "label": str(_l("High Contrast")),
+                                                                                "label": str(
+                                                                                    _l(
+                                                                                        "High Contrast"
+                                                                                    )
+                                                                                ),
                                                                                 "value": "high-contrast",
                                                                             },
                                                                         ],
@@ -274,7 +326,8 @@ def create_navbar_layout() -> Optional[Any]:
                                                             ],
                                                             nav=True,
                                                             in_navbar=True,
-                                                            label=nav_icon(
+                                                            label=_nav_icon(
+                                                                app,
                                                                 "settings",
                                                                 str(_l("Settings")),
                                                             ),
@@ -313,7 +366,8 @@ def create_navbar_layout() -> Optional[Any]:
                                                     id="language-toggle",
                                                 ),
                                                 html.A(
-                                                    nav_icon(
+                                                    _nav_icon(
+                                                        app,
                                                         "logout",
                                                         str(_l("Logout")),
                                                     ),

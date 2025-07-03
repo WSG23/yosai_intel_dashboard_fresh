@@ -20,4 +20,3 @@ def test_valid_dataframe_allowed():
     df = pd.DataFrame({"a": [1, 2]})
     res = validator.validate_file_upload(df)
     assert res.valid
-

@@ -117,7 +117,9 @@ class AIClassificationPlugin:
             raise RuntimeError("service not started")
         return self.entry_classifier.classify_entries(data, session_id)
 
-    def confirm_device_mapping(self, mappings: Dict[str, Dict], session_id: str) -> bool:
+    def confirm_device_mapping(
+        self, mappings: Dict[str, Dict], session_id: str
+    ) -> bool:
         if not self.entry_classifier:
             raise RuntimeError("service not started")
         return self.entry_classifier.confirm_device_mapping(mappings, session_id)
@@ -131,4 +133,3 @@ class AIClassificationPlugin:
         if not self.csv_repository:
             return False
         return self.csv_repository.save_permanent_data(session_id, client_id)
-

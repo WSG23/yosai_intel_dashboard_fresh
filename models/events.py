@@ -8,9 +8,11 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 from .enums import AccessResult, BadgeStatus, AnomalyType, SeverityLevel, TicketStatus
 
+
 @dataclass
 class AccessEvent:
     """Core access control event model"""
+
     event_id: str
     timestamp: datetime
     person_id: str
@@ -22,26 +24,28 @@ class AccessEvent:
     entry_without_badge: bool = False
     device_status: str = "normal"
     raw_data: Dict[str, Any] = field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
-            'event_id': self.event_id,
-            'timestamp': self.timestamp,
-            'person_id': self.person_id,
-            'door_id': self.door_id,
-            'badge_id': self.badge_id,
-            'access_result': self.access_result.value,
-            'badge_status': self.badge_status.value,
-            'door_held_open_time': self.door_held_open_time,
-            'entry_without_badge': self.entry_without_badge,
-            'device_status': self.device_status,
-            'raw_data': self.raw_data
+            "event_id": self.event_id,
+            "timestamp": self.timestamp,
+            "person_id": self.person_id,
+            "door_id": self.door_id,
+            "badge_id": self.badge_id,
+            "access_result": self.access_result.value,
+            "badge_status": self.badge_status.value,
+            "door_held_open_time": self.door_held_open_time,
+            "entry_without_badge": self.entry_without_badge,
+            "device_status": self.device_status,
+            "raw_data": self.raw_data,
         }
+
 
 @dataclass
 class AnomalyDetection:
     """Anomaly detection result model"""
+
     anomaly_id: str
     event_id: str
     anomaly_type: AnomalyType
@@ -54,27 +58,29 @@ class AnomalyDetection:
     is_verified: Optional[bool] = None
     verified_by: Optional[str] = None
     verified_at: Optional[datetime] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
-            'anomaly_id': self.anomaly_id,
-            'event_id': self.event_id,
-            'anomaly_type': self.anomaly_type.value,
-            'severity': self.severity.value,
-            'confidence_score': self.confidence_score,
-            'description': self.description,
-            'detected_at': self.detected_at,
-            'ai_model_version': self.ai_model_version,
-            'additional_context': self.additional_context,
-            'is_verified': self.is_verified,
-            'verified_by': self.verified_by,
-            'verified_at': self.verified_at
+            "anomaly_id": self.anomaly_id,
+            "event_id": self.event_id,
+            "anomaly_type": self.anomaly_type.value,
+            "severity": self.severity.value,
+            "confidence_score": self.confidence_score,
+            "description": self.description,
+            "detected_at": self.detected_at,
+            "ai_model_version": self.ai_model_version,
+            "additional_context": self.additional_context,
+            "is_verified": self.is_verified,
+            "verified_by": self.verified_by,
+            "verified_at": self.verified_at,
         }
+
 
 @dataclass
 class IncidentTicket:
     """Security incident ticket model"""
+
     ticket_id: str
     event_id: str
     anomaly_id: Optional[str] = None
@@ -89,22 +95,22 @@ class IncidentTicket:
     resolved_at: Optional[datetime] = None
     resolution_type: Optional[str] = None
     resolution_notes: Optional[str] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
-            'ticket_id': self.ticket_id,
-            'event_id': self.event_id,
-            'anomaly_id': self.anomaly_id,
-            'status': self.status.value,
-            'threat_score': self.threat_score,
-            'facility_location': self.facility_location,
-            'area': self.area,
-            'device_id': self.device_id,
-            'access_group': self.access_group,
-            'created_at': self.created_at,
-            'assigned_to': self.assigned_to,
-            'resolved_at': self.resolved_at,
-            'resolution_type': self.resolution_type,
-            'resolution_notes': self.resolution_notes
+            "ticket_id": self.ticket_id,
+            "event_id": self.event_id,
+            "anomaly_id": self.anomaly_id,
+            "status": self.status.value,
+            "threat_score": self.threat_score,
+            "facility_location": self.facility_location,
+            "area": self.area,
+            "device_id": self.device_id,
+            "access_group": self.access_group,
+            "created_at": self.created_at,
+            "assigned_to": self.assigned_to,
+            "resolved_at": self.resolved_at,
+            "resolution_type": self.resolution_type,
+            "resolution_notes": self.resolution_notes,
         }

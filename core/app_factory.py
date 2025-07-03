@@ -263,7 +263,6 @@ def _create_simple_app() -> dash.Dash:
         )
         app.config.assets_ignore = r"^\..*|.*\.txt$"
 
-
         app.index_string = f"""
 <!DOCTYPE html>
 <html>
@@ -372,7 +371,6 @@ def _create_json_safe_app() -> dash.Dash:
             assets_ignore=assets_ignore,
         )
         app.config.assets_ignore = r"^\..*|.*\.txt$"
-
 
         app.index_string = f"""
 <!DOCTYPE html>

@@ -26,7 +26,9 @@ class SecretsValidator:
         counts = Counter(value)
         return -sum((c / length) * math.log2(c / length) for c in counts.values())
 
-    def validate_secret(self, secret: str, environment: str = "development") -> Dict[str, List[str] | float]:
+    def validate_secret(
+        self, secret: str, environment: str = "development"
+    ) -> Dict[str, List[str] | float]:
         warnings: List[str] = []
         errors: List[str] = []
 

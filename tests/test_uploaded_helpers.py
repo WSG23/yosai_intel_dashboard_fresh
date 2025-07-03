@@ -19,26 +19,36 @@ def test_load_uploaded_data(monkeypatch):
 
 
 def test_clean_uploaded_dataframe():
-    df = pd.DataFrame({
-        "Timestamp": ["2024-01-01 00:00:00"],
-        "Person ID": ["u1"],
-        "Token ID": ["t1"],
-        "Device name": ["d1"],
-        "Access result": ["Granted"],
-    })
+    df = pd.DataFrame(
+        {
+            "Timestamp": ["2024-01-01 00:00:00"],
+            "Person ID": ["u1"],
+            "Token ID": ["t1"],
+            "Device name": ["d1"],
+            "Access result": ["Granted"],
+        }
+    )
     service = AnalyticsService()
     cleaned = service.clean_uploaded_dataframe(df)
-    assert list(cleaned.columns) == ["timestamp", "person_id", "token_id", "door_id", "access_result"]
+    assert list(cleaned.columns) == [
+        "timestamp",
+        "person_id",
+        "token_id",
+        "door_id",
+        "access_result",
+    ]
     assert pd.api.types.is_datetime64_any_dtype(cleaned["timestamp"])
 
 
 def test_summarize_dataframe():
-    df = pd.DataFrame({
-        "person_id": ["u1", "u2"],
-        "door_id": ["d1", "d2"],
-        "timestamp": pd.to_datetime(["2024-01-01", "2024-01-02"]),
-        "access_result": ["Granted", "Denied"],
-    })
+    df = pd.DataFrame(
+        {
+            "person_id": ["u1", "u2"],
+            "door_id": ["d1", "d2"],
+            "timestamp": pd.to_datetime(["2024-01-01", "2024-01-02"]),
+            "access_result": ["Granted", "Denied"],
+        }
+    )
     service = AnalyticsService()
     summary = service.summarize_dataframe(df)
     assert summary["total_events"] == 2
@@ -71,11 +81,13 @@ def test_count_and_date_helpers():
 
 
 def test_stream_uploaded_file(tmp_path):
-    df = pd.DataFrame({
-        "Timestamp": ["2024-01-01 10:00:00"],
-        "Person ID": ["u1"],
-        "Device name": ["d1"],
-    })
+    df = pd.DataFrame(
+        {
+            "Timestamp": ["2024-01-01 10:00:00"],
+            "Person ID": ["u1"],
+            "Device name": ["d1"],
+        }
+    )
     path = tmp_path / "x.csv"
     df.to_csv(path, index=False)
     service = AnalyticsService()
@@ -87,22 +99,24 @@ def test_stream_uploaded_file(tmp_path):
 def test_aggregate_counts():
     from collections import Counter
 
-    df1 = pd.DataFrame({
-        "person_id": ["u1", "u2"],
-        "door_id": ["d1", "d2"],
-        "timestamp": ["2024-01-01", "2024-01-02"],
-    })
-    df2 = pd.DataFrame({
-        "person_id": ["u1"],
-        "door_id": ["d1"],
-        "timestamp": ["2024-01-03"],
-    })
+    df1 = pd.DataFrame(
+        {
+            "person_id": ["u1", "u2"],
+            "door_id": ["d1", "d2"],
+            "timestamp": ["2024-01-01", "2024-01-02"],
+        }
+    )
+    df2 = pd.DataFrame(
+        {
+            "person_id": ["u1"],
+            "door_id": ["d1"],
+            "timestamp": ["2024-01-03"],
+        }
+    )
 
     service = AnalyticsService()
     u_counts, d_counts = Counter(), Counter()
-    total, min_ts, max_ts = aggregate_counts(
-        [df1, df2], u_counts, d_counts, None, None
-    )
+    total, min_ts, max_ts = aggregate_counts([df1, df2], u_counts, d_counts, None, None)
 
     assert total == 3
     assert u_counts["u1"] == 2

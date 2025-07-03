@@ -68,7 +68,12 @@ class AISuggestionService:
                 logger.info("   ✅ %s -> %s (%.0f%%)", column, field, confidence * 100)
             else:
                 suggested_values.append(None)
-                logger.info("   ❓ %s -> No confident suggestion (%.0f%%)", column, confidence * 100)
+                logger.info(
+                    "   ❓ %s -> No confident suggestion (%.0f%%)",
+                    column,
+                    confidence * 100,
+                )
         return [suggested_values]
+
 
 __all__ = ["AISuggestionService"]

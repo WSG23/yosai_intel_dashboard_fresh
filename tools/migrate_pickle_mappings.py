@@ -56,4 +56,3 @@ def main(argv: list[str]) -> None:
 
 if __name__ == "__main__":  # pragma: no cover - manual utility
     main(sys.argv)
-

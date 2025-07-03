@@ -1,4 +1,5 @@
 """Simple column suggestion heuristics used across the app."""
+
 from typing import Dict, List, Any
 
 
@@ -10,9 +11,15 @@ def generate_column_suggestions(columns: List[str]) -> Dict[str, Dict[str, Any]]
         column_lower = column.lower()
         suggestion = {"field": "", "confidence": 0.0}
 
-        if any(keyword in column_lower for keyword in ["person", "user", "employee", "name"]):
+        if any(
+            keyword in column_lower
+            for keyword in ["person", "user", "employee", "name"]
+        ):
             suggestion = {"field": "person_id", "confidence": 0.7}
-        elif any(keyword in column_lower for keyword in ["door", "location", "device", "room"]):
+        elif any(
+            keyword in column_lower
+            for keyword in ["door", "location", "device", "room"]
+        ):
             suggestion = {"field": "door_id", "confidence": 0.7}
         elif any(keyword in column_lower for keyword in ["time", "date", "stamp"]):
             suggestion = {"field": "timestamp", "confidence": 0.8}

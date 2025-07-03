@@ -34,4 +34,5 @@ def monitor_query_performance(threshold_ms: float = 1000.0):
 
     return decorator
 
+
 __all__ = ["monitor_query_performance"]

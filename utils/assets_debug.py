@@ -11,15 +11,27 @@ ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 NAVBAR_ICON_DIR = ASSETS_DIR / "navbar_icons"
 
 
-def check_navbar_assets(required: Iterable[str]) -> Dict[str, bool]:
-    """Return mapping of required icon names to existence state."""
+def check_navbar_assets(
+    required: Iterable[str], *, warn: bool = True
+) -> Dict[str, bool]:
+    """Return mapping of required icon names to existence state.
+
+    ``required`` should contain icon base names **without** the ``.png``
+    extension. The function appends ``.png`` automatically. Set ``warn=False``
+    to suppress warning logs for missing icons.
+    """
+
     results: Dict[str, bool] = {}
     for name in required:
-        path = NAVBAR_ICON_DIR / name
+        filename = f"{name}.png"
+        path = NAVBAR_ICON_DIR / filename
         exists = path.is_file()
         results[safe_unicode_encode(name)] = exists
-        if not exists:
-            logger.warning("Navbar icon missing: %s", safe_unicode_encode(str(path)))
+        if warn and not exists:
+            logger.warning(
+                "Navbar icon missing: %s",
+                safe_unicode_encode(str(path)),
+            )
     return results
 
 
@@ -40,8 +52,11 @@ def debug_dash_asset_serving(app: Any, icon: str = "analytics.png") -> bool:
         return False
 
 
-def navbar_icon(filename: str, alt: str, fallback_text: str):
-    """Return an ``Img`` component or fallback text for missing icons."""
+def navbar_icon(filename: str, alt: str, fallback_text: str, *, warn: bool = True):
+    """Return an ``Img`` component or fallback text for missing icons.
+
+    Set ``warn=False`` to suppress the warning log when the icon is missing.
+    """
     path = NAVBAR_ICON_DIR / filename
     if path.is_file():
         return html.Img(
@@ -49,7 +64,8 @@ def navbar_icon(filename: str, alt: str, fallback_text: str):
             className="nav-icon",
             alt=alt,
         )
-    logger.warning("Missing navbar icon: %s", safe_unicode_encode(filename))
+    if warn:
+        logger.warning("Missing navbar icon: %s", safe_unicode_encode(filename))
     return html.Span(fallback_text, className="nav-icon")
 
 

@@ -29,4 +29,3 @@ class UnicodeQueryHandler:
     @classmethod
     def safe_encode_params(cls, params: Any) -> Any:
         return cls._encode(params)
-

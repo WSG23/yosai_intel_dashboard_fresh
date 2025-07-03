@@ -23,7 +23,9 @@ class DataLoadingService:
         df = self.validator.validate(df)
         return map_and_clean(df)
 
-    def stream_file(self, source: Any, chunksize: int = 50000) -> Iterator[pd.DataFrame]:
+    def stream_file(
+        self, source: Any, chunksize: int = 50000
+    ) -> Iterator[pd.DataFrame]:
         if isinstance(source, (str, Path)) or hasattr(source, "read"):
             for chunk in pd.read_csv(source, chunksize=chunksize, encoding="utf-8"):
                 chunk = self.validator.validate(chunk)
@@ -31,4 +33,3 @@ class DataLoadingService:
         else:
             df = self.validator.validate(source)
             yield map_and_clean(df)
-

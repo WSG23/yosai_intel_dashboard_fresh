@@ -15,8 +15,7 @@ from core.security import InputValidator as _ComprehensiveValidator
 class Validator(Protocol):
     """Validator protocol for simple validators."""
 
-    def validate(self, data: Any) -> Any:
-        ...
+    def validate(self, data: Any) -> Any: ...
 
 
 class InputValidator:
@@ -48,7 +47,9 @@ class InputValidator:
         return bleach.clean(result["sanitized"], strip=True)
 
     # Expose common methods from the comprehensive validator
-    def validate_input(self, input_data: str, field_name: str = "input") -> Dict[str, Any]:
+    def validate_input(
+        self, input_data: str, field_name: str = "input"
+    ) -> Dict[str, Any]:
         return self._validator.validate_input(input_data, field_name)
 
     def validate_file_upload(
@@ -77,4 +78,10 @@ def validate_file_upload(
     return input_validator.validate_file_upload(filename, file_content, max_size_mb)
 
 
-__all__ = ["InputValidator", "Validator", "validate_input", "validate_file_upload", "input_validator"]
+__all__ = [
+    "InputValidator",
+    "Validator",
+    "validate_input",
+    "validate_file_upload",
+    "input_validator",
+]

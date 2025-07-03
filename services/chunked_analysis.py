@@ -55,9 +55,7 @@ def analyze_with_chunking(
             f"❌ PROCESSING ERROR: Expected {validated_rows:,} rows, got {rows_processed:,}"
         )
     else:
-        logger.info(
-            f"✅ SUCCESS: Processed ALL {rows_processed:,} rows successfully"
-        )
+        logger.info(f"✅ SUCCESS: Processed ALL {rows_processed:,} rows successfully")
 
     return result
 

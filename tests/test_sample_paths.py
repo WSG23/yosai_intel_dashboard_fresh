@@ -48,4 +48,3 @@ def test_fixed_processor_paths_from_config(monkeypatch):
 
     assert "/tmp/config_sample.csv" in calls
     assert "/tmp/config_sample.json" in calls
-

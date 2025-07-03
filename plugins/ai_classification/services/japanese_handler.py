@@ -15,4 +15,3 @@ class JapaneseTextHandler:
 
     def normalize_text(self, text: str) -> str:
         return text.strip()
-

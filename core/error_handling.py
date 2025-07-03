@@ -11,15 +11,19 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 import asyncio
 
+
 class ErrorSeverity(Enum):
     """Error severity levels"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
 
+
 class ErrorCategory(Enum):
     """Error categories for better classification"""
+
     DATABASE = "database"
     FILE_PROCESSING = "file_processing"
     AUTHENTICATION = "authentication"
@@ -28,9 +32,11 @@ class ErrorCategory(Enum):
     EXTERNAL_API = "external_api"
     USER_INPUT = "user_input"
 
+
 @dataclass
 class ErrorContext:
     """Rich error context for better debugging"""
+
     error_id: str
     timestamp: datetime
     category: ErrorCategory
@@ -41,15 +47,16 @@ class ErrorContext:
     request_id: Optional[str] = None
     stack_trace: Optional[str] = None
 
+
 class YosaiError(Exception):
     """Base exception class for all Yōsai-specific errors"""
-    
+
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         category: ErrorCategory = ErrorCategory.ANALYTICS,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
-        details: Dict[str, Any] = None
+        details: Dict[str, Any] = None,
     ):
         self.message = message
         self.category = category
@@ -58,43 +65,58 @@ class YosaiError(Exception):
         self.timestamp = datetime.now()
         super().__init__(message)
 
+
 class DatabaseError(YosaiError):
     """Database-specific errors"""
+
     def __init__(self, message: str, details: Dict[str, Any] = None):
         super().__init__(message, ErrorCategory.DATABASE, ErrorSeverity.HIGH, details)
 
+
 class FileProcessingError(YosaiError):
     """File processing errors"""
+
     def __init__(self, message: str, details: Dict[str, Any] = None):
-        super().__init__(message, ErrorCategory.FILE_PROCESSING, ErrorSeverity.MEDIUM, details)
+        super().__init__(
+            message, ErrorCategory.FILE_PROCESSING, ErrorSeverity.MEDIUM, details
+        )
+
 
 class ConfigurationError(YosaiError):
     """Configuration errors"""
+
     def __init__(self, message: str, details: Dict[str, Any] = None):
-        super().__init__(message, ErrorCategory.CONFIGURATION, ErrorSeverity.CRITICAL, details)
+        super().__init__(
+            message, ErrorCategory.CONFIGURATION, ErrorSeverity.CRITICAL, details
+        )
+
 
 class CircuitBreakerError(YosaiError):
     """Circuit breaker errors"""
+
     def __init__(self, message: str, details: Dict[str, Any] = None):
-        super().__init__(message, ErrorCategory.EXTERNAL_API, ErrorSeverity.HIGH, details)
+        super().__init__(
+            message, ErrorCategory.EXTERNAL_API, ErrorSeverity.HIGH, details
+        )
+
 
 class ErrorHandler:
     """Centralized error handling with Apple-style patterns"""
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.error_history: List[ErrorContext] = []
         self.max_history = 1000
-    
+
     def handle_error(
-        self, 
-        error: Exception, 
+        self,
+        error: Exception,
         category: ErrorCategory = ErrorCategory.ANALYTICS,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
-        context: Dict[str, Any] = None
+        context: Dict[str, Any] = None,
     ) -> ErrorContext:
         """Handle an error with proper logging and tracking"""
-        
+
         error_context = ErrorContext(
             error_id=f"ERR_{int(time.time())}_{id(error)}",
             timestamp=datetime.now(),
@@ -102,42 +124,52 @@ class ErrorHandler:
             severity=severity,
             message=str(error),
             details=context or {},
-            stack_trace=None  # Could add traceback if needed
+            stack_trace=None,  # Could add traceback if needed
         )
-        
+
         # Log based on severity
         if severity == ErrorSeverity.CRITICAL:
-            self.logger.critical(f"CRITICAL ERROR [{error_context.error_id}]: {error_context.message}")
+            self.logger.critical(
+                f"CRITICAL ERROR [{error_context.error_id}]: {error_context.message}"
+            )
         elif severity == ErrorSeverity.HIGH:
-            self.logger.error(f"ERROR [{error_context.error_id}]: {error_context.message}")
+            self.logger.error(
+                f"ERROR [{error_context.error_id}]: {error_context.message}"
+            )
         elif severity == ErrorSeverity.MEDIUM:
-            self.logger.warning(f"WARNING [{error_context.error_id}]: {error_context.message}")
+            self.logger.warning(
+                f"WARNING [{error_context.error_id}]: {error_context.message}"
+            )
         else:
-            self.logger.info(f"INFO [{error_context.error_id}]: {error_context.message}")
-        
+            self.logger.info(
+                f"INFO [{error_context.error_id}]: {error_context.message}"
+            )
+
         # Store in history
         self._add_to_history(error_context)
-        
+
         return error_context
-    
+
     def _add_to_history(self, error_context: ErrorContext) -> None:
         """Add error to history with size limit"""
         self.error_history.append(error_context)
         if len(self.error_history) > self.max_history:
             self.error_history.pop(0)
-    
+
     def get_error_summary(self, hours: int = 24) -> Dict[str, Any]:
         """Get error summary for the last N hours"""
         cutoff = datetime.now() - timedelta(hours=hours)
         recent_errors = [e for e in self.error_history if e.timestamp >= cutoff]
-        
+
         return {
-            'total_errors': len(recent_errors),
-            'by_category': self._group_by_category(recent_errors),
-            'by_severity': self._group_by_severity(recent_errors),
-            'critical_errors': [e for e in recent_errors if e.severity == ErrorSeverity.CRITICAL]
+            "total_errors": len(recent_errors),
+            "by_category": self._group_by_category(recent_errors),
+            "by_severity": self._group_by_severity(recent_errors),
+            "critical_errors": [
+                e for e in recent_errors if e.severity == ErrorSeverity.CRITICAL
+            ],
         }
-    
+
     def _group_by_category(self, errors: List[ErrorContext]) -> Dict[str, int]:
         """Group errors by category"""
         result = {}
@@ -145,7 +177,7 @@ class ErrorHandler:
             category = error.category.value
             result[category] = result.get(category, 0) + 1
         return result
-    
+
     def _group_by_severity(self, errors: List[ErrorContext]) -> Dict[str, int]:
         """Group errors by severity"""
         result = {}
@@ -154,15 +186,18 @@ class ErrorHandler:
             result[severity] = result.get(severity, 0) + 1
         return result
 
+
 # Global error handler instance
 error_handler = ErrorHandler()
+
 
 def with_error_handling(
     category: ErrorCategory = ErrorCategory.ANALYTICS,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
-    reraise: bool = False
+    reraise: bool = False,
 ):
     """Decorator for automatic error handling"""
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -170,31 +205,34 @@ def with_error_handling(
                 return func(*args, **kwargs)
             except Exception as e:
                 error_context = error_handler.handle_error(
-                    e, 
-                    category=category, 
+                    e,
+                    category=category,
                     severity=severity,
                     context={
-                        'function': func.__name__,
-                        'args': str(args)[:200],  # Limit size
-                        'kwargs': str(kwargs)[:200]
-                    }
+                        "function": func.__name__,
+                        "args": str(args)[:200],  # Limit size
+                        "kwargs": str(kwargs)[:200],
+                    },
                 )
-                
+
                 if reraise:
                     raise
-                
+
                 # Return safe default based on function return type
                 return None
-        
+
         return wrapper
+
     return decorator
+
 
 def with_async_error_handling(
     category: ErrorCategory = ErrorCategory.ANALYTICS,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
-    reraise: bool = False
+    reraise: bool = False,
 ):
     """Decorator for async error handling"""
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
@@ -202,43 +240,45 @@ def with_async_error_handling(
                 return await func(*args, **kwargs)
             except Exception as e:
                 error_context = error_handler.handle_error(
-                    e, 
-                    category=category, 
+                    e,
+                    category=category,
                     severity=severity,
                     context={
-                        'function': func.__name__,
-                        'args': str(args)[:200],
-                        'kwargs': str(kwargs)[:200]
-                    }
+                        "function": func.__name__,
+                        "args": str(args)[:200],
+                        "kwargs": str(kwargs)[:200],
+                    },
                 )
-                
+
                 if reraise:
                     raise
-                
+
                 return None
-        
+
         return wrapper
+
     return decorator
+
 
 class CircuitBreaker:
     """Circuit breaker pattern for external service calls"""
-    
+
     def __init__(self, failure_threshold: int = 5, timeout: int = 60):
         self.failure_threshold = failure_threshold
         self.timeout = timeout
         self.failure_count = 0
         self.last_failure_time = None
         self.state = "closed"  # closed, open, half-open
-    
+
     def call(self, func: Callable, *args, **kwargs) -> Any:
         """Call function with circuit breaker protection"""
-        
+
         if self.state == "open":
             if self._should_attempt_reset():
                 self.state = "half-open"
             else:
                 raise CircuitBreakerError("Circuit breaker is open")
-        
+
         try:
             result = func(*args, **kwargs)
             self._on_success()
@@ -246,35 +286,37 @@ class CircuitBreaker:
         except Exception as e:
             self._on_failure()
             raise
-    
+
     def _should_attempt_reset(self) -> bool:
         """Check if we should attempt to reset the circuit"""
         return (
-            self.last_failure_time and 
-            time.time() - self.last_failure_time >= self.timeout
+            self.last_failure_time
+            and time.time() - self.last_failure_time >= self.timeout
         )
-    
+
     def _on_success(self):
         """Handle successful call"""
         self.failure_count = 0
         self.state = "closed"
-    
+
     def _on_failure(self):
         """Handle failed call"""
         self.failure_count += 1
         self.last_failure_time = time.time()
-        
+
         if self.failure_count >= self.failure_threshold:
             self.state = "open"
+
 
 # Retry decorator with exponential backoff
 def with_retry(
     max_attempts: int = 3,
     delay: float = 1.0,
     exponential_backoff: bool = True,
-    exceptions: tuple = (Exception,)
+    exceptions: tuple = (Exception,),
 ):
     """Retry decorator with exponential backoff"""
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -284,19 +326,20 @@ def with_retry(
                 except exceptions as e:
                     if attempt == max_attempts - 1:
                         raise
-                    
-                    wait_time = delay * (2 ** attempt) if exponential_backoff else delay
+
+                    wait_time = delay * (2**attempt) if exponential_backoff else delay
                     time.sleep(wait_time)
-                    
+
                     error_handler.handle_error(
                         e,
                         severity=ErrorSeverity.LOW,
                         context={
-                            'attempt': attempt + 1,
-                            'max_attempts': max_attempts,
-                            'function': func.__name__
-                        }
+                            "attempt": attempt + 1,
+                            "max_attempts": max_attempts,
+                            "function": func.__name__,
+                        },
                     )
-        
+
         return wrapper
+
     return decorator

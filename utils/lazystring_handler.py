@@ -1,4 +1,5 @@
 """Handle LazyString objects for JSON serialization."""
+
 import logging
 from typing import Any
 
@@ -7,6 +8,7 @@ from core.serialization import SafeJSONSerializer
 logger = logging.getLogger(__name__)
 
 _serializer = SafeJSONSerializer()
+
 
 def sanitize_lazystring_recursive(obj: Any) -> Any:
     """Recursively convert LazyString objects to regular strings for JSON serialization"""

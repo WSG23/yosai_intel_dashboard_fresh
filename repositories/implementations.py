@@ -11,7 +11,9 @@ class PersonRepository(IPersonRepository):
     async def get_by_id(self, person_id: str) -> Optional[Person]:  # pragma: no cover
         raise NotImplementedError
 
-    async def get_all(self, limit: int = 100, offset: int = 0) -> List[Person]:  # pragma: no cover
+    async def get_all(
+        self, limit: int = 100, offset: int = 0
+    ) -> List[Person]:  # pragma: no cover
         raise NotImplementedError
 
     async def create(self, person: Person) -> Person:  # pragma: no cover
@@ -44,7 +46,9 @@ class AccessEventRepository(IAccessEventRepository):
     async def create_event(self, event: AccessEvent) -> AccessEvent:  # pragma: no cover
         raise NotImplementedError
 
-    async def get_recent_events(self, limit: int = 100) -> List[AccessEvent]:  # pragma: no cover
+    async def get_recent_events(
+        self, limit: int = 100
+    ) -> List[AccessEvent]:  # pragma: no cover
         raise NotImplementedError
 
 
@@ -57,4 +61,3 @@ class DoorRepository(IDoorRepository):
 
     async def get_critical_doors(self) -> List[Door]:  # pragma: no cover
         raise NotImplementedError
-

@@ -29,14 +29,18 @@ class AnalyticsDataAccessor:
         uploaded_data = self._get_uploaded_data()
         if not uploaded_data:
             return pd.DataFrame(), {}
-        combined_df, metadata = self._apply_mappings_and_combine(uploaded_data, mappings_data)
+        combined_df, metadata = self._apply_mappings_and_combine(
+            uploaded_data, mappings_data
+        )
         return combined_df, metadata
 
     def _load_consolidated_mappings(self) -> Dict[str, Any]:
         """Load consolidated mappings from ``learned_mappings.json``."""
         try:
             if self.mappings_file.exists():
-                with open(self.mappings_file, "r", encoding="utf-8", errors="replace") as f:
+                with open(
+                    self.mappings_file, "r", encoding="utf-8", errors="replace"
+                ) as f:
                     return json.load(f)
             return {}
         except Exception as exc:  # pragma: no cover - best effort
@@ -47,6 +51,7 @@ class AnalyticsDataAccessor:
         """Retrieve uploaded data from the ``file_upload`` module."""
         try:
             from pages.file_upload import get_uploaded_data
+
             uploaded_data = get_uploaded_data()
             if uploaded_data:
                 logger.info("Found %s uploaded files", len(uploaded_data))
@@ -81,7 +86,9 @@ class AnalyticsDataAccessor:
         for filename, df in uploaded_data.items():
             try:
                 mapped_df = self._apply_column_mappings(df, filename, mappings_data)
-                enriched_df = self._apply_device_mappings(mapped_df, filename, mappings_data)
+                enriched_df = self._apply_device_mappings(
+                    mapped_df, filename, mappings_data
+                )
                 enriched_df["source_file"] = filename
                 enriched_df["processed_at"] = datetime.now()
                 combined_dfs.append(enriched_df)
@@ -89,19 +96,29 @@ class AnalyticsDataAccessor:
                 metadata["total_records"] += len(enriched_df)
 
                 if "person_id" in enriched_df.columns:
-                    metadata["unique_users"].update(enriched_df["person_id"].dropna().unique())
+                    metadata["unique_users"].update(
+                        enriched_df["person_id"].dropna().unique()
+                    )
                 if "door_id" in enriched_df.columns:
-                    metadata["unique_devices"].update(enriched_df["door_id"].dropna().unique())
+                    metadata["unique_devices"].update(
+                        enriched_df["door_id"].dropna().unique()
+                    )
 
                 if "timestamp" in enriched_df.columns:
-                    dates = pd.to_datetime(enriched_df["timestamp"], errors="coerce").dropna()
+                    dates = pd.to_datetime(
+                        enriched_df["timestamp"], errors="coerce"
+                    ).dropna()
                     if len(dates) > 0:
                         if metadata["date_range"]["start"] is None:
                             metadata["date_range"]["start"] = dates.min()
                             metadata["date_range"]["end"] = dates.max()
                         else:
-                            metadata["date_range"]["start"] = min(metadata["date_range"]["start"], dates.min())
-                            metadata["date_range"]["end"] = max(metadata["date_range"]["end"], dates.max())
+                            metadata["date_range"]["start"] = min(
+                                metadata["date_range"]["start"], dates.min()
+                            )
+                            metadata["date_range"]["end"] = max(
+                                metadata["date_range"]["end"], dates.max()
+                            )
             except Exception as exc:  # pragma: no cover - best effort
                 logger.error("Error processing %s: %s", filename, exc)
                 continue

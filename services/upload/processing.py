@@ -35,7 +35,10 @@ class UploadProcessingService:
         return dbc.Alert(
             [
                 html.H6(
-                    [html.I(className="fas fa-check-circle me-2"), f"{prefix} {filename}"],
+                    [
+                        html.I(className="fas fa-check-circle me-2"),
+                        f"{prefix} {filename}",
+                    ],
                     className="alert-heading",
                 ),
                 html.P(
@@ -62,9 +65,7 @@ class UploadProcessingService:
             learned = learning_service.get_learned_mappings(df, filename)
             if learned:
                 learning_service.apply_learned_mappings_to_global_store(df, filename)
-                logger.info(
-                    "🤖 Auto-applied %s learned device mappings", len(learned)
-                )
+                logger.info("🤖 Auto-applied %s learned device mappings", len(learned))
                 return True
             return False
         except Exception as exc:  # pragma: no cover - best effort
@@ -83,7 +84,8 @@ class UploadProcessingService:
                         dbc.CardBody(
                             [
                                 html.P(
-                                    "Configure your data for analysis:", className="mb-3"
+                                    "Configure your data for analysis:",
+                                    className="mb-3",
                                 ),
                                 dbc.ButtonGroup(
                                     [
@@ -159,8 +161,12 @@ class UploadProcessingService:
                     cols = len(df.columns)
 
                     self.store.add_file(filename, df)
-                    upload_results.append(self.build_success_alert(filename, rows, cols))
-                    file_preview_components.append(self.build_file_preview_component(df, filename))
+                    upload_results.append(
+                        self.build_success_alert(filename, rows, cols)
+                    )
+                    file_preview_components.append(
+                        self.build_file_preview_component(df, filename)
+                    )
 
                     column_names = df.columns.tolist()
                     file_info_dict[filename] = {
@@ -175,7 +181,9 @@ class UploadProcessingService:
 
                     try:
                         learning_service = get_device_learning_service()
-                        user_mappings = learning_service.get_user_device_mappings(filename)
+                        user_mappings = learning_service.get_user_device_mappings(
+                            filename
+                        )
                         if user_mappings:
                             from services.ai_mapping_store import ai_mapping_store
 
@@ -226,5 +234,6 @@ class UploadProcessingService:
             no_update,
             no_update,
         )
+
 
 __all__ = ["UploadProcessingService"]

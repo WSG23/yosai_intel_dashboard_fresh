@@ -52,15 +52,17 @@ class SessionManager:
             for session_id in session_ids[-limit:]:
                 session_data = self.get_session_data(session_id)
                 if session_data:
-                    processed_data = session_data.get('processed_data', {})
-                    sessions.append({
-                        'session_id': session_id,
-                        'filename': processed_data.get('filename', 'Unknown'),
-                        'upload_time': processed_data.get('upload_timestamp', ''),
-                        'row_count': processed_data.get('row_count', 0),
-                        'headers': processed_data.get('headers', [])
-                    })
-            return sorted(sessions, key=lambda x: x['upload_time'], reverse=True)
+                    processed_data = session_data.get("processed_data", {})
+                    sessions.append(
+                        {
+                            "session_id": session_id,
+                            "filename": processed_data.get("filename", "Unknown"),
+                            "upload_time": processed_data.get("upload_timestamp", ""),
+                            "row_count": processed_data.get("row_count", 0),
+                            "headers": processed_data.get("headers", []),
+                        }
+                    )
+            return sorted(sessions, key=lambda x: x["upload_time"], reverse=True)
         except Exception as e:
             logger.error(f"Failed to list sessions: {e}")
             return []

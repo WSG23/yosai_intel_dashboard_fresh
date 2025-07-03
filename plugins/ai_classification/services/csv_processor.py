@@ -26,7 +26,9 @@ class CSVProcessorService:
         self.config = config
         self.logger = logger
 
-    def process_file(self, file_path: str, session_id: str, client_id: str) -> Dict[str, Any]:
+    def process_file(
+        self, file_path: str, session_id: str, client_id: str
+    ) -> Dict[str, Any]:
         try:
             path = Path(file_path)
             if not path.exists():
@@ -50,7 +52,11 @@ class CSVProcessorService:
             return {
                 "success": True,
                 "session_id": session_id,
-                "file_info": {"name": path.name, "rows": len(df), "columns": len(headers)},
+                "file_info": {
+                    "name": path.name,
+                    "rows": len(df),
+                    "columns": len(headers),
+                },
                 "headers": headers,
                 "sample_data": sample_data,
             }
@@ -58,4 +64,3 @@ class CSVProcessorService:
         except Exception as exc:
             self.logger.error("CSV processing failed: %s", exc)
             return {"success": False, "error": str(exc)}
-

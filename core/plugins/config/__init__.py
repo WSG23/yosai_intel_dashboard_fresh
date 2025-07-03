@@ -13,14 +13,15 @@ try:
         return get_config()
 
     __all__ = [
-        'UnifiedConfig',
-        'get_config',
-        'get_service_locator',
-        'DatabaseManager',
+        "UnifiedConfig",
+        "get_config",
+        "get_service_locator",
+        "DatabaseManager",
     ]
 
 except Exception:
+
     def get_service_locator():  # pragma: no cover - fallback
         return None
 
-    __all__ = ['get_service_locator']
+    __all__ = ["get_service_locator"]

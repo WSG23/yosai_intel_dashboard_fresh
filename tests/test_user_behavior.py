@@ -13,10 +13,30 @@ def create_analyzer(df):
 def test_generate_behavior_summary_basic():
     df = pd.DataFrame(
         [
-            {"person_id": "U1", "door_id": "D1", "timestamp": "2024-01-01 09:00:00", "access_result": "Granted"},
-            {"person_id": "U1", "door_id": "D2", "timestamp": "2024-01-01 10:00:00", "access_result": "Granted"},
-            {"person_id": "U2", "door_id": "D1", "timestamp": "2024-01-02 23:00:00", "access_result": "Denied"},
-            {"person_id": "U2", "door_id": "D3", "timestamp": "2024-01-02 23:30:00", "access_result": "Granted"},
+            {
+                "person_id": "U1",
+                "door_id": "D1",
+                "timestamp": "2024-01-01 09:00:00",
+                "access_result": "Granted",
+            },
+            {
+                "person_id": "U1",
+                "door_id": "D2",
+                "timestamp": "2024-01-01 10:00:00",
+                "access_result": "Granted",
+            },
+            {
+                "person_id": "U2",
+                "door_id": "D1",
+                "timestamp": "2024-01-02 23:00:00",
+                "access_result": "Denied",
+            },
+            {
+                "person_id": "U2",
+                "door_id": "D3",
+                "timestamp": "2024-01-02 23:30:00",
+                "access_result": "Granted",
+            },
         ]
     )
     analyzer, prepared = create_analyzer(df)
@@ -31,8 +51,18 @@ def test_generate_behavior_summary_basic():
 def test_generate_behavior_summary_missing_person_ids():
     df = pd.DataFrame(
         [
-            {"person_id": None, "door_id": "D1", "timestamp": "2024-01-01 09:00:00", "access_result": "Granted"},
-            {"person_id": None, "door_id": "D1", "timestamp": "2024-01-01 10:00:00", "access_result": "Denied"},
+            {
+                "person_id": None,
+                "door_id": "D1",
+                "timestamp": "2024-01-01 09:00:00",
+                "access_result": "Granted",
+            },
+            {
+                "person_id": None,
+                "door_id": "D1",
+                "timestamp": "2024-01-01 10:00:00",
+                "access_result": "Denied",
+            },
         ]
     )
     analyzer, prepared = create_analyzer(df)
@@ -45,10 +75,30 @@ def test_generate_behavior_summary_missing_person_ids():
 def test_calculate_user_risk_score():
     df = pd.DataFrame(
         [
-            {"person_id": "U1", "door_id": "D1", "timestamp": "2024-01-01 09:00:00", "access_result": "Granted"},
-            {"person_id": "U1", "door_id": "D1", "timestamp": "2024-01-02 23:00:00", "access_result": "Denied"},
-            {"person_id": "U2", "door_id": "D1", "timestamp": "2024-01-03 09:00:00", "access_result": "Granted"},
-            {"person_id": "U2", "door_id": "D1", "timestamp": "2024-01-04 09:00:00", "access_result": "Granted"},
+            {
+                "person_id": "U1",
+                "door_id": "D1",
+                "timestamp": "2024-01-01 09:00:00",
+                "access_result": "Granted",
+            },
+            {
+                "person_id": "U1",
+                "door_id": "D1",
+                "timestamp": "2024-01-02 23:00:00",
+                "access_result": "Denied",
+            },
+            {
+                "person_id": "U2",
+                "door_id": "D1",
+                "timestamp": "2024-01-03 09:00:00",
+                "access_result": "Granted",
+            },
+            {
+                "person_id": "U2",
+                "door_id": "D1",
+                "timestamp": "2024-01-04 09:00:00",
+                "access_result": "Granted",
+            },
         ]
     )
     analyzer, prepared = create_analyzer(df)
@@ -84,4 +134,6 @@ def test_calculate_temporal_diversity():
 
     assert result["hour_diversity"] == pytest.approx(expected_hour)
     assert result["day_diversity"] == pytest.approx(expected_day)
-    assert result["overall_temporal_diversity"] == pytest.approx((expected_hour + expected_day) / 2)
+    assert result["overall_temporal_diversity"] == pytest.approx(
+        (expected_hour + expected_day) / 2
+    )

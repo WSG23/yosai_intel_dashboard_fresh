@@ -9,7 +9,9 @@ def factory():
 
 
 def test_pool_reuse():
-    pool = DatabaseConnectionPool(factory, initial_size=2, max_size=4, timeout=10, shrink_timeout=1)
+    pool = DatabaseConnectionPool(
+        factory, initial_size=2, max_size=4, timeout=10, shrink_timeout=1
+    )
     c1 = pool.get_connection()
     pool.release_connection(c1)
     c2 = pool.get_connection()
@@ -18,7 +20,9 @@ def test_pool_reuse():
 
 
 def test_pool_health_check():
-    pool = DatabaseConnectionPool(factory, initial_size=1, max_size=2, timeout=10, shrink_timeout=1)
+    pool = DatabaseConnectionPool(
+        factory, initial_size=1, max_size=2, timeout=10, shrink_timeout=1
+    )
     conn = pool.get_connection()
     conn.close()
     pool.release_connection(conn)
@@ -27,7 +31,9 @@ def test_pool_health_check():
 
 
 def test_pool_expands_and_shrinks():
-    pool = DatabaseConnectionPool(factory, initial_size=1, max_size=3, timeout=10, shrink_timeout=0)
+    pool = DatabaseConnectionPool(
+        factory, initial_size=1, max_size=3, timeout=10, shrink_timeout=0
+    )
 
     c1 = pool.get_connection()
     # First connection should not trigger expansion
@@ -42,4 +48,3 @@ def test_pool_expands_and_shrinks():
 
     # Shrink happens immediately due to shrink_timeout=0
     assert pool._max_size == 1
-

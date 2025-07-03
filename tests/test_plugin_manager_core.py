@@ -131,7 +131,12 @@ def create_plugin():
     )
     sys.path.insert(0, str(tmp_path))
     try:
-        manager = PluginManager(DIContainer(), ConfigManager(), package="testplugins", health_check_interval=1)
+        manager = PluginManager(
+            DIContainer(),
+            ConfigManager(),
+            package="testplugins",
+            health_check_interval=1,
+        )
         plugins = manager.load_all_plugins()
         assert len(plugins) == 1
         assert "plug_a" in manager.plugins

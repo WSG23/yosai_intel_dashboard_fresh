@@ -82,7 +82,11 @@ def setup_logging(config: Dict[str, Any]) -> None:
         },
         "loggers": {
             "": {"handlers": ["console", "file"], "level": "DEBUG", "propagate": False},
-            "yosai": {"handlers": ["console", "file"], "level": "DEBUG", "propagate": False},
+            "yosai": {
+                "handlers": ["console", "file"],
+                "level": "DEBUG",
+                "propagate": False,
+            },
         },
     }
 
@@ -90,4 +94,3 @@ def setup_logging(config: Dict[str, Any]) -> None:
         logging_config["handlers"]["console"]["level"] = "DEBUG"
 
     logging.config.dictConfig(logging_config)
-

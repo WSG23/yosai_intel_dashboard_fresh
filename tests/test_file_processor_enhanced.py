@@ -28,7 +28,12 @@ def test_enhanced_processor(tmp_path):
     assert result["valid"] is True
     mapped_df = result.get("data")
     assert mapped_df is not None
-    assert list(mapped_df.columns) == ["person_id", "door_id", "access_result", "timestamp"]
+    assert list(mapped_df.columns) == [
+        "person_id",
+        "door_id",
+        "access_result",
+        "timestamp",
+    ]
 
 
 def test_malicious_filename_rejected(tmp_path):
@@ -49,5 +54,3 @@ def test_oversized_file_rejected(tmp_path):
 def test_upload_limit_allows_large_files():
     """Default upload size should permit files of at least 50MB."""
     assert dynamic_config.security.max_upload_mb >= 50
-
-

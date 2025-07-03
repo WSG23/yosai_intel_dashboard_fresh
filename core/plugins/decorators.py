@@ -11,14 +11,14 @@ def safe_callback(app_or_container: Any = None) -> Callable:
             # Get callback service from container (via plugin)
             callback_service = None
 
-            if hasattr(app_or_container, '_yosai_container'):
+            if hasattr(app_or_container, "_yosai_container"):
                 container = app_or_container._yosai_container
                 try:
-                    callback_service = container.get('json_callback_service')
+                    callback_service = container.get("json_callback_service")
                 except Exception:
                     # Fallback to generic callback service
                     try:
-                        callback_service = container.get('callback_service')
+                        callback_service = container.get("callback_service")
                     except Exception:
                         pass
 

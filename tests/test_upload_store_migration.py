@@ -17,4 +17,3 @@ def test_pkl_migration(tmp_path):
     info = store.get_file_info()["legacy.csv"]
     assert info["rows"] == 2
     assert info["columns"] == 2
-

@@ -32,4 +32,3 @@ def test_process_uploaded_files_split(monkeypatch, tmp_path):
 
     assert info["big.csv"]["rows"] == len(df)
     assert list(store.get_filenames()) == ["big.csv"]
-

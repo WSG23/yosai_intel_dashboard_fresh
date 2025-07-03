@@ -3,6 +3,7 @@
 Fixed Main Application - No import issues
 """
 import logging
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -100,7 +101,9 @@ def main():
     """Main application entry point"""
     try:
         load_dotenv()
-        from config.dev_mode import setup_dev_mode; setup_dev_mode()
+        from config.dev_mode import setup_dev_mode
+
+        setup_dev_mode()
         # Import configuration
         try:
             from config.config import get_config

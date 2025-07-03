@@ -23,10 +23,10 @@ class TestSecurityVulnerabilities:
         from utils.unicode_utils import sanitize_unicode_input
 
         # Test lone surrogates
-        lone_surrogate = "\uD800\uD801"  # Invalid surrogate pair
+        lone_surrogate = "\ud800\ud801"  # Invalid surrogate pair
         result = sanitize_unicode_input(lone_surrogate)
-        assert "\uD800" not in result
-        assert "\uD801" not in result
+        assert "\ud800" not in result
+        assert "\ud801" not in result
         assert "\ufffd" in result
 
     def test_sanitize_unicode_input_ascii_fallback(self):

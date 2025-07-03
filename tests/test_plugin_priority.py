@@ -50,7 +50,12 @@ def create_plugin():
 
     sys.path.insert(0, str(tmp_path))
     try:
-        manager = PluginManager(DIContainer(), ConfigManager(), package="prio_plugins", health_check_interval=1)
+        manager = PluginManager(
+            DIContainer(),
+            ConfigManager(),
+            package="prio_plugins",
+            health_check_interval=1,
+        )
         plugins = manager.load_all_plugins()
         names = [p.metadata.name for p in plugins]
         assert names == ["b", "a"]

@@ -11,9 +11,7 @@ def test_safe_unicode_encode_surrogates():
 
 
 def test_sanitize_data_frame():
-    df = pd.DataFrame({
-        "=bad" + chr(0xDC00): ["=cmd()", "ok" + chr(0xD800)]
-    })
+    df = pd.DataFrame({"=bad" + chr(0xDC00): ["=cmd()", "ok" + chr(0xD800)]})
     cleaned = sanitize_data_frame(df)
     assert list(cleaned.columns) == ["bad"]
     assert cleaned.iloc[0, 0] == "cmd()"

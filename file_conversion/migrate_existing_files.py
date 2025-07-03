@@ -1,4 +1,5 @@
 """Script to migrate a pickle file to Parquet format using :class:`StorageManager`."""
+
 from __future__ import annotations
 
 from pathlib import Path

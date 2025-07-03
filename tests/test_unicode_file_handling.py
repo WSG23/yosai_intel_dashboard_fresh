@@ -12,11 +12,13 @@ def test_consolidated_learning_unicode(tmp_path):
     storage = tmp_path / "mäppings.json"
     service = ConsolidatedLearningService(str(storage))
 
-    df = pd.DataFrame({
-        "door_id": ["дверь"],
-        "timestamp": ["2024-01-01"],
-        "user": ["пользователь"],
-    })
+    df = pd.DataFrame(
+        {
+            "door_id": ["дверь"],
+            "timestamp": ["2024-01-01"],
+            "user": ["пользователь"],
+        }
+    )
     mappings = {"дверь": {"floor": 1}}
 
     service.save_complete_mapping(df, "файл.csv", mappings)

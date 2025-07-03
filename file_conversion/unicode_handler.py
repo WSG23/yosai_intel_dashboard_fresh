@@ -1,4 +1,5 @@
 """Utilities for cleaning Unicode surrogate characters."""
+
 from __future__ import annotations
 
 import logging
@@ -20,7 +21,13 @@ class UnicodeCleaner:
             if not isinstance(text, str):
                 text = str(text)
             cleaned = "".join(
-                ch for ch in text if not (UnicodeCleaner._SURROGATE_RANGE[0] <= ord(ch) <= UnicodeCleaner._SURROGATE_RANGE[1])
+                ch
+                for ch in text
+                if not (
+                    UnicodeCleaner._SURROGATE_RANGE[0]
+                    <= ord(ch)
+                    <= UnicodeCleaner._SURROGATE_RANGE[1]
+                )
             )
             return cleaned
         except Exception as exc:  # pragma: no cover - best effort
@@ -33,7 +40,9 @@ class UnicodeCleaner:
         try:
             df_clean = df.copy()
             # Clean column names
-            df_clean.columns = [UnicodeCleaner.clean_string(c) for c in df_clean.columns]
+            df_clean.columns = [
+                UnicodeCleaner.clean_string(c) for c in df_clean.columns
+            ]
             # Clean string values
             for col in df_clean.select_dtypes(include=["object"]).columns:
                 df_clean[col] = df_clean[col].map(UnicodeCleaner.clean_string)
@@ -41,5 +50,6 @@ class UnicodeCleaner:
         except Exception as exc:  # pragma: no cover - best effort
             _logger.error("Error cleaning DataFrame: %s", exc)
             return df
+
 
 __all__ = ["UnicodeCleaner"]

@@ -11,9 +11,11 @@ from .interfaces import ICacheManager
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class CacheEntry:
     """Cache entry with expiration"""
+
     value: Any
     created_at: float
     ttl: Optional[float] = None
@@ -24,13 +26,14 @@ class CacheEntry:
             return False
         return time.time() - self.created_at > self.ttl
 
+
 class MemoryCacheManager(ICacheManager):
     """Memory-based cache manager"""
 
     def __init__(self, cache_config):
         self.config = cache_config
         self._cache: Dict[str, CacheEntry] = {}
-        self.default_ttl = getattr(cache_config, 'timeout_seconds', 300)
+        self.default_ttl = getattr(cache_config, "timeout_seconds", 300)
         self._started = False
 
     def get(self, key: str) -> Optional[Any]:
@@ -49,9 +52,7 @@ class MemoryCacheManager(ICacheManager):
         """Set value in memory cache"""
         cache_ttl = ttl or self.default_ttl
         self._cache[key] = CacheEntry(
-            value=value,
-            created_at=time.time(),
-            ttl=cache_ttl
+            value=value, created_at=time.time(), ttl=cache_ttl
         )
 
     def delete(self, key: str) -> bool:
@@ -76,6 +77,7 @@ class MemoryCacheManager(ICacheManager):
         self._started = False
         logger.info("Memory cache manager stopped")
 
+
 class RedisCacheManager(ICacheManager):
     """Redis-based cache manager"""
 
@@ -87,9 +89,9 @@ class RedisCacheManager(ICacheManager):
     def _client(self) -> redis.Redis:
         if self.redis_client is None:
             self.redis_client = redis.Redis(
-                host=getattr(self.config, 'host', 'localhost'),
-                port=getattr(self.config, 'port', 6379),
-                db=getattr(self.config, 'db', 0)
+                host=getattr(self.config, "host", "localhost"),
+                port=getattr(self.config, "port", 6379),
+                db=getattr(self.config, "db", 0),
             )
         return self.redis_client
 
@@ -112,7 +114,7 @@ class RedisCacheManager(ICacheManager):
             return
         try:
             data = pickle.dumps(value)
-            expire = ttl or getattr(self.config, 'ttl', None)
+            expire = ttl or getattr(self.config, "ttl", None)
             if expire:
                 self._client().setex(key, expire, data)
             else:
@@ -160,4 +162,5 @@ class RedisCacheManager(ICacheManager):
         self._started = False
         logger.info("Redis cache manager stopped")
 
-__all__ = ['MemoryCacheManager', 'RedisCacheManager', 'CacheEntry']
+
+__all__ = ["MemoryCacheManager", "RedisCacheManager", "CacheEntry"]

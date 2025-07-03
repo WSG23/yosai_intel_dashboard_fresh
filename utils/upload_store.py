@@ -1,4 +1,5 @@
 """Persistent uploaded data store module."""
+
 import json
 import logging
 import threading
@@ -108,9 +109,7 @@ class UploadedDataStore:
                     "columns": len(df.columns),
                     "column_names": list(df.columns),
                     "upload_time": datetime.now().isoformat(),
-                    "size_mb": round(
-                        df.memory_usage(deep=True).sum() / 1024 / 1024, 2
-                    ),
+                    "size_mb": round(df.memory_usage(deep=True).sum() / 1024 / 1024, 2),
                 }
                 with open(self._info_path(), "w", encoding="utf-8") as f:
                     json.dump(self._file_info_store, f, indent=2)

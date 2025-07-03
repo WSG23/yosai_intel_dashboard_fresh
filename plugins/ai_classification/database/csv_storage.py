@@ -75,9 +75,7 @@ class CSVStorageRepository:
                         session_id = file_path.stem.replace("session_", "")
                         self._load_session_from_file(session_id)
                     except Exception as e:
-                        logger.warning(
-                            f"Failed to load session file {file_path}: {e}"
-                        )
+                        logger.warning(f"Failed to load session file {file_path}: {e}")
 
             logger.info(f"Repository initialized with {len(self.sessions)} sessions")
             return True

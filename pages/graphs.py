@@ -36,15 +36,21 @@ def layout() -> dbc.Container:
 
     tabs = dbc.Tabs(
         [
-            dbc.Tab(dcc.Graph(figure=figures["line"]),
-                    label=sanitize_unicode_input("Line Charts"),
-                    tab_id="line"),
-            dbc.Tab(dcc.Graph(figure=figures["bar"]),
-                    label=sanitize_unicode_input("Bar Charts"),
-                    tab_id="bar"),
-            dbc.Tab(dcc.Graph(figure=figures["other"]),
-                    label=sanitize_unicode_input("Other"),
-                    tab_id="other"),
+            dbc.Tab(
+                dcc.Graph(figure=figures["line"]),
+                label=sanitize_unicode_input("Line Charts"),
+                tab_id="line",
+            ),
+            dbc.Tab(
+                dcc.Graph(figure=figures["bar"]),
+                label=sanitize_unicode_input("Bar Charts"),
+                tab_id="bar",
+            ),
+            dbc.Tab(
+                dcc.Graph(figure=figures["other"]),
+                label=sanitize_unicode_input("Other"),
+                tab_id="other",
+            ),
         ],
         id="graphs-tabs",
         active_tab="line",

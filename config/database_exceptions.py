@@ -12,4 +12,3 @@ class ConnectionValidationFailed(DatabaseError):
 
 class UnicodeEncodingError(DatabaseError):
     """Raised when Unicode encoding fails."""
-

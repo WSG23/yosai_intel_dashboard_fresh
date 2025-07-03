@@ -11,6 +11,7 @@ from utils.unicode_utils import handle_surrogate_characters
 
 try:  # Optional Flask-Babel
     from flask_babel import LazyString
+
     BABEL_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
     LazyString = None  # type: ignore
@@ -18,6 +19,7 @@ except Exception:  # pragma: no cover - optional dependency
 
 try:
     from markupsafe import Markup
+
     MARKUP_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
     Markup = None  # type: ignore

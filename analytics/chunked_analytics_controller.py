@@ -20,9 +20,14 @@ class ChunkedAnalyticsController:
     def __init__(self, chunk_size: int = None, max_workers: int = None) -> None:
         try:
             from config.dynamic_config import dynamic_config
-            if hasattr(dynamic_config, 'analytics'):
-                self.chunk_size = chunk_size or getattr(dynamic_config.analytics, 'chunk_size', 50000)
-                self.max_workers = max_workers or getattr(dynamic_config.analytics, 'max_workers', 4)
+
+            if hasattr(dynamic_config, "analytics"):
+                self.chunk_size = chunk_size or getattr(
+                    dynamic_config.analytics, "chunk_size", 50000
+                )
+                self.max_workers = max_workers or getattr(
+                    dynamic_config.analytics, "max_workers", 4
+                )
             else:
                 self.chunk_size = chunk_size or 50000
                 self.max_workers = max_workers or 4
@@ -32,9 +37,13 @@ class ChunkedAnalyticsController:
 
         # Ensure chunk size is at least the configured minimum
         self.chunk_size = max(self.chunk_size, AnalyticsConstants.min_chunk_size)
-        logger.info(f"ChunkedAnalyticsController initialized: chunk_size={self.chunk_size}")
+        logger.info(
+            f"ChunkedAnalyticsController initialized: chunk_size={self.chunk_size}"
+        )
 
-    def process_large_dataframe(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
+    def process_large_dataframe(
+        self, df: pd.DataFrame, analysis_types: List[str]
+    ) -> Dict[str, Any]:
         """Process a large DataFrame using chunked analysis."""
         total_rows = len(df)
         logger.info(f"🔄 Starting COMPLETE chunked analysis for {total_rows:,} rows")
@@ -58,12 +67,16 @@ class ChunkedAnalyticsController:
         chunks_processed = 0
         total_chunks = (len(df) + self.chunk_size - 1) // self.chunk_size
 
-        logger.info(f"🎯 Will process {total_chunks} chunks to analyze ALL {total_rows:,} rows")
+        logger.info(
+            f"🎯 Will process {total_chunks} chunks to analyze ALL {total_rows:,} rows"
+        )
 
         # Process all chunks with detailed logging
         for chunk_df in self._chunk_dataframe(df):
             chunk_size_actual = len(chunk_df)
-            logger.info(f"📦 Processing chunk {chunks_processed + 1}/{total_chunks}: {chunk_size_actual:,} rows")
+            logger.info(
+                f"📦 Processing chunk {chunks_processed + 1}/{total_chunks}: {chunk_size_actual:,} rows"
+            )
 
             # Process this chunk
             chunk_results = self._process_chunk(chunk_df, analysis_types)
@@ -75,14 +88,20 @@ class ChunkedAnalyticsController:
             aggregated_results["rows_processed"] += chunk_size_actual
 
             # Progress logging every chunk for debugging
-            logger.info(f"✅ Completed chunk {chunks_processed}/{total_chunks} "
-                        f"({aggregated_results['rows_processed']:,}/{total_rows:,} rows processed)")
+            logger.info(
+                f"✅ Completed chunk {chunks_processed}/{total_chunks} "
+                f"({aggregated_results['rows_processed']:,}/{total_rows:,} rows processed)"
+            )
 
         # Verify all chunks were processed
         if aggregated_results["rows_processed"] != total_rows:
-            logger.error(f"❌ CHUNK PROCESSING ERROR: Only processed {aggregated_results['rows_processed']:,} of {total_rows:,} rows!")
+            logger.error(
+                f"❌ CHUNK PROCESSING ERROR: Only processed {aggregated_results['rows_processed']:,} of {total_rows:,} rows!"
+            )
         else:
-            logger.info(f"🎉 SUCCESS: Processed ALL {aggregated_results['rows_processed']:,} rows in {chunks_processed} chunks")
+            logger.info(
+                f"🎉 SUCCESS: Processed ALL {aggregated_results['rows_processed']:,} rows in {chunks_processed} chunks"
+            )
 
         return self._finalize_results(aggregated_results)
 
@@ -92,7 +111,9 @@ class ChunkedAnalyticsController:
         chunks_yielded = 0
         rows_yielded = 0
 
-        logger.info(f"🔢 Chunking {total_rows:,} rows with chunk size {self.chunk_size:,}")
+        logger.info(
+            f"🔢 Chunking {total_rows:,} rows with chunk size {self.chunk_size:,}"
+        )
 
         for i in range(0, total_rows, self.chunk_size):
             end_idx = min(i + self.chunk_size, total_rows)
@@ -101,12 +122,18 @@ class ChunkedAnalyticsController:
             chunks_yielded += 1
             rows_yielded += len(chunk)
 
-            logger.debug(f"📦 Yielding chunk {chunks_yielded}: rows {i:,} to {end_idx-1:,} ({len(chunk):,} rows)")
+            logger.debug(
+                f"📦 Yielding chunk {chunks_yielded}: rows {i:,} to {end_idx-1:,} ({len(chunk):,} rows)"
+            )
             yield chunk
 
-        logger.info(f"✅ Chunking complete: {chunks_yielded} chunks, {rows_yielded:,} total rows")
+        logger.info(
+            f"✅ Chunking complete: {chunks_yielded} chunks, {rows_yielded:,} total rows"
+        )
 
-    def _validate_timestamp_column(self, df: pd.DataFrame, column: str = "timestamp") -> pd.DataFrame:
+    def _validate_timestamp_column(
+        self, df: pd.DataFrame, column: str = "timestamp"
+    ) -> pd.DataFrame:
         """Validate and clean timestamp column in DataFrame.
 
         Converts the column to ``datetime`` and removes any rows with malformed or
@@ -128,13 +155,18 @@ class ChunkedAnalyticsController:
             df = df[~invalid_mask]
 
         try:
-            df = df[(df[column] >= pd.Timestamp("1970-01-01")) & (df[column] <= pd.Timestamp("2100-12-31"))]
+            df = df[
+                (df[column] >= pd.Timestamp("1970-01-01"))
+                & (df[column] <= pd.Timestamp("2100-12-31"))
+            ]
         except Exception as e:  # pragma: no cover - best effort
             logger.debug(f"Timestamp range filter failed: {e}")
 
         return df
 
-    def _process_chunk(self, chunk_df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
+    def _process_chunk(
+        self, chunk_df: pd.DataFrame, analysis_types: List[str]
+    ) -> Dict[str, Any]:
         """Process a single chunk for all analysis types."""
         logger.debug(f"🔍 Processing chunk with {len(chunk_df):,} rows")
 
@@ -164,12 +196,16 @@ class ChunkedAnalyticsController:
         if "access_result" in chunk_df.columns:
             # Detect successful events using several patterns
             success_patterns = ["grant", "allow", "success", "permit", "approved"]
-            success_mask = chunk_df["access_result"].str.lower().str.contains(
-                "|".join(success_patterns), case=False, na=False
+            success_mask = (
+                chunk_df["access_result"]
+                .str.lower()
+                .str.contains("|".join(success_patterns), case=False, na=False)
             )
             results["successful_events"] = int(success_mask.sum())
             results["failed_events"] = len(chunk_df) - results["successful_events"]
-            logger.debug(f"Chunk access results: {results['successful_events']} success, {results['failed_events']} failed")
+            logger.debug(
+                f"Chunk access results: {results['successful_events']} success, {results['failed_events']} failed"
+            )
 
         # Process analysis types
         if "security" in analysis_types:
@@ -184,7 +220,9 @@ class ChunkedAnalyticsController:
         if "trends" in analysis_types:
             results["temporal_patterns"] = self._analyze_trends_chunk(chunk_df)
 
-        logger.debug(f"✅ Chunk processing complete: {results['total_events']} events processed")
+        logger.debug(
+            f"✅ Chunk processing complete: {results['total_events']} events processed"
+        )
         return results
 
     def _analyze_security_chunk(self, chunk_df: pd.DataFrame) -> List[Dict[str, Any]]:
@@ -194,21 +232,32 @@ class ChunkedAnalyticsController:
         if "access_result" in chunk_df.columns and "person_id" in chunk_df.columns:
             # Identify users with repeated failures
             failure_patterns = ["deny", "fail", "block", "reject", "denied", "failed"]
-            failed_attempts = chunk_df[chunk_df["access_result"].str.lower().str.contains(
-                "|".join(failure_patterns), case=False, na=False
-            )]
+            failed_attempts = chunk_df[
+                chunk_df["access_result"]
+                .str.lower()
+                .str.contains("|".join(failure_patterns), case=False, na=False)
+            ]
 
             if len(failed_attempts) > 0:
                 user_failures = failed_attempts.groupby("person_id").size()
-                high_failure_users = user_failures[user_failures >= AnalysisThresholds.failed_attempt_threshold]
+                high_failure_users = user_failures[
+                    user_failures >= AnalysisThresholds.failed_attempt_threshold
+                ]
 
                 for user_id, failure_count in high_failure_users.items():
-                    issues.append({
-                        "type": "high_failure_rate",
-                        "user_id": str(user_id),
-                        "failure_count": int(failure_count),
-                        "severity": "high" if failure_count >= AnalysisThresholds.high_failure_severity else "medium",
-                    })
+                    issues.append(
+                        {
+                            "type": "high_failure_rate",
+                            "user_id": str(user_id),
+                            "failure_count": int(failure_count),
+                            "severity": (
+                                "high"
+                                if failure_count
+                                >= AnalysisThresholds.high_failure_severity
+                                else "medium"
+                            ),
+                        }
+                    )
 
         return issues
 
@@ -229,15 +278,19 @@ class ChunkedAnalyticsController:
                     user_data = chunk_df[chunk_df["person_id"] == user_id]
                     if len(user_data) > 1:
                         time_diffs = user_data["timestamp"].diff().dt.total_seconds()
-                        rapid_attempts = (time_diffs < AnalysisThresholds.rapid_attempt_seconds).sum()
+                        rapid_attempts = (
+                            time_diffs < AnalysisThresholds.rapid_attempt_seconds
+                        ).sum()
 
                         if rapid_attempts > AnalysisThresholds.rapid_attempt_threshold:
-                            anomalies.append({
-                                "type": "rapid_attempts",
-                                "user_id": str(user_id),
-                                "rapid_count": int(rapid_attempts),
-                                "severity": "high",
-                            })
+                            anomalies.append(
+                                {
+                                    "type": "rapid_attempts",
+                                    "user_id": str(user_id),
+                                    "rapid_count": int(rapid_attempts),
+                                    "severity": "high",
+                                }
+                            )
             except Exception as e:
                 logger.warning(f"Anomaly analysis failed for chunk: {e}")
 
@@ -249,8 +302,12 @@ class ChunkedAnalyticsController:
 
         if "person_id" in chunk_df.columns:
             user_activity = chunk_df.groupby("person_id").size()
-            patterns["avg_activity"] = float(user_activity.mean()) if len(user_activity) > 0 else 0.0
-            patterns["max_activity"] = int(user_activity.max()) if len(user_activity) > 0 else 0
+            patterns["avg_activity"] = (
+                float(user_activity.mean()) if len(user_activity) > 0 else 0.0
+            )
+            patterns["max_activity"] = (
+                int(user_activity.max()) if len(user_activity) > 0 else 0
+            )
             patterns["active_users"] = len(user_activity)
 
         return patterns
@@ -270,13 +327,17 @@ class ChunkedAnalyticsController:
                     }
 
                     chunk_df["hour"] = chunk_df["timestamp"].dt.hour
-                    patterns["hourly_distribution"] = chunk_df["hour"].value_counts().to_dict()
+                    patterns["hourly_distribution"] = (
+                        chunk_df["hour"].value_counts().to_dict()
+                    )
             except Exception as e:
                 logger.warning(f"Trends analysis failed for chunk: {e}")
 
         return patterns
 
-    def _aggregate_chunk_results(self, aggregated: Dict[str, Any], chunk_results: Dict[str, Any]) -> None:
+    def _aggregate_chunk_results(
+        self, aggregated: Dict[str, Any], chunk_results: Dict[str, Any]
+    ) -> None:
         """Aggregate chunk results into overall results."""
         # Basic counts
         aggregated["total_events"] += chunk_results["total_events"]
@@ -318,7 +379,9 @@ class ChunkedAnalyticsController:
 
         # Calculate success rate
         if aggregated["total_events"] > 0:
-            aggregated["success_rate"] = aggregated["successful_events"] / aggregated["total_events"]
+            aggregated["success_rate"] = (
+                aggregated["successful_events"] / aggregated["total_events"]
+            )
         else:
             aggregated["success_rate"] = 0.0
 
@@ -330,11 +393,17 @@ class ChunkedAnalyticsController:
 
         # Convert date range values to ISO strings
         if aggregated["date_range"]["start"]:
-            aggregated["date_range"]["start"] = aggregated["date_range"]["start"].isoformat()
+            aggregated["date_range"]["start"] = aggregated["date_range"][
+                "start"
+            ].isoformat()
         if aggregated["date_range"]["end"]:
-            aggregated["date_range"]["end"] = aggregated["date_range"]["end"].isoformat()
+            aggregated["date_range"]["end"] = aggregated["date_range"][
+                "end"
+            ].isoformat()
 
-        logger.info(f"🎉 FINAL RESULTS: {aggregated['total_events']:,} total events, "
-                    f"{aggregated['unique_users']:,} users, {aggregated['unique_doors']:,} doors")
+        logger.info(
+            f"🎉 FINAL RESULTS: {aggregated['total_events']:,} total events, "
+            f"{aggregated['unique_users']:,} users, {aggregated['unique_doors']:,} doors"
+        )
 
         return aggregated

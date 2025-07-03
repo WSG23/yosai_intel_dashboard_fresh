@@ -16,13 +16,14 @@ from core.query_optimizer import monitor_query_performance
 
 _sql_validator = SQLInjectionPrevention()
 
+
 class AccessEventModel(BaseModel):
     """Model for access control events with full type safety"""
 
     @monitor_query_performance()
     def get_data(self, filters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
         """Get access events with optional filtering"""
-        
+
         base_query = """
         SELECT 
             event_id,
@@ -38,67 +39,69 @@ class AccessEventModel(BaseModel):
         FROM access_events 
         WHERE 1=1
         """
-        
+
         params = []
-        
+
         # Use empty dict if filters is None
         if filters is None:
             filters = {}
-        
+
         # Build dynamic query with filters
-        if 'start_date' in filters:
+        if "start_date" in filters:
             base_query += " AND timestamp >= ?"
-            params.append(filters['start_date'])
-        
-        if 'end_date' in filters:
+            params.append(filters["start_date"])
+
+        if "end_date" in filters:
             base_query += " AND timestamp <= ?"
-            params.append(filters['end_date'])
-        
-        if 'person_id' in filters:
+            params.append(filters["end_date"])
+
+        if "person_id" in filters:
             base_query += " AND person_id = ?"
-            params.append(filters['person_id'])
-        
-        if 'door_id' in filters:
+            params.append(filters["person_id"])
+
+        if "door_id" in filters:
             base_query += " AND door_id = ?"
-            params.append(filters['door_id'])
-        
-        if 'access_result' in filters:
+            params.append(filters["door_id"])
+
+        if "access_result" in filters:
             base_query += " AND access_result = ?"
-            params.append(filters['access_result'])
-        
-        base_query += f" ORDER BY timestamp DESC LIMIT {DataProcessingLimits.DEFAULT_QUERY_LIMIT}"
-        
+            params.append(filters["access_result"])
+
+        base_query += (
+            f" ORDER BY timestamp DESC LIMIT {DataProcessingLimits.DEFAULT_QUERY_LIMIT}"
+        )
+
         try:
             df = self.db.execute_query(base_query, tuple(params) if params else None)
             return self._process_dataframe(df) if df is not None else pd.DataFrame()
         except Exception as e:
             logging.error(f"Error fetching access events: {e}")
             return pd.DataFrame()
-    
+
     def _process_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """Process and validate DataFrame from database"""
         if df.empty:
             return df
-        
+
         try:
             # Convert timestamp to datetime
-            if 'timestamp' in df.columns:
-                df['timestamp'] = pd.to_datetime(df['timestamp'])
-            
+            if "timestamp" in df.columns:
+                df["timestamp"] = pd.to_datetime(df["timestamp"])
+
             # Validate enum values
-            if 'access_result' in df.columns:
+            if "access_result" in df.columns:
                 valid_results = [result.value for result in AccessResult]
-                df = df[df['access_result'].isin(valid_results)]
-            
-            if 'badge_status' in df.columns:
+                df = df[df["access_result"].isin(valid_results)]
+
+            if "badge_status" in df.columns:
                 valid_statuses = [status.value for status in BadgeStatus]
-                df = df[df['badge_status'].isin(valid_statuses)]
-            
+                df = df[df["badge_status"].isin(valid_statuses)]
+
             return df
         except Exception as e:
             logging.error(f"Error processing DataFrame: {e}")
             return df
-    
+
     @monitor_query_performance()
     def get_summary_stats(self) -> Dict[str, Any]:
         """Get comprehensive summary statistics"""
@@ -112,36 +115,36 @@ class AccessEventModel(BaseModel):
         FROM access_events
         WHERE timestamp >= date('now', '-30 days')
         """
-        
+
         try:
             result = self.db.execute_query(query)
             if result is not None and not result.empty:
                 stats = result.iloc[0].to_dict()
-                
+
                 # Calculate derived metrics
-                total = stats.get('total_events', 0)
-                granted = stats.get('granted_events', 0)
-                
+                total = stats.get("total_events", 0)
+                granted = stats.get("granted_events", 0)
+
                 if total > 0:
-                    stats['granted_rate'] = (granted / total) * 100
-                    stats['denied_rate'] = ((total - granted) / total) * 100
+                    stats["granted_rate"] = (granted / total) * 100
+                    stats["denied_rate"] = ((total - granted) / total) * 100
                 else:
-                    stats['granted_rate'] = 0
-                    stats['denied_rate'] = 0
-                
+                    stats["granted_rate"] = 0
+                    stats["denied_rate"] = 0
+
                 return stats
-            
+
             return {}
         except Exception as e:
             logging.error(f"Error getting summary stats: {e}")
             return {}
-    
+
     @monitor_query_performance()
     def get_recent_events(self, hours: int = 24) -> pd.DataFrame:
         """Get recent events for real-time monitoring"""
         cutoff_time = datetime.now() - timedelta(hours=hours)
-        return self.get_data({'start_date': cutoff_time})
-    
+        return self.get_data({"start_date": cutoff_time})
+
     @monitor_query_performance()
     def get_hourly_distribution(self, days: int = 7) -> pd.DataFrame:
         """Get hourly access distribution for analytics"""
@@ -156,7 +159,7 @@ class AccessEventModel(BaseModel):
         GROUP BY strftime('%H', timestamp)
         ORDER BY hour
         """
-        params = (f'-{days} days',)
+        params = (f"-{days} days",)
 
         try:
             result = self.db.execute_query(query, params)
@@ -164,7 +167,7 @@ class AccessEventModel(BaseModel):
         except Exception as e:
             logging.error(f"Error getting hourly distribution: {e}")
             return pd.DataFrame()
-    
+
     @monitor_query_performance()
     def get_user_activity(self, limit: int = 20) -> pd.DataFrame:
         """Get top active users"""
@@ -180,14 +183,14 @@ class AccessEventModel(BaseModel):
         ORDER BY total_events DESC
         LIMIT ?
         """
-        
+
         try:
             result = self.db.execute_query(query, (limit,))
             return result if result is not None else pd.DataFrame()
         except Exception as e:
             logging.error(f"Error getting user activity: {e}")
             return pd.DataFrame()
-    
+
     @monitor_query_performance()
     def get_door_activity(self, limit: int = 20) -> pd.DataFrame:
         """Get most accessed doors"""
@@ -203,14 +206,14 @@ class AccessEventModel(BaseModel):
         ORDER BY total_events DESC
         LIMIT ?
         """
-        
+
         try:
             result = self.db.execute_query(query, (limit,))
             return result if result is not None else pd.DataFrame()
         except Exception as e:
             logging.error(f"Error getting door activity: {e}")
             return pd.DataFrame()
-    
+
     @monitor_query_performance()
     def get_trend_analysis(self, days: int = 30) -> pd.DataFrame:
         """Get daily trend analysis"""
@@ -227,80 +230,98 @@ class AccessEventModel(BaseModel):
         GROUP BY date(timestamp)
         ORDER BY date
         """
-        params = (f'-{days} days',)
-        
+        params = (f"-{days} days",)
+
         try:
             result = self.db.execute_query(query, params)
             if result is not None and not result.empty:
                 # Add calculated columns
-                result['denied_events'] = result['total_events'] - result['granted_events']
-                result['success_rate'] = (result['granted_events'] / result['total_events'] * 100).round(2)
+                result["denied_events"] = (
+                    result["total_events"] - result["granted_events"]
+                )
+                result["success_rate"] = (
+                    result["granted_events"] / result["total_events"] * 100
+                ).round(2)
                 return result
             return pd.DataFrame()
         except Exception as e:
             logging.error(f"Error getting trend analysis: {e}")
             return pd.DataFrame()
-    
+
     def validate_data(self, data: pd.DataFrame) -> bool:
         """Validate access events data structure"""
         if data is None or data.empty:
             return False
-        
-        required_columns = ['event_id', 'timestamp', 'person_id', 'door_id', 'access_result']
-        
+
+        required_columns = [
+            "event_id",
+            "timestamp",
+            "person_id",
+            "door_id",
+            "access_result",
+        ]
+
         # Check for required columns
         missing_columns = [col for col in required_columns if col not in data.columns]
         if missing_columns:
             logging.error(f"Missing required columns: {missing_columns}")
             return False
-        
+
         # Validate data types
         try:
             # Check timestamp format
-            pd.to_datetime(data['timestamp'].iloc[0])
-            
+            pd.to_datetime(data["timestamp"].iloc[0])
+
             # Check access_result values
             valid_results = [result.value for result in AccessResult]
-            invalid_results = data[~data['access_result'].isin(valid_results)]['access_result'].unique()
+            invalid_results = data[~data["access_result"].isin(valid_results)][
+                "access_result"
+            ].unique()
             if len(invalid_results) > 0:
                 logging.warning(f"Invalid access results found: {invalid_results}")
-            
+
             return True
-            
+
         except Exception as e:
             logging.error(f"Data validation failed: {e}")
             return False
-    
+
     @monitor_query_performance()
     def create_event(self, event_data: Dict[str, Any]) -> bool:
         """Create a new access event"""
-        required_fields = ['event_id', 'timestamp', 'person_id', 'door_id', 'access_result']
-        
+        required_fields = [
+            "event_id",
+            "timestamp",
+            "person_id",
+            "door_id",
+            "access_result",
+        ]
+
         # Validate required fields
         if not all(field in event_data for field in required_fields):
             logging.error("Missing required fields for event creation")
             return False
-        
+
         query = """
         INSERT INTO access_events 
         (event_id, timestamp, person_id, door_id, badge_id, access_result, 
          badge_status, door_held_open_time, entry_without_badge, device_status)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
-        
+
         params = (
-            event_data['event_id'],
-            event_data['timestamp'],
-            event_data['person_id'],
-            event_data['door_id'],
-            event_data.get('badge_id'),
-            event_data['access_result'],
-            event_data.get('badge_status', 'Valid'),
-            event_data.get('door_held_open_time', 0.0),
-            event_data.get('entry_without_badge', False),
-            event_data.get('device_status', 'normal')
+            event_data["event_id"],
+            event_data["timestamp"],
+            event_data["person_id"],
+            event_data["door_id"],
+            event_data.get("badge_id"),
+            event_data["access_result"],
+            event_data.get("badge_status", "Valid"),
+            event_data.get("door_held_open_time", 0.0),
+            event_data.get("entry_without_badge", False),
+            event_data.get("device_status", "normal"),
         )
-        
+
         try:
             self.db.execute_command(query, params)
             logging.info(f"Created access event: {event_data['event_id']}")
@@ -309,14 +330,17 @@ class AccessEventModel(BaseModel):
             logging.error(f"Failed to create access event: {e}")
             return False
 
+
 # Factory function for easy instantiation
 def create_access_event_model(db_connection=None) -> AccessEventModel:
     """Factory function to create AccessEventModel instance"""
     if db_connection is None:
         from config.database_manager import get_database
+
         db_connection = get_database()
-    
+
     return AccessEventModel(db_connection)
 
+
 # Export the model class and factory
-__all__ = ['AccessEventModel', 'create_access_event_model']
+__all__ = ["AccessEventModel", "create_access_event_model"]
