@@ -11,7 +11,7 @@ from dash import html, dcc, Input, Output
 from components.ui.navbar import create_navbar_layout
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from core.container import Container as DIContainer
-from core.plugins.auto_config import setup_plugins
+from core.plugins.auto_config import PluginAutoConfiguration
 from core.secret_manager import validate_secrets
 from dash_csrf_plugin import setup_enhanced_csrf_protection, CSRFMode
 from flask_babel import Babel
@@ -157,11 +157,14 @@ def _create_full_app() -> dash.Dash:
 
         # Initialize plugin system via unified registry
         container = DIContainer()
-        registry = setup_plugins(
+        plugin_auto = PluginAutoConfiguration(
             app,
             container=container,
             config_manager=config_manager,
         )
+        plugin_auto.scan_and_configure("plugins")
+        plugin_auto.generate_health_endpoints()
+        registry = plugin_auto.registry
         app._yosai_plugin_manager = registry.plugin_manager
 
         @app.server.teardown_appcontext  # type: ignore[attr-defined]

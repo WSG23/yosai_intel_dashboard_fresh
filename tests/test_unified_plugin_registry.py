@@ -2,7 +2,7 @@ from dash import Dash
 import sys
 import os
 from core.plugins.unified_registry import UnifiedPluginRegistry
-from core.plugins.auto_config import setup_plugins
+from core.plugins.auto_config import PluginAutoConfiguration
 from core.plugins.protocols import PluginMetadata
 from core.container import Container as DIContainer
 from config.config import ConfigManager
@@ -79,7 +79,10 @@ def create_plugin():
     registry = None
     try:
         app = Dash(__name__)
-        registry = setup_plugins(app, package="auto_pkg")
+        plugin_auto = PluginAutoConfiguration(app, package="auto_pkg")
+        plugin_auto.scan_and_configure("auto_pkg")
+        plugin_auto.generate_health_endpoints()
+        registry = plugin_auto.registry
         assert "dummy" in registry.plugin_manager.plugins
         rules = [r.rule for r in app.server.url_map.iter_rules()]
         assert "/health/plugins" in rules
@@ -87,3 +90,29 @@ def create_plugin():
         sys.path.remove(str(tmp_path))
         if registry:
             registry.plugin_manager.stop_health_monitor()
+
+
+def test_validate_plugin_dependencies():
+    """Ensure dependency validation reports missing dependencies."""
+    os.environ.setdefault("SECRET_KEY", "test")
+    os.environ.setdefault("DB_PASSWORD", "pwd")
+    os.environ.setdefault("AUTH0_CLIENT_ID", "cid")
+    os.environ.setdefault("AUTH0_CLIENT_SECRET", "csecret")
+    os.environ.setdefault("AUTH0_DOMAIN", "domain")
+    os.environ.setdefault("AUTH0_AUDIENCE", "aud")
+    app = Dash(__name__)
+    auto = PluginAutoConfiguration(app)
+
+    class DepPlugin(DummyPlugin):
+        metadata = PluginMetadata(
+            name="dep",
+            version="0.1",
+            description="dep",
+            author="tester",
+            dependencies=["missing"],
+        )
+
+    plugin = DepPlugin()
+    auto.registry.register_plugin(plugin)
+    missing = auto.validate_plugin_dependencies()
+    assert "dep:missing" in missing
