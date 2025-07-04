@@ -17,6 +17,9 @@ import logging
 from dataclasses import dataclass
 import warnings
 
+from .security_score_calculator import SecurityScoreCalculator
+from .security_metrics import SecurityMetrics
+
 warnings.filterwarnings("ignore")
 
 
@@ -154,6 +157,14 @@ class SecurityPatternsAnalyzer:
         )
 
         return df_clean
+
+    def _prepare_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Alias for backward compatibility."""
+        try:
+            return self._prepare_security_data(df)
+        except Exception as e:
+            self.logger.warning(f"Data preparation failed: {e}")
+            raise
 
     def _detect_statistical_threats(self, df: pd.DataFrame) -> List[ThreatIndicator]:
         """Detect threats using statistical methods"""
@@ -525,6 +536,71 @@ class SecurityPatternsAnalyzer:
         upper_bound = min(100, score + margin_of_error)
 
         return (round(lower_bound, 2), round(upper_bound, 2))
+
+    def _analyze_failed_access(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Analyze failed access attempts and summarize statistics."""
+        summary = {
+            "total": 0,
+            "failure_rate": 0.0,
+            "high_risk_users": {},
+            "peak_failure_times": [],
+            "top_failure_doors": {},
+            "patterns": {},
+            "risk_level": "low",
+        }
+
+        try:
+            failed = df[df.get("access_granted", 1) == 0]
+            summary["total"] = int(len(failed))
+            if len(df) > 0:
+                summary["failure_rate"] = round(len(failed) / len(df), 4)
+
+            if not failed.empty:
+                summary["high_risk_users"] = (
+                    failed["person_id"].value_counts().head(5).to_dict()
+                )
+                if "hour" in failed.columns:
+                    summary["peak_failure_times"] = (
+                        failed["hour"].value_counts().nlargest(3).index.tolist()
+                    )
+                if "door_id" in failed.columns:
+                    summary["top_failure_doors"] = (
+                        failed["door_id"].value_counts().head(3).to_dict()
+                    )
+
+                summary["patterns"] = {
+                    "after_hours_rate": float(failed.get("is_after_hours", pd.Series([])).mean()),
+                    "weekend_rate": float(failed.get("is_weekend", pd.Series([])).mean()),
+                }
+
+                rate = summary["failure_rate"]
+                if rate >= 0.5 or len(summary["high_risk_users"]) > 3:
+                    summary["risk_level"] = "high"
+                elif rate >= 0.2:
+                    summary["risk_level"] = "medium"
+        except Exception as e:
+            self.logger.warning(f"Failed access analysis failed: {e}")
+
+        return summary
+
+    def _calculate_enterprise_security_score(self, df: pd.DataFrame) -> SecurityMetrics:
+        """Calculate enterprise security score using the calculator."""
+        try:
+            calculator = SecurityScoreCalculator()
+            result = calculator.calculate_security_score_fixed(df)
+            return SecurityMetrics(
+                score=float(result.get("score", 0.0)),
+                threat_level=result.get("threat_level", "unknown"),
+                confidence_interval=tuple(result.get("confidence_interval", (0.0, 0.0))),
+                method=result.get("method", "unknown"),
+            )
+        except Exception as e:
+            self.logger.warning(f"Enterprise security score calculation failed: {e}")
+            return SecurityMetrics(0.0, "unknown", (0.0, 0.0), "none")
+
+    def _calculate_security_score(self, df: pd.DataFrame) -> SecurityMetrics:
+        """Compatibility wrapper for enterprise security scoring."""
+        return self._calculate_enterprise_security_score(df)
 
     def _convert_to_legacy_format(self, result: SecurityAssessment) -> Dict[str, Any]:
         """Convert SecurityAssessment to legacy dictionary format"""
