@@ -41,6 +41,11 @@ csv_content = export_service.to_csv_string(data)
                         ],
                         className="mb-4",
                     ),
+                    html.P(
+                        "Exported files are saved by your browser to the default download"
+                        " location, such as `~/Downloads`.",
+                        className="mb-3",
+                    ),
                     dcc.Markdown(code_example, className="bg-light p-3 rounded"),
                 ]
             ),
