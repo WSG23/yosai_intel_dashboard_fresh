@@ -423,18 +423,18 @@ class UniquePatternAnalyzer:
                 ),
             },
             "unique_entities": {
-                "users": df["person_id"].nunique() if "person_id" in df.columns else 0,
-                "devices": df["door_id"].nunique() if "door_id" in df.columns else 0,
-                "unique_days": df["date"].nunique() if "date" in df.columns else 0,
+                "users": int(df["person_id"].nunique()) if "person_id" in df.columns else 0,
+                "devices": int(df["door_id"].nunique()) if "door_id" in df.columns else 0,
+                "unique_days": int(df["date"].nunique()) if "date" in df.columns else 0,
             },
             "data_quality": {
-                "missing_timestamps": (
+                "missing_timestamps": int(
                     df["timestamp"].isna().sum() if "timestamp" in df.columns else 0
                 ),
-                "missing_users": (
+                "missing_users": int(
                     df["person_id"].isna().sum() if "person_id" in df.columns else 0
                 ),
-                "missing_devices": (
+                "missing_devices": int(
                     df["door_id"].isna().sum() if "door_id" in df.columns else 0
                 ),
             },

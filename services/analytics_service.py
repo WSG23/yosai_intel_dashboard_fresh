@@ -484,8 +484,12 @@ class AnalyticsService:
         logger = logging.getLogger(__name__)
 
         total_records = len(df)
-        unique_users = df["person_id"].nunique() if "person_id" in df.columns else 0
-        unique_devices = df["door_id"].nunique() if "door_id" in df.columns else 0
+        unique_users = (
+            int(df["person_id"].nunique()) if "person_id" in df.columns else 0
+        )
+        unique_devices = (
+            int(df["door_id"].nunique()) if "door_id" in df.columns else 0
+        )
 
         date_span = 0
         if "timestamp" in df.columns:
