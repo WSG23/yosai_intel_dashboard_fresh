@@ -41,16 +41,9 @@ class ChunkedAnalyticsController:
             f"ChunkedAnalyticsController initialized: chunk_size={self.chunk_size}"
         )
 
-    def process_large_dataframe(
-        self, df: pd.DataFrame, analysis_types: List[str]
-    ) -> Dict[str, Any]:
-        """Process a large DataFrame using chunked analysis."""
-        total_rows = len(df)
-        logger.info(f"🔄 Starting COMPLETE chunked analysis for {total_rows:,} rows")
-        logger.info(f"📊 Chunk size: {self.chunk_size:,}")
-
-        # Initialize aggregated results
-        aggregated_results = {
+    def _create_empty_results(self) -> Dict[str, Any]:
+        """Return a fresh results dictionary with set fields."""
+        return {
             "total_events": 0,
             "unique_users": set(),
             "unique_doors": set(),
@@ -60,9 +53,24 @@ class ChunkedAnalyticsController:
             "anomalies": [],
             "behavioral_patterns": {},
             "temporal_patterns": {},
-            "date_range": {"start": None, "end": None},
-            "rows_processed": 0,
         }
+
+    def process_large_dataframe(
+        self, df: pd.DataFrame, analysis_types: List[str]
+    ) -> Dict[str, Any]:
+        """Process a large DataFrame using chunked analysis."""
+        total_rows = len(df)
+        logger.info(f"🔄 Starting COMPLETE chunked analysis for {total_rows:,} rows")
+        logger.info(f"📊 Chunk size: {self.chunk_size:,}")
+
+        # Initialize aggregated results using helper for consistency
+        aggregated_results = self._create_empty_results()
+        aggregated_results.update(
+            {
+                "date_range": {"start": None, "end": None},
+                "rows_processed": 0,
+            }
+        )
 
         chunks_processed = 0
         total_chunks = (len(df) + self.chunk_size - 1) // self.chunk_size
@@ -82,7 +90,7 @@ class ChunkedAnalyticsController:
             chunk_results = self._process_chunk(chunk_df, analysis_types)
 
             # Aggregate results from this chunk
-            self._aggregate_chunk_results(aggregated_results, chunk_results)
+            self._aggregate_results(aggregated_results, chunk_results)
 
             chunks_processed += 1
             aggregated_results["rows_processed"] += chunk_size_actual
@@ -170,39 +178,43 @@ class ChunkedAnalyticsController:
         """Process a single chunk for all analysis types."""
         logger.debug(f"🔍 Processing chunk with {len(chunk_df):,} rows")
 
-        results = {
-            "total_events": len(chunk_df),
-            "unique_users": set(),
-            "unique_doors": set(),
-            "successful_events": 0,
-            "failed_events": 0,
-            "security_issues": [],
-            "anomalies": [],
-            "behavioral_patterns": {},
-            "temporal_patterns": {},
-        }
+        results = self._create_empty_results()
+        results["total_events"] = len(chunk_df)
 
-        # Handle typical column names
-        if "person_id" in chunk_df.columns:
-            unique_users = chunk_df["person_id"].dropna().unique()
+        # Detect likely column names flexibly
+        user_col = None
+        door_col = None
+        result_col = None
+        for col in chunk_df.columns:
+            norm = col.lower().replace(" ", "_")
+            if user_col is None and any(k in norm for k in ["person", "user"]):
+                user_col = col
+            if door_col is None and any(k in norm for k in ["door", "device"]):
+                door_col = col
+            if result_col is None and any(k in norm for k in ["result", "status"]):
+                result_col = col
+
+        if user_col:
+            unique_users = chunk_df[user_col].dropna().unique()
             results["unique_users"] = set(str(u) for u in unique_users)
             logger.debug(f"Found {len(results['unique_users'])} unique users in chunk")
 
-        if "door_id" in chunk_df.columns:
-            unique_doors = chunk_df["door_id"].dropna().unique()
+        if door_col:
+            unique_doors = chunk_df[door_col].dropna().unique()
             results["unique_doors"] = set(str(d) for d in unique_doors)
             logger.debug(f"Found {len(results['unique_doors'])} unique doors in chunk")
 
-        if "access_result" in chunk_df.columns:
-            # Detect successful events using several patterns
+        if result_col:
+            result_series = chunk_df[result_col].astype(str).str.lower()
             success_patterns = ["grant", "allow", "success", "permit", "approved"]
-            success_mask = (
-                chunk_df["access_result"]
-                .str.lower()
-                .str.contains("|".join(success_patterns), case=False, na=False)
-            )
+            failure_patterns = ["deny", "fail", "block", "reject", "denied", "failed"]
+            success_mask = result_series.str.contains("|".join(success_patterns), na=False)
+            failure_mask = result_series.str.contains("|".join(failure_patterns), na=False)
             results["successful_events"] = int(success_mask.sum())
-            results["failed_events"] = len(chunk_df) - results["successful_events"]
+            if failure_mask.any():
+                results["failed_events"] = int(failure_mask.sum())
+            else:
+                results["failed_events"] = len(chunk_df) - results["successful_events"]
             logger.debug(
                 f"Chunk access results: {results['successful_events']} success, {results['failed_events']} failed"
             )
@@ -335,7 +347,7 @@ class ChunkedAnalyticsController:
 
         return patterns
 
-    def _aggregate_chunk_results(
+    def _aggregate_results(
         self, aggregated: Dict[str, Any], chunk_results: Dict[str, Any]
     ) -> None:
         """Aggregate chunk results into overall results."""
