@@ -990,6 +990,7 @@ class Callbacks:
             learning_service = get_device_learning_service()
 
             safe_name = filename.replace(" ", "_").replace("/", "_")
+            _uploaded_data_store.wait_for_pending_saves()
             file_path = _uploaded_data_store.storage_dir / f"{safe_name}.parquet"
             if not file_path.exists():
                 logger.error(f"Uploaded file not found: {file_path}")
