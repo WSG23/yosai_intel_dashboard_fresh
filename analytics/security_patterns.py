@@ -14,6 +14,7 @@ from typing import Dict, List, Any, Tuple, Optional, Callable
 from datetime import datetime, timedelta
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
+from sklearn.exceptions import DataConversionWarning
 from scipy import stats
 import logging
 from dataclasses import dataclass
@@ -24,7 +25,20 @@ import warnings
 from .security_score_calculator import SecurityScoreCalculator
 from .security_metrics import SecurityMetrics
 
-warnings.filterwarnings("ignore")
+# Ignore warnings from scikit-learn about missing feature names and automatic
+# data type conversions. These arise during DataFrame-based model training and
+# are safe to suppress.
+warnings.filterwarnings(
+    "ignore",
+    message="X does not have valid feature names",
+    category=UserWarning,
+    module="sklearn",
+)
+warnings.filterwarnings(
+    "ignore",
+    category=DataConversionWarning,
+    module="sklearn",
+)
 
 
 class SecurityEvent(Enum):

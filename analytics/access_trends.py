@@ -13,7 +13,12 @@ import logging
 from dataclasses import dataclass
 import warnings
 
-warnings.filterwarnings("ignore")
+# Suppress pandas deprecation warnings regarding legacy frequency strings.
+warnings.filterwarnings(
+    "ignore",
+    category=FutureWarning,
+    module="pandas",
+)
 
 
 @dataclass
