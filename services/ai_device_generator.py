@@ -23,6 +23,7 @@ class DeviceAttributes:
     is_elevator: bool
     is_stairwell: bool
     is_fire_escape: bool
+    is_restricted: bool  # ADD THIS LINE
     confidence: float
     ai_reasoning: str
 
@@ -80,7 +81,8 @@ class AIDeviceGenerator:
             "exit": [r"exit|egress|out\b", r"gate.*exit"],
             "elevator": [r"elevator|lift|elev"],
             "stairwell": [r"staircase|stairs|stairwell"],
-            "fire_escape": [r"fire.*(?:exit|escape)|emergency.*exit"],
+            "fire_escape": [r"fire.*(?:exit|escape)|emergency.*(?:exit|escape)"],  # FIXED: Complete pattern
+            "restricted": [r"restricted|secure|authorized|private|limited"],  # ADD THIS LINE
         }
 
         # Location-specific patterns for better naming
@@ -132,6 +134,7 @@ class AIDeviceGenerator:
             is_elevator=access_flags["elevator"],
             is_stairwell=access_flags["stairwell"],
             is_fire_escape=access_flags["fire_escape"],
+            is_restricted=access_flags["restricted"],  # ADD THIS LINE
             confidence=confidence,
             ai_reasoning="; ".join(reasoning_parts),
         )

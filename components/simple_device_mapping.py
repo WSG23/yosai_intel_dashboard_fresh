@@ -410,7 +410,7 @@ def toggle_simple_device_modal(open_clicks, cancel_clicks, save_clicks, is_open)
     return is_open
 
 
-def save_user_inputs(floors, security, access, devices):
+def save_user_inputs(floors, security, access, special, devices):
     """Save user inputs immediately when they change"""
 
     if not devices:
@@ -423,6 +423,7 @@ def save_user_inputs(floors, security, access, devices):
             security[i] if i < len(security) and security[i] is not None else 5
         )
         user_access = access[i] if i < len(access) else []
+        user_special = special[i] if i < len(special) else []
 
         ai_mapping_store.set(
             device,
@@ -431,6 +432,10 @@ def save_user_inputs(floors, security, access, devices):
                 "security_level": user_security,
                 "is_entry": "entry" in user_access,
                 "is_exit": "exit" in user_access,
+                "is_elevator": "is_elevator" in user_special,
+                "is_stairwell": "is_stairwell" in user_special,
+                "is_fire_escape": "is_fire_escape" in user_special,
+                "is_restricted": "is_restricted" in user_special,
                 "confidence": 1.0,
                 "device_name": device,
                 "ai_reasoning": "User input",
@@ -567,6 +572,7 @@ def register_callbacks(
             Input({"type": "device-floor", "index": ALL}, "value"),
             Input({"type": "device-security", "index": ALL}, "value"),
             Input({"type": "device-access", "index": ALL}, "value"),
+            Input({"type": "device-special", "index": ALL}, "value"),
         ],
         [State("current-devices-list", "data")],
         prevent_initial_call=True,

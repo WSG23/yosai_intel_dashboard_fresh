@@ -125,7 +125,7 @@ class DoorMappingService:
             is_elevator=ai_attributes.is_elevator,
             is_stairwell=ai_attributes.is_stairwell,
             is_fire_escape=ai_attributes.is_fire_escape,
-            is_restricted=getattr(ai_attributes, "is_restricted", False),
+            is_restricted=ai_attributes.is_restricted,  # CHANGE: Remove getattr, use direct access
             other=not any(
                 [
                     ai_attributes.is_entry,
@@ -133,6 +133,7 @@ class DoorMappingService:
                     ai_attributes.is_elevator,
                     ai_attributes.is_stairwell,
                     ai_attributes.is_fire_escape,
+                    ai_attributes.is_restricted,  # ADD THIS LINE
                 ]
             ),
             security_level=security_level,
