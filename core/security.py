@@ -544,3 +544,25 @@ def rate_limit_decorator(max_requests: int = 100, window_minutes: int = 1):
         return wrapper
 
     return decorator
+
+
+def initialize_validation_callbacks() -> None:
+    """Set up request validation callbacks on import."""
+    try:
+        from security.validation_middleware import ValidationMiddleware
+        from core.callback_manager import CallbackManager
+    except Exception:
+        # Optional components may be missing in minimal environments
+        return
+
+    try:
+        middleware = ValidationMiddleware()
+        manager = CallbackManager()
+        middleware.register_callbacks(manager)
+    except Exception as exc:  # pragma: no cover - log and continue
+        logging.getLogger(__name__).warning(
+            "Failed to initialize validation callbacks: %s", exc
+        )
+
+
+initialize_validation_callbacks()
