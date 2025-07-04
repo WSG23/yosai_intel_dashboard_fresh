@@ -1,6 +1,7 @@
 """Dash callback handlers for the deep analytics page."""
 
 from dash import Input, Output, State, callback_context, html
+from dash.exceptions import PreventUpdate
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from analytics.controllers import UnifiedAnalyticsController
 import logging
@@ -468,8 +469,9 @@ class Callbacks:
 
     def refresh_data_sources_callback(self, n_clicks):
         """Refresh data sources when button clicked."""
-        if n_clicks:
-            return get_data_source_options_safe()
+        if not callback_context.triggered:
+            raise PreventUpdate
+
         return get_data_source_options_safe()
 
     def update_status_alert(self, trigger):
@@ -518,6 +520,7 @@ def register_callbacks(
             ],
             [State("analytics-data-source", "value")],
             "handle_analysis_buttons",
+            {"prevent_initial_call": True},
         ),
         (
             cb.refresh_data_sources_callback,
@@ -525,6 +528,7 @@ def register_callbacks(
             Input("refresh-sources-btn", "n_clicks"),
             None,
             "refresh_data_sources",
+            {"prevent_initial_call": True},
         ),
         (
             cb.update_status_alert,
@@ -532,17 +536,18 @@ def register_callbacks(
             Input("hidden-trigger", "children"),
             None,
             "update_status_alert",
+            {"prevent_initial_call": False},
         ),
     ]
 
-    for func, outputs, inputs, states, cid in callback_defs:
+    for func, outputs, inputs, states, cid, extra in callback_defs:
         manager.register_callback(
             outputs,
             inputs,
             states,
-            prevent_initial_call=True if cid != "update_status_alert" else False,
             callback_id=cid,
             component_name="deep_analytics",
+            **extra,
         )(func)
 
     if controller is not None:
