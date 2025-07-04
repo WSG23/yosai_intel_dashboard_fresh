@@ -15,7 +15,11 @@ def test_get_ai_column_suggestions_with_plugin(monkeypatch):
                 "confidence_scores": {h: 0.8 for h in headers},
             }
 
-    monkeypatch.setattr(plugin_adapter, "get_ai_classification_service", lambda: Dummy())
+    monkeypatch.setattr(
+        plugin_adapter.PluginServiceLocator,
+        "get_ai_classification_service",
+        lambda: Dummy(),
+    )
     df = pd.DataFrame(columns=["A", "B"])
     result = adapter.get_ai_column_suggestions(df, "f.csv")
     assert result["A"]["field"] == "field"
@@ -24,7 +28,11 @@ def test_get_ai_column_suggestions_with_plugin(monkeypatch):
 
 def test_get_ai_column_suggestions_fallback(monkeypatch):
     adapter = ComponentPluginAdapter()
-    monkeypatch.setattr(plugin_adapter, "get_ai_classification_service", lambda: None)
+    monkeypatch.setattr(
+        plugin_adapter.PluginServiceLocator,
+        "get_ai_classification_service",
+        lambda: None,
+    )
     df = pd.DataFrame(columns=["Mystery"])
     result = adapter.get_ai_column_suggestions(df, "x.csv")
     assert result["Mystery"]["field"] == ""

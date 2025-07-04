@@ -7,9 +7,12 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from core.plugins.service_locator import get_ai_classification_service
+from plugins.service_locator import PluginServiceLocator
 from services.ai_suggestions import generate_column_suggestions
-from unicode_handler import sanitize_dataframe, clean_unicode_text
+
+_unicode = PluginServiceLocator.get_unicode_handler()
+sanitize_dataframe = _unicode.sanitize_dataframe
+clean_unicode_text = _unicode.clean_unicode_text
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +21,7 @@ class ComponentPluginAdapter:
     """Adapter providing safe access to optional plugin services."""
 
     def get_ai_plugin(self):
-        return get_ai_classification_service()
+        return PluginServiceLocator.get_ai_classification_service()
 
     # ------------------------------------------------------------------
     # AI column mapping helpers
