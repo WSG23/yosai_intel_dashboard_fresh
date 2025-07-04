@@ -1303,7 +1303,7 @@ def register_callbacks(
     ]
 
     for func, outputs, inputs, states, cid, extra in callback_defs:
-        manager.register_callback(
+        manager.unified_callback(
             outputs,
             inputs,
             states,
