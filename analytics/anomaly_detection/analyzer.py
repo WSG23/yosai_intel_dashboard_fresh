@@ -10,10 +10,17 @@ from datetime import datetime
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import DataConversionWarning
-from scipy import stats
 import logging
-from dataclasses import dataclass
 import warnings
+
+from .types import AnomalyAnalysis
+from .data_prep import prepare_anomaly_data
+from .statistical_detection import (
+    detect_frequency_anomalies,
+    detect_statistical_anomalies,
+    calculate_severity_from_zscore,
+)
+from .ml_inference import detect_ml_anomalies
 
 # Ignore benign type conversion warnings emitted by scikit-learn when integer
 # features are automatically cast to floats.
@@ -24,16 +31,6 @@ warnings.filterwarnings(
 )
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class AnomalyAnalysis:
-    """Comprehensive anomaly analysis result"""
-    total_anomalies: int
-    severity_distribution: Dict[str, int]
-    detection_summary: Dict[str, Any]
-    risk_assessment: Dict[str, Any]
-    recommendations: List[str]
 
 
 class AnomalyDetector:
@@ -122,45 +119,7 @@ class AnomalyDetector:
 
     def _prepare_anomaly_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """Prepare and clean data for anomaly detection"""
-        df_clean = df.copy()
-
-        # Handle Unicode issues
-        string_columns = df_clean.select_dtypes(include=["object"]).columns
-        for col in string_columns:
-            df_clean[col] = (
-                df_clean[col]
-                .astype(str)
-                .apply(lambda x: x.encode("utf-8", errors="ignore").decode("utf-8"))
-            )
-
-        # Ensure required columns exist or create defaults
-        required_cols = ["timestamp", "person_id", "door_id", "access_result"]
-        for col in required_cols:
-            if col not in df_clean.columns:
-                if col == "timestamp":
-                    df_clean[col] = pd.Timestamp.now()
-                elif col in ["person_id", "door_id"]:
-                    df_clean[col] = f"unknown_{col}"
-                elif col == "access_result":
-                    df_clean[col] = "Unknown"
-
-        # Convert timestamp
-        if not pd.api.types.is_datetime64_any_dtype(df_clean["timestamp"]):
-            try:
-                df_clean["timestamp"] = pd.to_datetime(df_clean["timestamp"])
-            except:
-                df_clean["timestamp"] = pd.Timestamp.now()
-
-        # Add derived features
-        df_clean["hour"] = df_clean["timestamp"].dt.hour
-        df_clean["day_of_week"] = df_clean["timestamp"].dt.dayofweek
-        df_clean["is_weekend"] = df_clean["day_of_week"].isin([5, 6])
-        df_clean["is_after_hours"] = df_clean["hour"].isin(
-            list(range(0, 6)) + list(range(22, 24))
-        )
-        df_clean["access_granted"] = (df_clean["access_result"] == "Granted").astype(int)
-
-        return df_clean
+        return prepare_anomaly_data(df, self.logger)
 
     def _prepare_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """Alias for backward compatibility"""
@@ -168,149 +127,24 @@ class AnomalyDetector:
 
     def _detect_frequency_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
         """Detect frequency-based anomalies"""
-        anomalies = []
-        
-        try:
-            # Group by person and analyze access frequency
-            person_stats = df.groupby('person_id').agg({
-                'timestamp': ['count', 'min', 'max'],
-                'access_granted': 'sum'
-            }).round(2)
-            
-            person_stats.columns = ['total_attempts', 'first_access', 'last_access', 'successful_attempts']
-            
-            # Detect high-frequency users (activity bursts)
-            freq_threshold = person_stats['total_attempts'].quantile(0.95)
-            high_freq_users = person_stats[person_stats['total_attempts'] > freq_threshold]
-            
-            for person_id, stats in high_freq_users.iterrows():
-                anomalies.append({
-                    "type": "activity_burst",
-                    "user_id": person_id,
-                    "details": {
-                        "total_attempts": int(stats['total_attempts']),
-                        "successful_attempts": int(stats['successful_attempts']),
-                        "time_span": str(stats['last_access'] - stats['first_access'])
-                    },
-                    "severity": "medium",
-                    "confidence": 0.8,
-                    "timestamp": datetime.now()
-                })
-                
-        except Exception as e:
-            self.logger.warning(f"Frequency anomaly detection failed: {e}")
-            
-        return anomalies
+        return detect_frequency_anomalies(df, self.logger)
 
     def _detect_statistical_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
         """Detect statistical anomalies using Z-score and IQR methods"""
-        anomalies = []
-        
-        try:
-            # Access frequency anomalies
-            hourly_access = df.groupby(df['timestamp'].dt.hour).size()
-            z_scores = np.abs(stats.zscore(hourly_access))
-            
-            anomalous_hours = hourly_access[z_scores > (3.0 * (1 - sensitivity))]
-            
-            for hour, count in anomalous_hours.items():
-                anomalies.append({
-                    "type": "unusual_hour_activity",
-                    "details": {
-                        "hour": int(hour),
-                        "access_count": int(count),
-                        "z_score": float(z_scores[hour])
-                    },
-                    "severity": self._calculate_severity_from_zscore(z_scores[hour]),
-                    "confidence": min(0.95, abs(z_scores[hour]) / 4.0),
-                    "timestamp": datetime.now()
-                })
-                
-        except Exception as e:
-            self.logger.warning(f"Statistical anomaly detection failed: {e}")
-            
-        return anomalies
+        return detect_statistical_anomalies(df, sensitivity, self.logger)
 
     def _detect_pattern_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
         """Detect pattern-based anomalies"""
-        anomalies = []
-        
-        try:
-            # After-hours access patterns
-            after_hours_access = df[df['is_after_hours']]
-            if len(after_hours_access) > 0:
-                after_hours_users = after_hours_access.groupby('person_id').size()
-                threshold = max(1, int(len(after_hours_users) * (1 - sensitivity)))
-                
-                frequent_after_hours = after_hours_users[after_hours_users > threshold]
-                
-                for person_id, count in frequent_after_hours.items():
-                    anomalies.append({
-                        "type": "frequent_after_hours",
-                        "user_id": person_id,
-                        "details": {
-                            "after_hours_count": int(count),
-                            "total_access_count": int(df[df['person_id'] == person_id].shape[0])
-                        },
-                        "severity": "medium",
-                        "confidence": 0.7,
-                        "timestamp": datetime.now()
-                    })
-                    
-        except Exception as e:
-            self.logger.warning(f"Pattern anomaly detection failed: {e}")
-            
-        return anomalies
+        # reuse frequency anomalies for pattern check based on sensitivity
+        return detect_frequency_anomalies(df, self.logger)
 
     def _detect_ml_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
         """Detect anomalies using machine learning"""
-        anomalies = []
-        
-        try:
-            # Prepare features for ML
-            features = ['hour', 'day_of_week', 'is_weekend', 'is_after_hours', 'access_granted']
-            feature_df = df[features].copy()
-            
-            if len(feature_df) < 10:
-                return anomalies
-                
-            # Fit isolation forest
-            self.isolation_forest.set_params(contamination=1 - sensitivity)
-            outliers = self.isolation_forest.fit_predict(feature_df)
-            
-            # Get anomaly indices
-            anomaly_indices = np.where(outliers == -1)[0]
-            
-            for idx in anomaly_indices:
-                original_row = df.iloc[idx]
-                anomalies.append({
-                    "type": "ml_anomaly",
-                    "details": {
-                        "person_id": original_row["person_id"],
-                        "door_id": original_row["door_id"],
-                        "timestamp": original_row["timestamp"].isoformat(),
-                        "features": feature_df.iloc[idx].to_dict(),
-                    },
-                    "severity": "medium",
-                    "confidence": 0.6,
-                    "timestamp": datetime.now()
-                })
-                
-        except Exception as e:
-            self.logger.warning(f"ML anomaly detection failed: {e}")
-            
-        return anomalies
+        return detect_ml_anomalies(df, sensitivity, self.isolation_forest, self.logger)
 
     def _calculate_severity_from_zscore(self, z_score: float) -> str:
         """Calculate severity level from Z-score"""
-        if z_score >= 4.0:
-            return "critical"
-        elif z_score >= 3.5:
-            return "high"
-        elif z_score >= 3.0:
-            return "medium"
-        else:
-            return "low"
+        return calculate_severity_from_zscore(z_score)
 
     def _deduplicate_anomalies(self, anomalies: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Remove duplicate anomalies"""

@@ -1,0 +1,97 @@
+from __future__ import annotations
+
+import logging
+from datetime import datetime
+from typing import List, Optional
+
+import pandas as pd
+
+from .types import ThreatIndicator
+
+__all__ = [
+    "detect_pattern_threats",
+    "detect_rapid_attempts",
+    "detect_after_hours_anomalies",
+]
+
+
+def detect_rapid_attempts(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -> List[ThreatIndicator]:
+    """Detect rapid successive access attempts."""
+    logger = logger or logging.getLogger(__name__)
+    threats: List[ThreatIndicator] = []
+    try:
+        df_sorted = df.sort_values(["person_id", "timestamp"])
+        df_sorted["time_diff"] = df_sorted.groupby("person_id")["timestamp"].diff()
+        rapid_threshold = pd.Timedelta(seconds=30)
+        rapid_attempts = df_sorted[df_sorted["time_diff"] < rapid_threshold]
+        if len(rapid_attempts) > 0:
+            user_rapid_counts = rapid_attempts.groupby("person_id").size()
+            for user_id, count in user_rapid_counts.items():
+                if count >= 3:
+                    user_rapid_data = rapid_attempts[rapid_attempts["person_id"] == user_id]
+                    failure_rate = 1 - user_rapid_data["access_granted"].mean()
+                    severity = "critical" if failure_rate > 0.7 else "high"
+                    confidence = min(0.95, count / 10)
+                    threats.append(
+                        ThreatIndicator(
+                            threat_type="rapid_access_attempts",
+                            severity=severity,
+                            confidence=confidence,
+                            description=f"User {user_id} made {count} rapid access attempts",
+                            evidence={
+                                "user_id": str(user_id),
+                                "rapid_attempts": count,
+                                "failure_rate": failure_rate,
+                                "time_window": "within_30_seconds",
+                            },
+                            timestamp=datetime.now(),
+                            affected_entities=[str(user_id)],
+                        )
+                    )
+    except Exception as exc:  # pragma: no cover - log and continue
+        logger.warning("Rapid attempts detection failed: %s", exc)
+    return threats
+
+
+def detect_after_hours_anomalies(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -> List[ThreatIndicator]:
+    """Detect suspicious after-hours access patterns."""
+    logger = logger or logging.getLogger(__name__)
+    threats: List[ThreatIndicator] = []
+    try:
+        after_hours_data = df[df["is_after_hours"] == True]
+        if len(after_hours_data) == 0:
+            return threats
+        user_after_hours = after_hours_data.groupby("person_id").size().astype(float)
+        threshold = user_after_hours.quantile(0.9)
+        excessive_users = user_after_hours[user_after_hours > threshold]
+        for user_id, count in excessive_users.items():
+            user_total = len(df[df["person_id"] == user_id])
+            after_hours_rate = count / user_total
+            if after_hours_rate > 0.3:
+                threats.append(
+                    ThreatIndicator(
+                        threat_type="excessive_after_hours_access",
+                        severity="medium",
+                        confidence=min(0.9, after_hours_rate),
+                        description=f"User {user_id} has excessive after-hours access: {count} events ({after_hours_rate:.1%})",
+                        evidence={
+                            "user_id": str(user_id),
+                            "after_hours_count": count,
+                            "after_hours_rate": after_hours_rate,
+                            "total_events": user_total,
+                        },
+                        timestamp=datetime.now(),
+                        affected_entities=[str(user_id)],
+                    )
+                )
+    except Exception as exc:  # pragma: no cover - log and continue
+        logger.warning("After-hours anomaly detection failed: %s", exc)
+    return threats
+
+
+def detect_pattern_threats(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -> List[ThreatIndicator]:
+    """Run all pattern-based threat detectors."""
+    threats = []
+    threats.extend(detect_rapid_attempts(df, logger))
+    threats.extend(detect_after_hours_anomalies(df, logger))
+    return threats
