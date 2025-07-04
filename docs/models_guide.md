@@ -280,20 +280,24 @@ def search_person_activity(db_connection, person_id, start_date):
 ```
 
 
-🚨 models/anomaly.py - "The Threat Detector"
---------------------------------------------
+
+🚨 AnomalyDetectionModel - "The Threat Detector"
+-----------------------------------------------
 WHAT IT DOES:
-Manages all the suspicious activities and security anomalies detected by AI.
-Helps you find patterns in security threats and analyze what's going wrong.
+Tracks suspicious activity and anomalies detected by AI. The model lives in
+`models/base.py` and can be imported directly from the `models` package.
 
 HOW OTHER MODULES USE IT:
 ```python
 # In dashboard - showing current threats
-from models.anomaly import AnomalyDetectionModel
+from models import AnomalyDetectionModel
 
-def get_active_threats(db_connection):
+def get_active_threats(db_connection, events):
     anomaly_model = AnomalyDetectionModel(db_connection)
-    
-    # Get high-severity anomalies from last 24 hours
-    filters = {
-        'severity': 'high',
+
+    high_severity = [
+        a for a in anomaly_model.detect_anomalies(events)
+        if a.get('severity') == 'high'
+    ]
+    return high_severity
+```
