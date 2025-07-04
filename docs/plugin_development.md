@@ -68,9 +68,10 @@ def create_plugin() -> MyPlugin:
 ### Callback Registration
 
 Plugins that define `register_callbacks()` should implement
-`CallbackPluginProtocol`. After loading all plugins call
-`register_plugin_callbacks(app)` from the `PluginManager` so each plugin can
-hook into Dash.
+`CallbackPluginProtocol`. Load plugins through `setup_plugins(app)` from
+`core.plugins.auto_config` so each plugin can hook into Dash automatically.
+The helper exposes `/health/plugins` and attaches the plugin manager as
+`app._yosai_plugin_manager`.
 
 ### Health Checks
 
