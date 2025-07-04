@@ -79,12 +79,7 @@ python3 app.py
 Step 5: Monitor plugin health
 ============================
 
-# Add this endpoint to monitor plugin health:
-
-@server.route("/health/plugins")
-def plugin_health():
-    if hasattr(app, '_yosai_plugin_manager'):
-        health = app._yosai_plugin_manager.get_plugin_health()
-        return jsonify(health)
-    return jsonify({"error": "Plugin manager not available"})
+The plugin manager automatically exposes a `/health/plugins` endpoint
+after plugins are registered. Visit this route to view aggregated
+health data for all active plugins.
 
