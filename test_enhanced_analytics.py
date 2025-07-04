@@ -16,7 +16,7 @@ sys.path.append(os.path.dirname(__file__))
 from analytics.analytics_controller import (
     AnalyticsController,
     AnalyticsConfig,
-    ConsolidatedCallbackManager,
+    CallbackController,
     CallbackEvent,
 )
 
@@ -198,7 +198,7 @@ def test_controller_integration():
 
     # Initialize callback manager
     print("\n📡 Initializing callback system...")
-    callback_manager = ConsolidatedCallbackManager()
+    callback_manager = CallbackController()
 
     # Register callbacks for all events
     for event in CallbackEvent:
@@ -214,7 +214,7 @@ def test_controller_integration():
         enable_anomaly_detection=True,
         parallel_processing=False,  # Sequential for testing clarity
     )
-    controller = AnalyticsController(config=config, callback_manager=callback_manager)
+    controller = AnalyticsController(config=config, controller=callback_manager)
     print("   ✅ Controller initialized with all modules enabled")
 
     # Run complete analysis
