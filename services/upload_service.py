@@ -102,10 +102,15 @@ def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
 
 
 def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert:
-    """Create a preview card showing the correct row count."""
+    """Create a preview card showing the correct row count.
+
+    The preview table uses ``df.head(5)`` and clamps ``df`` to fewer than
+    100 rows before rendering.
+    """
     try:
         # CRITICAL: Get actual DataFrame size
         actual_rows, actual_cols = df.shape
+        df = df.head(99)
         preview_rows = min(5, actual_rows)  # Only for table display
 
         logger.info(

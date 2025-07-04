@@ -32,7 +32,7 @@ class JsonSerializationConfig:
     """Configuration for JSON serialization plugin"""
 
     enabled: bool = True
-    max_dataframe_rows: int = 1000
+    max_dataframe_rows: int = 99
     max_string_length: int = 10000
     include_type_metadata: bool = True
     compress_large_objects: bool = True
@@ -41,7 +41,12 @@ class JsonSerializationConfig:
 
 
 class YosaiJSONEncoder(json.JSONEncoder):
-    """Self-contained JSON encoder that handles all problematic types"""
+    """Self-contained JSON encoder that handles all problematic types.
+
+    DataFrame previews always use ``df.head(5)`` and are clamped to fewer than
+    100 rows. If the serialized preview exceeds 5MB, the ``data`` field is
+    replaced with an empty list and ``truncated`` flag.
+    """
 
     def __init__(
         self, config: Optional[JsonSerializationConfig] = None, *args, **kwargs
@@ -58,12 +63,20 @@ class YosaiJSONEncoder(json.JSONEncoder):
 
         # Handle pandas DataFrames
         if isinstance(o, pd.DataFrame):
-            return {
+            max_rows = min(self.config.max_dataframe_rows, 99)
+            preview_df = o.head(max_rows)
+            preview_records = preview_df.head(5).to_dict("records")
+            payload = {
                 "__type__": "DataFrame",
-                "data": o.head(self.config.max_dataframe_rows).to_dict("records"),
+                "data": preview_records,
                 "shape": o.shape,
                 "columns": list(o.columns),
             }
+            serialized = json.dumps(payload)
+            if len(serialized.encode("utf-8")) >= 5 * 1024 * 1024:
+                payload["data"] = []
+                payload["truncated"] = True
+            return payload
 
         # Handle pandas Series
         if isinstance(o, pd.Series):

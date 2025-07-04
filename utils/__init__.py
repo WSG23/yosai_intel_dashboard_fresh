@@ -16,6 +16,7 @@ try:
         navbar_icon,
     )
     from .assets_utils import get_nav_icon
+    from .preview_utils import serialize_dataframe_preview
 except Exception:  # pragma: no cover - fallback when utils unavailable
     from .unicode_utils import (
         safe_unicode_encode,
@@ -32,6 +33,7 @@ except Exception:  # pragma: no cover - fallback when utils unavailable
         navbar_icon,
     )
     from .assets_utils import get_nav_icon
+    from .preview_utils import serialize_dataframe_preview
 
 __all__: list[str] = [
     "sanitize_unicode_input",
@@ -45,4 +47,5 @@ __all__: list[str] = [
     "debug_dash_asset_serving",
     "navbar_icon",
     "get_nav_icon",
+    "serialize_dataframe_preview",
 ]

@@ -260,11 +260,16 @@ def create_analytics_charts(analytics_data: Dict[str, Any]) -> html.Div:
 
 
 def create_data_preview(df: pd.DataFrame, filename: str = "") -> html.Div:
-    """Create data preview component"""
+    """Create data preview component.
+
+    The preview table always uses ``df.head(5)`` and the DataFrame is
+    clamped to fewer than 100 rows before rendering.
+    """
     if df is None or df.empty:
         return dbc.Alert("No data to preview", color="info")
 
-    # Get basic info
+    # Clamp to avoid huge previews
+    df = df.head(99)
     num_rows, num_cols = df.shape
 
     return dbc.Card(
@@ -287,7 +292,7 @@ def create_data_preview(df: pd.DataFrame, filename: str = "") -> html.Div:
                     # Data preview table
                     html.H6("Sample Data:", className="mt-3"),
                     dbc.Table.from_dataframe(
-                        df.head(10),
+                        df.head(5),
                         striped=True,
                         bordered=True,
                         hover=True,
