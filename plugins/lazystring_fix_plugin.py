@@ -8,7 +8,10 @@ from typing import Any
 
 from core.plugins.protocols import PluginMetadata
 
-from utils.unicode_utils import handle_surrogate_characters
+from plugins.service_locator import PluginServiceLocator
+
+_unicode = PluginServiceLocator.get_unicode_handler()
+UnicodeProcessor = _unicode.UnicodeProcessor
 from core.serialization import SafeJSONSerializer
 
 # Optional Babel import
@@ -65,7 +68,7 @@ def _is_lazy_string(obj: Any) -> bool:
 
 def _sanitize_text(text: str) -> str:
     text = unicodedata.normalize("NFKC", text)
-    text = handle_surrogate_characters(text)
+    text = UnicodeProcessor.clean_surrogate_chars(text)
     return text
 
 

@@ -28,6 +28,7 @@ class SecurityCallbackController:
     def unregister_callback(self, event: SecurityEvent, callback: Callable[[Dict[str, Any]], None]) -> bool:
         try:
             self._callbacks[event].remove(callback)
+
             return True
         except (ValueError, KeyError):
             return False
@@ -54,4 +55,5 @@ __all__ = [
     "SecurityCallbackController",
     "security_callback_controller",
     "emit_security_event",
+
 ]

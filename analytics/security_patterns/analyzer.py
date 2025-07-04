@@ -48,9 +48,6 @@ warnings.filterwarnings(
     module="sklearn",
 )
 
-
-
-
 @dataclass
 class SecurityAssessment:
     """Comprehensive security assessment result"""
@@ -506,4 +503,25 @@ __all__ = [
     "EnhancedSecurityAnalyzer",
     "SecurityCallbackController",
     "SecurityEvent",
+    "setup_isolated_security_testing",
 ]
+
+
+def setup_isolated_security_testing(
+    register_handler: bool = False,
+) -> tuple[SecurityCallbackController, Optional[Callable[[Dict[str, Any]], None]]]:
+    """Return a cleared controller and optional test handler."""
+
+    controller = SecurityCallbackController()
+    controller.clear_all_callbacks()
+    handler: Optional[Callable[[Dict[str, Any]], None]] = None
+
+    if register_handler:
+        def _handler(data: Dict[str, Any], event: SecurityEvent = SecurityEvent.ANALYSIS_COMPLETE) -> None:
+            controller.history.append((event, data))
+
+        handler = _handler
+        for event in SecurityEvent:
+            controller.register_callback(event, lambda d, e=event: _handler(d, e))
+
+    return controller, handler

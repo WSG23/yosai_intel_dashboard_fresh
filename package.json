@@ -12,7 +12,7 @@
     "pa11y": "^9.0.0"
   },
   "scripts": {
-    "build-css": "postcss assets/css/main.css -o assets/dist/main.min.css",
+    "build-css": "sh scripts/build_css.sh",
     "lint:a11y": "pa11y http://localhost:8050"
   }
 }

@@ -347,7 +347,7 @@ def get_device_learning_service() -> DeviceLearningService:
 def create_learning_callbacks(manager: UnifiedCallbackCoordinator) -> None:
     """Register device learning callback with coordinator."""
 
-    @manager.register_callback(
+    @manager.unified_callback(
         Output("device-learning-status", "children"),
         [
             Input("file-upload-store", "data"),

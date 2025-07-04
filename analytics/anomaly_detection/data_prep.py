@@ -12,12 +12,12 @@ def prepare_anomaly_data(df: pd.DataFrame, logger: Optional[logging.Logger] = No
     logger = logger or logging.getLogger(__name__)
     df_clean = df.copy()
 
+    from security.unicode_security_handler import UnicodeSecurityHandler
+
     string_columns = df_clean.select_dtypes(include=["object"]).columns
     for col in string_columns:
-        df_clean[col] = (
-            df_clean[col]
-            .astype(str)
-            .apply(lambda x: x.encode("utf-8", errors="ignore").decode("utf-8"))
+        df_clean[col] = df_clean[col].astype(str).apply(
+            UnicodeSecurityHandler.sanitize_unicode_input
         )
 
     required_cols = ["timestamp", "person_id", "door_id", "access_result"]

@@ -33,10 +33,17 @@ def safe_callback(app_or_container: Any = None) -> Callable:
         return wrapper
 
     # Handle both @safe_callback and @safe_callback(app) usage
-    if callable(app_or_container):
-        # Direct usage: @safe_callback
+    if callable(app_or_container) and not hasattr(app_or_container, "callback_map"):
+        # Direct usage: @safe_callback when a plain function is passed
         func = app_or_container
         return decorator(func)
     else:
         # Parameterized usage: @safe_callback(app)
         return decorator
+
+
+def unified_callback(target: Any, *cb_args: Any, **cb_kwargs: Any) -> Callable:
+    """Return decorator registering callbacks on any supported target."""
+    from .callback_unifier import CallbackUnifier
+
+    return CallbackUnifier(target, safe_callback(target))(*cb_args, **cb_kwargs)

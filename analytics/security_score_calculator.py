@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import logging
 
 # Unicode-safe string handling
-import unicodedata
+from security.unicode_security_handler import UnicodeSecurityHandler
 
 
 @dataclass
@@ -51,15 +51,8 @@ class SecurityScoreCalculator:
         self.logger = logging.getLogger(__name__)
 
     def sanitize_unicode_text(self, text: str) -> str:
-        """Handle unicode surrogate characters safely"""
-        if not isinstance(text, str):
-            return str(text)
-
-        try:
-            normalized = unicodedata.normalize("NFKD", text)
-            return normalized.encode("utf-8", errors="ignore").decode("utf-8")
-        except (UnicodeDecodeError, UnicodeEncodeError):
-            return "".join(char for char in text if ord(char) < 128)
+        """Sanitize ``text`` using the shared security handler."""
+        return UnicodeSecurityHandler.sanitize_unicode_input(text)
 
     def validate_dataframe(self, df: pd.DataFrame) -> Tuple[bool, str]:
         """Validate required columns exist and add missing ones"""

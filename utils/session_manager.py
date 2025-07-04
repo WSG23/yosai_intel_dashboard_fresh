@@ -2,7 +2,7 @@
 
 import logging
 from typing import Optional, Dict, Any, List
-from plugins.ai_classification.plugin import AIClassificationPlugin
+from components.plugin_adapter import ComponentPluginAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -11,14 +11,14 @@ class SessionManager:
     """Manage session data persistence and retrieval"""
 
     def __init__(self):
+        self.adapter = ComponentPluginAdapter()
         self.ai_plugin = None
         self._initialize_plugin()
 
     def _initialize_plugin(self):
         """Initialize AI plugin for data access"""
         try:
-            self.ai_plugin = AIClassificationPlugin()
-            self.ai_plugin.start()
+            self.ai_plugin = self.adapter.get_ai_plugin()
         except Exception as e:
             logger.error(f"Failed to initialize AI plugin: {e}")
 

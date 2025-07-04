@@ -412,7 +412,7 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
 
     try:
 
-        @manager.register_callback(
+        @manager.unified_callback(
             Output("live-time", "children"),
             Input("url-i18n", "pathname"),
             callback_id="navbar_live_time",
@@ -423,7 +423,7 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             return f"Live: {current_time}"
 
-        @manager.register_callback(
+        @manager.unified_callback(
             Output("language-toggle", "children"),
             Input("language-toggle", "n_clicks"),
             prevent_initial_call=True,
@@ -477,7 +477,7 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
                     ),
                 ]
 
-        @manager.register_callback(
+        @manager.unified_callback(
             Output("theme-store", "data"),
             Input("theme-dropdown", "value"),
             callback_id="navbar_select_theme",
@@ -492,7 +492,7 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             Input("theme-store", "data"),
         )
 
-        @manager.register_callback(
+        @manager.unified_callback(
             Output("navbar-logo", "src"),
             Input("theme-store", "data"),
             callback_id="navbar_logo_theme",
@@ -504,7 +504,7 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
                 return "/assets/yosai_logo_name_white.png"
             return "/assets/yosai_logo_name_black.png"
 
-        @manager.register_callback(
+        @manager.unified_callback(
             Output("download-csv", "data"),
             Input("nav-export-csv", "n_clicks"),
             prevent_initial_call=True,
@@ -521,7 +521,7 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
                 return dash.no_update
             return dict(content=csv_str, filename="device_learning_data.csv")
 
-        @manager.register_callback(
+        @manager.unified_callback(
             Output("download-json", "data"),
             Input("nav-export-json", "n_clicks"),
             prevent_initial_call=True,
@@ -538,7 +538,7 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
                 return dash.no_update
             return dict(content=json_str, filename="device_learning_data.json")
 
-        @manager.register_callback(
+        @manager.unified_callback(
             Output("page-context", "children"),
             Input("url-i18n", "pathname"),
             callback_id="navbar_page_context",

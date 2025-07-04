@@ -30,6 +30,14 @@ class UnifiedCallbackCoordinator:
         self._output_map: Dict[str, str] = {}
         self._namespaces: Dict[str, List[str]] = {}
 
+    # Convenience unified decorator ------------------------------------
+    def unified_callback(self, *args: Any, **kwargs: Any):
+        """Return :class:`CallbackUnifier` bound to this coordinator."""
+        from .plugins.callback_unifier import CallbackUnifier
+        from .plugins.decorators import safe_callback
+
+        return CallbackUnifier(self, safe_callback(self.app))(*args, **kwargs)
+
     # ------------------------------------------------------------------
     def register_component_namespace(self, component_name: str) -> None:
         """Ensure a namespace exists for the given component."""

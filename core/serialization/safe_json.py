@@ -7,7 +7,10 @@ import logging
 from dataclasses import asdict, is_dataclass
 from typing import Any
 
-from utils.unicode_utils import handle_surrogate_characters
+from plugins.service_locator import PluginServiceLocator
+
+_unicode = PluginServiceLocator.get_unicode_handler()
+UnicodeProcessor = _unicode.UnicodeProcessor
 
 try:  # Optional Flask-Babel
     from flask_babel import LazyString
@@ -47,16 +50,18 @@ class SafeJSONSerializer:
                 return obj
 
             if isinstance(obj, bytes):
-                return handle_surrogate_characters(obj.decode("utf-8", "replace"))
+                return UnicodeProcessor.clean_surrogate_chars(
+                    obj.decode("utf-8", "replace")
+                )
 
             if isinstance(obj, str):
-                return handle_surrogate_characters(obj)
+                return UnicodeProcessor.clean_surrogate_chars(obj)
 
             if MARKUP_AVAILABLE and isinstance(obj, Markup):
-                return handle_surrogate_characters(str(obj))
+                return UnicodeProcessor.clean_surrogate_chars(str(obj))
 
             if BABEL_AVAILABLE and LazyString and isinstance(obj, LazyString):
-                return handle_surrogate_characters(str(obj))
+                return UnicodeProcessor.clean_surrogate_chars(str(obj))
 
             if isinstance(obj, dict):
                 return {self._sanitize(k): self._sanitize(v) for k, v in obj.items()}
@@ -74,6 +79,6 @@ class SafeJSONSerializer:
                 return {k: self._sanitize(v) for k, v in vars(obj).items()}
         except Exception as exc:  # pragma: no cover - best effort
             logger.warning("SafeJSONSerializer failed: %s", exc)
-            return handle_surrogate_characters(str(obj))
+            return UnicodeProcessor.clean_surrogate_chars(str(obj))
 
         return obj

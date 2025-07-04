@@ -49,7 +49,10 @@ class DatabaseConfig:
     def get_connection_string(self) -> str:
         """Get database connection string"""
         if self.type == "postgresql":
-            return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
+            return (
+                f"postgresql://{self.user}:{self.password}"
+                f"@{self.host}:{self.port}/{self.name}"
+            )
         elif self.type == "sqlite":
             return f"sqlite:///{self.name}"
         else:
@@ -129,7 +132,21 @@ class ConfigManager:
                 content = f.read()
                 # Simple environment variable substitution
                 content = self._substitute_env_vars(content)
-                return yaml.safe_load(content)
+
+                class IncludeLoader(yaml.SafeLoader):
+                    pass
+
+                base_dir = config_file.parent
+
+                def _include(loader: IncludeLoader, node: yaml.Node):
+                    filename = loader.construct_scalar(node)
+                    inc_path = base_dir / filename
+                    with open(inc_path, "r") as inc:
+                        return yaml.load(inc, Loader=IncludeLoader)
+
+                IncludeLoader.add_constructor("!include", _include)
+
+                return yaml.load(content, Loader=IncludeLoader)
         except Exception as e:
             logger.warning(f"Error loading config file {config_file}: {e}")
             return None

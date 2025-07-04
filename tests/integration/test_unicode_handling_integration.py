@@ -1,0 +1,25 @@
+import pandas as pd
+from plugins.service_locator import PluginServiceLocator
+
+handler = PluginServiceLocator.get_unicode_handler()
+
+
+def test_unicode_handler_centralization():
+    text = "A" + chr(0xD800) + "B"
+    cleaned = handler.UnicodeProcessor.clean_surrogate_chars(text)
+    assert cleaned == "AB"
+
+    from file_conversion.unicode_handler import UnicodeCleaner
+    assert UnicodeCleaner.clean_string(text) == cleaned
+
+    df = pd.DataFrame({"c" + chr(0xD800): ["x" + chr(0xDC00)]})
+    cleaned_df = UnicodeCleaner.clean_dataframe(df)
+    assert list(cleaned_df.columns) == ["c"]
+    assert cleaned_df.iloc[0, 0] == "x"
+
+    from security.unicode_security_handler import UnicodeSecurityHandler
+    assert UnicodeSecurityHandler.sanitize_unicode_input(text) == cleaned
+    sec_df = UnicodeSecurityHandler.sanitize_dataframe(df)
+    assert list(sec_df.columns) == ["c"]
+    assert sec_df.iloc[0, 0] == "x"
+

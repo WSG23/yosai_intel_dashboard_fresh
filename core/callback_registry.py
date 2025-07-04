@@ -19,6 +19,14 @@ class CallbackRegistry:
         self.registered_callbacks = {}
         self.clientside_callbacks = {}
 
+    # New unified decorator -----------------------------------------------
+    def unified_callback(self, *args, **kwargs):
+        """Return :class:`CallbackUnifier` bound to this registry."""
+        from .plugins.callback_unifier import CallbackUnifier
+        from .plugins.decorators import safe_callback
+
+        return CallbackUnifier(self, safe_callback(self.app))(*args, **kwargs)
+
     def register_callback(
         self,
         outputs,

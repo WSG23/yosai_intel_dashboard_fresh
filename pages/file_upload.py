@@ -31,6 +31,7 @@ from config.dynamic_config import dynamic_config
 
 from components.column_verification import save_verified_mappings
 from services.ai_suggestions import generate_column_suggestions
+from components.plugin_adapter import ComponentPluginAdapter
 from services.upload import (
     UploadProcessingService,
     AISuggestionService,
@@ -43,6 +44,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize a shared AI suggestion service for module-level helpers
 _ai_service = AISuggestionService()
+plugin_adapter = ComponentPluginAdapter()
 
 
 def analyze_device_name_with_ai(device_name: str) -> Dict[str, Any]:
@@ -1113,20 +1115,10 @@ def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Di
             "user_verified": True,
         }
 
-        try:
-            from plugins.ai_classification.plugin import AIClassificationPlugin
-            from plugins.ai_classification.config import get_ai_config
-
-            ai_plugin = AIClassificationPlugin(get_ai_config())
-            if ai_plugin.start():
-                session_id = (
-                    f"verified_{filename}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                )
-                ai_mappings = {v: k for k, v in mappings.items()}
-                ai_plugin.confirm_column_mapping(ai_mappings, session_id)
-                logger.info(f"✅ AI training data saved: {ai_mappings}")
-        except Exception as ai_e:
-            logger.info(f"⚠️ AI training save failed: {ai_e}")
+        if plugin_adapter.save_verified_mappings(filename, mappings, {}):
+            logger.info("✅ AI training data saved via plugin")
+        else:
+            logger.info("⚠️ AI training save failed")
 
         import os
 
@@ -1303,7 +1295,7 @@ def register_callbacks(
     ]
 
     for func, outputs, inputs, states, cid, extra in callback_defs:
-        manager.register_callback(
+        manager.unified_callback(
             outputs,
             inputs,
             states,

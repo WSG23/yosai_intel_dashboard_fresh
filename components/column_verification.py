@@ -20,6 +20,9 @@ from datetime import datetime
 import json
 import re
 from services.ai_suggestions import generate_column_suggestions
+from components.plugin_adapter import ComponentPluginAdapter
+
+adapter = ComponentPluginAdapter()
 
 logger = logging.getLogger(__name__)
 
@@ -434,66 +437,14 @@ def create_confidence_badge(confidence: float) -> html.Span:
 def get_ai_column_suggestions(
     df: pd.DataFrame, filename: str
 ) -> Dict[str, Dict[str, Any]]:
-    """
-    Get AI suggestions for column mappings based on THIS specific CSV file
-    Integrates with existing AI classification plugin
-    """
-    suggestions = {}
-
+    """Return AI column mapping suggestions using the plugin adapter."""
     logger.info(f"🤖 Analyzing columns for {filename}:")
     logger.info(f"   Columns found: {list(df.columns)}")
-
     try:
-        # Try to use the existing AI classification plugin
-        from plugins.ai_classification.plugin import AIClassificationPlugin
-        from plugins.ai_classification.config import get_ai_config
-
-        ai_plugin = AIClassificationPlugin(get_ai_config())
-        if ai_plugin.start():
-            headers = df.columns.tolist()
-            session_id = f"file_{filename}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-
-            logger.info(f"   🧠 Getting AI suggestions for: {headers}")
-
-            # Get AI mapping suggestions for THIS specific file
-            ai_result = ai_plugin.map_columns(headers, session_id)
-
-            if ai_result.get("success"):
-                suggested_mapping = ai_result.get("suggested_mapping", {})
-                confidence_scores = ai_result.get("confidence_scores", {})
-
-                for header in headers:
-                    if header in suggested_mapping:
-                        suggestions[header] = {
-                            "field": suggested_mapping[header],
-                            "confidence": confidence_scores.get(header, 0.0),
-                        }
-                        logger.info(
-                            f"      ✅ {header} -> {suggested_mapping[header]} ({confidence_scores.get(header, 0):.0%})"
-                        )
-                    else:
-                        suggestions[header] = {"field": "", "confidence": 0.0}
-                        logger.info(f"      ❓ {header} -> No AI suggestion")
-
-                logger.info(
-                    f"AI suggestions generated for {len(suggestions)} columns in {filename}"
-                )
-            else:
-                logger.warning(
-                    f"AI mapping failed for {filename}, using file-specific analysis"
-                )
-                suggestions = _analyze_file_specific_columns(df, filename)
-        else:
-            logger.warning(
-                f"AI plugin failed to start for {filename}, using file-specific analysis"
-            )
-            suggestions = _analyze_file_specific_columns(df, filename)
-
-    except Exception as e:
+        return adapter.get_ai_column_suggestions(df, filename)
+    except Exception as e:  # pragma: no cover - defensive
         logger.error(f"Error getting AI suggestions for {filename}: {e}")
-        suggestions = _analyze_file_specific_columns(df, filename)
-
-    return suggestions
+        return _analyze_file_specific_columns(df, filename)
 
 
 def _analyze_file_specific_columns(
@@ -659,32 +610,9 @@ def save_verified_mappings(
         logger.info(f"   Mappings: {column_mappings}")
         logger.info(f"   Context: {training_data['learning_context']}")
 
-        # Try to save to AI classification plugin database
-        try:
-            from plugins.ai_classification.plugin import AIClassificationPlugin
-            from plugins.ai_classification.config import get_ai_config
-
-            ai_plugin = AIClassificationPlugin(get_ai_config())
-            if ai_plugin.start():
-                session_id = (
-                    f"verified_{filename}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                )
-
-                # Store the verified mapping for AI learning
-                ai_plugin.confirm_column_mapping(column_mappings, session_id)
-
-                # Store additional training context
-                if hasattr(ai_plugin, "csv_repository"):
-                    ai_plugin.csv_repository.store_column_mapping(
-                        session_id, training_data
-                    )
-
-                logger.info(f"Verified mappings saved to AI system for {filename}")
-                logger.info(f"✅ AI system updated with mappings for {filename}")
-
-        except Exception as ai_e:
-            logger.warning(f"Failed to save to AI system: {ai_e}")
-            logger.info(f"AI system save failed: {ai_e}")
+        # Try to save using the plugin adapter
+        if not adapter.save_verified_mappings(filename, column_mappings, metadata):
+            logger.info("AI system save failed or unavailable")
 
         # Save to file-specific training data
         try:
@@ -728,7 +656,7 @@ def register_callbacks(
 ) -> None:
     """Register component callbacks using the coordinator."""
 
-    manager.register_callback(
+    manager.unified_callback(
         Output({"type": "custom-field", "index": MATCH}, "style"),
         Input({"type": "column-mapping", "index": MATCH}, "value"),
         callback_id="toggle_custom_field",

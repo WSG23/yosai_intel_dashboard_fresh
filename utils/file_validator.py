@@ -15,12 +15,10 @@ from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
-from utils.unicode_utils import (
-    handle_surrogate_characters,
-    sanitize_unicode_input,
-    safe_unicode_encode,
-    clean_unicode_surrogates,
-)
+from plugins.service_locator import PluginServiceLocator
+
+_unicode = PluginServiceLocator.get_unicode_handler()
+UnicodeProcessor = _unicode.UnicodeProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -148,9 +146,13 @@ class FileContentValidator:
 
     def _validate_security(self, file_bytes: bytes) -> Dict[str, Any]:
         try:
-            text = safe_unicode_encode(file_bytes.decode("utf-8", "ignore"))
+            text = UnicodeProcessor.safe_encode_text(
+                file_bytes.decode("utf-8", "ignore")
+            )
         except Exception:
-            text = sanitize_unicode_input(file_bytes.decode("utf-8", "ignore"))
+            text = UnicodeProcessor.safe_encode_text(
+                file_bytes.decode("utf-8", "ignore")
+            )
 
         for pattern in self.DANGEROUS_PATTERNS:
             if re.search(pattern, text, re.IGNORECASE):
@@ -177,7 +179,9 @@ class FileContentValidator:
         return {"valid": False, "error": f"Unsupported file type: {ext}"}
 
     def _validate_csv_content(self, file_bytes: bytes) -> Dict[str, Any]:
-        text = safe_unicode_encode(file_bytes.decode("utf-8", "ignore"))
+        text = UnicodeProcessor.safe_encode_text(
+            file_bytes.decode("utf-8", "ignore")
+        )
         lines = text.strip().split("\n")
         if len(lines) < 1:
             return {"valid": False, "error": "CSV file appears to be empty"}
@@ -193,7 +197,9 @@ class FileContentValidator:
 
     def _validate_json_content(self, file_bytes: bytes) -> Dict[str, Any]:
         try:
-            text = safe_unicode_encode(file_bytes.decode("utf-8", "ignore"))
+            text = UnicodeProcessor.safe_encode_text(
+                file_bytes.decode("utf-8", "ignore")
+            )
             data = json.loads(text)
             if isinstance(data, list):
                 rows = len(data)
@@ -210,7 +216,9 @@ class FileContentValidator:
             return {"valid": False, "error": f"JSON validation failed: {exc}"}
 
     def _validate_jsonl_content(self, file_bytes: bytes) -> Dict[str, Any]:
-        text = safe_unicode_encode(file_bytes.decode("utf-8", "ignore"))
+        text = UnicodeProcessor.safe_encode_text(
+            file_bytes.decode("utf-8", "ignore")
+        )
         lines = text.strip().split("\n")
         valid_lines = 0
         cols = 0
@@ -318,8 +326,12 @@ def safe_decode_with_unicode_handling(data: bytes, enc: str) -> str:
         text = data.decode(enc, errors="surrogatepass")
     except UnicodeDecodeError:
         text = data.decode(enc, errors="replace")
-    text = handle_surrogate_characters(text)
-    cleaned = text.encode("utf-8", errors="ignore").decode("utf-8", errors="ignore")
+
+    text = UnicodeProcessor.clean_surrogate_chars(text)
+
+    from security.unicode_security_handler import UnicodeSecurityHandler
+
+    cleaned = UnicodeSecurityHandler.sanitize_unicode_input(text)
     return cleaned.replace("\ufffd", "")
 
 
@@ -365,14 +377,24 @@ def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFr
                     json_data = json.loads(text)
                     if isinstance(json_data, list):
                         cleaned = [
-                            {k: clean_unicode_surrogates(v) for k, v in obj.items()}
+                            {
+                                k: UnicodeProcessor.clean_surrogate_chars(v)
+                                for k, v in obj.items()
+                            }
                             if isinstance(obj, dict)
                             else obj
                             for obj in json_data
                         ]
                         df = pd.DataFrame(cleaned)
                     else:
-                        cleaned = {k: clean_unicode_surrogates(v) for k, v in json_data.items()} if isinstance(json_data, dict) else json_data
+                        cleaned = (
+                            {
+                                k: UnicodeProcessor.clean_surrogate_chars(v)
+                                for k, v in json_data.items()
+                            }
+                            if isinstance(json_data, dict)
+                            else json_data
+                        )
                         df = pd.DataFrame([cleaned])
                     return df, None
                 except UnicodeDecodeError:
