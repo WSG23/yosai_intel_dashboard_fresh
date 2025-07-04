@@ -64,6 +64,8 @@ class DeviceLearningService:
                         errors="replace",
                     ) as f:
                         data = json.load(f)
+                        if "device_mappings" not in data and "mappings" in data:
+                            data["device_mappings"] = data.get("mappings", {})
                         fingerprint = mapping_file.stem.replace("mapping_", "")
                         self.learned_mappings[fingerprint] = data
                     logger.info(f"Loaded learned mapping: {fingerprint}")
@@ -250,7 +252,7 @@ class DeviceLearningService:
                 "filename": filename,
                 "fingerprint": fingerprint,
                 "saved_at": datetime.now().isoformat(),
-                "mappings": user_mappings,
+                "device_mappings": user_mappings,
                 "source": "user_confirmed",
                 "device_count": len(user_mappings),
             }
@@ -279,7 +281,7 @@ class DeviceLearningService:
                     data.get("filename") == filename
                     and data.get("source") == "user_confirmed"
                 ):
-                    return data.get("device_mappings", {})
+                    return data.get("device_mappings") or data.get("mappings", {})
 
             logger.info(f"No user device mappings found for {filename}")
             return {}
