@@ -10,8 +10,8 @@ from typing import Dict, List, Any, Optional, Callable
 import logging
 from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
-from enum import Enum
-import threading
+
+from callback_controller import CallbackController, CallbackEvent
 
 # Import enhanced analyzers
 from .security_patterns import SecurityPatternsAnalyzer, create_security_analyzer
@@ -20,86 +20,7 @@ from .user_behavior import UserBehaviorAnalyzer, create_behavior_analyzer
 from .anomaly_detection import AnomalyDetector, create_anomaly_detector
 
 
-# Consolidated Callback System
-class CallbackEvent(Enum):
-    """Standardized callback events"""
-
-    ANALYSIS_START = "analysis_start"
-    ANALYSIS_PROGRESS = "analysis_progress"
-    ANALYSIS_COMPLETE = "analysis_complete"
-    ANALYSIS_ERROR = "analysis_error"
-    SECURITY_THREAT_DETECTED = "security_threat_detected"
-    ANOMALY_DETECTED = "anomaly_detected"
-    TREND_CHANGE_DETECTED = "trend_change_detected"
-    BEHAVIOR_RISK_IDENTIFIED = "behavior_risk_identified"
-
-
-@dataclass
-class CallbackData:
-    """Standardized callback data structure"""
-
-    event_type: CallbackEvent
-    analysis_id: str
-    timestamp: str
-    data: Dict[str, Any]
-    metadata: Optional[Dict[str, Any]] = None
-
-
-class ConsolidatedCallbackManager:
-    """Thread-safe consolidated callback manager"""
-
-    def __init__(self, logger: Optional[logging.Logger] = None):
-        self.logger = logger or logging.getLogger(__name__)
-        self._callbacks: Dict[CallbackEvent, List[Callable]] = {}
-        self._lock = threading.RLock()
-
-    def register_callback(
-        self, event: CallbackEvent, callback: Callable[[CallbackData], None]
-    ):
-        """Register callback for specific event type"""
-        with self._lock:
-            if event not in self._callbacks:
-                self._callbacks[event] = []
-            self._callbacks[event].append(callback)
-
-    def unregister_callback(self, event: CallbackEvent, callback: Callable):
-        """Unregister specific callback"""
-        with self._lock:
-            if event in self._callbacks and callback in self._callbacks[event]:
-                self._callbacks[event].remove(callback)
-
-    def trigger_callback(
-        self,
-        event: CallbackEvent,
-        analysis_id: str,
-        data: Dict[str, Any],
-        metadata: Optional[Dict[str, Any]] = None,
-    ):
-        """Trigger all callbacks for event type"""
-        callback_data = CallbackData(
-            event_type=event,
-            analysis_id=analysis_id,
-            timestamp=pd.Timestamp.now().isoformat(),
-            data=data,
-            metadata=metadata,
-        )
-
-        with self._lock:
-            callbacks = self._callbacks.get(event, [])
-
-        for callback in callbacks:
-            try:
-                callback(callback_data)
-            except Exception as e:
-                self.logger.error(f"Callback error for {event}: {e}")
-
-    def clear_callbacks(self, event: Optional[CallbackEvent] = None):
-        """Clear callbacks for specific event or all events"""
-        with self._lock:
-            if event:
-                self._callbacks[event] = []
-            else:
-                self._callbacks.clear()
+# Consolidated Callback System - using global controller
 
 
 # Unicode Handler
@@ -168,10 +89,10 @@ class AnalyticsController:
     def __init__(
         self,
         config: Optional[AnalyticsConfig] = None,
-        callback_manager: Optional[ConsolidatedCallbackManager] = None,
+        controller: Optional[CallbackController] = None,
     ):
         self.config = config or AnalyticsConfig()
-        self.callback_manager = callback_manager or ConsolidatedCallbackManager()
+        self.controller = controller or CallbackController()
         self.logger = logging.getLogger(__name__)
 
         # Initialize enhanced analyzers
@@ -206,7 +127,7 @@ class AnalyticsController:
             df_clean = UnicodeHandler.clean_dataframe_unicode(df)
 
             # Trigger start callback
-            self.callback_manager.trigger_callback(
+            self.controller.fire_event(
                 CallbackEvent.ANALYSIS_START,
                 analysis_id,
                 {"total_records": len(df_clean), "start_time": start_time.isoformat()},
@@ -225,7 +146,7 @@ class AnalyticsController:
                     if isinstance(security_result, dict):
                         risk_level = security_result.get("risk_level", "low")
                         if risk_level in ["critical", "high"]:
-                            self.callback_manager.trigger_callback(
+                            self.controller.fire_event(
                                 CallbackEvent.SECURITY_THREAT_DETECTED,
                                 analysis_id,
                                 {
@@ -250,7 +171,7 @@ class AnalyticsController:
                         if trend == "decreasing":
                             strength = trends_result.get("trend_strength", 0)
                             if strength > 0.7:
-                                self.callback_manager.trigger_callback(
+                                self.controller.fire_event(
                                     CallbackEvent.TREND_CHANGE_DETECTED,
                                     analysis_id,
                                     {"trend": trend, "strength": strength},
@@ -270,7 +191,7 @@ class AnalyticsController:
                     if isinstance(behavior_result, dict):
                         high_risk_count = behavior_result.get("high_risk_users", 0)
                         if high_risk_count > 0:
-                            self.callback_manager.trigger_callback(
+                            self.controller.fire_event(
                                 CallbackEvent.BEHAVIOR_RISK_IDENTIFIED,
                                 analysis_id,
                                 {"high_risk_count": high_risk_count},
@@ -293,7 +214,7 @@ class AnalyticsController:
                         total_anomalies = anomaly_result.get("anomalies_detected", 0)
                         threat_level = anomaly_result.get("threat_level", "low")
                         if total_anomalies > 0 and threat_level in ["critical", "high"]:
-                            self.callback_manager.trigger_callback(
+                            self.controller.fire_event(
                                 CallbackEvent.ANOMALY_DETECTED,
                                 analysis_id,
                                 {
@@ -317,7 +238,7 @@ class AnalyticsController:
             data_summary = self._generate_data_summary(df_clean)
 
             # Trigger completion callback
-            self.callback_manager.trigger_callback(
+            self.controller.fire_event(
                 CallbackEvent.ANALYSIS_COMPLETE,
                 analysis_id,
                 {
@@ -344,7 +265,7 @@ class AnalyticsController:
             self.logger.error(f"Enhanced analytics failed: {e}")
 
             # Trigger error callback
-            self.callback_manager.trigger_callback(
+            self.controller.fire_event(
                 CallbackEvent.ANALYSIS_ERROR,
                 analysis_id,
                 {"error": str(e), "error_type": type(e).__name__},
@@ -397,12 +318,12 @@ class AnalyticsController:
             return {"total_records": len(df)}
 
     def register_callback(self, event: CallbackEvent, callback):
-        """Register callback with the callback manager"""
-        self.callback_manager.register_callback(event, callback)
+        """Register callback with the controller"""
+        self.controller.register_callback(event, callback)
 
     def unregister_callback(self, event: CallbackEvent, callback):
-        """Unregister callback from the callback manager"""
-        self.callback_manager.unregister_callback(event, callback)
+        """Unregister callback from the controller"""
+        self.controller.unregister_callback(event, callback)
 
     # Legacy compatibility methods
     def analyze_specific(
@@ -473,7 +394,7 @@ class AnalyticsController:
         if event_name in event_mapping:
             event = event_mapping[event_name]
             data = {"legacy_args": args} if args else {}
-            self.callback_manager.trigger_callback(event, analysis_id, data)
+            self.controller.fire_event(event, analysis_id, data)
 
 
 # Export classes for compatibility
@@ -481,8 +402,7 @@ __all__ = [
     "AnalyticsController",
     "AnalyticsConfig",
     "AnalyticsResult",
-    "ConsolidatedCallbackManager",
+    "CallbackController",
     "CallbackEvent",
-    "CallbackData",
     "UnicodeHandler",
 ]

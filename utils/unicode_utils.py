@@ -1,127 +1,215 @@
-from __future__ import annotations
+"""Consolidated Unicode handling utilities."""
 
-"""Unified Unicode helper functions."""
+from __future__ import annotations
 
 import logging
 import re
 import unicodedata
-from typing import Any, Union
+from typing import Any, Union, Optional
 
 import pandas as pd
 
 logger = logging.getLogger(__name__)
 
 
+class UnicodeProcessor:
+    """Centralized Unicode processing with robust error handling."""
+
+    # Unicode surrogate range constants
+    SURROGATE_LOW = 0xD800
+    SURROGATE_HIGH = 0xDFFF
+    REPLACEMENT_CHAR = "\uFFFD"
+
+    @staticmethod
+    def clean_surrogate_chars(text: str, replacement: str = "") -> str:
+        """Remove Unicode surrogate characters from ``text``."""
+        if not isinstance(text, str):
+            text = str(text) if text is not None else ""
+
+        try:
+            cleaned = re.sub(r"[\uD800-\uDFFF]", replacement, text)
+            cleaned = unicodedata.normalize("NFKC", cleaned)
+            return cleaned
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.warning(f"Failed to clean surrogate chars: {exc}")
+            return "".join(
+                ch
+                for ch in text
+                if not (UnicodeProcessor.SURROGATE_LOW <= ord(ch) <= UnicodeProcessor.SURROGATE_HIGH)
+            )
+
+    @staticmethod
+    def safe_decode_bytes(data: bytes, encoding: str = "utf-8") -> str:
+        """Safely decode bytes with Unicode surrogate handling."""
+        try:
+            text = data.decode(encoding, errors="surrogatepass")
+            return UnicodeProcessor.clean_surrogate_chars(text)
+        except UnicodeDecodeError:
+            try:
+                text = data.decode(encoding, errors="replace")
+                return UnicodeProcessor.clean_surrogate_chars(text)
+            except Exception:
+                return data.decode(encoding, errors="ignore")
+
+    @staticmethod
+    def safe_encode_text(value: Any) -> str:
+        """Convert any value to a safe UTF-8 string."""
+        if value is None or (isinstance(value, float) and pd.isna(value)):
+            return ""
+
+        try:
+            if isinstance(value, bytes):
+                return UnicodeProcessor.safe_decode_bytes(value)
+
+            text = str(value)
+            cleaned = UnicodeProcessor.clean_surrogate_chars(text)
+            cleaned.encode("utf-8")
+            return cleaned
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.error(f"Unicode encoding failed for {type(value)}: {exc}")
+            return "".join(ch for ch in str(value) if ord(ch) < 128)
+
+    @staticmethod
+    def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+        """Sanitize entire DataFrame for Unicode issues."""
+        try:
+            df_clean = df.copy()
+
+            new_columns = []
+            for col in df_clean.columns:
+                safe_col = UnicodeProcessor.safe_encode_text(col)
+                safe_col = re.sub(r"^[=+\-@]+", "", safe_col)
+                new_columns.append(safe_col or f"col_{len(new_columns)}")
+
+            df_clean.columns = new_columns
+
+            for col in df_clean.select_dtypes(include=["object"]).columns:
+                df_clean[col] = df_clean[col].apply(lambda x: UnicodeProcessor.safe_encode_text(x))
+                df_clean[col] = df_clean[col].apply(
+                    lambda x: re.sub(r"^[=+\-@]+", "", x) if isinstance(x, str) else x
+                )
+
+            return df_clean
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error(f"DataFrame sanitization failed: {exc}")
+            return df
+
+
+class ChunkedUnicodeProcessor:
+    """Process large files in chunks to handle memory efficiently."""
+
+    DEFAULT_CHUNK_SIZE = 1024 * 1024  # 1MB
+
+    @staticmethod
+    def process_large_content(
+        content: bytes,
+        encoding: str = "utf-8",
+        chunk_size: Optional[int] = None,
+    ) -> str:
+        """Process large byte content in chunks with Unicode handling."""
+
+        if chunk_size is None:
+            chunk_size = ChunkedUnicodeProcessor.DEFAULT_CHUNK_SIZE
+
+        try:
+            pieces = []
+            view = memoryview(content)
+
+            for start in range(0, len(view), chunk_size):
+                chunk = view[start : start + chunk_size].tobytes()
+                text_chunk = UnicodeProcessor.safe_decode_bytes(chunk, encoding)
+                pieces.append(text_chunk)
+
+            return "".join(pieces)
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error(f"Chunked processing failed: {exc}")
+            return UnicodeProcessor.safe_decode_bytes(content, encoding)
+
+
+# Public API
+def clean_unicode_text(text: str) -> str:
+    """Clean Unicode text of surrogate characters."""
+
+    return UnicodeProcessor.clean_surrogate_chars(text)
+
+
+def safe_decode(data: bytes, encoding: str = "utf-8") -> str:
+    """Safely decode bytes with Unicode handling."""
+
+    return UnicodeProcessor.safe_decode_bytes(data, encoding)
+
+
+def safe_encode(value: Any) -> str:
+    """Convert any value to a safe UTF-8 string."""
+
+    return UnicodeProcessor.safe_encode_text(value)
+
+
+def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Sanitize DataFrame for Unicode issues."""
+
+    return UnicodeProcessor.sanitize_dataframe(df)
+
+
+# ---------------------------------------------------------------------------
+# Backwards compatibility helpers
+
 def handle_surrogate_characters(text: str) -> str:
-    """Return ``text`` with problematic surrogate characters sanitized."""
-    try:
-        cleaned = re.sub(r"[\uD800-\uDFFF]", "\ufffd", text)
-        cleaned = unicodedata.normalize("NFKC", cleaned)
-        return cleaned.encode("utf-8", "replace").decode("utf-8")
-    except Exception as exc:  # pragma: no cover - best effort
-        logger.warning("Surrogate character handling failed: %s", exc)
-        return text.encode("utf-8", "replace").decode("utf-8")
+    """Return text with surrogate characters replaced by ``REPLACEMENT_CHAR``."""
+
+    return UnicodeProcessor.clean_surrogate_chars(text, UnicodeProcessor.REPLACEMENT_CHAR)
 
 
 def safe_unicode_encode(value: Any) -> str:
-    """Convert ``value`` to a UTF-8 string, removing invalid surrogates."""
-    try:
-        if isinstance(value, bytes):
-            try:
-                value = value.decode("utf-8", "surrogatepass")
-            except Exception:
-                value = value.decode("latin-1", "surrogatepass")
-        else:
-            value = str(value)
-        value = re.sub(r"[\ud800-\udfff]", "", value)
-        return value.encode("utf-8", "ignore").decode("utf-8", "ignore")
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.error("Unicode encoding failed: %s", exc)
-        return handle_surrogate_characters(str(value))
+    """Alias for :func:`safe_encode`."""
+
+    return safe_encode(value)
 
 
 def clean_unicode_surrogates(text: Any) -> str:
-    """Remove Unicode surrogate characters from ``text``."""
-    if text is None or (isinstance(text, float) and pd.isna(text)):
-        return ""
-    text = str(text)
-    text = re.sub(r"[\ud800-\udfff]", "", text)
-    text = text.replace("\ufffe", "").replace("\uffff", "")
-    return text
+    """Remove surrogate characters from ``text``."""
+
+    return UnicodeProcessor.clean_surrogate_chars(str(text))
 
 
-def sanitize_data_frame(df: pd.DataFrame) -> pd.DataFrame:
-    """Sanitize DataFrame column names and string values."""
-    df_clean = df.copy()
-
-    new_columns = []
-    for col in df_clean.columns:
-        safe_col = clean_unicode_surrogates(col)
-        safe_col = re.sub(r"^[=+\-@]+", "", safe_col)
-        new_columns.append(safe_col)
-    df_clean.columns = new_columns
-
-    for col in df_clean.select_dtypes(include=["object"]).columns:
-        df_clean[col] = df_clean[col].map(clean_unicode_surrogates)
-        df_clean[col] = df_clean[col].map(lambda x: re.sub(r"^[=+\-@]+", "", x))
-
-    return df_clean
-
-
-def sanitize_unicode_input(text: Union[str, Any], replacement: str = "\ufffd") -> str:
+def sanitize_unicode_input(text: Union[str, Any], replacement: str = UnicodeProcessor.REPLACEMENT_CHAR) -> str:
     """Sanitize text input to handle Unicode surrogate characters."""
-    if text is None:
-        return ""
 
-    if not isinstance(text, str):
-        try:
-            text = str(text)
-        except Exception:
-            return ""
-
-    try:
-        cleaned = text.encode("utf-8", errors="ignore").decode("utf-8")
-        cleaned = unicodedata.normalize("NFKC", cleaned)
-        cleaned = "".join(
-            char
-            for char in cleaned
-            if unicodedata.category(char)[0] != "C" or char in "\t\n\r"
-        )
-        cleaned = re.sub(r"[\ud800-\udfff]", replacement, cleaned)
-        return cleaned
-    except Exception:
-        return "".join(char for char in str(text) if ord(char) < 127)
+    return UnicodeProcessor.safe_encode_text(text)
 
 
 def process_large_csv_content(
-    content: bytes, encoding: str = "utf-8", *, chunk_size: int = 1024 * 1024
+    content: bytes, encoding: str = "utf-8", *, chunk_size: int = ChunkedUnicodeProcessor.DEFAULT_CHUNK_SIZE
 ) -> str:
     """Decode potentially large CSV content in chunks and sanitize."""
-    pieces: list[str] = []
-    mv = memoryview(content)
-    for start in range(0, len(mv), chunk_size):
-        chunk = mv[start : start + chunk_size].tobytes()
-        text = chunk.decode(encoding, errors="surrogatepass")
-        pieces.append(clean_unicode_surrogates(text))
-    return "".join(pieces)
+
+    return ChunkedUnicodeProcessor.process_large_content(content, encoding, chunk_size)
 
 
 def safe_format_number(value: Union[int, float], default: str = "0") -> str:
     """Safely format numbers with Unicode safety."""
+
     try:
         if isinstance(value, (int, float)) and not isinstance(value, bool):
             return f"{value:,}"
         return default
-    except (ValueError, TypeError):
+    except (ValueError, TypeError):  # pragma: no cover - defensive
         return default
 
 
 __all__ = [
+    "UnicodeProcessor",
+    "ChunkedUnicodeProcessor",
+    "clean_unicode_text",
+    "safe_decode",
+    "safe_encode",
+    "sanitize_dataframe",
+    # Backwards compatible aliases
     "safe_unicode_encode",
     "handle_surrogate_characters",
     "clean_unicode_surrogates",
-    "sanitize_data_frame",
     "sanitize_unicode_input",
     "process_large_csv_content",
     "safe_format_number",
 ]
+
