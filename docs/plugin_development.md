@@ -80,7 +80,7 @@ can monitor all running plugins.
 
 ## Configuration
 
-Plugins are enabled and configured through `config/config.yaml` under the top
+Plugins are enabled and configured through `core/plugins/config/plugins.yaml` under the top
 level `plugins:` key. Each section is named after the plugin's metadata name.
 
 ```yaml

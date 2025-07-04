@@ -336,8 +336,8 @@ override security and performance defaults:
 
 Plugins live in the `plugins/` directory. Place any custom plugin package inside
 this folder, for example `plugins/my_plugin/plugin.py` defining a
-`create_plugin()` function. Enable the plugin by adding a section under
-`plugins:` in `config/config.yaml` and setting `enabled: true` plus any plugin
+`create_plugin()` function. Enable the plugin by editing
+`core/plugins/config/plugins.yaml` and setting `enabled: true` plus any plugin
 options. In your app factory create a `PluginManager`, call
 `load_all_plugins()` and then `register_plugin_callbacks(app)` to activate all
  enabled plugins. See [docs/plugins.md](docs/plugins.md) for a detailed overview

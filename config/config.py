@@ -4,6 +4,7 @@ Simplified Configuration System
 Replaces: config/yaml_config.py, config/unified_config.py, config/validator.py
 """
 import os
+from pathlib import Path
 import yaml
 import logging
 from dataclasses import dataclass, field
@@ -84,6 +85,7 @@ class Config:
     security: SecurityConfig = field(default_factory=SecurityConfig)
     sample_files: SampleFilesConfig = field(default_factory=SampleFilesConfig)
     environment: str = "development"
+    plugins: Dict[str, Any] = field(default_factory=dict)
 
 
 class ConfigManager:
@@ -104,6 +106,8 @@ class ConfigManager:
         # Apply YAML config
         if yaml_config:
             self.config = ConfigValidator.validate(yaml_config)
+            if "plugins" in yaml_config:
+                self.config.plugins = yaml_config.get("plugins", {})
 
         # Apply environment overrides
         self._apply_env_overrides()
@@ -129,7 +133,20 @@ class ConfigManager:
                 content = f.read()
                 # Simple environment variable substitution
                 content = self._substitute_env_vars(content)
-                return yaml.safe_load(content)
+                data = yaml.safe_load(content) or {}
+
+            # Load plugin configuration
+            plugin_path = Path(__file__).resolve().parents[1] / "core" / "plugins" / "config" / "plugins.yaml"
+            if plugin_path.exists():
+                with open(plugin_path, "r") as pf:
+                    plugin_data = yaml.safe_load(pf) or {}
+                if "plugins" in plugin_data:
+                    if "plugins" in data and isinstance(data["plugins"], dict):
+                        data["plugins"].update(plugin_data["plugins"])
+                    else:
+                        data["plugins"] = plugin_data["plugins"]
+
+            return data
         except Exception as e:
             logger.warning(f"Error loading config file {config_file}: {e}")
             return None
@@ -365,6 +382,14 @@ class ConfigManager:
         """Get sample file path configuration"""
         return self.config.sample_files
 
+    def get_plugins_config(self) -> Dict[str, Any]:
+        """Return full plugins configuration dictionary"""
+        return self.config.plugins
+
+    def get_plugin_config(self, name: str) -> Dict[str, Any]:
+        """Return configuration for a specific plugin"""
+        return self.config.plugins.get(name, {})
+
 
 # Global configuration instance
 _config_manager: Optional[ConfigManager] = None
@@ -406,6 +431,16 @@ def get_sample_files_config() -> SampleFilesConfig:
     return get_config().get_sample_files_config()
 
 
+def get_plugins_config() -> Dict[str, Any]:
+    """Get full plugins configuration"""
+    return get_config().get_plugins_config()
+
+
+def get_plugin_config(name: str) -> Dict[str, Any]:
+    """Get configuration for a specific plugin"""
+    return get_config().get_plugin_config(name)
+
+
 # Export main classes and functions
 __all__ = [
     "Config",
@@ -420,4 +455,6 @@ __all__ = [
     "get_database_config",
     "get_security_config",
     "get_sample_files_config",
+    "get_plugins_config",
+    "get_plugin_config",
 ]

@@ -32,10 +32,10 @@ plugin_callback_results = plugin_manager.register_plugin_callbacks(app)
 logger.info(f"Registered plugin callbacks: {plugin_callback_results}")
 
 
-Step 2: Update your config/config.yaml
-======================================
+Step 2: Update your core/plugins/config/plugins.yaml
+====================================================
 
-# Add this section to your existing config.yaml:
+# Add this section to your plugins.yaml:
 
 plugins:
   json_serialization:

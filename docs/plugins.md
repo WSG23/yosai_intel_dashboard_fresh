@@ -10,7 +10,7 @@ You can change the search location by passing a different package name to `Plugi
 
 ## Configuration
 
-Application settings include a top level `plugins:` section in `config/config.yaml`. Each plugin has its own subsection named after its metadata name. Set `enabled: true` to load a plugin and supply any plugin specific options under that key. These options are provided to `configure()` after the plugin is loaded.
+Plugin options are defined in `core/plugins/config/plugins.yaml` under the top level `plugins:` key. Each plugin has its own subsection named after its metadata name. Set `enabled: true` to load a plugin and supply any plugin specific options under that key. These options are provided to `configure()` after the plugin is loaded.
 
 ```yaml
 plugins:
@@ -49,7 +49,7 @@ def create_plugin() -> HelloWorldPlugin:
     return HelloWorldPlugin()
 ```
 
-Enable the plugin in `config/config.yaml`:
+Enable the plugin in `core/plugins/config/plugins.yaml`:
 
 ```yaml
 plugins:

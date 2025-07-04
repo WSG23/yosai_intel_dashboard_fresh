@@ -40,4 +40,6 @@ class ConfigValidator:
                         setattr(section_obj, key, value)
         if "environment" in data:
             config.environment = str(data["environment"])
+        if "plugins" in data and isinstance(data["plugins"], dict):
+            config.plugins = data["plugins"]
         return config

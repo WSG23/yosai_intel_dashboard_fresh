@@ -1,20 +1,19 @@
-# config/plugins.yaml
-"""
-Plugin configuration section for config.yaml
-Add this to your main config file:
+# Plugin configuration for Yōsai Intel Dashboard
 
 plugins:
   json_serialization:
     enabled: true
-    max_dataframe_rows: 1000
-    max_string_length: 10000
+    max_dataframe_rows: 2000000  # see JsonSerializationLimits.MAX_DATAFRAME_PROCESSING_ROWS
+    max_string_length: 50000  # see JsonSerializationLimits.MAX_INPUT_STRING_LENGTH_CHARACTERS
     include_type_metadata: true
     compress_large_objects: true
     fallback_to_repr: true
     auto_wrap_callbacks: true
-  
+    force_complete_analysis: true
+  hello_world:
+    enabled: false  # example plugin shown in docs/plugins.md
+
   # Future plugins can be added here
   # my_custom_plugin:
   #   enabled: true
   #   custom_setting: value
-"""
