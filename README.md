@@ -160,9 +160,10 @@ Docker Compose reads variables from a `.env` file in this directory. Set
 starting the services.
 
 Alternatively you can launch the app with Gunicorn or uWSGI. This is the
-recommended approach for any production deployment:
+recommended approach for any production deployment. A sample Gunicorn
+configuration is provided at `gunicorn.conf.py`:
 ```bash
-gunicorn wsgi:server
+gunicorn -c gunicorn.conf.py wsgi:server
 # or
 uwsgi --module wsgi:server
 ```
@@ -254,6 +255,9 @@ HOST=0.0.0.0         # Bind to all interfaces for production
 PORT=8050            # Application port
 SECRET_KEY=your-key  # Change for production
 ```
+
+For Gunicorn deployments, host, port and log level defaults are also
+defined in `gunicorn.conf.py`.
 
 The secret key is not included in the default YAML files. Define
 `SECRET_KEY` in your environment or a `.env` file before starting the
