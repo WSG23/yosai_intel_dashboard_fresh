@@ -11,9 +11,16 @@ __all__ = [
     "db_interface",
     "file_processing_utils",
     "utils",
+    "AnalyticsDataRepository",
+    "AnalyticsBusinessService",
+    "AnalyticsUIController",
 ]
 
 import logging
+
+from .data_repository import AnalyticsDataRepository
+from .business_service import AnalyticsBusinessService
+from .ui_controller import AnalyticsUIController
 
 
 def initialize_security_callbacks() -> None:
