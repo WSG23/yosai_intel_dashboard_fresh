@@ -6,8 +6,8 @@ def test_security_display_fix():
     """Test the security display with corrected data"""
     mock_results = {
         "total_events": 395852,
-        "unique_users": {"user1", "user2", "user3"},
-        "unique_doors": {"door1", "door2"},
+        "unique_users": 3,
+        "unique_doors": 2,
         "successful_events": 350000,
         "failed_events": 45852,
         "security_score": {"score": 75.5, "threat_level": "medium"},

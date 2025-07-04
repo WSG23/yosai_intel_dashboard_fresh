@@ -148,7 +148,7 @@ class UserBehaviorAnalyzer:
 
             # Basic activity features
             total_events = len(user_data)
-            unique_doors = user_data["door_id"].nunique()
+            unique_doors = int(user_data["door_id"].nunique())
             success_rate = user_data["access_granted"].mean()
 
             # Temporal features
@@ -377,7 +377,7 @@ class UserBehaviorAnalyzer:
             # Overall activity patterns
             global_patterns["activity_distribution"] = {
                 "total_events": len(df),
-                "unique_users": df["person_id"].nunique(),
+                "unique_users": int(df["person_id"].nunique()),
                 "avg_events_per_user": user_features["total_events"].mean(),
                 "avg_success_rate": user_features["success_rate"].mean(),
             }
