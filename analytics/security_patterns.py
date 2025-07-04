@@ -1,7 +1,4 @@
-"""
-Enhanced Security Patterns Analyzer
-Replace the entire content of analytics/security_patterns.py with this code
-"""
+"""Advanced analyzer for detecting security patterns."""
 
 import pandas as pd
 import numpy as np
