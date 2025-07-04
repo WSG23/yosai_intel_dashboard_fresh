@@ -1,9 +1,4 @@
-class PluginServiceLocator:
-    """Central access point for optional plugin utilities."""
+"""Compatibility wrapper importing :class:`PluginServiceLocator`."""
+from core.plugins.service_locator import PluginServiceLocator
 
-    @staticmethod
-    def get_unicode_handler():
-        """Return the unified Unicode handler module."""
-        import unicode_handler
-
-        return unicode_handler
+__all__ = ["PluginServiceLocator"]
