@@ -3,6 +3,7 @@ from analytics.security_patterns import (
     SecurityPatternsAnalyzer,
     SecurityCallbackController,
     SecurityEvent,
+    setup_isolated_security_testing,
 )
 
 
@@ -38,7 +39,7 @@ def create_df_with_critical_threat():
 
 
 def test_callback_registration_and_fire():
-    controller = SecurityCallbackController()
+    controller, _ = setup_isolated_security_testing()
     results = []
 
     def cb(data):
@@ -46,25 +47,20 @@ def test_callback_registration_and_fire():
 
     controller.register_callback(SecurityEvent.THREAT_DETECTED, cb)
     controller.fire_event(SecurityEvent.THREAT_DETECTED, {"msg": "alert"})
+
     assert results == [{"msg": "alert"}]
+    assert controller.history == [
+        (SecurityEvent.THREAT_DETECTED, {"msg": "alert"})
+    ]
 
 
 def test_analyzer_triggers_callbacks():
-    controller = SecurityCallbackController()
-    events = []
-
-    controller.register_callback(
-        SecurityEvent.THREAT_DETECTED,
-        lambda d: events.append(("threat", d)),
-    )
-    controller.register_callback(
-        SecurityEvent.ANALYSIS_COMPLETE,
-        lambda d: events.append(("complete", d)),
-    )
+    controller, _ = setup_isolated_security_testing()
 
     analyzer = SecurityPatternsAnalyzer(callback_controller=controller)
     df = create_df_with_critical_threat()
     analyzer.analyze_security_patterns(df)
 
-    assert any(e[0] == "threat" for e in events)
-    assert any(e[0] == "complete" for e in events)
+    events = [e[0] for e in controller.history]
+    assert SecurityEvent.THREAT_DETECTED in events
+    assert SecurityEvent.ANALYSIS_COMPLETE in events

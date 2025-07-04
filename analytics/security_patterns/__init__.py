@@ -6,6 +6,7 @@ from .analyzer import (
     EnhancedSecurityAnalyzer,
     SecurityCallbackController,
     SecurityEvent,
+    setup_isolated_security_testing,
 )
 from .data_prep import prepare_security_data
 from .statistical_detection import (
@@ -26,6 +27,7 @@ __all__ = [
     "EnhancedSecurityAnalyzer",
     "SecurityCallbackController",
     "SecurityEvent",
+    "setup_isolated_security_testing",
     "prepare_security_data",
     "detect_failure_rate_anomalies",
     "detect_frequency_anomalies",
