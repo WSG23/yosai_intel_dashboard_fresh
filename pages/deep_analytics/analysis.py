@@ -24,6 +24,7 @@ import plotly.graph_objects as go
 # Add this import
 from services import AnalyticsService, get_analytics_service
 from utils.unicode_utils import sanitize_unicode_input, safe_format_number
+from utils.preview_utils import serialize_dataframe_preview
 
 # Internal service imports with CORRECTED paths
 ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
@@ -248,7 +249,7 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
                     )
 
                     try:
-                        data_preview = df.head(5).to_dict("records")
+                        data_preview = serialize_dataframe_preview(df)
                     except Exception as e:
                         logger.exception("Failed to build data preview: %s", e)
                         data_preview = []

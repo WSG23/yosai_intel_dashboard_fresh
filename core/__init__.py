@@ -3,6 +3,7 @@
 Core package initialization - Fixed for streamlined architecture
 """
 import logging
+from .dash_profile import profile_callback
 
 # Configure logging
 logging.basicConfig(
@@ -18,4 +19,4 @@ def create_app(mode: str | None = None):
     return _create_app(mode)
 
 
-__all__ = ["create_app"]
+__all__ = ["create_app", "profile_callback"]

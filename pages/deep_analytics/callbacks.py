@@ -4,6 +4,7 @@ from dash import Input, Output, State, callback_context, html
 from dash.exceptions import PreventUpdate
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from analytics.controllers import UnifiedAnalyticsController
+from core.dash_profile import profile_callback
 import logging
 
 logger = logging.getLogger(__name__)
@@ -549,6 +550,7 @@ def register_callbacks(
             component_name="deep_analytics",
             **extra,
         )(func)
+
 
     if controller is not None:
         controller.register_callback(

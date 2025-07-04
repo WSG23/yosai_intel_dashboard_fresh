@@ -29,10 +29,14 @@ def _generate_sample_figures():
         return {"line": empty, "bar": empty, "other": empty}
 
 
+# Generate figures once at import time to avoid expensive recomputation
+GRAPH_FIGURES = _generate_sample_figures()
+
+
 def layout() -> dbc.Container:
     """Graphs page layout with sample charts."""
 
-    figures = _generate_sample_figures()
+    figures = GRAPH_FIGURES
 
     tabs = dbc.Tabs(
         [
