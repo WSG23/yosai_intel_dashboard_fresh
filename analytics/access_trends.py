@@ -97,12 +97,12 @@ class AccessTrendsAnalyzer:
         df_clean = df.copy()
 
         # Handle Unicode issues
+        from security.unicode_security_handler import UnicodeSecurityHandler
+
         string_columns = df_clean.select_dtypes(include=["object"]).columns
         for col in string_columns:
-            df_clean[col] = (
-                df_clean[col]
-                .astype(str)
-                .apply(lambda x: x.encode("utf-8", errors="ignore").decode("utf-8"))
+            df_clean[col] = df_clean[col].astype(str).apply(
+                UnicodeSecurityHandler.sanitize_unicode_input
             )
 
         # Convert timestamp

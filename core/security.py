@@ -256,8 +256,10 @@ class InputValidator:
         """Check file content for security issues"""
         # Convert to string for pattern matching (first 1KB)
         try:
+            from security.unicode_security_handler import UnicodeSecurityHandler
+
             text_content = content[:1024].decode("utf-8", errors="ignore")
-            text_content = sanitize_unicode_input(text_content).lower()
+            text_content = UnicodeSecurityHandler.sanitize_unicode_input(text_content).lower()
         except:
             return False
 

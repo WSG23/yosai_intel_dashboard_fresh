@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
 
 from callback_controller import CallbackController, CallbackEvent
+from security.unicode_security_handler import UnicodeSecurityHandler
 
 # Import enhanced analyzers
 from .security_patterns import SecurityPatternsAnalyzer, create_security_analyzer
@@ -33,12 +34,7 @@ class UnicodeHandler:
         if not isinstance(text, str):
             text = str(text)
 
-        try:
-            text.encode("utf-8")
-            return text
-        except UnicodeEncodeError:
-            cleaned = text.encode("utf-8", errors="ignore").decode("utf-8")
-            return cleaned
+        return UnicodeSecurityHandler.sanitize_unicode_input(text)
 
     @staticmethod
     def clean_dataframe_unicode(df: pd.DataFrame) -> pd.DataFrame:
@@ -47,7 +43,7 @@ class UnicodeHandler:
 
         string_columns = df_clean.select_dtypes(include=["object"]).columns
         for col in string_columns:
-            df_clean[col] = df_clean[col].apply(UnicodeHandler.clean_unicode_string)
+            df_clean[col] = df_clean[col].apply(UnicodeSecurityHandler.sanitize_unicode_input)
 
         return df_clean
 
