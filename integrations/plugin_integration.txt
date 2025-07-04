@@ -1,42 +1,35 @@
 # integration/plugin_integration.py
 """
-Integration instructions for adding the JSON Serialization Plugin to your app
+Updated integration guide for the plugin system using the unified registry.
 """
 
 print("""
-🔌 JSON SERIALIZATION PLUGIN INTEGRATION
+🔌 PLUGIN INTEGRATION WITH UNIFIED REGISTRY
 
-Step 1: Update your core/app_factory.py
-======================================
-
-# Add after your existing container creation:
+Step 1: Enable the PluginManager
+================================
 
 from core.plugins.manager import PluginManager
+from core.callback_registry import CallbackRegistry
 
-# Create container with YAML config (your existing code)
 config_manager = get_config()
 container = get_configured_container_with_yaml(config_manager)
 
-# NEW: Add plugin manager
-plugin_manager = PluginManager(container, config_manager)
+# Create registry and manager
+registry = CallbackRegistry(app)
+plugin_manager = PluginManager(container, config_manager, registry)
 
-# Load all plugins
-plugin_results = plugin_manager.load_all_plugins()
-logger.info(f"Loaded plugins: {plugin_results}")
+# Load and start plugins
+plugin_manager.load_all_plugins()
+plugin_manager.register_plugin_callbacks(app)
 
-# Store plugin manager in app for callback registration
-app._yosai_plugin_manager = plugin_manager
+# The manager now exposes a unified registry for callbacks and automatically
+# serves aggregated health information at /health/plugins.
 
-# In your callback registration section, add:
-plugin_callback_results = plugin_manager.register_plugin_callbacks(app)
-logger.info(f"Registered plugin callbacks: {plugin_callback_results}")
+Step 2: Configure plugins in plugins.yaml
+=========================================
 
-
-Step 2: Update your config/config.yaml
-======================================
-
-# Add this section to your existing config.yaml:
-
+# core/plugins/config/plugins.yaml
 plugins:
   json_serialization:
     enabled: true
@@ -45,46 +38,22 @@ plugins:
     include_type_metadata: true
     compress_large_objects: true
     fallback_to_repr: true
-    auto_wrap_callbacks: true
+  hello_world:
+    enabled: false
+""")
 
+print("""
+Step 3: Use ComponentPluginAdapter
+==================================
 
-Step 3: Use the plugin in your callbacks
-========================================
+from core.plugins.adapter import ComponentPluginAdapter
+from core.plugins.decorators import unified_callback
 
-# In your pages/deep_analytics.py or any callback file:
+class ExampleComponent(ComponentPluginAdapter):
+    def layout(self):
+        return html.Div(id="example-div")
 
-from core.plugins.decorators import safe_callback
-
-@app.callback(...)
-@safe_callback(app)  # This now uses the plugin automatically!
-@role_required("admin")
-def your_callback_function(inputs...):
-    # Your existing logic
-    # All outputs are now automatically JSON-safe
-    return some_dataframe, some_function, some_complex_object
-
-
-Step 4: Test the plugin
-======================
-
-# Run the plugin tests:
-python -m pytest tests/test_json_serialization_plugin.py -v
-
-# Start your app:
-python3 app.py
-
-# The JSON serialization errors should be completely gone!
-
-
-Step 5: Monitor plugin health
-============================
-
-# Add this endpoint to monitor plugin health:
-
-@server.route("/health/plugins")
-def plugin_health():
-    if hasattr(app, '_yosai_plugin_manager'):
-        health = app._yosai_plugin_manager.get_plugin_health()
-        return jsonify(health)
-    return jsonify({"error": "Plugin manager not available"})
-
+    @unified_callback(Output("example-div", "children"), Input("trigger", "n_clicks"))
+    def update_div(self, _):
+        return "updated"
+""")
