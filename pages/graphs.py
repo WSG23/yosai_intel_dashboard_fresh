@@ -6,8 +6,10 @@ import dash_bootstrap_components as dbc
 from utils.unicode_utils import sanitize_unicode_input
 from services.analytics_summary import create_sample_data
 from analytics.interactive_charts import create_charts_generator
+from core.cache import cache
 
 
+@cache.memoize()
 def _generate_sample_figures():
     """Return a small set of sample figures using the analytics service."""
     try:
