@@ -7,6 +7,8 @@ from utils.unicode_utils import (
     safe_decode,
     safe_encode,
     sanitize_dataframe,
+    process_large_csv_content,
+    safe_format_number,
 )
 
 __all__ = [
@@ -16,4 +18,6 @@ __all__ = [
     "safe_decode",
     "safe_encode",
     "sanitize_dataframe",
+    "process_large_csv_content",
+    "safe_format_number",
 ]

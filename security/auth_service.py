@@ -8,7 +8,10 @@ from pathlib import Path
 from typing import Any, Dict
 
 from config.dynamic_config import dynamic_config
-from core.unicode_utils import sanitize_unicode_input
+from plugins.service_locator import PluginServiceLocator
+
+_unicode = PluginServiceLocator.get_unicode_handler()
+UnicodeProcessor = _unicode.UnicodeProcessor
 from core.security import RateLimiter
 
 SAFE_FILENAME_RE = re.compile(r"^[A-Za-z0-9._\- ]{1,100}$")
@@ -46,7 +49,7 @@ class SecurityService:
         self.logger.info("File validation enabled")
 
     def validate_file(self, filename: str, size: int) -> Dict[str, Any]:
-        filename = sanitize_unicode_input(filename)
+        filename = UnicodeProcessor.safe_encode_text(filename)
         issues: list[str] = []
 
         max_size_bytes = dynamic_config.security.max_upload_mb * 1024 * 1024
