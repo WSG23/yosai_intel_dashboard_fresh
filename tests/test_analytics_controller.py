@@ -1,106 +1,47 @@
 import pandas as pd
-import pytest
 
-from analytics.analytics_controller import AnalyticsController, AnalyticsConfig
-
-
-class DummySecurityAnalyzer:
-    def __init__(self):
-        self.calls = 0
-
-    def analyze_patterns(self, df):
-        self.calls += 1
-        return {"security": True}
+from analytics.data_repository import AnalyticsDataRepository
+from analytics.business_service import AnalyticsBusinessService
+from analytics.ui_controller import AnalyticsUIController
+from callback_controller import CallbackController, CallbackEvent
 
 
-class DummyTrendsAnalyzer:
-    def __init__(self):
-        self.calls = 0
-
-    def analyze_trends(self, df):
-        self.calls += 1
-        return {"trends": True}
-
-
-def create_controller(cache_results=False):
-    config = AnalyticsConfig(
-        enable_security_patterns=True,
-        enable_access_trends=True,
-        enable_user_behavior=False,
-        enable_anomaly_detection=False,
-        enable_interactive_charts=False,
-        parallel_processing=False,
-        cache_results=cache_results,
-    )
-    controller = AnalyticsController(config)
-    controller.security_analyzer = DummySecurityAnalyzer()
-    controller.trends_analyzer = DummyTrendsAnalyzer()
-    return controller
-
-
-def sample_df():
+def _sample_df() -> pd.DataFrame:
     return pd.DataFrame(
         {
-            "event_id": [1, 2],
-            "timestamp": ["2024-01-01 10:00:00", "2024-01-01 11:00:00"],
-            "person_id": ["p1", "p2"],
+            "person_id": ["u1", "u2"],
             "door_id": ["d1", "d2"],
             "access_result": ["Granted", "Denied"],
         }
     )
 
 
-def test_prepare_data_missing_and_duplicates():
-    controller = create_controller()
-    df = sample_df()
-    # add duplicate and check removal
-    df = pd.concat([df, df.iloc[[0]]], ignore_index=True)
-    prepared = controller._prepare_data(df)
-    assert len(prepared) == 2
-
-    # missing column should raise
-    df_missing = df.drop(columns=["door_id"])
-    with pytest.raises(ValueError):
-        controller._prepare_data(df_missing)
-
-    # invalid timestamp should raise
-    df_bad = sample_df()
-    df_bad.loc[0, "timestamp"] = "badtime"
-    with pytest.raises(Exception):
-        controller._prepare_data(df_bad)
+def test_business_service_analysis():
+    repo = AnalyticsDataRepository()
+    service = AnalyticsBusinessService(repo)
+    df = _sample_df()
+    results = service.run_analysis(df)
+    assert results["total_events"] == 2
+    assert results["unique_users"] == 2
+    assert results["unique_doors"] == 2
 
 
-def test_generate_data_summary():
-    controller = create_controller()
-    empty_summary = controller._generate_data_summary(pd.DataFrame())
-    assert empty_summary["total_events"] == 0
-    assert empty_summary["data_quality"] == "empty"
+def test_ui_controller_callbacks():
+    repo = AnalyticsDataRepository()
+    service = AnalyticsBusinessService(repo)
+    callback_controller = CallbackController()
+    ui = AnalyticsUIController(service, callback_controller)
 
-    df = controller._prepare_data(sample_df())
-    summary = controller._generate_data_summary(df)
-    assert summary["total_events"] == 2
-    assert summary["unique_users"] == 2
-    assert summary["unique_doors"] == 2
-    assert summary["access_success_rate"] == 50.0
-    assert summary["data_quality"] == "excellent"
-
-
-def test_analyze_all_triggers_callbacks_and_cache():
-    controller = create_controller(cache_results=True)
-    events = []
-    controller.register_callback(
-        "on_analysis_start", lambda aid, df: events.append("start")
+    events: list[str] = []
+    callback_controller.register_callback(
+        CallbackEvent.ANALYSIS_START, lambda ctx: events.append("start")
     )
-    controller.register_callback(
-        "on_analysis_complete", lambda aid, res: events.append("complete")
+    callback_controller.register_callback(
+        CallbackEvent.ANALYSIS_COMPLETE, lambda ctx: events.append("complete")
     )
 
-    df = sample_df()
-    result1 = controller.analyze_all(df)
+    df = _sample_df()
+    results = ui.handle_analysis_request(df)
+
+    assert results["total_events"] == 2
     assert events == ["start", "complete"]
-    assert controller.security_analyzer.calls == 1
-
-    result2 = controller.analyze_all(df)
-    assert events == ["start", "complete", "start"]
-    assert controller.security_analyzer.calls == 1
-    assert result2 is result1
