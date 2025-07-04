@@ -17,9 +17,14 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import DataConversionWarning
 import logging
 from dataclasses import dataclass
-from enum import Enum, auto
 from collections import defaultdict
 import warnings
+from security_callback_controller import (
+    SecurityEvent,
+    security_callback_controller,
+    emit_security_event,
+    SecurityCallbackController,
+)
 
 from ..security_score_calculator import SecurityScoreCalculator
 from ..security_metrics import SecurityMetrics
@@ -44,44 +49,6 @@ warnings.filterwarnings(
 )
 
 
-class SecurityEvent(Enum):
-    """Events emitted during security analysis."""
-
-    THREAT_DETECTED = auto()
-    ANALYSIS_COMPLETE = auto()
-
-
-class SecurityCallbackController:
-    """Simple callback manager for security analysis events."""
-
-    def __init__(self) -> None:
-        self._callbacks: Dict[SecurityEvent, List[Callable[[Dict[str, Any]], None]]] = defaultdict(list)
-
-    def register_callback(
-        self, event: SecurityEvent, callback: Callable[[Dict[str, Any]], None]
-    ) -> None:
-        self._callbacks[event].append(callback)
-
-    def unregister_callback(
-        self, event: SecurityEvent, callback: Callable[[Dict[str, Any]], None]
-    ) -> bool:
-        try:
-            self._callbacks[event].remove(callback)
-            return True
-        except (ValueError, KeyError):
-            return False
-
-    def fire_event(self, event: SecurityEvent, data: Optional[Dict[str, Any]] = None) -> None:
-        for cb in list(self._callbacks.get(event, [])):
-            try:
-                cb(data or {})
-            except Exception:  # pragma: no cover - log and continue
-                logging.getLogger(__name__).exception(
-                    "Callback error for %s", event.name
-                )
-
-    def clear_all_callbacks(self) -> None:
-        self._callbacks.clear()
 
 
 @dataclass
@@ -104,12 +71,11 @@ class SecurityPatternsAnalyzer:
         contamination: float = 0.1,
         confidence_threshold: float = 0.7,
         logger: Optional[logging.Logger] = None,
-        callback_controller: Optional[SecurityCallbackController] = None,
     ):
         self.contamination = contamination
         self.confidence_threshold = confidence_threshold
         self.logger = logger or logging.getLogger(__name__)
-        self.callback_controller = callback_controller or SecurityCallbackController()
+        self.callback_controller = security_callback_controller
 
         # Initialize ML models
         self.isolation_forest = IsolationForest(
@@ -170,12 +136,14 @@ class SecurityPatternsAnalyzer:
                             "confidence": threat.confidence,
                         },
                     )
+                    self._emit_anomaly_detected(threat)
 
             # Notify completion of analysis
             self.callback_controller.fire_event(
                 SecurityEvent.ANALYSIS_COMPLETE,
                 {"score": security_score, "risk_level": risk_level},
             )
+            self._emit_score_calculated(security_score, risk_level)
 
             return SecurityAssessment(
                 overall_score=security_score,
@@ -444,6 +412,24 @@ class SecurityPatternsAnalyzer:
     def _calculate_security_score(self, df: pd.DataFrame) -> SecurityMetrics:
         """Compatibility wrapper for enterprise security scoring."""
         return self._calculate_enterprise_security_score(df)
+
+    def _emit_anomaly_detected(self, threat: ThreatIndicator) -> None:
+        """Emit an anomaly detected event."""
+        emit_security_event(
+            SecurityEvent.ANOMALY_DETECTED,
+            {
+                "threat_type": threat.threat_type,
+                "severity": threat.severity,
+                "confidence": threat.confidence,
+            },
+        )
+
+    def _emit_score_calculated(self, score: float, risk_level: str) -> None:
+        """Emit event when a security score has been calculated."""
+        emit_security_event(
+            SecurityEvent.SCORE_CALCULATED,
+            {"score": score, "risk_level": risk_level},
+        )
 
     def _convert_to_legacy_format(self, result: SecurityAssessment) -> Dict[str, Any]:
         """Convert SecurityAssessment to legacy dictionary format"""
