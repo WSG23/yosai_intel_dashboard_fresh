@@ -8,6 +8,21 @@ from services.consolidated_learning_service import get_learning_service
 from services.device_learning_service import get_device_learning_service
 
 
+def _unwrap_file_wrappers(mappings: Dict[str, Any]) -> Dict[str, Any]:
+    """Recursively unwrap file-level wrapper dictionaries."""
+    flat: Dict[str, Any] = {}
+    for key, val in mappings.items():
+        if (
+            isinstance(val, dict)
+            and {"filename", "saved_at", "device_count", "device_mappings"}.issubset(val.keys())
+        ):
+            inner = val.get("device_mappings", {})
+            flat.update(_unwrap_file_wrappers(inner))
+        else:
+            flat[key] = val
+    return flat
+
+
 def get_enhanced_data() -> Dict[str, Any]:
     """Return enhanced mapping data consolidating all current sources."""
     # Consolidate from multiple sources since learned_data might be empty
@@ -81,6 +96,9 @@ def to_json_string(data: Dict[str, Any]) -> str:
         return obj
     
     sanitized_data = sanitize_for_json(data)
+    for fp, content in sanitized_data.items():
+        raw = content.get("device_mappings", {})
+        content["device_mappings"] = _unwrap_file_wrappers(raw)
     return json.dumps(sanitized_data, indent=2, ensure_ascii=False)
 
 
@@ -103,8 +121,9 @@ def to_csv_string(data: Dict[str, Any]) -> str:
         }
         
         # Extract actual device mappings - only meaningful device names
-        device_mappings = content.get("device_mappings", {})
-        clean_devices = _get_clean_device_mappings(device_mappings)
+        raw = content.get("device_mappings", {})
+        flat = _unwrap_file_wrappers(raw)
+        clean_devices = _get_clean_device_mappings(flat)
         
         # Add flattened device mappings for clean devices only
         for device_id, device_data in clean_devices.items():
