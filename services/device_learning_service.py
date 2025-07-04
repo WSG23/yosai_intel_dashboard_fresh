@@ -9,7 +9,7 @@ from datetime import datetime
 import pandas as pd
 from dash import html
 from dash.dependencies import Input, Output
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from services.consolidated_learning_service import get_learning_service
 from dash._callback_context import callback_context
 
@@ -344,7 +344,7 @@ def get_device_learning_service() -> DeviceLearningService:
     return _device_learning_service
 
 
-def create_learning_callbacks(manager: UnifiedCallbackCoordinator) -> None:
+def create_learning_callbacks(manager: TrulyUnifiedCallbacks) -> None:
     """Register device learning callback with coordinator."""
 
     @manager.unified_callback(

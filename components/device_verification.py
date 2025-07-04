@@ -3,7 +3,7 @@
 import pandas as pd
 from dash import html, dcc
 from dash.dependencies import Input, Output, State, ALL, MATCH
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from analytics.controllers import UnifiedAnalyticsController
 import logging
 
@@ -275,7 +275,7 @@ def mark_device_as_edited(floor, access, special, security):
 
 
 def register_callbacks(
-    manager: UnifiedCallbackCoordinator,
+    manager: TrulyUnifiedCallbacks,
     controller: UnifiedAnalyticsController | None = None,
 ) -> None:
     """Register component callbacks using the provided coordinator."""

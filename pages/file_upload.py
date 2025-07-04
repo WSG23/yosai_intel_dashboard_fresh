@@ -13,7 +13,7 @@ from typing import Optional, Dict, Any, List, Tuple
 from dash import html, dcc
 from dash.dash import no_update
 from dash._callback_context import callback_context
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from analytics.controllers import UnifiedAnalyticsController
 from core.dash_profile import profile_callback
 import logging
@@ -1143,7 +1143,7 @@ def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Di
 
 
 def register_callbacks(
-    manager: UnifiedCallbackCoordinator,
+    manager: TrulyUnifiedCallbacks,
     controller: UnifiedAnalyticsController | None = None,
 ) -> None:
     """Instantiate :class:`Callbacks` and register its methods."""

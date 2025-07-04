@@ -3,7 +3,7 @@
 from dash import html, dcc
 from dash._callback_context import callback_context
 import dash
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from analytics.controllers import UnifiedAnalyticsController
 import logging
 
@@ -540,7 +540,7 @@ def populate_simple_device_modal(is_open):
 
 
 def register_callbacks(
-    manager: UnifiedCallbackCoordinator,
+    manager: TrulyUnifiedCallbacks,
     controller: UnifiedAnalyticsController | None = None,
 ) -> None:
     """Register component callbacks using the provided coordinator."""
