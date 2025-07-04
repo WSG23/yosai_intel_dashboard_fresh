@@ -338,12 +338,12 @@ Plugins live in the `plugins/` directory. Place any custom plugin package inside
 this folder, for example `plugins/my_plugin/plugin.py` defining a
 `create_plugin()` function. Enable the plugin by adding a section under
 `plugins:` in `config/config.yaml` and setting `enabled: true` plus any plugin
-options. In your app factory create a `PluginManager`, call
-`load_all_plugins()` and then `register_plugin_callbacks(app)` to activate all
- enabled plugins. See [docs/plugins.md](docs/plugins.md) for a detailed overview
- of discovery, configuration and the plugin lifecycle. For step-by-step
- instructions on writing your own plugin check
- [docs/plugin_development.md](docs/plugin_development.md).
+options. Initialize plugins by calling `setup_plugins` from
+`core.plugins.auto_config`. This discovers plugins, registers callbacks, exposes
+`/health/plugins` and attaches the manager as `app._yosai_plugin_manager`.
+See [docs/plugins.md](docs/plugins.md) for a detailed overview of discovery,
+configuration and the plugin lifecycle. For step-by-step instructions on
+writing your own plugin check [docs/plugin_development.md](docs/plugin_development.md).
 For a diagram of the full process see [docs/plugin_lifecycle.md](docs/plugin_lifecycle.md).
 The same document includes a minimal **Hello World** plugin showcasing
 `create_plugin()` and callback registration.

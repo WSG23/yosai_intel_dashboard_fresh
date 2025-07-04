@@ -63,6 +63,8 @@ For each enabled plugin the manager calls these methods:
 2. `configure(config)` – apply configuration values.
 3. `start()` – perform any runtime initialization.
 
-After all plugins are loaded call `register_plugin_callbacks(app)` so callback plugins can hook into Dash. Plugins implement `health_check()` and `stop()`. The manager periodically gathers health data and exposes it via `/health/plugins`.
+Initialize plugins using `setup_plugins(app)` from `core.plugins.auto_config`.
+This loads every enabled plugin, registers callbacks, exposes `/health/plugins`
+and attaches the plugin manager as `app._yosai_plugin_manager`.
 
 For a visual overview of discovery, dependency resolution and the lifecycle calls see [plugin_lifecycle.md](plugin_lifecycle.md).
