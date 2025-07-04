@@ -37,5 +37,4 @@ flasgger==0.9.7.1
 python-dotenv==1.0.0
 pytest==7.4.0
 pyarrow>=10.0.0
-flask-talisman==1.0.0
 polars>=0.19.0  # optional, for enhanced CSV processing
