@@ -50,9 +50,12 @@ def create_plugin():
 
     sys.path.insert(0, str(tmp_path))
     try:
+        cfg = ConfigManager()
+        cfg.config.plugin_settings["a"] = {}
+        cfg.config.plugin_settings["b"] = {}
         manager = PluginManager(
             DIContainer(),
-            ConfigManager(),
+            cfg,
             package="prio_plugins",
             health_check_interval=1,
         )

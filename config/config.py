@@ -87,6 +87,7 @@ class Config:
     security: SecurityConfig = field(default_factory=SecurityConfig)
     sample_files: SampleFilesConfig = field(default_factory=SampleFilesConfig)
     environment: str = "development"
+    plugin_settings: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
 
 class ConfigManager:
@@ -107,6 +108,7 @@ class ConfigManager:
         # Apply YAML config
         if yaml_config:
             self.config = ConfigValidator.validate(yaml_config)
+            self._apply_yaml_config(yaml_config)
 
         # Apply environment overrides
         self._apply_env_overrides()
@@ -225,6 +227,11 @@ class ConfigManager:
             self.config.sample_files.json_path = sample_data.get(
                 "json_path", self.config.sample_files.json_path
             )
+
+        if "plugins" in yaml_config:
+            plugins_data = yaml_config["plugins"]
+            if isinstance(plugins_data, dict):
+                self.config.plugin_settings.update(plugins_data)
 
     def _apply_env_overrides(self) -> None:
         """Apply environment variable overrides"""
@@ -382,6 +389,10 @@ class ConfigManager:
         """Get sample file path configuration"""
         return self.config.sample_files
 
+    def get_plugin_config(self, name: str) -> Dict[str, Any]:
+        """Return configuration dictionary for the given plugin."""
+        return self.config.plugin_settings.get(name, {})
+
 
 # Global configuration instance
 _config_manager: Optional[ConfigManager] = None
@@ -423,6 +434,11 @@ def get_sample_files_config() -> SampleFilesConfig:
     return get_config().get_sample_files_config()
 
 
+def get_plugin_config(name: str) -> Dict[str, Any]:
+    """Get configuration for a specific plugin"""
+    return get_config().get_plugin_config(name)
+
+
 # Export main classes and functions
 __all__ = [
     "Config",
@@ -437,4 +453,5 @@ __all__ = [
     "get_database_config",
     "get_security_config",
     "get_sample_files_config",
+    "get_plugin_config",
 ]

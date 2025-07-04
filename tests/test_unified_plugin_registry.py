@@ -49,7 +49,9 @@ def test_registry_registration_and_service():
     os.environ.setdefault("AUTH0_AUDIENCE", "aud")
     app = Dash(__name__)
     container = DIContainer()
-    registry = UnifiedPluginRegistry(app, container, ConfigManager())
+    cfg = ConfigManager()
+    cfg.config.plugin_settings["dummy"] = {"enabled": True}
+    registry = UnifiedPluginRegistry(app, container, cfg)
     plugin = DummyPlugin()
     assert registry.register_plugin(plugin)
     registry.auto_configure_callbacks()

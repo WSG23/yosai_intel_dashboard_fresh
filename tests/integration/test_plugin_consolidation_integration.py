@@ -16,10 +16,12 @@ def test_plugin_discovery_and_callback_registration(monkeypatch, tmp_path):
     try:
         app = Dash(__name__)
         app.layout = html.Div()
+        cfg = ConfigManager()
+        cfg.config.plugin_settings["auto_plugin"] = {"enabled": True}
         registry = setup_plugins(
             app,
             container=DIContainer(),
-            config_manager=ConfigManager(),
+            config_manager=cfg,
             package="auto_pkg",
         )
         assert "auto_plugin" in registry.plugin_manager.plugins

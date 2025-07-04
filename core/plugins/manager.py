@@ -115,11 +115,12 @@ class PluginManager:
     def load_plugin(self, plugin: PluginProtocol) -> bool:
         """Load a specific plugin instance"""
         try:
-            config = {}
             if hasattr(plugin, "metadata"):
                 name = plugin.metadata.name
             else:
                 name = plugin.__class__.__name__
+
+            config = self.config_manager.get_plugin_config(name)
 
             if not callable(getattr(plugin, "health_check", None)):
                 logger.error("Plugin %s does not implement health_check", name)
@@ -128,6 +129,12 @@ class PluginManager:
 
             success = plugin.load(self.container, config)
             if success:
+                try:
+                    plugin.configure(config)
+                except Exception as exc:
+                    logger.error("Failed to configure plugin %s: %s", name, exc)
+                    self.plugin_status[name] = PluginStatus.FAILED
+                    return False
                 plugin.start()
                 self.plugins[name] = plugin
                 self.plugin_status[name] = PluginStatus.STARTED
