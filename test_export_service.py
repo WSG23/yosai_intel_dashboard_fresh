@@ -5,22 +5,37 @@ import importlib.util
 import sys
 import types
 
-# Create stub modules to satisfy dependencies when loading export_service
+class DummyLearningService:
+    def __init__(self):
+        self.learned_data = {}
+    def _persist_learned_data(self):
+        pass
+
+def stub_get_learning_service():
+    return DummyLearningService()
+
+class DummyDeviceService:
+    def __init__(self):
+        self.learned_mappings = {}
+
+def stub_get_device_learning_service():
+    return DummyDeviceService()
+
+# Stub required modules before loading export_service
 consolidated_stub = types.ModuleType("services.consolidated_learning_service")
-consolidated_stub.get_learning_service = lambda: None
+consolidated_stub.get_learning_service = stub_get_learning_service
 device_stub = types.ModuleType("services.device_learning_service")
-device_stub.get_device_learning_service = lambda: None
+device_stub.get_device_learning_service = stub_get_device_learning_service
 sys.modules["services.consolidated_learning_service"] = consolidated_stub
 sys.modules["services.device_learning_service"] = device_stub
 
-spec = importlib.util.spec_from_file_location(
-    "export_service", "services/export_service.py"
-)
+spec = importlib.util.spec_from_file_location("export_service", "services/export_service.py")
 export_service = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(export_service)
 
+
 class ExportServiceCsvTest(unittest.TestCase):
-    def test_rows_per_device(self):
+    def test_wide_csv_structure(self):
         data = {
             "abc": {
                 "filename": "file.csv",
@@ -28,31 +43,23 @@ class ExportServiceCsvTest(unittest.TestCase):
                 "source": "user_confirmed",
                 "device_count": 2,
                 "device_mappings": {
-                    "door1": {"floor_number": 1, "security_level": 2},
-                    "door2": {"floor_number": 2, "security_level": 3},
+                    "door1": {"floor": 1, "sec": 2},
+                    "door2": {"floor": 2, "sec": 3},
                 },
-            }
-        }
-        csv = export_service.to_csv_string(data)
-        df = pd.read_csv(StringIO(csv))
-        self.assertEqual(len(df), 2)
-        self.assertSetEqual(set(df["device_name"]), {"door1", "door2"})
-
-    def test_legacy_mappings(self):
-        data = {
-            "def": {
-                "filename": "legacy.csv",
-                "learned_at": "2024-01-02T00:00:00",
-                "source": "legacy",
-                "device_count": 1,
-                "mappings": {"dev": {"floor_number": 3, "security_level": 1}},
+                "column_mappings": {"uid": "user_id"},
             }
         }
         csv = export_service.to_csv_string(data)
         df = pd.read_csv(StringIO(csv))
         self.assertEqual(len(df), 1)
-        self.assertEqual(df.loc[0, "device_name"], "dev")
-        self.assertEqual(df.loc[0, "floor_number"], 3)
+        self.assertIn("mappings.door1.floor", df.columns)
+        self.assertEqual(df.loc[0, "mappings.door2.sec"], 3)
+        self.assertEqual(df.loc[0, "column_mappings.uid"], "user_id")
+
+    def test_empty_export(self):
+        csv = export_service.to_csv_string({})
+        self.assertEqual(csv, "")
+
 
 if __name__ == "__main__":
     unittest.main()
