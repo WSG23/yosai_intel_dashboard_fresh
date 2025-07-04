@@ -10,13 +10,12 @@ You can change the search location by passing a different package name to `Plugi
 
 ## Configuration
 
-Application settings include a top level `plugins:` section in `config/config.yaml`. Each plugin has its own subsection named after its metadata name. Set `enabled: true` to load a plugin and supply any plugin specific options under that key. These options are provided to `configure()` after the plugin is loaded.
+Application settings reference `core/plugins/config/plugins.yaml` for all plugin
+configuration. Add the following line to your main config to include it. This
+dedicated file centralizes every plugin's settings.
 
 ```yaml
-plugins:
-  json_serialization:
-    enabled: true
-    max_dataframe_rows: 1000
+plugins: !include ../../core/plugins/config/plugins.yaml
 ```
 
 ## Hello World Example
@@ -49,12 +48,11 @@ def create_plugin() -> HelloWorldPlugin:
     return HelloWorldPlugin()
 ```
 
-Enable the plugin in `config/config.yaml`:
+Enable the plugin in `core/plugins/config/plugins.yaml`:
 
 ```yaml
-plugins:
-  hello_world:
-    enabled: true
+hello_world:
+  enabled: true
 ```
 
 ## Lifecycle
