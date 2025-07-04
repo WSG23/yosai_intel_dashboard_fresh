@@ -26,15 +26,35 @@ def to_json_string(data: Dict[str, Any]) -> str:
 
 
 def to_csv_string(data: Dict[str, Any]) -> str:
-    """Serialize enhanced data to CSV string using flattened structure."""
+    """Serialize enhanced data to CSV string with one row per device."""
     if not data:
         return ""
-    records = []
+
+    rows = []
     for fingerprint, content in data.items():
-        record = {"fingerprint": fingerprint}
-        record.update(content)
-        records.append(record)
-    df = pd.json_normalize(records)
+        device_mappings = (
+            content.get("device_mappings")
+            or content.get("mappings")
+            or {}
+        )
+
+        base = {
+            "fingerprint": fingerprint,
+            "filename": content.get("filename"),
+            "saved_at": content.get("saved_at") or content.get("learned_at"),
+            "source": content.get("source"),
+            "device_count": content.get("device_count")
+            or content.get("file_stats", {}).get("device_count")
+            or len(device_mappings),
+        }
+
+        for device_name, attrs in device_mappings.items():
+            row = {**base, "device_name": device_name}
+            if isinstance(attrs, dict):
+                row.update(attrs)
+            rows.append(row)
+
+    df = pd.DataFrame(rows)
     return df.to_csv(index=False)
 
 

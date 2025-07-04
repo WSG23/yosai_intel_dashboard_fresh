@@ -515,7 +515,7 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             """Export device learning data as CSV file."""
             import services.export_service as export_service
 
-            data = export_service.get_device_learning_data()
+            data = export_service.get_enhanced_data()
             csv_str = export_service.to_csv_string(data)
             if not csv_str:
                 return dash.no_update
@@ -532,7 +532,7 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             """Export device learning data as JSON file."""
             import services.export_service as export_service
 
-            data = export_service.get_device_learning_data()
+            data = export_service.get_enhanced_data()
             json_str = export_service.to_json_string(data)
             if not json_str:
                 return dash.no_update
