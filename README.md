@@ -482,6 +482,9 @@ mappings have been saved, otherwise the mapping step will fail.
    `.env` file before running them.
 7. A legacy `lazystring` fix plugin sample is kept in
    `examples/legacy_lazystring_fix_plugin.py` for reference only.
+8. The full pipeline diagnostic helper now lives at
+   `examples/diagnostic_script.py` and can be run with
+   `python examples/diagnostic_script.py`.
 
 ## 📦 Versioning
 
