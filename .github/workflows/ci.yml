@@ -27,7 +27,8 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install black flake8 mypy bandit pytest pytest-cov safety
+          pip install -r requirements_ui.txt
+          pip install black flake8 mypy bandit pytest pytest-cov safety==2.3.5
 
       - name: 🔤 Extract translations
         run: pybabel extract -F babel.cfg -o messages.pot .
@@ -52,7 +53,7 @@ jobs:
         run: bandit -r .
 
       - name: 📚 Safety (dependency CVE scan)
-        run: safety check --full-report
+        run: python scripts/audit_dependencies.py
 
       # ----- Tests -----
       - name: ✅ Run PyTest
