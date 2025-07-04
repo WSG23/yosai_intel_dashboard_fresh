@@ -7,7 +7,10 @@ from typing import Any
 import pandas as pd
 
 from utils.file_validator import safe_decode_file, process_dataframe
-from core.unicode_utils import sanitize_unicode_input
+from plugins.service_locator import PluginServiceLocator
+
+_unicode = PluginServiceLocator.get_unicode_handler()
+UnicodeProcessor = _unicode.UnicodeProcessor
 from config.dynamic_config import dynamic_config
 
 from .validation_exceptions import ValidationError
@@ -19,7 +22,7 @@ class SecureFileValidator:
     ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
 
     def sanitize_filename(self, filename: str) -> str:
-        filename = sanitize_unicode_input(filename)
+        filename = UnicodeProcessor.safe_encode_text(filename)
         if os.path.basename(filename) != filename:
             raise ValidationError("Path separators not allowed in filename")
         if len(filename) > 100:

@@ -3,7 +3,10 @@
 import pandas as pd
 from config.dynamic_config import dynamic_config
 from config.constants import DataProcessingLimits
-from utils.unicode_utils import sanitize_data_frame
+from plugins.service_locator import PluginServiceLocator
+
+_unicode = PluginServiceLocator.get_unicode_handler()
+UnicodeProcessor = _unicode.UnicodeProcessor
 from .validation_exceptions import ValidationError
 import logging
 
@@ -132,6 +135,6 @@ class DataFrameSecurityValidator:
                 logger.warning(f"Potential CSV injection detected in column '{col}'")
                 raise ValidationError(f"Formula detected in column '{col}'")
 
-        sanitized = sanitize_data_frame(df)
+        sanitized = UnicodeProcessor.sanitize_dataframe(df)
 
         return sanitized
