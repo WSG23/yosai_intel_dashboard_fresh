@@ -3,6 +3,7 @@
 from dash import Input, Output, State, callback_context, html
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from analytics.controllers import UnifiedAnalyticsController
+from core.dash_profile import profile_callback
 import logging
 
 logger = logging.getLogger(__name__)
@@ -543,7 +544,7 @@ def register_callbacks(
             prevent_initial_call=True if cid != "update_status_alert" else False,
             callback_id=cid,
             component_name="deep_analytics",
-        )(func)
+        )(profile_callback(cid)(func))
 
     if controller is not None:
         controller.register_callback(

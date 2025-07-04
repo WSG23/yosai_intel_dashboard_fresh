@@ -1,0 +1,40 @@
+import time
+import asyncio
+import logging
+from functools import wraps
+
+
+def profile_callback(callback_id: str):
+    """Measure runtime of Dash callback functions."""
+
+    def decorator(func):
+        if asyncio.iscoroutinefunction(func):
+
+            @wraps(func)
+            async def async_wrapper(*args, **kwargs):
+                start = time.perf_counter()
+                result = await func(*args, **kwargs)
+                duration_ms = (time.perf_counter() - start) * 1000
+                if duration_ms > 100:
+                    logging.warning(
+                        "Callback %s took %.2f ms", callback_id, duration_ms
+                    )
+                return result
+
+            return async_wrapper
+
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            start = time.perf_counter()
+            result = func(*args, **kwargs)
+            duration_ms = (time.perf_counter() - start) * 1000
+            if duration_ms > 100:
+                logging.warning("Callback %s took %.2f ms", callback_id, duration_ms)
+            return result
+
+        return sync_wrapper
+
+    return decorator
+
+
+__all__ = ["profile_callback"]
