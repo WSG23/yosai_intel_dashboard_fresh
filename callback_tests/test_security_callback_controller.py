@@ -1,0 +1,70 @@
+import pandas as pd
+from analytics.security_patterns import (
+    SecurityPatternsAnalyzer,
+    SecurityCallbackController,
+    SecurityEvent,
+)
+
+
+def create_df_with_critical_threat():
+    data = []
+    ts = pd.Timestamp("2024-01-01 00:00:00")
+
+    # Rapid denied attempts for the same user (triggers critical threat)
+    for i in range(4):
+        data.append(
+            {
+                "event_id": i,
+                "timestamp": ts + pd.Timedelta(seconds=i * 10),
+                "person_id": "baduser",
+                "door_id": "d1",
+                "access_result": "Denied",
+            }
+        )
+
+    # Additional normal traffic
+    for i in range(20):
+        data.append(
+            {
+                "event_id": 100 + i,
+                "timestamp": ts + pd.Timedelta(hours=1, minutes=i),
+                "person_id": f"u{i%3}",
+                "door_id": "d1",
+                "access_result": "Granted",
+            }
+        )
+
+    return pd.DataFrame(data)
+
+
+def test_callback_registration_and_fire():
+    controller = SecurityCallbackController()
+    results = []
+
+    def cb(data):
+        results.append(data)
+
+    controller.register_callback(SecurityEvent.THREAT_DETECTED, cb)
+    controller.fire_event(SecurityEvent.THREAT_DETECTED, {"msg": "alert"})
+    assert results == [{"msg": "alert"}]
+
+
+def test_analyzer_triggers_callbacks():
+    controller = SecurityCallbackController()
+    events = []
+
+    controller.register_callback(
+        SecurityEvent.THREAT_DETECTED,
+        lambda d: events.append(("threat", d)),
+    )
+    controller.register_callback(
+        SecurityEvent.ANALYSIS_COMPLETE,
+        lambda d: events.append(("complete", d)),
+    )
+
+    analyzer = SecurityPatternsAnalyzer(callback_controller=controller)
+    df = create_df_with_critical_threat()
+    analyzer.analyze_security_patterns(df)
+
+    assert any(e[0] == "threat" for e in events)
+    assert any(e[0] == "complete" for e in events)

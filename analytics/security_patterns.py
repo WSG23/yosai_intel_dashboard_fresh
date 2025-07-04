@@ -5,16 +5,58 @@ Replace the entire content of analytics/security_patterns.py with this code
 
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Dict, List, Any, Tuple, Optional, Callable
 from datetime import datetime, timedelta
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 from scipy import stats
 import logging
 from dataclasses import dataclass
+from enum import Enum, auto
+from collections import defaultdict
 import warnings
 
 warnings.filterwarnings("ignore")
+
+
+class SecurityEvent(Enum):
+    """Events emitted during security analysis."""
+
+    THREAT_DETECTED = auto()
+    ANALYSIS_COMPLETE = auto()
+
+
+class SecurityCallbackController:
+    """Simple callback manager for security analysis events."""
+
+    def __init__(self) -> None:
+        self._callbacks: Dict[SecurityEvent, List[Callable[[Dict[str, Any]], None]]] = defaultdict(list)
+
+    def register_callback(
+        self, event: SecurityEvent, callback: Callable[[Dict[str, Any]], None]
+    ) -> None:
+        self._callbacks[event].append(callback)
+
+    def unregister_callback(
+        self, event: SecurityEvent, callback: Callable[[Dict[str, Any]], None]
+    ) -> bool:
+        try:
+            self._callbacks[event].remove(callback)
+            return True
+        except (ValueError, KeyError):
+            return False
+
+    def fire_event(self, event: SecurityEvent, data: Optional[Dict[str, Any]] = None) -> None:
+        for cb in list(self._callbacks.get(event, [])):
+            try:
+                cb(data or {})
+            except Exception:  # pragma: no cover - log and continue
+                logging.getLogger(__name__).exception(
+                    "Callback error for %s", event.name
+                )
+
+    def clear_all_callbacks(self) -> None:
+        self._callbacks.clear()
 
 
 @dataclass
@@ -50,10 +92,12 @@ class SecurityPatternsAnalyzer:
         contamination: float = 0.1,
         confidence_threshold: float = 0.7,
         logger: Optional[logging.Logger] = None,
+        callback_controller: Optional[SecurityCallbackController] = None,
     ):
         self.contamination = contamination
         self.confidence_threshold = confidence_threshold
         self.logger = logger or logging.getLogger(__name__)
+        self.callback_controller = callback_controller or SecurityCallbackController()
 
         # Initialize ML models
         self.isolation_forest = IsolationForest(
@@ -101,6 +145,24 @@ class SecurityPatternsAnalyzer:
             risk_level = self._determine_risk_level(security_score, threat_indicators)
             confidence_interval = self._calculate_confidence_interval(
                 df_clean, security_score
+            )
+
+            # Fire callbacks for detected critical threats
+            for threat in threat_indicators:
+                if threat.severity == "critical":
+                    self.callback_controller.fire_event(
+                        SecurityEvent.THREAT_DETECTED,
+                        {
+                            "threat_type": threat.threat_type,
+                            "description": threat.description,
+                            "confidence": threat.confidence,
+                        },
+                    )
+
+            # Notify completion of analysis
+            self.callback_controller.fire_event(
+                SecurityEvent.ANALYSIS_COMPLETE,
+                {"score": security_score, "risk_level": risk_level},
             )
 
             return SecurityAssessment(
@@ -596,4 +658,6 @@ __all__ = [
     "SecurityPatternsAnalyzer",
     "create_security_analyzer",
     "EnhancedSecurityAnalyzer",
+    "SecurityCallbackController",
+    "SecurityEvent",
 ]
