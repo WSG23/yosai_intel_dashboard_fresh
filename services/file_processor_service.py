@@ -11,7 +11,11 @@ from pathlib import Path
 from .base import BaseService
 from .protocols import FileProcessorProtocol
 from utils.file_validator import safe_decode_with_unicode_handling
-from utils.unicode_utils import sanitize_unicode_input, safe_unicode_encode
+from utils.unicode_utils import (
+    sanitize_unicode_input,
+    sanitize_data_frame,
+    process_large_csv_content,
+)
 from config.dynamic_config import dynamic_config
 
 logger = logging.getLogger(__name__)
@@ -22,6 +26,28 @@ class FileProcessorService(BaseService):
 
     ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
     MAX_FILE_SIZE_MB = dynamic_config.get_max_upload_size_mb()
+
+    # Encoding detection order for robust decoding
+    ENCODING_PRIORITY = [
+        "utf-8",
+        "utf-8-sig",
+        "utf-16",
+        "utf-16-le",
+        "utf-16-be",
+        "latin1",
+        "cp1252",
+        "iso-8859-1",
+        "ascii",
+    ]
+
+    # Default CSV parsing options
+    CSV_OPTIONS: Dict[str, Any] = {
+        "low_memory": False,
+        "dtype": str,
+        "keep_default_na": False,
+        "na_filter": False,
+        "skipinitialspace": True,
+    }
 
     def __init__(self):
         super().__init__("file_processor")
@@ -80,54 +106,87 @@ class FileProcessorService(BaseService):
             raise
 
     def _process_csv(self, content: bytes) -> pd.DataFrame:
-        """Process CSV file with enhanced Unicode handling"""
+        """Process CSV file with robust Unicode handling."""
+        logger.debug("Processing CSV content")
+
+        if len(content) > 10 * 1024 * 1024:
+            text_content = process_large_csv_content(content)
+        else:
+            text_content = self._decode_with_fallback(content)
+
+        delimiters = [",", ";", "\t", "|"]
+
+        for delim in delimiters:
+            try:
+                df = pd.read_csv(io.StringIO(text_content), sep=delim, **self.CSV_OPTIONS)
+                if len(df.columns) > 1 or (len(df.columns) == 1 and len(df) > 0):
+                    logger.debug("Successfully parsed CSV with delimiter '%s'", delim)
+                    return sanitize_data_frame(df)
+            except Exception as exc:
+                logger.debug("Failed to parse with delimiter '%s': %s", delim, exc)
+                continue
+
         try:
-            # Enhanced encoding detection and Unicode handling
-            encodings = ["utf-8", "utf-8-sig", "latin-1", "cp1252", "iso-8859-1"]
-
-            for encoding in encodings:
-                try:
-                    # Handle Unicode surrogates
-                    if encoding == "utf-8":
-                        text = content.decode(encoding, errors="surrogateescape")
-                    else:
-                        text = content.decode(encoding)
-
-                    # Remove Unicode surrogate characters
-                    text = safe_unicode_encode(text)
-
-                    # Parse with optimizations for large files
-                    df = pd.read_csv(
-                        io.StringIO(text),
-                        low_memory=False,  # Better for large files
-                        dtype=str,  # Preserve data integrity
-                    )
-                    return df
-
-                except (UnicodeDecodeError, pd.errors.EmptyDataError):
-                    continue
-
-            raise ValueError("Could not decode CSV file with any standard encoding")
-        except Exception as e:
-            raise ValueError(f"Error reading CSV: {e}")
+            df = pd.read_csv(
+                io.StringIO(text_content),
+                engine="python",
+                sep=None,
+                **self.CSV_OPTIONS,
+            )
+            return sanitize_data_frame(df)
+        except Exception as exc:
+            raise ValueError(f"Could not parse CSV file: {exc}")
 
     def _process_json(self, content: bytes) -> pd.DataFrame:
-        """Process JSON file"""
+        """Process JSON file with robust decoding."""
+        logger.debug("Processing JSON content")
+        text_content = self._decode_with_fallback(content)
+
         try:
-            for encoding in ["utf-8", "latin-1", "cp1252"]:
-                try:
-                    text = safe_decode_with_unicode_handling(content, encoding)
-                    text = sanitize_unicode_input(text)
-                    return pd.read_json(io.StringIO(text))
-                except UnicodeDecodeError:
-                    continue
-            raise ValueError("Could not decode JSON with any standard encoding")
+            data = json.loads(text_content)
+            if isinstance(data, list):
+                df = pd.DataFrame(data)
+            elif isinstance(data, dict):
+                df = pd.DataFrame([data])
+            else:
+                raise ValueError("JSON must be an object or array")
+            return sanitize_data_frame(df)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Invalid JSON format: {exc}")
         except Exception as e:
             raise ValueError(f"Error reading JSON: {e}")
 
     def _process_excel(self, content: bytes) -> pd.DataFrame:
         """Process Excel file"""
+        logger.debug("Processing Excel content")
         try:
-            return pd.read_excel(io.BytesIO(content))
+            df = pd.read_excel(io.BytesIO(content), dtype=str, keep_default_na=False)
+            return sanitize_data_frame(df)
         except Exception as e:
             raise ValueError(f"Error reading Excel file: {e}")
+
+    def _decode_with_fallback(self, content: bytes) -> str:
+        """Decode bytes using multiple encodings with basic heuristics."""
+        for enc in self.ENCODING_PRIORITY:
+            try:
+                text = safe_decode_with_unicode_handling(content, enc)
+                if self._is_reasonable_text(text):
+                    logger.debug("Decoded content using %s", enc)
+                    return text
+            except Exception:
+                continue
+        logger.warning("All encodings failed, using replacement characters")
+        return content.decode("utf-8", errors="replace")
+
+    def _is_reasonable_text(self, text: str) -> bool:
+        """Basic check to ensure decoded text looks valid."""
+        if not text.strip():
+            return False
+
+        replacement_ratio = text.count("\ufffd") / len(text)
+        if replacement_ratio > 0.1:
+            return False
+
+        printable = sum(1 for c in text if c.isprintable() or c.isspace())
+        return (printable / len(text)) > 0.7
+
