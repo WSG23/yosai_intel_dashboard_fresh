@@ -1,6 +1,9 @@
-"""
-Enhanced Security Patterns Analyzer
-Replace the entire content of analytics/security_patterns.py with this code
+"""Security Patterns Analyzer.
+
+This module applies machine learning techniques to identify suspicious
+access behavior. It combines statistical anomaly detection, pattern
+analysis and risk scoring to generate a comprehensive security assessment
+with actionable recommendations.
 """
 
 import pandas as pd
