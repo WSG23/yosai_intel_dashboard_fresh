@@ -56,6 +56,7 @@ class SecurityCallbackController:
 
     def __init__(self) -> None:
         self._callbacks: Dict[SecurityEvent, List[Callable[[Dict[str, Any]], None]]] = defaultdict(list)
+        self.history: List[Tuple[SecurityEvent, Dict[str, Any]]] = []
 
     def register_callback(
         self, event: SecurityEvent, callback: Callable[[Dict[str, Any]], None]
@@ -72,9 +73,11 @@ class SecurityCallbackController:
             return False
 
     def fire_event(self, event: SecurityEvent, data: Optional[Dict[str, Any]] = None) -> None:
+        payload = data or {}
+        self.history.append((event, payload))
         for cb in list(self._callbacks.get(event, [])):
             try:
-                cb(data or {})
+                cb(payload)
             except Exception:  # pragma: no cover - log and continue
                 logging.getLogger(__name__).exception(
                     "Callback error for %s", event.name
@@ -82,6 +85,7 @@ class SecurityCallbackController:
 
     def clear_all_callbacks(self) -> None:
         self._callbacks.clear()
+        self.history.clear()
 
 
 @dataclass
@@ -520,4 +524,25 @@ __all__ = [
     "EnhancedSecurityAnalyzer",
     "SecurityCallbackController",
     "SecurityEvent",
+    "setup_isolated_security_testing",
 ]
+
+
+def setup_isolated_security_testing(
+    register_handler: bool = False,
+) -> tuple[SecurityCallbackController, Optional[Callable[[Dict[str, Any]], None]]]:
+    """Return a cleared controller and optional test handler."""
+
+    controller = SecurityCallbackController()
+    controller.clear_all_callbacks()
+    handler: Optional[Callable[[Dict[str, Any]], None]] = None
+
+    if register_handler:
+        def _handler(data: Dict[str, Any], event: SecurityEvent = SecurityEvent.ANALYSIS_COMPLETE) -> None:
+            controller.history.append((event, data))
+
+        handler = _handler
+        for event in SecurityEvent:
+            controller.register_callback(event, lambda d, e=event: _handler(d, e))
+
+    return controller, handler
