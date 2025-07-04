@@ -26,6 +26,8 @@ from .analysis import (
     process_suggests_analysis,
     process_suggests_analysis_safe,
 )
+from unicode_handler import sanitize_dataframe
+from callback_controller import CallbackController
 
 __all__ = [
     "layout",
@@ -53,4 +55,6 @@ __all__ = [
     "process_quality_analysis_safe",
     "process_suggests_analysis",
     "process_suggests_analysis_safe",
+    "sanitize_dataframe",
+    "CallbackController",
 ]
