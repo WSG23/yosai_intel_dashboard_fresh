@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from enum import Enum, auto
 from typing import Callable, Dict, List, Optional, Any
-from collections import defaultdict
 import logging
+
+from core.callback_manager import CallbackManager
 
 logger = logging.getLogger(__name__)
 
@@ -17,31 +18,31 @@ class SecurityEvent(Enum):
     VALIDATION_FAILED = auto()
 
 class SecurityCallbackController:
-    """Manage callbacks for security events."""
+    """Manage callbacks for security events using :class:`CallbackManager`."""
 
-    def __init__(self) -> None:
-        self._callbacks: Dict[SecurityEvent, List[Callable[[Dict[str, Any]], None]]] = defaultdict(list)
+    def __init__(self, manager: Optional[CallbackManager] = None) -> None:
+        self._manager = manager or CallbackManager()
+        self.history: List[tuple[SecurityEvent, Dict[str, Any]]] = []
 
-    def register_callback(self, event: SecurityEvent, callback: Callable[[Dict[str, Any]], None]) -> None:
-        self._callbacks[event].append(callback)
+    def register_callback(
+        self, event: SecurityEvent, callback: Callable[[Dict[str, Any]], None], *, priority: int = 50
+    ) -> None:
+        self._manager.register_callback(event, callback, priority=priority)
 
     def unregister_callback(self, event: SecurityEvent, callback: Callable[[Dict[str, Any]], None]) -> bool:
-        try:
-            self._callbacks[event].remove(callback)
-
-            return True
-        except (ValueError, KeyError):
-            return False
+        before = len(self._manager.get_callbacks(event))
+        self._manager.unregister_callback(event, callback)
+        after = len(self._manager.get_callbacks(event))
+        return after < before
 
     def fire_event(self, event: SecurityEvent, data: Optional[Dict[str, Any]] = None) -> None:
-        for cb in list(self._callbacks.get(event, [])):
-            try:
-                cb(data or {})
-            except Exception:  # pragma: no cover - log and continue
-                logger.exception("Callback error for %s", event.name)
+        payload = data or {}
+        self.history.append((event, payload))
+        self._manager.trigger(event, payload)
 
     def clear_all_callbacks(self) -> None:
-        self._callbacks.clear()
+        self._manager = CallbackManager()
+        self.history.clear()
 
 def emit_security_event(event: SecurityEvent, data: Optional[Dict[str, Any]] = None) -> None:
     """Emit a security event using the global controller."""
