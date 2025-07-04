@@ -11,7 +11,7 @@ from typing import Dict, Any, List, Callable
 
 from config.constants import FileProcessingLimits
 
-from utils.unicode_utils import sanitize_unicode_input
+from core.unicode_utils import sanitize_unicode_input
 from dataclasses import dataclass
 from enum import Enum
 from .security_patterns import (

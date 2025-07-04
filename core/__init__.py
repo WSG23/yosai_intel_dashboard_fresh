@@ -19,4 +19,6 @@ def create_app(mode: str | None = None):
     return _create_app(mode)
 
 
-__all__ = ["create_app", "profile_callback"]
+from .unicode_utils import sanitize_unicode_input
+
+__all__ = ["create_app", "profile_callback", "sanitize_unicode_input"]
