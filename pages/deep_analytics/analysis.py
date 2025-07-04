@@ -781,24 +781,45 @@ def process_quality_analysis(data_source: str) -> Dict[str, Any]:
 
 
 # Helper extraction functions for results processing
-def _extract_counts(results: Dict[str, Any]) -> Dict[str, int]:
-    """Extract proper counts from results handling sets and other data types"""
+def _extract_counts(results: Dict[str, Any]) -> Dict[str, int | float]:
+    """Extract proper counts from results handling sets and other iterables"""
     total_events = results.get("total_events", 0)
 
-    unique_users_raw = results.get("unique_users", 0)
-    if isinstance(unique_users_raw, (set, list)):
-        unique_users = len(unique_users_raw)
-    else:
-        unique_users = int(unique_users_raw) if unique_users_raw else 0
+    def _normalize_count(value: Any) -> int:
+        if value is None:
+            return 0
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return int(value)
+        if hasattr(value, "__len__") and not isinstance(value, (str, bytes)):
+            try:
+                return len(value)
+            except Exception:
+                pass
+        if hasattr(value, "__iter__") and not isinstance(value, (str, bytes)):
+            try:
+                return len(list(value))
+            except Exception:
+                pass
+        try:
+            return int(value)
+        except Exception:
+            return 0
 
-    unique_doors_raw = results.get("unique_doors", 0)
-    if isinstance(unique_doors_raw, (set, list)):
-        unique_doors = len(unique_doors_raw)
-    else:
-        unique_doors = int(unique_doors_raw) if unique_doors_raw else 0
+    unique_users = _normalize_count(results.get("unique_users", 0))
+    unique_doors = _normalize_count(results.get("unique_doors", 0))
 
     success_rate = results.get("success_rate", 0)
-    if success_rate == 0:
+    if not success_rate:
+        success_rate = results.get("overall_success_rate", 0)
+    if not success_rate:
+        pct = (
+            results.get("success_percentage")
+            or results.get("success_rate_percentage")
+            or results.get("success_percent")
+        )
+        if pct:
+            success_rate = pct / 100 if pct > 1 else pct
+    if not success_rate:
         successful = results.get("successful_events", 0)
         failed = results.get("failed_events", 0)
         if (successful + failed) > 0:
@@ -830,10 +851,28 @@ def _extract_security_metrics(results: Dict[str, Any]) -> Dict[str, Any]:
     if failed_attempts == 0:
         failed_attempts = results.get("failed_events", 0)
 
+    success_rate = results.get("success_rate", 0)
+    if not success_rate:
+        success_rate = results.get("overall_success_rate", 0)
+    if not success_rate:
+        pct = (
+            results.get("success_percentage")
+            or results.get("success_rate_percentage")
+            or results.get("success_percent")
+        )
+        if pct:
+            success_rate = pct / 100 if pct > 1 else pct
+    if not success_rate:
+        successful = results.get("successful_events", 0)
+        failed = results.get("failed_events", 0)
+        if (successful + failed) > 0:
+            success_rate = successful / (successful + failed)
+
     return {
         "score": score_val,
         "risk_level": risk_level,
         "failed_attempts": failed_attempts,
+        "success_rate": success_rate,
     }
 
 
