@@ -80,15 +80,21 @@ can monitor all running plugins.
 
 ## Configuration
 
-Plugins are enabled and configured through `config/config.yaml` under the top
-level `plugins:` key. Each section is named after the plugin's metadata name.
+Plugins are enabled and configured through `core/plugins/config/plugins.yaml`.
+This dedicated file centralizes all plugin settings. Reference it in your main
+configuration:
 
 ```yaml
-plugins:
-  my_plugin:
-    enabled: true
-    option_a: 123
-    option_b: "value"
+plugins: !include ../../core/plugins/config/plugins.yaml
+```
+
+Inside `core/plugins/config/plugins.yaml` define each plugin section:
+
+```yaml
+my_plugin:
+  enabled: true
+  option_a: 123
+  option_b: "value"
 ```
 
 The provided configuration dictionary is passed to `configure()` during plugin
