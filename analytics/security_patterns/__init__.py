@@ -4,9 +4,13 @@ from .analyzer import (
     SecurityPatternsAnalyzer,
     create_security_analyzer,
     EnhancedSecurityAnalyzer,
+)
+from security_callback_controller import (
     SecurityCallbackController,
     SecurityEvent,
-    setup_isolated_security_testing,
+    security_callback_controller,
+    emit_security_event,
+
 )
 from .data_prep import prepare_security_data
 from .statistical_detection import (
@@ -27,7 +31,9 @@ __all__ = [
     "EnhancedSecurityAnalyzer",
     "SecurityCallbackController",
     "SecurityEvent",
-    "setup_isolated_security_testing",
+    "security_callback_controller",
+    "emit_security_event",
+
     "prepare_security_data",
     "detect_failure_rate_anomalies",
     "detect_frequency_anomalies",

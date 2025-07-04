@@ -12,6 +12,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import DataConversionWarning
 import logging
 import warnings
+from security_callback_controller import (
+    SecurityEvent,
+    emit_security_event,
+)
 
 from .types import AnomalyAnalysis
 from .data_prep import prepare_anomaly_data
@@ -104,6 +108,11 @@ class AnomalyDetector:
             detection_summary = self._generate_detection_summary(unique_anomalies)
             risk_assessment = self._assess_overall_risk(unique_anomalies)
             recommendations = self._generate_recommendations(unique_anomalies, risk_assessment)
+
+            self._emit_anomaly_detected(
+                len(unique_anomalies), risk_assessment.get("risk_level", "low")
+            )
+            self._emit_score_calculated(risk_assessment.get("risk_score", 0))
 
             return AnomalyAnalysis(
                 total_anomalies=len(unique_anomalies),
@@ -298,6 +307,17 @@ class AnomalyDetector:
             "anomaly_count": 0,
             "confidence_mean": 0,
         }
+
+    def _emit_anomaly_detected(self, count: int, risk_level: str) -> None:
+        """Emit event when anomalies are detected."""
+        emit_security_event(
+            SecurityEvent.ANOMALY_DETECTED,
+            {"total_anomalies": count, "risk_level": risk_level},
+        )
+
+    def _emit_score_calculated(self, score: float) -> None:
+        """Emit risk score calculation event."""
+        emit_security_event(SecurityEvent.SCORE_CALCULATED, {"score": score})
 
 
 # Backward compatibility aliases

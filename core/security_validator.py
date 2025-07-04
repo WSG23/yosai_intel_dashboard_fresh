@@ -20,6 +20,7 @@ from .security_patterns import (
 )
 from security.sql_validator import SQLInjectionPrevention
 from security.validation_exceptions import ValidationError
+from security_callback_controller import emit_security_event, SecurityEvent
 
 
 class SecurityLevel(Enum):
@@ -191,12 +192,18 @@ class SecurityValidator:
     ) -> Dict[str, Any]:
         """Compile the final validation result dictionary."""
         severity = max((issue.level for issue in issues), default=SecurityLevel.LOW)
-        return {
+        result = {
             "valid": len(issues) == 0,
             "issues": issues,
             "sanitized": sanitized_value,
             "severity": severity,
         }
+        if not result["valid"]:
+            emit_security_event(
+                SecurityEvent.VALIDATION_FAILED,
+                {"severity": severity.name, "issue_count": len(issues)},
+            )
+        return result
 
     def get_available_validators(self) -> List[str]:
         """Return the list of enabled validators."""

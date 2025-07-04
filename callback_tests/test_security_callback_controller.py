@@ -1,7 +1,7 @@
 import pandas as pd
 from analytics.security_patterns import (
     SecurityPatternsAnalyzer,
-    SecurityCallbackController,
+    security_callback_controller,
     SecurityEvent,
     setup_isolated_security_testing,
 )
@@ -39,7 +39,9 @@ def create_df_with_critical_threat():
 
 
 def test_callback_registration_and_fire():
-    controller, _ = setup_isolated_security_testing()
+    controller = security_callback_controller
+    controller.clear_all_callbacks()
+
     results = []
 
     def cb(data):
@@ -54,10 +56,23 @@ def test_callback_registration_and_fire():
     ]
 
 
-def test_analyzer_triggers_callbacks():
-    controller, _ = setup_isolated_security_testing()
 
-    analyzer = SecurityPatternsAnalyzer(callback_controller=controller)
+def test_analyzer_triggers_callbacks():
+    controller = security_callback_controller
+    controller.clear_all_callbacks()
+    events = []
+
+    controller.register_callback(
+        SecurityEvent.THREAT_DETECTED,
+        lambda d: events.append(("threat", d)),
+    )
+    controller.register_callback(
+        SecurityEvent.ANALYSIS_COMPLETE,
+        lambda d: events.append(("complete", d)),
+    )
+
+
+    analyzer = SecurityPatternsAnalyzer()
     df = create_df_with_critical_threat()
     analyzer.analyze_security_patterns(df)
 
