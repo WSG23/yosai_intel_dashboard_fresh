@@ -1,4 +1,13 @@
-from dash import Dash
+from dash import Dash, html
+from flask.json.provider import DefaultJSONProvider
+import enum
+
+
+class EnumJSONProvider(DefaultJSONProvider):
+    def default(self, o):
+        if isinstance(o, enum.Enum):
+            return o.name
+        return super().default(o)
 import sys
 import os
 from core.plugins.unified_registry import UnifiedPluginRegistry
@@ -79,6 +88,9 @@ def create_plugin():
     registry = None
     try:
         app = Dash(__name__)
+        app.layout = html.Div()
+        app.server.json_provider_class = EnumJSONProvider
+        app.server.json = app.server.json_provider_class(app.server)
         plugin_auto = PluginAutoConfiguration(app, package="auto_pkg")
         plugin_auto.scan_and_configure("auto_pkg")
         plugin_auto.generate_health_endpoints()
@@ -86,6 +98,11 @@ def create_plugin():
         assert "dummy" in registry.plugin_manager.plugins
         rules = [r.rule for r in app.server.url_map.iter_rules()]
         assert "/health/plugins" in rules
+        client = app.server.test_client()
+        resp = client.get("/health/plugins")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["dummy"]["health"]["healthy"] is True
     finally:
         sys.path.remove(str(tmp_path))
         if registry:
