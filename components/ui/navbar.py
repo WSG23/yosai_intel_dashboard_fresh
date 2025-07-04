@@ -512,14 +512,14 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             component_name="navbar",
         )
         def export_csv(n_clicks: Optional[int]):
-            """Export device learning data as CSV file."""
+            """Export enhanced learning data as CSV file."""
             import services.export_service as export_service
 
-            data = export_service.get_device_learning_data()
+            data = export_service.get_enhanced_data()
             csv_str = export_service.to_csv_string(data)
             if not csv_str:
                 return dash.no_update
-            return dict(content=csv_str, filename="device_learning_data.csv")
+            return dict(content=csv_str, filename="enhanced_data.csv")
 
         @manager.register_callback(
             Output("download-json", "data"),
@@ -529,14 +529,14 @@ def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             component_name="navbar",
         )
         def export_json(n_clicks: Optional[int]):
-            """Export device learning data as JSON file."""
+            """Export enhanced learning data as JSON file."""
             import services.export_service as export_service
 
-            data = export_service.get_device_learning_data()
+            data = export_service.get_enhanced_data()
             json_str = export_service.to_json_string(data)
             if not json_str:
                 return dash.no_update
-            return dict(content=json_str, filename="device_learning_data.json")
+            return dict(content=json_str, filename="enhanced_data.json")
 
         @manager.register_callback(
             Output("page-context", "children"),
