@@ -24,6 +24,8 @@ class PluginAutoConfiguration:
     ) -> None:
         self.app = app
         self.container = container or DIContainer()
+        # Expose container on the app for decorators like ``safe_callback``
+        self.app._yosai_container = self.container
         self.config_manager = config_manager or ConfigManager()
         self.package = package
         self.registry = UnifiedPluginRegistry(

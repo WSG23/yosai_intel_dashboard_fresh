@@ -7,6 +7,8 @@ from core.plugins.protocols import PluginMetadata
 from core.container import Container as DIContainer
 from config.config import ConfigManager
 from core.plugins.callback_unifier import CallbackUnifier
+from core.json_serialization_plugin import JsonSerializationPlugin
+from core.plugins.decorators import safe_callback
 
 
 REQUIRED_VARS = [
@@ -119,3 +121,30 @@ def test_setup_loads_and_registers_callbacks(monkeypatch, tmp_path):
         sys.path.remove(str(tmp_path))
         if registry:
             registry.plugin_manager.stop_health_monitor()
+
+
+def test_setup_exposes_container_and_safe_callback(monkeypatch):
+    """Ensure setup_plugins attaches container and safe_callback uses it."""
+    _set_env(monkeypatch)
+    app = Dash(__name__)
+
+    registry = setup_plugins(app)
+    try:
+        assert hasattr(app, "_yosai_container")
+
+        container = app._yosai_container
+
+        plugin = JsonSerializationPlugin()
+        plugin.load(container, {"enabled": True})
+
+        @safe_callback(app)
+        def cb():
+            import pandas as pd
+
+            return pd.DataFrame({"A": [1, 2]})
+
+        result = cb()
+        assert isinstance(result, dict)
+        assert result.get("__type__") == "DataFrame"
+    finally:
+        registry.plugin_manager.stop_health_monitor()
