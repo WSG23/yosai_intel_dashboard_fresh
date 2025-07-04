@@ -987,6 +987,20 @@ class Callbacks:
                 }
 
             learning_service = get_device_learning_service()
+
+            safe_name = filename.replace(" ", "_").replace("/", "_")
+            file_path = _uploaded_data_store.storage_dir / f"{safe_name}.parquet"
+            if not file_path.exists():
+                logger.error(f"Uploaded file not found: {file_path}")
+                error_alert = dbc.Toast(
+                    "❌ Uploaded data missing - cannot save mappings.",
+                    header="Error",
+                    is_open=True,
+                    dismissable=True,
+                    duration=5000,
+                )
+                return error_alert, no_update, no_update
+
             df = _uploaded_data_store.load_dataframe(filename)
             learning_service.save_user_device_mappings(df, filename, user_mappings)
 
