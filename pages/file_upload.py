@@ -15,6 +15,7 @@ from dash.dash import no_update
 from dash._callback_context import callback_context
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from analytics.controllers import UnifiedAnalyticsController
+from core.dash_profile import profile_callback
 import logging
 
 logger = logging.getLogger(__name__)
@@ -1294,7 +1295,7 @@ def register_callbacks(
             callback_id=cid,
             component_name="file_upload",
             **extra,
-        )(func)
+        )(profile_callback(cid)(func))
 
     if controller is not None:
         controller.register_callback(
