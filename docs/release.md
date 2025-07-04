@@ -29,4 +29,11 @@ pip install --upgrade <package>
 # update requirements*.txt with the new versions and commit the changes
 ```
 
+After updating dependencies, run the Safety audit script to ensure no new high
+severity vulnerabilities are introduced:
+
+```bash
+python scripts/audit_dependencies.py
+```
+
 
