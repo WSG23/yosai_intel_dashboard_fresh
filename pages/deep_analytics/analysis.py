@@ -837,6 +837,54 @@ def _extract_security_metrics(results: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _extract_enhanced_security_details(results: Dict[str, Any]) -> Dict[str, Any]:
+    """Return extended security analysis details."""
+    threats = results.get("threats", [])
+    if not isinstance(threats, list):
+        threats = []
+
+    threat_count = results.get("threat_count")
+    if threat_count is None:
+        threat_count = len(threats)
+
+    critical_threats = results.get("critical_threats")
+    if critical_threats is None:
+        critical_threats = len(
+            [t for t in threats if str(t.get("severity", "")).lower() == "critical"]
+        )
+
+    ci_raw = results.get("confidence_interval", (0.0, 0.0))
+    if isinstance(ci_raw, (list, tuple)) and len(ci_raw) == 2:
+        try:
+            confidence_interval = (float(ci_raw[0]), float(ci_raw[1]))
+        except (TypeError, ValueError):
+            confidence_interval = (0.0, 0.0)
+    else:
+        confidence_interval = (0.0, 0.0)
+
+    recommendations = results.get("recommendations", [])
+    if not isinstance(recommendations, list):
+        recommendations = [str(recommendations)] if recommendations else []
+
+    top_threats: List[str] = []
+    if threats:
+        sorted_threats = sorted(
+            threats, key=lambda x: float(x.get("confidence", 0)), reverse=True
+        )[:3]
+        for t in sorted_threats:
+            desc = t.get("description") or t.get("type", "Unknown")
+            severity = str(t.get("severity", "unknown")).title()
+            top_threats.append(f"{severity}: {desc}")
+
+    return {
+        "threat_count": threat_count,
+        "critical_threats": critical_threats,
+        "confidence_interval": confidence_interval,
+        "recommendations": recommendations,
+        "top_threats": top_threats,
+    }
+
+
 def create_analysis_results_display(
     results: Dict[str, Any], analysis_type: str
 ) -> html.Div | dbc.Card | dbc.Alert:
@@ -852,11 +900,31 @@ def create_analysis_results_display(
         # Create type-specific content
         if analysis_type == "security":
             sec_metrics = _extract_security_metrics(results)
+            sec_details = _extract_enhanced_security_details(results)
             specific_content = [
                 html.P(f"Security Score: {sec_metrics['score']:.1f}/100"),
                 html.P(f"Failed Attempts: {sec_metrics['failed_attempts']:,}"),
                 html.P(f"Risk Level: {sec_metrics['risk_level']}"),
+                html.P(
+                    f"Threats: {sec_details['threat_count']} (Critical: {sec_details['critical_threats']})"
+                ),
+                html.P(
+                    "Confidence Interval: "
+                    f"{sec_details['confidence_interval'][0]:.1f}-{sec_details['confidence_interval'][1]:.1f}"
+                ),
             ]
+
+            if sec_details["recommendations"]:
+                specific_content.append(html.H6("Recommendations"))
+                specific_content.append(
+                    html.Ul([html.Li(r) for r in sec_details["recommendations"]])
+                )
+            if sec_details["top_threats"]:
+                specific_content.append(html.H6("Top Threats"))
+                specific_content.append(
+                    html.Ul([html.Li(t) for t in sec_details["top_threats"]])
+                )
+
             color = (
                 "danger"
                 if sec_metrics["risk_level"] == "High"
