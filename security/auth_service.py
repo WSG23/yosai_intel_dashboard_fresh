@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from config.dynamic_config import dynamic_config
-from utils.unicode_utils import sanitize_unicode_input
+from core.unicode_utils import sanitize_unicode_input
 from core.security import RateLimiter
 
 SAFE_FILENAME_RE = re.compile(r"^[A-Za-z0-9._\- ]{1,100}$")
