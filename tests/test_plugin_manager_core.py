@@ -66,7 +66,9 @@ class NoHealthPlugin:
 
 
 def test_load_plugin_success(tmp_path):
-    manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+    cfg = ConfigManager()
+    cfg.config.plugin_settings["dummy"] = {"enabled": True}
+    manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
     plugin = DummyPlugin()
     result = manager.load_plugin(plugin)
 
@@ -78,7 +80,9 @@ def test_load_plugin_success(tmp_path):
 
 
 def test_load_plugin_failure_missing_health():
-    manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+    cfg = ConfigManager()
+    cfg.config.plugin_settings["nohealth"] = {"enabled": True}
+    manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
     plugin = NoHealthPlugin()
     result = manager.load_plugin(plugin)
 
@@ -88,7 +92,9 @@ def test_load_plugin_failure_missing_health():
 
 
 def test_get_plugin_health(monkeypatch):
-    manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+    cfg = ConfigManager()
+    cfg.config.plugin_settings["dummy"] = {"enabled": True}
+    manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
     plugin = DummyPlugin()
     manager.load_plugin(plugin)
 
@@ -131,9 +137,11 @@ def create_plugin():
     )
     sys.path.insert(0, str(tmp_path))
     try:
+        cfg = ConfigManager()
+        cfg.config.plugin_settings["plug_a"] = {"enabled": True}
         manager = PluginManager(
             DIContainer(),
-            ConfigManager(),
+            cfg,
             package="testplugins",
             health_check_interval=1,
         )
@@ -146,7 +154,9 @@ def create_plugin():
 
 
 def test_stop_all_plugins_calls_stop():
-    manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+    cfg = ConfigManager()
+    cfg.config.plugin_settings["dummy"] = {"enabled": True}
+    manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
     plugin = DummyPlugin()
     manager.load_plugin(plugin)
 
@@ -167,7 +177,9 @@ class FailingStopPlugin(DummyPlugin):
 
 
 def test_stop_all_plugins_handles_errors():
-    manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+    cfg = ConfigManager()
+    cfg.config.plugin_settings["failstop"] = {"enabled": True}
+    manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
     plugin = FailingStopPlugin()
     manager.load_plugin(plugin)
 

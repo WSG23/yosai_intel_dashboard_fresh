@@ -141,7 +141,12 @@ class TestPluginManager(unittest.TestCase):
 
     def setUp(self):
         self.container = DIContainer()
-        self.manager = PluginManager(self.container, ConfigManager())
+        cfg_mgr = ConfigManager()
+        cfg_mgr.config.plugin_settings["json_serialization"] = {
+            "max_dataframe_rows": 5,
+            "auto_wrap_callbacks": True,
+        }
+        self.manager = PluginManager(self.container, cfg_mgr)
 
     def test_plugin_discovery(self):
         """Test that the JSON serialization plugin can be discovered"""
@@ -153,6 +158,7 @@ class TestPluginManager(unittest.TestCase):
 
         self.assertTrue(success)
         self.assertIn("json_serialization", self.manager.plugins)
+        self.assertEqual(plugin.config.max_dataframe_rows, 5)
 
     def test_plugin_health_monitoring(self):
         """Test plugin health monitoring"""
@@ -166,7 +172,9 @@ class TestPluginManager(unittest.TestCase):
 
     def test_periodic_health_snapshot(self):
         """Plugin manager updates health snapshot periodically"""
-        manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+        cfg = ConfigManager()
+        cfg.config.plugin_settings["json_serialization"] = {"max_dataframe_rows": 5}
+        manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
         plugin = JsonSerializationPlugin()
         manager.load_plugin(plugin)
         time.sleep(1.5)
@@ -177,7 +185,9 @@ class TestPluginManager(unittest.TestCase):
     def test_health_endpoint_registration(self):
         """Ensure /health/plugins endpoint is registered"""
         app = Flask(__name__)
-        manager = PluginManager(DIContainer(), ConfigManager(), health_check_interval=1)
+        cfg = ConfigManager()
+        cfg.config.plugin_settings["json_serialization"] = {"max_dataframe_rows": 5}
+        manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
         manager.register_health_endpoint(app)
         rules = [str(rule) for rule in app.url_map.iter_rules()]
         self.assertIn("/health/plugins", rules)

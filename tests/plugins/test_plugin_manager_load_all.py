@@ -52,9 +52,11 @@ def test_load_all_plugins_registers_services(tmp_path):
     pkg_dir = create_package(tmp_path)
     sys.path.insert(0, str(tmp_path))
     try:
+        cfg = ConfigManager()
+        cfg.config.plugin_settings["test_plugin"] = {"enabled": True}
         manager = PluginManager(
             DIContainer(),
-            ConfigManager(),
+            cfg,
             package="pm_plugins",
             health_check_interval=1,
         )

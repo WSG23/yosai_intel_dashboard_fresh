@@ -89,6 +89,7 @@ def test_setup_uses_provided_dependencies(monkeypatch, tmp_path):
         app = Dash(__name__)
         container = DIContainer()
         config = ConfigManager()
+        config.config.plugin_settings["auto_plugin"] = {"enabled": True}
         registry = setup_plugins(app, container=container, config_manager=config, package="auto_pkg")
         assert registry.container is container
         assert registry.plugin_manager.container is container
