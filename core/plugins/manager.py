@@ -215,7 +215,11 @@ class PluginManager:
         """Expose aggregated plugin health via /health/plugins"""
         server = app.server if hasattr(app, "server") else app
 
-        @server.route("/health/plugins", methods=["GET"])
+        # Avoid duplicate registration if another component already added it
+        for rule in server.url_map.iter_rules():
+            if rule.rule == "/health/plugins":
+                return
+
         def plugin_health():
             """Plugin health snapshot.
             ---
@@ -230,3 +234,10 @@ class PluginManager:
                         type: object
             """
             return self.health_snapshot or self.get_plugin_health()
+
+        server.add_url_rule(
+            "/health/plugins",
+            "plugin_health",
+            plugin_health,
+            methods=["GET"],
+        )

@@ -24,4 +24,8 @@ class TrulyUnifiedCallbacks:
 
     # Basic pass-through for Dash.callback ---------------------------------
     def register_callback(self, outputs, inputs=None, states=None, **kwargs):
+        if inputs is None:
+            inputs = []
+        if states is None:
+            states = []
         return self.app.callback(outputs, inputs, states, **kwargs)
