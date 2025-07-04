@@ -21,6 +21,7 @@ import plotly.graph_objects as go
 from services import AnalyticsService, get_analytics_service
 from utils.unicode_utils import sanitize_unicode_input, safe_format_number
 from utils.preview_utils import serialize_dataframe_preview
+from security.unicode_security_handler import UnicodeSecurityHandler
 
 # Internal service imports with CORRECTED paths
 ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
@@ -154,6 +155,15 @@ def get_analysis_type_options() -> List[Dict[str, str]]:
         {"label": "🤖 AI Column Suggestions", "value": "suggests"},
         {"label": "📊 Data Quality", "value": "quality"},
     ]
+
+
+def clean_analysis_data_unicode(df: pd.DataFrame) -> pd.DataFrame:
+    """Return DataFrame sanitized for Unicode issues."""
+    try:
+        return UnicodeSecurityHandler.sanitize_dataframe(df)
+    except Exception as e:
+        logger.exception("Unicode sanitization failed: %s", e)
+        return df
 
 
 # =============================================================================

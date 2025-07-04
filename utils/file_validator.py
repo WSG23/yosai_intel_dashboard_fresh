@@ -318,8 +318,12 @@ def safe_decode_with_unicode_handling(data: bytes, enc: str) -> str:
         text = data.decode(enc, errors="surrogatepass")
     except UnicodeDecodeError:
         text = data.decode(enc, errors="replace")
+
     text = handle_surrogate_characters(text)
-    cleaned = text.encode("utf-8", errors="ignore").decode("utf-8", errors="ignore")
+
+    from security.unicode_security_handler import UnicodeSecurityHandler
+
+    cleaned = UnicodeSecurityHandler.sanitize_unicode_input(text)
     return cleaned.replace("\ufffd", "")
 
 

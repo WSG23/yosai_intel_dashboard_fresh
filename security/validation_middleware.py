@@ -58,9 +58,13 @@ class ValidationMiddleware:
             ):
                 return None
             try:
-                request._cached_data = self.orchestrator.validate(
-                    request.data.decode("utf-8", errors="ignore")
-                ).encode("utf-8")
+                from security.unicode_security_handler import UnicodeSecurityHandler
+
+                raw_text = request.data.decode("utf-8", errors="ignore")
+                sanitized = UnicodeSecurityHandler.sanitize_unicode_input(raw_text)
+                request._cached_data = self.orchestrator.validate(sanitized).encode(
+                    "utf-8"
+                )
             except ValidationError:
                 return Response("Bad Request", status=400)
         return None
