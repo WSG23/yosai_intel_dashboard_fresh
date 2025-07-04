@@ -12,6 +12,7 @@ Flask-Login==0.6.2
 Flask-WTF==1.1.1
 Flask-Compress~=1.14
 Flask-Talisman==1.1.0
+Flask-Caching==2.3.1
 authlib==1.2.1
 python-jose==3.3.0
 cssutils==2.8.0

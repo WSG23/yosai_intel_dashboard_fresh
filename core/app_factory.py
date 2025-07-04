@@ -21,6 +21,7 @@ from flask_compress import Compress
 from flask_talisman import Talisman
 from core.theme_manager import apply_theme_settings, DEFAULT_THEME, sanitize_theme
 from config.config import get_config
+from .cache import cache
 
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 BUNDLE = "/assets/dist/main.min.css"
@@ -73,6 +74,9 @@ def _create_full_app() -> dash.Dash:
             assets_folder=str(ASSETS_DIR),
             assets_ignore=assets_ignore,
         )
+
+        cache.init_app(app.server)
+        app.cache = cache
 
         app.index_string = f"""
 <!DOCTYPE html>
@@ -271,6 +275,12 @@ def _create_simple_app() -> dash.Dash:
             assets_ignore=assets_ignore,
         )
 
+        cache.init_app(app.server)
+        app.cache = cache
+
+        cache.init_app(app.server)
+        app.cache = cache
+
         app.index_string = f"""
 <!DOCTYPE html>
 <html>
@@ -385,6 +395,9 @@ def _create_json_safe_app() -> dash.Dash:
             suppress_callback_exceptions=True,
             assets_ignore=assets_ignore,
         )
+
+        cache.init_app(app.server)
+        app.cache = cache
 
         app.index_string = f"""
 <!DOCTYPE html>
