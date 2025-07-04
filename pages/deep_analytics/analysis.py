@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""
-COMPLETE DEEP ANALYTICS FIX
-Fixes all method and import errors
-Replace the broken functions in pages/deep_analytics.py
-"""
+"""Deep analytics utilities for dashboard pages."""
 
 # =============================================================================
 # SECTION 1: CORRECTED IMPORTS (Replace at top of pages/deep_analytics.py)

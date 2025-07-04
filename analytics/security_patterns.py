@@ -1,3 +1,4 @@
+
 """Security Patterns Analyzer.
 
 This module applies machine learning techniques to identify suspicious
@@ -5,6 +6,7 @@ access behavior. It combines statistical anomaly detection, pattern
 analysis and risk scoring to generate a comprehensive security assessment
 with actionable recommendations.
 """
+
 
 import pandas as pd
 import numpy as np
