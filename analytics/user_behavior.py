@@ -10,11 +10,24 @@ from datetime import datetime
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import silhouette_score
+from sklearn.exceptions import DataConversionWarning
 import logging
 from dataclasses import dataclass
 import warnings
 
-warnings.filterwarnings("ignore")
+# Ignore the upcoming default change warning for KMeans ``n_init`` and
+# suppress type conversion warnings when non-float data is passed.
+warnings.filterwarnings(
+    "ignore",
+    message=".*n_init.*will change.*",
+    category=FutureWarning,
+    module="sklearn",
+)
+warnings.filterwarnings(
+    "ignore",
+    category=DataConversionWarning,
+    module="sklearn",
+)
 
 
 @dataclass

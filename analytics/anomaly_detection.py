@@ -9,12 +9,19 @@ from typing import Dict, List, Any, Tuple, Optional
 from datetime import datetime
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
+from sklearn.exceptions import DataConversionWarning
 from scipy import stats
 import logging
 from dataclasses import dataclass
 import warnings
 
-warnings.filterwarnings("ignore")
+# Ignore benign type conversion warnings emitted by scikit-learn when integer
+# features are automatically cast to floats.
+warnings.filterwarnings(
+    "ignore",
+    category=DataConversionWarning,
+    module="sklearn",
+)
 
 logger = logging.getLogger(__name__)
 
