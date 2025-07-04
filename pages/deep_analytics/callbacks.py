@@ -2,7 +2,7 @@
 
 from dash import Input, Output, State, callback_context, html
 from dash.exceptions import PreventUpdate
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from analytics.controllers import UnifiedAnalyticsController
 from core.dash_profile import profile_callback
 import logging
@@ -500,7 +500,7 @@ class Callbacks:
 
 
 def register_callbacks(
-    manager: UnifiedCallbackCoordinator,
+    manager: TrulyUnifiedCallbacks,
     controller: UnifiedAnalyticsController | None = None,
 ) -> None:
     """Instantiate :class:`Callbacks` and register its methods."""

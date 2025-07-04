@@ -6,10 +6,10 @@ from dash import Dash
 
 from .callback_manager import CallbackManager
 from .callback_events import CallbackEvent
-from .unified_callback_coordinator import UnifiedCallbackCoordinator
+from .truly_unified_callbacks import TrulyUnifiedCallbacks
 
 
-class UnifiedCallbackCoordinatorWrapper(UnifiedCallbackCoordinator):
+class UnifiedCallbackCoordinatorWrapper(TrulyUnifiedCallbacks):
     """Wrapper exposing a callback manager for backward compatibility."""
 
     def __init__(self, app: Dash, callback_manager: CallbackManager) -> None:

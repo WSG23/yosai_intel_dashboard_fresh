@@ -5,7 +5,7 @@ import logging
 
 from dash import Dash
 
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.callback_manager import CallbackManager
 from core.plugins.manager import PluginManager
 from core.plugins.protocols import PluginProtocol
@@ -30,7 +30,7 @@ class UnifiedPluginRegistry:
         self.app = app
         self.container = container
         self.callback_manager = callback_manager or CallbackManager()
-        self.coordinator = UnifiedCallbackCoordinator(app)
+        self.coordinator = TrulyUnifiedCallbacks(app)
         self.plugin_manager = PluginManager(container, config_manager, package=package)
         # Register health endpoint immediately
         try:

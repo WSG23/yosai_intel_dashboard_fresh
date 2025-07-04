@@ -9,7 +9,7 @@ from flasgger import Swagger
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output
 from components.ui.navbar import create_navbar_layout
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.container import Container as DIContainer
 from core.plugins.auto_config import PluginAutoConfiguration
 from core.secret_manager import validate_secrets
@@ -183,8 +183,8 @@ def _create_full_app() -> dash.Dash:
 
         app.layout = _serve_layout
 
-        # Register all callbacks using UnifiedCallbackCoordinator
-        coordinator = UnifiedCallbackCoordinator(app)
+        # Register all callbacks using TrulyUnifiedCallbacks
+        coordinator = TrulyUnifiedCallbacks(app)
         _register_router_callbacks(coordinator)
         _register_global_callbacks(coordinator)
 
@@ -553,7 +553,7 @@ def _create_placeholder_page(title: str, subtitle: str, message: str) -> html.Di
     )
 
 
-def _register_router_callbacks(manager: UnifiedCallbackCoordinator) -> None:
+def _register_router_callbacks(manager: TrulyUnifiedCallbacks) -> None:
     """Register page routing callbacks."""
 
     @manager.register_callback(
@@ -669,7 +669,7 @@ def _get_upload_page() -> Any:
         )
 
 
-def _register_global_callbacks(manager: UnifiedCallbackCoordinator) -> None:
+def _register_global_callbacks(manager: TrulyUnifiedCallbacks) -> None:
     """Register global application callbacks"""
 
     # Register device learning callbacks

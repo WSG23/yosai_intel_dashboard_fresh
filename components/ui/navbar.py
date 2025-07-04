@@ -4,7 +4,7 @@ Navigation bar component with grid layout using existing framework
 
 import datetime
 from typing import TYPE_CHECKING, Optional, Any, Union
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from flask_babel import lazy_gettext as _l, refresh
 from flask import session
 from core.plugins.decorators import safe_callback
@@ -405,7 +405,7 @@ def _create_fallback_navbar() -> str:
 
 
 @safe_callback
-def register_navbar_callbacks(manager: UnifiedCallbackCoordinator) -> None:
+def register_navbar_callbacks(manager: TrulyUnifiedCallbacks) -> None:
     """Register navbar callbacks for live updates"""
     if not DASH_AVAILABLE or not manager:
         return
