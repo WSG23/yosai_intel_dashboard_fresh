@@ -14,6 +14,7 @@ def test_standardized_output(monkeypatch):
         is_elevator=False,
         is_stairwell=False,
         is_fire_escape=False,
+        is_restricted=False,
         confidence=0.9,
         ai_reasoning="test",
     )
