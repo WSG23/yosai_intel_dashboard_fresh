@@ -6,36 +6,19 @@ before processing to ensure they are present, non-empty and within the configure
 size limits.
 """
 import pandas as pd
-import json
 import logging
 from typing import Dict, Any, List, Optional, Tuple
 
 from services.file_processing_service import FileProcessingService
-from services.database_analytics_service import DatabaseAnalyticsService
 from services.data_loader import DataLoader
-from services.analytics_summary import (
-    generate_basic_analytics,
-    generate_sample_analytics,
-    summarize_dataframe,
-)
+from services.analytics_summary import generate_sample_analytics
 from services.data_validation import DataValidationService
 from services.data_loading_service import DataLoadingService
-from services.chunked_analysis import analyze_with_chunking
-from services.result_formatting import regular_analysis
+from services.upload_processing import UploadAnalyticsProcessor
+from services.db_analytics_helper import DatabaseAnalyticsHelper
+from services.summary_reporting import SummaryReporter
 
-from utils.mapping_helpers import map_and_clean
-from datetime import datetime, timedelta
-import os
-
-from analytics.db_interface import AnalyticsDataAccessor
-from analytics.file_processing_utils import (
-    stream_uploaded_file,
-    update_counts,
-    update_timestamp_range,
-    aggregate_counts,
-    calculate_date_range,
-    build_result,
-)
+from datetime import datetime
 
 
 def ensure_analytics_config():
@@ -68,9 +51,14 @@ class AnalyticsService:
         from services.input_validator import InputValidator
 
         self.input_validator = InputValidator()
-        self.database_analytics_service = DatabaseAnalyticsService(
-            self.database_manager
+        self.upload_processor = UploadAnalyticsProcessor(
+            self.file_processing_service,
+            self.validation_service,
+            self.data_loading_service,
+            self.input_validator,
         )
+        self.db_helper = DatabaseAnalyticsHelper(self.database_manager)
+        self.summary_reporter = SummaryReporter(self.database_manager)
         self.data_loader = DataLoader()
 
     def _initialize_database(self):
@@ -93,83 +81,17 @@ class AnalyticsService:
             )
             self.database_manager = DatabaseManager(manager_cfg)
             logger.info("Database manager initialized")
-            self.database_analytics_service = DatabaseAnalyticsService(
-                self.database_manager
-            )
+            self.db_helper = DatabaseAnalyticsHelper(self.database_manager)
+            self.summary_reporter = SummaryReporter(self.database_manager)
         except Exception as e:
             logger.warning(f"Database initialization failed: {e}")
             self.database_manager = None
+            self.db_helper = DatabaseAnalyticsHelper(None)
+            self.summary_reporter = SummaryReporter(None)
 
     def get_analytics_from_uploaded_data(self) -> Dict[str, Any]:
-        """Get analytics from uploaded files using the file processor."""
-        try:
-            # Get uploaded file paths (not pre-processed data)
-            from pages.file_upload import get_uploaded_filenames
-
-            uploaded_files = get_uploaded_filenames()
-
-            if not uploaded_files:
-                return {"status": "no_data", "message": "No uploaded files available"}
-
-            valid_files: List[str] = []
-            processing_info: Dict[str, Any] = {}
-            for path in uploaded_files:
-                result = self.input_validator.validate_file_upload(path)
-                if result.valid:
-                    valid_files.append(path)
-                else:
-                    processing_info[path] = f"invalid: {result.message}"
-
-            if not valid_files:
-                return {
-                    "status": "error",
-                    "message": "No valid files to process",
-                    "processing_info": processing_info,
-                }
-
-            combined_df, info, processed_files, total_records = (
-                self.file_processing_service.process_files(valid_files)
-            )
-            if isinstance(info, list):
-                processing_info["logs"] = info
-
-            if combined_df.empty:
-                return {
-                    "status": "error",
-                    "message": "No files could be processed successfully",
-                    "processing_info": processing_info,
-                }
-
-            # Generate analytics from the properly processed data
-            analytics = generate_basic_analytics(combined_df)
-
-            # Add processing information
-            analytics.update(
-                {
-                    "data_source": "uploaded_files_fixed",
-                    "total_files_processed": processed_files,
-                    "total_files_attempted": len(uploaded_files),
-                    "processing_info": processing_info,
-                    "total_events": total_records,
-                    "active_users": (
-                        combined_df["person_id"].nunique()
-                        if "person_id" in combined_df.columns
-                        else 0
-                    ),
-                    "active_doors": (
-                        combined_df["door_id"].nunique()
-                        if "door_id" in combined_df.columns
-                        else 0
-                    ),
-                    "timestamp": datetime.now().isoformat(),
-                }
-            )
-
-            return analytics
-
-        except Exception as e:
-            logger.error(f"Error getting analytics from uploaded data: {e}")
-            return {"status": "error", "message": str(e)}
+        """Get analytics from uploaded files using helper."""
+        return self.upload_processor.get_analytics_from_uploaded_data()
 
     def get_analytics_by_source(self, source: str) -> Dict[str, Any]:
         """Get analytics from specified source with forced uploaded data check"""
@@ -201,224 +123,41 @@ class AnalyticsService:
         self, uploaded_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Process uploaded files using chunked streaming."""
-        try:
-            from collections import Counter
-
-            logger.info(f"Processing {len(uploaded_data)} uploaded files directly...")
-
-            processing_info: Dict[str, Any] = {}
-            total_events = 0
-            user_counts: Counter[str] = Counter()
-            door_counts: Counter[str] = Counter()
-            min_ts: Optional[pd.Timestamp] = None
-            max_ts: Optional[pd.Timestamp] = None
-
-            for filename, source in uploaded_data.items():
-                validation = self.input_validator.validate_file_upload(source)
-                if not validation.valid:
-                    processing_info[filename] = {
-                        "rows": 0,
-                        "status": f"invalid: {validation.message}",
-                    }
-                    continue
-
-                try:
-                    chunks = stream_uploaded_file(self.data_loading_service, source)
-                    file_events, min_ts, max_ts = aggregate_counts(
-                        chunks, user_counts, door_counts, min_ts, max_ts
-                    )
-                    processing_info[filename] = {"rows": file_events, "status": "ok"}
-                    total_events += file_events
-                except Exception as e:  # pragma: no cover - best effort
-                    processing_info[filename] = {"rows": 0, "status": f"error: {e}"}
-                    logger.error(f"Error processing {filename}: {e}")
-
-            if not processing_info:
-                return {"status": "error", "message": "No uploaded files processed"}
-
-            date_range = calculate_date_range(min_ts, max_ts)
-
-            result = build_result(
-                total_events, user_counts, door_counts, date_range, processing_info
-            )
-
-            return result
-
-        except Exception as e:  # pragma: no cover - unexpected
-            logger.error(f"Direct processing failed: {e}")
-            return {"status": "error", "message": str(e)}
+        return self.upload_processor._process_uploaded_data_directly(uploaded_data)
 
     def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
         """Load uploaded data from the file upload page."""
-        try:
-            from pages.file_upload import get_uploaded_data
-
-            return get_uploaded_data() or {}
-        except Exception as e:  # pragma: no cover - best effort
-            logger.error(f"Error loading uploaded data: {e}")
-            return {}
+        return self.upload_processor.load_uploaded_data()
 
     def clean_uploaded_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply standard column mappings and basic cleaning."""
-        return map_and_clean(df)
+        return self.upload_processor.clean_uploaded_dataframe(df)
 
     def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Create a summary dictionary from a combined DataFrame."""
-        return summarize_dataframe(df)
+        return self.upload_processor.summarize_dataframe(df)
 
     def analyze_with_chunking(
         self, df: pd.DataFrame, analysis_types: List[str]
     ) -> Dict[str, Any]:
         """Analyze a DataFrame using chunked processing."""
-        return analyze_with_chunking(df, self.validation_service, analysis_types)
+        return self.upload_processor.analyze_with_chunking(df, analysis_types)
 
     def diagnose_data_flow(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Diagnostic method to check data processing flow."""
-        logger.info("=== Data Flow Diagnosis ===")
-        logger.info(f"Input DataFrame: {len(df)} rows, {len(df.columns)} columns")
-        logger.info(
-            f"Memory usage: {df.memory_usage(deep=True).sum() / 1024 / 1024:,.1f} MB"
-        )
-
-        validator = self.validation_service
-
-        logger.info(
-            f"Validator config: upload_mb={validator.max_upload_mb}, analysis_mb={validator.max_analysis_mb}, chunk_size={validator.chunk_size}"
-        )
-
-        cleaned_df, needs_chunking = validator.validate_for_analysis(df.copy())
-        logger.info(
-            f"After validation: {len(cleaned_df)} rows, needs_chunking={needs_chunking}"
-        )
-
-        if needs_chunking:
-            chunk_size = validator.get_optimal_chunk_size(cleaned_df)
-            logger.info(f"Optimal chunk size: {chunk_size}")
-
-        return {
-            "input_rows": len(df),
-            "validated_rows": len(cleaned_df),
-            "needs_chunking": needs_chunking,
-            "validator_config": {
-                "max_upload_mb": validator.max_upload_mb,
-                "max_analysis_mb": validator.max_analysis_mb,
-                "chunk_size": validator.chunk_size,
-            },
-        }
+        return self.upload_processor.diagnose_data_flow(df)
 
     def _get_real_uploaded_data(self) -> Dict[str, Any]:
         """Load and summarize all uploaded records."""
-        try:
-            uploaded_data = self.load_uploaded_data()
-            if not uploaded_data:
-                return {"status": "no_data", "message": "No uploaded files available"}
-
-            logger.info(f"Processing {len(uploaded_data)} uploaded files...")
-
-            all_dfs = []
-            total_original_rows = 0
-
-            for filename, df in uploaded_data.items():
-                logger.info(f"Processing {filename}: {len(df):,} rows")
-                cleaned = self.clean_uploaded_dataframe(df)
-                all_dfs.append(cleaned)
-                total_original_rows += len(df)
-
-            combined_df = pd.concat(all_dfs, ignore_index=True)
-
-            logger.info(f"Combined: {len(combined_df):,} total rows")
-
-            summary = self.summarize_dataframe(combined_df)
-            summary.update(
-                {
-                    "status": "success",
-                    "timestamp": datetime.now().isoformat(),
-                    "files_processed": len(uploaded_data),
-                    "original_total_rows": total_original_rows,
-                }
-            )
-
-            logger.info("Analytics result:")
-            logger.info(f"Total Events: {summary['total_events']:,}")
-            logger.info(f"Active Users: {summary['active_users']:,}")
-            logger.info(f"Active Doors: {summary['active_doors']:,}")
-
-            return summary
-
-        except Exception as e:
-            logger.error(f"Error processing uploaded data: {e}")
-            return {
-                "status": "error",
-                "message": f"Error processing uploaded data: {str(e)}",
-                "total_events": 0,
-            }
+        return self.upload_processor._get_real_uploaded_data()
 
     def _get_analytics_with_fixed_processor(self) -> Dict[str, Any]:
         """Get analytics using the sample file processor."""
-
-        from config.config import get_sample_files_config
-
-        sample_cfg = get_sample_files_config()
-        csv_file = os.getenv("SAMPLE_CSV_PATH", sample_cfg.csv_path)
-        json_file = os.getenv("SAMPLE_JSON_PATH", sample_cfg.json_path)
-
-        try:
-            from services import FileProcessor
-            import pandas as pd
-            import json
-
-            if FileProcessor is None:
-                raise RuntimeError("FileProcessor service not available")
-
-            processor = FileProcessor(
-                upload_folder="temp", allowed_extensions={"csv", "json", "xlsx"}
-            )
-            all_data = []
-
-            # Process CSV file
-            if os.path.exists(csv_file):
-                df_csv = pd.read_csv(csv_file)
-                result = processor._validate_data(df_csv)
-                if result["valid"]:
-                    processed_df = result["data"]
-                    processed_df["source_file"] = "csv"
-                    all_data.append(processed_df)
-
-            # Process JSON file
-            if os.path.exists(json_file):
-                with open(json_file, "r", encoding="utf-8", errors="replace") as f:
-                    json_data = json.load(f)
-                df_json = pd.DataFrame(json_data)
-                result = processor._validate_data(df_json)
-                if result["valid"]:
-                    processed_df = result["data"]
-                    processed_df["source_file"] = "json"
-                    all_data.append(processed_df)
-
-            if all_data:
-                combined_df = pd.concat(all_data, ignore_index=True)
-
-                return {
-                    "status": "success",
-                    "total_events": len(combined_df),
-                    "active_users": combined_df["person_id"].nunique(),
-                    "active_doors": combined_df["door_id"].nunique(),
-                    "data_source": "fixed_processor",
-                    "timestamp": datetime.now().isoformat(),
-                }
-
-        except Exception as e:
-            logger.error(f"Error in fixed processor analytics: {e}")
-            return {"status": "error", "message": str(e)}
-
-        return {"status": "no_data", "message": "Files not available"}
+        return self.upload_processor._get_analytics_with_fixed_processor()
 
     def _get_database_analytics(self) -> Dict[str, Any]:
-        """Get analytics from database"""
-        if not self.database_analytics_service:
-            return {"status": "error", "message": "Database not available"}
-
-        return self.database_analytics_service.get_analytics()
+        """Get analytics from database."""
+        return self.db_helper.get_analytics()
 
     def get_dashboard_summary(self) -> Dict[str, Any]:
         """Get a basic dashboard summary"""
@@ -470,7 +209,9 @@ class AnalyticsService:
         logger.info(f"📊 COMBINED DATASET: {final_rows:,} total rows")
 
         if final_rows != original_rows:
-            logger.warning(f"⚠️  Data loss detected: {original_rows:,} → {final_rows:,}")
+            logger.warning(
+                f"⚠️  Data loss detected: {original_rows:,} → {final_rows:,}"
+            )
 
         if final_rows == 150 and original_rows > 150:
             logger.error("🚨 FOUND 150 ROW LIMIT in unique patterns analysis!")
@@ -487,9 +228,7 @@ class AnalyticsService:
         unique_users = (
             int(df["person_id"].nunique()) if "person_id" in df.columns else 0
         )
-        unique_devices = (
-            int(df["door_id"].nunique()) if "door_id" in df.columns else 0
-        )
+        unique_devices = int(df["door_id"].nunique()) if "door_id" in df.columns else 0
 
         date_span = 0
         if "timestamp" in df.columns:
@@ -700,7 +439,9 @@ class AnalyticsService:
                 logger.info(f"✅ SUCCESS: Correctly showing {result_total:,} rows")
             else:
                 logger.warning(
-                    f"⚠️  Unexpected count: {result_total:,} (expected {original_rows:,})"
+                    "⚠️  Unexpected count: %s (expected %s)",
+                    f"{result_total:,}",
+                    f"{original_rows:,}",
                 )
 
             return result
@@ -719,86 +460,23 @@ class AnalyticsService:
 
     def health_check(self) -> Dict[str, Any]:
         """Check service health"""
-        health: Dict[str, Any] = {
-            "service": "healthy",
-            "timestamp": datetime.now().isoformat(),
-        }
-
-        # Check database
-        if self.database_manager:
-            try:
-                health["database"] = (
-                    "healthy" if self.database_manager.health_check() else "unhealthy"
-                )
-            except:
-                health["database"] = "unhealthy"
-        else:
-            health["database"] = "not_configured"
-
-        # Check file upload
-        try:
-            from pages.file_upload import get_uploaded_filenames
-
-            health["uploaded_files"] = len(get_uploaded_filenames())
-        except ImportError:
-            health["uploaded_files"] = "not_available"
-
-        return health
+        return self.summary_reporter.health_check()
 
     def get_data_source_options(self) -> List[Dict[str, str]]:
         """Get available data source options"""
-        options = [{"label": "Sample Data", "value": "sample"}]
-
-        # Check for uploaded data
-        try:
-            from pages.file_upload import get_uploaded_filenames
-
-            uploaded_files = get_uploaded_filenames()
-            if uploaded_files:
-                options.append(
-                    {
-                        "label": f"Uploaded Files ({len(uploaded_files)})",
-                        "value": "uploaded",
-                    }
-                )
-        except ImportError:
-            pass
-
-        # Check for database
-        if self.database_manager and self.database_manager.health_check():
-            options.append({"label": "Database", "value": "database"})
-
-        return options
+        return self.summary_reporter.get_data_source_options()
 
     def get_available_sources(self) -> list[str]:
         """Return identifiers for available data sources."""
-        return [opt.get("value", "") for opt in self.get_data_source_options()]
+        return self.summary_reporter.get_available_sources()
 
     def get_date_range_options(self) -> Dict[str, str]:
         """Get default date range options"""
-        from datetime import datetime, timedelta
-
-        return {
-            "start": (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d"),
-            "end": datetime.now().strftime("%Y-%m-%d"),
-        }
+        return self.summary_reporter.get_date_range_options()
 
     def get_analytics_status(self) -> Dict[str, Any]:
         """Get current analytics status"""
-        status = {
-            "timestamp": datetime.now().isoformat(),
-            "data_sources_available": len(self.get_data_source_options()),
-            "service_health": self.health_check(),
-        }
-
-        try:
-            from pages.file_upload import get_uploaded_filenames
-
-            status["uploaded_files"] = len(get_uploaded_filenames())
-        except ImportError:
-            status["uploaded_files"] = 0
-
-        return status
+        return self.summary_reporter.get_analytics_status()
 
 
 # Global service instance
