@@ -11,41 +11,23 @@ Step 1: Update your core/app_factory.py
 
 # Add after your existing container creation:
 
-from core.plugins.manager import PluginManager
+from core.plugins.auto_config import setup_plugins
 
 # Create container with YAML config (your existing code)
 config_manager = get_config()
 container = get_configured_container_with_yaml(config_manager)
 
-# NEW: Add plugin manager
-plugin_manager = PluginManager(container, config_manager)
-
-# Load all plugins
-plugin_results = plugin_manager.load_all_plugins()
-logger.info(f"Loaded plugins: {plugin_results}")
-
-# Store plugin manager in app for callback registration
-app._yosai_plugin_manager = plugin_manager
-
-# In your callback registration section, add:
-plugin_callback_results = plugin_manager.register_plugin_callbacks(app)
-logger.info(f"Registered plugin callbacks: {plugin_callback_results}")
+# NEW: Setup plugins with automatic discovery
+registry = setup_plugins(app, container=container, config_manager=config_manager)
+app._yosai_plugin_manager = registry.plugin_manager
 
 
 Step 2: Update your config/config.yaml
 ======================================
 
-# Add this section to your existing config.yaml:
+# Reference the shared plugin configuration:
 
-plugins:
-  json_serialization:
-    enabled: true
-    max_dataframe_rows: 1000
-    max_string_length: 10000
-    include_type_metadata: true
-    compress_large_objects: true
-    fallback_to_repr: true
-    auto_wrap_callbacks: true
+plugins: !include plugins.yaml
 
 
 Step 3: Use the plugin in your callbacks
@@ -79,12 +61,6 @@ python3 app.py
 Step 5: Monitor plugin health
 ============================
 
-# Add this endpoint to monitor plugin health:
-
-@server.route("/health/plugins")
-def plugin_health():
-    if hasattr(app, '_yosai_plugin_manager'):
-        health = app._yosai_plugin_manager.get_plugin_health()
-        return jsonify(health)
-    return jsonify({"error": "Plugin manager not available"})
+The health endpoint is now registered automatically at `/health/plugins`.
+Simply visit that URL to view the current plugin status.
 

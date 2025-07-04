@@ -30,8 +30,22 @@ class DynamicConfigManager:
             config_path = select_config_file()
 
             if config_path and config_path.exists():
+
+                class IncludeLoader(yaml.SafeLoader):
+                    pass
+
+                base_dir = config_path.parent
+
+                def _include(loader: IncludeLoader, node: yaml.Node):
+                    filename = loader.construct_scalar(node)
+                    path = base_dir / filename
+                    with open(path, "r") as inc:
+                        return yaml.load(inc, Loader=IncludeLoader)
+
+                IncludeLoader.add_constructor("!include", _include)
+
                 with open(config_path, "r", encoding="utf-8") as f:
-                    config_data = yaml.safe_load(f)
+                    config_data = yaml.load(f, Loader=IncludeLoader)
 
                 analytics_config = config_data.get("analytics", {})
                 for key, value in analytics_config.items():
@@ -62,7 +76,8 @@ class DynamicConfigManager:
             value = int(max_upload)
             if value < 50:  # Prevent accidentally setting too small
                 print(
-                    f"WARNING: MAX_UPLOAD_MB={value} is too small for large files. Using 50MB minimum."
+                    "WARNING: MAX_UPLOAD_MB="
+                    f"{value} is too small. Using 50MB minimum."
                 )
                 value = 50
             self.security.max_upload_mb = value
@@ -159,7 +174,8 @@ def diagnose_upload_config():
     env_value = os.getenv("MAX_UPLOAD_MB")
     if env_value and int(env_value) < 50:
         print(
-            f"\u26a0\ufe0f  WARNING: Environment variable MAX_UPLOAD_MB={env_value} is too small!"
+            "\u26a0\ufe0f  WARNING: Environment variable MAX_UPLOAD_MB="
+            f"{env_value} is too small!"
         )
         print("   Run: unset MAX_UPLOAD_MB")
 
