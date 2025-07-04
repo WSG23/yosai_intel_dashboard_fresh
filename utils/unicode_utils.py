@@ -151,6 +151,12 @@ def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return UnicodeProcessor.sanitize_dataframe(df)
 
 
+def sanitize_data_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """Deprecated alias for :func:`sanitize_dataframe`."""
+
+    return sanitize_dataframe(df)
+
+
 # ---------------------------------------------------------------------------
 # Backwards compatibility helpers
 
@@ -204,6 +210,7 @@ __all__ = [
     "safe_decode",
     "safe_encode",
     "sanitize_dataframe",
+    "sanitize_data_frame",
     # Backwards compatible aliases
     "safe_unicode_encode",
     "handle_surrogate_characters",
