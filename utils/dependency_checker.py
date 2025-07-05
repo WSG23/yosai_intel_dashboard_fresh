@@ -11,7 +11,10 @@ logger = logging.getLogger(__name__)
 PACKAGE_MODULE_MAP: Dict[str, str] = {
     "flask-babel": "flask_babel",
     "flask-caching": "flask_caching",
+    "flask-compress": "flask_compress",
     "flask-login": "flask_login",
+    "flask-talisman": "flask_talisman",
+    "flask-wtf": "flask_wtf",
     "dash-bootstrap-components": "dash_bootstrap_components",
     "dash-extensions": "dash_extensions",
     "dash-leaflet": "dash_leaflet",
@@ -44,7 +47,9 @@ def verify_requirements(path: str = "requirements.txt") -> None:
                 continue
 
             pkg = line.split("==")[0].split(">=")[0].split("~=")[0]
-            module_name = PACKAGE_MODULE_MAP.get(pkg.lower(), pkg.replace("-", "_"))
+            module_name = PACKAGE_MODULE_MAP.get(
+                pkg.lower(), pkg.lower().replace("-", "_")
+            )
             reqs.append(module_name)
 
     missing = check_dependencies(reqs)
