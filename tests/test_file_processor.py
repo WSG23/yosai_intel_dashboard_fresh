@@ -13,7 +13,6 @@ import tempfile
 from services.unified_file_validator import UnifiedFileValidator as RobustFileProcessor
 from services.data_processing.file_handler import FileProcessingError, process_file_simple
 
-
 class TestRobustFileProcessor:
     """Test the robust file processor"""
     

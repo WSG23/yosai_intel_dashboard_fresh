@@ -1,8 +1,7 @@
 """Unified file validation and security handling."""
 
-import io
-import json
 from pathlib import Path
+from typing import Any, Optional
 
 import pandas as pd
 
@@ -25,13 +24,11 @@ import pandas as pd
 
 from security.file_validator import SecureFileValidator
 from services.input_validator import InputValidator, ValidationResult
-from security.validation_exceptions import ValidationError
-from core.error_handling import FileProcessingError
+from services.data_processing.core.exceptions import (
+    FileProcessingError,
+    FileValidationError,
+)
 
-
-class FileProcessingError(Exception):
-    """Placeholder exception for processing errors."""
-    pass
 
 
 def process_file_simple(content: bytes, filename: str):
@@ -43,15 +40,42 @@ class FileHandler:
     """Combine security and basic validation for uploaded files."""
 
     def __init__(self, max_size_mb: Optional[int] = None) -> None:
-        self.basic_validator = InputValidator(max_size_mb)
-        self.secure_validator = SecureFileValidator()
+        self.validator = UnifiedFileValidator(max_size_mb)
 
     def sanitize_filename(self, filename: str) -> str:
-        return self.secure_validator.sanitize_filename(filename)
+        return self.validator.sanitize_filename(filename)
 
     def validate_file_upload(self, file_obj: Any) -> ValidationResult:
-        """Run basic checks on ``file_obj`` using :class:`InputValidator`."""
-        return self.basic_validator.validate_file_upload(file_obj)
+        """Run basic checks on ``file_obj`` using :class:`UnifiedFileValidator`."""
+        if file_obj is None:
+            return ValidationResult(False, "No file provided")
+        try:
+            import pandas as pd
+            if isinstance(file_obj, pd.DataFrame):
+                metrics = self.validator.validate_dataframe(file_obj)
+                return ValidationResult(metrics.get("valid", False), metrics.get("error", "ok") if not metrics.get("valid", False) else "ok")
+        except Exception:
+            pass
+        if isinstance(file_obj, (str, Path)):
+            path = Path(file_obj)
+            if not path.exists():
+                return ValidationResult(False, "File not found")
+            size_mb = path.stat().st_size / (1024 * 1024)
+            if size_mb == 0:
+                return ValidationResult(False, "File is empty")
+            if size_mb > self.validator.max_size_mb:
+                return ValidationResult(False, f"File too large: {size_mb:.1f}MB > {self.validator.max_size_mb}MB")
+            return ValidationResult(True, "ok")
+
+        if isinstance(file_obj, (bytes, bytearray)):
+            size_mb = len(file_obj) / (1024 * 1024)
+            if size_mb == 0:
+                return ValidationResult(False, "File is empty")
+            if size_mb > self.validator.max_size_mb:
+                return ValidationResult(False, f"File too large: {size_mb:.1f}MB > {self.validator.max_size_mb}MB")
+            return ValidationResult(True, "ok")
+
+        return ValidationResult(False, "Unsupported file type")
 
     def process_base64_contents(self, contents: str, filename: str) -> pd.DataFrame:
         """Decode ``contents`` and return a validated :class:`~pandas.DataFrame`."""
@@ -59,7 +83,8 @@ class FileHandler:
         df = self.secure_validator.validate_file_contents(contents, sanitized)
         result = self.basic_validator.validate_file_upload(df)
         if not result.valid:
-            raise ValidationError(result.message)
+            raise FileValidationError(result.message)
+
         return df
 
 

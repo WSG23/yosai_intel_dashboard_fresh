@@ -7,6 +7,7 @@ from typing import List, Tuple
 
 from services.unified_file_validator import UnifiedFileValidator
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,7 +32,7 @@ class FileProcessingService:
             return pd.DataFrame(data)
         if path.endswith((".xlsx", ".xls")):
             return pd.read_excel(path)
-        raise ValueError(f"Unsupported file type: {path}")
+        raise FileFormatError(f"Unsupported file type: {path}")
 
     def process_files(
         self, file_paths: List[str]
