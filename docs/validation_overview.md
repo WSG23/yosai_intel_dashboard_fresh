@@ -7,6 +7,7 @@ This dashboard includes several validators that sanitize input and uploaded data
 ### InputValidator
 - **Purpose**: Clean individual strings using Unicode normalization and simple XSS pattern checks.
 - **Use when**: Accepting form fields, query parameters or any user supplied text.
+- Internally uses `core.unicode_processor.UnicodeProcessor` for thorough text cleaning.
 
 ### SecureFileValidator
 - **Purpose**: Safely decode base64 uploads, enforce filename rules and parse CSV/JSON/XLSX files.
@@ -44,3 +45,9 @@ This dashboard includes several validators that sanitize input and uploaded data
 - **CSV upload**: `SecureFileValidator` to parse the file, then `DataFrameSecurityValidator` before analysis.
 - **Displaying comments**: `InputValidator` when accepting the comment and `XSSPrevention` when rendering it.
 
+
+Example usage of the processor:
+```python
+from core.unicode_processor import UnicodeProcessor
+cleaned = UnicodeProcessor.safe_encode_text(user_input)
+```
