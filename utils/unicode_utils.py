@@ -79,7 +79,15 @@ class UnicodeProcessor:
             for col in df_clean.columns:
                 safe_col = UnicodeProcessor.safe_encode_text(col)
                 safe_col = re.sub(r"^[=+\-@]+", "", safe_col)
-                new_columns.append(safe_col or f"col_{len(new_columns)}")
+                safe_col = safe_col or f"col_{len(new_columns)}"
+
+                base_name = safe_col
+                counter = 1
+                while safe_col in new_columns:
+                    safe_col = f"{base_name}_{counter}"
+                    counter += 1
+
+                new_columns.append(safe_col)
 
             df_clean.columns = new_columns
 
