@@ -8,6 +8,7 @@ import pandas as pd
 from services.analytics_summary import summarize_dataframe, generate_basic_analytics
 from services.chunked_analysis import analyze_with_chunking
 from services.data_validation import DataValidationService
+from ..upload_processing import UploadAnalyticsProcessor as _UploadAnalyticsProcessor
 
 
 def summarize_dataframes(dfs: List[pd.DataFrame]) -> Dict[str, Any]:
@@ -25,4 +26,12 @@ def run_anomaly_detection(df: pd.DataFrame, validator: DataValidationService) ->
     return analyze_with_chunking(df, validator, ["anomaly"])
 
 
-__all__ = ["summarize_dataframes", "run_anomaly_detection"]
+class UploadAnalyticsProcessor(_UploadAnalyticsProcessor):
+    """Alias for :class:`services.upload_processing.UploadAnalyticsProcessor`."""
+
+
+__all__ = [
+    "summarize_dataframes",
+    "run_anomaly_detection",
+    "UploadAnalyticsProcessor",
+]
