@@ -1,16 +1,13 @@
 import pandas as pd
 from analytics.upload_processor import UploadAnalyticsProcessor
-from services.file_processing_service import FileProcessingService
 
 from services.data_validation import DataValidationService
 from services.data_processing.processor import Processor
-from services.data_processing.unified_file_validator import UnifiedFileValidator
 
 def _make_processor():
     vs = DataValidationService()
     dls = Processor(validator=vs)
-    handler = UnifiedFileValidator()
-    return UploadAnalyticsProcessor(fps, vs, dls, handler)
+    return UploadAnalyticsProcessor(vs, dls)
 
 def test_direct_processing_helper(tmp_path):
     df1 = pd.DataFrame(

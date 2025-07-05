@@ -7,7 +7,7 @@ from services.data_enhancer import (
     apply_fuzzy_column_matching,
 )
 from services.data_validation import DataValidationService
-from services.upload_service import process_uploaded_file
+from services.data_processing.file_processor import process_uploaded_file
 from config.dynamic_config import dynamic_config
 
 
