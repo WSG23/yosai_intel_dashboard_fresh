@@ -152,7 +152,16 @@ following steps:
    ```bash
    pip install -r requirements.txt  # or ./scripts/setup.sh
    ```
-5. If you accidentally open the app with `https://` instead of `http://`,
+5. If Dash packages behave unexpectedly, reinstall them with pinned versions:
+   ```bash
+   pip uninstall -y dash dash-leaflet dash-extensions dash-bootstrap-components
+   pip install dash==2.14.1
+   pip install dash-bootstrap-components==1.6.0
+   pip install dash-extensions==1.0.4
+   pip install dash-leaflet==0.1.28
+   pip install -r requirements.txt
+   ```
+6. If you accidentally open the app with `https://` instead of `http://`,
    your browser may cache a service worker or enforce HSTS, preventing the
    plain HTTP version from loading. Use the browser's development settings to
    clear site data, including service workers and caches, and remove any HSTS
@@ -244,7 +253,8 @@ dashboard. Key entry points include `tests/test_integration.py`,
 **Note:** The file upload and column mapping functionality relies on `pandas`.
 If `pandas` is missing these pages will be disabled. Ensure you run
 `pip install -r requirements.txt` to install all dependencies.
-`PerformanceMonitor` also requires `psutil` for CPU and memory metrics.
+`PerformanceMonitor` requires `psutil` for CPU and memory metrics, and the
+file processing utilities depend on `chardet` to detect text encoding.
 
 ## 🔧 Configuration
 
