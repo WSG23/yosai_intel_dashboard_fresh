@@ -2,3 +2,17 @@
 python_version = "3.11"
 explicit_package_bases = true
 mypy_path = ["."]
+
+[tool.isort]
+profile = "black"
+known_first_party = [
+    "core",
+    "models",
+    "services",
+    "analytics",
+    "analyzers",
+    "components",
+    "pages",
+    "utils",
+]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]

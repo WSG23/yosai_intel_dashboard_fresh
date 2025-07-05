@@ -21,8 +21,11 @@ After installing the dependencies you can run the tests and code quality checks:
 pytest
 mypy --strict .
 flake8 .
+isort --check .
 black --check .
 bandit -r .
 ```
+
+Run `isort .` to automatically sort imports before committing changes.
 
 Please ensure tests and linters pass before opening a pull request.
