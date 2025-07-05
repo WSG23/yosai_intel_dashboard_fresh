@@ -6,6 +6,8 @@ from typing import Any, Dict, Coroutine, Callable, Awaitable
 
 # Simple in-memory async task tracker
 _tasks: Dict[str, Dict[str, Any]] = {}
+# Lock guarding access to the task dictionary
+_lock = threading.Lock()
 
 # Background event loop running in a dedicated thread
 _loop = asyncio.new_event_loop()
@@ -25,11 +27,13 @@ def create_task(
     """
     
     task_id = str(uuid.uuid4())
-    _tasks[task_id] = {"progress": 0, "result": None, "done": False}
+    with _lock:
+        _tasks[task_id] = {"progress": 0, "result": None, "done": False}
 
     def _update(pct: int) -> None:
         pct = max(0, min(100, int(pct)))
-        _tasks[task_id]["progress"] = pct
+        with _lock:
+            _tasks[task_id]["progress"] = pct
 
     async def _runner() -> None:
         try:
@@ -39,12 +43,15 @@ def create_task(
                 coro = func(_update)
             result = await coro
 
-            _tasks[task_id]["result"] = result
+            with _lock:
+                _tasks[task_id]["result"] = result
         except Exception as exc:  # pragma: no cover - best effort
-            _tasks[task_id]["result"] = exc
+            with _lock:
+                _tasks[task_id]["result"] = exc
         finally:
-            _tasks[task_id]["progress"] = 100
-            _tasks[task_id]["done"] = True
+            with _lock:
+                _tasks[task_id]["progress"] = 100
+                _tasks[task_id]["done"] = True
 
     _loop.call_soon_threadsafe(_loop.create_task, _runner())
     return task_id
@@ -52,12 +59,14 @@ def create_task(
 
 def get_status(task_id: str) -> Dict[str, Any]:
     """Return the status dictionary for ``task_id``."""
-    status = _tasks.get(task_id)
-    if status is None:
-        return {"progress": 100, "result": None, "done": True}
-    return dict(status)
+    with _lock:
+        status = _tasks.get(task_id)
+        if status is None:
+            return {"progress": 100, "result": None, "done": True}
+        return dict(status)
 
 
 def clear_task(task_id: str) -> None:
     """Remove completed task from the registry."""
-    _tasks.pop(task_id, None)
+    with _lock:
+        _tasks.pop(task_id, None)
