@@ -12,6 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
+import base64
+import re
 
 from config.dynamic_config import dynamic_config
 
@@ -29,6 +31,8 @@ class InputValidator:
 
     def __init__(self, max_size_mb: Optional[int] = None) -> None:
         self.max_size_mb = max_size_mb or dynamic_config.security.max_upload_mb
+
+    _DATA_URI_RE = re.compile(r"^data:.*;base64,", re.IGNORECASE)
 
     def validate_file_upload(self, file_obj: Any) -> ValidationResult:
         """Validate an uploaded file-like object.
@@ -59,20 +63,32 @@ class InputValidator:
         except Exception:
             pass
 
-        # If it's a path on disk
+        # If it's a path on disk or base64 encoded string
         if isinstance(file_obj, (str, Path)):
-            path = Path(file_obj)
-            if not path.exists():
-                return ValidationResult(False, "File not found")
-            size_mb = path.stat().st_size / (1024 * 1024)
-            if size_mb == 0:
-                return ValidationResult(False, "File is empty")
-            if size_mb > self.max_size_mb:
-                return ValidationResult(
-                    False,
-                    f"File too large: {size_mb:.1f}MB > {self.max_size_mb}MB",
-                )
-            return ValidationResult(True, "ok")
+            text = str(file_obj)
+            if self._DATA_URI_RE.match(text):
+                try:
+                    _, b64 = text.split(',', 1)
+                    decoded = base64.b64decode(b64)
+                except Exception:
+                    return ValidationResult(False, "Invalid base64 contents")
+                return self.validate_file_upload(decoded)
+
+            if isinstance(file_obj, Path) or Path(text).exists():
+                path = Path(file_obj)
+                if not path.exists():
+                    return ValidationResult(False, "File not found")
+                size_mb = path.stat().st_size / (1024 * 1024)
+                if size_mb == 0:
+                    return ValidationResult(False, "File is empty")
+                if size_mb > self.max_size_mb:
+                    return ValidationResult(
+                        False,
+                        f"File too large: {size_mb:.1f}MB > {self.max_size_mb}MB",
+                    )
+                return ValidationResult(True, "ok")
+
+            return ValidationResult(False, "File not found")
 
         # Raw bytes
         if isinstance(file_obj, (bytes, bytearray)):

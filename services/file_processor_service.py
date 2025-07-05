@@ -6,6 +6,8 @@ import pandas as pd
 import io
 import json
 import logging
+import csv
+import chardet
 from typing import Dict, Any, List
 from pathlib import Path
 
@@ -115,25 +117,34 @@ class FileProcessorService(BaseService):
         else:
             text_content = self._decode_with_fallback(content)
 
-        delimiters = [",", ";", "\t", "|"]
-
-        for delim in delimiters:
-            try:
-                df = pd.read_csv(io.StringIO(text_content), sep=delim, **self.CSV_OPTIONS)
-                if len(df.columns) > 1 or (len(df.columns) == 1 and len(df) > 0):
-                    logger.debug("Successfully parsed CSV with delimiter '%s'", delim)
-                    return sanitize_data_frame(df)
-            except Exception as exc:
-                logger.debug("Failed to parse with delimiter '%s': %s", delim, exc)
-                continue
+        sample = "\n".join(text_content.splitlines()[:20])
+        delimiter = ","
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=[",", ";", "\t", "|"])
+            delimiter = dialect.delimiter
+        except Exception:
+            logger.debug("CSV sniffer failed, falling back to manual detection")
 
         try:
-            df = pd.read_csv(
-                io.StringIO(text_content),
-                engine="python",
-                sep=None,
-                **self.CSV_OPTIONS,
-            )
+            if len(content) > 10 * 1024 * 1024:
+                reader = pd.read_csv(
+                    io.StringIO(text_content),
+                    sep=delimiter,
+                    chunksize=100000,
+                    **self.CSV_OPTIONS,
+                )
+                df = pd.concat(reader, ignore_index=True)
+            else:
+                df = pd.read_csv(io.StringIO(text_content), sep=delimiter, **self.CSV_OPTIONS)
+            if len(df.columns) <= 1:
+                df_alt = pd.read_csv(
+                    io.StringIO(text_content),
+                    engine="python",
+                    sep=None,
+                    **self.CSV_OPTIONS,
+                )
+                if len(df_alt.columns) > len(df.columns):
+                    df = df_alt
             return sanitize_data_frame(df)
         except Exception as exc:
             raise ValueError(f"Could not parse CSV file: {exc}")
@@ -168,6 +179,17 @@ class FileProcessorService(BaseService):
 
     def _decode_with_fallback(self, content: bytes) -> str:
         """Decode bytes using multiple encodings with basic heuristics."""
+        detected = chardet.detect(content)
+        encoding = detected.get("encoding")
+        if encoding:
+            try:
+                text = safe_decode_with_unicode_handling(content, encoding)
+                if self._is_reasonable_text(text):
+                    logger.debug("Decoded content using detected %s", encoding)
+                    return text
+            except Exception:
+                pass
+
         for enc in self.ENCODING_PRIORITY:
             try:
                 text = safe_decode_with_unicode_handling(content, enc)

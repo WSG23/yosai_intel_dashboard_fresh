@@ -67,6 +67,7 @@ class UnicodeProcessor:
                 return ""
 
         try:
+            text = text.encode("utf-16", "surrogatepass").decode("utf-16")
             text = unicodedata.normalize("NFKC", text)
         except Exception as exc:  # pragma: no cover - defensive
             logger.warning("Unicode normalization failed: %s", exc)

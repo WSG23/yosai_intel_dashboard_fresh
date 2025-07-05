@@ -1,29 +1,25 @@
 import logging
-from typing import Callable, List, Any
+from typing import Callable, Any
+
+from core.callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
 
 logger = logging.getLogger(__name__)
 
 class ProgressEventManager:
-    """Lightweight manager for upload progress events."""
+    """Wrapper around :class:`CallbackManager` for upload progress."""
 
-    def __init__(self) -> None:
-        self._callbacks: List[Callable[[str, int], Any]] = []
+    def __init__(self, manager: CallbackManager | None = None) -> None:
+        self._manager = manager or CallbackManager()
 
     def register(self, callback: Callable[[str, int], Any]) -> None:
-        """Register a progress callback."""
-        self._callbacks.append(callback)
+        self._manager.register_callback(CallbackEvent.ANALYSIS_PROGRESS, callback)
 
     def unregister(self, callback: Callable[[str, int], Any]) -> None:
-        """Unregister a callback."""
-        self._callbacks = [cb for cb in self._callbacks if cb != callback]
+        self._manager.unregister_callback(CallbackEvent.ANALYSIS_PROGRESS, callback)
 
     def emit(self, filename: str, progress: int) -> None:
-        """Emit a progress update to all callbacks."""
-        for cb in list(self._callbacks):
-            try:
-                cb(filename, progress)
-            except Exception as exc:  # pragma: no cover - best effort
-                logger.warning("Progress callback failed: %s", exc)
+        self._manager.trigger(CallbackEvent.ANALYSIS_PROGRESS, filename, progress)
 
 progress_manager = ProgressEventManager()
 
