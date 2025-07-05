@@ -75,6 +75,7 @@ class PluginServiceLocator:
         """Return the unified Unicode handler module."""
         from utils import unicode_utils
 
+
         return unicode_utils
 
 

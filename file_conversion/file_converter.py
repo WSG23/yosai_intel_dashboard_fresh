@@ -8,7 +8,7 @@ from typing import Tuple
 
 import pandas as pd
 
-from .unicode_handler import UnicodeCleaner
+from utils.unicode_utils import sanitize_dataframe
 
 _logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class FileConverter:
             if not pkl_path.exists():
                 return False, f"Pickle file not found: {pkl_path}"
             df = pd.read_pickle(pkl_path)
-            df = UnicodeCleaner.clean_dataframe(df)
+            df = sanitize_dataframe(df)
             parquet_path.parent.mkdir(parents=True, exist_ok=True)
             df.to_parquet(parquet_path, index=False)
             return True, f"Converted {pkl_path} to {parquet_path}"
