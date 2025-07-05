@@ -3,7 +3,7 @@ from services.upload_processing import UploadAnalyticsProcessor
 from services.file_processing_service import FileProcessingService
 from services.data_validation import DataValidationService
 from services.data_processing.processor import Processor
-from services.input_validator import InputValidator
+from services.unified_file_validator import UnifiedFileValidator
 
 
 
@@ -11,8 +11,8 @@ def _make_processor():
     fps = FileProcessingService()
     vs = DataValidationService()
     dls = Processor(validator=vs)
-    iv = InputValidator()
-    return UploadAnalyticsProcessor(fps, vs, dls, iv)
+    handler = UnifiedFileValidator()
+    return UploadAnalyticsProcessor(fps, vs, dls, handler)
 
 
 
