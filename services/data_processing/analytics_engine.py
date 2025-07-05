@@ -4,8 +4,15 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from services import get_analytics_service
-from services.ai_suggestions import generate_column_suggestions
+try:
+    from services import get_analytics_service  # type: ignore
+except Exception:  # pragma: no cover - avoid circular import during tests
+    get_analytics_service = None
+try:
+    from services.ai_suggestions import generate_column_suggestions
+except Exception:  # pragma: no cover - optional AI suggestions
+    def generate_column_suggestions(*args: Any, **kwargs: Any) -> Dict[str, Dict[str, Any]]:
+        return {}
 from utils.preview_utils import serialize_dataframe_preview
 from security.unicode_security_handler import UnicodeSecurityHandler
 

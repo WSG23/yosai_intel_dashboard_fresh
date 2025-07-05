@@ -10,10 +10,6 @@ import pandas as pd
 from plugins.service_locator import PluginServiceLocator
 from services.data_enhancer import get_ai_column_suggestions
 
-_unicode = PluginServiceLocator.get_unicode_handler()
-sanitize_dataframe = _unicode.sanitize_dataframe
-clean_unicode_text = _unicode.clean_unicode_text
-
 
 logger = logging.getLogger(__name__)
 
@@ -68,16 +64,6 @@ class ComponentPluginAdapter:
                 logger.warning("Saving verified mappings failed: %s", exc)
         return False
 
-    # ------------------------------------------------------------------
-    # Unicode helpers - thin wrappers around :mod:`unicode_handler`
-    # ------------------------------------------------------------------
-    @staticmethod
-    def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-        return sanitize_dataframe(df)
-
-    @staticmethod
-    def clean_text(text: str) -> str:
-        return clean_unicode_text(text)
 
 
 __all__ = ["ComponentPluginAdapter"]

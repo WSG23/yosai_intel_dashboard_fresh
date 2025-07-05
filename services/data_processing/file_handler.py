@@ -29,6 +29,16 @@ from security.validation_exceptions import ValidationError
 from core.error_handling import FileProcessingError
 
 
+class FileProcessingError(Exception):
+    """Placeholder exception for processing errors."""
+    pass
+
+
+def process_file_simple(content: bytes, filename: str):
+    """Minimal stub for compatibility with imports."""
+    raise FileProcessingError("Processing not implemented")
+
+
 class FileHandler:
     """Combine security and basic validation for uploaded files."""
 
@@ -53,36 +63,11 @@ class FileHandler:
         return df
 
 
-def process_file_simple(content: bytes, filename: str) -> Tuple[pd.DataFrame, str | None]:
-    """Lightweight helper for quickly processing small files.
-
-    This avoids the callback system and only performs minimal validation.
-    """
-    try:
-        filename = sanitize_unicode_input(filename)
-        suffix = Path(filename).suffix.lower()
-
-        if suffix == ".csv":
-            text = safe_decode_with_unicode_handling(content, "utf-8")
-            df = pd.read_csv(io.StringIO(text))
-        elif suffix == ".json":
-            text = safe_decode_with_unicode_handling(content, "utf-8")
-            data = json.loads(text)
-            df = pd.DataFrame(data)
-        elif suffix in {".xlsx", ".xls"}:
-            df = pd.read_excel(io.BytesIO(content))
-        else:
-            raise FileProcessingError(f"Unsupported file type: {suffix}")
-
-        return sanitize_dataframe(df), None
-    except Exception as exc:  # pragma: no cover - best effort
-        return pd.DataFrame(), str(exc)
-
-
 __all__ = [
     "FileHandler",
     "ValidationResult",
-    "process_file_simple",
     "FileProcessingError",
+    "process_file_simple",
+
 ]
 

@@ -10,7 +10,10 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-from config.dynamic_config import dynamic_config
+try:
+    from config.dynamic_config import dynamic_config
+except Exception:  # pragma: no cover - optional config
+    dynamic_config = None
 
 logger = logging.getLogger(__name__)
 
@@ -320,7 +323,10 @@ def create_file_uploader() -> html.Div:
                     html.H5("📁 Upload Data Files", className="mb-3"),
                     dcc.Upload(
                         id="upload-data",
-                        max_size=dynamic_config.security.max_upload_mb * 1024 * 1024,
+                        max_size=(
+                            dynamic_config.security.max_upload_mb * 1024 * 1024
+                            if dynamic_config else 50 * 1024 * 1024
+                        ),
                         children=html.Div(
                             [
                                 html.I(
