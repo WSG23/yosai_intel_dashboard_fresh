@@ -18,7 +18,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # Add this import
-from services import AnalyticsService, get_analytics_service
+from services import AnalyticsService
 from utils.unicode_utils import sanitize_unicode_input, safe_format_number
 from utils.preview_utils import serialize_dataframe_preview
 from security.unicode_security_handler import UnicodeSecurityHandler
@@ -26,44 +26,26 @@ from security.unicode_security_handler import UnicodeSecurityHandler
 # Internal service imports with CORRECTED paths
 ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
 
-from services.ai_suggestions import generate_column_suggestions
-from services.analytics_processing import (
-    process_suggests_analysis as service_process_suggests_analysis,
-    create_suggests_display as service_create_suggests_display,
-    process_quality_analysis as service_process_quality_analysis,
-    create_data_quality_display as service_create_data_quality_display,
-    analyze_data_with_service as service_analyze_data_with_service,
-    create_analysis_results_display as service_create_analysis_results_display,
+from services.data_processing.analytics_engine import (
+    AI_SUGGESTIONS_AVAILABLE,
+    get_ai_suggestions_for_file,
+    get_analytics_service_safe,
+    get_data_source_options_safe,
+    get_latest_uploaded_source_value,
+    get_analysis_type_options,
+    clean_analysis_data_unicode,
+    process_suggests_analysis,
+    process_quality_analysis,
+    analyze_data_with_service,
+    process_suggests_analysis_safe,
+    process_quality_analysis_safe,
+    analyze_data_with_service_safe,
 )
 
 
+# AI_SUGGESTIONS_AVAILABLE constant and helper functions are provided by
+# ``services.data_processing.analytics_engine``
 
-def get_ai_suggestions_for_file(
-    df: pd.DataFrame, filename: str
-) -> Dict[str, Dict[str, Any]]:
-    """Return AI column suggestions for ``df`` columns."""
-    try:
-        return get_ai_column_suggestions(list(df.columns))
-    except Exception:
-        suggestions: Dict[str, Dict[str, Any]] = {}
-        for col in df.columns:
-            col_lower = col.lower().strip()
-            if any(word in col_lower for word in ["time", "date", "stamp"]):
-                suggestions[col] = {"field": "timestamp", "confidence": 0.8}
-            elif any(word in col_lower for word in ["person", "user", "employee"]):
-                suggestions[col] = {"field": "person_id", "confidence": 0.7}
-            elif any(word in col_lower for word in ["door", "location", "device"]):
-                suggestions[col] = {"field": "door_id", "confidence": 0.7}
-            elif any(word in col_lower for word in ["access", "result", "status"]):
-                suggestions[col] = {"field": "access_result", "confidence": 0.6}
-            elif any(word in col_lower for word in ["token", "badge", "card"]):
-                suggestions[col] = {"field": "token_id", "confidence": 0.6}
-            else:
-                suggestions[col] = {"field": "", "confidence": 0.0}
-        return suggestions
-
-
-AI_SUGGESTIONS_AVAILABLE = True
 
 # Logger setup
 logger = logging.getLogger(__name__)
@@ -87,103 +69,13 @@ def _get_display_title(analysis_type: str) -> str:
 # =============================================================================
 
 
-def get_analytics_service_safe():
-    """Safely return the shared analytics service instance."""
-    if get_analytics_service is None:
-        return None
-    try:
-        return get_analytics_service()
-    except Exception as e:
-        logger.exception("Failed to initialize AnalyticsService: %s", e)
-        return None
 
-
-def get_data_source_options_safe():
-    """Get data source options without Unicode issues"""
-    options = []
-    try:
-        from pages.file_upload import get_uploaded_data
-
-        uploaded_files = get_uploaded_data()
-        if uploaded_files:
-            for filename in uploaded_files.keys():
-                options.append(
-                    {"label": f"File: {filename}", "value": f"upload:{filename}"}
-                )
-    except ImportError:
-        pass
-    try:
-        service = get_analytics_service_safe()
-        if service:
-            service_sources = service.get_data_source_options()
-            for source_dict in service_sources:
-                if isinstance(source_dict, dict):
-                    label = source_dict.get("label", "Unknown")
-                    value = source_dict.get("value", "unknown")
-                else:
-                    # Backwards compatibility if service returns strings
-                    label = str(source_dict)
-                    value = str(source_dict)
-                options.append(
-                    {"label": f"Service: {label}", "value": f"service:{value}"}
-                )
-    except Exception as e:
-        logger.exception("Error getting service data sources: %s", e)
-    if not options:
-        options.append(
-            {"label": "No data sources available - Upload files first", "value": "none"}
-        )
-    return options
-
-
-def get_latest_uploaded_source_value() -> Optional[str]:
-    """Return dropdown value for the most recently uploaded file"""
-    try:
-        from pages.file_upload import get_uploaded_filenames
-
-        filenames = get_uploaded_filenames()
-        if filenames:
-            # Use the last filename in the list which represents the
-            # most recently uploaded file because the underlying store
-            # preserves insertion order.
-            return f"upload:{filenames[-1]}"
-    except ImportError as e:
-        logger.error("File upload utilities missing: %s", e)
-    except Exception as e:
-        logger.exception("Failed to get latest uploaded source value: %s", e)
-    return None
-
-
-def get_analysis_type_options() -> List[Dict[str, str]]:
-    """Get available analysis types including suggests analysis"""
-    return [
-        {"label": "🔒 Security Patterns", "value": "security"},
-        {"label": "📈 Access Trends", "value": "trends"},
-        {"label": "👤 User Behavior", "value": "behavior"},
-        {"label": "🚨 Anomaly Detection", "value": "anomaly"},
-        {"label": "🤖 AI Column Suggestions", "value": "suggests"},
-        {"label": "📊 Data Quality", "value": "quality"},
-    ]
-
-
-def clean_analysis_data_unicode(df: pd.DataFrame) -> pd.DataFrame:
-    """Return DataFrame sanitized for Unicode issues."""
-    try:
-        return UnicodeSecurityHandler.sanitize_dataframe(df)
-    except Exception as e:
-        logger.exception("Unicode sanitization failed: %s", e)
-        return df
 
 
 # =============================================================================
 # SECTION 3: SUGGESTS ANALYSIS PROCESSOR
 # Add this new function to handle suggests display
 # =============================================================================
-
-
-def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
-    """Process AI suggestions analysis via service layer."""
-    return service_process_suggests_analysis(data_source)
 
 
 # =============================================================================
@@ -349,12 +241,7 @@ def get_initial_message():
 # =============================================================================
 # SECTION 7: HELPER DISPLAY FUNCTIONS
 # Add these helper functions for non-suggests analysis types
-# =============================================================================
-
-
-def analyze_data_with_service(data_source: str, analysis_type: str) -> Dict[str, Any]:
-    """Generate analysis using the analytics service with chunked processing."""
-    return service_analyze_data_with_service(data_source, analysis_type)
+# ============================================================================
 
 
 def create_data_quality_display_corrected(
@@ -452,12 +339,6 @@ def create_data_quality_display_corrected(
     except Exception as e:
         logger.exception("Quality analysis display error: %s", e)
         return dbc.Alert(f"Quality analysis error: {str(e)}", color="danger")
-
-
-def process_quality_analysis(data_source: str) -> Dict[str, Any]:
-    """Basic processing for data quality analysis via service layer."""
-    return service_process_quality_analysis(data_source)
-
 
 # Helper extraction functions for results processing
 def _extract_counts(results: Dict[str, Any]) -> Dict[str, int | float]:
@@ -653,111 +534,7 @@ def get_initial_message_safe():
     )
 
 
-def process_suggests_analysis_safe(data_source):
-    """Safe AI suggestions analysis"""
-    try:
-        if data_source.startswith("upload:") or data_source == "service:uploaded":
-            from pages.file_upload import get_uploaded_data
 
-            uploaded_files = get_uploaded_data()
-            if not uploaded_files:
-                return {"error": "No uploaded files found"}
-            filename = (
-                data_source.replace("upload:", "")
-                if data_source.startswith("upload:")
-                else list(uploaded_files.keys())[0]
-            )
-            df = uploaded_files.get(filename)
-            if df is None:
-                return {"error": f"File {filename} not found"}
-            suggestions = {}
-            for col in df.columns:
-                col_lower = str(col).lower().strip()
-                if any(word in col_lower for word in ["time", "date", "stamp"]):
-                    suggestions[col] = {"field": "timestamp", "confidence": 0.8}
-                elif any(word in col_lower for word in ["person", "user", "employee"]):
-                    suggestions[col] = {"field": "person_id", "confidence": 0.7}
-                elif any(word in col_lower for word in ["door", "location", "device"]):
-                    suggestions[col] = {"field": "door_id", "confidence": 0.7}
-                else:
-                    suggestions[col] = {"field": "other", "confidence": 0.5}
-            return {
-                "analysis_type": "AI Column Suggestions",
-                "filename": filename,
-                "suggestions": suggestions,
-                "total_columns": len(df.columns),
-                "total_rows": len(df),
-            }
-        return {"error": "AI suggestions only available for uploaded files"}
-    except Exception as e:
-        logger.exception("AI analysis error: %s", e)
-        return {"error": f"AI analysis error: {str(e)}"}
-
-
-def process_quality_analysis_safe(data_source):
-    """Safe data quality analysis"""
-    try:
-        if data_source.startswith("upload:") or data_source == "service:uploaded":
-            from pages.file_upload import get_uploaded_data
-
-            uploaded_files = get_uploaded_data()
-            if not uploaded_files:
-                return {"error": "No uploaded files found"}
-            filename = (
-                data_source.replace("upload:", "")
-                if data_source.startswith("upload:")
-                else list(uploaded_files.keys())[0]
-            )
-            df = uploaded_files.get(filename)
-            if df is None:
-                return {"error": f"File {filename} not found"}
-            total_rows = len(df)
-            total_cols = len(df.columns)
-            missing_values = df.isnull().sum().sum()
-            duplicate_rows = df.duplicated().sum()
-            quality_score = max(
-                0, 100 - (missing_values + duplicate_rows) / total_rows * 100
-            )
-            return {
-                "analysis_type": "Data Quality",
-                "filename": filename,
-                "total_rows": total_rows,
-                "total_columns": total_cols,
-                "missing_values": int(missing_values),
-                "duplicate_rows": int(duplicate_rows),
-                "quality_score": round(quality_score, 1),
-            }
-        return {"error": "Data quality analysis only available for uploaded files"}
-    except Exception as e:
-        logger.exception("Quality analysis error: %s", e)
-        return {"error": f"Quality analysis error: {str(e)}"}
-
-
-def analyze_data_with_service_safe(data_source, analysis_type):
-    """Safe service-based analysis"""
-    try:
-        service = get_analytics_service_safe()
-        if not service:
-            return {"error": "Analytics service not available"}
-        source_name = (
-            data_source.replace("service:", "")
-            if data_source.startswith("service:")
-            else "uploaded"
-        )
-        analytics_results = service.get_analytics_by_source(source_name)
-        if analytics_results.get("status") == "error":
-            return {"error": analytics_results.get("message", "Unknown error")}
-        return {
-            "analysis_type": analysis_type.title(),
-            "data_source": data_source,
-            "total_events": analytics_results.get("total_events", 0),
-            "unique_users": analytics_results.get("unique_users", 0),
-            "success_rate": analytics_results.get("success_rate", 0),
-            "status": "completed",
-        }
-    except Exception as e:
-        logger.exception("Service analysis failed: %s", e)
-        return {"error": f"Service analysis failed: {str(e)}"}
 
 
 def create_analysis_results_display_safe(results, analysis_type):

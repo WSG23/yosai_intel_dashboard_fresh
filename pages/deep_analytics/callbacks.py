@@ -10,14 +10,16 @@ import logging
 logger = logging.getLogger(__name__)
 import dash_bootstrap_components as dbc
 from .analysis import (
+    create_analysis_results_display,
+    create_analysis_results_display_safe,
+    get_initial_message_safe,
+)
+from services.data_processing.analytics_engine import (
     process_suggests_analysis_safe,
     process_quality_analysis_safe,
     analyze_data_with_service,
-    get_initial_message_safe,
     get_data_source_options_safe,
     get_analytics_service_safe,
-    create_analysis_results_display,
-    create_analysis_results_display_safe,
     AI_SUGGESTIONS_AVAILABLE,
 )
 
