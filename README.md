@@ -389,6 +389,32 @@ The new `ConfigManager` provides the combined functionality of the deprecated
 files while maintaining backwards compatible helper functions like
 `get_app_config()` and `get_database_config()`.
 
+## 🔄 Migration Guide
+
+The dashboard now centralizes Unicode handling in `core.unicode`.
+Detect legacy usage and migrate with the helper tools:
+
+```bash
+python tools/migration_detector.py --scan .
+python tools/migration_validator.py
+```
+
+See [docs/migration_guide.md](docs/migration_guide.md) for step-by-step
+instructions and benefits of the new processors.
+
+## 📊 Plugin Performance Monitoring
+
+Use `EnhancedThreadSafePluginManager` to track plugin load times and
+resource usage:
+
+```python
+from core.plugins.performance_manager import EnhancedThreadSafePluginManager
+manager = EnhancedThreadSafePluginManager(container, config)
+data = manager.get_plugin_performance_metrics()
+```
+
+The `/api/v1/plugins/performance` endpoint exposes metrics for dashboards.
+
 ## 📊 Modular Components
 
 ### Database Layer (`config/`)

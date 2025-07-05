@@ -60,6 +60,10 @@ monitoring:
   metrics_enabled: true
   health_check_interval_seconds: ${HEALTH_CHECK_INTERVAL:30}
   performance_monitoring: ${ENABLE_PERFORMANCE_MONITORING:true}
+  plugin_performance:
+    thresholds:
+      load_time_ms: 1000
+      memory_usage_mb: 100
   error_reporting_enabled: ${ENABLE_ERROR_REPORTING:true}
   sentry_dsn: ${SENTRY_DSN}
   log_retention_days: ${LOG_RETENTION_DAYS:90}

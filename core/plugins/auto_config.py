@@ -79,7 +79,8 @@ class PluginAutoConfiguration:
             plugin_health,
             methods=["GET"],
         )
-        return {"/health/plugins": plugin_health}
+        self.registry.plugin_manager.register_performance_endpoint(self.app)
+        return {"/health/plugins": plugin_health, "/health/plugins/performance": self.registry.plugin_manager.get_plugin_performance_metrics}
 
 
 def setup_plugins(
