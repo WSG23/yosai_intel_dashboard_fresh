@@ -28,3 +28,4 @@ def sanitize_unicode_input(text: Any, replacement: str = "\uFFFD") -> str:
 
 
 __all__ = ["sanitize_unicode_input"]
+

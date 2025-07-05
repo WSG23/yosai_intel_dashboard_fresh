@@ -9,34 +9,14 @@ import time
 from unittest.mock import MagicMock, patch
 from datetime import datetime
 
-# Import your callback system - adjust import path as needed
-try:
-    from services.data_processing.callback_controller import (
-        CallbackController,
-        CallbackEvent,
-        CallbackContext,
-        callback_handler,
-        TemporaryCallback,
-        fire_event,
-    )
-except ImportError:
-    # Fallback for existing system
-    from analytics.analytics_controller import CallbackManager
-    
-    # Create minimal compatibility layer
-    class CallbackEvent:
-        FILE_PROCESSING_START = "file_processing_start"
-        FILE_PROCESSING_COMPLETE = "file_processing_complete"
-        ANALYSIS_START = "analysis_start"
-    
-    class CallbackContext:
-        def __init__(self, event_type, source_id, data=None):
-            self.event_type = event_type
-            self.source_id = source_id
-            self.data = data or {}
-    
-    # Use existing callback manager
-    CallbackController = CallbackManager
+from core.callback_controller import (
+    CallbackController,
+    CallbackEvent,
+    CallbackContext,
+    callback_handler,
+    TemporaryCallback,
+    fire_event,
+)
 
 
 class TestCallbackController:

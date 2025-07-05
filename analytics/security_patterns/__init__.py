@@ -5,12 +5,15 @@ from .analyzer import (
     create_security_analyzer,
     EnhancedSecurityAnalyzer,
 )
-from services.data_processing.callback_controller import (
+from core.callback_controller import (
     CallbackController as SecurityCallbackController,
-    SecurityEvent,
-    security_callback_controller,
-    emit_security_event,
+    CallbackEvent as SecurityEvent,
+    get_callback_controller,
+    fire_event,
 )
+
+security_callback_controller = get_callback_controller()
+emit_security_event = fire_event
 from .data_prep import prepare_security_data
 from .statistical_detection import (
     detect_failure_rate_anomalies,

@@ -19,7 +19,7 @@ def create_app(mode: str | None = None):
     return _create_app(mode)
 
 
-from .unicode_utils import sanitize_unicode_input
+from utils.unicode_utils import sanitize_unicode_input
 from .truly_unified_callbacks import TrulyUnifiedCallbacks
 
 __all__ = ["create_app", "profile_callback", "sanitize_unicode_input", "TrulyUnifiedCallbacks"]
