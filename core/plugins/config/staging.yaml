@@ -78,8 +78,8 @@ security:
   # CORS Configuration
   cors_enabled: ${CORS_ENABLED:true}
   cors_origins:
-    - ${FRONTEND_URL:https://staging-dashboard.yourdomain.com}
-    - ${ADDITIONAL_CORS_ORIGIN:https://staging-admin.yourdomain.com}
+    - ${FRONTEND_URL}
+    - ${ADDITIONAL_CORS_ORIGIN}
   cors_methods:
     - GET
     - POST

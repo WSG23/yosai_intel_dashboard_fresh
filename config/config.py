@@ -18,6 +18,14 @@ from core.exceptions import ConfigurationError
 logger = logging.getLogger(__name__)
 
 
+def _validate_production_secrets() -> None:
+    """Ensure required secrets are set when running in production."""
+    if os.getenv("YOSAI_ENV") == "production":
+        secret = os.getenv("SECRET_KEY")
+        if not secret:
+            raise ConfigurationError("SECRET_KEY required in production")
+
+
 @dataclass
 class AppConfig:
     """Application configuration"""
@@ -157,6 +165,7 @@ class ConfigManager:
     def _load_config(self) -> None:
         """Load configuration from YAML file and environment"""
         self.config.environment = get_environment()
+        _validate_production_secrets()
         # Load from YAML file
         yaml_config = self._load_yaml_config()
 
