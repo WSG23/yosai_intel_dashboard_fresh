@@ -16,7 +16,7 @@ from .result_formatting import (
     regular_analysis,
 )
 from .registry import get_service
-from .upload_processing import UploadAnalyticsProcessor
+from .analytics.upload_analytics import UploadAnalyticsProcessor
 from .db_analytics_helper import DatabaseAnalyticsHelper
 from .summary_reporting import SummaryReporter
 from .data_processing.unified_file_validator import UnifiedFileValidator

@@ -2,7 +2,7 @@ import base64
 import importlib
 
 from config import dynamic_config as dyn_module
-from services import upload_service as upload_module
+from services.data_processing import file_processor as upload_module
 
 
 def test_env_max_upload_limit(monkeypatch):

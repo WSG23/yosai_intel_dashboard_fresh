@@ -3,6 +3,7 @@ from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.data_loading_service import DataLoadingService
 from services.data_validation import DataValidationService
 
+
 def _make_processor():
     from flask import Flask
     from core.cache import cache
@@ -11,6 +12,7 @@ def _make_processor():
 
     vs = DataValidationService()
     dls = DataLoadingService(vs)
+
     return UploadAnalyticsProcessor(vs, dls)
 
 def test_direct_processing_helper(tmp_path):

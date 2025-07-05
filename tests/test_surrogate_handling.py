@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-from utils.file_validator import process_dataframe
+from services.data_processing.unified_file_validator import process_dataframe
 
 
 def test_process_dataframe_csv_with_surrogate(tmp_path):

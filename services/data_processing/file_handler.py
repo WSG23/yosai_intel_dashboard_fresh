@@ -5,7 +5,7 @@ from typing import Any, Optional
 
 import pandas as pd
 
-from utils.file_validator import safe_decode_with_unicode_handling
+from services.data_processing.unified_file_validator import safe_decode_with_unicode_handling
 from security.unicode_security_processor import (
     sanitize_unicode_input,
     sanitize_dataframe,
@@ -22,8 +22,7 @@ from typing import Any, Optional, Tuple
 
 import pandas as pd
 
-from security.file_validator import SecureFileValidator
-from services.input_validator import InputValidator, ValidationResult
+from services.input_validator import ValidationResult
 from services.data_processing.unified_file_validator import UnifiedFileValidator
 from services.data_processing.core.exceptions import (
     FileProcessingError,
@@ -70,9 +69,6 @@ class FileHandler:
 
     def __init__(self, max_size_mb: Optional[int] = None) -> None:
         self.validator = UnifiedFileValidator(max_size_mb)
-        # expose validators for backwards compatibility
-        self.secure_validator = self.validator.secure_validator
-        self.basic_validator = self.validator.basic_validator
 
     def sanitize_filename(self, filename: str) -> str:
         return self.validator.sanitize_filename(filename)
@@ -111,13 +107,7 @@ class FileHandler:
 
     def process_base64_contents(self, contents: str, filename: str) -> pd.DataFrame:
         """Decode ``contents`` and return a validated :class:`~pandas.DataFrame`."""
-        sanitized = self.secure_validator.sanitize_filename(filename)
-        df = self.secure_validator.validate_file_contents(contents, sanitized)
-        result = self.basic_validator.validate_file_upload(df)
-        if not result.valid:
-            raise FileValidationError(result.message)
-
-        return df
+        return self.validator.validate_file(contents, filename)
 
 
 __all__ = [

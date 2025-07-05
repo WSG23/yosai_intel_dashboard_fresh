@@ -9,7 +9,13 @@ from core.callback_manager import CallbackManager
 from config.dynamic_config import dynamic_config
 
 from core.exceptions import ValidationError
-from core.input_validation import InputValidator, Validator
+from core.security import InputValidator
+from typing import Protocol
+
+
+class Validator(Protocol):
+    def validate(self, data: str) -> str:
+        ...
 
 
 class ValidationOrchestrator:
