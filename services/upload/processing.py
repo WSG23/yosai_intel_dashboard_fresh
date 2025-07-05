@@ -6,7 +6,10 @@ from dash import html
 from dash.dash import no_update
 import dash_bootstrap_components as dbc
 
-from services.upload_service import process_uploaded_file, create_file_preview
+from services.data_processing.file_processor import (
+    process_uploaded_file,
+    create_file_preview,
+)
 from services.device_learning_service import get_device_learning_service
 from services.data_enhancer import get_ai_column_suggestions
 from utils.upload_store import UploadedDataStore

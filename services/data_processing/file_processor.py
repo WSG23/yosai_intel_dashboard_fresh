@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, List, Tuple, Dict
+from datetime import datetime
+
+import dash_bootstrap_components as dbc
+from dash import html
+from security.xss_validator import XSSPrevention
 import logging
 
 import pandas as pd
@@ -77,6 +82,28 @@ class FileProcessor:
         logger.info("Processing uploaded contents for %s", filename)
         return self.validator.validate_contents(contents, filename)
 
+    def process_files(self, file_paths: List[str]) -> Tuple[pd.DataFrame, List[str], int, int]:
+        """Load and validate a list of files."""
+        all_data: List[pd.DataFrame] = []
+        info: List[str] = []
+        total_records = 0
+        processed_files = 0
+
+        for path in file_paths:
+            try:
+                df = self.validator.load_dataframe(Path(path))
+                df["source_file"] = path
+                all_data.append(df)
+                total_records += len(df)
+                processed_files += 1
+                info.append(f"✅ {path}: {len(df)} records")
+            except Exception as exc:  # pragma: no cover - best effort
+                info.append(f"❌ {path}: {exc}")
+                logger.error("Exception processing %s: %s", path, exc)
+
+        combined = pd.concat(all_data, ignore_index=True) if all_data else pd.DataFrame()
+        return combined, info, processed_files, total_records
+
     def read_uploaded_file(self, contents: str, filename: str) -> tuple[pd.DataFrame, float]:
         """Decode ``contents`` and return the dataframe and raw size in MB."""
         import base64
@@ -129,4 +156,147 @@ class FileProcessor:
         return {"status": "ok"}
 
 
-__all__ = ["FileProcessor", "UnifiedFileValidator", "process_file_simple", "FileProcessingError"]
+_processor = FileProcessor()
+
+
+def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
+    """Process uploaded file content using the shared processor."""
+    try:
+        df, file_size_mb = _processor.read_uploaded_file(contents, filename)
+
+        if df.empty:
+            return {"success": False, "error": "File contains no data"}
+
+        return {
+            "success": True,
+            "data": df,
+            "rows": len(df),
+            "columns": list(df.columns),
+            "file_size_mb": file_size_mb,
+            "upload_time": datetime.now(),
+        }
+    except Exception as e:  # pragma: no cover - best effort
+        logger.error("Error processing file %s: %s", filename, e)
+        return {"success": False, "error": f"Error processing file: {str(e)}"}
+
+
+def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert:
+    """Create a preview card showing the correct row count."""
+    try:
+        actual_rows, actual_cols = df.shape
+        df = df.head(99)
+        preview_rows = min(5, actual_rows)
+
+        logger.info(
+            "Creating preview for %s: %d rows \u00d7 %d columns",
+            filename,
+            actual_rows,
+            actual_cols,
+        )
+
+        column_info = []
+        for col in df.columns[:10]:
+            dtype = str(df[col].dtype)
+            null_count = df[col].isnull().sum()
+            safe_col = XSSPrevention.sanitize_html_output(str(col))
+            column_info.append(f"{safe_col} ({dtype}) - {null_count} nulls")
+
+        preview_df: pd.DataFrame = df.head(preview_rows).copy()
+        preview_df.columns = [
+            XSSPrevention.sanitize_html_output(str(c)) for c in preview_df.columns
+        ]
+
+        def _sanitize(value: Any) -> str:
+            return XSSPrevention.sanitize_html_output(str(value))
+
+        preview_df = preview_df.map(_sanitize)
+
+        if actual_rows <= 10:
+            status_color = "warning"
+            status_message = f"\u26A0\ufe0f Only {actual_rows} rows found - check if file is complete"
+        else:
+            status_color = "success"
+            status_message = f"\u2705 Successfully loaded {actual_rows:,} rows"
+
+        return dbc.Card(
+            [
+                dbc.CardHeader(
+                    [
+                        html.H6(f"\ud83d\udcc4 {filename}", className="mb-0"),
+                        dbc.Badge(
+                            f"{actual_rows:,} rows total",
+                            color="info",
+                            className="ms-2",
+                        ),
+                    ]
+                ),
+                dbc.CardBody(
+                    [
+                        dbc.Alert(status_message, color=status_color, className="mb-3"),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        html.H6(
+                                            "Processing Statistics:",
+                                            className="text-primary",
+                                        ),
+                                        html.Ul(
+                                            [
+                                                html.Li(f"Total Rows: {actual_rows:,}"),
+                                                html.Li(f"Columns: {actual_cols}"),
+                                                html.Li(
+                                                    f"Memory: {df.memory_usage(deep=True).sum() / (1024 * 1024):,.1f} MB"
+                                                ),
+                                                html.Li("Status: Complete"),
+                                            ]
+                                        ),
+                                    ],
+                                    width=6,
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.H6("Columns:", className="text-primary"),
+                                        html.Ul([html.Li(info) for info in column_info]),
+                                    ],
+                                    width=6,
+                                ),
+                            ]
+                        ),
+                        html.Hr(),
+                        html.H6(
+                            f"Sample Data (first {preview_rows} rows):",
+                            className="text-primary mt-3",
+                        ),
+                        dbc.Table.from_dataframe(
+                            preview_df,
+                            striped=True,
+                            bordered=True,
+                            hover=True,
+                            responsive=True,
+                            size="sm",
+                        ),
+                        dbc.Alert(
+                            f"\ud83d\udcca Processing Summary: {actual_rows:,} rows will be available for analytics. "
+                            f"Above table shows first {preview_rows} rows for preview only.",
+                            color="info",
+                            className="mt-3",
+                        ),
+                    ]
+                ),
+            ],
+            className="mb-3",
+        )
+    except Exception as e:  # pragma: no cover - best effort
+        logger.error("Error creating preview for %s: %s", filename, e)
+        return dbc.Alert(f"Error creating preview: {str(e)}", color="warning")
+
+
+__all__ = [
+    "FileProcessor",
+    "UnifiedFileValidator",
+    "process_file_simple",
+    "FileProcessingError",
+    "process_uploaded_file",
+    "create_file_preview",
+]

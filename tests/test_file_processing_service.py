@@ -1,5 +1,5 @@
 import pandas as pd
-from services.file_processing_service import FileProcessingService
+from services.data_processing.file_processor import FileProcessor
 
 
 def test_process_csv(tmp_path):
@@ -14,7 +14,7 @@ def test_process_csv(tmp_path):
     csv_path = tmp_path / "sample.csv"
     df.to_csv(csv_path, index=False)
 
-    service = FileProcessingService()
+    service = FileProcessor()
     combined, info, processed, total = service.process_files([str(csv_path)])
 
     assert processed == 1
