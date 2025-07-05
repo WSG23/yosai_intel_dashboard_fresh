@@ -76,6 +76,54 @@ class FileProcessor:
         logger.info("Processing uploaded contents for %s", filename)
         return self.validator.validate_contents(contents, filename)
 
+    def read_uploaded_file(self, contents: str, filename: str) -> tuple[pd.DataFrame, float]:
+        """Decode ``contents`` and return the dataframe and raw size in MB."""
+        import base64
+        import io
+        from config.dynamic_config import dynamic_config
+
+        sanitized = self.validator.secure_validator.sanitize_filename(filename)
+        if "," not in contents:
+            raise ValidationError("Invalid upload data")
+        _, content_string = contents.split(",", 1)
+        decoded = base64.b64decode(content_string)
+        file_size_mb = len(decoded) / (1024 * 1024)
+
+        if len(decoded) > dynamic_config.get_max_upload_size_bytes():
+            raise ValidationError(
+                f"File too large: {file_size_mb:.1f}MB exceeds limit of {dynamic_config.get_max_upload_size_mb()}MB"
+            )
+
+        stream = io.BytesIO(decoded)
+        name = sanitized.lower()
+        chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
+
+        if name.endswith(".csv"):
+            chunks = []
+            header = None
+            for chunk in pd.read_csv(stream, chunksize=chunk_size, encoding="utf-8"):
+                if header is None:
+                    header = list(chunk.columns)
+                dup = (chunk.astype(str) == header).all(axis=1)
+                chunk = chunk[~dup]
+                chunks.append(chunk)
+            df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+        elif name.endswith(".json"):
+            try:
+                chunks = []
+                for chunk in pd.read_json(stream, lines=True, chunksize=chunk_size):
+                    chunks.append(chunk)
+                df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+            except ValueError:
+                stream.seek(0)
+                df = pd.read_json(stream)
+        elif name.endswith(('.xlsx', '.xls')):
+            df = pd.read_excel(stream)
+        else:
+            raise ValidationError("Unsupported file type. Supported: .csv, .json, .xlsx, .xls")
+
+        return df, file_size_mb
+
     def health_check(self) -> dict[str, Any]:
         return {"status": "ok"}
 

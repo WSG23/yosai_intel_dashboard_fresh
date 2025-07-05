@@ -9,6 +9,7 @@ from ..result_formatting import (
     regular_analysis,
 )
 from utils.mapping_helpers import map_and_clean
+from .preparation import prepare_dataframe
 
 __all__ = [
     "generate_basic_analytics",
@@ -19,5 +20,6 @@ __all__ = [
     "calculate_temporal_stats_safe",
     "regular_analysis",
     "map_and_clean",
+    "prepare_dataframe",
 ]
 
