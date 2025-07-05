@@ -13,7 +13,7 @@ from services.data_loader import DataLoader
 from services.analytics_summary import generate_sample_analytics
 from services.data_validation import DataValidationService
 from services.data_loading_service import DataLoadingService
-from services.upload_processing import UploadAnalyticsProcessor
+from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.db_analytics_helper import DatabaseAnalyticsHelper
 from services.summary_reporting import SummaryReporter
 
