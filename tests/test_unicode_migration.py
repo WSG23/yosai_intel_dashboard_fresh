@@ -1,13 +1,14 @@
 import pandas as pd
 import pytest
 
-from utils.unicode_utils import (
+from core.unicode import (
     UnicodeProcessor,
     ChunkedUnicodeProcessor,
     clean_unicode_text,
     safe_decode_bytes,
     safe_encode_text,
     sanitize_dataframe,
+    # Deprecated functions for testing
     safe_unicode_encode,
     safe_encode,
     safe_decode,
