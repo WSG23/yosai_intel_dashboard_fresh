@@ -1,79 +1,80 @@
-"""Asynchronous file processor using aiofiles."""
+#!/usr/bin/env python3
+"""Asynchronous CSV processing helpers."""
+
 
 from __future__ import annotations
 
 import asyncio
-import base64
-import logging
-import os
 from pathlib import Path
-from typing import Callable, Awaitable, Optional
+from typing import AsyncIterator, Callable, List, Optional
 
-import aiofiles
 import pandas as pd
 
-from .file_processor import UnicodeFileProcessor
-
-logger = logging.getLogger(__name__)
+from config.dynamic_config import dynamic_config
 
 
 class AsyncFileProcessor:
-    """Process uploaded files asynchronously in chunks."""
+    """Read CSV files asynchronously in chunks with progress reporting."""
 
-    def __init__(self, chunk_size: int = 1024 * 1024) -> None:
-        self.chunk_size = chunk_size
+    def __init__(self, chunk_size: int | None = None) -> None:
+        self.chunk_size = chunk_size or dynamic_config.analytics.chunk_size
 
-    async def _notify(
+    async def read_csv_chunks(
         self,
-        callback: Optional[Callable[[str, int], Awaitable[None] | None]],
-        filename: str,
-        processed: int,
-        total: int,
-    ) -> None:
-        if not callback:
-            return
-        percent = int(processed / total * 100) if total else 100
-        try:
-            if asyncio.iscoroutinefunction(callback):
-                await callback(filename, percent)
-            else:
-                callback(filename, percent)
-        except Exception as exc:  # pragma: no cover - best effort
-            logger.warning("Progress callback failed: %s", exc)
+        file_path: str | Path,
+        *,
+        encoding: str = "utf-8",
+        progress_callback: Optional[Callable[[int], None]] = None,
+    ) -> AsyncIterator[pd.DataFrame]:
+        path = Path(file_path)
+        total_lines = await asyncio.to_thread(self._count_lines, path)
+        processed = 0
+        reader = pd.read_csv(path, chunksize=self.chunk_size, encoding=encoding)
 
-    async def process_file(
-        self,
-        contents: str,
-        filename: str,
-        progress_callback: Optional[Callable[[str, int], Awaitable[None] | None]] = None,
-    ) -> pd.DataFrame:
-        """Return DataFrame parsed from ``contents``."""
-        prefix, data = contents.split(",", 1)
-        raw = base64.b64decode(data)
-        total = len(raw)
-        async with aiofiles.tempfile.NamedTemporaryFile(
-            "wb", delete=False, suffix=Path(filename).suffix
-        ) as tmp:
-            path = tmp.name
-            for offset in range(0, total, self.chunk_size):
-                chunk = raw[offset : offset + self.chunk_size]
-                await tmp.write(chunk)
-                await self._notify(progress_callback, filename, offset + len(chunk), total)
-        try:
-            if filename.endswith(".csv"):
-                df = await asyncio.to_thread(pd.read_csv, path)
-            elif filename.endswith((".xlsx", ".xls")):
-                df = await asyncio.to_thread(pd.read_excel, path)
-            else:
-                raise ValueError(f"Unsupported file type: {filename}")
-        finally:
+        def _next_chunk() -> pd.DataFrame | None:
             try:
-                os.unlink(path)
-            except Exception:  # pragma: no cover - cleanup best effort
+                return next(reader)
+            except StopIteration:
+                return None
+
+        while True:
+            chunk = await asyncio.to_thread(_next_chunk)
+            if chunk is None:
+                break
+            processed += len(chunk)
+            if progress_callback and total_lines:
+                pct = int(processed / total_lines * 100)
+                pct = max(0, min(100, pct))
+                try:
+                    progress_callback(pct)
+                except Exception:  # pragma: no cover - best effort
+                    pass
+            yield chunk
+        if progress_callback:
+            try:
+                progress_callback(100)
+            except Exception:  # pragma: no cover - best effort
                 pass
-        df = UnicodeFileProcessor.sanitize_dataframe_unicode(df)
-        await self._notify(progress_callback, filename, total, total)
-        return df
+
+    async def load_csv(
+        self,
+        file_path: str | Path,
+        *,
+        encoding: str = "utf-8",
+        progress_callback: Optional[Callable[[int], None]] = None,
+    ) -> pd.DataFrame:
+        chunks: List[pd.DataFrame] = []
+        async for chunk in self.read_csv_chunks(
+            file_path, encoding=encoding, progress_callback=progress_callback
+        ):
+            chunks.append(chunk)
+        return pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+
+    @staticmethod
+    def _count_lines(path: Path) -> int:
+        with open(path, "rb") as fh:
+            return max(sum(1 for _ in fh) - 1, 0)
+
 
 
 __all__ = ["AsyncFileProcessor"]

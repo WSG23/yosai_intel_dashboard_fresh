@@ -1,6 +1,7 @@
 """Data processing utilities."""
 
 from .file_handler import FileHandler, process_file_simple
+from .async_file_processor import AsyncFileProcessor
 # ``FileProcessor`` was removed in favor of ``UnicodeFileProcessor``.  Import
 # the new class here and optionally expose it under the old name for backward
 # compatibility.
@@ -62,6 +63,7 @@ def load_analytics_helpers() -> None:  # pragma: no cover - optional
 
 __all__ = [
     "FileHandler",
+    "AsyncFileProcessor",
     "UnifiedFileValidator",
     "process_file_simple",
     "FileProcessingError",

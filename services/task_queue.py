@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import threading
 import uuid
 from typing import Any, Dict, Coroutine, Callable, Awaitable
@@ -12,18 +13,32 @@ _thread = threading.Thread(target=_loop.run_forever, daemon=True)
 _thread.start()
 
 
-def create_task(coro: Coroutine[Any, Any, Any] | Callable[[], Awaitable[Any]]) -> str:
-    """Schedule ``coro`` or coroutine function and return a task ID."""
+def create_task(
+    func: Callable[[Callable[[int], None]], Awaitable[Any]] | Awaitable[Any]
+) -> str:
+    """Schedule ``func`` and return a task ID.
+
+    ``func`` may be either a coroutine object or a callable that accepts a
+    progress callback and returns a coroutine.  The callback will update
+    the internal progress state and may be used by the task to report
+    incremental progress.
+    """
+    
     task_id = str(uuid.uuid4())
     _tasks[task_id] = {"progress": 0, "result": None, "done": False}
 
+    def _update(pct: int) -> None:
+        pct = max(0, min(100, int(pct)))
+        _tasks[task_id]["progress"] = pct
+
     async def _runner() -> None:
-        _tasks[task_id]["progress"] = 50
         try:
-            if asyncio.iscoroutine(coro):
-                result = await coro
+            if inspect.iscoroutine(func):
+                coro = func
             else:
-                result = await coro()
+                coro = func(_update)
+            result = await coro
+
             _tasks[task_id]["result"] = result
         except Exception as exc:  # pragma: no cover - best effort
             _tasks[task_id]["result"] = exc
@@ -37,7 +52,10 @@ def create_task(coro: Coroutine[Any, Any, Any] | Callable[[], Awaitable[Any]]) -
 
 def get_status(task_id: str) -> Dict[str, Any]:
     """Return the status dictionary for ``task_id``."""
-    return _tasks.get(task_id, {"progress": 100, "result": None, "done": True})
+    status = _tasks.get(task_id)
+    if status is None:
+        return {"progress": 100, "result": None, "done": True}
+    return dict(status)
 
 
 def clear_task(task_id: str) -> None:
