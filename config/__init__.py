@@ -31,15 +31,19 @@ from .database_exceptions import (
 from .dynamic_config import dynamic_config, DynamicConfigManager
 from .constants import SecurityConstants, PerformanceConstants, CSSConstants
 import logging
-from services.registry import get_service
+
+def _lazy_get_service(name: str):
+    """Import ``get_service`` lazily to avoid early registry imports."""
+    from services.registry import get_service
+    return get_service(name)
 
 logger = logging.getLogger(__name__)
 
 # Resolve optional database manager via registry
-DatabaseManager = get_service("DatabaseManager")
-DatabaseConnection = get_service("DatabaseConnection")
-MockConnection = get_service("MockConnection")
-EnhancedPostgreSQLManager = get_service("EnhancedPostgreSQLManager")
+DatabaseManager = _lazy_get_service("DatabaseManager")
+DatabaseConnection = _lazy_get_service("DatabaseConnection")
+MockConnection = _lazy_get_service("MockConnection")
+EnhancedPostgreSQLManager = _lazy_get_service("EnhancedPostgreSQLManager")
 DATABASE_MANAGER_AVAILABLE = DatabaseManager is not None
 
 __all__ = [

@@ -19,8 +19,13 @@ from core.unicode import (
     sanitize_dataframe,
     sanitize_unicode_input,
 )
-from core.security import InputValidator as StringValidator
 from services.input_validator import InputValidator, ValidationResult
+
+
+def _lazy_string_validator() -> "StringValidator":
+    """Import ``InputValidator`` from :mod:`core.security` lazily."""
+    from core.security import InputValidator as StringValidator
+    return StringValidator()
 from core.exceptions import ValidationError
 
 
@@ -174,7 +179,7 @@ class UnifiedFileValidator:
 
     def __init__(self, max_size_mb: Optional[int] = None) -> None:
         self.max_size_mb = max_size_mb or dynamic_config.security.max_upload_mb
-        self._string_validator = StringValidator()
+        self._string_validator = _lazy_string_validator()
         self._basic_validator = InputValidator(self.max_size_mb)
 
     def _sanitize_string(self, value: str) -> str:
