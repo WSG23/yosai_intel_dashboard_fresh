@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Security-focused wrapper around core Unicode utilities."""
+
+from __future__ import annotations
 
 from typing import Any
 
