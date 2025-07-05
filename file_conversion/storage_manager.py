@@ -10,8 +10,8 @@ from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
-from .file_converter import FileConverter
-from security.unicode_security_processor import sanitize_dataframe
+from core.callback_controller import CallbackController, CallbackEvent
+from core.unicode_processor import UnicodeProcessor
 
 _logger = logging.getLogger(__name__)
 
@@ -24,6 +24,7 @@ class StorageManager:
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self._metadata_path = self.base_dir / "metadata.json"
         self._metadata: Dict[str, Any] = {}
+        self.callback_controller = CallbackController()
         self._load_metadata()
 
     # -- metadata helpers -------------------------------------------------
@@ -47,21 +48,47 @@ class StorageManager:
     def migrate_pkl_to_parquet(self, pkl_path: Path) -> Tuple[bool, str]:
         """Convert ``pkl_path`` to Parquet in base directory."""
         parquet_path = self.base_dir / pkl_path.with_suffix(".parquet").name
-        success, msg = FileConverter.pkl_to_parquet(pkl_path, parquet_path)
-        if success:
+        self.callback_controller.fire_event(
+            CallbackEvent.FILE_PROCESSING_START,
+            str(pkl_path),
+        )
+        try:
+            if not pkl_path.exists():
+                raise FileNotFoundError(f"Pickle file not found: {pkl_path}")
+
+            df = pd.read_pickle(pkl_path)
+            df_clean = UnicodeProcessor.sanitize_dataframe(df)
+            df_clean.to_parquet(parquet_path, index=False, compression="snappy")
+
             self._metadata[parquet_path.name] = {
                 "original_file": str(pkl_path),
+                "rows": len(df_clean),
+                "columns": len(df_clean.columns),
                 "converted_at": datetime.utcnow().isoformat(),
             }
             self._save_metadata()
-        return success, msg
+
+            self.callback_controller.fire_event(
+                CallbackEvent.FILE_PROCESSING_COMPLETE,
+                str(pkl_path),
+                {"parquet_file": str(parquet_path)},
+            )
+            return True, f"Converted {pkl_path} to {parquet_path}"
+        except Exception as exc:  # pragma: no cover - best effort
+            _logger.error("Failed to migrate pkl: %s", exc)
+            self.callback_controller.fire_event(
+                CallbackEvent.FILE_PROCESSING_ERROR,
+                str(pkl_path),
+                {"error": str(exc)},
+            )
+            return False, str(exc)
 
     def save_dataframe(self, df: pd.DataFrame, name: str) -> Tuple[bool, str]:
         """Save ``df`` to a Parquet file under ``name`` with metadata."""
         try:
-            df_clean = sanitize_dataframe(df)
+            df_clean = UnicodeProcessor.sanitize_dataframe(df)
             parquet_path = self.base_dir / f"{name}.parquet"
-            df_clean.to_parquet(parquet_path, index=False)
+            df_clean.to_parquet(parquet_path, index=False, compression="snappy")
             self._metadata[parquet_path.name] = {
                 "rows": len(df_clean),
                 "columns": len(df_clean.columns),
