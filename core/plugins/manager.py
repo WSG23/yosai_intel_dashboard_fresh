@@ -243,6 +243,23 @@ class PluginManager:
             methods=["GET"],
         )
 
+    def register_performance_endpoint(self, app: Any) -> None:
+        """Expose plugin performance metrics via /health/plugins/performance"""
+        server = app.server if hasattr(app, "server") else app
+        for rule in server.url_map.iter_rules():
+            if rule.rule == "/health/plugins/performance":
+                return
+
+        def plugin_performance():
+            return getattr(app, "_yosai_plugin_manager").get_plugin_performance_metrics()
+
+        server.add_url_rule(
+            "/health/plugins/performance",
+            "plugin_performance",
+            plugin_performance,
+            methods=["GET"],
+        )
+
 
 class ThreadSafePluginManager(PluginManager):
     """Plugin manager variant with locking around shared state."""

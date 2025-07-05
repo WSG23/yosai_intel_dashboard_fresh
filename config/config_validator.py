@@ -29,7 +29,16 @@ class ConfigValidator:
         from .config import Config
 
         config = Config()
-        for section in ["app", "database", "security", "sample_files"]:
+        for section in [
+            "app",
+            "database",
+            "security",
+            "sample_files",
+            "analytics",
+            "monitoring",
+            "cache",
+            "secret_validation",
+        ]:
             if section in data:
                 section_data = data.get(section, {})
                 if not isinstance(section_data, dict):

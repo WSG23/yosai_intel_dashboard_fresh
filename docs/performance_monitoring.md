@@ -40,3 +40,4 @@ docker run -p 5044:5044 \
 ```
 
 Adjust the `elasticsearch` output section if you have a different destination.
+
