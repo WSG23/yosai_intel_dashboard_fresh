@@ -30,6 +30,7 @@ from services.data_processing.file_processor import (
     process_uploaded_file,
     create_file_preview,
 )
+from components.file_preview import create_file_preview_ui
 from utils.upload_store import uploaded_data_store as _uploaded_data_store
 from services.upload_data_service import (
     get_uploaded_data as service_get_uploaded_data,

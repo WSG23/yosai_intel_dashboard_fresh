@@ -10,6 +10,7 @@ from services.data_processing.file_processor import (
     process_uploaded_file,
     create_file_preview,
 )
+from components.file_preview import create_file_preview_ui
 from services.device_learning_service import get_device_learning_service
 from services.data_enhancer import get_ai_column_suggestions
 from utils.upload_store import UploadedDataStore
@@ -76,9 +77,10 @@ class UploadProcessingService:
             return False
 
     def build_file_preview_component(self, df: pd.DataFrame, filename: str) -> html.Div:
+        preview_info = create_file_preview(df)
         return html.Div(
             [
-                create_file_preview(df, filename),
+                create_file_preview_ui(preview_info),
                 dbc.Card(
                     [
                         dbc.CardHeader(
@@ -158,7 +160,7 @@ class UploadProcessingService:
 
             try:
                 result = process_uploaded_file(content, filename)
-                if result["success"]:
+                if result["status"] == "success":
                     df = result["data"]
                     rows = len(df)
                     cols = len(df.columns)
@@ -177,7 +179,7 @@ class UploadProcessingService:
                         "rows": rows,
                         "columns": cols,
                         "column_names": column_names,
-                        "upload_time": result["upload_time"].isoformat(),
+                        "upload_time": pd.Timestamp.now().isoformat(),
                         "ai_suggestions": get_ai_column_suggestions(column_names),
                     }
                     current_file_info = file_info_dict[filename]
