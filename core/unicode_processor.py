@@ -8,6 +8,7 @@ import re
 import unicodedata
 from typing import Any, Callable, Optional, Union
 
+
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -20,6 +21,12 @@ _BOM_RE = re.compile("\ufeff")
 # Leading characters that may trigger dangerous behaviour when interpreted by
 # spreadsheet applications (e.g. Excel formula injection)
 _DANGEROUS_PREFIX_RE = re.compile(r"^[=+\-@]+")
+
+# Match unpaired surrogate code points (high not followed by low or
+# low not preceded by high)
+_UNPAIRED_SURROGATE_RE = re.compile(
+    r"(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])"
+)
 
 
 class UnicodeProcessor:
@@ -243,6 +250,18 @@ def clean_unicode_surrogates(text: Any) -> str:
     return UnicodeProcessor.clean_surrogate_chars(str(text))
 
 
+def contains_surrogates(text: str) -> bool:
+    """Return ``True`` if ``text`` contains any unpaired surrogate code points."""
+
+    if not isinstance(text, str):
+        try:
+            text = str(text)
+        except Exception:  # pragma: no cover - defensive
+            return False
+
+    return bool(_UNPAIRED_SURROGATE_RE.search(text))
+
+
 def sanitize_unicode_input(text: Union[str, Any]) -> str:
     """Return ``text`` stripped of surrogate pairs and BOM characters."""
 
@@ -301,6 +320,7 @@ __all__ = [
     "handle_surrogate_characters",
     "clean_unicode_surrogates",
     "sanitize_unicode_input",
+    "contains_surrogates",
     "process_large_csv_content",
     "safe_format_number",
 ]
