@@ -3,6 +3,7 @@
 from .file_handler import FileHandler, process_file_simple, FileProcessingError
 from .file_processor import FileProcessor, UnifiedFileValidator
 
+
 # Analytics helpers are intentionally loaded lazily in environments where the
 # full analytics stack is unavailable. ``AI_SUGGESTIONS_AVAILABLE`` defaults to
 # ``False`` and can be overridden by calling :func:`load_analytics_helpers`.
