@@ -7,12 +7,12 @@ from pathlib import Path
 import pandas as pd
 
 from utils.file_validator import safe_decode_with_unicode_handling
-from utils.unicode_utils import (
+from core.unicode_processor import (
     sanitize_unicode_input,
     sanitize_dataframe,
     process_large_csv_content,
 )
-from services.data_processing.callback_controller import (
+from core.callback_controller import (
     CallbackController,
     CallbackEvent,
 )

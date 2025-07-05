@@ -3,7 +3,7 @@ import pandas as pd
 import tempfile
 from pathlib import Path
 
-from utils.unicode_utils import (
+from core.unicode_processor import (
     UnicodeProcessor,
     ChunkedUnicodeProcessor,
     clean_unicode_text,
@@ -11,7 +11,7 @@ from utils.unicode_utils import (
     safe_encode,
     sanitize_dataframe,
 )
-from services.data_processing.callback_controller import (
+from core.callback_controller import (
     CallbackController,
     CallbackEvent,
     fire_event,

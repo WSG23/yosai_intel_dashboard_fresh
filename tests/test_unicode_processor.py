@@ -1,7 +1,7 @@
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 
-from utils.unicode_utils import safe_unicode_encode, sanitize_data_frame
+from core.unicode_processor import safe_unicode_encode, sanitize_data_frame
 
 
 

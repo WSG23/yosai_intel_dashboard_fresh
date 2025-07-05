@@ -5,8 +5,8 @@ from .analyzer import (
     create_security_analyzer,
     EnhancedSecurityAnalyzer,
 )
-from services.data_processing.callback_controller import (
-    CallbackController as SecurityCallbackController,
+from core.callback_controller import CallbackController as SecurityCallbackController
+from security_callback_controller import (
     SecurityEvent,
     security_callback_controller,
     emit_security_event,

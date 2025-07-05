@@ -1,7 +1,7 @@
 import pandas as pd
 from components.plugin_adapter import ComponentPluginAdapter
 import components.plugin_adapter as plugin_adapter
-from utils.unicode_utils import sanitize_dataframe, clean_unicode_text
+from core.unicode_processor import sanitize_dataframe, clean_unicode_text
 
 
 def test_get_ai_column_suggestions_with_plugin(monkeypatch):

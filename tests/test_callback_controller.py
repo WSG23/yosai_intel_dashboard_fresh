@@ -11,7 +11,7 @@ from datetime import datetime
 
 # Import your callback system - adjust import path as needed
 try:
-    from services.data_processing.callback_controller import (
+    from core.callback_controller import (
         CallbackController,
         CallbackEvent,
         CallbackContext,
