@@ -1,0 +1,4 @@
+[tool.mypy]
+python_version = "3.11"
+explicit_package_bases = true
+mypy_path = ["."]
