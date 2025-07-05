@@ -200,6 +200,8 @@ pip install -r requirements.txt
 pip install -r requirements-dev.txt
 # or use ./scripts/setup.sh which installs requirements.txt
 ```
+Detailed instructions are provided in
+[docs/test_setup.md](docs/test_setup.md).
 
 Run the complete test suite:
 ```bash
