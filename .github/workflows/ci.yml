@@ -82,6 +82,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: 🐍 Run security audit
+        run: ./security_audit.sh
+
+      - name: 📊 Run load test
+        run: ./load_test.sh
+
+      - name: 🛡️ Run failover test
+        run: ./failover_test.sh
+
+      - name: ♻️ Run recovery test
+        run: ./recovery_test.sh
+
+      - name: 🗄️ Run compliance audit
+        run: ./compliance_audit.sh
+
       - name: 🏗️  Build & push image
         uses: docker/build-push-action@v5
         with:
