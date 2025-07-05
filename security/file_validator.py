@@ -13,7 +13,7 @@ _unicode = PluginServiceLocator.get_unicode_handler()
 UnicodeProcessor = _unicode.UnicodeProcessor
 from config.dynamic_config import dynamic_config
 
-from .validation_exceptions import ValidationError
+from core.exceptions import ValidationError
 
 
 class SecureFileValidator:

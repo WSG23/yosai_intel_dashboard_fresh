@@ -9,7 +9,8 @@ from .xss_validator import XSSPrevention
 from .business_logic_validator import BusinessLogicValidator
 from .validation_middleware import ValidationMiddleware, ValidationOrchestrator
 from .attack_detection import AttackDetection
-from .validation_exceptions import ValidationError, SecurityViolation
+from core.exceptions import ValidationError
+from .validation_exceptions import SecurityViolation
 from .secrets_validator import SecretsValidator, register_health_endpoint
 
 __all__ = [

@@ -1,8 +1,4 @@
-"""Custom validation exceptions."""
-
-
-class ValidationError(Exception):
-    """Raised when validation fails."""
+"""Custom security-related exceptions."""
 
 
 class SecurityViolation(Exception):

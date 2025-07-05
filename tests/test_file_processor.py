@@ -15,7 +15,7 @@ from services.data_processing.file_handler import (
     FileProcessingError,
     process_file_simple,
 )
-from security.validation_exceptions import ValidationError
+from core.exceptions import ValidationError
 import base64
 
 
