@@ -20,6 +20,7 @@ from .analytics.upload_analytics import UploadAnalyticsProcessor
 from .db_analytics_helper import DatabaseAnalyticsHelper
 from .summary_reporting import SummaryReporter
 from .data_processing.unified_file_validator import UnifiedFileValidator
+from .progress_event_manager import progress_manager
 
 logger = logging.getLogger(__name__)
 
@@ -54,5 +55,5 @@ __all__ = [
     "UploadAnalyticsProcessor",
     "DatabaseAnalyticsHelper",
     "SummaryReporter",
-
+    "progress_manager",
 ]
