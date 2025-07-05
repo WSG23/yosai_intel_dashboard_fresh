@@ -13,7 +13,6 @@ from components.ui.navbar import create_navbar_layout
 from core.container import Container as DIContainer
 from core.plugins.auto_config import PluginAutoConfiguration
 from core.secret_manager import validate_secrets
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from dash_csrf_plugin import setup_enhanced_csrf_protection, CSRFMode
 from flask_babel import Babel
 from flask import session
@@ -188,6 +187,7 @@ def _create_full_app() -> dash.Dash:
         app.layout = _serve_layout
 
         # Register all callbacks using TrulyUnifiedCallbacks
+        from core.truly_unified_callbacks import TrulyUnifiedCallbacks
         coordinator = TrulyUnifiedCallbacks(app)
         _register_router_callbacks(coordinator)
         _register_global_callbacks(coordinator)
