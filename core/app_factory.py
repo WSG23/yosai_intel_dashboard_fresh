@@ -250,6 +250,8 @@ def _create_full_app() -> dash.Dash:
         # Expose basic health check endpoint and Swagger docs
         server = app.server
         _configure_swagger(server)
+        from services.progress_events import ProgressEventManager
+        progress_events = ProgressEventManager()
 
         @server.route("/health", methods=["GET"])
         def health():
@@ -275,6 +277,11 @@ def _create_full_app() -> dash.Dash:
         def health_secrets():
             """Return validation summary for required secrets"""
             return validate_secrets(), 200
+
+        @server.route("/upload/progress/<task_id>")
+        def upload_progress(task_id: str):
+            """Stream task progress updates as Server-Sent Events."""
+            return progress_events.stream(task_id)
 
         @app.server.before_request
         def filter_noisy_requests():
