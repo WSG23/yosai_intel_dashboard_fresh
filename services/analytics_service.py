@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Analytics Service - Enhanced with Unique Patterns Analysis
+"""Analytics Service - Enhanced with Unique Patterns Analysis.
 
-Uploaded files are validated with :class:`services.data_processing.unified_file_validator.UnifiedFileValidator`
-before processing to ensure they are present, non-empty and within the configured
-size limits.
+Uploaded files are validated with
+``services.data_processing.unified_file_validator.UnifiedFileValidator`` before
+processing to ensure they are present, non-empty and within the configured size
+limits.
 """
 import logging
+import threading
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -18,7 +20,6 @@ from services.data_loading_service import DataLoadingService
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.db_analytics_helper import DatabaseAnalyticsHelper
 from services.summary_reporting import SummaryReporter
-
 
 
 def ensure_analytics_config():
@@ -208,7 +209,9 @@ class AnalyticsService:
 
         if final_rows != original_rows:
             logger.warning(
-                f"⚠️  Data loss detected: {original_rows:,} → {final_rows:,}"
+                "⚠️  Data loss detected: %s → %s",
+                f"{original_rows:,}",
+                f"{final_rows:,}",
             )
 
         if final_rows == 150 and original_rows > 150:
@@ -477,6 +480,7 @@ class AnalyticsService:
 
 # Global service instance
 _analytics_service: Optional[AnalyticsService] = None
+_analytics_service_lock = threading.Lock()
 
 
 def get_analytics_service(
@@ -489,9 +493,13 @@ def get_analytics_service(
     """
     global _analytics_service
     if service is not None:
-        _analytics_service = service
+        with _analytics_service_lock:
+            _analytics_service = service
+        return _analytics_service
     if _analytics_service is None:
-        _analytics_service = AnalyticsService()
+        with _analytics_service_lock:
+            if _analytics_service is None:
+                _analytics_service = AnalyticsService()
     return _analytics_service
 
 
