@@ -6,11 +6,11 @@ from typing import Any, Optional
 import pandas as pd
 
 from utils.file_validator import safe_decode_with_unicode_handling
-from core.unicode_processor import (
+from security.unicode_security_processor import (
     sanitize_unicode_input,
     sanitize_dataframe,
-    process_large_csv_content,
 )
+from core.unicode_processor import process_large_csv_content
 from core.callback_controller import (
     CallbackController,
     CallbackEvent,

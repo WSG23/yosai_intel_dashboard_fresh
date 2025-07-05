@@ -28,7 +28,7 @@ from services.data_processing.analytics_engine import (
     process_suggests_analysis,
     process_suggests_analysis_safe,
 )
-from core.unicode_processor import sanitize_dataframe
+from security.unicode_security_processor import sanitize_dataframe
 
 from core.callback_controller import CallbackController
 

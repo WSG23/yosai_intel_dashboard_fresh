@@ -7,7 +7,7 @@ import logging
 from dataclasses import asdict, is_dataclass
 from typing import Any
 
-from core.unicode_processor import UnicodeProcessor
+from security.unicode_security_processor import UnicodeSecurityProcessor
 
 try:  # Optional Flask-Babel
     from flask_babel import LazyString
@@ -47,16 +47,16 @@ class SafeJSONSerializer:
                 return obj
 
             if isinstance(obj, bytes):
-                return UnicodeProcessor.safe_decode(obj).text
+                return UnicodeSecurityProcessor.sanitize_unicode_input(obj)
 
             if isinstance(obj, str):
-                return UnicodeProcessor.clean_text(obj).text
+                return UnicodeSecurityProcessor.sanitize_unicode_input(obj)
 
             if MARKUP_AVAILABLE and isinstance(obj, Markup):
-                return UnicodeProcessor.clean_text(str(obj)).text
+                return UnicodeSecurityProcessor.sanitize_unicode_input(str(obj))
 
             if BABEL_AVAILABLE and LazyString and isinstance(obj, LazyString):
-                return UnicodeProcessor.clean_text(str(obj)).text
+                return UnicodeSecurityProcessor.sanitize_unicode_input(str(obj))
 
             if isinstance(obj, dict):
                 return {self._sanitize(k): self._sanitize(v) for k, v in obj.items()}
@@ -74,6 +74,6 @@ class SafeJSONSerializer:
                 return {k: self._sanitize(v) for k, v in vars(obj).items()}
         except Exception as exc:  # pragma: no cover - best effort
             logger.warning("SafeJSONSerializer failed: %s", exc)
-            return UnicodeProcessor.clean_text(str(obj)).text
+            return UnicodeSecurityProcessor.sanitize_unicode_input(str(obj))
 
         return obj
