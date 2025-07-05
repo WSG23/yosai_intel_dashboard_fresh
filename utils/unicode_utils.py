@@ -34,7 +34,9 @@ class UnicodeProcessor:
 
         try:
             cleaned = _SURROGATE_RE.sub(replacement, text)
+
             cleaned = unicodedata.normalize("NFKC", cleaned)
+            cleaned = _CONTROL_RE.sub("", cleaned)
             return cleaned
         except Exception as exc:  # pragma: no cover - defensive
             logger.warning(f"Failed to clean surrogate chars: {exc}")
@@ -90,6 +92,7 @@ class UnicodeProcessor:
                 safe_col = UnicodeProcessor.safe_encode_text(col)
                 safe_col = _DANGEROUS_PREFIX_RE.sub("", safe_col)
                 new_columns.append(safe_col or f"col_{len(new_columns)}")
+
 
             df_clean.columns = new_columns
 
@@ -200,7 +203,21 @@ def sanitize_unicode_input(
 ) -> str:
     """Sanitize text input to handle Unicode surrogate characters."""
 
-    return UnicodeProcessor.safe_encode_text(text)
+
+    if not isinstance(text, str):
+        try:
+            text = str(text)
+        except Exception:  # pragma: no cover - defensive
+            logger.warning("Failed to convert %r to str", text, exc_info=True)
+            return ""
+
+    try:
+        cleaned = UnicodeProcessor.clean_surrogate_chars(text, replacement)
+        cleaned.encode("utf-8")
+        return cleaned
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("sanitize_unicode_input failed: %s", exc)
+        return "".join(ch for ch in str(text) if ch.isascii())
 
 
 def process_large_csv_content(

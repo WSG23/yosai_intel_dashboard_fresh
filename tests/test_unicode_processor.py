@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from utils.unicode_utils import safe_unicode_encode, sanitize_data_frame
 
 
+
 def test_safe_unicode_encode_surrogates():
     text = "A" + chr(0xD800) + "B"
     assert safe_unicode_encode(text) == "AB"
@@ -33,3 +34,4 @@ def test_unicode_processor_thread_safety():
 
     for result in results:
         pd.testing.assert_frame_equal(result, expected)
+

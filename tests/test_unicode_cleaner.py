@@ -1,13 +1,16 @@
 import pandas as pd
-from file_conversion.unicode_handler import UnicodeCleaner
-from utils.unicode_utils import safe_unicode_encode
+from utils.unicode_utils import (
+    UnicodeProcessor,
+    sanitize_dataframe,
+    safe_unicode_encode,
+)
 
 
 def test_clean_dataframe_removes_surrogates():
     df = pd.DataFrame(
         {"bad" + chr(0xD800) + "col": ["A" + chr(0xDC00), "B" + chr(0xDFFF)]}
     )
-    cleaned = UnicodeCleaner.clean_dataframe(df)
+    cleaned = sanitize_dataframe(df)
     assert list(cleaned.columns) == ["badcol"]
     assert list(cleaned.iloc[:, 0]) == ["A", "B"]
 
