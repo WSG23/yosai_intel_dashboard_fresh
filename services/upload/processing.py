@@ -6,10 +6,9 @@ from dash import html
 from dash.dash import no_update
 import dash_bootstrap_components as dbc
 
-from services.data_processing.file_processor import (
-    process_uploaded_file,
-    create_file_preview,
-)
+from services.data_processing.file_processor import create_file_preview
+from services.data_processing.async_file_processor import AsyncFileProcessor
+from services.progress_event_manager import progress_manager
 from components.file_preview import create_file_preview_ui
 from services.device_learning_service import get_device_learning_service
 from services.data_enhancer import get_ai_column_suggestions
@@ -23,6 +22,7 @@ class UploadProcessingService:
 
     def __init__(self, store: UploadedDataStore):
         self.store = store
+        self.processor = AsyncFileProcessor()
 
     def build_success_alert(
         self,
@@ -117,7 +117,7 @@ class UploadProcessingService:
             ]
         )
 
-    def process_files(
+    async def process_files(
         self, contents_list: List[str] | str, filenames_list: List[str] | str
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
         if not contents_list:
@@ -159,26 +159,18 @@ class UploadProcessingService:
                 content = parts[0]
 
             try:
-                result = process_uploaded_file(content, filename)
-                if result["status"] == "success":
-                    df = result["data"]
-                    rows = len(df)
-                    cols = len(df.columns)
-
-                    self.store.add_file(filename, df)
-                    upload_results.append(
-                        self.build_success_alert(filename, rows, cols)
-                    )
-                    file_preview_components.append(
-                        self.build_file_preview_component(df, filename)
-                    )
+                df = await self.processor.process_file(
+                    content, filename, progress_manager.emit
+                )
+                rows = len(df)
+                cols = len(df.columns)
 
                     column_names = df.columns.tolist()
                     file_info_dict[filename] = {
                         "filename": filename,
                         "rows": rows,
                         "columns": cols,
-                        "column_names": column_names,
+                        "path": str(self.store.get_file_path(filename)),
                         "upload_time": pd.Timestamp.now().isoformat(),
                         "ai_suggestions": get_ai_column_suggestions(column_names),
                     }
@@ -188,31 +180,21 @@ class UploadProcessingService:
                         learning_service = get_device_learning_service()
                         user_mappings = learning_service.get_user_device_mappings(
                             filename
+
                         )
-                        if user_mappings:
-                            from services.ai_mapping_store import ai_mapping_store
+                    else:
+                        logger.info("🆕 First upload - AI will be used")
+                        from services.ai_mapping_store import ai_mapping_store
 
-                            ai_mapping_store.clear()
-                            for device, mapping in user_mappings.items():
-                                mapping["source"] = "user_confirmed"
-                                ai_mapping_store.set(device, mapping)
-                            logger.info(
-                                "✅ Loaded %s saved mappings - AI SKIPPED",
-                                len(user_mappings),
-                            )
-                        else:
-                            logger.info("🆕 First upload - AI will be used")
-                            from services.ai_mapping_store import ai_mapping_store
-
-                            ai_mapping_store.clear()
-                            self.auto_apply_learned_mappings(df, filename)
-                    except Exception as exc:  # pragma: no cover - best effort
-                        logger.info("⚠️ Error: %s", exc)
-                else:
-                    upload_results.append(self.build_failure_alert(result["error"]))
+                        ai_mapping_store.clear()
+                        self.auto_apply_learned_mappings(df, filename)
+                except Exception as exc:  # pragma: no cover - best effort
+                    logger.info("⚠️ Error: %s", exc)
             except Exception as exc:  # pragma: no cover - best effort
                 upload_results.append(
-                    self.build_failure_alert(f"Error processing {filename}: {str(exc)}")
+                    self.build_failure_alert(
+                        f"Error processing {filename}: {str(exc)}"
+                    )
                 )
 
         upload_nav = []

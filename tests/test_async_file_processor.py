@@ -32,3 +32,4 @@ def test_async_file_processor_progress(tmp_path):
     assert len(result) == len(df)
     assert last == 100
     clear_task(tid)
+

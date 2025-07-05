@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Asynchronous CSV processing helpers."""
 
+
 from __future__ import annotations
 
 import asyncio
@@ -73,6 +74,7 @@ class AsyncFileProcessor:
     def _count_lines(path: Path) -> int:
         with open(path, "rb") as fh:
             return max(sum(1 for _ in fh) - 1, 0)
+
 
 
 __all__ = ["AsyncFileProcessor"]

@@ -1,6 +1,7 @@
 import base64
 import pandas as pd
 import dash_bootstrap_components as dbc
+import asyncio
 from services.upload import UploadProcessingService
 from utils.upload_store import UploadedDataStore
 
@@ -32,7 +33,7 @@ def test_immediate_confirm_after_upload(monkeypatch, tmp_path):
     content = _encode_df(df)
 
     # Simulate upload which triggers async disk save
-    cb.process_uploaded_files(content, "data.csv")
+    asyncio.run(cb.process_uploaded_files(content, "data.csv"))
 
     file_info = {"filename": "data.csv", "devices": ["Door1"]}
     alert, _, _ = cb.save_confirmed_device_mappings(

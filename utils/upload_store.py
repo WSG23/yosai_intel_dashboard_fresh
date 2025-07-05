@@ -50,6 +50,10 @@ class UploadedDataStore:
         safe_name = filename.replace(" ", "_").replace("/", "_")
         return self.storage_dir / f"{safe_name}.parquet"
 
+    def get_file_path(self, filename: str) -> Path:
+        """Public wrapper for :meth:`_get_file_path`."""
+        return self._get_file_path(filename)
+
     def _info_path(self) -> Path:
         return self.storage_dir / "file_info.json"
 
@@ -85,7 +89,7 @@ class UploadedDataStore:
                             **self._file_info_store.get(fname, {}),
                             "rows": len(df),
                             "columns": len(df.columns),
-                            "column_names": list(df.columns),
+                            "path": str(fpath),
                             "upload_time": datetime.now().isoformat(),
                             "size_mb": round(
                                 df.memory_usage(deep=True).sum() / 1024 / 1024, 2
@@ -94,6 +98,10 @@ class UploadedDataStore:
                         modified = True
                     else:
                         continue
+                else:
+                    # Ensure path metadata exists for already-converted files
+                    if "path" not in self._file_info_store.get(fname, {}):
+                        self._file_info_store[fname]["path"] = str(fpath)
             if modified:
                 with open(self._info_path(), "w", encoding="utf-8") as f:
                     json.dump(self._file_info_store, f, indent=2)
@@ -102,15 +110,18 @@ class UploadedDataStore:
 
     def _save_to_disk(self, filename: str, df: pd.DataFrame) -> None:
         try:
-            df.to_parquet(self._get_file_path(filename), index=False)
+            path = self._get_file_path(filename)
+            df.to_parquet(path, index=False)
+            info = {
+                "rows": len(df),
+                "columns": len(df.columns),
+                "path": str(path),
+                "upload_time": datetime.now().isoformat(),
+                "size_mb": round(df.memory_usage(deep=True).sum() / 1024 / 1024, 2),
+            }
             with self._lock:
-                self._file_info_store[filename] = {
-                    "rows": len(df),
-                    "columns": len(df.columns),
-                    "column_names": list(df.columns),
-                    "upload_time": datetime.now().isoformat(),
-                    "size_mb": round(df.memory_usage(deep=True).sum() / 1024 / 1024, 2),
-                }
+                self._file_info_store[filename] = info
+                self._data_store.pop(filename, None)
                 with open(self._info_path(), "w", encoding="utf-8") as f:
                     json.dump(self._file_info_store, f, indent=2)
         except Exception as e:  # pragma: no cover - best effort
@@ -131,11 +142,10 @@ class UploadedDataStore:
             future.result()
             with self._lock:
                 self._save_futures.pop(filename, None)
+                df = self._data_store.pop(filename, df)
         if df is not None:
             return df
         df = pd.read_parquet(self._get_file_path(filename))
-        with self._lock:
-            self._data_store[filename] = df
         return df
 
     def get_all_data(self) -> Dict[str, pd.DataFrame]:

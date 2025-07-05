@@ -58,7 +58,6 @@ from services.task_queue import create_task, get_status, clear_task
 logger = logging.getLogger(__name__)
 
 
-
 def layout():
     """File upload page layout with persistent storage"""
     return dbc.Container(
@@ -134,7 +133,9 @@ def layout():
                 ],
                 className="mb-3",
             ),
-            dcc.Interval(id="upload-progress-interval", interval=1000, disabled=True),
+            # Hidden button triggered by SSE when upload completes
+            dbc.Button("", id="progress-done-trigger", className="hidden"),
+            html.Div(id="sse-trigger", style={"display": "none"}),
             # Data preview area
             dbc.Row([dbc.Col([html.Div(id="file-preview")])]),
             # Navigation to analytics
@@ -271,10 +272,16 @@ class Callbacks:
         file_preview_components: List[Any] = []
         current_file_info: Dict[str, Any] = {}
 
-        for filename in _uploaded_data_store.get_filenames():
-            df = _uploaded_data_store.load_dataframe(filename)
-            rows = len(df)
-            cols = len(df.columns)
+        file_infos = _uploaded_data_store.get_file_info()
+
+        for filename, info in file_infos.items():
+            path = info.get("path") or str(_uploaded_data_store.get_file_path(filename))
+            try:
+                df_preview = pd.read_parquet(path).head(10)
+            except Exception:
+                df_preview = _uploaded_data_store.load_dataframe(filename).head(10)
+            rows = info.get("rows", len(df_preview))
+            cols = info.get("columns", len(df_preview.columns))
 
             upload_results.append(
                 self.processing.build_success_alert(
@@ -287,15 +294,15 @@ class Callbacks:
             )
 
             file_preview_components.append(
-                self.processing.build_file_preview_component(df, filename)
+                self.processing.build_file_preview_component(df_preview, filename)
             )
 
             current_file_info = {
                 "filename": filename,
                 "rows": rows,
                 "columns": cols,
-                "column_names": df.columns.tolist(),
-                "ai_suggestions": get_ai_column_suggestions(df.columns.tolist()),
+                "path": path,
+                "ai_suggestions": info.get("ai_suggestions", {}),
             }
 
         upload_nav = html.Div(
@@ -318,60 +325,48 @@ class Callbacks:
             False,
         )
 
-    def process_uploaded_files(
+    async def process_uploaded_files(
         self, contents_list: List[str] | str, filenames_list: List[str] | str
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
-        return self.processing.process_files(contents_list, filenames_list)
+        return await self.processing.process_files(contents_list, filenames_list)
 
-    def start_upload_background(
+    def schedule_upload_task(
         self, contents_list: List[str] | str, filenames_list: List[str] | str
-    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, int, str, bool, str]:
-        """Kick off background upload processing and enable progress polling."""
+    ) -> str:
+        """Schedule background processing of uploaded files."""
         if not contents_list:
-            return (
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                0,
-                "0%",
-                True,
-                "",
-            )
+            return ""
+
 
         if not isinstance(contents_list, list):
             contents_list = [contents_list]
         if not isinstance(filenames_list, list):
             filenames_list = [filenames_list]
 
-        async_coro = asyncio.to_thread(
-            self.processing.process_files, contents_list, filenames_list
-        )
+        async_coro = self.processing.process_files(contents_list, filenames_list)
         task_id = create_task(async_coro)
 
-        return (
-            no_update,
-            no_update,
-            no_update,
-            no_update,
-            no_update,
-            no_update,
-            no_update,
-            0,
-            "0%",
-            False,
-            task_id,
-        )
 
-    def check_upload_progress(
-        self, _n: int, task_id: str
-    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, int, str, bool, str]:
-        """Poll background processing status and emit results when ready."""
+    def reset_upload_progress(
+        self, contents_list: List[str] | str
+    ) -> Tuple[int, str, bool]:
+        """Reset progress indicators when a new upload starts."""
+        if not contents_list:
+            return 0, "0%", True
+        return 0, "0%", False
+
+    def update_progress_bar(self, _n: int, task_id: str) -> Tuple[int, str]:
+        """Update the progress bar based on current task status."""
+
         status = get_status(task_id)
         progress = int(status.get("progress", 0))
+        return progress, f"{progress}%"
+
+    def finalize_upload_results(
+        self, _n: int, task_id: str
+    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, bool]:
+        """Emit upload results once processing completes."""
+        status = get_status(task_id)
         result = status.get("result")
 
         if status.get("done") and result is not None:
@@ -386,7 +381,8 @@ class Callbacks:
                     no_update,
                     no_update,
                 )
-            return (*result, 100, "100%", True, task_id)
+            return (*result, True)
+
 
         return (
             no_update,
@@ -396,11 +392,10 @@ class Callbacks:
             no_update,
             no_update,
             no_update,
-            progress,
-            f"{progress}%",
-            False,
-            task_id,
+            no_update,
+
         )
+
 
     def handle_modal_dialogs(
         self,
@@ -763,7 +758,16 @@ class Callbacks:
             .replace("🔧", "")
             .replace("❌", "")
         )
-        columns = file_info.get("column_names", []) or file_info.get("columns", [])
+        columns = file_info.get("columns", [])
+        if not columns:
+            path = file_info.get("path") or str(
+                _uploaded_data_store.get_file_path(filename)
+            )
+            try:
+                columns = pd.read_parquet(path, nrows=0).columns.tolist()
+            except Exception:
+                df_tmp = _uploaded_data_store.load_dataframe(filename)
+                columns = df_tmp.columns.tolist()
         ai_suggestions = file_info.get("ai_suggestions", {})
 
         # ADD THIS BLOCK HERE - Check for saved column mappings
@@ -787,9 +791,7 @@ class Callbacks:
                             "confidence": 1.0,
                             "source": "saved",
                         }
-                    logger.info(
-                        f"📋 Pre-filled saved mappings: {saved_column_mappings}"
-                    )
+                    logger.info(f"📋 Pre-filled saved mappings: {saved_column_mappings}")
         except Exception as e:
             logger.debug(f"No saved mappings: {e}")
         # END OF ADDITION
@@ -1058,7 +1060,9 @@ class Callbacks:
                         )
                         storage_dir = _uploaded_data_store.storage_dir
                         logger.error(f"📁 Storage directory: {storage_dir}")
-                        logger.error(f"📁 Storage directory exists: {storage_dir.exists()}")
+                        logger.error(
+                            f"📁 Storage directory exists: {storage_dir.exists()}"
+                        )
                         if storage_dir.exists():
                             disk_files = list(storage_dir.glob("*.parquet"))
                             logger.error(
@@ -1123,9 +1127,7 @@ class Callbacks:
         logger.info(f"🔍 DEBUG - confirm_clicks: {confirm_clicks}")
         logger.info(f"🔍 DEBUG - values: {values}")
         logger.info(f"🔍 DEBUG - ids: {ids}")
-        logger.info(
-            f"🔍 DEBUG - file_info filename: {file_info.get('filename', 'N/A')}"
-        )
+        logger.info(f"🔍 DEBUG - file_info filename: {file_info.get('filename', 'N/A')}")
 
         try:
             filename = file_info.get("filename", "")
@@ -1167,8 +1169,6 @@ class Callbacks:
             )
 
 
-
-
 # ------------------------------------------------------------
 # Callback manager for the upload page
 # ------------------------------------------------------------
@@ -1191,23 +1191,24 @@ def register_callbacks(
             {"prevent_initial_call": True},
         ),
         (
-            cb.start_upload_background,
+            cb.schedule_upload_task,
+            Output("upload-task-id", "data", allow_duplicate=True),
+            Input("upload-data", "contents"),
+            State("upload-data", "filename"),
+            "schedule_upload_task",
+            {"prevent_initial_call": True, "allow_duplicate": True},
+        ),
+        (
+            cb.reset_upload_progress,
             [
-                Output("upload-results", "children", allow_duplicate=True),
-                Output("file-preview", "children", allow_duplicate=True),
-                Output("file-info-store", "data", allow_duplicate=True),
-                Output("upload-nav", "children", allow_duplicate=True),
-                Output("current-file-info-store", "data", allow_duplicate=True),
-                Output("column-verification-modal", "is_open", allow_duplicate=True),
-                Output("device-verification-modal", "is_open", allow_duplicate=True),
                 Output("upload-progress", "value", allow_duplicate=True),
                 Output("upload-progress", "label", allow_duplicate=True),
                 Output("upload-progress-interval", "disabled", allow_duplicate=True),
-                Output("upload-task-id", "data", allow_duplicate=True),
+
             ],
             Input("upload-data", "contents"),
-            State("upload-data", "filename"),
-            "start_upload_background",
+            None,
+            "reset_upload_progress",
             {"prevent_initial_call": True, "allow_duplicate": True},
         ),
         (
@@ -1227,7 +1228,18 @@ def register_callbacks(
             {"prevent_initial_call": "initial_duplicate", "allow_duplicate": True},
         ),
         (
-            cb.check_upload_progress,
+            cb.update_progress_bar,
+            [
+                Output("upload-progress", "value", allow_duplicate=True),
+                Output("upload-progress", "label", allow_duplicate=True),
+            ],
+            Input("upload-progress-interval", "n_intervals"),
+            State("upload-task-id", "data"),
+            "update_progress_bar",
+            {"prevent_initial_call": True, "allow_duplicate": True},
+        ),
+        (
+            cb.finalize_upload_results,
             [
                 Output("upload-results", "children", allow_duplicate=True),
                 Output("file-preview", "children", allow_duplicate=True),
@@ -1236,14 +1248,12 @@ def register_callbacks(
                 Output("current-file-info-store", "data", allow_duplicate=True),
                 Output("column-verification-modal", "is_open", allow_duplicate=True),
                 Output("device-verification-modal", "is_open", allow_duplicate=True),
-                Output("upload-progress", "value", allow_duplicate=True),
-                Output("upload-progress", "label", allow_duplicate=True),
                 Output("upload-progress-interval", "disabled", allow_duplicate=True),
-                Output("upload-task-id", "data", allow_duplicate=True),
+
             ],
-            Input("upload-progress-interval", "n_intervals"),
+            Input("progress-done-trigger", "n_clicks"),
             State("upload-task-id", "data"),
-            "check_upload_progress",
+            "finalize_upload_results",
             {"prevent_initial_call": True, "allow_duplicate": True},
         ),
         (
@@ -1335,6 +1345,12 @@ def register_callbacks(
             component_name="file_upload",
             **extra,
         )(profile_callback(cid)(func))
+
+    manager.app.clientside_callback(
+        "function(tid){if(window.startUploadProgress){window.startUploadProgress(tid);} return '';}",
+        Output("sse-trigger", "children"),
+        Input("upload-task-id", "data"),
+    )
 
     if controller is not None:
         controller.register_callback(

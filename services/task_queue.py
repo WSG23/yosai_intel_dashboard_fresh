@@ -23,7 +23,7 @@ def create_task(
     the internal progress state and may be used by the task to report
     incremental progress.
     """
-
+    
     task_id = str(uuid.uuid4())
     _tasks[task_id] = {"progress": 0, "result": None, "done": False}
 
@@ -38,6 +38,7 @@ def create_task(
             else:
                 coro = func(_update)
             result = await coro
+
             _tasks[task_id]["result"] = result
         except Exception as exc:  # pragma: no cover - best effort
             _tasks[task_id]["result"] = exc
