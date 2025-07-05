@@ -2,7 +2,11 @@ import pandas as pd
 import base64
 
 from services.data_processing.unified_file_validator import UnifiedFileValidator
-
+from services.data_enhancer import (
+    get_mapping_suggestions,
+    apply_fuzzy_column_matching,
+)
+from services.data_validation import DataValidationService
 from services.upload_service import process_uploaded_file
 from config.dynamic_config import dynamic_config
 
@@ -22,14 +26,15 @@ def test_enhanced_processor(tmp_path):
     processor = UnifiedFileValidator()
 
     df_loaded = pd.read_csv(csv_path)
-    suggestions = processor.get_mapping_suggestions(df_loaded)
+    suggestions = get_mapping_suggestions(df_loaded)
     assert suggestions["missing_mappings"] == []
 
-    result = processor._validate_data(df_loaded)
-    assert result["valid"] is True
-    mapped_df = result.get("data")
-    assert mapped_df is not None
-    assert list(mapped_df.columns) == [
+    mapped_df, _ = apply_fuzzy_column_matching(
+        df_loaded, ["person_id", "door_id", "access_result", "timestamp"]
+    )
+    validator = DataValidationService()
+    processed_df = validator.validate_for_upload(mapped_df)
+    assert list(processed_df.columns) == [
         "person_id",
         "door_id",
         "access_result",

@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-
+import base64
 
 from services.data_processing.unified_file_validator import UnifiedFileValidator
 
@@ -19,8 +19,9 @@ def test_parse_csv_with_various_delimiters(tmp_path, sep):
 
     processor = UnifiedFileValidator()
     with open(csv_path, "rb") as f:
-        text, _ = processor.validate_and_decode(str(csv_path), f.read())
-    parsed = processor._parse_csv(text)
+        data_b64 = base64.b64encode(f.read()).decode()
+    contents = f"data:text/csv;base64,{data_b64}"
+    parsed = processor.validate_file(contents, "sample.csv")
 
     expected = df.copy()
     expected["timestamp"] = pd.to_datetime(expected["timestamp"])
