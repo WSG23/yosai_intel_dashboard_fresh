@@ -11,6 +11,9 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+# Regular expression for common Unicode control characters
+_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+
 
 class UnicodeProcessor:
     """Centralized Unicode processing with robust error handling."""
@@ -28,6 +31,7 @@ class UnicodeProcessor:
 
         try:
             cleaned = re.sub(r"[\uD800-\uDFFF]", replacement, text)
+            cleaned = _CONTROL_RE.sub("", cleaned)
             cleaned = unicodedata.normalize("NFKC", cleaned)
             return cleaned
         except Exception as exc:  # pragma: no cover - defensive
@@ -179,9 +183,22 @@ def clean_unicode_surrogates(text: Any) -> str:
 
 
 def sanitize_unicode_input(text: Union[str, Any], replacement: str = UnicodeProcessor.REPLACEMENT_CHAR) -> str:
-    """Sanitize text input to handle Unicode surrogate characters."""
+    """Sanitize text input to handle Unicode and control characters."""
 
-    return UnicodeProcessor.safe_encode_text(text)
+    if not isinstance(text, str):
+        try:
+            text = str(text)
+        except Exception:  # pragma: no cover - defensive
+            logger.warning("Failed to convert %r to str", text, exc_info=True)
+            return ""
+
+    try:
+        cleaned = UnicodeProcessor.clean_surrogate_chars(text, replacement)
+        cleaned.encode("utf-8")
+        return cleaned
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("sanitize_unicode_input failed: %s", exc)
+        return "".join(ch for ch in str(text) if ch.isascii())
 
 
 def process_large_csv_content(

@@ -1,5 +1,6 @@
 import pandas as pd
 from plugins.service_locator import PluginServiceLocator
+from utils.unicode_utils import UnicodeProcessor, sanitize_dataframe
 
 handler = PluginServiceLocator.get_unicode_handler()
 
@@ -9,11 +10,10 @@ def test_unicode_handler_centralization():
     cleaned = handler.UnicodeProcessor.clean_surrogate_chars(text)
     assert cleaned == "AB"
 
-    from file_conversion.unicode_handler import UnicodeCleaner
-    assert UnicodeCleaner.clean_string(text) == cleaned
+    assert UnicodeProcessor.clean_surrogate_chars(text) == cleaned
 
     df = pd.DataFrame({"c" + chr(0xD800): ["x" + chr(0xDC00)]})
-    cleaned_df = UnicodeCleaner.clean_dataframe(df)
+    cleaned_df = sanitize_dataframe(df)
     assert list(cleaned_df.columns) == ["c"]
     assert cleaned_df.iloc[0, 0] == "x"
 
