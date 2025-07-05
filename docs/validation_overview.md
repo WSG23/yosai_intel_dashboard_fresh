@@ -50,6 +50,7 @@ in a future release.
 
 Example usage of the processor:
 ```python
-from core.unicode_processor import UnicodeProcessor
-cleaned = UnicodeProcessor.safe_encode_text(user_input)
+from core.unicode import get_text_processor
+processor = get_text_processor()
+cleaned = processor.safe_encode_text(user_input)
 ```
