@@ -32,9 +32,37 @@ from services.data_processing.core.exceptions import (
 
 
 
-def process_file_simple(content: bytes, filename: str):
-    """Minimal stub for compatibility with imports."""
-    raise FileProcessingError("Processing not implemented")
+def process_file_simple(content: bytes, filename: str) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
+    """Parse a CSV ``content`` and return a sanitized ``DataFrame``.
+
+    The helper intentionally performs only minimal validation and is used by
+    older parts of the code base that expect a best-effort CSV reader.  It
+    should **not** raise exceptions on parsing errors.  Instead a tuple of
+    ``(df, None)`` is returned on success or ``(None, error_message)`` on
+    failure.
+    """
+
+    if not content:
+        return None, "File is empty"
+
+    try:
+        encoding = "utf-8"
+        chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
+
+        if len(content) > chunk_size:
+            text = process_large_csv_content(content, encoding, chunk_size=chunk_size)
+        else:
+            text = safe_decode_with_unicode_handling(content, encoding)
+
+        text = sanitize_unicode_input(text)
+
+        from io import StringIO
+
+        df = pd.read_csv(StringIO(text))
+        df = sanitize_dataframe(df)
+        return df, None
+    except Exception as exc:  # pragma: no cover - robustness
+        return None, str(exc)
 
 
 class FileHandler:
