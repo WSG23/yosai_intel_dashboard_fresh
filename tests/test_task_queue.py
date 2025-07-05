@@ -8,7 +8,7 @@ def test_task_queue_basic():
         await asyncio.sleep(0.01)
         return "ok"
 
-    tid = create_task(sample())
+    tid = create_task(sample)
     for _ in range(100):
         status = get_status(tid)
         if status.get("done"):

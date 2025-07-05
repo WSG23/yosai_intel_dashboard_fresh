@@ -1,7 +1,7 @@
 import asyncio
 import threading
 import uuid
-from typing import Any, Dict, Coroutine
+from typing import Any, Dict, Coroutine, Callable, Awaitable
 
 # Simple in-memory async task tracker
 _tasks: Dict[str, Dict[str, Any]] = {}
@@ -12,15 +12,18 @@ _thread = threading.Thread(target=_loop.run_forever, daemon=True)
 _thread.start()
 
 
-def create_task(coro: Coroutine[Any, Any, Any]) -> str:
-    """Schedule ``coro`` and return a task ID."""
+def create_task(coro: Coroutine[Any, Any, Any] | Callable[[], Awaitable[Any]]) -> str:
+    """Schedule ``coro`` or coroutine function and return a task ID."""
     task_id = str(uuid.uuid4())
     _tasks[task_id] = {"progress": 0, "result": None, "done": False}
 
     async def _runner() -> None:
         _tasks[task_id]["progress"] = 50
         try:
-            result = await coro
+            if asyncio.iscoroutine(coro):
+                result = await coro
+            else:
+                result = await coro()
             _tasks[task_id]["result"] = result
         except Exception as exc:  # pragma: no cover - best effort
             _tasks[task_id]["result"] = exc

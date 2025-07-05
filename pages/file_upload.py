@@ -318,10 +318,10 @@ class Callbacks:
             False,
         )
 
-    def process_uploaded_files(
+    async def process_uploaded_files(
         self, contents_list: List[str] | str, filenames_list: List[str] | str
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
-        return self.processing.process_files(contents_list, filenames_list)
+        return await self.processing.process_files(contents_list, filenames_list)
 
     def start_upload_background(
         self, contents_list: List[str] | str, filenames_list: List[str] | str
@@ -347,9 +347,7 @@ class Callbacks:
         if not isinstance(filenames_list, list):
             filenames_list = [filenames_list]
 
-        async_coro = asyncio.to_thread(
-            self.processing.process_files, contents_list, filenames_list
-        )
+        async_coro = self.processing.process_files(contents_list, filenames_list)
         task_id = create_task(async_coro)
 
         return (
