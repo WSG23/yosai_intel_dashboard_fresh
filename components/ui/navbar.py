@@ -13,6 +13,7 @@ from core.plugins.decorators import safe_callback
 from core.theme_manager import DEFAULT_THEME, sanitize_theme
 from utils.assets_utils import get_nav_icon
 from utils.assets_debug import check_navbar_assets
+from __future__ import annotations
 
 import logging
 
