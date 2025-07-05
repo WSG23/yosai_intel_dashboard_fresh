@@ -70,5 +70,13 @@ monitoring:
   sentry_dsn: ${SENTRY_DSN}
   log_retention_days: ${LOG_RETENTION_DAYS:90}
 
+uploads:
+  chunk_size: ${UPLOAD_CHUNK_SIZE:50000}
+  max_parallel_uploads: ${MAX_PARALLEL_UPLOADS:4}
+  validator_rules:
+    sql_injection: true
+    xss: true
+    path_traversal: true
+
 secret_validation:
   severity: high

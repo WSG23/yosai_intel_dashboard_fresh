@@ -1,0 +1,85 @@
+/* =================================================================== */
+/* 03-components/_upload.css - File Upload Component Styles            */
+/* =================================================================== */
+
+/* Drag and Drop Area */
+.upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10);
+  border: 2px dashed var(--color-accent);
+  border-radius: var(--radius-lg);
+  background: var(--surface-tertiary);
+  color: var(--text-secondary);
+  text-align: center;
+  cursor: pointer;
+  transition: background var(--duration-normal) var(--ease-out),
+              border-color var(--duration-normal) var(--ease-out);
+}
+
+.upload-dropzone--active {
+  background: var(--color-accent-subtle);
+  border-color: var(--color-accent-hover);
+  animation: upload-pulse 1.2s ease-out infinite;
+}
+
+.upload-dropzone:focus-within {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@keyframes upload-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 153, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(0, 153, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 153, 255, 0);
+  }
+}
+
+/* Progress Bar */
+.upload-progress {
+  width: 100%;
+  height: var(--space-3);
+  margin-top: var(--space-4);
+  background: var(--color-gray-700);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.upload-progress__bar {
+  width: 0;
+  height: 100%;
+  background: var(--color-accent);
+  animation: upload-progress 2s linear infinite;
+}
+
+.upload-progress--done .upload-progress__bar {
+  width: 100%;
+  animation: none;
+}
+
+@keyframes upload-progress {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* High Contrast Theme */
+[data-theme="high-contrast"] .upload-dropzone {
+  border-color: var(--color-white);
+  background: var(--color-black);
+  color: var(--color-white);
+}
+
+[data-theme="high-contrast"] .upload-progress {
+  background: var(--color-gray-500);
+}
+
+[data-theme="high-contrast"] .upload-progress__bar {
+  background: var(--color-white);
+}

@@ -75,5 +75,6 @@
         input.dispatchEvent(new Event('change', {bubbles:true}));
       }
     }, true);
+
   });
 })();

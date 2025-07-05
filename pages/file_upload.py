@@ -39,6 +39,7 @@ from services.upload import (
     save_ai_training_data,
 )
 from components.upload import ClientSideValidator
+
 from services.task_queue import create_task, get_status, clear_task
 
 
@@ -62,7 +63,7 @@ def layout():
                                     ),
                                     dbc.CardBody(
                                         [
-                                            dcc.Upload(
+                                            DragDropUploadArea(
                                                 id="upload-data",
                                                 max_size=dynamic_config.get_max_upload_size_bytes(),  # Updated to use new method
                                                 **{
@@ -97,6 +98,7 @@ def layout():
                                                 className="file-upload-area",
                                                 multiple=True,
                                             )
+
                                         ]
                                     ),
                                 ]
@@ -117,7 +119,9 @@ def layout():
                                 label="0%",
                                 striped=True,
                                 animated=True,
-                            )
+                                **{"aria-label": "Overall upload progress"},
+                            ),
+                            html.Ul(id="file-progress-list", className="list-unstyled mt-2")
                         ]
                     )
                 ],
@@ -241,6 +245,7 @@ class Callbacks:
         self.modal = ModalService()
         self.client_validator = ClientSideValidator()
 
+
     def highlight_upload_area(self, n_clicks):
         """Highlight upload area when 'upload more' is clicked."""
         if n_clicks:
@@ -330,7 +335,46 @@ class Callbacks:
     async def process_uploaded_files(
         self, contents_list: List[str] | str, filenames_list: List[str] | str
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
-        return await self.processing.process_files(contents_list, filenames_list)
+        if not contents_list:
+            return (
+                [],
+                [],
+                {},
+                [],
+                {},
+                no_update,
+                no_update,
+            )
+
+        if not isinstance(contents_list, list):
+            contents_list = [contents_list]
+            filenames_list = [filenames_list]
+
+        valid_contents: list[str] = []
+        valid_filenames: list[str] = []
+        alerts: list[Any] = []
+        for content, fname in zip(contents_list, filenames_list):
+            ok, msg = self.validator.validate(fname, content)
+            if not ok:
+                alerts.append(self.processing.build_failure_alert(msg))
+            else:
+                valid_contents.append(content)
+                valid_filenames.append(fname)
+                self.chunked.start_file(fname)
+                self.queue.add_file(fname)
+
+        if not valid_contents:
+            return alerts, [], {}, [], {}, no_update, no_update
+
+        result = await self.processing.process_files(valid_contents, valid_filenames)
+
+        for fname in valid_filenames:
+            self.chunked.finish_file(fname)
+            self.queue.mark_complete(fname)
+
+        result = list(result)
+        result[0] = alerts + result[0]
+        return tuple(result)
 
     def schedule_upload_task(
         self, contents_list: List[str] | str, filenames_list: List[str] | str
@@ -355,12 +399,25 @@ class Callbacks:
             return 0, "0%", True
         return 0, "0%", False
 
-    def update_progress_bar(self, _n: int, task_id: str) -> Tuple[int, str]:
-        """Update the progress bar based on current task status."""
+    def update_progress_bar(self, _n: int, task_id: str) -> Tuple[int, str, Any]:
+        """Update the progress bar and per-file indicators."""
 
         status = get_status(task_id)
         progress = int(status.get("progress", 0))
-        return progress, f"{progress}%"
+        file_items = [
+            html.Li(
+                dbc.Progress(
+                    value=self.chunked.get_progress(fname),
+                    label=f"{fname} {self.chunked.get_progress(fname)}%",
+                    striped=True,
+                    animated=True,
+                    id={"type": "file-progress", "name": fname},
+                    **{"aria-label": f"Upload progress for {fname}"},
+                )
+            )
+            for fname in self.queue.files
+        ]
+        return progress, f"{progress}%", file_items
 
     def finalize_upload_results(
         self, _n: int, task_id: str
@@ -1256,6 +1313,7 @@ def register_callbacks(
             [
                 Output("upload-progress", "value", allow_duplicate=True),
                 Output("upload-progress", "label", allow_duplicate=True),
+                Output("file-progress-list", "children", allow_duplicate=True),
             ],
             Input("upload-progress-interval", "n_intervals"),
             State("upload-task-id", "data"),
