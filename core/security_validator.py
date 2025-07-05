@@ -20,9 +20,9 @@ from .security_patterns import (
 )
 from security.sql_validator import SQLInjectionPrevention
 from security.validation_exceptions import ValidationError
-from services.data_processing.callback_controller import (
-    emit_security_event,
-    SecurityEvent,
+from core.callback_controller import (
+    fire_event as emit_security_event,
+    CallbackEvent as SecurityEvent,
 )
 
 
