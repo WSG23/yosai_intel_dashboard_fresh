@@ -1,7 +1,7 @@
 import pandas as pd
 import base64
 
-from services import FileProcessor
+from services.data_processing.file_handler import FileHandler
 from services.upload_service import process_uploaded_file
 from config.dynamic_config import dynamic_config
 
@@ -18,7 +18,7 @@ def test_enhanced_processor(tmp_path):
     csv_path = tmp_path / "sample.csv"
     df.to_csv(csv_path, index=False)
 
-    processor = FileProcessor(upload_folder=str(tmp_path), allowed_extensions={"csv"})
+    processor = FileHandler()
 
     df_loaded = pd.read_csv(csv_path)
     suggestions = processor.get_mapping_suggestions(df_loaded)
