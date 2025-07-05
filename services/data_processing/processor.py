@@ -2,32 +2,54 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Iterator, Optional, Tuple
 
 import pandas as pd
+
+from services.data_validation import DataValidationService
+from utils.mapping_helpers import map_and_clean
 
 logger = logging.getLogger(__name__)
 
 
-class DataLoader:
-    """Load uploaded datasets and apply learned mappings.
+class Processor:
+    """Unified data loader with streaming and mapping helpers."""
 
-    .. deprecated:: 0.10.0
-       Replaced by :class:`services.data_processing.processor.Processor`.
-    """
-
-    def __init__(self, base_data_path: str = "data"):
-        import warnings
-
-        warnings.warn(
-            "DataLoader is deprecated; use Processor instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
+    def __init__(
+        self,
+        base_data_path: str = "data",
+        validator: Optional[DataValidationService] = None,
+    ) -> None:
         self.base_path = Path(base_data_path)
         self.mappings_file = self.base_path / "learned_mappings.json"
         self.session_storage = self.base_path.parent / "session_storage"
+        self.validator = validator or DataValidationService()
 
+    # ------------------------------------------------------------------
+    # Streaming helpers (from DataLoadingService)
+    # ------------------------------------------------------------------
+    def load_dataframe(self, source: Any) -> pd.DataFrame:
+        """Load ``source`` into a validated and mapped dataframe."""
+        if isinstance(source, (str, Path)) or hasattr(source, "read"):
+            df = pd.read_csv(source, encoding="utf-8")
+        else:
+            df = source
+        df = self.validator.validate(df)
+        return map_and_clean(df)
+
+    def stream_file(self, source: Any, chunksize: int = 50000) -> Iterator[pd.DataFrame]:
+        """Yield cleaned chunks from ``source``."""
+        if isinstance(source, (str, Path)) or hasattr(source, "read"):
+            for chunk in pd.read_csv(source, chunksize=chunksize, encoding="utf-8"):
+                chunk = self.validator.validate(chunk)
+                yield map_and_clean(chunk)
+        else:
+            df = self.validator.validate(source)
+            yield map_and_clean(df)
+
+    # ------------------------------------------------------------------
+    # Uploaded data processing (from DataLoader)
+    # ------------------------------------------------------------------
     def get_processed_database(self) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         """Return uploaded data combined with mapping metadata."""
         mappings = self._load_consolidated_mappings()
@@ -36,6 +58,7 @@ class DataLoader:
             return pd.DataFrame(), {}
         return self._apply_mappings_and_combine(uploaded, mappings)
 
+    # Internal helpers -------------------------------------------------
     def _load_consolidated_mappings(self) -> Dict[str, Any]:
         try:
             if self.mappings_file.exists():
@@ -164,4 +187,4 @@ class DataLoader:
         return df.merge(attrs_df, on="door_id", how="left")
 
 
-__all__ = ["DataLoader"]
+__all__ = ["Processor"]

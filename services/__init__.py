@@ -7,6 +7,7 @@ from .data_loader import DataLoader
 from .data_validation import DataValidationService
 from .analytics_generator import AnalyticsGenerator
 from .data_loading_service import DataLoadingService
+from .data_processing.processor import Processor
 from .chunked_analysis import analyze_with_chunking
 from .result_formatting import (
     prepare_regular_result,
@@ -42,6 +43,7 @@ __all__ = [
     "DataValidationService",
     "AnalyticsGenerator",
     "DataLoadingService",
+    "Processor",
     "analyze_with_chunking",
     "prepare_regular_result",
     "apply_regular_analysis",

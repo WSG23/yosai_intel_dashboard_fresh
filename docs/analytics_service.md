@@ -13,9 +13,11 @@ and generates summaries for the UI.
 
 ## Major Classes and Methods
 
-### `DataLoader`
+### `Processor`
 
 - `get_processed_database()` – return combined dataframe and metadata
+- `load_dataframe()` – load a single file with validation and mappings
+- `stream_file()` – yield validated chunks for large files
 - `_load_consolidated_mappings()` – read saved mapping information
 - `_get_uploaded_data()` – retrieve uploaded files from the UI layer
 - `_apply_mappings_and_combine()` – apply mappings and merge files
@@ -31,7 +33,7 @@ and generates summaries for the UI.
 ## Data Flow
 
 1. User uploads files or selects a data source.
-2. `DataLoader` loads mappings and cleans each file.
+2. `Processor` loads mappings and cleans each file.
 3. Cleaned data is combined and handed to `AnalyticsService`.
 4. Analytics are computed and returned to the dashboard.
 

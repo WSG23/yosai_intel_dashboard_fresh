@@ -1,9 +1,9 @@
 import pandas as pd
-from services.data_loader import DataLoader
+from services.data_processing.processor import Processor
 
 
 def test_get_processed_database_basic(monkeypatch):
-    loader = DataLoader()
+    loader = Processor()
     uploaded = {
         "sample.csv": pd.DataFrame(
             {
