@@ -245,6 +245,7 @@ class Callbacks:
 
     def __init__(self):
         self.processing = UploadProcessingService(_uploaded_data_store)
+        self.preview_processor = self.processing.async_processor
         self.ai = AISuggestionService()
         self.modal = ModalService()
 
@@ -254,7 +255,7 @@ class Callbacks:
             return "file-upload-area file-upload-area--highlight"
         return "file-upload-area"
 
-    def restore_upload_state(self, pathname: str):
+    async def restore_upload_state(self, pathname: str):
         """Return stored upload details when revisiting the upload page."""
 
         if pathname != "/file-upload" or not _uploaded_data_store:
@@ -277,7 +278,7 @@ class Callbacks:
         for filename, info in file_infos.items():
             path = info.get("path") or str(_uploaded_data_store.get_file_path(filename))
             try:
-                df_preview = pd.read_parquet(path).head(10)
+                df_preview = await self.preview_processor.preview_from_parquet(path, rows=10)
             except Exception:
                 df_preview = _uploaded_data_store.load_dataframe(filename).head(10)
             rows = info.get("rows", len(df_preview))
@@ -742,7 +743,7 @@ class Callbacks:
             logger.error(f"❌ Error in device modal: {e}")
             return dbc.Alert(f"Error: {e}", color="danger"), file_info
 
-    def populate_modal_content(self, is_open, file_info):
+    async def populate_modal_content(self, is_open, file_info):
         """Generate the column mapping modal content."""
 
         if not is_open or not file_info:
@@ -764,7 +765,8 @@ class Callbacks:
                 _uploaded_data_store.get_file_path(filename)
             )
             try:
-                columns = pd.read_parquet(path, nrows=0).columns.tolist()
+                df_tmp = await self.preview_processor.preview_from_parquet(path, rows=0)
+                columns = df_tmp.columns.tolist()
             except Exception:
                 df_tmp = _uploaded_data_store.load_dataframe(filename)
                 columns = df_tmp.columns.tolist()

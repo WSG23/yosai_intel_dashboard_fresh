@@ -10,6 +10,7 @@ from components.file_preview import create_file_preview_ui
 from services.data_enhancer import get_ai_column_suggestions
 from services.data_processing.async_file_processor import AsyncFileProcessor
 from services.data_processing.file_processor import create_file_preview
+from .async_processor import AsyncUploadProcessor
 from services.device_learning_service import get_device_learning_service
 from services.progress_event_manager import progress_manager
 from utils.upload_store import UploadedDataStore
@@ -23,6 +24,7 @@ class UploadProcessingService:
     def __init__(self, store: UploadedDataStore):
         self.store = store
         self.processor = AsyncFileProcessor()
+        self.async_processor = AsyncUploadProcessor()
 
     def build_success_alert(
         self,
