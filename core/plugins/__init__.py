@@ -3,6 +3,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from .manager import ThreadSafePluginManager as PluginManager
+    from .performance_manager import EnhancedThreadSafePluginManager
     from .auto_config import PluginAutoConfiguration
     PLUGINS_AVAILABLE = True
 except ImportError as e:
@@ -21,4 +22,9 @@ except ImportError as e:
         def scan_and_configure(self, *args):
             pass
 
-__all__ = ["PluginManager", "PluginAutoConfiguration", "PLUGINS_AVAILABLE"]
+__all__ = [
+    "PluginManager",
+    "PluginAutoConfiguration",
+    "EnhancedThreadSafePluginManager",
+    "PLUGINS_AVAILABLE",
+]
