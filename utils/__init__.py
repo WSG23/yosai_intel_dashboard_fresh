@@ -1,5 +1,8 @@
 """Utility helpers for Yōsai Intel Dashboard with Unicode migration support."""
 
+# Public helper used across the code base
+from core.unicode_processor import process_large_csv_content
+
 try:  # pragma: no cover - graceful import fallback
     from .unicode_utils import (
         # Preferred API
@@ -37,10 +40,7 @@ except Exception:  # pragma: no cover - fallback when unicode_utils unavailable
         UnicodeSecurityProcessor,
         sanitize_unicode_input,
     )
-    from core.unicode_processor import (
-        process_large_csv_content,
-        safe_format_number,
-    )
+    from core.unicode_processor import safe_format_number
     handle_surrogate_characters = UnicodeSecurityProcessor.sanitize_unicode_input
     clean_unicode_surrogates = UnicodeSecurityProcessor.sanitize_unicode_input
     unicode_clean_text = UnicodeSecurityProcessor.sanitize_unicode_input
@@ -76,6 +76,7 @@ __all__: list[str] = [
     "clean_unicode_surrogates",
     "sanitize_unicode_input",
     "sanitize_data_frame",
+    "process_large_csv_content",
     # Existing utilities
     "check_navbar_assets",
     "debug_dash_asset_serving",
