@@ -160,7 +160,7 @@ class UploadProcessingService:
 
             try:
                 df = await self.processor.process_file(
-                    content, filename, progress_manager.emit
+                    content, filename, progress_manager=None
                 )
                 rows = len(df)
                 cols = len(df.columns)
