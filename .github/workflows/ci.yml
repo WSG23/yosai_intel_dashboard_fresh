@@ -43,6 +43,9 @@ jobs:
       - name: 🧹 Black (format check)
         run: black --check --diff .
 
+      - name: 🔀 Isort (import order)
+        run: isort --profile=black --check --diff .
+
       - name: 🔍 Flake8
         run: flake8 .
 

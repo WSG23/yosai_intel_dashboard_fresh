@@ -5,9 +5,11 @@ Uploaded files are validated with :class:`services.data_processing.unified_file_
 before processing to ensure they are present, non-empty and within the configured
 size limits.
 """
-import pandas as pd
 import logging
-from typing import Dict, Any, List, Optional, Tuple
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+import pandas as pd
 
 from services.data_loader import DataLoader
 from services.analytics_summary import generate_sample_analytics
@@ -17,7 +19,6 @@ from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.db_analytics_helper import DatabaseAnalyticsHelper
 from services.summary_reporting import SummaryReporter
 
-from datetime import datetime
 
 
 def ensure_analytics_config():
@@ -374,8 +375,6 @@ class AnalyticsService:
 
     def get_unique_patterns_analysis(self, data_source: str | None = None):
         """Get unique patterns analysis for the requested source."""
-        import logging
-
         logger = logging.getLogger(__name__)
 
         try:

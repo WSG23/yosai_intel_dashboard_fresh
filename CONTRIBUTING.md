@@ -9,6 +9,8 @@ Install the core and development dependencies:
 ```bash
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
+pip install pre-commit
+pre-commit install
 ```
 
 These additional packages provide linting, type checking, security scanning and testing tools used in our CI pipeline.
