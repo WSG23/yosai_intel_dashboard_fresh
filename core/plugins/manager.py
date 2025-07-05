@@ -3,7 +3,7 @@ import pkgutil
 import logging
 import threading
 import time
-from typing import List, Any, Dict
+from typing import List, Any, Dict, cast
 
 from core.callback_manager import CallbackManager
 from core.plugins.protocols import (
@@ -161,11 +161,14 @@ class PluginManager:
             if isinstance(plugin, CallbackPluginProtocol) or hasattr(
                 plugin, "register_callbacks"
             ):
+                cb_plugin = cast(CallbackPluginProtocol, plugin)
                 try:
-                    result = plugin.register_callbacks(manager, self.container)
+                    result = cb_plugin.register_callbacks(manager, self.container)
                     results.append(result)
                 except Exception as exc:  # pragma: no cover - log and continue
-                    logger.error("Failed to register callbacks for %s: %s", plugin, exc)
+                    logger.error(
+                        "Failed to register callbacks for %s: %s", plugin, exc
+                    )
                     results.append(False)
         return results
 
