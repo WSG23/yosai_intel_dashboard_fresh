@@ -91,6 +91,35 @@ def print_startup_info(app_config):
     logger.info("\n🚀 Dashboard starting...")
 
 
+def ensure_https_certificates():
+    """Auto-generate HTTPS certificates using mkcert if they don't exist"""
+    cert_file = "localhost+1.pem"
+    key_file = "localhost+1-key.pem"
+
+    if os.path.exists(cert_file) and os.path.exists(key_file):
+        logger.info("✅ HTTPS certificates found")
+        return (cert_file, key_file)
+
+    logger.info("📜 Generating HTTPS certificates...")
+
+    try:
+        subprocess.run(["mkcert", "-version"], capture_output=True, check=True)
+        subprocess.run(["mkcert", "-install"], capture_output=True, check=True)
+        logger.info("✅ Local CA installed")
+        subprocess.run(
+            ["mkcert", "localhost", "127.0.0.1"], capture_output=True, check=True
+        )
+        logger.info("✅ HTTPS certificates generated")
+        return (cert_file, key_file)
+    except subprocess.CalledProcessError:
+        logger.error("❌ Failed to generate certificates with mkcert")
+        return None
+    except FileNotFoundError:
+        logger.error("❌ mkcert not found - install with: brew install mkcert")
+        logger.info("💡 Falling back to HTTP mode")
+        return None
+
+
 def main():
     """Main application entry point"""
     try:
@@ -116,6 +145,9 @@ def main():
 
         # Print startup information
         print_startup_info(app_config)
+
+        # Auto-generate HTTPS certificates
+        ssl_context = ensure_https_certificates()
 
         try:
             from core.secrets_validator import validate_all_secrets
@@ -182,12 +214,21 @@ def main():
 
         # Run the application
         try:
-            app.run_server(
-                host=app_config.host,
-                port=app_config.port,
-                debug=app_config.debug,
-                ssl_context='adhoc'
-            )
+            if ssl_context:
+                logger.info("🔒 Starting with HTTPS")
+                app.run_server(
+                    host=app_config.host,
+                    port=app_config.port,
+                    debug=app_config.debug,
+                    ssl_context=ssl_context,
+                )
+            else:
+                logger.info("🌐 Starting with HTTP")
+                app.run_server(
+                    host=app_config.host,
+                    port=app_config.port,
+                    debug=app_config.debug,
+                )
         except KeyboardInterrupt:
             logger.info("\n👋 Application stopped by user")
         except Exception as e:
