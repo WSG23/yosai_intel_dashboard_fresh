@@ -26,7 +26,7 @@ from security.unicode_security_handler import UnicodeSecurityHandler
 # Internal service imports with CORRECTED paths
 ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
 
-from services.ai_suggestions import generate_column_suggestions
+from services.data_enhancer import get_ai_column_suggestions
 
 
 def get_ai_suggestions_for_file(
@@ -34,7 +34,7 @@ def get_ai_suggestions_for_file(
 ) -> Dict[str, Dict[str, Any]]:
     """Return AI column suggestions for ``df`` columns."""
     try:
-        return generate_column_suggestions(list(df.columns))
+        return get_ai_column_suggestions(list(df.columns))
     except Exception:
         suggestions: Dict[str, Dict[str, Any]] = {}
         for col in df.columns:
