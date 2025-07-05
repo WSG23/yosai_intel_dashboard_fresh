@@ -1,5 +1,5 @@
 import pytest
-from pages.file_upload import analyze_device_name_with_ai
+from services.upload import analyze_device_name_with_ai
 from services.ai_mapping_store import ai_mapping_store
 from services.ai_device_generator import AIDeviceGenerator, DeviceAttributes
 
