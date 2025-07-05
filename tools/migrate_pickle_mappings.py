@@ -14,7 +14,6 @@ Usage::
 The JSON output will be written next to the pickle file using the
 ``.json`` extension.
 """
-
 from __future__ import annotations
 
 import json
