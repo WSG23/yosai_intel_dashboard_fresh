@@ -1,9 +1,9 @@
 from ..unicode_processor import *
 from ..unicode_processor import safe_decode_bytes, safe_encode_text
 from .processor import (
-    UnicodeTextProcessor,
-    UnicodeSQLProcessor,
     UnicodeSecurityProcessor,
+    UnicodeSQLProcessor,
+    UnicodeTextProcessor,
 )
 
 __all__ = [
@@ -20,6 +20,7 @@ __all__ = [
     "handle_surrogate_characters",
     "clean_unicode_surrogates",
     "sanitize_unicode_input",
+    "contains_surrogates",
     "process_large_csv_content",
     "safe_format_number",
     "UnicodeTextProcessor",
