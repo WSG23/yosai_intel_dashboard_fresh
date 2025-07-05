@@ -17,6 +17,7 @@ from services.analytics import (
     analyze_with_chunking,
     map_and_clean,
 )
+from utils.unicode_utils import sanitize_dataframe
 
 logger = logging.getLogger(__name__)
 
@@ -192,18 +193,18 @@ class UploadAnalyticsProcessor:
             all_data = []
             if os.path.exists(csv_file):
                 df_csv = pd.read_csv(csv_file)
-                result = processor._validate_data(df_csv)
-                if result["valid"]:
-                    processed_df = result["data"]
+                metrics = processor.validate_dataframe(df_csv)
+                if metrics.get("valid"):
+                    processed_df = sanitize_dataframe(df_csv)
                     processed_df["source_file"] = "csv"
                     all_data.append(processed_df)
             if os.path.exists(json_file):
                 with open(json_file, "r", encoding="utf-8", errors="replace") as f:
                     json_data = json.load(f)
                 df_json = pd.DataFrame(json_data)
-                result = processor._validate_data(df_json)
-                if result["valid"]:
-                    processed_df = result["data"]
+                metrics = processor.validate_dataframe(df_json)
+                if metrics.get("valid"):
+                    processed_df = sanitize_dataframe(df_json)
                     processed_df["source_file"] = "json"
                     all_data.append(processed_df)
             if all_data:

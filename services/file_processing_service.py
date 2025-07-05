@@ -6,6 +6,8 @@ import logging
 from typing import List, Tuple
 
 from services.data_processing.unified_file_validator import UnifiedFileValidator
+from utils.unicode_utils import sanitize_dataframe
+from services.data_processing.core.exceptions import FileFormatError
 
 
 logger = logging.getLogger(__name__)
@@ -50,16 +52,18 @@ class FileProcessingService:
         for path in file_paths:
             try:
                 df = self._read_file(path)
-                result = self.processor._validate_data(df)
-                if result.get("valid"):
-                    processed_df = result.get("data", df)
+                metrics = self.processor.validate_dataframe(df)
+                if metrics.get("valid"):
+                    processed_df = sanitize_dataframe(df)
                     processed_df["source_file"] = path
                     all_data.append(processed_df)
                     total_records += len(processed_df)
                     processed_files += 1
                     info.append(f"✅ {path}: {len(processed_df)} records")
                 else:
-                    info.append(f"❌ {path}: {result.get('error', 'Unknown error')}")
+                    info.append(
+                        f"❌ {path}: {metrics.get('error', 'Unknown error')}"
+                    )
             except Exception as e:  # pragma: no cover - best effort
                 info.append(f"❌ {path}: Exception - {e}")
                 logger.error(f"Exception processing {path}: {e}")
