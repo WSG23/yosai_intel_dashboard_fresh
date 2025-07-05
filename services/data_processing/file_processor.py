@@ -27,7 +27,7 @@ class UnicodeFileProcessor:
         try:
             # Detect encoding
             detected = chardet.detect(content)
-            encoding = detected.get('encoding', 'utf-8')
+            encoding = detected.get('encoding') or 'utf-8'
 
             # Try detected encoding first
             try:
