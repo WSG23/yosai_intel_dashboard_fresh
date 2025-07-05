@@ -12,7 +12,10 @@ from utils.unicode_utils import (
     sanitize_dataframe,
     process_large_csv_content,
 )
-from callback_controller import CallbackController, CallbackEvent
+from services.data_processing.callback_controller import (
+    CallbackController,
+    CallbackEvent,
+)
 from config.dynamic_config import dynamic_config
 
 logger = logging.getLogger(__name__)

@@ -20,7 +20,10 @@ from .security_patterns import (
 )
 from security.sql_validator import SQLInjectionPrevention
 from security.validation_exceptions import ValidationError
-from security_callback_controller import emit_security_event, SecurityEvent
+from services.data_processing.callback_controller import (
+    emit_security_event,
+    SecurityEvent,
+)
 
 
 class SecurityLevel(Enum):
