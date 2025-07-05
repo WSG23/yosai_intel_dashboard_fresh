@@ -157,7 +157,7 @@ following steps:
    pip uninstall -y dash dash-leaflet dash-extensions dash-bootstrap-components
    pip install dash==2.14.1
    pip install dash-bootstrap-components==1.6.0
-   pip install dash-extensions==1.0.4
+   pip install dash-extensions==1.0.11
    pip install dash-leaflet==0.1.28
    pip install -r requirements.txt
    ```

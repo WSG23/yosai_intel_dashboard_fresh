@@ -1,6 +1,6 @@
-dash==2.14.1
+dash==2.15.0
 dash-bootstrap-components==1.6.0
-dash-extensions==1.0.4
+dash-extensions==1.0.11
 dash-leaflet==0.1.28
 Flask>=2.2.5
 plotly==5.15.0
