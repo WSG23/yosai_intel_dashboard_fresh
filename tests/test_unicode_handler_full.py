@@ -1,18 +1,19 @@
 import json
-import pandas as pd
 import tempfile
 from pathlib import Path
 
+import pandas as pd
+
+from core.callback_events import CallbackEvent
+from core.callback_manager import CallbackManager
 from core.unicode_processor import (
-    UnicodeProcessor,
     ChunkedUnicodeProcessor,
+    UnicodeProcessor,
     clean_unicode_text,
     safe_decode,
     safe_encode,
     sanitize_dataframe,
 )
-from core.callback_manager import CallbackManager
-from core.callback_events import CallbackEvent
 
 
 class CallbackController(CallbackManager):
@@ -42,13 +43,10 @@ def callback_handler(event: CallbackEvent):
 
 _GLOBAL = CallbackController()
 fire_event = _GLOBAL.fire_event
+from services.data_processing.file_processor import FileProcessor as RobustFileProcessor
 from services.data_processing.file_processor import (
-    FileProcessor as RobustFileProcessor,
-
     process_file_simple,
-    FileProcessingError,
 )
-
 
 
 class TestUnicodeProcessor:
@@ -112,6 +110,29 @@ class TestUnicodeProcessor:
         df = pd.DataFrame([[1, 2]], columns=["", None])
         out = UnicodeProcessor.sanitize_dataframe(df)
         assert list(out.columns) == ["col_0", "col_1"]
+
+    def test_sanitize_dataframe_string_dtype(self):
+        df = pd.DataFrame({"a": pd.Series(["x\uD800", "y"], dtype="string")})
+        out = UnicodeProcessor.sanitize_dataframe(df)
+        assert out.loc[0, "a"] == "x"
+        assert out["a"].dtype == "string"
+
+    def test_sanitize_dataframe_nested_structures(self):
+        df = pd.DataFrame({"col": [["a\uD83D", {"k\uD83D": "v\uDE00"}]]})
+        out = UnicodeProcessor.sanitize_dataframe(df)
+        cell = out.iloc[0, 0]
+        assert cell[0] == "a"
+        assert "k" in cell[1] and cell[1]["k"] == "v"
+
+    def test_sanitize_dataframe_progress_callback(self):
+        df = pd.DataFrame({"c1": ["a"], "c2": ["b"]})
+        calls = []
+
+        def cb(i, total):
+            calls.append((i, total))
+
+        UnicodeProcessor.sanitize_dataframe(df, progress=cb)
+        assert calls and calls[-1] == (2, 2)
 
 
 class TestChunkedUnicodeProcessor:

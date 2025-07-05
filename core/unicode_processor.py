@@ -6,8 +6,7 @@ import logging
 import math
 import re
 import unicodedata
-from typing import Any, Optional, Union
-
+from typing import Any, Callable, Optional, Union
 
 import pandas as pd
 
@@ -87,8 +86,23 @@ class UnicodeProcessor:
             return "".join(ch for ch in str(value) if ord(ch) < 128)
 
     @staticmethod
-    def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-        """Sanitize entire DataFrame for Unicode issues."""
+    def sanitize_dataframe(
+        df: pd.DataFrame,
+        *,
+        progress: Union[bool, Callable[[int, int], None], None] = None,
+    ) -> pd.DataFrame:
+        """Sanitize entire DataFrame for Unicode issues.
+
+        Parameters
+        ----------
+        df:
+            DataFrame to sanitize.
+        progress:
+            If ``True`` and the DataFrame has over 10k rows, progress will be
+            logged with :func:`logging.info` for each processed column. If a
+            callable is provided it will be invoked with ``(column_index,
+            total_columns)`` for every sanitized column.
+        """
         try:
             df_clean = df.copy()
 
@@ -98,18 +112,33 @@ class UnicodeProcessor:
                 safe_col = _DANGEROUS_PREFIX_RE.sub("", safe_col)
                 new_columns.append(safe_col or f"col_{len(new_columns)}")
 
-
             df_clean.columns = new_columns
 
-            for col in df_clean.select_dtypes(include=["object"]).columns:
-                df_clean[col] = df_clean[col].apply(
-                    lambda x: UnicodeProcessor.safe_encode_text(x)
-                )
+            object_cols = df_clean.select_dtypes(include=["object", "string"]).columns
+            total_cols = len(object_cols)
+
+            def _sanitize_value(value: Any) -> Any:
+                if isinstance(value, list):
+                    return [_sanitize_value(v) for v in value]
+                if isinstance(value, dict):
+                    return {
+                        _sanitize_value(k): _sanitize_value(v)
+                        for k, v in value.items()
+                    }
+                return UnicodeProcessor.safe_encode_text(value)
+
+            for idx, col in enumerate(object_cols):
+                df_clean[col] = df_clean[col].apply(_sanitize_value)
                 df_clean[col] = df_clean[col].apply(
                     lambda x: _DANGEROUS_PREFIX_RE.sub("", x)
                     if isinstance(x, str)
                     else x
                 )
+
+                if callable(progress):
+                    progress(idx + 1, total_cols)
+                elif progress and len(df_clean) > 10_000:
+                    logger.info("Sanitized column %s/%s", idx + 1, total_cols)
 
             return df_clean
         except Exception as exc:  # pragma: no cover - defensive
@@ -275,4 +304,3 @@ __all__ = [
     "process_large_csv_content",
     "safe_format_number",
 ]
-
