@@ -8,7 +8,10 @@ from pathlib import Path
 from typing import Callable, Optional, List
 
 import pandas as pd
-import psutil
+try:
+    import psutil
+except ImportError:  # pragma: no cover - optional dependency
+    psutil = None  # type: ignore
 
 
 class PerformanceFileProcessor:
@@ -45,7 +48,10 @@ class PerformanceFileProcessor:
         for chunk in pd.read_csv(path, chunksize=self.chunk_size, encoding=encoding):
             dfs.append(chunk)
             rows += len(chunk)
-            mem_mb = psutil.Process().memory_info().rss / (1024 * 1024)
+            mem_mb = (
+                psutil.Process().memory_info().rss / (1024 * 1024)
+                if psutil else 0
+            )
             if progress_callback:
                 try:
                     progress_callback(rows, mem_mb)
