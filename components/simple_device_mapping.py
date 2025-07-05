@@ -15,14 +15,12 @@ from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
 from typing import List, Dict, Any
 import pandas as pd
-import logging
 
 # ADD after existing imports
 from services.door_mapping_service import door_mapping_service
 from services.ai_mapping_store import ai_mapping_store
 from services.device_learning_service import get_device_learning_service
 
-logger = logging.getLogger(__name__)
 
 # Options for special device areas shared with verification component
 special_areas_options = [
