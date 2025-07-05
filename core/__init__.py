@@ -21,5 +21,18 @@ def create_app(mode: str | None = None):
 
 from .unicode_processor import sanitize_unicode_input
 from .truly_unified_callbacks import TrulyUnifiedCallbacks
+from .unicode import (
+    UnicodeTextProcessor,
+    UnicodeSQLProcessor,
+    UnicodeSecurityProcessor,
+)
 
-__all__ = ["create_app", "profile_callback", "sanitize_unicode_input", "TrulyUnifiedCallbacks"]
+__all__ = [
+    "create_app",
+    "profile_callback",
+    "sanitize_unicode_input",
+    "TrulyUnifiedCallbacks",
+    "UnicodeTextProcessor",
+    "UnicodeSQLProcessor",
+    "UnicodeSecurityProcessor",
+]
