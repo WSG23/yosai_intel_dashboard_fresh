@@ -5,10 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import pandas as pd
-from plugins.service_locator import PluginServiceLocator
-
-_unicode = PluginServiceLocator.get_unicode_handler()
-UnicodeProcessor = _unicode.UnicodeProcessor
+from core.unicode import UnicodeProcessor
 
 
 def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:

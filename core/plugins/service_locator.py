@@ -3,12 +3,30 @@ from __future__ import annotations
 """Central plugin service locator consolidating optional utilities."""
 
 import logging
+import warnings
 from typing import Any, Optional
+
+
+class _LocatorMeta(type):
+    """Intercept deprecated attribute access on the locator."""
+
+    def __getattr__(cls, name: str):
+        if name == "get_unicode_handler":
+            warnings.warn(
+                "PluginServiceLocator.get_unicode_handler() is deprecated; "
+                "import from core.unicode instead",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            from core import unicode as _unicode  # type: ignore
+
+            return lambda: _unicode
+        raise AttributeError(name)
 
 logger = logging.getLogger(__name__)
 
 
-class PluginServiceLocator:
+class PluginServiceLocator(metaclass=_LocatorMeta):
     """Provide access to optional plugin services with lazy loading."""
 
     _ai_plugin: Optional[Any] = None
@@ -70,12 +88,6 @@ class PluginServiceLocator:
             return cls._json_plugin.serialization_service
         return None
 
-    @staticmethod
-    def get_unicode_handler():
-        """Return the unified Unicode handler module."""
-        from core import unicode_processor
-
-        return unicode_processor
 
 
 # Convenience module level functions for backward compatibility ------
@@ -104,19 +116,27 @@ def reset_ai_classification_plugin() -> None:
 def get_json_serialization_service() -> Optional[Any]:
     return PluginServiceLocator.get_json_serialization_service()
 
-
-def get_unicode_handler():
-    return PluginServiceLocator.get_unicode_handler()
-
-
 __all__ = [
     "PluginServiceLocator",
     "get_ai_classification_service",
     "set_ai_classification_plugin",
     "reset_ai_classification_plugin",
     "get_json_serialization_service",
-    "get_unicode_handler",
 ]
+
+# ---------------------------------------------------------------------------
+def __getattr__(name: str):
+    if name == "get_unicode_handler":
+        warnings.warn(
+            "plugins.service_locator.get_unicode_handler() is deprecated; "
+            "import from core.unicode instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        from core import unicode as _unicode  # type: ignore
+
+        return lambda: _unicode
+    raise AttributeError(name)
 
 # Backwards compatibility for tests that patch _load_ai_plugin
 _load_ai_plugin = PluginServiceLocator._load_ai_plugin
