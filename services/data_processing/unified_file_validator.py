@@ -16,23 +16,56 @@ from utils.file_validator import (
 )
 from utils.unicode_utils import UnicodeProcessor, sanitize_dataframe
 from core.input_validation import InputValidator as StringValidator
-from services.input_validator import InputValidator, ValidationResult
+from dataclasses import dataclass
+import re
 from security.auth_service import SecurityService, SAFE_FILENAME_RE
-from security.file_validator import SecureFileValidator
 from security.validation_exceptions import ValidationError
+
+
+@dataclass
+class ValidationResult:
+    valid: bool
+    message: str = ""
 
 
 class UnifiedFileValidator:
     """Combine all file validation responsibilities into a single class."""
 
-    ALLOWED_EXTENSIONS = SecureFileValidator.ALLOWED_EXTENSIONS
+    ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
+    DANGEROUS_PATTERNS = [
+        r"=\s*cmd\s*\|",
+        r"=\s*system\s*\(",
+        r"@import\s+url\s*\(",
+        r"javascript\s*:",
+        r"data\s*:\s*text/html",
+        r"<script[^>]*>",
+        r"vbscript\s*:",
+        r"file\s*://",
+        r"\\\\[^\\]+\\",
+    ]
 
     def __init__(self, max_size_mb: Optional[int] = None) -> None:
         self.max_size_mb = max_size_mb or dynamic_config.security.max_upload_mb
         self._string_validator = StringValidator()
         self._security_service = SecurityService(None)
         self._security_service.enable_file_validation()
-        self._basic_validator = InputValidator(self.max_size_mb)
+
+    def _calculate_control_char_ratio(self, text: str) -> float:
+        control_chars = sum(1 for c in text if ord(c) < 32 and c not in "\t\n\r")
+        return control_chars / len(text) if text else 0.0
+
+    def _check_security(self, file_bytes: bytes) -> None:
+        try:
+            text = UnicodeProcessor.safe_encode(file_bytes.decode("utf-8", "ignore"))
+        except Exception:
+            text = UnicodeProcessor.safe_encode(file_bytes.decode("utf-8", "ignore"))
+
+        for pattern in self.DANGEROUS_PATTERNS:
+            if re.search(pattern, text, re.IGNORECASE):
+                raise ValidationError("File contains potentially dangerous content")
+
+        if self._calculate_control_char_ratio(text) > 0.1:
+            raise ValidationError("File contains excessive control characters")
 
     # ------------------------------------------------------------------
     # Filename helpers
@@ -88,6 +121,8 @@ class UnifiedFileValidator:
         if not sec_result["valid"]:
             raise ValidationError("; ".join(sec_result["issues"]))
 
+        self._check_security(file_bytes)
+
         df, err = process_dataframe(file_bytes, sanitized_name)
         if df is None:
             raise ValidationError(err or "Unable to parse file")
@@ -103,8 +138,51 @@ class UnifiedFileValidator:
     # Compatibility helpers
     # ------------------------------------------------------------------
     def validate_file_upload(self, file_obj: Any) -> ValidationResult:
-        """Validate ``file_obj`` using the basic validator."""
-        return self._basic_validator.validate_file_upload(file_obj)
+        """Validate ``file_obj`` using basic size and type checks."""
+        if file_obj is None:
+            return ValidationResult(False, "No file provided")
+
+        try:
+            import pandas as pd
+            if isinstance(file_obj, pd.DataFrame):
+                if file_obj.empty:
+                    return ValidationResult(False, "Empty dataframe")
+                size_mb = file_obj.memory_usage(deep=True).sum() / (1024 * 1024)
+                if size_mb > self.max_size_mb:
+                    return ValidationResult(
+                        False,
+                        f"Dataframe too large: {size_mb:.1f}MB > {self.max_size_mb}MB",
+                    )
+                return ValidationResult(True, "ok")
+        except Exception:
+            pass
+
+        if isinstance(file_obj, (str, Path)):
+            path = Path(file_obj)
+            if not path.exists():
+                return ValidationResult(False, "File not found")
+            size_mb = path.stat().st_size / (1024 * 1024)
+            if size_mb == 0:
+                return ValidationResult(False, "File is empty")
+            if size_mb > self.max_size_mb:
+                return ValidationResult(
+                    False,
+                    f"File too large: {size_mb:.1f}MB > {self.max_size_mb}MB",
+                )
+            return ValidationResult(True, "ok")
+
+        if isinstance(file_obj, (bytes, bytearray)):
+            size_mb = len(file_obj) / (1024 * 1024)
+            if size_mb == 0:
+                return ValidationResult(False, "File is empty")
+            if size_mb > self.max_size_mb:
+                return ValidationResult(
+                    False,
+                    f"File too large: {size_mb:.1f}MB > {self.max_size_mb}MB",
+                )
+            return ValidationResult(True, "ok")
+
+        return ValidationResult(False, "Unsupported file type")
 
     def process_base64_contents(self, contents: str, filename: str) -> pd.DataFrame:
         """Backward compatible wrapper for :meth:`validate_file`."""

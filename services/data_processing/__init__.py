@@ -1,7 +1,6 @@
 """Data processing utilities."""
 
 from .file_handler import FileHandler, process_file_simple
-from .file_processor import FileProcessor
 from .unified_file_validator import UnifiedFileValidator
 from .core.exceptions import (
     FileProcessingError,
@@ -55,7 +54,6 @@ def load_analytics_helpers() -> None:  # pragma: no cover - optional
 
 __all__ = [
     "FileHandler",
-    "FileProcessor",
     "UnifiedFileValidator",
     "process_file_simple",
     "FileProcessingError",
