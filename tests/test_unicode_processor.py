@@ -1,7 +1,11 @@
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 
-from core.unicode_processor import safe_unicode_encode, sanitize_data_frame
+from core.unicode_processor import (
+    safe_unicode_encode,
+    sanitize_data_frame,
+    safe_format_number,
+)
 
 
 
@@ -58,6 +62,12 @@ def test_safe_decode_encode_no_errors():
     encoded = safe_encode(decoded + chr(0xDFFF))
     assert isinstance(decoded, str) and isinstance(encoded, str)
     assert "\ud800" not in decoded and "\udfff" not in encoded
+
+
+def test_safe_format_number_handles_special_values():
+    assert safe_format_number(float("nan")) is None
+    assert safe_format_number(float("inf")) is None
+    assert safe_format_number(12345) == "12,345"
 
 
 @pytest.mark.slow

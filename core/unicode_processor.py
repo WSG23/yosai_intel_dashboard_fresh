@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
+import math
 import re
 import unicodedata
-from typing import Any, Union, Optional
+from typing import Any, Optional, Union
 
 
 import pandas as pd
@@ -14,6 +15,9 @@ logger = logging.getLogger(__name__)
 
 # Precompiled regular expressions used throughout the module
 _SURROGATE_RE = re.compile(r"[\uD800-\uDFFF]")
+# Control characters and BOM handling
+_CONTROL_RE = re.compile(r"[\x00-\x1F\x7F]")
+_BOM_RE = re.compile("\ufeff")
 # Leading characters that may trigger dangerous behaviour when interpreted by
 # spreadsheet applications (e.g. Excel formula injection)
 _DANGEROUS_PREFIX_RE = re.compile(r"^[=+\-@]+")
@@ -198,23 +202,19 @@ def clean_unicode_surrogates(text: Any) -> str:
     return UnicodeProcessor.clean_surrogate_chars(str(text))
 
 
-def sanitize_unicode_input(
-    text: Union[str, Any],
-    replacement: str = UnicodeProcessor.REPLACEMENT_CHAR,
-) -> str:
-    """Sanitize text input to handle Unicode surrogate characters."""
-
+def sanitize_unicode_input(text: Union[str, Any]) -> str:
+    """Return ``text`` stripped of surrogate pairs and BOM characters."""
 
     if not isinstance(text, str):
         try:
             text = str(text)
-        except Exception:  # pragma: no cover - defensive
-            logger.warning("Failed to convert %r to str", text, exc_info=True)
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.warning("Failed to convert %r to str: %s", text, exc)
             return ""
 
     try:
-        cleaned = UnicodeProcessor.clean_surrogate_chars(text, replacement)
-        cleaned.encode("utf-8")
+        cleaned = _SURROGATE_RE.sub("", text)
+        cleaned = _BOM_RE.sub("", cleaned)
         return cleaned
     except Exception as exc:  # pragma: no cover - best effort
         logger.error("sanitize_unicode_input failed: %s", exc)
@@ -232,15 +232,17 @@ def process_large_csv_content(
     return ChunkedUnicodeProcessor.process_large_content(content, encoding, chunk_size)
 
 
-def safe_format_number(value: Union[int, float], default: str = "0") -> str:
-    """Safely format numbers with Unicode safety."""
+def safe_format_number(value: Union[int, float]) -> Optional[str]:
+    """Return formatted number or ``None`` for NaN/inf values."""
 
     try:
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if isinstance(value, bool):
+            value = int(value)
+        if isinstance(value, (int, float)) and math.isfinite(float(value)):
             return f"{value:,}"
-        return default
-    except (ValueError, TypeError):  # pragma: no cover - defensive
-        return default
+    except (ValueError, TypeError) as exc:  # pragma: no cover - defensive
+        logger.warning("Failed to format number %r: %s", value, exc)
+    return None
 
 
 __all__ = [
