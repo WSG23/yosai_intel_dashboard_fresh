@@ -1,7 +1,10 @@
 """Utility helpers for Yōsai Intel Dashboard with Unicode migration support."""
 
 # Public helper used across the code base
-from core.unicode_processor import process_large_csv_content
+try:
+    from core.unicode_processor import process_large_csv_content
+except Exception:  # pragma: no cover - fallback when dependencies fail
+    process_large_csv_content = None  # type: ignore
 
 try:  # pragma: no cover - graceful import fallback
     from .unicode_utils import (
