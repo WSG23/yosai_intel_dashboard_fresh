@@ -1,5 +1,6 @@
 import base64
 import pandas as pd
+import asyncio
 
 from pages.file_upload import Callbacks, _uploaded_data_store
 from services.upload import UploadProcessingService
@@ -21,7 +22,9 @@ def test_multi_part_upload_row_count():
 
     cb = Callbacks()
     cb.processing = UploadProcessingService(_uploaded_data_store)
-    res = cb.process_uploaded_files([part1, part2], ["sample.csv", "sample.csv"])
+    res = asyncio.run(
+        cb.process_uploaded_files([part1, part2], ["sample.csv", "sample.csv"])
+    )
     info = res[2]
     assert info["sample.csv"]["rows"] == len(df)
     stored = _uploaded_data_store.get_all_data()["sample.csv"]

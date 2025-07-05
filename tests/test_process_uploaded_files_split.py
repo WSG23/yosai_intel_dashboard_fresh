@@ -1,5 +1,6 @@
 import base64
 import pandas as pd
+import asyncio
 
 from pages import file_upload
 from pages.file_upload import Callbacks
@@ -27,7 +28,7 @@ def test_process_uploaded_files_split(monkeypatch, tmp_path):
 
     cb = Callbacks()
     cb.processing = UploadProcessingService(store)
-    result = cb.process_uploaded_files(contents_list, filenames_list)
+    result = asyncio.run(cb.process_uploaded_files(contents_list, filenames_list))
     info = result[2]
 
     assert info["big.csv"]["rows"] == len(df)
