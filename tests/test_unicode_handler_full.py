@@ -20,8 +20,8 @@ from services.data_processing.callback_controller import (
 from services.data_processing.file_handler import (
     FileHandler as RobustFileProcessor,
     process_file_simple,
-    FileProcessingError,
 )
+from services.data_processing.core.exceptions import FileProcessingError
 
 
 class TestUnicodeProcessor:

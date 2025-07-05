@@ -12,9 +12,9 @@ import tempfile
 
 from services.data_processing.file_handler import (
     FileHandler as RobustFileProcessor,
-    FileProcessingError,
     process_file_simple,
 )
+from services.data_processing.core.exceptions import FileProcessingError
 
 
 class TestRobustFileProcessor:

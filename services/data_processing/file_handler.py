@@ -25,13 +25,10 @@ import pandas as pd
 
 from security.file_validator import SecureFileValidator
 from services.input_validator import InputValidator, ValidationResult
-from security.validation_exceptions import ValidationError
-from core.error_handling import FileProcessingError
-
-
-class FileProcessingError(Exception):
-    """Placeholder exception for processing errors."""
-    pass
+from services.data_processing.core.exceptions import (
+    FileProcessingError,
+    FileValidationError,
+)
 
 
 def process_file_simple(content: bytes, filename: str):
@@ -59,7 +56,7 @@ class FileHandler:
         df = self.secure_validator.validate_file_contents(contents, sanitized)
         result = self.basic_validator.validate_file_upload(df)
         if not result.valid:
-            raise ValidationError(result.message)
+            raise FileValidationError(result.message)
         return df
 
 
