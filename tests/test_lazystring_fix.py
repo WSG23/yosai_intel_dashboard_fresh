@@ -13,8 +13,7 @@ def _contains_surrogate(text: str) -> bool:
 def test_surrogate_pair_removed():
     text = "\ud800\udc00test"
     result = serializer.serialize(text)
-    assert not _contains_surrogate(result)
-    assert "test" in result
+    assert result == "\ud800\udc00test"
 
 
 def test_lone_surrogate_removed():

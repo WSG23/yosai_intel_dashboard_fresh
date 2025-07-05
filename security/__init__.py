@@ -1,23 +1,29 @@
 """Security package exposing validation utilities."""
 
-from core.security import InputValidator
 from typing import Protocol
+
+from core.security import InputValidator
 
 
 class Validator(Protocol):
     def validate(self, data: str) -> str:
         ...
 
-from .dataframe_validator import DataFrameSecurityValidator
-from .sql_validator import SQLInjectionPrevention, SQLSecurityConfig
-from .xss_validator import XSSPrevention
-from .business_logic_validator import BusinessLogicValidator
-from .validation_middleware import ValidationMiddleware, ValidationOrchestrator
-from .attack_detection import AttackDetection
 from core.exceptions import ValidationError
+
+from .attack_detection import AttackDetection
+from .business_logic_validator import BusinessLogicValidator
+from .dataframe_validator import DataFrameSecurityValidator
+from .secrets_validator import SecretsValidator, register_health_endpoint
+from .sql_validator import SQLInjectionPrevention, SQLSecurityConfig
+from .unicode_surrogate_validator import (
+    SurrogateHandlingConfig,
+    UnicodeSurrogateValidator,
+)
 from .validation_exceptions import SecurityViolation
 from .unicode_security_validator import UnicodeSecurityValidator
 from .secrets_validator import SecretsValidator, register_health_endpoint
+
 
 __all__ = [
     "InputValidator",
@@ -35,4 +41,6 @@ __all__ = [
     "UnicodeSecurityValidator",
     "SecretsValidator",
     "register_health_endpoint",
+    "UnicodeSurrogateValidator",
+    "SurrogateHandlingConfig",
 ]

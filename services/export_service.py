@@ -4,6 +4,11 @@ import re
 from typing import Dict, Any, List
 from datetime import datetime
 
+from core.serialization import SafeJSONSerializer
+
+# JSON sanitizer used for export formatting
+_serializer = SafeJSONSerializer()
+
 import pandas as pd
 
 from services.consolidated_learning_service import get_learning_service
@@ -65,21 +70,15 @@ def get_device_learning_data() -> Dict[str, Any]:
 
 def to_json_string(data: Dict[str, Any]) -> str:
     """Serialize enhanced data to pretty JSON string with UTF-8 safety."""
-    def sanitize(obj: Any) -> Any:
-        if isinstance(obj, str):
-            return obj.encode("utf-8", errors="replace").decode("utf-8")
-        if isinstance(obj, dict):
-            return {k: sanitize(v) for k, v in obj.items()}
-        if isinstance(obj, list):
-            return [sanitize(v) for v in obj]
-        return obj
-
-    clean = sanitize(data)
+    clean = _serializer.serialize(data)
     # keep only real devices in JSON exports
     for fp, content in clean.items():
         raw = content.get("device_mappings", {})
         content["device_mappings"] = _extract_only_devices(raw)
-    return json.dumps(clean, indent=2, ensure_ascii=False)
+
+    # Ensure normalization happens before JSON encoding
+    sanitized = _serializer.serialize(clean)
+    return json.dumps(sanitized, indent=2, ensure_ascii=False)
 
 
 def to_csv_string(data: Dict[str, Any]) -> str:

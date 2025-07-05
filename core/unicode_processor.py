@@ -6,7 +6,7 @@ import logging
 import math
 import re
 import unicodedata
-from typing import Any, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 
 import pandas as pd
@@ -21,6 +21,12 @@ _BOM_RE = re.compile("\ufeff")
 # Leading characters that may trigger dangerous behaviour when interpreted by
 # spreadsheet applications (e.g. Excel formula injection)
 _DANGEROUS_PREFIX_RE = re.compile(r"^[=+\-@]+")
+
+# Match unpaired surrogate code points (high not followed by low or
+# low not preceded by high)
+_UNPAIRED_SURROGATE_RE = re.compile(
+    r"(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])"
+)
 
 
 def _sanitize_nested(value: Any) -> Any:
@@ -46,12 +52,45 @@ class UnicodeProcessor:
 
     @staticmethod
     def clean_surrogate_chars(text: str, replacement: str = "") -> str:
-        """Remove Unicode surrogate characters from ``text``."""
+        """Remove unmatched surrogate characters from ``text``."""
         if not isinstance(text, str):
             text = str(text) if text is not None else ""
 
+        invalid_found = False
+        out_chars = []
+        i = 0
         try:
-            cleaned = _SURROGATE_RE.sub(replacement, text)
+            while i < len(text):
+                ch = text[i]
+                cp = ord(ch)
+                # High surrogate
+                if 0xD800 <= cp <= 0xDBFF:
+                    if i + 1 < len(text) and 0xDC00 <= ord(text[i + 1]) <= 0xDFFF:
+                        out_chars.append(ch)
+                        out_chars.append(text[i + 1])
+                        i += 2
+                        continue
+                    invalid_found = True
+                    if replacement:
+                        out_chars.append(replacement)
+                    i += 1
+                    continue
+
+                # Low surrogate without preceding high surrogate
+                if 0xDC00 <= cp <= 0xDFFF:
+                    invalid_found = True
+                    if replacement:
+                        out_chars.append(replacement)
+                    i += 1
+                    continue
+
+                out_chars.append(ch)
+                i += 1
+
+            cleaned = "".join(out_chars)
+
+            if invalid_found:
+                logger.warning("Invalid surrogate sequence removed")
 
             cleaned = unicodedata.normalize("NFKC", cleaned)
             cleaned = _CONTROL_RE.sub("", cleaned)
@@ -62,9 +101,7 @@ class UnicodeProcessor:
                 ch
                 for ch in text
                 if not (
-                    UnicodeProcessor.SURROGATE_LOW
-                    <= ord(ch)
-                    <= UnicodeProcessor.SURROGATE_HIGH
+                    UnicodeProcessor.SURROGATE_LOW <= ord(ch) <= UnicodeProcessor.SURROGATE_HIGH
                 )
             )
 
@@ -100,8 +137,23 @@ class UnicodeProcessor:
             return "".join(ch for ch in str(value) if ord(ch) < 128)
 
     @staticmethod
-    def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-        """Sanitize entire DataFrame for Unicode issues."""
+    def sanitize_dataframe(
+        df: pd.DataFrame,
+        *,
+        progress: Union[bool, Callable[[int, int], None], None] = None,
+    ) -> pd.DataFrame:
+        """Sanitize entire DataFrame for Unicode issues.
+
+        Parameters
+        ----------
+        df:
+            DataFrame to sanitize.
+        progress:
+            If ``True`` and the DataFrame has over 10k rows, progress will be
+            logged with :func:`logging.info` for each processed column. If a
+            callable is provided it will be invoked with ``(column_index,
+            total_columns)`` for every sanitized column.
+        """
         try:
             df_clean = df.copy()
 
@@ -111,16 +163,21 @@ class UnicodeProcessor:
                 safe_col = _DANGEROUS_PREFIX_RE.sub("", safe_col)
                 new_columns.append(safe_col or f"col_{len(new_columns)}")
 
-
             df_clean.columns = new_columns
 
             for col in df_clean.select_dtypes(include=["object"]).columns:
                 df_clean[col] = df_clean[col].apply(_sanitize_nested)
+
                 df_clean[col] = df_clean[col].apply(
                     lambda x: _DANGEROUS_PREFIX_RE.sub("", x)
                     if isinstance(x, str)
                     else x
                 )
+
+                if callable(progress):
+                    progress(idx + 1, total_cols)
+                elif progress and len(df_clean) > 10_000:
+                    logger.info("Sanitized column %s/%s", idx + 1, total_cols)
 
             return df_clean
         except Exception as exc:  # pragma: no cover - defensive
@@ -235,6 +292,18 @@ def clean_unicode_surrogates(text: Any) -> str:
     return UnicodeProcessor.clean_surrogate_chars(str(text))
 
 
+def contains_surrogates(text: str) -> bool:
+    """Return ``True`` if ``text`` contains any unpaired surrogate code points."""
+
+    if not isinstance(text, str):
+        try:
+            text = str(text)
+        except Exception:  # pragma: no cover - defensive
+            return False
+
+    return bool(_UNPAIRED_SURROGATE_RE.search(text))
+
+
 def sanitize_unicode_input(text: Union[str, Any]) -> str:
     """Return ``text`` stripped of surrogate pairs and BOM characters."""
 
@@ -297,4 +366,3 @@ __all__ = [
     "process_large_csv_content",
     "safe_format_number",
 ]
-

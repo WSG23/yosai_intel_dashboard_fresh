@@ -3,18 +3,14 @@ Enhanced Security Validation for Yōsai Intel Dashboard
 Implements comprehensive input validation and security checks
 """
 
-from dataclasses import dataclass
-from enum import Enum
 import logging
 import os
 import re
 import secrets
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Callable, Dict, List
 
-from .security_patterns import (
-    PATH_TRAVERSAL_PATTERNS as RAW_PATH_PATTERNS,
-    XSS_PATTERNS as RAW_XSS_PATTERNS,
-)
 from config.constants import FileProcessingLimits
 from core.exceptions import ValidationError
 from security.sql_validator import SQLInjectionPrevention
@@ -23,6 +19,9 @@ from security_callback_controller import (
     SecurityEvent,
     emit_security_event,
 )
+
+from .security_patterns import PATH_TRAVERSAL_PATTERNS as RAW_PATH_PATTERNS
+from .security_patterns import XSS_PATTERNS as RAW_XSS_PATTERNS
 
 
 class SecurityLevel(Enum):
@@ -81,6 +80,10 @@ class SecurityValidator:
 
     def _sanitize_input(self, value: str) -> str:
         """Sanitize input by encoding dangerous characters"""
+        from security.unicode_surrogate_validator import UnicodeSurrogateValidator
+
+        validator = UnicodeSurrogateValidator()
+        value = validator.sanitize(value)
         value = sanitize_unicode_input(value)
         # HTML entity encoding
         replacements = {

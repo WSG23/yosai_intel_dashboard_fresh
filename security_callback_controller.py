@@ -1,7 +1,7 @@
 """Compatibility wrapper exposing security-specific callback names."""
 
+from core.callback_controller import CallbackEvent
 from core.callback_manager import CallbackManager
-from core.callback_events import CallbackEvent
 
 SecurityEvent = CallbackEvent
 SecurityCallbackController = CallbackManager
