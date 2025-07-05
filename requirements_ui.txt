@@ -1,5 +1,5 @@
-dash>=2,<3
-dash-bootstrap-components==1.6.0
+txtdash>=2.14.0,<3
+dash-bootstrap-components>=1.4.0,<2
 plotly==5.15.0
 pandas==2.1.1
 numpy>=1.23.2,<1.28
