@@ -2,9 +2,23 @@ import importlib
 import time
 import pandas as pd
 import pytest
+import warnings
 
 from core.unicode_processor import UnicodeProcessor as UnicodeTextProcessor
-from utils.unicode_utils import UnicodeProcessor as UtilsProcessor, sanitize_dataframe
+from core.unicode import (
+    clean_unicode_text,
+    safe_encode_text,
+    sanitize_dataframe,
+    UnicodeProcessor as UtilsProcessor,
+    # Test deprecated functions
+    safe_unicode_encode,
+    safe_encode,
+    safe_decode,
+    handle_surrogate_characters,
+    clean_unicode_surrogates,
+    sanitize_unicode_input,
+    sanitize_data_frame,
+)
 from config.unicode_handler import UnicodeQueryHandler
 from security.unicode_security_handler import UnicodeSecurityHandler as UnicodeSecurityProcessor
 
