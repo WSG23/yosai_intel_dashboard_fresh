@@ -12,7 +12,7 @@ from utils.unicode_utils import (
     sanitize_dataframe,
     process_large_csv_content,
 )
-from services.data_processing.callback_controller import (
+from core.callback_controller import (
     CallbackController,
     CallbackEvent,
 )

@@ -19,12 +19,14 @@ import logging
 from dataclasses import dataclass
 from collections import defaultdict
 import warnings
-from services.data_processing.callback_controller import (
-    SecurityEvent,
-    security_callback_controller,
-    emit_security_event,
+from core.callback_controller import (
+    CallbackEvent as SecurityEvent,
+    get_callback_controller,
+    fire_event as emit_security_event,
     CallbackController as SecurityCallbackController,
 )
+
+security_callback_controller = get_callback_controller()
 
 from ..security_score_calculator import SecurityScoreCalculator
 from ..security_metrics import SecurityMetrics

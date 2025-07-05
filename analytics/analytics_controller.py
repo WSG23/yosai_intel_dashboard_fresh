@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from services.data_processing.callback_controller import CallbackController
+from core.callback_controller import CallbackController
 
 from .data_repository import AnalyticsDataRepository
 from .business_service import AnalyticsBusinessService
