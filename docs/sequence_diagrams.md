@@ -28,7 +28,7 @@ sequenceDiagram
     participant S as Server
     participant FS as FileStorage
 
-    U->>B: Choose file
+    U->>B: Drag or select file
     B->>S: POST /files
     S->>FS: Save
     FS-->>S: Path
