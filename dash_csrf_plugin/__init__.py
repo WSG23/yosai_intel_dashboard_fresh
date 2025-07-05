@@ -283,7 +283,7 @@ class EnhancedCSRFManager:
             from flask_wtf.csrf import generate_csrf
 
             return generate_csrf()
-        except:
+        except Exception:
             return ""
 
     def validate_csrf(self) -> bool:
@@ -298,7 +298,7 @@ class EnhancedCSRFManager:
             if token:
                 validate_csrf(token)
                 return True
-        except:
+        except Exception:
             pass
         return False
 

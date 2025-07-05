@@ -145,7 +145,7 @@ def test_save_load_cycle():
                         if data.get("filename") == test_filename:
                             our_file = file_path
                             break
-                except:
+                except Exception:
                     continue
 
             if our_file:
