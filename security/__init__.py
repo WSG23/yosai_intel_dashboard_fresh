@@ -16,6 +16,7 @@ from .validation_middleware import ValidationMiddleware, ValidationOrchestrator
 from .attack_detection import AttackDetection
 from core.exceptions import ValidationError
 from .validation_exceptions import SecurityViolation
+from .unicode_security_validator import UnicodeSecurityValidator
 from .secrets_validator import SecretsValidator, register_health_endpoint
 
 __all__ = [
@@ -31,6 +32,7 @@ __all__ = [
     "AttackDetection",
     "ValidationError",
     "SecurityViolation",
+    "UnicodeSecurityValidator",
     "SecretsValidator",
     "register_health_endpoint",
 ]

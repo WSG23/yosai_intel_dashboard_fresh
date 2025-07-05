@@ -23,6 +23,19 @@ _BOM_RE = re.compile("\ufeff")
 _DANGEROUS_PREFIX_RE = re.compile(r"^[=+\-@]+")
 
 
+def _sanitize_nested(value: Any) -> Any:
+    """Recursively sanitize nested data structures."""
+    if isinstance(value, dict):
+        return {k: _sanitize_nested(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_sanitize_nested(v) for v in value]
+    if isinstance(value, tuple):
+        return tuple(_sanitize_nested(v) for v in value)
+    if isinstance(value, set):
+        return {_sanitize_nested(v) for v in value}
+    return UnicodeProcessor.safe_encode_text(value)
+
+
 class UnicodeProcessor:
     """Centralized Unicode processing with robust error handling."""
 
@@ -102,9 +115,7 @@ class UnicodeProcessor:
             df_clean.columns = new_columns
 
             for col in df_clean.select_dtypes(include=["object"]).columns:
-                df_clean[col] = df_clean[col].apply(
-                    lambda x: UnicodeProcessor.safe_encode_text(x)
-                )
+                df_clean[col] = df_clean[col].apply(_sanitize_nested)
                 df_clean[col] = df_clean[col].apply(
                     lambda x: _DANGEROUS_PREFIX_RE.sub("", x)
                     if isinstance(x, str)
@@ -191,6 +202,16 @@ def sanitize_data_frame(df: pd.DataFrame) -> pd.DataFrame:
     return sanitize_dataframe(df)
 
 
+def contains_surrogates(text: Any) -> bool:
+    """Return ``True`` if ``text`` contains Unicode surrogate codepoints."""
+    if not isinstance(text, str):
+        try:
+            text = str(text)
+        except Exception:
+            return False
+    return bool(_SURROGATE_RE.search(text))
+
+
 # ---------------------------------------------------------------------------
 # Backwards compatibility helpers
 
@@ -272,6 +293,7 @@ __all__ = [
     "handle_surrogate_characters",
     "clean_unicode_surrogates",
     "sanitize_unicode_input",
+    "contains_surrogates",
     "process_large_csv_content",
     "safe_format_number",
 ]
