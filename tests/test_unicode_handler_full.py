@@ -17,7 +17,7 @@ from core.callback_controller import (
     fire_event,
     callback_handler,
 )
-from core.file_processor import (
+from services.data_processing.file_processor import (
     FileProcessor as RobustFileProcessor,
     process_file_simple,
     FileProcessingError,

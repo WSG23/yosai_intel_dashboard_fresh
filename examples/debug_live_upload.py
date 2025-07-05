@@ -72,26 +72,26 @@ def add_debug_hooks():
 
     file_validator.process_dataframe = debug_process_dataframe
 
-    # Hook 4: Patch FileHandler._validate_data if it exists
+    # Hook 4: Patch FileProcessor.process_uploaded_contents if available
     try:
-        from services.data_processing.file_handler import FileHandler as FileProcessor
+        from services.data_processing.file_processor import FileProcessor
 
-        original_validate_data = FileProcessor._validate_data
+        original_process = FileProcessor.process_uploaded_contents
 
         def debug_validate_data(self, df):
             input_rows = len(df)
             logger.info(
-                f"🧹 HOOK 4: FileProcessor._validate_data() input: {input_rows} rows"
+                f"🧹 HOOK 4: FileProcessor.process_uploaded_contents() input: {input_rows} rows"
             )
-            result = original_validate_data(self, df)
+            result = original_process(self, df)
             if result.get("valid") and result.get("data") is not None:
                 output_rows = len(result["data"])
                 logger.info(
-                    f"🎯 HOOK 4: FileProcessor._validate_data() output: {output_rows} rows"
+                    f"🎯 HOOK 4: FileProcessor.process_uploaded_contents() output: {output_rows} rows"
                 )
                 if output_rows == 150:
                     logger.error(
-                        f"🚨 FOUND 150 ROW LIMIT in FileProcessor._validate_data!"
+                        f"🚨 FOUND 150 ROW LIMIT in FileProcessor.process_uploaded_contents!"
                     )
                 if output_rows != input_rows:
                     logger.warning(
@@ -99,7 +99,7 @@ def add_debug_hooks():
                     )
             return result
 
-        FileProcessor._validate_data = debug_validate_data
+        FileProcessor.process_uploaded_contents = debug_validate_data
         logger.info("✅ Added FileProcessor debugging hook")
     except ImportError:
         logger.info("⏭️ FileProcessor not available for debugging")

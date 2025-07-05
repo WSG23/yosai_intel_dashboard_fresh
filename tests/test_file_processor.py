@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 import tempfile
 
-from core.file_processor import (
+from services.data_processing.file_processor import (
     FileProcessor as RobustFileProcessor,
     FileProcessingError,
     process_file_simple,
