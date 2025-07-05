@@ -182,7 +182,7 @@ def main():
 
         # Run the application
         try:
-            app.run_server(
+            app.run(
                 host=app_config.host,
                 port=app_config.port,
                 debug=app_config.debug,
