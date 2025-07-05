@@ -12,8 +12,8 @@ logging.basicConfig(
 )
 import os
 import sys
-import importlib
 from flask import request
+from utils.dependency_checker import verify_requirements
 
 try:
     from dotenv import load_dotenv
@@ -63,21 +63,7 @@ def check_learning_status():
 
 
 def verify_dependencies() -> None:
-    """Ensure critical third-party libraries are available."""
-    required = ["bleach", "pandas", "dash", "flask", "dotenv"]
-    missing = []
-    for pkg in required:
-        try:
-            importlib.import_module(pkg)
-        except ImportError:
-            missing.append(pkg)
-
-    if missing:
-        logger.error("Missing required dependencies: %s", ", ".join(missing))
-        logger.info(
-            "\n💡 Run `pip install -r requirements.txt` or `./scripts/setup.sh` to install them"
-        )
-        sys.exit(1)
+    verify_requirements("requirements.txt")
 
 
 def print_startup_info(app_config):
