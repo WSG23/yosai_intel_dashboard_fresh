@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional, Tuple
 import pandas as pd
 
 from .file_converter import FileConverter
-from .unicode_handler import UnicodeCleaner
+from utils.unicode_utils import sanitize_dataframe
 
 _logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ class StorageManager:
     def save_dataframe(self, df: pd.DataFrame, name: str) -> Tuple[bool, str]:
         """Save ``df`` to a Parquet file under ``name`` with metadata."""
         try:
-            df_clean = UnicodeCleaner.clean_dataframe(df)
+            df_clean = sanitize_dataframe(df)
             parquet_path = self.base_dir / f"{name}.parquet"
             df_clean.to_parquet(parquet_path, index=False)
             self._metadata[parquet_path.name] = {
