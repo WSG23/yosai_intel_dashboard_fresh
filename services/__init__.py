@@ -20,6 +20,7 @@ from .upload_processing import UploadAnalyticsProcessor
 from .db_analytics_helper import DatabaseAnalyticsHelper
 from .summary_reporting import SummaryReporter
 from .data_processing.file_handler import FileHandler
+from .data_processing.unified_file_validator import UnifiedFileValidator
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
 
 __all__ = [
     "FileHandler",
+    "UnifiedFileValidator",
     "FILE_HANDLER_AVAILABLE",
     "get_analytics_service",
     "create_analytics_service",
