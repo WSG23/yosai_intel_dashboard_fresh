@@ -235,11 +235,13 @@ dashboard. Key entry points include `tests/test_integration.py`,
 - **Hardened SQL Injection Prevention**: Uses `sqlparse` and `bleach` to validate queries
 - **Centralized Unicode Processing**: Normalize text with `core.unicode`.
 - **Event Driven Callbacks**: Plugins react to `core.callback_controller` events.
-- **Metrics & Monitoring**: `PerformanceMonitor` tracks system performance.
+- **Metrics & Monitoring**: `PerformanceMonitor` tracks system performance
+  using `psutil`.
 
 **Note:** The file upload and column mapping functionality relies on `pandas`.
 If `pandas` is missing these pages will be disabled. Ensure you run
 `pip install -r requirements.txt` to install all dependencies.
+`PerformanceMonitor` also requires `psutil` for CPU and memory metrics.
 
 ## 🔧 Configuration
 
