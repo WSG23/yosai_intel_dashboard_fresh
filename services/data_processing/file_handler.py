@@ -24,6 +24,16 @@ from services.input_validator import InputValidator, ValidationResult
 from security.validation_exceptions import ValidationError
 
 
+class FileProcessingError(Exception):
+    """Placeholder exception for processing errors."""
+    pass
+
+
+def process_file_simple(content: bytes, filename: str):
+    """Minimal stub for compatibility with imports."""
+    raise FileProcessingError("Processing not implemented")
+
+
 class FileHandler:
     """Combine security and basic validation for uploaded files."""
 
@@ -48,5 +58,10 @@ class FileHandler:
         return df
 
 
-__all__ = ["FileHandler", "ValidationResult"]
+__all__ = [
+    "FileHandler",
+    "ValidationResult",
+    "FileProcessingError",
+    "process_file_simple",
+]
 

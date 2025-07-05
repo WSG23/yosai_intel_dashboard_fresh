@@ -1,7 +1,7 @@
 import pandas as pd
 from components.plugin_adapter import ComponentPluginAdapter
-from core.plugins import service_locator
 import components.plugin_adapter as plugin_adapter
+from utils.unicode_utils import sanitize_dataframe, clean_unicode_text
 
 
 def test_get_ai_column_suggestions_with_plugin(monkeypatch):
@@ -39,9 +39,8 @@ def test_get_ai_column_suggestions_fallback(monkeypatch):
 
 
 def test_unicode_helpers():
-    adapter = ComponentPluginAdapter()
     df = pd.DataFrame({"col\uD83D": ["val\uDE00"]})
-    out = adapter.sanitize_dataframe(df)
+    out = sanitize_dataframe(df)
     assert "\uD83D" not in str(out.columns)
     assert "\uDE00" not in str(out.values)
-    assert adapter.clean_text("t\uD83D") == "t"
+    assert clean_unicode_text("t\uD83D") == "t"

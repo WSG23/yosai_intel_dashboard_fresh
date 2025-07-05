@@ -82,12 +82,9 @@ def create_column_verification_modal(file_info: Dict[str, Any]) -> dbc.Modal:
                             options=STANDARD_FIELD_OPTIONS,
                             placeholder=f"Map {column} to...",
                             value=default_value,
-                            autoFocus=True if i == 0 else False,
-                            tabIndex=0,
                         )
                     ),
                 ],
-                tabIndex=0,
             )
         )
 
@@ -284,7 +281,6 @@ def create_verification_interface(
                     ),
                 ],
                 className="mb-3",
-                tabIndex=0,
             )
         )
 
@@ -656,7 +652,7 @@ def register_callbacks(
 ) -> None:
     """Register component callbacks using the coordinator."""
 
-    manager.unified_callback(
+    manager.register_callback(
         Output({"type": "custom-field", "index": MATCH}, "style"),
         Input({"type": "column-mapping", "index": MATCH}, "value"),
         callback_id="toggle_custom_field",
