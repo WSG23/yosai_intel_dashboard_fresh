@@ -22,6 +22,12 @@ from core.theme_manager import apply_theme_settings, DEFAULT_THEME, sanitize_the
 from config.config import get_config
 from .cache import cache
 
+# Optional callback system -------------------------------------------------
+try:  # pragma: no cover - graceful import fallback
+    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+except Exception:  # pragma: no cover - fallback when unavailable
+    TrulyUnifiedCallbacks = None  # type: ignore[misc]
+
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
@@ -186,44 +192,54 @@ def _create_full_app() -> dash.Dash:
 
         app.layout = _serve_layout
 
-        # Register all callbacks using TrulyUnifiedCallbacks
-        from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-        coordinator = TrulyUnifiedCallbacks(app)
-        _register_router_callbacks(coordinator)
-        _register_global_callbacks(coordinator)
+        # Register all callbacks using TrulyUnifiedCallbacks if available
+        if TrulyUnifiedCallbacks is not None:
+            coordinator = TrulyUnifiedCallbacks(app)
+            _register_router_callbacks(coordinator)
+            _register_global_callbacks(coordinator)
+        else:  # pragma: no cover - optional dependency missing
+            coordinator = None
+            logger.warning(
+                "TrulyUnifiedCallbacks unavailable; skipping unified callback setup"
+            )
 
         # Register page/component callbacks
-        try:
-            from pages.file_upload import (
-                register_callbacks as register_upload_callbacks,
-                Callbacks as UploadCallbacks,
-            )
-            from components.simple_device_mapping import (
-                register_callbacks as register_simple_mapping,
-            )
-            from components.device_verification import (
-                register_callbacks as register_device_verification,
-            )
-            from pages.deep_analytics.callbacks import (
-                register_callbacks as register_deep_callbacks,
-                Callbacks as DeepAnalyticsCallbacks,
-            )
-            from components.ui.navbar import register_navbar_callbacks
+        if coordinator is not None:
+            try:
+                from pages.file_upload import (
+                    register_callbacks as register_upload_callbacks,
+                    Callbacks as UploadCallbacks,
+                )
+                from components.simple_device_mapping import (
+                    register_callbacks as register_simple_mapping,
+                )
+                from components.device_verification import (
+                    register_callbacks as register_device_verification,
+                )
+                from pages.deep_analytics.callbacks import (
+                    register_callbacks as register_deep_callbacks,
+                    Callbacks as DeepAnalyticsCallbacks,
+                )
+                from components.ui.navbar import register_navbar_callbacks
 
-            register_upload_callbacks(coordinator)
-            register_simple_mapping(coordinator)
-            register_device_verification(coordinator)
-            register_deep_callbacks(coordinator)
-            register_navbar_callbacks(coordinator)
+                register_upload_callbacks(coordinator)
+                register_simple_mapping(coordinator)
+                register_device_verification(coordinator)
+                register_deep_callbacks(coordinator)
+                register_navbar_callbacks(coordinator)
 
-            # Keep references to callback managers
-            app._upload_callbacks = UploadCallbacks()
-            app._deep_analytics_callbacks = DeepAnalyticsCallbacks()
+                # Keep references to callback managers
+                app._upload_callbacks = UploadCallbacks()
+                app._deep_analytics_callbacks = DeepAnalyticsCallbacks()
 
-            if config_manager.get_app_config().environment == "development":
-                coordinator.print_callback_summary()
-        except Exception as e:
-            logger.warning(f"Failed to register module callbacks: {e}")
+                if config_manager.get_app_config().environment == "development":
+                    coordinator.print_callback_summary()
+            except Exception as e:
+                logger.warning(f"Failed to register module callbacks: {e}")
+        else:
+            logger.warning(
+                "Skipping registration of module callbacks due to missing coordinator"
+            )
 
         # Initialize services
         _initialize_services()
