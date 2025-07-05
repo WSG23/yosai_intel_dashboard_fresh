@@ -15,6 +15,8 @@ from core.file_processor import (
     FileProcessingError,
     process_file_simple,
 )
+from security.validation_exceptions import ValidationError
+import base64
 
 
 
@@ -220,3 +222,23 @@ class TestFileProcessorUtilities:
                 pytest.skip("DataFrame validation not available")
         except Exception:
             pytest.skip("DataFrame validation not implemented")
+
+
+class TestProcessBase64Contents:
+    """Tests for the ``process_base64_contents`` helper"""
+
+    def test_process_base64_success(self):
+        processor = RobustFileProcessor()
+        df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+        csv_bytes = df.to_csv(index=False).encode("utf-8")
+        contents = "data:text/csv;base64," + base64.b64encode(csv_bytes).decode()
+
+        result = processor.process_base64_contents(contents, "data.csv")
+        assert len(result) == 2
+        assert list(result.columns) == ["a", "b"]
+
+    def test_process_base64_invalid(self):
+        processor = RobustFileProcessor()
+        bad = "data:text/csv;base64,@@@"
+        with pytest.raises(ValidationError):
+            processor.process_base64_contents(bad, "bad.csv")
