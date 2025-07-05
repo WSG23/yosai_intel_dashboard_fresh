@@ -6,3 +6,4 @@ pytest
 pytest-cov
 safety==2.3.5
 PyYAML==6.0.1
+psutil>=5.9.0
