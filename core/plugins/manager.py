@@ -72,7 +72,7 @@ class PluginManager:
             return PluginPriority.NORMAL.value
 
     def load_all_plugins(self) -> List[Any]:
-        """Dynamically load all plugins from the configured package."""
+        """Discover and load plugins from ``self.package``."""
         try:
             pkg = importlib.import_module(self.package)
         except ModuleNotFoundError:
@@ -80,8 +80,10 @@ class PluginManager:
             return []
 
         discovered: List[PluginProtocol] = []
-        for loader, name, is_pkg in pkgutil.iter_modules(pkg.__path__):
-            module_name = f"{self.package}.{name}"
+        for info in pkgutil.iter_modules(pkg.__path__, prefix=f"{self.package}."):
+            if not info.ispkg:
+                continue
+            module_name = info.name
             try:
                 module = importlib.import_module(module_name)
                 plugin = None
@@ -91,7 +93,6 @@ class PluginManager:
                     plugin = module.plugin
                 elif hasattr(module, "init_plugin"):
                     plugin = module.init_plugin(self.container, self.config_manager)
-
                 if plugin:
                     discovered.append(plugin)
                 self.loaded_plugins.append(module)
@@ -104,8 +105,8 @@ class PluginManager:
         except Exception as exc:
             logger.error("Failed to resolve plugin dependencies: %s", exc)
             return []
-        ordered.sort(key=self._get_priority)
 
+        ordered.sort(key=self._get_priority)
         results: List[PluginProtocol] = []
         for plugin in ordered:
             if self.load_plugin(plugin):
