@@ -12,7 +12,7 @@ import sys
 import os
 from core.plugins.unified_registry import UnifiedPluginRegistry
 from core.plugins.auto_config import PluginAutoConfiguration
-from core.plugins.protocols import PluginMetadata
+from services.data_processing.core.protocols import PluginMetadata
 from core.container import Container as DIContainer
 from config.config import ConfigManager
 

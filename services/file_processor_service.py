@@ -10,7 +10,6 @@ from pathlib import Path
 
 from .base import BaseService
 from services.data_processing.core.protocols import FileProcessorProtocol
-
 from utils.file_validator import safe_decode_with_unicode_handling
 from utils.unicode_utils import (
     sanitize_unicode_input,
