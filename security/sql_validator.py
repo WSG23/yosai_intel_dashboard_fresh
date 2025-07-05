@@ -14,7 +14,7 @@ from sqlparse import tokens as T
 
 from core.security_patterns import SQL_INJECTION_PATTERNS
 from .attack_detection import AttackDetection
-from .validation_exceptions import ValidationError
+from core.exceptions import ValidationError
 
 
 class SQLSecurityLimits:

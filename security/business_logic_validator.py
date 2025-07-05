@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from .validation_exceptions import ValidationError
+from core.exceptions import ValidationError
 
 
 class BusinessLogicValidator:

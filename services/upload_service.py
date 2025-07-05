@@ -1,89 +1,27 @@
 """Utilities for processing uploaded files and creating previews."""
 
-import base64
-import io
 import logging
 from datetime import datetime
 from typing import Any, Dict
 
-from config.dynamic_config import dynamic_config
-from services.data_processing.unified_file_validator import UnifiedFileValidator
+from services.data_processing.file_processor import FileProcessor
 from security.xss_validator import XSSPrevention
 from services.data_validation import DataValidationService
-from services.analytics import map_and_clean
+from services.analytics import prepare_dataframe
 
 import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import html
 
 logger = logging.getLogger(__name__)
-_handler = UnifiedFileValidator()
+_processor = FileProcessor()
 
 
 def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
-    """Process uploaded file content with enhanced size handling."""
+    """Process uploaded file content using the shared processor."""
     try:
-        filename = _handler.sanitize_filename(filename)
-
-        content_type, content_string = contents.split(",", 1)
-        decoded = base64.b64decode(content_string)
-
-        # Enhanced size validation with better error messages
-        file_size_mb = len(decoded) / (1024 * 1024)
-        max_size_mb = dynamic_config.get_max_upload_size_mb()
-        max_size_bytes = dynamic_config.get_max_upload_size_bytes()
-
-        if len(decoded) > max_size_bytes:
-            return {
-                "success": False,
-                "error": f"File too large: {file_size_mb:.1f}MB exceeds limit of {max_size_mb}MB",
-                "file_size_mb": file_size_mb,
-                "max_allowed_mb": max_size_mb,
-            }
-
-        validator = DataValidationService()
-
-        if filename.lower().endswith(".csv"):
-            chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
-            stream = io.BytesIO(decoded)
-            header = None
-            chunks = []
-            for chunk in pd.read_csv(stream, chunksize=chunk_size, encoding="utf-8"):
-                if header is None:
-                    header = list(chunk.columns)
-                duplicate = (chunk.astype(str) == header).all(axis=1)
-                chunk = chunk[~duplicate]
-                chunk = validator.validate(chunk)
-                chunk = map_and_clean(chunk)
-                chunks.append(chunk)
-            df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
-        elif filename.lower().endswith(".json"):
-            chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
-            stream = io.BytesIO(decoded)
-            try:
-                chunks = []
-                for chunk in pd.read_json(stream, lines=True, chunksize=chunk_size):
-                    chunk = validator.validate(chunk)
-                    chunks.append(map_and_clean(chunk))
-                df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
-            except ValueError:
-                stream.seek(0)
-                df = pd.read_json(stream)
-                df = map_and_clean(validator.validate(df))
-        elif filename.lower().endswith((".xlsx", ".xls")):
-            df = pd.read_excel(io.BytesIO(decoded))
-            df = map_and_clean(validator.validate(df))
-        else:
-            return {
-                "success": False,
-                "error": "Unsupported file type. Supported: .csv, .json, .xlsx, .xls",
-            }
-
-        if not isinstance(df, pd.DataFrame):
-            return {
-                "success": False,
-                "error": f"Processing resulted in {type(df)} instead of DataFrame",
-            }
+        df, file_size_mb = _processor.read_uploaded_file(contents, filename)
+        df = prepare_dataframe(df, DataValidationService())
 
         if df.empty:
             return {"success": False, "error": "File contains no data"}

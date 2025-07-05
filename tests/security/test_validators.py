@@ -1,34 +1,34 @@
 import pandas as pd
 import pytest
 
-from core.input_validation import InputValidator
+from core.security_validator import SecurityValidator
 from security.dataframe_validator import DataFrameSecurityValidator
 from security.sql_validator import SQLInjectionPrevention
 from security.xss_validator import XSSPrevention
-from security.validation_exceptions import ValidationError
+from core.exceptions import ValidationError
 
 
 def test_unicode_normalization():
-    validator = InputValidator()
+    validator = SecurityValidator()
     with pytest.raises(ValidationError):
-        validator.validate("<bad>")
+        validator.validate_input("<bad>")
 
 
 def test_html_js_injection_attempts():
-    validator = InputValidator()
+    validator = SecurityValidator()
     payloads = [
         "<script>alert('xss')</script>",
         "<img src=x onerror=alert(1)>",
     ]
     for payload in payloads:
         with pytest.raises(ValidationError):
-            validator.validate(payload)
+            validator.validate_input(payload)
 
 
 def test_json_input_allowed():
-    validator = InputValidator()
+    validator = SecurityValidator()
     # Should not raise ValidationError for quotes within JSON structures
-    validator.validate('{"key":"val"}')
+    validator.validate_input('{"key":"val"}')
 
 
 def test_sql_injection_detection():

@@ -10,7 +10,7 @@ from utils.file_validator import safe_decode_file, process_dataframe
 from core.unicode import UnicodeProcessor
 from config.dynamic_config import dynamic_config
 
-from .validation_exceptions import ValidationError
+from core.exceptions import ValidationError
 
 
 class SecureFileValidator:

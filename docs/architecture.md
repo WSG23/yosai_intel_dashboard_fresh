@@ -20,9 +20,9 @@ The factory builds the container, which then instantiates services. Services ope
   `DataFrameSecurityValidator` classes.
 - **Separated Analytics Modules** – The previously monolithic
   `AnalyticsService` has been broken into smaller modules under
-  `services/data_processing/` and `analytics/`.  `FileHandler`, `DataProcessor`
-  and `AnalyticsEngine` handle file loading, cleaning and metric generation
-  while controllers manage UI callbacks.
+`services/data_processing/` and `analytics/`.  `UnifiedFileValidator`,
+`Processor` and `AnalyticsEngine` handle file loading, cleaning and metric
+generation while controllers manage UI callbacks.
 
 Developers still using the legacy `DataLoader` or `DataLoadingService` should
 migrate to `services.data_processing.processor.Processor` and update imports
