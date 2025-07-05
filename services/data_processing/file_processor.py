@@ -9,9 +9,9 @@ import logging
 
 import pandas as pd
 
-from services.input_validator import InputValidator, ValidationResult
-from security.file_validator import SecureFileValidator
+from services.input_validator import ValidationResult
 from security.dataframe_validator import DataFrameSecurityValidator
+from services.data_processing.unified_file_validator import UnifiedFileValidator as CoreValidator
 from core.exceptions import ValidationError
 from .file_handler import process_file_simple
 from .core.exceptions import FileProcessingError
@@ -23,15 +23,14 @@ class UnifiedFileValidator:
     """Combine file and DataFrame validation helpers."""
 
     def __init__(self, max_size_mb: Optional[int] = None) -> None:
-        self.input_validator = InputValidator(max_size_mb)
-        self.secure_validator = SecureFileValidator()
+        self.core_validator = CoreValidator(max_size_mb)
         self.df_validator = DataFrameSecurityValidator()
 
     # ------------------------------------------------------------------
     # Basic helpers
     # ------------------------------------------------------------------
     def validate_path(self, path: Path) -> None:
-        result = self.input_validator.validate_file_upload(path)
+        result = self.core_validator.validate_file_upload(path)
         if not result.valid:
             raise ValidationError(result.message)
 
@@ -55,8 +54,8 @@ class UnifiedFileValidator:
         return df
 
     def validate_contents(self, contents: str, filename: str) -> pd.DataFrame:
-        df = self.secure_validator.validate_file_contents(contents, filename)
-        result = self.input_validator.validate_file_upload(df)
+        df = self.core_validator.validate_file(contents, filename)
+        result = self.core_validator.validate_file_upload(df)
         if not result.valid:
             raise ValidationError(result.message)
         df = self.df_validator.validate_for_upload(df)
@@ -84,7 +83,7 @@ class FileProcessor:
         import io
         from config.dynamic_config import dynamic_config
 
-        sanitized = self.validator.secure_validator.sanitize_filename(filename)
+        sanitized = self.validator.core_validator.sanitize_filename(filename)
         if "," not in contents:
             raise ValidationError("Invalid upload data")
         _, content_string = contents.split(",", 1)
