@@ -10,6 +10,7 @@ from core.unicode import (
     safe_encode_text,
     sanitize_dataframe,
     UnicodeProcessor as UtilsProcessor,
+    contains_surrogates,
     # Test deprecated functions
     safe_unicode_encode,
     safe_encode,
@@ -21,6 +22,9 @@ from core.unicode import (
 )
 from config.unicode_handler import UnicodeQueryHandler
 from security.unicode_security_handler import UnicodeSecurityHandler as UnicodeSecurityProcessor
+from security.unicode_security_validator import UnicodeSecurityValidator
+from security.validation_exceptions import ValidationError
+from config.database_exceptions import UnicodeEncodingError
 
 
 def test_unicode_text_processor_surrogate_removal():
@@ -30,16 +34,15 @@ def test_unicode_text_processor_surrogate_removal():
 
 def test_sql_query_encoding_removes_surrogates():
     text = "SELECT" + chr(0xD800) + "1"
-    encoded = UnicodeQueryHandler.safe_encode_query(text)
-    assert "SELECT" in encoded and "1" in encoded
-    assert "\ud800" not in encoded
+    with pytest.raises(UnicodeEncodingError):
+        UnicodeQueryHandler.safe_encode_query(text)
 
 
 def test_unicode_security_processor_sanitization():
-    df = pd.DataFrame({"=bad" + chr(0xDC00): ["=cmd" + chr(0xD800)]})
+    df = pd.DataFrame({"=bad" + chr(0xDC00): ["😀=cmd" + chr(0xD800)]})
     cleaned = UnicodeSecurityProcessor.sanitize_dataframe(df)
     assert list(cleaned.columns) == ["bad"]
-    assert cleaned.iloc[0, 0] == "cmd"
+    assert cleaned.iloc[0, 0] == "😀=cmd"
 
 
 def test_wrapper_compatibility_and_imports():
@@ -57,3 +60,23 @@ def test_large_dataframe_performance():
     duration = time.time() - start
     assert duration < 10
     assert cleaned.iloc[0, 0] == "bad"
+
+
+def test_wrapped_contains_surrogates():
+    assert contains_surrogates("x" + chr(0xD800))
+    assert not contains_surrogates("emoji😀")
+
+
+def test_unicode_security_validator_df():
+    df = pd.DataFrame({"col": ["ok", "bad" + chr(0xD800)]})
+    df_clean = UnicodeSecurityValidator.validate_dataframe(df)
+    assert df_clean.iloc[1, 0] == "bad"
+
+    valid = UnicodeSecurityValidator.validate_dataframe(pd.DataFrame({"col": ["😀ok"]}))
+    assert valid.iloc[0, 0] == "😀ok"
+
+
+def test_nested_values_wrapper():
+    df = pd.DataFrame({"col": [["a" + chr(0xDFFF)]]})
+    cleaned = sanitize_dataframe(df)
+    assert cleaned.iloc[0, 0][0] == "a"

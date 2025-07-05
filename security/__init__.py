@@ -21,8 +21,9 @@ from .unicode_surrogate_validator import (
     UnicodeSurrogateValidator,
 )
 from .validation_exceptions import SecurityViolation
-from .validation_middleware import ValidationMiddleware, ValidationOrchestrator
-from .xss_validator import XSSPrevention
+from .unicode_security_validator import UnicodeSecurityValidator
+from .secrets_validator import SecretsValidator, register_health_endpoint
+
 
 __all__ = [
     "InputValidator",
@@ -37,6 +38,7 @@ __all__ = [
     "AttackDetection",
     "ValidationError",
     "SecurityViolation",
+    "UnicodeSecurityValidator",
     "SecretsValidator",
     "register_health_endpoint",
     "UnicodeSurrogateValidator",

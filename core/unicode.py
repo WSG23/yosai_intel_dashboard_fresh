@@ -263,6 +263,15 @@ def sanitize_data_frame(df: pd.DataFrame) -> pd.DataFrame:
     return sanitize_dataframe(df)
 
 
+def contains_surrogates(text: Any) -> bool:
+    if not isinstance(text, str):
+        try:
+            text = str(text)
+        except Exception:
+            return False
+    return bool(_SURROGATE_RE.search(text))
+
+
 __all__ = [
     # Preferred helpers
     "clean_unicode_text",
@@ -279,6 +288,7 @@ __all__ = [
     "handle_surrogate_characters",
     "clean_unicode_surrogates",
     "sanitize_unicode_input",
+    "contains_surrogates",
     "sanitize_data_frame",
 ]
 
