@@ -1,7 +1,7 @@
 import pytest
 
 from core.plugins.dependency_resolver import PluginDependencyResolver
-from core.plugins.protocols import PluginMetadata
+from services.data_processing.core.protocols import PluginMetadata
 
 
 class DummyPlugin:

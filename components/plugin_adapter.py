@@ -14,6 +14,7 @@ _unicode = PluginServiceLocator.get_unicode_handler()
 sanitize_dataframe = _unicode.sanitize_dataframe
 clean_unicode_text = _unicode.clean_unicode_text
 
+
 logger = logging.getLogger(__name__)
 
 
