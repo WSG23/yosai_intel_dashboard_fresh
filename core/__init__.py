@@ -26,6 +26,7 @@ from .unicode import (
     UnicodeSQLProcessor,
     UnicodeSecurityProcessor,
 )
+from .performance_file_processor import PerformanceFileProcessor
 
 __all__ = [
     "create_app",
@@ -35,4 +36,5 @@ __all__ = [
     "UnicodeTextProcessor",
     "UnicodeSQLProcessor",
     "UnicodeSecurityProcessor",
+    "PerformanceFileProcessor",
 ]
