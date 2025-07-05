@@ -12,7 +12,6 @@ This tool assists migrating to the new plugin architecture:
 
 Pass ``--dry-run`` to preview file modifications without applying them.
 """
-
 from __future__ import annotations
 
 import ast
