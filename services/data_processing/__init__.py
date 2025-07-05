@@ -1,7 +1,14 @@
 """Data processing utilities."""
 
 from .file_handler import FileHandler, process_file_simple
-from .file_processor import FileProcessor
+# ``FileProcessor`` was removed in favor of ``UnicodeFileProcessor``.  Import
+# the new class here and optionally expose it under the old name for backward
+# compatibility.
+from .file_processor import UnicodeFileProcessor
+
+# Provide the legacy name ``FileProcessor`` for callers that still import it
+# from ``services.data_processing``.
+FileProcessor = UnicodeFileProcessor
 from .unified_file_validator import UnifiedFileValidator
 from .core.exceptions import (
     FileProcessingError,
@@ -55,7 +62,6 @@ def load_analytics_helpers() -> None:  # pragma: no cover - optional
 
 __all__ = [
     "FileHandler",
-    "FileProcessor",
     "UnifiedFileValidator",
     "process_file_simple",
     "FileProcessingError",
