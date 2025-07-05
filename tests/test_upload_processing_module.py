@@ -1,5 +1,5 @@
 import pandas as pd
-from analytics.upload_processor import UploadAnalyticsProcessor
+from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.file_processing_service import FileProcessingService
 
 from services.data_validation import DataValidationService
