@@ -51,4 +51,5 @@ __all__ = [
     "UploadAnalyticsProcessor",
     "DatabaseAnalyticsHelper",
     "SummaryReporter",
+    "FileHandler",
 ]
