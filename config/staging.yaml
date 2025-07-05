@@ -56,5 +56,13 @@ cache:
   type: "memory"
   ttl: 300
 
+uploads:
+  chunk_size: 50000
+  max_parallel_uploads: 4
+  validator_rules:
+    sql_injection: true
+    xss: true
+    path_traversal: true
+
 secret_validation:
   severity: medium  # Staging environment severity

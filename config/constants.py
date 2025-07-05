@@ -36,6 +36,18 @@ class DataProcessingLimits:
     DEFAULT_QUERY_LIMIT: int = 10_000
 
 
+class UploadLimits:
+    """Defaults for chunked uploads and validation."""
+
+    DEFAULT_CHUNK_SIZE: int = 50_000
+    MAX_PARALLEL_UPLOADS: int = 4
+    VALIDATOR_RULES: dict = {
+        "sql_injection": True,
+        "xss": True,
+        "path_traversal": True,
+    }
+
+
 class FileProcessingLimits:
     """File upload and processing limits."""
 

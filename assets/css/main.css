@@ -24,6 +24,7 @@
 @import './03-components/_modals.css';
 @import './03-components/_safe-components.css';
 @import './03-components/_device-verification.css';
+@import './03-components/_upload.css';
 
 /* Dashboard Panels */
 @import './04-panels/_panel-base.css';

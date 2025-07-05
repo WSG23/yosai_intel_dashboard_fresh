@@ -26,4 +26,12 @@ logging:
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
   file: "logs/app.log"
 
+uploads:
+  chunk_size: 50000
+  max_parallel_uploads: 4
+  validator_rules:
+    sql_injection: true
+    xss: true
+    path_traversal: true
+
 plugins: !include plugins.yaml

@@ -10,7 +10,7 @@ sequenceDiagram
     participant V as Validator
     participant AS as AnalyticsService
 
-    U->>B: Select file & click upload
+    U->>B: Drag or select file, click Upload
     B->>S: POST /upload
     S->>V: Validate file
     V-->>S: Clean data

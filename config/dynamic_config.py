@@ -8,6 +8,7 @@ from .constants import (
     PerformanceConstants,
     CSSConstants,
     AnalyticsConstants,
+    UploadLimits,
 )
 
 
@@ -19,6 +20,7 @@ class DynamicConfigManager:
         self.performance = PerformanceConstants()
         self.css = CSSConstants()
         self.analytics = AnalyticsConstants()
+        self.uploads = UploadLimits()
         self._load_yaml_config()
         self._apply_env_overrides()
 
@@ -51,6 +53,11 @@ class DynamicConfigManager:
                 for key, value in analytics_config.items():
                     if hasattr(self.analytics, key):
                         setattr(self.analytics, key, value)
+
+                uploads_config = config_data.get("uploads", {})
+                for key, value in uploads_config.items():
+                    if hasattr(self.uploads, key):
+                        setattr(self.uploads, key, value)
 
         except Exception as exc:
             logging.getLogger(__name__).warning(
@@ -115,6 +122,27 @@ class DynamicConfigManager:
         if batch_size is not None:
             self.analytics.batch_size = int(batch_size)
 
+        upload_chunk = os.getenv("UPLOAD_CHUNK_SIZE")
+        if upload_chunk is not None:
+            self.uploads.DEFAULT_CHUNK_SIZE = int(upload_chunk)
+
+        parallel_uploads = os.getenv("MAX_PARALLEL_UPLOADS")
+        if parallel_uploads is not None:
+            self.uploads.MAX_PARALLEL_UPLOADS = int(parallel_uploads)
+
+        validator_rules = os.getenv("VALIDATOR_RULES")
+        if validator_rules:
+            try:
+                import json
+
+                rules = json.loads(validator_rules)
+                if isinstance(rules, dict):
+                    self.uploads.VALIDATOR_RULES.update(rules)
+            except Exception:
+                logging.getLogger(__name__).warning(
+                    "Failed to parse VALIDATOR_RULES env var"
+                )
+
     def get_rate_limit(self) -> Dict[str, int]:
         return {
             "requests": self.security.rate_limit_requests,
@@ -150,6 +178,15 @@ class DynamicConfigManager:
     def validate_large_file_support(self) -> bool:
         """Check if configuration supports 50MB+ files."""
         return self.get_max_upload_size_mb() >= 50
+
+    def get_upload_chunk_size(self) -> int:
+        return getattr(self.uploads, "DEFAULT_CHUNK_SIZE", 50000)
+
+    def get_max_parallel_uploads(self) -> int:
+        return getattr(self.uploads, "MAX_PARALLEL_UPLOADS", 4)
+
+    def get_validator_rules(self) -> Dict[str, Any]:
+        return getattr(self.uploads, "VALIDATOR_RULES", {})
 
 
 # Global instance
