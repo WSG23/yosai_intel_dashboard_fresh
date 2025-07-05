@@ -52,7 +52,7 @@ from services.data_processing.file_processor import (
 class TestUnicodeProcessor:
     def test_clean_surrogate_chars_basic(self):
         text = "Hello\uD83D\uDE00World"
-        assert UnicodeProcessor.clean_surrogate_chars(text) == "HelloWorld"
+        assert UnicodeProcessor.clean_surrogate_chars(text) == "Hello\U0001F600World"
 
     def test_clean_surrogate_chars_isolated_surrogates(self):
         text = "Test\uD83DText"
@@ -68,8 +68,7 @@ class TestUnicodeProcessor:
         text = "Test\uD83D\uDE00Text"
         data = text.encode("utf-8", "surrogatepass")
         result = UnicodeProcessor.safe_decode_bytes(data)
-        assert "Test" in result and "Text" in result
-        assert "\uD83D" not in result and "\uDE00" not in result
+        assert result == "Test\U0001F600Text"
 
     def test_safe_decode_bytes_fallback_encoding(self):
         text = "Caf\xe9".encode("latin-1")
@@ -144,8 +143,7 @@ class TestChunkedUnicodeProcessor:
     def test_process_large_content_with_surrogates(self):
         content = ("Test\uD83D\uDE00Content" * 500).encode("utf-8", "surrogatepass")
         result = ChunkedUnicodeProcessor.process_large_content(content, chunk_size=50)
-        assert "\uD83D" not in result and "\uDE00" not in result
-        assert "TestContent" in result
+        assert result == "Test\U0001F600Content" * 500
 
 
 class TestCallbackController:
