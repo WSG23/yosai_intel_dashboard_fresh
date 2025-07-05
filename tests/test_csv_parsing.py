@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from services import FileProcessor
+from services.data_processing.file_handler import FileHandler
 
 
 @pytest.mark.parametrize("sep", [";", "\t"])
@@ -17,8 +17,10 @@ def test_parse_csv_with_various_delimiters(tmp_path, sep):
     csv_path = tmp_path / "sample.csv"
     df.to_csv(csv_path, index=False, sep=sep)
 
-    processor = FileProcessor(upload_folder=str(tmp_path), allowed_extensions={"csv"})
-    parsed = processor._parse_csv(str(csv_path))
+    processor = FileHandler()
+    with open(csv_path, "rb") as f:
+        text, _ = processor.validate_and_decode(str(csv_path), f.read())
+    parsed = processor._parse_csv(text)
 
     expected = df.copy()
     expected["timestamp"] = pd.to_datetime(expected["timestamp"])
