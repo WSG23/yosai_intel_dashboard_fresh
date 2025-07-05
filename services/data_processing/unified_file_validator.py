@@ -14,7 +14,7 @@ from typing import Any, Dict, Optional, Tuple
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
-from utils.unicode_utils import (
+from core.unicode import (
     UnicodeProcessor,
     sanitize_dataframe,
     sanitize_unicode_input,
