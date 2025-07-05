@@ -1,5 +1,3 @@
-"""Upload UI components."""
+from .client_side_validator import ClientSideValidator
 
-from .drag_drop_upload_area import DragDropUploadArea
-
-__all__ = ["DragDropUploadArea"]
+__all__ = ["ClientSideValidator"]
