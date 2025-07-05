@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from typing import Iterable, Dict, Any
-from .unicode_utils import safe_unicode_encode
+from core.unicode import safe_unicode_encode
 
 from dash import html  # type: ignore
 

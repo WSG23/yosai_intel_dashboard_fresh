@@ -7,7 +7,7 @@ except Exception:  # pragma: no cover - fallback when dependencies fail
     process_large_csv_content = None  # type: ignore
 
 try:  # pragma: no cover - graceful import fallback
-    from .unicode_utils import (
+    from core.unicode import (
         # Preferred API
         clean_unicode_text,
         safe_decode_bytes,
@@ -37,7 +37,7 @@ try:  # pragma: no cover - graceful import fallback
     )
     from .assets_utils import get_nav_icon
     from .preview_utils import serialize_dataframe_preview
-except Exception:  # pragma: no cover - fallback when unicode_utils unavailable
+except Exception:  # pragma: no cover - fallback when core.unicode unavailable
     from security.unicode_security_processor import (
         sanitize_dataframe as sanitize_data_frame,
         UnicodeSecurityProcessor,
