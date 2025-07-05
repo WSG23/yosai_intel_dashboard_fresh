@@ -5,7 +5,8 @@ import pandas as pd
 
 from services.consolidated_learning_service import ConsolidatedLearningService
 from analytics.db_interface import AnalyticsDataAccessor
-from pages import file_upload
+import services.upload.helpers as upload_helpers
+from services.upload import save_ai_training_data
 
 
 def test_consolidated_learning_unicode(tmp_path):
@@ -51,7 +52,7 @@ def test_save_ai_training_data_unicode(tmp_path, monkeypatch):
     def fake_makedirs(path, exist_ok=False):
         training_dir.mkdir(exist_ok=True)
 
-    monkeypatch.setattr(file_upload.os, "makedirs", fake_makedirs)
+    monkeypatch.setattr(upload_helpers.os, "makedirs", fake_makedirs)
 
     open_orig = builtins.open
 
@@ -60,16 +61,16 @@ def test_save_ai_training_data_unicode(tmp_path, monkeypatch):
             return open_orig(target, mode, encoding=encoding, errors=errors)
         return open_orig(path, mode, encoding=encoding, errors=errors)
 
-    monkeypatch.setattr(file_upload, "open", fake_open)
+    monkeypatch.setattr(upload_helpers, "open", fake_open)
 
     class DummyDT:
         @classmethod
         def now(cls):
             return datetime(2024, 1, 1, 0, 0, 0)
 
-    monkeypatch.setattr(file_upload, "datetime", DummyDT)
+    monkeypatch.setattr(upload_helpers, "datetime", DummyDT)
 
-    file_upload.save_ai_training_data(
+    save_ai_training_data(
         "файл.csv",
         {"дверь": "timestamp"},
         {"columns": ["a"], "ai_suggestions": {}},
