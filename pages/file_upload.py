@@ -323,24 +323,12 @@ class Callbacks:
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
         return self.processing.process_files(contents_list, filenames_list)
 
-    def start_upload_background(
+    def schedule_upload_task(
         self, contents_list: List[str] | str, filenames_list: List[str] | str
-    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, int, str, bool, str]:
-        """Kick off background upload processing and enable progress polling."""
+    ) -> str:
+        """Schedule background processing of uploaded files."""
         if not contents_list:
-            return (
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                0,
-                "0%",
-                True,
-                "",
-            )
+            return ""
 
         if not isinstance(contents_list, list):
             contents_list = [contents_list]
@@ -350,28 +338,27 @@ class Callbacks:
         async_coro = asyncio.to_thread(
             self.processing.process_files, contents_list, filenames_list
         )
-        task_id = create_task(async_coro)
+        return create_task(async_coro)
 
-        return (
-            no_update,
-            no_update,
-            no_update,
-            no_update,
-            no_update,
-            no_update,
-            no_update,
-            0,
-            "0%",
-            False,
-            task_id,
-        )
+    def reset_upload_progress(
+        self, contents_list: List[str] | str
+    ) -> Tuple[int, str, bool]:
+        """Reset progress indicators when a new upload starts."""
+        if not contents_list:
+            return 0, "0%", True
+        return 0, "0%", False
 
-    def check_upload_progress(
-        self, _n: int, task_id: str
-    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, int, str, bool, str]:
-        """Poll background processing status and emit results when ready."""
+    def update_progress_bar(self, _n: int, task_id: str) -> Tuple[int, str]:
+        """Update the progress bar based on current task status."""
         status = get_status(task_id)
         progress = int(status.get("progress", 0))
+        return progress, f"{progress}%"
+
+    def finalize_upload_results(
+        self, _n: int, task_id: str
+    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, bool]:
+        """Emit upload results once processing completes."""
+        status = get_status(task_id)
         result = status.get("result")
 
         if status.get("done") and result is not None:
@@ -386,7 +373,7 @@ class Callbacks:
                     no_update,
                     no_update,
                 )
-            return (*result, 100, "100%", True, task_id)
+            return (*result, True)
 
         return (
             no_update,
@@ -396,11 +383,9 @@ class Callbacks:
             no_update,
             no_update,
             no_update,
-            progress,
-            f"{progress}%",
-            False,
-            task_id,
+            no_update,
         )
+
 
     def handle_modal_dialogs(
         self,
@@ -1191,23 +1176,23 @@ def register_callbacks(
             {"prevent_initial_call": True},
         ),
         (
-            cb.start_upload_background,
+            cb.schedule_upload_task,
+            Output("upload-task-id", "data", allow_duplicate=True),
+            Input("upload-data", "contents"),
+            State("upload-data", "filename"),
+            "schedule_upload_task",
+            {"prevent_initial_call": True, "allow_duplicate": True},
+        ),
+        (
+            cb.reset_upload_progress,
             [
-                Output("upload-results", "children", allow_duplicate=True),
-                Output("file-preview", "children", allow_duplicate=True),
-                Output("file-info-store", "data", allow_duplicate=True),
-                Output("upload-nav", "children", allow_duplicate=True),
-                Output("current-file-info-store", "data", allow_duplicate=True),
-                Output("column-verification-modal", "is_open", allow_duplicate=True),
-                Output("device-verification-modal", "is_open", allow_duplicate=True),
                 Output("upload-progress", "value", allow_duplicate=True),
                 Output("upload-progress", "label", allow_duplicate=True),
                 Output("upload-progress-interval", "disabled", allow_duplicate=True),
-                Output("upload-task-id", "data", allow_duplicate=True),
             ],
             Input("upload-data", "contents"),
-            State("upload-data", "filename"),
-            "start_upload_background",
+            None,
+            "reset_upload_progress",
             {"prevent_initial_call": True, "allow_duplicate": True},
         ),
         (
@@ -1227,7 +1212,18 @@ def register_callbacks(
             {"prevent_initial_call": "initial_duplicate", "allow_duplicate": True},
         ),
         (
-            cb.check_upload_progress,
+            cb.update_progress_bar,
+            [
+                Output("upload-progress", "value", allow_duplicate=True),
+                Output("upload-progress", "label", allow_duplicate=True),
+            ],
+            Input("upload-progress-interval", "n_intervals"),
+            State("upload-task-id", "data"),
+            "update_progress_bar",
+            {"prevent_initial_call": True, "allow_duplicate": True},
+        ),
+        (
+            cb.finalize_upload_results,
             [
                 Output("upload-results", "children", allow_duplicate=True),
                 Output("file-preview", "children", allow_duplicate=True),
@@ -1236,14 +1232,11 @@ def register_callbacks(
                 Output("current-file-info-store", "data", allow_duplicate=True),
                 Output("column-verification-modal", "is_open", allow_duplicate=True),
                 Output("device-verification-modal", "is_open", allow_duplicate=True),
-                Output("upload-progress", "value", allow_duplicate=True),
-                Output("upload-progress", "label", allow_duplicate=True),
                 Output("upload-progress-interval", "disabled", allow_duplicate=True),
-                Output("upload-task-id", "data", allow_duplicate=True),
             ],
             Input("upload-progress-interval", "n_intervals"),
             State("upload-task-id", "data"),
-            "check_upload_progress",
+            "finalize_upload_results",
             {"prevent_initial_call": True, "allow_duplicate": True},
         ),
         (
