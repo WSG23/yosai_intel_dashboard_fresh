@@ -9,6 +9,8 @@ def test_memory_cleanup_after_save(tmp_path):
     store.wait_for_pending_saves()
 
     assert store._data_store == {}
+    # ensure no stray DataFrame objects remain referenced
+    assert not any(isinstance(v, pd.DataFrame) for v in store.__dict__.values())
 
     info = store.get_file_info()["sample.csv"]
     assert info["rows"] == 2
@@ -18,6 +20,7 @@ def test_memory_cleanup_after_save(tmp_path):
     assert len(df_loaded) == 2
     # loading the dataframe should not keep it cached
     assert store._data_store == {}
+    assert not any(isinstance(v, pd.DataFrame) for v in store.__dict__.values())
 
     # re-load store from disk
     store2 = UploadedDataStore(storage_dir=tmp_path)

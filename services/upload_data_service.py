@@ -26,9 +26,15 @@ def get_file_info() -> Dict[str, Dict[str, Any]]:
     """Return metadata for uploaded files."""
     return uploaded_data_store.get_file_info()
 
+
+def load_dataframe(filename: str) -> pd.DataFrame:
+    """Load a single uploaded file on demand."""
+    return uploaded_data_store.load_dataframe(filename)
+
 __all__ = [
     "get_uploaded_data",
     "get_uploaded_filenames",
     "clear_uploaded_data",
     "get_file_info",
+    "load_dataframe",
 ]

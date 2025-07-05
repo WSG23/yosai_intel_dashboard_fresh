@@ -121,7 +121,6 @@ class UploadedDataStore:
             }
             with self._lock:
                 self._file_info_store[filename] = info
-                self._data_store.pop(filename, None)
                 with open(self._info_path(), "w", encoding="utf-8") as f:
                     json.dump(self._file_info_store, f, indent=2)
         except Exception as e:  # pragma: no cover - best effort
@@ -129,24 +128,19 @@ class UploadedDataStore:
 
     # -- Public API ---------------------------------------------------------
     def add_file(self, filename: str, df: pd.DataFrame) -> None:
-        with self._lock:
-            self._data_store[filename] = df
-        future = self._executor.submit(self._save_to_disk, filename, df)
-        self._save_futures[filename] = future
+        """Persist ``df`` to disk and record its metadata."""
+        # save synchronously to ensure metadata exists immediately
+        self._save_to_disk(filename, df)
 
     def load_dataframe(self, filename: str) -> pd.DataFrame:
+        """Load a previously saved dataframe."""
         with self._lock:
-            df = self._data_store.get(filename)
             future = self._save_futures.get(filename)
         if future is not None:
             future.result()
             with self._lock:
                 self._save_futures.pop(filename, None)
-                df = self._data_store.pop(filename, df)
-        if df is not None:
-            return df
-        df = pd.read_parquet(self._get_file_path(filename))
-        return df
+        return pd.read_parquet(self._get_file_path(filename))
 
     def get_all_data(self) -> Dict[str, pd.DataFrame]:
         return {fname: self.load_dataframe(fname) for fname in self.get_filenames()}
