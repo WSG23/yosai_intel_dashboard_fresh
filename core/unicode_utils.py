@@ -1,1 +1,2 @@
-from utils.unicode_utils import *
+from utils.unicode_utils import *  # re-export for backward compatibility
+

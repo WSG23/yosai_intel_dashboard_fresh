@@ -1,8 +1,7 @@
 import pandas as pd
 import pytest
 
-from services.unified_file_validator import UnifiedFileValidator
-
+from core.file_processor import FileProcessor as FileHandler
 
 @pytest.mark.parametrize("sep", [";", "\t"])
 def test_parse_csv_with_various_delimiters(tmp_path, sep):

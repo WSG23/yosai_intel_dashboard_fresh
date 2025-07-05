@@ -1,5 +1,6 @@
 import pandas as pd
-from services.unified_file_validator import UnifiedFileValidator
+from core.unified_file_validator import UnifiedFileValidator as FileHandler
+
 
 
 def test_none_upload_rejected():
