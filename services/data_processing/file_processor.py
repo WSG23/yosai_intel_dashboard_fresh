@@ -12,7 +12,7 @@ import pandas as pd
 from services.input_validator import InputValidator, ValidationResult
 from security.file_validator import SecureFileValidator
 from security.dataframe_validator import DataFrameSecurityValidator
-from security.validation_exceptions import ValidationError
+from core.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 

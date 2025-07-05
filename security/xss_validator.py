@@ -2,7 +2,7 @@
 
 import html
 
-from .validation_exceptions import ValidationError
+from core.exceptions import ValidationError
 
 
 class XSSPrevention:

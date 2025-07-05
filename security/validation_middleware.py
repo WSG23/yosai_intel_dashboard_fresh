@@ -8,7 +8,7 @@ from core.callback_manager import CallbackManager
 
 from config.dynamic_config import dynamic_config
 
-from .validation_exceptions import ValidationError
+from core.exceptions import ValidationError
 from core.input_validation import InputValidator, Validator
 
 
