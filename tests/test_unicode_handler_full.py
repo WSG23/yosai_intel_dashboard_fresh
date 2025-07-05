@@ -76,6 +76,16 @@ class TestUnicodeProcessor:
         assert out.iloc[2, 0] == "opt"
         assert out.iloc[3, 0] == "imp"
 
+    def test_sanitize_dataframe_duplicate_columns(self):
+        df = pd.DataFrame([[1, 2]], columns=["dup", "dup"])
+        out = UnicodeProcessor.sanitize_dataframe(df)
+        assert list(out.columns) == ["dup", "dup_1"]
+
+    def test_sanitize_dataframe_empty_columns(self):
+        df = pd.DataFrame([[1, 2]], columns=["", None])
+        out = UnicodeProcessor.sanitize_dataframe(df)
+        assert list(out.columns) == ["col_0", "col_1"]
+
 
 class TestChunkedUnicodeProcessor:
     def test_process_large_content_utf8(self):
