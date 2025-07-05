@@ -3,7 +3,7 @@
 import logging
 from typing import Dict, Any, Optional, List
 
-from core.plugins.protocols import PluginMetadata
+from services.data_processing.core.protocols import PluginMetadata
 
 from .config import AIClassificationConfig, get_ai_config
 from .services.csv_processor import CSVProcessorService

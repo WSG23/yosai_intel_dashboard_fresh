@@ -37,12 +37,13 @@ from services.analytics_processing import (
 )
 
 
+
 def get_ai_suggestions_for_file(
     df: pd.DataFrame, filename: str
 ) -> Dict[str, Dict[str, Any]]:
     """Return AI column suggestions for ``df`` columns."""
     try:
-        return generate_column_suggestions(list(df.columns))
+        return get_ai_column_suggestions(list(df.columns))
     except Exception:
         suggestions: Dict[str, Dict[str, Any]] = {}
         for col in df.columns:

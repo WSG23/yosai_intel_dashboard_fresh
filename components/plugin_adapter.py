@@ -8,11 +8,12 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 from plugins.service_locator import PluginServiceLocator
-from services.ai_suggestions import generate_column_suggestions
+from services.data_enhancer import get_ai_column_suggestions
 
 _unicode = PluginServiceLocator.get_unicode_handler()
 sanitize_dataframe = _unicode.sanitize_dataframe
 clean_unicode_text = _unicode.clean_unicode_text
+
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ class ComponentPluginAdapter:
             except Exception as exc:  # pragma: no cover - best effort
                 logger.warning("AI suggestion failed: %s", exc)
         # Fallback to simple heuristics
-        return generate_column_suggestions(headers)
+        return get_ai_column_suggestions(headers)
 
     def save_verified_mappings(
         self, filename: str, mappings: Dict[str, str], metadata: Dict[str, Any]

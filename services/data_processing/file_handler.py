@@ -12,6 +12,11 @@ from utils.unicode_utils import (
     sanitize_dataframe,
     process_large_csv_content,
 )
+from services.data_enhancer import (
+    apply_manual_mapping,
+    get_mapping_suggestions,
+    apply_fuzzy_column_matching,
+)
 from callback_controller import CallbackController, CallbackEvent
 from config.dynamic_config import dynamic_config
 
@@ -180,105 +185,13 @@ class FileHandler:
             "column_names": list(df.columns),
         }
 
-    def _fuzzy_match_columns(
-        self, available_columns: Sequence[str], required_columns: Sequence[str]
-    ) -> Dict[str, str]:
-        suggestions: Dict[str, str] = {}
-        mapping_patterns = {
-            "person_id": [
-                "person id",
-                "userid",
-                "user id",
-                "user",
-                "employee",
-                "badge",
-                "card",
-                "person",
-                "emp",
-                "employee_id",
-                "badge_id",
-                "card_id",
-            ],
-            "door_id": [
-                "device name",
-                "devicename",
-                "device_name",
-                "door",
-                "reader",
-                "device",
-                "access_point",
-                "gate",
-                "entry",
-                "door_name",
-                "reader_id",
-                "access_device",
-            ],
-            "access_result": [
-                "access result",
-                "accessresult",
-                "access_result",
-                "result",
-                "status",
-                "outcome",
-                "decision",
-                "success",
-                "granted",
-                "denied",
-                "access_status",
-            ],
-            "timestamp": [
-                "timestamp",
-                "time",
-                "datetime",
-                "date",
-                "when",
-                "occurred",
-                "event_time",
-                "access_time",
-                "date_time",
-                "event_date",
-            ],
-        }
-        available_lower = {col.lower(): col for col in available_columns}
-        for required_col, patterns in mapping_patterns.items():
-            best_match = None
-            for pattern in patterns:
-                if pattern.lower() in available_lower:
-                    best_match = available_lower[pattern.lower()]
-                    break
-            if not best_match:
-                for pattern in patterns:
-                    for available_col_lower, original_col in available_lower.items():
-                        if pattern in available_col_lower or available_col_lower in pattern:
-                            best_match = original_col
-                            break
-                    if best_match:
-                        break
-            if best_match:
-                suggestions[required_col] = best_match
-        return suggestions
-
     def apply_manual_mapping(
         self, df: pd.DataFrame, column_mapping: Dict[str, str]
     ) -> pd.DataFrame:
-        missing_source_cols = [
-            source for source in column_mapping.values() if source not in df.columns
-        ]
-        if missing_source_cols:
-            raise ValueError(f"Source columns not found: {missing_source_cols}")
-        return df.rename(columns={v: k for k, v in column_mapping.items()})
+        return apply_manual_mapping(df, column_mapping)
 
     def get_mapping_suggestions(self, df: pd.DataFrame) -> Dict[str, Any]:
-        required_columns = ["person_id", "door_id", "access_result", "timestamp"]
-        fuzzy_matches = self._fuzzy_match_columns(list(df.columns), required_columns)
-        return {
-            "available_columns": list(df.columns),
-            "required_columns": required_columns,
-            "suggested_mappings": fuzzy_matches,
-            "missing_mappings": [
-                col for col in required_columns if col not in fuzzy_matches
-            ],
-        }
+        return get_mapping_suggestions(df)
 
 
 # Convenience wrapper for backward compatibility

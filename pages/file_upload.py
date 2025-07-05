@@ -36,7 +36,7 @@ from services.upload_data_service import (
 from config.dynamic_config import dynamic_config
 
 from components.column_verification import save_verified_mappings
-from services.ai_suggestions import generate_column_suggestions
+from services.data_enhancer import get_ai_column_suggestions
 from components.plugin_adapter import ComponentPluginAdapter
 from services.upload import (
     UploadProcessingService,
@@ -272,7 +272,7 @@ class Callbacks:
                 "rows": rows,
                 "columns": cols,
                 "column_names": df.columns.tolist(),
-                "ai_suggestions": generate_column_suggestions(df.columns.tolist()),
+                "ai_suggestions": get_ai_column_suggestions(df.columns.tolist()),
             }
 
         upload_nav = html.Div(
