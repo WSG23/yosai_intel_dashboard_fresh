@@ -2,6 +2,8 @@
 Navigation bar component with grid layout using existing framework
 """
 
+from __future__ import annotations
+
 import datetime
 from typing import TYPE_CHECKING, Optional, Any, Union
 
@@ -13,7 +15,6 @@ from core.plugins.decorators import safe_callback
 from core.theme_manager import DEFAULT_THEME, sanitize_theme
 from utils.assets_utils import get_nav_icon
 from utils.assets_debug import check_navbar_assets
-from __future__ import annotations
 
 import logging
 
