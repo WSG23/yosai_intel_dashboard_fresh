@@ -9,6 +9,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional, List
 
+from core.protocols import ConfigProviderProtocol
+
 from .dynamic_config import dynamic_config
 from .environment import get_environment, select_config_file
 from .config_validator import ConfigValidator
@@ -145,7 +147,7 @@ class Config:
     plugin_settings: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
 
-class ConfigManager:
+class ConfigManager(ConfigProviderProtocol):
     """Simple configuration manager"""
 
     def __init__(self, config_path: Optional[str] = None):
