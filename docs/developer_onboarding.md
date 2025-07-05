@@ -4,7 +4,7 @@ This guide walks new contributors through setting up a local development environ
 
 ## Prerequisites
 
-- **Python 3.11+**
+- **Python 3.8+**
 - **PostgreSQL 13+**
 - **Redis**
 

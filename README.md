@@ -60,6 +60,9 @@ directory as long as their paths match the references in
 
 ### Development Setup
 
+Python 3.8 or later is required. All pinned dependency versions are compatible
+with this Python release and newer.
+
 1. **Clone and enter the project:**
    ```bash
    git clone <repository>
