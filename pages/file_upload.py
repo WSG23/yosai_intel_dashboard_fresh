@@ -58,7 +58,6 @@ from services.task_queue import create_task, get_status, clear_task
 logger = logging.getLogger(__name__)
 
 
-
 def layout():
     """File upload page layout with persistent storage"""
     return dbc.Container(
@@ -273,10 +272,16 @@ class Callbacks:
         file_preview_components: List[Any] = []
         current_file_info: Dict[str, Any] = {}
 
-        for filename in _uploaded_data_store.get_filenames():
-            df = _uploaded_data_store.load_dataframe(filename)
-            rows = len(df)
-            cols = len(df.columns)
+        file_infos = _uploaded_data_store.get_file_info()
+
+        for filename, info in file_infos.items():
+            path = info.get("path") or str(_uploaded_data_store.get_file_path(filename))
+            try:
+                df_preview = pd.read_parquet(path).head(10)
+            except Exception:
+                df_preview = _uploaded_data_store.load_dataframe(filename).head(10)
+            rows = info.get("rows", len(df_preview))
+            cols = info.get("columns", len(df_preview.columns))
 
             upload_results.append(
                 self.processing.build_success_alert(
@@ -289,15 +294,15 @@ class Callbacks:
             )
 
             file_preview_components.append(
-                self.processing.build_file_preview_component(df, filename)
+                self.processing.build_file_preview_component(df_preview, filename)
             )
 
             current_file_info = {
                 "filename": filename,
                 "rows": rows,
                 "columns": cols,
-                "column_names": df.columns.tolist(),
-                "ai_suggestions": get_ai_column_suggestions(df.columns.tolist()),
+                "path": path,
+                "ai_suggestions": info.get("ai_suggestions", {}),
             }
 
         upload_nav = html.Div(
@@ -753,7 +758,16 @@ class Callbacks:
             .replace("🔧", "")
             .replace("❌", "")
         )
-        columns = file_info.get("column_names", []) or file_info.get("columns", [])
+        columns = file_info.get("columns", [])
+        if not columns:
+            path = file_info.get("path") or str(
+                _uploaded_data_store.get_file_path(filename)
+            )
+            try:
+                columns = pd.read_parquet(path, nrows=0).columns.tolist()
+            except Exception:
+                df_tmp = _uploaded_data_store.load_dataframe(filename)
+                columns = df_tmp.columns.tolist()
         ai_suggestions = file_info.get("ai_suggestions", {})
 
         # ADD THIS BLOCK HERE - Check for saved column mappings
@@ -777,9 +791,7 @@ class Callbacks:
                             "confidence": 1.0,
                             "source": "saved",
                         }
-                    logger.info(
-                        f"📋 Pre-filled saved mappings: {saved_column_mappings}"
-                    )
+                    logger.info(f"📋 Pre-filled saved mappings: {saved_column_mappings}")
         except Exception as e:
             logger.debug(f"No saved mappings: {e}")
         # END OF ADDITION
@@ -1048,7 +1060,9 @@ class Callbacks:
                         )
                         storage_dir = _uploaded_data_store.storage_dir
                         logger.error(f"📁 Storage directory: {storage_dir}")
-                        logger.error(f"📁 Storage directory exists: {storage_dir.exists()}")
+                        logger.error(
+                            f"📁 Storage directory exists: {storage_dir.exists()}"
+                        )
                         if storage_dir.exists():
                             disk_files = list(storage_dir.glob("*.parquet"))
                             logger.error(
@@ -1113,9 +1127,7 @@ class Callbacks:
         logger.info(f"🔍 DEBUG - confirm_clicks: {confirm_clicks}")
         logger.info(f"🔍 DEBUG - values: {values}")
         logger.info(f"🔍 DEBUG - ids: {ids}")
-        logger.info(
-            f"🔍 DEBUG - file_info filename: {file_info.get('filename', 'N/A')}"
-        )
+        logger.info(f"🔍 DEBUG - file_info filename: {file_info.get('filename', 'N/A')}")
 
         try:
             filename = file_info.get("filename", "")
@@ -1155,8 +1167,6 @@ class Callbacks:
                 dismissable=True,
                 duration=5000,
             )
-
-
 
 
 # ------------------------------------------------------------

@@ -165,40 +165,22 @@ class UploadProcessingService:
                 rows = len(df)
                 cols = len(df.columns)
 
-                self.store.add_file(filename, df)
-                upload_results.append(
-                    self.build_success_alert(filename, rows, cols)
-                )
-                file_preview_components.append(
-                    self.build_file_preview_component(df, filename)
-                )
+                    column_names = df.columns.tolist()
+                    file_info_dict[filename] = {
+                        "filename": filename,
+                        "rows": rows,
+                        "columns": cols,
+                        "path": str(self.store.get_file_path(filename)),
+                        "upload_time": pd.Timestamp.now().isoformat(),
+                        "ai_suggestions": get_ai_column_suggestions(column_names),
+                    }
+                    current_file_info = file_info_dict[filename]
 
-                column_names = df.columns.tolist()
-                file_info_dict[filename] = {
-                    "filename": filename,
-                    "rows": rows,
-                    "columns": cols,
-                    "column_names": column_names,
-                    "upload_time": pd.Timestamp.now().isoformat(),
-                    "ai_suggestions": get_ai_column_suggestions(column_names),
-                }
-                current_file_info = file_info_dict[filename]
+                    try:
+                        learning_service = get_device_learning_service()
+                        user_mappings = learning_service.get_user_device_mappings(
+                            filename
 
-                try:
-                    learning_service = get_device_learning_service()
-                    user_mappings = learning_service.get_user_device_mappings(
-                        filename
-                    )
-                    if user_mappings:
-                        from services.ai_mapping_store import ai_mapping_store
-
-                        ai_mapping_store.clear()
-                        for device, mapping in user_mappings.items():
-                            mapping["source"] = "user_confirmed"
-                            ai_mapping_store.set(device, mapping)
-                        logger.info(
-                            "✅ Loaded %s saved mappings - AI SKIPPED",
-                            len(user_mappings),
                         )
                     else:
                         logger.info("🆕 First upload - AI will be used")
