@@ -4,36 +4,23 @@ Complete File Upload Page - Missing piece for consolidation
 Integrates with analytics system
 """
 import logging
-import json
 from datetime import datetime
-import asyncio
 import time
 
 import pandas as pd
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple
 from dash import html, dcc
 from dash.dash import no_update
-from dash._callback_context import callback_context
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from analytics.controllers import UnifiedAnalyticsController
 from core.dash_profile import profile_callback
-import logging
-
-logger = logging.getLogger(__name__)
+from core.callback_registry import debounce
 from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
-from services.device_learning_service import (
-    DeviceLearningService,
-    get_device_learning_service,
-)
-from services.data_processing.file_processor import (
-    process_uploaded_file,
-    create_file_preview,
-)
-from components.file_preview import create_file_preview_ui
+from services.device_learning_service import get_device_learning_service
 from utils.upload_store import uploaded_data_store as _uploaded_data_store
 from services.upload_data_service import (
     get_uploaded_data as service_get_uploaded_data,
@@ -44,7 +31,6 @@ from services.upload_data_service import (
 from config.dynamic_config import dynamic_config
 
 from components.column_verification import save_verified_mappings
-from services.data_enhancer import get_ai_column_suggestions
 from services.upload import (
     UploadProcessingService,
     AISuggestionService,
@@ -1183,7 +1169,19 @@ def register_callbacks(
     """Instantiate :class:`Callbacks` and register its methods."""
 
     cb = Callbacks()
-    callback_defs = [
+
+    def _register(defs: List[tuple]):
+        for func, outputs, inputs, states, cid, extra in defs:
+            manager.unified_callback(
+                outputs,
+                inputs,
+                states,
+                callback_id=cid,
+                component_name="file_upload",
+                **extra,
+            )(debounce()(profile_callback(cid)(func)))
+
+    upload_callbacks = [
         (
             cb.highlight_upload_area,
             Output("upload-data", "className"),
@@ -1229,6 +1227,9 @@ def register_callbacks(
             "restore_upload_state",
             {"prevent_initial_call": "initial_duplicate", "allow_duplicate": True},
         ),
+    ]
+
+    progress_callbacks = [
         (
             cb.update_progress_bar,
             [
@@ -1258,6 +1259,9 @@ def register_callbacks(
             "finalize_upload_results",
             {"prevent_initial_call": True, "allow_duplicate": True},
         ),
+    ]
+
+    modal_callbacks = [
         (
             cb.handle_modal_dialogs,
             [
@@ -1338,15 +1342,9 @@ def register_callbacks(
         ),
     ]
 
-    for func, outputs, inputs, states, cid, extra in callback_defs:
-        manager.unified_callback(
-            outputs,
-            inputs,
-            states,
-            callback_id=cid,
-            component_name="file_upload",
-            **extra,
-        )(profile_callback(cid)(func))
+    _register(upload_callbacks)
+    _register(progress_callbacks)
+    _register(modal_callbacks)
 
     manager.app.clientside_callback(
         "function(tid){if(window.startUploadProgress){window.startUploadProgress(tid);} return '';}",

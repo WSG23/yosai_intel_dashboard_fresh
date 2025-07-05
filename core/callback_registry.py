@@ -3,10 +3,31 @@ Centralized Callback Registry for Dash Application
 Manages all callbacks in a modular, organized way
 """
 
-from dash import callback, Input, Output, State, callback_context, clientside_callback
-import dash
-from typing import Dict, List, Callable, Any
+from dash import no_update
+from typing import List, Callable
+from functools import wraps
+import time
 import logging
+
+
+def debounce(wait_ms: int = 300):
+    """Return decorator to suppress rapid callback invocations."""
+
+    def decorator(func: Callable):
+        last_call = 0.0
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            nonlocal last_call
+            now = time.monotonic() * 1000
+            if now - last_call < wait_ms:
+                return no_update
+            last_call = now
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 logger = logging.getLogger(__name__)
 
