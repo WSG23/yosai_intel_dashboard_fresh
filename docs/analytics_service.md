@@ -46,3 +46,21 @@ parameter. The yielded chunks are passed to `_aggregate_counts` to update user
 and door statistics.  The final dictionary is assembled by `_build_result`.
 This incremental approach prevents excessive memory usage when processing very
 large CSV uploads.
+
+## Using the DI Container
+
+The analytics service can be registered with `core.container` so other modules
+resolve it without direct imports:
+
+```python
+from core.container import Container
+from services.analytics_service import create_analytics_service
+
+container = Container()
+container.register("analytics", create_analytics_service())
+
+analytics = container.get("analytics")
+```
+
+`AnalyticsService` implements `AnalyticsServiceProtocol`, allowing alternative
+implementations for testing or future extensions.

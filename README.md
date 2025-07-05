@@ -265,8 +265,19 @@ file processing utilities depend on `chardet` to detect text encoding.
 This project uses **`config/config.py`** for application settings. It
 loads defaults from `config/config.yaml` and allows environment variables to
 override any value. Earlier versions used separate modules like
-`app_config.py`, `simple_config.py` and `config_manager.py`; all of these are
-replaced by the unified `ConfigManager` in `config/config.py`.
+`app_config.py`, `simple_config.py` and `config_manager.py`; these have been
+replaced by the unified `ConfigManager` in `config/config.py`. Register the
+configuration with the DI container so it can be resolved from anywhere:
+
+```python
+from core.container import Container
+from config.config import ConfigManager
+
+container = Container()
+container.register("config", ConfigManager())
+
+config = container.get("config")
+```
 
 ### Database
 
@@ -378,16 +389,22 @@ The same document includes a minimal **Hello World** plugin showcasing
 ### Migration Notes
 
 Older modules `config/app_config.py`, `config/simple_config.py` and the
-previous `config_manager.py` have been removed. Replace any imports of these
-files with:
+previous `config_manager.py` have been removed. Create a container and access
+the new unified configuration through it instead:
 
 ```python
-from config.config import ConfigManager, get_config
+from core.container import Container
+from config.config import ConfigManager
+
+container = Container()
+container.register("config", ConfigManager())
+
+config = container.get("config")
 ```
 
-The new `ConfigManager` provides the combined functionality of the deprecated
-files while maintaining backwards compatible helper functions like
-`get_app_config()` and `get_database_config()`.
+The `ConfigManager` implements `ConfigurationProtocol` so alternative
+implementations can be swapped in for tests. Helper functions like
+`get_app_config()` and `get_database_config()` remain available for convenience.
 
 ## 🔄 Migration Guide
 
@@ -437,8 +454,23 @@ manager.execute_query_with_retry("SELECT 1")
 - Full type annotations and validation
 - **Guide**: [docs/models_guide.md](docs/models_guide.md) explains each model file
 
-### Services Layer (`services/`)
+-### Services Layer (`services/`)
 - **analytics_service.py**: Business logic for analytics ([docs](docs/analytics_service.md))
+  
+  Register an instance with the container to access analytics operations:
+
+  ```python
+  from core.container import Container
+  from services.analytics_service import create_analytics_service
+
+  container = Container()
+  container.register("analytics", create_analytics_service())
+
+  analytics = container.get("analytics")
+  ```
+  
+  The `AnalyticsService` conforms to `AnalyticsServiceProtocol`, so you can
+  substitute your own implementation during tests.
 - **device_learning_service.py**: Persists learned device mappings ([docs](docs/device_learning_service.md))
 - Caching and performance optimization
 - Modular and testable
