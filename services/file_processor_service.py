@@ -9,7 +9,7 @@ from typing import Dict, Any, List
 from pathlib import Path
 
 from .base import BaseService
-from .protocols import FileProcessorProtocol
+from services.data_processing.core.protocols import FileProcessorProtocol
 from utils.file_validator import safe_decode_with_unicode_handling
 from utils.unicode_utils import (
     sanitize_unicode_input,

@@ -3,7 +3,7 @@ import sys
 from dash import Dash, Output, Input
 
 from core.plugins.auto_config import setup_plugins
-from core.plugins.protocols import PluginMetadata
+from services.data_processing.core.protocols import PluginMetadata
 from core.container import Container as DIContainer
 from config.config import ConfigManager
 from core.plugins.callback_unifier import CallbackUnifier
@@ -32,7 +32,7 @@ def _create_package(tmp_path):
     (pkg / "__init__.py").write_text("")
     plugin_code = '''
 from dash import Output, Input
-from core.plugins.protocols import PluginMetadata
+from services.data_processing.core.protocols import PluginMetadata
 from core.plugins.callback_unifier import CallbackUnifier
 
 class AutoPlugin:

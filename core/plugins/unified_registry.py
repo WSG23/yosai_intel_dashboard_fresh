@@ -8,7 +8,7 @@ from dash import Dash
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.callback_manager import CallbackManager
 from core.plugins.manager import PluginManager
-from core.plugins.protocols import PluginProtocol
+from services.data_processing.core.protocols import PluginProtocol
 from core.container import Container as DIContainer
 from config.config import ConfigManager
 from services.registry import registry as service_registry
