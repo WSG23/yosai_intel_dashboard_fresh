@@ -260,7 +260,7 @@ class InputValidator:
 
             text_content = content[:1024].decode("utf-8", errors="ignore")
             text_content = UnicodeSecurityHandler.sanitize_unicode_input(text_content).lower()
-        except:
+        except Exception:
             return False
 
         # Check for suspicious patterns

@@ -91,7 +91,7 @@ def quick_check():
 
             store_data = ai_mapping_store.all()
             print(f"   Global store items: {len(store_data)}")
-        except:
+        except Exception:
             print(f"   Global store: Not available")
 
     except Exception as e:

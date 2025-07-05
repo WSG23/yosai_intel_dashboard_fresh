@@ -80,7 +80,7 @@ def investigate_data():
             try:
                 if filepath.stat().st_size > 5 * 1024 * 1024:  # 5MB
                     large_files.append(filepath)
-            except:
+            except OSError:
                 pass
 
     if large_files:

@@ -124,7 +124,7 @@ class AccessEventModel(BaseModel):
                         patterns["hourly_distribution"][hour] = (
                             patterns["hourly_distribution"].get(hour, 0) + 1
                         )
-                    except:
+                    except Exception:
                         pass
 
             return patterns
