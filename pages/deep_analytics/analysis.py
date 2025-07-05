@@ -19,7 +19,7 @@ import plotly.graph_objects as go
 
 # Add this import
 from services import AnalyticsService
-from utils.unicode_utils import sanitize_unicode_input, safe_format_number
+from core.unicode_processor import sanitize_unicode_input, safe_format_number
 from utils.preview_utils import serialize_dataframe_preview
 from security.unicode_security_handler import UnicodeSecurityHandler
 

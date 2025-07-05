@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional, Tuple
 import pandas as pd
 
 from .file_converter import FileConverter
-from utils.unicode_utils import sanitize_dataframe
+from core.unicode_processor import sanitize_dataframe
 
 _logger = logging.getLogger(__name__)
 

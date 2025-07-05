@@ -1,6 +1,14 @@
 """Data processing utilities."""
 
-from .file_handler import FileHandler, process_file_simple, FileProcessingError
+from .file_handler import FileHandler, process_file_simple
+from .core.exceptions import (
+    FileProcessingError,
+    FileValidationError,
+    FileFormatError,
+    FileSizeError,
+    FileSecurityError,
+)
+
 
 # Analytics helpers are intentionally loaded lazily in environments where the
 # full analytics stack is unavailable. ``AI_SUGGESTIONS_AVAILABLE`` defaults to
@@ -45,6 +53,12 @@ def load_analytics_helpers() -> None:  # pragma: no cover - optional
 
 __all__ = [
     "FileHandler",
+    "FileProcessor",
+    "UnifiedFileValidator",
     "process_file_simple",
     "FileProcessingError",
+    "FileValidationError",
+    "FileFormatError",
+    "FileSizeError",
+    "FileSecurityError",
 ]

@@ -3,7 +3,7 @@ import pandas as pd
 import tempfile
 from pathlib import Path
 
-from utils.unicode_utils import (
+from core.unicode_processor import (
     UnicodeProcessor,
     ChunkedUnicodeProcessor,
     clean_unicode_text,
@@ -11,18 +11,14 @@ from utils.unicode_utils import (
     safe_encode,
     sanitize_dataframe,
 )
-from services.data_processing.callback_controller import (
+from core.callback_controller import (
     CallbackController,
     CallbackEvent,
     fire_event,
     callback_handler,
 )
-from services.data_processing.file_handler import (
-    FileHandler as RobustFileProcessor,
-    process_file_simple,
-    FileProcessingError,
-)
-
+from services.unified_file_validator import UnifiedFileValidator as RobustFileProcessor
+from services.data_processing.file_handler import process_file_simple, FileProcessingError
 
 class TestUnicodeProcessor:
     def test_clean_surrogate_chars_basic(self):

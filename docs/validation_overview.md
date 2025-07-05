@@ -11,6 +11,7 @@ existing validation code.
   security rules.
 - **Use when**: Sanitizing any external data before database writes or analysis.
 
+
 ```python
 from core.security_validator import SecurityValidator
 
@@ -46,3 +47,9 @@ in a future release.
 - **CSV upload**: `SecurityValidator.validate_file_upload()` then `DataFrameSecurityValidator.validate_for_analysis()`.
 - **Displaying comments**: `SecurityValidator.validate_input()` when accepting the comment.
 
+
+Example usage of the processor:
+```python
+from core.unicode_processor import UnicodeProcessor
+cleaned = UnicodeProcessor.safe_encode_text(user_input)
+```
