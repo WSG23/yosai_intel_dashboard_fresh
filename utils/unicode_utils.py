@@ -11,7 +11,8 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-# Regular expression for common Unicode control characters
+# Regular expression matching ASCII control characters to be stripped.
+
 _CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 
@@ -33,6 +34,7 @@ class UnicodeProcessor:
             cleaned = re.sub(r"[\uD800-\uDFFF]", replacement, text)
             cleaned = _CONTROL_RE.sub("", cleaned)
             cleaned = unicodedata.normalize("NFKC", cleaned)
+            cleaned = _CONTROL_RE.sub("", cleaned)
             return cleaned
         except Exception as exc:  # pragma: no cover - defensive
             logger.warning(f"Failed to clean surrogate chars: {exc}")
