@@ -134,7 +134,9 @@ def layout():
                 ],
                 className="mb-3",
             ),
-            dcc.Interval(id="upload-progress-interval", interval=1000, disabled=True),
+            # Hidden button triggered by SSE when upload completes
+            dbc.Button("", id="progress-done-trigger", className="hidden"),
+            html.Div(id="sse-trigger", style={"display": "none"}),
             # Data preview area
             dbc.Row([dbc.Col([html.Div(id="file-preview")])]),
             # Navigation to analytics
@@ -330,6 +332,7 @@ class Callbacks:
         if not contents_list:
             return ""
 
+
         if not isinstance(contents_list, list):
             contents_list = [contents_list]
         if not isinstance(filenames_list, list):
@@ -350,6 +353,7 @@ class Callbacks:
 
     def update_progress_bar(self, _n: int, task_id: str) -> Tuple[int, str]:
         """Update the progress bar based on current task status."""
+
         status = get_status(task_id)
         progress = int(status.get("progress", 0))
         return progress, f"{progress}%"
@@ -375,6 +379,7 @@ class Callbacks:
                 )
             return (*result, True)
 
+
         return (
             no_update,
             no_update,
@@ -384,6 +389,7 @@ class Callbacks:
             no_update,
             no_update,
             no_update,
+
         )
 
 
@@ -1189,6 +1195,7 @@ def register_callbacks(
                 Output("upload-progress", "value", allow_duplicate=True),
                 Output("upload-progress", "label", allow_duplicate=True),
                 Output("upload-progress-interval", "disabled", allow_duplicate=True),
+
             ],
             Input("upload-data", "contents"),
             None,
@@ -1233,8 +1240,9 @@ def register_callbacks(
                 Output("column-verification-modal", "is_open", allow_duplicate=True),
                 Output("device-verification-modal", "is_open", allow_duplicate=True),
                 Output("upload-progress-interval", "disabled", allow_duplicate=True),
+
             ],
-            Input("upload-progress-interval", "n_intervals"),
+            Input("progress-done-trigger", "n_clicks"),
             State("upload-task-id", "data"),
             "finalize_upload_results",
             {"prevent_initial_call": True, "allow_duplicate": True},
@@ -1328,6 +1336,12 @@ def register_callbacks(
             component_name="file_upload",
             **extra,
         )(profile_callback(cid)(func))
+
+    manager.app.clientside_callback(
+        "function(tid){if(window.startUploadProgress){window.startUploadProgress(tid);} return '';}",
+        Output("sse-trigger", "children"),
+        Input("upload-task-id", "data"),
+    )
 
     if controller is not None:
         controller.register_callback(

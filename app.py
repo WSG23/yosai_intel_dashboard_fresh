@@ -182,7 +182,12 @@ def main():
 
         # Run the application
         try:
-            app.run(debug=app_config.debug, host=app_config.host, port=app_config.port)
+            app.run_server(
+                host=app_config.host,
+                port=app_config.port,
+                debug=app_config.debug,
+                ssl_context='adhoc'
+            )
         except KeyboardInterrupt:
             logger.info("\n👋 Application stopped by user")
         except Exception as e:
