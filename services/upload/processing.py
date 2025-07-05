@@ -6,7 +6,19 @@ from dash import html
 from dash.dash import no_update
 import dash_bootstrap_components as dbc
 
-from services.upload_service import process_uploaded_file, create_file_preview
+from services.data_processing import process_file
+
+
+def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card:
+    """Return a very small preview card for the uploaded file."""
+    return dbc.Card([
+        dbc.CardHeader(html.H6(filename)),
+        dbc.CardBody(
+            [
+                html.Small(f"{len(df):,} rows × {len(df.columns)} cols"),
+            ]
+        ),
+    ])
 from services.device_learning_service import get_device_learning_service
 from services.data_enhancer import get_ai_column_suggestions
 from utils.upload_store import UploadedDataStore
@@ -154,7 +166,7 @@ class UploadProcessingService:
                 content = parts[0]
 
             try:
-                result = process_uploaded_file(content, filename)
+                result = process_file(content, filename)
                 if result["success"]:
                     df = result["data"]
                     rows = len(df)

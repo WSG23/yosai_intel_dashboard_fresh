@@ -2,6 +2,24 @@
 
 from .file_handler import FileHandler, process_file_simple, FileProcessingError
 
+import logging
+import pandas as pd
+from typing import Any, Dict
+
+logger = logging.getLogger(__name__)
+
+
+def process_file(contents: str, filename: str) -> Dict[str, Any]:
+    """Decode ``contents`` and return a DataFrame with status info."""
+
+    handler = FileHandler()
+    try:
+        df = handler.process_base64_contents(contents, filename)
+        return {"success": True, "data": df}
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("process_file failed: %s", exc)
+        return {"success": False, "error": str(exc), "data": pd.DataFrame()}
+
 # Analytics helpers are intentionally loaded lazily in environments where the
 # full analytics stack is unavailable. ``AI_SUGGESTIONS_AVAILABLE`` defaults to
 # ``False`` and can be overridden by calling :func:`load_analytics_helpers`.
@@ -45,6 +63,7 @@ def load_analytics_helpers() -> None:  # pragma: no cover - optional
 
 __all__ = [
     "FileHandler",
+    "process_file",
     "process_file_simple",
     "FileProcessingError",
 ]

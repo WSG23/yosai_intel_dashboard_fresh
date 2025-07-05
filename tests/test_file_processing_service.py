@@ -1,5 +1,6 @@
 import pandas as pd
-from services.file_processing_service import FileProcessingService
+import base64
+from services.data_processing import process_file
 
 
 def test_process_csv(tmp_path):
@@ -14,10 +15,10 @@ def test_process_csv(tmp_path):
     csv_path = tmp_path / "sample.csv"
     df.to_csv(csv_path, index=False)
 
-    service = FileProcessingService()
-    combined, info, processed, total = service.process_files([str(csv_path)])
+    data = base64.b64encode(csv_path.read_bytes()).decode()
+    contents = f"data:text/csv;base64,{data}"
+    result = process_file(contents, "sample.csv")
+    df_loaded = result.get("data")
 
-    assert processed == 1
-    assert total == 2
-    assert len(combined) == 2
-    assert info and info[0].startswith("✅")
+    assert result["success"] is True
+    assert len(df_loaded) == 2

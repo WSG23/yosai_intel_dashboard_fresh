@@ -16,9 +16,9 @@ from .result_formatting import (
     regular_analysis,
 )
 from .registry import get_service
-from .upload_processing import UploadAnalyticsProcessor
 from .db_analytics_helper import DatabaseAnalyticsHelper
 from .summary_reporting import SummaryReporter
+from .analytics import analyze_uploaded_data
 from .data_processing.file_handler import FileHandler
 
 logger = logging.getLogger(__name__)
@@ -50,8 +50,8 @@ __all__ = [
     "calculate_temporal_stats_safe",
     "regular_analysis",
     "ai_mapping_store",
-    "UploadAnalyticsProcessor",
     "DatabaseAnalyticsHelper",
     "SummaryReporter",
+    "analyze_uploaded_data",
     "FileHandler",
 ]
