@@ -3,15 +3,15 @@ from services.upload_processing import UploadAnalyticsProcessor
 from services.file_processing_service import FileProcessingService
 from services.data_validation import DataValidationService
 from services.data_loading_service import DataLoadingService
-from services.input_validator import InputValidator
+from services.data_processing.file_handler import FileHandler
 
 
 def _make_processor():
     fps = FileProcessingService()
     vs = DataValidationService()
     dls = DataLoadingService(vs)
-    iv = InputValidator()
-    return UploadAnalyticsProcessor(fps, vs, dls, iv)
+    fh = FileHandler()
+    return UploadAnalyticsProcessor(fps, vs, dls, fh)
 
 
 def test_direct_processing_helper(tmp_path):

@@ -46,6 +46,7 @@ from services.data_processing.analytics_engine import (
 # AI_SUGGESTIONS_AVAILABLE constant and helper functions are provided by
 # ``services.data_processing.analytics_engine``
 
+
 # Logger setup
 logger = logging.getLogger(__name__)
 
@@ -77,9 +78,6 @@ def _get_display_title(analysis_type: str) -> str:
 # =============================================================================
 
 
-
-
-
 # =============================================================================
 # SECTION 4: SUGGESTS DISPLAY COMPONENTS
 # Add these functions to create suggests UI components
@@ -89,156 +87,8 @@ def _get_display_title(analysis_type: str) -> str:
 def create_suggests_display(
     suggests_data: Dict[str, Any],
 ) -> html.Div | dbc.Card | dbc.Alert:
-    """Create suggests analysis display components (fixed version)"""
-    if "error" in suggests_data:
-        return dbc.Alert(f"Error: {suggests_data['error']}", color="danger")
-
-    try:
-        filename = suggests_data.get("filename", "Unknown")
-        suggestions = suggests_data.get("suggestions", [])
-        avg_confidence = suggests_data.get("avg_confidence", 0)
-        confident_mappings = suggests_data.get("confident_mappings", 0)
-        total_columns = suggests_data.get("total_columns", 0)
-        total_rows = suggests_data.get("total_rows", 0)
-
-        # Summary card
-        summary_card = dbc.Card(
-            [
-                dbc.CardHeader(
-                    [html.H5(f"🤖 AI Column Mapping Analysis - {filename}")]
-                ),
-                dbc.CardBody(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    [
-                                        html.H6("Dataset Info"),
-                                        html.P(f"File: {filename}"),
-                                        html.P(f"Rows: {total_rows:,}"),
-                                        html.P(f"Columns: {total_columns}"),
-                                    ],
-                                    width=4,
-                                ),
-                                dbc.Col(
-                                    [
-                                        html.H6("Overall Confidence"),
-                                        dbc.Progress(
-                                            value=avg_confidence * 100,
-                                            label=f"{avg_confidence:.1%}",
-                                            color=(
-                                                "success"
-                                                if avg_confidence >= 0.7
-                                                else (
-                                                    "warning"
-                                                    if avg_confidence >= 0.4
-                                                    else "danger"
-                                                )
-                                            ),
-                                        ),
-                                    ],
-                                    width=4,
-                                ),
-                                dbc.Col(
-                                    [
-                                        html.H6("Confident Mappings"),
-                                        html.H3(
-                                            f"{confident_mappings}/{total_columns}",
-                                            className=(
-                                                "text-success"
-                                                if confident_mappings
-                                                >= total_columns * 0.7
-                                                else "text-warning"
-                                            ),
-                                        ),
-                                    ],
-                                    width=4,
-                                ),
-                            ]
-                        )
-                    ]
-                ),
-            ],
-            className="mb-3",
-        )
-
-        # Suggestions table
-        if suggestions:
-            table_rows = []
-            for suggestion in suggestions:
-                confidence = suggestion["confidence"]
-
-                table_rows.append(
-                    html.Tr(
-                        [
-                            html.Td(suggestion["column"]),
-                            html.Td(suggestion["suggested_field"]),
-                            html.Td(
-                                [
-                                    dbc.Progress(
-                                        value=confidence * 100,
-                                        label=f"{confidence:.1%}",
-                                        color=(
-                                            "success"
-                                            if confidence >= 0.7
-                                            else (
-                                                "warning"
-                                                if confidence >= 0.4
-                                                else "danger"
-                                            )
-                                        ),
-                                    )
-                                ]
-                            ),
-                            html.Td(suggestion["status"]),
-                            html.Td(
-                                html.Small(
-                                    str(suggestion["sample_data"][:2]),
-                                    className="text-muted",
-                                )
-                            ),
-                        ]
-                    )
-                )
-
-            suggestions_table = dbc.Card(
-                [
-                    dbc.CardHeader([html.H6("📋 Column Mapping Suggestions")]),
-                    dbc.CardBody(
-                        [
-                            dbc.Table(
-                                [
-                                    html.Thead(
-                                        [
-                                            html.Tr(
-                                                [
-                                                    html.Th("Column Name"),
-                                                    html.Th("Suggested Field"),
-                                                    html.Th("Confidence"),
-                                                    html.Th("Status"),
-                                                    html.Th("Sample Data"),
-                                                ]
-                                            )
-                                        ]
-                                    ),
-                                    html.Tbody(table_rows),
-                                ],
-                                responsive=True,
-                                striped=True,
-                            )
-                        ]
-                    ),
-                ],
-                className="mb-3",
-            )
-        else:
-            suggestions_table = dbc.Alert("No suggestions available", color="warning")
-
-        return html.Div([summary_card, suggestions_table])
-
-    except Exception as e:
-        logger.exception("Error creating suggests display: %s", e)
-        return dbc.Alert(f"Error creating display: {str(e)}", color="danger")
+    """Create suggests analysis display using the service layer."""
+    return service_create_suggests_display(suggests_data)
 
 
 # =============================================================================
@@ -391,10 +241,7 @@ def get_initial_message():
 # =============================================================================
 # SECTION 7: HELPER DISPLAY FUNCTIONS
 # Add these helper functions for non-suggests analysis types
-# =============================================================================
-
-
-
+# ============================================================================
 
 
 def create_data_quality_display_corrected(
@@ -492,10 +339,6 @@ def create_data_quality_display_corrected(
     except Exception as e:
         logger.exception("Quality analysis display error: %s", e)
         return dbc.Alert(f"Quality analysis error: {str(e)}", color="danger")
-
-
-
-
 
 # Helper extraction functions for results processing
 def _extract_counts(results: Dict[str, Any]) -> Dict[str, int | float]:
@@ -644,130 +487,8 @@ def _extract_enhanced_security_details(results: Dict[str, Any]) -> Dict[str, Any
 def create_analysis_results_display(
     results: Dict[str, Any], analysis_type: str
 ) -> html.Div | dbc.Card | dbc.Alert:
-    """Create display for different analysis types"""
-    try:
-        counts = _extract_counts(results)
-        total_events = counts["total_events"]
-        unique_users = counts["unique_users"]
-        unique_doors = counts["unique_doors"]
-        success_rate = counts["success_rate"]
-        analysis_focus = results.get("analysis_focus", "")
-
-        # Create type-specific content
-        if analysis_type == "security":
-            sec_metrics = _extract_security_metrics(results)
-            sec_details = _extract_enhanced_security_details(results)
-            specific_content = [
-                html.P(f"Security Score: {sec_metrics['score']:.1f}/100"),
-                html.P(f"Failed Attempts: {sec_metrics['failed_attempts']:,}"),
-                html.P(f"Risk Level: {sec_metrics['risk_level']}"),
-                html.P(
-                    f"Threats: {sec_details['threat_count']} (Critical: {sec_details['critical_threats']})"
-                ),
-                html.P(
-                    "Confidence Interval: "
-                    f"{sec_details['confidence_interval'][0]:.1f}-{sec_details['confidence_interval'][1]:.1f}"
-                ),
-            ]
-
-            if sec_details["recommendations"]:
-                specific_content.append(html.H6("Recommendations"))
-                specific_content.append(
-                    html.Ul([html.Li(r) for r in sec_details["recommendations"]])
-                )
-            if sec_details["top_threats"]:
-                specific_content.append(html.H6("Top Threats"))
-                specific_content.append(
-                    html.Ul([html.Li(t) for t in sec_details["top_threats"]])
-                )
-
-            color = (
-                "danger"
-                if sec_metrics["risk_level"] == "High"
-                else "warning" if sec_metrics["risk_level"] == "Medium" else "success"
-            )
-
-        elif analysis_type == "trends":
-            specific_content = [
-                html.P(f"Daily Average: {results.get('daily_average', 0):.0f} events"),
-                html.P(f"Peak Usage: {results.get('peak_usage', 'Unknown')}"),
-                html.P(f"Trend: {results.get('trend_direction', 'Unknown')}"),
-            ]
-            color = "info"
-
-        elif analysis_type == "behavior":
-            specific_content = [
-                html.P(
-                    f"Avg Accesses/User: {results.get('avg_accesses_per_user', 0):.1f}"
-                ),
-                html.P(f"Heavy Users: {results.get('heavy_users', 0)}"),
-                html.P(f"Behavior Score: {results.get('behavior_score', 'Unknown')}"),
-            ]
-            color = "success"
-
-        elif analysis_type == "anomaly":
-            specific_content = [
-                html.P(f"Anomalies Detected: {results.get('anomalies_detected', 0):,}"),
-                html.P(f"Threat Level: {results.get('threat_level', 'Unknown')}"),
-                html.P(f"Status: {results.get('suspicious_activities', 'Unknown')}"),
-            ]
-            color = "danger" if results.get("threat_level") == "Critical" else "warning"
-
-        else:
-            specific_content = [html.P("Standard analysis completed")]
-            color = "info"
-
-        title_safe = sanitize_unicode_input(_get_display_title(analysis_type))
-        events_safe = safe_format_number(total_events)
-        users_safe = safe_format_number(unique_users)
-        doors_safe = safe_format_number(unique_doors)
-
-        return dbc.Card(
-            [
-                dbc.CardHeader([html.H5(f"📊 {title_safe}")]),
-                dbc.CardBody(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    [
-                                        html.H6("📈 Summary"),
-                                        html.P(f"Total Events: {events_safe}"),
-                                        html.P(f"Unique Users: {users_safe}"),
-                                        html.P(f"Unique Doors: {doors_safe}"),
-                                        dbc.Progress(
-                                            value=success_rate * 100,
-                                            label=f"Success Rate: {success_rate:.1%}",
-                                            color=(
-                                                "success"
-                                                if success_rate > 0.8
-                                                else "warning"
-                                            ),
-                                        ),
-                                    ],
-                                    width=6,
-                                ),
-                                dbc.Col(
-                                    [
-                                        html.H6(f"🎯 {analysis_type.title()} Specific"),
-                                        html.Div(specific_content),
-                                    ],
-                                    width=6,
-                                ),
-                            ]
-                        ),
-                        html.Hr(),
-                        dbc.Alert(
-                            [html.H6("Analysis Focus"), html.P(analysis_focus)],
-                            color=color,
-                        ),
-                    ]
-                ),
-            ]
-        )
-    except Exception as e:
-        logger.exception("Error displaying results: %s", e)
-        return dbc.Alert(f"Error displaying results: {str(e)}", color="danger")
+    """Create display for different analysis types via service layer."""
+    return service_create_analysis_results_display(results, analysis_type)
 
 
 def create_limited_analysis_display(
@@ -796,78 +517,8 @@ def create_limited_analysis_display(
 
 
 def create_data_quality_display(data_source: str) -> html.Div | dbc.Card | dbc.Alert:
-    """Create data quality analysis display"""
-    try:
-        if data_source.startswith("upload:"):
-            filename = data_source.replace("upload:", "")
-            from utils.upload_store import uploaded_data_store
-
-            if filename in uploaded_data_store.get_filenames():
-                df = uploaded_data_store.load_dataframe(filename)
-
-                # Basic quality metrics
-                total_rows = len(df)
-                total_cols = len(df.columns)
-                missing_values = df.isnull().sum().sum()
-                duplicate_rows = df.duplicated().sum()
-
-                return dbc.Card(
-                    [
-                        dbc.CardHeader([html.H5("📊 Data Quality Analysis")]),
-                        dbc.CardBody(
-                            [
-                                dbc.Row(
-                                    [
-                                        dbc.Col(
-                                            [
-                                                html.H6("Dataset Overview"),
-                                                html.P(f"Rows: {total_rows:,}"),
-                                                html.P(f"Columns: {total_cols}"),
-                                                html.P(
-                                                    f"Missing values: {missing_values:,}"
-                                                ),
-                                                html.P(
-                                                    f"Duplicate rows: {duplicate_rows:,}"
-                                                ),
-                                            ],
-                                            width=6,
-                                        ),
-                                        dbc.Col(
-                                            [
-                                                html.H6("Quality Score"),
-                                                dbc.Progress(
-                                                    value=max(
-                                                        0,
-                                                        100
-                                                        - (
-                                                            missing_values
-                                                            / total_rows
-                                                            * 100
-                                                        )
-                                                        - (
-                                                            duplicate_rows
-                                                            / total_rows
-                                                            * 10
-                                                        ),
-                                                    ),
-                                                    label="Quality",
-                                                    color="success",
-                                                ),
-                                            ],
-                                            width=6,
-                                        ),
-                                    ]
-                                )
-                            ]
-                        ),
-                    ]
-                )
-        return dbc.Alert(
-            "Data quality analysis only available for uploaded files", color="info"
-        )
-    except Exception as e:
-        logger.exception("Quality analysis error: %s", e)
-        return dbc.Alert(f"Quality analysis error: {str(e)}", color="danger")
+    """Create data quality analysis display via service layer."""
+    return service_create_data_quality_display(data_source)
 
 
 def get_initial_message_safe():

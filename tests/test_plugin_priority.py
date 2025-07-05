@@ -1,6 +1,6 @@
 import sys
 from core.plugins.manager import PluginManager
-from core.plugins.protocols import PluginPriority
+from services.data_processing.core.protocols import PluginPriority
 from core.container import Container as DIContainer
 from config.config import ConfigManager
 
@@ -13,7 +13,7 @@ def test_priority_order(tmp_path):
     plugin_a = pkg_dir / "plugin_a.py"
     plugin_a.write_text(
         """
-from core.plugins.protocols import PluginPriority
+from services.data_processing.core.protocols import PluginPriority
 class PluginA:
     class metadata:
         name = 'a'
@@ -32,7 +32,7 @@ def create_plugin():
     plugin_b = pkg_dir / "plugin_b.py"
     plugin_b.write_text(
         """
-from core.plugins.protocols import PluginPriority
+from services.data_processing.core.protocols import PluginPriority
 class PluginB:
     class metadata:
         name = 'b'
