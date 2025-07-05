@@ -407,7 +407,7 @@ def _create_fallback_navbar() -> str:
 
 
 @safe_callback
-def register_navbar_callbacks(manager: TrulyUnifiedCallbacks) -> None:
+def register_navbar_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
     """Register navbar callbacks for live updates"""
     if not DASH_AVAILABLE or not manager:
         return

@@ -11,7 +11,7 @@ try:  # pragma: no cover - graceful import fallback
         # Preferred API
         clean_unicode_text,
         safe_decode_bytes,
-        safe_encode_text,
+        safe_encode,
         sanitize_dataframe,
         UnicodeProcessor,
         ChunkedUnicodeProcessor,
@@ -27,7 +27,7 @@ try:  # pragma: no cover - graceful import fallback
 
     # Migration aliases for transitional imports
     unicode_clean_text = clean_unicode_text
-    unicode_safe_encode = safe_encode_text
+    unicode_safe_encode = safe_encode
     unicode_sanitize_df = sanitize_dataframe
 
     from .assets_debug import (
@@ -63,7 +63,7 @@ __all__: list[str] = [
     # Preferred API
     "clean_unicode_text",
     "safe_decode_bytes",
-    "safe_encode_text",
+    "safe_encode",
     "sanitize_dataframe",
     "UnicodeProcessor",
     "ChunkedUnicodeProcessor",

@@ -39,7 +39,7 @@ def safe_decode_bytes(data: bytes, encoding: str = "utf-8") -> str:
 
 def safe_encode_text(value: Any) -> str:
     _warn("safe_encode_text")
-    return _u.safe_encode_text(value)
+    return _u.safe_encode(value)
 
 
 def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
@@ -49,12 +49,12 @@ def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 def safe_unicode_encode(value: Any) -> str:
     _warn("safe_encode_text")
-    return _u.safe_encode_text(value)
+    return _u.safe_encode(value)
 
 
 def safe_encode(value: Any) -> str:
     _warn("safe_encode_text")
-    return _u.safe_encode_text(value)
+    return _u.safe_encode(value)
 
 
 def safe_decode(data: bytes, encoding: str = "utf-8") -> str:

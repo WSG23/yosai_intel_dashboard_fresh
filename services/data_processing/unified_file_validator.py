@@ -194,7 +194,7 @@ class UnifiedFileValidator:
     def sanitize_filename(self, filename: str) -> str:
         """Validate and sanitize a filename."""
         cleaned = self._sanitize_string(filename)
-        cleaned = UnicodeProcessor.safe_encode_text(cleaned)
+        cleaned = UnicodeProcessor.safe_encode(cleaned)
 
         if os.path.basename(cleaned) != cleaned:
             raise ValidationError("Path separators not allowed in filename")
