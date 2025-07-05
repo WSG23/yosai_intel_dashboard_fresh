@@ -20,11 +20,11 @@ def test_immediate_confirm_after_upload(monkeypatch, tmp_path):
     sys.modules["pages.graphs"] = types.ModuleType("pages.graphs")
     sys.modules["pages.graphs"].GRAPH_FIGURES = {}
 
-    file_upload = importlib.import_module("pages.file_upload")
-    Callbacks = file_upload.Callbacks
+    utils_module = importlib.import_module("pages.upload_utils")
+    Callbacks = importlib.import_module("pages.upload_callbacks").Callbacks
 
     store = UploadedDataStore(storage_dir=tmp_path)
-    monkeypatch.setattr(file_upload, "_uploaded_data_store", store)
+    monkeypatch.setattr(utils_module, "_uploaded_data_store", store)
 
     cb = Callbacks()
     cb.processing = UploadProcessingService(store)

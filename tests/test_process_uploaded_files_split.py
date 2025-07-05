@@ -2,8 +2,8 @@ import base64
 import pandas as pd
 import asyncio
 
-from pages import file_upload
-from pages.file_upload import Callbacks
+from pages import upload_utils
+from pages.upload_callbacks import Callbacks
 from services.upload import UploadProcessingService
 from utils.upload_store import UploadedDataStore
 
@@ -24,7 +24,7 @@ def test_process_uploaded_files_split(monkeypatch, tmp_path):
     filenames_list = ["big.csv", "big.csv"]
 
     store = UploadedDataStore(storage_dir=tmp_path)
-    monkeypatch.setattr(file_upload, "_uploaded_data_store", store)
+    monkeypatch.setattr(upload_utils, "_uploaded_data_store", store)
 
     cb = Callbacks()
     cb.processing = UploadProcessingService(store)

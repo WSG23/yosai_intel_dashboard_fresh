@@ -2,7 +2,8 @@ import base64
 import pandas as pd
 import asyncio
 
-from pages.file_upload import Callbacks, _uploaded_data_store
+from pages.upload_callbacks import Callbacks
+from pages.upload_utils import _uploaded_data_store
 from services.upload import UploadProcessingService
 
 
