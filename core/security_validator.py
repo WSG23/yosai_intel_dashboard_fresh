@@ -11,7 +11,7 @@ from typing import Dict, Any, List, Callable
 
 from config.constants import FileProcessingLimits
 
-from core.unicode_processor import sanitize_unicode_input
+from security.unicode_security_processor import sanitize_unicode_input
 from dataclasses import dataclass
 from enum import Enum
 from .security_patterns import (
@@ -19,7 +19,7 @@ from .security_patterns import (
     PATH_TRAVERSAL_PATTERNS as RAW_PATH_PATTERNS,
 )
 from security.sql_validator import SQLInjectionPrevention
-from security.validation_exceptions import ValidationError
+from core.exceptions import ValidationError
 from security_callback_controller import (
     emit_security_event,
     SecurityEvent,

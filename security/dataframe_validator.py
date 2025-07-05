@@ -7,7 +7,7 @@ from plugins.service_locator import PluginServiceLocator
 
 _unicode = PluginServiceLocator.get_unicode_handler()
 UnicodeProcessor = _unicode.UnicodeProcessor
-from .validation_exceptions import ValidationError
+from core.exceptions import ValidationError
 import logging
 
 logger = logging.getLogger(__name__)

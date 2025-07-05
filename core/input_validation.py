@@ -8,7 +8,8 @@ from typing import Any, Protocol, Dict
 import bleach
 
 from core.unicode_processor import sanitize_unicode_input
-from security.validation_exceptions import ValidationError
+from core.exceptions import ValidationError
+
 from core.security import InputValidator as _ComprehensiveValidator
 
 

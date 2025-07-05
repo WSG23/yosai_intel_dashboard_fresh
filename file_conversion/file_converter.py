@@ -8,7 +8,7 @@ from typing import Tuple
 
 import pandas as pd
 
-from core.unicode_processor import sanitize_dataframe
+from security.unicode_security_processor import sanitize_dataframe
 
 _logger = logging.getLogger(__name__)
 

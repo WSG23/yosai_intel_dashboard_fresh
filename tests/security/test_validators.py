@@ -5,7 +5,7 @@ from core.security_validator import SecurityValidator
 from security.dataframe_validator import DataFrameSecurityValidator
 from security.sql_validator import SQLInjectionPrevention
 from security.xss_validator import XSSPrevention
-from security.validation_exceptions import ValidationError
+from core.exceptions import ValidationError
 
 
 def test_unicode_normalization():
