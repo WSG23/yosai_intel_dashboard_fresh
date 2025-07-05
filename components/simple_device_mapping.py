@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
 from typing import List, Dict, Any
-from dash.development.base_component import Component
 import pandas as pd
 import logging
 
@@ -207,7 +206,7 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
     )
     status_div = html.Div(id="device-save-status")
 
-    modal_children: List[Component] = [
+    modal_children: List[Any] = [
         device_store,
         suggestions_store,
         status_div,
