@@ -64,9 +64,8 @@ def _create_full_app() -> dash.Dash:
         if built_css.exists():
             external_stylesheets.append("/assets/dist/main.min.css")
             assets_ignore += r"|css/main\.css"
-        assets_ignore = rf"^\..*|.*\.txt$|{assets_ignore}"
-        assets_ignore = rf"^\..*|.*\.txt$|{assets_ignore}"
         # Ignore hidden files and text assets but allow everything else
+        # Consolidated ignore expression
         assets_ignore = rf"^\..*|.*\.txt$|{assets_ignore}"
 
         app = dash.Dash(
@@ -77,6 +76,7 @@ def _create_full_app() -> dash.Dash:
             assets_ignore=assets_ignore,
         )
 
+        # Initialize caching once per app instance
         cache.init_app(app.server)
         app.cache = cache
 
@@ -284,9 +284,6 @@ def _create_simple_app() -> dash.Dash:
             suppress_callback_exceptions=True,
             assets_ignore=assets_ignore,
         )
-
-        cache.init_app(app.server)
-        app.cache = cache
 
         cache.init_app(app.server)
         app.cache = cache
