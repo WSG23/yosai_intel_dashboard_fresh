@@ -1,5 +1,5 @@
 import sys
-from core.plugins.manager import PluginManager
+from core.plugins.manager import ThreadSafePluginManager as PluginManager
 from services.data_processing.core.protocols import PluginPriority
 from core.container import Container as DIContainer
 from config.config import ConfigManager
