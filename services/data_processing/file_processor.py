@@ -127,3 +127,13 @@ def create_file_preview(df: pd.DataFrame, max_rows: int = 10) -> Dict[str, Any]:
             'dtypes': {}
         }
 
+# For backwards compatibility expose ``UnicodeFileProcessor`` as ``FileProcessor``
+FileProcessor = UnicodeFileProcessor
+
+__all__ = [
+    "UnicodeFileProcessor",
+    "FileProcessor",
+    "process_uploaded_file",
+    "create_file_preview",
+]
+
