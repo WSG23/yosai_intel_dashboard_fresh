@@ -1,3 +1,3 @@
-from services.data_processing.file_handler import FileHandler as UnifiedFileValidator
+from services.data_processing.unified_file_validator import UnifiedFileValidator
 
 __all__ = ["UnifiedFileValidator"]

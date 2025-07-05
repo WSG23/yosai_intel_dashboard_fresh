@@ -19,7 +19,7 @@ from .registry import get_service
 from .upload_processing import UploadAnalyticsProcessor
 from .db_analytics_helper import DatabaseAnalyticsHelper
 from .summary_reporting import SummaryReporter
-from .unified_file_validator import UnifiedFileValidator
+from .data_processing.unified_file_validator import UnifiedFileValidator
 
 logger = logging.getLogger(__name__)
 

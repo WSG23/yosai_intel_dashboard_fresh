@@ -4,7 +4,7 @@ from services.file_processing_service import FileProcessingService
 
 from services.data_validation import DataValidationService
 from services.data_processing.processor import Processor
-from services.unified_file_validator import UnifiedFileValidator
+from services.data_processing.unified_file_validator import UnifiedFileValidator
 
 def _make_processor():
     vs = DataValidationService()

@@ -5,7 +5,7 @@ import json
 import logging
 from typing import List, Tuple
 
-from services.unified_file_validator import UnifiedFileValidator
+from services.data_processing.unified_file_validator import UnifiedFileValidator
 
 
 logger = logging.getLogger(__name__)

@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any, Dict
 
 from config.dynamic_config import dynamic_config
-from services.unified_file_validator import UnifiedFileValidator
+from services.data_processing.unified_file_validator import UnifiedFileValidator
 from security.xss_validator import XSSPrevention
 from services.data_validation import DataValidationService
 from services.analytics import map_and_clean
