@@ -242,3 +242,54 @@ class PluginManager:
             plugin_health,
             methods=["GET"],
         )
+
+
+class ThreadSafePluginManager(PluginManager):
+    """Plugin manager variant with locking around shared state."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        self._lock = threading.RLock()
+        super().__init__(*args, **kwargs)
+
+    # ------------------------------------------------------------------
+    def load_plugin(self, plugin: PluginProtocol) -> bool:  # type: ignore[override]
+        with self._lock:
+            if hasattr(plugin, "metadata"):
+                name = plugin.metadata.name
+            else:
+                name = plugin.__class__.__name__
+            if name in self.plugins:
+                return False
+            return super().load_plugin(plugin)
+
+    # ------------------------------------------------------------------
+    def load_all_plugins(self) -> List[Any]:  # type: ignore[override]
+        with self._lock:
+            return super().load_all_plugins()
+
+    # ------------------------------------------------------------------
+    def register_plugin_callbacks(
+        self, app: Any, manager: CallbackManager
+    ) -> List[Any]:  # type: ignore[override]
+        with self._lock:
+            return super().register_plugin_callbacks(app, manager)
+
+    # ------------------------------------------------------------------
+    def get_plugin_health(self) -> Dict[str, Any]:  # type: ignore[override]
+        with self._lock:
+            return super().get_plugin_health()
+
+    # ------------------------------------------------------------------
+    def _health_monitor_loop(self) -> None:  # type: ignore[override]
+        while self._health_monitor_active:
+            with self._lock:
+                try:
+                    self.health_snapshot = self.get_plugin_health()
+                except Exception as exc:  # pragma: no cover - defensive
+                    logger.error("Health monitoring error: %s", exc)
+            time.sleep(self._health_check_interval)
+
+    # ------------------------------------------------------------------
+    def stop_all_plugins(self) -> None:  # type: ignore[override]
+        with self._lock:
+            super().stop_all_plugins()

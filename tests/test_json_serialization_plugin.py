@@ -20,7 +20,7 @@ from core.json_serialization_plugin import (
     JsonSerializationService,
     JsonCallbackService,
 )
-from core.plugins.manager import PluginManager
+from core.plugins.manager import ThreadSafePluginManager as PluginManager
 from core.container import Container as DIContainer
 from config.config import ConfigManager
 

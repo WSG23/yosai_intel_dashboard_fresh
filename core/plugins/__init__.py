@@ -2,7 +2,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 try:
-    from .manager import PluginManager
+    from .manager import ThreadSafePluginManager as PluginManager
     from .auto_config import PluginAutoConfiguration
     PLUGINS_AVAILABLE = True
 except ImportError as e:
