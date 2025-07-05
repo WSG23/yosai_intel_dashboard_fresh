@@ -11,9 +11,12 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from .analytics_summary import generate_basic_analytics, summarize_dataframe
-from .chunked_analysis import analyze_with_chunking
-from utils.mapping_helpers import map_and_clean
+from services.analytics import (
+    generate_basic_analytics,
+    summarize_dataframe,
+    analyze_with_chunking,
+    map_and_clean,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -179,9 +182,9 @@ class UploadAnalyticsProcessor:
         json_file = os.getenv("SAMPLE_JSON_PATH", sample_cfg.json_path)
 
         try:
-            from services.data_processing.file_handler import FileHandler
+            from services.unified_file_validator import UnifiedFileValidator
 
-            processor = FileHandler()
+            processor = UnifiedFileValidator()
             all_data = []
             if os.path.exists(csv_file):
                 df_csv = pd.read_csv(csv_file)
