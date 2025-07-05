@@ -4,7 +4,9 @@ Navigation bar component with grid layout using existing framework
 
 import datetime
 from typing import TYPE_CHECKING, Optional, Any, Union
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+
+if TYPE_CHECKING:
+    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from flask_babel import lazy_gettext as _l, refresh
 from flask import session
 from core.plugins.decorators import safe_callback

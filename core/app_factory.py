@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Complete application factory integration."""
+from __future__ import annotations
 import dash
 import logging
 import os
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional, Any, TYPE_CHECKING
 from flasgger import Swagger
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output
 from components.ui.navbar import create_navbar_layout
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.container import Container as DIContainer
 from core.plugins.auto_config import PluginAutoConfiguration
 from core.secret_manager import validate_secrets
@@ -21,6 +21,9 @@ from flask_talisman import Talisman
 from core.theme_manager import apply_theme_settings, DEFAULT_THEME, sanitize_theme
 from config.config import get_config
 from .cache import cache
+
+if TYPE_CHECKING:  # pragma: no cover - only for type hints
+    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 BUNDLE = "/assets/dist/main.min.css"
@@ -184,6 +187,8 @@ def _create_full_app() -> dash.Dash:
         app.layout = _serve_layout
 
         # Register all callbacks using TrulyUnifiedCallbacks
+        from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+
         coordinator = TrulyUnifiedCallbacks(app)
         _register_router_callbacks(coordinator)
         _register_global_callbacks(coordinator)
@@ -553,7 +558,7 @@ def _create_placeholder_page(title: str, subtitle: str, message: str) -> html.Di
     )
 
 
-def _register_router_callbacks(manager: TrulyUnifiedCallbacks) -> None:
+def _register_router_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
     """Register page routing callbacks."""
 
     @manager.register_callback(
@@ -669,7 +674,7 @@ def _get_upload_page() -> Any:
         )
 
 
-def _register_global_callbacks(manager: TrulyUnifiedCallbacks) -> None:
+def _register_global_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
     """Register global application callbacks"""
 
     # Register device learning callbacks

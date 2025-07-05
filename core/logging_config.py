@@ -78,6 +78,8 @@ def setup_logging(config: Dict[str, Any]) -> None:
                 "maxBytes": 10485760,
                 "backupCount": 5,
                 "formatter": "json",
+                "encoding": "utf-8",
+                "errors": "backslashreplace",
             },
         },
         "loggers": {

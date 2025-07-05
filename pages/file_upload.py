@@ -14,7 +14,10 @@ from typing import Optional, Dict, Any, List, Tuple
 from dash import html, dcc
 from dash.dash import no_update
 from dash._callback_context import callback_context
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from analytics.controllers import UnifiedAnalyticsController
 from core.dash_profile import profile_callback
 import logging
@@ -1172,7 +1175,7 @@ class Callbacks:
 
 
 def register_callbacks(
-    manager: TrulyUnifiedCallbacks,
+    manager: "TrulyUnifiedCallbacks",
     controller: UnifiedAnalyticsController | None = None,
 ) -> None:
     """Instantiate :class:`Callbacks` and register its methods."""

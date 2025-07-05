@@ -2,10 +2,11 @@ from __future__ import annotations
 
 """Truly unified callback system combining registry and coordinator."""
 
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from dash import Dash
 
-from .plugins.callback_unifier import CallbackUnifier
+if TYPE_CHECKING:  # pragma: no cover - for type hints only
+    from .plugins.callback_unifier import CallbackUnifier
 
 
 class TrulyUnifiedCallbacks:
@@ -18,6 +19,8 @@ class TrulyUnifiedCallbacks:
 
     def callback(self, *args: Any, **kwargs: Any):
         """Unified callback decorator."""
+        from .plugins.callback_unifier import CallbackUnifier
+
         return CallbackUnifier(self)(*args, **kwargs)
 
     unified_callback = callback
