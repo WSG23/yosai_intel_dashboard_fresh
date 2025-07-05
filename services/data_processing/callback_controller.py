@@ -1,26 +1,40 @@
-"""Compatibility wrapper for :mod:`core.callback_controller`."""
+"""Deprecated wrapper around the unified callback controller.
+
+This module provides backward compatible access to the callback controller
+APIs now located in :mod:`core.callback_controller` and
+:mod:`security_callback_controller`.
+"""
 
 from core.callback_controller import (
-    CallbackController,
     CallbackEvent,
     CallbackContext,
+    CallbackProtocol,
+    CallbackRegistry,
+    CallbackController,
+
     callback_handler,
     TemporaryCallback,
     get_callback_controller,
     fire_event,
 )
+from security_callback_controller import (
+    SecurityEvent,
+    SecurityCallbackController,
+    security_callback_controller as _security_callback_controller,
+    emit_security_event,
+)
 
-# Backwards compatibility aliases
-SecurityEvent = CallbackEvent
-emit_security_event = fire_event
+# Global instances preserved for compatibility
 callback_controller = CallbackController()
-security_callback_controller = callback_controller
+security_callback_controller = _security_callback_controller
+
 
 __all__ = [
     "CallbackEvent",
     "SecurityEvent",
     "CallbackContext",
     "CallbackController",
+    "SecurityCallbackController",
     "callback_handler",
     "TemporaryCallback",
     "get_callback_controller",

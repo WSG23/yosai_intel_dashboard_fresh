@@ -5,11 +5,12 @@ from .analyzer import (
     create_security_analyzer,
     EnhancedSecurityAnalyzer,
 )
-from core.callback_controller import (
-    CallbackController as SecurityCallbackController,
-    CallbackEvent as SecurityEvent,
-    get_callback_controller,
-    fire_event,
+from core.callback_controller import CallbackController as SecurityCallbackController
+from security_callback_controller import (
+    SecurityEvent,
+    security_callback_controller,
+    emit_security_event,
+
 )
 
 security_callback_controller = get_callback_controller()

@@ -3,7 +3,7 @@ import pandas as pd
 import tempfile
 from pathlib import Path
 
-from utils.unicode_utils import (
+from core.unicode_processor import (
     UnicodeProcessor,
     ChunkedUnicodeProcessor,
     clean_unicode_text,

@@ -12,7 +12,11 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import DataConversionWarning
 import logging
 import warnings
-from core.callback_controller import CallbackEvent as SecurityEvent, fire_event as emit_security_event
+from security_callback_controller import (
+    SecurityEvent,
+    emit_security_event,
+)
+
 
 from .types import AnomalyAnalysis
 from .data_prep import prepare_anomaly_data

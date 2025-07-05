@@ -1,7 +1,7 @@
 """Utility helpers for Yōsai Intel Dashboard."""
 
 try:
-    from .unicode_utils import (
+    from core.unicode_processor import (
         safe_encode as safe_unicode_encode,
         UnicodeProcessor,
         sanitize_dataframe as sanitize_data_frame,
@@ -19,7 +19,7 @@ try:
     from .assets_utils import get_nav_icon
     from .preview_utils import serialize_dataframe_preview
 except Exception:  # pragma: no cover - fallback when utils unavailable
-    from .unicode_utils import (
+    from core.unicode_processor import (
         safe_encode as safe_unicode_encode,
         UnicodeProcessor,
         sanitize_dataframe as sanitize_data_frame,

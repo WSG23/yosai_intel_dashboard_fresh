@@ -1,15 +1,7 @@
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 
-import time
-import pytest
-
-from utils.unicode_utils import (
-    safe_unicode_encode,
-    sanitize_data_frame,
-    safe_decode,
-    safe_encode,
-)
+from core.unicode_processor import safe_unicode_encode, sanitize_data_frame
 
 
 
