@@ -28,7 +28,7 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements_ui.txt
-          pip install black flake8 mypy bandit pytest pytest-cov safety==2.3.5
+          pip install -r requirements-dev.txt
 
       - name: 🔤 Extract translations
         run: pybabel extract -F babel.cfg -o messages.pot .

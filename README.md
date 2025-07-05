@@ -505,6 +505,8 @@ mappings have been saved, otherwise the mapping step will fail.
 
 ## 🤝 Contributing
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines. In short:
+
 1. Install dependencies:
    ```bash
    pip install -r requirements.txt
