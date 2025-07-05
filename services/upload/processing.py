@@ -178,7 +178,7 @@ class UploadProcessingService:
                         "filename": filename,
                         "rows": rows,
                         "columns": cols,
-                        "column_names": column_names,
+                        "path": str(self.store.get_file_path(filename)),
                         "upload_time": pd.Timestamp.now().isoformat(),
                         "ai_suggestions": get_ai_column_suggestions(column_names),
                     }
