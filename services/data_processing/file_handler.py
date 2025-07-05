@@ -24,7 +24,7 @@ import pandas as pd
 
 from security.file_validator import SecureFileValidator
 from services.input_validator import InputValidator, ValidationResult
-from services.unified_file_validator import UnifiedFileValidator
+from services.data_processing.unified_file_validator import UnifiedFileValidator
 from services.data_processing.core.exceptions import (
     FileProcessingError,
     FileValidationError,
