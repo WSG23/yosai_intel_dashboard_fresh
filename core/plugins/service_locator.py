@@ -73,9 +73,9 @@ class PluginServiceLocator:
     @staticmethod
     def get_unicode_handler():
         """Return the unified Unicode handler module."""
-        import unicode_handler
+        from utils import unicode_utils
 
-        return unicode_handler
+        return unicode_utils
 
 
 # Convenience module level functions for backward compatibility ------
