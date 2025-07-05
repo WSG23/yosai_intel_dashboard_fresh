@@ -4,6 +4,9 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+# Ensure test stubs (e.g., a Dash stub) are available before real packages
+stub_dir = Path(__file__).resolve().parent / "stubs"
+sys.path.insert(0, str(stub_dir))
 
 import pytest
 import tempfile
