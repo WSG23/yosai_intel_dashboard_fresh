@@ -1,46 +1,48 @@
 # Validation Overview
 
-This dashboard includes several validators that sanitize input and uploaded data before any processing occurs. Use this guide to choose the right validator for each scenario.
+This dashboard previously exposed multiple independent validators. These have
+now been consolidated into the unified `SecurityValidator` which handles string,
+file and DataFrame checks in one place. Use the examples below to migrate any
+existing validation code.
 
-## Validators
+## SecurityValidator
 
-### InputValidator
-- **Purpose**: Clean individual strings using Unicode normalization and simple XSS pattern checks.
-- **Use when**: Accepting form fields, query parameters or any user supplied text.
+- **Purpose**: Perform all input, file and DataFrame validation with consistent
+  security rules.
+- **Use when**: Sanitizing any external data before database writes or analysis.
 
-### SecureFileValidator
-- **Purpose**: Safely decode base64 uploads, enforce filename rules and parse CSV/JSON/XLSX files.
-- **Use when**: Handling file uploads from the UI or API.
+```python
+from core.security_validator import SecurityValidator
 
-### DataFrameSecurityValidator
-- **Purpose**: Ensure Pandas DataFrames are safe for processing. Checks memory limits, removes dangerous formulas and supports chunked analysis.
-- **Use when**: Processing uploaded datasets or database queries represented as DataFrames.
+validator = SecurityValidator()
+validator.validate_input(user_name, "user_name")
+validator.validate_file_upload(filename, file_bytes)
+```
 
-### SQLInjectionPrevention
-- **Purpose**: Sanitize SQL parameters and statements and enforce parameterized queries.
-- **Use when**: Building dynamic SQL or validating search terms used in database queries.
+The `SecurityValidator` replaces the old `InputValidator`,
+`SecureFileValidator`, `DataFrameSecurityValidator`, `SQLInjectionPrevention`,
+`XSSPrevention`, `BusinessLogicValidator` and `SecretsValidator` classes.
+All of these wrappers now delegate to the unified validator and will be removed
+in a future release.
 
-### XSSPrevention
-- **Purpose**: Escape HTML fragments before rendering to the browser.
-- **Use when**: Returning user provided comments or other rich text in templates.
+### Migration Steps
 
-### BusinessLogicValidator
-- **Purpose**: Placeholder for domain specific checks on data structures.
-- **Use when**: Custom application rules require validation beyond generic security checks.
-
-### SecretsValidator
-- **Purpose**: Audit configuration secrets for insecure patterns and entropy.
-- **Use when**: Validating environment variables or application keys during startup.
+1. Replace imports of the legacy validator classes with
+   `SecurityValidator` from `core.security_validator`.
+2. Update code that called `validate()` or `validate_file_upload()` on the old
+   classes to use the corresponding `SecurityValidator` methods.
+3. If your module relied on the generic `Validator` protocol, it remains
+   compatible with the new class.
 
 ## Best Practices
-- Validate data as early as possible after receiving it.
-- Combine validators if input passes through multiple layers (e.g., `SecureFileValidator` then `DataFrameSecurityValidator`).
-- Use `SQLInjectionPrevention` for any data that is incorporated into SQL queries.
-- Escape user provided output with `XSSPrevention` before rendering HTML.
-- Periodically run `SecretsValidator` on stored credentials.
+- Validate data as early as possible using `SecurityValidator`.
+- Run `validate_file_upload()` on files before saving or parsing.
+- Use `DataFrameSecurityValidator` when processing large data sets.
+- Sanitize all query parameters with `validate_input()`.
+- Rotate secrets regularly and validate them during startup.
 
 ## Example Scenarios
-- **User search input**: `InputValidator` → `SQLInjectionPrevention` before constructing a query.
-- **CSV upload**: `SecureFileValidator` to parse the file, then `DataFrameSecurityValidator` before analysis.
-- **Displaying comments**: `InputValidator` when accepting the comment and `XSSPrevention` when rendering it.
+- **User search input**: `SecurityValidator.validate_input()` before constructing a query.
+- **CSV upload**: `SecurityValidator.validate_file_upload()` then `DataFrameSecurityValidator.validate_for_analysis()`.
+- **Displaying comments**: `SecurityValidator.validate_input()` when accepting the comment.
 
