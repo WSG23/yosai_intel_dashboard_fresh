@@ -19,14 +19,28 @@ def create_app(mode: str | None = None):
     return _create_app(mode)
 
 
+from typing import TYPE_CHECKING
+
 from .unicode_processor import sanitize_unicode_input
-from .truly_unified_callbacks import TrulyUnifiedCallbacks
 from .unicode import (
     UnicodeTextProcessor,
     UnicodeSQLProcessor,
     UnicodeSecurityProcessor,
 )
 from .performance_file_processor import PerformanceFileProcessor
+
+if TYPE_CHECKING:  # pragma: no cover - avoid circular import at runtime
+    from .truly_unified_callbacks import TrulyUnifiedCallbacks
+
+
+def __getattr__(name: str):
+    """Lazily import heavy modules on demand."""
+    if name == "TrulyUnifiedCallbacks":
+        from .truly_unified_callbacks import TrulyUnifiedCallbacks as _tuc
+
+        globals()[name] = _tuc
+        return _tuc
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 __all__ = [
     "create_app",

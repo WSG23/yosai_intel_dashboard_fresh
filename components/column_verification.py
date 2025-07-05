@@ -7,7 +7,10 @@ Feeds back to AI training data
 
 import pandas as pd
 from dash import html, dcc, callback, Input, Output, State, ALL, MATCH
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from analytics.controllers import UnifiedAnalyticsController
 import logging
 
@@ -647,7 +650,7 @@ def toggle_custom_field(selected_value):
 
 
 def register_callbacks(
-    manager: TrulyUnifiedCallbacks,
+    manager: "TrulyUnifiedCallbacks",
     controller: UnifiedAnalyticsController | None = None,
 ) -> None:
     """Register component callbacks using the coordinator."""

@@ -1,17 +1,19 @@
 from __future__ import annotations
 
-from typing import Any, List, Optional
+from typing import Any, List, Optional, TYPE_CHECKING
 import logging
 
 from dash import Dash
 
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.callback_manager import CallbackManager
 from core.plugins.manager import PluginManager
 from services.data_processing.core.protocols import PluginProtocol
 from core.container import Container as DIContainer
 from config.config import ConfigManager
 from services.registry import registry as service_registry
+
+if TYPE_CHECKING:  # pragma: no cover - only for type hints
+    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,10 @@ class UnifiedPluginRegistry:
         self.app = app
         self.container = container
         self.callback_manager = callback_manager or CallbackManager()
+
+        # Import lazily to avoid circular dependency during module import
+        from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+
         self.coordinator = TrulyUnifiedCallbacks(app)
         self.plugin_manager = PluginManager(container, config_manager, package=package)
         # Register health endpoint immediately
