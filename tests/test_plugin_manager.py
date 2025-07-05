@@ -5,7 +5,7 @@ from pathlib import Path
 from core.plugins.manager import PluginManager
 from core.container import Container as DIContainer
 from config.config import ConfigManager
-from core.plugins.protocols import PluginMetadata
+from services.data_processing.core.protocols import PluginMetadata
 
 
 class SimplePlugin:
@@ -57,7 +57,7 @@ def test_load_all_plugins(tmp_path):
     plugin_file = pkg_dir / "plug.py"
     plugin_file.write_text(
         """
-from core.plugins.protocols import PluginMetadata
+from services.data_processing.core.protocols import PluginMetadata
 
 class Plug:
     metadata = PluginMetadata(

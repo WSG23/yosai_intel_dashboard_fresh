@@ -19,7 +19,7 @@ import logging
 from datetime import datetime
 import json
 import re
-from services.ai_suggestions import generate_column_suggestions
+from services.data_enhancer import get_ai_column_suggestions as simple_column_suggestions
 from components.plugin_adapter import ComponentPluginAdapter
 
 adapter = ComponentPluginAdapter()
@@ -572,7 +572,7 @@ def _analyze_sample_data(sample_values: List[str], column_name: str) -> Dict[str
 
 def _get_fallback_suggestions(columns: List[str]) -> Dict[str, Dict[str, Any]]:
     """Fallback column suggestions using simple heuristics"""
-    return generate_column_suggestions(columns)
+    return simple_column_suggestions(columns)
 
 
 def save_verified_mappings(

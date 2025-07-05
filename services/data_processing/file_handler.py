@@ -36,3 +36,4 @@ class FileHandler:
 
 
 __all__ = ["FileHandler", "ValidationResult"]
+

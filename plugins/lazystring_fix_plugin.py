@@ -6,7 +6,7 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
-from core.plugins.protocols import PluginMetadata
+from services.data_processing.core.protocols import PluginMetadata
 
 from plugins.service_locator import PluginServiceLocator
 

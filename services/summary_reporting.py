@@ -33,7 +33,7 @@ class SummaryReporter:
             health["database"] = "not_configured"
 
         try:
-            from pages.file_upload import get_uploaded_filenames
+            from services.upload_data_service import get_uploaded_filenames
 
             health["uploaded_files"] = len(get_uploaded_filenames())
         except ImportError:
@@ -44,7 +44,7 @@ class SummaryReporter:
         """Return available data source options."""
         options = [{"label": "Sample Data", "value": "sample"}]
         try:
-            from pages.file_upload import get_uploaded_filenames
+            from services.upload_data_service import get_uploaded_filenames
 
             uploaded_files = get_uploaded_filenames()
             if uploaded_files:
@@ -79,7 +79,7 @@ class SummaryReporter:
             "service_health": self.health_check(),
         }
         try:
-            from pages.file_upload import get_uploaded_filenames
+            from services.upload_data_service import get_uploaded_filenames
 
             status["uploaded_files"] = len(get_uploaded_filenames())
         except ImportError:

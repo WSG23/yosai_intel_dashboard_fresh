@@ -5,7 +5,7 @@ import json
 import logging
 from typing import List, Tuple
 
-from services import FileProcessor
+from services.data_processing.file_handler import FileHandler
 
 logger = logging.getLogger(__name__)
 
@@ -13,10 +13,8 @@ logger = logging.getLogger(__name__)
 class FileProcessingService:
     """Service for reading and validating uploaded files."""
 
-    def __init__(self, processor: FileProcessor | None = None):
-        self.processor = processor or FileProcessor(
-            upload_folder="temp", allowed_extensions={"csv", "json", "xlsx"}
-        )
+    def __init__(self, processor: FileHandler | None = None):
+        self.processor = processor or FileHandler()
 
     def _read_file(self, path: str) -> pd.DataFrame:
         """Read a single file into a DataFrame."""

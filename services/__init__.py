@@ -23,8 +23,8 @@ from .data_processing.file_handler import FileHandler
 logger = logging.getLogger(__name__)
 
 # Resolve optional services from the registry
-FileProcessor = get_service("FileProcessor")
-FILE_PROCESSOR_AVAILABLE = FileProcessor is not None
+FileHandlerService = get_service("FileHandler")
+FILE_HANDLER_AVAILABLE = FileHandlerService is not None
 
 get_analytics_service = get_service("get_analytics_service")
 create_analytics_service = get_service("create_analytics_service")
@@ -32,8 +32,8 @@ AnalyticsService = get_service("AnalyticsService")
 ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
 
 __all__ = [
-    "FileProcessor",
-    "FILE_PROCESSOR_AVAILABLE",
+    "FileHandler",
+    "FILE_HANDLER_AVAILABLE",
     "get_analytics_service",
     "create_analytics_service",
     "AnalyticsService",
