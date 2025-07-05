@@ -33,7 +33,7 @@ Centralized analytics service for dashboard operations.
 
 - `get_dashboard_summary() -> Dict[str, Any]`: Get dashboard overview
 - `get_access_patterns_analysis(days) -> Dict[str, Any]`: Analyze access patterns
-- `process_uploaded_file(df, filename) -> Dict[str, Any]`: Process uploaded data
+- `FileProcessor.read_uploaded_file(contents, filename) -> DataFrame`: Decode uploaded data
 
 ## Models
 
