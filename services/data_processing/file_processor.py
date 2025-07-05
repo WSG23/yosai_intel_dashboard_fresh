@@ -24,7 +24,7 @@ from .core.exceptions import FileProcessingError
 logger = logging.getLogger(__name__)
 
 
-class UnifiedFileValidator:
+class FileProcessorValidator:
     """Combine file and DataFrame validation helpers."""
 
     def __init__(self, max_size_mb: Optional[int] = None) -> None:
@@ -68,10 +68,10 @@ class UnifiedFileValidator:
 
 
 class FileProcessor:
-    """High level processor that delegates to :class:`UnifiedFileValidator`."""
+    """High level processor that delegates to :class:`FileProcessorValidator`."""
 
-    def __init__(self, validator: Optional[UnifiedFileValidator] = None) -> None:
-        self.validator = validator or UnifiedFileValidator()
+    def __init__(self, validator: Optional[FileProcessorValidator] = None) -> None:
+        self.validator = validator or FileProcessorValidator()
 
     def process_path(self, file_path: str | Path) -> pd.DataFrame:
         path = Path(file_path)
@@ -294,7 +294,7 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
 
 __all__ = [
     "FileProcessor",
-    "UnifiedFileValidator",
+    "FileProcessorValidator",
     "process_file_simple",
     "FileProcessingError",
     "process_uploaded_file",
