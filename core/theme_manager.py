@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Set
 
-from utils.unicode_utils import sanitize_unicode_input
+from core.unicode_processor import sanitize_unicode_input
 
 logger = logging.getLogger(__name__)
 

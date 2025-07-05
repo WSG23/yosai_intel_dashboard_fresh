@@ -231,6 +231,9 @@ dashboard. Key entry points include `tests/test_integration.py`,
 - **CSRF Protection Plugin**: Optional production-ready CSRF middleware for Dash
 - **Machine-Learned Column Mapping**: Trainable model for smarter CSV header recognition
 - **Hardened SQL Injection Prevention**: Uses `sqlparse` and `bleach` to validate queries
+- **Centralized Unicode Processing**: Normalize text with `core.unicode_processor`.
+- **Event Driven Callbacks**: Plugins react to `core.callback_controller` events.
+- **Metrics & Monitoring**: `PerformanceMonitor` tracks system performance.
 
 **Note:** The file upload and column mapping functionality relies on `pandas`.
 If `pandas` is missing these pages will be disabled. Ensure you run
@@ -459,7 +462,28 @@ switch themes at runtime.
 
 See the [data model diagram](docs/data_model.md) for an overview of key entities.
 The running application exposes Swagger-based API docs at `http://<host>:<port>/api/docs`.
+- Performance metrics: [docs/performance_monitoring.md](docs/performance_monitoring.md)
 Update the spec by running `python tools/generate_openapi.py` which writes `docs/openapi.json` for the UI.
+## Usage Examples
+
+### Cleaning text
+```python
+from core.unicode_processor import UnicodeProcessor
+raw = "Bad\uD83DText"
+clean = UnicodeProcessor.safe_encode_text(raw)
+```
+
+### Firing events
+```python
+from core.callback_controller import fire_event, CallbackEvent
+fire_event(CallbackEvent.ANALYSIS_COMPLETE, "analytics", {"rows": 42})
+```
+
+Performance metrics can be retrieved via:
+```python
+from core.performance import get_performance_monitor
+summary = get_performance_monitor().get_metrics_summary()
+```
 ## 📜 Data Migration
 Use the storage utilities to convert legacy pickle files to Parquet and load them:
 ```python

@@ -1,6 +1,6 @@
 import pytest
 
-from utils.unicode_utils import sanitize_unicode_input
+from core.unicode_processor import sanitize_unicode_input
 
 
 def test_sanitize_unicode_removes_surrogates():

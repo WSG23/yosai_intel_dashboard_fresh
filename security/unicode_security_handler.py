@@ -6,10 +6,7 @@ from typing import Any
 
 import pandas as pd
 
-from plugins.service_locator import PluginServiceLocator
-
-_unicode = PluginServiceLocator.get_unicode_handler()
-UnicodeProcessor = _unicode.UnicodeProcessor
+from core.unicode_processor import UnicodeProcessor
 
 
 class UnicodeSecurityHandler:
@@ -18,7 +15,7 @@ class UnicodeSecurityHandler:
     @staticmethod
     def sanitize_unicode_input(text: Any) -> str:
         """Sanitize input text for unsafe Unicode characters."""
-        return UnicodeProcessor.safe_encode_text(text)
+        return UnicodeProcessor.safe_encode(text).text
 
     @staticmethod
     def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:

@@ -1,16 +1,29 @@
-"""Utility helpers for Yōsai Intel Dashboard."""
+"""Utility helpers for Yōsai Intel Dashboard with Unicode migration support."""
 
-try:
+try:  # pragma: no cover - graceful import fallback
     from .unicode_utils import (
-        safe_encode as safe_unicode_encode,
+        # Preferred API
+        clean_unicode_text,
+        safe_decode_bytes,
+        safe_encode_text,
+        sanitize_dataframe,
         UnicodeProcessor,
-        sanitize_dataframe as sanitize_data_frame,
-        process_large_csv_content,
-        safe_format_number,
+        ChunkedUnicodeProcessor,
+        # Deprecated API
+        safe_unicode_encode,
+        safe_encode,
+        safe_decode,
+        handle_surrogate_characters,
+        clean_unicode_surrogates,
+        sanitize_unicode_input,
+        sanitize_data_frame,
     )
-    handle_surrogate_characters = UnicodeProcessor.clean_surrogate_chars
-    sanitize_unicode_input = UnicodeProcessor.safe_encode_text
-    clean_unicode_surrogates = UnicodeProcessor.clean_surrogate_chars
+
+    # Migration aliases for transitional imports
+    unicode_clean_text = clean_unicode_text
+    unicode_safe_encode = safe_encode_text
+    unicode_sanitize_df = sanitize_dataframe
+
     from .assets_debug import (
         check_navbar_assets,
         debug_dash_asset_serving,
@@ -18,17 +31,21 @@ try:
     )
     from .assets_utils import get_nav_icon
     from .preview_utils import serialize_dataframe_preview
-except Exception:  # pragma: no cover - fallback when utils unavailable
-    from .unicode_utils import (
-        safe_encode as safe_unicode_encode,
-        UnicodeProcessor,
+except Exception:  # pragma: no cover - fallback when unicode_utils unavailable
+    from core.unicode_processor import (
         sanitize_dataframe as sanitize_data_frame,
+        UnicodeProcessor,
+        safe_encode as safe_unicode_encode,
         process_large_csv_content,
         safe_format_number,
     )
     handle_surrogate_characters = UnicodeProcessor.clean_surrogate_chars
     sanitize_unicode_input = UnicodeProcessor.safe_encode_text
     clean_unicode_surrogates = UnicodeProcessor.clean_surrogate_chars
+    unicode_clean_text = UnicodeProcessor.clean_surrogate_chars
+    unicode_safe_encode = UnicodeProcessor.safe_encode_text
+    unicode_sanitize_df = sanitize_data_frame
+
     from .assets_debug import (
         check_navbar_assets,
         debug_dash_asset_serving,
@@ -36,18 +53,33 @@ except Exception:  # pragma: no cover - fallback when utils unavailable
     )
     from .assets_utils import get_nav_icon
     from .preview_utils import serialize_dataframe_preview
+
 
 __all__: list[str] = [
-    "sanitize_unicode_input",
+    # Preferred API
+    "clean_unicode_text",
+    "safe_decode_bytes",
+    "safe_encode_text",
+    "sanitize_dataframe",
+    "UnicodeProcessor",
+    "ChunkedUnicodeProcessor",
+    # Migration aliases
+    "unicode_clean_text",
+    "unicode_safe_encode",
+    "unicode_sanitize_df",
+    # Deprecated API
     "safe_unicode_encode",
+    "safe_encode",
+    "safe_decode",
     "handle_surrogate_characters",
-    "sanitize_data_frame",
     "clean_unicode_surrogates",
-    "process_large_csv_content",
-    "safe_format_number",
+    "sanitize_unicode_input",
+    "sanitize_data_frame",
+    # Existing utilities
     "check_navbar_assets",
     "debug_dash_asset_serving",
     "navbar_icon",
     "get_nav_icon",
     "serialize_dataframe_preview",
 ]
+

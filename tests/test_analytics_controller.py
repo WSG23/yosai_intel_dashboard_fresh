@@ -3,7 +3,7 @@ import pandas as pd
 from analytics.data_repository import AnalyticsDataRepository
 from analytics.business_service import AnalyticsBusinessService
 from analytics.ui_controller import AnalyticsUIController
-from services.data_processing.callback_controller import (
+from core.callback_controller import (
     CallbackController,
     CallbackEvent,
 )

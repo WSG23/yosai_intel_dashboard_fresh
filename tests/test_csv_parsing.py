@@ -3,7 +3,6 @@ import pytest
 
 from core.file_processor import FileProcessor as FileHandler
 
-
 @pytest.mark.parametrize("sep", [";", "\t"])
 def test_parse_csv_with_various_delimiters(tmp_path, sep):
     data = {
@@ -17,7 +16,7 @@ def test_parse_csv_with_various_delimiters(tmp_path, sep):
     csv_path = tmp_path / "sample.csv"
     df.to_csv(csv_path, index=False, sep=sep)
 
-    processor = FileHandler()
+    processor = UnifiedFileValidator()
     with open(csv_path, "rb") as f:
         text, _ = processor.validate_and_decode(str(csv_path), f.read())
     parsed = processor._parse_csv(text)

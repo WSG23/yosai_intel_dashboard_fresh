@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Analytics Service - Enhanced with Unique Patterns Analysis
 
-Uploaded files are validated with :class:`services.data_processing.file_handler.FileHandler`
+Uploaded files are validated with :class:`services.unified_file_validator.UnifiedFileValidator`
 before processing to ensure they are present, non-empty and within the configured
 size limits.
 """
@@ -9,7 +9,6 @@ import pandas as pd
 import logging
 from typing import Dict, Any, List, Optional, Tuple
 
-from services.file_processing_service import FileProcessingService
 from services.data_loader import DataLoader
 from services.analytics_summary import generate_sample_analytics
 from services.data_validation import DataValidationService
@@ -45,17 +44,15 @@ class AnalyticsService:
     def __init__(self):
         self.database_manager: Optional[Any] = None
         self._initialize_database()
-        self.file_processing_service = FileProcessingService()
         self.validation_service = DataValidationService()
         self.data_loading_service = DataLoadingService(self.validation_service)
-        from services.data_processing.file_handler import FileHandler
+        from services.unified_file_validator import UnifiedFileValidator
 
-        self.file_handler = FileHandler()
+        self.file_handler = UnifiedFileValidator()
+
         self.upload_processor = UploadAnalyticsProcessor(
-            self.file_processing_service,
             self.validation_service,
             self.data_loading_service,
-            self.file_handler,
         )
         self.db_helper = DatabaseAnalyticsHelper(self.database_manager)
         self.summary_reporter = SummaryReporter(self.database_manager)

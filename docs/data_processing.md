@@ -19,7 +19,7 @@ services/
 - **`DataEnhancer`** – Applies normalisation and adds computed columns.
 - **`DataProcessor`** – High level wrapper that uses `FileHandler` and `DataEnhancer` to produce a clean dataframe.
 - **`AnalyticsEngine`** – Generates statistics from the processed dataframe.
-- **`CallbackController`** – Emits events throughout the pipeline so plugins can react.
+- **``core.callback_controller.CallbackController``** – Emits events throughout the pipeline so plugins can react.
 
 ## Relationships
 
@@ -32,3 +32,9 @@ classDiagram
 ```
 
 This separation makes the pipeline extensible and easier to test as new data sources are added.
+
+Example event:
+```python
+from core.callback_controller import fire_event, CallbackEvent
+fire_event(CallbackEvent.FILE_UPLOAD_COMPLETE, "uploader", {"rows": len(df)})
+```
