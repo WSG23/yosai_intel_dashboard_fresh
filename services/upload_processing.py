@@ -244,6 +244,10 @@ class UploadAnalyticsProcessor:
                 "total_events": 0,
             }
 
+    def analyze_uploaded_data(self) -> Dict[str, Any]:
+        """Public wrapper for :py:meth:`_get_real_uploaded_data`."""
+        return self._get_real_uploaded_data()
+
     def _get_analytics_with_fixed_processor(self) -> Dict[str, Any]:
         """Get analytics using the sample file processor."""
         from config.config import get_sample_files_config
