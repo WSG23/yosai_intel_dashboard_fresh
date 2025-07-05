@@ -1,13 +1,18 @@
 import pandas as pd
-from analytics.upload_processor import UploadAnalyticsProcessor
-
-
+from services.analytics.upload_analytics import UploadAnalyticsProcessor
+from services.data_loading_service import DataLoadingService
 from services.data_validation import DataValidationService
-from services.data_processing.processor import Processor
+
 
 def _make_processor():
+    from flask import Flask
+    from core.cache import cache
+
+    cache.init_app(Flask(__name__))
+
     vs = DataValidationService()
-    dls = Processor(validator=vs)
+    dls = DataLoadingService(vs)
+
     return UploadAnalyticsProcessor(vs, dls)
 
 def test_direct_processing_helper(tmp_path):
