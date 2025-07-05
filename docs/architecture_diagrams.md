@@ -23,7 +23,7 @@ sequenceDiagram
     participant S as Service layer
     participant DB as Database
 
-    U->>FE: Upload file
+    U->>FE: Drag or select file
     FE->>BE: POST /upload
     BE->>S: Validate and parse
     S->>DB: Store records
