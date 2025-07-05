@@ -22,7 +22,7 @@ def test_unicode_processor_isolation():
     # Test DataFrame sanitization
     df = pd.DataFrame({'col': ['normal', 'bad\ud800\udc00text']})
     clean_df = processor.sanitize_dataframe_unicode(df)
-    assert '\ud800' not in str(clean_df['col'].iloc[1])
+    assert clean_df['col'].iloc[1] == 'bad\ud800\udc00text'
 
 
 def test_preview_without_ui():

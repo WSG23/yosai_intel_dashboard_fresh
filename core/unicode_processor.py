@@ -33,12 +33,45 @@ class UnicodeProcessor:
 
     @staticmethod
     def clean_surrogate_chars(text: str, replacement: str = "") -> str:
-        """Remove Unicode surrogate characters from ``text``."""
+        """Remove unmatched surrogate characters from ``text``."""
         if not isinstance(text, str):
             text = str(text) if text is not None else ""
 
+        invalid_found = False
+        out_chars = []
+        i = 0
         try:
-            cleaned = _SURROGATE_RE.sub(replacement, text)
+            while i < len(text):
+                ch = text[i]
+                cp = ord(ch)
+                # High surrogate
+                if 0xD800 <= cp <= 0xDBFF:
+                    if i + 1 < len(text) and 0xDC00 <= ord(text[i + 1]) <= 0xDFFF:
+                        out_chars.append(ch)
+                        out_chars.append(text[i + 1])
+                        i += 2
+                        continue
+                    invalid_found = True
+                    if replacement:
+                        out_chars.append(replacement)
+                    i += 1
+                    continue
+
+                # Low surrogate without preceding high surrogate
+                if 0xDC00 <= cp <= 0xDFFF:
+                    invalid_found = True
+                    if replacement:
+                        out_chars.append(replacement)
+                    i += 1
+                    continue
+
+                out_chars.append(ch)
+                i += 1
+
+            cleaned = "".join(out_chars)
+
+            if invalid_found:
+                logger.warning("Invalid surrogate sequence removed")
 
             cleaned = unicodedata.normalize("NFKC", cleaned)
             cleaned = _CONTROL_RE.sub("", cleaned)
@@ -49,9 +82,7 @@ class UnicodeProcessor:
                 ch
                 for ch in text
                 if not (
-                    UnicodeProcessor.SURROGATE_LOW
-                    <= ord(ch)
-                    <= UnicodeProcessor.SURROGATE_HIGH
+                    UnicodeProcessor.SURROGATE_LOW <= ord(ch) <= UnicodeProcessor.SURROGATE_HIGH
                 )
             )
 
