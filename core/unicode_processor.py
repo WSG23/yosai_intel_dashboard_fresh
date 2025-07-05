@@ -155,6 +155,18 @@ def clean_unicode_text(text: str) -> str:
     return UnicodeProcessor.clean_surrogate_chars(text)
 
 
+def safe_decode_bytes(data: bytes, encoding: str = "utf-8") -> str:
+    """Safely decode bytes with Unicode handling."""
+
+    return UnicodeProcessor.safe_decode_bytes(data, encoding)
+
+
+def safe_encode_text(value: Any) -> str:
+    """Convert any value to a safe UTF-8 string."""
+
+    return UnicodeProcessor.safe_encode_text(value)
+
+
 def safe_decode(data: bytes, encoding: str = "utf-8") -> str:
     """Safely decode bytes with Unicode handling."""
 
@@ -249,6 +261,8 @@ __all__ = [
     "UnicodeProcessor",
     "ChunkedUnicodeProcessor",
     "clean_unicode_text",
+    "safe_decode_bytes",
+    "safe_encode_text",
     "safe_decode",
     "safe_encode",
     "sanitize_dataframe",
