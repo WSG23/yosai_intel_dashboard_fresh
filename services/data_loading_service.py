@@ -1,4 +1,8 @@
-"""Data loading helpers for uploaded files."""
+"""Data loading helpers for uploaded files.
+
+.. deprecated:: 0.10.0
+   Use :class:`services.data_processing.processor.Processor` instead.
+"""
 
 from pathlib import Path
 from typing import Any, Iterator
@@ -10,9 +14,21 @@ from utils.mapping_helpers import map_and_clean
 
 
 class DataLoadingService:
-    """Load and stream uploaded file data."""
+    """Load and stream uploaded file data.
+
+    This class is kept for backward compatibility and will be removed in a
+    future release.  Consumers should migrate to
+    :class:`services.data_processing.processor.Processor`.
+    """
 
     def __init__(self, validator: DataValidationService | None = None) -> None:
+        import warnings
+
+        warnings.warn(
+            "DataLoadingService is deprecated; use Processor instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.validator = validator or DataValidationService()
 
     def load_dataframe(self, source: Any) -> pd.DataFrame:

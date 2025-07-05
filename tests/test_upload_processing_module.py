@@ -2,16 +2,18 @@ import pandas as pd
 from services.upload_processing import UploadAnalyticsProcessor
 from services.file_processing_service import FileProcessingService
 from services.data_validation import DataValidationService
-from services.data_loading_service import DataLoadingService
-from services.data_processing.file_handler import FileHandler
+from services.data_processing.processor import Processor
+from services.input_validator import InputValidator
+
 
 
 def _make_processor():
     fps = FileProcessingService()
     vs = DataValidationService()
-    dls = DataLoadingService(vs)
-    fh = FileHandler()
-    return UploadAnalyticsProcessor(fps, vs, dls, fh)
+    dls = Processor(validator=vs)
+    iv = InputValidator()
+    return UploadAnalyticsProcessor(fps, vs, dls, iv)
+
 
 
 def test_direct_processing_helper(tmp_path):
