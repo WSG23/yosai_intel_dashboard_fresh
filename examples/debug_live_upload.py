@@ -72,9 +72,9 @@ def add_debug_hooks():
 
     file_validator.process_dataframe = debug_process_dataframe
 
-    # Hook 4: Patch FileProcessor._validate_data if it exists
+    # Hook 4: Patch FileHandler._validate_data if it exists
     try:
-        from services.file_processor import FileProcessor
+        from services.data_processing.file_handler import FileHandler as FileProcessor
 
         original_validate_data = FileProcessor._validate_data
 

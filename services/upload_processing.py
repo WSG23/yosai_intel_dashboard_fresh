@@ -253,14 +253,9 @@ class UploadAnalyticsProcessor:
         json_file = os.getenv("SAMPLE_JSON_PATH", sample_cfg.json_path)
 
         try:
-            from services import FileProcessor
+            from services.data_processing.file_handler import FileHandler
 
-            if FileProcessor is None:
-                raise RuntimeError("FileProcessor service not available")
-
-            processor = FileProcessor(
-                upload_folder="temp", allowed_extensions={"csv", "json", "xlsx"}
-            )
+            processor = FileHandler()
             all_data = []
             if os.path.exists(csv_file):
                 df_csv = pd.read_csv(csv_file)

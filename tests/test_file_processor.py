@@ -10,26 +10,11 @@ import json
 from pathlib import Path
 import tempfile
 
-# Import your file processor - adjust import path as needed
-try:
-    from robust_file_processor import (
-        RobustFileProcessor,
-        FileProcessingError,
-        process_file_simple
-    )
-except ImportError:
-    try:
-        from services.file_processor_service import FileProcessorService as RobustFileProcessor
-        
-        class FileProcessingError(Exception):
-            pass
-        
-        def process_file_simple(content, filename):
-            processor = RobustFileProcessor()
-            return processor.process_file(content, filename)
-            
-    except ImportError:
-        pytest.skip("File processor not available", allow_module_level=True)
+from services.data_processing.file_handler import (
+    FileHandler as RobustFileProcessor,
+    FileProcessingError,
+    process_file_simple,
+)
 
 
 class TestRobustFileProcessor:
