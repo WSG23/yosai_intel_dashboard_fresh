@@ -1,4 +1,7 @@
-from utils.file_validator import safe_decode_file, process_dataframe
+from services.data_processing.unified_file_validator import (
+    safe_decode_file,
+    process_dataframe,
+)
 
 
 def test_safe_decode_file_invalid_base64():

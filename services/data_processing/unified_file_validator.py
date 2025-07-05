@@ -4,42 +4,196 @@ from __future__ import annotations
 
 from pathlib import Path
 import os
-from typing import Any, Dict, Optional
+import base64
+import io
+import json
+import logging
+import re
+from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
-from utils.file_validator import (
-    validate_dataframe_content,
-    safe_decode_file,
-    process_dataframe,
+from utils.unicode_utils import (
+    UnicodeProcessor,
+    sanitize_dataframe,
+    sanitize_unicode_input,
 )
-from utils.unicode_utils import UnicodeProcessor, sanitize_dataframe
-from core.input_validation import InputValidator as StringValidator
+from core.security import InputValidator as StringValidator
 from services.input_validator import InputValidator, ValidationResult
-from security.auth_service import SecurityService, SAFE_FILENAME_RE
-from security.file_validator import SecureFileValidator
 from core.exceptions import ValidationError
 
+
+SAFE_FILENAME_RE = re.compile(r"^[A-Za-z0-9._\- ]{1,100}$")
+ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
+
+
+logger = logging.getLogger(__name__)
+
+
+def safe_decode_with_unicode_handling(data: bytes, enc: str) -> str:
+    try:
+        text = data.decode(enc, errors="surrogatepass")
+    except UnicodeDecodeError:
+        text = data.decode(enc, errors="replace")
+
+    text = UnicodeProcessor.clean_surrogate_chars(text)
+
+    from security.unicode_security_handler import UnicodeSecurityHandler
+
+    cleaned = UnicodeSecurityHandler.sanitize_unicode_input(text)
+    return cleaned.replace("\ufffd", "")
+
+
+def safe_decode_file(contents: str) -> Optional[bytes]:
+    try:
+        if "," not in contents:
+            return None
+        _, content_string = contents.split(",", 1)
+        decoded = base64.b64decode(content_string)
+        if not decoded:
+            return None
+        return decoded
+    except (base64.binascii.Error, ValueError):
+        return None
+    except Exception as exc:  # pragma: no cover
+        logger.exception("Unexpected error decoding file", exc_info=exc)
+        raise
+
+
+def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
+    try:
+        filename_lower = filename.lower()
+        if filename_lower.endswith(".csv"):
+            for encoding in ["utf-8", "latin-1", "cp1252"]:
+                try:
+                    text = safe_decode_with_unicode_handling(decoded, encoding)
+                    df = pd.read_csv(
+                        io.StringIO(text),
+                        on_bad_lines="skip",
+                        encoding="utf-8",
+                        low_memory=False,
+                        dtype=str,
+                        keep_default_na=False,
+                    )
+                    return df, None
+                except UnicodeDecodeError:
+                    continue
+            return None, "Could not decode CSV with any standard encoding"
+        elif filename_lower.endswith(".json"):
+            for encoding in ["utf-8", "latin-1", "cp1252"]:
+                try:
+                    text = safe_decode_with_unicode_handling(decoded, encoding)
+                    json_data = json.loads(text)
+                    if isinstance(json_data, list):
+                        cleaned = [
+                            {k: UnicodeProcessor.clean_surrogate_chars(v) for k, v in obj.items()} if isinstance(obj, dict) else obj
+                            for obj in json_data
+                        ]
+                        df = pd.DataFrame(cleaned)
+                    else:
+                        cleaned = (
+                            {k: UnicodeProcessor.clean_surrogate_chars(v) for k, v in json_data.items()} if isinstance(json_data, dict) else json_data
+                        )
+                        df = pd.DataFrame([cleaned])
+                    return df, None
+                except UnicodeDecodeError:
+                    continue
+            return None, "Could not decode JSON with any standard encoding"
+        elif filename_lower.endswith((".xlsx", ".xls")):
+            df = pd.read_excel(io.BytesIO(decoded))
+            return df, None
+        else:
+            return None, f"Unsupported file type: {filename}"
+    except (
+        UnicodeDecodeError,
+        ValueError,
+        pd.errors.ParserError,
+        json.JSONDecodeError,
+    ) as e:
+        return None, f"Error processing file: {str(e)}"
+    except Exception as exc:  # pragma: no cover
+        logger.exception("Unexpected error processing file", exc_info=exc)
+        raise
+
+
+def validate_dataframe_content(df: pd.DataFrame) -> Dict[str, Any]:
+    if df.empty:
+        return {"valid": False, "error": "DataFrame is empty", "issues": ["empty_dataframe"]}
+
+    issues = []
+    warnings = []
+
+    if len(df.columns) == 0:
+        return {"valid": False, "error": "DataFrame has no columns", "issues": ["no_columns"]}
+
+    if len(df.columns) != len(set(df.columns)):
+        issues.append("duplicate_columns")
+        warnings.append("DataFrame contains duplicate column names")
+
+    empty_columns = df.columns[df.isnull().all()].tolist()
+    if empty_columns:
+        issues.append("empty_columns")
+        warnings.append(f"Columns with no data: {empty_columns}")
+
+    total_cells = len(df) * len(df.columns)
+    null_cells = df.isnull().sum().sum()
+    empty_string_cells = (df == "").sum().sum()
+    null_ratio = null_cells / total_cells if total_cells > 0 else 0
+    empty_ratio = (null_cells + empty_string_cells) / total_cells if total_cells > 0 else 0
+
+    if empty_ratio > 0.5:
+        issues.append("high_empty_ratio")
+        warnings.append(f"High percentage of empty cells: {empty_ratio:.1%}")
+
+    suspicious_cols = [
+        col
+        for col in df.columns
+        if any(prefix in str(col).lower() for prefix in ["=", "+", "-", "@", "cmd", "system"])
+    ]
+    if suspicious_cols:
+        issues.append("suspicious_column_names")
+        warnings.append(f"Suspicious column names detected: {suspicious_cols}")
+
+    return {
+        "valid": len(issues) == 0 or all(issue in ["empty_columns", "high_empty_ratio"] for issue in issues),
+        "rows": len(df),
+        "columns": len(df.columns),
+        "null_ratio": null_ratio,
+        "empty_ratio": empty_ratio,
+        "issues": issues,
+        "warnings": warnings,
+        "column_names": list(df.columns),
+        "memory_usage": df.memory_usage(deep=True).sum(),
+    }
 
 class UnifiedFileValidator:
     """Combine all file validation responsibilities into a single class."""
 
-    ALLOWED_EXTENSIONS = SecureFileValidator.ALLOWED_EXTENSIONS
+    ALLOWED_EXTENSIONS = ALLOWED_EXTENSIONS
 
     def __init__(self, max_size_mb: Optional[int] = None) -> None:
         self.max_size_mb = max_size_mb or dynamic_config.security.max_upload_mb
         self._string_validator = StringValidator()
-        self._security_service = SecurityService(None)
-        self._security_service.enable_file_validation()
         self._basic_validator = InputValidator(self.max_size_mb)
+
+    def _sanitize_string(self, value: str) -> str:
+        cleaned = sanitize_unicode_input(str(value))
+        if re.search(r"(<script.*?>.*?</script>|<.*?on\w+\s*=|javascript:|data:text/html|[<>])", cleaned, re.IGNORECASE | re.DOTALL):
+            raise ValidationError("Potentially dangerous characters detected")
+        result = self._string_validator.validate_input(cleaned, "input")
+        if not result["valid"]:
+            raise ValidationError("; ".join(result["issues"]))
+        import bleach
+
+        return bleach.clean(result["sanitized"], strip=True)
 
     # ------------------------------------------------------------------
     # Filename helpers
     # ------------------------------------------------------------------
     def sanitize_filename(self, filename: str) -> str:
         """Validate and sanitize a filename."""
-        cleaned = self._string_validator.validate(filename)
+        cleaned = self._sanitize_string(filename)
         cleaned = UnicodeProcessor.safe_encode_text(cleaned)
 
         if os.path.basename(cleaned) != cleaned:
@@ -73,6 +227,19 @@ class UnifiedFileValidator:
         metrics["memory_usage_mb"] = size_mb
         return metrics
 
+    def validate_file_meta(self, filename: str, size: int) -> Dict[str, Any]:
+        """Validate filename and file size without inspecting contents."""
+        issues: list[str] = []
+        max_bytes = self.max_size_mb * 1024 * 1024
+        if size > max_bytes:
+            issues.append("File too large")
+        if not SAFE_FILENAME_RE.fullmatch(filename):
+            issues.append("Invalid filename")
+        ext = Path(filename).suffix.lower()
+        if ext not in self.ALLOWED_EXTENSIONS:
+            issues.append(f"Unsupported file type: {ext}")
+        return {"valid": len(issues) == 0, "issues": issues}
+
     # ------------------------------------------------------------------
     # File helpers
     # ------------------------------------------------------------------
@@ -84,7 +251,7 @@ class UnifiedFileValidator:
         if file_bytes is None:
             raise ValidationError("Invalid base64 contents")
 
-        sec_result = self._security_service.validate_file(sanitized_name, len(file_bytes))
+        sec_result = self.validate_file_meta(sanitized_name, len(file_bytes))
         if not sec_result["valid"]:
             raise ValidationError("; ".join(sec_result["issues"]))
 
@@ -111,4 +278,11 @@ class UnifiedFileValidator:
         return self.validate_file(contents, filename)
 
 
-__all__ = ["UnifiedFileValidator", "ValidationResult"]
+__all__ = [
+    "UnifiedFileValidator",
+    "ValidationResult",
+    "safe_decode_with_unicode_handling",
+    "safe_decode_file",
+    "process_dataframe",
+    "validate_dataframe_content",
+]
