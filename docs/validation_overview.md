@@ -20,9 +20,10 @@ validator.validate_input(user_name, "user_name")
 validator.validate_file_upload(filename, file_bytes)
 ```
 
-The `SecurityValidator` replaces the old `InputValidator`,
-`SecureFileValidator`, `DataFrameSecurityValidator`, `SQLInjectionPrevention`,
-`XSSPrevention`, `BusinessLogicValidator` and `SecretsValidator` classes.
+The `SecurityValidator` and `UnifiedFileValidator` replace the old
+`InputValidator`, `SecureFileValidator`, `DataFrameSecurityValidator`,
+`SQLInjectionPrevention`, `XSSPrevention`, `BusinessLogicValidator` and
+`SecretsValidator` classes.
 All of these wrappers now delegate to the unified validator and will be removed
 in a future release.
 
