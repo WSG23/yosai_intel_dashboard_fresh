@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .database_exceptions import UnicodeEncodingError
+from .unicode_sql_processor import UnicodeSQLProcessor
 
 
 class UnicodeQueryHandler:
@@ -12,9 +13,10 @@ class UnicodeQueryHandler:
     def _encode(value: Any) -> Any:
         if isinstance(value, str):
             try:
-                data = value.encode("utf-8", "surrogateescape")
-                return data.decode("utf-8", "replace")
-            except Exception as exc:
+                return UnicodeSQLProcessor.encode_query(value)
+            except UnicodeEncodingError:
+                raise
+            except Exception as exc:  # pragma: no cover - defensive
                 raise UnicodeEncodingError(str(exc)) from exc
         if isinstance(value, dict):
             return {k: UnicodeQueryHandler._encode(v) for k, v in value.items()}

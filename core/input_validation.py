@@ -9,6 +9,7 @@ import bleach
 
 from core.unicode_processor import sanitize_unicode_input
 from core.exceptions import ValidationError
+
 from core.security import InputValidator as _ComprehensiveValidator
 
 
