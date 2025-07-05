@@ -34,9 +34,5 @@ class SecurityError(YosaiBaseException):
     """Security-related errors"""
 
 
-class FileProcessingError(YosaiBaseException):
-    """File processing errors"""
-
-
 class ServiceUnavailableError(YosaiBaseException):
     """Service unavailable errors"""

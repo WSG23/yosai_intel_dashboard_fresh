@@ -73,15 +73,6 @@ class DatabaseError(YosaiError):
         super().__init__(message, ErrorCategory.DATABASE, ErrorSeverity.HIGH, details)
 
 
-class FileProcessingError(YosaiError):
-    """File processing errors"""
-
-    def __init__(self, message: str, details: Dict[str, Any] = None):
-        super().__init__(
-            message, ErrorCategory.FILE_PROCESSING, ErrorSeverity.MEDIUM, details
-        )
-
-
 class ConfigurationError(YosaiError):
     """Configuration errors"""
 

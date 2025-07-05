@@ -1,7 +1,13 @@
 """Data processing utilities."""
 
-from .file_handler import FileHandler, process_file_simple, FileProcessingError
-from .file_processor import FileProcessor, UnifiedFileValidator
+from .file_handler import FileHandler, process_file_simple
+from .core.exceptions import (
+    FileProcessingError,
+    FileValidationError,
+    FileFormatError,
+    FileSizeError,
+    FileSecurityError,
+)
 
 
 # Analytics helpers are intentionally loaded lazily in environments where the
@@ -51,4 +57,8 @@ __all__ = [
     "UnifiedFileValidator",
     "process_file_simple",
     "FileProcessingError",
+    "FileValidationError",
+    "FileFormatError",
+    "FileSizeError",
+    "FileSecurityError",
 ]

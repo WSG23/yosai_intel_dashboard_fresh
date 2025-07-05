@@ -5,14 +5,30 @@ from typing import Any, Optional
 
 import pandas as pd
 
-from services.input_validator import ValidationResult
-from services.data_processing.unified_file_validator import UnifiedFileValidator
-from core.error_handling import FileProcessingError
+from utils.file_validator import safe_decode_with_unicode_handling
+from utils.unicode_utils import (
+    sanitize_unicode_input,
+    sanitize_dataframe,
+    process_large_csv_content,
+)
+from services.data_processing.callback_controller import (
+    CallbackController,
+    CallbackEvent,
+)
+from config.dynamic_config import dynamic_config
 
 
-class FileProcessingError(Exception):
-    """Placeholder exception for processing errors."""
-    pass
+from typing import Any, Optional, Tuple
+
+import pandas as pd
+
+from security.file_validator import SecureFileValidator
+from services.input_validator import InputValidator, ValidationResult
+from services.data_processing.core.exceptions import (
+    FileProcessingError,
+    FileValidationError,
+)
+
 
 
 def process_file_simple(content: bytes, filename: str):
@@ -63,7 +79,12 @@ class FileHandler:
 
     def process_base64_contents(self, contents: str, filename: str) -> pd.DataFrame:
         """Decode ``contents`` and return a validated :class:`~pandas.DataFrame`."""
-        df = self.validator.validate_file(contents, filename)
+        sanitized = self.secure_validator.sanitize_filename(filename)
+        df = self.secure_validator.validate_file_contents(contents, sanitized)
+        result = self.basic_validator.validate_file_upload(df)
+        if not result.valid:
+            raise FileValidationError(result.message)
+
         return df
 
 
