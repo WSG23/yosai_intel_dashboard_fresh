@@ -1,6 +1,8 @@
 """Data processing utilities."""
 
 from .file_handler import FileHandler, process_file_simple
+from .file_processor import FileProcessor
+from .unified_file_validator import UnifiedFileValidator
 from .core.exceptions import (
     FileProcessingError,
     FileValidationError,
