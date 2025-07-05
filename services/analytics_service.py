@@ -9,7 +9,7 @@ limits.
 import logging
 import threading
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Protocol
 
 import pandas as pd
 
@@ -20,6 +20,26 @@ from services.data_loading_service import DataLoadingService
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.db_analytics_helper import DatabaseAnalyticsHelper
 from services.summary_reporting import SummaryReporter
+
+
+class ConfigProviderProtocol(Protocol):
+    """Provide configuration values to services."""
+
+    def get_database_config(self) -> Any:
+        """Return the database configuration."""
+        ...
+
+
+class AnalyticsProviderProtocol(Protocol):
+    """Basic analytics provider interface."""
+
+    def process_data(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Process ``df`` and return analytics metrics."""
+        ...
+
+    def get_metrics(self) -> Dict[str, Any]:
+        """Return current analytics metrics."""
+        ...
 
 
 def ensure_analytics_config():
@@ -40,10 +60,11 @@ ensure_analytics_config()
 logger = logging.getLogger(__name__)
 
 
-class AnalyticsService:
+class AnalyticsService(AnalyticsProviderProtocol):
     """Complete analytics service that integrates all data sources"""
 
-    def __init__(self):
+    def __init__(self, config_provider: ConfigProviderProtocol | None = None):
+        self._config_provider = config_provider
         self.database_manager: Optional[Any] = None
         self._initialize_database()
         self.validation_service = DataValidationService()
@@ -67,9 +88,12 @@ class AnalyticsService:
                 DatabaseManager,
                 DatabaseConfig as ManagerConfig,
             )
-            from config.config import get_database_config
+            if self._config_provider is not None:
+                cfg = self._config_provider.get_database_config()
+            else:
+                from config.config import get_database_config
 
-            cfg = get_database_config()
+                cfg = get_database_config()
             manager_cfg = ManagerConfig(
                 type=cfg.type,
                 host=cfg.host,
@@ -477,6 +501,18 @@ class AnalyticsService:
         """Get current analytics status"""
         return self.summary_reporter.get_analytics_status()
 
+    # ------------------------------------------------------------------
+    # AnalyticsProviderProtocol implementation
+    # ------------------------------------------------------------------
+    def process_data(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Process ``df`` and return a metrics dictionary."""
+        cleaned = self.clean_uploaded_dataframe(df)
+        return self.summarize_dataframe(cleaned)
+
+    def get_metrics(self) -> Dict[str, Any]:
+        """Return current analytics metrics."""
+        return self.get_analytics_status()
+
 
 # Global service instance
 _analytics_service: Optional[AnalyticsService] = None
@@ -485,6 +521,7 @@ _analytics_service_lock = threading.Lock()
 
 def get_analytics_service(
     service: Optional[AnalyticsService] = None,
+    config_provider: ConfigProviderProtocol | None = None,
 ) -> AnalyticsService:
     """Return a global analytics service instance.
 
@@ -499,13 +536,15 @@ def get_analytics_service(
     if _analytics_service is None:
         with _analytics_service_lock:
             if _analytics_service is None:
-                _analytics_service = AnalyticsService()
+                _analytics_service = AnalyticsService(config_provider)
     return _analytics_service
 
 
-def create_analytics_service() -> AnalyticsService:
+def create_analytics_service(
+    config_provider: ConfigProviderProtocol | None = None,
+) -> AnalyticsService:
     """Create new analytics service instance"""
-    return AnalyticsService()
+    return AnalyticsService(config_provider)
 
 
 __all__ = ["AnalyticsService", "get_analytics_service", "create_analytics_service"]
