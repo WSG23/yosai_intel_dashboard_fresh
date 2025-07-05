@@ -76,4 +76,13 @@ class AISuggestionService:
         return [suggested_values]
 
 
-__all__ = ["AISuggestionService"]
+# Shared instance for module level helpers
+_DEFAULT_AI_SERVICE = AISuggestionService()
+
+
+def analyze_device_name_with_ai(device_name: str) -> Dict[str, Any]:
+    """Convenience wrapper calling :class:`AISuggestionService`."""
+    return _DEFAULT_AI_SERVICE.analyze_device_name_with_ai(device_name)
+
+
+__all__ = ["AISuggestionService", "analyze_device_name_with_ai"]

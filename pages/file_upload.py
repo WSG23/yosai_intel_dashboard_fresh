@@ -37,25 +37,18 @@ from config.dynamic_config import dynamic_config
 
 from components.column_verification import save_verified_mappings
 from services.data_enhancer import get_ai_column_suggestions
-from components.plugin_adapter import ComponentPluginAdapter
 from services.upload import (
     UploadProcessingService,
     AISuggestionService,
     ModalService,
+    get_trigger_id,
+    save_ai_training_data,
 )
 from services.task_queue import create_task, get_status, clear_task
 
 
 logger = logging.getLogger(__name__)
 
-# Initialize a shared AI suggestion service for module-level helpers
-_ai_service = AISuggestionService()
-plugin_adapter = ComponentPluginAdapter()
-
-
-def analyze_device_name_with_ai(device_name: str) -> Dict[str, Any]:
-    """Helper exposing device analysis for tests and other modules."""
-    return _ai_service.analyze_device_name_with_ai(device_name)
 
 
 def layout():
@@ -1098,48 +1091,6 @@ class Callbacks:
             )
 
 
-def get_trigger_id() -> str:
-    """Return the triggered callback identifier."""
-    ctx = callback_context
-    return ctx.triggered[0]["prop_id"] if ctx.triggered else ""
-
-
-def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Dict):
-    """Save confirmed mappings for AI training"""
-    try:
-        logger.info(f"🤖 Saving AI training data for {filename}")
-
-        # Prepare training data
-        training_data = {
-            "filename": filename,
-            "timestamp": datetime.now().isoformat(),
-            "mappings": mappings,
-            "reverse_mappings": {v: k for k, v in mappings.items()},
-            "column_count": len(file_info.get("columns", [])),
-            "ai_suggestions": file_info.get("ai_suggestions", {}),
-            "user_verified": True,
-        }
-
-        if plugin_adapter.save_verified_mappings(filename, mappings, {}):
-            logger.info("✅ AI training data saved via plugin")
-        else:
-            logger.info("⚠️ AI training save failed")
-
-        import os
-
-        os.makedirs("data/training", exist_ok=True)
-        with open(
-            f"data/training/mappings_{datetime.now().strftime('%Y%m%d')}.jsonl",
-            "a",
-            encoding="utf-8",
-            errors="replace",
-        ) as f:
-            f.write(json.dumps(training_data) + "\n")
-
-        logger.info(f"✅ Training data saved locally")
-
-    except Exception as e:
-        logger.info(f"❌ Error saving training data: {e}")
 
 
 # ------------------------------------------------------------
