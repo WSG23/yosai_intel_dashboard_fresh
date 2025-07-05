@@ -232,7 +232,10 @@ def _create_full_app() -> dash.Dash:
                 app._upload_callbacks = UploadCallbacks()
                 app._deep_analytics_callbacks = DeepAnalyticsCallbacks()
 
-                if config_manager.get_app_config().environment == "development" and hasattr(coordinator, "print_callback_summary"):
+                if (
+                    config_manager.get_app_config().environment == "development"
+                    and hasattr(coordinator, "print_callback_summary")
+                ):
                     coordinator.print_callback_summary()
             except Exception as e:
                 logger.warning(f"Failed to register module callbacks: {e}")
@@ -272,6 +275,30 @@ def _create_full_app() -> dash.Dash:
         def health_secrets():
             """Return validation summary for required secrets"""
             return validate_secrets(), 200
+
+        @app.server.before_request
+        def filter_noisy_requests():
+            """Filter out SSL handshake attempts and bot noise"""
+            from flask import request, abort
+
+            # Block requests with suspicious headers
+            user_agent = request.headers.get("User-Agent", "")
+            if not user_agent or len(user_agent) < 5:
+                abort(400)
+
+            # Block oversized requests that are likely noise
+            content_length = request.headers.get("Content-Length")
+            if content_length:
+                try:
+                    if int(content_length) > 50000:  # 50KB limit
+                        abort(400)
+                except (ValueError, TypeError):
+                    pass
+
+            # Block binary content that shouldn't be here
+            content_type = request.headers.get("Content-Type", "")
+            if request.method == "POST" and "application/x-" in content_type:
+                abort(400)
 
         logger.info("✅ Complete Dash application created successfully")
         return app
