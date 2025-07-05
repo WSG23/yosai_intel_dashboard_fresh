@@ -18,6 +18,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Validation Overview](docs/validation_overview.md)
 - [Model Cards](docs/model_cards.md)
 - [Data Versioning](docs/data_versioning.md)
+- [Data Processing](docs/data_processing.md)
 
 The dashboard is extensible through a lightweight plugin system. Plugins live in the `plugins/` directory and are loaded by a `PluginManager`. See [docs/plugins.md](docs/plugins.md) for discovery, configuration details and a simple **Hello World** example. The [plugin lifecycle diagram](docs/plugin_lifecycle.md) illustrates how plugins are discovered, dependencies resolved and health checks performed.
 
@@ -195,7 +196,9 @@ compression is automatically handled at runtime by `flask-compress`.
 
 Install dependencies before running the tests:
 ```bash
-./scripts/setup.sh  # or `pip install -r requirements.txt`
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+# or use ./scripts/setup.sh which installs requirements.txt
 ```
 
 Run the complete test suite:
@@ -478,18 +481,23 @@ mappings have been saved, otherwise the mapping step will fail.
 
 ## 🤝 Contributing
 
-1. Ensure all tests pass: `pytest`
-2. Format code with `black` and run `flake8`
-3. Follow type safety guidelines and maintain the modular architecture
-4. Add tests for new functionality and update documentation when applicable
-5. Optional debug helpers live in `examples/`. Run the upload helper with
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
+   ```
+2. Ensure all tests pass: `pytest`
+3. Format code with `black` and run `flake8`
+4. Follow type safety guidelines and maintain the modular architecture
+5. Add tests for new functionality and update documentation when applicable
+6. Optional debug helpers live in `examples/`. Run the upload helper with
    `python examples/debug_live_upload.py` to validate environment setup
-6. The example CSRF scripts in `examples/` read `SECRET_KEY` from the
+7. The example CSRF scripts in `examples/` read `SECRET_KEY` from the
    environment using the `SecretManager`. Set this variable in your shell or
    `.env` file before running them.
-7. A legacy `lazystring` fix plugin sample is kept in
+8. A legacy `lazystring` fix plugin sample is kept in
    `examples/legacy_lazystring_fix_plugin.py` for reference only.
-8. The full pipeline diagnostic helper now lives at
+9. The full pipeline diagnostic helper now lives at
    `examples/diagnostic_script.py` and can be run with
    `python examples/diagnostic_script.py`.
 

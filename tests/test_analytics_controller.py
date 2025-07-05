@@ -3,7 +3,10 @@ import pandas as pd
 from analytics.data_repository import AnalyticsDataRepository
 from analytics.business_service import AnalyticsBusinessService
 from analytics.ui_controller import AnalyticsUIController
-from callback_controller import CallbackController, CallbackEvent
+from services.data_processing.callback_controller import (
+    CallbackController,
+    CallbackEvent,
+)
 
 
 def _sample_df() -> pd.DataFrame:

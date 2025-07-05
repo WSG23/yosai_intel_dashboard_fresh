@@ -12,7 +12,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import DataConversionWarning
 import logging
 import warnings
-from security_callback_controller import (
+from services.data_processing.callback_controller import (
     SecurityEvent,
     emit_security_event,
 )

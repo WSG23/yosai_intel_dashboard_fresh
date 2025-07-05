@@ -1,0 +1,7 @@
+black
+flake8
+mypy
+bandit
+pytest
+pytest-cov
+safety==2.3.5

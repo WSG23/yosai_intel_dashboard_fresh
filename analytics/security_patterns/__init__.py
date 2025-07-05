@@ -5,12 +5,11 @@ from .analyzer import (
     create_security_analyzer,
     EnhancedSecurityAnalyzer,
 )
-from security_callback_controller import (
-    SecurityCallbackController,
+from services.data_processing.callback_controller import (
+    CallbackController as SecurityCallbackController,
     SecurityEvent,
     security_callback_controller,
     emit_security_event,
-
 )
 from .data_prep import prepare_security_data
 from .statistical_detection import (

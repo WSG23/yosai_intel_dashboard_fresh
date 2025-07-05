@@ -50,7 +50,7 @@ class AnalyticsDataAccessor:
     def _get_uploaded_data(self) -> Dict[str, pd.DataFrame]:
         """Retrieve uploaded data from the ``file_upload`` module."""
         try:
-            from pages.file_upload import get_uploaded_data
+            from services.upload_data_service import get_uploaded_data
 
             uploaded_data = get_uploaded_data()
             if uploaded_data:

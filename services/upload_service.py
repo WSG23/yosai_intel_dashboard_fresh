@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any, Dict
 
 from config.dynamic_config import dynamic_config
-from security.file_validator import SecureFileValidator
+from services.data_processing.file_handler import FileHandler
 from security.xss_validator import XSSPrevention
 from services.data_validation import DataValidationService
 from utils.mapping_helpers import map_and_clean
@@ -17,13 +17,13 @@ import dash_bootstrap_components as dbc
 from dash import html
 
 logger = logging.getLogger(__name__)
-_validator = SecureFileValidator()
+_handler = FileHandler()
 
 
 def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
     """Process uploaded file content with enhanced size handling."""
     try:
-        filename = _validator.sanitize_filename(filename)
+        filename = _handler.sanitize_filename(filename)
 
         content_type, content_string = contents.split(",", 1)
         decoded = base64.b64decode(content_string)

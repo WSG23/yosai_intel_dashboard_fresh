@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, Dict, Set, DefaultDict
 
-from .protocols import PluginProtocol
+from services.data_processing.core.protocols import PluginProtocol
 
 
 class PluginDependencyResolver:

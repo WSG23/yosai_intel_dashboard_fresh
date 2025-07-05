@@ -53,7 +53,7 @@ class DataLoader:
 
     def _get_uploaded_data(self) -> Dict[str, pd.DataFrame]:
         try:
-            from pages.file_upload import get_uploaded_data
+            from services.upload_data_service import get_uploaded_data
 
             data = get_uploaded_data()
             if not data:

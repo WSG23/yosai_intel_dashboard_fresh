@@ -26,17 +26,17 @@ class UploadAnalyticsProcessor:
         file_processing_service: Any,
         validation_service: Any,
         data_loading_service: Any,
-        input_validator: Any,
+        file_handler: Any,
     ) -> None:
         self.file_processing_service = file_processing_service
         self.validation_service = validation_service
         self.data_loading_service = data_loading_service
-        self.input_validator = input_validator
+        self.file_handler = file_handler
 
     def get_analytics_from_uploaded_data(self) -> Dict[str, Any]:
         """Generate analytics from uploaded files."""
         try:
-            from pages.file_upload import get_uploaded_filenames
+            from services.upload_data_service import get_uploaded_filenames
 
             uploaded_files = get_uploaded_filenames()
             if not uploaded_files:
@@ -45,7 +45,7 @@ class UploadAnalyticsProcessor:
             valid_files: List[str] = []
             processing_info: Dict[str, Any] = {}
             for path in uploaded_files:
-                result = self.input_validator.validate_file_upload(path)
+                result = self.file_handler.validate_file_upload(path)
                 if result.valid:
                     valid_files.append(path)
                 else:
@@ -118,7 +118,7 @@ class UploadAnalyticsProcessor:
             max_ts: Optional[pd.Timestamp] = None
 
             for filename, source in uploaded_data.items():
-                validation = self.input_validator.validate_file_upload(source)
+                validation = self.file_handler.validate_file_upload(source)
                 if not validation.valid:
                     processing_info[filename] = {
                         "rows": 0,
@@ -151,7 +151,7 @@ class UploadAnalyticsProcessor:
     def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
         """Load uploaded data from file_upload page."""
         try:
-            from pages.file_upload import get_uploaded_data
+            from services.upload_data_service import get_uploaded_data
 
             return get_uploaded_data() or {}
         except Exception as exc:  # pragma: no cover - best effort

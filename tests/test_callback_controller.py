@@ -11,13 +11,13 @@ from datetime import datetime
 
 # Import your callback system - adjust import path as needed
 try:
-    from callback_controller import (
+    from services.data_processing.callback_controller import (
         CallbackController,
         CallbackEvent,
         CallbackContext,
         callback_handler,
         TemporaryCallback,
-        fire_event
+        fire_event,
     )
 except ImportError:
     # Fallback for existing system

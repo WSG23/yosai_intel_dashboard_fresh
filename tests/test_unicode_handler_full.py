@@ -11,7 +11,7 @@ from unicode_handler import (
     safe_encode,
     sanitize_dataframe,
 )
-from callback_controller import (
+from services.data_processing.callback_controller import (
     CallbackController,
     CallbackEvent,
     fire_event,
