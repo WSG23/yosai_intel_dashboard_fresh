@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
-"""
-Fixed Main Application - No import issues
-"""
-import logging
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    encoding="utf-8",
-    errors="replace",
-)
-import os
+"""Fixed Main Application - No import issues"""
 import sys
+import subprocess
+
+def check_and_install_critical_deps():
+    critical = ['psutil', 'chardet', 'pandas', 'dash', 'flask']
+    missing = []
+    for pkg in critical:
+        try:
+            __import__(pkg)
+        except ImportError:
+            missing.append(pkg)
+    if missing:
+        print(f"Installing missing: {missing}")
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + missing)
+
+check_and_install_critical_deps()
+
+import logging
+import os
 from flask import request
-from utils.dependency_checker import verify_requirements
 
 try:
     from dotenv import load_dotenv
@@ -63,6 +69,7 @@ def check_learning_status():
 
 
 def verify_dependencies() -> None:
+    from utils.dependency_checker import verify_requirements
     verify_requirements("requirements.txt")
 
 
