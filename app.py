@@ -216,7 +216,7 @@ def main():
         try:
             if ssl_context:
                 logger.info("🔒 Starting with HTTPS")
-                app.run_server(
+                app.run(
                     host=app_config.host,
                     port=app_config.port,
                     debug=app_config.debug,
@@ -224,7 +224,7 @@ def main():
                 )
             else:
                 logger.info("🌐 Starting with HTTP")
-                app.run_server(
+                app.run(
                     host=app_config.host,
                     port=app_config.port,
                     debug=app_config.debug,
