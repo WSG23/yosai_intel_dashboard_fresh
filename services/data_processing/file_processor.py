@@ -13,6 +13,8 @@ from services.input_validator import InputValidator, ValidationResult
 from security.file_validator import SecureFileValidator
 from security.dataframe_validator import DataFrameSecurityValidator
 from core.exceptions import ValidationError
+from .file_handler import process_file_simple
+from .core.exceptions import FileProcessingError
 
 logger = logging.getLogger(__name__)
 
@@ -128,4 +130,4 @@ class FileProcessor:
         return {"status": "ok"}
 
 
-__all__ = ["FileProcessor", "UnifiedFileValidator"]
+__all__ = ["FileProcessor", "UnifiedFileValidator", "process_file_simple", "FileProcessingError"]
