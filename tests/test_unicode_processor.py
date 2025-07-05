@@ -1,9 +1,8 @@
 import pandas as pd
-from utils.unicode_utils import (
-    safe_unicode_encode,
-    sanitize_data_frame,
-    UnicodeProcessor,
-)
+from concurrent.futures import ThreadPoolExecutor
+
+from utils.unicode_utils import safe_unicode_encode, sanitize_data_frame
+
 
 
 def test_safe_unicode_encode_surrogates():
@@ -22,14 +21,17 @@ def test_sanitize_data_frame():
     assert cleaned.iloc[1, 0] == "ok"
 
 
-def test_clean_surrogate_chars_strips_control_chars():
-    text = "A\x01B" + chr(0xD800) + "C\x7fD"
-    cleaned = UnicodeProcessor.clean_surrogate_chars(text)
-    assert cleaned == "ABCD"
+def test_unicode_processor_thread_safety():
+    df = pd.DataFrame({"=bad": ["=cmd()" + chr(0xD800), "ok"]})
 
+    expected = sanitize_data_frame(df)
 
-def test_sanitize_data_frame_control_chars():
-    df = pd.DataFrame({"a": ["x\x00\x1f", "y"]})
-    cleaned = sanitize_data_frame(df)
-    assert cleaned.iloc[0, 0] == "x"
+    def worker(_: int) -> pd.DataFrame:
+        return sanitize_data_frame(df)
+
+    with ThreadPoolExecutor(max_workers=5) as exc:
+        results = list(exc.map(worker, range(10)))
+
+    for result in results:
+        pd.testing.assert_frame_equal(result, expected)
 

@@ -11,9 +11,11 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-# Regular expression matching ASCII control characters to be stripped.
-
-_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+# Precompiled regular expressions used throughout the module
+_SURROGATE_RE = re.compile(r"[\uD800-\uDFFF]")
+# Leading characters that may trigger dangerous behaviour when interpreted by
+# spreadsheet applications (e.g. Excel formula injection)
+_DANGEROUS_PREFIX_RE = re.compile(r"^[=+\-@]+")
 
 
 class UnicodeProcessor:
@@ -31,8 +33,8 @@ class UnicodeProcessor:
             text = str(text) if text is not None else ""
 
         try:
-            cleaned = re.sub(r"[\uD800-\uDFFF]", replacement, text)
-            cleaned = _CONTROL_RE.sub("", cleaned)
+            cleaned = _SURROGATE_RE.sub(replacement, text)
+
             cleaned = unicodedata.normalize("NFKC", cleaned)
             cleaned = _CONTROL_RE.sub("", cleaned)
             return cleaned
@@ -41,7 +43,11 @@ class UnicodeProcessor:
             return "".join(
                 ch
                 for ch in text
-                if not (UnicodeProcessor.SURROGATE_LOW <= ord(ch) <= UnicodeProcessor.SURROGATE_HIGH)
+                if not (
+                    UnicodeProcessor.SURROGATE_LOW
+                    <= ord(ch)
+                    <= UnicodeProcessor.SURROGATE_HIGH
+                )
             )
 
     @staticmethod
@@ -84,23 +90,20 @@ class UnicodeProcessor:
             new_columns = []
             for col in df_clean.columns:
                 safe_col = UnicodeProcessor.safe_encode_text(col)
-                safe_col = re.sub(r"^[=+\-@]+", "", safe_col)
-                safe_col = safe_col or f"col_{len(new_columns)}"
+                safe_col = _DANGEROUS_PREFIX_RE.sub("", safe_col)
+                new_columns.append(safe_col or f"col_{len(new_columns)}")
 
-                base_name = safe_col
-                counter = 1
-                while safe_col in new_columns:
-                    safe_col = f"{base_name}_{counter}"
-                    counter += 1
-
-                new_columns.append(safe_col)
 
             df_clean.columns = new_columns
 
             for col in df_clean.select_dtypes(include=["object"]).columns:
-                df_clean[col] = df_clean[col].apply(lambda x: UnicodeProcessor.safe_encode_text(x))
                 df_clean[col] = df_clean[col].apply(
-                    lambda x: re.sub(r"^[=+\-@]+", "", x) if isinstance(x, str) else x
+                    lambda x: UnicodeProcessor.safe_encode_text(x)
+                )
+                df_clean[col] = df_clean[col].apply(
+                    lambda x: _DANGEROUS_PREFIX_RE.sub("", x)
+                    if isinstance(x, str)
+                    else x
                 )
 
             return df_clean
@@ -177,7 +180,9 @@ def sanitize_data_frame(df: pd.DataFrame) -> pd.DataFrame:
 def handle_surrogate_characters(text: str) -> str:
     """Return text with surrogate characters replaced by ``REPLACEMENT_CHAR``."""
 
-    return UnicodeProcessor.clean_surrogate_chars(text, UnicodeProcessor.REPLACEMENT_CHAR)
+    return UnicodeProcessor.clean_surrogate_chars(
+        text, UnicodeProcessor.REPLACEMENT_CHAR
+    )
 
 
 def safe_unicode_encode(value: Any) -> str:
@@ -192,8 +197,12 @@ def clean_unicode_surrogates(text: Any) -> str:
     return UnicodeProcessor.clean_surrogate_chars(str(text))
 
 
-def sanitize_unicode_input(text: Union[str, Any], replacement: str = UnicodeProcessor.REPLACEMENT_CHAR) -> str:
-    """Sanitize text input to handle Unicode and control characters."""
+def sanitize_unicode_input(
+    text: Union[str, Any],
+    replacement: str = UnicodeProcessor.REPLACEMENT_CHAR,
+) -> str:
+    """Sanitize text input to handle Unicode surrogate characters."""
+
 
     if not isinstance(text, str):
         try:
@@ -212,7 +221,10 @@ def sanitize_unicode_input(text: Union[str, Any], replacement: str = UnicodeProc
 
 
 def process_large_csv_content(
-    content: bytes, encoding: str = "utf-8", *, chunk_size: int = ChunkedUnicodeProcessor.DEFAULT_CHUNK_SIZE
+    content: bytes,
+    encoding: str = "utf-8",
+    *,
+    chunk_size: int = ChunkedUnicodeProcessor.DEFAULT_CHUNK_SIZE,
 ) -> str:
     """Decode potentially large CSV content in chunks and sanitize."""
 
@@ -246,4 +258,3 @@ __all__ = [
     "process_large_csv_content",
     "safe_format_number",
 ]
-
