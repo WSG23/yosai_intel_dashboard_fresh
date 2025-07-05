@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from services.data_processing.file_handler import FileHandler
+
 from services.data_processing.unified_file_validator import UnifiedFileValidator
 
 @pytest.mark.parametrize("sep", [";", "\t"])

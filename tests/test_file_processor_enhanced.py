@@ -1,7 +1,6 @@
 import pandas as pd
 import base64
 
-from services.data_processing.file_handler import FileHandler
 from services.data_processing.unified_file_validator import UnifiedFileValidator
 
 from services.upload_service import process_uploaded_file

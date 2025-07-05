@@ -7,17 +7,17 @@ The `services/data_processing/` directory contains the building blocks for uploa
 ```
 services/
   data_processing/
-      file_handler.py       # Validate and parse uploads
+      file_processor.py     # Validate and parse uploads
+      processor.py          # Coordinate validation and enhancement
       data_enhancer.py      # Enrich DataFrame columns
-      data_processor.py     # Coordinate file handling and enhancement
       analytics_engine.py   # Produce charts and metrics
 ```
 
 ## Core Classes
 
-- **`FileHandler`** – Reads CSV/JSON/Excel files and performs validation.
+- **`UnifiedFileValidator`** – Reads CSV/JSON/Excel files and performs validation.
 - **`DataEnhancer`** – Applies normalisation and adds computed columns.
-- **`DataProcessor`** – High level wrapper that uses `FileHandler` and `DataEnhancer` to produce a clean dataframe.
+- **`Processor`** – High level wrapper that uses `UnifiedFileValidator` and `DataEnhancer` to produce a clean dataframe.
 - **`AnalyticsEngine`** – Generates statistics from the processed dataframe.
 - **``core.callback_controller.CallbackController``** – Emits events throughout the pipeline so plugins can react.
 
@@ -25,9 +25,9 @@ services/
 
 ```mermaid
 classDiagram
-    FileHandler <|-- DataProcessor
-    DataEnhancer <|-- DataProcessor
-    DataProcessor --> AnalyticsEngine
+    UnifiedFileValidator <|-- Processor
+    DataEnhancer <|-- Processor
+    Processor --> AnalyticsEngine
     AnalyticsEngine --> CallbackController
 ```
 
