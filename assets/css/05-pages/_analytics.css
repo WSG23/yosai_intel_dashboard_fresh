@@ -5,8 +5,6 @@
   display: none;
 }
 
-/* Page transition effect */
+/* Page transition handled via utility classes */
 .main-content {
-  animation: fade-slide-in 0.4s ease-out;
-  padding-top: 4rem; /* offset for fixed navbar */
 }

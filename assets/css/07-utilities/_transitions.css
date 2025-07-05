@@ -1,0 +1,27 @@
+/* =================================================================== */
+/* 07-utilities/_transitions.css - Opacity/Transform Transition Helpers */
+/* =================================================================== */
+
+.transition-fade-move {
+  transition-property: opacity, transform;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-out);
+  will-change: opacity, transform;
+}
+
+/* Starting state - keeps element in flow while hidden */
+.transition-start {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+/* Ending state shown after content loads */
+.transition-end {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Utility to promote its own layer and avoid layout shifts */
+.transition-fix {
+  transform: translateZ(0);
+}

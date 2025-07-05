@@ -567,7 +567,10 @@ def _create_main_layout() -> html.Div:
             dcc.Loading(
                 id="page-loading",
                 type="circle",
-                children=html.Main(id="page-content", className="main-content p-4"),
+                children=html.Main(
+                    id="page-content",
+                    className="main-content p-4 transition-fade-move transition-start",
+                ),
             ),
             # Global data stores
             dcc.Store(id="global-store", data={}),
@@ -609,23 +612,25 @@ def _register_router_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
 
     @manager.register_callback(
         Output("page-content", "children"),
+        Output("page-content", "className"),
         Input("url", "pathname"),
         callback_id="display_page",
         component_name="app_factory",
     )
     def display_page(pathname: str):
+        end_class = "main-content p-4 transition-fade-move transition-end"
         if pathname == "/analytics":
-            return _get_analytics_page()
+            return _get_analytics_page(), end_class
         elif pathname == "/graphs":
-            return _get_graphs_page()
+            return _get_graphs_page(), end_class
         elif pathname == "/export":
-            return _get_export_page()
+            return _get_export_page(), end_class
         elif pathname == "/settings":
-            return _get_settings_page()
+            return _get_settings_page(), end_class
         elif pathname in {"/upload", "/file-upload"}:
-            return _get_upload_page()
+            return _get_upload_page(), end_class
         elif pathname in {"/", "/dashboard"}:
-            return _get_home_page()
+            return _get_home_page(), end_class
         return html.Div(
             [
                 html.H1("Page Not Found", className="text-center mt-5"),
@@ -637,7 +642,7 @@ def _register_router_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
                     "Go Home", href="/", color="primary", className="d-block mx-auto"
                 ),
             ]
-        )
+        ), end_class
 
 
 def _get_home_page() -> Any:
