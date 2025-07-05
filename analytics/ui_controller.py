@@ -4,10 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from core.callback_controller import (
-    CallbackController,
-    CallbackEvent,
-)
+from core.callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
 
 from .business_service import AnalyticsBusinessService
 
@@ -18,18 +16,18 @@ class AnalyticsUIController:
     def __init__(
         self,
         service: AnalyticsBusinessService,
-        callback_controller: Optional[CallbackController] = None,
+        callback_manager: Optional[CallbackManager] = None,
     ) -> None:
         self.service = service
-        self.callback_controller = callback_controller or CallbackController()
+        self.callback_manager = callback_manager or CallbackManager()
 
     # ------------------------------------------------------------------
     def handle_analysis_request(self, ui_data: Any) -> Dict[str, Any]:
         """Process a UI request for analytics and return formatted results."""
-        self.callback_controller.fire_event(CallbackEvent.ANALYSIS_START, "ui", {})
+        self.callback_manager.trigger(CallbackEvent.ANALYSIS_START, "ui", {})
         results = self.service.run_analysis(ui_data)
         formatted = self.format_results_for_ui(results)
-        self.callback_controller.fire_event(
+        self.callback_manager.trigger(
             CallbackEvent.ANALYSIS_COMPLETE, "ui", formatted
         )
         return formatted

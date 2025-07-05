@@ -19,7 +19,7 @@ import logging
 from dataclasses import dataclass
 from collections import defaultdict
 import warnings
-from core.callback_controller import CallbackController as SecurityCallbackController
+from core.callback_manager import CallbackManager as SecurityCallbackController
 from security_callback_controller import (
     SecurityEvent,
     security_callback_controller,
@@ -27,7 +27,6 @@ from security_callback_controller import (
 
 )
 
-security_callback_controller = get_callback_controller()
 
 from ..security_score_calculator import SecurityScoreCalculator
 from ..security_metrics import SecurityMetrics
@@ -128,7 +127,7 @@ class SecurityPatternsAnalyzer:
             # Fire callbacks for detected critical threats
             for threat in threat_indicators:
                 if threat.severity == "critical":
-                    self.callback_controller.fire_event(
+                    self.callback_controller.trigger(
                         SecurityEvent.THREAT_DETECTED,
                         {
                             "threat_type": threat.threat_type,
@@ -139,7 +138,7 @@ class SecurityPatternsAnalyzer:
                     self._emit_anomaly_detected(threat)
 
             # Notify completion of analysis
-            self.callback_controller.fire_event(
+            self.callback_controller.trigger(
                 SecurityEvent.ANALYSIS_COMPLETE,
                 {"score": security_score, "risk_level": risk_level},
             )
@@ -516,7 +515,8 @@ def setup_isolated_security_testing(
     """Return a cleared controller and optional test handler."""
 
     controller = SecurityCallbackController()
-    controller.clear_all_callbacks()
+    controller._callbacks.clear()
+    controller.history = []
     handler: Optional[Callable[[Dict[str, Any]], None]] = None
 
     if register_handler:

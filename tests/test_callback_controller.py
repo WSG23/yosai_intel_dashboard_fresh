@@ -6,37 +6,48 @@ Save as: tests/test_callback_controller.py
 import pytest
 import threading
 import time
-from unittest.mock import MagicMock, patch
 from datetime import datetime
 
-# Import your callback system - adjust import path as needed
-try:
-    from core.callback_controller import (
-        CallbackController,
-        CallbackEvent,
-        CallbackContext,
-        callback_handler,
-        TemporaryCallback,
-        fire_event,
-    )
-except ImportError:
-    # Fallback for existing system
-    from analytics.analytics_controller import CallbackManager
-    
-    # Create minimal compatibility layer
-    class CallbackEvent:
-        FILE_PROCESSING_START = "file_processing_start"
-        FILE_PROCESSING_COMPLETE = "file_processing_complete"
-        ANALYSIS_START = "analysis_start"
-    
-    class CallbackContext:
-        def __init__(self, event_type, source_id, data=None):
-            self.event_type = event_type
-            self.source_id = source_id
-            self.data = data or {}
-    
-    # Use existing callback manager
-    CallbackController = CallbackManager
+from core.callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
+
+
+class CallbackContext:
+    def __init__(self, event_type, source_id, data=None):
+        self.event_type = event_type
+        self.source_id = source_id
+        self.data = data or {}
+
+
+class CallbackController(CallbackManager):
+    def fire_event(self, event: CallbackEvent, source_id: str, data=None):
+        ctx = CallbackContext(event, source_id, data)
+        self.trigger(event, ctx)
+
+
+def callback_handler(event: CallbackEvent):
+    def decorator(func):
+        _GLOBAL.register_callback(event, func)
+        return func
+    return decorator
+
+
+class TemporaryCallback:
+    def __init__(self, event: CallbackEvent, cb, controller: CallbackController):
+        self.event = event
+        self.cb = cb
+        self.controller = controller
+
+    def __enter__(self):
+        self.controller.register_callback(self.event, self.cb)
+        return self.cb
+
+    def __exit__(self, exc_type, exc, tb):
+        self.controller.unregister_callback(self.event, self.cb)
+
+
+_GLOBAL = CallbackController()
+fire_event = _GLOBAL.fire_event
 
 
 
@@ -46,11 +57,7 @@ class TestCallbackController:
     def setup_method(self):
         """Setup for each test"""
         self.controller = CallbackController()
-        # Clear any existing callbacks
-        if hasattr(self.controller, 'clear_all_callbacks'):
-            self.controller.clear_all_callbacks()
-        elif hasattr(self.controller, '_callbacks'):
-            self.controller._callbacks.clear()
+        self.controller._callbacks.clear()
     
     def test_callback_registration(self):
         """Test basic callback registration"""
@@ -59,24 +66,13 @@ class TestCallbackController:
         def test_callback(context):
             callback_executed.append(context)
         
-        # Register callback
-        if hasattr(self.controller, 'register_callback'):
-            self.controller.register_callback(CallbackEvent.FILE_PROCESSING_START, test_callback)
-        else:
-            # Fallback for existing system
-            self.controller.add_callback('file_processing_start', test_callback)
+        self.controller.register_callback(CallbackEvent.FILE_PROCESSING_START, test_callback)
         
-        # Fire event
-        if hasattr(self.controller, 'fire_event'):
-            self.controller.fire_event(
-                CallbackEvent.FILE_PROCESSING_START,
-                "test_source",
-                {"filename": "test.csv"}
-            )
-        else:
-            # Fallback
-            context = CallbackContext("file_processing_start", "test_source", {"filename": "test.csv"})
-            test_callback(context)
+        self.controller.fire_event(
+            CallbackEvent.FILE_PROCESSING_START,
+            "test_source",
+            {"filename": "test.csv"}
+        )
         
         assert len(callback_executed) == 1
     
@@ -90,17 +86,10 @@ class TestCallbackController:
         def callback2(context):
             results.append("callback2")
         
-        # Register both callbacks
-        event = CallbackEvent.ANALYSIS_START if hasattr(CallbackEvent, 'ANALYSIS_START') else 'analysis_start'
-        
-        if hasattr(self.controller, 'register_callback'):
-            self.controller.register_callback(event, callback1)
-            self.controller.register_callback(event, callback2)
-            self.controller.fire_event(event, "test", {})
-        else:
-            # Manual execution for compatibility
-            callback1(CallbackContext(event, "test"))
-            callback2(CallbackContext(event, "test"))
+        event = CallbackEvent.ANALYSIS_START
+        self.controller.register_callback(event, callback1)
+        self.controller.register_callback(event, callback2)
+        self.controller.fire_event(event, "test", {})
         
         assert "callback1" in results
         assert "callback2" in results
@@ -115,27 +104,12 @@ class TestCallbackController:
         def working_callback(context):
             working_callback_executed.append("worked")
         
-        # This test may need to be adapted based on your error handling
-        try:
-            if hasattr(self.controller, 'register_callback'):
-                event = CallbackEvent.FILE_PROCESSING_START
-                self.controller.register_callback(event, failing_callback)
-                self.controller.register_callback(event, working_callback)
-                self.controller.fire_event(event, "test", {})
-            else:
-                # Manual test
-                try:
-                    failing_callback(CallbackContext("test", "test"))
-                except ValueError:
-                    pass  # Expected
-                working_callback(CallbackContext("test", "test"))
-            
-            # Working callback should still execute despite error in failing callback
-            assert "worked" in working_callback_executed
-            
-        except Exception:
-            # If error handling isn't implemented, that's okay for now
-            pytest.skip("Error handling not implemented")
+        event = CallbackEvent.FILE_PROCESSING_START
+        self.controller.register_callback(event, failing_callback)
+        self.controller.register_callback(event, working_callback)
+        self.controller.fire_event(event, "test", {})
+
+        assert "worked" in working_callback_executed
     
     def test_callback_unregistration(self):
         """Test callback removal"""
@@ -144,19 +118,12 @@ class TestCallbackController:
         def test_callback(context):
             executed.append("executed")
         
-        if hasattr(self.controller, 'register_callback') and hasattr(self.controller, 'unregister_callback'):
-            event = CallbackEvent.FILE_PROCESSING_START
-            
-            # Register, fire, unregister, fire again
-            self.controller.register_callback(event, test_callback)
-            self.controller.fire_event(event, "test", {})
-            
-            success = self.controller.unregister_callback(event, test_callback)
-            assert success
-            
-            self.controller.fire_event(event, "test", {})
-            
-            # Should only have been called once
-            assert len(executed) == 1
-        else:
-            pytest.skip("Unregistration not implemented")
+        event = CallbackEvent.FILE_PROCESSING_START
+
+        self.controller.register_callback(event, test_callback)
+        self.controller.fire_event(event, "test", {})
+
+        self.controller.unregister_callback(event, test_callback)
+        self.controller.fire_event(event, "test", {})
+
+        assert len(executed) == 1

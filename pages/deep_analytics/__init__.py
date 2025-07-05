@@ -30,7 +30,7 @@ from services.data_processing.analytics_engine import (
 )
 from security.unicode_security_processor import sanitize_dataframe
 
-from core.callback_controller import CallbackController
+from core.callback_manager import CallbackManager
 
 __all__ = [
     "layout",
@@ -59,5 +59,5 @@ __all__ = [
     "process_suggests_analysis",
     "process_suggests_analysis_safe",
     "sanitize_dataframe",
-    "CallbackController",
+    "CallbackManager",
 ]

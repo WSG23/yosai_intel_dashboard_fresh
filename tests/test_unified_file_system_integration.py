@@ -3,13 +3,30 @@ import pandas as pd
 import pytest
 
 from core.callback_events import CallbackEvent
-from core.callback_controller import TemporaryCallback
-from file_conversion.storage_manager import StorageManager
+from core.callback_manager import CallbackManager
+
+
+class TemporaryCallback:
+    def __init__(self, event: CallbackEvent, cb):
+        self.manager = _GLOBAL_MANAGER
+        self.event = event
+        self.cb = cb
+
+    def __enter__(self):
+        self.manager.register_callback(self.event, self.cb)
+        return self.cb
+
+    def __exit__(self, exc_type, exc, tb):
+        self.manager.unregister_callback(self.event, self.cb)
+
+
 from services.unified_file_controller import (
     process_file_upload,
     batch_migrate_legacy_files,
     get_processing_metrics,
+    callback_manager as _GLOBAL_MANAGER,
 )
+from file_conversion.storage_manager import StorageManager
 
 
 def _encode_df(df: pd.DataFrame) -> str:

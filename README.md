@@ -246,7 +246,9 @@ dashboard. Key entry points include `tests/test_integration.py`,
 - **Machine-Learned Column Mapping**: Trainable model for smarter CSV header recognition
 - **Hardened SQL Injection Prevention**: Uses `sqlparse` and `bleach` to validate queries
 - **Centralized Unicode Processing**: Normalize text with `core.unicode`.
-- **Event Driven Callbacks**: Plugins react to `core.callback_controller` events.
+- **Event Driven Callbacks**: Plugins react to events via the unified
+  `TrulyUnifiedCallbacks` manager.
+  This single interface replaces previous callback controllers.
 - **Metrics & Monitoring**: `PerformanceMonitor` tracks system performance
   using `psutil`.
 
@@ -495,8 +497,11 @@ clean = processor.safe_encode_text(raw)
 
 ### Firing events
 ```python
-from core.callback_controller import fire_event, CallbackEvent
-fire_event(CallbackEvent.ANALYSIS_COMPLETE, "analytics", {"rows": 42})
+from core.callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
+
+manager = CallbackManager()
+manager.trigger(CallbackEvent.ANALYSIS_COMPLETE, "analytics", {"rows": 42})
 ```
 
 Performance metrics can be retrieved via:

@@ -3,13 +3,14 @@ import time
 from pathlib import Path
 from typing import Callable, Optional, Sequence
 
-from core.callback_controller import fire_event
+from core.callback_manager import CallbackManager
 from core.callback_events import CallbackEvent
 from core.unicode import UnicodeProcessor
 from services.data_processing.unified_file_validator import UnifiedFileValidator
 from file_conversion.storage_manager import StorageManager
 
 _logger = logging.getLogger(__name__)
+callback_manager = CallbackManager()
 
 # Simple in-memory metrics
 _metrics = {
@@ -55,7 +56,7 @@ def process_file_upload(
     if not ok:
         raise RuntimeError(msg)
 
-    fire_event(
+    callback_manager.trigger(
         CallbackEvent.DATA_PROCESSED,
         "unified_file_controller",
         {"filename": filename, "rows": len(df)},

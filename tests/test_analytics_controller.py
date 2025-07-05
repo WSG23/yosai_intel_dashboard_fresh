@@ -3,10 +3,8 @@ import pandas as pd
 from analytics.data_repository import AnalyticsDataRepository
 from analytics.business_service import AnalyticsBusinessService
 from analytics.ui_controller import AnalyticsUIController
-from core.callback_controller import (
-    CallbackController,
-    CallbackEvent,
-)
+from core.callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
 
 
 def _sample_df() -> pd.DataFrame:
@@ -32,14 +30,14 @@ def test_business_service_analysis():
 def test_ui_controller_callbacks():
     repo = AnalyticsDataRepository()
     service = AnalyticsBusinessService(repo)
-    callback_controller = CallbackController()
-    ui = AnalyticsUIController(service, callback_controller)
+    callback_manager = CallbackManager()
+    ui = AnalyticsUIController(service, callback_manager)
 
     events: list[str] = []
-    callback_controller.register_callback(
+    callback_manager.register_callback(
         CallbackEvent.ANALYSIS_START, lambda ctx: events.append("start")
     )
-    callback_controller.register_callback(
+    callback_manager.register_callback(
         CallbackEvent.ANALYSIS_COMPLETE, lambda ctx: events.append("complete")
     )
 
