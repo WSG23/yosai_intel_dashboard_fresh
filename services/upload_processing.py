@@ -186,7 +186,7 @@ class UploadAnalyticsProcessor:
         json_file = os.getenv("SAMPLE_JSON_PATH", sample_cfg.json_path)
 
         try:
-            from services.unified_file_validator import UnifiedFileValidator
+            from services.data_processing.unified_file_validator import UnifiedFileValidator
 
             processor = UnifiedFileValidator()
             all_data = []

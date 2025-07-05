@@ -16,6 +16,7 @@ from utils.file_validator import (
 )
 from utils.unicode_utils import UnicodeProcessor, sanitize_dataframe
 from core.input_validation import InputValidator as StringValidator
+from services.input_validator import InputValidator, ValidationResult
 from security.auth_service import SecurityService, SAFE_FILENAME_RE
 from security.file_validator import SecureFileValidator
 from security.validation_exceptions import ValidationError
@@ -31,6 +32,7 @@ class UnifiedFileValidator:
         self._string_validator = StringValidator()
         self._security_service = SecurityService(None)
         self._security_service.enable_file_validation()
+        self._basic_validator = InputValidator(self.max_size_mb)
 
     # ------------------------------------------------------------------
     # Filename helpers
@@ -97,5 +99,16 @@ class UnifiedFileValidator:
         df = sanitize_dataframe(df)
         return df
 
+    # ------------------------------------------------------------------
+    # Compatibility helpers
+    # ------------------------------------------------------------------
+    def validate_file_upload(self, file_obj: Any) -> ValidationResult:
+        """Validate ``file_obj`` using the basic validator."""
+        return self._basic_validator.validate_file_upload(file_obj)
 
-__all__ = ["UnifiedFileValidator"]
+    def process_base64_contents(self, contents: str, filename: str) -> pd.DataFrame:
+        """Backward compatible wrapper for :meth:`validate_file`."""
+        return self.validate_file(contents, filename)
+
+
+__all__ = ["UnifiedFileValidator", "ValidationResult"]
