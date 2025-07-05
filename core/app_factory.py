@@ -232,7 +232,7 @@ def _create_full_app() -> dash.Dash:
                 app._upload_callbacks = UploadCallbacks()
                 app._deep_analytics_callbacks = DeepAnalyticsCallbacks()
 
-                if config_manager.get_app_config().environment == "development":
+                if config_manager.get_app_config().environment == "development" and hasattr(coordinator, "print_callback_summary"):
                     coordinator.print_callback_summary()
             except Exception as e:
                 logger.warning(f"Failed to register module callbacks: {e}")

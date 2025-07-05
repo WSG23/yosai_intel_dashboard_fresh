@@ -155,7 +155,7 @@ class SecurityChartsGenerator:
         # Add concentric circles for each layer
         for i, layer in enumerate(layer_metrics):
             # Calculate opacity based on risk (lower success rate = higher opacity)
-            opacity = 0.3 + (0.4 * (1 - layer["success_rate"] / 100))
+            opacity = float(0.3 + (0.4 * (1 - layer["success_rate"] / 100)))
 
             # Add circle
             theta = np.linspace(0, 2 * np.pi, 100)
@@ -168,7 +168,7 @@ class SecurityChartsGenerator:
                     y=y,
                     mode="lines",
                     fill="tonext" if i > 0 else "toself",
-                    fillcolor=f"rgba{tuple(list(self._hex_to_rgb(layer['color'])) + [opacity])}",
+                    fillcolor=f"rgba{tuple(list(self._hex_to_rgb(layer['color'])) + [float(opacity)])}",
                     line=dict(color=layer["color"], width=2),
                     name=layer["name"],
                     hovertemplate=(
