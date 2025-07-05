@@ -7,17 +7,17 @@ from datetime import datetime
 from typing import Any, Dict
 
 from config.dynamic_config import dynamic_config
-from services.data_processing.file_handler import FileHandler
+from services.unified_file_validator import UnifiedFileValidator
 from security.xss_validator import XSSPrevention
 from services.data_validation import DataValidationService
-from utils.mapping_helpers import map_and_clean
+from services.analytics import map_and_clean
 
 import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import html
 
 logger = logging.getLogger(__name__)
-_handler = FileHandler()
+_handler = UnifiedFileValidator()
 
 
 def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:

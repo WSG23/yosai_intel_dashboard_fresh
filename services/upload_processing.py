@@ -11,95 +11,31 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from .analytics_summary import generate_basic_analytics, summarize_dataframe
-from .chunked_analysis import analyze_with_chunking
-from utils.mapping_helpers import map_and_clean
+from services.analytics import (
+    generate_basic_analytics,
+    summarize_dataframe,
+    analyze_with_chunking,
+    map_and_clean,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class UploadAnalyticsProcessor:
-    """Handle analytics generation from uploaded datasets."""
+    """Handle analytics generation from already loaded DataFrames."""
 
-    def __init__(
-        self,
-        file_processing_service: Any,
-        validation_service: Any,
-        data_loading_service: Any,
-        file_handler: Any,
-    ) -> None:
-        self.file_processing_service = file_processing_service
+    def __init__(self, validation_service: Any, data_loading_service: Any) -> None:
         self.validation_service = validation_service
         self.data_loading_service = data_loading_service
-        self.file_handler = file_handler
 
     def get_analytics_from_uploaded_data(self) -> Dict[str, Any]:
         """Generate analytics from uploaded files."""
-        try:
-            from services.upload_data_service import get_uploaded_filenames
-
-            uploaded_files = get_uploaded_filenames()
-            if not uploaded_files:
-                return {"status": "no_data", "message": "No uploaded files available"}
-
-            valid_files: List[str] = []
-            processing_info: Dict[str, Any] = {}
-            for path in uploaded_files:
-                result = self.file_handler.validate_file_upload(path)
-                if result.valid:
-                    valid_files.append(path)
-                else:
-                    processing_info[path] = f"invalid: {result.message}"
-
-            if not valid_files:
-                return {
-                    "status": "error",
-                    "message": "No valid files to process",
-                    "processing_info": processing_info,
-                }
-
-            (
-                combined_df,
-                info,
-                processed_files,
-                total_records,
-            ) = self.file_processing_service.process_files(valid_files)
-            if isinstance(info, list):
-                processing_info["logs"] = info
-
-            if combined_df.empty:
-                return {
-                    "status": "error",
-                    "message": "No files could be processed successfully",
-                    "processing_info": processing_info,
-                }
-
-            analytics = generate_basic_analytics(combined_df)
-            analytics.update(
-                {
-                    "data_source": "uploaded_files_fixed",
-                    "total_files_processed": processed_files,
-                    "total_files_attempted": len(uploaded_files),
-                    "processing_info": processing_info,
-                    "total_events": total_records,
-                    "active_users": combined_df["person_id"].nunique()
-                    if "person_id" in combined_df.columns
-                    else 0,
-                    "active_doors": combined_df["door_id"].nunique()
-                    if "door_id" in combined_df.columns
-                    else 0,
-                    "timestamp": datetime.now().isoformat(),
-                }
-            )
-            return analytics
-        except Exception as exc:  # pragma: no cover - best effort
-            logger.error("Error getting analytics from uploaded data: %s", exc)
-            return {"status": "error", "message": str(exc)}
+        return self._get_real_uploaded_data()
 
     def _process_uploaded_data_directly(
-        self, uploaded_data: Dict[str, Any]
+        self, uploaded_data: Dict[str, pd.DataFrame]
     ) -> Dict[str, Any]:
-        """Process uploaded files using streaming."""
+        """Process already loaded DataFrames using streaming."""
         try:
             from collections import Counter
             from analytics.file_processing_utils import (
@@ -118,13 +54,6 @@ class UploadAnalyticsProcessor:
             max_ts: Optional[pd.Timestamp] = None
 
             for filename, source in uploaded_data.items():
-                validation = self.file_handler.validate_file_upload(source)
-                if not validation.valid:
-                    processing_info[filename] = {
-                        "rows": 0,
-                        "status": f"invalid: {validation.message}",
-                    }
-                    continue
                 try:
                     chunks = stream_uploaded_file(self.data_loading_service, source)
                     file_events, min_ts, max_ts = aggregate_counts(
@@ -253,9 +182,9 @@ class UploadAnalyticsProcessor:
         json_file = os.getenv("SAMPLE_JSON_PATH", sample_cfg.json_path)
 
         try:
-            from services.data_processing.file_handler import FileHandler
+            from services.unified_file_validator import UnifiedFileValidator
 
-            processor = FileHandler()
+            processor = UnifiedFileValidator()
             all_data = []
             if os.path.exists(csv_file):
                 df_csv = pd.read_csv(csv_file)
