@@ -8,7 +8,7 @@ import dash_bootstrap_components as dbc
 
 from services.upload_service import process_uploaded_file, create_file_preview
 from services.device_learning_service import get_device_learning_service
-from services.ai_suggestions import generate_column_suggestions
+from services.data_enhancer import get_ai_column_suggestions
 from utils.upload_store import UploadedDataStore
 
 logger = logging.getLogger(__name__)
@@ -175,7 +175,7 @@ class UploadProcessingService:
                         "columns": cols,
                         "column_names": column_names,
                         "upload_time": result["upload_time"].isoformat(),
-                        "ai_suggestions": generate_column_suggestions(column_names),
+                        "ai_suggestions": get_ai_column_suggestions(column_names),
                     }
                     current_file_info = file_info_dict[filename]
 

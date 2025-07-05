@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Analytics Service - Enhanced with Unique Patterns Analysis
 
-Uploaded files are validated with :class:`services.input_validator.InputValidator`
+Uploaded files are validated with :class:`services.data_processing.file_handler.FileHandler`
 before processing to ensure they are present, non-empty and within the configured
 size limits.
 """
@@ -48,14 +48,14 @@ class AnalyticsService:
         self.file_processing_service = FileProcessingService()
         self.validation_service = DataValidationService()
         self.data_loading_service = DataLoadingService(self.validation_service)
-        from services.input_validator import InputValidator
+        from services.data_processing.file_handler import FileHandler
 
-        self.input_validator = InputValidator()
+        self.file_handler = FileHandler()
         self.upload_processor = UploadAnalyticsProcessor(
             self.file_processing_service,
             self.validation_service,
             self.data_loading_service,
-            self.input_validator,
+            self.file_handler,
         )
         self.db_helper = DatabaseAnalyticsHelper(self.database_manager)
         self.summary_reporter = SummaryReporter(self.database_manager)
@@ -98,7 +98,7 @@ class AnalyticsService:
 
         # FORCE CHECK: If uploaded data exists, use it regardless of source
         try:
-            from pages.file_upload import get_uploaded_data
+            from services.upload_data_service import get_uploaded_data
 
             uploaded_data = get_uploaded_data()
 

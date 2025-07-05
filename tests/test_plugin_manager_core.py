@@ -6,7 +6,7 @@ from pathlib import Path
 from core.plugins.manager import PluginManager
 from core.container import Container as DIContainer
 from config.config import ConfigManager
-from core.plugins.protocols import PluginStatus, PluginMetadata
+from services.data_processing.core.protocols import PluginStatus, PluginMetadata
 
 
 class DummyPlugin:
@@ -111,7 +111,7 @@ def test_load_all_plugins(tmp_path, monkeypatch):
     plugin_module = pkg_dir / "plugin_a.py"
     plugin_module.write_text(
         """
-from core.plugins.protocols import PluginMetadata
+from services.data_processing.core.protocols import PluginMetadata
 
 class Plugin:
     metadata = PluginMetadata(

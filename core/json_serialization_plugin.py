@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from core.serialization import SafeJSONSerializer
 
-from core.plugins.protocols import PluginMetadata
+from services.data_processing.core.protocols import PluginMetadata
 
 # Optional Babel support
 try:
