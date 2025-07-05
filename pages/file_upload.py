@@ -7,6 +7,7 @@ import logging
 import json
 from datetime import datetime
 import asyncio
+import time
 
 import pandas as pd
 from typing import Optional, Dict, Any, List, Tuple
@@ -207,6 +208,28 @@ def clear_uploaded_data():
 def get_file_info() -> Dict[str, Dict[str, Any]]:
     """Get information about uploaded files."""
     return service_get_file_info()
+
+
+def check_upload_system_health() -> Dict[str, Any]:
+    """Monitor upload system health."""
+    issues = []
+    storage_dir = _uploaded_data_store.storage_dir
+
+    if not storage_dir.exists():
+        issues.append(f"Storage directory missing: {storage_dir}")
+
+    try:
+        test_file = storage_dir / "test.tmp"
+        test_file.write_text("test")
+        test_file.unlink()
+    except Exception as e:
+        issues.append(f"Cannot write to storage directory: {e}")
+
+    pending = len(_uploaded_data_store._save_futures)
+    if pending > 10:
+        issues.append(f"Too many pending saves: {pending}")
+
+    return {"healthy": len(issues) == 0, "issues": issues}
 
 
 class Callbacks:
@@ -989,21 +1012,58 @@ class Callbacks:
 
             learning_service = get_device_learning_service()
 
-            safe_name = filename.replace(" ", "_").replace("/", "_")
-            _uploaded_data_store.wait_for_pending_saves()
-            file_path = _uploaded_data_store.storage_dir / f"{safe_name}.parquet"
-            if not file_path.exists():
-                logger.error(f"Uploaded file not found: {file_path}")
-                error_alert = dbc.Toast(
-                    "❌ Uploaded data missing - cannot save mappings.",
-                    header="Error",
-                    is_open=True,
-                    dismissable=True,
-                    duration=5000,
-                )
-                return error_alert, no_update, no_update
+            if not filename:
+                raise ValueError("No filename provided in file_info")
 
-            df = _uploaded_data_store.load_dataframe(filename)
+            if not devices:
+                raise ValueError("No devices found in file_info")
+
+            df = None
+            max_attempts = 3
+            for attempt in range(max_attempts):
+                try:
+                    logger.info(
+                        f"🔄 Attempt {attempt + 1}/{max_attempts} to load file: {filename}"
+                    )
+                    _uploaded_data_store.wait_for_pending_saves()
+                    available_files = _uploaded_data_store.get_filenames()
+                    logger.info(f"📁 Available files: {available_files}")
+                    if filename not in available_files:
+                        raise ValueError(
+                            f"File '{filename}' not found in upload store. Available: {available_files}"
+                        )
+                    df = _uploaded_data_store.load_dataframe(filename)
+                    if df is None:
+                        raise ValueError(
+                            f"Failed to load DataFrame for '{filename}' - returned None"
+                        )
+                    if df.empty:
+                        raise ValueError(f"DataFrame for '{filename}' is empty")
+                    logger.info(
+                        f"✅ Successfully loaded file: {filename} ({len(df)} rows, {len(df.columns)} columns)"
+                    )
+                    break
+                except Exception as load_error:
+                    logger.warning(f"⚠️ Attempt {attempt + 1} failed: {load_error}")
+                    if attempt == max_attempts - 1:
+                        logger.error(
+                            f"❌ All {max_attempts} attempts failed to load '{filename}'"
+                        )
+                        storage_dir = _uploaded_data_store.storage_dir
+                        logger.error(f"📁 Storage directory: {storage_dir}")
+                        logger.error(f"📁 Storage directory exists: {storage_dir.exists()}")
+                        if storage_dir.exists():
+                            disk_files = list(storage_dir.glob("*.parquet"))
+                            logger.error(
+                                f"📁 Disk files: {[f.name for f in disk_files]}"
+                            )
+                        raise ValueError(
+                            f"Cannot load uploaded file after {max_attempts} attempts: {load_error}"
+                        )
+                    time.sleep(0.5)
+
+            if df is None:
+                raise ValueError(f"Data for '{filename}' could not be loaded")
             learning_service.save_user_device_mappings(df, filename, user_mappings)
 
             from services.ai_mapping_store import ai_mapping_store
@@ -1025,13 +1085,22 @@ class Callbacks:
             return success_alert, False, False
 
         except Exception as e:
-            logger.info(f"\u274c Error saving device mappings: {e}")
+            logger.error(f"❌ Error saving device mappings: {e}")
+
+            error_msg = str(e)
+            if "not found in upload store" in error_msg:
+                error_msg += "\n\nTry refreshing the page and uploading the file again."
+            elif "empty" in error_msg.lower():
+                error_msg += "\n\nThe uploaded file appears to be empty."
+            elif "load" in error_msg.lower():
+                error_msg += "\n\nThere was an issue accessing the uploaded file."
+
             error_alert = dbc.Toast(
-                f"❌ Error saving mappings: {e}",
+                f"❌ Error saving mappings: {error_msg}",
                 header="Error",
                 is_open=True,
                 dismissable=True,
-                duration=5000,
+                duration=8000,
             )
             return error_alert, no_update, no_update
 
@@ -1275,6 +1344,7 @@ __all__ = [
     "get_uploaded_filenames",
     "clear_uploaded_data",
     "get_file_info",
+    "check_upload_system_health",
     "save_ai_training_data",
     "register_callbacks",
 ]
