@@ -8,7 +8,7 @@ Calling these functions will emit :class:`DeprecationWarning` directing you
 from __future__ import annotations
 
 import warnings
-from typing import Any
+from typing import Any, Callable, Union
 
 import pandas as pd
 
@@ -42,9 +42,13 @@ def safe_encode_text(value: Any) -> str:
     return _u.safe_encode(value)
 
 
-def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+def sanitize_dataframe(
+    df: pd.DataFrame,
+    *,
+    progress: Union[bool, Callable[[int, int], None], None] = None,
+) -> pd.DataFrame:
     _warn("sanitize_dataframe")
-    return _u.sanitize_dataframe(df)
+    return _u.sanitize_dataframe(df, progress=progress)
 
 
 def safe_unicode_encode(value: Any) -> str:
