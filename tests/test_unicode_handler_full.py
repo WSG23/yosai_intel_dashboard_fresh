@@ -11,12 +11,37 @@ from core.unicode_processor import (
     safe_encode,
     sanitize_dataframe,
 )
-from core.callback_controller import (
-    CallbackController,
-    CallbackEvent,
-    fire_event,
-    callback_handler,
-)
+from core.callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
+
+
+class CallbackController(CallbackManager):
+    def fire_event(self, event: CallbackEvent, source_id: str, data=None):
+        ctx = type("Ctx", (), {"event_type": event, "source_id": source_id, "data": data or {}})
+        self.trigger(event, ctx)
+
+    def register_error_handler(self, handler):
+        self._handler = handler
+
+    def trigger(self, event: CallbackEvent, *args, **kwargs):
+        try:
+            return super().trigger(event, *args, **kwargs)
+        except Exception as exc:
+            if hasattr(self, "_handler"):
+                self._handler(exc, args[0])
+            else:
+                raise
+
+
+def callback_handler(event: CallbackEvent):
+    def decorator(func):
+        _GLOBAL.register_callback(event, func)
+        return func
+    return decorator
+
+
+_GLOBAL = CallbackController()
+fire_event = _GLOBAL.fire_event
 from services.data_processing.file_processor import (
     FileProcessor as RobustFileProcessor,
 
@@ -105,7 +130,7 @@ class TestChunkedUnicodeProcessor:
 class TestCallbackController:
     def test_callback_registration_and_firing(self):
         controller = CallbackController()
-        controller.clear_all_callbacks()
+        controller._callbacks.clear()
         called = {}
 
         def cb(ctx):
@@ -118,7 +143,7 @@ class TestCallbackController:
 
     def test_callback_unregistration(self):
         controller = CallbackController()
-        controller.clear_all_callbacks()
+        controller._callbacks.clear()
         hits = []
 
         def cb(ctx):
@@ -131,7 +156,7 @@ class TestCallbackController:
 
     def test_multiple_callbacks_same_event(self):
         controller = CallbackController()
-        controller.clear_all_callbacks()
+        controller._callbacks.clear()
         results = []
 
         def cb1(ctx):
@@ -147,7 +172,7 @@ class TestCallbackController:
 
     def test_callback_error_handling(self):
         controller = CallbackController()
-        controller.clear_all_callbacks()
+        controller._callbacks.clear()
         seen = []
 
         def err_handler(exc, ctx):
@@ -167,7 +192,7 @@ class TestCallbackController:
 
     def test_callback_decorator(self):
         controller = CallbackController()
-        controller.clear_all_callbacks()
+        controller._callbacks.clear()
         executed = []
 
         @callback_handler(CallbackEvent.DATA_QUALITY_CHECK)
@@ -249,7 +274,7 @@ class TestRobustFileProcessor:
             events.append(ctx.event_type)
 
         controller = CallbackController()
-        controller.clear_all_callbacks()
+        controller._callbacks.clear()
         controller.register_callback(CallbackEvent.FILE_PROCESSING_START, track)
         controller.register_callback(CallbackEvent.FILE_PROCESSING_COMPLETE, track)
         csv = "name,age\nJohn,30".encode("utf-8")
@@ -294,7 +319,7 @@ class TestIntegration:
             events.append(ctx.event_type)
 
         controller = CallbackController()
-        controller.clear_all_callbacks()
+        controller._callbacks.clear()
         controller.register_callback(CallbackEvent.FILE_PROCESSING_START, tracker)
         controller.register_callback(CallbackEvent.FILE_PROCESSING_COMPLETE, tracker)
         proc = RobustFileProcessor(controller)

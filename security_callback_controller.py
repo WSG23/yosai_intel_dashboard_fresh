@@ -1,15 +1,14 @@
-"""Compatibility wrapper for :mod:`core.callback_controller` with security naming."""
+"""Compatibility wrapper exposing security-specific callback names."""
 
-from core.callback_controller import (
-    CallbackController,
-    CallbackEvent,
-    fire_event,
-)
+from core.callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
 
 SecurityEvent = CallbackEvent
-SecurityCallbackController = CallbackController
-security_callback_controller = CallbackController()
-emit_security_event = fire_event
+SecurityCallbackController = CallbackManager
+security_callback_controller = CallbackManager()
+
+def emit_security_event(event: SecurityEvent, data: dict | None = None) -> None:
+    security_callback_controller.trigger(event, data)
 
 __all__ = [
     "SecurityEvent",

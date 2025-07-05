@@ -1,11 +1,21 @@
 import json
 import pandas as pd
 from datetime import datetime
-from core.callback_controller import (
-    CallbackController,
-    CallbackEvent,
-    TemporaryCallback,
-)
+from core.callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
+
+class TemporaryCallback:
+    def __init__(self, event: CallbackEvent, cb, manager: CallbackManager) -> None:
+        self.event = event
+        self.cb = cb
+        self.manager = manager
+
+    def __enter__(self):
+        self.manager.register_callback(self.event, self.cb)
+        return self.cb
+
+    def __exit__(self, exc_type, exc, tb):
+        self.manager.unregister_callback(self.event, self.cb)
 from file_conversion.storage_manager import StorageManager
 
 
@@ -14,8 +24,8 @@ def test_migrate_pkl_to_parquet(tmp_path):
     pkl_path = tmp_path / "sample.pkl"
     df.to_pickle(pkl_path)
 
-    controller = CallbackController()
-    controller.clear_all_callbacks()
+    controller = CallbackManager()
+    controller._callbacks.clear()
     events = []
 
     def record(ctx):

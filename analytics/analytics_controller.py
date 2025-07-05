@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from core.callback_controller import CallbackController
+from core.callback_manager import CallbackManager
 
 from .data_repository import AnalyticsDataRepository
 from .business_service import AnalyticsBusinessService
@@ -17,11 +17,11 @@ class AnalyticsController(AnalyticsUIController):
     def __init__(
         self,
         repository: Optional[AnalyticsDataRepository] = None,
-        callback_controller: Optional[CallbackController] = None,
+        callback_manager: Optional[CallbackManager] = None,
     ) -> None:
         repository = repository or AnalyticsDataRepository()
         service = AnalyticsBusinessService(repository)
-        super().__init__(service, callback_controller)
+        super().__init__(service, callback_manager)
 
     def analyze(self, criteria: Any) -> Dict[str, Any]:
         """Compatibility method forwarding to :meth:`handle_analysis_request`."""
