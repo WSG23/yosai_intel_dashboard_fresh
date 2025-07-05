@@ -231,7 +231,7 @@ dashboard. Key entry points include `tests/test_integration.py`,
 - **CSRF Protection Plugin**: Optional production-ready CSRF middleware for Dash
 - **Machine-Learned Column Mapping**: Trainable model for smarter CSV header recognition
 - **Hardened SQL Injection Prevention**: Uses `sqlparse` and `bleach` to validate queries
-- **Centralized Unicode Processing**: Normalize text with `core.unicode_processor`.
+- **Centralized Unicode Processing**: Normalize text with `core.unicode`.
 - **Event Driven Callbacks**: Plugins react to `core.callback_controller` events.
 - **Metrics & Monitoring**: `PerformanceMonitor` tracks system performance.
 
@@ -468,9 +468,10 @@ Update the spec by running `python tools/generate_openapi.py` which writes `docs
 
 ### Cleaning text
 ```python
-from core.unicode_processor import UnicodeProcessor
+from core.unicode import get_text_processor
 raw = "Bad\uD83DText"
-clean = UnicodeProcessor.safe_encode_text(raw)
+processor = get_text_processor()
+clean = processor.safe_encode_text(raw)
 ```
 
 ### Firing events

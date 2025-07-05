@@ -19,6 +19,7 @@ from .config import (
 from .connection_pool import DatabaseConnectionPool
 from .connection_retry import ConnectionRetryManager, RetryConfig
 from .unicode_handler import UnicodeQueryHandler
+from .unicode_sql_processor import UnicodeSQLProcessor
 from .database_exceptions import (
     DatabaseError,
     ConnectionRetryExhausted,
@@ -57,6 +58,7 @@ __all__ = [
     "ConnectionRetryManager",
     "RetryConfig",
     "UnicodeQueryHandler",
+    "UnicodeSQLProcessor",
     "DatabaseError",
     "ConnectionRetryExhausted",
     "ConnectionValidationFailed",

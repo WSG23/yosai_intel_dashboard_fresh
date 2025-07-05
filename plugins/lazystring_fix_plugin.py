@@ -8,7 +8,7 @@ from typing import Any
 
 from services.data_processing.core.protocols import PluginMetadata
 
-from core.unicode_processor import UnicodeProcessor
+from security.unicode_security_processor import UnicodeSecurityProcessor
 from core.serialization import SafeJSONSerializer
 
 # Optional Babel import
@@ -64,8 +64,8 @@ def _is_lazy_string(obj: Any) -> bool:
 
 
 def _sanitize_text(text: str) -> str:
-    result = UnicodeProcessor.clean_text(text)
-    return result.text
+    """Return sanitized text using :class:`UnicodeSecurityProcessor`."""
+    return UnicodeSecurityProcessor.sanitize_unicode_input(text)
 
 
 def sanitize_lazystring(obj: Any) -> Any:

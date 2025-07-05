@@ -32,18 +32,19 @@ try:  # pragma: no cover - graceful import fallback
     from .assets_utils import get_nav_icon
     from .preview_utils import serialize_dataframe_preview
 except Exception:  # pragma: no cover - fallback when unicode_utils unavailable
-    from core.unicode_processor import (
+    from security.unicode_security_processor import (
         sanitize_dataframe as sanitize_data_frame,
-        UnicodeProcessor,
-        safe_encode as safe_unicode_encode,
+        UnicodeSecurityProcessor,
+        sanitize_unicode_input,
+    )
+    from core.unicode_processor import (
         process_large_csv_content,
         safe_format_number,
     )
-    handle_surrogate_characters = UnicodeProcessor.clean_surrogate_chars
-    sanitize_unicode_input = UnicodeProcessor.safe_encode_text
-    clean_unicode_surrogates = UnicodeProcessor.clean_surrogate_chars
-    unicode_clean_text = UnicodeProcessor.clean_surrogate_chars
-    unicode_safe_encode = UnicodeProcessor.safe_encode_text
+    handle_surrogate_characters = UnicodeSecurityProcessor.sanitize_unicode_input
+    clean_unicode_surrogates = UnicodeSecurityProcessor.sanitize_unicode_input
+    unicode_clean_text = UnicodeSecurityProcessor.sanitize_unicode_input
+    unicode_safe_encode = UnicodeSecurityProcessor.sanitize_unicode_input
     unicode_sanitize_df = sanitize_data_frame
 
     from .assets_debug import (
