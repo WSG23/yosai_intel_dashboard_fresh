@@ -39,6 +39,7 @@ except ImportError:
     CallbackController = CallbackManager
 
 
+
 class TestCallbackController:
     """Test the callback controller functionality"""
     

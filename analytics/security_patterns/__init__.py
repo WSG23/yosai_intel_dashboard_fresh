@@ -10,7 +10,11 @@ from security_callback_controller import (
     SecurityEvent,
     security_callback_controller,
     emit_security_event,
+
 )
+
+security_callback_controller = get_callback_controller()
+emit_security_event = fire_event
 from .data_prep import prepare_security_data
 from .statistical_detection import (
     detect_failure_rate_anomalies,

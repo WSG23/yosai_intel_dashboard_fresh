@@ -5,7 +5,8 @@ import json
 import logging
 from typing import List, Tuple
 
-from services.data_processing.file_handler import FileHandler
+from services.unified_file_validator import UnifiedFileValidator
+
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +14,8 @@ logger = logging.getLogger(__name__)
 class FileProcessingService:
     """Service for reading and validating uploaded files."""
 
-    def __init__(self, processor: FileHandler | None = None):
-        self.processor = processor or FileHandler()
+    def __init__(self, processor: UnifiedFileValidator | None = None):
+        self.processor = processor or UnifiedFileValidator()
 
     def _read_file(self, path: str) -> pd.DataFrame:
         """Read a single file into a DataFrame."""
@@ -31,7 +32,7 @@ class FileProcessingService:
             return pd.DataFrame(data)
         if path.endswith((".xlsx", ".xls")):
             return pd.read_excel(path)
-        raise ValueError(f"Unsupported file type: {path}")
+        raise FileFormatError(f"Unsupported file type: {path}")
 
     def process_files(
         self, file_paths: List[str]

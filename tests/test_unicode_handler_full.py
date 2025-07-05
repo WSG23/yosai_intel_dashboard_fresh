@@ -17,12 +17,8 @@ from core.callback_controller import (
     fire_event,
     callback_handler,
 )
-from services.data_processing.file_handler import (
-    FileHandler as RobustFileProcessor,
-    process_file_simple,
-    FileProcessingError,
-)
-
+from services.unified_file_validator import UnifiedFileValidator as RobustFileProcessor
+from services.data_processing.file_handler import process_file_simple, FileProcessingError
 
 class TestUnicodeProcessor:
     def test_clean_surrogate_chars_basic(self):

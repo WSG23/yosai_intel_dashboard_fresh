@@ -24,7 +24,10 @@ from security_callback_controller import (
     SecurityEvent,
     security_callback_controller,
     emit_security_event,
+
 )
+
+security_callback_controller = get_callback_controller()
 
 from ..security_score_calculator import SecurityScoreCalculator
 from ..security_metrics import SecurityMetrics

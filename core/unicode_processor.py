@@ -7,6 +7,7 @@ import re
 import unicodedata
 from typing import Any, Union, Optional
 
+
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -258,3 +259,4 @@ __all__ = [
     "process_large_csv_content",
     "safe_format_number",
 ]
+

@@ -19,13 +19,14 @@ from .registry import get_service
 from .upload_processing import UploadAnalyticsProcessor
 from .db_analytics_helper import DatabaseAnalyticsHelper
 from .summary_reporting import SummaryReporter
-from .data_processing.file_handler import FileHandler
+from .unified_file_validator import UnifiedFileValidator
 
 logger = logging.getLogger(__name__)
 
 # Resolve optional services from the registry
-FileHandlerService = get_service("FileHandler")
-FILE_HANDLER_AVAILABLE = FileHandlerService is not None
+UnifiedFileValidatorService = get_service("UnifiedFileValidator")
+FILE_VALIDATOR_AVAILABLE = UnifiedFileValidatorService is not None
+
 
 get_analytics_service = get_service("get_analytics_service")
 create_analytics_service = get_service("create_analytics_service")
@@ -33,8 +34,8 @@ AnalyticsService = get_service("AnalyticsService")
 ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
 
 __all__ = [
-    "FileHandler",
-    "FILE_HANDLER_AVAILABLE",
+    "UnifiedFileValidator",
+    "FILE_VALIDATOR_AVAILABLE",
     "get_analytics_service",
     "create_analytics_service",
     "AnalyticsService",
@@ -53,5 +54,5 @@ __all__ = [
     "UploadAnalyticsProcessor",
     "DatabaseAnalyticsHelper",
     "SummaryReporter",
-    "FileHandler",
+
 ]
