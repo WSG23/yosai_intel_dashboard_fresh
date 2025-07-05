@@ -36,7 +36,7 @@ class UploadAnalyticsProcessor:
     def get_analytics_from_uploaded_data(self) -> Dict[str, Any]:
         """Generate analytics from uploaded files."""
         try:
-            from pages.file_upload import get_uploaded_filenames
+            from services.upload_data_service import get_uploaded_filenames
 
             uploaded_files = get_uploaded_filenames()
             if not uploaded_files:
@@ -151,7 +151,7 @@ class UploadAnalyticsProcessor:
     def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
         """Load uploaded data from file_upload page."""
         try:
-            from pages.file_upload import get_uploaded_data
+            from services.upload_data_service import get_uploaded_data
 
             return get_uploaded_data() or {}
         except Exception as exc:  # pragma: no cover - best effort

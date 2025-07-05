@@ -27,6 +27,12 @@ from services.device_learning_service import (
 )
 from services.upload_service import process_uploaded_file, create_file_preview
 from utils.upload_store import uploaded_data_store as _uploaded_data_store
+from services.upload_data_service import (
+    get_uploaded_data as service_get_uploaded_data,
+    get_uploaded_filenames as service_get_uploaded_filenames,
+    clear_uploaded_data as service_clear_uploaded_data,
+    get_file_info as service_get_file_info,
+)
 from config.dynamic_config import dynamic_config
 
 from components.column_verification import save_verified_mappings
@@ -192,23 +198,22 @@ def layout():
 
 def get_uploaded_data() -> Dict[str, pd.DataFrame]:
     """Get all uploaded data (for use by analytics)."""
-    return _uploaded_data_store.get_all_data()
+    return service_get_uploaded_data()
 
 
 def get_uploaded_filenames() -> List[str]:
     """Get list of uploaded filenames."""
-    return _uploaded_data_store.get_filenames()
+    return service_get_uploaded_filenames()
 
 
 def clear_uploaded_data():
     """Clear all uploaded data."""
-    _uploaded_data_store.clear_all()
-    logger.info("Uploaded data cleared")
+    service_clear_uploaded_data()
 
 
 def get_file_info() -> Dict[str, Dict[str, Any]]:
     """Get information about uploaded files."""
-    return _uploaded_data_store.get_file_info()
+    return service_get_file_info()
 
 
 class Callbacks:

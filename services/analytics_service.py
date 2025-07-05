@@ -98,7 +98,7 @@ class AnalyticsService:
 
         # FORCE CHECK: If uploaded data exists, use it regardless of source
         try:
-            from pages.file_upload import get_uploaded_data
+            from services.upload_data_service import get_uploaded_data
 
             uploaded_data = get_uploaded_data()
 
