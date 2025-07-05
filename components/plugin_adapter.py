@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from plugins.service_locator import PluginServiceLocator
+from core.plugins.service_locator import PluginServiceLocator
 from services.data_enhancer import get_ai_column_suggestions
 
 
