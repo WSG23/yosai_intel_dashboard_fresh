@@ -79,6 +79,57 @@ class SampleFilesConfig:
 
 
 @dataclass
+class AnalyticsConfig:
+    """Analytics tuning options"""
+
+    cache_timeout_seconds: int = 60
+    max_records_per_query: int = 500000
+    enable_real_time: bool = True
+    batch_size: int = 25000
+    chunk_size: int = 100000
+    enable_chunked_analysis: bool = True
+    anomaly_detection_enabled: bool = True
+    ml_models_path: str = "models/ml"
+    data_retention_days: int = 30
+    query_timeout_seconds: int = 600
+    force_full_dataset_analysis: bool = True
+
+
+@dataclass
+class MonitoringConfig:
+    """Runtime monitoring options"""
+
+    health_check_enabled: bool = True
+    metrics_enabled: bool = True
+    health_check_interval: int = 30
+    performance_monitoring: bool = False
+    error_reporting_enabled: bool = True
+    sentry_dsn: Optional[str] = None
+    log_retention_days: int = 30
+
+
+@dataclass
+class CacheConfig:
+    """Cache backend settings"""
+
+    type: str = "memory"
+    host: str = "localhost"
+    port: int = 6379
+    database: int = 0
+    timeout_seconds: int = 300
+    key_prefix: str = "yosai:"
+    compression_enabled: bool = False
+    max_memory_mb: int = 100
+
+
+@dataclass
+class SecretValidationConfig:
+    """Severity configuration for secret validator"""
+
+    severity: str = "low"
+
+
+@dataclass
 class Config:
     """Main configuration object"""
 
@@ -86,6 +137,10 @@ class Config:
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
     security: SecurityConfig = field(default_factory=SecurityConfig)
     sample_files: SampleFilesConfig = field(default_factory=SampleFilesConfig)
+    analytics: AnalyticsConfig = field(default_factory=AnalyticsConfig)
+    monitoring: MonitoringConfig = field(default_factory=MonitoringConfig)
+    cache: CacheConfig = field(default_factory=CacheConfig)
+    secret_validation: SecretValidationConfig = field(default_factory=SecretValidationConfig)
     environment: str = "development"
     plugin_settings: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
@@ -228,6 +283,30 @@ class ConfigManager:
                 "json_path", self.config.sample_files.json_path
             )
 
+        if "analytics" in yaml_config:
+            analytics_data = yaml_config["analytics"]
+            for key, value in analytics_data.items():
+                if hasattr(self.config.analytics, key):
+                    setattr(self.config.analytics, key, value)
+
+        if "monitoring" in yaml_config:
+            mon_data = yaml_config["monitoring"]
+            for key, value in mon_data.items():
+                if hasattr(self.config.monitoring, key):
+                    setattr(self.config.monitoring, key, value)
+
+        if "cache" in yaml_config:
+            cache_data = yaml_config["cache"]
+            for key, value in cache_data.items():
+                if hasattr(self.config.cache, key):
+                    setattr(self.config.cache, key, value)
+
+        if "secret_validation" in yaml_config:
+            sec_val = yaml_config["secret_validation"]
+            for key, value in sec_val.items():
+                if hasattr(self.config.secret_validation, key):
+                    setattr(self.config.secret_validation, key, value)
+
         if "plugins" in yaml_config:
             plugins_data = yaml_config["plugins"]
             if isinstance(plugins_data, dict):
@@ -310,6 +389,22 @@ class ConfigManager:
         if sample_json is not None:
             self.config.sample_files.json_path = sample_json
 
+        cache_type = os.getenv("CACHE_TYPE")
+        if cache_type is not None:
+            self.config.cache.type = cache_type
+        cache_host = os.getenv("CACHE_HOST")
+        if cache_host is not None:
+            self.config.cache.host = cache_host
+        cache_port = os.getenv("CACHE_PORT")
+        if cache_port is not None:
+            self.config.cache.port = int(cache_port)
+        cache_db = os.getenv("CACHE_DB")
+        if cache_db is not None:
+            self.config.cache.database = int(cache_db)
+        cache_timeout = os.getenv("CACHE_TIMEOUT")
+        if cache_timeout is not None:
+            self.config.cache.timeout_seconds = int(cache_timeout)
+
     def _apply_validated_secrets(self) -> None:
         """Apply secrets validated by SecretsValidator."""
         if "SECRET_KEY" in self.validated_secrets:
@@ -389,6 +484,22 @@ class ConfigManager:
         """Get sample file path configuration"""
         return self.config.sample_files
 
+    def get_analytics_config(self) -> AnalyticsConfig:
+        """Get analytics configuration"""
+        return self.config.analytics
+
+    def get_monitoring_config(self) -> MonitoringConfig:
+        """Get monitoring configuration"""
+        return self.config.monitoring
+
+    def get_cache_config(self) -> CacheConfig:
+        """Get cache configuration"""
+        return self.config.cache
+
+    def get_secret_validation_config(self) -> SecretValidationConfig:
+        """Get secret validation configuration"""
+        return self.config.secret_validation
+
     def get_plugin_config(self, name: str) -> Dict[str, Any]:
         """Return configuration dictionary for the given plugin."""
         return self.config.plugin_settings.get(name, {})
@@ -434,6 +545,26 @@ def get_sample_files_config() -> SampleFilesConfig:
     return get_config().get_sample_files_config()
 
 
+def get_analytics_config() -> AnalyticsConfig:
+    """Get analytics configuration"""
+    return get_config().get_analytics_config()
+
+
+def get_monitoring_config() -> MonitoringConfig:
+    """Get monitoring configuration"""
+    return get_config().get_monitoring_config()
+
+
+def get_cache_config() -> CacheConfig:
+    """Get cache configuration"""
+    return get_config().get_cache_config()
+
+
+def get_secret_validation_config() -> SecretValidationConfig:
+    """Get secret validation configuration"""
+    return get_config().get_secret_validation_config()
+
+
 def get_plugin_config(name: str) -> Dict[str, Any]:
     """Get configuration for a specific plugin"""
     return get_config().get_plugin_config(name)
@@ -446,6 +577,10 @@ __all__ = [
     "DatabaseConfig",
     "SecurityConfig",
     "SampleFilesConfig",
+    "AnalyticsConfig",
+    "MonitoringConfig",
+    "CacheConfig",
+    "SecretValidationConfig",
     "ConfigManager",
     "get_config",
     "reload_config",
@@ -453,5 +588,9 @@ __all__ = [
     "get_database_config",
     "get_security_config",
     "get_sample_files_config",
+    "get_analytics_config",
+    "get_monitoring_config",
+    "get_cache_config",
+    "get_secret_validation_config",
     "get_plugin_config",
 ]
