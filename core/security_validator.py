@@ -3,27 +3,25 @@ Enhanced Security Validation for Yōsai Intel Dashboard
 Implements comprehensive input validation and security checks
 """
 
-import logging
-import re
-import os
-import secrets
-from typing import Dict, Any, List, Callable
-
-from config.constants import FileProcessingLimits
-
-from security.unicode_security_processor import sanitize_unicode_input
 from dataclasses import dataclass
 from enum import Enum
-from .security_patterns import (
-    XSS_PATTERNS as RAW_XSS_PATTERNS,
-    PATH_TRAVERSAL_PATTERNS as RAW_PATH_PATTERNS,
-)
-from security.sql_validator import SQLInjectionPrevention
-from core.exceptions import ValidationError
-from security_callback_controller import (
-    emit_security_event,
-    SecurityEvent,
+import logging
+import os
+import re
+import secrets
+from typing import Any, Callable, Dict, List
 
+from .security_patterns import (
+    PATH_TRAVERSAL_PATTERNS as RAW_PATH_PATTERNS,
+    XSS_PATTERNS as RAW_XSS_PATTERNS,
+)
+from config.constants import FileProcessingLimits
+from core.exceptions import ValidationError
+from security.sql_validator import SQLInjectionPrevention
+from security.unicode_security_processor import sanitize_unicode_input
+from security_callback_controller import (
+    SecurityEvent,
+    emit_security_event,
 )
 
 

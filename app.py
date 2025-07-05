@@ -229,6 +229,7 @@ def main():
                     port=app_config.port,
                     debug=app_config.debug,
                 )
+
         except KeyboardInterrupt:
             logger.info("\n👋 Application stopped by user")
         except Exception as e:
