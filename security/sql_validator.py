@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import logging
 import re
-import urllib.parse
-from dataclasses import dataclass
 from typing import Any, Optional, Tuple
+import urllib.parse
 
 import bleach
 import sqlparse
 from sqlparse import tokens as T
 
-from core.security_patterns import SQL_INJECTION_PATTERNS
 from .attack_detection import AttackDetection
 from core.exceptions import ValidationError
+from core.security_patterns import SQL_INJECTION_PATTERNS
 
 
 class SQLSecurityLimits:
