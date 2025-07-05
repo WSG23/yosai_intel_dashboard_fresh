@@ -23,7 +23,7 @@ from typing import Any, Optional, Tuple
 import pandas as pd
 
 from security.file_validator import SecureFileValidator
-from services.input_validator import InputValidator, ValidationResult
+from core.input_validation import InputValidator, ValidationResult
 from services.unified_file_validator import UnifiedFileValidator
 from services.data_processing.core.exceptions import (
     FileProcessingError,

@@ -16,7 +16,7 @@ from utils.file_validator import (
 )
 from utils.unicode_utils import UnicodeProcessor, sanitize_dataframe
 from core.input_validation import InputValidator as StringValidator
-from services.input_validator import InputValidator, ValidationResult
+from core.input_validation import InputValidator, ValidationResult
 from security.auth_service import SecurityService, SAFE_FILENAME_RE
 from security.file_validator import SecureFileValidator
 from security.validation_exceptions import ValidationError
