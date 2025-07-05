@@ -7,10 +7,7 @@ from typing import Any
 import pandas as pd
 
 from utils.file_validator import safe_decode_file, process_dataframe
-from plugins.service_locator import PluginServiceLocator
-
-_unicode = PluginServiceLocator.get_unicode_handler()
-UnicodeProcessor = _unicode.UnicodeProcessor
+from core.unicode import UnicodeProcessor
 from config.dynamic_config import dynamic_config
 
 from core.exceptions import ValidationError

@@ -8,10 +8,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from config.dynamic_config import dynamic_config
-from plugins.service_locator import PluginServiceLocator
-
-_unicode = PluginServiceLocator.get_unicode_handler()
-UnicodeProcessor = _unicode.UnicodeProcessor
+from core.unicode import UnicodeProcessor
 from core.security import RateLimiter
 
 SAFE_FILENAME_RE = re.compile(r"^[A-Za-z0-9._\- ]{1,100}$")

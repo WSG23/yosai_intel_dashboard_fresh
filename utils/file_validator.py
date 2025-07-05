@@ -15,10 +15,7 @@ from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
-from plugins.service_locator import PluginServiceLocator
-
-_unicode = PluginServiceLocator.get_unicode_handler()
-UnicodeProcessor = _unicode.UnicodeProcessor
+from core.unicode import UnicodeProcessor
 
 logger = logging.getLogger(__name__)
 

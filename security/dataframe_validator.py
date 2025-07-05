@@ -3,11 +3,9 @@
 import pandas as pd
 from config.dynamic_config import dynamic_config
 from config.constants import DataProcessingLimits
-from plugins.service_locator import PluginServiceLocator
+from core.unicode import UnicodeProcessor
+from .validation_exceptions import ValidationError
 
-_unicode = PluginServiceLocator.get_unicode_handler()
-UnicodeProcessor = _unicode.UnicodeProcessor
-from core.exceptions import ValidationError
 import logging
 
 logger = logging.getLogger(__name__)

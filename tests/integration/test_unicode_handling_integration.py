@@ -1,8 +1,6 @@
 import pandas as pd
-from plugins.service_locator import PluginServiceLocator
-from core.unicode_processor import UnicodeProcessor, sanitize_dataframe
-
-handler = PluginServiceLocator.get_unicode_handler()
+import core.unicode as handler
+from core.unicode import UnicodeProcessor, sanitize_dataframe
 
 
 def test_unicode_handler_centralization():
