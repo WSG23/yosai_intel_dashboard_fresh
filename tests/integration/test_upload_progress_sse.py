@@ -1,7 +1,7 @@
-import pandas as pd
 import dash
 import dash_bootstrap_components as dbc
-from dash import html, dcc
+import pandas as pd
+from dash import dcc, html
 
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from pages import file_upload
@@ -24,3 +24,5 @@ def test_upload_progress_sse(dash_duo, tmp_path):
     file_input = dash_duo.find_element("#upload-data input")
     file_input.send_keys(str(csv))
     dash_duo.wait_for_text_to_equal("#upload-progress", "100%", timeout=10)
+    logs = dash_duo.driver.execute_script("return window.uploadProgressLog.length")
+    assert logs and logs > 3

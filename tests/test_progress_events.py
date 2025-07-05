@@ -1,6 +1,7 @@
 import asyncio
+
 from services.progress_events import ProgressEventManager
-from services.task_queue import create_task, clear_task
+from services.task_queue import clear_task, create_task
 
 
 def test_progress_event_generator():
@@ -13,5 +14,5 @@ def test_progress_event_generator():
     tid = create_task(sample())
     events = list(manager.generator(tid))
     clear_task(tid)
-    assert events[0] == "0"
-    assert events[-1] == "100"
+    assert events[0] == "data: 0\n\n"
+    assert events[-1] == "data: 100\n\n"
