@@ -44,7 +44,7 @@ get_service = registry.get_service
 
 
 # Register built-in optional services
-register_service("FileProcessor", "services.data_processing.file_handler:FileHandler")
+register_service("FileProcessor", "services.data_processing.file_processor:FileProcessor")
 register_service("FileHandler", "services.data_processing.file_handler:FileHandler")
 register_service(
     "get_analytics_service", "services.analytics_service:get_analytics_service"
