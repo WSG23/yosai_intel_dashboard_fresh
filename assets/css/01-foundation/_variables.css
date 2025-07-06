@@ -73,6 +73,10 @@
 
   /* Semantic color */
   --color-info: #3FA7D6;
+  --color-info-subtle: #D9EDF7;
+  --color-success-subtle: #D3F4E1;
+  --color-warning-subtle: #FFEFD2;
+  --color-critical-subtle: #F9D2D2;
   
   /* Spacing system (8pt grid) */
   --space-0: 0;
