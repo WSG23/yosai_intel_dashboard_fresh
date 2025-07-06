@@ -22,7 +22,7 @@ from core.container import Container as DIContainer
 from core.enhanced_container import ServiceContainer
 from core.plugins.auto_config import PluginAutoConfiguration
 from core.secrets_manager import validate_secrets
-from core.theme_manager import DEFAULT_THEME, apply_theme_settings, sanitize_theme
+from core.theme_manager import DEFAULT_THEME, apply_theme_settings
 from dash_csrf_plugin import CSRFMode, setup_enhanced_csrf_protection
 from services import get_analytics_service
 
@@ -501,13 +501,6 @@ def _create_json_safe_app() -> dash.Dash:
 
 def _create_main_layout() -> html.Div:
     """Create main application layout with complete integration"""
-    theme = sanitize_theme(os.getenv("YOSAI_THEME", DEFAULT_THEME))
-    class_map = {
-        "dark": "dark-mode",
-        "light": "light-mode",
-        "high-contrast": "high-contrast-mode",
-    }
-    theme_class = class_map.get(theme, "dark-mode")
     return html.Div(
         [
             # URL routing component
@@ -528,8 +521,7 @@ def _create_main_layout() -> html.Div:
             dcc.Store(id="app-state-store", data={"initial": True}),
             dcc.Store(id="theme-store", data=DEFAULT_THEME),
             html.Div(id="theme-dummy-output", style={"display": "none"}),
-        ],
-        className=theme_class,
+        ]
     )
 
 

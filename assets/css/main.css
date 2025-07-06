@@ -3,7 +3,6 @@
 /* =================================================================== */
 
 /* Critical CSS - Foundation Layer (loads first) */
-@import './01-foundation/_colors.css';
 @import './01-foundation/_variables.css';
 @import './01-foundation/_reset.css';
 @import './01-foundation/_typography.css';

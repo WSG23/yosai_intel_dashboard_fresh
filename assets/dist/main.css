@@ -581,18 +581,18 @@ button:disabled {
 }
 /* Legacy button utility classes */
 .btn-primary {
-  background-color: var(--button-bg);
-  color: var(--text-primary);
+  background-color: var(--accent-primary);
+  color: var(--text-on-accent);
 }
 .btn-primary:hover {
-  background-color: var(--accent);
+  background-color: var(--accent-primary-hover);
 }
 .btn-secondary {
-  background-color: var(--bg-secondary);
+  background-color: var(--surface-secondary);
   color: var(--text-primary);
 }
 .btn-secondary:hover {
-  background-color: var(--accent);
+  background-color: var(--surface-tertiary);
 }
 /* Button States */
 .btn--loading {
@@ -1427,21 +1427,21 @@ button:disabled {
 }
 
 .btn-primary {
-    background-color: #007bff;
-    color: #fff
+    background-color: var(--accent-primary);
+    color: var(--text-on-accent)
 }
 
 .btn-primary:hover {
-    background-color: #0056b3
+    background-color: var(--accent-primary-hover)
 }
 
 .btn-secondary {
-    background-color: #6c757d;
-    color: #fff
+    background-color: var(--surface-secondary);
+    color: var(--text-primary)
 }
 
 .btn-secondary:hover {
-    background-color: #545b62
+    background-color: var(--surface-tertiary)
 }
 
 .btn--loading {

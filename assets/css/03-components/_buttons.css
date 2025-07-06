@@ -30,7 +30,7 @@
 
 .btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow: 0 0 0 2px var(--color-accent);
 }
 
 /* General hover effect for all buttons */
@@ -155,21 +155,23 @@
 
 /* Legacy button utility classes */
 .btn-primary {
-  background-color: var(--button-bg);
-  color: var(--text-primary);
+  background-color: var(--accent-primary);
+  color: var(--text-on-accent);
 }
 
 .btn-primary:hover {
-  background-color: var(--accent);
+  background-color: var(--accent-primary-hover);
+
 }
 
 .btn-secondary {
-  background-color: var(--bg-secondary);
+  background-color: var(--surface-secondary);
   color: var(--text-primary);
 }
 
 .btn-secondary:hover {
-  background-color: var(--accent);
+  background-color: var(--surface-tertiary);
+
 }
 
 /* Button States */
