@@ -75,6 +75,7 @@ class SecurityConfig:
 
     secret_key: str = field(default_factory=lambda: os.getenv("SECRET_KEY", ""))
     session_timeout: int = 3600
+    session_timeout_by_role: Dict[str, int] = field(default_factory=dict)
     cors_origins: List[str] = field(default_factory=list)
     csrf_enabled: bool = True
     max_failed_attempts: int = 5
@@ -274,6 +275,11 @@ class ConfigManager(ConfigProviderProtocol):
             self.config.security.session_timeout = sec_data.get(
                 "session_timeout", self.config.security.session_timeout
             )
+            if "session_timeout_by_role" in sec_data:
+                self.config.security.session_timeout_by_role = sec_data.get(
+                    "session_timeout_by_role",
+                    self.config.security.session_timeout_by_role,
+                )
             self.config.security.cors_origins = sec_data.get(
                 "cors_origins", self.config.security.cors_origins
             )

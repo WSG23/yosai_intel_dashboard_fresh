@@ -15,6 +15,9 @@ database:
 
 security:
   session_timeout: 3600
+  session_timeout_by_role:
+    admin: 7200
+    basic: 1800
   csrf_enabled: false
 
 sample_files:
