@@ -11,7 +11,8 @@ from . import (
     ModalService,
     UploadProcessingService,
 )
-from .managers import ChunkedUploadManager, UploadQueueManager
+from .managers import ChunkedUploadManager
+from .upload_queue_manager import UploadQueueManager
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,9 @@ class UnifiedUploadController:
                 [
                     Output("upload-progress", "value", allow_duplicate=True),
                     Output("upload-progress", "label", allow_duplicate=True),
-                    Output("upload-progress-interval", "disabled", allow_duplicate=True),
+                    Output(
+                        "upload-progress-interval", "disabled", allow_duplicate=True
+                    ),
                 ],
                 Input("upload-data", "contents"),
                 None,
@@ -76,8 +79,12 @@ class UnifiedUploadController:
                     Output("file-info-store", "data", allow_duplicate=True),
                     Output("upload-nav", "children", allow_duplicate=True),
                     Output("current-file-info-store", "data", allow_duplicate=True),
-                    Output("column-verification-modal", "is_open", allow_duplicate=True),
-                    Output("device-verification-modal", "is_open", allow_duplicate=True),
+                    Output(
+                        "column-verification-modal", "is_open", allow_duplicate=True
+                    ),
+                    Output(
+                        "device-verification-modal", "is_open", allow_duplicate=True
+                    ),
                 ],
                 Input("url", "pathname"),
                 None,
@@ -109,9 +116,15 @@ class UnifiedUploadController:
                     Output("file-info-store", "data", allow_duplicate=True),
                     Output("upload-nav", "children", allow_duplicate=True),
                     Output("current-file-info-store", "data", allow_duplicate=True),
-                    Output("column-verification-modal", "is_open", allow_duplicate=True),
-                    Output("device-verification-modal", "is_open", allow_duplicate=True),
-                    Output("upload-progress-interval", "disabled", allow_duplicate=True),
+                    Output(
+                        "column-verification-modal", "is_open", allow_duplicate=True
+                    ),
+                    Output(
+                        "device-verification-modal", "is_open", allow_duplicate=True
+                    ),
+                    Output(
+                        "upload-progress-interval", "disabled", allow_duplicate=True
+                    ),
                 ],
                 Input("progress-done-trigger", "n_clicks"),
                 State("upload-task-id", "data"),
@@ -127,8 +140,12 @@ class UnifiedUploadController:
                 self.cb.handle_modal_dialogs,
                 [
                     Output("toast-container", "children", allow_duplicate=True),
-                    Output("column-verification-modal", "is_open", allow_duplicate=True),
-                    Output("device-verification-modal", "is_open", allow_duplicate=True),
+                    Output(
+                        "column-verification-modal", "is_open", allow_duplicate=True
+                    ),
+                    Output(
+                        "device-verification-modal", "is_open", allow_duplicate=True
+                    ),
                 ],
                 [
                     Input("verify-columns-btn-simple", "n_clicks"),
@@ -175,8 +192,12 @@ class UnifiedUploadController:
                 self.cb.save_confirmed_device_mappings,
                 [
                     Output("toast-container", "children", allow_duplicate=True),
-                    Output("column-verification-modal", "is_open", allow_duplicate=True),
-                    Output("device-verification-modal", "is_open", allow_duplicate=True),
+                    Output(
+                        "column-verification-modal", "is_open", allow_duplicate=True
+                    ),
+                    Output(
+                        "device-verification-modal", "is_open", allow_duplicate=True
+                    ),
                 ],
                 [Input("device-verify-confirm", "n_clicks")],
                 [
@@ -205,4 +226,3 @@ class UnifiedUploadController:
 
 
 __all__ = ["UnifiedUploadController"]
-

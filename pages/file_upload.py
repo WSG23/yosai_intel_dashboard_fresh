@@ -3,6 +3,7 @@
 Complete File Upload Page - Missing piece for consolidation
 Integrates with analytics system
 """
+
 import logging
 import time
 from datetime import datetime
@@ -39,10 +40,10 @@ from services.upload import (
     ChunkedUploadManager,
     ModalService,
     UploadProcessingService,
-    UploadQueueManager,
     get_trigger_id,
     save_ai_training_data,
 )
+from services.upload.upload_queue_manager import UploadQueueManager
 from services.upload.unified_controller import UnifiedUploadController
 from core.callback_manager import CallbackManager
 from core.callback_controller import CallbackEvent
@@ -321,7 +322,7 @@ class Callbacks:
             False,
             False,
         )
-        
+
         if not isinstance(contents_list, list):
             contents_list = [contents_list]
             filenames_list = [filenames_list]
@@ -790,6 +791,7 @@ class Callbacks:
                 else dbc.Alert("No file information available", color="warning")
             )
 
+
 class Callbacks:
     """Container object for upload page callbacks."""
 
@@ -801,7 +803,6 @@ class Callbacks:
         self.client_validator = ClientSideValidator()
         self.chunked = ChunkedUploadManager()
         self.queue = UploadQueueManager()
-
 
     def highlight_upload_area(self, n_clicks):
         """Highlight upload area when 'upload more' is clicked."""
@@ -843,7 +844,9 @@ class Callbacks:
                     path, rows=_get_max_display_rows()
                 )
             except Exception:
-                df_preview = _uploaded_data_store.load_dataframe(filename).head(_get_max_display_rows())
+                df_preview = _uploaded_data_store.load_dataframe(filename).head(
+                    _get_max_display_rows()
+                )
             rows = info.get("rows", len(df_preview))
             cols = info.get("columns", len(df_preview.columns))
 

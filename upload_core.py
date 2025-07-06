@@ -1,4 +1,5 @@
 """Core upload processing helpers extracted from the Dash page."""
+
 from __future__ import annotations
 
 import logging
@@ -17,9 +18,9 @@ from services.upload import (
     ClientSideValidator,
     ModalService,
     UploadProcessingService,
-    UploadQueueManager,
     get_trigger_id,
 )
+from services.upload.upload_queue_manager import UploadQueueManager
 from upload_validator import UploadValidator
 from utils.upload_store import uploaded_data_store as _uploaded_data_store
 
@@ -109,7 +110,9 @@ class UploadCore:
         task_id = create_task(async_coro)
         return task_id
 
-    def reset_upload_progress(self, contents_list: List[str] | str) -> Tuple[int, str, bool]:
+    def reset_upload_progress(
+        self, contents_list: List[str] | str
+    ) -> Tuple[int, str, bool]:
         if not contents_list:
             return 0, "0%", True
         return 0, "0%", False
@@ -178,7 +181,8 @@ class UploadCore:
                     "security_level": security[i] if i < len(security) else 5,
                     "is_entry": "entry" in (access[i] if i < len(access) else []),
                     "is_exit": "exit" in (access[i] if i < len(access) else []),
-                    "is_restricted": "is_restricted" in (special[i] if i < len(special) else []),
+                    "is_restricted": "is_restricted"
+                    in (special[i] if i < len(special) else []),
                     "confidence": 1.0,
                     "device_name": device,
                     "source": "user_confirmed",
@@ -200,6 +204,7 @@ class UploadCore:
 
             learning_service.save_user_device_mappings(df, filename, user_mappings)
             from services.ai_mapping_store import ai_mapping_store
+
             ai_mapping_store.update(user_mappings)
 
             success_alert = dbc.Toast(
@@ -220,5 +225,6 @@ class UploadCore:
                 duration=8000,
             )
             return error_alert, no_update, no_update
+
 
 __all__ = ["UploadCore"]
