@@ -460,6 +460,14 @@ python tools/migration_detector.py --scan .
 python tools/migration_validator.py
 ```
 
+The repository also includes a helper for enforcing snake_case names.
+Scan the codebase and automatically fix issues with:
+
+```bash
+python tools/naming_standardizer.py scan .
+python tools/naming_standardizer.py fix <path>
+```
+
 See [docs/migration_guide.md](docs/migration_guide.md) for step-by-step
 instructions and benefits of the new processors.
 
