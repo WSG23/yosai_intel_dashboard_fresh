@@ -1,9 +1,10 @@
 import json
-from flask import Flask
-import pytest
 
-from security.secrets_validator import SecretsValidator, register_health_endpoint
+import pytest
+from flask import Flask
+
 from core.secret_manager import SecretManager
+from security.secrets_validator import SecretsValidator, register_health_endpoint
 
 
 class DummyManager(SecretManager):

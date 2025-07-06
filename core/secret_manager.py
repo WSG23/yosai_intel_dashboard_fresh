@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import secrets
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 from core.exceptions import SecurityError
 

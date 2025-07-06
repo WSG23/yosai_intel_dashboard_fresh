@@ -1,8 +1,8 @@
 """Simple registry for optional services."""
 
+import logging
 from importlib import import_module
 from typing import Any, Dict, Optional
-import logging
 
 logger = logging.getLogger(__name__)
 

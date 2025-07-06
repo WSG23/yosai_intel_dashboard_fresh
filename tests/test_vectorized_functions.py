@@ -1,6 +1,7 @@
 import pandas as pd
-from analytics.security_patterns import SecurityPatternsAnalyzer
+
 from analytics.anomaly_detection import AnomalyDetection
+from analytics.security_patterns import SecurityPatternsAnalyzer
 
 
 def test_extract_failure_patterns_vectorized():

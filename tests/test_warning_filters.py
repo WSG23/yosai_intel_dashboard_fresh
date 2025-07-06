@@ -1,9 +1,10 @@
 import warnings
+
 import pandas as pd
 
+from analytics.access_trends import AccessTrendsAnalyzer
 from analytics.anomaly_detection import AnomalyDetector
 from analytics.security_patterns import SecurityPatternsAnalyzer
-from analytics.access_trends import AccessTrendsAnalyzer
 from analytics.user_behavior import UserBehaviorAnalyzer
 
 

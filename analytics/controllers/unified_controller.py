@@ -2,11 +2,11 @@ from __future__ import annotations
 
 """Unified analytics controller with async callbacks and security checks."""
 
-from typing import Callable, Any, Optional, List, Dict
 import logging
+from typing import Any, Callable, Dict, List, Optional
 
-from core.callback_manager import CallbackManager
 from core.callback_events import CallbackEvent
+from core.callback_manager import CallbackManager
 from core.security_validator import SecurityValidator
 
 

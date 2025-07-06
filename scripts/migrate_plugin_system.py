@@ -14,8 +14,8 @@ Pass ``--dry-run`` to preview file modifications without applying them.
 """
 from __future__ import annotations
 
-import ast
 import argparse
+import ast
 from pathlib import Path
 from typing import Dict, Set
 

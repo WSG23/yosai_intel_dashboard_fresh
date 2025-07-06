@@ -2,26 +2,26 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
 import time
+from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
 import dash_bootstrap_components as dbc
 from dash import html, no_update
 
-from utils.upload_store import uploaded_data_store as _uploaded_data_store
-from services.upload import (
-    UploadProcessingService,
-    AISuggestionService,
-    ModalService,
-    get_trigger_id,
-    ChunkedUploadManager,
-    UploadQueueManager,
-    ClientSideValidator,
-)
 from services.device_learning_service import get_device_learning_service
-from services.task_queue import create_task, get_status, clear_task
+from services.task_queue import clear_task, create_task, get_status
+from services.upload import (
+    AISuggestionService,
+    ChunkedUploadManager,
+    ClientSideValidator,
+    ModalService,
+    UploadProcessingService,
+    UploadQueueManager,
+    get_trigger_id,
+)
 from upload_validator import UploadValidator
+from utils.upload_store import uploaded_data_store as _uploaded_data_store
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +125,6 @@ class UploadCore:
                     striped=True,
                     animated=True,
                     id={"type": "file-progress", "name": fname},
-                    **{"aria-label": f"Upload progress for {fname}"},
                 )
             )
             for fname in self.queue.files

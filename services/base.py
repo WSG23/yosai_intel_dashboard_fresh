@@ -2,9 +2,9 @@
 Base service classes and interfaces for Yōsai Intel Dashboard
 """
 
+import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional, Protocol
-import logging
 
 logger = logging.getLogger(__name__)
 

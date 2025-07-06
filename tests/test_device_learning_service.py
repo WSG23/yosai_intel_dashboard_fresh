@@ -1,5 +1,7 @@
 import json
+
 import pandas as pd
+
 from services.device_learning_service import DeviceLearningService
 
 

@@ -1,9 +1,10 @@
 import logging
 from pathlib import Path
-from typing import Iterable, Dict, Any
-from core.unicode import safe_unicode_encode
+from typing import Any, Dict, Iterable
 
 from dash import html  # type: ignore
+
+from core.unicode import safe_unicode_encode
 
 logger = logging.getLogger(__name__)
 

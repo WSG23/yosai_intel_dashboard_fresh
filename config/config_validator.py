@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict
 
 from core.exceptions import ConfigurationError
 

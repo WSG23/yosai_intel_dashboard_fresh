@@ -1,6 +1,7 @@
 """Integration tests for modular AI components."""
 
 import pandas as pd
+
 from services.ai_device_generator import AIDeviceGenerator
 from services.consolidated_learning_service import get_learning_service
 

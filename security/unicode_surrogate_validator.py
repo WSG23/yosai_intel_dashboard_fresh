@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from core.exceptions import ValidationError
-from security_callback_controller import SecurityEvent, emit_security_event
 from core.unicode_processor import contains_surrogates
+from security_callback_controller import SecurityEvent, emit_security_event
 
 
 @dataclass

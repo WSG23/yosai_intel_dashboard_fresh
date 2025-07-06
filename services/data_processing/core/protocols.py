@@ -2,19 +2,20 @@
 
 from __future__ import annotations
 
-from typing import (
-    Protocol,
-    Dict,
-    Any,
-    Optional,
-    List,
-    Callable,
-    Type,
-    runtime_checkable,
-)
 from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Protocol,
+    Type,
+    runtime_checkable,
+)
+
 import pandas as pd
 
 

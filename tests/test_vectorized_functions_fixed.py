@@ -2,13 +2,16 @@
 Save this as tests/test_vectorized_functions_fixed.py
 """
 
-import pytest
 import pandas as pd
+import pytest
 
 # Fixed imports
 try:
+    from analytics.anomaly_detection import (  # Both names
+        AnomalyDetection,
+        AnomalyDetector,
+    )
     from analytics.security_patterns import SecurityPatternsAnalyzer
-    from analytics.anomaly_detection import AnomalyDetection, AnomalyDetector  # Both names
 except ImportError as e:
     pytest.skip(f"Required modules not available: {e}", allow_module_level=True)
 

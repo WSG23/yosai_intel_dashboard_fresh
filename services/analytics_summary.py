@@ -1,6 +1,7 @@
 """Public API wrappers for analytics generation."""
 
 from typing import Any, Dict
+
 import pandas as pd
 
 from .analytics_generator import AnalyticsGenerator

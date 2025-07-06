@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Fixed Main Application - No import issues"""
-import sys
 import subprocess
+import sys
+
 
 def check_and_install_critical_deps():
     critical = ['psutil', 'chardet', 'pandas', 'dash', 'flask']
@@ -19,6 +20,7 @@ check_and_install_critical_deps()
 
 import logging
 import os
+
 from flask import request
 
 try:
@@ -163,9 +165,9 @@ def main():
         # Import and create the Dash application
         try:
             from core.app_factory import create_app
-            from security.validation_middleware import ValidationMiddleware
-            from core.callback_manager import CallbackManager
             from core.callback_events import CallbackEvent
+            from core.callback_manager import CallbackManager
+            from security.validation_middleware import ValidationMiddleware
 
             app = create_app()
             middleware = ValidationMiddleware()

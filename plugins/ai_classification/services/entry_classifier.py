@@ -2,11 +2,11 @@
 
 import logging
 import re
-from typing import List, Dict, Any, Optional
 from collections import Counter
+from typing import Any, Dict, List, Optional
 
-from ..database.csv_storage import CSVStorageRepository
 from ..config import EntryClassificationConfig
+from ..database.csv_storage import CSVStorageRepository
 
 logger = logging.getLogger(__name__)
 

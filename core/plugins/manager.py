@@ -1,22 +1,21 @@
 import importlib
-import pkgutil
 import logging
+import pkgutil
 import threading
 import time
-from typing import List, Any, Dict
+from typing import Any, Dict, List
 
-from core.callback_manager import CallbackManager
-from services.data_processing.core.protocols import (
-    PluginProtocol,
-    CallbackPluginProtocol,
-    PluginStatus,
-    PluginPriority,
-)
-from .dependency_resolver import PluginDependencyResolver
-
-from core.container import Container as DIContainer
 from config.config import ConfigManager
+from core.callback_manager import CallbackManager
+from core.container import Container as DIContainer
+from services.data_processing.core.protocols import (
+    CallbackPluginProtocol,
+    PluginPriority,
+    PluginProtocol,
+    PluginStatus,
+)
 
+from .dependency_resolver import PluginDependencyResolver
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +101,12 @@ class PluginManager:
 
         try:
             ordered = self._resolver.resolve(discovered)
+        except ValueError as exc:
+            if "Circular dependency" in str(exc):
+                logger.error("Plugin dependency cycle detected: %s", exc)
+                return []
+            logger.error("Failed to resolve plugin dependencies: %s", exc)
+            return []
         except Exception as exc:
             logger.error("Failed to resolve plugin dependencies: %s", exc)
             return []

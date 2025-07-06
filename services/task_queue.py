@@ -2,7 +2,7 @@ import asyncio
 import inspect
 import threading
 import uuid
-from typing import Any, Dict, Coroutine, Callable, Awaitable
+from typing import Any, Awaitable, Callable, Coroutine, Dict
 
 # Simple in-memory async task tracker
 _tasks: Dict[str, Dict[str, Any]] = {}

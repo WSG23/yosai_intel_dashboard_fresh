@@ -1,4 +1,5 @@
 import pytest
+
 from config.unicode_handler import UnicodeQueryHandler
 
 

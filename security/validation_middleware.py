@@ -1,16 +1,14 @@
 """Flask request validation middleware."""
 
-from flask import request, Response
-from typing import Callable, Optional
+from typing import Callable, Optional, Protocol
 
-from core.callback_events import CallbackEvent
-from core.callback_manager import CallbackManager
+from flask import Response, request
 
 from config.dynamic_config import dynamic_config
-
+from core.callback_events import CallbackEvent
+from core.callback_manager import CallbackManager
 from core.exceptions import ValidationError
 from core.security import InputValidator
-from typing import Protocol
 
 
 class Validator(Protocol):
@@ -64,9 +62,8 @@ class ValidationMiddleware:
             ):
                 return None
             try:
-                from security.unicode_security_handler import UnicodeSecurityHandler
-
                 from core.unicode_decode import safe_unicode_decode
+                from security.unicode_security_handler import UnicodeSecurityHandler
 
                 raw_text = safe_unicode_decode(request.data, "utf-8")
                 sanitized = UnicodeSecurityHandler.sanitize_unicode_input(raw_text)

@@ -1,8 +1,9 @@
 import sys
+
+from config.config import ConfigManager
+from core.container import Container as DIContainer
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
 from services.data_processing.core.protocols import PluginPriority
-from core.container import Container as DIContainer
-from config.config import ConfigManager
 
 
 def test_priority_order(tmp_path):

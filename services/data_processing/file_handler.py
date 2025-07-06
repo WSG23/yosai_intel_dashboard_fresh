@@ -1,32 +1,26 @@
 """Unified file validation and security handling."""
 
 from pathlib import Path
-from typing import Any, Optional
-
-import pandas as pd
-
-from services.data_processing.unified_file_validator import (
-    safe_decode_with_unicode_handling,
-)
-from security.unicode_security_processor import (
-    sanitize_unicode_input,
-    sanitize_dataframe,
-)
-from core.unicode_processor import process_large_csv_content
-from config.dynamic_config import dynamic_config
-from core.performance import get_performance_monitor
-
-
 from typing import Any, Optional, Tuple
 
 import pandas as pd
 
-from upload_types import ValidationResult
-from services.data_processing.unified_file_validator import UnifiedFileValidator
+from config.dynamic_config import dynamic_config
+from core.performance import get_performance_monitor
+from core.unicode_processor import process_large_csv_content
+from security.unicode_security_processor import (
+    sanitize_dataframe,
+    sanitize_unicode_input,
+)
 from services.data_processing.core.exceptions import (
     FileProcessingError,
     FileValidationError,
 )
+from services.data_processing.unified_file_validator import (
+    UnifiedFileValidator,
+    safe_decode_with_unicode_handling,
+)
+from upload_types import ValidationResult
 
 
 def process_file_simple(

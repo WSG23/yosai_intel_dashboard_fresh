@@ -1,8 +1,8 @@
 """Configuration classes for the AI Classification plugin"""
 
+import os
 from dataclasses import dataclass, field
 from typing import Dict, List
-import os
 
 
 @dataclass

@@ -1,8 +1,8 @@
 import json
 
-from security.validation_middleware import ValidationMiddleware
-
 from flask import Flask
+
+from security.validation_middleware import ValidationMiddleware
 
 
 def _create_upload_app() -> Flask:

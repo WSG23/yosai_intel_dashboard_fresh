@@ -1,5 +1,5 @@
 import dash_bootstrap_components as dbc
-from dash import html, dcc
+from dash import dcc, html
 
 from components.column_verification import create_column_verification_modal
 from components.device_verification import create_device_verification_modal

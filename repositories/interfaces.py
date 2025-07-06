@@ -1,10 +1,10 @@
 """Repository interfaces for data access layer"""
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from models.entities import Person, Door, AccessEvent
+from models.entities import AccessEvent, Door, Person
 
 
 class IPersonRepository(ABC):

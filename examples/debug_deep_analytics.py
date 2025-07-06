@@ -4,11 +4,12 @@ COMPLETE DIAGNOSTIC SCRIPT - Find 150 Row Limit
 This script traces through the entire data pipeline to find where 150 rows comes from.
 """
 
-import pandas as pd
 import logging
 import sys
 import traceback
 from pathlib import Path
+
+import pandas as pd
 
 # Setup comprehensive logging
 logging.basicConfig(

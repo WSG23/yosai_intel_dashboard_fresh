@@ -1,6 +1,6 @@
 import pytest
 
-from core.security_validator import SecurityValidator, SecurityLevel
+from core.security_validator import SecurityLevel, SecurityValidator
 
 
 def test_sql_injection_validation():

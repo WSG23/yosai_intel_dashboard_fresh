@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Test complete dataset analysis without row limits."""
 
+import os
+import tempfile
+
 import pandas as pd
 import pytest
+
 from services.analytics_service import AnalyticsService
-import tempfile
-import os
 
 
 def test_complete_dataset_analysis():

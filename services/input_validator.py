@@ -9,11 +9,11 @@ exceed configured limits.  The validator returns a simple dataclass
 
 from __future__ import annotations
 
+import base64
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
-import base64
-import re
 
 from config.dynamic_config import dynamic_config
 

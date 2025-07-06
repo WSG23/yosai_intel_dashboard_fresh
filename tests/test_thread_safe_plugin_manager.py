@@ -1,12 +1,11 @@
-import time
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor
 
-from core.plugins.manager import ThreadSafePluginManager
-from core.container import Container as DIContainer
 from config.config import ConfigManager
+from core.container import Container as DIContainer
+from core.plugins.manager import ThreadSafePluginManager
 from services.data_processing.core.protocols import PluginMetadata
-
 
 for var in [
     "SECRET_KEY",

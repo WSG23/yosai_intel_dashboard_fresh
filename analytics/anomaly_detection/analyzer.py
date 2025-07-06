@@ -3,29 +3,30 @@ Fix for analytics/anomaly_detection.py
 Replace the existing file with this corrected version that exports AnomalyDetection
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, List, Any, Tuple, Optional
-from datetime import datetime
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
-from sklearn.exceptions import DataConversionWarning
 import logging
 import warnings
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import IsolationForest
+from sklearn.exceptions import DataConversionWarning
+from sklearn.preprocessing import StandardScaler
+
 from security_callback_controller import (
     SecurityEvent,
     emit_security_event,
 )
 
-
-from .types import AnomalyAnalysis
 from .data_prep import prepare_anomaly_data
+from .ml_inference import detect_ml_anomalies
 from .statistical_detection import (
+    calculate_severity_from_zscore,
     detect_frequency_anomalies,
     detect_statistical_anomalies,
-    calculate_severity_from_zscore,
 )
-from .ml_inference import detect_ml_anomalies
+from .types import AnomalyAnalysis
 
 # Ignore benign type conversion warnings emitted by scikit-learn when integer
 # features are automatically cast to floats.

@@ -1,15 +1,14 @@
 import pandas as pd
 
-from services.data_processing.file_processor import FileProcessor
-
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.data_loading_service import DataLoadingService
-
+from services.data_processing.file_processor import FileProcessor
 from services.data_validation import DataValidationService
 
 
 def _create_components():
     from flask import Flask
+
     from core.cache import cache
 
     cache.init_app(Flask(__name__))
