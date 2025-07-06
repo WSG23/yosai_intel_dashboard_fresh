@@ -58,6 +58,11 @@ jobs:
       - name: 📚 Safety (dependency CVE scan)
         run: python scripts/audit_dependencies.py
 
+      - name: 🔎 Gitleaks (secret scan)
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: "--source=."
+
       # ----- Tests -----
       - name: ✅ Run PyTest
         run: pytest -q --cov=.
