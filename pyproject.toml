@@ -5,6 +5,7 @@ mypy_path = ["."]
 
 [tool.isort]
 profile = "black"
+line_length = 88
 known_first_party = [
     "core",
     "models",
@@ -16,3 +17,9 @@ known_first_party = [
     "utils",
 ]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+[tool.black]
+line-length = 88
+target-version = ["py38", "py39", "py310", "py311"]
+include = '(\.pyi?|\.ipynb)$'
+exclude = '/(\.direnv|\.eggs|\.git|\.hg|\.ipynb_checkpoints|\.mypy_cache|\.nox|\.pytest_cache|\.ruff_cache|\.tox|\.svn|\.venv|\.vscode|__pypackages__|_build|buck-out|build|dist|venv)/'
