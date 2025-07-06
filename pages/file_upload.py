@@ -394,6 +394,7 @@ class Callbacks:
 
         async_coro = self.processing.process_files(contents_list, filenames_list)
         task_id = create_task(async_coro)
+        return task_id
 
     def reset_upload_progress(
         self, contents_list: List[str] | str
