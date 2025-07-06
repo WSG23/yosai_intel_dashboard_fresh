@@ -263,12 +263,22 @@ file processing utilities depend on `chardet` to detect text encoding.
 
 ## 🔧 Configuration
 
-This project uses **`config/config.py`** for application settings. It
-loads defaults from `config/config.yaml` and allows environment variables to
-override any value. Earlier versions used separate modules like
-`app_config.py`, `simple_config.py` and `config_manager.py`; these have been
-replaced by the unified `ConfigManager` in `config/config.py`. Register the
-configuration with the DI container so it can be resolved from anywhere:
+Configuration is managed by **`config.config.ConfigManager`**. The loader
+selects a YAML file based on the `YOSAI_ENV` or `YOSAI_CONFIG_FILE`
+environment variables and applies environment overrides. Earlier versions used
+separate modules like `app_config.py`, `simple_config.py` and
+`config_manager.py`; these have been replaced by this unified manager. Register
+the configuration with the DI container so it can be resolved from anywhere:
+
+```python
+from config.config import ConfigManager
+
+config = ConfigManager()
+db_cfg = config.get_database_config()
+```
+
+To share the configuration across the application, register the manager with
+the dependency injection container:
 
 ```python
 from core.container import Container
@@ -362,8 +372,8 @@ YOSAI_APP_MODE=simple python app.py
 
 #### Dynamic Constants
 
-The new `DynamicConfigManager` reads several optional environment variables to
-override security and performance defaults:
+`ConfigManager` integrates with the dynamic configuration helper to read a few
+optional environment variables that tweak security and performance settings:
 
 - `PBKDF2_ITERATIONS` – password hashing iterations
 - `RATE_LIMIT_API` – number of requests allowed per window

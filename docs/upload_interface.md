@@ -10,11 +10,15 @@ Supported file types are CSV and JSON. Large files are streamed to avoid exhaust
 
 ### Chunk Size
 
-Large CSV files are processed in chunks. The default chunk size is 50,000 rows and is configured via `dynamic_config.analytics.chunk_size`. You can override it at runtime by setting the environment variable `ANALYTICS_CHUNK_SIZE`.
+Large CSV files are processed in chunks. The default chunk size is configured
+under `uploads.chunk_size` and can be overridden by setting the environment
+variable `UPLOAD_CHUNK_SIZE`.
 
 ### Queue Limits
 
-Background tasks such as analytics processing and file saves run in a thread pool. The number of concurrent workers is controlled by `dynamic_config.analytics.max_workers` (default `4`). Adjust the `MAX_WORKERS` environment variable to increase or decrease the processing queue.
+Background tasks such as analytics processing and file saves run in a thread
+pool. The worker count comes from `uploads.max_parallel_uploads` (default `4`).
+Use the `MAX_PARALLEL_UPLOADS` environment variable to adjust this value.
 
 ## Mobile & Accessibility Guidelines
 
