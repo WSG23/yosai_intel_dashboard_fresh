@@ -20,13 +20,17 @@ from core.unicode import (
     sanitize_dataframe,
     sanitize_unicode_input,
 )
-from services.input_validator import InputValidator, ValidationResult
+from upload_validator import UploadValidator
+from upload_types import ValidationResult
 
 
 def _lazy_string_validator() -> "StringValidator":
     """Import ``InputValidator`` from :mod:`core.security` lazily."""
     from core.security import InputValidator as StringValidator
+
     return StringValidator()
+
+
 from core.exceptions import ValidationError
 
 
@@ -67,7 +71,9 @@ def safe_decode_file(contents: str) -> Optional[bytes]:
         raise
 
 
-def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
+def process_dataframe(
+    decoded: bytes, filename: str
+) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
     try:
         filename_lower = filename.lower()
         monitor = get_performance_monitor()
@@ -90,7 +96,11 @@ def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFr
                     for chunk in reader:
                         monitor.throttle_if_needed()
                         chunks.append(chunk)
-                    df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+                    df = (
+                        pd.concat(chunks, ignore_index=True)
+                        if chunks
+                        else pd.DataFrame()
+                    )
                     return df, None
                 except UnicodeDecodeError:
                     continue
@@ -108,7 +118,11 @@ def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFr
                     for chunk in reader:
                         monitor.throttle_if_needed()
                         chunks.append(chunk)
-                    df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+                    df = (
+                        pd.concat(chunks, ignore_index=True)
+                        if chunks
+                        else pd.DataFrame()
+                    )
                     return df, None
                 except UnicodeDecodeError:
                     continue
@@ -132,13 +146,21 @@ def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFr
 
 def validate_dataframe_content(df: pd.DataFrame) -> Dict[str, Any]:
     if df.empty:
-        return {"valid": False, "error": "DataFrame is empty", "issues": ["empty_dataframe"]}
+        return {
+            "valid": False,
+            "error": "DataFrame is empty",
+            "issues": ["empty_dataframe"],
+        }
 
     issues = []
     warnings = []
 
     if len(df.columns) == 0:
-        return {"valid": False, "error": "DataFrame has no columns", "issues": ["no_columns"]}
+        return {
+            "valid": False,
+            "error": "DataFrame has no columns",
+            "issues": ["no_columns"],
+        }
 
     if len(df.columns) != len(set(df.columns)):
         issues.append("duplicate_columns")
@@ -153,7 +175,9 @@ def validate_dataframe_content(df: pd.DataFrame) -> Dict[str, Any]:
     null_cells = df.isnull().sum().sum()
     empty_string_cells = (df == "").sum().sum()
     null_ratio = null_cells / total_cells if total_cells > 0 else 0
-    empty_ratio = (null_cells + empty_string_cells) / total_cells if total_cells > 0 else 0
+    empty_ratio = (
+        (null_cells + empty_string_cells) / total_cells if total_cells > 0 else 0
+    )
 
     if empty_ratio > 0.5:
         issues.append("high_empty_ratio")
@@ -162,14 +186,18 @@ def validate_dataframe_content(df: pd.DataFrame) -> Dict[str, Any]:
     suspicious_cols = [
         col
         for col in df.columns
-        if any(prefix in str(col).lower() for prefix in ["=", "+", "-", "@", "cmd", "system"])
+        if any(
+            prefix in str(col).lower()
+            for prefix in ["=", "+", "-", "@", "cmd", "system"]
+        )
     ]
     if suspicious_cols:
         issues.append("suspicious_column_names")
         warnings.append(f"Suspicious column names detected: {suspicious_cols}")
 
     return {
-        "valid": len(issues) == 0 or all(issue in ["empty_columns", "high_empty_ratio"] for issue in issues),
+        "valid": len(issues) == 0
+        or all(issue in ["empty_columns", "high_empty_ratio"] for issue in issues),
         "rows": len(df),
         "columns": len(df.columns),
         "null_ratio": null_ratio,
@@ -180,6 +208,7 @@ def validate_dataframe_content(df: pd.DataFrame) -> Dict[str, Any]:
         "memory_usage": df.memory_usage(deep=True).sum(),
     }
 
+
 class UnifiedFileValidator:
     """Combine all file validation responsibilities into a single class."""
 
@@ -188,11 +217,15 @@ class UnifiedFileValidator:
     def __init__(self, max_size_mb: Optional[int] = None) -> None:
         self.max_size_mb = max_size_mb or dynamic_config.security.max_upload_mb
         self._string_validator = _lazy_string_validator()
-        self._basic_validator = InputValidator(self.max_size_mb)
+        self._basic_validator = UploadValidator(self.max_size_mb)
 
     def _sanitize_string(self, value: str) -> str:
         cleaned = sanitize_unicode_input(str(value))
-        if re.search(r"(<script.*?>.*?</script>|<.*?on\w+\s*=|javascript:|data:text/html|[<>])", cleaned, re.IGNORECASE | re.DOTALL):
+        if re.search(
+            r"(<script.*?>.*?</script>|<.*?on\w+\s*=|javascript:|data:text/html|[<>])",
+            cleaned,
+            re.IGNORECASE | re.DOTALL,
+        ):
             raise ValidationError("Potentially dangerous characters detected")
         result = self._string_validator.validate_input(cleaned, "input")
         if not result["valid"]:
