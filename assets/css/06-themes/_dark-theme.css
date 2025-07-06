@@ -3,7 +3,7 @@
 /* =================================================================== */
 
 /* Dark theme is the default, but we can override for other themes */
-.dark-mode {
+html.dark-mode {
   --surface-app: var(--color-gray-850);       /* was 900 */
   --surface-primary: var(--color-gray-800);   /* was 850 */
   --surface-secondary: var(--color-gray-750); /* was 800 */
@@ -14,7 +14,7 @@
 }
 
 /* Light theme overrides */
-.light-mode {
+html.light-mode {
   --surface-app: var(--color-white);
   --surface-primary: var(--color-gray-50);
   --surface-secondary: var(--color-gray-100);
@@ -28,7 +28,7 @@
 }
 
 /* High contrast theme */
-.high-contrast-mode {
+html.high-contrast-mode {
   --surface-app: var(--color-black);
   --surface-primary: var(--color-black);
   --surface-secondary: var(--color-gray-900);
@@ -40,7 +40,7 @@
 }
 
 /* Executive presentation theme - higher contrast, larger text */
-.executive-mode {
+html.executive-mode {
   --text-base: 1.125rem;    /* Larger base text */
   --text-lg: 1.25rem;
   --text-xl: 1.5rem;

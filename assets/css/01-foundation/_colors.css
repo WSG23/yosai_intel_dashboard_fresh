@@ -15,7 +15,7 @@
   --graph-series-5: #f2cc8f;
 }
 
-.dark-mode {
+html.dark-mode {
   --bg-primary: #1c1c1e;
   --bg-secondary: #2c2c2e;
   --text-primary: #f5f5f7;

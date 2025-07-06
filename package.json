@@ -8,7 +8,7 @@
     "postcss": "^8.4.24",
     "postcss-cli": "^10.1.0",
     "postcss-import": "^15.1.0",
-    "@fullhuman/postcss-purgecss": "^5.1.0",
+    "@fullhuman/postcss-purgecss": "^7.0.2",
     "pa11y": "^9.0.0"
   },
   "scripts": {
