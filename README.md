@@ -76,7 +76,7 @@ with this Python release and newer.
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. **Install dependencies:**
+3. **Install Python dependencies:**
    ```bash
    ./scripts/setup.sh
    ```
@@ -85,15 +85,20 @@ with this Python release and newer.
    installed **before** running Pyright or using the Pylance extension. Missing
    packages will otherwise appear as unresolved imports.
 
-4. **Set up environment:**
+4. **Install Node dependencies:**
+   PostCSS and other build tools live in `package.json`.
+   ```bash
+   npm install
+   ```
+   These packages are required for the CSS build step.
+5. **Set up environment:**
    ```bash
    cp .env.example .env
    # Generate random development secrets
    python scripts/generate_dev_secrets.py >> .env
    # Edit .env with your configuration (e.g. set HOST and database info)
    ```
-
-5. **Build the CSS bundle:**
+6. **Build the CSS bundle:**
    Ensure `node` and `npm` are available if you use the npm command.
    ```bash
    npm run build-css  # or `python tools/build_css.py`
@@ -103,7 +108,7 @@ with this Python release and newer.
    be edited directly. Modify source files under `assets/css/` and rerun the
    build when needed.
 
-6. **Run the application (development only):**
+7. **Run the application (development only):**
    The app now loads variables from `.env` automatically.
    ```bash
    python app.py  # use only for local development
@@ -114,7 +119,7 @@ with this Python release and newer.
    # or
    uwsgi --module wsgi:server
    ```
-7. **Access the dashboard:**
+8. **Access the dashboard:**
    Open http://127.0.0.1:8050 in your browser. The application runs over
    plain HTTP by default; configure a reverse proxy with TLS if you need HTTPS.
    The development server does not support HTTPS, so be sure to visit

@@ -8,6 +8,7 @@ Install the core and development dependencies:
 
 ```bash
 ./scripts/setup.sh
+npm install
 pip install pre-commit
 pre-commit install
 ```
