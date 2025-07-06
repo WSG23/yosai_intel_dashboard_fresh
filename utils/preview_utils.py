@@ -4,6 +4,7 @@ from typing import Any, List, Dict
 import pandas as pd
 
 from security.unicode_security_processor import sanitize_unicode_input
+from services.analytics_service import MAX_DISPLAY_ROWS
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,8 @@ def serialize_dataframe_preview(df: pd.DataFrame) -> List[Dict[str, Any]]:
     returned.
     """
     try:
-        limited_df = df.head(99)  # clamp DataFrame to <100 rows
+        df_limited = df.head(MAX_DISPLAY_ROWS) if len(df) > MAX_DISPLAY_ROWS else df
+        limited_df = df_limited.head(99)  # clamp DataFrame to <100 rows
         preview = limited_df.head(5).to_dict("records")
         preview = [
             {k: sanitize_unicode_input(v) for k, v in row.items()}

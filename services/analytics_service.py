@@ -39,6 +39,10 @@ ensure_analytics_config()
 
 logger = logging.getLogger(__name__)
 
+from config.dynamic_config import dynamic_config
+
+MAX_DISPLAY_ROWS = dynamic_config.analytics.max_display_rows
+
 
 class AnalyticsService:
     """Complete analytics service that integrates all data sources"""

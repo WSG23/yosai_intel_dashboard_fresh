@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+from services.analytics_service import MAX_DISPLAY_ROWS
 
 from services.data_processing.file_processor import UnicodeFileProcessor
 
@@ -32,7 +33,8 @@ class AsyncUploadProcessor:
     async def preview_from_parquet(self, path: str | Path, *, rows: int = 10) -> pd.DataFrame:
         """Return the first ``rows`` of a parquet file asynchronously."""
         df = await self.read_parquet(path)
-        return df.head(rows)
+        df_limited = df.head(MAX_DISPLAY_ROWS) if len(df) > MAX_DISPLAY_ROWS else df
+        return df_limited.head(rows)
 
 
 __all__ = ["AsyncUploadProcessor"]
