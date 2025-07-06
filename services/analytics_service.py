@@ -92,6 +92,7 @@ class AnalyticsService(AnalyticsProviderProtocol):
                 DatabaseManager,
                 DatabaseConfig as ManagerConfig,
             )
+
             if self._config_provider is not None:
                 cfg = self._config_provider.get_database_config()
             else:
