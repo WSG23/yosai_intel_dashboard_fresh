@@ -47,9 +47,9 @@ def test_theme_persistence_on_reload(dash_duo):
     assert dropdown.get_attribute("value") == DEFAULT_THEME
 
     dash_duo.select_dcc_dropdown("#theme-dropdown", "light")
-    dash_duo.wait_for(lambda: dash_duo.find_element("html").get_attribute("data-theme") == "light")
+    dash_duo.wait_for(lambda: "light-mode" in dash_duo.find_element("html").get_attribute("class"))
 
     dash_duo.driver.refresh()
-    dash_duo.wait_for(lambda: dash_duo.find_element("html").get_attribute("data-theme") == "light")
+    dash_duo.wait_for(lambda: "light-mode" in dash_duo.find_element("html").get_attribute("class"))
     dropdown = dash_duo.find_element("#theme-dropdown")
     assert dropdown.get_attribute("value") == "light"

@@ -122,7 +122,7 @@ def get_analysis_buttons_section():
                     dbc.Col(
                         [
                             dbc.Button(
-                                "🔒 Security Analysis",
+                                "Security Analysis",
                                 id="security-btn",
                                 color="danger",
                                 outline=True,
@@ -135,7 +135,7 @@ def get_analysis_buttons_section():
                     dbc.Col(
                         [
                             dbc.Button(
-                                "📈 Trends Analysis",
+                                "Trends Analysis",
                                 id="trends-btn",
                                 color="info",
                                 outline=True,
@@ -148,7 +148,7 @@ def get_analysis_buttons_section():
                     dbc.Col(
                         [
                             dbc.Button(
-                                "👤 Behavior Analysis",
+                                "Behavior Analysis",
                                 id="behavior-btn",
                                 color="warning",
                                 outline=True,
@@ -161,7 +161,7 @@ def get_analysis_buttons_section():
                     dbc.Col(
                         [
                             dbc.Button(
-                                "🚨 Anomaly Detection",
+                                "Anomaly Detection",
                                 id="anomaly-btn",
                                 color="dark",
                                 outline=True,
@@ -174,7 +174,7 @@ def get_analysis_buttons_section():
                     dbc.Col(
                         [
                             dbc.Button(
-                                "🤖 AI Suggestions",
+                                "AI Suggestions",
                                 id="suggests-btn",
                                 color="success",
                                 outline=True,
@@ -187,7 +187,7 @@ def get_analysis_buttons_section():
                     dbc.Col(
                         [
                             dbc.Button(
-                                "💰 Data Quality",
+                                "Data Quality",
                                 id="quality-btn",
                                 color="secondary",
                                 outline=True,
@@ -509,7 +509,7 @@ def create_limited_analysis_display(
     """Create limited analysis display when service unavailable"""
     return dbc.Card(
         [
-            dbc.CardHeader([html.H5(f"⚠️ Limited {analysis_type.title()} Analysis")]),
+            dbc.CardHeader([html.H5(f"Limited {analysis_type.title()} Analysis")]),
             dbc.CardBody(
                 [
                     dbc.Alert(

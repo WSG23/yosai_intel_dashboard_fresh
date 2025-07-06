@@ -79,19 +79,19 @@
 
 /* Legacy alert utility classes */
 .alert-success {
-  color: #155724;
-  background-color: #d4edda;
-  border-color: #c3e6cb;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  border-color: var(--accent);
 }
 
 .alert-danger {
-  color: #721c24;
-  background-color: #f8d7da;
-  border-color: #f5c6cb;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  border-color: var(--accent);
 }
 
 .alert-warning {
-  color: #856404;
-  background-color: #fff3cd;
-  border-color: #ffeaa7;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  border-color: var(--accent);
 }

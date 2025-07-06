@@ -136,6 +136,6 @@
 }
 
 /* Dark theme adjustments */
-[data-theme="dark"] .modal-overlay {
+.dark-mode .modal-overlay {
     background-color: rgba(0, 0, 0, 0.7);
 }
