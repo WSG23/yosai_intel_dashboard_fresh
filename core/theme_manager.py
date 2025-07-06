@@ -40,10 +40,10 @@ def generate_theme_script() -> str:
 
         function applyTheme(theme) {{
             const clean = sanitize(theme);
-            document.documentElement.dataset.theme = clean;
-            document.querySelectorAll('[data-theme]').forEach(el => {{
-                el.dataset.theme = clean;
-            }});
+            const html = document.documentElement;
+            html.classList.remove('light-mode', 'dark-mode', 'high-contrast-mode');
+            const classMap = {{ 'dark': 'dark-mode', 'light': 'light-mode', 'high-contrast': 'high-contrast-mode' }};
+            html.classList.add(classMap[clean] || 'dark-mode');
             localStorage.setItem('app-theme', clean);
             document.dispatchEvent(new CustomEvent('themeChange', {{ detail: clean }}));
         }}

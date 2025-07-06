@@ -8,9 +8,9 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: 0.5rem 1rem;
+  padding: var(--space-3) var(--space-5);
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   font-family: var(--font-family-system);
   font-weight: var(--font-weight-medium);
   text-decoration: none;
@@ -20,6 +20,7 @@
   white-space: nowrap;
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn:disabled {
@@ -28,8 +29,8 @@
 }
 
 .btn:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent);
 }
 
 /* General hover effect for all buttons */
@@ -143,31 +144,32 @@
 
 /* General hover effect for all buttons */
 .btn:hover:not(:disabled) {
-  filter: brightness(1.05);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .btn:active {
   transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Legacy button utility classes */
 .btn-primary {
-  background-color: #007bff;
-  color: white;
+  background-color: var(--button-bg);
+  color: var(--text-primary);
 }
 
 .btn-primary:hover {
-  background-color: #0056b3;
+  background-color: var(--accent);
 }
 
 .btn-secondary {
-  background-color: #6c757d;
-  color: white;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .btn-secondary:hover {
-  background-color: #545b62;
+  background-color: var(--accent);
 }
 
 /* Button States */

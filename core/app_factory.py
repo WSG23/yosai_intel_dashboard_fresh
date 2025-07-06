@@ -683,7 +683,7 @@ def _get_upload_page() -> Any:
     except Exception:
         logger.exception("Upload page failed to load")
     return _create_placeholder_page(
-        "📁 File Upload",
+        "File Upload",
         "Upload page failed to load",
         "There was an error loading the upload page. Check logs for details.",
     )
