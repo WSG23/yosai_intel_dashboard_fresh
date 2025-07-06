@@ -125,7 +125,6 @@ class UploadCore:
                     striped=True,
                     animated=True,
                     id={"type": "file-progress", "name": fname},
-                    **{"aria-label": f"Upload progress for {fname}"},
                 )
             )
             for fname in self.queue.files
