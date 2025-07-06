@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import secrets
+import logging
 from typing import Any, Dict, List, Optional
 
 from core.exceptions import SecurityError
@@ -45,10 +46,43 @@ class SecretManager:
         return key
 
     def _get_aws_secret(self, key: str) -> Optional[str]:
-        raise NotImplementedError("AWS secrets backend not configured")
+        """Retrieve a secret from AWS Secrets Manager."""
+        try:
+            import base64
+            import boto3
+            client = boto3.client(
+                "secretsmanager",
+                region_name=os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
+            )
+            resp = client.get_secret_value(SecretId=key)
+            if "SecretString" in resp:
+                return resp["SecretString"]
+            if "SecretBinary" in resp:
+                return base64.b64decode(resp["SecretBinary"]).decode("utf-8")
+        except Exception as exc:
+            logging.getLogger(__name__).warning("AWS secret fetch failed: %s", exc)
+        return None
 
     def _get_vault_secret(self, key: str) -> Optional[str]:
-        raise NotImplementedError("Vault secrets backend not configured")
+        """Retrieve a secret from HashiCorp Vault."""
+        try:
+            import hvac
+
+            url = os.getenv("VAULT_ADDR")
+            token = os.getenv("VAULT_TOKEN")
+            if not url or not token:
+                return None
+
+            client = hvac.Client(url=url, token=token)
+            if "#" in key:
+                path, field = key.split("#", 1)
+            else:
+                path, field = key, "value"
+            resp = client.secrets.kv.v2.read_secret_version(path=path)
+            return resp["data"]["data"].get(field)
+        except Exception as exc:
+            logging.getLogger(__name__).warning("Vault secret fetch failed: %s", exc)
+        return None
 
 
 def validate_secrets() -> Dict[str, Any]:
