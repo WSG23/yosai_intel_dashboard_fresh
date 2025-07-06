@@ -18,6 +18,14 @@ from core.secret_manager import SecretManager
 from .config_validator import ConfigValidator
 from .dynamic_config import dynamic_config
 from .environment import get_environment, select_config_file
+from .constants import (
+    DEFAULT_APP_HOST,
+    DEFAULT_APP_PORT,
+    DEFAULT_DB_HOST,
+    DEFAULT_DB_PORT,
+    DEFAULT_CACHE_HOST,
+    DEFAULT_CACHE_PORT,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +44,8 @@ class AppConfig:
 
     title: str = "Yōsai Intel Dashboard"
     debug: bool = True
-    host: str = "127.0.0.1"
-    port: int = 8050
+    host: str = DEFAULT_APP_HOST
+    port: int = DEFAULT_APP_PORT
     secret_key: str = field(default_factory=lambda: os.getenv("SECRET_KEY", ""))
     environment: str = "development"
 
@@ -47,8 +55,8 @@ class DatabaseConfig:
     """Database configuration"""
 
     type: str = "sqlite"
-    host: str = "localhost"
-    port: int = 5432
+    host: str = DEFAULT_DB_HOST
+    port: int = DEFAULT_DB_PORT
     name: str = "yosai.db"
     user: str = "user"
     password: str = ""
@@ -127,8 +135,8 @@ class CacheConfig:
     """Cache backend settings"""
 
     type: str = "memory"
-    host: str = "localhost"
-    port: int = 6379
+    host: str = DEFAULT_CACHE_HOST
+    port: int = DEFAULT_CACHE_PORT
     database: int = 0
     timeout_seconds: int = 300
     key_prefix: str = "yosai:"
@@ -495,7 +503,7 @@ class ConfigManager(ConfigProviderProtocol):
             ):
                 warnings.append("Production database requires password")
 
-            if self.config.app.host == "127.0.0.1":
+            if self.config.app.host == DEFAULT_APP_HOST:
                 warnings.append("Production should not run on localhost")
 
         if self.config.app.debug and self.config.app.host == "0.0.0.0":

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Protocol
 
 from .database_exceptions import ConnectionValidationFailed, DatabaseError
+from .constants import DEFAULT_DB_HOST, DEFAULT_DB_PORT
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +23,8 @@ class DatabaseConfig:
     """Database configuration dataclass"""
 
     type: str = "sqlite"
-    host: str = "localhost"
-    port: int = 5432
+    host: str = DEFAULT_DB_HOST
+    port: int = DEFAULT_DB_PORT
     name: str = "yosai.db"
     user: str = "user"
     password: str = ""
