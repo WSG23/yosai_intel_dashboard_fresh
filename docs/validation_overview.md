@@ -55,3 +55,19 @@ from core.unicode import get_text_processor
 processor = get_text_processor()
 cleaned = processor.safe_encode_text(user_input)
 ```
+
+## ClientSideValidator
+
+Uploads are checked in the browser before being sent to the server.  The
+`ClientSideValidator` mirrors these rules on the server so behaviour is
+consistent regardless of where validation occurs.
+
+Key rules enforced:
+
+- **Magic number checks** – file headers must match their extension.
+- **Size limits** – configurable per file type with a global fallback.
+- **Duplicate detection** – repeated filenames are rejected in a single batch.
+- **Custom hooks** – optional callbacks allow bespoke validation logic.
+
+The validator exposes a JSON configuration via `to_json()` used by the
+`upload-handlers.js` script to apply the same checks client-side.
