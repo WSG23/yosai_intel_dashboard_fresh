@@ -32,8 +32,10 @@ to your organization policy.
 ## Docker and Cloud Secret Usage
 
 Secrets can be supplied as Docker secrets when running with Docker
-Compose. Mount files under `/run/secrets` and the application will read
-them via environment variables. For cloud deployments the
+Compose. The production compose file expects `secrets/db_password.txt`
+and `secrets/secret_key.txt` which are mounted under `/run/secrets`. The
+application reads these files and exposes them through environment
+variables. For cloud deployments the
 `SecretManager` supports `env`, `aws`, and `vault` backends. Set the
 `SECRET_BACKEND` variable to select the desired provider.
 

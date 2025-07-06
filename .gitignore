@@ -94,7 +94,10 @@ Desktop.ini
 .env.development
 .env.staging
 *.key
-secrets/
+secrets/*
+!secrets/
+!secrets/*.txt
+!secrets/README.md
 
 # Training data
 data/training/

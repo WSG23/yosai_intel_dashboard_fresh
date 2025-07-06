@@ -185,9 +185,10 @@ Using Docker Compose:
 docker-compose -f docker-compose.prod.yml up -d
 ```
 Whenever you modify the code, rebuild the Docker image with `docker-compose build` (or `docker-compose up --build`) so the running container picks up your changes.
-Docker Compose reads variables from a `.env` file in this directory. Set
-`DB_PASSWORD` **and** `SECRET_KEY` there (or export them in your shell) before
-starting the services.
+Docker Compose reads sensitive values from files under the `secrets/`
+directory. Create `secrets/db_password.txt` and `secrets/secret_key.txt`
+containing your database password and Flask secret key before starting the
+services. The files will be mounted into `/run/secrets` automatically.
 
 Alternatively you can launch the app with Gunicorn or uWSGI. This is the
 recommended approach for any production deployment. A sample Gunicorn
