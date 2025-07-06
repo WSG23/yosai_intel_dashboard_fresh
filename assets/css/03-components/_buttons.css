@@ -155,12 +155,13 @@
 
 /* Legacy button utility classes */
 .btn-primary {
-  background-color: var(--color-primary);
-  color: var(--text-primary);
+  background-color: var(--accent-primary);
+  color: var(--text-on-accent);
 }
 
 .btn-primary:hover {
-  background-color: var(--color-accent);
+  background-color: var(--accent-primary-hover);
+
 }
 
 .btn-secondary {
@@ -169,7 +170,8 @@
 }
 
 .btn-secondary:hover {
-  background-color: var(--color-accent);
+  background-color: var(--surface-tertiary);
+
 }
 
 /* Button States */
