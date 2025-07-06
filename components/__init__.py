@@ -324,7 +324,7 @@ def create_file_uploader() -> html.Div:
         [
             dbc.CardBody(
                 [
-                    html.H5("📁 Upload Data Files", className="mb-3"),
+                    html.H5("Upload Data Files", className="mb-3"),
                     dcc.Upload(
                         id="upload-data",
                         max_size=(
@@ -380,7 +380,7 @@ def create_error_alert(message: str, title: str = "Error") -> dbc.Alert:
     """Create error alert component"""
     return dbc.Alert(
         [
-            html.H6(f"⚠️ {title}", className="alert-heading"),
+            html.H6(title, className="alert-heading"),
             html.P(message, className="mb-0"),
         ],
         color="danger",
@@ -391,7 +391,7 @@ def create_success_alert(message: str, title: str = "Success") -> dbc.Alert:
     """Create success alert component"""
     return dbc.Alert(
         [
-            html.H6(f"✅ {title}", className="alert-heading"),
+            html.H6(title, className="alert-heading"),
             html.P(message, className="mb-0"),
         ],
         color="success",
@@ -402,7 +402,7 @@ def create_info_alert(message: str, title: str = "Info") -> dbc.Alert:
     """Create info alert component"""
     return dbc.Alert(
         [
-            html.H6(f"ℹ️ {title}", className="alert-heading"),
+            html.H6(title, className="alert-heading"),
             html.P(message, className="mb-0"),
         ],
         color="info",

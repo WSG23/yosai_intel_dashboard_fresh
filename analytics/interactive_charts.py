@@ -21,12 +21,12 @@ class SecurityChartsGenerator:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.color_palette = {
-            "primary": "#1f77b4",
-            "success": "#2ca02c",
-            "warning": "#ff7f0e",
-            "danger": "#d62728",
-            "info": "#17a2b8",
-            "secondary": "#6c757d",
+            "primary": "var(--graph-series-1)",
+            "success": "var(--graph-series-3)",
+            "warning": "var(--graph-series-2)",
+            "danger": "var(--graph-series-4)",
+            "info": "var(--graph-series-5)",
+            "secondary": "var(--graph-series-2)",
         }
 
     def generate_all_charts(self, df: pd.DataFrame) -> Dict[str, Any]:
@@ -75,28 +75,28 @@ class SecurityChartsGenerator:
             {
                 "name": "Perimeter",
                 "doors": ["DOOR001"],
-                "color": "#ff7f0e",
+                "color": "var(--graph-series-2)",
                 "radius": 100,
             },
             {
                 "name": "General Access",
                 "doors": ["DOOR004"],
-                "color": "#2ca02c",
+                "color": "var(--graph-series-3)",
                 "radius": 80,
             },
             {
                 "name": "Restricted",
                 "doors": ["DOOR003"],
-                "color": "#ff7f0e",
+                "color": "var(--graph-series-2)",
                 "radius": 60,
             },
             {
                 "name": "Critical",
                 "doors": ["DOOR002", "DOOR005"],
-                "color": "#d62728",
+                "color": "var(--graph-series-4)",
                 "radius": 40,
             },
-            {"name": "Core", "doors": [], "color": "#1f77b4", "radius": 20},
+            {"name": "Core", "doors": [], "color": "var(--graph-series-1)", "radius": 20},
         ]
 
         # Calculate metrics for each layer
@@ -280,7 +280,7 @@ class SecurityChartsGenerator:
                 x=layers,
                 y=[layer["failed_attempts"] for layer in layer_metrics],
                 marker_color=[
-                    "#d62728" if layer["failed_attempts"] > 0 else "#2ca02c"
+                    "var(--graph-series-4)" if layer["failed_attempts"] > 0 else "var(--graph-series-3)"
                     for layer in layer_metrics
                 ],
                 name="Failed Attempts",
@@ -310,7 +310,7 @@ class SecurityChartsGenerator:
                     labels=result_counts.index,
                     values=result_counts.values,
                     hole=0.4,
-                    marker_colors=["#2ca02c", "#d62728"],
+                    marker_colors=["var(--graph-series-3)", "var(--graph-series-4)"],
                     hovertemplate="<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>",
                 )
             ]
@@ -339,7 +339,7 @@ class SecurityChartsGenerator:
                 x=daily_success.index,
                 y=daily_success.values,
                 mode="lines+markers",
-                line=dict(color="#1f77b4", width=2),
+                line=dict(color="var(--graph-series-1)", width=2),
                 marker=dict(size=6),
                 name="Success Rate",
             )
@@ -411,7 +411,7 @@ class SecurityChartsGenerator:
             vertical_spacing=0.1,
         )
 
-        colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"]
+        colors = ["var(--graph-series-1)", "var(--graph-series-2)", "var(--graph-series-3)", "var(--graph-series-4)"]
         for i, (col, color) in enumerate(zip(daily_metrics.columns, colors)):
             row = (i // 2) + 1
             col_pos = (i % 2) + 1
@@ -439,7 +439,7 @@ class SecurityChartsGenerator:
 
         # Color bars based on business hours
         colors = [
-            "#ff7f0e" if hour < 8 or hour > 18 else "#1f77b4"
+            "var(--graph-series-2)" if hour < 8 or hour > 18 else "var(--graph-series-1)"
             for hour in hourly_counts.index
         ]
 
@@ -467,7 +467,7 @@ class SecurityChartsGenerator:
         weekend_comparison.columns = ["Weekday", "Weekend"]
 
         charts["weekend_comparison"] = go.Figure()
-        for col, color in zip(weekend_comparison.columns, ["#1f77b4", "#ff7f0e"]):
+        for col, color in zip(weekend_comparison.columns, ["var(--graph-series-1)", "var(--graph-series-2)"]):
             charts["weekend_comparison"].add_trace(
                 go.Scatter(
                     x=weekend_comparison.index,
@@ -507,7 +507,7 @@ class SecurityChartsGenerator:
             go.Histogram(
                 x=user_activity["Total Events"],
                 nbinsx=20,
-                marker_color="#1f77b4",
+                marker_color="var(--graph-series-1)",
                 opacity=0.7,
                 hovertemplate="Events: %{x}<br>Users: %{y}<extra></extra>",
             )
@@ -524,7 +524,7 @@ class SecurityChartsGenerator:
 
         # Color code by success rate
         colors = [
-            "#d62728" if sr < 80 else "#ff7f0e" if sr < 95 else "#2ca02c"
+            "var(--graph-series-4)" if sr < 80 else "var(--graph-series-2)" if sr < 95 else "var(--graph-series-3)"
             for sr in top_users["Success Rate"]
         ]
 
@@ -600,7 +600,7 @@ class SecurityChartsGenerator:
             go.Bar(
                 x=door_stats.index,
                 y=door_stats["Total Events"],
-                marker_color="#1f77b4",
+                marker_color="var(--graph-series-1)",
                 hovertemplate="Door: %{x}<br>Events: %{y}<br>Users: %{customdata}<extra></extra>",
                 customdata=door_stats["Unique Users"],
             )
@@ -616,7 +616,7 @@ class SecurityChartsGenerator:
 
         # Color code doors by success rate
         colors = [
-            "#d62728" if sr < 80 else "#ff7f0e" if sr < 95 else "#2ca02c"
+            "var(--graph-series-4)" if sr < 80 else "var(--graph-series-2)" if sr < 95 else "var(--graph-series-3)"
             for sr in door_stats["Success Rate"]
         ]
 
@@ -650,7 +650,7 @@ class SecurityChartsGenerator:
                 go.Bar(
                     x=failed_by_door.index,
                     y=failed_by_door.values,
-                    marker_color="#d62728",
+                    marker_color="var(--graph-series-4)",
                     hovertemplate="Door: %{x}<br>Failed Attempts: %{y}<extra></extra>",
                 )
             )
@@ -717,7 +717,7 @@ class SecurityChartsGenerator:
         }
 
         charts["risk_breakdown"] = go.Figure()
-        colors = ["#d62728", "#ff7f0e", "#1f77b4"]
+        colors = ["var(--graph-series-4)", "var(--graph-series-2)", "var(--graph-series-1)"]
 
         for i, (factor, value) in enumerate(risk_factors.items()):
             charts["risk_breakdown"].add_trace(
@@ -740,7 +740,7 @@ class SecurityChartsGenerator:
         daily_risk.columns = ["Failure Rate", "After Hours Rate"]
 
         charts["risk_timeline"] = go.Figure()
-        for col, color in zip(daily_risk.columns, ["#d62728", "#ff7f0e"]):
+        for col, color in zip(daily_risk.columns, ["var(--graph-series-4)", "var(--graph-series-2)"]):
             charts["risk_timeline"].add_trace(
                 go.Scatter(
                     x=daily_risk.index,
@@ -784,7 +784,7 @@ class SecurityChartsGenerator:
                     y=normal_days.values,
                     mode="lines+markers",
                     name="Normal Activity",
-                    line=dict(color="#1f77b4", width=2),
+                    line=dict(color="var(--graph-series-1)", width=2),
                     marker=dict(size=6),
                 )
             )
@@ -797,7 +797,7 @@ class SecurityChartsGenerator:
                         y=anomalies.values,
                         mode="markers",
                         name="Anomalies",
-                        marker=dict(size=12, color="#d62728", symbol="x"),
+                        marker=dict(size=12, color="var(--graph-series-4)", symbol="x"),
                     )
                 )
 
@@ -849,7 +849,7 @@ class SecurityChartsGenerator:
                     go.Bar(
                         x=anomalous_users.index,
                         y=anomalous_users.values,
-                        marker_color="#d62728",
+                        marker_color="var(--graph-series-4)",
                         hovertemplate="User: %{x}<br>Events: %{y}<br>Z-score: %{customdata:.2f}<extra></extra>",
                         customdata=z_scores[anomalous_users.index],
                     )
@@ -883,7 +883,7 @@ class SecurityChartsGenerator:
                 y=business_hours_compliance["compliance_score"],
                 mode="lines+markers",
                 name="Business Hours Compliance",
-                line=dict(color="#2ca02c", width=2),
+                line=dict(color="var(--graph-series-3)", width=2),
                 fill="tonexty",
                 fillcolor="rgba(44,160,44,0.1)",
             )
@@ -920,7 +920,7 @@ class SecurityChartsGenerator:
                     y=badge_compliance.values,
                     mode="lines+markers",
                     name="Badge Compliance",
-                    line=dict(color="#1f77b4", width=2),
+                    line=dict(color="var(--graph-series-1)", width=2),
                 )
             )
 
@@ -945,7 +945,7 @@ class SecurityChartsGenerator:
         charts["compliance_summary"] = go.Figure()
 
         colors = [
-            "#2ca02c" if score >= 90 else "#ff7f0e" if score >= 80 else "#d62728"
+            "var(--graph-series-3)" if score >= 90 else "var(--graph-series-2)" if score >= 80 else "var(--graph-series-4)"
             for score in compliance_metrics.values()
         ]
 
