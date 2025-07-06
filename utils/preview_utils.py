@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 import pandas as pd
 
 from config.config import get_analytics_config
-from security.unicode_security_processor import sanitize_unicode_input
+from core.unicode_utils import sanitize_for_utf8
 from services.analytics_service import MAX_DISPLAY_ROWS
 
 
@@ -27,7 +27,7 @@ def serialize_dataframe_preview(df: pd.DataFrame) -> List[Dict[str, Any]]:
 
         preview = limited_df.head(5).to_dict("records")
         preview = [
-            {k: sanitize_unicode_input(v) for k, v in row.items()}
+            {k: sanitize_for_utf8(v) for k, v in row.items()}
             for row in preview
         ]
         serialized = json.dumps(preview, ensure_ascii=False)

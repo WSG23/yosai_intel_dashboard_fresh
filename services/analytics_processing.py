@@ -6,7 +6,7 @@ import pandas as pd
 from dash import html
 
 from core.unicode_processor import safe_format_number
-from security.unicode_security_processor import sanitize_unicode_input
+from core.unicode_utils import sanitize_for_utf8
 from services import get_analytics_service
 from services.ai_suggestions import generate_column_suggestions
 from services.upload_data_service import get_uploaded_data
@@ -446,7 +446,7 @@ def create_analysis_results_display(results: Dict[str, Any], analysis_type: str)
             specific_content = [html.P("Standard analysis completed")]
             color = "info"
 
-        title_safe = sanitize_unicode_input(analysis_type.title() + " Results")
+        title_safe = sanitize_for_utf8(analysis_type.title() + " Results")
         events_safe = safe_format_number(total_events)
         users_safe = safe_format_number(unique_users)
         doors_safe = safe_format_number(unique_doors)

@@ -8,10 +8,8 @@ import pandas as pd
 from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
 from core.unicode_processor import process_large_csv_content
-from security.unicode_security_processor import (
-    sanitize_dataframe,
-    sanitize_unicode_input,
-)
+from core.unicode_utils import sanitize_for_utf8
+from security.unicode_security_processor import sanitize_dataframe
 from services.data_processing.core.exceptions import (
     FileProcessingError,
     FileValidationError,
@@ -47,7 +45,7 @@ def process_file_simple(
         else:
             text = safe_decode_with_unicode_handling(content, encoding)
 
-        text = sanitize_unicode_input(text)
+        text = sanitize_for_utf8(text)
 
         from io import StringIO
 
