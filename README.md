@@ -81,16 +81,17 @@ with this Python release and newer.
    ./scripts/setup.sh
    ```
    The script installs both `requirements.txt` and `requirements-dev.txt` from
-   PyPI or a local `packages/` directory if present. Ensure dependencies are
-   installed **before** running Pyright or using the Pylance extension. Missing
-   packages will otherwise appear as unresolved imports.
+   PyPI (or a local `packages/` directory if present) and runs `npm install` to
+   fetch Node dependencies. Ensure dependencies are installed **before** running
+   Pyright or using the Pylance extension. Missing packages will otherwise
+   appear as unresolved imports.
 
-4. **Install Node dependencies:**
-   PostCSS and other build tools live in `package.json`.
+4. **Install Node dependencies (optional):**
+   PostCSS and other build tools live in `package.json`. `./scripts/setup.sh`
+   already runs `npm install`, but you can execute it manually if desired.
    ```bash
    npm install
    ```
-   These packages are required for the CSS build step.
 5. **Set up environment:**
    ```bash
    cp .env.example .env

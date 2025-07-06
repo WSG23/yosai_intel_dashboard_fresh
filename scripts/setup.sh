@@ -12,3 +12,10 @@ else
     pip install -r "$ROOT_DIR/requirements.txt"
     pip install -r "$ROOT_DIR/requirements-dev.txt"
 fi
+
+# Install Node dependencies for the CSS build step
+if command -v npm >/dev/null 2>&1; then
+    PUPPETEER_SKIP_DOWNLOAD=1 npm install
+else
+    echo "npm is not installed; skipping Node dependency installation" >&2
+fi
