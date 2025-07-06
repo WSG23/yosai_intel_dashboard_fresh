@@ -93,6 +93,7 @@ class AnalyticsConfig:
     data_retention_days: int = 30
     query_timeout_seconds: int = 600
     force_full_dataset_analysis: bool = True
+    max_display_rows: int = 10000
 
 
 @dataclass

@@ -18,6 +18,10 @@ if TYPE_CHECKING:
 from analytics.controllers import UnifiedAnalyticsController
 from core.dash_profile import profile_callback
 from core.callback_registry import debounce
+from config.config import get_analytics_config
+
+def _get_max_display_rows() -> int:
+    return get_analytics_config().max_display_rows or 10000
 from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
 from services.device_learning_service import get_device_learning_service
@@ -283,10 +287,10 @@ class Callbacks:
             path = info.get("path") or str(_uploaded_data_store.get_file_path(filename))
             try:
                 df_preview = await self.preview_processor.preview_from_parquet(
-                    path, rows=10
+                    path, rows=_get_max_display_rows()
                 )
             except Exception:
-                df_preview = _uploaded_data_store.load_dataframe(filename).head(10)
+                df_preview = _uploaded_data_store.load_dataframe(filename).head(_get_max_display_rows())
             rows = info.get("rows", len(df_preview))
             cols = info.get("columns", len(df_preview.columns))
 

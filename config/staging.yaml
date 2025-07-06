@@ -47,6 +47,7 @@ analytics:
   data_retention_days: 30
   query_timeout_seconds: 600
   force_full_dataset_analysis: true
+  max_display_rows: 10000
 
 monitoring:
   health_check_interval: 30

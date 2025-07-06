@@ -5,6 +5,10 @@ from typing import Any
 import pandas as pd
 
 from services.data_processing.file_processor import UnicodeFileProcessor
+from config.config import get_analytics_config
+
+def _get_max_display_rows() -> int:
+    return get_analytics_config().max_display_rows or 10000
 
 
 class AsyncUploadProcessor:
@@ -29,10 +33,11 @@ class AsyncUploadProcessor:
         df = await asyncio.to_thread(pd.read_parquet, path, **kwargs)
         return self.unicode_processor.sanitize_dataframe_unicode(df)
 
-    async def preview_from_parquet(self, path: str | Path, *, rows: int = 10) -> pd.DataFrame:
+    async def preview_from_parquet(self, path: str | Path, *, rows: int | None = None) -> pd.DataFrame:
         """Return the first ``rows`` of a parquet file asynchronously."""
         df = await self.read_parquet(path)
-        return df.head(rows)
+        limit = rows or _get_max_display_rows()
+        return df.head(limit)
 
 
 __all__ = ["AsyncUploadProcessor"]
