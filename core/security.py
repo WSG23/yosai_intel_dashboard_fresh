@@ -29,6 +29,7 @@ from core.security_patterns import (
 
 from security.unicode_security_processor import sanitize_unicode_input
 from config.dynamic_config import dynamic_config
+from core.exceptions import ValidationError
 
 
 class SecurityLevel(Enum):
@@ -78,6 +79,30 @@ class InputValidator:
                 for pattern in PATH_TRAVERSAL_PATTERNS
             ],
         }
+
+    def validate(self, value: str) -> str:
+        """Validate a single value and return the sanitized result.
+
+        Parameters
+        ----------
+        value: str
+            The input value to validate.
+
+        Returns
+        -------
+        str
+            The sanitized form of ``value``.
+
+        Raises
+        ------
+        ValidationError
+            If the input fails validation checks.
+        """
+
+        result = self.validate_input(value)
+        if not result.get("valid", False):
+            raise ValidationError("Invalid input", result)
+        return result.get("sanitized", value)
 
     def validate_input(
         self, input_data: str, field_name: str = "unknown"
