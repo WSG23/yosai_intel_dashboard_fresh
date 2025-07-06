@@ -5,7 +5,9 @@ from typing import Any, Optional
 
 import pandas as pd
 
-from services.data_processing.unified_file_validator import safe_decode_with_unicode_handling
+from services.data_processing.unified_file_validator import (
+    safe_decode_with_unicode_handling,
+)
 from security.unicode_security_processor import (
     sanitize_unicode_input,
     sanitize_dataframe,
@@ -27,8 +29,9 @@ from services.data_processing.core.exceptions import (
 )
 
 
-
-def process_file_simple(content: bytes, filename: str) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
+def process_file_simple(
+    content: bytes, filename: str
+) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
     """Parse a CSV ``content`` and return a sanitized ``DataFrame``.
 
     The helper intentionally performs only minimal validation and is used by
@@ -82,9 +85,17 @@ class FileHandler:
             return ValidationResult(False, "No file provided")
         try:
             import pandas as pd
+
             if isinstance(file_obj, pd.DataFrame):
                 metrics = self.validator.validate_dataframe(file_obj)
-                return ValidationResult(metrics.get("valid", False), metrics.get("error", "ok") if not metrics.get("valid", False) else "ok")
+                return ValidationResult(
+                    metrics.get("valid", False),
+                    (
+                        metrics.get("error", "ok")
+                        if not metrics.get("valid", False)
+                        else "ok"
+                    ),
+                )
         except Exception:
             pass
         if isinstance(file_obj, (str, Path)):
@@ -95,7 +106,10 @@ class FileHandler:
             if size_mb == 0:
                 return ValidationResult(False, "File is empty")
             if size_mb > self.validator.max_size_mb:
-                return ValidationResult(False, f"File too large: {size_mb:.1f}MB > {self.validator.max_size_mb}MB")
+                return ValidationResult(
+                    False,
+                    f"File too large: {size_mb:.1f}MB > {self.validator.max_size_mb}MB",
+                )
             return ValidationResult(True, "ok")
 
         if isinstance(file_obj, (bytes, bytearray)):
@@ -103,7 +117,10 @@ class FileHandler:
             if size_mb == 0:
                 return ValidationResult(False, "File is empty")
             if size_mb > self.validator.max_size_mb:
-                return ValidationResult(False, f"File too large: {size_mb:.1f}MB > {self.validator.max_size_mb}MB")
+                return ValidationResult(
+                    False,
+                    f"File too large: {size_mb:.1f}MB > {self.validator.max_size_mb}MB",
+                )
             return ValidationResult(True, "ok")
 
         return ValidationResult(False, "Unsupported file type")
@@ -118,6 +135,4 @@ __all__ = [
     "ValidationResult",
     "FileProcessingError",
     "process_file_simple",
-
 ]
-
