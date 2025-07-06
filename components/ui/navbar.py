@@ -329,6 +329,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                                         },
                                                                     ),
                                                                     className="px-2",
+                                                                    toggle=False,
                                                                 ),
                                                             ],
                                                             nav=True,
