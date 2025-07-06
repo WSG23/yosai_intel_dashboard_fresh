@@ -21,7 +21,7 @@ from config.config import get_config
 from core.container import Container as DIContainer
 from core.enhanced_container import ServiceContainer
 from core.plugins.auto_config import PluginAutoConfiguration
-from core.secret_manager import validate_secrets
+from core.secrets_manager import validate_secrets
 from core.theme_manager import DEFAULT_THEME, apply_theme_settings, sanitize_theme
 from dash_csrf_plugin import CSRFMode, setup_enhanced_csrf_protection
 from services import get_analytics_service

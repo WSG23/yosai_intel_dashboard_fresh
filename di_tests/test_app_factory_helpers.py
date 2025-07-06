@@ -30,8 +30,8 @@ sys.modules.setdefault("core.enhanced_container", ModuleType("core.enhanced_cont
 sys.modules["core.enhanced_container"].ServiceContainer = object
 sys.modules.setdefault("core.plugins.auto_config", ModuleType("core.plugins.auto_config"))
 sys.modules["core.plugins.auto_config"].PluginAutoConfiguration = lambda *a, **k: None
-sys.modules.setdefault("core.secret_manager", ModuleType("core.secret_manager"))
-sys.modules["core.secret_manager"].validate_secrets = lambda: {}
+sys.modules.setdefault("core.secrets_manager", ModuleType("core.secrets_manager"))
+sys.modules["core.secrets_manager"].validate_secrets = lambda: {}
 sys.modules.setdefault("core.theme_manager", ModuleType("core.theme_manager"))
 sys.modules["core.theme_manager"].DEFAULT_THEME = "light"
 sys.modules["core.theme_manager"].apply_theme_settings = lambda app: None
