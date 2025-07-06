@@ -37,4 +37,6 @@ uploads:
     xss: true
     path_traversal: true
 
+monitoring: !include monitoring.yaml
+
 plugins: !include plugins.yaml
