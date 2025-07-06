@@ -1,11 +1,11 @@
 import logging
-from typing import Optional, Callable, Dict, List
+from typing import Callable, Dict, List, Optional
 
 import dash
 
 from .config import CSRFConfig, CSRFMode
-from .manager import CSRFManager
 from .exceptions import CSRFConfigurationError
+from .manager import CSRFManager
 
 logger = logging.getLogger(__name__)
 

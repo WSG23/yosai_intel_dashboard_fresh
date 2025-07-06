@@ -1,21 +1,20 @@
 import pandas as pd
 import pytest
 
-from core.unicode import (
-    UnicodeProcessor,
+from core.unicode import (  # Deprecated functions for testing
     ChunkedUnicodeProcessor,
-    clean_unicode_text,
-    safe_decode_bytes,
-    safe_encode_text,
-    sanitize_dataframe,
-    # Deprecated functions for testing
-    safe_unicode_encode,
-    safe_encode,
-    safe_decode,
-    handle_surrogate_characters,
+    UnicodeProcessor,
     clean_unicode_surrogates,
-    sanitize_unicode_input,
+    clean_unicode_text,
+    handle_surrogate_characters,
+    safe_decode,
+    safe_decode_bytes,
+    safe_encode,
+    safe_encode_text,
+    safe_unicode_encode,
     sanitize_data_frame,
+    sanitize_dataframe,
+    sanitize_unicode_input,
 )
 
 

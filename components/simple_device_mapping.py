@@ -1,26 +1,30 @@
 """Simple manual device mapping component"""
 
-from dash import html, dcc
-from dash._callback_context import callback_context
-import dash
 from typing import TYPE_CHECKING
+
+import dash
+from dash import dcc, html
+from dash._callback_context import callback_context
 
 if TYPE_CHECKING:
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from analytics.controllers import UnifiedAnalyticsController
+
 import logging
 
-logger = logging.getLogger(__name__)
-from dash.dependencies import Input, Output, State, ALL
-import dash_bootstrap_components as dbc
-from typing import List, Dict, Any
-import pandas as pd
+from analytics.controllers import UnifiedAnalyticsController
 
-# ADD after existing imports
-from services.door_mapping_service import door_mapping_service
+logger = logging.getLogger(__name__)
+from typing import Any, Dict, List
+
+import dash_bootstrap_components as dbc
+import pandas as pd
+from dash.dependencies import ALL, Input, Output, State
+
 from services.ai_mapping_store import ai_mapping_store
 from services.device_learning_service import get_device_learning_service
 
+# ADD after existing imports
+from services.door_mapping_service import door_mapping_service
 
 # Options for special device areas shared with verification component
 special_areas_options = [

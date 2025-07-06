@@ -5,8 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Dict, Optional
 
-from .secret_manager import SecretManager
 from core.exceptions import ConfigurationError
+
+from .secret_manager import SecretManager
 
 
 class SecretsValidator:

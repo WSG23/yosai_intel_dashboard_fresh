@@ -1,11 +1,13 @@
 import json
 import logging
-from typing import Any, List, Dict
+from typing import Any, Dict, List
+
 import pandas as pd
 
 from config.config import get_analytics_config
 from security.unicode_security_processor import sanitize_unicode_input
 from services.analytics_service import MAX_DISPLAY_ROWS
+
 
 def _get_max_display_rows() -> int:
     return get_analytics_config().max_display_rows or 10000

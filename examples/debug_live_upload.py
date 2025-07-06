@@ -5,8 +5,8 @@ LIVE UPLOAD DEBUGGING - Find where 150 row truncation happens
 Add this temporarily to trace the upload pipeline
 """
 
-import sys
 import logging
+import sys
 
 sys.path.append(".")
 

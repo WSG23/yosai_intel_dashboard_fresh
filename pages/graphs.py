@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Graphs visualization page with placeholder content."""
 
-from dash import html, dcc
 import dash_bootstrap_components as dbc
-from security.unicode_security_processor import sanitize_unicode_input
-from services.analytics_summary import create_sample_data
+from dash import dcc, html
+
 from analytics.interactive_charts import create_charts_generator
 from core.cache import cache
+from security.unicode_security_processor import sanitize_unicode_input
+from services.analytics_summary import create_sample_data
 
 
 @cache.memoize()

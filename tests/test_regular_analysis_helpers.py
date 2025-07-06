@@ -1,7 +1,8 @@
 import pandas as pd
+
 from services.result_formatting import (
-    prepare_regular_result,
     apply_regular_analysis,
+    prepare_regular_result,
 )
 
 

@@ -1,4 +1,5 @@
 import types
+
 from core.plugins import service_locator
 
 

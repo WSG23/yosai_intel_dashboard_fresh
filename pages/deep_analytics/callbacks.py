@@ -1,29 +1,34 @@
 """Dash callback handlers for the deep analytics page."""
 
+from typing import TYPE_CHECKING
+
 from dash import Input, Output, State, callback_context, html
 from dash.exceptions import PreventUpdate
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+
+import logging
+
 from analytics.controllers import UnifiedAnalyticsController
 from core.dash_profile import profile_callback
-import logging
 
 logger = logging.getLogger(__name__)
 import dash_bootstrap_components as dbc
+
+from services.data_processing.analytics_engine import (
+    AI_SUGGESTIONS_AVAILABLE,
+    analyze_data_with_service,
+    get_analytics_service_safe,
+    get_data_source_options_safe,
+    process_quality_analysis_safe,
+    process_suggests_analysis_safe,
+)
+
 from .analysis import (
     create_analysis_results_display,
     create_analysis_results_display_safe,
     get_initial_message_safe,
-)
-from services.data_processing.analytics_engine import (
-    process_suggests_analysis_safe,
-    process_quality_analysis_safe,
-    analyze_data_with_service,
-    get_data_source_options_safe,
-    get_analytics_service_safe,
-    AI_SUGGESTIONS_AVAILABLE,
 )
 
 

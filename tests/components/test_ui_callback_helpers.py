@@ -1,15 +1,20 @@
 from unittest import mock
+
 import dash
 
 from components.column_verification import (
-    toggle_custom_field,
     register_callbacks as register_column_callbacks,
 )
-from components.simple_device_mapping import (
-    apply_ai_device_suggestions,
-    register_callbacks as register_device_callbacks,
+from components.column_verification import (
+    toggle_custom_field,
 )
 from components.device_verification import mark_device_as_edited
+from components.simple_device_mapping import (
+    apply_ai_device_suggestions,
+)
+from components.simple_device_mapping import (
+    register_callbacks as register_device_callbacks,
+)
 
 
 def test_toggle_custom_field():

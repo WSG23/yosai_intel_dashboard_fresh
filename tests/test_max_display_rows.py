@@ -1,8 +1,9 @@
 import pandas as pd
+
 from config.config import ConfigManager
 from config.dynamic_config import dynamic_config
-from services.data_processing.file_processor import create_file_preview
 from services.analytics_service import MAX_DISPLAY_ROWS
+from services.data_processing.file_processor import create_file_preview
 
 
 def test_dynamic_config_default_display_rows():

@@ -1,4 +1,5 @@
 import dash_bootstrap_components as dbc
+
 from pages.deep_analytics.analysis import create_analysis_results_display
 
 

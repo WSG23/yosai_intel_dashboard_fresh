@@ -1,8 +1,8 @@
 import logging
-from typing import Callable, Any
+from typing import Any, Callable
 
-from core.callback_manager import CallbackManager
 from core.callback_events import CallbackEvent
+from core.callback_manager import CallbackManager
 
 logger = logging.getLogger(__name__)
 

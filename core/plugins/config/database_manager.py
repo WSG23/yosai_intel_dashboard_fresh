@@ -1,13 +1,14 @@
 """Enhanced database managers implementing the interface"""
 
 import logging
-from typing import Optional, Any, Dict
+import sqlite3
+from typing import Any, Dict, Optional
 
 import pandas as pd
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import sqlite3
-from .interfaces import IDatabaseManager, ConnectionResult
+
+from .interfaces import ConnectionResult, IDatabaseManager
 
 logger = logging.getLogger(__name__)
 

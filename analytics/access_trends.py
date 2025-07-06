@@ -3,15 +3,16 @@ Enhanced Access Trends Analyzer
 Replace the entire content of analytics/access_trends.py with this code
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, List, Any, Tuple, Optional
+import logging
+import warnings
+from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+import pandas as pd
 from scipy import stats
 from sklearn.linear_model import LinearRegression
-import logging
-from dataclasses import dataclass
-import warnings
 
 # Suppress pandas deprecation warnings regarding legacy frequency strings.
 warnings.filterwarnings(

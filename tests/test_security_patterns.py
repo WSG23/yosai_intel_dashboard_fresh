@@ -1,4 +1,5 @@
 import pandas as pd
+
 from analytics.security_patterns import SecurityPatternsAnalyzer
 
 

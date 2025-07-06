@@ -2,9 +2,10 @@
 """
 UI components for file preview - Separated from processing logic
 """
+from typing import Any, Dict, List
+
 import dash_bootstrap_components as dbc
-from dash import html, dash_table
-from typing import Dict, Any, List
+from dash import dash_table, html
 
 
 def create_file_preview_ui(preview_info: Dict[str, Any]) -> dbc.Card:

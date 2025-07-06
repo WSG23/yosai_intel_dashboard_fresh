@@ -16,14 +16,12 @@ from .business_logic_validator import BusinessLogicValidator
 from .dataframe_validator import DataFrameSecurityValidator
 from .secrets_validator import SecretsValidator, register_health_endpoint
 from .sql_validator import SQLInjectionPrevention, SQLSecurityConfig
+from .unicode_security_validator import UnicodeSecurityValidator
 from .unicode_surrogate_validator import (
     SurrogateHandlingConfig,
     UnicodeSurrogateValidator,
 )
 from .validation_exceptions import SecurityViolation
-from .unicode_security_validator import UnicodeSecurityValidator
-from .secrets_validator import SecretsValidator, register_health_endpoint
-
 
 __all__ = [
     "InputValidator",

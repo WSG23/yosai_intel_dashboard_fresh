@@ -1,6 +1,6 @@
-from pathlib import Path
 import json
 import sys
+from pathlib import Path
 
 try:
     from flasgger import Swagger

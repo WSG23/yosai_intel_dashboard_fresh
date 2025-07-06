@@ -3,6 +3,7 @@
 Core package initialization - Fixed for streamlined architecture
 """
 import logging
+
 from .dash_profile import profile_callback
 
 # Configure logging
@@ -21,13 +22,13 @@ def create_app(mode: str | None = None):
 
 from typing import TYPE_CHECKING
 
-from .unicode_processor import sanitize_unicode_input
-from .unicode import (
-    UnicodeTextProcessor,
-    UnicodeSQLProcessor,
-    UnicodeSecurityProcessor,
-)
 from .performance_file_processor import PerformanceFileProcessor
+from .unicode import (
+    UnicodeSecurityProcessor,
+    UnicodeSQLProcessor,
+    UnicodeTextProcessor,
+)
+from .unicode_processor import sanitize_unicode_input
 
 if TYPE_CHECKING:  # pragma: no cover - avoid circular import at runtime
     from .truly_unified_callbacks import TrulyUnifiedCallbacks

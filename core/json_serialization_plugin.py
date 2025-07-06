@@ -3,16 +3,16 @@ Self-Contained JSON Serialization Plugin
 Handles all JSON serialization issues internally with minimal external dependencies
 """
 
-import os
 import json
 import logging
-import pandas as pd
-from datetime import datetime, date
-from dataclasses import dataclass, is_dataclass, asdict
+import os
+from dataclasses import asdict, dataclass, is_dataclass
+from datetime import date, datetime
 from typing import Any, Dict, List, Optional, Union
 
-from core.serialization import SafeJSONSerializer
+import pandas as pd
 
+from core.serialization import SafeJSONSerializer
 from services.data_processing.core.protocols import PluginMetadata
 
 # Optional Babel support

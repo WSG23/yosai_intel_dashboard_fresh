@@ -4,10 +4,11 @@ Quick test to verify the datetime fix works
 Run this after applying the datetime parsing fixes
 """
 
-import sys
-import pandas as pd
-from datetime import datetime, timedelta
 import random
+import sys
+from datetime import datetime, timedelta
+
+import pandas as pd
 
 
 # Create test data with proper timestamp format

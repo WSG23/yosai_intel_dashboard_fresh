@@ -5,15 +5,15 @@ Includes wildcard route support and enhanced view function handling
 
 __version__ = "1.1.0"  # Updated version with enhancements
 
-import os
 import logging
-from typing import Optional, Dict, Any, List
+import os
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 # Core imports
 import dash
-from flask import request, session, current_app
-from dash import html, dcc
+from dash import dcc, html
+from flask import current_app, request, session
 
 logger = logging.getLogger(__name__)
 

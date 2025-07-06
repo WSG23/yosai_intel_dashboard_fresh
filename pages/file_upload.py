@@ -4,51 +4,51 @@ Complete File Upload Page - Missing piece for consolidation
 Integrates with analytics system
 """
 import logging
-from datetime import datetime
 import time
+from datetime import datetime
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 import pandas as pd
-from typing import Dict, Any, List, Tuple
-from dash import html, dcc
+from dash import dcc, html
 from dash.dash import no_update
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+
 from analytics.controllers import UnifiedAnalyticsController
-from core.dash_profile import profile_callback
-from core.callback_registry import debounce
 from config.config import get_analytics_config
+from core.callback_registry import debounce
+from core.dash_profile import profile_callback
+
 
 def _get_max_display_rows() -> int:
     return get_analytics_config().max_display_rows or 10000
-from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
-from services.device_learning_service import get_device_learning_service
-from utils.upload_store import uploaded_data_store as _uploaded_data_store
-from services.upload_data_service import (
-    get_uploaded_data as service_get_uploaded_data,
-    get_uploaded_filenames as service_get_uploaded_filenames,
-    clear_uploaded_data as service_clear_uploaded_data,
-    get_file_info as service_get_file_info,
-)
-from config.dynamic_config import dynamic_config
+from dash.dependencies import ALL, Input, Output, State
 
+from components.advanced_upload import DragDropUploadArea
 from components.column_verification import save_verified_mappings
+from components.upload import ClientSideValidator as ErrorDisplayValidator
+from config.dynamic_config import dynamic_config
+from services.device_learning_service import get_device_learning_service
+from services.task_queue import clear_task, create_task, get_status
 from services.upload import (
-    UploadProcessingService,
     AISuggestionService,
     ModalService,
+    UploadProcessingService,
     get_trigger_id,
     save_ai_training_data,
 )
-from components.upload import ClientSideValidator as ErrorDisplayValidator
 from services.upload.validators import ClientSideValidator
-
-from components.advanced_upload import DragDropUploadArea
-
-from services.task_queue import create_task, get_status, clear_task
-
+from services.upload_data_service import (
+    clear_uploaded_data as service_clear_uploaded_data,
+)
+from services.upload_data_service import get_file_info as service_get_file_info
+from services.upload_data_service import get_uploaded_data as service_get_uploaded_data
+from services.upload_data_service import (
+    get_uploaded_filenames as service_get_uploaded_filenames,
+)
+from utils.upload_store import uploaded_data_store as _uploaded_data_store
 
 logger = logging.getLogger(__name__)
 

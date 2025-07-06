@@ -1,7 +1,8 @@
 import ast
-from typing import List, Dict, Any
 from pathlib import Path
-from .base_analyzer import BaseAnalyzer, QualityIssue, IssueType
+from typing import Any, Dict, List
+
+from .base_analyzer import BaseAnalyzer, IssueType, QualityIssue
 
 
 class ASTAnalyzer(BaseAnalyzer):

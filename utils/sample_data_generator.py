@@ -1,10 +1,11 @@
 # utils/sample_data_generator.py
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
+import logging
 import random
 import uuid
-import logging
+from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 

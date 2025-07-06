@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from core.callback_manager import CallbackManager
 from core.callback_events import CallbackEvent
+from core.callback_manager import CallbackManager
 
 from .business_service import AnalyticsBusinessService
 

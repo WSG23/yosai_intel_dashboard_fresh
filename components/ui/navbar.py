@@ -5,18 +5,21 @@ Navigation bar component with grid layout using existing framework
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING, Optional, Any, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 if TYPE_CHECKING:
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from flask_babel import lazy_gettext as _l, refresh
-from flask import session
-from core.plugins.decorators import safe_callback
-from core.theme_manager import DEFAULT_THEME, sanitize_theme
-from utils.assets_utils import get_nav_icon
-from utils.assets_debug import check_navbar_assets
 
 import logging
+
+from flask import session
+from flask_babel import lazy_gettext as _l
+from flask_babel import refresh
+
+from core.plugins.decorators import safe_callback
+from core.theme_manager import DEFAULT_THEME, sanitize_theme
+from utils.assets_debug import check_navbar_assets
+from utils.assets_utils import get_nav_icon
 
 logger = logging.getLogger(__name__)
 
@@ -24,16 +27,16 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     import dash
     import dash_bootstrap_components as dbc
-    from dash import html, dcc
+    from dash import dcc, html
     from dash._callback import callback
-    from dash.dependencies import Output, Input
+    from dash.dependencies import Input, Output
 
 # Runtime imports with proper fallbacks
 try:
     import dash_bootstrap_components as dbc
-    from dash import html, dcc
+    from dash import dcc, html
     from dash._callback import callback
-    from dash.dependencies import Output, Input
+    from dash.dependencies import Input, Output
 
     DASH_AVAILABLE = True
 except ImportError:

@@ -1,6 +1,7 @@
-from typing import List
 from pathlib import Path
-from .base_analyzer import BaseAnalyzer, QualityIssue, IssueType
+from typing import List
+
+from .base_analyzer import BaseAnalyzer, IssueType, QualityIssue
 
 MAX_LINE_LENGTH = 88
 

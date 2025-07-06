@@ -13,8 +13,8 @@ try:
 except Exception:  # pragma: no cover - optional AI suggestions
     def generate_column_suggestions(*args: Any, **kwargs: Any) -> Dict[str, Dict[str, Any]]:
         return {}
-from utils.preview_utils import serialize_dataframe_preview
 from security.unicode_security_handler import UnicodeSecurityHandler
+from utils.preview_utils import serialize_dataframe_preview
 
 logger = logging.getLogger(__name__)
 

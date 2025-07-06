@@ -3,20 +3,21 @@
 Simplified Models Package
 """
 
+from services import registry
+
+from .entities import Door, Facility, Person
+
 # Import core models only
 from .enums import (
-    AnomalyType,
     AccessResult,
+    AccessType,
+    AnomalyType,
     BadgeStatus,
+    DoorType,
     SeverityLevel,
     TicketStatus,
-    DoorType,
-    AccessType,
 )
-
-from .entities import Person, Door, Facility
 from .events import AccessEvent, AnomalyDetection, IncidentTicket
-from services import registry
 
 # Flag indicating if the core models are available. This is updated when
 # ``BaseModel`` is first resolved via ``__getattr__``.

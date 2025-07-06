@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import re
 
-
 REPLACEMENTS = {
     "safe_unicode_encode": "safe_encode_text",
     "safe_encode": "safe_encode_text",

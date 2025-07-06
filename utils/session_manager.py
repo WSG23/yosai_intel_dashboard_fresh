@@ -1,7 +1,8 @@
 """Session management utilities for persistent data"""
 
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
+
 from components.plugin_adapter import ComponentPluginAdapter
 
 logger = logging.getLogger(__name__)

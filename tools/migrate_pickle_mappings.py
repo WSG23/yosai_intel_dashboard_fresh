@@ -18,8 +18,8 @@ from __future__ import annotations
 
 import json
 import pickle
-from pathlib import Path
 import sys
+from pathlib import Path
 
 
 def migrate(pkl_file: Path) -> Path:

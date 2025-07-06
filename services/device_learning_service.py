@@ -1,20 +1,22 @@
 """Persist and recall device mappings between uploads."""
 
-import json
 import hashlib
+import json
 import logging
-from typing import Dict, Any, Optional
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict, Optional
+
 import pandas as pd
 from dash import html
 from dash.dependencies import Input, Output
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from services.consolidated_learning_service import get_learning_service
+
 from dash._callback_context import callback_context
+
+from services.consolidated_learning_service import get_learning_service
 
 logger = logging.getLogger(__name__)
 

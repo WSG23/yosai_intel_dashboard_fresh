@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import List, Dict, Set, DefaultDict, Iterable
+from typing import DefaultDict, Dict, List, Set
+
 
 from services.data_processing.core.protocols import PluginProtocol
 

@@ -3,7 +3,7 @@
 Simplified Pages Package
 """
 import logging
-from typing import Optional, Callable, Any
+from typing import Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
 

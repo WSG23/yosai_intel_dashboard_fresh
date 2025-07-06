@@ -1,8 +1,10 @@
 """Layout components for the deep analytics page."""
 
 import logging
-from dash import html, dcc
+
 import dash_bootstrap_components as dbc
+from dash import dcc, html
+
 from .analysis import (
     get_data_source_options_safe,
     get_latest_uploaded_source_value,

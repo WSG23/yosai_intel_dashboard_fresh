@@ -3,29 +3,28 @@ from __future__ import annotations
 """Auth0 OIDC integration"""
 
 import json
-import os
-import time
 import logging
+import os
 import socket
+import time
 from functools import wraps
-from typing import Optional, List
-from urllib.request import urlopen
+from typing import List, Optional
 from urllib.error import URLError
+from urllib.request import urlopen
 
-from flask import Blueprint, redirect, url_for, session, current_app, request
+from authlib.integrations.flask_client import OAuth
+from flask import Blueprint, current_app, redirect, request, session, url_for
 from flask_login import (
     LoginManager,
     UserMixin,
+    current_user,
     login_required,
     login_user,
     logout_user,
-    current_user,
 )
-from authlib.integrations.flask_client import OAuth
 from jose import jwt
 
 from .secret_manager import SecretManager
-
 
 auth_bp = Blueprint("auth", __name__)
 login_manager = LoginManager()

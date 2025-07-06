@@ -1,7 +1,7 @@
 import pytest
 
-from services.data_processing.unified_file_validator import UnifiedFileValidator
 from core.exceptions import ValidationError
+from services.data_processing.unified_file_validator import UnifiedFileValidator
 
 
 def test_validator_methods_basic():

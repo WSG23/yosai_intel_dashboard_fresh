@@ -1,6 +1,13 @@
 """Minimal plugin config compatibility"""
 
-# Import configuration manager from the new configuration module
+# Re-export from unified configuration for compatibility
+try:
+    from config.database_manager import DatabaseManager
+    from config.unified_config import (
+        UnifiedConfig,
+        get_config,
+    )
+
 
 from config.config import ConfigManager, get_config
 from config.database_manager import DatabaseManager

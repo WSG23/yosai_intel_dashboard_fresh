@@ -1,6 +1,9 @@
 import pandas as pd
+
 from analytics.security_patterns.data_prep import prepare_security_data
-from analytics.security_patterns.statistical_detection import detect_failure_rate_anomalies
+from analytics.security_patterns.statistical_detection import (
+    detect_failure_rate_anomalies,
+)
 
 
 def test_prepare_security_data_basic():

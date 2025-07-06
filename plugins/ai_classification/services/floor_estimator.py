@@ -2,11 +2,11 @@
 
 import logging
 import re
-from typing import Dict, Any, List, Set
 from collections import Counter
+from typing import Any, Dict, List, Set
 
-from ..database.csv_storage import CSVStorageRepository
 from ..config import FloorEstimationConfig
+from ..database.csv_storage import CSVStorageRepository
 
 logger = logging.getLogger(__name__)
 

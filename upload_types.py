@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
+
 @dataclass
 class ValidationResult:
     """Result of validating an uploaded file."""

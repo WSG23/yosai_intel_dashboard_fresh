@@ -1,7 +1,8 @@
-import dash_bootstrap_components as dbc
-from dash import html
 import types
+
+import dash_bootstrap_components as dbc
 import pytest
+from dash import html
 
 import pages.deep_analytics.callbacks as cb
 

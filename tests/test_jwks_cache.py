@@ -1,10 +1,10 @@
 import importlib
-import json
 import io
-import sys
-import types
+import json
 import logging
 import socket
+import sys
+import types
 
 import pytest
 

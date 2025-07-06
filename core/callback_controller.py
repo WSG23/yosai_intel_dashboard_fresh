@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import logging
 import threading
+import weakref
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, auto
 from typing import Any, Callable, Dict, List, Optional, Protocol
-import weakref
 
 logger = logging.getLogger(__name__)
 

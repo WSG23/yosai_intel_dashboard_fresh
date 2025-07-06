@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import logging
+import threading
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterable, List, Tuple
-import threading
-import logging
 
 from dash import Dash
-from dash.dependencies import Output, Input, State
+from dash.dependencies import Input, Output, State
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 import importlib
 import logging
 from pathlib import Path
-from typing import Iterable, List, Dict
+from typing import Dict, Iterable, List
 
 logger = logging.getLogger(__name__)
 
