@@ -107,21 +107,8 @@ def create_plugin():
     return pkg_dir
 
 
-def _set_required_env(monkeypatch):
-    envs = {
-        "SECRET_KEY": "x",
-        "DB_PASSWORD": "x",
-        "AUTH0_CLIENT_ID": "x",
-        "AUTH0_CLIENT_SECRET": "x",
-        "AUTH0_DOMAIN": "x",
-        "AUTH0_AUDIENCE": "x",
-    }
-    for k, v in envs.items():
-        monkeypatch.setenv(k, v)
 
-
-def test_cycle_logging(caplog, monkeypatch):
-    _set_required_env(monkeypatch)
+def test_cycle_logging(caplog, monkeypatch, mock_auth_env):
     cfg = DummyConfigManager()
     mgr = PluginManager(DIContainer(), cfg, health_check_interval=1)
 
@@ -138,8 +125,7 @@ def test_cycle_logging(caplog, monkeypatch):
     mgr.stop_health_monitor()
 
 
-def test_unknown_dep_logging(caplog, monkeypatch):
-    _set_required_env(monkeypatch)
+def test_unknown_dep_logging(caplog, monkeypatch, mock_auth_env):
     cfg = DummyConfigManager()
     mgr = PluginManager(DIContainer(), cfg, health_check_interval=1)
 

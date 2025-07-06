@@ -65,7 +65,7 @@ def _create_pkg(tmp_path, name):
     return pkg_dir
 
 
-def test_manager_cycle_logging(tmp_path, caplog):
+def test_manager_cycle_logging(tmp_path, caplog, mock_auth_env):
     pkg = _create_pkg(tmp_path, "cyclepkg")
     (pkg / "plug_a.py").write_text(
         """
@@ -133,7 +133,7 @@ def create_plugin():
         manager.stop_health_monitor()
 
 
-def test_manager_unknown_dependency_logging(tmp_path, caplog):
+def test_manager_unknown_dependency_logging(tmp_path, caplog, mock_auth_env):
     pkg = _create_pkg(tmp_path, "unkpkg")
     (pkg / "plug_a.py").write_text(
         """

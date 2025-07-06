@@ -99,3 +99,16 @@ def sample_doors() -> list[Door]:
             required_clearance=4,
         ),
     ]
+
+
+@pytest.fixture
+def mock_auth_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Setup required authentication environment variables"""
+    auth_vars = {
+        "AUTH0_CLIENT_ID": "test_client",
+        "AUTH0_CLIENT_SECRET": "test_secret",
+        "AUTH0_DOMAIN": "test.auth0.com",
+        "AUTH0_AUDIENCE": "test_audience",
+    }
+    for key, value in auth_vars.items():
+        monkeypatch.setenv(key, value)

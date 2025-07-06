@@ -20,6 +20,14 @@ import psutil
 from config.dynamic_config import dynamic_config
 
 
+class PerformanceThresholds:
+    """Common performance threshold values."""
+
+    SLOW_QUERY_SECONDS = 1.0
+    CACHE_TIMEOUT_SECONDS = 300
+    MAX_SLOW_QUERIES = 100
+
+
 class MetricType(Enum):
     """Types of performance metrics"""
 
@@ -219,7 +227,7 @@ class PerformanceMonitor:
         return summary
 
     def get_slow_operations(
-        self, threshold: float = 1.0, hours: int = 24
+        self, threshold: float = PerformanceThresholds.SLOW_QUERY_SECONDS, hours: int = 24
     ) -> List[Dict[str, Any]]:
         """Get operations that exceeded threshold"""
         cutoff = datetime.now() - timedelta(hours=hours)
@@ -531,7 +539,7 @@ class DatabaseQueryMonitor:
         )
 
         # Track slow queries
-        if duration > 1.0:  # Queries over 1 second
+        if duration > PerformanceThresholds.SLOW_QUERY_SECONDS:
             self.slow_queries.append(
                 {
                     "query": query,
@@ -543,8 +551,8 @@ class DatabaseQueryMonitor:
             )
 
             # Keep only recent slow queries
-            if len(self.slow_queries) > 100:
-                self.slow_queries = self.slow_queries[-100:]
+            if len(self.slow_queries) > PerformanceThresholds.MAX_SLOW_QUERIES:
+                self.slow_queries = self.slow_queries[-PerformanceThresholds.MAX_SLOW_QUERIES:]
 
     def _normalize_query(self, query: str) -> str:
         """Normalize query for pattern tracking"""
