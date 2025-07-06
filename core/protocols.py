@@ -111,3 +111,22 @@ class CallbackProtocol(Protocol):
     def validate_callback_output(self, output: Any) -> Any:
         """Validate and sanitize callback output"""
         ...
+
+
+class ConfigProviderProtocol(Protocol):
+    """Protocol for objects that supply configuration sections."""
+
+    @abstractmethod
+    def get_analytics_config(self) -> Dict[str, Any]:
+        """Return analytics configuration."""
+        ...
+
+    @abstractmethod
+    def get_database_config(self) -> Dict[str, Any]:
+        """Return database configuration."""
+        ...
+
+    @abstractmethod
+    def get_security_config(self) -> Dict[str, Any]:
+        """Return security configuration."""
+        ...

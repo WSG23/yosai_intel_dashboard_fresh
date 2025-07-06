@@ -11,7 +11,9 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output
 from components.ui.navbar import create_navbar_layout
 from core.container import Container as DIContainer
+from core.enhanced_container import ServiceContainer
 from core.plugins.auto_config import PluginAutoConfiguration
+from services import get_analytics_service
 from core.secret_manager import validate_secrets
 from dash_csrf_plugin import setup_enhanced_csrf_protection, CSRFMode
 from flask_babel import Babel
@@ -64,6 +66,19 @@ def create_app(mode: Optional[str] = None) -> dash.Dash:
 def _create_full_app() -> dash.Dash:
     """Create complete Dash application with full integration"""
     try:
+        service_container = ServiceContainer()
+        service_container.register_factory("config", get_config)
+        service_container.register_factory(
+            "analytics_service", get_analytics_service
+        )
+        config_manager = service_container.get("config")
+        analytics_service = service_container.get("analytics_service")
+        try:
+            health = analytics_service.health_check()
+            logger.info(f"Analytics service initialized: {health}")
+        except Exception as exc:  # pragma: no cover - service optional
+            logger.warning(f"Analytics service health check failed: {exc}")
+
         external_stylesheets = [dbc.themes.BOOTSTRAP]
         built_css = ASSETS_DIR / "dist" / "main.min.css"
         assets_ignore = r".*\.map|css/_.*"
@@ -81,6 +96,9 @@ def _create_full_app() -> dash.Dash:
             assets_folder=str(ASSETS_DIR),
             assets_ignore=assets_ignore,
         )
+
+        # Expose the service container on the app instance
+        app._service_container = service_container
 
         # Initialize caching once per app instance
         cache.init_app(app.server)
@@ -115,7 +133,8 @@ def _create_full_app() -> dash.Dash:
 
         apply_theme_settings(app)
         Compress(app.server)
-        config_manager = get_config()
+        # Use configuration service from the DI container
+        config_manager = service_container.get("config")
         https_only = config_manager.get_app_config().environment == "production"
         Talisman(
             app.server,
@@ -132,7 +151,9 @@ def _create_full_app() -> dash.Dash:
                 resp.headers["Cache-Control"] = "public,max-age=31536000,immutable"
             return resp
 
-        app.title = "Yōsai Intel Dashboard"
+        analytics_cfg = config_manager.get_analytics_config()
+        title = getattr(analytics_cfg, "title", config_manager.get_app_config().title)
+        app.title = title
 
         # Initialize Flask-Babel before any layouts use gettext
         try:
@@ -244,8 +265,8 @@ def _create_full_app() -> dash.Dash:
                 "Skipping registration of module callbacks due to missing coordinator"
             )
 
-        # Initialize services
-        _initialize_services()
+        # Initialize services using the DI container
+        _initialize_services(service_container)
 
         # Expose basic health check endpoint and Swagger docs
         server = app.server
@@ -736,20 +757,30 @@ def _register_global_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
     logger.info("✅ Global callbacks registered successfully")
 
 
-def _initialize_services() -> None:
+def _initialize_services(container: Optional[ServiceContainer] = None) -> None:
     """Initialize all application services"""
     try:
-        # Initialize analytics service
-        from services import get_analytics_service
+        container = container or ServiceContainer()
 
-        analytics_service = get_analytics_service()
+        if container.has("analytics_service"):
+            analytics_service = container.get("analytics_service")
+        else:
+            from services import get_analytics_service
+
+            analytics_service = get_analytics_service()
+
         health = analytics_service.health_check()
         logger.info(f"Analytics service initialized: {health}")
 
-        # Initialize configuration
-        config = get_config()
+        if container.has("config"):
+            config = container.get("config")
+        else:
+            config = get_config()
+
         app_config = config.get_app_config()
-        logger.info(f"Configuration loaded for environment: {app_config.environment}")
+        logger.info(
+            f"Configuration loaded for environment: {app_config.environment}"
+        )
 
     except Exception as e:
         logger.warning(f"Service initialization completed with warnings: {e}")

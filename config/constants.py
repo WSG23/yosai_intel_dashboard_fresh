@@ -116,6 +116,7 @@ class AnalyticsConstants:
     data_retention_days: int = 30
     max_workers: int = 4
     query_timeout_seconds: int = 300
+    max_display_rows: int = 10000
 
 
 @dataclass

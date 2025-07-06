@@ -8,11 +8,7 @@ from typing import Any
 
 from core.exceptions import ValidationError
 from security_callback_controller import SecurityEvent, emit_security_event
-
-
-def contains_surrogates(text: str) -> bool:
-    """Return ``True`` if ``text`` contains any surrogate codepoints."""
-    return any(0xD800 <= ord(ch) <= 0xDFFF for ch in text)
+from core.unicode_processor import contains_surrogates
 
 
 @dataclass

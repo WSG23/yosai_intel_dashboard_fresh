@@ -259,14 +259,6 @@ def sanitize_data_frame(df: pd.DataFrame) -> pd.DataFrame:
     return sanitize_dataframe(df)
 
 
-def contains_surrogates(text: Any) -> bool:
-    """Return ``True`` if ``text`` contains Unicode surrogate codepoints."""
-    if not isinstance(text, str):
-        try:
-            text = str(text)
-        except Exception:
-            return False
-    return bool(_SURROGATE_RE.search(text))
 
 
 # ---------------------------------------------------------------------------
