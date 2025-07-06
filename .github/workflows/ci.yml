@@ -72,6 +72,36 @@ jobs:
         with:
           fail_ci_if_error: true
 
+  performance-test:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ⚙️  Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: 📦 Install deps
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements_ui.txt
+          pip install -r requirements-dev.txt
+
+      - name: 🚀 Run performance tests
+        run: pytest -m performance -q | tee performance-results.log
+
+      - name: 📊 Upload performance results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-results
+          path: performance-results.log
+
   docker:
     needs: build-test
     if: github.ref == 'refs/heads/main'

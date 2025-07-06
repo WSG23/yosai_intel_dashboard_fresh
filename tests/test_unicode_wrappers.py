@@ -53,6 +53,7 @@ def test_wrapper_compatibility_and_imports():
 
 
 @pytest.mark.slow
+@pytest.mark.performance
 def test_large_dataframe_performance():
     df = pd.DataFrame({"col": ["=bad" + chr(0xD800)] * 1_000_000})
     start = time.time()

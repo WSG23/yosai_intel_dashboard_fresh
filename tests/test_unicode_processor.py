@@ -95,6 +95,7 @@ def test_dataframe_nested_values_cleaned():
 
 
 @pytest.mark.slow
+@pytest.mark.performance
 def test_sanitize_dataframe_benchmark():
     df = pd.DataFrame({"=col": ["=1"] * 100})
     start = time.time()

@@ -46,6 +46,7 @@ def test_nested_structures_and_types():
     assert sanitized["items"][0] == 1
 
 
+@pytest.mark.performance
 def test_long_string_performance():
     text = "a" * SecurityLimits.MAX_INPUT_STRING_LENGTH_CHARACTERS
     result = serializer.serialize(text)
