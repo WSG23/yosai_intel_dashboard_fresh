@@ -6,7 +6,8 @@ import json
 import logging
 import os
 import socket
-import time
+from datetime import timedelta
+
 from functools import wraps
 from typing import List, Optional
 from urllib.error import URLError
@@ -25,6 +26,7 @@ from flask_login import (
 from jose import jwt
 
 from .secret_manager import SecretManager
+from config.config import get_security_config
 
 auth_bp = Blueprint("auth", __name__)
 login_manager = LoginManager()
@@ -124,6 +126,22 @@ def _decode_jwt(token: str, domain: str, audience: str, client_id: str) -> dict:
     )
 
 
+def _determine_session_timeout(roles: List[str]) -> int:
+    """Return configured session timeout in seconds for given roles."""
+    cfg = get_security_config()
+    overrides = [cfg.session_timeout_by_role[r] for r in roles if r in cfg.session_timeout_by_role]
+    if overrides:
+        return max(overrides)
+    return cfg.session_timeout
+
+
+def _apply_session_timeout(user: User) -> None:
+    """Set session permanence and lifetime for the logged in user."""
+    secs = _determine_session_timeout(user.roles)
+    session.permanent = True
+    current_app.permanent_session_lifetime = timedelta(seconds=secs)
+
+
 @auth_bp.route("/login")
 def login():
     """Begin OAuth login flow.
@@ -167,6 +185,7 @@ def callback():
     )
     _users[user.id] = user
     login_user(user)
+    _apply_session_timeout(user)
     session["roles"] = user.roles
     session["user_id"] = user.id
     return redirect("/")

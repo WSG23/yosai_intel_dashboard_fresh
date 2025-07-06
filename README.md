@@ -530,6 +530,18 @@ All secrets can be provided via the `SecretManager` which supports `env`,
 Docker secrets. See the [architecture diagram](docs/auth_flow.png) for
 implementation details.
 
+Session cookies are marked as permanent on login. The default lifetime is
+configured via `security.session_timeout` in seconds. You can override the
+timeout for specific roles using `security.session_timeout_by_role`:
+
+```yaml
+security:
+  session_timeout: 3600
+  session_timeout_by_role:
+    admin: 7200
+    basic: 1800
+```
+
 The configuration loader performs a validation step on startup to ensure
 required secrets are set. See
 [docs/secret_management.md](docs/secret_management.md) for rotation
