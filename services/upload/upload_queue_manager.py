@@ -10,7 +10,18 @@ logger = logging.getLogger(__name__)
 
 
 class UploadQueueManager:
-    """Manage prioritized upload tasks with concurrency control."""
+    """Manage prioritized upload tasks with concurrency control.
+
+    Parameters
+    ----------
+    state:
+        Optional dictionary used to persist queue state.  Any mapping object may
+        be supplied and will be updated in-place when the queue changes.  If not
+        provided, an empty dictionary is used.
+    max_concurrent:
+        Maximum number of concurrent tasks to run.  This can be changed later by
+        passing ``max_concurrent`` to :meth:`process_queue`.
+    """
 
     def __init__(
         self, state: Dict[str, Any] | None = None, *, max_concurrent: int = 3
@@ -19,6 +30,9 @@ class UploadQueueManager:
         self._lock = threading.Lock()
         self._queue: List[Tuple[int, float, Any]] = []
         self._tasks: Dict[str, asyncio.Task] = {}
+        self.files: List[Any] = []
+        self.completed: set[Any] = set()
+        self._paused = False
         self._state = state if state is not None else {}
         self._load_state()
 
@@ -29,12 +43,40 @@ class UploadQueueManager:
             return
         for priority, ts, item in data.get("queue", []):
             heapq.heappush(self._queue, (priority, ts, item))
+        self._paused = data.get("paused", False)
+        self.files = list(data.get("files", []))
+        self.completed = set(data.get("completed", []))
 
     def _save_state(self) -> None:
         self._state["queue_state"] = {
             "queue": list(self._queue),
             "active": list(self._tasks.keys()),
+            "paused": self._paused,
+            "files": list(self.files),
+            "completed": list(self.completed),
         }
+
+    # -- Batch operations ----------------------------------------------------
+    def pause(self) -> None:
+        """Pause queue processing."""
+        with self._lock:
+            self._paused = True
+            self._save_state()
+
+    def resume(self) -> None:
+        """Resume queue processing."""
+        with self._lock:
+            self._paused = False
+            self._save_state()
+
+    def cancel(self) -> None:
+        """Cancel all pending and active tasks."""
+        with self._lock:
+            self._queue.clear()
+            for task in list(self._tasks.values()):
+                task.cancel()
+            self._tasks.clear()
+            self._save_state()
 
     # -- Public API ----------------------------------------------------------
     def add_files(self, files: Iterable[Any], *, priority: int = 0) -> None:
@@ -43,8 +85,27 @@ class UploadQueueManager:
             ts = time.time()
             for f in files:
                 heapq.heappush(self._queue, (priority, ts, f))
+                if f not in self.files:
+                    self.files.append(f)
                 ts += 1e-6  # ensure stable ordering
             self._save_state()
+
+    def add_file(self, file: Any, *, priority: int = 0) -> None:
+        """Compatibility wrapper for adding a single file."""
+        self.add_files([file], priority=priority)
+
+    def mark_complete(self, file: Any) -> None:
+        """Mark ``file`` as completed."""
+        with self._lock:
+            self.completed.add(file)
+            self._save_state()
+
+    def overall_progress(self) -> int:
+        total = len(self.files)
+        if total == 0:
+            return 0
+        pct = int(len(self.completed) / total * 100)
+        return max(0, min(100, pct))
 
     def get_queue_status(self) -> Dict[str, Any]:
         """Return counts of queued and active uploads."""
@@ -52,12 +113,16 @@ class UploadQueueManager:
             status = {
                 "pending": len(self._queue),
                 "active": len(self._tasks),
+                "paused": self._paused,
                 "max_concurrent": self.max_concurrent,
             }
         return status
 
     async def process_queue(
-        self, handler: Callable[[Any], asyncio.Future | Any]
+        self,
+        handler: Callable[[Any], asyncio.Future | Any],
+        *,
+        max_concurrent: int | None = None,
     ) -> List[Tuple[str, Any]]:
         """Process queued items using ``handler`` respecting concurrency.
 
@@ -66,8 +131,13 @@ class UploadQueueManager:
         result)`` tuples. Failed tasks will return the exception instance as the
         result.
         """
+        if max_concurrent is not None:
+            self.max_concurrent = max_concurrent
+
         completed: List[Tuple[str, Any]] = []
         with self._lock:
+            if self._paused:
+                return completed
             while self._queue and len(self._tasks) < self.max_concurrent:
                 priority, ts, item = heapq.heappop(self._queue)
                 task_id = str(uuid.uuid4())
