@@ -4,7 +4,7 @@ import types
 
 from dash import no_update
 
-from upload_core import UploadCore
+from core.callback_controller import CallbackEvent
 
 stub_pandas = types.ModuleType("pandas")
 stub_pandas.DataFrame = object
@@ -24,6 +24,12 @@ dyn_mod = types.ModuleType("config.dynamic_config")
 class _Dyn:
     def get_max_upload_size_bytes(self):
         return 1024
+    security = types.SimpleNamespace(
+        max_upload_mb=10,
+        rate_limit_requests=100,
+        rate_limit_window_minutes=1,
+        time_window=60,
+    )
 dyn_mod.dynamic_config = _Dyn()
 sys.modules["config.dynamic_config"] = dyn_mod
 sys.modules["services.device_learning_service"] = types.ModuleType("services.device_learning_service")
@@ -40,6 +46,38 @@ sys.modules["services.upload_data_service"] = uds
 col_mod = types.ModuleType("components.column_verification")
 col_mod.save_verified_mappings = lambda *a, **k: None
 sys.modules["components.column_verification"] = col_mod
+dbc_mod = types.ModuleType("dash_bootstrap_components")
+for attr in [
+    "Alert",
+    "Container",
+    "Row",
+    "Col",
+    "Card",
+    "CardHeader",
+    "CardBody",
+    "Progress",
+    "Table",
+    "Button",
+    "Modal",
+    "ModalHeader",
+    "ModalBody",
+    "ModalFooter",
+    "Toast",
+]:
+    setattr(dbc_mod, attr, lambda *a, **k: None)
+sys.modules["dash_bootstrap_components"] = dbc_mod
+svc_analytics_service = types.ModuleType("services.analytics_service")
+svc_analytics_service.MAX_DISPLAY_ROWS = 100
+sys.modules["services.analytics_service"] = svc_analytics_service
+core_unicode = types.ModuleType("core.unicode")
+core_unicode.safe_unicode_decode = lambda x, **_: x
+core_unicode.safe_unicode_encode = lambda x, **_: x
+core_unicode.ChunkedUnicodeProcessor = type(
+    "ChunkedUnicodeProcessor",
+    (),
+    {"process_large_content": staticmethod(lambda c, chunk_size=100: c)},
+)
+sys.modules["core.unicode"] = core_unicode
 upload_mod = types.ModuleType("services.upload")
 class _Proc:
     async_processor = None
@@ -57,6 +95,9 @@ upload_mod.ModalService = _Modal
 upload_mod.get_trigger_id = lambda: "trig"
 upload_mod.save_ai_training_data = lambda *a, **k: None
 sys.modules["services.upload"] = upload_mod
+validators_mod = types.ModuleType("services.upload.validators")
+validators_mod.ClientSideValidator = lambda *a, **k: None
+sys.modules["services.upload.validators"] = validators_mod
 comp_mod = types.ModuleType("components.upload")
 comp_mod.ClientSideValidator = lambda *a, **k: None
 sys.modules["components.upload"] = comp_mod
@@ -76,7 +117,7 @@ sys.modules["pages.export"] = types.ModuleType("pages.export")
 sys.modules["pages.settings"] = types.ModuleType("pages.settings")
 
 file_upload = importlib.import_module("pages.file_upload")
-Callbacks = UploadCore
+Callbacks = file_upload.Callbacks
 
 
 def test_schedule_upload_task_none():
@@ -112,6 +153,53 @@ def test_schedule_upload_task_returns_non_empty(monkeypatch):
     assert isinstance(tid, str) and tid
 
 
+def test_schedule_upload_task_triggers_event(monkeypatch):
+    cb = Callbacks()
+
+    class DummyManager:
+        def __init__(self):
+            self.events = []
+
+        def trigger(self, event, *args, **kwargs):
+            self.events.append(event)
+
+    dummy = DummyManager()
+    monkeypatch.setattr("pages.file_upload.CallbackManager", lambda: dummy)
+    def fake_create(coro):
+        if hasattr(coro, "close"):
+            coro.close()
+        return "tid77"
+
+    monkeypatch.setattr("pages.file_upload.create_task", fake_create)
+    tid = cb.schedule_upload_task("data", "name.csv")
+    assert tid == "tid77"
+    assert CallbackEvent.FILE_UPLOAD_START in dummy.events
+
+
+def test_schedule_upload_task_error(monkeypatch):
+    cb = Callbacks()
+
+    class DummyManager:
+        def __init__(self):
+            self.events = []
+
+        def trigger(self, event, *args, **kwargs):
+            self.events.append(event)
+
+    dummy = DummyManager()
+    monkeypatch.setattr("pages.file_upload.CallbackManager", lambda: dummy)
+
+    def boom(coro):
+        if hasattr(coro, "close"):
+            coro.close()
+        raise RuntimeError("fail")
+
+    monkeypatch.setattr("pages.file_upload.create_task", boom)
+    tid = cb.schedule_upload_task("data", "name.csv")
+    assert tid == ""
+    assert CallbackEvent.FILE_UPLOAD_ERROR in dummy.events
+
+
 def test_reset_upload_progress_disabled():
     cb = Callbacks()
     assert cb.reset_upload_progress(None) == (0, "0%", True)
@@ -124,8 +212,10 @@ def test_reset_upload_progress_enabled():
 
 def test_update_progress_bar(monkeypatch):
     cb = Callbacks()
+    cb.queue = types.SimpleNamespace(files=[])
+    cb.chunked = types.SimpleNamespace(get_progress=lambda _n: 0)
     monkeypatch.setattr("pages.file_upload.get_status", lambda tid: {"progress": 55})
-    assert cb.update_progress_bar(1, "tid") == (55, "55%")
+    assert cb.update_progress_bar(1, "tid") == (55, "55%", [])
 
 
 def test_finalize_upload_results_not_done(monkeypatch):

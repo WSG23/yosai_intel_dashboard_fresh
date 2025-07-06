@@ -23,6 +23,8 @@ from core.dash_profile import profile_callback
 
 def _get_max_display_rows() -> int:
     return get_analytics_config().max_display_rows or 10000
+
+
 import dash_bootstrap_components as dbc
 from dash.dependencies import ALL, Input, Output, State
 
@@ -39,6 +41,8 @@ from services.upload import (
     get_trigger_id,
     save_ai_training_data,
 )
+from core.callback_manager import CallbackManager
+from core.callback_controller import CallbackEvent
 from services.upload.validators import ClientSideValidator
 from services.upload_data_service import (
     clear_uploaded_data as service_clear_uploaded_data,
@@ -74,7 +78,6 @@ def layout():
                                                 id="upload-data",
                                                 max_size=dynamic_config.get_max_upload_size_bytes(),
                                             ).render()
-
                                         ]
                                     ),
                                 ]
@@ -96,7 +99,9 @@ def layout():
                                 striped=True,
                                 animated=True,
                             ),
-                            html.Ul(id="file-progress-list", className="list-unstyled mt-2")
+                            html.Ul(
+                                id="file-progress-list", className="list-unstyled mt-2"
+                            ),
                         ]
                     )
                 ],
@@ -209,6 +214,7 @@ def check_upload_system_health() -> Dict[str, Any]:
 
     return {"healthy": len(issues) == 0, "issues": issues}
 
+
 class Callbacks:
     """Container object for upload page callbacks."""
 
@@ -221,7 +227,6 @@ class Callbacks:
         self.validator = ClientSideValidator(
             max_size=dynamic_config.get_max_upload_size_bytes()
         )
-
 
     def highlight_upload_area(self, n_clicks):
         """Highlight upload area when 'upload more' is clicked."""
@@ -263,7 +268,10 @@ class Callbacks:
                     path, rows=_get_max_display_rows()
                 )
             except Exception:
-                df_preview = _uploaded_data_store.load_dataframe(filename).head(_get_max_display_rows())
+                df_preview = _uploaded_data_store.load_dataframe(filename).head(
+                    _get_max_display_rows()
+                )
+
             rows = info.get("rows", len(df_preview))
             cols = info.get("columns", len(df_preview.columns))
 
@@ -308,21 +316,8 @@ class Callbacks:
             False,
             False,
         )
-
-    async def process_uploaded_files(
-        self, contents_list: List[str] | str, filenames_list: List[str] | str
-    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
-        if not contents_list:
-            return (
-                [],
-                [],
-                {},
-                [],
-                {},
-                no_update,
-                no_update,
             )
-
+        
         if not isinstance(contents_list, list):
             contents_list = [contents_list]
             filenames_list = [filenames_list]
@@ -954,6 +949,7 @@ class Callbacks:
             )
 
         task_id = create_task(job)
+
         return task_id
 
     def reset_upload_progress(

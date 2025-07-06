@@ -120,6 +120,12 @@ class FileProcessorService(BaseService):
         else:
             text_content = self._decode_with_fallback(content)
 
+        # Sanitize any surrogate characters that may remain after decoding
+        text_content = self._decode_with_surrogate_handling(
+            text_content.encode("utf-8", "surrogatepass"),
+            "utf-8",
+        )
+
         sample = "\n".join(text_content.splitlines()[:20])
         delimiter = ","
         try:
@@ -203,6 +209,14 @@ class FileProcessorService(BaseService):
 
         logger.warning("All encodings failed, using replacement characters")
         return safe_unicode_decode(content, "utf-8")
+
+    def _decode_with_surrogate_handling(self, data: bytes, encoding: str) -> str:
+        """Decode ``data`` and remove surrogate code points."""
+        try:
+            text = data.decode(encoding, errors="surrogatepass")
+        except Exception:
+            text = data.decode(encoding, errors="replace")
+        return sanitize_unicode_input(text)
 
     def _is_reasonable_text(self, text: str) -> bool:
         """Basic check to ensure decoded text looks valid."""
