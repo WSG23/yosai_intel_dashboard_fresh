@@ -22,7 +22,7 @@ This guide walks new contributors through setting up a local development environ
    source venv/bin/activate
    ```
 
-3. **Install dependencies:**
+3. **Install Python dependencies:**
    ```bash
    ./scripts/setup.sh
    ```
@@ -30,21 +30,26 @@ This guide walks new contributors through setting up a local development environ
    development requirements include additional packages such as **PyYAML** that
    are necessary when running the test suite.
 
-4. **Compile translations:**
+4. **Install Node dependencies:**
+   ```bash
+   npm install
+   ```
+   These PostCSS packages are required when building the CSS bundle.
+5. **Compile translations:**
    ```bash
    pybabel compile -d translations
    ```
 
-5. **Configure environment variables:**
+6. **Configure environment variables:**
    ```bash
    cp .env.example .env
    # Edit .env as needed
    ```
 
-6. **(Optional) Initialize the database or load sample data.**
+7. **(Optional) Initialize the database or load sample data.**
    Prepare your PostgreSQL database and populate it with any example data if desired.
 
-7. **Run the test suite:**
+8. **Run the test suite:**
    ```bash
    pytest --cov
    mypy .
@@ -52,7 +57,7 @@ This guide walks new contributors through setting up a local development environ
    black --check .
    ```
    
-8. **Start the application:**
+9. **Start the application:**
    ```bash
    python app.py
    ```
