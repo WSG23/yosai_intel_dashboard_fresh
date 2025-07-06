@@ -4,6 +4,12 @@
 
 The dashboard exposes a simple drag-and-drop area on the **Upload** page. Either drag files onto the drop zone or click the region to open the file dialog. Selected files appear in a queue where you can remove entries prior to starting the upload. Once you press **Upload**, each file is sent to the server and a progress indicator shows completion status.
 
+Behind the scenes the upload is handled by a background worker. A task ID is
+returned immediately and progress events are streamed over Server‑Sent Events at
+`/upload/progress/<task_id>`. When processing completes the UI refreshes the
+`file-info-store` so analytics pages can use the new data without reloading the
+entire app.
+
 Supported file types are CSV and JSON. Large files are streamed to avoid exhausting browser memory. You may upload multiple files at once; they will be processed sequentially.
 
 ## Configuration Options
@@ -18,7 +24,9 @@ variable `UPLOAD_CHUNK_SIZE`.
 
 Background tasks such as analytics processing and file saves run in a thread
 pool. The worker count comes from `uploads.max_parallel_uploads` (default `4`).
-Use the `MAX_PARALLEL_UPLOADS` environment variable to adjust this value.
+Use the `MAX_PARALLEL_UPLOADS` environment variable to adjust this value. When a
+file takes too long the worker emits a warning which appears in the alert panel
+and is also sent to any connected monitoring systems.
 
 ## Mobile & Accessibility Guidelines
 
@@ -26,4 +34,10 @@ Use the `MAX_PARALLEL_UPLOADS` environment variable to adjust this value.
 - Provide an `aria-label` on the drop zone so screen readers announce its purpose.
 - Ensure contrast ratios meet WCAG AA guidelines and that keyboard focus is visible.
 - Touch targets, including the Upload button and remove icons, should be at least 44&times;44&nbsp;px.
+
+## Monitoring
+
+Metrics for file uploads are exposed at `/metrics`. Import the sample
+`prometheus.yml` from the `monitoring/` directory to scrape these statistics.
+Logstash integration is also available via `logging/logstash.conf`.
 
