@@ -36,11 +36,14 @@ from services.device_learning_service import get_device_learning_service
 from services.task_queue import clear_task, create_task, get_status
 from services.upload import (
     AISuggestionService,
+    ChunkedUploadManager,
     ModalService,
     UploadProcessingService,
+    UploadQueueManager,
     get_trigger_id,
     save_ai_training_data,
 )
+from services.upload.unified_controller import UnifiedUploadController
 from core.callback_manager import CallbackManager
 from core.callback_controller import CallbackEvent
 from services.upload.validators import ClientSideValidator
@@ -227,6 +230,8 @@ class Callbacks:
         self.validator = ClientSideValidator(
             max_size=dynamic_config.get_max_upload_size_bytes()
         )
+        self.chunked = ChunkedUploadManager()
+        self.queue = UploadQueueManager()
 
     def highlight_upload_area(self, n_clicks):
         """Highlight upload area when 'upload more' is clicked."""
@@ -795,6 +800,8 @@ class Callbacks:
         self.ai = AISuggestionService()
         self.modal = ModalService()
         self.client_validator = ClientSideValidator()
+        self.chunked = ChunkedUploadManager()
+        self.queue = UploadQueueManager()
 
 
     def highlight_upload_area(self, n_clicks):
