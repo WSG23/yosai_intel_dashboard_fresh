@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import asyncio
+import time
 from typing import Iterator
 
 from flask import Response, stream_with_context
@@ -22,7 +22,10 @@ class ProgressEventManager:
             yield f"data: {progress}\n\n"
             if status.get("done"):
                 break
-            asyncio.run(asyncio.sleep(self.interval))
+            # This generator runs synchronously inside a request handler, so
+            # a simple blocking sleep avoids the overhead of spawning an event
+            # loop for each iteration.
+            time.sleep(self.interval)
 
     def stream(self, task_id: str) -> Response:
         """Return an SSE ``Response`` streaming progress for ``task_id``."""
