@@ -11,10 +11,10 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 from core.exceptions import ConfigurationError
+from core.protocols import ConfigProviderProtocol
 from core.secrets_validator import SecretsValidator
 
 from .config_validator import ConfigValidator
-
 from .dynamic_config import dynamic_config
 from .environment import get_environment, select_config_file
 
