@@ -28,6 +28,8 @@ def test_process_uploaded_files_split(monkeypatch, tmp_path):
 
     cb = UploadCore()
     cb.processing = UploadProcessingService(store)
+    ok, msg = cb.validator.validate("big.csv", contents_list[0])
+    assert ok, msg
     result = asyncio.run(cb.process_uploaded_files(contents_list, filenames_list))
     info = result[2]
 
