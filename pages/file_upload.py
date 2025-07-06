@@ -35,9 +35,17 @@ from services.upload_data_service import (
 from config.dynamic_config import dynamic_config
 
 from components.column_verification import save_verified_mappings
-from upload_core import UploadCore
-from upload_callbacks import UploadCallbackManager
-from services.upload import save_ai_training_data
+from services.upload import (
+    UploadProcessingService,
+    AISuggestionService,
+    ModalService,
+    get_trigger_id,
+    save_ai_training_data,
+)
+from services.upload.unified_controller import UnifiedUploadController
+from components.upload import ClientSideValidator
+
+
 from services.task_queue import create_task, get_status, clear_task
 
 
@@ -237,12 +245,45 @@ class Callbacks(UploadCore):
     """Backward compatibility wrapper"""
     pass
 
-def register_callbacks(
+def register_upload_callbacks(
     manager: "TrulyUnifiedCallbacks",
     controller: UnifiedAnalyticsController | None = None,
 ) -> None:
     cb = Callbacks()
-    UploadCallbackManager(cb).register(manager, controller)
+    upload_ctrl = UnifiedUploadController(cb)
+
+    def _register(defs: List[tuple]):
+        for func, outputs, inputs, states, cid, extra in defs:
+            manager.unified_callback(
+                outputs,
+                inputs,
+                states,
+                callback_id=cid,
+                component_name="file_upload",
+                **extra,
+            )(debounce()(profile_callback(cid)(func)))
+
+    for defs in (
+        upload_ctrl.upload_callbacks(),
+        upload_ctrl.progress_callbacks(),
+        upload_ctrl.validation_callbacks(),
+    ):
+        _register(defs)
+
+    manager.app.clientside_callback(
+        "function(tid){if(window.startUploadProgress){window.startUploadProgress(tid);} return '';}",
+        Output("sse-trigger", "children"),
+        Input("upload-task-id", "data"),
+    )
+
+    if controller is not None:
+        controller.register_callback(
+            "on_analysis_error",
+            lambda aid, err: logger.error("File upload error: %s", err),
+        )
+
+
+# Export functions for integration with other modules
 
 __all__ = [
     "layout",
@@ -253,7 +294,7 @@ __all__ = [
     "get_file_info",
     "check_upload_system_health",
     "save_ai_training_data",
-    "register_callbacks",
+    "register_upload_callbacks",
 ]
 
 logger.info(f"\U0001f50d FILE_UPLOAD.PY LOADED - Callbacks should be registered")
