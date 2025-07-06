@@ -83,19 +83,19 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🐍 Run security audit
-        run: ./security_audit.sh
+        run: ./scripts/security_audit.sh
 
       - name: 📊 Run load test
-        run: ./load_test.sh
+        run: ./scripts/load_test.sh
 
       - name: 🛡️ Run failover test
-        run: ./failover_test.sh
+        run: ./scripts/failover_test.sh
 
       - name: ♻️ Run recovery test
-        run: ./recovery_test.sh
+        run: ./scripts/recovery_test.sh
 
       - name: 🗄️ Run compliance audit
-        run: ./compliance_audit.sh
+        run: ./scripts/compliance_audit.sh
 
       - name: 🏗️  Build & push image
         uses: docker/build-push-action@v5
