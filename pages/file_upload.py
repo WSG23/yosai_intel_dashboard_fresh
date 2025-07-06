@@ -29,13 +29,13 @@ def _get_max_display_rows() -> int:
 import dash_bootstrap_components as dbc
 from dash.dependencies import ALL, Input, Output, State
 
-from components.advanced_upload import DragDropUploadArea
-from components.column_verification import (
-    save_verified_mappings,
-    create_verification_interface,
-)
+from components.column_verification import save_verified_mappings
+
 from components.upload import ClientSideValidator as ErrorDisplayValidator
+from components.upload.drag_drop_upload_area import DragDropUploadArea
 from config.dynamic_config import dynamic_config
+from core.callback_controller import CallbackEvent
+from core.callback_manager import CallbackManager
 from services.device_learning_service import get_device_learning_service
 from services.task_queue import clear_task, create_task, get_status
 from services.upload import (
@@ -46,10 +46,8 @@ from services.upload import (
     get_trigger_id,
     save_ai_training_data,
 )
-from services.upload.upload_queue_manager import UploadQueueManager
 from services.upload.unified_controller import UnifiedUploadController
-from core.callback_manager import CallbackManager
-from core.callback_controller import CallbackEvent
+from services.upload.upload_queue_manager import UploadQueueManager
 from services.upload.validators import ClientSideValidator
 from services.upload_data_service import (
     clear_uploaded_data as service_clear_uploaded_data,
@@ -79,14 +77,7 @@ def layout():
                                     dbc.CardHeader(
                                         [html.H5("Upload Data Files", className="mb-0")]
                                     ),
-                                    dbc.CardBody(
-                                        [
-                                            DragDropUploadArea(
-                                                id="upload-data",
-                                                max_size=dynamic_config.get_max_upload_size_bytes(),
-                                            ).render()
-                                        ]
-                                    ),
+                                    dbc.CardBody([DragDropUploadArea()]),
                                 ]
                             )
                         ]

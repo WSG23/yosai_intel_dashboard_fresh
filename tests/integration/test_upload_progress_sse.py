@@ -21,7 +21,7 @@ def test_upload_progress_sse(dash_duo, tmp_path):
     app = _create_upload_app()
     dash_duo.start_server(app)
     assert not dash_duo.find_elements("#upload-progress-interval")
-    file_input = dash_duo.find_element("#upload-data input")
+    file_input = dash_duo.find_element("#drag-drop-upload input")
     file_input.send_keys(str(csv))
     dash_duo.wait_for_text_to_equal("#upload-progress", "100%", timeout=10)
     logs = dash_duo.driver.execute_script("return window.uploadProgressLog.length")

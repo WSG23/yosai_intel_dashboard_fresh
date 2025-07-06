@@ -1,4 +1,5 @@
 """Callback registration utilities for upload components."""
+
 from __future__ import annotations
 
 import logging
@@ -37,7 +38,7 @@ class UploadCallbackManager:
         upload_callbacks = [
             (
                 cb.highlight_upload_area,
-                Output("upload-data", "className"),
+                Output("drag-drop-upload", "className"),
                 Input("upload-more-btn", "n_clicks"),
                 None,
                 "highlight_upload_area",
@@ -46,8 +47,8 @@ class UploadCallbackManager:
             (
                 cb.schedule_upload_task,
                 Output("upload-task-id", "data", allow_duplicate=True),
-                Input("upload-data", "contents"),
-                State("upload-data", "filename"),
+                Input("drag-drop-upload", "contents"),
+                State("drag-drop-upload", "filename"),
                 "schedule_upload_task",
                 {"prevent_initial_call": True, "allow_duplicate": True},
             ),
@@ -64,9 +65,11 @@ class UploadCallbackManager:
                 [
                     Output("upload-progress", "value", allow_duplicate=True),
                     Output("upload-progress", "label", allow_duplicate=True),
-                    Output("upload-progress-interval", "disabled", allow_duplicate=True),
+                    Output(
+                        "upload-progress-interval", "disabled", allow_duplicate=True
+                    ),
                 ],
-                Input("upload-data", "contents"),
+                Input("drag-drop-upload", "contents"),
                 None,
                 "reset_upload_progress",
                 {"prevent_initial_call": True, "allow_duplicate": True},
@@ -94,9 +97,15 @@ class UploadCallbackManager:
                     Output("file-info-store", "data", allow_duplicate=True),
                     Output("upload-nav", "children", allow_duplicate=True),
                     Output("current-file-info-store", "data", allow_duplicate=True),
-                    Output("column-verification-modal", "is_open", allow_duplicate=True),
-                    Output("device-verification-modal", "is_open", allow_duplicate=True),
-                    Output("upload-progress-interval", "disabled", allow_duplicate=True),
+                    Output(
+                        "column-verification-modal", "is_open", allow_duplicate=True
+                    ),
+                    Output(
+                        "device-verification-modal", "is_open", allow_duplicate=True
+                    ),
+                    Output(
+                        "upload-progress-interval", "disabled", allow_duplicate=True
+                    ),
                 ],
                 Input("progress-done-trigger", "n_clicks"),
                 State("upload-task-id", "data"),
@@ -119,5 +128,6 @@ class UploadCallbackManager:
                 "on_analysis_error",
                 lambda aid, err: logger.error("File upload error: %s", err),
             )
+
 
 __all__ = ["UploadCallbackManager"]

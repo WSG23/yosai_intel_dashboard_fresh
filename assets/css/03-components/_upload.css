@@ -145,3 +145,9 @@
   height: 100%;
   object-fit: cover;
 }
+
+/* Minimum touch target size */
+.drag-drop-upload .btn {
+  min-width: 44px;
+  min-height: 44px;
+}
