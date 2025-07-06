@@ -187,87 +187,9 @@ def _create_full_app() -> dash.Dash:
             except Exception as e:  # pragma: no cover - best effort
                 logger.warning(f"Failed to initialize CSRF plugin: {e}")
 
-        # Initialize plugin system via unified registry
-        container = DIContainer()
-        plugin_auto = PluginAutoConfiguration(
-            app,
-            container=container,
-            config_manager=config_manager,
-        )
-        plugin_auto.scan_and_configure("plugins")
-        plugin_auto.generate_health_endpoints()
-        registry = plugin_auto.registry
-        app._yosai_plugin_manager = registry.plugin_manager
-
-        @app.server.teardown_appcontext  # type: ignore[attr-defined]
-        def _shutdown_plugin_manager(exc=None):
-            registry.plugin_manager.stop_all_plugins()
-            registry.plugin_manager.stop_health_monitor()
-
-        # Set main layout with caching to avoid repeated JSON encoding
-        layout_snapshot = None
-
-        def _serve_layout():
-            nonlocal layout_snapshot
-            if layout_snapshot is None:
-                layout_snapshot = _create_main_layout()
-            return layout_snapshot
-
-        app.layout = _serve_layout
-
-        # Register all callbacks using TrulyUnifiedCallbacks if available
-        if TrulyUnifiedCallbacks is not None:
-            coordinator = TrulyUnifiedCallbacks(app)
-            _register_router_callbacks(coordinator)
-            _register_global_callbacks(coordinator)
-        else:  # pragma: no cover - optional dependency missing
-            coordinator = None
-            logger.warning(
-                "TrulyUnifiedCallbacks unavailable; skipping unified callback setup"
-            )
-
-        # Register page/component callbacks
-        if coordinator is not None:
-            try:
-                from components.device_verification import (
-                    register_callbacks as register_device_verification,
-                )
-                from components.simple_device_mapping import (
-                    register_callbacks as register_simple_mapping,
-                )
-                from components.ui.navbar import register_navbar_callbacks
-                from pages.deep_analytics.callbacks import (
-                    Callbacks as DeepAnalyticsCallbacks,
-                )
-                from pages.deep_analytics.callbacks import (
-                    register_callbacks as register_deep_callbacks,
-                )
-                from pages.file_upload import Callbacks as UploadCallbacks
-                from pages.file_upload import (
-                    register_callbacks as register_upload_callbacks,
-                )
-
-                register_upload_callbacks(coordinator)
-                register_simple_mapping(coordinator)
-                register_device_verification(coordinator)
-                register_deep_callbacks(coordinator)
-                register_navbar_callbacks(coordinator)
-
-                # Keep references to callback managers
-                app._upload_callbacks = UploadCallbacks()
-                app._deep_analytics_callbacks = DeepAnalyticsCallbacks()
-
-                if (
-                    config_manager.get_app_config().environment == "development"
-                    and hasattr(coordinator, "print_callback_summary")
-                ):
-                    coordinator.print_callback_summary()
-            except Exception as e:
-                logger.warning(f"Failed to register module callbacks: {e}")
-        else:
-            logger.warning(
-                "Skipping registration of module callbacks due to missing coordinator"
-            )
+        _initialize_plugins(app, config_manager)
+        _setup_layout(app)
+        _register_callbacks(app, config_manager)
 
         # Initialize services using the DI container
         _initialize_services(service_container)
@@ -776,6 +698,93 @@ def _register_global_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
     create_learning_callbacks(manager)
 
     logger.info("✅ Global callbacks registered successfully")
+
+
+def _initialize_plugins(app: dash.Dash, config_manager: Any) -> None:
+    """Initialize plugin system and register health endpoints."""
+
+    container = DIContainer()
+    plugin_auto = PluginAutoConfiguration(
+        app, container=container, config_manager=config_manager
+    )
+    plugin_auto.scan_and_configure("plugins")
+    plugin_auto.generate_health_endpoints()
+    registry = plugin_auto.registry
+    app._yosai_plugin_manager = registry.plugin_manager
+
+    @app.server.teardown_appcontext  # type: ignore[attr-defined]
+    def _shutdown_plugin_manager(exc=None):
+        registry.plugin_manager.stop_all_plugins()
+        registry.plugin_manager.stop_health_monitor()
+
+
+def _setup_layout(app: dash.Dash) -> None:
+    """Attach main layout with caching."""
+
+    layout_snapshot = None
+
+    def _serve_layout() -> Any:
+        nonlocal layout_snapshot
+        if layout_snapshot is None:
+            layout_snapshot = _create_main_layout()
+        return layout_snapshot
+
+    app.layout = _serve_layout
+
+
+def _register_callbacks(app: dash.Dash, config_manager: Any) -> None:
+    """Register application callbacks using the unified coordinator."""
+
+    if TrulyUnifiedCallbacks is not None:
+        coordinator = TrulyUnifiedCallbacks(app)
+        _register_router_callbacks(coordinator)
+        _register_global_callbacks(coordinator)
+    else:  # pragma: no cover - optional dependency missing
+        coordinator = None
+        logger.warning(
+            "TrulyUnifiedCallbacks unavailable; skipping unified callback setup"
+        )
+
+    if coordinator is not None:
+        try:
+            from components.device_verification import (
+                register_callbacks as register_device_verification,
+            )
+            from components.simple_device_mapping import (
+                register_callbacks as register_simple_mapping,
+            )
+            from components.ui.navbar import register_navbar_callbacks
+            from pages.deep_analytics.callbacks import (
+                Callbacks as DeepAnalyticsCallbacks,
+            )
+            from pages.deep_analytics.callbacks import (
+                register_callbacks as register_deep_callbacks,
+            )
+            from pages.file_upload import Callbacks as UploadCallbacks
+            from pages.file_upload import (
+                register_callbacks as register_upload_callbacks,
+            )
+
+            register_upload_callbacks(coordinator)
+            register_simple_mapping(coordinator)
+            register_device_verification(coordinator)
+            register_deep_callbacks(coordinator)
+            register_navbar_callbacks(coordinator)
+
+            app._upload_callbacks = UploadCallbacks()
+            app._deep_analytics_callbacks = DeepAnalyticsCallbacks()
+
+            if (
+                config_manager.get_app_config().environment == "development"
+                and hasattr(coordinator, "print_callback_summary")
+            ):
+                coordinator.print_callback_summary()
+        except Exception as e:  # pragma: no cover - log and continue
+            logger.warning(f"Failed to register module callbacks: {e}")
+    else:
+        logger.warning(
+            "Skipping registration of module callbacks due to missing coordinator"
+        )
 
 
 def _initialize_services(container: Optional[ServiceContainer] = None) -> None:
