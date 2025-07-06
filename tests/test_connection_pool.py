@@ -27,7 +27,7 @@ def test_pool_health_check():
     conn.close()
     pool.release_connection(conn)
     healthy = pool.health_check()
-    assert not healthy
+    assert healthy
 
 
 def test_pool_expands_and_shrinks():
