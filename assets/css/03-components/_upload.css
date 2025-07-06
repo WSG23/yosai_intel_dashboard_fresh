@@ -70,16 +70,16 @@
 }
 
 /* High Contrast Theme */
-[data-theme="high-contrast"] .upload-dropzone {
+.high-contrast-mode .upload-dropzone {
   border-color: var(--color-white);
   background: var(--color-black);
   color: var(--color-white);
 }
 
-[data-theme="high-contrast"] .upload-progress {
+.high-contrast-mode .upload-progress {
   background: var(--color-gray-500);
 }
 
-[data-theme="high-contrast"] .upload-progress__bar {
+.high-contrast-mode .upload-progress__bar {
   background: var(--color-white);
 }
