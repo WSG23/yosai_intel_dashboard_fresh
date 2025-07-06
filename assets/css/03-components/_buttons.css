@@ -30,7 +30,7 @@
 
 .btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow: 0 0 0 2px var(--color-accent);
 }
 
 /* General hover effect for all buttons */
@@ -161,6 +161,7 @@
 
 .btn-primary:hover {
   background-color: var(--accent-primary-hover);
+
 }
 
 .btn-secondary {
@@ -170,6 +171,7 @@
 
 .btn-secondary:hover {
   background-color: var(--surface-tertiary);
+
 }
 
 /* Button States */

@@ -30,7 +30,10 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import ALL, Input, Output, State
 
 from components.advanced_upload import DragDropUploadArea
-from components.column_verification import save_verified_mappings
+from components.column_verification import (
+    save_verified_mappings,
+    create_verification_interface,
+)
 from components.upload import ClientSideValidator as ErrorDisplayValidator
 from config.dynamic_config import dynamic_config
 from services.device_learning_service import get_device_learning_service
@@ -790,10 +793,142 @@ class Callbacks:
                 if not is_open
                 else dbc.Alert("No file information available", color="warning")
             )
+        try:
+            filename = file_info.get("filename", "")
+            df = _uploaded_data_store.load_dataframe(filename)
+            if df is None:
+                raise ValueError(f"No data loaded for {filename}")
+
+            columns = list(df.columns)
+            sample = df.head(5).to_dict()
+            ai_suggestions = file_info.get("ai_suggestions", {})
+
+            return create_verification_interface(columns, sample, ai_suggestions)
+        except Exception as e:  # pragma: no cover - robustness
+            logger.error(f"Error generating column modal: {e}")
+            return dbc.Alert(f"Error: {e}", color="danger")
+
+    def save_confirmed_device_mappings(
+        self,
+        confirm_clicks,
+        floors,
+        security,
+        access,
+        special,
+        file_info,
+    ) -> Tuple[Any, Any, Any]:
+        """Persist user-confirmed device mappings for learning."""
+        if not confirm_clicks or not file_info:
+            return no_update, no_update, no_update
+        try:
+            devices = file_info.get("devices", [])
+            filename = file_info.get("filename", "")
+
+            user_mappings: Dict[str, Any] = {}
+            for i, device in enumerate(devices):
+                user_mappings[device] = {
+                    "floor_number": floors[i] if i < len(floors) else 1,
+                    "security_level": security[i] if i < len(security) else 5,
+                    "is_entry": "entry" in (access[i] if i < len(access) else []),
+                    "is_exit": "exit" in (access[i] if i < len(access) else []),
+                    "is_restricted": "is_restricted" in (
+                        special[i] if i < len(special) else []
+                    ),
+                    "confidence": 1.0,
+                    "device_name": device,
+                    "source": "user_confirmed",
+                    "saved_at": datetime.now().isoformat(),
+                }
+
+            learning_service = get_device_learning_service()
+            if not filename:
+                raise ValueError("No filename provided in file_info")
+            if not devices:
+                raise ValueError("No devices found in file_info")
+
+            _uploaded_data_store.wait_for_pending_saves()
+            df = _uploaded_data_store.load_dataframe(filename)
+            if df is None or df.empty:
+                raise ValueError(f"Data for '{filename}' could not be loaded")
+
+            learning_service.save_user_device_mappings(df, filename, user_mappings)
+            from services.ai_mapping_store import ai_mapping_store
+
+            ai_mapping_store.update(user_mappings)
+
+            success_alert = dbc.Toast(
+                "✅ Device mappings saved to database!",
+                header="Confirmed & Saved",
+                is_open=True,
+                dismissable=True,
+                duration=3000,
+            )
+            return success_alert, False, False
+        except Exception as e:  # pragma: no cover - robustness
+            logger.error("Error saving device mappings: %s", e)
+            error_alert = dbc.Toast(
+                f"❌ Error saving mappings: {e}",
+                header="Error",
+                is_open=True,
+                dismissable=True,
+                duration=8000,
+            )
+            return error_alert, no_update, no_update
+
+    def save_verified_column_mappings(
+        self,
+        confirm_clicks,
+        mapping_values,
+        mapping_ids,
+        file_info,
+    ) -> Any:
+        """Save verified column mappings and training data."""
+        if not confirm_clicks or not file_info:
+            return no_update
+        try:
+            filename = file_info.get("filename", "")
+            column_mappings: Dict[str, str] = {}
+            for value, ident in zip(mapping_values, mapping_ids):
+                field = ident.get("field") if isinstance(ident, dict) else None
+                if value and field:
+                    column_mappings[field] = value
+
+            metadata = {
+                "source_type": file_info.get("data_source_type"),
+                "quality": file_info.get("data_quality"),
+            }
+
+            if save_verified_mappings(filename, column_mappings, metadata):
+                save_ai_training_data(filename, column_mappings, file_info)
+                alert = dbc.Toast(
+                    "✅ Column mappings saved!",
+                    header="Confirmed & Saved",
+                    is_open=True,
+                    dismissable=True,
+                    duration=3000,
+                )
+            else:
+                alert = dbc.Toast(
+                    "⚠️ Failed to save mappings",
+                    header="Warning",
+                    is_open=True,
+                    dismissable=True,
+                    duration=8000,
+                )
+            return alert
+        except Exception as e:  # pragma: no cover - robustness
+            logger.error("Error saving column mappings: %s", e)
+            return dbc.Toast(
+                f"❌ Error saving mappings: {e}",
+                header="Error",
+                is_open=True,
+                dismissable=True,
+                duration=8000,
+            )
 
 
-class Callbacks:
-    """Container object for upload page callbacks."""
+class CallbacksLegacy:
+    """Legacy duplicate class (unused)."""
 
     def __init__(self):
         self.processing = UploadProcessingService(_uploaded_data_store)
