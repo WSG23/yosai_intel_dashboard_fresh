@@ -5,9 +5,10 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Callable, Optional, List
+from typing import Callable, List, Optional
 
 import pandas as pd
+
 try:
     import psutil
 except ImportError:  # pragma: no cover - optional dependency
@@ -17,9 +18,12 @@ except ImportError:  # pragma: no cover - optional dependency
 class PerformanceFileProcessor:
     """Process large CSV files in chunks with memory tracking."""
 
-    def __init__(self, chunk_size: int = 50000) -> None:
+    def __init__(self, chunk_size: int = 50000, *, max_memory_mb: int | None = None) -> None:
+        from config.dynamic_config import dynamic_config
+
         self.chunk_size = chunk_size
         self.logger = logging.getLogger(__name__)
+        self.max_memory_mb = max_memory_mb or dynamic_config.analytics.max_memory_mb
 
     def process_large_csv(
         self,
@@ -52,6 +56,13 @@ class PerformanceFileProcessor:
                 psutil.Process().memory_info().rss / (1024 * 1024)
                 if psutil else 0
             )
+            if self.max_memory_mb and mem_mb > self.max_memory_mb:
+                self.logger.error(
+                    "Memory usage %.1f MB exceeds limit %s MB", mem_mb, self.max_memory_mb
+                )
+                raise MemoryError(
+                    f"Memory usage {mem_mb:.1f} MB exceeds limit {self.max_memory_mb} MB"
+                )
             if progress_callback:
                 try:
                     progress_callback(rows, mem_mb)

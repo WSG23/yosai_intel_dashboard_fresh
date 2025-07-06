@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import List, Iterable
+from typing import Iterable, List
 
 import pandas as pd
 
@@ -20,6 +20,7 @@ class UnlimitedFileProcessor:
 
     def __init__(self, chunk_size: int | None = None) -> None:
         self.chunk_size = chunk_size or dynamic_config.analytics.chunk_size
+        self.max_memory_mb = dynamic_config.analytics.max_memory_mb
 
     def read_csv_chunks(
         self, file_path: str | Path, encoding: str = "utf-8"
@@ -31,6 +32,7 @@ class UnlimitedFileProcessor:
         for chunk in pd.read_csv(path, chunksize=self.chunk_size, encoding=encoding):
             monitor.throttle_if_needed()
             rows += len(chunk)
+            check_memory_limit(self.max_memory_mb, logger)
             logger.debug("Processed %s rows from %s", rows, path.name)
             yield chunk
         logger.info("Finished processing %s rows from %s", rows, path.name)

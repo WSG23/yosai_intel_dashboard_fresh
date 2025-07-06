@@ -11,6 +11,7 @@ from typing import AsyncIterator, Callable, List, Optional
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
+from utils.memory_utils import check_memory_limit
 
 
 class AsyncFileProcessor:
@@ -18,6 +19,8 @@ class AsyncFileProcessor:
 
     def __init__(self, chunk_size: int | None = None) -> None:
         self.chunk_size = chunk_size or dynamic_config.analytics.chunk_size
+        self.max_memory_mb = dynamic_config.analytics.max_memory_mb
+        self.logger = logging.getLogger(__name__)
 
     async def read_csv_chunks(
         self,
@@ -41,6 +44,7 @@ class AsyncFileProcessor:
             chunk = await asyncio.to_thread(_next_chunk)
             if chunk is None:
                 break
+            check_memory_limit(self.max_memory_mb, self.logger)
             processed += len(chunk)
             if progress_callback and total_lines:
                 pct = int(processed / total_lines * 100)

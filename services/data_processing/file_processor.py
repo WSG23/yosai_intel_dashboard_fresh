@@ -15,7 +15,12 @@ from pathlib import Path
 
 # Core processing imports only - NO UI COMPONENTS
 from security.unicode_security_processor import sanitize_unicode_input
+from config.config import get_analytics_config
+
+def _get_max_display_rows() -> int:
+    return get_analytics_config().max_display_rows or 10000
 from core.unicode_processor import safe_format_number
+from services.analytics_service import MAX_DISPLAY_ROWS
 
 logger = logging.getLogger(__name__)
 
@@ -105,10 +110,12 @@ def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
             'filename': filename
         }
 
-def create_file_preview(df: pd.DataFrame, max_rows: int = 10) -> Dict[str, Any]:
+def create_file_preview(df: pd.DataFrame, max_rows: int | None = None) -> Dict[str, Any]:
     """Create safe preview data without UI components"""
     try:
-        preview_df = df.head(max_rows)
+        rows = max_rows or _get_max_display_rows()
+        preview_df = df.head(rows)
+
         # Ensure all data is JSON serializable and Unicode-safe
         preview_data = []
         for _, row in preview_df.iterrows():

@@ -60,6 +60,7 @@ analytics:
   data_retention_days: ${DATA_RETENTION_DAYS:365}
   query_timeout_seconds: ${QUERY_TIMEOUT_SECONDS:600}
   force_full_dataset_analysis: ${FORCE_FULL_DATASET:true}
+  max_display_rows: ${MAX_DISPLAY_ROWS:10000}
 
 monitoring:
   health_check_enabled: true
