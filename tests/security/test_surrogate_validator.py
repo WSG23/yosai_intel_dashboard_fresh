@@ -21,6 +21,8 @@ from security_callback_controller import SecurityEvent
 def test_contains_surrogates_detects():
     assert contains_surrogates("a\ud800b")
     assert not contains_surrogates("abc")
+    # Valid surrogate pair should not be flagged
+    assert not contains_surrogates("\ud800\udc00")
 
 
 def test_remove_mode(monkeypatch):

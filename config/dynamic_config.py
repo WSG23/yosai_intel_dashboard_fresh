@@ -1,15 +1,15 @@
-import os
 import logging
-from typing import Dict, Any
+import os
+from typing import Any, Dict
 
-from .environment import select_config_file
 from .constants import (
-    SecurityConstants,
-    PerformanceConstants,
-    CSSConstants,
     AnalyticsConstants,
+    CSSConstants,
+    PerformanceConstants,
+    SecurityConstants,
     UploadLimits,
 )
+from .environment import select_config_file
 
 
 class DynamicConfigManager:
@@ -98,6 +98,10 @@ class DynamicConfigManager:
         if ai_threshold is not None:
             self.performance.ai_confidence_threshold = int(ai_threshold)
 
+        mem_thresh = os.getenv("MEMORY_THRESHOLD_MB")
+        if mem_thresh is not None:
+            self.performance.memory_usage_threshold_mb = int(mem_thresh)
+
         css_threshold = os.getenv("CSS_BUNDLE_THRESHOLD")
         if css_threshold is not None:
             self.css.bundle_threshold_kb = int(css_threshold)
@@ -121,6 +125,10 @@ class DynamicConfigManager:
         batch_size = os.getenv("ANALYTICS_BATCH_SIZE")
         if batch_size is not None:
             self.analytics.batch_size = int(batch_size)
+
+        max_memory = os.getenv("ANALYTICS_MAX_MEMORY_MB")
+        if max_memory is not None:
+            self.analytics.max_memory_mb = int(max_memory)
 
         upload_chunk = os.getenv("UPLOAD_CHUNK_SIZE")
         if upload_chunk is not None:
@@ -195,8 +203,9 @@ dynamic_config = DynamicConfigManager()
 
 def diagnose_upload_config():
     """Diagnostic function to check upload configuration"""
-    from config.dynamic_config import dynamic_config
     import os
+
+    from config.dynamic_config import dynamic_config
 
     print("=== Upload Configuration Diagnosis ===")
     print(f"Environment MAX_UPLOAD_MB: {os.getenv('MAX_UPLOAD_MB', 'Not Set')}")

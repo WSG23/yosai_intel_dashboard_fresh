@@ -10,8 +10,6 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
-    env:
-      POETRY_VERSION: 1.8.2
 
     steps:
       - name: 📥 Checkout code
@@ -58,6 +56,11 @@ jobs:
       - name: 📚 Safety (dependency CVE scan)
         run: python scripts/audit_dependencies.py
 
+      - name: 🔎 Gitleaks (secret scan)
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: "--source=."
+
       # ----- Tests -----
       - name: ✅ Run PyTest
         run: pytest -q --cov=.
@@ -66,6 +69,36 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           fail_ci_if_error: true
+
+  performance-test:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ⚙️  Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: 📦 Install deps
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements_ui.txt
+          pip install -r requirements-dev.txt
+
+      - name: 🚀 Run performance tests
+        run: pytest -m performance -q | tee performance-results.log
+
+      - name: 📊 Upload performance results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-results
+          path: performance-results.log
 
   docker:
     needs: build-test
@@ -83,19 +116,19 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🐍 Run security audit
-        run: ./security_audit.sh
+        run: ./scripts/security_audit.sh
 
       - name: 📊 Run load test
-        run: ./load_test.sh
+        run: ./scripts/load_test.sh
 
       - name: 🛡️ Run failover test
-        run: ./failover_test.sh
+        run: ./scripts/failover_test.sh
 
       - name: ♻️ Run recovery test
-        run: ./recovery_test.sh
+        run: ./scripts/recovery_test.sh
 
       - name: 🗄️ Run compliance audit
-        run: ./compliance_audit.sh
+        run: ./scripts/compliance_audit.sh
 
       - name: 🏗️  Build & push image
         uses: docker/build-push-action@v5
@@ -105,6 +138,11 @@ jobs:
           tags: ghcr.io/${{ github.repository }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: 🔍 Scan Docker image
+        uses: aquasec/trivy-action@v0.14.0
+        with:
+          image-ref: ghcr.io/${{ github.repository }}:latest
 
       - name: ✅ Image digest
         run: echo "Image built: ${{ steps.build-and-push.outputs.digest }}"
@@ -121,3 +159,14 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           generate_release_notes: true
+
+  deploy-staging:
+    needs: docker
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy to staging
+        run: YOSAI_ENV=staging docker-compose up -d

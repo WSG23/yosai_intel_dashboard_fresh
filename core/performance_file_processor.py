@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 from typing import IO, Callable, Iterable, List, Optional, Union
 
+
 import pandas as pd
 
 try:
@@ -18,9 +19,12 @@ except ImportError:  # pragma: no cover - optional dependency
 class PerformanceFileProcessor:
     """Process large CSV files in chunks with memory tracking."""
 
-    def __init__(self, chunk_size: int = 50000) -> None:
+    def __init__(self, chunk_size: int = 50000, *, max_memory_mb: int | None = None) -> None:
+        from config.dynamic_config import dynamic_config
+
         self.chunk_size = chunk_size
         self.logger = logging.getLogger(__name__)
+        self.max_memory_mb = max_memory_mb or dynamic_config.analytics.max_memory_mb
 
     def _get_memory_usage(self) -> float:
         """Return current process memory usage in MB."""
@@ -96,6 +100,4 @@ class PerformanceFileProcessor:
         chunks = list(gen)
         return pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
 
-
 __all__ = ["PerformanceFileProcessor"]
-

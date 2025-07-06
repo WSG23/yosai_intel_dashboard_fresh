@@ -8,12 +8,19 @@ import pandas as pd
 import json
 import io
 import chardet
+from config.dynamic_config import dynamic_config
+from core.performance import get_performance_monitor
 from typing import Optional, Dict, Any, List, Tuple, Union
 from pathlib import Path
 
 # Core processing imports only - NO UI COMPONENTS
 from security.unicode_security_processor import sanitize_unicode_input
+from config.config import get_analytics_config
+
+def _get_max_display_rows() -> int:
+    return get_analytics_config().max_display_rows or 10000
 from core.unicode_processor import safe_format_number
+from services.analytics_service import MAX_DISPLAY_ROWS
 
 logger = logging.getLogger(__name__)
 
@@ -63,9 +70,17 @@ def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
         # Safe Unicode processing
         text_content = UnicodeFileProcessor.safe_decode_content(decoded)
 
+        chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
+        monitor = get_performance_monitor()
+
         # Process based on file type
         if filename.endswith('.csv'):
-            df = pd.read_csv(io.StringIO(text_content))
+            reader = pd.read_csv(io.StringIO(text_content), chunksize=chunk_size)
+            chunks = []
+            for chunk in reader:
+                monitor.throttle_if_needed()
+                chunks.append(chunk)
+            df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
         elif filename.endswith(('.xlsx', '.xls')):
             df = pd.read_excel(io.BytesIO(decoded))
         else:
@@ -95,10 +110,12 @@ def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
             'filename': filename
         }
 
-def create_file_preview(df: pd.DataFrame, max_rows: int = 10) -> Dict[str, Any]:
+def create_file_preview(df: pd.DataFrame, max_rows: int | None = None) -> Dict[str, Any]:
     """Create safe preview data without UI components"""
     try:
-        preview_df = df.head(max_rows)
+        rows = max_rows or _get_max_display_rows()
+        preview_df = df.head(rows)
+
         # Ensure all data is JSON serializable and Unicode-safe
         preview_data = []
         for _, row in preview_df.iterrows():

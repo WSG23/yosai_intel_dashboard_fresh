@@ -14,6 +14,7 @@ try:
     from config.dynamic_config import dynamic_config
 except Exception:  # pragma: no cover - optional config
     dynamic_config = None
+from services.analytics_service import MAX_DISPLAY_ROWS
 
 logger = logging.getLogger(__name__)
 
@@ -272,7 +273,8 @@ def create_data_preview(df: pd.DataFrame, filename: str = "") -> html.Div:
         return dbc.Alert("No data to preview", color="info")
 
     # Clamp to avoid huge previews
-    df = df.head(99)
+    df_limited = df.head(MAX_DISPLAY_ROWS) if len(df) > MAX_DISPLAY_ROWS else df
+    df = df_limited.head(99)
     num_rows, num_cols = df.shape
 
     return dbc.Card(
@@ -295,7 +297,7 @@ def create_data_preview(df: pd.DataFrame, filename: str = "") -> html.Div:
                     # Data preview table
                     html.H6("Sample Data:", className="mt-3"),
                     dbc.Table.from_dataframe(
-                        df.head(5),
+                        df_limited.head(5),
                         striped=True,
                         bordered=True,
                         hover=True,

@@ -1,0 +1,27 @@
+import pandas as pd
+import pytest
+from services.data_processing.file_handler import process_file_simple
+from services.data_processing.unified_file_validator import process_dataframe
+from core.performance import get_performance_monitor
+from config.dynamic_config import dynamic_config
+
+
+def test_memory_limit_abort_csv(monkeypatch, tmp_path):
+    monkeypatch.setattr(dynamic_config.performance, "memory_usage_threshold_mb", 1)
+    monitor = get_performance_monitor()
+    monitor.memory_threshold_mb = 1
+    df = pd.DataFrame({"a": range(10)})
+    path = tmp_path / "sample.csv"
+    df.to_csv(path, index=False)
+    content = path.read_bytes()
+    with pytest.raises(MemoryError):
+        process_file_simple(content, "sample.csv")
+
+
+def test_memory_limit_abort_json(monkeypatch):
+    monkeypatch.setattr(dynamic_config.performance, "memory_usage_threshold_mb", 1)
+    monitor = get_performance_monitor()
+    monitor.memory_threshold_mb = 1
+    data = b"[{\"a\":1},{\"a\":2}]"
+    with pytest.raises(MemoryError):
+        process_dataframe(data, "sample.json")

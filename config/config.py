@@ -3,19 +3,30 @@
 Simplified Configuration System
 Replaces: config/yaml_config.py, config/unified_config.py, config/validator.py
 """
-import os
-import yaml
 import logging
+import os
 from dataclasses import dataclass, field
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
+
+import yaml
+
+from core.exceptions import ConfigurationError
+from core.secrets_validator import SecretsValidator
+
+from .config_validator import ConfigValidator
 
 from .dynamic_config import dynamic_config
 from .environment import get_environment, select_config_file
-from .config_validator import ConfigValidator
-from core.secrets_validator import SecretsValidator
-from core.exceptions import ConfigurationError
 
 logger = logging.getLogger(__name__)
+
+
+def _validate_production_secrets() -> None:
+    """Ensure required secrets are set when running in production."""
+    if os.getenv("YOSAI_ENV") == "production":
+        secret = os.getenv("SECRET_KEY")
+        if not secret:
+            raise ConfigurationError("SECRET_KEY required in production")
 
 
 @dataclass
@@ -93,6 +104,8 @@ class AnalyticsConfig:
     data_retention_days: int = 30
     query_timeout_seconds: int = 600
     force_full_dataset_analysis: bool = True
+    max_memory_mb: int = 1024
+
 
 
 @dataclass
@@ -145,7 +158,7 @@ class Config:
     plugin_settings: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
 
-class ConfigManager:
+class ConfigManager(ConfigProviderProtocol):
     """Simple configuration manager"""
 
     def __init__(self, config_path: Optional[str] = None):
@@ -157,6 +170,7 @@ class ConfigManager:
     def _load_config(self) -> None:
         """Load configuration from YAML file and environment"""
         self.config.environment = get_environment()
+        _validate_production_secrets()
         # Load from YAML file
         yaml_config = self._load_yaml_config()
 

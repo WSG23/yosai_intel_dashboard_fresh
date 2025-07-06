@@ -46,3 +46,10 @@ parameter. The yielded chunks are passed to `_aggregate_counts` to update user
 and door statistics.  The final dictionary is assembled by `_build_result`.
 This incremental approach prevents excessive memory usage when processing very
 large CSV uploads.
+
+### Display Row Limit
+
+Analytics previews honor the `analytics.max_display_rows` setting from
+`config`. Set this value to control how many rows of a DataFrame are loaded for
+UI previews. The default is 10,000 rows, ensuring that analytical processing
+still uses the full dataset even when previews are truncated.

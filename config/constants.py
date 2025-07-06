@@ -87,6 +87,7 @@ class PerformanceConstants:
 
     db_pool_size: int = 10
     ai_confidence_threshold: int = 75
+    memory_usage_threshold_mb: int = 1024
 
 
 @dataclass
@@ -116,6 +117,8 @@ class AnalyticsConstants:
     data_retention_days: int = 30
     max_workers: int = 4
     query_timeout_seconds: int = 300
+    max_memory_mb: int = 1024
+
 
 
 @dataclass

@@ -32,6 +32,7 @@ def test_legitimate_inputs():
     assert validator.validate_query_parameter(123) == "123"
 
 
+@pytest.mark.performance
 def test_performance_large_batch():
     validator = SQLInjectionPrevention()
     for _ in range(10000):
