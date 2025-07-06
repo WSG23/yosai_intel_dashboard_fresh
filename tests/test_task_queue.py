@@ -1,7 +1,8 @@
 import asyncio
 import time
 from concurrent.futures import ThreadPoolExecutor
-from services.task_queue import create_task, get_status, clear_task
+
+from services.task_queue import clear_task, create_task, get_status
 
 
 def test_task_queue_basic():

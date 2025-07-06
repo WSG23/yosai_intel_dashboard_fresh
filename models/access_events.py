@@ -4,15 +4,18 @@ Access Events Data Model for Yōsai Intel Dashboard
 Handles all database operations for access control events
 """
 
-import pandas as pd
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Union
-from .base import BaseModel
-from .enums import AccessResult, BadgeStatus
-from security.sql_validator import SQLInjectionPrevention
+from typing import Any, Dict, List, Optional, Union
+
+import pandas as pd
+
 from config.constants import DataProcessingLimits
 from core.query_optimizer import monitor_query_performance
+from security.sql_validator import SQLInjectionPrevention
+
+from .base import BaseModel
+from .enums import AccessResult, BadgeStatus
 
 _sql_validator = SQLInjectionPrevention()
 

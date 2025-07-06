@@ -6,6 +6,7 @@ Test the exact code path that's causing 150 rows in unique patterns analysis
 
 import logging
 import sys
+
 import pandas as pd
 
 # Setup logging
@@ -201,8 +202,9 @@ def test_unique_patterns_specific():
         print("   Checking for common data limiting patterns...")
 
         # Test if clean_uploaded_dataframe has any limits
-        from services.analytics_service import AnalyticsService
         import inspect
+
+        from services.analytics_service import AnalyticsService
 
         # Get the source code of clean_uploaded_dataframe
         source = inspect.getsource(AnalyticsService.clean_uploaded_dataframe)

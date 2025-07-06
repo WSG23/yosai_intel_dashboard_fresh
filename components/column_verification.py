@@ -5,27 +5,32 @@ Allows manual verification of AI-suggested column mappings
 Feeds back to AI training data
 """
 
-import pandas as pd
-from dash import html, dcc, callback, Input, Output, State, ALL, MATCH
 from typing import TYPE_CHECKING
+
+import pandas as pd
+from dash import ALL, MATCH, Input, Output, State, callback, dcc, html
 
 if TYPE_CHECKING:
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from analytics.controllers import UnifiedAnalyticsController
+
 import logging
 
+from analytics.controllers import UnifiedAnalyticsController
+
 logger = logging.getLogger(__name__)
+import json
+import logging
+import re
+from datetime import datetime
+from typing import Any, Dict, List
+
 import dash
 import dash_bootstrap_components as dbc
-from typing import Dict, List, Any
-import logging
-from datetime import datetime
-import json
-import re
+
+from components.plugin_adapter import ComponentPluginAdapter
 from services.data_enhancer import (
     get_ai_column_suggestions as simple_column_suggestions,
 )
-from components.plugin_adapter import ComponentPluginAdapter
 
 adapter = ComponentPluginAdapter()
 

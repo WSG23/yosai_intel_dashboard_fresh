@@ -1,7 +1,7 @@
 """Result types for functional error handling"""
 
-from typing import Generic, TypeVar, Union, Callable
 from dataclasses import dataclass
+from typing import Callable, Generic, TypeVar, Union
 
 T = TypeVar("T")
 E = TypeVar("E")

@@ -2,13 +2,14 @@
 Command-line interface for CSRF plugin
 """
 
-import click
-import sys
 import json
-from typing import Dict, Any
+import sys
+from typing import Any, Dict
 
-from .plugin import DashCSRFPlugin
+import click
+
 from .config import CSRFConfig, CSRFMode
+from .plugin import DashCSRFPlugin
 from .utils import CSRFUtils
 
 

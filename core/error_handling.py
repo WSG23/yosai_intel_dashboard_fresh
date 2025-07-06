@@ -2,14 +2,14 @@
 """
 Comprehensive error handling system with Apple-style resilience patterns
 """
-import logging
+import asyncio
 import functools
+import logging
 import time
-from typing import Callable, Any, Optional, Dict, Type, List
-from enum import Enum
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-import asyncio
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Type
 
 
 class ErrorSeverity(Enum):

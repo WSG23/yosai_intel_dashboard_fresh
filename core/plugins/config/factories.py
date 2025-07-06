@@ -1,8 +1,9 @@
 """Factory classes for creating configuration components"""
 
 import logging
-from typing import Type, Dict, Callable, Any, List
-from .interfaces import IDatabaseManager, ICacheManager
+from typing import Any, Callable, Dict, List, Type
+
+from .interfaces import ICacheManager, IDatabaseManager
 
 logger = logging.getLogger(__name__)
 

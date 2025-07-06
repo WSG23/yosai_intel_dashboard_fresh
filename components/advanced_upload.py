@@ -1,6 +1,8 @@
-from dash import html, dcc
 import dash_bootstrap_components as dbc
+from dash import dcc, html
+
 from services.upload.validators import ClientSideValidator
+
 
 class DragDropUploadArea:
     """Simple drag-and-drop upload component with client-side validation."""

@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Test file processor without UI dependencies"""
-import pytest
-import pandas as pd
 import io
+
+import pandas as pd
+import pytest
+
 from services.data_processing.file_processor import (
     UnicodeFileProcessor,
-    process_uploaded_file,
     create_file_preview,
+    process_uploaded_file,
 )
 
 

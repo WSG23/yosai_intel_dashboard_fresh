@@ -1,7 +1,10 @@
 import pandas as pd
 import pytest
-from core.performance_file_processor import PerformanceFileProcessor as UnlimitedFileProcessor
-from core.unicode_processor import sanitize_unicode_input, safe_format_number
+
+from core.performance_file_processor import (
+    PerformanceFileProcessor as UnlimitedFileProcessor,
+)
+from core.unicode_processor import safe_format_number, sanitize_unicode_input
 
 
 @pytest.mark.performance

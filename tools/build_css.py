@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from models import css_build_optimizer
 
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"

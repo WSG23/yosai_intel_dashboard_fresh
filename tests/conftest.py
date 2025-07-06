@@ -8,14 +8,15 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 stub_dir = Path(__file__).resolve().parent / "stubs"
 sys.path.insert(0, str(stub_dir))
 
-import pytest
-import tempfile
 import shutil
+import tempfile
 from typing import Generator
+
 import pandas as pd
+import pytest
 
 from core.container import Container
-from models.entities import Person, Door, AccessEvent
+from models.entities import AccessEvent, Door, Person
 from models.enums import AccessResult, DoorType
 
 

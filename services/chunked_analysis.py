@@ -5,6 +5,7 @@ import pandas as pd
 
 from analytics.chunked_analytics_controller import ChunkedAnalyticsController
 from services.data_validation import DataValidationService
+
 from .result_formatting import regular_analysis
 
 logger = logging.getLogger(__name__)

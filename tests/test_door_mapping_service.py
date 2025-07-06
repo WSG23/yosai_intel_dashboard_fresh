@@ -1,6 +1,7 @@
 import pandas as pd
-from services.door_mapping_service import DoorMappingService
+
 from services.ai_device_generator import AIDeviceGenerator, DeviceAttributes
+from services.door_mapping_service import DoorMappingService
 
 
 def test_standardized_output(monkeypatch):

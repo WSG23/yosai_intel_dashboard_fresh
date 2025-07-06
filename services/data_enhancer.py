@@ -1,7 +1,8 @@
 """Utility functions for column matching and AI suggestions."""
 from __future__ import annotations
 
-from typing import Sequence, Dict, Any, Tuple, List
+from typing import Any, Dict, List, Sequence, Tuple
+
 import pandas as pd
 
 

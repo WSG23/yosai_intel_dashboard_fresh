@@ -1,5 +1,5 @@
 import functools
-from typing import Callable, Any, Optional
+from typing import Any, Callable, Optional
 
 
 def safe_callback(app_or_container: Any = None) -> Callable:

@@ -1,8 +1,9 @@
 import pandas as pd
+
 from analytics.security_patterns import (
+    SecurityEvent,
     SecurityPatternsAnalyzer,
     security_callback_controller,
-    SecurityEvent,
     setup_isolated_security_testing,
 )
 

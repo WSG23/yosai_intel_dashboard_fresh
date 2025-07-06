@@ -1,7 +1,8 @@
 import time
-from core.plugins.manager import ThreadSafePluginManager as PluginManager
-from core.container import Container as DIContainer
+
 from config.config import ConfigManager
+from core.container import Container as DIContainer
+from core.plugins.manager import ThreadSafePluginManager as PluginManager
 
 
 def test_health_thread_stops_on_exit():

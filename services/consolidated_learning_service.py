@@ -5,11 +5,12 @@ Replaces services/device_learning_service.py
 
 import hashlib
 import json
-from pathlib import Path
-from typing import Dict, Any, List, Optional
-from datetime import datetime
-import pandas as pd
 import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
 
 
 class ConsolidatedLearningService:

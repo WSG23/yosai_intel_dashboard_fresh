@@ -1,9 +1,10 @@
 import asyncio
-import pandas as pd
 import time
 
+import pandas as pd
+
 from services.data_processing.async_file_processor import AsyncFileProcessor
-from services.task_queue import create_task, get_status, clear_task
+from services.task_queue import clear_task, create_task, get_status
 
 
 def test_async_file_processor_progress(tmp_path):

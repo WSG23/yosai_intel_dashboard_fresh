@@ -7,7 +7,6 @@ import logging
 from pathlib import Path
 from typing import IO, Callable, Iterable, List, Optional, Union
 
-
 import pandas as pd
 
 try:

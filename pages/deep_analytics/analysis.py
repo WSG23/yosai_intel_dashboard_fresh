@@ -6,43 +6,54 @@
 # =============================================================================
 
 import logging
-from typing import Dict, List, Any, Optional, Tuple
-import pandas as pd
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
-# Dash core imports
-from dash import html, dcc, callback, Input, Output, State, ALL, MATCH, ctx
-from dash import callback_context
 import dash_bootstrap_components as dbc
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+# Dash core imports
+from dash import (
+    ALL,
+    MATCH,
+    Input,
+    Output,
+    State,
+    callback,
+    callback_context,
+    ctx,
+    dcc,
+    html,
+)
+
+from core.unicode_processor import safe_format_number
+from security.unicode_security_handler import UnicodeSecurityHandler
+from security.unicode_security_processor import sanitize_unicode_input
+
 # Add this import
 from services import AnalyticsService
-from security.unicode_security_processor import sanitize_unicode_input
-from core.unicode_processor import safe_format_number
 from utils.preview_utils import serialize_dataframe_preview
-from security.unicode_security_handler import UnicodeSecurityHandler
 
 # Internal service imports with CORRECTED paths
 ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
 
 from services.data_processing.analytics_engine import (
     AI_SUGGESTIONS_AVAILABLE,
+    analyze_data_with_service,
+    analyze_data_with_service_safe,
+    clean_analysis_data_unicode,
     get_ai_suggestions_for_file,
+    get_analysis_type_options,
     get_analytics_service_safe,
     get_data_source_options_safe,
     get_latest_uploaded_source_value,
-    get_analysis_type_options,
-    clean_analysis_data_unicode,
-    process_suggests_analysis,
     process_quality_analysis,
-    analyze_data_with_service,
-    process_suggests_analysis_safe,
     process_quality_analysis_safe,
-    analyze_data_with_service_safe,
+    process_suggests_analysis,
+    process_suggests_analysis_safe,
 )
-
 
 # AI_SUGGESTIONS_AVAILABLE constant and helper functions are provided by
 # ``services.data_processing.analytics_engine``

@@ -2,11 +2,12 @@
 """
 Debug CSV truncation issue - trace where 2.5MB becomes 150 rows
 """
-import pandas as pd
 import base64
 import io
 import logging
 from pathlib import Path
+
+import pandas as pd
 
 # Set up detailed logging
 logging.basicConfig(level=logging.DEBUG)
@@ -163,7 +164,7 @@ def test_upload_pipeline():
 
     # Also test file validator directly
     try:
-        from utils.file_validator import safe_decode_file, process_dataframe
+        from utils.file_validator import process_dataframe, safe_decode_file
 
         decoded = safe_decode_file(contents)
         if decoded:

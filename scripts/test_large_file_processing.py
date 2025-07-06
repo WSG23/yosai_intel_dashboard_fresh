@@ -1,6 +1,7 @@
 def test_large_file_processing():
-    from services.analytics_service import AnalyticsService
     import pandas as pd
+
+    from services.analytics_service import AnalyticsService
 
     # Create a test dataframe similar to your data
     test_df = pd.DataFrame(

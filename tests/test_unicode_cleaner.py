@@ -1,8 +1,9 @@
 import pandas as pd
+
 from core.unicode_processor import (
     UnicodeProcessor,
-    sanitize_dataframe,
     safe_unicode_encode,
+    sanitize_dataframe,
 )
 
 

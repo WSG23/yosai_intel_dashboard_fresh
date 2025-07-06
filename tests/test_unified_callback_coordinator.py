@@ -1,12 +1,12 @@
 import pytest
 from dash import Dash, Input, Output
 
+from core.callback_events import CallbackEvent
+from core.callback_manager import CallbackManager
+from core.callback_migration import UnifiedCallbackCoordinatorWrapper
 from core.unified_callback_coordinator import (
     UnifiedCallbackCoordinator,
 )
-from core.callback_manager import CallbackManager
-from core.callback_events import CallbackEvent
-from core.callback_migration import UnifiedCallbackCoordinatorWrapper
 
 
 def test_duplicate_callback_registration():

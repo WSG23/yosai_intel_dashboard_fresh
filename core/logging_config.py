@@ -1,10 +1,10 @@
 """Enhanced logging configuration"""
 
+import json
 import logging
 import logging.config
-from typing import Dict, Any
-import json
 from datetime import datetime
+from typing import Any, Dict
 
 
 class JsonFormatter(logging.Formatter):

@@ -3,10 +3,11 @@
 Protocol-oriented architecture inspired by Swift's approach
 Defines clear contracts for all major system components
 """
-from typing import Protocol, Dict, Any, Optional, List, Callable
 from abc import abstractmethod
-import pandas as pd
 from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional, Protocol
+
+import pandas as pd
 
 
 class DatabaseProtocol(Protocol):

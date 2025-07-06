@@ -5,4 +5,5 @@ class Dash:
         return decorator
 
 from . import html
+
 __all__ = ["Dash", "html"]

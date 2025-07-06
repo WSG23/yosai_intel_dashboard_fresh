@@ -1,9 +1,9 @@
 import dash
 from dash import Input, Output
 
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from core.callback_registry import CallbackRegistry
 from core.plugins.decorators import unified_callback
+from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 
 
 def test_unified_decorator_with_coordinator():

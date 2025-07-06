@@ -1,11 +1,11 @@
 import pandas as pd
 import pytest
 
+from core.exceptions import ValidationError
 from core.security_validator import SecurityValidator
 from security.dataframe_validator import DataFrameSecurityValidator
 from security.sql_validator import SQLInjectionPrevention
 from security.xss_validator import XSSPrevention
-from core.exceptions import ValidationError
 
 
 def test_unicode_normalization():
@@ -65,6 +65,7 @@ def test_csv_safe_dataframe_allowed():
 
 def _create_test_app():
     from flask import Flask
+
     from security.validation_middleware import ValidationMiddleware
 
     app = Flask(__name__)

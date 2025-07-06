@@ -1,6 +1,7 @@
+import enum
+
 from dash import Dash, html
 from flask.json.provider import DefaultJSONProvider
-import enum
 
 
 class EnumJSONProvider(DefaultJSONProvider):
@@ -8,13 +9,14 @@ class EnumJSONProvider(DefaultJSONProvider):
         if isinstance(o, enum.Enum):
             return o.name
         return super().default(o)
-import sys
 import os
-from core.plugins.unified_registry import UnifiedPluginRegistry
-from core.plugins.auto_config import PluginAutoConfiguration
-from services.data_processing.core.protocols import PluginMetadata
-from core.container import Container as DIContainer
+import sys
+
 from config.config import ConfigManager
+from core.container import Container as DIContainer
+from core.plugins.auto_config import PluginAutoConfiguration
+from core.plugins.unified_registry import UnifiedPluginRegistry
+from services.data_processing.core.protocols import PluginMetadata
 
 
 class DummyPlugin:

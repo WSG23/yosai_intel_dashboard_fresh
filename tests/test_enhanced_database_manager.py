@@ -1,4 +1,4 @@
-from config.database_manager import EnhancedPostgreSQLManager, DatabaseConfig
+from config.database_manager import DatabaseConfig, EnhancedPostgreSQLManager
 
 
 def test_execute_query_with_retry(monkeypatch):

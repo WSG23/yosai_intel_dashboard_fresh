@@ -3,19 +3,21 @@
 Performance optimization and monitoring system
 Inspired by Apple's Instruments and performance measurement tools
 """
-import time
-import functools
-import threading
 import asyncio
-from typing import Dict, Any, Optional, Callable, List, Tuple
+import functools
+import logging
+import threading
+import time
+from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from collections import defaultdict, deque
-import logging
-import psutil
-from config.dynamic_config import dynamic_config
-import pandas as pd
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+import pandas as pd
+import psutil
+
+from config.dynamic_config import dynamic_config
 
 
 class MetricType(Enum):

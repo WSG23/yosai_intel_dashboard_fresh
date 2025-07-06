@@ -8,7 +8,6 @@ import re
 import unicodedata
 from typing import Any, Callable, Optional, Union
 
-
 import pandas as pd
 
 logger = logging.getLogger(__name__)

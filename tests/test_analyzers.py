@@ -1,8 +1,10 @@
-import pytest
 from pathlib import Path
+
+import pytest
+
 from analyzers.ast_analyzer import ASTAnalyzer
-from analyzers.style_analyzer import StyleAnalyzer
 from analyzers.base_analyzer import IssueType
+from analyzers.style_analyzer import StyleAnalyzer
 
 
 class TestASTAnalyzer:

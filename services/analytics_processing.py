@@ -1,15 +1,16 @@
 import logging
 from typing import Any, Dict
+
+import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import html
-import dash_bootstrap_components as dbc
 
+from core.unicode_processor import safe_format_number
+from security.unicode_security_processor import sanitize_unicode_input
 from services import get_analytics_service
 from services.ai_suggestions import generate_column_suggestions
 from services.upload_data_service import get_uploaded_data
 from utils.preview_utils import serialize_dataframe_preview
-from security.unicode_security_processor import sanitize_unicode_input
-from core.unicode_processor import safe_format_number
 
 logger = logging.getLogger(__name__)
 

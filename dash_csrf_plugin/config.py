@@ -3,9 +3,9 @@ Configuration classes and enums for CSRF protection plugin
 """
 
 import os
-from enum import Enum
-from typing import List, Optional, Dict, Any, Callable
 from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
 
 class CSRFMode(Enum):

@@ -9,15 +9,15 @@ limits.
 import logging
 import threading
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Protocol
+from typing import Any, Dict, List, Optional, Protocol, Tuple
 
 import pandas as pd
 
-from services.data_loader import DataLoader
-from services.analytics_summary import generate_sample_analytics
-from services.data_validation import DataValidationService
-from services.data_loading_service import DataLoadingService
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
+from services.analytics_summary import generate_sample_analytics
+from services.data_loader import DataLoader
+from services.data_loading_service import DataLoadingService
+from services.data_validation import DataValidationService
 from services.db_analytics_helper import DatabaseAnalyticsHelper
 from services.summary_reporting import SummaryReporter
 
@@ -88,9 +88,9 @@ class AnalyticsService(AnalyticsProviderProtocol):
     def _initialize_database(self):
         """Initialize database connection"""
         try:
+            from config.database_manager import DatabaseConfig as ManagerConfig
             from config.database_manager import (
                 DatabaseManager,
-                DatabaseConfig as ManagerConfig,
             )
 
             if self._config_provider is not None:

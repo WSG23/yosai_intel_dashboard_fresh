@@ -1,30 +1,32 @@
 import importlib
 import time
-import pandas as pd
-import pytest
 import warnings
 
-from core.unicode_processor import UnicodeProcessor as UnicodeTextProcessor
-from core.unicode import (
-    clean_unicode_text,
-    safe_encode_text,
-    sanitize_dataframe,
-    UnicodeProcessor as UtilsProcessor,
-    contains_surrogates,
-    # Test deprecated functions
-    safe_unicode_encode,
-    safe_encode,
-    safe_decode,
-    handle_surrogate_characters,
-    clean_unicode_surrogates,
-    sanitize_unicode_input,
-    sanitize_data_frame,
-)
+import pandas as pd
+import pytest
+
+from config.database_exceptions import UnicodeEncodingError
 from config.unicode_handler import UnicodeQueryHandler
-from security.unicode_security_handler import UnicodeSecurityHandler as UnicodeSecurityProcessor
+from core.unicode import UnicodeProcessor as UtilsProcessor  # Test deprecated functions
+from core.unicode import (
+    clean_unicode_surrogates,
+    clean_unicode_text,
+    contains_surrogates,
+    handle_surrogate_characters,
+    safe_decode,
+    safe_encode,
+    safe_encode_text,
+    safe_unicode_encode,
+    sanitize_data_frame,
+    sanitize_dataframe,
+    sanitize_unicode_input,
+)
+from core.unicode_processor import UnicodeProcessor as UnicodeTextProcessor
+from security.unicode_security_handler import (
+    UnicodeSecurityHandler as UnicodeSecurityProcessor,
+)
 from security.unicode_security_validator import UnicodeSecurityValidator
 from security.validation_exceptions import ValidationError
-from config.database_exceptions import UnicodeEncodingError
 
 
 def test_unicode_text_processor_surrogate_removal():

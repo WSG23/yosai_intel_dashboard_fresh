@@ -4,8 +4,10 @@ Debug script to test chunked analysis with your dataset.
 Run this to verify the fix works.
 """
 
-import pandas as pd
 import logging
+
+import pandas as pd
+
 from services.analytics_service import AnalyticsService
 
 # Setup logging to see all debug info

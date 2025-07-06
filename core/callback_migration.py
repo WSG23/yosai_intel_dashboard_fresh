@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dash import Dash
 
-from .callback_manager import CallbackManager
 from .callback_events import CallbackEvent
+from .callback_manager import CallbackManager
 from .truly_unified_callbacks import TrulyUnifiedCallbacks
 
 

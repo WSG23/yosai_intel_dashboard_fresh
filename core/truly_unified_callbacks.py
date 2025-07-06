@@ -2,7 +2,8 @@ from __future__ import annotations
 
 """Truly unified callback system combining registry and coordinator."""
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
 from dash import Dash
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints only

@@ -1,12 +1,12 @@
 """Utility helpers for automatic plugin setup."""
 from __future__ import annotations
 
-from typing import Optional, Dict, Any, Callable, List
+from typing import Any, Callable, Dict, List, Optional
 
 from dash import Dash
 
-from core.container import Container as DIContainer
 from config.config import ConfigManager
+from core.container import Container as DIContainer
 
 from .unified_registry import UnifiedPluginRegistry
 

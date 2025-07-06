@@ -5,10 +5,11 @@ APIs now located in :mod:`core.callback_manager` and
 :mod:`security_callback_controller`.
 """
 
-from core.callback_manager import CallbackManager as CallbackController
 from core.callback_events import CallbackEvent
-from core.callback_manager import CallbackManager
-from core.callback_manager import CallbackManager as CallbackRegistry  # compat
+from core.callback_manager import CallbackManager  # compat
+from core.callback_manager import CallbackManager as CallbackController
+from core.callback_manager import CallbackManager as CallbackRegistry
+
 CallbackContext = object
 CallbackProtocol = object
 
@@ -39,10 +40,12 @@ def get_callback_controller() -> CallbackController:
 def fire_event(event: CallbackEvent, *args, **kwargs) -> None:
     callback_controller.trigger(event, *args, **kwargs)
 from security_callback_controller import (
-    SecurityEvent,
     SecurityCallbackController,
-    security_callback_controller as _security_callback_controller,
+    SecurityEvent,
     emit_security_event,
+)
+from security_callback_controller import (
+    security_callback_controller as _security_callback_controller,
 )
 
 # Global instances preserved for compatibility

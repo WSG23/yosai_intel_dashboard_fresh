@@ -1,7 +1,9 @@
 import importlib
 import sys
 import types
+
 from dash import no_update
+
 from upload_core import UploadCore
 
 stub_pandas = types.ModuleType("pandas")
