@@ -7,7 +7,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# install python dependencies into a virtual env
+# Install Python dependencies into a virtual environment.
+# Installing dependencies before copying the full source
+# guarantees that required packages are present and maximizes layer caching.
 COPY requirements.txt .
 RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
