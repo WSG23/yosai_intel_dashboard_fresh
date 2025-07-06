@@ -5,6 +5,10 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import logging
+import os
+import tempfile
 from pathlib import Path
 from typing import AsyncIterator, Callable, List, Optional
 
@@ -12,6 +16,7 @@ import pandas as pd
 
 from config.dynamic_config import dynamic_config
 from utils.memory_utils import check_memory_limit
+from .file_processor import UnicodeFileProcessor
 
 
 class AsyncFileProcessor:
@@ -73,6 +78,49 @@ class AsyncFileProcessor:
         ):
             chunks.append(chunk)
         return pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+
+    async def process_file(
+        self,
+        contents: str,
+        filename: str,
+        progress_callback: Optional[Callable[[str, int], None]] = None,
+    ) -> pd.DataFrame:
+        """Decode ``contents`` and return a sanitized ``DataFrame``."""
+        prefix, data = contents.split(",", 1)
+        raw = base64.b64decode(data)
+
+        suffix = Path(filename).suffix or ".tmp"
+        fd, path_str = tempfile.mkstemp(suffix=suffix)
+        os.close(fd)
+        path = Path(path_str)
+        await asyncio.to_thread(path.write_bytes, raw)
+
+        def _cb(pct: int) -> None:
+            if progress_callback:
+                try:
+                    progress_callback(filename, pct)
+                except Exception:  # pragma: no cover - best effort
+                    pass
+
+        try:
+            if filename.lower().endswith(".csv"):
+                df = await self.load_csv(path, progress_callback=_cb)
+            elif filename.lower().endswith((".xlsx", ".xls")):
+                df = await asyncio.to_thread(pd.read_excel, path)
+                df = UnicodeFileProcessor.sanitize_dataframe_unicode(df)
+                _cb(100)
+            elif filename.lower().endswith(".json"):
+                df = await asyncio.to_thread(pd.read_json, path)
+                df = UnicodeFileProcessor.sanitize_dataframe_unicode(df)
+                _cb(100)
+            else:
+                raise ValueError(f"Unsupported file type: {filename}")
+        finally:
+            try:
+                os.unlink(path)
+            except Exception:  # pragma: no cover - cleanup best effort
+                pass
+        return df
 
     @staticmethod
     def _count_lines(path: Path) -> int:

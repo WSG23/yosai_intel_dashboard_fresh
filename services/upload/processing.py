@@ -121,7 +121,11 @@ class UploadProcessingService:
         )
 
     async def process_files(
-        self, contents_list: List[str] | str, filenames_list: List[str] | str
+        self,
+        contents_list: List[str] | str,
+        filenames_list: List[str] | str,
+        *,
+        task_progress: Callable[[int], None] | None = None,
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
         if not contents_list:
             return (
@@ -150,6 +154,9 @@ class UploadProcessingService:
         for content, filename in zip(contents_list, filenames_list):
             file_parts.setdefault(filename, []).append(content)
 
+        total_files = len(file_parts)
+        processed_files = 0
+
         for filename, parts in file_parts.items():
             if len(parts) > 1:
                 prefix, first = parts[0].split(",", 1)
@@ -162,8 +169,14 @@ class UploadProcessingService:
                 content = parts[0]
 
             try:
+                def _cb(pct: int) -> None:
+                    progress_manager.emit(filename, pct)
+                    if task_progress:
+                        overall = int(((processed_files + pct / 100) / total_files) * 100)
+                        task_progress(overall)
+
                 df = await self.processor.process_file(
-                    content, filename, progress_manager=None
+                    content, filename, progress_callback=_cb
                 )
                 rows = len(df)
                 cols = len(df.columns)
@@ -211,6 +224,11 @@ class UploadProcessingService:
                 upload_results.append(
                     self.build_failure_alert(f"Error processing {filename}: {str(exc)}")
                 )
+
+            processed_files += 1
+            if task_progress:
+                pct = int(processed_files / total_files * 100)
+                task_progress(pct)
 
         upload_nav = []
         if file_info_dict:

@@ -343,7 +343,11 @@ class Callbacks:
         if not valid_contents:
             return alerts, [], {}, [], {}, no_update, no_update
 
-        result = await self.processing.process_files(valid_contents, valid_filenames)
+        result = await self.processing.process_files(
+            valid_contents,
+            valid_filenames,
+            task_progress=None,
+        )
 
         for fname in valid_filenames:
             self.chunked.finish_file(fname)
@@ -365,8 +369,13 @@ class Callbacks:
         if not isinstance(filenames_list, list):
             filenames_list = [filenames_list]
 
-        async_coro = self.processing.process_files(contents_list, filenames_list)
-        task_id = create_task(async_coro)
+        async def job(progress):
+            return await self.processing.process_files(
+                contents_list, filenames_list, task_progress=progress
+            )
+
+        task_id = create_task(job)
+        return task_id
 
     def reset_upload_progress(
         self, contents_list: List[str] | str
@@ -913,7 +922,11 @@ class Callbacks:
         if not valid_contents:
             return alerts, [], {}, [], {}, no_update, no_update
 
-        result = await self.processing.process_files(valid_contents, valid_filenames)
+        result = await self.processing.process_files(
+            valid_contents,
+            valid_filenames,
+            task_progress=None,
+        )
 
         for fname in valid_filenames:
             self.chunked.finish_file(fname)
@@ -935,8 +948,12 @@ class Callbacks:
         if not isinstance(filenames_list, list):
             filenames_list = [filenames_list]
 
-        async_coro = self.processing.process_files(contents_list, filenames_list)
-        task_id = create_task(async_coro)
+        async def job(progress):
+            return await self.processing.process_files(
+                contents_list, filenames_list, task_progress=progress
+            )
+
+        task_id = create_task(job)
         return task_id
 
     def reset_upload_progress(
