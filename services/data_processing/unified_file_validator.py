@@ -15,11 +15,8 @@ import pandas as pd
 
 from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
-from core.unicode import (
-    UnicodeProcessor,
-    sanitize_dataframe,
-    sanitize_unicode_input,
-)
+from core.unicode import UnicodeProcessor, sanitize_dataframe
+from core.unicode_utils import sanitize_for_utf8
 from upload_types import ValidationResult
 from upload_validator import UploadValidator
 
@@ -45,9 +42,7 @@ def safe_decode_with_unicode_handling(data: bytes, enc: str) -> str:
 
     text = safe_unicode_decode(data, enc)
 
-    from security.unicode_security_handler import UnicodeSecurityHandler
-
-    cleaned = UnicodeSecurityHandler.sanitize_unicode_input(text)
+    cleaned = sanitize_for_utf8(text)
     return cleaned.replace("\ufffd", "")
 
 
@@ -216,7 +211,7 @@ class UnifiedFileValidator:
         self._basic_validator = UploadValidator(self.max_size_mb)
 
     def _sanitize_string(self, value: str) -> str:
-        cleaned = sanitize_unicode_input(str(value))
+        cleaned = sanitize_for_utf8(str(value))
         if re.search(
             r"(<script.*?>.*?</script>|<.*?on\w+\s*=|javascript:|data:text/html|[<>])",
             cleaned,

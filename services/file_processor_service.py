@@ -14,11 +14,8 @@ import pandas as pd
 
 from config.dynamic_config import dynamic_config
 from core.performance_file_processor import PerformanceFileProcessor
-from core.unicode import (
-    process_large_csv_content,
-    sanitize_data_frame,
-    sanitize_unicode_input,
-)
+from core.unicode import process_large_csv_content, sanitize_data_frame
+from core.unicode_utils import sanitize_for_utf8
 from services.data_processing.core.protocols import FileProcessorProtocol
 from utils.file_validator import safe_decode_with_unicode_handling
 
@@ -64,7 +61,7 @@ class FileProcessorService(BaseService):
 
     def validate_file(self, filename: str, content: bytes) -> Dict[str, Any]:
         """Validate uploaded file"""
-        filename = sanitize_unicode_input(filename)
+        filename = sanitize_for_utf8(filename)
         issues = []
 
         # Check file extension
@@ -95,7 +92,7 @@ class FileProcessorService(BaseService):
     def process_file(self, file_content: bytes, filename: str) -> pd.DataFrame:
         """Process uploaded file and return DataFrame"""
         try:
-            filename = sanitize_unicode_input(filename)
+            filename = sanitize_for_utf8(filename)
             file_ext = Path(filename).suffix.lower()
 
             if file_ext == ".csv":
@@ -216,7 +213,7 @@ class FileProcessorService(BaseService):
             text = data.decode(encoding, errors="surrogatepass")
         except Exception:
             text = data.decode(encoding, errors="replace")
-        return sanitize_unicode_input(text)
+        return sanitize_for_utf8(text)
 
     def _is_reasonable_text(self, text: str) -> bool:
         """Basic check to ensure decoded text looks valid."""
