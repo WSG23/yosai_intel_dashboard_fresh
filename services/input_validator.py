@@ -68,7 +68,7 @@ class InputValidator:
             text = str(file_obj)
             if self._DATA_URI_RE.match(text):
                 try:
-                    _, b64 = text.split(',', 1)
+                    _, b64 = text.split(",", 1)
                     decoded = base64.b64decode(b64)
                 except Exception:
                     return ValidationResult(False, "Invalid base64 contents")
