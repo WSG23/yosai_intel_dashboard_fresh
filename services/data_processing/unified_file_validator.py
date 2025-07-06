@@ -20,7 +20,8 @@ from core.unicode import (
     sanitize_dataframe,
     sanitize_unicode_input,
 )
-from services.input_validator import InputValidator, ValidationResult
+from upload_validator import UploadValidator
+from upload_types import ValidationResult
 
 
 def _lazy_string_validator() -> "StringValidator":
@@ -188,7 +189,7 @@ class UnifiedFileValidator:
     def __init__(self, max_size_mb: Optional[int] = None) -> None:
         self.max_size_mb = max_size_mb or dynamic_config.security.max_upload_mb
         self._string_validator = _lazy_string_validator()
-        self._basic_validator = InputValidator(self.max_size_mb)
+        self._basic_validator = UploadValidator(self.max_size_mb)
 
     def _sanitize_string(self, value: str) -> str:
         cleaned = sanitize_unicode_input(str(value))
