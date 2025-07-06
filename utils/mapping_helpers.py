@@ -1,6 +1,7 @@
 """Utility functions for mapping uploaded data columns."""
 
 from typing import Dict, Optional
+
 import pandas as pd
 
 # Standard column mapping used across the project

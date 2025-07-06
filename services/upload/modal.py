@@ -1,5 +1,6 @@
-from typing import Any, Tuple
 import logging
+from typing import Any, Tuple
+
 from dash.dash import no_update
 
 logger = logging.getLogger(__name__)

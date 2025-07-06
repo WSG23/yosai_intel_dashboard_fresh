@@ -12,7 +12,9 @@ logger = logging.getLogger(__name__)
 class UploadQueueManager:
     """Manage prioritized upload tasks with concurrency control."""
 
-    def __init__(self, state: Dict[str, Any] | None = None, *, max_concurrent: int = 3) -> None:
+    def __init__(
+        self, state: Dict[str, Any] | None = None, *, max_concurrent: int = 3
+    ) -> None:
         self.max_concurrent = max_concurrent
         self._lock = threading.Lock()
         self._queue: List[Tuple[int, float, Any]] = []
@@ -54,7 +56,9 @@ class UploadQueueManager:
             }
         return status
 
-    async def process_queue(self, handler: Callable[[Any], asyncio.Future | Any]) -> List[Tuple[str, Any]]:
+    async def process_queue(
+        self, handler: Callable[[Any], asyncio.Future | Any]
+    ) -> List[Tuple[str, Any]]:
         """Process queued items using ``handler`` respecting concurrency.
 
         ``handler`` should be a coroutine function accepting a single queued

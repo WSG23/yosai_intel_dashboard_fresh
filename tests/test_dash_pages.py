@@ -17,7 +17,7 @@ from pages.deep_analytics import (
 def _create_upload_app():
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     coord = UnifiedCallbackCoordinator(app)
-    file_upload.register_callbacks(coord)
+    file_upload.register_upload_callbacks(coord)
     app.layout = html.Div([dcc.Location(id="url"), file_upload.layout()])
     return app
 

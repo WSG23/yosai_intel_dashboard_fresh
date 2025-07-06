@@ -22,7 +22,9 @@ import logging
 from datetime import datetime
 import json
 import re
-from services.data_enhancer import get_ai_column_suggestions as simple_column_suggestions
+from services.data_enhancer import (
+    get_ai_column_suggestions as simple_column_suggestions,
+)
 from components.plugin_adapter import ComponentPluginAdapter
 
 adapter = ComponentPluginAdapter()
