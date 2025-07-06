@@ -3,21 +3,6 @@
 import subprocess
 import sys
 
-
-def check_and_install_critical_deps():
-    critical = ['psutil', 'chardet', 'pandas', 'dash', 'flask']
-    missing = []
-    for pkg in critical:
-        try:
-            __import__(pkg)
-        except ImportError:
-            missing.append(pkg)
-    if missing:
-        print(f"Installing missing: {missing}")
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + missing)
-
-check_and_install_critical_deps()
-
 import logging
 import os
 

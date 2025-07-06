@@ -1,4 +1,6 @@
 # Core dashboard requirements
+# These packages must be installed before running the application.
+# The Dockerfiles and scripts/setup.sh handle this automatically.
 Flask>=2.2.5
 Flask-Babel==4.0.0
 Flask-Login==0.6.2

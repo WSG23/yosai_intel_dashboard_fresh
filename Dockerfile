@@ -8,7 +8,9 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
+# Copy requirements early and install them
+# Doing this before copying the rest of the source ensures
+# all dependencies are available at runtime and leverages Docker cache.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
