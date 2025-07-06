@@ -61,3 +61,32 @@ class PluginDependencyResolver:
 
         ordered.extend(plugins_without_meta)
         return ordered
+
+    def _find_cycle(
+        self, adjacency: Dict[str, Set[str]], nodes: Set[str]
+    ) -> List[str]:  # pragma: no cover - heuristic, optional
+        visited: Set[str] = set()
+        stack: List[str] = []
+
+        def dfs(node: str) -> List[str]:
+            if node in stack:
+                idx = stack.index(node)
+                return stack[idx:] + [node]
+            if node in visited:
+                return []
+            visited.add(node)
+            stack.append(node)
+            for nxt in adjacency.get(node, set()):
+                if nxt not in nodes:
+                    continue
+                cycle = dfs(nxt)
+                if cycle:
+                    return cycle
+            stack.pop()
+            return []
+
+        for n in nodes:
+            cycle = dfs(n)
+            if cycle:
+                return cycle
+        return []

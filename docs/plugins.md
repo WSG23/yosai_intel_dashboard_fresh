@@ -78,3 +78,4 @@ ERROR - Plugin dependency cycle detected: Circular dependency detected among: a,
 ```
 
 None of the involved plugins will be loaded. Check the logged plugin names and update their `dependencies` lists to remove the cycle.
+
