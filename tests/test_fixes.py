@@ -1,8 +1,10 @@
 import pandas as pd
+import pytest
 from core.performance_file_processor import PerformanceFileProcessor as UnlimitedFileProcessor
 from core.unicode_processor import sanitize_unicode_input, safe_format_number
 
 
+@pytest.mark.performance
 def test_unlimited_file_processor_handles_large_csv(tmp_path):
     df = pd.DataFrame({'A': range(200)})
     path = tmp_path / "big.csv"

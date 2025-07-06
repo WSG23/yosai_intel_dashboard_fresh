@@ -1,3 +1,4 @@
+import pytest
 from core.plugins.performance_manager import PluginPerformanceManager
 from tools.migration_validator import (
     MigrationValidator,
@@ -7,6 +8,7 @@ from tools.migration_validator import (
 )
 
 
+@pytest.mark.performance
 def test_plugin_performance_tracking():
     mgr = PluginPerformanceManager()
     mgr.record_plugin_metric('plug', 'load_time', 1.0)
@@ -19,6 +21,7 @@ def test_migration_detection():
     assert validator.generate_validation_report()['status'] == 'ok'
 
 
+@pytest.mark.performance
 def test_performance_alerts():
     mgr = PluginPerformanceManager()
     mgr.performance_thresholds['load_time'] = 0.5
