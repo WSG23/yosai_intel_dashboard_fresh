@@ -76,7 +76,7 @@ with this Python release and newer.
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. **Install dependencies:**
+3. **Install Python dependencies:**
    ```bash
    ./scripts/setup.sh
    ```
@@ -85,15 +85,20 @@ with this Python release and newer.
    installed **before** running Pyright or using the Pylance extension. Missing
    packages will otherwise appear as unresolved imports.
 
-4. **Set up environment:**
+4. **Install Node dependencies:**
+   PostCSS and other build tools live in `package.json`.
+   ```bash
+   npm install
+   ```
+   These packages are required for the CSS build step.
+5. **Set up environment:**
    ```bash
    cp .env.example .env
    # Generate random development secrets
    python scripts/generate_dev_secrets.py >> .env
    # Edit .env with your configuration (e.g. set HOST and database info)
    ```
-
-5. **Build the CSS bundle:**
+6. **Build the CSS bundle:**
    Ensure `node` and `npm` are available if you use the npm command.
    ```bash
    npm run build-css  # or `python tools/build_css.py`
@@ -103,7 +108,7 @@ with this Python release and newer.
    be edited directly. Modify source files under `assets/css/` and rerun the
    build when needed.
 
-6. **Run the application (development only):**
+7. **Run the application (development only):**
    The app now loads variables from `.env` automatically.
    ```bash
    python app.py  # use only for local development
@@ -114,7 +119,7 @@ with this Python release and newer.
    # or
    uwsgi --module wsgi:server
    ```
-7. **Access the dashboard:**
+8. **Access the dashboard:**
    Open http://127.0.0.1:8050 in your browser. The application runs over
    plain HTTP by default; configure a reverse proxy with TLS if you need HTTPS.
    The development server does not support HTTPS, so be sure to visit
@@ -264,6 +269,29 @@ If `pandas` is missing these pages will be disabled. Ensure you run
 install all dependencies (or execute `./scripts/setup.sh`).
 `PerformanceMonitor` requires `psutil` for CPU and memory metrics, and the
 file processing utilities depend on `chardet` to detect text encoding.
+
+## 🔄 Upload Workflow
+
+The upload page now streams files directly to a background task. Progress is
+reported via Server‑Sent Events at `/upload/progress/<task_id>`. Once the server
+finishes processing a file it updates the `file-info-store` so analytics pages
+pick up the new dataset automatically. Mobile users can collapse the queue to
+free up space and the workflow adjusts for touch interactions.
+
+## 📱 Mobile Support
+
+The layout is responsive down to narrow phone screens. Navigation collapses into
+a hamburger menu and the drag‑and‑drop region expands to full width. All touch
+targets meet the 44&nbsp;px guideline and alerts reposition so they remain
+readable on mobile devices.
+
+## 🛠️ Monitoring Setup
+
+Runtime metrics are exposed at `/metrics` for Prometheus. A sample configuration
+is provided in `monitoring/prometheus.yml`. Logstash support is available via
+`logging/logstash.conf`. Dashboards can be built in Grafana or Kibana using
+these data sources. See [performance_monitoring.md](docs/performance_monitoring.md)
+for details.
 
 ## 🔧 Configuration
 
@@ -572,6 +600,9 @@ The running application exposes Swagger-based API docs at `http://<host>:<port>/
 - Performance & log monitoring: [docs/performance_monitoring.md](docs/performance_monitoring.md)
 - Large file processing: [docs/performance_file_processor.md](docs/performance_file_processor.md)
 - Upload progress SSE: `/upload/progress/<task_id>` streams `data: <progress>` events roughly 60 times per second.
+- Callback design: [docs/callback_architecture.md](docs/callback_architecture.md)
+- State stores: [docs/state_management.md](docs/state_management.md)
+- Ops reference: [docs/operations_guide.md](docs/operations_guide.md)
 
 Update the spec by running `python tools/generate_openapi.py` which writes `docs/openapi.json` for the UI.
 ## Usage Examples

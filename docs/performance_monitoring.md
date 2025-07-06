@@ -41,3 +41,15 @@ docker run -p 5044:5044 \
 
 Adjust the `elasticsearch` output section if you have a different destination.
 
+
+## Real-time Performance Tracking
+
+The `core.monitoring.real_time_performance_tracker` module captures Core Web Vitals
+and server side metrics such as upload speed and callback duration. Metrics are
+stored using the existing `PerformanceMonitor` instance.
+
+Enable default thresholds in `config/monitoring.yaml` and adjust the Slack or
+email settings to receive alerts.
+
+A basic dashboard is available in `dashboards/performance/` for quick visual
+checks of recent activity.

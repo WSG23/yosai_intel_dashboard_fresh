@@ -20,6 +20,12 @@ Alternatively you can run `./scripts/setup.sh` to install both files at once.
 `requirements-dev.txt` includes additional packages such as **PyYAML** that are
 required by the tests but not needed in production.
 
+Install the Node dependencies used for building CSS and running accessibility
+checks:
+```bash
+npm install
+```
+
 ## 2. Prepare the Environment
 
 Compile the translation files (needed for some integration tests):

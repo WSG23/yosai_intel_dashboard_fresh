@@ -1,0 +1,9 @@
+realtime_tracker:
+  upload_speed_threshold_mb_s: 5
+  callback_duration_threshold_ms: 500
+  memory_limit_mb: 1024
+
+alerting:
+  slack_webhook: ""
+  email: ""
+  webhook_url: ""
