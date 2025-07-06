@@ -19,7 +19,7 @@ from typing import Any, Optional, Tuple
 
 import pandas as pd
 
-from services.input_validator import ValidationResult
+from upload_types import ValidationResult
 from services.data_processing.unified_file_validator import UnifiedFileValidator
 from services.data_processing.core.exceptions import (
     FileProcessingError,
