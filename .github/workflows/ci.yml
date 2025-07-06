@@ -39,10 +39,10 @@ jobs:
 
       # ----- Lint & static analysis -----
       - name: 🧹 Black (format check)
-        run: black --check --diff .
+        run: black --line-length=88 --check --diff .
 
       - name: 🔀 Isort (import order)
-        run: isort --profile=black --check --diff .
+        run: isort --profile=black --line-length=88 --check --diff .
 
       - name: 🔍 Flake8
         run: flake8 .
