@@ -57,7 +57,7 @@ class TestStyleAnalyzer:
 
     def test_detects_long_lines(self, tmp_path):
         test_file = tmp_path / "long_line.py"
-        long_line = "x = " + "a" * 130
+        long_line = "x = " + "a" * 90
         test_file.write_text(long_line)
 
         analyzer = StyleAnalyzer()
@@ -65,3 +65,14 @@ class TestStyleAnalyzer:
 
         line_length_issues = [i for i in issues if i.rule == "line_length"]
         assert len(line_length_issues) == 1
+
+    def test_metrics_max_line_length(self, tmp_path):
+        test_file = tmp_path / "metrics.py"
+        long_line = "y = " + "b" * 95
+        test_file.write_text("short\n" + long_line)
+
+        analyzer = StyleAnalyzer()
+        analyzer.analyze(test_file)
+        metrics = analyzer.get_metrics()
+
+        assert metrics["max_line_length"] == len(long_line)

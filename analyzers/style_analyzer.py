@@ -2,9 +2,14 @@ from typing import List
 from pathlib import Path
 from .base_analyzer import BaseAnalyzer, QualityIssue, IssueType
 
+MAX_LINE_LENGTH = 88
+
 
 class StyleAnalyzer(BaseAnalyzer):
     """Analyzes code style and formatting"""
+
+    def __init__(self) -> None:
+        self.metrics = {"max_line_length": 0}
 
     def analyze(self, file_path: Path) -> List[QualityIssue]:
         issues = []
@@ -13,16 +18,20 @@ class StyleAnalyzer(BaseAnalyzer):
                 lines = f.readlines()
 
             for i, line in enumerate(lines, 1):
-                if len(line.rstrip()) > 120:
+                line_length = len(line.rstrip())
+                if line_length > self.metrics["max_line_length"]:
+                    self.metrics["max_line_length"] = line_length
+
+                if line_length > MAX_LINE_LENGTH:
                     issues.append(
                         QualityIssue(
                             file_path=str(file_path),
                             line_number=i,
                             issue_type=IssueType.STYLE,
                             severity="info",
-                            message=f"Line too long: {len(line.rstrip())} chars",
+                            message=f"Line too long: {line_length} chars",
                             rule="line_length",
-                            suggestion="Break long lines (max: 120 chars)",
+                            suggestion=f"Break long lines (max: {MAX_LINE_LENGTH} chars)",
                         )
                     )
 
@@ -44,4 +53,4 @@ class StyleAnalyzer(BaseAnalyzer):
         return issues
 
     def get_metrics(self):
-        return {}
+        return self.metrics.copy()
