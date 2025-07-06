@@ -37,6 +37,13 @@ them via environment variables. For cloud deployments the
 `SecretManager` supports `env`, `aws`, and `vault` backends. Set the
 `SECRET_BACKEND` variable to select the desired provider.
 
+When using the `aws` backend the application reads secrets from AWS
+Secrets Manager. The configured AWS credentials and region are used to
+fetch the secret with a name matching the requested key. With the
+`vault` backend the client connects to HashiCorp Vault using the
+`VAULT_ADDR` and `VAULT_TOKEN` environment variables. Keys may include a
+field selector like `secret/data/db#password` to read specific values.
+
 ## Incident Handling
 
 If you suspect a secret has been exposed:

@@ -13,6 +13,7 @@ import yaml
 from core.exceptions import ConfigurationError
 from core.protocols import ConfigProviderProtocol
 from core.secrets_validator import SecretsValidator
+from core.secret_manager import SecretManager
 
 from .config_validator import ConfigValidator
 from .dynamic_config import dynamic_config
@@ -330,6 +331,8 @@ class ConfigManager(ConfigProviderProtocol):
 
     def _apply_env_overrides(self) -> None:
         """Apply environment variable overrides"""
+        manager = SecretManager()
+
         # App overrides
         if os.getenv("DEBUG"):
             self.config.app.debug = os.getenv("DEBUG", "").lower() in (
@@ -343,10 +346,14 @@ class ConfigManager(ConfigProviderProtocol):
         port_env = os.getenv("PORT")
         if port_env is not None:
             self.config.app.port = int(port_env)
-        secret_env = os.getenv("SECRET_KEY")
+        try:
+            secret_env = manager.get("SECRET_KEY")
+        except KeyError:
+            secret_env = None
         if secret_env is not None:
             self.config.app.secret_key = secret_env
             self.config.security.secret_key = secret_env
+            os.environ.setdefault("SECRET_KEY", secret_env)
         title_env = os.getenv("APP_TITLE")
         if title_env is not None:
             self.config.app.title = title_env
@@ -367,9 +374,27 @@ class ConfigManager(ConfigProviderProtocol):
         db_user = os.getenv("DB_USER")
         if db_user is not None:
             self.config.database.user = db_user
-        db_password = os.getenv("DB_PASSWORD")
+        try:
+            db_password = manager.get("DB_PASSWORD")
+        except KeyError:
+            db_password = None
         if db_password is not None:
             self.config.database.password = db_password
+            os.environ.setdefault("DB_PASSWORD", db_password)
+
+        # Propagate Auth0 secrets from the secret manager to the environment
+        for auth_key in [
+            "AUTH0_CLIENT_ID",
+            "AUTH0_CLIENT_SECRET",
+            "AUTH0_DOMAIN",
+            "AUTH0_AUDIENCE",
+        ]:
+            try:
+                value = manager.get(auth_key)
+            except KeyError:
+                value = None
+            if value is not None:
+                os.environ.setdefault(auth_key, value)
         # Pool size is loaded from DynamicConfigManager
         self.config.database.initial_pool_size = dynamic_config.get_db_pool_size()
         self.config.database.max_pool_size = dynamic_config.get_db_pool_size() * 2
