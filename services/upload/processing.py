@@ -11,7 +11,6 @@ from services.data_enhancer import get_ai_column_suggestions
 from services.data_processing.async_file_processor import AsyncFileProcessor
 from services.data_processing.file_processor import create_file_preview
 from services.device_learning_service import get_device_learning_service
-from services.progress_event_manager import progress_manager
 from utils.upload_store import UploadedDataStore
 
 from .async_processor import AsyncUploadProcessor

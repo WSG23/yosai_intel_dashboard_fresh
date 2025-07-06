@@ -12,7 +12,6 @@ from .data_processing.processor import Processor
 from .data_processing.unified_file_validator import UnifiedFileValidator
 from .data_validation import DataValidationService
 from .db_analytics_helper import DatabaseAnalyticsHelper
-from .progress_event_manager import progress_manager
 from .registry import get_service
 from .result_formatting import (
     apply_regular_analysis,
@@ -55,5 +54,4 @@ __all__ = [
     "UploadAnalyticsProcessor",
     "DatabaseAnalyticsHelper",
     "SummaryReporter",
-    "progress_manager",
 ]
