@@ -23,6 +23,8 @@ from core.dash_profile import profile_callback
 
 def _get_max_display_rows() -> int:
     return get_analytics_config().max_display_rows or 10000
+
+
 import dash_bootstrap_components as dbc
 from dash.dependencies import ALL, Input, Output, State
 
@@ -76,7 +78,6 @@ def layout():
                                                 id="upload-data",
                                                 max_size=dynamic_config.get_max_upload_size_bytes(),
                                             ).render()
-
                                         ]
                                     ),
                                 ]
@@ -98,7 +99,9 @@ def layout():
                                 striped=True,
                                 animated=True,
                             ),
-                            html.Ul(id="file-progress-list", className="list-unstyled mt-2")
+                            html.Ul(
+                                id="file-progress-list", className="list-unstyled mt-2"
+                            ),
                         ]
                     )
                 ],
@@ -211,6 +214,7 @@ def check_upload_system_health() -> Dict[str, Any]:
 
     return {"healthy": len(issues) == 0, "issues": issues}
 
+
 class Callbacks:
     """Container object for upload page callbacks."""
 
@@ -223,7 +227,6 @@ class Callbacks:
         self.validator = ClientSideValidator(
             max_size=dynamic_config.get_max_upload_size_bytes()
         )
-
 
     def highlight_upload_area(self, n_clicks):
         """Highlight upload area when 'upload more' is clicked."""
@@ -265,7 +268,10 @@ class Callbacks:
                     path, rows=_get_max_display_rows()
                 )
             except Exception:
-                df_preview = _uploaded_data_store.load_dataframe(filename).head(_get_max_display_rows())
+                df_preview = _uploaded_data_store.load_dataframe(filename).head(
+                    _get_max_display_rows()
+                )
+
             rows = info.get("rows", len(df_preview))
             cols = info.get("columns", len(df_preview.columns))
 
@@ -310,67 +316,6 @@ class Callbacks:
             False,
             False,
         )
-
-    async def process_uploaded_files(
-        self, contents_list: List[str] | str, filenames_list: List[str] | str
-    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
-        if not contents_list:
-            return (
-                [],
-                [],
-                {},
-                [],
-                {},
-                no_update,
-                no_update,
-            )
-
-        if not isinstance(contents_list, list):
-            contents_list = [contents_list]
-            filenames_list = [filenames_list]
-
-        valid_contents: list[str] = []
-        valid_filenames: list[str] = []
-        alerts: list[Any] = []
-        for content, fname in zip(contents_list, filenames_list):
-            ok, msg = self.validator.validate(fname, content)
-            if not ok:
-                alerts.append(self.processing.build_failure_alert(msg))
-            else:
-                valid_contents.append(content)
-                valid_filenames.append(fname)
-                self.chunked.start_file(fname)
-                self.queue.add_file(fname)
-
-        if not valid_contents:
-            return alerts, [], {}, [], {}, no_update, no_update
-
-        result = await self.processing.process_files(valid_contents, valid_filenames)
-
-        for fname in valid_filenames:
-            self.chunked.finish_file(fname)
-            self.queue.mark_complete(fname)
-
-        result = list(result)
-        result[0] = alerts + result[0]
-        return tuple(result)
-
-    def schedule_upload_task(
-        self, contents_list: List[str] | str, filenames_list: List[str] | str
-    ) -> str:
-        """Schedule background processing of uploaded files."""
-        if not contents_list:
-            return ""
-
-        if not isinstance(contents_list, list):
-            contents_list = [contents_list]
-        if not isinstance(filenames_list, list):
-            filenames_list = [filenames_list]
-
-        try:
-            async_coro = self.processing.process_files(
-                contents_list, filenames_list
-
             )
             task_id = create_task(async_coro)
         except Exception as exc:  # pragma: no cover - robustness
