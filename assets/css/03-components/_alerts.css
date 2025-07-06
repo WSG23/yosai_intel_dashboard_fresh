@@ -80,18 +80,18 @@
 /* Legacy alert utility classes */
 .alert-success {
   color: var(--text-primary);
-  background-color: var(--bg-secondary);
-  border-color: var(--accent);
+  background-color: var(--surface-secondary);
+  border-color: var(--color-accent);
 }
 
 .alert-danger {
   color: var(--text-primary);
-  background-color: var(--bg-secondary);
-  border-color: var(--accent);
+  background-color: var(--surface-secondary);
+  border-color: var(--color-accent);
 }
 
 .alert-warning {
   color: var(--text-primary);
-  background-color: var(--bg-secondary);
-  border-color: var(--accent);
+  background-color: var(--surface-secondary);
+  border-color: var(--color-accent);
 }
