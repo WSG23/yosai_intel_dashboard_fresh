@@ -25,7 +25,7 @@ from flask_login import (
 )
 from jose import jwt
 
-from .secret_manager import SecretManager
+from .secrets_manager import SecretsManager
 from config.config import get_security_config
 
 auth_bp = Blueprint("auth", __name__)
@@ -62,7 +62,7 @@ def load_user_from_request(request):
 
 
 def init_auth(app) -> None:
-    manager = SecretManager()
+    manager = SecretsManager()
     client_id = manager.get("AUTH0_CLIENT_ID")
     client_secret = manager.get("AUTH0_CLIENT_SECRET")
     domain = manager.get("AUTH0_DOMAIN")
@@ -172,7 +172,7 @@ def callback():
     auth0 = auth_bp.auth0
     token = auth0.authorize_access_token()
     id_token = token.get("id_token")
-    manager = SecretManager()
+    manager = SecretsManager()
     domain = manager.get("AUTH0_DOMAIN")
     audience = manager.get("AUTH0_AUDIENCE")
     client_id = manager.get("AUTH0_CLIENT_ID")
@@ -202,7 +202,7 @@ def logout():
         302:
           description: Redirect to login page
     """
-    manager = SecretManager()
+    manager = SecretsManager()
     domain = manager.get("AUTH0_DOMAIN")
     logout_user()
     session.clear()

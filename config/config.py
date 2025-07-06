@@ -13,7 +13,7 @@ import yaml
 from core.exceptions import ConfigurationError
 from core.protocols import ConfigProviderProtocol
 from core.secrets_validator import SecretsValidator
-from core.secret_manager import SecretManager
+from core.secrets_manager import SecretsManager
 
 from .config_validator import ConfigValidator
 from .dynamic_config import dynamic_config
@@ -339,14 +339,14 @@ class ConfigManager(ConfigProviderProtocol):
 
     def _apply_env_overrides(self) -> None:
         """Apply environment variable overrides"""
-        manager = SecretManager()
+        manager = SecretsManager()
         self._apply_app_env_overrides(manager)
         self._apply_database_env_overrides(manager)
         self._apply_security_env_overrides()
         self._apply_sample_files_env_overrides()
         self._apply_cache_env_overrides()
 
-    def _apply_app_env_overrides(self, manager: SecretManager) -> None:
+    def _apply_app_env_overrides(self, manager: SecretsManager) -> None:
         """Apply app-specific environment overrides"""
         if os.getenv("DEBUG"):
             self.config.app.debug = os.getenv("DEBUG", "").lower() in (
@@ -372,7 +372,7 @@ class ConfigManager(ConfigProviderProtocol):
         if title_env is not None:
             self.config.app.title = title_env
 
-    def _apply_database_env_overrides(self, manager: SecretManager) -> None:
+    def _apply_database_env_overrides(self, manager: SecretsManager) -> None:
         """Apply database environment overrides"""
         db_type = os.getenv("DB_TYPE")
         if db_type is not None:

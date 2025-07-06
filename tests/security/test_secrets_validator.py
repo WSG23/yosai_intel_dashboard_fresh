@@ -3,13 +3,13 @@ import json
 import pytest
 from flask import Flask
 
-from core.secret_manager import SecretManager
+from core.secrets_manager import SecretsManager
 from security.secrets_validator import SecretsValidator, register_health_endpoint
 
 
-class DummyManager(SecretManager):
+class DummyManager(SecretsManager):
     def __init__(self, secret: str):
-        super().__init__(backend="env")
+        super().__init__(docker_dir=".")
         self._secret = secret
 
     def get(self, key: str, default=None):  # type: ignore[override]

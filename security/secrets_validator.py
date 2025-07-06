@@ -3,7 +3,7 @@ import re
 from collections import Counter
 from typing import Dict, List, Optional
 
-from core.secret_manager import SecretManager
+from core.secrets_manager import SecretsManager
 
 
 class SecretsValidator:
@@ -15,8 +15,8 @@ class SecretsValidator:
     ]
     MIN_ENTROPY = 3.5
 
-    def __init__(self, manager: Optional[SecretManager] = None) -> None:
-        self.manager = manager or SecretManager()
+    def __init__(self, manager: Optional[SecretsManager] = None) -> None:
+        self.manager = manager or SecretsManager()
 
     @staticmethod
     def _entropy(value: str) -> float:
