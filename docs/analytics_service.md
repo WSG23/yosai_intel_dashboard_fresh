@@ -47,20 +47,9 @@ and door statistics.  The final dictionary is assembled by `_build_result`.
 This incremental approach prevents excessive memory usage when processing very
 large CSV uploads.
 
-## Using the DI Container
+### Display Row Limit
 
-The analytics service can be registered with `core.container` so other modules
-resolve it without direct imports:
-
-```python
-from core.container import Container
-from services.analytics_service import create_analytics_service
-
-container = Container()
-container.register("analytics", create_analytics_service())
-
-analytics = container.get("analytics")
-```
-
-`AnalyticsService` implements `AnalyticsServiceProtocol`, allowing alternative
-implementations for testing or future extensions.
+Analytics previews honor the `analytics.max_display_rows` setting from
+`config`. Set this value to control how many rows of a DataFrame are loaded for
+UI previews. The default is 10,000 rows, ensuring that analytical processing
+still uses the full dataset even when previews are truncated.
