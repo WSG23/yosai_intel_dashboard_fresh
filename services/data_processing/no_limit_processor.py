@@ -10,7 +10,7 @@ from typing import Iterable, List
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
-from utils.memory_utils import check_memory_limit
+from core.performance import get_performance_monitor
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,9 @@ class UnlimitedFileProcessor:
         """Yield ``DataFrame`` chunks from ``file_path``."""
         path = Path(file_path)
         rows = 0
+        monitor = get_performance_monitor()
         for chunk in pd.read_csv(path, chunksize=self.chunk_size, encoding=encoding):
+            monitor.throttle_if_needed()
             rows += len(chunk)
             check_memory_limit(self.max_memory_mb, logger)
             logger.debug("Processed %s rows from %s", rows, path.name)

@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional, Tuple
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
+from core.performance import get_performance_monitor
 from core.unicode import (
     UnicodeProcessor,
     sanitize_dataframe,
@@ -69,18 +70,27 @@ def safe_decode_file(contents: str) -> Optional[bytes]:
 def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
     try:
         filename_lower = filename.lower()
+        monitor = get_performance_monitor()
+        chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
+
         if filename_lower.endswith(".csv"):
             for encoding in ["utf-8", "latin-1", "cp1252"]:
                 try:
                     text = safe_decode_with_unicode_handling(decoded, encoding)
-                    df = pd.read_csv(
+                    reader = pd.read_csv(
                         io.StringIO(text),
                         on_bad_lines="skip",
                         encoding="utf-8",
                         low_memory=False,
                         dtype=str,
                         keep_default_na=False,
+                        chunksize=chunk_size,
                     )
+                    chunks = []
+                    for chunk in reader:
+                        monitor.throttle_if_needed()
+                        chunks.append(chunk)
+                    df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
                     return df, None
                 except UnicodeDecodeError:
                     continue
@@ -89,18 +99,16 @@ def process_dataframe(decoded: bytes, filename: str) -> Tuple[Optional[pd.DataFr
             for encoding in ["utf-8", "latin-1", "cp1252"]:
                 try:
                     text = safe_decode_with_unicode_handling(decoded, encoding)
-                    json_data = json.loads(text)
-                    if isinstance(json_data, list):
-                        cleaned = [
-                            {k: UnicodeProcessor.clean_surrogate_chars(v) for k, v in obj.items()} if isinstance(obj, dict) else obj
-                            for obj in json_data
-                        ]
-                        df = pd.DataFrame(cleaned)
-                    else:
-                        cleaned = (
-                            {k: UnicodeProcessor.clean_surrogate_chars(v) for k, v in json_data.items()} if isinstance(json_data, dict) else json_data
-                        )
-                        df = pd.DataFrame([cleaned])
+                    reader = pd.read_json(
+                        io.StringIO(text),
+                        lines=True,
+                        chunksize=chunk_size,
+                    )
+                    chunks = []
+                    for chunk in reader:
+                        monitor.throttle_if_needed()
+                        chunks.append(chunk)
+                    df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
                     return df, None
                 except UnicodeDecodeError:
                     continue

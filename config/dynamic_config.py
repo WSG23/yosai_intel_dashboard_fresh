@@ -98,6 +98,10 @@ class DynamicConfigManager:
         if ai_threshold is not None:
             self.performance.ai_confidence_threshold = int(ai_threshold)
 
+        mem_thresh = os.getenv("MEMORY_THRESHOLD_MB")
+        if mem_thresh is not None:
+            self.performance.memory_usage_threshold_mb = int(mem_thresh)
+
         css_threshold = os.getenv("CSS_BUNDLE_THRESHOLD")
         if css_threshold is not None:
             self.css.bundle_threshold_kb = int(css_threshold)

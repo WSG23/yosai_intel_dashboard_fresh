@@ -12,6 +12,7 @@ from security.unicode_security_processor import (
 )
 from core.unicode_processor import process_large_csv_content
 from config.dynamic_config import dynamic_config
+from core.performance import get_performance_monitor
 
 
 from typing import Any, Optional, Tuple
@@ -53,7 +54,13 @@ def process_file_simple(content: bytes, filename: str) -> Tuple[Optional[pd.Data
 
         from io import StringIO
 
-        df = pd.read_csv(StringIO(text))
+        monitor = get_performance_monitor()
+        reader = pd.read_csv(StringIO(text), chunksize=chunk_size)
+        chunks = []
+        for chunk in reader:
+            monitor.throttle_if_needed()
+            chunks.append(chunk)
+        df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
         df = sanitize_dataframe(df)
         return df, None
     except Exception as exc:  # pragma: no cover - robustness
