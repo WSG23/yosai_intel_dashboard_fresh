@@ -42,6 +42,7 @@ from services.upload import (
     get_trigger_id,
     save_ai_training_data,
 )
+from services.upload.unified_controller import UnifiedUploadController
 from components.upload import ClientSideValidator
 
 from services.task_queue import create_task, get_status, clear_task
@@ -1237,13 +1238,14 @@ class Callbacks:
 # ------------------------------------------------------------
 
 
-def register_callbacks(
+def register_upload_callbacks(
     manager: "TrulyUnifiedCallbacks",
     controller: UnifiedAnalyticsController | None = None,
 ) -> None:
     """Instantiate :class:`Callbacks` and register its methods."""
 
     cb = Callbacks()
+    upload_ctrl = UnifiedUploadController(cb)
 
     def _register(defs: List[tuple]):
         for func, outputs, inputs, states, cid, extra in defs:
@@ -1256,177 +1258,12 @@ def register_callbacks(
                 **extra,
             )(debounce()(profile_callback(cid)(func)))
 
-    upload_callbacks = [
-        (
-            cb.highlight_upload_area,
-            Output("upload-data", "className"),
-            Input("upload-more-btn", "n_clicks"),
-            None,
-            "highlight_upload_area",
-            {"prevent_initial_call": True},
-        ),
-        (
-            cb.schedule_upload_task,
-            Output("upload-task-id", "data", allow_duplicate=True),
-            Input("upload-data", "contents"),
-            State("upload-data", "filename"),
-            "schedule_upload_task",
-            {"prevent_initial_call": True, "allow_duplicate": True},
-        ),
-        (
-            cb.display_client_validation,
-            Output("upload-results", "children", allow_duplicate=True),
-            Input("client-validation-store", "data"),
-            None,
-            "display_client_validation",
-            {"prevent_initial_call": True, "allow_duplicate": True},
-        ),
-        (
-            cb.reset_upload_progress,
-            [
-                Output("upload-progress", "value", allow_duplicate=True),
-                Output("upload-progress", "label", allow_duplicate=True),
-                Output("upload-progress-interval", "disabled", allow_duplicate=True),
-            ],
-            Input("upload-data", "contents"),
-            None,
-            "reset_upload_progress",
-            {"prevent_initial_call": True, "allow_duplicate": True},
-        ),
-        (
-            cb.restore_upload_state,
-            [
-                Output("upload-results", "children", allow_duplicate=True),
-                Output("file-preview", "children", allow_duplicate=True),
-                Output("file-info-store", "data", allow_duplicate=True),
-                Output("upload-nav", "children", allow_duplicate=True),
-                Output("current-file-info-store", "data", allow_duplicate=True),
-                Output("column-verification-modal", "is_open", allow_duplicate=True),
-                Output("device-verification-modal", "is_open", allow_duplicate=True),
-            ],
-            Input("url", "pathname"),
-            None,
-            "restore_upload_state",
-            {"prevent_initial_call": "initial_duplicate", "allow_duplicate": True},
-        ),
-    ]
-
-    progress_callbacks = [
-        (
-            cb.update_progress_bar,
-            [
-                Output("upload-progress", "value", allow_duplicate=True),
-                Output("upload-progress", "label", allow_duplicate=True),
-                Output("file-progress-list", "children", allow_duplicate=True),
-            ],
-            Input("upload-progress-interval", "n_intervals"),
-            State("upload-task-id", "data"),
-            "update_progress_bar",
-            {"prevent_initial_call": True, "allow_duplicate": True},
-        ),
-        (
-            cb.finalize_upload_results,
-            [
-                Output("upload-results", "children", allow_duplicate=True),
-                Output("file-preview", "children", allow_duplicate=True),
-                Output("file-info-store", "data", allow_duplicate=True),
-                Output("upload-nav", "children", allow_duplicate=True),
-                Output("current-file-info-store", "data", allow_duplicate=True),
-                Output("column-verification-modal", "is_open", allow_duplicate=True),
-                Output("device-verification-modal", "is_open", allow_duplicate=True),
-                Output("upload-progress-interval", "disabled", allow_duplicate=True),
-            ],
-            Input("progress-done-trigger", "n_clicks"),
-            State("upload-task-id", "data"),
-            "finalize_upload_results",
-            {"prevent_initial_call": True, "allow_duplicate": True},
-        ),
-    ]
-
-    modal_callbacks = [
-        (
-            cb.handle_modal_dialogs,
-            [
-                Output("toast-container", "children", allow_duplicate=True),
-                Output("column-verification-modal", "is_open", allow_duplicate=True),
-                Output("device-verification-modal", "is_open", allow_duplicate=True),
-            ],
-            [
-                Input("verify-columns-btn-simple", "n_clicks"),
-                Input("classify-devices-btn", "n_clicks"),
-                Input("column-verify-confirm", "n_clicks"),
-                Input("column-verify-cancel", "n_clicks"),
-                Input("device-verify-cancel", "n_clicks"),
-            ],
-            None,
-            "handle_modal_dialogs",
-            {"prevent_initial_call": True, "allow_duplicate": True},
-        ),
-        (
-            cb.apply_ai_suggestions,
-            [Output({"type": "column-mapping", "index": ALL}, "value")],
-            [Input("column-verify-ai-auto", "n_clicks")],
-            [State("current-file-info-store", "data")],
-            "apply_ai_suggestions",
-            {"prevent_initial_call": True},
-        ),
-        (
-            cb.populate_device_modal_with_learning,
-            [
-                Output("device-modal-body", "children"),
-                Output("current-file-info-store", "data", allow_duplicate=True),
-            ],
-            Input("device-verification-modal", "is_open"),
-            State("current-file-info-store", "data"),
-            "populate_device_modal_with_learning",
-            {"prevent_initial_call": True, "allow_duplicate": True},
-        ),
-        (
-            cb.populate_modal_content,
-            Output("modal-body", "children"),
-            [
-                Input("column-verification-modal", "is_open"),
-                Input("current-file-info-store", "data"),
-            ],
-            None,
-            "populate_modal_content",
-            {"prevent_initial_call": True},
-        ),
-        (
-            cb.save_confirmed_device_mappings,
-            [
-                Output("toast-container", "children", allow_duplicate=True),
-                Output("column-verification-modal", "is_open", allow_duplicate=True),
-                Output("device-verification-modal", "is_open", allow_duplicate=True),
-            ],
-            [Input("device-verify-confirm", "n_clicks")],
-            [
-                State({"type": "device-floor", "index": ALL}, "value"),
-                State({"type": "device-security", "index": ALL}, "value"),
-                State({"type": "device-access", "index": ALL}, "value"),
-                State({"type": "device-special", "index": ALL}, "value"),
-                State("current-file-info-store", "data"),
-            ],
-            "save_confirmed_device_mappings",
-            {"prevent_initial_call": True},
-        ),
-        (
-            cb.save_verified_column_mappings,
-            Output("toast-container", "children", allow_duplicate=True),
-            [Input("column-verify-confirm", "n_clicks")],
-            [
-                State({"type": "standard-field-mapping", "field": ALL}, "value"),
-                State({"type": "standard-field-mapping", "field": ALL}, "id"),
-                State("current-file-info-store", "data"),
-            ],
-            "save_verified_column_mappings",
-            {"prevent_initial_call": True, "allow_duplicate": True},
-        ),
-    ]
-
-    _register(upload_callbacks)
-    _register(progress_callbacks)
-    _register(modal_callbacks)
+    for defs in (
+        upload_ctrl.upload_callbacks(),
+        upload_ctrl.progress_callbacks(),
+        upload_ctrl.validation_callbacks(),
+    ):
+        _register(defs)
 
     manager.app.clientside_callback(
         "function(tid){if(window.startUploadProgress){window.startUploadProgress(tid);} return '';}",
@@ -1451,7 +1288,7 @@ __all__ = [
     "get_file_info",
     "check_upload_system_health",
     "save_ai_training_data",
-    "register_callbacks",
+    "register_upload_callbacks",
 ]
 
 logger.info(f"\U0001f50d FILE_UPLOAD.PY LOADED - Callbacks should be registered")
