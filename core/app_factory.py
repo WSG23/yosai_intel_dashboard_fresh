@@ -502,6 +502,12 @@ def _create_json_safe_app() -> dash.Dash:
 def _create_main_layout() -> html.Div:
     """Create main application layout with complete integration"""
     theme = sanitize_theme(os.getenv("YOSAI_THEME", DEFAULT_THEME))
+    class_map = {
+        "dark": "dark-mode",
+        "light": "light-mode",
+        "high-contrast": "high-contrast-mode",
+    }
+    theme_class = class_map.get(theme, "dark-mode")
     return html.Div(
         [
             # URL routing component
@@ -527,7 +533,7 @@ def _create_main_layout() -> html.Div:
             dcc.Store(id="theme-store", data=DEFAULT_THEME),
             html.Div(id="theme-dummy-output", style={"display": "none"}),
         ],
-        **{"data-theme": theme},
+        className=theme_class,
     )
 
 

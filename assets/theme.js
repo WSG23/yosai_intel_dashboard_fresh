@@ -2,7 +2,10 @@
   function syncDropdown() {
     var dropdown = document.getElementById('theme-dropdown');
     if (!dropdown) return;
-    var current = document.documentElement.dataset.theme || 'dark';
+    var html = document.documentElement;
+    var current = 'dark';
+    if (html.classList.contains('light-mode')) current = 'light';
+    else if (html.classList.contains('high-contrast-mode')) current = 'high-contrast';
     if (dropdown.value !== current) {
       dropdown.value = current;
     }
