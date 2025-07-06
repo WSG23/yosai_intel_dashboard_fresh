@@ -2,12 +2,13 @@ import importlib
 import sys
 import types
 from dash import no_update
+from upload_core import UploadCore
 
 sys.modules["pages.graphs"] = types.ModuleType("pages.graphs")
 sys.modules["pages.graphs"].GRAPH_FIGURES = {}
 
 file_upload = importlib.import_module("pages.file_upload")
-Callbacks = file_upload.Callbacks
+Callbacks = UploadCore
 
 
 def test_schedule_upload_task_none():
