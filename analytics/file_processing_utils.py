@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import logging
+from collections import Counter
 from datetime import datetime
 from typing import Any, Dict, Iterable, Tuple
-from collections import Counter
 
 import pandas as pd
 

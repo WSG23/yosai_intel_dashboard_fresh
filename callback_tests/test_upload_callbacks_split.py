@@ -2,6 +2,7 @@ import importlib
 import sys
 import types
 from dash import no_update
+from upload_core import UploadCore
 
 stub_pandas = types.ModuleType("pandas")
 stub_pandas.DataFrame = object
@@ -73,7 +74,7 @@ sys.modules["pages.export"] = types.ModuleType("pages.export")
 sys.modules["pages.settings"] = types.ModuleType("pages.settings")
 
 file_upload = importlib.import_module("pages.file_upload")
-Callbacks = file_upload.Callbacks
+Callbacks = UploadCore
 
 
 def test_schedule_upload_task_none():
