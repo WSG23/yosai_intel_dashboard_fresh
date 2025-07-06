@@ -17,7 +17,7 @@ from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
 
 # Core processing imports only - NO UI COMPONENTS
-from security.unicode_security_processor import sanitize_unicode_input
+from core.unicode_utils import sanitize_for_utf8
 
 
 def _get_max_display_rows() -> int:
@@ -51,7 +51,7 @@ class UnicodeFileProcessor:
         """Remove Unicode surrogate characters from DataFrame"""
         for col in df.select_dtypes(include=['object']).columns:
             df[col] = df[col].astype(str).apply(
-                lambda x: sanitize_unicode_input(x) if isinstance(x, str) else x
+                lambda x: sanitize_for_utf8(x) if isinstance(x, str) else x
             )
         return df
 
@@ -125,7 +125,7 @@ def create_file_preview(df: pd.DataFrame, max_rows: int | None = None) -> Dict[s
                 elif isinstance(val, (int, float)):
                     safe_row[col] = safe_format_number(val)
                 else:
-                    safe_row[col] = sanitize_unicode_input(str(val))
+                    safe_row[col] = sanitize_for_utf8(str(val))
             preview_data.append(safe_row)
 
         return {

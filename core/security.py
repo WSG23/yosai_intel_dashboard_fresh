@@ -29,7 +29,7 @@ from core.security_patterns import (
     SQL_INJECTION_PATTERNS,
     XSS_PATTERNS,
 )
-from security.unicode_security_processor import sanitize_unicode_input
+from core.unicode_utils import sanitize_for_utf8
 
 
 class SecurityLevel(Enum):
@@ -110,7 +110,7 @@ class InputValidator:
         """Comprehensive input validation"""
         if not isinstance(input_data, str):
             input_data = str(input_data)
-        input_data = sanitize_unicode_input(input_data)
+        input_data = sanitize_for_utf8(input_data)
 
         result = {
             "field": field_name,
@@ -176,7 +176,7 @@ class InputValidator:
 
     def _sanitize_input(self, data: str) -> str:
         """Sanitize input data"""
-        data = sanitize_unicode_input(data)
+        data = sanitize_for_utf8(data)
         # Remove null bytes
         sanitized = data.replace("\x00", "")
 
@@ -281,10 +281,8 @@ class InputValidator:
         """Check file content for security issues"""
         # Convert to string for pattern matching (first 1KB)
         try:
-            from security.unicode_security_handler import UnicodeSecurityHandler
-
             text_content = content[:1024].decode("utf-8", errors="ignore")
-            text_content = UnicodeSecurityHandler.sanitize_unicode_input(text_content).lower()
+            text_content = sanitize_for_utf8(text_content).lower()
         except Exception:
             return False
 

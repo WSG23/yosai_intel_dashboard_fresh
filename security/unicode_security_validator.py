@@ -4,9 +4,7 @@ from typing import Any
 
 import pandas as pd
 
-from core.unicode_processor import contains_surrogates
-
-from .unicode_security_processor import UnicodeSecurityProcessor
+from core.unicode_utils import detect_surrogate_pairs, sanitize_for_utf8
 from .validation_exceptions import ValidationError
 
 
@@ -15,16 +13,16 @@ class UnicodeSecurityValidator:
 
     @staticmethod
     def validate_text(text: Any) -> str:
-        sanitized = UnicodeSecurityProcessor.sanitize_unicode_input(text)
-        if contains_surrogates(sanitized):
+        sanitized = sanitize_for_utf8(text)
+        if detect_surrogate_pairs(sanitized):
             raise ValidationError("Surrogate characters detected")
         return sanitized
 
     @staticmethod
     def validate_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-        sanitized = UnicodeSecurityProcessor.sanitize_dataframe(df)
+        sanitized = df.applymap(sanitize_for_utf8)
         if sanitized.select_dtypes(include=["object"]).applymap(
-            lambda x: contains_surrogates(str(x))
+            detect_surrogate_pairs
         ).any().any():
             raise ValidationError("Surrogate characters detected")
         return sanitized
