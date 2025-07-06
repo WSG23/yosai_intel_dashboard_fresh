@@ -28,16 +28,40 @@
   --color-gray-900: #0F1419;
   --color-background: #0F1419;
   --color-surface: #1A2332;
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+  --color-gray-50: #F9FAFB;
+  --color-gray-100: #F3F4F6;
+  --color-gray-200: #E5E7EB;
+  --color-gray-300: #D1D5DB;
+  --color-gray-400: #9CA3AF;
+  --color-gray-500: #6B7280;
+  --color-gray-600: #4B5563;
+  --color-gray-700: #374151;
+  --color-gray-750: #2D3748;
+  --color-gray-800: #1F2937;
+  --color-gray-850: #1A2332;
+  --color-gray-900: #0F1419;
+  --color-gray-950: #05070A;
   /* Default surface layers before a theme is applied */
   --surface-app: var(--color-surface);
   --surface-primary: var(--color-surface);
   --surface-secondary: var(--color-surface);
   --surface-tertiary: var(--color-surface);
   --surface-section: var(--surface-secondary);
+
   --color-border: #2D3748;
   --color-text-primary: #F7FAFC;
   --color-text-secondary: #E2E8F0;
   --color-text-tertiary: #A0AEC0;
+
+  --color-accent-subtle: #E3F2FD;
+  --text-on-accent: var(--color-white);
+  --color-graph-series-1: #1d4e89;
+  --color-graph-series-2: #e07a5f;
+  --color-graph-series-3: #3da5d9;
+  --color-graph-series-4: #81b29a;
+  --color-graph-series-5: #f2cc8f;
 
   /* Additional text colors used by utilities */
   --text-primary: var(--color-text-primary);

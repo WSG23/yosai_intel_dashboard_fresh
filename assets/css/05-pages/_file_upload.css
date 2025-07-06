@@ -4,16 +4,16 @@
 
 .file-upload-area {
   width: 100%;
-  border: 2px dashed var(--accent);
+  border: 2px dashed var(--color-accent);
   border-radius: 8px;
   text-align: center;
   cursor: pointer;
-  background-color: var(--bg-secondary);
+  background-color: var(--surface-secondary);
 }
 
 .file-upload-area--highlight {
-  border: 3px dashed var(--accent);
-  background-color: var(--bg-secondary);
+  border: 3px dashed var(--color-accent);
+  background-color: var(--surface-secondary);
   animation: pulse 1s infinite;
 }
 

@@ -89,7 +89,7 @@
    * Use the warning palette to maintain sufficient contrast
    * between the gradient background and the text color.
    */
-  background: linear-gradient(135deg, var(--accent), var(--color-warning));
+  background: linear-gradient(135deg, var(--color-accent), var(--color-warning));
   color: var(--color-gray-900);
   font-weight: var(--font-weight-semibold);
 }
