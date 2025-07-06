@@ -18,8 +18,7 @@ This checklist summarizes the basic steps required to prepare a development envi
 ## Pre‑commit Hooks
 1. Install the dependencies and `pre-commit`:
    ```bash
-   pip install -r requirements.txt
-   pip install -r requirements-dev.txt
+   ./scripts/setup.sh
    pip install pre-commit
    ```
 2. Install the hooks:

@@ -80,10 +80,10 @@ with this Python release and newer.
    ```bash
    ./scripts/setup.sh
    ```
-   The script installs requirements from PyPI or a local `packages/` directory if
-   present. Ensure dependencies are installed **before** running Pyright or using
-   the Pylance extension. Missing packages will otherwise appear as unresolved
-   imports.
+   The script installs both `requirements.txt` and `requirements-dev.txt` from
+   PyPI or a local `packages/` directory if present. Ensure dependencies are
+   installed **before** running Pyright or using the Pylance extension. Missing
+   packages will otherwise appear as unresolved imports.
 
 4. **Set up environment:**
    ```bash
@@ -142,7 +142,8 @@ following steps:
    ```bash
    ./scripts/setup.sh
    ```
-   If you encounter errors like `module 'flask' has no attribute 'helpers'`,
+   The script installs both requirement files. If you encounter errors like
+   `module 'flask' has no attribute 'helpers'`,
    ensure there are no local directories named `flask`, `pandas`, or `yaml`
    in the project root. These placeholder packages can shadow the real
    libraries installed from `requirements.txt`. Delete them before running
@@ -153,7 +154,9 @@ following steps:
 4. If the dashboard starts with a blank page, required packages are
    likely missing. Install them before launching the app:
    ```bash
-   pip install -r requirements.txt  # or ./scripts/setup.sh
+   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
+   # or simply run ./scripts/setup.sh
    ```
 5. If Dash packages behave unexpectedly, reinstall them with pinned versions:
    ```bash
@@ -213,7 +216,7 @@ Install dependencies before running the tests:
 ```bash
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
-# or use ./scripts/setup.sh which installs requirements.txt
+# or simply run ./scripts/setup.sh
 ```
 Detailed instructions are provided in
 [docs/test_setup.md](docs/test_setup.md).
@@ -257,7 +260,8 @@ dashboard. Key entry points include `tests/test_integration.py`,
 
 **Note:** The file upload and column mapping functionality relies on `pandas`.
 If `pandas` is missing these pages will be disabled. Ensure you run
-`pip install -r requirements.txt` to install all dependencies.
+`pip install -r requirements.txt` and `pip install -r requirements-dev.txt` to
+install all dependencies (or execute `./scripts/setup.sh`).
 `PerformanceMonitor` requires `psutil` for CPU and memory metrics, and the
 file processing utilities depend on `chardet` to detect text encoding.
 
