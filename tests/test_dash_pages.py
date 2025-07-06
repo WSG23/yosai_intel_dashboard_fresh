@@ -35,7 +35,7 @@ def test_upload_process_and_layout(dash_duo, tmp_path):
     pd.DataFrame({"a": [1, 2], "b": [3, 4]}).to_csv(csv, index=False)
     app = _create_upload_app()
     dash_duo.start_server(app)
-    file_input = dash_duo.find_element("#upload-data input")
+    file_input = dash_duo.find_element("#drag-drop-upload input")
     file_input.send_keys(str(csv))
     dash_duo.wait_for_text_to_contain(
         "#upload-results", "Successfully uploaded", timeout=10

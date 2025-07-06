@@ -1,6 +1,6 @@
 (function(){
   const STORE_ID = 'client-validation-store';
-  const UPLOAD_ID = 'upload-data';
+  const UPLOAD_ID = 'drag-drop-upload';
 
   function byId(id){
     return document.getElementById(id);

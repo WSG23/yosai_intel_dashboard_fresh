@@ -3331,6 +3331,10 @@ button:disabled {
   -o-object-fit: cover;
      object-fit: cover;
 }
+.drag-drop-upload .btn {
+  min-width: 44px;
+  min-height: 44px;
+}
 /* Dashboard Panels */
 /* =================================================================== */
 /* 04-panels/_panel-base.css - Base Panel System */

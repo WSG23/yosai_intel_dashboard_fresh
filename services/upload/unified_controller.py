@@ -35,7 +35,7 @@ class UnifiedUploadController:
         return [
             (
                 self.cb.highlight_upload_area,
-                Output("upload-data", "className"),
+                Output("drag-drop-upload", "className"),
                 Input("upload-more-btn", "n_clicks"),
                 None,
                 "highlight_upload_area",
@@ -44,8 +44,8 @@ class UnifiedUploadController:
             (
                 self.cb.schedule_upload_task,
                 Output("upload-task-id", "data", allow_duplicate=True),
-                Input("upload-data", "contents"),
-                State("upload-data", "filename"),
+                Input("drag-drop-upload", "contents"),
+                State("drag-drop-upload", "filename"),
                 "schedule_upload_task",
                 {"prevent_initial_call": True, "allow_duplicate": True},
             ),
@@ -66,7 +66,7 @@ class UnifiedUploadController:
                         "upload-progress-interval", "disabled", allow_duplicate=True
                     ),
                 ],
-                Input("upload-data", "contents"),
+                Input("drag-drop-upload", "contents"),
                 None,
                 "reset_upload_progress",
                 {"prevent_initial_call": True, "allow_duplicate": True},
