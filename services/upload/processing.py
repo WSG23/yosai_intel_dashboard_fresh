@@ -169,7 +169,6 @@ class UploadProcessingService:
 
             try:
                 def _cb(pct: int) -> None:
-                    progress_manager.emit(filename, pct)
                     if task_progress:
                         overall = int(((processed_files + pct / 100) / total_files) * 100)
                         task_progress(overall)
