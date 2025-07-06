@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Callable
 
 import dash_bootstrap_components as dbc
 import pandas as pd
@@ -169,6 +169,7 @@ class UploadProcessingService:
 
             try:
                 def _cb(name: str, pct: int) -> None:
+
                     if task_progress:
                         overall = int(((processed_files + pct / 100) / total_files) * 100)
                         task_progress(overall)
