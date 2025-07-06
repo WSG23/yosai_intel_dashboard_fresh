@@ -29,14 +29,14 @@ if TYPE_CHECKING:
     import dash_bootstrap_components as dbc
     from dash import dcc, html
     from dash._callback import callback
-    from dash.dependencies import Input, Output
+    from dash.dependencies import Input, Output, State
 
 # Runtime imports with proper fallbacks
 try:
     import dash_bootstrap_components as dbc
     from dash import dcc, html
     from dash._callback import callback
-    from dash.dependencies import Input, Output
+    from dash.dependencies import Input, Output, State
 
     DASH_AVAILABLE = True
 except ImportError:
@@ -62,6 +62,7 @@ except ImportError:
     callback: Any = _stub_callable
     Output: Any = _stub_callable
     Input: Any = _stub_callable
+    State: Any = _stub_callable
 
 
 PAGE_TITLES = {
@@ -199,193 +200,169 @@ def create_navbar_layout() -> Optional[Any]:
                                 # Right Column: Navigation Icons + Language Toggle
                                 dbc.Col(
                                     [
-                                        html.Div(
-                                            [
-                                                # Navigation Icons
-                                                html.Div(
-                                                    [
-                                                        html.A(
-                                                            _nav_icon(
-                                                                app,
-                                                                "dashboard",
-                                                                str(_l("Dashboard")),
-                                                            ),
-                                                            href="/dashboard",
-                                                            className="navbar-nav-link",
-                                                            title=str(_l("Dashboard")),
-                                                        ),
-                                                        html.A(
-                                                            _nav_icon(
-                                                                app,
-                                                                "analytics",
-                                                                str(
-                                                                    _l(
-                                                                        "Deep Analytics Page"
-                                                                    )
+                                        dbc.NavbarToggler(
+                                            id="navbar-toggler",
+                                            className="ml-auto d-md-none",
+                                        ),
+                                        dbc.Collapse(
+                                            html.Div(
+                                                [
+                                                    # Navigation Icons
+                                                    html.Div(
+                                                        [
+                                                            html.A(
+                                                                _nav_icon(
+                                                                    app,
+                                                                    "dashboard",
+                                                                    str(_l("Dashboard")),
                                                                 ),
+                                                                href="/dashboard",
+                                                                className="navbar-nav-link",
+                                                                title=str(_l("Dashboard")),
                                                             ),
-                                                            href="/analytics",
-                                                            className="navbar-nav-link",
-                                                            title=str(
-                                                                _l(
-                                                                    "Deep Analytics Page"
-                                                                )
-                                                            ),
-                                                        ),
-                                                        html.A(
-                                                            _nav_icon(
-                                                                app,
-                                                                "graphs",
-                                                                str(_l("Graphs")),
-                                                            ),
-                                                            href="/graphs",
-                                                            className="navbar-nav-link",
-                                                            title=str(_l("Graphs")),
-                                                        ),
-                                                        html.A(
-                                                            _nav_icon(
-                                                                app,
-                                                                "upload",
-                                                                str(_l("Upload")),
-                                                            ),
-                                                            href="/file-upload",
-                                                            className="navbar-nav-link",
-                                                            title=str(_l("Upload")),
-                                                        ),
-                                                        dbc.DropdownMenu(
-                                                            [
-                                                                dbc.DropdownMenuItem(
+                                                            html.A(
+                                                                _nav_icon(
+                                                                    app,
+                                                                    "analytics",
                                                                     str(
-                                                                        _l("Export CSV")
+                                                                        _l("Deep Analytics Page")
                                                                     ),
-                                                                    id="nav-export-csv",
                                                                 ),
-                                                                dbc.DropdownMenuItem(
-                                                                    str(
-                                                                        _l(
-                                                                            "Export JSON"
+                                                                href="/analytics",
+                                                                className="navbar-nav-link",
+                                                                title=str(
+                                                                    _l("Deep Analytics Page")
+                                                                ),
+                                                            ),
+                                                            html.A(
+                                                                _nav_icon(
+                                                                    app,
+                                                                    "graphs",
+                                                                    str(_l("Graphs")),
+                                                                ),
+                                                                href="/graphs",
+                                                                className="navbar-nav-link",
+                                                                title=str(_l("Graphs")),
+                                                            ),
+                                                            html.A(
+                                                                _nav_icon(
+                                                                    app,
+                                                                    "upload",
+                                                                    str(_l("Upload")),
+                                                                ),
+                                                                href="/file-upload",
+                                                                className="navbar-nav-link",
+                                                                title=str(_l("Upload")),
+                                                            ),
+                                                            dbc.DropdownMenu(
+                                                                [
+                                                                    dbc.DropdownMenuItem(
+                                                                        str(_l("Export CSV")),
+                                                                        id="nav-export-csv",
+                                                                    ),
+                                                                    dbc.DropdownMenuItem(
+                                                                        str(_l("Export JSON")),
+                                                                        id="nav-export-json",
+                                                                    ),
+                                                                ],
+                                                                nav=True,
+                                                                in_navbar=True,
+                                                                label=_nav_icon(
+                                                                    app,
+                                                                    "print",
+                                                                    str(_l("Export")),
+                                                                ),
+                                                                toggle_class_name="navbar-nav-link",
+                                                                menu_variant="dark",
+                                                            ),
+                                                            dbc.DropdownMenu(
+                                                                [
+                                                                    dbc.DropdownMenuItem(
+                                                                        dcc.Link(
+                                                                            str(_l("Settings")),
+                                                                            href="/settings",
+                                                                            className="dropdown-item",
                                                                         )
                                                                     ),
-                                                                    id="nav-export-json",
-                                                                ),
-                                                            ],
-                                                            nav=True,
-                                                            in_navbar=True,
-                                                            label=_nav_icon(
-                                                                app,
-                                                                "print",
-                                                                str(_l("Export")),
-                                                            ),
-                                                            toggle_class_name="navbar-nav-link",
-                                                            menu_variant="dark",
-                                                        ),
-                                                        dbc.DropdownMenu(
-                                                            [
-                                                                dbc.DropdownMenuItem(
-                                                                    dcc.Link(
-                                                                        str(
-                                                                            _l(
-                                                                                "Settings"
-                                                                            )
+                                                                    dbc.DropdownMenuItem(
+                                                                        dcc.Dropdown(
+                                                                            id="theme-dropdown",
+                                                                            options=[
+                                                                                {
+                                                                                    "label": str(_l("Dark")),
+                                                                                    "value": "dark",
+                                                                                },
+                                                                                {
+                                                                                    "label": str(_l("Light")),
+                                                                                    "value": "light",
+                                                                                },
+                                                                                {
+                                                                                    "label": str(_l("High Contrast")),
+                                                                                    "value": "high-contrast",
+                                                                                },
+                                                                            ],
+                                                                            value=DEFAULT_THEME,
+                                                                            clearable=False,
+                                                                            className="theme-dropdown",
+                                                                            style={"width": "120px"},
                                                                         ),
-                                                                        href="/settings",
-                                                                        className="dropdown-item",
-                                                                    )
-                                                                ),
-                                                                dbc.DropdownMenuItem(
-                                                                    dcc.Dropdown(
-                                                                        id="theme-dropdown",
-                                                                        options=[
-                                                                            {
-                                                                                "label": str(
-                                                                                    _l(
-                                                                                        "Dark"
-                                                                                    )
-                                                                                ),
-                                                                                "value": "dark",
-                                                                            },
-                                                                            {
-                                                                                "label": str(
-                                                                                    _l(
-                                                                                        "Light"
-                                                                                    )
-                                                                                ),
-                                                                                "value": "light",
-                                                                            },
-                                                                            {
-                                                                                "label": str(
-                                                                                    _l(
-                                                                                        "High Contrast"
-                                                                                    )
-                                                                                ),
-                                                                                "value": "high-contrast",
-                                                                            },
-                                                                        ],
-                                                                        value=DEFAULT_THEME,
-                                                                        clearable=False,
-                                                                        className="theme-dropdown",
-                                                                        style={
-                                                                            "width": "120px"
-                                                                        },
+                                                                        className="px-2",
+                                                                        toggle=False,
                                                                     ),
-                                                                    className="px-2",
-                                                                    toggle=False,
+                                                                ],
+                                                                nav=True,
+                                                                in_navbar=True,
+                                                                label=_nav_icon(
+                                                                    app,
+                                                                    "settings",
+                                                                    str(_l("Settings")),
                                                                 ),
-                                                            ],
-                                                            nav=True,
-                                                            in_navbar=True,
-                                                            label=_nav_icon(
-                                                                app,
-                                                                "settings",
-                                                                str(_l("Settings")),
+                                                                toggle_class_name="navbar-nav-link",
+                                                                menu_variant="dark",
                                                             ),
-                                                            toggle_class_name="navbar-nav-link",
-                                                            menu_variant="dark",
-                                                        ),
-                                                    ],
-                                                    className="d-flex align-items-center nav-icon-group",
-                                                ),
-                                                dcc.Download(id="download-csv"),
-                                                dcc.Download(id="download-json"),
-                                                # Language Toggle
-                                                html.Div(
-                                                    [
-                                                        html.Button(
-                                                            "EN",
-                                                            className="language-btn active",
-                                                            **{
-                                                                "aria-label": "Switch to English",
-                                                                "aria-pressed": "true",
-                                                            },
-                                                        ),
-                                                        html.Span(
-                                                            "|", className="mx-1"
-                                                        ),
-                                                        html.Button(
-                                                            "JP",
-                                                            className="language-btn",
-                                                            **{
-                                                                "aria-label": "Switch to Japanese",
-                                                                "aria-pressed": "false",
-                                                            },
-                                                        ),
-                                                    ],
-                                                    className="d-flex align-items-center text-sm navbar-language-toggle",
-                                                    id="language-toggle",
-                                                ),
-                                                html.A(
-                                                    _nav_icon(
-                                                        app,
-                                                        "logout",
-                                                        str(_l("Logout")),
+                                                        ],
+                                                        className="d-flex align-items-center nav-icon-group",
                                                     ),
-                                                    href="/login",  # Changed from /logout to /login
-                                                    className="navbar-nav-link",
-                                                    title=str(_l("Logout")),
-                                                ),
-                                            ],
-                                            className="d-flex align-items-center justify-content-end",
-                                        )
+                                                    dcc.Download(id="download-csv"),
+                                                    dcc.Download(id="download-json"),
+                                                    # Language Toggle
+                                                    html.Div(
+                                                        [
+                                                            html.Button(
+                                                                "EN",
+                                                                className="language-btn active",
+                                                                **{
+                                                                    "aria-label": "Switch to English",
+                                                                    "aria-pressed": "true",
+                                                                },
+                                                            ),
+                                                            html.Span("|", className="mx-1"),
+                                                            html.Button(
+                                                                "JP",
+                                                                className="language-btn",
+                                                                **{
+                                                                    "aria-label": "Switch to Japanese",
+                                                                    "aria-pressed": "false",
+                                                                },
+                                                            ),
+                                                        ],
+                                                        className="d-flex align-items-center text-sm navbar-language-toggle",
+                                                        id="language-toggle",
+                                                    ),
+                                                    html.A(
+                                                        _nav_icon(app, "logout", str(_l("Logout"))),
+                                                        href="/login",  # Changed from /logout to /login
+                                                        className="navbar-nav-link",
+                                                        title=str(_l("Logout")),
+                                                    ),
+                                                ],
+                                                className="d-flex align-items-center justify-content-end",
+                                            ),
+                                            id="navbar-collapse",
+                                            navbar=True,
+                                            is_open=False,
+                                            className="ml-auto",
+                                        ),
                                     ],
                                     width=3,
                                     className="d-flex align-items-center justify-content-end pr-4",
@@ -511,6 +488,19 @@ def register_navbar_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
             if theme in ("dark", "high-contrast"):
                 return "/assets/yosai_logo_name_white.png"
             return "/assets/yosai_logo_name_black.png"
+
+        @manager.unified_callback(
+            Output("navbar-collapse", "is_open"),
+            Input("navbar-toggler", "n_clicks"),
+            State("navbar-collapse", "is_open"),
+            callback_id="navbar_toggle_collapse",
+            component_name="navbar",
+        )
+        def toggle_collapse(n: Optional[int], is_open: bool) -> bool:
+            """Toggle the navigation collapse on small screens."""
+            if n:
+                return not is_open
+            return is_open
 
         @manager.unified_callback(
             Output("download-csv", "data"),
