@@ -5,9 +5,10 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Callable, Optional, List
+from typing import IO, Callable, Iterable, List, Optional, Union
 
 import pandas as pd
+
 try:
     import psutil
 except ImportError:  # pragma: no cover - optional dependency
@@ -21,13 +22,24 @@ class PerformanceFileProcessor:
         self.chunk_size = chunk_size
         self.logger = logging.getLogger(__name__)
 
+    def _get_memory_usage(self) -> float:
+        """Return current process memory usage in MB."""
+        if psutil is None:
+            return 0.0
+        try:
+            return psutil.Process().memory_info().rss / (1024 * 1024)
+        except Exception:  # pragma: no cover - best effort
+            return 0.0
+
     def process_large_csv(
         self,
-        file_path: str | Path,
+        file_path: Union[str, Path, IO[str]],
         *,
         encoding: str = "utf-8",
         progress_callback: Optional[Callable[[int, float], None]] = None,
-    ) -> pd.DataFrame:
+        max_memory_mb: Optional[float] = None,
+        stream: bool = False,
+    ) -> pd.DataFrame | Iterable[pd.DataFrame]:
         """Load ``file_path`` in chunks while reporting memory usage.
 
         Parameters
@@ -41,28 +53,48 @@ class PerformanceFileProcessor:
             current memory usage in MB.
         """
 
-        path = Path(file_path)
-        dfs: List[pd.DataFrame] = []
-        rows = 0
+        handle = file_path
+        if isinstance(file_path, (str, Path)):
+            handle = Path(file_path)
 
-        for chunk in pd.read_csv(path, chunksize=self.chunk_size, encoding=encoding):
-            dfs.append(chunk)
-            rows += len(chunk)
-            mem_mb = (
-                psutil.Process().memory_info().rss / (1024 * 1024)
-                if psutil else 0
+        reader = pd.read_csv(handle, chunksize=self.chunk_size, encoding=encoding)
+
+        def generator() -> Iterable[pd.DataFrame]:
+            rows = 0
+            buffer: List[pd.DataFrame] = []
+            mem_mb = 0.0
+            for chunk in reader:
+                rows += len(chunk)
+                buffer.append(chunk)
+                mem_mb = self._get_memory_usage()
+                if progress_callback:
+                    try:
+                        progress_callback(rows, mem_mb)
+                    except Exception as exc:  # pragma: no cover - defensive
+                        self.logger.warning("Progress callback failed: %s", exc)
+
+                if stream:
+                    yield chunk
+                    buffer.clear()
+                elif max_memory_mb and mem_mb > max_memory_mb:
+                    yield pd.concat(buffer, ignore_index=True)
+                    buffer.clear()
+
+            if not stream:
+                if buffer:
+                    yield pd.concat(buffer, ignore_index=True)
+            self.logger.info(
+                "Processed %s rows from %s (memory %.1f MB)",
+                rows,
+                file_path,
+                mem_mb,
             )
-            if progress_callback:
-                try:
-                    progress_callback(rows, mem_mb)
-                except Exception as exc:  # pragma: no cover - defensive
-                    self.logger.warning("Progress callback failed: %s", exc)
 
-        df = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
-        self.logger.info(
-            "Processed %s rows from %s (memory %.1f MB)", rows, path, mem_mb
-        )
-        return df
+        gen = generator()
+        if stream:
+            return gen
+        chunks = list(gen)
+        return pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
 
 
 __all__ = ["PerformanceFileProcessor"]

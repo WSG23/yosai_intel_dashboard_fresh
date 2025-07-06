@@ -2,24 +2,27 @@
 File Processing Service for Yōsai Intel Dashboard
 """
 
-import pandas as pd
+import csv
 import io
 import json
 import logging
-import csv
-import chardet
-from typing import Dict, Any, List
 from pathlib import Path
+from typing import Any, Dict, List
 
-from .base import BaseService
+import chardet
+import pandas as pd
+
+from config.dynamic_config import dynamic_config
+from core.performance_file_processor import PerformanceFileProcessor
+from core.unicode import (
+    process_large_csv_content,
+    sanitize_data_frame,
+    sanitize_unicode_input,
+)
 from services.data_processing.core.protocols import FileProcessorProtocol
 from utils.file_validator import safe_decode_with_unicode_handling
-from core.unicode import (
-    sanitize_unicode_input,
-    sanitize_data_frame,
-    process_large_csv_content,
-)
-from config.dynamic_config import dynamic_config
+
+from .base import BaseService
 
 logger = logging.getLogger(__name__)
 
@@ -127,13 +130,11 @@ class FileProcessorService(BaseService):
 
         try:
             if len(content) > 10 * 1024 * 1024:
-                reader = pd.read_csv(
+                processor = PerformanceFileProcessor(chunk_size=100000)
+                df = processor.process_large_csv(
                     io.StringIO(text_content),
-                    sep=delimiter,
-                    chunksize=100000,
-                    **self.CSV_OPTIONS,
+                    max_memory_mb=500,
                 )
-                df = pd.concat(reader, ignore_index=True)
             else:
                 df = pd.read_csv(io.StringIO(text_content), sep=delimiter, **self.CSV_OPTIONS)
             if len(df.columns) <= 1:
