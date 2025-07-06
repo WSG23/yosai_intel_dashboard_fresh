@@ -1,8 +1,18 @@
 from __future__ import annotations
 
-from typing import List, Dict, Set, DefaultDict
+from typing import List, Dict, Set, DefaultDict, Iterable
 
 from services.data_processing.core.protocols import PluginProtocol
+
+
+class CircularDependencyError(ValueError):
+    """Raised when a dependency cycle is detected."""
+
+    def __init__(self, nodes: Iterable[str]):
+        self.nodes = list(nodes)
+        super().__init__(
+            "Circular dependency detected among: " + ", ".join(sorted(self.nodes))
+        )
 
 
 class PluginDependencyResolver:
@@ -47,14 +57,7 @@ class PluginDependencyResolver:
 
         if len(ordered) != len(plugins_with_meta):
             unresolved = set(name_map) - {p.metadata.name for p in ordered}
-            cycle = self._find_cycle(adjacency, unresolved)
-            if cycle:
-                raise ValueError(
-                    "Circular dependency detected: " + " -> ".join(cycle)
-                )
-            raise ValueError(
-                "Circular dependency detected among: " + ", ".join(sorted(unresolved))
-            )
+            raise CircularDependencyError(unresolved)
 
         ordered.extend(plugins_without_meta)
         return ordered

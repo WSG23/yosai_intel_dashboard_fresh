@@ -69,15 +69,13 @@ and attaches the plugin manager as `app._yosai_plugin_manager`.
 
 For a visual overview of discovery, dependency resolution and the lifecycle calls see [plugin_lifecycle.md](plugin_lifecycle.md).
 
-## Dependency management
+## Circular dependencies
 
-Plugins can declare dependencies on other plugins via `metadata.dependencies`. The
-`PluginDependencyResolver` checks these dependencies while loading plugins. If a
-circular dependency is detected the manager logs an error like:
+Plugins should avoid depending on each other in a cycle. If the dependency resolver detects such a cycle the manager logs a message like:
 
 ```
-Plugin dependency cycle detected: a -> b -> a
+ERROR - Plugin dependency cycle detected: Circular dependency detected among: a, b
 ```
 
-and no plugins will be loaded. Avoid cycles by restructuring your plugin
-dependencies so they form a directed acyclic graph.
+None of the involved plugins will be loaded. Check the logged plugin names and update their `dependencies` lists to remove the cycle.
+
