@@ -332,8 +332,14 @@ class ConfigManager(ConfigProviderProtocol):
     def _apply_env_overrides(self) -> None:
         """Apply environment variable overrides"""
         manager = SecretManager()
+        self._apply_app_env_overrides(manager)
+        self._apply_database_env_overrides(manager)
+        self._apply_security_env_overrides()
+        self._apply_sample_files_env_overrides()
+        self._apply_cache_env_overrides()
 
-        # App overrides
+    def _apply_app_env_overrides(self, manager: SecretManager) -> None:
+        """Apply app-specific environment overrides"""
         if os.getenv("DEBUG"):
             self.config.app.debug = os.getenv("DEBUG", "").lower() in (
                 "true",
@@ -358,7 +364,8 @@ class ConfigManager(ConfigProviderProtocol):
         if title_env is not None:
             self.config.app.title = title_env
 
-        # Database overrides
+    def _apply_database_env_overrides(self, manager: SecretManager) -> None:
+        """Apply database environment overrides"""
         db_type = os.getenv("DB_TYPE")
         if db_type is not None:
             self.config.database.type = db_type
@@ -382,7 +389,6 @@ class ConfigManager(ConfigProviderProtocol):
             self.config.database.password = db_password
             os.environ.setdefault("DB_PASSWORD", db_password)
 
-        # Propagate Auth0 secrets from the secret manager to the environment
         for auth_key in [
             "AUTH0_CLIENT_ID",
             "AUTH0_CLIENT_SECRET",
@@ -395,7 +401,7 @@ class ConfigManager(ConfigProviderProtocol):
                 value = None
             if value is not None:
                 os.environ.setdefault(auth_key, value)
-        # Pool size is loaded from DynamicConfigManager
+
         self.config.database.initial_pool_size = dynamic_config.get_db_pool_size()
         self.config.database.max_pool_size = dynamic_config.get_db_pool_size() * 2
         db_timeout = os.getenv("DB_TIMEOUT")
@@ -411,7 +417,8 @@ class ConfigManager(ConfigProviderProtocol):
         if shrink_timeout is not None:
             self.config.database.shrink_timeout = int(shrink_timeout)
 
-        # Security overrides
+    def _apply_security_env_overrides(self) -> None:
+        """Apply security-related environment overrides"""
         csrf_enabled = os.getenv("CSRF_ENABLED")
         if csrf_enabled is not None:
             self.config.security.csrf_enabled = csrf_enabled.lower() in (
@@ -423,7 +430,8 @@ class ConfigManager(ConfigProviderProtocol):
         if max_failed is not None:
             self.config.security.max_failed_attempts = int(max_failed)
 
-        # Sample file overrides
+    def _apply_sample_files_env_overrides(self) -> None:
+        """Apply sample file path overrides"""
         sample_csv = os.getenv("SAMPLE_CSV_PATH")
         if sample_csv is not None:
             self.config.sample_files.csv_path = sample_csv
@@ -431,6 +439,8 @@ class ConfigManager(ConfigProviderProtocol):
         if sample_json is not None:
             self.config.sample_files.json_path = sample_json
 
+    def _apply_cache_env_overrides(self) -> None:
+        """Apply cache-related environment overrides"""
         cache_type = os.getenv("CACHE_TYPE")
         if cache_type is not None:
             self.config.cache.type = cache_type

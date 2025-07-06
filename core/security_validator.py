@@ -52,9 +52,9 @@ class SecurityValidator:
         self.logger = logging.getLogger(__name__)
 
     # Compiled patterns for performance
-    XSS_PATTERNS = [re.compile(p, re.IGNORECASE) for p in RAW_XSS_PATTERNS]
+    XSS_PATTERN_LIST = [re.compile(p, re.IGNORECASE) for p in RAW_XSS_PATTERNS]
 
-    PATH_PATTERNS = [re.compile(p, re.IGNORECASE) for p in RAW_PATH_PATTERNS]
+    PATH_TRAVERSAL_PATTERN_LIST = [re.compile(p, re.IGNORECASE) for p in RAW_PATH_PATTERNS]
 
     def validate_input(self, value: str, field_name: str = "input") -> Dict[str, Any]:
         """Orchestrate security validations for the given value."""
@@ -124,7 +124,7 @@ class SecurityValidator:
     ) -> List[SecurityIssue]:
         """Check for cross-site scripting patterns."""
         issues = []
-        for pattern in self.XSS_PATTERNS:
+        for pattern in self.XSS_PATTERN_LIST:
             if pattern.search(value):
                 issues.append(
                     self._create_security_issue(
@@ -142,7 +142,7 @@ class SecurityValidator:
     ) -> List[SecurityIssue]:
         """Check for path traversal attempts."""
         issues = []
-        for pattern in self.PATH_PATTERNS:
+        for pattern in self.PATH_TRAVERSAL_PATTERN_LIST:
             if pattern.search(value):
                 issues.append(
                     self._create_security_issue(
