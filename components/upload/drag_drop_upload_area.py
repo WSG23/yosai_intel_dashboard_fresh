@@ -16,6 +16,7 @@ def DragDropUploadArea(upload_id: str = "drag-drop-upload") -> html.Div:
 
     status_id = f"{upload_id}-status"
     camera_id = f"{upload_id}-camera"
+    preview_id = f"{upload_id}-previews"
 
     return html.Div(
         [
@@ -51,7 +52,13 @@ def DragDropUploadArea(upload_id: str = "drag-drop-upload") -> html.Div:
                     className="drag-drop-upload__inner",
                 ),
             ),
-            html.Div(id=status_id, className="drag-drop-upload__status", role="status"),
+            html.Ul(id=preview_id, className="drag-drop-upload__previews", role="list"),
+            html.Div(
+                id=status_id,
+                className="drag-drop-upload__status",
+                role="status",
+                **{"aria-live": "polite"},
+            ),
         ],
         id=f"{upload_id}-area",
         className="drag-drop-upload drag-drop-upload--idle",
