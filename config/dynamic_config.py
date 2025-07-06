@@ -1,15 +1,15 @@
-import os
 import logging
-from typing import Dict, Any
+import os
+from typing import Any, Dict
 
-from .environment import select_config_file
 from .constants import (
-    SecurityConstants,
-    PerformanceConstants,
-    CSSConstants,
     AnalyticsConstants,
+    CSSConstants,
+    PerformanceConstants,
+    SecurityConstants,
     UploadLimits,
 )
+from .environment import select_config_file
 
 
 class DynamicConfigManager:
@@ -122,6 +122,10 @@ class DynamicConfigManager:
         if batch_size is not None:
             self.analytics.batch_size = int(batch_size)
 
+        max_memory = os.getenv("ANALYTICS_MAX_MEMORY_MB")
+        if max_memory is not None:
+            self.analytics.max_memory_mb = int(max_memory)
+
         upload_chunk = os.getenv("UPLOAD_CHUNK_SIZE")
         if upload_chunk is not None:
             self.uploads.DEFAULT_CHUNK_SIZE = int(upload_chunk)
@@ -195,8 +199,9 @@ dynamic_config = DynamicConfigManager()
 
 def diagnose_upload_config():
     """Diagnostic function to check upload configuration"""
-    from config.dynamic_config import dynamic_config
     import os
+
+    from config.dynamic_config import dynamic_config
 
     print("=== Upload Configuration Diagnosis ===")
     print(f"Environment MAX_UPLOAD_MB: {os.getenv('MAX_UPLOAD_MB', 'Not Set')}")
