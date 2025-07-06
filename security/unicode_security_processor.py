@@ -8,7 +8,10 @@ from typing import Any
 
 import pandas as pd
 
-from core.unicode_processor import UnicodeProcessor
+from core.unicode_processor import (
+    UnicodeProcessor,
+    sanitize_unicode_input as core_sanitize_unicode_input,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -28,13 +31,13 @@ class UnicodeSecurityProcessor:
                 return ""
 
         try:
-            sanitized = UnicodeProcessor.sanitize_unicode_input(text)
+            sanitized = core_sanitize_unicode_input(text)
             return unicodedata.normalize("NFKC", sanitized)
         except UnicodeError as exc:
             logger.warning("Unicode sanitization failed: %s", exc)
             cleaned = UnicodeProcessor.clean_surrogate_chars(text)
             try:
-                cleaned = UnicodeProcessor.sanitize_unicode_input(cleaned)
+                cleaned = core_sanitize_unicode_input(cleaned)
                 return unicodedata.normalize("NFKC", cleaned)
             except Exception as inner:
                 logger.error("Normalization retry failed: %s", inner)
