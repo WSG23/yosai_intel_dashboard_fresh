@@ -342,12 +342,12 @@ class EnhancedPostgreSQLManager(DatabaseManager):
 
     def __init__(self, config: DatabaseConfig, retry_config: RetryConfig | None = None):
         super().__init__(config)
-        from .connection_pool import DatabaseConnectionPool
+        from database.connection_pool import EnhancedConnectionPool
         from .connection_retry import ConnectionRetryManager, RetryConfig
         from .unicode_handler import UnicodeQueryHandler
 
         self.retry_manager = ConnectionRetryManager(retry_config or RetryConfig())
-        self.pool = DatabaseConnectionPool(
+        self.pool = EnhancedConnectionPool(
             self._create_connection,
             self.config.initial_pool_size,
             self.config.max_pool_size,
