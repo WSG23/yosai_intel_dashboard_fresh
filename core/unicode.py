@@ -14,6 +14,8 @@ import unicodedata
 import warnings
 from typing import Any, Callable, Iterable, Optional
 
+from .unicode_processor import contains_surrogates
+
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -262,15 +264,6 @@ def sanitize_unicode_input(text: Any) -> str:
 @deprecated("sanitize_dataframe")
 def sanitize_data_frame(df: pd.DataFrame) -> pd.DataFrame:
     return sanitize_dataframe(df)
-
-
-def contains_surrogates(text: Any) -> bool:
-    if not isinstance(text, str):
-        try:
-            text = str(text)
-        except Exception:
-            return False
-    return bool(_SURROGATE_RE.search(text))
 
 
 __all__ = [
