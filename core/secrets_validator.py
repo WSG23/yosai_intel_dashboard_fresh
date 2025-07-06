@@ -7,7 +7,7 @@ from typing import Dict, Optional
 
 from core.exceptions import ConfigurationError
 
-from .secret_manager import SecretManager
+from .secrets_manager import SecretsManager
 
 
 class SecretsValidator:
@@ -22,8 +22,8 @@ class SecretsValidator:
         "AUTH0_AUDIENCE",
     ]
 
-    def __init__(self, manager: Optional[SecretManager] = None) -> None:
-        self.manager = manager or SecretManager()
+    def __init__(self, manager: Optional[SecretsManager] = None) -> None:
+        self.manager = manager or SecretsManager()
         self.logger = logging.getLogger(__name__)
 
     def validate_all_secrets(self) -> Dict[str, str]:
@@ -61,7 +61,7 @@ class SecretsValidator:
         return invalid
 
 
-def validate_all_secrets(manager: Optional[SecretManager] = None) -> Dict[str, str]:
+def validate_all_secrets(manager: Optional[SecretsManager] = None) -> Dict[str, str]:
     """Convenience wrapper for :class:`SecretsValidator`."""
     validator = SecretsValidator(manager)
     return validator.validate_all_secrets()
