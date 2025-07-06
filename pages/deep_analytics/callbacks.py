@@ -12,9 +12,14 @@ import logging
 
 from analytics.controllers import UnifiedAnalyticsController
 from core.dash_profile import profile_callback
+from core.callbacks import UnifiedCallbackManager
+from core.state import CentralizedStateManager
 
 logger = logging.getLogger(__name__)
 import dash_bootstrap_components as dbc
+
+callback_manager = UnifiedCallbackManager()
+analytics_state = CentralizedStateManager()
 
 from services.data_processing.analytics_engine import (
     AI_SUGGESTIONS_AVAILABLE,
@@ -516,50 +521,74 @@ def register_callbacks(
     """Instantiate :class:`Callbacks` and register its methods."""
 
     cb = Callbacks()
-    callback_defs = [
-        (
-            cb.handle_analysis_buttons,
-            Output("analytics-display-area", "children"),
-            [
-                Input("security-btn", "n_clicks"),
-                Input("trends-btn", "n_clicks"),
-                Input("behavior-btn", "n_clicks"),
-                Input("anomaly-btn", "n_clicks"),
-                Input("suggests-btn", "n_clicks"),
-                Input("quality-btn", "n_clicks"),
-                Input("unique-patterns-btn", "n_clicks"),
-            ],
-            [State("analytics-data-source", "value")],
-            "handle_analysis_buttons",
-            {"prevent_initial_call": True},
-        ),
-        (
-            cb.refresh_data_sources_callback,
-            Output("analytics-data-source", "options"),
-            Input("refresh-sources-btn", "n_clicks"),
-            None,
-            "refresh_data_sources",
-            {"prevent_initial_call": True},
-        ),
-        (
-            cb.update_status_alert,
-            Output("status-alert", "children"),
-            Input("hidden-trigger", "children"),
-            None,
-            "update_status_alert",
-            {"prevent_initial_call": False},
-        ),
-    ]
 
-    for func, outputs, inputs, states, cid, extra in callback_defs:
-        manager.unified_callback(
-            outputs,
-            inputs,
-            states,
-            callback_id=cid,
-            component_name="deep_analytics",
-            **extra,
-        )(func)
+    callback_manager.register_operation(
+        "analysis_buttons",
+        lambda s,t,b,a,sug,q,u,ds: cb.handle_analysis_buttons(
+            s,t,b,a,sug,q,u,ds
+        ),
+        name="handle_analysis_buttons",
+        timeout=5,
+    )
+    callback_manager.register_operation(
+        "refresh_sources",
+        lambda n: cb.refresh_data_sources_callback(n),
+        name="refresh_data_sources",
+    )
+    callback_manager.register_operation(
+        "status_alert",
+        lambda val: cb.update_status_alert(val),
+        name="update_status_alert",
+    )
+
+    @manager.unified_callback(
+        [
+            Output("analytics-display-area", "children"),
+            Output("analytics-data-source", "options"),
+            Output("status-alert", "children"),
+        ],
+        [
+            Input("security-btn", "n_clicks"),
+            Input("trends-btn", "n_clicks"),
+            Input("behavior-btn", "n_clicks"),
+            Input("anomaly-btn", "n_clicks"),
+            Input("suggests-btn", "n_clicks"),
+            Input("quality-btn", "n_clicks"),
+            Input("unique-patterns-btn", "n_clicks"),
+            Input("refresh-sources-btn", "n_clicks"),
+            Input("hidden-trigger", "children"),
+        ],
+        [State("analytics-data-source", "value")],
+        callback_id="analytics_operations",
+        component_name="deep_analytics",
+        prevent_initial_call=True,
+    )
+    def analytics_operations(
+        sec, trn, beh, anom, sug, qual, uniq, refresh, trigger, data_source
+    ):
+        display = callback_manager.execute_group(
+            "analysis_buttons",
+            sec,
+            trn,
+            beh,
+            anom,
+            sug,
+            qual,
+            uniq,
+            data_source,
+        )[0]
+
+        options = callback_manager.execute_group(
+            "refresh_sources", refresh
+        )[0]
+
+        alert = callback_manager.execute_group("status_alert", trigger)[0]
+
+        analytics_state.dispatch(
+            "UPDATE", {"display": display, "options": options, "alert": alert}
+        )
+
+        return display, options, alert
 
 
     if controller is not None:
