@@ -11,13 +11,25 @@ from dash import html
 class ClientSideValidator:
     """Utility for handling client-side upload validation results."""
 
+    ISSUE_MESSAGES = {
+        "too_large": "File exceeds size limit",
+        "duplicate": "Duplicate file",
+        "bad_magic": "File contents do not match type",
+        "unsupported_type": "Unsupported file type",
+        "decode_error": "Failed to decode data",
+        "custom_error": "Custom validation failed",
+    }
+
     def build_error_alerts(self, results: List[Dict[str, Any]]) -> List[Any]:
         """Convert validation results from the browser into alert components."""
         alerts: List[Any] = []
         for res in results:
             if res.get("valid", False):
                 continue
-            issues = ", ".join(res.get("issues", [])) or "Failed validation"
+            raw = res.get("issues", [])
+            issues = ", ".join(
+                self.ISSUE_MESSAGES.get(code, str(code)) for code in raw
+            ) or "Failed validation"
             alerts.append(
                 dbc.Alert(
                     [html.Strong(res.get("filename", "Unknown")), f": {issues}"],
