@@ -95,7 +95,6 @@ def layout():
                                 label="0%",
                                 striped=True,
                                 animated=True,
-                                **{"aria-label": "Overall upload progress"},
                             ),
                             html.Ul(id="file-progress-list", className="list-unstyled mt-2")
                         ]
@@ -390,7 +389,6 @@ class Callbacks:
                     striped=True,
                     animated=True,
                     id={"type": "file-progress", "name": fname},
-                    **{"aria-label": f"Upload progress for {fname}"},
                 )
             )
             for fname in self.queue.files
@@ -962,7 +960,6 @@ class Callbacks:
                     striped=True,
                     animated=True,
                     id={"type": "file-progress", "name": fname},
-                    **{"aria-label": f"Upload progress for {fname}"},
                 )
             )
             for fname in self.queue.files
@@ -1395,6 +1392,14 @@ def register_upload_callbacks(
         )
 
 
+def register_callbacks(
+    manager: "TrulyUnifiedCallbacks",
+    controller: UnifiedAnalyticsController | None = None,
+) -> None:
+    """Alias for backward compatibility."""
+    return register_upload_callbacks(manager, controller)
+
+
 # Export functions for integration with other modules
 
 __all__ = [
@@ -1407,6 +1412,7 @@ __all__ = [
     "check_upload_system_health",
     "save_ai_training_data",
     "register_upload_callbacks",
+    "register_callbacks",
 ]
 
 logger.info(f"\U0001f50d FILE_UPLOAD.PY LOADED - Callbacks should be registered")
