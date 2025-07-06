@@ -28,6 +28,7 @@ analytics:
   chunk_size: 50000
   force_full_dataset_analysis: true
   query_timeout_seconds: 300
+  max_display_rows: 10000
 
 monitoring:
   health_check_interval: 30
