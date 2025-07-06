@@ -1,27 +1,31 @@
 #!/usr/bin/env python3
 """Complete application factory integration."""
 from __future__ import annotations
-import dash
+
 import logging
 import os
 from pathlib import Path
-from typing import Optional, Any, TYPE_CHECKING
-from flasgger import Swagger
+from typing import TYPE_CHECKING, Any, Optional
+
+import dash
 import dash_bootstrap_components as dbc
-from dash import html, dcc, Input, Output
+from dash import Input, Output, dcc, html
+from flasgger import Swagger
+from flask import session
+from flask_babel import Babel
+from flask_compress import Compress
+from flask_talisman import Talisman
+
 from components.ui.navbar import create_navbar_layout
+from config.config import get_config
 from core.container import Container as DIContainer
 from core.enhanced_container import ServiceContainer
 from core.plugins.auto_config import PluginAutoConfiguration
-from services import get_analytics_service
 from core.secret_manager import validate_secrets
-from dash_csrf_plugin import setup_enhanced_csrf_protection, CSRFMode
-from flask_babel import Babel
-from flask import session
-from flask_compress import Compress
-from flask_talisman import Talisman
-from core.theme_manager import apply_theme_settings, DEFAULT_THEME, sanitize_theme
-from config.config import get_config
+from core.theme_manager import DEFAULT_THEME, apply_theme_settings, sanitize_theme
+from dash_csrf_plugin import CSRFMode, setup_enhanced_csrf_protection
+from services import get_analytics_service
+
 from .cache import cache
 
 # Optional callback system -------------------------------------------------
@@ -68,9 +72,7 @@ def _create_full_app() -> dash.Dash:
     try:
         service_container = ServiceContainer()
         service_container.register_factory("config", get_config)
-        service_container.register_factory(
-            "analytics_service", get_analytics_service
-        )
+        service_container.register_factory("analytics_service", get_analytics_service)
         config_manager = service_container.get("config")
         analytics_service = service_container.get("analytics_service")
         try:
@@ -227,21 +229,23 @@ def _create_full_app() -> dash.Dash:
         # Register page/component callbacks
         if coordinator is not None:
             try:
-                from pages.file_upload import (
-                    register_callbacks as register_upload_callbacks,
-                    Callbacks as UploadCallbacks,
+                from components.device_verification import (
+                    register_callbacks as register_device_verification,
                 )
                 from components.simple_device_mapping import (
                     register_callbacks as register_simple_mapping,
                 )
-                from components.device_verification import (
-                    register_callbacks as register_device_verification,
+                from components.ui.navbar import register_navbar_callbacks
+                from pages.deep_analytics.callbacks import (
+                    Callbacks as DeepAnalyticsCallbacks,
                 )
                 from pages.deep_analytics.callbacks import (
                     register_callbacks as register_deep_callbacks,
-                    Callbacks as DeepAnalyticsCallbacks,
                 )
-                from components.ui.navbar import register_navbar_callbacks
+                from pages.file_upload import Callbacks as UploadCallbacks
+                from pages.file_upload import (
+                    register_callbacks as register_upload_callbacks,
+                )
 
                 register_upload_callbacks(coordinator)
                 register_simple_mapping(coordinator)
@@ -272,6 +276,7 @@ def _create_full_app() -> dash.Dash:
         server = app.server
         _configure_swagger(server)
         from services.progress_events import ProgressEventManager
+
         progress_events = ProgressEventManager()
 
         @server.route("/health", methods=["GET"])
@@ -307,7 +312,7 @@ def _create_full_app() -> dash.Dash:
         @app.server.before_request
         def filter_noisy_requests():
             """Filter out SSL handshake attempts and bot noise"""
-            from flask import request, abort
+            from flask import abort, request
 
             # Block requests with suspicious headers
             user_agent = request.headers.get("User-Agent", "")
@@ -339,7 +344,7 @@ def _create_full_app() -> dash.Dash:
 def _create_simple_app() -> dash.Dash:
     """Create a simplified Dash application"""
     try:
-        from dash import html, dcc
+        from dash import dcc, html
 
         external_stylesheets = [dbc.themes.BOOTSTRAP]
         built_css = ASSETS_DIR / "dist" / "main.min.css"
@@ -652,18 +657,24 @@ def _register_router_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
             return _get_upload_page(), end_class
         elif pathname in {"/", "/dashboard"}:
             return _get_home_page(), end_class
-        return html.Div(
-            [
-                html.H1("Page Not Found", className="text-center mt-5"),
-                html.P(
-                    "The page you're looking for doesn't exist.",
-                    className="text-center",
-                ),
-                dbc.Button(
-                    "Go Home", href="/", color="primary", className="d-block mx-auto"
-                ),
-            ]
-        ), end_class
+        return (
+            html.Div(
+                [
+                    html.H1("Page Not Found", className="text-center mt-5"),
+                    html.P(
+                        "The page you're looking for doesn't exist.",
+                        className="text-center",
+                    ),
+                    dbc.Button(
+                        "Go Home",
+                        href="/",
+                        color="primary",
+                        className="d-block mx-auto",
+                    ),
+                ]
+            ),
+            end_class,
+        )
 
 
 def _get_home_page() -> Any:
@@ -677,13 +688,15 @@ def _get_analytics_page() -> Any:
         from pages.deep_analytics.layout import layout
 
         return layout()
-    except ImportError as e:
-        logger.error(f"Analytics page import failed: {e}")
-        return _create_placeholder_page(
-            "📊 Analytics",
-            "Analytics page is being loaded...",
-            "The analytics module is not available. Please check the installation.",
-        )
+    except ImportError:
+        logger.exception("Analytics page import failed")
+    except Exception:
+        logger.exception("Analytics page failed to load")
+    return _create_placeholder_page(
+        "📊 Analytics",
+        "Analytics page failed to load",
+        "There was an error loading the analytics page. Check logs for details.",
+    )
 
 
 def _get_graphs_page() -> Any:
@@ -692,13 +705,15 @@ def _get_graphs_page() -> Any:
         from pages.graphs import layout
 
         return layout()
-    except ImportError as e:
-        logger.error(f"Graphs page import failed: {e}")
-        return _create_placeholder_page(
-            "Graphs",
-            "Graphs page is being loaded...",
-            "The graphs module is not available. Please check the installation.",
-        )
+    except ImportError:
+        logger.exception("Graphs page import failed")
+    except Exception:
+        logger.exception("Graphs page failed to load")
+    return _create_placeholder_page(
+        "Graphs",
+        "Graphs page failed to load",
+        "There was an error loading the graphs page. Check logs for details.",
+    )
 
 
 def _get_export_page() -> Any:
@@ -707,13 +722,15 @@ def _get_export_page() -> Any:
         from pages.export import layout
 
         return layout()
-    except ImportError as e:
-        logger.error(f"Export page import failed: {e}")
-        return _create_placeholder_page(
-            "Export",
-            "Export page is being loaded...",
-            "The export module is not available. Please check the installation.",
-        )
+    except ImportError:
+        logger.exception("Export page import failed")
+    except Exception:
+        logger.exception("Export page failed to load")
+    return _create_placeholder_page(
+        "Export",
+        "Export page failed to load",
+        "There was an error loading the export page. Check logs for details.",
+    )
 
 
 def _get_settings_page() -> Any:
@@ -722,13 +739,15 @@ def _get_settings_page() -> Any:
         from pages.settings import layout
 
         return layout()
-    except ImportError as e:
-        logger.error(f"Settings page import failed: {e}")
-        return _create_placeholder_page(
-            "Settings",
-            "Settings page is being loaded...",
-            "The settings module is not available. Please check the installation.",
-        )
+    except ImportError:
+        logger.exception("Settings page import failed")
+    except Exception:
+        logger.exception("Settings page failed to load")
+    return _create_placeholder_page(
+        "Settings",
+        "Settings page failed to load",
+        "There was an error loading the settings page. Check logs for details.",
+    )
 
 
 def _get_upload_page() -> Any:
@@ -737,13 +756,15 @@ def _get_upload_page() -> Any:
         from pages.file_upload import layout
 
         return layout()
-    except ImportError as e:
-        logger.error(f"Upload page import failed: {e}")
-        return _create_placeholder_page(
-            "📁 File Upload",
-            "File upload page is being loaded...",
-            "The file upload module is not available. Please check the installation.",
-        )
+    except ImportError:
+        logger.exception("Upload page import failed")
+    except Exception:
+        logger.exception("Upload page failed to load")
+    return _create_placeholder_page(
+        "📁 File Upload",
+        "Upload page failed to load",
+        "There was an error loading the upload page. Check logs for details.",
+    )
 
 
 def _register_global_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
@@ -778,9 +799,7 @@ def _initialize_services(container: Optional[ServiceContainer] = None) -> None:
             config = get_config()
 
         app_config = config.get_app_config()
-        logger.info(
-            f"Configuration loaded for environment: {app_config.environment}"
-        )
+        logger.info(f"Configuration loaded for environment: {app_config.environment}")
 
     except Exception as e:
         logger.warning(f"Service initialization completed with warnings: {e}")
