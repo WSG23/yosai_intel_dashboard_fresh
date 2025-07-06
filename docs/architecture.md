@@ -27,3 +27,25 @@ generation while controllers manage UI callbacks.
 Developers still using the legacy `DataLoader` or `DataLoadingService` should
 migrate to `services.data_processing.processor.Processor` and update imports
 accordingly.
+
+## Service Lookup
+
+Common services like configuration and analytics are obtained from the DI
+container. Register them during application startup and retrieve them where
+needed:
+
+```python
+from core.container import Container
+from config.config import ConfigManager
+from services.analytics_service import create_analytics_service
+
+container = Container()
+container.register("config", ConfigManager())
+container.register("analytics", create_analytics_service())
+
+config_manager = container.get("config")  # ConfigurationProtocol
+analytics_service = container.get("analytics")  # AnalyticsServiceProtocol
+```
+
+Both services implement protocols so alternative implementations can be swapped
+in for tests or future extensions.

@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+from services.analytics_service import MAX_DISPLAY_ROWS
 
 from services.data_processing.file_processor import UnicodeFileProcessor
 from config.config import get_analytics_config
@@ -38,6 +39,5 @@ class AsyncUploadProcessor:
         df = await self.read_parquet(path)
         limit = rows or _get_max_display_rows()
         return df.head(limit)
-
 
 __all__ = ["AsyncUploadProcessor"]

@@ -5,6 +5,7 @@ import pandas as pd
 
 from config.config import get_analytics_config
 from security.unicode_security_processor import sanitize_unicode_input
+from services.analytics_service import MAX_DISPLAY_ROWS
 
 def _get_max_display_rows() -> int:
     return get_analytics_config().max_display_rows or 10000
@@ -21,6 +22,7 @@ def serialize_dataframe_preview(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """
     try:
         limited_df = df.head(_get_max_display_rows())
+
         preview = limited_df.head(5).to_dict("records")
         preview = [
             {k: sanitize_unicode_input(v) for k, v in row.items()}

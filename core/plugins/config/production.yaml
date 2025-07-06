@@ -106,7 +106,7 @@ security:
   max_file_size_mb: 100
   cors_enabled: true
   cors_origins:
-    - ${FRONTEND_URL:https://staging-dashboard.yourdomain.com}
+    - ${FRONTEND_URL:https://dashboard.yourdomain.com}
   rate_limiting_enabled: true
   rate_limit_per_minute: 200
 
