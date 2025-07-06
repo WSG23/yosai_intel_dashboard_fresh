@@ -3,17 +3,19 @@
 Simplified Configuration System
 Replaces: config/yaml_config.py, config/unified_config.py, config/validator.py
 """
-import os
-import yaml
 import logging
+import os
 from dataclasses import dataclass, field
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
+import yaml
+
+from core.exceptions import ConfigurationError
+from core.secrets_validator import SecretsValidator
+
+from .config_validator import ConfigValidator
 from .dynamic_config import dynamic_config
 from .environment import get_environment, select_config_file
-from .config_validator import ConfigValidator
-from core.secrets_validator import SecretsValidator
-from core.exceptions import ConfigurationError
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +95,7 @@ class AnalyticsConfig:
     data_retention_days: int = 30
     query_timeout_seconds: int = 600
     force_full_dataset_analysis: bool = True
+    max_memory_mb: int = 1024
 
 
 @dataclass
