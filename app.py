@@ -28,7 +28,7 @@ try:
 except ImportError:
     logging.error("Required package 'python-dotenv' is missing.")
     logging.error(
-        "Run `pip install -r requirements.txt` or `./scripts/setup.sh` to install dependencies."
+        "Run `pip install -r requirements.txt && pip install -r requirements-dev.txt` or `./scripts/setup.sh` to install dependencies."
     )
     sys.exit(1)
 

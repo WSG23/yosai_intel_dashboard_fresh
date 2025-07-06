@@ -7,8 +7,7 @@ Thank you for considering a contribution! Follow these steps to get the developm
 Install the core and development dependencies:
 
 ```bash
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
+./scripts/setup.sh
 pip install pre-commit
 pre-commit install
 ```

@@ -25,10 +25,10 @@ This guide walks new contributors through setting up a local development environ
 3. **Install dependencies:**
    ```bash
    ./scripts/setup.sh
-   pip install -r requirements-dev.txt
    ```
-   The development requirements include additional packages such as
-   **PyYAML** that are necessary when running the test suite.
+   This installs both `requirements.txt` and `requirements-dev.txt`. The
+   development requirements include additional packages such as **PyYAML** that
+   are necessary when running the test suite.
 
 4. **Compile translations:**
    ```bash

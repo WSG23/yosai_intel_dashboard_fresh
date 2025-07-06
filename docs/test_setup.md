@@ -16,6 +16,7 @@ Install the application and development requirements:
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
 ```
+Alternatively you can run `./scripts/setup.sh` to install both files at once.
 `requirements-dev.txt` includes additional packages such as **PyYAML** that are
 required by the tests but not needed in production.
 
