@@ -138,3 +138,14 @@ class CacheConstants:
 
     max_items: int = 100
     purge_count: int = 50
+
+
+# Network defaults
+DEFAULT_APP_HOST: str = "127.0.0.1"
+DEFAULT_APP_PORT: int = 8050
+
+DEFAULT_DB_HOST: str = "localhost"
+DEFAULT_DB_PORT: int = 5432
+
+DEFAULT_CACHE_HOST: str = "localhost"
+DEFAULT_CACHE_PORT: int = 6379

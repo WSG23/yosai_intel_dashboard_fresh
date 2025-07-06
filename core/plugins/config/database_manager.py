@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 import pandas as pd
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from config.constants import DEFAULT_DB_HOST, DEFAULT_DB_PORT
 
 from .interfaces import ConnectionResult, IDatabaseManager
 
@@ -59,8 +60,8 @@ class PostgreSQLDatabaseManager(IDatabaseManager):
         try:
             logger.info("Creating PostgreSQL connection")
             self.connection = psycopg2.connect(
-                host=getattr(self.config, "host", "localhost"),
-                port=getattr(self.config, "port", 5432),
+                host=getattr(self.config, "host", DEFAULT_DB_HOST),
+                port=getattr(self.config, "port", DEFAULT_DB_PORT),
                 dbname=getattr(
                     self.config, "name", getattr(self.config, "database", "postgres")
                 ),

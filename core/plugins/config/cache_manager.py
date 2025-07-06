@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional
 import redis
 
 from .interfaces import ICacheManager
+from config.constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
 
 logger = logging.getLogger(__name__)
 
@@ -90,8 +91,8 @@ class RedisCacheManager(ICacheManager):
     def _client(self) -> redis.Redis:
         if self.redis_client is None:
             self.redis_client = redis.Redis(
-                host=getattr(self.config, "host", "localhost"),
-                port=getattr(self.config, "port", 6379),
+                host=getattr(self.config, "host", DEFAULT_CACHE_HOST),
+                port=getattr(self.config, "port", DEFAULT_CACHE_PORT),
                 db=getattr(self.config, "db", 0),
             )
         return self.redis_client

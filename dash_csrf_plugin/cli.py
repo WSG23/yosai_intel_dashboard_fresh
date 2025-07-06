@@ -7,6 +7,7 @@ import sys
 from typing import Any, Dict
 
 import click
+from config.constants import DEFAULT_APP_PORT
 
 from .config import CSRFConfig, CSRFMode
 from .plugin import DashCSRFPlugin
@@ -106,7 +107,7 @@ def generate_key(length):
 @cli.command()
 @click.argument("app_module")
 @click.option("--host", "-h", default="127.0.0.1", help="Host to bind to")
-@click.option("--port", "-p", default=8050, help="Port to bind to")
+@click.option("--port", "-p", default=DEFAULT_APP_PORT, help="Port to bind to")
 @click.option("--debug", is_flag=True, help="Enable debug mode")
 def run(app_module, host, port, debug):
     """Run a Dash app with CSRF protection"""

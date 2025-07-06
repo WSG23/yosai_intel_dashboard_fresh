@@ -5,14 +5,16 @@ import os
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
+from .constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
+
 
 @dataclass
 class CacheConfig:
     """Cache configuration"""
 
     type: str = "memory"
-    host: str = "localhost"
-    port: int = 6379
+    host: str = DEFAULT_CACHE_HOST
+    port: int = DEFAULT_CACHE_PORT
 
 
 logger = logging.getLogger(__name__)
@@ -72,8 +74,8 @@ def from_environment() -> CacheConfig:
     """Create ``CacheConfig`` from environment variables."""
     return CacheConfig(
         type=os.getenv("CACHE_TYPE", "memory"),
-        host=os.getenv("CACHE_HOST", "localhost"),
-        port=int(os.getenv("CACHE_PORT", 6379)),
+        host=os.getenv("CACHE_HOST", DEFAULT_CACHE_HOST),
+        port=int(os.getenv("CACHE_PORT", DEFAULT_CACHE_PORT)),
     )
 
 
