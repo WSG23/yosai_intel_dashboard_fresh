@@ -270,6 +270,7 @@ overrides. Earlier versions used separate modules such as `app_config.py` and
 `simple_config.py`; these have been replaced by this unified loader. Register
 the configuration with the DI container so it can be resolved from anywhere:
 
+
 ```python
 from core.container import Container
 from config.config import ConfigManager
@@ -373,6 +374,7 @@ YOSAI_APP_MODE=simple python app.py
 
 `ConfigManager` uses the internal `DynamicConfigManager` to read optional
 environment variables that fine&ndash;tune security and performance defaults:
+
 
 - `PBKDF2_ITERATIONS` – password hashing iterations
 - `RATE_LIMIT_API` – number of requests allowed per window

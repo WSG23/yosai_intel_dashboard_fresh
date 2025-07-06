@@ -50,6 +50,7 @@ analytics_service = container.get("analytics")  # AnalyticsServiceProtocol
 `ConfigManager` automatically selects the YAML file to load based on
 `YOSAI_ENV` or `YOSAI_CONFIG_FILE`. It can also be used directly:
 
+
 ```python
 from config.config import ConfigManager
 
