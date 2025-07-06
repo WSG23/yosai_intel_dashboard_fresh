@@ -63,6 +63,13 @@ from config.dynamic_config import dynamic_config
 
 MAX_DISPLAY_ROWS = dynamic_config.analytics.max_display_rows
 
+# Thresholds used for row count sanity checks
+ROW_LIMIT_WARNING = 150
+"""Warning threshold when exactly 150 rows are returned."""
+
+LARGE_DATA_THRESHOLD = 1000
+"""Row count above which data is considered large."""
+
 
 class AnalyticsService(AnalyticsProviderProtocol):
     """Complete analytics service that integrates all data sources"""
@@ -243,11 +250,11 @@ class AnalyticsService(AnalyticsProviderProtocol):
                 f"{final_rows:,}",
             )
 
-        if final_rows == 150 and original_rows > 150:
-            logger.error("🚨 FOUND 150 ROW LIMIT in unique patterns analysis!")
+        if final_rows == ROW_LIMIT_WARNING and original_rows > ROW_LIMIT_WARNING:
+            logger.error("🚨 FOUND %s ROW LIMIT in unique patterns analysis!", ROW_LIMIT_WARNING)
             logger.error(f"   Original rows: {original_rows:,}")
             logger.error(f"   Final rows: {final_rows:,}")
-        elif final_rows > 1000:
+        elif final_rows > LARGE_DATA_THRESHOLD:
             logger.info(f"✅ Processing large dataset: {final_rows:,} rows")
 
     def _calculate_pattern_stats(self, df: pd.DataFrame) -> Tuple[int, int, int, int]:
@@ -461,8 +468,10 @@ class AnalyticsService(AnalyticsProviderProtocol):
             logger.info("🎉 UNIQUE PATTERNS ANALYSIS COMPLETE")
             logger.info(f"   Result total_records: {result_total:,}")
 
-            if result_total == 150 and result_total != original_rows:
-                logger.error("❌ STILL SHOWING 150 - CHECK DATA PROCESSING!")
+            if result_total == ROW_LIMIT_WARNING and result_total != original_rows:
+                logger.error(
+                    "❌ STILL SHOWING %s - CHECK DATA PROCESSING!", ROW_LIMIT_WARNING
+                )
             elif result_total == original_rows:
                 logger.info(f"✅ SUCCESS: Correctly showing {result_total:,} rows")
             else:
