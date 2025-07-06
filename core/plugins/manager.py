@@ -101,6 +101,12 @@ class PluginManager:
 
         try:
             ordered = self._resolver.resolve(discovered)
+        except ValueError as exc:
+            if "Circular dependency" in str(exc):
+                logger.error("Plugin dependency cycle detected: %s", exc)
+                return []
+            logger.error("Failed to resolve plugin dependencies: %s", exc)
+            return []
         except Exception as exc:
             logger.error("Failed to resolve plugin dependencies: %s", exc)
             return []

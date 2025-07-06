@@ -68,3 +68,14 @@ This loads every enabled plugin, registers callbacks, exposes `/health/plugins`
 and attaches the plugin manager as `app._yosai_plugin_manager`.
 
 For a visual overview of discovery, dependency resolution and the lifecycle calls see [plugin_lifecycle.md](plugin_lifecycle.md).
+
+## Circular dependencies
+
+Plugins should avoid depending on each other in a cycle. If the dependency resolver detects such a cycle the manager logs a message like:
+
+```
+ERROR - Plugin dependency cycle detected: Circular dependency detected among: a, b
+```
+
+None of the involved plugins will be loaded. Check the logged plugin names and update their `dependencies` lists to remove the cycle.
+
