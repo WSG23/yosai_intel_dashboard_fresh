@@ -40,10 +40,9 @@ class DatabaseConfig:
     name: str = "yosai.db"
     user: str = "user"
     password: str = ""
-    connection_pool_size: int = dynamic_config.get_db_pool_size()
     connection_timeout: int = 30
     initial_pool_size: int = dynamic_config.get_db_pool_size()
-    max_pool_size: int = dynamic_config.get_db_pool_size()
+    max_pool_size: int = dynamic_config.get_db_pool_size() * 2
     shrink_timeout: int = 60
 
     def get_connection_string(self) -> str:
@@ -240,9 +239,6 @@ class ConfigManager:
             self.config.database.password = db_data.get(
                 "password", self.config.database.password
             )
-            self.config.database.connection_pool_size = db_data.get(
-                "connection_pool_size", self.config.database.connection_pool_size
-            )
             self.config.database.connection_timeout = db_data.get(
                 "connection_timeout", self.config.database.connection_timeout
             )
@@ -355,7 +351,8 @@ class ConfigManager:
         if db_password is not None:
             self.config.database.password = db_password
         # Pool size is loaded from DynamicConfigManager
-        self.config.database.connection_pool_size = dynamic_config.get_db_pool_size()
+        self.config.database.initial_pool_size = dynamic_config.get_db_pool_size()
+        self.config.database.max_pool_size = dynamic_config.get_db_pool_size() * 2
         db_timeout = os.getenv("DB_TIMEOUT")
         if db_timeout is not None:
             self.config.database.connection_timeout = int(db_timeout)
