@@ -4,8 +4,9 @@ Emergency Safe Components
 Provides safe fallback components that are guaranteed to be JSON serializable
 """
 
-from dash import html, dcc
 import dash_bootstrap_components as dbc
+from dash import dcc, html
+
 from .assets_debug import navbar_icon
 
 

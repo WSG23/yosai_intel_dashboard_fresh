@@ -1,8 +1,8 @@
 """Configuration interfaces for better modularity"""
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Dict, List
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 
 @dataclass

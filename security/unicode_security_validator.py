@@ -4,9 +4,10 @@ from typing import Any
 
 import pandas as pd
 
+from core.unicode_processor import contains_surrogates
+
 from .unicode_security_processor import UnicodeSecurityProcessor
 from .validation_exceptions import ValidationError
-from core.unicode_processor import contains_surrogates
 
 
 class UnicodeSecurityValidator:

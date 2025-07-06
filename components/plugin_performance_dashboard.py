@@ -1,7 +1,7 @@
 """Dash components for plugin performance visualization."""
 from __future__ import annotations
 
-from dash import html, dcc, dash_table
+from dash import dash_table, dcc, html
 
 
 class PluginPerformanceDashboard:

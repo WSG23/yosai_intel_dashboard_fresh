@@ -2,9 +2,9 @@ import sys
 import time
 from pathlib import Path
 
-from core.plugins.manager import ThreadSafePluginManager as PluginManager
-from core.container import Container as DIContainer
 from config.config import ConfigManager
+from core.container import Container as DIContainer
+from core.plugins.manager import ThreadSafePluginManager as PluginManager
 from services.data_processing.core.protocols import PluginMetadata
 
 

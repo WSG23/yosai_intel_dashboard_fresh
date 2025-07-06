@@ -1,4 +1,5 @@
 import base64
+
 import pandas as pd
 import pytest
 
@@ -20,13 +21,15 @@ class TemporaryCallback:
         self.manager.unregister_callback(self.event, self.cb)
 
 
-from services.unified_file_controller import (
-    process_file_upload,
-    batch_migrate_legacy_files,
-    get_processing_metrics,
-    callback_manager as _GLOBAL_MANAGER,
-)
 from file_conversion.storage_manager import StorageManager
+from services.unified_file_controller import (
+    batch_migrate_legacy_files,
+)
+from services.unified_file_controller import callback_manager as _GLOBAL_MANAGER
+from services.unified_file_controller import (
+    get_processing_metrics,
+    process_file_upload,
+)
 
 
 def _encode_df(df: pd.DataFrame) -> str:

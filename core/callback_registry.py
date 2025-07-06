@@ -3,11 +3,12 @@ Centralized Callback Registry for Dash Application
 Manages all callbacks in a modular, organized way
 """
 
-from dash import no_update
-from typing import List, Callable
-from functools import wraps
-import time
 import logging
+import time
+from functools import wraps
+from typing import Callable, List
+
+from dash import no_update
 
 
 def debounce(wait_ms: int = 300):

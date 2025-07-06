@@ -3,12 +3,13 @@ Enhanced ML column classifier with heuristic fallbacks.
 Replaces plugins/ai_classification/services/column_mapper.py
 """
 
-from typing import Dict, List, Tuple, Optional, Any
+import logging
+import re
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
 import joblib
 import numpy as np
-import re
-import logging
-from pathlib import Path
 
 
 class EnhancedColumnClassifier:

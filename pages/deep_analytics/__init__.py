@@ -1,7 +1,21 @@
 """Initialize the deep analytics page and expose callbacks."""
 
-from .layout import layout
-from .callbacks import Callbacks, register_callbacks  # noqa: F401
+from core.callback_manager import CallbackManager
+from security.unicode_security_processor import sanitize_dataframe
+from services.data_processing.analytics_engine import (
+    AI_SUGGESTIONS_AVAILABLE,
+    analyze_data_with_service,
+    analyze_data_with_service_safe,
+    get_analysis_type_options,
+    get_analytics_service_safe,
+    get_data_source_options_safe,
+    get_latest_uploaded_source_value,
+    process_quality_analysis,
+    process_quality_analysis_safe,
+    process_suggests_analysis,
+    process_suggests_analysis_safe,
+)
+
 from .analysis import (
     ANALYTICS_SERVICE_AVAILABLE,
     create_analysis_results_display,
@@ -15,22 +29,8 @@ from .analysis import (
     get_initial_message_safe,
     get_updated_button_group,
 )
-from services.data_processing.analytics_engine import (
-    AI_SUGGESTIONS_AVAILABLE,
-    analyze_data_with_service,
-    analyze_data_with_service_safe,
-    get_analytics_service_safe,
-    get_analysis_type_options,
-    get_data_source_options_safe,
-    get_latest_uploaded_source_value,
-    process_quality_analysis,
-    process_quality_analysis_safe,
-    process_suggests_analysis,
-    process_suggests_analysis_safe,
-)
-from security.unicode_security_processor import sanitize_dataframe
-
-from core.callback_manager import CallbackManager
+from .callbacks import Callbacks, register_callbacks  # noqa: F401
+from .layout import layout
 
 __all__ = [
     "layout",

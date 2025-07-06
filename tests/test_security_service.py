@@ -1,7 +1,7 @@
 import pytest
 
-from services.data_processing.unified_file_validator import UnifiedFileValidator
 from config.dynamic_config import dynamic_config
+from services.data_processing.unified_file_validator import UnifiedFileValidator
 
 
 def test_malicious_filename_is_invalid():

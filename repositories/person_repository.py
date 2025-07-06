@@ -1,10 +1,10 @@
 """Repository pattern for Person data access"""
 
-from typing import List, Optional, Protocol
 from dataclasses import dataclass
+from typing import List, Optional, Protocol
 
 from models.entities import Person
-from utils.result_types import Result, success, failure
+from utils.result_types import Result, failure, success
 
 
 class PersonRepositoryProtocol(Protocol):

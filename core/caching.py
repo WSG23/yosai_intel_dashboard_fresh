@@ -1,9 +1,9 @@
 """Caching utilities for performance optimization"""
 
-from typing import Any, Optional, Callable, Dict
 import functools
 import threading
 from datetime import datetime, timedelta
+from typing import Any, Callable, Dict, Optional
 
 
 class MemoryCache:

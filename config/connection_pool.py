@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import time
 import threading
+import time
 from typing import Callable, List, Tuple
 
 from .database_exceptions import ConnectionValidationFailed

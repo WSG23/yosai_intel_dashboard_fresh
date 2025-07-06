@@ -1,14 +1,15 @@
 """Callback registration utilities for upload components."""
 from __future__ import annotations
-from typing import List, Tuple, Any
+
 import logging
+from typing import Any, List, Tuple
 
 from dash import no_update
-from dash.dependencies import Input, Output, State, ALL
+from dash.dependencies import ALL, Input, Output, State
 
-from upload_core import UploadCore
-from core.dash_profile import profile_callback
 from core.callback_registry import debounce
+from core.dash_profile import profile_callback
+from upload_core import UploadCore
 
 logger = logging.getLogger(__name__)
 

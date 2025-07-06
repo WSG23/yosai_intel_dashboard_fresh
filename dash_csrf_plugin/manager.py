@@ -3,12 +3,13 @@ CSRF Manager for handling CSRF protection in Dash applications
 """
 
 import logging
-from typing import Optional, List, Dict, Any
-from flask import request, session, current_app
+from typing import Any, Dict, List, Optional
+
+import dash
+from dash import dcc, html
+from flask import current_app, request, session
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf
 from werkzeug.exceptions import BadRequest
-import dash
-from dash import html, dcc
 
 from .config import CSRFConfig, CSRFMode
 from .exceptions import CSRFError, CSRFValidationError

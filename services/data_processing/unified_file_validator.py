@@ -2,13 +2,13 @@ from __future__ import annotations
 
 """Unified file validation utilities consolidating legacy validators."""
 
-from pathlib import Path
-import os
 import base64
 import io
 import json
 import logging
+import os
 import re
+from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
@@ -20,8 +20,8 @@ from core.unicode import (
     sanitize_dataframe,
     sanitize_unicode_input,
 )
-from upload_validator import UploadValidator
 from upload_types import ValidationResult
+from upload_validator import UploadValidator
 
 
 def _lazy_string_validator() -> "StringValidator":
@@ -32,7 +32,6 @@ def _lazy_string_validator() -> "StringValidator":
 
 
 from core.exceptions import ValidationError
-
 
 SAFE_FILENAME_RE = re.compile(r"^[A-Za-z0-9._\- ]{1,100}$")
 ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}

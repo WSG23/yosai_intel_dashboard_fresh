@@ -1,15 +1,15 @@
 import os
 import sys
-from dash import Dash, Output, Input
 
-from core.plugins.auto_config import setup_plugins
-from services.data_processing.core.protocols import PluginMetadata
-from core.container import Container as DIContainer
+from dash import Dash, Input, Output
+
 from config.config import ConfigManager
-from core.plugins.callback_unifier import CallbackUnifier
+from core.container import Container as DIContainer
 from core.json_serialization_plugin import JsonSerializationPlugin
+from core.plugins.auto_config import setup_plugins
+from core.plugins.callback_unifier import CallbackUnifier
 from core.plugins.decorators import safe_callback
-
+from services.data_processing.core.protocols import PluginMetadata
 
 REQUIRED_VARS = [
     "SECRET_KEY",

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import pandas as pd
 import logging
 from typing import Optional
+
+import pandas as pd
 
 __all__ = ["prepare_anomaly_data"]
 

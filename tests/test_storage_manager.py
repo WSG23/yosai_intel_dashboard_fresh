@@ -1,8 +1,11 @@
 import json
-import pandas as pd
 from datetime import datetime
-from core.callback_manager import CallbackManager
+
+import pandas as pd
+
 from core.callback_events import CallbackEvent
+from core.callback_manager import CallbackManager
+
 
 class TemporaryCallback:
     def __init__(self, event: CallbackEvent, cb, manager: CallbackManager) -> None:

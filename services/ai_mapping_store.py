@@ -1,7 +1,7 @@
 """Thread-safe store for device mapping results produced by AI."""
 
 import threading
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 class AIMappingStore:

@@ -3,17 +3,18 @@ Enhanced User Behavior Analyzer
 Replace the entire content of analytics/user_behavior.py with this code
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, List, Any, Tuple, Optional
-from datetime import datetime
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import silhouette_score
-from sklearn.exceptions import DataConversionWarning
 import logging
-from dataclasses import dataclass
 import warnings
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.exceptions import DataConversionWarning
+from sklearn.metrics import silhouette_score
+from sklearn.preprocessing import StandardScaler
 
 # Ignore the upcoming default change warning for KMeans ``n_init`` and
 # suppress type conversion warnings when non-float data is passed.

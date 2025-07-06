@@ -1,9 +1,10 @@
 """Analytics generation directly from a database connection."""
 
-import pandas as pd
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 

@@ -6,6 +6,7 @@ Tests the exact code path that the deep analytics page uses
 
 import logging
 import sys
+
 import pandas as pd
 
 # Setup logging
@@ -135,8 +136,8 @@ def test_deep_analytics_specific_path():
     print("🔬 STEP 5: Testing sample data generation")
     try:
         from services.analytics_summary import (
-            generate_sample_analytics,
             create_sample_data,
+            generate_sample_analytics,
         )
 
         # Test create_sample_data

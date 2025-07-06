@@ -1,12 +1,12 @@
 """AI powered column mapping service"""
 
 import logging
-from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..database.csv_storage import CSVStorageRepository
 from ..config import ColumnMappingConfig
 from ..database.ai_models import ColumnClassifier
+from ..database.csv_storage import CSVStorageRepository
 
 logger = logging.getLogger(__name__)
 

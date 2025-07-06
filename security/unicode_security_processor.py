@@ -10,8 +10,8 @@ import pandas as pd
 
 from core.unicode_processor import (
     UnicodeProcessor,
-    sanitize_unicode_input as core_sanitize_unicode_input,
 )
+from core.unicode_processor import sanitize_unicode_input as core_sanitize_unicode_input
 
 logger = logging.getLogger(__name__)
 

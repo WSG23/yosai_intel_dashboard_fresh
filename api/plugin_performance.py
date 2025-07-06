@@ -3,9 +3,8 @@ from __future__ import annotations
 
 from flask import jsonify, request
 
-from core.plugins.performance_manager import EnhancedThreadSafePluginManager
-
 from app import app
+from core.plugins.performance_manager import EnhancedThreadSafePluginManager
 
 
 class PluginPerformanceAPI:

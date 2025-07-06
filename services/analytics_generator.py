@@ -1,11 +1,12 @@
 """Analytics generation helpers packaged as a service."""
 
+import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict
 
 import numpy as np
 import pandas as pd
-import logging
+
 from core.cache import cache
 
 logger = logging.getLogger(__name__)

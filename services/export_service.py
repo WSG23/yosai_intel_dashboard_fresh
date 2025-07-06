@@ -1,8 +1,8 @@
 """Export helpers for enhanced learning data."""
 import json
 import re
-from typing import Dict, Any, List
 from datetime import datetime
+from typing import Any, Dict, List
 
 from core.serialization import SafeJSONSerializer
 
@@ -12,7 +12,7 @@ _serializer = SafeJSONSerializer()
 import pandas as pd
 
 from services.consolidated_learning_service import get_learning_service
-from services.device_learning_service      import get_device_learning_service
+from services.device_learning_service import get_device_learning_service
 
 
 def get_enhanced_data() -> Dict[str, Any]:

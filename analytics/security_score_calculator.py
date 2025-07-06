@@ -1,11 +1,12 @@
 """Security Score Calculation Module
 Corrects mathematical errors in security metrics calculation"""
 
-import pandas as pd
-import numpy as np
-from typing import Dict, Tuple, Optional
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
+from typing import Dict, Optional, Tuple
+
+import numpy as np
+import pandas as pd
 
 # Unicode-safe string handling
 from security.unicode_security_handler import UnicodeSecurityHandler

@@ -3,10 +3,10 @@
 Quick check of device mapping persistence
 """
 
-import os
 import json
-from pathlib import Path
+import os
 from datetime import datetime
+from pathlib import Path
 
 
 def quick_check():

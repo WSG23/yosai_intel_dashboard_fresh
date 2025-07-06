@@ -1,4 +1,5 @@
 import pytest
+
 from services.data_enhancer import get_ai_column_suggestions
 
 

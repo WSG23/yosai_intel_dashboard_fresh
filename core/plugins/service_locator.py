@@ -45,8 +45,8 @@ class PluginServiceLocator(metaclass=_LocatorMeta):
     @classmethod
     def _load_ai_plugin(cls) -> Optional[Any]:
         try:
-            from plugins.ai_classification.plugin import AIClassificationPlugin
             from plugins.ai_classification.config import get_ai_config
+            from plugins.ai_classification.plugin import AIClassificationPlugin
         except Exception as exc:  # pragma: no cover - optional
             logger.warning("AI classification plugin unavailable: %s", exc)
             return None

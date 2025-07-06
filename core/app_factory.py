@@ -1,27 +1,31 @@
 #!/usr/bin/env python3
 """Complete application factory integration."""
 from __future__ import annotations
-import dash
+
 import logging
 import os
 from pathlib import Path
-from typing import Optional, Any, TYPE_CHECKING
-from flasgger import Swagger
+from typing import TYPE_CHECKING, Any, Optional
+
+import dash
 import dash_bootstrap_components as dbc
-from dash import html, dcc, Input, Output
+from dash import Input, Output, dcc, html
+from flasgger import Swagger
+from flask import session
+from flask_babel import Babel
+from flask_compress import Compress
+from flask_talisman import Talisman
+
 from components.ui.navbar import create_navbar_layout
+from config.config import get_config
 from core.container import Container as DIContainer
 from core.enhanced_container import ServiceContainer
 from core.plugins.auto_config import PluginAutoConfiguration
-from services import get_analytics_service
 from core.secret_manager import validate_secrets
-from dash_csrf_plugin import setup_enhanced_csrf_protection, CSRFMode
-from flask_babel import Babel
-from flask import session
-from flask_compress import Compress
-from flask_talisman import Talisman
-from core.theme_manager import apply_theme_settings, DEFAULT_THEME, sanitize_theme
-from config.config import get_config
+from core.theme_manager import DEFAULT_THEME, apply_theme_settings, sanitize_theme
+from dash_csrf_plugin import CSRFMode, setup_enhanced_csrf_protection
+from services import get_analytics_service
+
 from .cache import cache
 
 # Optional callback system -------------------------------------------------
@@ -227,21 +231,23 @@ def _create_full_app() -> dash.Dash:
         # Register page/component callbacks
         if coordinator is not None:
             try:
-                from pages.file_upload import (
-                    register_callbacks as register_upload_callbacks,
-                    Callbacks as UploadCallbacks,
+                from components.device_verification import (
+                    register_callbacks as register_device_verification,
                 )
                 from components.simple_device_mapping import (
                     register_callbacks as register_simple_mapping,
                 )
-                from components.device_verification import (
-                    register_callbacks as register_device_verification,
+                from components.ui.navbar import register_navbar_callbacks
+                from pages.deep_analytics.callbacks import (
+                    Callbacks as DeepAnalyticsCallbacks,
                 )
                 from pages.deep_analytics.callbacks import (
                     register_callbacks as register_deep_callbacks,
-                    Callbacks as DeepAnalyticsCallbacks,
                 )
-                from components.ui.navbar import register_navbar_callbacks
+                from pages.file_upload import Callbacks as UploadCallbacks
+                from pages.file_upload import (
+                    register_callbacks as register_upload_callbacks,
+                )
 
                 register_upload_callbacks(coordinator)
                 register_simple_mapping(coordinator)
@@ -307,7 +313,7 @@ def _create_full_app() -> dash.Dash:
         @app.server.before_request
         def filter_noisy_requests():
             """Filter out SSL handshake attempts and bot noise"""
-            from flask import request, abort
+            from flask import abort, request
 
             # Block requests with suspicious headers
             user_agent = request.headers.get("User-Agent", "")
@@ -339,7 +345,7 @@ def _create_full_app() -> dash.Dash:
 def _create_simple_app() -> dash.Dash:
     """Create a simplified Dash application"""
     try:
-        from dash import html, dcc
+        from dash import dcc, html
 
         external_stylesheets = [dbc.themes.BOOTSTRAP]
         built_css = ASSETS_DIR / "dist" / "main.min.css"

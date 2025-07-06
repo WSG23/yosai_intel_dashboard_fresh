@@ -2,9 +2,11 @@
 Test suite for consolidated learning service.
 """
 
-import pandas as pd
 import tempfile
 from pathlib import Path
+
+import pandas as pd
+
 from services.consolidated_learning_service import ConsolidatedLearningService
 
 
@@ -111,7 +113,8 @@ class TestConsolidatedLearningService:
         assert pkl_path.exists()
 
     def test_json_precedence_over_pickle(self):
-        import pickle, json
+        import json
+        import pickle
 
         json_content = {"foo": "bar"}
         with open(self.storage_path, "w", encoding="utf-8") as fh:

@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
 import joblib
 
 try:
-    from sklearn.linear_model import LogisticRegression
     from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.linear_model import LogisticRegression
 except Exception:  # pragma: no cover - sklearn optional
     LogisticRegression = None  # type: ignore
     TfidfVectorizer = None  # type: ignore

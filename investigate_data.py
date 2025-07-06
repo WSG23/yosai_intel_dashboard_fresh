@@ -3,9 +3,10 @@
 Investigate what data is actually loaded in the system
 """
 import json
-import pandas as pd
-from pathlib import Path
 import os
+from pathlib import Path
+
+import pandas as pd
 
 
 def investigate_data():

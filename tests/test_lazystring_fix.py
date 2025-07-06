@@ -1,7 +1,7 @@
 import pytest
 
-from core.serialization import SafeJSONSerializer
 from config.constants import SecurityLimits
+from core.serialization import SafeJSONSerializer
 
 serializer = SafeJSONSerializer()
 

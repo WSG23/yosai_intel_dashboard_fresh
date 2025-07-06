@@ -14,9 +14,9 @@ import unicodedata
 import warnings
 from typing import Any, Callable, Iterable, Optional
 
-from .unicode_processor import contains_surrogates
-
 import pandas as pd
+
+from .unicode_processor import contains_surrogates
 
 logger = logging.getLogger(__name__)
 

@@ -2,27 +2,29 @@
 """
 Comprehensive tests for the JSON Serialization Plugin
 """
+import json
+import time
+import unittest
+from datetime import datetime
+
+import pandas as pd
 import pytest
+from flask import Flask
+
+from config.config import ConfigManager
+from core.container import Container as DIContainer
+from core.json_serialization_plugin import (
+    JsonCallbackService,
+    JsonSerializationConfig,
+    JsonSerializationPlugin,
+    JsonSerializationService,
+)
+from core.plugins.manager import ThreadSafePluginManager as PluginManager
 
 # Legacy DI tests were skipped previously. Run them now.
 # pytest.skip("legacy DI tests skipped", allow_module_level=True)
 
-import unittest
-import pandas as pd
-from datetime import datetime
-import json
-import time
-from flask import Flask
 
-from core.json_serialization_plugin import (
-    JsonSerializationPlugin,
-    JsonSerializationConfig,
-    JsonSerializationService,
-    JsonCallbackService,
-)
-from core.plugins.manager import ThreadSafePluginManager as PluginManager
-from core.container import Container as DIContainer
-from config.config import ConfigManager
 
 
 class TestJsonSerializationPlugin(unittest.TestCase):

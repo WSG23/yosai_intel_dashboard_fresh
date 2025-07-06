@@ -3,12 +3,13 @@
 Unique Patterns Analyzer - Modular analytics for unique users and devices
 Replace: Add to analytics/ directory
 """
-import pandas as pd
-import numpy as np
-from typing import Dict, Any, List, Tuple, Set
-from datetime import datetime, timedelta
-from collections import defaultdict
 import logging
+from collections import defaultdict
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Set, Tuple
+
+import numpy as np
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 

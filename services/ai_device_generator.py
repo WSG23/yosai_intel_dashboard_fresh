@@ -3,11 +3,12 @@ AI-powered device attribute generation service.
 Enhanced for real device naming patterns like F01A, F02B, etc.
 """
 
-import re
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass
-import pandas as pd
 import logging
+import re
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
 
 
 @dataclass

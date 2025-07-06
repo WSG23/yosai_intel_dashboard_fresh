@@ -5,8 +5,9 @@ Event and transaction models for the Yōsai Intel system
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, Any, Optional
-from .enums import AccessResult, BadgeStatus, AnomalyType, SeverityLevel, TicketStatus
+from typing import Any, Dict, Optional
+
+from .enums import AccessResult, AnomalyType, BadgeStatus, SeverityLevel, TicketStatus
 
 
 @dataclass

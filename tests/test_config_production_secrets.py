@@ -1,4 +1,5 @@
 import pytest
+
 from config.config import ConfigManager
 
 REQUIRED_AUTH_VARS = [
