@@ -38,8 +38,8 @@ from services.upload import (
     get_trigger_id,
     save_ai_training_data,
 )
-from services.upload import ChunkedUploadManager, UploadQueueManager, ClientSideValidator
-from components.advanced_upload import DragDropUploadArea
+from components.upload import ClientSideValidator
+
 from services.task_queue import create_task, get_status, clear_task
 
 
@@ -65,8 +65,40 @@ def layout():
                                         [
                                             DragDropUploadArea(
                                                 id="upload-data",
-                                                max_size=dynamic_config.get_max_upload_size_bytes(),
-                                            ).render()
+                                                max_size=dynamic_config.get_max_upload_size_bytes(),  # Updated to use new method
+                                                **{
+                                                    "data-max-size": dynamic_config.get_max_upload_size_bytes()
+                                                },
+                                                children=html.Div(
+                                                    [
+                                                        html.Span(
+                                                            [
+                                                                html.I(
+                                                                    className="fas fa-cloud-upload-alt fa-4x mb-3 text-primary",
+                                                                    **{
+                                                                        "aria-hidden": "true"
+                                                                    },
+                                                                ),
+                                                                html.Span(
+                                                                    "Upload icon",
+                                                                    className="sr-only",
+                                                                ),
+                                                            ]
+                                                        ),
+                                                        html.H5(
+                                                            "Drag and Drop or Click to Upload",
+                                                            className="text-primary",
+                                                        ),
+                                                        html.P(
+                                                            "Supports CSV, Excel (.xlsx, .xls), and JSON files",
+                                                            className="text-muted mb-0",
+                                                        ),
+                                                    ]
+                                                ),
+                                                className="file-upload-area",
+                                                multiple=True,
+                                            )
+
                                         ]
                                     ),
                                 ]
@@ -117,6 +149,7 @@ def layout():
             dcc.Store(id="current-file-info-store"),
             dcc.Store(id="current-session-id", data="session_123"),
             dcc.Store(id="upload-task-id"),
+            dcc.Store(id="client-validation-store", data=[]),
             dbc.Modal(
                 [
                     dbc.ModalHeader(dbc.ModalTitle("Column Mapping")),
@@ -210,15 +243,21 @@ class Callbacks:
         self.preview_processor = self.processing.async_processor
         self.ai = AISuggestionService()
         self.modal = ModalService()
-        self.chunked = ChunkedUploadManager()
-        self.queue = UploadQueueManager()
-        self.validator = ClientSideValidator(max_size=dynamic_config.get_max_upload_size_bytes())
+        self.client_validator = ClientSideValidator()
+
 
     def highlight_upload_area(self, n_clicks):
         """Highlight upload area when 'upload more' is clicked."""
         if n_clicks:
             return "file-upload-area file-upload-area--highlight"
         return "file-upload-area"
+
+    def display_client_validation(self, data):
+        """Show validation errors generated in the browser."""
+        if not data:
+            return no_update
+        alerts = self.client_validator.build_error_alerts(data)
+        return alerts
 
     async def restore_upload_state(self, pathname: str):
         """Return stored upload details when revisiting the upload page."""
@@ -243,7 +282,9 @@ class Callbacks:
         for filename, info in file_infos.items():
             path = info.get("path") or str(_uploaded_data_store.get_file_path(filename))
             try:
-                df_preview = await self.preview_processor.preview_from_parquet(path, rows=10)
+                df_preview = await self.preview_processor.preview_from_parquet(
+                    path, rows=10
+                )
             except Exception:
                 df_preview = _uploaded_data_store.load_dataframe(filename).head(10)
             rows = info.get("rows", len(df_preview))
@@ -342,7 +383,6 @@ class Callbacks:
         if not contents_list:
             return ""
 
-
         if not isinstance(contents_list, list):
             contents_list = [contents_list]
         if not isinstance(filenames_list, list):
@@ -350,7 +390,6 @@ class Callbacks:
 
         async_coro = self.processing.process_files(contents_list, filenames_list)
         task_id = create_task(async_coro)
-
 
     def reset_upload_progress(
         self, contents_list: List[str] | str
@@ -401,7 +440,6 @@ class Callbacks:
                 )
             return (*result, True)
 
-
         return (
             no_update,
             no_update,
@@ -411,9 +449,7 @@ class Callbacks:
             no_update,
             no_update,
             no_update,
-
         )
-
 
     def handle_modal_dialogs(
         self,
@@ -810,7 +846,9 @@ class Callbacks:
                             "confidence": 1.0,
                             "source": "saved",
                         }
-                    logger.info(f"📋 Pre-filled saved mappings: {saved_column_mappings}")
+                    logger.info(
+                        f"📋 Pre-filled saved mappings: {saved_column_mappings}"
+                    )
         except Exception as e:
             logger.debug(f"No saved mappings: {e}")
         # END OF ADDITION
@@ -1146,7 +1184,9 @@ class Callbacks:
         logger.info(f"🔍 DEBUG - confirm_clicks: {confirm_clicks}")
         logger.info(f"🔍 DEBUG - values: {values}")
         logger.info(f"🔍 DEBUG - ids: {ids}")
-        logger.info(f"🔍 DEBUG - file_info filename: {file_info.get('filename', 'N/A')}")
+        logger.info(
+            f"🔍 DEBUG - file_info filename: {file_info.get('filename', 'N/A')}"
+        )
 
         try:
             filename = file_info.get("filename", "")
@@ -1230,12 +1270,19 @@ def register_callbacks(
             {"prevent_initial_call": True, "allow_duplicate": True},
         ),
         (
+            cb.display_client_validation,
+            Output("upload-results", "children", allow_duplicate=True),
+            Input("client-validation-store", "data"),
+            None,
+            "display_client_validation",
+            {"prevent_initial_call": True, "allow_duplicate": True},
+        ),
+        (
             cb.reset_upload_progress,
             [
                 Output("upload-progress", "value", allow_duplicate=True),
                 Output("upload-progress", "label", allow_duplicate=True),
                 Output("upload-progress-interval", "disabled", allow_duplicate=True),
-
             ],
             Input("upload-data", "contents"),
             None,
@@ -1284,7 +1331,6 @@ def register_callbacks(
                 Output("column-verification-modal", "is_open", allow_duplicate=True),
                 Output("device-verification-modal", "is_open", allow_duplicate=True),
                 Output("upload-progress-interval", "disabled", allow_duplicate=True),
-
             ],
             Input("progress-done-trigger", "n_clicks"),
             State("upload-task-id", "data"),

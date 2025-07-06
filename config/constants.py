@@ -119,6 +119,7 @@ class AnalyticsConstants:
     max_memory_mb: int = 1024
 
 
+
 @dataclass
 class AnalysisThresholds:
     """Threshold values used in analytics calculations."""

@@ -14,10 +14,19 @@ from core.exceptions import ConfigurationError
 from core.secrets_validator import SecretsValidator
 
 from .config_validator import ConfigValidator
+
 from .dynamic_config import dynamic_config
 from .environment import get_environment, select_config_file
 
 logger = logging.getLogger(__name__)
+
+
+def _validate_production_secrets() -> None:
+    """Ensure required secrets are set when running in production."""
+    if os.getenv("YOSAI_ENV") == "production":
+        secret = os.getenv("SECRET_KEY")
+        if not secret:
+            raise ConfigurationError("SECRET_KEY required in production")
 
 
 @dataclass
@@ -98,6 +107,7 @@ class AnalyticsConfig:
     max_memory_mb: int = 1024
 
 
+
 @dataclass
 class MonitoringConfig:
     """Runtime monitoring options"""
@@ -148,7 +158,7 @@ class Config:
     plugin_settings: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
 
-class ConfigManager:
+class ConfigManager(ConfigProviderProtocol):
     """Simple configuration manager"""
 
     def __init__(self, config_path: Optional[str] = None):
@@ -160,6 +170,7 @@ class ConfigManager:
     def _load_config(self) -> None:
         """Load configuration from YAML file and environment"""
         self.config.environment = get_environment()
+        _validate_production_secrets()
         # Load from YAML file
         yaml_config = self._load_yaml_config()
 
