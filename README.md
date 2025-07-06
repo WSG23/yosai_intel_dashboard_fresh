@@ -263,22 +263,13 @@ file processing utilities depend on `chardet` to detect text encoding.
 
 ## 🔧 Configuration
 
-Configuration is managed by **`config.config.ConfigManager`**. The loader
-selects a YAML file based on the `YOSAI_ENV` or `YOSAI_CONFIG_FILE`
-environment variables and applies environment overrides. Earlier versions used
-separate modules like `app_config.py`, `simple_config.py` and
-`config_manager.py`; these have been replaced by this unified manager. Register
+This project uses **`config/config.py`** for all application settings. The
+`ConfigManager` class loads a YAML file from `config/` based on
+`YOSAI_ENV` or `YOSAI_CONFIG_FILE` and then applies any environment variable
+overrides. Earlier versions used separate modules such as `app_config.py` and
+`simple_config.py`; these have been replaced by this unified loader. Register
 the configuration with the DI container so it can be resolved from anywhere:
 
-```python
-from config.config import ConfigManager
-
-config = ConfigManager()
-db_cfg = config.get_database_config()
-```
-
-To share the configuration across the application, register the manager with
-the dependency injection container:
 
 ```python
 from core.container import Container
@@ -288,6 +279,15 @@ container = Container()
 container.register("config", ConfigManager())
 
 config = container.get("config")
+```
+
+A short example without the container:
+
+```python
+from config.config import ConfigManager
+
+config = ConfigManager()
+db_cfg = config.get_database_config()
 ```
 
 ### Database
@@ -349,15 +349,15 @@ python app.py
 These values override `database.host`, `database.username`, `cache.host` and
 `security.secret_key` from the loaded YAML.
 
-### Additional Environment Variables
+### Selecting a YAML File
 
-The helper functions in `config/environment.py` pick the correct YAML file.
-They look at two variables:
+`ConfigManager` determines which YAML file to load by inspecting environment
+variables:
 
 - `YOSAI_ENV` – set to `development`, `staging`, `production` or `test` to
-  automatically load the matching file in `config/` (default: `development`).
-- `YOSAI_CONFIG_FILE` – absolute path to a custom YAML configuration file. When
-  set it takes precedence over `YOSAI_ENV`.
+  automatically load the corresponding file under `config/`.
+- `YOSAI_CONFIG_FILE` – absolute path to a custom YAML file. When set it
+  overrides `YOSAI_ENV`.
 - `YOSAI_APP_MODE` – set to `full`, `simple` or `json-safe` to select the
   startup mode for `create_app()` (default: `full`).
 
@@ -372,8 +372,9 @@ YOSAI_APP_MODE=simple python app.py
 
 #### Dynamic Constants
 
-`ConfigManager` integrates with the dynamic configuration helper to read a few
-optional environment variables that tweak security and performance settings:
+`ConfigManager` uses the internal `DynamicConfigManager` to read optional
+environment variables that fine&ndash;tune security and performance defaults:
+
 
 - `PBKDF2_ITERATIONS` – password hashing iterations
 - `RATE_LIMIT_API` – number of requests allowed per window

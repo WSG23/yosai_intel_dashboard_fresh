@@ -47,11 +47,9 @@ config_manager = container.get("config")  # ConfigurationProtocol
 analytics_service = container.get("analytics")  # AnalyticsServiceProtocol
 ```
 
-`ConfigManager` automatically loads the YAML file specified by
-`YOSAI_CONFIG_FILE` or chosen according to `YOSAI_ENV` (development,
-staging, production or test).
+`ConfigManager` automatically selects the YAML file to load based on
+`YOSAI_ENV` or `YOSAI_CONFIG_FILE`. It can also be used directly:
 
-Minimal usage without the container:
 
 ```python
 from config.config import ConfigManager
