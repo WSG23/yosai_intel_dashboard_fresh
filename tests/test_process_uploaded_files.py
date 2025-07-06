@@ -22,6 +22,9 @@ def test_multi_part_upload_row_count():
 
     cb = Callbacks()
     cb.processing = UploadProcessingService(_uploaded_data_store)
+    # ensure validator attribute is initialized
+    ok, msg = cb.validator.validate("sample.csv", part1)
+    assert ok, msg
     res = asyncio.run(
         cb.process_uploaded_files([part1, part2], ["sample.csv", "sample.csv"])
     )

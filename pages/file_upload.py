@@ -42,7 +42,8 @@ from services.upload import (
     get_trigger_id,
     save_ai_training_data,
 )
-from components.upload import ClientSideValidator
+from components.upload import ClientSideValidator as ErrorDisplayValidator
+from services.upload.validators import ClientSideValidator
 
 from services.task_queue import create_task, get_status, clear_task
 
@@ -247,7 +248,10 @@ class Callbacks:
         self.preview_processor = self.processing.async_processor
         self.ai = AISuggestionService()
         self.modal = ModalService()
-        self.client_validator = ClientSideValidator()
+        self.client_validator = ErrorDisplayValidator()
+        self.validator = ClientSideValidator(
+            max_size=dynamic_config.get_max_upload_size_bytes()
+        )
 
 
     def highlight_upload_area(self, n_clicks):

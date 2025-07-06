@@ -28,6 +28,8 @@ def test_immediate_confirm_after_upload(monkeypatch, tmp_path):
 
     cb = Callbacks()
     cb.processing = UploadProcessingService(store)
+    ok, msg = cb.validator.validate("data.csv", _encode_df(pd.DataFrame()))
+    assert ok, msg
 
     df = pd.DataFrame({"device": ["Door1"], "val": [1]})
     content = _encode_df(df)
