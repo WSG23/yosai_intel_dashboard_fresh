@@ -45,6 +45,8 @@ from services.upload import (
 from components.upload import ClientSideValidator as ErrorDisplayValidator
 from services.upload.validators import ClientSideValidator
 
+from components.advanced_upload import DragDropUploadArea
+
 from services.task_queue import create_task, get_status, clear_task
 
 
@@ -70,39 +72,8 @@ def layout():
                                         [
                                             DragDropUploadArea(
                                                 id="upload-data",
-                                                max_size=dynamic_config.get_max_upload_size_bytes(),  # Updated to use new method
-                                                **{
-                                                    "data-max-size": dynamic_config.get_max_upload_size_bytes()
-                                                },
-                                                children=html.Div(
-                                                    [
-                                                        html.Span(
-                                                            [
-                                                                html.I(
-                                                                    className="fas fa-cloud-upload-alt fa-4x mb-3 text-primary",
-                                                                    **{
-                                                                        "aria-hidden": "true"
-                                                                    },
-                                                                ),
-                                                                html.Span(
-                                                                    "Upload icon",
-                                                                    className="sr-only",
-                                                                ),
-                                                            ]
-                                                        ),
-                                                        html.H5(
-                                                            "Drag and Drop or Click to Upload",
-                                                            className="text-primary",
-                                                        ),
-                                                        html.P(
-                                                            "Supports CSV, Excel (.xlsx, .xls), and JSON files",
-                                                            className="text-muted mb-0",
-                                                        ),
-                                                    ]
-                                                ),
-                                                className="file-upload-area",
-                                                multiple=True,
-                                            )
+                                                max_size=dynamic_config.get_max_upload_size_bytes(),
+                                            ).render()
 
                                         ]
                                     ),
