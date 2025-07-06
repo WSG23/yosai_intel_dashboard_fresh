@@ -4,6 +4,7 @@ import dash_bootstrap_components as dbc
 import asyncio
 from services.upload import UploadProcessingService
 from utils.upload_store import UploadedDataStore
+from upload_core import UploadCore
 
 
 def _encode_df(df: pd.DataFrame) -> str:
@@ -21,13 +22,15 @@ def test_immediate_confirm_after_upload(monkeypatch, tmp_path):
     sys.modules["pages.graphs"].GRAPH_FIGURES = {}
 
     file_upload = importlib.import_module("pages.file_upload")
-    Callbacks = file_upload.Callbacks
+    Callbacks = UploadCore
 
     store = UploadedDataStore(storage_dir=tmp_path)
     monkeypatch.setattr(file_upload, "_uploaded_data_store", store)
 
     cb = Callbacks()
     cb.processing = UploadProcessingService(store)
+    ok, msg = cb.validator.validate("data.csv", _encode_df(pd.DataFrame()))
+    assert ok, msg
 
     df = pd.DataFrame({"device": ["Door1"], "val": [1]})
     content = _encode_df(df)

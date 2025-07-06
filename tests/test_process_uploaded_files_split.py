@@ -3,7 +3,7 @@ import pandas as pd
 import asyncio
 
 from pages import file_upload
-from pages.file_upload import Callbacks
+from upload_core import UploadCore
 from services.upload import UploadProcessingService
 from utils.upload_store import UploadedDataStore
 
@@ -26,8 +26,10 @@ def test_process_uploaded_files_split(monkeypatch, tmp_path):
     store = UploadedDataStore(storage_dir=tmp_path)
     monkeypatch.setattr(file_upload, "_uploaded_data_store", store)
 
-    cb = Callbacks()
+    cb = UploadCore()
     cb.processing = UploadProcessingService(store)
+    ok, msg = cb.validator.validate("big.csv", contents_list[0])
+    assert ok, msg
     result = asyncio.run(cb.process_uploaded_files(contents_list, filenames_list))
     info = result[2]
 

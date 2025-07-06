@@ -2,7 +2,8 @@ import base64
 import pandas as pd
 import asyncio
 
-from pages.file_upload import Callbacks, _uploaded_data_store
+from upload_core import UploadCore
+from utils.upload_store import uploaded_data_store as _uploaded_data_store
 from services.upload import UploadProcessingService
 
 
@@ -20,8 +21,11 @@ def test_multi_part_upload_row_count():
     part1 = prefix + b64[:mid]
     part2 = prefix + b64[mid:]
 
-    cb = Callbacks()
+    cb = UploadCore()
     cb.processing = UploadProcessingService(_uploaded_data_store)
+    # ensure validator attribute is initialized
+    ok, msg = cb.validator.validate("sample.csv", part1)
+    assert ok, msg
     res = asyncio.run(
         cb.process_uploaded_files([part1, part2], ["sample.csv", "sample.csv"])
     )

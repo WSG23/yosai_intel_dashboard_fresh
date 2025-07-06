@@ -38,4 +38,5 @@ class UploadQueueManager:
         pct = int(len(self.completed) / total * 100)
         return max(0, min(100, pct))
 
+
 __all__ = ["ChunkedUploadManager", "UploadQueueManager"]

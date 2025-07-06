@@ -36,16 +36,12 @@ class UnicodeFileProcessor:
             detected = chardet.detect(content)
             encoding = detected.get('encoding') or 'utf-8'
 
-            # Try detected encoding first
-            try:
-                return content.decode(encoding)
-            except UnicodeDecodeError:
-                # Fallback to utf-8 with error handling
-                return content.decode('utf-8', errors='replace')
+            from core.unicode_decode import safe_unicode_decode
+
+            return safe_unicode_decode(content, encoding)
         except Exception as e:
             logger.warning(f"Unicode decode error: {e}")
-            # Last resort: latin-1 can decode any byte sequence
-            return content.decode('latin-1')
+            return safe_unicode_decode(content, "latin-1")
 
     @staticmethod
     def sanitize_dataframe_unicode(df: pd.DataFrame) -> pd.DataFrame:

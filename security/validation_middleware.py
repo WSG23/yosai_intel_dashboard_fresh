@@ -66,7 +66,9 @@ class ValidationMiddleware:
             try:
                 from security.unicode_security_handler import UnicodeSecurityHandler
 
-                raw_text = request.data.decode("utf-8", errors="ignore")
+                from core.unicode_decode import safe_unicode_decode
+
+                raw_text = safe_unicode_decode(request.data, "utf-8")
                 sanitized = UnicodeSecurityHandler.sanitize_unicode_input(raw_text)
                 request._cached_data = self.orchestrator.validate(sanitized).encode(
                     "utf-8"
