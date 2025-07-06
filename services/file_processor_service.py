@@ -199,8 +199,10 @@ class FileProcessorService(BaseService):
                     return text
             except Exception:
                 continue
+        from core.unicode_decode import safe_unicode_decode
+
         logger.warning("All encodings failed, using replacement characters")
-        return content.decode("utf-8", errors="replace")
+        return safe_unicode_decode(content, "utf-8")
 
     def _is_reasonable_text(self, text: str) -> bool:
         """Basic check to ensure decoded text looks valid."""

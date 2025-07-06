@@ -11,6 +11,7 @@ try:  # pragma: no cover - graceful import fallback
         # Preferred API
         clean_unicode_text,
         safe_decode_bytes,
+        safe_unicode_decode,
         safe_encode,
         sanitize_dataframe,
         UnicodeProcessor,
@@ -63,6 +64,7 @@ __all__: list[str] = [
     # Preferred API
     "clean_unicode_text",
     "safe_decode_bytes",
+    "safe_unicode_decode",
     "safe_encode",
     "sanitize_dataframe",
     "UnicodeProcessor",

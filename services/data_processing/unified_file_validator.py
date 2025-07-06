@@ -42,12 +42,9 @@ logger = logging.getLogger(__name__)
 
 
 def safe_decode_with_unicode_handling(data: bytes, enc: str) -> str:
-    try:
-        text = data.decode(enc, errors="surrogatepass")
-    except UnicodeDecodeError:
-        text = data.decode(enc, errors="replace")
+    from core.unicode_decode import safe_unicode_decode
 
-    text = UnicodeProcessor.clean_surrogate_chars(text)
+    text = safe_unicode_decode(data, enc)
 
     from security.unicode_security_handler import UnicodeSecurityHandler
 
