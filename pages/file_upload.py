@@ -39,6 +39,8 @@ from services.upload import (
     get_trigger_id,
     save_ai_training_data,
 )
+from core.callback_manager import CallbackManager
+from core.callback_controller import CallbackEvent
 from services.upload.validators import ClientSideValidator
 from services.upload_data_service import (
     clear_uploaded_data as service_clear_uploaded_data,
@@ -368,6 +370,7 @@ class Callbacks:
         try:
             async_coro = self.processing.process_files(
                 contents_list, filenames_list
+
             )
             task_id = create_task(async_coro)
         except Exception as exc:  # pragma: no cover - robustness
