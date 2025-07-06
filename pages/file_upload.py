@@ -39,6 +39,8 @@ from services.upload import (
     get_trigger_id,
     save_ai_training_data,
 )
+from core.callback_manager import CallbackManager
+from core.callback_controller import CallbackEvent
 from services.upload.validators import ClientSideValidator
 from services.upload_data_service import (
     clear_uploaded_data as service_clear_uploaded_data,
@@ -365,8 +367,24 @@ class Callbacks:
         if not isinstance(filenames_list, list):
             filenames_list = [filenames_list]
 
-        async_coro = self.processing.process_files(contents_list, filenames_list)
-        task_id = create_task(async_coro)
+        manager = CallbackManager()
+        try:
+            manager.trigger(
+                CallbackEvent.FILE_UPLOAD_START,
+                "file_upload",
+                {"files": filenames_list},
+            )
+            async_coro = self.processing.process_files(contents_list, filenames_list)
+            task_id = create_task(async_coro)
+            return task_id
+        except Exception as exc:  # pragma: no cover - log and notify
+            logger.exception("Error scheduling upload task: %s", exc)
+            manager.trigger(
+                CallbackEvent.FILE_UPLOAD_ERROR,
+                "file_upload",
+                {"error": str(exc)},
+            )
+            return ""
 
     def reset_upload_progress(
         self, contents_list: List[str] | str
@@ -935,9 +953,24 @@ class Callbacks:
         if not isinstance(filenames_list, list):
             filenames_list = [filenames_list]
 
-        async_coro = self.processing.process_files(contents_list, filenames_list)
-        task_id = create_task(async_coro)
-        return task_id
+        manager = CallbackManager()
+        try:
+            manager.trigger(
+                CallbackEvent.FILE_UPLOAD_START,
+                "file_upload",
+                {"files": filenames_list},
+            )
+            async_coro = self.processing.process_files(contents_list, filenames_list)
+            task_id = create_task(async_coro)
+            return task_id
+        except Exception as exc:  # pragma: no cover - log and notify
+            logger.exception("Error scheduling upload task: %s", exc)
+            manager.trigger(
+                CallbackEvent.FILE_UPLOAD_ERROR,
+                "file_upload",
+                {"error": str(exc)},
+            )
+            return ""
 
     def reset_upload_progress(
         self, contents_list: List[str] | str
