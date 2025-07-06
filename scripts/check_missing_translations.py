@@ -2,9 +2,10 @@
 """Simple check for untranslated strings in .po files."""
 from __future__ import annotations
 
-from babel.messages import pofile
-from pathlib import Path
 import sys
+from pathlib import Path
+
+from babel.messages import pofile
 
 
 def find_missing_strings() -> list[tuple[Path, str]]:

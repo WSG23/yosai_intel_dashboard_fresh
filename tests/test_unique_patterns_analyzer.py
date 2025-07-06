@@ -1,4 +1,5 @@
 import pandas as pd
+
 from analytics.unique_patterns_analyzer import UniquePatternAnalyzer
 
 

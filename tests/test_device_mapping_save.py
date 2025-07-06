@@ -1,10 +1,12 @@
-import base64
-import pandas as pd
-import dash_bootstrap_components as dbc
 import asyncio
+import base64
+
+import dash_bootstrap_components as dbc
+import pandas as pd
+
 from services.upload import UploadProcessingService
-from utils.upload_store import UploadedDataStore
 from upload_core import UploadCore
+from utils.upload_store import UploadedDataStore
 
 
 def _encode_df(df: pd.DataFrame) -> str:

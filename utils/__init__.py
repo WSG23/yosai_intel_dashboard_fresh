@@ -7,23 +7,20 @@ except Exception:  # pragma: no cover - fallback when dependencies fail
     process_large_csv_content = None  # type: ignore
 
 try:  # pragma: no cover - graceful import fallback
-    from core.unicode import (
-        # Preferred API
-        clean_unicode_text,
-        safe_decode_bytes,
-        safe_unicode_decode,
-        safe_encode,
-        sanitize_dataframe,
-        UnicodeProcessor,
+    from core.unicode import (  # Preferred API; Deprecated API
         ChunkedUnicodeProcessor,
-        # Deprecated API
-        safe_unicode_encode,
-        safe_encode,
-        safe_decode,
-        handle_surrogate_characters,
+        UnicodeProcessor,
         clean_unicode_surrogates,
-        sanitize_unicode_input,
+        clean_unicode_text,
+        handle_surrogate_characters,
+        safe_decode,
+        safe_decode_bytes,
+        safe_encode,
+        safe_unicode_decode,
+        safe_unicode_encode,
         sanitize_data_frame,
+        sanitize_dataframe,
+        sanitize_unicode_input,
     )
 
     # Migration aliases for transitional imports
@@ -39,12 +36,16 @@ try:  # pragma: no cover - graceful import fallback
     from .assets_utils import get_nav_icon
     from .preview_utils import serialize_dataframe_preview
 except Exception:  # pragma: no cover - fallback when core.unicode unavailable
+    from core.unicode_processor import safe_format_number
+    from security.unicode_security_processor import (
+        UnicodeSecurityProcessor,
+    )
     from security.unicode_security_processor import (
         sanitize_dataframe as sanitize_data_frame,
-        UnicodeSecurityProcessor,
+    )
+    from security.unicode_security_processor import (
         sanitize_unicode_input,
     )
-    from core.unicode_processor import safe_format_number
     handle_surrogate_characters = UnicodeSecurityProcessor.sanitize_unicode_input
     clean_unicode_surrogates = UnicodeSecurityProcessor.sanitize_unicode_input
     unicode_clean_text = UnicodeSecurityProcessor.sanitize_unicode_input

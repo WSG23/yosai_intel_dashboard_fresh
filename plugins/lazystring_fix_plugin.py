@@ -1,15 +1,15 @@
 """LazyString sanitization and Flask integration plugin."""
 
 from __future__ import annotations
+
 import logging
 import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
-from services.data_processing.core.protocols import PluginMetadata
-
-from security.unicode_security_processor import UnicodeSecurityProcessor
 from core.serialization import SafeJSONSerializer
+from security.unicode_security_processor import UnicodeSecurityProcessor
+from services.data_processing.core.protocols import PluginMetadata
 
 # Optional Babel import
 try:

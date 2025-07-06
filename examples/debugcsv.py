@@ -4,12 +4,13 @@ Debug script to identify exactly where your CSV is being truncated
 Run this to find the source of the 5-row limitation
 """
 
-import sys
-import pandas as pd
 import base64
 import io
 import logging
+import sys
 from pathlib import Path
+
+import pandas as pd
 
 # Add your project to path
 sys.path.append(".")

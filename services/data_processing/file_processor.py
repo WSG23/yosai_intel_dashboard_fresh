@@ -3,19 +3,22 @@
 File processing service - Core data processing without UI dependencies
 Handles Unicode surrogate characters safely
 """
-import logging
-import pandas as pd
-import json
 import io
+import json
+import logging
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import chardet
+import pandas as pd
+
+from config.config import get_analytics_config
 from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
-from typing import Optional, Dict, Any, List, Tuple, Union
-from pathlib import Path
 
 # Core processing imports only - NO UI COMPONENTS
 from security.unicode_security_processor import sanitize_unicode_input
-from config.config import get_analytics_config
+
 
 def _get_max_display_rows() -> int:
     return get_analytics_config().max_display_rows or 10000

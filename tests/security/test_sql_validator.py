@@ -1,7 +1,7 @@
 import pytest
 
-from security.sql_validator import SQLInjectionPrevention
 from core.exceptions import ValidationError
+from security.sql_validator import SQLInjectionPrevention
 
 
 def test_injection_vectors(caplog):

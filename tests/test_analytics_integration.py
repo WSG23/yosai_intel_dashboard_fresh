@@ -2,10 +2,11 @@
 """
 Complete Integration Tests for Analytics System
 """
-import pytest
 import pandas as pd
-from services import get_analytics_service, create_analytics_service
+import pytest
+
 from models import ModelFactory
+from services import create_analytics_service, get_analytics_service
 
 
 def test_analytics_service_creation():
@@ -43,6 +44,7 @@ def test_model_factory():
 def test_model_factory_absent(monkeypatch):
     """ModelFactory gracefully handles missing registry entry"""
     from importlib import reload
+
     import services.registry as reg
 
     original = reg.get_service

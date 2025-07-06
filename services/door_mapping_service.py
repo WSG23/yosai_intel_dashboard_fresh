@@ -3,17 +3,19 @@ Door Mapping Service - Business logic for device attribute assignment
 Handles AI model data processing and manual override management
 """
 
-import pandas as pd
 import json
 import logging
-from typing import Dict, List, Any, Optional, Tuple
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+import pandas as pd
+
+from config.dynamic_config import dynamic_config
 
 # ADD after existing imports
 from services.ai_device_generator import AIDeviceGenerator
 from services.consolidated_learning_service import get_learning_service
-from config.dynamic_config import dynamic_config
 
 logger = logging.getLogger(__name__)
 

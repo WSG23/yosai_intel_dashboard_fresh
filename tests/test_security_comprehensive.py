@@ -4,8 +4,9 @@ class TestSecurityVulnerabilities:
     def test_sql_injection_prevention(self):
         """Test SQL injection attack patterns."""
         import pytest
-        from security.sql_validator import SQLInjectionPrevention
+
         from core.exceptions import ValidationError
+        from security.sql_validator import SQLInjectionPrevention
 
         malicious_inputs = [
             "'; DROP TABLE users; --",

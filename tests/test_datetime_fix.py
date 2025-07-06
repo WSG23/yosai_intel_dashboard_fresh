@@ -1,11 +1,12 @@
 import pandas as pd
-from services.analytics_service import AnalyticsService
+
 from analytics.utils import ensure_datetime_columns
+from services.analytics_service import AnalyticsService
 
 
 def create_test_data(rows=100):
-    from datetime import datetime, timedelta
     import random
+    from datetime import datetime, timedelta
 
     data = []
     base_date = datetime(2024, 1, 1)

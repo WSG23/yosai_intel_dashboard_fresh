@@ -8,32 +8,31 @@ with actionable recommendations.
 """
 
 
-import pandas as pd
-import numpy as np
-from typing import Dict, List, Any, Tuple, Optional, Callable
-
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
-from sklearn.exceptions import DataConversionWarning
 import logging
-from dataclasses import dataclass
-from collections import defaultdict
 import warnings
+from collections import defaultdict
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import IsolationForest
+from sklearn.exceptions import DataConversionWarning
+from sklearn.preprocessing import StandardScaler
+
 from core.callback_manager import CallbackManager as SecurityCallbackController
 from security_callback_controller import (
     SecurityEvent,
-    security_callback_controller,
     emit_security_event,
-
+    security_callback_controller,
 )
 
-
-from ..security_score_calculator import SecurityScoreCalculator
 from ..security_metrics import SecurityMetrics
-from .types import ThreatIndicator
+from ..security_score_calculator import SecurityScoreCalculator
 from .data_prep import prepare_security_data
-from .statistical_detection import detect_statistical_threats
 from .pattern_detection import detect_pattern_threats
+from .statistical_detection import detect_statistical_threats
+from .types import ThreatIndicator
 
 # Ignore warnings from scikit-learn about missing feature names and automatic
 # data type conversions. These arise during DataFrame-based model training and

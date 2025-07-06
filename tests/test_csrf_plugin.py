@@ -1,6 +1,7 @@
 import os
-from core import app_factory
+
 from config.config import reload_config
+from core import app_factory
 
 
 def test_csrf_plugin_enabled_in_production(monkeypatch):

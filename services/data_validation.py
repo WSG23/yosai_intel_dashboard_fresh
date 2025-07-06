@@ -3,6 +3,7 @@
 from typing import Any, Tuple
 
 import pandas as pd
+
 from security.dataframe_validator import DataFrameSecurityValidator
 
 

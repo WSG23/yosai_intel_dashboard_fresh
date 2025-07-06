@@ -2,13 +2,14 @@
 Utility functions for CSRF protection plugin
 """
 
-import secrets
 import hashlib
 import logging
-from typing import Dict, Any, Optional, List
+import secrets
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
+
 import dash
-from flask import request, current_app
+from flask import current_app, request
 
 logger = logging.getLogger(__name__)
 

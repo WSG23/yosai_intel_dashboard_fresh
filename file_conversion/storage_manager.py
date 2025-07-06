@@ -10,8 +10,8 @@ from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
-from core.callback_manager import CallbackManager
 from core.callback_events import CallbackEvent
+from core.callback_manager import CallbackManager
 from core.unicode_processor import UnicodeProcessor
 
 _logger = logging.getLogger(__name__)

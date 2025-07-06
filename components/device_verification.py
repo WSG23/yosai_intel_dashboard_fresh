@@ -1,21 +1,26 @@
 """Device verification component - follows exact same pattern as column_verification.py"""
 
-import pandas as pd
-from dash import html, dcc
-from dash.dependencies import Input, Output, State, ALL, MATCH
 from typing import TYPE_CHECKING
+
+import pandas as pd
+from dash import dcc, html
+from dash.dependencies import ALL, MATCH, Input, Output, State
 
 if TYPE_CHECKING:
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from analytics.controllers import UnifiedAnalyticsController
+
 import logging
 
+from analytics.controllers import UnifiedAnalyticsController
+
 logger = logging.getLogger(__name__)
-import dash
-import dash_bootstrap_components as dbc
-from typing import Dict, List, Any, Union
 import logging
 from datetime import datetime
+from typing import Any, Dict, List, Union
+
+import dash
+import dash_bootstrap_components as dbc
+
 from components.simple_device_mapping import special_areas_options
 from services.ai_mapping_store import ai_mapping_store
 

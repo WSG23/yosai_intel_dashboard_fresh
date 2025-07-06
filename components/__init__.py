@@ -4,12 +4,14 @@ Simplified Component System
 Replaces: Complex component registry, missing components, safe imports
 """
 import logging
-from typing import Dict, Any, List, Optional
-from dash import html, dcc
+from typing import Any, Dict, List, Optional
+
 import dash_bootstrap_components as dbc
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import pandas as pd
+from dash import dcc, html
+
 try:
     from config.dynamic_config import dynamic_config
 except Exception:  # pragma: no cover - optional config

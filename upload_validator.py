@@ -1,12 +1,14 @@
 """Validation helpers for uploaded files."""
 from __future__ import annotations
-from pathlib import Path
-from typing import Any, Optional
+
 import base64
 import re
+from pathlib import Path
+from typing import Any, Optional
 
 from config.dynamic_config import dynamic_config
 from upload_types import ValidationResult
+
 
 class UploadValidator:
     """Validate basic properties of uploaded files."""

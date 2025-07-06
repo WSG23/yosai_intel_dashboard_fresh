@@ -3,9 +3,9 @@ from datetime import datetime
 
 import pandas as pd
 
-from services.consolidated_learning_service import ConsolidatedLearningService
-from analytics.db_interface import AnalyticsDataAccessor
 import services.upload.helpers as upload_helpers
+from analytics.db_interface import AnalyticsDataAccessor
+from services.consolidated_learning_service import ConsolidatedLearningService
 from services.upload import save_ai_training_data
 
 

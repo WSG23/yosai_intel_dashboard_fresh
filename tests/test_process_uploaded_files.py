@@ -1,10 +1,11 @@
-import base64
-import pandas as pd
 import asyncio
+import base64
 
+import pandas as pd
+
+from services.upload import UploadProcessingService
 from upload_core import UploadCore
 from utils.upload_store import uploaded_data_store as _uploaded_data_store
-from services.upload import UploadProcessingService
 
 
 def test_multi_part_upload_row_count():

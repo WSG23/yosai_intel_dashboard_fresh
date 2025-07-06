@@ -8,11 +8,11 @@ import logging
 import os
 import sqlite3
 import threading
-from pathlib import Path
-from typing import Optional, Any, Dict, Protocol
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, Optional, Protocol
 
-from .database_exceptions import DatabaseError, ConnectionValidationFailed
+from .database_exceptions import ConnectionValidationFailed, DatabaseError
 
 logger = logging.getLogger(__name__)
 
@@ -342,8 +342,8 @@ class EnhancedPostgreSQLManager(DatabaseManager):
 
     def __init__(self, config: DatabaseConfig, retry_config: RetryConfig | None = None):
         super().__init__(config)
-        from .connection_retry import ConnectionRetryManager, RetryConfig
         from .connection_pool import DatabaseConnectionPool
+        from .connection_retry import ConnectionRetryManager, RetryConfig
         from .unicode_handler import UnicodeQueryHandler
 
         self.retry_manager = ConnectionRetryManager(retry_config or RetryConfig())

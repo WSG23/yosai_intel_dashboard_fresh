@@ -1,14 +1,14 @@
 """Repository layer for data access"""
 
-from .interfaces import (
-    IPersonRepository,
-    IAccessEventRepository,
-    IDoorRepository,
-)
 from .implementations import (
-    PersonRepository,
     AccessEventRepository,
     DoorRepository,
+    PersonRepository,
+)
+from .interfaces import (
+    IAccessEventRepository,
+    IDoorRepository,
+    IPersonRepository,
 )
 
 __all__ = [

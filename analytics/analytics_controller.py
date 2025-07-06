@@ -6,8 +6,8 @@ from typing import Any, Dict, Optional
 
 from core.callback_manager import CallbackManager
 
-from .data_repository import AnalyticsDataRepository
 from .business_service import AnalyticsBusinessService
+from .data_repository import AnalyticsDataRepository
 from .ui_controller import AnalyticsUIController
 
 

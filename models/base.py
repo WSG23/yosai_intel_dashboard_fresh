@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Base classes for data models used throughout the application."""
 import logging
-import pandas as pd
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 

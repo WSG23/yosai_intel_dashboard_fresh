@@ -2,11 +2,11 @@
 
 # Re-export from unified configuration for compatibility
 try:
+    from config.database_manager import DatabaseManager
     from config.unified_config import (
         UnifiedConfig,
         get_config,
     )
-    from config.database_manager import DatabaseManager
 
     def get_service_locator():
         """Return configuration object for plugins"""

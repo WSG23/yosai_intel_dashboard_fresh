@@ -1,19 +1,19 @@
-import pandas as pd
-import pytest
 import time
 from concurrent.futures import ThreadPoolExecutor
 
+import pandas as pd
+import pytest
+
 from core.unicode_processor import (
-    safe_unicode_encode,
-    sanitize_data_frame,
-    safe_format_number,
+    contains_surrogates,
     safe_decode,
     safe_encode,
-    contains_surrogates,
+    safe_format_number,
+    safe_unicode_encode,
+    sanitize_data_frame,
 )
 from security.unicode_security_validator import UnicodeSecurityValidator
 from security.validation_exceptions import ValidationError
-
 
 
 def test_safe_unicode_encode_surrogates():

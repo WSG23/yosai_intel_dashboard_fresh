@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Export page providing download instructions."""
 
-from dash import html, dcc
 import dash_bootstrap_components as dbc
+from dash import dcc, html
+
 from security.unicode_security_processor import sanitize_unicode_input
 
 

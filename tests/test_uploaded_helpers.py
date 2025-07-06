@@ -1,12 +1,13 @@
 import pandas as pd
-from services import AnalyticsService
+
 from analytics.file_processing_utils import (
-    update_counts,
-    update_timestamp_range,
+    aggregate_counts,
     calculate_date_range,
     stream_uploaded_file,
-    aggregate_counts,
+    update_counts,
+    update_timestamp_range,
 )
+from services import AnalyticsService
 
 
 def test_load_uploaded_data(monkeypatch):

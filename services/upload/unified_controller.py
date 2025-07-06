@@ -1,16 +1,17 @@
 import logging
-from typing import List, Tuple, Any
+from typing import Any, List, Tuple
 
-from dash.dependencies import Input, Output, State, ALL
+from dash.dependencies import ALL, Input, Output, State
+
+from utils.upload_store import uploaded_data_store as _uploaded_data_store
 
 from . import (
     AISuggestionService,
+    ClientSideValidator,
     ModalService,
     UploadProcessingService,
-    ClientSideValidator,
 )
 from .managers import ChunkedUploadManager, UploadQueueManager
-from utils.upload_store import uploaded_data_store as _uploaded_data_store
 
 logger = logging.getLogger(__name__)
 

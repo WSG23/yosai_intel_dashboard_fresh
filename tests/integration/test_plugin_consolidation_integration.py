@@ -1,11 +1,11 @@
 import sys
+
 from dash import Dash, html
 
-from core.plugins.auto_config import setup_plugins
-from core.container import Container as DIContainer
 from config.config import ConfigManager
-
-from tests.test_auto_configuration import _set_env, _create_package
+from core.container import Container as DIContainer
+from core.plugins.auto_config import setup_plugins
+from tests.test_auto_configuration import _create_package, _set_env
 
 
 def test_plugin_discovery_and_callback_registration(monkeypatch, tmp_path):

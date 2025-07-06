@@ -5,8 +5,10 @@ Core entity models for the Yōsai Intel system
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple
-from utils.result_types import Result, success, failure
+from typing import Any, Dict, List, Optional, Tuple
+
+from utils.result_types import Result, failure, success
+
 from .enums import DoorType
 from .events import AccessEvent
 

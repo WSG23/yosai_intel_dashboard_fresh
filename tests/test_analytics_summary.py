@@ -1,4 +1,5 @@
 import pandas as pd
+
 from services.analytics_summary import (
     generate_basic_analytics,
     generate_sample_analytics,

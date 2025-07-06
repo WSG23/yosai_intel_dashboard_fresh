@@ -18,8 +18,8 @@ __all__ = [
 
 import logging
 
-from .data_repository import AnalyticsDataRepository
 from .business_service import AnalyticsBusinessService
+from .data_repository import AnalyticsDataRepository
 from .ui_controller import AnalyticsUIController
 
 

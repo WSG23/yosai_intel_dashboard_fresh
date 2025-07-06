@@ -4,11 +4,11 @@ Plugin system protocols for Yōsai Intel Dashboard
 Follows the existing protocol-oriented architecture
 """
 
-from typing import Protocol, Dict, Any, List, Optional, Type, runtime_checkable
 from abc import abstractmethod
-from enum import Enum
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Protocol, Type, runtime_checkable
 
 
 class PluginStatus(Enum):

@@ -3,13 +3,14 @@ Test file for callback controller functionality
 Save as: tests/test_callback_controller.py
 """
 
-import pytest
 import threading
 import time
 from datetime import datetime
 
-from core.callback_manager import CallbackManager
+import pytest
+
 from core.callback_events import CallbackEvent
+from core.callback_manager import CallbackManager
 
 
 class CallbackContext:

@@ -11,12 +11,13 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 from services.analytics import (
-    generate_basic_analytics,
-    summarize_dataframe,
     analyze_with_chunking,
+    generate_basic_analytics,
     map_and_clean,
+    summarize_dataframe,
 )
 from services.data_validation import DataValidationService
+
 from ..upload_processing import UploadAnalyticsProcessor as _UploadAnalyticsProcessor
 
 

@@ -1,11 +1,11 @@
 """Enhanced CSV processing service with optional Polars optimization"""
 
 import logging
-from typing import Dict, Any, Optional, List
-
-import pandas as pd
-import numpy as np
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import numpy as np
+import pandas as pd
 
 # Optional Polars import with pandas fallback
 try:

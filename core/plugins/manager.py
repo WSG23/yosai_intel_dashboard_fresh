@@ -1,22 +1,21 @@
 import importlib
-import pkgutil
 import logging
+import pkgutil
 import threading
 import time
-from typing import List, Any, Dict
+from typing import Any, Dict, List
 
-from core.callback_manager import CallbackManager
-from services.data_processing.core.protocols import (
-    PluginProtocol,
-    CallbackPluginProtocol,
-    PluginStatus,
-    PluginPriority,
-)
-from .dependency_resolver import PluginDependencyResolver
-
-from core.container import Container as DIContainer
 from config.config import ConfigManager
+from core.callback_manager import CallbackManager
+from core.container import Container as DIContainer
+from services.data_processing.core.protocols import (
+    CallbackPluginProtocol,
+    PluginPriority,
+    PluginProtocol,
+    PluginStatus,
+)
 
+from .dependency_resolver import PluginDependencyResolver
 
 logger = logging.getLogger(__name__)
 

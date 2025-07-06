@@ -1,10 +1,11 @@
-import base64
-import pandas as pd
 import asyncio
+import base64
+
+import pandas as pd
 
 from pages import file_upload
-from upload_core import UploadCore
 from services.upload import UploadProcessingService
+from upload_core import UploadCore
 from utils.upload_store import UploadedDataStore
 
 

@@ -1,8 +1,8 @@
 # core/interfaces.py
 """Protocol definitions for configuration and analytics providers."""
 
-from typing import Protocol, Any, Dict
 from abc import abstractmethod
+from typing import Any, Dict, Protocol
 
 
 class ConfigurationProviderProtocol(Protocol):

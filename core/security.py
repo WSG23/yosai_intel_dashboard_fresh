@@ -3,17 +3,20 @@
 Comprehensive security system for Yōsai Intel Dashboard
 Implements Apple's security-by-design principles
 """
-import re
 import hashlib
+import logging
+import mimetypes
+import re
 import secrets
 import time
-from typing import Dict, Any, Optional, List, Union
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-import logging
 from pathlib import Path
-import mimetypes
+from typing import Any, Dict, List, Optional, Union
+
+from config.dynamic_config import dynamic_config
+from core.exceptions import ValidationError
 
 # Import common security regex patterns used throughout this module.
 # These constants live in ``core/security_patterns.py`` and are reused in
@@ -22,14 +25,11 @@ import mimetypes
 # Use an absolute import so this module can run standalone without relying on
 # the package context. This prevents NameError when executed directly.
 from core.security_patterns import (
+    PATH_TRAVERSAL_PATTERNS,
     SQL_INJECTION_PATTERNS,
     XSS_PATTERNS,
-    PATH_TRAVERSAL_PATTERNS,
 )
-
 from security.unicode_security_processor import sanitize_unicode_input
-from config.dynamic_config import dynamic_config
-from core.exceptions import ValidationError
 
 
 class SecurityLevel(Enum):
@@ -576,8 +576,8 @@ def rate_limit_decorator(max_requests: int = 100, window_minutes: int = 1):
 def initialize_validation_callbacks() -> None:
     """Set up request validation callbacks on import."""
     try:
-        from security.validation_middleware import ValidationMiddleware
         from core.callback_manager import CallbackManager
+        from security.validation_middleware import ValidationMiddleware
     except Exception:
         # Optional components may be missing in minimal environments
         return

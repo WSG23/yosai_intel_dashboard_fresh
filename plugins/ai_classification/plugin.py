@@ -1,17 +1,17 @@
 """Enhanced AI Classification Plugin with CSV Processing"""
 
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 from services.data_processing.core.protocols import PluginMetadata
 
 from .config import AIClassificationConfig, get_ai_config
-from .services.csv_processor import CSVProcessorService
-from .services.column_mapper import ColumnMappingService
-from .services.floor_estimator import FloorEstimationService
-from .services.entry_classifier import EntryClassificationService
-from .services.japanese_handler import JapaneseTextHandler
 from .database.csv_storage import CSVStorageRepository
+from .services.column_mapper import ColumnMappingService
+from .services.csv_processor import CSVProcessorService
+from .services.entry_classifier import EntryClassificationService
+from .services.floor_estimator import FloorEstimationService
+from .services.japanese_handler import JapaneseTextHandler
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,9 @@
 """Database connection - compatible with existing codebase"""
 
-import pandas as pd
 from typing import Optional, Protocol
+
+import pandas as pd
+
 from config.database_manager import DatabaseManager, MockConnection
 
 
