@@ -321,7 +321,6 @@ class Callbacks:
             False,
             False,
         )
-            )
         
         if not isinstance(contents_list, list):
             contents_list = [contents_list]
