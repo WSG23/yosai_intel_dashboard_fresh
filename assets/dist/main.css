@@ -2199,7 +2199,7 @@ button:disabled {
     min-width: 200px
 }
 
-[data-theme=dark] {
+.dark-mode {
     --surface-app: var(--color-gray-850);
     --surface-primary: var(--color-gray-800);
     --surface-secondary: var(--color-gray-750);
@@ -2209,7 +2209,7 @@ button:disabled {
     --text-tertiary: var(--color-gray-500)
 }
 
-[data-theme=light] {
+.light-mode {
     --surface-app: var(--color-white);
     --surface-primary: var(--color-gray-50);
     --surface-secondary: var(--color-gray-100);
@@ -2220,7 +2220,7 @@ button:disabled {
     --color-border: var(--color-gray-300)
 }
 
-[data-theme=high-contrast] {
+.high-contrast-mode {
     --surface-app: var(--color-black);
     --surface-primary: var(--color-black);
     --surface-secondary: var(--color-gray-900);
@@ -2231,7 +2231,7 @@ button:disabled {
     --color-border: var(--color-white)
 }
 
-[data-theme=executive] {
+.executive-mode {
     --text-base: 1.125rem;
     --text-lg: 1.25rem;
     --text-xl: 1.5rem;
