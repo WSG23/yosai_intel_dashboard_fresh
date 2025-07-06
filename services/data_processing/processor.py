@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, Optional, Tuple
 
 import pandas as pd
+from config.dynamic_config import dynamic_config
+from core.performance import get_performance_monitor
 
 from services.data_validation import DataValidationService
 from utils.mapping_helpers import map_and_clean
@@ -30,8 +32,16 @@ class Processor:
     # ------------------------------------------------------------------
     def load_dataframe(self, source: Any) -> pd.DataFrame:
         """Load ``source`` into a validated and mapped dataframe."""
+        chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
+        monitor = get_performance_monitor()
+
         if isinstance(source, (str, Path)) or hasattr(source, "read"):
-            df = pd.read_csv(source, encoding="utf-8")
+            reader = pd.read_csv(source, encoding="utf-8", chunksize=chunk_size)
+            chunks = []
+            for chunk in reader:
+                monitor.throttle_if_needed()
+                chunks.append(chunk)
+            df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
         else:
             df = source
         df = self.validator.validate(df)
@@ -39,8 +49,10 @@ class Processor:
 
     def stream_file(self, source: Any, chunksize: int = 50000) -> Iterator[pd.DataFrame]:
         """Yield cleaned chunks from ``source``."""
+        monitor = get_performance_monitor()
         if isinstance(source, (str, Path)) or hasattr(source, "read"):
             for chunk in pd.read_csv(source, chunksize=chunksize, encoding="utf-8"):
+                monitor.throttle_if_needed()
                 chunk = self.validator.validate(chunk)
                 yield map_and_clean(chunk)
         else:

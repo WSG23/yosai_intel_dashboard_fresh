@@ -66,6 +66,7 @@ monitoring:
   metrics_enabled: true
   health_check_interval: ${HEALTH_CHECK_INTERVAL:30}
   performance_monitoring: ${ENABLE_PERFORMANCE_MONITORING:true}
+  memory_threshold_mb: ${MEMORY_THRESHOLD_MB:1024}
   error_reporting_enabled: ${ENABLE_ERROR_REPORTING:true}
   sentry_dsn: ${SENTRY_DSN}
   log_retention_days: ${LOG_RETENTION_DAYS:90}

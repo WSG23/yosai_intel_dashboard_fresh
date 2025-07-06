@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict, deque
 import logging
 import psutil
+from config.dynamic_config import dynamic_config
 import pandas as pd
 from enum import Enum
 
@@ -67,6 +68,9 @@ class PerformanceMonitor:
         self.aggregated_metrics: Dict[str, List[float]] = defaultdict(list)
         self.logger = logging.getLogger(__name__)
         self._lock = threading.Lock()
+        self.memory_threshold_mb = getattr(
+            dynamic_config.performance, "memory_usage_threshold_mb", 1024
+        )
 
         # Start background monitoring
         self._monitoring_active = True
@@ -141,6 +145,20 @@ class PerformanceMonitor:
             memory_used_mb=psutil.virtual_memory().used / (1024 * 1024),
             active_threads=threading.active_count(),
         )
+
+    def memory_usage_mb(self) -> float:
+        """Return current process memory usage in MB."""
+        return psutil.Process().memory_info().rss / (1024 * 1024)
+
+    def throttle_if_needed(self) -> None:
+        """Abort or slow down processing if memory usage is high."""
+        usage = self.memory_usage_mb()
+        if usage > self.memory_threshold_mb:
+            raise MemoryError(
+                f"Memory limit exceeded: {usage:.1f}MB > {self.memory_threshold_mb}MB"
+            )
+        if usage > self.memory_threshold_mb * 0.9:
+            time.sleep(0.01)
 
     def _background_monitor(self) -> None:
         """Background thread for system monitoring"""
