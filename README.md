@@ -677,6 +677,11 @@ Uploaded files are now **lazy loaded**. Only the `file_info.json` metadata is
 read at startup; Parquet files are opened on demand when analytics or previews
 require them. This keeps startup fast even with many large uploads.
 
+Uploaded data is persisted inside `temp/uploaded_data`. Each successful
+upload creates a `<name>.parquet` file along with metadata in
+`file_info.json`. The analytics page lists these entries in the **Data Source**
+dropdown so you can revisit earlier uploads without re-uploading them.
+
 **Important:** keep the `temp/uploaded_data` directory intact until device
 mappings have been saved, otherwise the mapping step will fail.
 

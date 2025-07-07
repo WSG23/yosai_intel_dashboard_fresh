@@ -41,13 +41,12 @@ def get_data_source_options_safe() -> List[Dict[str, str]]:
     """Return dropdown options for available data sources."""
     options: List[Dict[str, str]] = []
     try:
-        from pages.file_upload import get_uploaded_data  # lazy import
+        from services.upload_data_service import get_uploaded_data  # lazy import
 
         uploaded_files = get_uploaded_data()
-        if uploaded_files:
-            for filename in uploaded_files.keys():
-                options.append({"label": f"File: {filename}", "value": f"upload:{filename}"})
-    except ImportError:
+        for filename in uploaded_files.keys():
+            options.append({"label": f"File: {filename}", "value": f"upload:{filename}"})
+    except Exception:
         pass
     try:
         service = get_analytics_service_safe()
@@ -71,7 +70,7 @@ def get_data_source_options_safe() -> List[Dict[str, str]]:
 def get_latest_uploaded_source_value() -> Optional[str]:
     """Return the dropdown value for the most recently uploaded file."""
     try:
-        from pages.file_upload import get_uploaded_filenames  # lazy import
+        from services.upload_data_service import get_uploaded_filenames  # lazy import
 
         filenames = get_uploaded_filenames()
         if filenames:
