@@ -950,7 +950,8 @@ def _register_callbacks(app: dash.Dash, config_manager: Any) -> None:
             register_simple_mapping(coordinator)
             register_device_verification(coordinator)
             register_deep_callbacks(coordinator)
-            register_navbar_callbacks(coordinator)
+            from services.interfaces import get_export_service
+            register_navbar_callbacks(coordinator, get_export_service())
 
             app._upload_callbacks = UploadCallbacks()
             app._deep_analytics_callbacks = DeepAnalyticsCallbacks()

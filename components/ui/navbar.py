@@ -20,6 +20,7 @@ from core.plugins.decorators import safe_callback
 from core.theme_manager import DEFAULT_THEME, sanitize_theme
 from utils.assets_debug import check_navbar_assets
 from utils.assets_utils import get_nav_icon
+from services.interfaces import ExportServiceProtocol, get_export_service
 
 logger = logging.getLogger(__name__)
 
@@ -487,10 +488,15 @@ def _create_fallback_navbar() -> str:
 
 
 @safe_callback
-def register_navbar_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
+def register_navbar_callbacks(
+    manager: "TrulyUnifiedCallbacks",
+    export_service: ExportServiceProtocol | None = None,
+) -> None:
     """Register navbar callbacks for live updates"""
     if not DASH_AVAILABLE or not manager:
         return
+
+    export_service = export_service or get_export_service()
 
     try:
 
@@ -608,8 +614,6 @@ def register_navbar_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
         )
         def export_csv(n_clicks: Optional[int]):
             """Export device learning data as CSV file."""
-            import services.export_service as export_service
-
             data = export_service.get_enhanced_data()
             csv_str = export_service.to_csv_string(data)
             if not csv_str:
@@ -625,8 +629,6 @@ def register_navbar_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
         )
         def export_json(n_clicks: Optional[int]):
             """Export device learning data as JSON file."""
-            import services.export_service as export_service
-
             data = export_service.get_enhanced_data()
             json_str = export_service.to_json_string(data)
             if not json_str:
