@@ -82,53 +82,23 @@ try:
         get_trigger_id,
         save_ai_training_data,
     )
-except Exception:  # pragma: no cover - optional dependency for tests
-    AISuggestionService = type("AISuggestionService", (), {})
-    ModalService = type("ModalService", (), {})
-
-    class UploadProcessingService:  # type: ignore
-        async_processor = None
-
-        def __init__(self, *_a, **_kw):
-            pass
-
-        async def process_files(self, *_a, **_kw):
-            return ([], [], {}, [], {}, None, None)
-
-    class ChunkedUploadManager:  # type: ignore
-        def start_file(self, *_a, **_kw):
-            pass
-
-        def finish_file(self, *_a, **_kw):
-            pass
-
-        def get_progress(self, *_a, **_kw):
-            return 0
-
-    def get_trigger_id():
-        return "trig"
-
-    def save_ai_training_data(*_a, **_kw):
-        pass
+except ImportError as exc:  # pragma: no cover - optional dependency for tests
+    raise ImportError(
+        "services.upload package is required for file upload functionality"
+    ) from exc
 
 
 try:
     from services.upload.unified_controller import UnifiedUploadController
-except Exception:  # pragma: no cover - optional dependency for tests
-    UnifiedUploadController = None
+except ImportError as exc:  # pragma: no cover - optional dependency for tests
+    raise ImportError("services.upload.unified_controller module is required") from exc
 
 try:
     from services.upload.upload_queue_manager import UploadQueueManager
-except Exception:  # pragma: no cover - optional dependency for tests
-
-    class UploadQueueManager:  # type: ignore
-        files: list[str] = []
-
-        def add_file(self, *_a, **_kw):
-            pass
-
-        def mark_complete(self, *_a, **_kw):
-            pass
+except ImportError as exc:  # pragma: no cover - optional dependency for tests
+    raise ImportError(
+        "services.upload.upload_queue_manager module is required"
+    ) from exc
 
 
 from services.upload.validators import ClientSideValidator
@@ -1049,6 +1019,7 @@ class Callbacks:
                 dismissable=True,
                 duration=8000,
             )
+
 
 def register_upload_callbacks(
     manager: "TrulyUnifiedCallbacks",
