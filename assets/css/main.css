@@ -5,6 +5,7 @@
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
 /* Critical CSS - Foundation Layer (loads first) */
+@import './01-foundation/_colors.css';
 @import './01-foundation/_variables.css';
 @import './01-foundation/_reset.css';
 @import './01-foundation/_typography.css';
@@ -13,6 +14,7 @@
 /* Layout System */
 @import './02-layout/_grid.css';
 @import './02-layout/_containers.css';
+@import './02-layout/_theme-provider.css';
 @import './07-utilities/_spacing.css';
 @import './07-utilities/_positioning.css';
 
@@ -43,7 +45,7 @@
 @import './05-pages/_file_upload.css';
 
 /* Theme System */
-@import './06-themes/_dark-theme.css';
+@import './06-themes/_themes.css';
 
 /* Utility Classes */
 @import './07-utilities/_display.css';
