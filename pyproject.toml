@@ -23,3 +23,6 @@ line-length = 88
 target-version = ["py38", "py39", "py310", "py311"]
 include = '(\.pyi?|\.ipynb)$'
 exclude = '/(\.direnv|\.eggs|\.git|\.hg|\.ipynb_checkpoints|\.mypy_cache|\.nox|\.pytest_cache|\.ruff_cache|\.tox|\.svn|\.venv|\.vscode|__pypackages__|_build|buck-out|build|dist|venv)/'
+
+[tool.poetry.scripts]
+yosai-review = "file_processing.user_review:review"

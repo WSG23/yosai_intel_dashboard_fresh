@@ -24,12 +24,10 @@ jobs:
         run: |
           set -xe
           flake8 . --max-line-length 88 -v
+
       - name: PyTest
         run: |
           set -xe
           pytest --maxfail=1 --disable-warnings -q --cov=.
       - name: Upload coverage
         uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: htmlcov/
