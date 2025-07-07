@@ -14,7 +14,6 @@ def DragDropUploadArea(upload_id: str = "drag-drop-upload") -> html.Div:
     """
 
     status_id = f"{upload_id}-status"
-    camera_id = f"{upload_id}-camera"
     preview_id = f"{upload_id}-previews"
 
     return html.Div(
@@ -38,13 +37,6 @@ def DragDropUploadArea(upload_id: str = "drag-drop-upload") -> html.Div:
                             "Drag and drop files or press Enter to select",
                             id=f"{upload_id}-label",
                             className="mb-1",
-                        ),
-                        html.Button(
-                            "Use Camera",
-                            id=camera_id,
-                            className="btn btn-secondary mt-2",
-                            type="button",
-                            **{"aria-label": "Use camera to capture"},
                         ),
                     ],
                     className="drag-drop-upload__inner",

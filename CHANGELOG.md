@@ -12,5 +12,9 @@ All notable changes to this project will be documented in this file.
   `create_analysis_results_display`.
 
 ### Fixed
-- N/A
+- Navigation bar icons failed to load when `app.get_asset_url` returned
+  `None`. Asset utilities now fall back to direct `/assets/` paths.
+- Removed unused "Use Camera" button from the file upload component.
+- Reduced `.nav-icon` size to `2rem` for better appearance with fallback
+  Font Awesome icons.
 

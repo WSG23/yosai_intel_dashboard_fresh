@@ -62,8 +62,9 @@
 
 /* Navigation Icon */
 .nav-icon {
-  width: 24px;
-  height: 24px;
+  width: 2rem;
+  height: 2rem;
+
   flex-shrink: 0;
 }
 
