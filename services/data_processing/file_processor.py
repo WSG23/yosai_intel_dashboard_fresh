@@ -15,6 +15,7 @@ import pandas as pd
 from config.config import get_analytics_config
 from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
+from core.unicode_decode import safe_unicode_decode
 
 # Core processing imports only - NO UI COMPONENTS
 from core.unicode_utils import sanitize_for_utf8
@@ -41,8 +42,6 @@ class UnicodeFileProcessor:
             # Detect encoding
             detected = chardet.detect(content)
             encoding = detected.get('encoding') or 'utf-8'
-
-            from core.unicode_decode import safe_unicode_decode
 
             return safe_unicode_decode(content, encoding)
         except Exception as e:
