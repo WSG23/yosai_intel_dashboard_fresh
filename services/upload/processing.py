@@ -1,9 +1,10 @@
 import logging
 from typing import Any, Dict, List, Tuple, Callable
 
+import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
-from dash import html
+import dash.html as html
 from dash.dash import no_update
 
 from components.file_preview import create_file_preview_ui
@@ -168,10 +169,13 @@ class UploadProcessingService:
                 content = parts[0]
 
             try:
+
                 def _cb(name: str, pct: int) -> None:
 
                     if task_progress:
-                        overall = int(((processed_files + pct / 100) / total_files) * 100)
+                        overall = int(
+                            ((processed_files + pct / 100) / total_files) * 100
+                        )
                         task_progress(overall)
 
                 df = await self.processor.process_file(
