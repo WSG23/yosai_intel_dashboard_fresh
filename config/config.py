@@ -114,6 +114,7 @@ class AnalyticsConfig:
     query_timeout_seconds: int = 600
     force_full_dataset_analysis: bool = True
     max_memory_mb: int = 1024
+    max_display_rows: int = 10000
 
 
 
@@ -312,7 +313,10 @@ class ConfigManager(ConfigProviderProtocol):
             analytics_data = yaml_config["analytics"]
             for key, value in analytics_data.items():
                 if hasattr(self.config.analytics, key):
-                    setattr(self.config.analytics, key, value)
+                    if key == "max_display_rows":
+                        setattr(self.config.analytics, key, int(value))
+                    else:
+                        setattr(self.config.analytics, key, value)
 
         if "monitoring" in yaml_config:
             mon_data = yaml_config["monitoring"]
