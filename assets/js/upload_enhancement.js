@@ -1,121 +1,185 @@
-(function(){
-  const AREA_ID = 'drag-drop-upload-area';
-  const UPLOAD_ID = 'drag-drop-upload';
-  const PROGRESS_ID = 'upload-progress';
+/**
+ * Client-side JavaScript for enhanced file upload functionality
+ * Save as: assets/js/upload_enhancement.js
+ */
 
-  function byId(id){
-    return document.getElementById(id);
-  }
+// Upload progress tracking and visual feedback
+window.uploadProgressLog = [];
 
-  function sanitizeFilename(name){
-    if(!name){ return ''; }
-    let norm;
-    try{ norm = name.normalize('NFC'); }catch(_e){ norm = name; }
-    let out = '';
-    for(const ch of norm){
-      const cp = ch.codePointAt(0);
-      if(cp >= 32 && !(cp >= 0xD800 && cp <= 0xDFFF)){
-        out += ch;
-      }
-    }
-    return out;
-  }
-
-  function getConfig(upload){
-    const attr = upload && upload.getAttribute('data-validator-config');
-    if(attr){
-      try{ return JSON.parse(attr); }catch(_e){}
-    }
-    return window.uploadValidatorConfig || {};
-  }
-
-  function validateFile(file, cfg){
-    const ext = '.' + file.name.toLowerCase().split('.').pop();
-    if(cfg.allowed_ext && Array.isArray(cfg.allowed_ext) &&
-       !cfg.allowed_ext.includes(ext)){
-      return 'unsupported_type';
-    }
-    const limit = (cfg.size_limits && cfg.size_limits[ext]) || cfg.max_size;
-    if(limit && file.size > limit){ return 'too_large'; }
-    return '';
-  }
-
-  function updateProgress(bar, val){
-    if(!bar){ return; }
-    const v = Math.min(100, Math.max(0, Math.round(val)));
-    bar.setAttribute('value', v);
-    bar.textContent = v + '%';
-  }
-
-  document.addEventListener('DOMContentLoaded', function(){
-    const area = byId(AREA_ID);
-    const upload = byId(UPLOAD_ID);
-    if(!area || !upload){ return; }
-    const input = upload.querySelector('input[type="file"]');
-    const progress = byId(PROGRESS_ID);
-    const status = byId(UPLOAD_ID + '-status');
-    const previews = byId(UPLOAD_ID + '-previews');
-    const cfg = getConfig(upload);
-
-    window.uploadEnhancementLog = [];
-
-    area.addEventListener('dragenter', e=>{
-      e.preventDefault();
-      area.classList.add('drag-drop-upload--hover');
+/**
+ * Enhanced drag and drop functionality with visual feedback
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    // Find all upload components
+    const uploadComponents = document.querySelectorAll('[data-dash-is-loading="true"]');
+    
+    uploadComponents.forEach(component => {
+        const uploadArea = component.querySelector('div[style*="border-style: dashed"]');
+        if (!uploadArea) return;
+        
+        // Add enhanced drag and drop events
+        setupDragAndDrop(uploadArea);
+        
+        // Add keyboard accessibility
+        setupKeyboardAccessibility(uploadArea);
+        
+        // Add file validation
+        setupFileValidation(uploadArea);
     });
-    area.addEventListener('dragover', e=>{
-      e.preventDefault();
-      area.classList.add('drag-drop-upload--dragging');
-    });
-    ['dragleave','drop'].forEach(evt=>{
-      area.addEventListener(evt, ()=>{
-        area.classList.remove('drag-drop-upload--hover','drag-drop-upload--dragging');
-      });
-    });
+});
 
-    area.addEventListener('keydown', e=>{
-      if(e.key === 'Enter' || e.key === ' '){
+/**
+ * Setup drag and drop with visual feedback
+ */
+function setupDragAndDrop(uploadArea) {
+    let dragCounter = 0;
+    
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    // Highlight drop area when item is dragged over it
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function preventDefaults(e) {
         e.preventDefault();
-        input && input.click();
-      }
-    });
-
-    if(!input){ return; }
-
-    input.addEventListener('change', async function(){
-      const files = Array.from(input.files || []);
-      const dt = new DataTransfer();
-      let processed = 0;
-      updateProgress(progress, 0);
-      window.uploadEnhancementLog.length = 0;
-      for(const file of files){
-        const issue = validateFile(file, cfg);
-        if(issue){
-          window.uploadEnhancementLog.push({file: file.name, error: issue});
-          continue;
+        e.stopPropagation();
+    }
+    
+    function highlight(e) {
+        dragCounter++;
+        uploadArea.style.backgroundColor = '#e3f2fd';
+        uploadArea.style.borderColor = '#2196f3';
+        uploadArea.style.transform = 'scale(1.02)';
+        uploadArea.style.boxShadow = '0 4px 20px rgba(33, 150, 243, 0.3)';
+    }
+    
+    function unhighlight(e) {
+        dragCounter--;
+        if (dragCounter === 0) {
+            uploadArea.style.backgroundColor = '#f8f9fa';
+            uploadArea.style.borderColor = '#007bff';
+            uploadArea.style.transform = 'scale(1)';
+            uploadArea.style.boxShadow = 'none';
         }
-        const cleanName = sanitizeFilename(file.name);
-        const newFile = cleanName !== file.name ? new File([file], cleanName, {type: file.type}) : file;
-        dt.items.add(newFile);
-        processed += 1;
-        const val = processed / files.length * 100;
-        updateProgress(progress, val);
-        window.uploadEnhancementLog.push({file: newFile.name, progress: val});
-      }
-      input.files = dt.files;
-      if(previews){
-        previews.innerHTML = '';
-        Array.from(dt.files).forEach(f => {
-          const li = document.createElement('li');
-          li.className = 'drag-drop-upload__preview';
-          li.textContent = f.name;
-          previews.appendChild(li);
-        });
-      }
-      if(status){
-        status.textContent = processed ? 'Ready to upload' : 'No valid files';
-      }
-      if(processed === files.length){ updateProgress(progress, 100); }
+    }
+}
+
+/**
+ * Setup keyboard accessibility
+ */
+function setupKeyboardAccessibility(uploadArea) {
+    uploadArea.setAttribute('tabindex', '0');
+    uploadArea.setAttribute('role', 'button');
+    uploadArea.setAttribute('aria-label', 'Click or press Enter to upload files');
+    
+    uploadArea.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            const fileInput = uploadArea.querySelector('input[type="file"]');
+            if (fileInput) {
+                fileInput.click();
+            }
+        }
     });
-  });
-})();
+    
+    // Focus styles
+    uploadArea.addEventListener('focus', function() {
+        uploadArea.style.outline = '2px solid #007bff';
+        uploadArea.style.outlineOffset = '2px';
+    });
+    
+    uploadArea.addEventListener('blur', function() {
+        uploadArea.style.outline = 'none';
+    });
+}
+
+/**
+ * Setup client-side file validation
+ */
+function setupFileValidation(uploadArea) {
+    const fileInput = uploadArea.querySelector('input[type="file"]');
+    if (!fileInput) return;
+    
+    fileInput.addEventListener('change', function(e) {
+        const files = e.target.files;
+        validateFiles(files);
+    });
+}
+
+/**
+ * Validate files before upload
+ */
+function validateFiles(files) {
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    const allowedTypes = [
+        'text/csv',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/json'
+    ];
+    
+    const allowedExtensions = ['.csv', '.xls', '.xlsx', '.json'];
+    
+    Array.from(files).forEach(file => {
+        // Size validation
+        if (file.size > maxSize) {
+            showValidationError(`File "${file.name}" is too large. Maximum size is 50MB.`);
+            return;
+        }
+        
+        // Type validation
+        const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+        if (!allowedExtensions.includes(fileExtension)) {
+            showValidationError(`File "${file.name}" has an unsupported format. Supported: CSV, Excel, JSON.`);
+            return;
+        }
+        
+        // Unicode filename validation
+        try {
+            encodeURIComponent(file.name);
+        } catch (e) {
+            showValidationError(`File "${file.name}" has an invalid filename. Please rename and try again.`);
+            return;
+        }
+        
+        console.log(`✅ File "${file.name}" passed validation`);
+        window.uploadProgressLog.push(`Validated: ${file.name}`);
+    });
+}
+
+/**
+ * Show validation error to user
+ */
+function showValidationError(message) {
+    console.error(message);
+    
+    // Create toast notification
+    const toastContainer = document.getElementById('toast-container');
+    if (toastContainer) {
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-danger alert-dismissible fade show';
+        toast.innerHTML = `
+            <strong>Upload Error:</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        toastContainer.appendChild(toast);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 5000);
+    }
+}
+
+console.log('🎯 Upload enhancement JavaScript loaded successfully');

@@ -3,7 +3,10 @@ from __future__ import annotations
 """File upload page wrapping the reusable upload component."""
 
 import logging
-from typing import Any, Dict, List
+import time
+from dataclasses import dataclass
+from datetime import datetime
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Union
 
 import pandas as pd
 from dash.exceptions import PreventUpdate
@@ -12,12 +15,9 @@ try:
     from dash import dcc, html, no_update
 except Exception:  # pragma: no cover - optional Dash dependency
     from types import SimpleNamespace
-
     dcc = SimpleNamespace()
     html = SimpleNamespace()
     no_update = None
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
@@ -84,7 +84,6 @@ except Exception:  # pragma: no cover - optional dependency for tests
     ModalService = type("ModalService", (), {})
 
 
-from components.file_upload_component import FileUploadComponent
 
 from services.upload_data_service import (
     clear_uploaded_data as service_clear_uploaded_data,
@@ -98,17 +97,96 @@ from utils.upload_store import uploaded_data_store as _uploaded_data_store
 
 logger = logging.getLogger(__name__)
 
-_component = FileUploadComponent()
+
+def layout() -> html.Div:
+    """
+    Create the upload page layout using the fixed upload component.
+    """
+    from components.upload.drag_drop_upload_area_fixed import FileUploadComponent
+
+    upload_component = FileUploadComponent("main-file-upload")
+
+    return dbc.Container([
+        dbc.Row([
+            dbc.Col([
+                html.H1("File Upload", className="mb-4"),
+                html.P(
+                    "Upload your data files to begin analysis. "
+                    "Supported formats: CSV, Excel (.xlsx, .xls), and JSON files.",
+                    className="text-muted mb-4"
+                ),
+
+                # Upload component
+                upload_component.render(),
+
+                # Additional info
+                dbc.Card([
+                    dbc.CardHeader("Upload Guidelines"),
+                    dbc.CardBody([
+                        html.Ul([
+                            html.Li("Maximum file size: 50MB"),
+                            html.Li("Multiple files can be uploaded simultaneously"),
+                            html.Li("CSV files should use UTF-8 encoding when possible"),
+                            html.Li("Excel files (.xlsx, .xls) are fully supported"),
+                            html.Li("JSON files will be parsed and validated")
+                        ])
+                    ])
+                ], className="mt-4"),
+
+                # Toast container for notifications
+                html.Div(id="toast-container"),
+
+                # Hidden stores for data
+                dcc.Store(id="file-info-store"),
+                dcc.Store(id="upload-progress-store")
+
+            ], width=12)
+        ])
+    ], fluid=True)
 
 
-def layout():
-    """Return the upload component layout."""
-    return _component.layout()
+def register_upload_callbacks(
+    manager: "TrulyUnifiedCallbacks",
+    controller=None,
+) -> None:
+    """
+    Register upload callbacks using the manager.
+    
+    Args:
+        manager: Unified callback manager
+        controller: Optional analytics controller
+    """
+    try:
+        # Import the fixed component
+        from components.upload.drag_drop_upload_area_fixed import FileUploadComponent
+        
+        # Create upload component instance
+        upload_component = FileUploadComponent("main-file-upload")
+        
+        # Register callbacks through the manager's app
+        upload_component.register_callbacks(manager.app)
+        
+        logger.info("✅ Upload callbacks registered successfully")
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to register upload callbacks: {e}")
+        raise
 
 
-def register_upload_callbacks(manager, controller=None) -> None:
-    """Register callbacks for the upload component with ``manager.app``."""
-    _component.register_callbacks(manager, controller)
+def register_enhanced_upload_callbacks(
+    manager: "TrulyUnifiedCallbacks",
+    controller=None,
+) -> None:
+    """Enhanced upload callbacks - alias for compatibility."""
+    return register_upload_callbacks(manager, controller)
+
+
+def register_callbacks(
+    manager: "TrulyUnifiedCallbacks",
+    controller=None,
+) -> None:
+    """General callback registration - alias for compatibility."""
+    return register_upload_callbacks(manager, controller)
 
 
 def get_uploaded_data() -> Dict[str, pd.DataFrame]:
