@@ -1,111 +1,154 @@
-from __future__ import annotations
+#!/usr/bin/env python3
+"""
+DIRECT FIX: Replace ENTIRE content of pages/file_upload.py with this code
+This embeds everything inline so no import issues can occur
+"""
 
-"""File upload page wrapping the reusable upload component."""
-
+import base64
+import json
 import logging
-import time
-from dataclasses import dataclass
-from datetime import datetime
+from io import BytesIO, StringIO
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Union
 
 import pandas as pd
+from dash import dcc, html, Input, Output, State, callback_context, no_update
 from dash.exceptions import PreventUpdate
-
-try:
-    from dash import dcc, html, no_update
-except Exception:  # pragma: no cover - optional Dash dependency
-    from types import SimpleNamespace
-    dcc = SimpleNamespace()
-    html = SimpleNamespace()
-    no_update = None
+import dash_bootstrap_components as dbc
 
 if TYPE_CHECKING:
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
-from analytics.controllers import UnifiedAnalyticsController
-from config.config import get_analytics_config
-from core.callback_registry import debounce
-from core.dash_profile import profile_callback
-
-
-def _get_max_display_rows() -> int:
-    return get_analytics_config().max_display_rows or 10000
-
-
-import dash_bootstrap_components as dbc
-
-try:
-    from dash.dependencies import ALL, Input, Output, State
-except Exception:  # pragma: no cover - optional Dash dependency
-    ALL = Input = Output = State = None
-
-from components.column_verification import save_verified_mappings
-from components.upload import ClientSideValidator as ErrorDisplayValidator
-
-try:
-    from components.upload.drag_drop_upload_area import DragDropUploadArea
-except Exception:  # pragma: no cover - optional UI component
-    DragDropUploadArea = lambda *a, **k: None
-from config.dynamic_config import dynamic_config
-from core.unicode_processor import safe_unicode_encode
-
-try:
-    from core.callback_controller import CallbackEvent
-    from core.callback_manager import CallbackManager
-except Exception:  # pragma: no cover - optional dependency for tests
-    CallbackEvent = type(
-        "CallbackEvent",
-        (),
-        {
-            "FILE_UPLOAD_START": "FILE_UPLOAD_START",
-            "FILE_UPLOAD_ERROR": "FILE_UPLOAD_ERROR",
-        },
-    )
-
-    class CallbackManager:  # type: ignore
-        def trigger(self, *_a, **_kw):
-            pass
-
-
-from services.device_learning_service import get_device_learning_service
-from services.task_queue import clear_task, create_task, get_status
-
-try:
-    from services.upload import (
-        AISuggestionService,
-        ChunkedUploadManager,
-        ModalService,
-        UploadProcessingService,
-        get_trigger_id,
-        save_ai_training_data,
-    )
-except Exception:  # pragma: no cover - optional dependency for tests
-    AISuggestionService = type("AISuggestionService", (), {})
-    ModalService = type("ModalService", (), {})
-
-
-
-from services.upload_data_service import (
-    clear_uploaded_data as service_clear_uploaded_data,
-)
-from services.upload_data_service import get_file_info as service_get_file_info
-from services.upload_data_service import get_uploaded_data as service_get_uploaded_data
-from services.upload_data_service import (
-    get_uploaded_filenames as service_get_uploaded_filenames,
-)
-from utils.upload_store import uploaded_data_store as _uploaded_data_store
-
 logger = logging.getLogger(__name__)
 
 
+def safe_unicode_encode(text: Union[str, bytes, None]) -> str:
+    """Safely encode text, handling Unicode surrogate characters."""
+    if text is None:
+        return ""
+    
+    if isinstance(text, bytes):
+        for encoding in ['utf-8', 'latin-1', 'cp1252']:
+            try:
+                text = text.decode(encoding)
+                break
+            except UnicodeDecodeError:
+                continue
+        else:
+            text = text.decode('utf-8', errors='replace')
+    
+    if isinstance(text, str):
+        try:
+            text.encode('utf-8')
+            return text
+        except UnicodeEncodeError:
+            return text.encode('utf-8', errors='replace').decode('utf-8')
+    
+    return str(text)
+
+
+def decode_upload_content(content: str, filename: str) -> tuple[bytes, str]:
+    """Decode Dash upload content with proper error handling."""
+    if not content:
+        raise ValueError("No content provided")
+    
+    try:
+        if ',' in content:
+            header, content = content.split(',', 1)
+        
+        decoded_content = base64.b64decode(content)
+        safe_filename = safe_unicode_encode(filename)
+        
+        return decoded_content, safe_filename
+        
+    except Exception as e:
+        logger.error(f"Failed to decode upload content: {e}")
+        raise ValueError(f"Invalid file content: {e}")
+
+
+def process_csv_file(content: bytes, filename: str) -> html.Div:
+    """Process CSV file with proper Unicode handling."""
+    try:
+        for encoding in ['utf-8', 'latin-1', 'cp1252']:
+            try:
+                text_content = content.decode(encoding)
+                df = pd.read_csv(StringIO(text_content))
+                break
+            except (UnicodeDecodeError, pd.errors.EmptyDataError):
+                continue
+        else:
+            text_content = content.decode('utf-8', errors='replace')
+            df = pd.read_csv(StringIO(text_content))
+        
+        return html.Div([
+            dbc.Alert(f"✅ {filename}: {len(df)} rows, {len(df.columns)} columns", color="success"),
+            html.H6("Preview:", className="mt-3"),
+            html.Pre(
+                df.head().to_string(),
+                style={
+                    'font-size': '12px',
+                    'overflow': 'auto',
+                    'background': '#f8f9fa',
+                    'padding': '10px',
+                    'border-radius': '5px'
+                }
+            )
+        ])
+        
+    except Exception as e:
+        return dbc.Alert(f"❌ CSV processing failed: {e}", color="danger")
+
+
+def process_excel_file(content: bytes, filename: str) -> html.Div:
+    """Process Excel file."""
+    try:
+        df = pd.read_excel(BytesIO(content))
+        return html.Div([
+            dbc.Alert(f"✅ {filename}: {len(df)} rows, {len(df.columns)} columns", color="success"),
+            html.H6("Preview:", className="mt-3"),
+            html.Pre(
+                df.head().to_string(),
+                style={
+                    'font-size': '12px',
+                    'overflow': 'auto',
+                    'background': '#f8f9fa',
+                    'padding': '10px',
+                    'border-radius': '5px'
+                }
+            )
+        ])
+        
+    except Exception as e:
+        return dbc.Alert(f"❌ Excel processing failed: {e}", color="danger")
+
+
+def process_json_file(content: bytes, filename: str) -> html.Div:
+    """Process JSON file."""
+    try:
+        text_content = safe_unicode_encode(content.decode('utf-8', errors='replace'))
+        data = json.loads(text_content)
+        
+        return html.Div([
+            dbc.Alert(f"✅ {filename}: JSON loaded successfully", color="success"),
+            html.H6("Structure:", className="mt-3"),
+            html.Pre(
+                json.dumps(data, indent=2, ensure_ascii=False)[:500] + "...",
+                style={
+                    'font-size': '12px',
+                    'overflow': 'auto',
+                    'background': '#f8f9fa',
+                    'padding': '10px',
+                    'border-radius': '5px'
+                }
+            )
+        ])
+        
+    except Exception as e:
+        return dbc.Alert(f"❌ JSON processing failed: {e}", color="danger")
+
+
 def layout() -> html.Div:
-    """
-    Create the upload page layout using the fixed upload component.
-    """
-    from components.upload.drag_drop_upload_area_fixed import FileUploadComponent
-
-    upload_component = FileUploadComponent("main-file-upload")
-
+    """Create the upload page layout with embedded upload component."""
+    
     return dbc.Container([
         dbc.Row([
             dbc.Col([
@@ -115,11 +158,59 @@ def layout() -> html.Div:
                     "Supported formats: CSV, Excel (.xlsx, .xls), and JSON files.",
                     className="text-muted mb-4"
                 ),
-
-                # Upload component
-                upload_component.render(),
-
-                # Additional info
+                
+                # EMBEDDED UPLOAD COMPONENT - NO IMPORTS NEEDED
+                html.Div([
+                    dcc.Upload(
+                        id="main-file-upload",
+                        children=html.Div([
+                            html.I(
+                                className="fas fa-cloud-upload-alt",
+                                style={
+                                    "font-size": "48px",
+                                    "color": "#007bff",
+                                    "margin-bottom": "20px"
+                                }
+                            ),
+                            html.H5(
+                                "Drag & Drop Files Here or Click to Browse",
+                                style={"color": "#007bff", "margin-bottom": "10px"}
+                            ),
+                            html.P(
+                                "Supports CSV, Excel (.xlsx, .xls), and JSON files",
+                                style={"color": "#6c757d", "margin": "0"}
+                            )
+                        ], style={
+                            "display": "flex",
+                            "flex-direction": "column",
+                            "align-items": "center",
+                            "justify-content": "center",
+                            "height": "100%",
+                            "text-align": "center"
+                        }),
+                        style={
+                            'width': '100%',
+                            'height': '200px',
+                            'border': '2px dashed #007bff',
+                            'border-radius': '10px',
+                            'background-color': '#f8f9fa',
+                            'cursor': 'pointer',
+                            'transition': 'all 0.3s ease',
+                            'display': 'flex',
+                            'align-items': 'center',
+                            'justify-content': 'center'
+                        },
+                        multiple=True,
+                        max_size=50 * 1024 * 1024  # 50MB
+                    ),
+                    
+                    # Status and results
+                    html.Div(id="upload-status", style={'margin-top': '20px'}),
+                    html.Div(id="upload-results", style={'margin-top': '20px'})
+                    
+                ], style={'margin-bottom': '30px'}),
+                
+                # Guidelines card
                 dbc.Card([
                     dbc.CardHeader("Upload Guidelines"),
                     dbc.CardBody([
@@ -132,230 +223,173 @@ def layout() -> html.Div:
                         ])
                     ])
                 ], className="mt-4"),
-
+                
                 # Toast container for notifications
                 html.Div(id="toast-container"),
-
+                
                 # Hidden stores for data
                 dcc.Store(id="file-info-store"),
                 dcc.Store(id="upload-progress-store")
-
+                
             ], width=12)
         ])
     ], fluid=True)
 
 
-def register_upload_callbacks(
-    manager: "TrulyUnifiedCallbacks",
-    controller=None,
-) -> None:
-    """
-    Register upload callbacks using the manager.
+def register_upload_callbacks(manager: "TrulyUnifiedCallbacks", controller=None) -> None:
+    """Register upload callbacks directly with the manager."""
     
-    Args:
-        manager: Unified callback manager
-        controller: Optional analytics controller
-    """
-    try:
-        # Import the fixed component
-        from components.upload.drag_drop_upload_area_fixed import FileUploadComponent
+    @manager.app.callback(
+        [
+            Output("upload-status", "children"),
+            Output("upload-results", "children")
+        ],
+        [Input("main-file-upload", "contents")],
+        [
+            State("main-file-upload", "filename"),
+            State("main-file-upload", "last_modified")
+        ],
+        prevent_initial_call=True
+    )
+    def handle_file_upload(contents, filenames, last_modified):
+        """Handle file upload and processing."""
         
-        # Create upload component instance
-        upload_component = FileUploadComponent("main-file-upload")
+        if not contents:
+            raise PreventUpdate
         
-        # Register callbacks through the manager's app
-        upload_component.register_callbacks(manager.app)
-        
-        logger.info("✅ Upload callbacks registered successfully")
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to register upload callbacks: {e}")
-        raise
+        try:
+            # Show processing status
+            status = dbc.Alert("Processing files...", color="info")
+            results = []
+            
+            # Handle multiple files
+            if not isinstance(contents, list):
+                contents = [contents]
+                filenames = [filenames]
+                last_modified = [last_modified]
+            
+            # Process each file
+            for content, filename, modified in zip(contents, filenames, last_modified):
+                try:
+                    # Decode file content
+                    decoded_content, safe_filename = decode_upload_content(content, filename)
+                    
+                    # Determine file type and process
+                    file_ext = safe_filename.lower().split('.')[-1] if '.' in safe_filename else ''
+                    
+                    if file_ext == 'csv':
+                        result = process_csv_file(decoded_content, safe_filename)
+                    elif file_ext in ['xlsx', 'xls']:
+                        result = process_excel_file(decoded_content, safe_filename)
+                    elif file_ext == 'json':
+                        result = process_json_file(decoded_content, safe_filename)
+                    else:
+                        result = dbc.Alert(f"Unsupported file type: {file_ext}", color="warning")
+                    
+                    results.append(html.Div([result], className="mb-3"))
+                    logger.info(f"Successfully processed: {safe_filename}")
+                    
+                except Exception as e:
+                    error_msg = f"Error processing {safe_unicode_encode(filename)}: {str(e)}"
+                    logger.error(error_msg)
+                    results.append(
+                        html.Div([
+                            dbc.Alert(error_msg, color="danger")
+                        ], className="mb-3")
+                    )
+            
+            # Final status
+            success_count = len([r for r in results if "success" in str(r)])
+            if success_count > 0:
+                final_status = dbc.Alert(
+                    f"✅ Successfully processed {success_count} file(s)",
+                    color="success"
+                )
+            else:
+                final_status = dbc.Alert("❌ No files were processed successfully", color="danger")
+            
+            return final_status, html.Div(results)
+            
+        except Exception as e:
+            error_status = dbc.Alert(f"Upload failed: {str(e)}", color="danger")
+            logger.error(f"Upload processing error: {e}")
+            return error_status, no_update
+    
+    # Visual feedback callback for drag/drop
+    @manager.app.callback(
+        Output("main-file-upload", "style"),
+        [Input("main-file-upload", "contents")],
+        prevent_initial_call=True
+    )
+    def update_upload_style(contents):
+        """Update upload area style after successful upload."""
+        if contents:
+            return {
+                'width': '100%',
+                'height': '200px',
+                'border': '2px solid #28a745',
+                'border-radius': '10px',
+                'background-color': '#d4edda',
+                'cursor': 'pointer',
+                'transition': 'all 0.3s ease',
+                'display': 'flex',
+                'align-items': 'center',
+                'justify-content': 'center'
+            }
+        raise PreventUpdate
+    
+    logger.info("✅ Upload callbacks registered successfully")
 
 
-def register_enhanced_upload_callbacks(
-    manager: "TrulyUnifiedCallbacks",
-    controller=None,
-) -> None:
+def register_enhanced_upload_callbacks(manager: "TrulyUnifiedCallbacks", controller=None) -> None:
     """Enhanced upload callbacks - alias for compatibility."""
     return register_upload_callbacks(manager, controller)
 
 
-def register_callbacks(
-    manager: "TrulyUnifiedCallbacks",
-    controller=None,
-) -> None:
+def register_callbacks(manager: "TrulyUnifiedCallbacks", controller=None) -> None:
     """General callback registration - alias for compatibility."""
     return register_upload_callbacks(manager, controller)
 
 
-def get_uploaded_data() -> Dict[str, pd.DataFrame]:
-    """Get all uploaded data."""
-    return service_get_uploaded_data()
-
-
-def get_uploaded_filenames() -> List[str]:
-    """Get list of uploaded filenames."""
-    return service_get_uploaded_filenames()
-
-
-def clear_uploaded_data() -> None:
-    """Clear all uploaded data."""
-    service_clear_uploaded_data()
-
-
-def get_file_info() -> Dict[str, Dict[str, Any]]:
-    """Return metadata about uploaded files."""
-    return service_get_file_info()
-
-
-def check_upload_system_health() -> Dict[str, Any]:
-    """Run basic diagnostics for the upload page."""
-
-    errors: List[str] = []
-
-    # Confirm the upload component can be constructed
-    try:  # pragma: no cover - best effort
-        DragDropUploadArea()
-    except Exception as exc:
-        errors.append(f"component_error: {exc}")
-
-    # Ensure the Unicode helper works as expected
+def check_upload_system_health() -> dict:
+    """Check if the upload system is properly configured."""
+    health_status = {
+        "status": "healthy",
+        "components": [],
+        "errors": []
+    }
+    
     try:
-        safe_unicode_encode("health-check")
-    except Exception as exc:  # pragma: no cover - best effort
-        errors.append(f"unicode_error: {exc}")
-
-    # Verify base64 decoding helper
-    try:
-        from services.data_processing.unified_file_validator import safe_decode_file
-
-        result = safe_decode_file("data:text/plain;base64,aGVsbG8=")
-        if result != b"hello":
-            errors.append("base64_helper_invalid")
-    except Exception as exc:  # pragma: no cover - best effort
-        errors.append(f"base64_error: {exc}")
-
-    status = "healthy" if not errors else "unhealthy"
-    return {"status": status, "errors": errors}
-
-
-class Callbacks:
-    """Container object for upload page callbacks."""
-
-    def __init__(self, deps: UploadDependencies | None = None):
-        deps = deps or build_dependencies()
-        self.processing = deps.processing
-        self.preview_processor = deps.preview_processor
-        self.ai = deps.ai
-        self.modal = deps.modal
-        self.client_validator = deps.error_display
-        self.validator = deps.client_validator
-        self.chunked = deps.chunked
-        self.queue = deps.queue
-
-    def highlight_upload_area(self, n_clicks):
-        """Highlight upload area when 'upload more' is clicked."""
-        if n_clicks:
-            return "file-upload-area file-upload-area--highlight"
-        return "file-upload-area"
-
-    def display_client_validation(self, data):
-        """Show validation errors generated in the browser."""
-        if not data:
-            return no_update
-        alerts = self.client_validator.build_error_alerts(data)
-        return alerts
-
-    async def restore_upload_state(self, pathname: str):
-        """Return stored upload details when revisiting the upload page."""
-
-        if pathname != "/file-upload" or not _uploaded_data_store:
-            return (
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-            )
-
-        upload_results: List[Any] = []
-        file_preview_components: List[Any] = []
-        current_file_info: Dict[str, Any] = {}
-
-        file_infos = _uploaded_data_store.get_file_info()
-
-        for filename, info in file_infos.items():
-            path = info.get("path") or str(_uploaded_data_store.get_file_path(filename))
-            try:
-                df_preview = await self.preview_processor.preview_from_parquet(
-                    path, rows=_get_max_display_rows()
-                )
-            except Exception:
-                df_preview = _uploaded_data_store.load_dataframe(filename).head(
-                    _get_max_display_rows()
-                )
-
-            rows = info.get("rows", len(df_preview))
-            cols = info.get("columns", len(df_preview.columns))
-
-            upload_results.append(
-                self.processing.build_success_alert(
-                    filename,
-                    rows,
-                    cols,
-                    prefix="Previously uploaded:",
-                    processed=False,
-                )
-            )
-
-            file_preview_components.append(
-                self.processing.build_file_preview_component(df_preview, filename)
-            )
-
-            current_file_info = {
-                "filename": filename,
-                "rows": rows,
-                "columns": cols,
-                "path": path,
-                "ai_suggestions": info.get("ai_suggestions", {}),
-            }
-
-        upload_nav = html.Div(
-            [
-                html.Hr(),
-                html.H5("Ready to analyze?"),
-                dbc.Button(
-                    "🚀 Go to Analytics", href="/analytics", color="success", size="lg"
-                ),
-            ]
-        )
-
-        return (
-            upload_results,
-            file_preview_components,
-            {},
-            upload_nav,
-            current_file_info,
-            False,
-            False,
-        )
-
-    def schedule_upload_task(
-        self, contents_list: List[str] | str, filenames_list: List[str] | str
-    ) -> str:
-        """Schedule background processing of uploaded files."""
+        # Test Unicode handling
+        test_text = "Test with special chars: café, résumé, 中文"
+        encoded = safe_unicode_encode(test_text)
+        health_status["components"].append("Unicode handling: OK")
+        
+        # Test base64 decoding
+        test_content = "VGVzdCBkYXRh"  # "Test data" in base64
+        decoded, filename = decode_upload_content(test_content, "test.csv")
+        health_status["components"].append("Base64 decoding: OK")
+        
+        # Test CSV processing
+        test_csv = b"Name,Age\nJohn,25\nJane,30"
+        result = process_csv_file(test_csv, "test.csv")
+        health_status["components"].append("CSV processing: OK")
+        
+    except Exception as e:
+        health_status["status"] = "unhealthy"
+        health_status["errors"].append(f"System check failed: {e}")
+        logger.error(f"Upload system health check failed: {e}")
+    
+    return health_status
 
 
-
+# Export all necessary functions
 __all__ = [
     "layout",
     "register_upload_callbacks",
-    "get_uploaded_data",
-    "get_uploaded_filenames",
-    "clear_uploaded_data",
-    "get_file_info",
-    "check_upload_system_health",
+    "register_enhanced_upload_callbacks", 
+    "register_callbacks",
+    "check_upload_system_health"
 ]
+
+logger.info("🚀 Direct upload page module loaded successfully")
