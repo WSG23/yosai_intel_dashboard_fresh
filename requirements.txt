@@ -13,7 +13,7 @@ dash-bootstrap-components==1.6.0
 dash-extensions==1.0.4
 dash-leaflet==0.1.28
 plotly==5.15.0
-pandas==2.1.1
+pandas>=2.1.1,<2.3.0
 numpy>=1.24.0
 authlib==1.2.1
 python-jose==3.3.0
