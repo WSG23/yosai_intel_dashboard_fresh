@@ -7,7 +7,7 @@ import os
 import sys
 import types
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 # Graceful Dash imports with fallback
 try:
@@ -24,7 +24,7 @@ except ImportError as e:
         logging.warning("Running in test mode - using Dash stubs")
 
         class _MockDash:
-            def __init__(self, *args, **kwargs):
+            def __init__(self, *args, **kwargs) -> None:
                 pass
 
             def callback(self, *args, **kwargs):
@@ -33,12 +33,23 @@ except ImportError as e:
             server = type("MockServer", (), {})()
 
         class _MockComponent:
-            def __init__(self, *args, **kwargs):
+            def __init__(self, *args, **kwargs) -> None:
                 pass
 
-        dash = _MockDash  # type: ignore
-        dbc = type("MockDBC", (), {})()  # type: ignore
-        Input = Output = dcc = html = _MockComponent  # type: ignore
+        dash = cast(Any, types.SimpleNamespace(Dash=_MockDash))
+        Input = Output = dcc = html = cast(Any, _MockComponent)
+        dbc = cast(
+            Any,
+            types.SimpleNamespace(
+                themes=types.SimpleNamespace(BOOTSTRAP=None),
+                Alert=_MockComponent,
+                Container=_MockComponent,
+                Row=_MockComponent,
+                Col=_MockComponent,
+                Navbar=_MockComponent,
+                Button=_MockComponent,
+            ),
+        )
         DASH_AVAILABLE = False
     else:
         sys.exit(1)
@@ -97,6 +108,9 @@ except Exception:  # pragma: no cover - fallback when unavailable
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+    import dash
+    from dash import Input, Output, dcc, html
+    import dash_bootstrap_components as dbc
 
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 BUNDLE = "/assets/dist/main.min.css"
