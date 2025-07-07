@@ -16,3 +16,16 @@ def test_get_nav_icon_existing(monkeypatch):
 def test_get_nav_icon_missing(monkeypatch):
     app = _make_app(monkeypatch)
     assert get_nav_icon(app, "missing_icon_xyz") is None
+
+
+def test_get_nav_icon_fallback(monkeypatch):
+    app = _make_app(monkeypatch)
+
+    def fake_get_asset_url(path):
+        return None
+
+    app.get_asset_url = fake_get_asset_url
+    assert (
+        get_nav_icon(app, "analytics")
+        == "/assets/navbar_icons/analytics.png"
+    )

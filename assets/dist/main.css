@@ -1091,8 +1091,8 @@ button:disabled {
 }
 /* Navigation Icon */
 .nav-icon {
-  width: 3rem;
-  height: 3rem;
+  width: 2rem;
+  height: 2rem;
   flex-shrink: 0;
   padding: var(--space-1);
 }
