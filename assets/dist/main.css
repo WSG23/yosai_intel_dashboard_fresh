@@ -1,4 +1,7 @@
 /* This file is auto-generated. Do not edit directly. */
+
+
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 /* =================================================================== */
 /* assets/css/main.css - Master Import File */
 /* =================================================================== */
@@ -1093,11 +1096,25 @@ button:disabled {
 .nav-icon {
   width: 2rem;
   height: 2rem;
+
   flex-shrink: 0;
-  padding: var(--space-1);
+}
+.nav-icon--image {
+  -o-object-fit: contain;
+     object-fit: contain;
+  vertical-align: middle;
+}
+.nav-icon--fallback {
+  font-size: 20px;
+  line-height: 24px;
+  text-align: center;
+  vertical-align: middle;
 }
 .navbar-nav-link {
   padding: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 /* Navbar Component */
 .navbar {
