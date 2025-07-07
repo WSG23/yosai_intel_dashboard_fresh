@@ -69,7 +69,7 @@ def handle_unicode_surrogates(text: str) -> str:
 
 # Rest of imports
 from flasgger import Swagger
-from flask import session
+from flask import Flask, session
 from flask_babel import Babel
 from flask_compress import Compress
 
@@ -313,7 +313,7 @@ def _create_full_app() -> "Dash":
         _initialize_services(service_container)
 
         # Expose basic health check endpoint and Swagger docs
-        server = app.server
+        server: Flask = cast(Flask, app.server)
         _configure_swagger(server)
         from services.progress_events import ProgressEventManager
 
@@ -349,7 +349,7 @@ def _create_full_app() -> "Dash":
             """Stream task progress updates as Server-Sent Events."""
             return progress_events.stream(task_id)
 
-        @app.server.before_request
+        @server.before_request
         def filter_noisy_requests():
             """Filter out SSL handshake attempts and bot noise"""
             from flask import abort, request
@@ -464,7 +464,7 @@ def _create_simple_app() -> "Dash":
         )
 
         # Expose basic health check endpoint and Swagger docs
-        server = app.server
+        server: Flask = cast(Flask, app.server)
         _configure_swagger(server)
 
         @server.route("/health", methods=["GET"])
@@ -583,7 +583,7 @@ def _create_json_safe_app() -> "Dash":
         )
 
         # Expose basic health check endpoint and Swagger docs
-        server = app.server
+        server: Flask = cast(Flask, app.server)
         _configure_swagger(server)
 
         @server.route("/health", methods=["GET"])
