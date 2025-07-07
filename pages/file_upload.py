@@ -145,17 +145,6 @@ from utils.upload_store import uploaded_data_store as _uploaded_data_store
 logger = logging.getLogger(__name__)
 
 
-def safe_unicode_encode(value: Any) -> str:
-    """Safely encode potentially problematic text to UTF-8."""
-
-    try:
-        if isinstance(value, bytes):
-            value = value.decode("utf-8", "surrogatepass")
-        return str(value).encode("utf-8", "surrogatepass").decode("utf-8", "ignore")
-    except Exception:
-        return str(value)
-
-
 def handle_enhanced_upload(contents: str | None, filename: str | None) -> Any:
     """Basic enhanced upload handler."""
 
