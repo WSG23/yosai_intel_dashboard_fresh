@@ -657,12 +657,49 @@ def _create_placeholder_page(title: str, subtitle: str, message: str) -> html.Di
 def _register_router_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
     """Register page routing callbacks."""
 
-    @manager.register_callback(
-        Output("page-content", "children"),
-        Output("page-content", "className"),
-        Input("url", "pathname"),
+    def safe_callback(outputs, inputs, callback_id="unknown"):
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                try:
+                    safe_args = []
+                    for arg in args:
+                        if isinstance(arg, str):
+                            safe_args.append(handle_unicode_surrogates(arg))
+                        else:
+                            safe_args.append(arg)
+
+                    result = func(*safe_args, **kwargs)
+
+                    if isinstance(result, str):
+                        result = handle_unicode_surrogates(result)
+                    elif isinstance(result, (list, tuple)):
+                        result = [
+                            handle_unicode_surrogates(item) if isinstance(item, str) else item
+                            for item in result
+                        ]
+
+                    return result
+
+                except Exception as e:
+                    logger.error(f"Callback {callback_id} failed: {e}")
+                    if isinstance(outputs, (list, tuple)):
+                        return ["Error"] * len(outputs)
+                    return "Error"
+
+            manager.register_callback(
+                outputs,
+                inputs,
+                callback_id=callback_id,
+                component_name="app_factory",
+            )(wrapper)
+            return wrapper
+
+        return decorator
+
+    @safe_callback(
+        [Output("page-content", "children"), Output("page-content", "className")],
+        [Input("url", "pathname")],
         callback_id="display_page",
-        component_name="app_factory",
     )
     def display_page(pathname: str):
         end_class = "main-content p-4 transition-fade-move transition-end"
@@ -807,78 +844,9 @@ def _register_global_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
             logger.error("❌ No app instance available for callback registration")
             return
 
-        # Consolidated callback decorator with Unicode safety
-        def safe_callback(outputs, inputs, callback_id="unknown"):
-            def decorator(func):
-                def wrapper(*args, **kwargs):
-                    try:
-                        # Handle Unicode surrogates in inputs
-                        safe_args = []
-                        for arg in args:
-                            if isinstance(arg, str):
-                                safe_args.append(handle_unicode_surrogates(arg))
-                            else:
-                                safe_args.append(arg)
-
-                        result = func(*safe_args, **kwargs)
-
-                        # Handle Unicode surrogates in outputs
-                        if isinstance(result, str):
-                            result = handle_unicode_surrogates(result)
-                        elif isinstance(result, (list, tuple)):
-                            result = [handle_unicode_surrogates(item) if isinstance(item, str) else item for item in result]
-
-                        return result
-
-                    except Exception as e:
-                        logger.error(f"Callback {callback_id} failed: {e}")
-                        # Return appropriate error response based on output count
-                        if isinstance(outputs, (list, tuple)):
-                            return ["Error"] * len(outputs)
-                        return "Error"
-
-                # Register with Dash
-                app.callback(outputs, inputs)(wrapper)
-                logger.info(f"✅ Registered callback: {callback_id}")
-                return wrapper
-            return decorator
-
         # Register device learning callbacks
         from services.device_learning_service import create_learning_callbacks
         create_learning_callbacks(manager)
-
-        # Main navigation callback with consolidation
-        @safe_callback(
-            Output("page-content", "children"),
-            Input("url", "pathname"),
-            "main-navigation"
-        )
-        def display_page(pathname):
-            """Main page routing with Unicode safety"""
-            if not pathname:
-                pathname = "/"
-
-            # Route mapping with error handling
-            routes = {
-                "/": _get_dashboard_page,
-                "/dashboard": _get_dashboard_page,
-                "/analytics": _get_analytics_page,
-                "/graphs": _get_graphs_page,
-                "/export": _get_export_page,
-                "/settings": _get_settings_page,
-                "/upload": _get_upload_page,
-                "/file-upload": _get_upload_page,
-            }
-
-            page_func = routes.get(pathname)
-            if page_func:
-                try:
-                    return page_func()
-                except Exception as e:
-                    logger.error(f"Page load failed for {pathname}: {e}")
-                    return _create_error_page(f"Failed to load page: {pathname}")
-
-            return _create_error_page(f"Page not found: {pathname}")
 
         logger.info("✅ Global callbacks registered successfully")
 
