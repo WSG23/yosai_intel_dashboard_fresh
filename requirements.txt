@@ -36,4 +36,6 @@ gunicorn>=21.0.0
 chardet>=5.0.0
 pyopenssl>=23.0.0
 SQLAlchemy>=2.0
+prefect>=2.0
+click>=8.0
 
