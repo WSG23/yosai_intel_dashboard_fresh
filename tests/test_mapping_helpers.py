@@ -1,6 +1,6 @@
 import pandas as pd
 
-from utils.mapping_helpers import map_and_clean
+from utils.mapping_helpers import map_and_clean, standardize_column_names
 
 
 def test_map_and_clean_basic():
@@ -58,3 +58,9 @@ def test_map_and_clean_with_learned_mappings():
         "token_id",
     ]
     assert cleaned.loc[0, "person_id"] == "u2"
+
+
+def test_standardize_column_names_basic():
+    df = pd.DataFrame({"A B": [1], "C-D": [2], "e": [3]})
+    out = standardize_column_names(df)
+    assert list(out.columns) == ["a_b", "c_d", "e"]
