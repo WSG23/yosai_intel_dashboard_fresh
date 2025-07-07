@@ -1,11 +1,14 @@
 """
-Shim module to provide dash.no_update in environments
-where dash.no_update is missing.
+Local shim to provide dash.no_update for tests.
 """
 try:
-    # Try to import the real no_update if dash is installed
+    # If the real dash package exports no_update, use it
     from dash import no_update
-except Exception:
-    # Fallback stub
-    no_update = None  # or use a sentinel object if preferred
+except (ImportError, ModuleNotFoundError):
+    # Fallback stub: a unique sentinel object
+    class _NoUpdateSentinel:
+        """Sentinel for no_update stub."""
+        pass
+    no_update = _NoUpdateSentinel()
+
 __all__ = ["no_update"]
