@@ -1,5 +1,20 @@
 import pytest
-import dash
+from pathlib import Path
+import sys, types
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+try:
+    import dash
+except ModuleNotFoundError:
+    dash = types.SimpleNamespace(no_update=None)
+    sys.modules['dash'] = dash
+
+# Provide dash.exceptions.PreventUpdate when dash isn't installed
+if 'dash.exceptions' not in sys.modules:
+    sys.modules['dash.exceptions'] = types.SimpleNamespace(PreventUpdate=Exception)
 
 # Ensure dash.no_update is defined for tests
 if not hasattr(dash, "no_update"):
