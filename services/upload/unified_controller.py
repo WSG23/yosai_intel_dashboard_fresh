@@ -16,10 +16,7 @@ from . import (
 from .managers import ChunkedUploadManager
 from .upload_queue_manager import UploadQueueManager
 
-try:  # pragma: no cover - fallback for optional dependency
-    from core.unicode import safe_unicode_encode
-except Exception:  # pragma: no cover - minimal environment
-    from core.unicode_processor import safe_unicode_encode  # type: ignore
+from core.unicode_processor import safe_unicode_encode
 
 logger = logging.getLogger(__name__)
 

@@ -16,7 +16,6 @@ from core.unicode import (
     safe_decode,
     safe_encode,
     safe_encode_text,
-    safe_unicode_encode,
     sanitize_data_frame,
     sanitize_dataframe,
     sanitize_unicode_input,

@@ -11,11 +11,11 @@ from core.unicode import (  # Deprecated functions for testing
     safe_decode_bytes,
     safe_encode,
     safe_encode_text,
-    safe_unicode_encode,
     sanitize_data_frame,
     sanitize_dataframe,
     sanitize_unicode_input,
 )
+from core.unicode_processor import safe_unicode_encode
 
 
 def test_surrogate_removal():

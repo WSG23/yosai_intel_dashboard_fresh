@@ -17,11 +17,11 @@ try:  # pragma: no cover - graceful import fallback
         safe_decode_bytes,
         safe_encode,
         safe_unicode_decode,
-        safe_unicode_encode,
         sanitize_data_frame,
         sanitize_dataframe,
         sanitize_unicode_input,
     )
+    from core.unicode_processor import safe_unicode_encode
 
     # Migration aliases for transitional imports
     unicode_clean_text = clean_unicode_text

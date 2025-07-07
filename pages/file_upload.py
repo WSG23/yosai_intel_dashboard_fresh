@@ -50,7 +50,7 @@ try:
 except Exception:  # pragma: no cover - optional UI component
     DragDropUploadArea = lambda *a, **k: None
 from config.dynamic_config import dynamic_config
-from core.unicode import safe_unicode_encode
+from core.unicode_processor import safe_unicode_encode
 
 try:
     from core.callback_controller import CallbackEvent
