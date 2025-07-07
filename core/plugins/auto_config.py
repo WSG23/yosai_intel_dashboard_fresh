@@ -1,7 +1,7 @@
 """Utility helpers for automatic plugin setup."""
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 
 from dash import Dash
 
@@ -25,7 +25,7 @@ class PluginAutoConfiguration:
         self.app = app
         self.container = container or DIContainer()
         # Expose container on the app for decorators like ``safe_callback``
-        self.app._yosai_container = self.container
+        cast(Any, self.app)._yosai_container = self.container
         self.config_manager = config_manager or ConfigManager()
         self.package = package
         self.registry = UnifiedPluginRegistry(

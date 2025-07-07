@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 
 import dash
 
@@ -48,8 +48,8 @@ class DashCSRFPlugin:
         self._initialized = True
 
         if not hasattr(app, "_plugins"):
-            app._plugins = {}
-        app._plugins["csrf"] = self
+            cast(Any, app)._plugins = {}
+        cast(Any, app)._plugins["csrf"] = self
 
         self._run_hooks("after_init")
         logger.info("Dash CSRF Plugin initialized")
