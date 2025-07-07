@@ -321,6 +321,7 @@ class Callbacks:
         self, contents_list: List[str] | str, filenames_list: List[str] | str
     ) -> str:
         """Schedule background processing of uploaded files."""
+
         if not contents_list:
             return ""
 
@@ -334,13 +335,31 @@ class Callbacks:
                 contents_list, filenames_list, task_progress=progress
             )
 
-        task_id = create_task(job)
-        return task_id
+        manager = CallbackManager()
+        try:
+            task_id = create_task(job)
+            logger.info("Scheduled upload task %s", task_id)
+            manager.trigger(
+                CallbackEvent.FILE_UPLOAD_START,
+                "file_upload",
+                {"files": filenames_list, "task_id": task_id},
+            )
+            return task_id
+        except Exception as exc:  # pragma: no cover - safety
+            logger.error("Failed to schedule upload task: %s", exc)
+            manager.trigger(
+                CallbackEvent.FILE_UPLOAD_ERROR,
+                "file_upload",
+                {"error": str(exc)},
+            )
+            return ""
 
     def reset_upload_progress(
         self, contents_list: List[str] | str
     ) -> Tuple[int, str, bool]:
         """Reset progress indicators when a new upload starts."""
+
+        logger.debug("Resetting upload progress")
         if not contents_list:
             return 0, "0%", True
         return 0, "0%", False
@@ -350,6 +369,7 @@ class Callbacks:
 
         status = get_status(task_id)
         progress = int(status.get("progress", 0))
+        logger.debug("Upload progress %s%% for %s", progress, task_id)
         file_items = [
             html.Li(
                 dbc.Progress(
@@ -368,12 +388,20 @@ class Callbacks:
         self, _n: int, task_id: str
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, bool]:
         """Emit upload results once processing completes."""
+
         status = get_status(task_id)
         result = status.get("result")
+        manager = CallbackManager()
 
         if status.get("done") and result is not None:
             clear_task(task_id)
             if isinstance(result, Exception):
+                logger.error("Upload processing error: %s", result)
+                manager.trigger(
+                    CallbackEvent.FILE_UPLOAD_ERROR,
+                    "file_upload",
+                    {"error": str(result)},
+                )
                 result = (
                     [self.processing.build_failure_alert(str(result))],
                     [],
@@ -382,6 +410,12 @@ class Callbacks:
                     {},
                     no_update,
                     no_update,
+                )
+            else:
+                manager.trigger(
+                    CallbackEvent.FILE_UPLOAD_COMPLETE,
+                    "file_upload",
+                    {"task_id": task_id},
                 )
             return (*result, True)
 
