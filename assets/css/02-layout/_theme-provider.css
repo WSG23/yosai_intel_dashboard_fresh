@@ -1,0 +1,44 @@
+/* =================================================================== */
+/* 02-layout/_theme-provider.css - CSS Theme Management                */
+/* Detects user preference and applies variables with smooth transition */
+/* =================================================================== */
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not([data-theme]) {
+    --bg-primary: var(--gray-900);
+    --bg-secondary: var(--gray-800);
+    --text-primary: var(--white);
+    --text-secondary: var(--gray-100);
+    --border: var(--gray-500);
+    color-scheme: dark;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  body:not([data-theme]) {
+    --bg-primary: var(--white);
+    --bg-secondary: var(--gray-50);
+    --text-primary: var(--gray-900);
+    --text-secondary: var(--gray-500);
+    --border: var(--gray-100);
+    color-scheme: light;
+  }
+}
+
+body[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+body[data-theme="light"] {
+  color-scheme: light;
+}
+
+body[data-theme="contrast"] {
+  color-scheme: dark;
+}
