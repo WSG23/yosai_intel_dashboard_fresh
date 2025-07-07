@@ -2,17 +2,21 @@
 """Graphs visualization page with placeholder content."""
 
 import dash_bootstrap_components as dbc
-from dash import dcc, html
 
 from analytics.interactive_charts import create_charts_generator
 from core.cache import cache
+from dash import dcc, html
 from security.unicode_security_processor import sanitize_unicode_input
 from services.analytics_summary import create_sample_data
 
 
 @cache.memoize()
 def _generate_sample_figures():
-    """Return a small set of sample figures using the analytics service."""
+    """Return a small set of sample figures using the analytics service.
+
+    The data is created via :func:`create_sample_data` and then fed to a
+    chart generator produced by :func:`create_charts_generator`.
+    """
     try:
         df = create_sample_data(500)
         generator = create_charts_generator()
