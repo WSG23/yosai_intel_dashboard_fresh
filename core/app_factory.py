@@ -14,25 +14,35 @@ try:
     import dash
     import dash_bootstrap_components as dbc
     from dash import Input, Output, dcc, html
+
     DASH_AVAILABLE = True
 except ImportError as e:
     logging.critical(f"❌ Dash import failed: {e}")
     logging.critical("Fix: pip install dash==2.14.1 dash-bootstrap-components==1.6.0")
     # For tests, provide stubs to prevent SystemExit
-    if 'pytest' in sys.modules:
+    if "pytest" in sys.modules:
         logging.warning("Running in test mode - using Dash stubs")
+
         class _MockDash:
-            def __init__(self, *args, **kwargs): pass
-            def callback(self, *args, **kwargs): return lambda f: f
-            server = type('MockServer', (), {})()
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def callback(self, *args, **kwargs):
+                return lambda f: f
+
+            server = type("MockServer", (), {})()
+
         class _MockComponent:
-            def __init__(self, *args, **kwargs): pass
+            def __init__(self, *args, **kwargs):
+                pass
+
         dash = _MockDash  # type: ignore
-        dbc = type('MockDBC', (), {})()  # type: ignore
+        dbc = type("MockDBC", (), {})()  # type: ignore
         Input = Output = dcc = html = _MockComponent  # type: ignore
         DASH_AVAILABLE = False
     else:
         sys.exit(1)
+
 
 # Handle Unicode surrogates
 def handle_unicode_surrogates(text: str) -> str:
@@ -40,10 +50,11 @@ def handle_unicode_surrogates(text: str) -> str:
     if not isinstance(text, str):
         return str(text)
     try:
-        text.encode('utf-8')
+        text.encode("utf-8")
         return text
     except UnicodeEncodeError:
-        return text.encode('utf-8', errors='ignore').decode('utf-8')
+        return text.encode("utf-8", errors="ignore").decode("utf-8")
+
 
 # Rest of imports
 from flasgger import Swagger
@@ -62,7 +73,6 @@ class DummyConfigManager:
 
     def get_plugin_config(self, name: str):
         return self.config.plugin_settings.get(name, {})
-
 
 
 from components.ui.navbar import create_navbar_layout
@@ -107,7 +117,7 @@ def create_app(mode: Optional[str] = None) -> dash.Dash:
     # Check Dash availability early
     if not DASH_AVAILABLE:
         logger.error("❌ Cannot create app - Dash not available")
-        if 'pytest' not in sys.modules:
+        if "pytest" not in sys.modules:
             raise ImportError("Dash is not properly installed")
 
     try:
@@ -143,7 +153,7 @@ def create_app(mode: Optional[str] = None) -> dash.Dash:
             assets_ignore=assets_ignore,
             suppress_callback_exceptions=True,
             prevent_initial_callbacks=True,
-            title="Yōsai Intel Dashboard"
+            title="Yōsai Intel Dashboard",
         )
 
         logger.info("Creating application in full mode")
@@ -626,14 +636,20 @@ def _create_error_page(message: str) -> Any:
         return None
 
     safe_message = handle_unicode_surrogates(message)
-    return dbc.Container([
-        dbc.Alert([
-            html.H4("⚠️ Error", className="alert-heading"),
-            html.P(safe_message),
-            html.Hr(),
-            html.P("Please check the logs for more details.", className="mb-0")
-        ], color="danger")
-    ], fluid=True)
+    return dbc.Container(
+        [
+            dbc.Alert(
+                [
+                    html.H4("⚠️ Error", className="alert-heading"),
+                    html.P(safe_message),
+                    html.Hr(),
+                    html.P("Please check the logs for more details.", className="mb-0"),
+                ],
+                color="danger",
+            )
+        ],
+        fluid=True,
+    )
 
 
 def _create_placeholder_page(title: str, subtitle: str, message: str) -> html.Div:
@@ -660,14 +676,12 @@ def _register_router_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
 
     def safe_callback(outputs, inputs, callback_id="unknown"):
         def decorator(func):
-            def wrapper(*args, **kwargs):
+            def unicode_wrapper(*args, **kwargs):
                 try:
-                    safe_args = []
-                    for arg in args:
-                        if isinstance(arg, str):
-                            safe_args.append(handle_unicode_surrogates(arg))
-                        else:
-                            safe_args.append(arg)
+                    safe_args = [
+                        handle_unicode_surrogates(a) if isinstance(a, str) else a
+                        for a in args
+                    ]
 
                     result = func(*safe_args, **kwargs)
 
@@ -675,7 +689,11 @@ def _register_router_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
                         result = handle_unicode_surrogates(result)
                     elif isinstance(result, (list, tuple)):
                         result = [
-                            handle_unicode_surrogates(item) if isinstance(item, str) else item
+                            (
+                                handle_unicode_surrogates(item)
+                                if isinstance(item, str)
+                                else item
+                            )
                             for item in result
                         ]
 
@@ -687,13 +705,17 @@ def _register_router_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
                         return ["Error"] * len(outputs)
                     return "Error"
 
-            manager.register_callback(
+            # Wrap with plugin-safe callback and register via unified interface
+            from core.plugins.decorators import safe_callback as plugin_safe_callback
+
+            wrapped = plugin_safe_callback(manager.app)(unicode_wrapper)
+            manager.unified_callback(
                 outputs,
                 inputs,
                 callback_id=callback_id,
                 component_name="app_factory",
-            )(wrapper)
-            return wrapper
+            )(wrapped)
+            return wrapped
 
         return decorator
 
@@ -840,13 +862,14 @@ def _register_global_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
 
     try:
         # Get app instance
-        app = getattr(manager, 'app', None)
+        app = getattr(manager, "app", None)
         if not app:
             logger.error("❌ No app instance available for callback registration")
             return
 
         # Register device learning callbacks
         from services.device_learning_service import create_learning_callbacks
+
         create_learning_callbacks(manager)
 
         logger.info("✅ Global callbacks registered successfully")
@@ -854,7 +877,7 @@ def _register_global_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
     except Exception as e:
         logger.error(f"❌ Failed to register global callbacks: {e}")
         # Don't raise in test mode
-        if 'pytest' not in sys.modules:
+        if "pytest" not in sys.modules:
             raise
 
 
@@ -932,9 +955,8 @@ def _register_callbacks(app: dash.Dash, config_manager: Any) -> None:
             app._upload_callbacks = UploadCallbacks()
             app._deep_analytics_callbacks = DeepAnalyticsCallbacks()
 
-            if (
-                config_manager.get_app_config().environment == "development"
-                and hasattr(coordinator, "print_callback_summary")
+            if config_manager.get_app_config().environment == "development" and hasattr(
+                coordinator, "print_callback_summary"
             ):
                 coordinator.print_callback_summary()
         except Exception as e:  # pragma: no cover - log and continue
