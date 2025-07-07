@@ -91,24 +91,26 @@ fallback_icons = {
 
 def _nav_icon(app: Any, name: str, alt: str) -> Any:
     """Return Img tag or Font-Awesome fallback for the given icon name."""
+    url = None
     try:
         url = get_nav_icon(app, name)
-        if url:
-            return html.Img(
-                src=url,
-                className="nav-icon nav-icon--image",
-                alt=alt,
-                style={
-                    "width": "24px",
-                    "height": "24px",
-                    "objectFit": "contain",
-                    "display": "block",
-                },
-                # Add key to force re-render when navigating between pages
-                key=f"nav-icon-{name}"
-            )
-    except Exception as e:
+    except Exception as e:  # pragma: no cover - best effort
         logger.debug(f"Icon loading failed for {name}: {e}")
+
+    if url:
+        return html.Img(
+            src=url,
+            className="nav-icon nav-icon--image",
+            alt=alt,
+            style={
+                "width": "24px",
+                "height": "24px",
+                "objectFit": "contain",
+                "display": "block",
+            },
+            # Add key to force re-render when navigating between pages
+            key=f"nav-icon-{name}",
+        )
 
     # Font-Awesome fallback with improved styling
     glyph = fallback_icons.get(name, "fas fa-circle")
@@ -125,7 +127,7 @@ def _nav_icon(app: Any, name: str, alt: str) -> Any:
             "color": "inherit",
         },
         # Add key to prevent caching issues
-        key=f"nav-fallback-{name}"
+        key=f"nav-fallback-{name}",
     )
 
 
@@ -143,7 +145,6 @@ def nav_icon(name: str, alt: str) -> Any:
             className=f"{glyph} nav-icon nav-icon--fallback",
             **{"aria-hidden": "true"},
             style={"fontSize": "20px", "width": "24px", "height": "24px"},
-
         )
 
 
