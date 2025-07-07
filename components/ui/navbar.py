@@ -90,25 +90,42 @@ fallback_icons = {
 
 
 def _nav_icon(app: Any, name: str, alt: str) -> Any:
-    """Return ``Img`` tag or Font-Awesome fallback for the given icon name."""
-    url = get_nav_icon(app, name)
-    if url:
-        return html.Img(src=url, className="nav-icon", alt=alt)
+    """Return Img tag or Font-Awesome fallback for the given icon name."""
+    try:
+        url = get_nav_icon(app, name)
+        if url:
+            return html.Img(
+                src=url,
+                className="nav-icon nav-icon--image",
+                alt=alt,
+                style={"width": "24px", "height": "24px"},
+            )
+    except Exception as e:  # pragma: no cover - graceful fallback
+        logger.debug(f"Icon loading failed for {name}: {e}")
 
     glyph = fallback_icons.get(name, "fas fa-circle")
-    return html.I(className=f"{glyph} nav-icon", **{"aria-hidden": "true"})
+    return html.I(
+        className=f"{glyph} nav-icon nav-icon--fallback",
+        **{"aria-hidden": "true"},
+        style={"fontSize": "20px", "width": "24px", "height": "24px"},
+    )
 
 
 def nav_icon(name: str, alt: str) -> Any:
-    """Wrapper that infers the Dash app from ``dash.get_app``."""
+    """Wrapper that handles app context safely."""
     try:
         import dash
 
         app = dash.get_app()
         return _nav_icon(app, name, alt)
-    except Exception:  # pragma: no cover - graceful fallback
+    except Exception as e:  # pragma: no cover - graceful fallback
+        logger.debug(f"Dash app context unavailable for {name}: {e}")
         glyph = fallback_icons.get(name, "fas fa-circle")
-        return html.I(className=f"{glyph} nav-icon", **{"aria-hidden": "true"})
+        return html.I(
+            className=f"{glyph} nav-icon nav-icon--fallback",
+            **{"aria-hidden": "true"},
+            style={"fontSize": "20px", "width": "24px", "height": "24px"},
+        )
 
 
 def create_navbar_layout() -> Optional[Any]:
