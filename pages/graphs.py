@@ -6,7 +6,6 @@ import logging
 from typing import Any, Dict
 
 import dash_bootstrap_components as dbc
-from dash import dcc, html
 
 try:
     import pandas as pd
@@ -19,6 +18,7 @@ except Exception as e:  # pragma: no cover - optional plotting deps
     go = None
 
 from core.cache import cache
+from dash import dcc, html
 from security.unicode_security_processor import sanitize_unicode_input
 
 
