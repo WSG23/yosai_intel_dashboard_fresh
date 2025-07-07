@@ -75,6 +75,7 @@ from core.theme_manager import DEFAULT_THEME, apply_theme_settings
 from utils.assets_utils import ensure_icon_cache_headers
 from dash_csrf_plugin import CSRFMode, setup_enhanced_csrf_protection
 from services import get_analytics_service
+from pages import get_page_layout
 
 from .cache import cache
 
@@ -765,9 +766,9 @@ def _get_analytics_page() -> Any:
 def _get_graphs_page() -> Any:
     """Get graphs page with placeholder content."""
     try:
-        from pages.graphs import layout
-
-        return layout()
+        layout_func = get_page_layout("graphs")
+        if layout_func:
+            return layout_func()
     except ImportError:
         logger.exception("Graphs page import failed")
     except Exception:
