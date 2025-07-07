@@ -6,6 +6,8 @@ import pandas as pd
 from column_mapper import AIColumnMapperAdapter
 from example_ai_adapter import ComponentPluginAdapter
 
+CONTROL_CHAR_PATTERN = r"[\x00-\x1F\x7F]"
+
 
 def load_raw_file(path: str) -> pd.DataFrame:
     """Load raw file as DataFrame supporting CSV, JSON and Excel."""
@@ -20,7 +22,16 @@ def load_raw_file(path: str) -> pd.DataFrame:
 
 
 def validate_rows(df: pd.DataFrame) -> pd.DataFrame:
-    """Add validation columns and flag row-level issues."""
+    """Validate each row and append ``is_valid`` and ``validation_errors``.
+
+    Rules applied per row:
+      - ``MISSING_REQUIRED``: any of ``timestamp``, ``person_id``, ``door_id`` or
+        ``access_result`` is null.
+      - ``TOO_MANY_EMPTY``: ratio of empty cells exceeds ``0.5``.
+      - ``CONTROL_CHAR_EXCEEDED``: control-character ratio exceeds ``0.1``.
+
+    The function retains all rows and simply marks invalid ones.
+    """
 
     df = df.copy()
     required = ["timestamp", "person_id", "door_id", "access_result"]
@@ -42,7 +53,7 @@ def validate_rows(df: pd.DataFrame) -> pd.DataFrame:
     str_df = df.select_dtypes(include="object")
     if not str_df.empty:
         filled = str_df.fillna("")
-        control_chars = filled.apply(lambda c: c.str.count(r"[\x00-\x1F\x7F]"))
+        control_chars = filled.apply(lambda c: c.str.count(CONTROL_CHAR_PATTERN))
         control_count = control_chars.sum(axis=1)
         total_chars = filled.applymap(len).sum(axis=1)
         control_ratio = np.where(total_chars == 0, 0, control_count / total_chars)
