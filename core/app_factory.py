@@ -201,9 +201,8 @@ def _create_full_app() -> "Dash":
         if built_css.exists():
             external_stylesheets.append("/assets/dist/main.min.css")
             assets_ignore += r"|css/main\.css"
-        # Ignore hidden files and text assets but allow everything else
-        # Consolidated ignore expression
-        assets_ignore = rf"^\..*|.*\.txt$|{assets_ignore}"
+        # Ignore hidden files and text assets
+        assets_ignore = r"^\..*|.*\.txt$"
 
         app = dash.Dash(
             __name__,
