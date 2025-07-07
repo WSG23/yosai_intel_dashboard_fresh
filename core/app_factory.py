@@ -87,7 +87,7 @@ from dash_csrf_plugin import CSRFMode, setup_enhanced_csrf_protection
 from services import get_analytics_service
 from pages import get_page_layout
 
-from .cache import cache
+from flask_caching import Cache
 
 # Optional callback system -------------------------------------------------
 try:  # pragma: no cover - graceful import fallback
@@ -201,7 +201,7 @@ def _create_full_app() -> dash.Dash:
         app._service_container = service_container
 
         # Initialize caching once per app instance
-        cache.init_app(app.server)
+        cache = Cache(app.server, config={"CACHE_TYPE": "simple"})
         app.cache = cache
 
         app.index_string = f"""
@@ -381,7 +381,7 @@ def _create_simple_app() -> dash.Dash:
         )
         ensure_icon_cache_headers(app)
 
-        cache.init_app(app.server)
+        cache = Cache(app.server, config={"CACHE_TYPE": "simple"})
         app.cache = cache
 
         app.index_string = f"""
@@ -500,7 +500,7 @@ def _create_json_safe_app() -> dash.Dash:
         )
         ensure_icon_cache_headers(app)
 
-        cache.init_app(app.server)
+        cache = Cache(app.server, config={"CACHE_TYPE": "simple"})
         app.cache = cache
 
         app.index_string = f"""
