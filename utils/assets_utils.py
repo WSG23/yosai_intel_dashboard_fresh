@@ -28,11 +28,17 @@ def get_nav_icon(app, name: str) -> str | None:
 
 def ensure_icon_cache_headers(app):
     """Add cache headers for icon assets to prevent loading issues."""
+
     @app.server.after_request
     def add_icon_cache_headers(response):
-        if response.headers.get('Content-Type', '').startswith('image/'):
-            if '/assets/navbar_icons/' in request.path:
-                response.headers['Cache-Control'] = 'public, max-age=3600'
-                response.headers['ETag'] = f'"{hash(request.path)}"'
+        if response.headers.get("Content-Type", "").startswith("image/") and (
+            "/assets/navbar_icons/" in request.path
+        ):
+            response.headers["Cache-Control"] = "public, max-age=3600"
+            response.headers["ETag"] = f'"{hash(request.path)}"'
         return response
+
     return app
+
+
+__all__ = ["get_nav_icon", "ensure_icon_cache_headers"]

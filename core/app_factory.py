@@ -23,6 +23,7 @@ from core.enhanced_container import ServiceContainer
 from core.plugins.auto_config import PluginAutoConfiguration
 from core.secrets_manager import validate_secrets
 from core.theme_manager import DEFAULT_THEME, apply_theme_settings
+from utils.assets_utils import ensure_icon_cache_headers
 from dash_csrf_plugin import CSRFMode, setup_enhanced_csrf_protection
 from services import get_analytics_service
 
@@ -98,6 +99,7 @@ def _create_full_app() -> dash.Dash:
             assets_folder=str(ASSETS_DIR),
             assets_ignore=assets_ignore,
         )
+        ensure_icon_cache_headers(app)
 
         # Expose the service container on the app instance
         app._service_container = service_container
@@ -281,6 +283,7 @@ def _create_simple_app() -> dash.Dash:
             suppress_callback_exceptions=True,
             assets_ignore=assets_ignore,
         )
+        ensure_icon_cache_headers(app)
 
         cache.init_app(app.server)
         app.cache = cache
@@ -399,6 +402,7 @@ def _create_json_safe_app() -> dash.Dash:
             suppress_callback_exceptions=True,
             assets_ignore=assets_ignore,
         )
+        ensure_icon_cache_headers(app)
 
         cache.init_app(app.server)
         app.cache = cache
