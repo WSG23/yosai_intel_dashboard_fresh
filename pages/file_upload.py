@@ -8,6 +8,7 @@ from typing import Any, Dict, List
 import pandas as pd
 
 from components.file_upload_component import FileUploadComponent
+
 from services.upload_data_service import (
     clear_uploaded_data as service_clear_uploaded_data,
 )
