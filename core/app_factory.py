@@ -96,6 +96,7 @@ from core.theme_manager import DEFAULT_THEME, apply_theme_settings
 from utils.assets_utils import ensure_icon_cache_headers
 from dash_csrf_plugin import CSRFMode, setup_enhanced_csrf_protection
 from services import get_analytics_service
+from services.analytics_service import AnalyticsService
 from pages import get_page_layout
 
 from flask_caching import Cache
@@ -994,6 +995,7 @@ def _initialize_services(container: Optional[ServiceContainer] = None) -> None:
 
             analytics_service = get_analytics_service()
 
+        analytics_service = cast(AnalyticsService, analytics_service)
         health = analytics_service.health_check()
         logger.info(f"Analytics service initialized: {health}")
 
