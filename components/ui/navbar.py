@@ -220,24 +220,32 @@ def create_navbar_layout() -> Optional[Any]:
                                                                 _nav_icon(
                                                                     app,
                                                                     "dashboard",
-                                                                    str(_l("Dashboard")),
+                                                                    str(
+                                                                        _l("Dashboard")
+                                                                    ),
                                                                 ),
                                                                 href="/dashboard",
                                                                 className="navbar-nav-link",
-                                                                title=str(_l("Dashboard")),
+                                                                title=str(
+                                                                    _l("Dashboard")
+                                                                ),
                                                             ),
                                                             html.A(
                                                                 _nav_icon(
                                                                     app,
                                                                     "analytics",
                                                                     str(
-                                                                        _l("Deep Analytics Page")
+                                                                        _l(
+                                                                            "Deep Analytics Page"
+                                                                        )
                                                                     ),
                                                                 ),
                                                                 href="/analytics",
                                                                 className="navbar-nav-link",
                                                                 title=str(
-                                                                    _l("Deep Analytics Page")
+                                                                    _l(
+                                                                        "Deep Analytics Page"
+                                                                    )
                                                                 ),
                                                             ),
                                                             html.A(
@@ -263,11 +271,19 @@ def create_navbar_layout() -> Optional[Any]:
                                                             dbc.DropdownMenu(
                                                                 [
                                                                     dbc.DropdownMenuItem(
-                                                                        str(_l("Export CSV")),
+                                                                        str(
+                                                                            _l(
+                                                                                "Export CSV"
+                                                                            )
+                                                                        ),
                                                                         id="nav-export-csv",
                                                                     ),
                                                                     dbc.DropdownMenuItem(
-                                                                        str(_l("Export JSON")),
+                                                                        str(
+                                                                            _l(
+                                                                                "Export JSON"
+                                                                            )
+                                                                        ),
                                                                         id="nav-export-json",
                                                                     ),
                                                                 ],
@@ -285,7 +301,11 @@ def create_navbar_layout() -> Optional[Any]:
                                                                 [
                                                                     dbc.DropdownMenuItem(
                                                                         dcc.Link(
-                                                                            str(_l("Settings")),
+                                                                            str(
+                                                                                _l(
+                                                                                    "Settings"
+                                                                                )
+                                                                            ),
                                                                             href="/settings",
                                                                             className="dropdown-item",
                                                                         )
@@ -295,22 +315,36 @@ def create_navbar_layout() -> Optional[Any]:
                                                                             id="theme-dropdown",
                                                                             options=[
                                                                                 {
-                                                                                    "label": str(_l("Dark")),
+                                                                                    "label": str(
+                                                                                        _l(
+                                                                                            "Dark"
+                                                                                        )
+                                                                                    ),
                                                                                     "value": "dark",
                                                                                 },
                                                                                 {
-                                                                                    "label": str(_l("Light")),
+                                                                                    "label": str(
+                                                                                        _l(
+                                                                                            "Light"
+                                                                                        )
+                                                                                    ),
                                                                                     "value": "light",
                                                                                 },
                                                                                 {
-                                                                                    "label": str(_l("High Contrast")),
+                                                                                    "label": str(
+                                                                                        _l(
+                                                                                            "High Contrast"
+                                                                                        )
+                                                                                    ),
                                                                                     "value": "high-contrast",
                                                                                 },
                                                                             ],
                                                                             value=DEFAULT_THEME,
                                                                             clearable=False,
                                                                             className="theme-dropdown",
-                                                                            style={"width": "120px"},
+                                                                            style={
+                                                                                "width": "120px"
+                                                                            },
                                                                         ),
                                                                         className="px-2",
                                                                         toggle=False,
@@ -342,7 +376,9 @@ def create_navbar_layout() -> Optional[Any]:
                                                                     "aria-pressed": "true",
                                                                 },
                                                             ),
-                                                            html.Span("|", className="mx-1"),
+                                                            html.Span(
+                                                                "|", className="mx-1"
+                                                            ),
                                                             html.Button(
                                                                 "JP",
                                                                 className="language-btn",
@@ -356,7 +392,11 @@ def create_navbar_layout() -> Optional[Any]:
                                                         id="language-toggle",
                                                     ),
                                                     html.A(
-                                                        _nav_icon(app, "logout", str(_l("Logout"))),
+                                                        _nav_icon(
+                                                            app,
+                                                            "logout",
+                                                            str(_l("Logout")),
+                                                        ),
                                                         href="/login",  # Changed from /logout to /login
                                                         className="navbar-nav-link",
                                                         title=str(_l("Logout")),
