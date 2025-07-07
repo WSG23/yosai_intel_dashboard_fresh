@@ -276,12 +276,15 @@ def _create_full_app() -> dash.Dash:
             def _select_locale() -> str:
                 return session.get("locale", "en")
 
-            if hasattr(babel, "localeselector"):
-                babel.localeselector(_select_locale)  # Flask-Babel <4
-            elif hasattr(babel, "locale_selector_func"):
-                babel.locale_selector_func(_select_locale)  # Flask-Babel 3.x
-            else:  # pragma: no cover - Flask-Babel >=4
-                babel.locale_selector = _select_locale  # type: ignore[attr-defined]
+            selector = getattr(babel, "localeselector", None)
+            if selector:
+                selector(_select_locale)  # Flask-Babel <4
+            else:
+                selector = getattr(babel, "locale_selector_func", None)
+                if selector:
+                    selector(_select_locale)  # Flask-Babel 3.x
+                else:  # pragma: no cover - Flask-Babel >=4
+                    babel.locale_selector = _select_locale  # type: ignore[attr-defined]
             app.server.babel = babel
         except Exception as e:  # pragma: no cover - optional dependency
             logger.warning(f"Failed to initialize Babel: {e}")
@@ -965,6 +968,7 @@ def _register_callbacks(app: dash.Dash, config_manager: Any) -> None:
             register_device_verification(coordinator)
             register_deep_callbacks(coordinator)
             from services.interfaces import get_export_service
+
             register_navbar_callbacks(coordinator, get_export_service())
 
             app._upload_callbacks = UploadCallbacks()
