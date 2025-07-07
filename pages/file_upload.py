@@ -333,25 +333,34 @@ def get_file_info() -> Dict[str, Dict[str, Any]]:
 
 
 def check_upload_system_health() -> Dict[str, Any]:
-    """Monitor upload system health."""
-    issues = []
-    storage_dir = _uploaded_data_store.storage_dir
+    """Run basic diagnostics for the upload page."""
 
-    if not storage_dir.exists():
-        issues.append(f"Storage directory missing: {storage_dir}")
+    errors: List[str] = []
 
+    # Confirm the upload component can be constructed
+    try:  # pragma: no cover - best effort
+        DragDropUploadArea()
+    except Exception as exc:
+        errors.append(f"component_error: {exc}")
+
+    # Ensure the Unicode helper works as expected
     try:
-        test_file = storage_dir / "test.tmp"
-        test_file.write_text("test")
-        test_file.unlink()
-    except Exception as e:
-        issues.append(f"Cannot write to storage directory: {e}")
+        safe_unicode_encode("health-check")
+    except Exception as exc:  # pragma: no cover - best effort
+        errors.append(f"unicode_error: {exc}")
 
-    pending = len(_uploaded_data_store._save_futures)
-    if pending > 10:
-        issues.append(f"Too many pending saves: {pending}")
+    # Verify base64 decoding helper
+    try:
+        from services.data_processing.unified_file_validator import safe_decode_file
 
-    return {"healthy": len(issues) == 0, "issues": issues}
+        result = safe_decode_file("data:text/plain;base64,aGVsbG8=")
+        if result != b"hello":
+            errors.append("base64_helper_invalid")
+    except Exception as exc:  # pragma: no cover - best effort
+        errors.append(f"base64_error: {exc}")
+
+    status = "healthy" if not errors else "unhealthy"
+    return {"status": status, "errors": errors}
 
 
 class Callbacks:
