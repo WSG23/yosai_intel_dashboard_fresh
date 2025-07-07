@@ -46,16 +46,20 @@ def _create_figures() -> Dict[str, Any]:
         return {"line": empty, "bar": empty, "other": empty}
 
 
-FIGURES = _create_figures()
+_FIGURES: Dict[str, Any] | None = None
 
 
 def layout() -> dbc.Container:
     """Return the graphs page layout."""
+    global _FIGURES
+    if _FIGURES is None:
+        _FIGURES = _create_figures()
+
     tabs = dbc.Tabs(
         [
-            dbc.Tab(dcc.Graph(figure=FIGURES.get("line")), label=sanitize_unicode_input("Line"), tab_id="line"),
-            dbc.Tab(dcc.Graph(figure=FIGURES.get("bar")), label=sanitize_unicode_input("Bar"), tab_id="bar"),
-            dbc.Tab(dcc.Graph(figure=FIGURES.get("other")), label=sanitize_unicode_input("Other"), tab_id="other"),
+            dbc.Tab(dcc.Graph(figure=_FIGURES.get("line") if _FIGURES else None), label=sanitize_unicode_input("Line"), tab_id="line"),
+            dbc.Tab(dcc.Graph(figure=_FIGURES.get("bar") if _FIGURES else None), label=sanitize_unicode_input("Bar"), tab_id="bar"),
+            dbc.Tab(dcc.Graph(figure=_FIGURES.get("other") if _FIGURES else None), label=sanitize_unicode_input("Other"), tab_id="other"),
         ],
         id="graphs-tabs",
         active_tab="line",
