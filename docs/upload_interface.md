@@ -19,7 +19,7 @@ returned immediately and progress events are streamed over Server‑Sent Events 
 `file-info-store` so analytics pages can use the new data without reloading the
 entire app.
 
-Supported file types are CSV and JSON. Large files are streamed to avoid exhausting browser memory. You may upload multiple files at once; they will be processed sequentially.
+Supported file types include CSV, JSON, and Excel (`.xls`/`.xlsx`). Large files are streamed to avoid exhausting browser memory. You may upload multiple files at once; they will be processed sequentially.
 
 ## Configuration Options
 
