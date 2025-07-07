@@ -55,6 +55,13 @@ class UnicodeFileProcessor:
             )
         return df
 
+    def read_uploaded_file(
+        self, contents: str, filename: str
+    ) -> Tuple[pd.DataFrame, str | None]:
+        """Process ``contents`` and return the DataFrame and error string."""
+        result = process_uploaded_file(contents, filename)
+        return result["data"], result["error"]
+
 def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
     """
     Process uploaded file content safely

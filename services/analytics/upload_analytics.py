@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-import json
-import logging
-import os
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import pandas as pd
 
-from services.analytics import (
-    analyze_with_chunking,
-    generate_basic_analytics,
-    map_and_clean,
-    summarize_dataframe,
-)
+from services.analytics_summary import summarize_dataframe
+from services.chunked_analysis import analyze_with_chunking
 from services.data_validation import DataValidationService
 
 from ..upload_processing import UploadAnalyticsProcessor as _UploadAnalyticsProcessor
