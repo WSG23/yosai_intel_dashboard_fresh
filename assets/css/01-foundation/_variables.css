@@ -4,7 +4,7 @@
 
 :root {
   /* Extracted from existing dashboard.css */
-  --color-primary: #1B2A47;
+  --color-primary: #000000;
   --color-accent: #2196F3;
   --color-accent-hover: #42A5F5;
   /* Slight accent tint used for subtle backgrounds */
