@@ -1,5 +1,7 @@
 import logging
-from typing import Any, List, Tuple
+import base64
+import re
+from typing import Any, List, Optional, Tuple
 
 from dash.dependencies import ALL, Input, Output, State
 
@@ -14,6 +16,11 @@ from . import (
 from .managers import ChunkedUploadManager
 from .upload_queue_manager import UploadQueueManager
 
+try:  # pragma: no cover - fallback for optional dependency
+    from core.unicode import safe_unicode_encode
+except Exception:  # pragma: no cover - minimal environment
+    from core.unicode_processor import safe_unicode_encode  # type: ignore
+
 logger = logging.getLogger(__name__)
 
 
@@ -22,6 +29,7 @@ class UnifiedUploadController:
 
     def __init__(self, callbacks: Any | None = None) -> None:
         self.cb = callbacks
+        self.logger = logger
         self.processing = UploadProcessingService(_uploaded_data_store)
         self.preview_processor = self.processing.async_processor
         self.ai = AISuggestionService()
@@ -29,6 +37,39 @@ class UnifiedUploadController:
         self.client_validator = ClientSideValidator()
         self.chunked = ChunkedUploadManager()
         self.queue = UploadQueueManager()
+
+    # ------------------------------------------------------------------
+    def process_upload_content(
+        self, contents: Optional[str], filename: Optional[str]
+    ) -> Optional[tuple[str, str]]:
+        """Return sanitized ``contents`` and ``filename``."""
+
+        if not contents or not filename:
+            return None
+
+        sanitized_name = re.sub(r"[^A-Za-z0-9._-]", "_", filename).strip("_")[:100]
+        sanitized_contents = self._process_file_data(contents)
+        if sanitized_contents is None:
+            return None
+        return sanitized_contents, sanitized_name
+
+    def _process_file_data(self, contents: str) -> Optional[str]:
+        """Decode ``contents`` from base64, sanitize and re-encode."""
+
+        if "," not in contents:
+            return None
+
+        prefix, data = contents.split(",", 1)
+        try:
+            decoded = base64.b64decode(data)
+        except Exception as exc:  # pragma: no cover - best effort
+            self.logger.warning("Base64 decode failed: %s", exc)
+            return None
+
+        text = decoded.decode("utf-8", "replace")
+        sanitized = safe_unicode_encode(text)
+        encoded = base64.b64encode(sanitized.encode("utf-8")).decode("utf-8")
+        return f"{prefix},{encoded}"
 
     # ------------------------------------------------------------------
     def upload_callbacks(self) -> List[Tuple[Any, Any, Any, Any, str, dict]]:

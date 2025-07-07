@@ -6,11 +6,13 @@ Integrates with analytics system
 
 import logging
 import time
+from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
-from dataclasses import dataclass
 
 import pandas as pd
+from dash.exceptions import PreventUpdate
+
 try:
     from dash import dcc, html, no_update
 except Exception:  # pragma: no cover - optional Dash dependency
@@ -34,20 +36,22 @@ def _get_max_display_rows() -> int:
 
 
 import dash_bootstrap_components as dbc
+
 try:
     from dash.dependencies import ALL, Input, Output, State
 except Exception:  # pragma: no cover - optional Dash dependency
     ALL = Input = Output = State = None
 
 from components.column_verification import save_verified_mappings
-
 from components.upload import ClientSideValidator as ErrorDisplayValidator
+
 try:
     from components.upload.drag_drop_upload_area import DragDropUploadArea
 except Exception:  # pragma: no cover - optional UI component
     DragDropUploadArea = lambda *a, **k: None
 from config.dynamic_config import dynamic_config
 from core.unicode import safe_unicode_encode
+
 try:
     from core.callback_controller import CallbackEvent
     from core.callback_manager import CallbackManager
@@ -64,8 +68,11 @@ except Exception:  # pragma: no cover - optional dependency for tests
     class CallbackManager:  # type: ignore
         def trigger(self, *_a, **_kw):
             pass
+
+
 from services.device_learning_service import get_device_learning_service
 from services.task_queue import clear_task, create_task, get_status
+
 try:
     from services.upload import (
         AISuggestionService,
@@ -103,6 +110,8 @@ except Exception:  # pragma: no cover - optional dependency for tests
 
     def save_ai_training_data(*_a, **_kw):
         pass
+
+
 try:
     from services.upload.unified_controller import UnifiedUploadController
 except Exception:  # pragma: no cover - optional dependency for tests
@@ -111,6 +120,7 @@ except Exception:  # pragma: no cover - optional dependency for tests
 try:
     from services.upload.upload_queue_manager import UploadQueueManager
 except Exception:  # pragma: no cover - optional dependency for tests
+
     class UploadQueueManager:  # type: ignore
         files: list[str] = []
 
@@ -119,6 +129,8 @@ except Exception:  # pragma: no cover - optional dependency for tests
 
         def mark_complete(self, *_a, **_kw):
             pass
+
+
 from services.upload.validators import ClientSideValidator
 from services.upload_data_service import (
     clear_uploaded_data as service_clear_uploaded_data,
@@ -131,6 +143,43 @@ from services.upload_data_service import (
 from utils.upload_store import uploaded_data_store as _uploaded_data_store
 
 logger = logging.getLogger(__name__)
+
+
+def safe_unicode_encode(value: Any) -> str:
+    """Safely encode potentially problematic text to UTF-8."""
+
+    try:
+        if isinstance(value, bytes):
+            value = value.decode("utf-8", "surrogatepass")
+        return str(value).encode("utf-8", "surrogatepass").decode("utf-8", "ignore")
+    except Exception:
+        return str(value)
+
+
+def handle_enhanced_upload(contents: str | None, filename: str | None) -> Any:
+    """Basic enhanced upload handler."""
+
+    if not contents:
+        raise PreventUpdate
+
+    logger.info("Enhanced upload for %s", safe_unicode_encode(filename))
+    return dbc.Alert(
+        f"Enhanced upload queued: {safe_unicode_encode(filename)}",
+        color="info",
+    )
+
+
+def handle_upload_errors(message: str | None) -> Any:
+    """Display enhanced upload errors."""
+
+    if not message:
+        raise PreventUpdate
+
+    logger.error("Upload error: %s", message)
+    return dbc.Alert(
+        f"Upload error: {safe_unicode_encode(message)}",
+        color="danger",
+    )
 
 
 @dataclass
@@ -918,9 +967,8 @@ class Callbacks:
                     "security_level": security[i] if i < len(security) else 5,
                     "is_entry": "entry" in (access[i] if i < len(access) else []),
                     "is_exit": "exit" in (access[i] if i < len(access) else []),
-                    "is_restricted": "is_restricted" in (
-                        special[i] if i < len(special) else []
-                    ),
+                    "is_restricted": "is_restricted"
+                    in (special[i] if i < len(special) else []),
                     "confidence": 1.0,
                     "device_name": device,
                     "source": "user_confirmed",
@@ -1600,7 +1648,6 @@ class CallbacksLegacy:
             )
 
 
-
 def register_upload_callbacks(
     manager: "TrulyUnifiedCallbacks",
     controller: UnifiedAnalyticsController | None = None,
@@ -1639,6 +1686,32 @@ def register_upload_callbacks(
         )
 
 
+def register_enhanced_upload_callbacks(
+    manager: "TrulyUnifiedCallbacks",
+    controller: UnifiedAnalyticsController | None = None,
+) -> None:
+    """Register enhanced upload callbacks."""
+
+    manager.unified_callback(
+        Output("toast-container", "children", allow_duplicate=True),
+        Input("drag-drop-upload", "contents"),
+        State("drag-drop-upload", "filename"),
+        callback_id="enhanced_upload",
+        component_name="file_upload",
+        prevent_initial_call=True,
+    )(debounce()(profile_callback("enhanced_upload")(handle_enhanced_upload)))
+
+    manager.unified_callback(
+        Output("toast-container", "children", allow_duplicate=True),
+        Input("drag-drop-upload", "error"),
+        callback_id="enhanced_upload_error",
+        component_name="file_upload",
+        prevent_initial_call=True,
+    )(debounce()(profile_callback("upload_error")(handle_upload_errors)))
+
+    register_upload_callbacks(manager, controller)
+
+
 def register_callbacks(
     manager: "TrulyUnifiedCallbacks",
     controller: UnifiedAnalyticsController | None = None,
@@ -1658,6 +1731,7 @@ __all__ = [
     "get_file_info",
     "check_upload_system_health",
     "save_ai_training_data",
+    "register_enhanced_upload_callbacks",
     "register_upload_callbacks",
     "register_callbacks",
 ]
