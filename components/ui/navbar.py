@@ -93,10 +93,13 @@ def _nav_icon(app: Any, name: str, alt: str) -> Any:
     """Return ``Img`` tag or Font-Awesome fallback for the given icon name."""
     url = get_nav_icon(app, name)
     if url:
-        return html.Img(src=url, className="nav-icon", alt=alt)
+        return html.Img(src=url, className="nav-icon nav-icon--image", alt=alt)
 
     glyph = fallback_icons.get(name, "fas fa-circle")
-    return html.I(className=f"{glyph} nav-icon", **{"aria-hidden": "true"})
+    return html.I(
+        className=f"{glyph} nav-icon nav-icon--fallback",
+        **{"aria-hidden": "true"},
+    )
 
 
 def nav_icon(name: str, alt: str) -> Any:
@@ -108,7 +111,10 @@ def nav_icon(name: str, alt: str) -> Any:
         return _nav_icon(app, name, alt)
     except Exception:  # pragma: no cover - graceful fallback
         glyph = fallback_icons.get(name, "fas fa-circle")
-        return html.I(className=f"{glyph} nav-icon", **{"aria-hidden": "true"})
+        return html.I(
+            className=f"{glyph} nav-icon nav-icon--fallback",
+            **{"aria-hidden": "true"},
+        )
 
 
 def create_navbar_layout() -> Optional[Any]:
