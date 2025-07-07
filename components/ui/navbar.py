@@ -98,18 +98,34 @@ def _nav_icon(app: Any, name: str, alt: str) -> Any:
                 src=url,
                 className="nav-icon nav-icon--image",
                 alt=alt,
-                style={"width": "24px", "height": "24px"},
+                style={
+                    "width": "24px",
+                    "height": "24px",
+                    "objectFit": "contain",
+                    "display": "block",
+                },
+                # Add key to force re-render when navigating between pages
+                key=f"nav-icon-{name}"
             )
-    except Exception as e:  # pragma: no cover - graceful fallback
+    except Exception as e:
         logger.debug(f"Icon loading failed for {name}: {e}")
 
-
+    # Font-Awesome fallback with improved styling
     glyph = fallback_icons.get(name, "fas fa-circle")
     return html.I(
         className=f"{glyph} nav-icon nav-icon--fallback",
         **{"aria-hidden": "true"},
-        style={"fontSize": "20px", "width": "24px", "height": "24px"},
-
+        style={
+            "fontSize": "20px",
+            "width": "24px",
+            "height": "24px",
+            "display": "flex",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "color": "inherit",
+        },
+        # Add key to prevent caching issues
+        key=f"nav-fallback-{name}"
     )
 
 
