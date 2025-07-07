@@ -317,40 +317,6 @@ class Callbacks:
             False,
         )
 
-        if not isinstance(contents_list, list):
-            contents_list = [contents_list]
-            filenames_list = [filenames_list]
-
-        valid_contents: list[str] = []
-        valid_filenames: list[str] = []
-        alerts: list[Any] = []
-        for content, fname in zip(contents_list, filenames_list):
-            ok, msg = self.validator.validate(fname, content)
-            if not ok:
-                alerts.append(self.processing.build_failure_alert(msg))
-            else:
-                valid_contents.append(content)
-                valid_filenames.append(fname)
-                self.chunked.start_file(fname)
-                self.queue.add_file(fname)
-
-        if not valid_contents:
-            return alerts, [], {}, [], {}, no_update, no_update
-
-        result = await self.processing.process_files(
-            valid_contents,
-            valid_filenames,
-            task_progress=None,
-        )
-
-        for fname in valid_filenames:
-            self.chunked.finish_file(fname)
-            self.queue.mark_complete(fname)
-
-        result = list(result)
-        result[0] = alerts + result[0]
-        return tuple(result)
-
     def schedule_upload_task(
         self, contents_list: List[str] | str, filenames_list: List[str] | str
     ) -> str:
