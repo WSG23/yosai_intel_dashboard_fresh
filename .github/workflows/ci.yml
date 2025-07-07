@@ -10,15 +10,15 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.8
-      - name: Install deps
+      - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Black
+      - name: Black check
         run: black --check . --line-length 88
-      - name: Flake8
+      - name: Flake8 lint
         run: flake8 . --max-line-length 88
-      - name: PyTest
-        run: pytest --maxfail=1 --disable-warnings -q --cov=.
-      - name: Upload coverage
+      - name: Run tests
+        run: pytest --maxfail=1 --disable-warnings -q --cov=./
+      - name: Upload coverage report
         uses: actions/upload-artifact@v3
         with:
           name: coverage-report

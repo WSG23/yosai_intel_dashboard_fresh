@@ -2,67 +2,69 @@ from __future__ import annotations
 
 """Prefect orchestration for access event processing pipeline."""
 
-import prefect
-from prefect import Flow, task
+from prefect import Flow, Parameter, task
 
 from file_processing.format_detector import FormatDetector, UnsupportedFormatError
 from file_processing.data_processor import DataProcessor
 from file_processing.exporter import export_to_csv, export_to_json, ExportError
-from core.callback_controller import CallbackController, CallbackEvent
+from callbacks.controller import CallbackController
 
 
 @task
-def ingest(file_path: str, hint: dict | None = None):
-    """Load input file based on detected format."""
-    detector = FormatDetector()
+def ingest(file_path: str, hint: dict, cb: CallbackController):
+    """Load the input file and detect its format."""
     try:
-        df, meta = detector.detect_and_load(file_path, hint)
-    except UnsupportedFormatError as exc:
-        CallbackController().fire_event(
-            CallbackEvent.FILE_PROCESSING_ERROR,
-            file_path,
-            {"error": str(exc)},
-        )
+        df, meta = FormatDetector().detect_and_load(file_path, hint)
+        return df, meta
+    except UnsupportedFormatError as e:
+        cb.error(f"Ingestion failed: {e}", context={"file": file_path})
         raise
-    return df, meta
 
 
 @task
-def transform(df, meta, config, device_registry, callback_controller):
-    """Transform DataFrame according to provided configuration."""
-    processor = DataProcessor(config, device_registry, callback_controller)
+def transform(df, meta, config, registry, cb: CallbackController):
+    """Transform the dataframe using :class:`DataProcessor`."""
+    processor = DataProcessor(config, registry, cb)
     df2 = processor.process(df, meta)
     return df2, meta
 
 
 @task
-def export(df, meta, output_base: str):
-    """Export processed data to CSV and JSON outputs."""
+def export(df, meta, output_base: str, cb: CallbackController):
+    """Export the processed data to CSV and JSON."""
     try:
         export_to_csv(df, f"{output_base}.csv", meta)
         export_to_json(df, f"{output_base}.json", meta)
-    except ExportError as exc:
-        CallbackController().fire_event(
-            CallbackEvent.FILE_PROCESSING_ERROR,
-            output_base,
-            {"error": str(exc)},
-        )
+        cb.info("Export succeeded", context={"output": output_base})
+    except ExportError as e:
+        cb.error(f"Export failed: {e}", context={"base": output_base})
         raise
 
 
 with Flow("access-event-pipeline") as flow:
-    file_path = prefect.Parameter("file_path")
-    hint = prefect.Parameter("hint", default=None)
-    output_base = prefect.Parameter("output_base")
-    config = prefect.Parameter("config")
-    device_registry = prefect.Parameter("device_registry")
-    callback_controller = prefect.Parameter("callback_controller")
+    file_path = Parameter("file_path")
+    hint = Parameter("hint", default={})
+    output_base = Parameter("output_base")
+    config = Parameter("config")
+    registry = Parameter("device_registry")
+    cb = Parameter("callback_controller")
 
-    df, meta = ingest(file_path, hint)
-    df2, meta2 = transform(df, meta, config, device_registry, callback_controller)
-    export(df2, meta2, output_base)
+    df, meta = ingest(file_path, hint, cb)
+    df2, meta = transform(df, meta, config, registry, cb)
+    export(df2, meta, output_base, cb)
 
 
-if __name__ == "__main__":
-    # Example runner: load config, registry, callback controller then run the flow
-    pass
+if __name__ == "__main__":  # pragma: no cover - manual execution example
+    import yaml
+    import json
+
+    # load config, registry, callback controller ...
+    flow.run(
+        parameters={
+            "file_path": "path/to/data.csv",
+            "output_base": "out/data",
+            "config": config,
+            "device_registry": registry,
+            "callback_controller": cb,
+        }
+    )
