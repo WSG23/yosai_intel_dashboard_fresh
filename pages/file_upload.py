@@ -50,6 +50,7 @@ try:
 except Exception:  # pragma: no cover - optional UI component
     DragDropUploadArea = lambda *a, **k: None
 from config.dynamic_config import dynamic_config
+from core.unicode import safe_unicode_encode
 
 try:
     from core.callback_controller import CallbackEvent
@@ -479,6 +480,8 @@ class Callbacks:
             contents_list = [contents_list]
         if not isinstance(filenames_list, list):
             filenames_list = [filenames_list]
+
+        filenames_list = [safe_unicode_encode(f) for f in filenames_list]
 
         async def job(progress=None):
             return await self.processing.process_files(
@@ -1182,14 +1185,15 @@ class CallbacksLegacy:
         valid_filenames: list[str] = []
         alerts: list[Any] = []
         for content, fname in zip(contents_list, filenames_list):
-            ok, msg = self.validator.validate(fname, content)
+            clean_name = safe_unicode_encode(fname)
+            ok, msg = self.validator.validate(clean_name, content)
             if not ok:
                 alerts.append(self.processing.build_failure_alert(msg))
             else:
                 valid_contents.append(content)
-                valid_filenames.append(fname)
-                self.chunked.start_file(fname)
-                self.queue.add_file(fname)
+                valid_filenames.append(clean_name)
+                self.chunked.start_file(clean_name)
+                self.queue.add_file(clean_name)
 
         if not valid_contents:
             return alerts, [], {}, [], {}, no_update, no_update
