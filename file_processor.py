@@ -1,4 +1,6 @@
 from typing import Optional, Dict, List
+
+import numpy as np
 import pandas as pd
 
 from column_mapper import AIColumnMapperAdapter
@@ -17,6 +19,57 @@ def load_raw_file(path: str) -> pd.DataFrame:
     raise ValueError(f"Unsupported file type: {path}")
 
 
+def validate_rows(df: pd.DataFrame) -> pd.DataFrame:
+    """Add validation columns and flag row-level issues."""
+
+    df = df.copy()
+    required = ["timestamp", "person_id", "door_id", "access_result"]
+
+    req_df = pd.concat(
+        [
+            df[col]
+            if col in df.columns
+            else pd.Series([pd.NA] * len(df), index=df.index)
+            for col in required
+        ],
+        axis=1,
+    )
+    missing_required = req_df.isna().any(axis=1)
+
+    empty_ratio = df.isna().sum(axis=1) / df.shape[1]
+    too_many_empty = empty_ratio > 0.5
+
+    str_df = df.select_dtypes(include="object")
+    if not str_df.empty:
+        filled = str_df.fillna("")
+        control_chars = filled.apply(lambda c: c.str.count(r"[\x00-\x1F\x7F]"))
+        control_count = control_chars.sum(axis=1)
+        total_chars = filled.applymap(len).sum(axis=1)
+        control_ratio = np.where(total_chars == 0, 0, control_count / total_chars)
+    else:
+        control_ratio = pd.Series(0, index=df.index)
+    control_exceeded = control_ratio > 0.1
+
+    is_valid = ~(missing_required | too_many_empty | control_exceeded)
+
+    error_codes = [
+        "MISSING_REQUIRED",
+        "TOO_MANY_EMPTY",
+        "CONTROL_CHAR_EXCEEDED",
+    ]
+    validation_errors = [
+        [code for cond, code in zip(
+            (missing_required[i], too_many_empty[i], control_exceeded[i]),
+            error_codes,
+        ) if cond]
+        for i in range(len(df))
+    ]
+
+    df["is_valid"] = is_valid
+    df["validation_errors"] = validation_errors
+    return df
+
+
 def process_file(
     path: str,
     custom_mappings: Optional[Dict[str, List[str]]] = None,
@@ -33,5 +86,7 @@ def process_file(
     )
     df_raw = mapper.map_and_standardize(df_raw)
 
+    df_validated = validate_rows(df_raw)
+
     # Further validation, enrichment, anomaly detection would continue here.
-    return df_raw
+    return df_validated
