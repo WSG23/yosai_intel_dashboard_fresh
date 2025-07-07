@@ -13,15 +13,13 @@ The component toggles state classes so you can style hover, dragging and uploadi
 
 File previews are rendered as thumbnails for images or with a generic file icon for other types.
 
-On mobile devices a **Use Camera** button activates the device camera and inserts the captured photo into the file list.
-
 Behind the scenes the upload is handled by a background worker. A task ID is
 returned immediately and progress events are streamed over Server‑Sent Events at
 `/upload/progress/<task_id>`. When processing completes the UI refreshes the
 `file-info-store` so analytics pages can use the new data without reloading the
 entire app.
 
-Supported file types are CSV and JSON. Large files are streamed to avoid exhausting browser memory. You may upload multiple files at once; they will be processed sequentially.
+Supported file types include CSV, JSON, and Excel (`.xls`/`.xlsx`). Large files are streamed to avoid exhausting browser memory. You may upload multiple files at once; they will be processed sequentially.
 
 ## Configuration Options
 
@@ -46,7 +44,6 @@ and is also sent to any connected monitoring systems.
 - Ensure contrast ratios meet WCAG AA guidelines and that keyboard focus is visible.
 - The area exposes `role="button"` and supports keyboard activation via the Enter key.
 - Touch targets, including the Upload button and remove icons, should be at least 44&times;44&nbsp;px.
-- The **Use Camera** button invokes the mobile camera when available.
 
 ## Monitoring
 
