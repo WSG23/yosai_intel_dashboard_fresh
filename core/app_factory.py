@@ -7,7 +7,7 @@ import os
 import sys
 import types
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Any, Optional, Callable, cast
 
 # Graceful Dash imports with fallback
 try:
@@ -672,7 +672,7 @@ def _create_error_page(message: str) -> Any:
     )
 
 
-def _create_placeholder_page(title: str, subtitle: str, message: str) -> "Html.Div":
+def _create_placeholder_page(title: str, subtitle: str, message: str) -> Html.Div:
     """Create placeholder page for missing modules"""
     return dbc.Container(
         [
@@ -691,7 +691,7 @@ def _create_placeholder_page(title: str, subtitle: str, message: str) -> "Html.D
     )
 
 
-def _register_router_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
+def _register_router_callbacks(manager: TrulyUnifiedCallbacks) -> None:
     """Register page routing callbacks."""
 
     def safe_callback(outputs, inputs, callback_id="unknown"):
@@ -873,7 +873,7 @@ def _get_upload_page() -> Any:
     )
 
 
-def _register_global_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
+def _register_global_callbacks(manager: TrulyUnifiedCallbacks) -> None:
     """Register global application callbacks with consolidated management and Unicode safety"""
 
     if not DASH_AVAILABLE:
@@ -961,10 +961,7 @@ def _register_callbacks(app: "Dash", config_manager: Any) -> None:
             from pages.deep_analytics.callbacks import (
                 register_callbacks as register_deep_callbacks,
             )
-            from pages.file_upload import Callbacks as UploadCallbacks
-            from pages.file_upload import (
-                register_callbacks as register_upload_callbacks,
-            )
+            from pages.file_upload import register_callbacks as register_upload_callbacks
 
             register_upload_callbacks(coordinator)
             register_simple_mapping(coordinator)
@@ -974,7 +971,7 @@ def _register_callbacks(app: "Dash", config_manager: Any) -> None:
 
             register_navbar_callbacks(coordinator, get_export_service())
 
-            cast(Any, app)._upload_callbacks = UploadCallbacks()
+            cast(Any, app)._upload_callbacks = object()
             cast(Any, app)._deep_analytics_callbacks = DeepAnalyticsCallbacks()
 
             if config_manager.get_app_config().environment == "development" and hasattr(
@@ -999,7 +996,8 @@ def _initialize_services(container: Optional[ServiceContainer] = None) -> None:
         else:
             from services import get_analytics_service
 
-            analytics_service = get_analytics_service()
+            analytics_service_func = cast(Callable[[], AnalyticsService], get_analytics_service)
+            analytics_service = analytics_service_func()
 
         analytics_service = cast(AnalyticsService, analytics_service)
         health = analytics_service.health_check()
