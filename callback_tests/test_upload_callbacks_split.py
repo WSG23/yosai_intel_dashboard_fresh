@@ -1,10 +1,19 @@
 import importlib
 import sys
 import types
+from pathlib import Path
 
-from dash import no_update
+# Ensure repository root is on the import path so local shims are found
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from core.callback_controller import CallbackEvent
+stub_dash = types.ModuleType("dash")
+stub_dash.dcc = types.SimpleNamespace()
+stub_dash.html = types.SimpleNamespace()
+stub_dash.no_update = None
+dash_exceptions = types.ModuleType("dash.exceptions")
+dash_exceptions.PreventUpdate = type("PreventUpdate", (), {})
+sys.modules["dash"] = stub_dash
+sys.modules["dash.exceptions"] = dash_exceptions
 
 stub_pandas = types.ModuleType("pandas")
 stub_pandas.DataFrame = object
@@ -77,6 +86,9 @@ core_unicode.ChunkedUnicodeProcessor = type(
     (),
     {"process_large_content": staticmethod(lambda c, chunk_size=100: c)},
 )
+core_unicode.UnicodeSecurityProcessor = object
+core_unicode.UnicodeSQLProcessor = object
+core_unicode.UnicodeTextProcessor = object
 sys.modules["core.unicode"] = core_unicode
 upload_mod = types.ModuleType("services.upload")
 class _Proc:
@@ -115,6 +127,10 @@ sys.modules["pages.graphs"].GRAPH_FIGURES = {}
 sys.modules["pages.deep_analytics"] = types.ModuleType("pages.deep_analytics")
 sys.modules["pages.export"] = types.ModuleType("pages.export")
 sys.modules["pages.settings"] = types.ModuleType("pages.settings")
+
+from dash import no_update
+
+from core.callback_controller import CallbackEvent
 
 file_upload = importlib.import_module("pages.file_upload")
 Callbacks = file_upload.Callbacks
