@@ -134,7 +134,9 @@ def test_register_callbacks(monkeypatch):
     # stub modules for component registrations
     sys.modules["components.device_verification"] = SimpleNamespace(register_callbacks=lambda m: calls.setdefault("device", True))
     sys.modules["components.simple_device_mapping"] = SimpleNamespace(register_callbacks=lambda m: calls.setdefault("simple", True))
-    sys.modules["components.ui.navbar"] = SimpleNamespace(register_navbar_callbacks=lambda m: calls.setdefault("nav", True))
+    sys.modules["components.ui.navbar"] = SimpleNamespace(
+        register_navbar_callbacks=lambda m, svc=None: calls.setdefault("nav", True)
+    )
     sys.modules["pages.deep_analytics.callbacks"] = SimpleNamespace(
         Callbacks=type("CB1", (), {}),
         register_callbacks=lambda m: calls.setdefault("deep", True),

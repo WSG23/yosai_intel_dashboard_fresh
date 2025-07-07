@@ -1,16 +1,22 @@
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from services.upload.validators import ClientSideValidator
+from services.interfaces import UploadValidatorProtocol, get_upload_validator
 
 
 class DragDropUploadArea:
     """Simple drag-and-drop upload component with client-side validation."""
 
-    def __init__(self, id: str = "upload-data", *, max_size: int | None = None) -> None:
+    def __init__(
+        self,
+        id: str = "upload-data",
+        *,
+        max_size: int | None = None,
+        validator: UploadValidatorProtocol | None = None,
+    ) -> None:
         self.id = id
         self.max_size = max_size
-        self.validator = ClientSideValidator(max_size=max_size)
+        self.validator = validator or get_upload_validator()
 
     def render(self) -> dcc.Upload:
         return dcc.Upload(

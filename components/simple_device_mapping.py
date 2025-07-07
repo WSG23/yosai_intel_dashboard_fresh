@@ -24,7 +24,7 @@ from services.ai_mapping_store import ai_mapping_store
 from services.device_learning_service import get_device_learning_service
 
 # ADD after existing imports
-from services.door_mapping_service import door_mapping_service
+from services.interfaces import DoorMappingServiceProtocol, get_door_mapping_service
 
 # Options for special device areas shared with verification component
 special_areas_options = [
@@ -35,7 +35,11 @@ special_areas_options = [
 ]
 
 
-def apply_learned_device_mappings(df: pd.DataFrame, filename: str) -> bool:
+def apply_learned_device_mappings(
+    df: pd.DataFrame,
+    filename: str,
+    door_service: DoorMappingServiceProtocol | None = None,
+) -> bool:
     """
     Apply learned device mappings using the door mapping service
 
@@ -46,11 +50,15 @@ def apply_learned_device_mappings(df: pd.DataFrame, filename: str) -> bool:
     Returns:
         True if learned mappings were applied
     """
-    return door_mapping_service.apply_learned_mappings(df, filename)
+    svc = door_service or get_door_mapping_service()
+    return svc.apply_learned_mappings(df, filename)
 
 
 def save_confirmed_device_mappings(
-    df: pd.DataFrame, filename: str, confirmed_mappings: Dict[str, Any]
+    df: pd.DataFrame,
+    filename: str,
+    confirmed_mappings: Dict[str, Any],
+    door_service: DoorMappingServiceProtocol | None = None,
 ) -> str:
     """
     Save confirmed device mappings using the door mapping service
@@ -69,10 +77,15 @@ def save_confirmed_device_mappings(
         device_data.update(mapping)
         devices_list.append(device_data)
 
-    return door_mapping_service.save_confirmed_mappings(df, filename, devices_list)
+    svc = door_service or get_door_mapping_service()
+    return svc.save_confirmed_mappings(df, filename, devices_list)
 
 
-def generate_ai_device_defaults(df: pd.DataFrame, client_profile: str = "auto"):
+def generate_ai_device_defaults(
+    df: pd.DataFrame,
+    client_profile: str = "auto",
+    door_service: DoorMappingServiceProtocol | None = None,
+) -> None:
     """Generate AI-based defaults, prioritizing learned mappings"""
     try:
         learning_service = get_device_learning_service()
@@ -83,7 +96,8 @@ def generate_ai_device_defaults(df: pd.DataFrame, client_profile: str = "auto"):
             logger.info("🎯 Applied learned mappings as defaults")
             return
 
-        result = door_mapping_service.process_uploaded_data(df, client_profile)
+        svc = door_service or get_door_mapping_service()
+        result = svc.process_uploaded_data(df, client_profile)
         ai_mapping_store.clear()
         for device in result["devices"]:
             learned_mapping = learning_service.get_device_mapping_by_name(
