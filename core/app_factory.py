@@ -7,7 +7,7 @@ import os
 import sys
 import types
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, Callable, cast
+from typing import TYPE_CHECKING, Any, Callable, Optional, cast
 
 # Graceful Dash imports with fallback
 try:
@@ -72,7 +72,6 @@ from flasgger import Swagger
 from flask import Flask, session
 from flask_babel import Babel
 from flask_compress import Compress
-
 from flask_talisman import Talisman
 
 
@@ -86,6 +85,8 @@ class DummyConfigManager:
         return self.config.plugin_settings.get(name, {})
 
 
+from flask_caching import Cache
+
 from components.ui.navbar import create_navbar_layout
 from config.config import get_config
 from core.container import Container as DIContainer
@@ -93,13 +94,11 @@ from core.enhanced_container import ServiceContainer
 from core.plugins.auto_config import PluginAutoConfiguration
 from core.secrets_manager import validate_secrets
 from core.theme_manager import DEFAULT_THEME, apply_theme_settings
-from utils.assets_utils import ensure_icon_cache_headers
 from dash_csrf_plugin import CSRFMode, setup_enhanced_csrf_protection
+from pages import get_page_layout
 from services import get_analytics_service
 from services.analytics_service import AnalyticsService
-from pages import get_page_layout
-
-from flask_caching import Cache
+from utils.assets_utils import ensure_icon_cache_headers
 
 # Optional callback system -------------------------------------------------
 try:  # pragma: no cover - graceful import fallback
@@ -108,10 +107,12 @@ except Exception:  # pragma: no cover - fallback when unavailable
     TrulyUnifiedCallbacks = None  # type: ignore[misc]
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-    from dash import Dash
-    from dash import Input, Output, dcc as Dcc, html as Html
     import dash_bootstrap_components as dbc
+    from dash import Dash, Input, Output
+    from dash import dcc as Dcc
+    from dash import html as Html
+
+    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 BUNDLE = "/assets/dist/main.min.css"
@@ -185,7 +186,8 @@ def _create_full_app() -> "Dash":
         service_container = ServiceContainer()
         service_container.register_factory("config", get_config)
         service_container.register_factory(
-            "analytics_service", lambda: get_analytics_service()
+            "analytics_service",
+            lambda: cast(AnalyticsService, get_analytics_service()),
         )
         config_manager = service_container.get("config")
         analytics_service = service_container.get("analytics_service")
@@ -287,7 +289,7 @@ def _create_full_app() -> "Dash":
                     selector(_select_locale)  # Flask-Babel 3.x
                 else:  # pragma: no cover - Flask-Babel >=4
                     babel.locale_selector = _select_locale  # type: ignore[attr-defined]
-            app.server.babel = babel
+            cast(Any, app.server).babel = babel
         except Exception as e:  # pragma: no cover - optional dependency
             logger.warning(f"Failed to initialize Babel: {e}")
 
@@ -644,7 +646,7 @@ def _create_main_layout() -> "Html.Div":
     )
 
 
-def _create_navbar() -> "dbc.Navbar":
+def _create_navbar() -> Any:
     """Wrapper to create the navigation bar layout."""
     return create_navbar_layout()
 
@@ -671,7 +673,7 @@ def _create_error_page(message: str) -> Any:
     )
 
 
-def _create_placeholder_page(title: str, subtitle: str, message: str) -> Html.Div:
+def _create_placeholder_page(title: str, subtitle: str, message: str) -> dbc.Container:
     """Create placeholder page for missing modules"""
     return dbc.Container(
         [
@@ -690,7 +692,7 @@ def _create_placeholder_page(title: str, subtitle: str, message: str) -> Html.Di
     )
 
 
-def _register_router_callbacks(manager: TrulyUnifiedCallbacks) -> None:
+def _register_router_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
     """Register page routing callbacks."""
 
     def safe_callback(outputs, inputs, callback_id="unknown"):
@@ -872,7 +874,7 @@ def _get_upload_page() -> Any:
     )
 
 
-def _register_global_callbacks(manager: TrulyUnifiedCallbacks) -> None:
+def _register_global_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
     """Register global application callbacks with consolidated management and Unicode safety"""
 
     if not DASH_AVAILABLE:
@@ -960,7 +962,9 @@ def _register_callbacks(app: "Dash", config_manager: Any) -> None:
             from pages.deep_analytics.callbacks import (
                 register_callbacks as register_deep_callbacks,
             )
-            from pages.file_upload import register_callbacks as register_upload_callbacks
+            from pages.file_upload import (
+                register_callbacks as register_upload_callbacks,
+            )
 
             register_upload_callbacks(coordinator)
             register_simple_mapping(coordinator)
@@ -995,7 +999,9 @@ def _initialize_services(container: Optional[ServiceContainer] = None) -> None:
         else:
             from services import get_analytics_service
 
-            analytics_service_func = cast(Callable[[], AnalyticsService], get_analytics_service)
+            analytics_service_func = cast(
+                Callable[[], AnalyticsService], get_analytics_service
+            )
             analytics_service = analytics_service_func()
 
         analytics_service = cast(AnalyticsService, analytics_service)

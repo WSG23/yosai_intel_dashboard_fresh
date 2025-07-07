@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 """Fixed Main Application - No import issues"""
-import subprocess
-import sys
-
 import logging
 import os
+import subprocess
+import sys
 from typing import Any, cast
 
 from flask import Flask, request
-from typing import cast
 
 try:
     from dotenv import load_dotenv
@@ -59,6 +57,7 @@ def check_learning_status():
 
 def verify_dependencies() -> None:
     from utils.dependency_checker import verify_requirements
+
     verify_requirements("requirements.txt")
 
 
@@ -207,7 +206,7 @@ def main():
                 logger.info("🔒 Starting with HTTPS")
                 app.run(
                     host=app_config.host,
-                    port=app_config.port,
+                    port=str(app_config.port),
                     debug=app_config.debug,
                     ssl_context=ssl_context,
                 )
@@ -215,7 +214,7 @@ def main():
                 logger.info("🌐 Starting with HTTP")
                 app.run(
                     host=app_config.host,
-                    port=app_config.port,
+                    port=str(app_config.port),
                     debug=app_config.debug,
                 )
 
