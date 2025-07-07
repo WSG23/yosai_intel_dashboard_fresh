@@ -11,7 +11,7 @@
 /* =================================================================== */
 :root {
   /* Extracted from existing dashboard.css */
-  --color-primary: #1B2A47;
+  --color-primary: #000000;
   --color-accent: #2196F3;
   --color-accent-hover: #42A5F5;
   /* Slight accent tint used for subtle backgrounds */
@@ -1092,43 +1092,67 @@ button:disabled {
   background: var(--color-accent);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
-/* Navigation Icon */
+/* Enhanced Navigation Icon Styles */
 .nav-icon {
-  width: 2rem;
-  height: 2rem;
-
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .nav-icon--image {
   -o-object-fit: contain;
      object-fit: contain;
   vertical-align: middle;
+  max-width: 100%;
+  max-height: 100%;
+  /* Prevent image caching issues during navigation */
+  image-rendering: auto;
+  image-rendering: crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
 }
 .nav-icon--fallback {
   font-size: 20px;
   line-height: 24px;
   text-align: center;
   vertical-align: middle;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
 }
 .navbar-nav-link {
   padding: var(--space-3);
   display: flex;
   align-items: center;
   gap: 8px;
+  color: var(--text-primary);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
 }
-/* Navbar Component */
+.navbar-nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+/* Enhanced Navbar Component - Force Black Background */
 .navbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: var(--space-4) var(--space-6);
-  background: var(--color-primary);
+  background: #000000 !important; /* Force black background */
   border-bottom: 1px solid var(--color-gray-700);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: var(--z-sticky);
+  min-height: 64px;
 }
 .navbar__brand {
   display: flex;
@@ -1152,6 +1176,63 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+}
+/* Icon loading and caching improvements */
+.nav-icon img {
+  pointer-events: none;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+}
+/* Ensure icons are visible on all themes */
+.navbar .nav-icon--image,
+.navbar .nav-icon--fallback {
+  opacity: 1;
+  visibility: visible;
+  filter: brightness(1);
+}
+/* Dark theme specific adjustments */
+.dark-mode .navbar {
+  background: #000000 !important;
+  border-bottom-color: #333333;
+}
+.dark-mode .navbar .nav-icon--fallback {
+  color: #ffffff;
+}
+/* Light theme specific adjustments */
+.light-mode .navbar {
+  background: #000000 !important;
+  border-bottom-color: #333333;
+}
+.light-mode .navbar .nav-icon--fallback {
+  color: #ffffff;
+}
+/* High contrast theme adjustments */
+.high-contrast-mode .navbar {
+  background: #000000 !important;
+  border-bottom-color: #ffffff;
+}
+.high-contrast-mode .navbar .nav-icon--fallback {
+  color: #ffffff;
+}
+/* Mobile responsive improvements */
+@media (max-width: 768px) {
+  .navbar {
+    padding: var(--space-3) var(--space-4);
+  }
+  
+  .navbar__nav {
+    gap: var(--space-2);
+  }
+  
+  .nav-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .nav-icon--fallback {
+    font-size: 16px;
+  }
 }
 /* =================================================================== */
 /* 03-components/_modals.css - Modal Component System */
