@@ -65,6 +65,13 @@ application expects the following files:
 Additional icons can live in the same directory as long as their paths match the references in
 `components/ui/navbar.py`.
 
+Run the debug helper to verify that icon files exist and can be served:
+
+```bash
+python scripts/debug_navbar_icons.py
+```
+Pass icon names to check custom files.
+
 ## 🚀 Quick Start
 
 ### Development Setup
