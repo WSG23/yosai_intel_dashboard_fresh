@@ -1,8 +1,17 @@
+#!/usr/bin/env python3
+"""Debug utilities for Dash asset serving with safe imports."""
+
+try:
+    from dash import html  # type: ignore
+    DASH_AVAILABLE = True
+except ImportError:
+    # Provide fallback for when dash is not available
+    DASH_AVAILABLE = False
+    html = None
+
 import logging
 from pathlib import Path
-from typing import Any, Dict, Iterable
-
-from dash import html  # type: ignore
+from typing import Any, Optional, Dict, Iterable
 
 from core.unicode import safe_unicode_encode
 
@@ -59,6 +68,12 @@ def debug_dash_asset_serving(app: Any, icon: str = "analytics.png") -> bool:
         return False
 
 
+def log_asset_info(icon: str) -> None:
+    """Log whether a navbar icon file exists."""
+    path = NAVBAR_ICON_DIR / icon
+    logger.info("Icon path %s exists=%s", path, path.is_file())
+
+
 def navbar_icon(filename: str, alt: str, fallback_text: str, *, warn: bool = True):
     """Return an ``Img`` component or fallback text for missing icons.
 
@@ -79,5 +94,6 @@ def navbar_icon(filename: str, alt: str, fallback_text: str, *, warn: bool = Tru
 __all__ = [
     "check_navbar_assets",
     "debug_dash_asset_serving",
+    "log_asset_info",
     "navbar_icon",
 ]

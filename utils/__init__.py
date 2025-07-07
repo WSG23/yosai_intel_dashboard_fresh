@@ -28,11 +28,24 @@ try:  # pragma: no cover - graceful import fallback
     unicode_safe_encode = safe_encode
     unicode_sanitize_df = sanitize_dataframe
 
-    from .assets_debug import (
-        check_navbar_assets,
-        debug_dash_asset_serving,
-        navbar_icon,
-    )
+    # Safe imports with fallbacks
+    try:
+        from .assets_debug import (
+            check_navbar_assets,
+            debug_dash_asset_serving,
+            log_asset_info,
+        )
+    except ImportError:
+        # Provide fallbacks when dash imports fail
+        def check_navbar_assets(*args, **kwargs):
+            return True
+
+        def debug_dash_asset_serving(*args, **kwargs):
+            return True
+
+        def log_asset_info(*args, **kwargs):
+            return None
+
     from .assets_utils import get_nav_icon
     from .preview_utils import serialize_dataframe_preview
     from .mapping_helpers import standardize_column_names, AIColumnMapperAdapter
@@ -53,11 +66,24 @@ except Exception:  # pragma: no cover - fallback when core.unicode unavailable
     unicode_safe_encode = UnicodeSecurityProcessor.sanitize_unicode_input
     unicode_sanitize_df = sanitize_data_frame
 
-    from .assets_debug import (
-        check_navbar_assets,
-        debug_dash_asset_serving,
-        navbar_icon,
-    )
+    # Safe imports with fallbacks
+    try:
+        from .assets_debug import (
+            check_navbar_assets,
+            debug_dash_asset_serving,
+            log_asset_info,
+        )
+    except ImportError:
+        # Provide fallbacks when dash imports fail
+        def check_navbar_assets(*args, **kwargs):
+            return True
+
+        def debug_dash_asset_serving(*args, **kwargs):
+            return True
+
+        def log_asset_info(*args, **kwargs):
+            return None
+
     from .assets_utils import get_nav_icon
     from .preview_utils import serialize_dataframe_preview
     from .mapping_helpers import standardize_column_names, AIColumnMapperAdapter
@@ -88,6 +114,7 @@ __all__: list[str] = [
     # Existing utilities
     "check_navbar_assets",
     "debug_dash_asset_serving",
+    "log_asset_info",
     "navbar_icon",
     "get_nav_icon",
     "serialize_dataframe_preview",
