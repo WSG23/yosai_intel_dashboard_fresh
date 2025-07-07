@@ -139,7 +139,17 @@ def nav_icon(name: str, alt: str) -> Any:
     try:
         import dash
 
-        app = dash.Dash.get_app()
+        # dash.get_app was introduced in newer versions of Dash.
+        # Use it when available and fall back to the old method for
+        # compatibility with older Dash versions.
+        get_app = getattr(dash, "get_app", None)
+        if get_app is None:
+            get_app = getattr(dash.Dash, "get_app", None)
+
+        if get_app is None:
+            raise AttributeError("Dash app getter not available")
+
+        app = get_app()
         return _nav_icon(app, name, alt)
     except Exception as e:  # pragma: no cover - graceful fallback
         logger.debug(f"Dash app context unavailable for {name}: {e}")
@@ -159,7 +169,14 @@ def create_navbar_layout() -> Optional[Any]:
     try:
         import dash
 
-        app = dash.Dash.get_app()
+        get_app = getattr(dash, "get_app", None)
+        if get_app is None:
+            get_app = getattr(dash.Dash, "get_app", None)
+
+        if get_app is None:
+            raise AttributeError("Dash app getter not available")
+
+        app = get_app()
         check_navbar_assets(
             [
                 "dashboard",
