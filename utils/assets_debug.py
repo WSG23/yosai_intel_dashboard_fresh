@@ -13,7 +13,7 @@ import logging
 from pathlib import Path
 from typing import Any, Optional, Dict, Iterable
 
-from core.unicode import safe_unicode_encode
+from core.unicode_processor import safe_unicode_encode
 
 logger = logging.getLogger(__name__)
 

@@ -18,7 +18,6 @@ __all__ = [
     "safe_encode",
     "sanitize_dataframe",
     "sanitize_data_frame",
-    "safe_unicode_encode",
     "handle_surrogate_characters",
     "clean_unicode_surrogates",
     "sanitize_unicode_input",

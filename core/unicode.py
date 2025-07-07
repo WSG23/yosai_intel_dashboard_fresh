@@ -232,11 +232,6 @@ def deprecated(replacement: str) -> Callable[[Callable[..., Any]], Callable[...,
 
 
 @deprecated("safe_encode_text")
-def safe_unicode_encode(value: Any) -> str:
-    return safe_encode_text(value)
-
-
-@deprecated("safe_encode_text")
 def safe_encode(value: Any) -> str:
     return safe_encode_text(value)
 
@@ -276,7 +271,6 @@ __all__ = [
     "UnicodeProcessor",
     "ChunkedUnicodeProcessor",
     # Deprecated
-    "safe_unicode_encode",
     "safe_encode",
     "safe_decode",
     "handle_surrogate_characters",

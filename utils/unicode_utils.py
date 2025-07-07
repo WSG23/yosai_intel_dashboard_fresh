@@ -51,11 +51,6 @@ def sanitize_dataframe(
     return _u.sanitize_dataframe(df, progress=progress)
 
 
-def safe_unicode_encode(value: Any) -> str:
-    _warn("safe_encode_text")
-    return _u.safe_encode(value)
-
-
 def safe_encode(value: Any) -> str:
     _warn("safe_encode_text")
     return _u.safe_encode(value)
@@ -93,7 +88,6 @@ __all__ = [
     "sanitize_dataframe",
     "UnicodeProcessor",
     "ChunkedUnicodeProcessor",
-    "safe_unicode_encode",
     "safe_encode",
     "safe_decode",
     "handle_surrogate_characters",
