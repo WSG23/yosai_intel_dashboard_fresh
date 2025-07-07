@@ -109,8 +109,8 @@ except Exception:  # pragma: no cover - fallback when unavailable
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-    import dash
-    from dash import Input, Output, dcc, html
+    from dash import Dash
+    from dash import Input, Output, dcc as Dcc, html as Html
     import dash_bootstrap_components as dbc
 
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
@@ -119,7 +119,7 @@ BUNDLE = "/assets/dist/main.min.css"
 logger = logging.getLogger(__name__)
 
 
-def create_app(mode: Optional[str] = None) -> dash.Dash:
+def create_app(mode: Optional[str] = None) -> "Dash":
     """Create a Dash application.
 
     Parameters
@@ -179,7 +179,7 @@ def create_app(mode: Optional[str] = None) -> dash.Dash:
         raise
 
 
-def _create_full_app() -> dash.Dash:
+def _create_full_app() -> "Dash":
     """Create complete Dash application with full integration"""
     try:
         service_container = ServiceContainer()
@@ -379,7 +379,7 @@ def _create_full_app() -> dash.Dash:
         raise
 
 
-def _create_simple_app() -> dash.Dash:
+def _create_simple_app() -> "Dash":
     """Create a simplified Dash application"""
     try:
         from dash import dcc, html
@@ -498,7 +498,7 @@ def _create_simple_app() -> dash.Dash:
         raise
 
 
-def _create_json_safe_app() -> dash.Dash:
+def _create_json_safe_app() -> "Dash":
     """Create Dash application with JSON-safe layout"""
     try:
         from dash import html
@@ -617,7 +617,7 @@ def _create_json_safe_app() -> dash.Dash:
         raise
 
 
-def _create_main_layout() -> html.Div:
+def _create_main_layout() -> "Html.Div":
     """Create main application layout with complete integration"""
     return html.Div(
         [
@@ -643,7 +643,7 @@ def _create_main_layout() -> html.Div:
     )
 
 
-def _create_navbar() -> dbc.Navbar:
+def _create_navbar() -> "dbc.Navbar":
     """Wrapper to create the navigation bar layout."""
     return create_navbar_layout()
 
@@ -670,7 +670,7 @@ def _create_error_page(message: str) -> Any:
     )
 
 
-def _create_placeholder_page(title: str, subtitle: str, message: str) -> html.Div:
+def _create_placeholder_page(title: str, subtitle: str, message: str) -> "Html.Div":
     """Create placeholder page for missing modules"""
     return dbc.Container(
         [
@@ -899,7 +899,7 @@ def _register_global_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
             raise
 
 
-def _initialize_plugins(app: dash.Dash, config_manager: Any) -> None:
+def _initialize_plugins(app: "Dash", config_manager: Any) -> None:
     """Initialize plugin system and register health endpoints."""
 
     container = DIContainer()
@@ -917,7 +917,7 @@ def _initialize_plugins(app: dash.Dash, config_manager: Any) -> None:
         registry.plugin_manager.stop_health_monitor()
 
 
-def _setup_layout(app: dash.Dash) -> None:
+def _setup_layout(app: "Dash") -> None:
     """Attach main layout with caching."""
 
     layout_snapshot = None
@@ -931,7 +931,7 @@ def _setup_layout(app: dash.Dash) -> None:
     app.layout = _serve_layout
 
 
-def _register_callbacks(app: dash.Dash, config_manager: Any) -> None:
+def _register_callbacks(app: "Dash", config_manager: Any) -> None:
     """Register application callbacks using the unified coordinator."""
 
     if TrulyUnifiedCallbacks is not None:
