@@ -2,7 +2,6 @@
 """Accessible drag and drop upload area component."""
 from __future__ import annotations
 
-import dash_bootstrap_components as dbc
 from dash import dcc, html
 
 
@@ -40,12 +39,11 @@ def DragDropUploadArea(upload_id: str = "drag-drop-upload") -> html.Div:
                             id=f"{upload_id}-label",
                             className="mb-1",
                         ),
-                        dbc.Button(
+                        html.Button(
                             "Use Camera",
                             id=camera_id,
-                            color="secondary",
-                            size="sm",
-                            className="mt-2",
+                            className="btn btn-secondary mt-2",
+                            type="button",
                             **{"aria-label": "Use camera to capture"},
                         ),
                     ],
