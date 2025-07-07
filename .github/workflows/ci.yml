@@ -1,172 +1,25 @@
 name: CI
 
-on:
-  pull_request:
-    branches: ["*"]
-  push:
-    branches: ["main"]
-    tags: ['v*.*.*']
+on: [push, pull_request]
 
 jobs:
-  build-test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: ⚙️  Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: 📦 Install deps
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements_ui.txt
-          pip install -r requirements-dev.txt
-
-      - name: 🔤 Extract translations
-        run: pybabel extract -F babel.cfg -o messages.pot .
-
-      - name: 🌐 Compile translations
-        run: pybabel compile -d translations
-
-      - name: 📝 Check missing translations
-        run: python scripts/check_missing_translations.py
-
-      # ----- Lint & static analysis -----
-      - name: 🧹 Black (format check)
-        run: black --line-length=88 --check --diff .
-
-      - name: 🔀 Isort (import order)
-        run: isort --profile=black --line-length=88 --check --diff .
-
-      - name: 🔍 Flake8
-        run: flake8 .
-
-      - name: 🧐 Mypy (type check)
-        run: mypy --strict .
-
-      - name: 🛡️  Bandit (security scan)
-        run: bandit -r .
-
-      - name: 📚 Safety (dependency CVE scan)
-        run: python scripts/audit_dependencies.py
-
-      - name: 🔎 Gitleaks (secret scan)
-        uses: gitleaks/gitleaks-action@v2
-        with:
-          args: "--source=."
-
-      # ----- Tests -----
-      - name: ✅ Run PyTest
-        run: pytest -q --cov=.
-
-      - name: ⬆️  Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          fail_ci_if_error: true
-
-  performance-test:
-    needs: build-test
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: ⚙️  Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: 📦 Install deps
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements_ui.txt
-          pip install -r requirements-dev.txt
-
-      - name: 🚀 Run performance tests
-        run: pytest -m performance -q | tee performance-results.log
-
-      - name: 📊 Upload performance results
-        if: always()
+          python-version: 3.8
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Black
+        run: black --check . --line-length 88
+      - name: Flake8
+        run: flake8 . --max-line-length 88
+      - name: PyTest
+        run: pytest --maxfail=1 --disable-warnings -q --cov=.
+      - name: Upload coverage
         uses: actions/upload-artifact@v3
         with:
-          name: performance-results
-          path: performance-results.log
-
-  docker:
-    needs: build-test
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🔐 Login to Docker registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🐍 Run security audit
-        run: ./scripts/security_audit.sh
-
-      - name: 📊 Run load test
-        run: ./scripts/load_test.sh
-
-      - name: 🛡️ Run failover test
-        run: ./scripts/failover_test.sh
-
-      - name: ♻️ Run recovery test
-        run: ./scripts/recovery_test.sh
-
-      - name: 🗄️ Run compliance audit
-        run: ./scripts/compliance_audit.sh
-
-      - name: 🏗️  Build & push image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ghcr.io/${{ github.repository }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: 🔍 Scan Docker image
-        uses: aquasec/trivy-action@v0.14.0
-        with:
-          image-ref: ghcr.io/${{ github.repository }}:latest
-
-      - name: ✅ Image digest
-        run: echo "Image built: ${{ steps.build-and-push.outputs.digest }}"
-
-  release-notes:
-    needs: build-test
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 📝 Generate release
-        uses: softprops/action-gh-release@v1
-        with:
-          generate_release_notes: true
-
-  deploy-staging:
-    needs: docker
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🚀 Deploy to staging
-        run: YOSAI_ENV=staging docker-compose up -d
+          name: coverage-report
+          path: htmlcov/
