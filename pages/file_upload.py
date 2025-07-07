@@ -418,44 +418,11 @@ class Callbacks:
             False,
         )
 
-        if not isinstance(contents_list, list):
-            contents_list = [contents_list]
-            filenames_list = [filenames_list]
-
-        valid_contents: list[str] = []
-        valid_filenames: list[str] = []
-        alerts: list[Any] = []
-        for content, fname in zip(contents_list, filenames_list):
-            ok, msg = self.validator.validate(fname, content)
-            if not ok:
-                alerts.append(self.processing.build_failure_alert(msg))
-            else:
-                valid_contents.append(content)
-                valid_filenames.append(fname)
-                self.chunked.start_file(fname)
-                self.queue.add_file(fname)
-
-        if not valid_contents:
-            return alerts, [], {}, [], {}, no_update, no_update
-
-        result = await self.processing.process_files(
-            valid_contents,
-            valid_filenames,
-            task_progress=None,
-        )
-
-        for fname in valid_filenames:
-            self.chunked.finish_file(fname)
-            self.queue.mark_complete(fname)
-
-        result = list(result)
-        result[0] = alerts + result[0]
-        return tuple(result)
-
     def schedule_upload_task(
         self, contents_list: List[str] | str, filenames_list: List[str] | str
     ) -> str:
         """Schedule background processing of uploaded files."""
+
         if not contents_list:
             return ""
 
@@ -477,12 +444,15 @@ class Callbacks:
             return task_id
         except Exception:  # pragma: no cover - compatibility
             manager.trigger(CallbackEvent.FILE_UPLOAD_ERROR)
+
             return ""
 
     def reset_upload_progress(
         self, contents_list: List[str] | str
     ) -> Tuple[int, str, bool]:
         """Reset progress indicators when a new upload starts."""
+
+        logger.debug("Resetting upload progress")
         if not contents_list:
             return 0, "0%", True
         return 0, "0%", False
@@ -492,6 +462,7 @@ class Callbacks:
 
         status = get_status(task_id)
         progress = int(status.get("progress", 0))
+        logger.debug("Upload progress %s%% for %s", progress, task_id)
         file_items = [
             html.Li(
                 dbc.Progress(
@@ -510,12 +481,20 @@ class Callbacks:
         self, _n: int, task_id: str
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, bool]:
         """Emit upload results once processing completes."""
+
         status = get_status(task_id)
         result = status.get("result")
+        manager = CallbackManager()
 
         if status.get("done") and result is not None:
             clear_task(task_id)
             if isinstance(result, Exception):
+                logger.error("Upload processing error: %s", result)
+                manager.trigger(
+                    CallbackEvent.FILE_UPLOAD_ERROR,
+                    "file_upload",
+                    {"error": str(result)},
+                )
                 result = (
                     [self.processing.build_failure_alert(str(result))],
                     [],
@@ -524,6 +503,12 @@ class Callbacks:
                     {},
                     no_update,
                     no_update,
+                )
+            else:
+                manager.trigger(
+                    CallbackEvent.FILE_UPLOAD_COMPLETE,
+                    "file_upload",
+                    {"task_id": task_id},
                 )
             return (*result, True)
 
@@ -1609,6 +1594,7 @@ class CallbacksLegacy:
                 if not is_open
                 else dbc.Alert("No file information available", color="warning")
             )
+
 
 
 def register_upload_callbacks(
