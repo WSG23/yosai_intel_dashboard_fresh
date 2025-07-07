@@ -21,7 +21,10 @@ from core.unicode_utils import sanitize_for_utf8
 
 
 def _get_max_display_rows() -> int:
-    return get_analytics_config().max_display_rows or 10000
+    try:
+        return get_analytics_config().max_display_rows or dynamic_config.analytics.max_display_rows
+    except Exception:
+        return dynamic_config.analytics.max_display_rows
 from core.unicode_processor import safe_format_number
 from services.analytics_service import MAX_DISPLAY_ROWS
 
@@ -119,7 +122,8 @@ def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
 def create_file_preview(df: pd.DataFrame, max_rows: int | None = None) -> Dict[str, Any]:
     """Create safe preview data without UI components"""
     try:
-        rows = max_rows or _get_max_display_rows()
+        limit = _get_max_display_rows()
+        rows = min(max_rows if max_rows is not None else limit, limit)
         preview_df = df.head(rows)
 
         # Ensure all data is JSON serializable and Unicode-safe
