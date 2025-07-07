@@ -43,3 +43,11 @@ __all__ = [
     "detect_after_hours_anomalies",
     "ThreatIndicator",
 ]
+
+
+def setup_isolated_security_testing() -> None:
+    """Prepare the analytics.security_patterns module for isolated security tests."""
+    # TODO: implement test setup logic
+    return None
+
+__all__.append("setup_isolated_security_testing")
