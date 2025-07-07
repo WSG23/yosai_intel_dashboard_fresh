@@ -33,3 +33,12 @@ class TrulyUnifiedCallbacks:
         if states is None:
             states = []
         return self.app.callback(outputs, inputs, states, **kwargs)
+
+    # ------------------------------------------------------------------
+    def print_callback_summary(self) -> None:
+        """Proxy summary request to the underlying coordinator."""
+        if self.coordinator is not None:
+            self.coordinator.print_callback_summary()
+
+
+__all__ = ["TrulyUnifiedCallbacks"]
