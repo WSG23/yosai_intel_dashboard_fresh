@@ -7,6 +7,7 @@ from typing import Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from pandas import Series, DataFrame
 
 # Unicode-safe string handling
 from security.unicode_security_handler import UnicodeSecurityHandler
@@ -71,7 +72,7 @@ class SecurityScoreCalculator:
 
         return True, "Validation passed"
 
-    def _calculate_after_hours(self, timestamps: pd.Series) -> pd.Series:
+    def _calculate_after_hours(self, timestamps: Series) -> Series:
         """Calculate after hours flag (before 8 AM or after 6 PM)"""
         dt_series = pd.to_datetime(timestamps)
         hour = dt_series.dt.hour
