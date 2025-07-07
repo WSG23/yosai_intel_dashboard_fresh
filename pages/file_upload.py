@@ -17,6 +17,8 @@ except Exception:  # pragma: no cover - optional Dash dependency
     html = SimpleNamespace()
     no_update = None
 
+from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
