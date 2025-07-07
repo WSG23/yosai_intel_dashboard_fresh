@@ -87,7 +87,6 @@
     if(!upload){ return; }
     const area = byId(`${UPLOAD_ID}-area`);
     const previewList = byId(`${UPLOAD_ID}-previews`);
-    const cameraBtn = byId(`${UPLOAD_ID}-camera`);
     const input = upload.querySelector('input[type="file"]');
     if(!input){ return; }
     const config = getConfig(upload);
@@ -107,24 +106,6 @@
       });
     }
 
-    if(cameraBtn){
-      cameraBtn.addEventListener('click', ()=>{
-        const camInput = document.createElement('input');
-        camInput.type = 'file';
-        camInput.accept = 'image/*';
-        camInput.capture = 'environment';
-        camInput.addEventListener('change', ()=>{
-          if(camInput.files.length){
-            const dt = new DataTransfer();
-            Array.from(input.files).forEach(f=>dt.items.add(f));
-            Array.from(camInput.files).forEach(f=>dt.items.add(f));
-            input.files = dt.files;
-            input.dispatchEvent(new Event('change', {bubbles:true}));
-          }
-        });
-        camInput.click();
-      });
-    }
 
     input.addEventListener('change', async function(e){
       e.stopImmediatePropagation();
