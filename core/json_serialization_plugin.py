@@ -8,7 +8,7 @@ import logging
 import os
 from dataclasses import asdict, dataclass, is_dataclass
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 import pandas as pd
 
@@ -383,7 +383,7 @@ class JsonSerializationPlugin:
                     # This is a Dash app
                     app.server.json_provider_class = self._yosai_json_provider_class
                     app.server.json = self._yosai_json_provider_class(app.server)
-                    app._yosai_json_plugin = self
+                    cast(Any, app)._yosai_json_plugin = self
                     self.logger.info("Applied JSON serialization to Dash app")
                 elif hasattr(app, "json_provider_class") and hasattr(
                     self, "_yosai_json_provider_class"

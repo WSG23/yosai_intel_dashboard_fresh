@@ -215,11 +215,11 @@ def _create_full_app() -> "Dash":
         ensure_icon_cache_headers(app)
 
         # Expose the service container on the app instance
-        app._service_container = service_container
+        cast(Any, app)._service_container = service_container
 
         # Initialize caching once per app instance
         cache = Cache(app.server, config={"CACHE_TYPE": "simple"})
-        app.cache = cache
+        cast(Any, app).cache = cache
 
         app.index_string = f"""
 <!DOCTYPE html>
@@ -299,7 +299,7 @@ def _create_full_app() -> "Dash":
             and config_manager.get_app_config().environment == "production"
         ):
             try:
-                app._csrf_plugin = setup_enhanced_csrf_protection(
+                cast(Any, app)._csrf_plugin = setup_enhanced_csrf_protection(
                     app, CSRFMode.PRODUCTION
                 )
             except Exception as e:  # pragma: no cover - best effort
@@ -402,7 +402,7 @@ def _create_simple_app() -> "Dash":
         ensure_icon_cache_headers(app)
 
         cache = Cache(app.server, config={"CACHE_TYPE": "simple"})
-        app.cache = cache
+        cast(Any, app).cache = cache
 
         app.index_string = f"""
 <!DOCTYPE html>
@@ -521,7 +521,7 @@ def _create_json_safe_app() -> "Dash":
         ensure_icon_cache_headers(app)
 
         cache = Cache(app.server, config={"CACHE_TYPE": "simple"})
-        app.cache = cache
+        cast(Any, app).cache = cache
 
         app.index_string = f"""
 <!DOCTYPE html>
@@ -911,7 +911,7 @@ def _initialize_plugins(app: "Dash", config_manager: Any) -> None:
     plugin_auto.scan_and_configure("plugins")
     plugin_auto.generate_health_endpoints()
     registry = plugin_auto.registry
-    app._yosai_plugin_manager = registry.plugin_manager
+    cast(Any, app)._yosai_plugin_manager = registry.plugin_manager
 
     @app.server.teardown_appcontext  # type: ignore[attr-defined]
     def _shutdown_plugin_manager(exc=None):
@@ -974,8 +974,8 @@ def _register_callbacks(app: "Dash", config_manager: Any) -> None:
 
             register_navbar_callbacks(coordinator, get_export_service())
 
-            app._upload_callbacks = UploadCallbacks()
-            app._deep_analytics_callbacks = DeepAnalyticsCallbacks()
+            cast(Any, app)._upload_callbacks = UploadCallbacks()
+            cast(Any, app)._deep_analytics_callbacks = DeepAnalyticsCallbacks()
 
             if config_manager.get_app_config().environment == "development" and hasattr(
                 coordinator, "print_callback_summary"
