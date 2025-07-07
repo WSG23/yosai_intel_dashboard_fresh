@@ -21,6 +21,10 @@ This project follows a fully modular design built around a dependency injection 
 - [Data Versioning](docs/data_versioning.md)
 - [Data Processing](docs/data_processing.md)
 
+Core service protocols live in `services/interfaces.py`. Components obtain
+implementations from the `ServiceContainer` when an explicit instance is not
+provided, allowing tests to supply lightweight mocks.
+
 The dashboard is extensible through a lightweight plugin system. Plugins live in the `plugins/` directory and are loaded by a `PluginManager`. See [docs/plugins.md](docs/plugins.md) for discovery, configuration details and a simple **Hello World** example. The [plugin lifecycle diagram](docs/plugin_lifecycle.md) illustrates how plugins are discovered, dependencies resolved and health checks performed.
 
 ```

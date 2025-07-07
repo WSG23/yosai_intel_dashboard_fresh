@@ -60,3 +60,8 @@ db_cfg = config.get_database_config()
 
 Both services implement protocols so alternative implementations can be swapped
 in for tests or future extensions.
+
+Additional interfaces such as `ExportServiceProtocol`, `UploadValidatorProtocol`
+and `DoorMappingServiceProtocol` are defined in `services/interfaces.py`. When a
+component does not receive a concrete instance it falls back to the global
+`ServiceContainer` exposed on the Dash app.
