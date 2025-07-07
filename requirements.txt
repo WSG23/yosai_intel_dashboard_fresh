@@ -38,4 +38,5 @@ pyopenssl>=23.0.0
 SQLAlchemy>=2.0
 prefect>=2.0
 click>=8.0
+pytest-cov>=2.12.0
 
