@@ -4,17 +4,83 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Callable, Dict, List
+from functools import wraps
 
-import dash
-import dash_bootstrap_components as dbc
-from dash import Input, Output, dcc, html
-from flasgger import Swagger
-from flask import session
-from flask_babel import Babel
-from flask_compress import Compress
-from flask_talisman import Talisman
+# Safe Dash imports with error handling
+try:
+    import dash
+    import dash_bootstrap_components as dbc
+    from dash import Input, Output, dcc, html
+    from flasgger import Swagger
+    from flask import session
+    from flask_babel import Babel
+    from flask_compress import Compress
+    from flask_talisman import Talisman
+except ImportError as e:
+    logging.error(f"❌ Critical import failed: {e}")
+    logging.error(
+        "Run: pip install dash>=2.17.0 dash-bootstrap-components>=1.6.0"
+    )
+    sys.exit(1)
+
+# Unicode surrogate handler
+def handle_unicode_surrogates(text: str) -> str:
+    """Handle Unicode surrogate characters that can't be encoded in UTF-8."""
+    if not isinstance(text, str):
+        return text
+    try:
+        text.encode("utf-8")
+        return text
+    except UnicodeEncodeError:
+        return text.encode("utf-8", errors="ignore").decode("utf-8")
+
+
+# Consolidated callback decorator
+def consolidated_callback(
+    app: dash.Dash,
+    outputs: List[Output],
+    inputs: List[Input],
+    callback_id: str,
+    unicode_safe: bool = True,
+):
+    """Consolidated callback decorator with Unicode safety."""
+
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                if unicode_safe:
+                    args = tuple(
+                        handle_unicode_surrogates(arg) if isinstance(arg, str) else arg
+                        for arg in args
+                    )
+                result = func(*args, **kwargs)
+                if unicode_safe and isinstance(result, (str, dict, list)):
+                    result = _sanitize_unicode_result(result)
+                return result
+            except Exception as e:  # pragma: no cover - runtime safety
+                logging.error(f"Callback {callback_id} failed: {e}")
+                return "Error" if len(outputs) == 1 else ["Error"] * len(outputs)
+
+        app.callback(outputs, inputs)(wrapper)
+        logging.info(f"✅ Registered callback: {callback_id}")
+        return wrapper
+
+    return decorator
+
+
+def _sanitize_unicode_result(result: Any) -> Any:
+    """Recursively sanitize results for Unicode safety."""
+    if isinstance(result, str):
+        return handle_unicode_surrogates(result)
+    elif isinstance(result, dict):
+        return {k: _sanitize_unicode_result(v) for k, v in result.items()}
+    elif isinstance(result, list):
+        return [_sanitize_unicode_result(item) for item in result]
+    return result
 
 from components.ui.navbar import create_navbar_layout
 from config.config import get_config
@@ -534,6 +600,23 @@ def _create_navbar() -> dbc.Navbar:
     return create_navbar_layout()
 
 
+def _create_error_page(message: str) -> Any:
+    """Create error page with Unicode-safe message"""
+    safe_message = handle_unicode_surrogates(message)
+    return dbc.Container(
+        [
+            dbc.Alert(
+                [
+                    html.H4("⚠️ Error", className="alert-heading"),
+                    html.P(safe_message),
+                ],
+                color="danger",
+            )
+        ],
+        fluid=True,
+    )
+
+
 def _create_placeholder_page(title: str, subtitle: str, message: str) -> html.Div:
     """Create placeholder page for missing modules"""
     return dbc.Container(
@@ -600,6 +683,11 @@ def _register_router_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
 def _get_home_page() -> Any:
     """Get default home page."""
     return _get_analytics_page()
+
+
+def _get_dashboard_page() -> Any:
+    """Alias for the default dashboard page."""
+    return _get_home_page()
 
 
 def _get_analytics_page() -> Any:
@@ -688,14 +776,78 @@ def _get_upload_page() -> Any:
 
 
 def _register_global_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
-    """Register global application callbacks"""
+    """Register global application callbacks with consolidated management"""
 
-    # Register device learning callbacks
-    from services.device_learning_service import create_learning_callbacks
+    # Get the Dash app instance
+    app = manager.app if hasattr(manager, "app") else None
+    if not app:
+        logger.error("❌ No app instance available for callback registration")
+        return
 
-    create_learning_callbacks(manager)
+    try:
+        # Register device learning callbacks with consolidation
+        from services.device_learning_service import create_learning_callbacks
 
-    logger.info("✅ Global callbacks registered successfully")
+        create_learning_callbacks(manager)
+
+        # Theme management callback (consolidated)
+        @consolidated_callback(
+            app,
+            [Output("theme-store", "data")],
+            [Input("theme-dropdown", "value")],
+            "theme-management",
+            unicode_safe=True,
+        )
+        def update_theme_consolidated(theme_value):
+            """Consolidated theme update with Unicode safety"""
+            if not theme_value:
+                return DEFAULT_THEME
+            return handle_unicode_surrogates(str(theme_value))
+
+        # Navigation callback (consolidated)
+        @consolidated_callback(
+            app,
+            [Output("page-content", "children")],
+            [Input("url", "pathname")],
+            "navigation-management",
+            unicode_safe=True,
+        )
+        def display_page_consolidated(pathname):
+            """Consolidated page navigation with Unicode safety"""
+            if not pathname:
+                pathname = "/"
+
+            safe_pathname = handle_unicode_surrogates(pathname)
+
+            # Route mapping
+            routes = {
+                "/": lambda: _get_dashboard_page(),
+                "/dashboard": lambda: _get_dashboard_page(),
+                "/analytics": lambda: _get_analytics_page(),
+                "/graphs": lambda: _get_graphs_page(),
+                "/export": lambda: _get_export_page(),
+                "/settings": lambda: _get_settings_page(),
+                "/upload": lambda: _get_upload_page(),
+                "/file-upload": lambda: _get_upload_page(),
+            }
+
+            page_func = routes.get(safe_pathname)
+            if page_func:
+                try:
+                    return page_func()
+                except Exception as e:
+                    logger.error(f"Page load failed for {safe_pathname}: {e}")
+                    return _create_error_page(
+                        f"Failed to load page: {safe_pathname}"
+                    )
+
+            return _create_error_page("Page not found")
+
+        logger.info("✅ Global callbacks registered successfully with consolidation")
+
+    except Exception as e:
+        logger.error(f"❌ Failed to register global callbacks: {e}")
+        raise
 
 
 def _initialize_plugins(app: dash.Dash, config_manager: Any) -> None:
