@@ -654,6 +654,14 @@ Performance metrics can be retrieved via:
 from core.performance import get_performance_monitor
 summary = get_performance_monitor().get_metrics_summary()
 ```
+### Standardizing column names
+```python
+import pandas as pd
+from utils.mapping_helpers import standardize_column_names
+
+df = pd.DataFrame({"A B": [1], "C-D": [2]})
+clean_df = standardize_column_names(df)
+```
 ## 📜 Data Migration
 Use the storage utilities to convert legacy pickle files to Parquet and load them:
 ```python

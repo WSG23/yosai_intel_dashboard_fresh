@@ -35,6 +35,7 @@ try:  # pragma: no cover - graceful import fallback
     )
     from .assets_utils import get_nav_icon
     from .preview_utils import serialize_dataframe_preview
+    from .mapping_helpers import standardize_column_names, AIColumnMapperAdapter
 except Exception:  # pragma: no cover - fallback when core.unicode unavailable
     from core.unicode_processor import safe_format_number
     from security.unicode_security_processor import (
@@ -59,6 +60,7 @@ except Exception:  # pragma: no cover - fallback when core.unicode unavailable
     )
     from .assets_utils import get_nav_icon
     from .preview_utils import serialize_dataframe_preview
+    from .mapping_helpers import standardize_column_names, AIColumnMapperAdapter
 
 
 __all__: list[str] = [
@@ -89,5 +91,7 @@ __all__: list[str] = [
     "navbar_icon",
     "get_nav_icon",
     "serialize_dataframe_preview",
+    "standardize_column_names",
+    "AIColumnMapperAdapter",
 ]
 
