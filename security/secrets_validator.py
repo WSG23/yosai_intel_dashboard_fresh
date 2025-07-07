@@ -1,7 +1,9 @@
 import math
 import re
 from collections import Counter
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, cast
+
+from flask import Flask
 
 from core.secrets_manager import SecretsManager
 
@@ -51,7 +53,7 @@ class SecretsValidator:
 def register_health_endpoint(app, validator: Optional[SecretsValidator] = None) -> None:
     """Register /health/secrets endpoint on a Flask or Dash app."""
     validator = validator or SecretsValidator()
-    server = app.server if hasattr(app, "server") else app
+    server: Flask = cast(Flask, app.server if hasattr(app, "server") else app)
 
     @server.route("/health/secrets", methods=["GET"])
     def secrets_health():

@@ -6,7 +6,8 @@ import sys
 import logging
 import os
 
-from flask import request
+from flask import Flask, request
+from typing import cast
 
 try:
     from dotenv import load_dotenv
@@ -159,7 +160,7 @@ def main():
             manager = CallbackManager()
             middleware.register_callbacks(manager)
 
-            server = app.server
+            server: Flask = cast(Flask, app.server)
 
             @server.before_request
             def _before_request():
