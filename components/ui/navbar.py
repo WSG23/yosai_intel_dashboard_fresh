@@ -27,14 +27,17 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     import dash
     import dash_bootstrap_components as dbc
-    from dash import dcc, html
+    import dash.dcc as dcc
+    import dash.html as html
     from dash._callback import callback
     from dash.dependencies import Input, Output, State
 
 # Runtime imports with proper fallbacks
 try:
+    import dash
     import dash_bootstrap_components as dbc
-    from dash import dcc, html
+    import dash.dcc as dcc
+    import dash.html as html
     from dash._callback import callback
     from dash.dependencies import Input, Output, State
 
@@ -136,7 +139,7 @@ def nav_icon(name: str, alt: str) -> Any:
     try:
         import dash
 
-        app = dash.get_app()
+        app = dash.Dash.get_app()
         return _nav_icon(app, name, alt)
     except Exception as e:  # pragma: no cover - graceful fallback
         logger.debug(f"Dash app context unavailable for {name}: {e}")
@@ -156,7 +159,7 @@ def create_navbar_layout() -> Optional[Any]:
     try:
         import dash
 
-        app = dash.get_app()
+        app = dash.Dash.get_app()
         check_navbar_assets(
             [
                 "dashboard",
