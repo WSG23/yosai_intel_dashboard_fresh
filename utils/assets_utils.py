@@ -1,6 +1,6 @@
 from pathlib import Path
 import logging
-from flask import request
+from flask import request, url_for
 
 ASSET_ICON_DIR = Path(__file__).resolve().parent.parent / "assets" / "navbar_icons"
 
@@ -8,22 +8,17 @@ ASSET_ICON_DIR = Path(__file__).resolve().parent.parent / "assets" / "navbar_ico
 def get_nav_icon(app, name: str) -> str | None:
     """Return an asset URL for the given navbar icon if it exists."""
     png_path = ASSET_ICON_DIR / f"{name}.png"
-    if png_path.is_file():
-        try:
-            # Always use absolute path to prevent issues when navigating between pages
-            base_url = getattr(app.server, 'static_url_path', '') or ''
-            if hasattr(app, 'get_asset_url'):
-                url = app.get_asset_url(f"navbar_icons/{name}.png")
-                if url and not url.startswith('http'):
-                    # Ensure absolute path for consistent loading across pages
-                    return f"{base_url}/assets/navbar_icons/{name}.png"
-                return url
-            return f"{base_url}/assets/navbar_icons/{name}.png"
-        except Exception as e:
-            logging.getLogger(__name__).debug(f"get_asset_url failed for {name}: {e}")
-            # Fallback to absolute path
-            return f"/assets/navbar_icons/{name}.png"
-    return None
+    if not png_path.is_file():
+        return None
+
+    server = getattr(app, "server", app)
+
+    try:
+        with server.test_request_context():
+            return url_for("assets", filename=f"navbar_icons/{name}.png")
+    except Exception as exc:  # pragma: no cover - best effort
+        logging.getLogger(__name__).debug(f"url_for failed for {name}: {exc}")
+        return f"/assets/navbar_icons/{name}.png"
 
 
 def ensure_icon_cache_headers(app):
