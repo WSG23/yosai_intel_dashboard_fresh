@@ -12,7 +12,10 @@ class UploadAnalyticsProcessor:
         }
 
     def analyze_uploaded_data(self):
-        return {"status": "success"}
+        data = self.load_uploaded_data()
+        metrics = self._process_uploaded_data_directly(data)
+        metrics["status"] = "success"
+        return metrics
 
     def load_uploaded_data(self):  # pragma: no cover - simple stub
         return {}
