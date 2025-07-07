@@ -3,7 +3,12 @@ import sys
 from types import ModuleType, SimpleNamespace
 from pathlib import Path
 
+# Ensure stub modules are importable before loading the factory
 ROOT = Path(__file__).resolve().parents[1]
+STUB_DIR = ROOT / "tests" / "stubs"
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(STUB_DIR))
+
 
 spec = importlib.util.spec_from_file_location("core.app_factory", ROOT / "core" / "app_factory.py")
 app_factory = importlib.util.module_from_spec(spec)
@@ -16,6 +21,9 @@ ui_pkg.__path__ = []
 sys.modules.setdefault("components.ui", ui_pkg)
 sys.modules.setdefault("components.ui.navbar", ModuleType("components.ui.navbar"))
 sys.modules["components.ui.navbar"].create_navbar_layout = lambda: "navbar"
+sys.modules.setdefault("core.unicode_processor", ModuleType("core.unicode_processor"))
+sys.modules["core.unicode_processor"].safe_format_number = lambda *a, **k: ""
+sys.modules.setdefault("core.unicode", ModuleType("core.unicode"))
 config_pkg = ModuleType("config")
 config_pkg.__path__ = []
 sys.modules.setdefault("config", config_pkg)
