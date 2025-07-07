@@ -54,9 +54,7 @@ yosai_intel_dashboard/
 Store PNG images for the navigation bar in `assets/navbar_icons/`. The
 application expects the following files:
 
-* `dashboard.png`
 * `analytics.png`
-* `graphs.png`
 * `upload.png`
 * `print.png`
 * `settings.png`

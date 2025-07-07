@@ -122,9 +122,7 @@ def create_navbar_layout() -> Optional[Any]:
         app = dash.get_app()
         check_navbar_assets(
             [
-                "dashboard",
                 "analytics",
-                "graphs",
                 "upload",
                 "print",
                 "settings",
