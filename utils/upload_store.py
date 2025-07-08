@@ -11,11 +11,12 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 from file_conversion.file_converter import FileConverter
+from services.upload.protocols import UploadStorageProtocol
 
 logger = logging.getLogger(__name__)
 
 
-class UploadedDataStore:
+class UploadedDataStore(UploadStorageProtocol):
     """Persistent uploaded data store with file system backup.
 
     The class is designed to be thread-safe for concurrent writes. All

@@ -10,12 +10,14 @@ from typing import Any, List, Tuple
 import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import dash_table, dcc, html, no_update
+
+from .protocols import UploadControllerProtocol
 from dash.dependencies import Input, Output
 
 logger = logging.getLogger(__name__)
 
 
-class UnifiedUploadController:
+class UnifiedUploadController(UploadControllerProtocol):
     """Expose grouped callback definitions for registration."""
 
     def __init__(self, callbacks: Any | None = None) -> None:
@@ -104,6 +106,15 @@ class UnifiedUploadController:
                 {"prevent_initial_call": True},
             ),
         ]
+
+    # -----------------------------------------------------------------
+    def process_uploaded_files(
+        self,
+        contents_list: List[str],
+        filenames_list: List[str],
+    ) -> Tuple[List[Any], List[Any], Dict[str, Any], Dict[str, Any]]:
+        """Placeholder implementation for protocol compliance."""
+        return [], [], {}, {}
 
 
 __all__ = ["UnifiedUploadController"]

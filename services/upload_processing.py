@@ -1,4 +1,7 @@
-class UploadAnalyticsProcessor:
+from services.upload.protocols import UploadAnalyticsProtocol
+
+
+class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
     """Minimal stub for tests."""
 
     def __init__(self, *args, **kwargs) -> None:

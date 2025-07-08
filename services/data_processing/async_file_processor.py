@@ -12,6 +12,8 @@ import tempfile
 from pathlib import Path
 from typing import AsyncIterator, Callable, List, Optional
 
+from services.upload.protocols import FileProcessorProtocol
+
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
@@ -19,7 +21,7 @@ from utils.memory_utils import check_memory_limit
 from .file_processor import UnicodeFileProcessor
 
 
-class AsyncFileProcessor:
+class AsyncFileProcessor(FileProcessorProtocol):
     """Read CSV files asynchronously in chunks with progress reporting."""
 
     def __init__(self, chunk_size: int | None = None) -> None:
@@ -121,6 +123,13 @@ class AsyncFileProcessor:
             except Exception:  # pragma: no cover - cleanup best effort
                 pass
         return df
+
+    def read_uploaded_file(
+        self, contents: str, filename: str
+    ) -> Tuple[pd.DataFrame, str]:
+        """Synchronously read uploaded file using async helper."""
+        df = asyncio.run(self.process_file(contents, filename))
+        return df, ""
 
     @staticmethod
     def _count_lines(path: Path) -> int:
