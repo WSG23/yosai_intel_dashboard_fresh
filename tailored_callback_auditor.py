@@ -8,7 +8,7 @@ import ast
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Set, Tuple, Optional
+from typing import Any, Dict, List, Set, Tuple, Optional
 from dataclasses import dataclass
 from collections import defaultdict, Counter
 import json
@@ -83,7 +83,7 @@ class YourSystemCallbackAuditor:
             ]
         }
     
-    def scan_complete_codebase(self) -> Dict[str, any]:
+    def scan_complete_codebase(self) -> Dict[str, Any]:
         """Comprehensive scan of your entire codebase"""
         print("🔍 Starting comprehensive callback pattern audit...")
         

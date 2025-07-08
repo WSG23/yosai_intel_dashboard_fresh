@@ -4,7 +4,7 @@
 import json
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 def safe_read_file(file_path):
     """Safely read a file with multiple encoding attempts."""
@@ -91,7 +91,7 @@ def update_imports(base_dir: str = ".") -> Dict[str, int]:
     
     return modified
 
-def complete_unicode_cleanup(base_dir: str = ".") -> Dict[str, any]:
+def complete_unicode_cleanup(base_dir: str = ".") -> Dict[str, Any]:
     """Complete Unicode cleanup with simple file handling."""
     
     print("🔍 Scanning for legacy Unicode references...")

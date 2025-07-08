@@ -4,7 +4,7 @@ from __future__ import annotations
 import time
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -33,7 +33,7 @@ class DIPerformanceMonitor:
         metrics = self.service_metrics[service_key]
         metrics.errors += 1
 
-    def get_metrics_summary(self) -> Dict[str, any]:
+    def get_metrics_summary(self) -> Dict[str, Any]:
         return {
             key: vars(value) for key, value in self.service_metrics.items()
         }
