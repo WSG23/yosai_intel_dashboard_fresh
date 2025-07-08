@@ -8,7 +8,7 @@ from config.dynamic_config import dynamic_config
 from core.callback_events import CallbackEvent
 from core.callback_manager import CallbackManager
 from core.exceptions import ValidationError
-from core.security import InputValidator
+from core.security_validator import SecurityValidator
 
 
 class Validator(Protocol):
@@ -34,7 +34,17 @@ class ValidationMiddleware:
     SAFE_VALIDATION_THRESHOLD = 1 * 1024 * 1024  # 1 MB
 
     def __init__(self) -> None:
-        self.orchestrator = ValidationOrchestrator([InputValidator()])
+        class _Adapter:
+            def __init__(self) -> None:
+                self.validator = SecurityValidator()
+
+            def validate(self, data: str) -> str:
+                result = self.validator.validate_input(data, "request")
+                if not result["valid"]:
+                    raise ValidationError("Invalid input")
+                return result["sanitized"]
+
+        self.orchestrator = ValidationOrchestrator([_Adapter()])
         self.max_body_size = dynamic_config.security.max_upload_mb * 1024 * 1024
 
     def register_callbacks(self, manager: CallbackManager) -> None:

@@ -1,72 +1,71 @@
 # Validation Overview
 
-This dashboard previously exposed multiple independent validators. These have
-now been consolidated into the unified `SecurityValidator` which handles string,
-file and DataFrame checks in one place. Use the examples below to migrate any
-existing validation code.
+All validation in the Yōsai Intel Dashboard is handled by the unified `SecurityValidator` class. Previous individual validator classes have been completely removed and their functionality consolidated.
 
-## SecurityValidator
+## Current Validation Architecture
 
-- **Purpose**: Perform all input, file and DataFrame validation with consistent
-  security rules.
-- **Use when**: Sanitizing any external data before database writes or analysis.
-
+Use `SecurityValidator` for all validation needs:
 
 ```python
 from core.security_validator import SecurityValidator
 
 validator = SecurityValidator()
-validator.validate_input(user_name, "user_name")
-validator.validate_file_upload(filename, file_bytes)
+
+# Input validation (replaces InputValidator, SQLInjectionPrevention, XSSPrevention)
+result = validator.validate_input(user_input, "field_name")
+if not result['valid']:
+    raise ValidationError(result['issues'])
+
+# File upload validation (replaces SecureFileValidator, DataFrameSecurityValidator)
+result = validator.validate_file_upload(filename, file_bytes)
+if not result['valid']:
+    raise ValidationError(result['issues'])
 ```
 
-The `SecurityValidator` and `UnifiedFileValidator` replace the old
-`InputValidator`, `SecureFileValidator`, `XSSPrevention`,
-`BusinessLogicValidator` and `SecretsValidator` classes.
-All of these wrappers now delegate to the unified validator and will be removed
-in a future release.
+## Validation Features
 
-### Migration Steps
+SecurityValidator provides comprehensive validation including:
+- **SQL injection prevention** - Detects and blocks SQL injection attempts
+- **XSS attack prevention** - Sanitizes cross-site scripting attempts  
+- **Path traversal prevention** - Blocks directory traversal attacks
+- **Unicode security** - Handles surrogate characters and encoding issues
+- **File validation** - Checks file types, sizes, and malicious content
+- **Input sanitization** - Cleans and normalizes user input
 
-1. Replace imports of the legacy validator classes with
-   `SecurityValidator` from `core.security_validator`.
-2. Update code that called `validate()` or `validate_file_upload()` on the old
-   classes to use the corresponding `SecurityValidator` methods.
-3. If your module relied on the generic `Validator` protocol, it remains
-   compatible with the new class.
+## Migration from Deprecated Classes
 
-## Best Practices
-- Validate data as early as possible using `SecurityValidator`.
-- Run `validate_file_upload()` on files before saving or parsing.
-- Use chunked processing helpers for large data sets.
-- Sanitize all query parameters with `validate_input()`.
-- Rotate secrets regularly and validate them during startup.
+All deprecated validator classes have been REMOVED. Update your code:
 
-## Example Scenarios
-- **User search input**: `SecurityValidator.validate_input()` before constructing a query.
-- **CSV upload**: `SecurityValidator.validate_file_upload()` before parsing the file.
-- **Displaying comments**: `SecurityValidator.validate_input()` when accepting the comment.
-
-
-Example usage of the processor:
 ```python
-from core.unicode import get_text_processor
-processor = get_text_processor()
-cleaned = processor.safe_encode_text(user_input)
+# OLD (REMOVED):
+from security.dataframe_validator import DataFrameSecurityValidator
+validator = DataFrameSecurityValidator()
+result = validator.validate_for_upload(df)
+
+# NEW (CURRENT):
+from core.security_validator import SecurityValidator
+validator = SecurityValidator()
+csv_bytes = df.to_csv(index=False).encode('utf-8')
+result = validator.validate_file_upload("data.csv", csv_bytes)
+
+# OLD (REMOVED):
+from security.sql_validator import SQLInjectionPrevention  
+SQLInjectionPrevention.validate_query_parameter(user_input)
+
+# NEW (CURRENT):
+from core.security_validator import SecurityValidator
+validator = SecurityValidator()
+result = validator.validate_input(user_input, "query_parameter")
 ```
 
-## ClientSideValidator
+## Removed Classes
 
-Uploads are checked in the browser before being sent to the server.  The
-`ClientSideValidator` mirrors these rules on the server so behaviour is
-consistent regardless of where validation occurs.
+These classes have been COMPLETELY REMOVED:
+- ❌ `InputValidator` 
+- ❌ `DataFrameSecurityValidator`
+- ❌ `SQLInjectionPrevention`
+- ❌ `XSSPrevention`
+- ❌ `SecureFileValidator` 
+- ❌ `BusinessLogicValidator`
 
-Key rules enforced:
-
-- **Magic number checks** – file headers must match their extension.
-- **Size limits** – configurable per file type with a global fallback.
-- **Duplicate detection** – repeated filenames are rejected in a single batch.
-- **Custom hooks** – optional callbacks allow bespoke validation logic.
-
-The validator exposes a JSON configuration via `to_json()` used by the
-`upload-handlers.js` script to apply the same checks client-side.
+Use `SecurityValidator` for all validation needs.

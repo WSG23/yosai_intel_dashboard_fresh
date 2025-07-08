@@ -1,19 +1,13 @@
-"""Security package exposing validation utilities."""
+"""Security package exposing current validation utilities.
 
-from typing import Protocol
-
-from core.security import InputValidator
-
-
-class Validator(Protocol):
-    def validate(self, data: str) -> str:
-        ...
+This package provides unified security validation through SecurityValidator.
+All deprecated individual validators have been removed and consolidated.
+"""
 
 from core.exceptions import ValidationError
-
+from core.security_validator import SecurityValidator
 from .attack_detection import AttackDetection
 from .secrets_validator import SecretsValidator, register_health_endpoint
-from core.security_validator import SecurityValidator
 from .unicode_security_validator import UnicodeSecurityValidator
 from .unicode_surrogate_validator import (
     SurrogateHandlingConfig,
@@ -21,18 +15,20 @@ from .unicode_surrogate_validator import (
 )
 from .validation_exceptions import SecurityViolation
 
+# Public API - Only current, non-deprecated classes
 __all__ = [
-    "InputValidator",
-    "Validator",
+    # Core validation
     "SecurityValidator",
-    "ValidationMiddleware",
-    "ValidationOrchestrator",
-    "AttackDetection",
     "ValidationError",
     "SecurityViolation",
+
+    # Specialized validators
     "UnicodeSecurityValidator",
-    "SecretsValidator",
-    "register_health_endpoint",
     "UnicodeSurrogateValidator",
     "SurrogateHandlingConfig",
+
+    # Security utilities
+    "AttackDetection",
+    "SecretsValidator",
+    "register_health_endpoint",
 ]
