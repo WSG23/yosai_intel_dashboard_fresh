@@ -3,7 +3,7 @@ from __future__ import annotations
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from components.upload.drag_drop_upload_area import DragDropUploadArea
+from components.upload import UploadArea
 from upload_callbacks import UploadCallbackManager
 
 
@@ -25,7 +25,7 @@ class FileUploadComponent:
                                     dbc.CardHeader([
                                         html.H5("Upload Data Files", className="mb-0")
                                     ]),
-                                    dbc.CardBody([DragDropUploadArea("file-uploader")]),
+                                    dbc.CardBody([UploadArea().render()]),
                                 ]
                             )
                         )
