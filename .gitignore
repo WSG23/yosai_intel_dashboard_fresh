@@ -115,3 +115,7 @@ assets/css/*
 # Compiled translations
 translations/**/*.mo
 cache/
+venv/
+venv
+*.pyc
+__pycache__/
