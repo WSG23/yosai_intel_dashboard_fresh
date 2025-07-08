@@ -1,17 +1,5 @@
 import asyncio
-import importlib.util
-from pathlib import Path
-
-spec = importlib.util.spec_from_file_location(
-    "upload_queue_manager",
-    str(
-        Path(__file__).resolve().parents[2] / "services/upload/upload_queue_manager.py"
-    ),
-)
-_mod = importlib.util.module_from_spec(spec)
-assert spec.loader is not None
-spec.loader.exec_module(_mod)
-UploadQueueManager = _mod.UploadQueueManager
+from services.upload.upload_queue_manager import UploadQueueManager
 
 
 async def _handler(item: str) -> str:

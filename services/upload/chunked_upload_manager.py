@@ -34,6 +34,7 @@ class ChunkedUploadManager:
         metadata_dir: Optional[Path | str] = None,
         *,
         initial_chunk_size: int = 50000,
+        retry_manager_cls: type[ConnectionRetryManager] = ConnectionRetryManager,
     ) -> None:
         self.store = store
         self.metadata_dir = Path(metadata_dir or "temp/upload_metadata")
@@ -42,6 +43,7 @@ class ChunkedUploadManager:
         self.min_chunk_size = 1000
         self.max_chunk_size = 100_000
         self.retry_config = RetryConfig(max_attempts=3, base_delay=0.2, jitter=False)
+        self._retry_manager_cls = retry_manager_cls
 
     # ------------------------------------------------------------------
     def _metadata_path(self, filename: str) -> Path:
@@ -76,7 +78,7 @@ class ChunkedUploadManager:
         def _save() -> None:
             self.store.add_file(name, df)
 
-        ConnectionRetryManager(self.retry_config).run_with_retry(_save)
+        self._retry_manager_cls(self.retry_config).run_with_retry(_save)
 
     # ------------------------------------------------------------------
     def upload_file(self, file_path: str | Path, *, encoding: str = "utf-8") -> None:

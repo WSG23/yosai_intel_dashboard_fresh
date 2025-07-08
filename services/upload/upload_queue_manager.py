@@ -4,7 +4,7 @@ import logging
 import threading
 import time
 import uuid
-from typing import Any, Callable, Dict, Iterable, List, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Tuple, Awaitable
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +24,14 @@ class UploadQueueManager:
     """
 
     def __init__(
-        self, state: Dict[str, Any] | None = None, *, max_concurrent: int = 3
+        self,
+        state: Dict[str, Any] | None = None,
+        *,
+        max_concurrent: int = 3,
+        task_factory: Callable[[Awaitable[Any]], asyncio.Task] = asyncio.create_task,
     ) -> None:
         self.max_concurrent = max_concurrent
+        self._task_factory = task_factory
         self._lock = threading.Lock()
         self._queue: List[Tuple[int, float, Any]] = []
         self._tasks: Dict[str, asyncio.Task] = {}
@@ -141,7 +146,7 @@ class UploadQueueManager:
             while self._queue and len(self._tasks) < self.max_concurrent:
                 priority, ts, item = heapq.heappop(self._queue)
                 task_id = str(uuid.uuid4())
-                task = asyncio.create_task(handler(item))
+                task = self._task_factory(handler(item))
                 self._tasks[task_id] = task
             self._save_state()
 

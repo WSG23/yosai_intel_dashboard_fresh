@@ -11,7 +11,10 @@ import dash_bootstrap_components as dbc
 from dash import html, no_update
 
 from services.interfaces import get_device_learning_service
-from services.task_queue import clear_task, create_task, get_status
+from services.task_queue import (
+    TaskQueue,
+    TaskQueueProtocol,
+)
 from services.upload import (
     AISuggestionService,
     ChunkedUploadManager,
@@ -38,6 +41,7 @@ class UploadCore:
         processing: UploadProcessingServiceProtocol,
         learning_service: DeviceLearningServiceProtocol,
         store: UploadStorageProtocol,
+        task_queue: TaskQueueProtocol | None = None,
     ) -> None:
         self.store = store
         self.processing = processing
@@ -49,6 +53,7 @@ class UploadCore:
         self.validator = UploadValidator()
         self.chunked = ChunkedUploadManager()
         self.queue = UploadQueueManager()
+        self.task_queue = task_queue or TaskQueue()
 
     def highlight_upload_area(self, n_clicks):
         if n_clicks:
@@ -116,7 +121,7 @@ class UploadCore:
         if not isinstance(filenames_list, list):
             filenames_list = [filenames_list]
         async_coro = self.processing.process_files(contents_list, filenames_list)
-        task_id = create_task(async_coro)
+        task_id = self.task_queue.create_task(async_coro)
         return task_id
 
     def reset_upload_progress(
@@ -127,7 +132,7 @@ class UploadCore:
         return 0, "0%", False
 
     def update_progress_bar(self, _n: int, task_id: str) -> Tuple[int, str, Any]:
-        status = get_status(task_id)
+        status = self.task_queue.get_status(task_id)
         progress = int(status.get("progress", 0))
         file_items = [
             html.Li(
@@ -146,11 +151,11 @@ class UploadCore:
     def finalize_upload_results(
         self, _n: int, task_id: str
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, bool]:
-        status = get_status(task_id)
+        status = self.task_queue.get_status(task_id)
         result = status.get("result")
 
         if status.get("done") and result is not None:
-            clear_task(task_id)
+            self.task_queue.clear_task(task_id)
             if isinstance(result, Exception):
                 result = (
                     [self.processing.build_failure_alert(str(result))],
