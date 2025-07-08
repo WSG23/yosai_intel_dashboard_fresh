@@ -37,7 +37,13 @@ class TestProtocolCompliance:
 
     def test_all_registered_services_implement_protocols(self):
         container = (
-            TestContainerBuilder().with_env_defaults().with_all_services().build()
+            TestContainerBuilder()
+            .with_env_defaults()
+            .with_all_services()
+            .with_fake_analytics_service()
+            .with_upload_services()
+            .with_dash_stubs()
+            .build()
         )
         results = container.validate_registrations()
         assert len(results["protocol_violations"]) == 0
