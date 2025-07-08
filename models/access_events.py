@@ -12,12 +12,12 @@ import pandas as pd
 
 from config.constants import DataProcessingLimits
 from core.query_optimizer import monitor_query_performance
-from security.sql_validator import SQLInjectionPrevention
+from core.security_validator import SecurityValidator
 
 from .base import BaseModel
 from .enums import AccessResult, BadgeStatus
 
-_sql_validator = SQLInjectionPrevention()
+_sql_validator = SecurityValidator()
 
 
 class AccessEventModel(BaseModel):
@@ -151,7 +151,7 @@ class AccessEventModel(BaseModel):
     @monitor_query_performance()
     def get_hourly_distribution(self, days: int = 7) -> pd.DataFrame:
         """Get hourly access distribution for analytics"""
-        _sql_validator.validate_query_parameter(days)
+        _sql_validator.validate_input(str(days), "query_parameter")
         query = """
         SELECT
             strftime('%H', timestamp) as hour,
@@ -220,7 +220,7 @@ class AccessEventModel(BaseModel):
     @monitor_query_performance()
     def get_trend_analysis(self, days: int = 30) -> pd.DataFrame:
         """Get daily trend analysis"""
-        _sql_validator.validate_query_parameter(days)
+        _sql_validator.validate_input(str(days), "query_parameter")
         query = """
         SELECT
             date(timestamp) as date,

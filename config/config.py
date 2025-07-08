@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 from core.exceptions import ConfigurationError
-from core.protocols import ConfigProviderProtocol
+from core.protocols import ConfigurationProtocol
 from core.secrets_validator import SecretsValidator
 from core.secrets_manager import SecretsManager
 
@@ -168,7 +168,7 @@ class Config:
     plugin_settings: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
 
-class ConfigManager(ConfigProviderProtocol):
+class ConfigManager(ConfigurationProtocol):
     """Simple configuration manager"""
 
     def __init__(self, config_path: Optional[str] = None):
@@ -567,6 +567,11 @@ class ConfigManager(ConfigProviderProtocol):
     def get_plugin_config(self, name: str) -> Dict[str, Any]:
         """Return configuration dictionary for the given plugin."""
         return self.config.plugin_settings.get(name, {})
+
+    # ------------------------------------------------------------------
+    def reload_config(self) -> None:
+        """Reload configuration from source."""
+        self._load_config()
 
 
 # Global configuration instance

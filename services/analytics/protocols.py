@@ -20,4 +20,5 @@ class DataProcessorProtocol(Protocol):
 
     @abstractmethod
     def prepare(self, df: pd.DataFrame) -> pd.DataFrame:
+
         ...

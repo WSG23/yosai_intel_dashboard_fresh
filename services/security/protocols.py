@@ -18,4 +18,5 @@ class AuthenticationProtocol(Protocol):
 
     @abstractmethod
     def authenticate(self, token: str) -> bool:
+
         ...

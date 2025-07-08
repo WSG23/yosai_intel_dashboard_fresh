@@ -3,15 +3,18 @@
 Protocol-oriented architecture inspired by Swift's approach
 Defines clear contracts for all major system components
 """
+"""Protocol interfaces for core services used across the project."""
+
 from abc import abstractmethod
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Protocol
+from typing import Any, Callable, Dict, List, Optional, Protocol, runtime_checkable
 
 import pandas as pd
 
 
+@runtime_checkable
 class DatabaseProtocol(Protocol):
-    """Protocol defining database operations contract"""
+    """Protocol defining database operations contract."""
 
     @abstractmethod
     def execute_query(self, query: str, params: Optional[tuple] = None) -> pd.DataFrame:
@@ -25,12 +28,18 @@ class DatabaseProtocol(Protocol):
 
     @abstractmethod
     def health_check(self) -> bool:
-        """Verify database connectivity"""
+        """Verify database connectivity."""
+        ...
+
+    @abstractmethod
+    def begin_transaction(self) -> Any:
+        """Begin database transaction."""
         ...
 
 
+@runtime_checkable
 class AnalyticsServiceProtocol(Protocol):
-    """Protocol for analytics service operations"""
+    """Protocol for analytics service operations."""
 
     @abstractmethod
     def get_dashboard_summary(self) -> Dict[str, Any]:
@@ -45,6 +54,11 @@ class AnalyticsServiceProtocol(Protocol):
     @abstractmethod
     def detect_anomalies(self, data: pd.DataFrame) -> List[Dict[str, Any]]:
         """Detect anomalies in access data"""
+        ...
+
+    @abstractmethod
+    def generate_report(self, report_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate analytics report of specified type."""
         ...
 
 
@@ -62,6 +76,7 @@ class FileProcessorProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class ConfigurationProtocol(Protocol):
     """Protocol for configuration management"""
 
@@ -76,8 +91,13 @@ class ConfigurationProtocol(Protocol):
         ...
 
     @abstractmethod
-    def reload_configuration(self) -> None:
-        """Reload configuration from source"""
+    def get_security_config(self) -> Dict[str, Any]:
+        """Get security configuration settings."""
+        ...
+
+    @abstractmethod
+    def reload_config(self) -> None:
+        """Reload configuration from source."""
         ...
 
 
@@ -130,4 +150,134 @@ class ConfigProviderProtocol(Protocol):
     @abstractmethod
     def get_security_config(self) -> Dict[str, Any]:
         """Return security configuration."""
+        ...
+
+
+@runtime_checkable
+class SecurityServiceProtocol(Protocol):
+    """Protocol for security validation operations."""
+
+    @abstractmethod
+    def validate_input(self, value: str, field_name: str = "input") -> Dict[str, Any]:
+        """Validate user input for security threats."""
+        ...
+
+    @abstractmethod
+    def validate_file_upload(self, filename: str, content: bytes) -> Dict[str, Any]:
+        """Validate uploaded file for security compliance."""
+        ...
+
+    @abstractmethod
+    def sanitize_output(self, content: str) -> str:
+        """Sanitize content for safe output."""
+        ...
+
+    @abstractmethod
+    def check_permissions(self, user_id: str, resource: str, action: str) -> bool:
+        """Check user permissions for resource action."""
+        ...
+
+
+@runtime_checkable
+class StorageProtocol(Protocol):
+    """Protocol for generic data storage operations."""
+
+    @abstractmethod
+    def store_data(self, key: str, data: Any) -> str:
+        """Store data and return storage identifier."""
+        ...
+
+    @abstractmethod
+    def retrieve_data(self, key: str) -> Any:
+        """Retrieve data by key."""
+        ...
+
+    @abstractmethod
+    def delete_data(self, key: str) -> bool:
+        """Delete data by key."""
+        ...
+
+    @abstractmethod
+    def list_keys(self, prefix: str = "") -> List[str]:
+        """List storage keys with optional prefix filter."""
+        ...
+
+    @abstractmethod
+    def get_storage_info(self) -> Dict[str, Any]:
+        """Get storage system information."""
+        ...
+
+
+@runtime_checkable
+class LoggingProtocol(Protocol):
+    """Protocol for logging operations."""
+
+    @abstractmethod
+    def log_info(self, message: str, **kwargs) -> None:
+        """Log informational message."""
+        ...
+
+    @abstractmethod
+    def log_warning(self, message: str, **kwargs) -> None:
+        """Log warning message."""
+        ...
+
+    @abstractmethod
+    def log_error(self, message: str, error: Exception | None = None, **kwargs) -> None:
+        """Log error message."""
+        ...
+
+    @abstractmethod
+    def get_log_level(self) -> str:
+        """Get current log level."""
+        ...
+
+
+@runtime_checkable
+class EventBusProtocol(Protocol):
+    """Protocol for simple event bus operations."""
+
+    @abstractmethod
+    def publish(self, event_type: str, data: Dict[str, Any]) -> None:
+        """Publish event to bus."""
+        ...
+
+    @abstractmethod
+    def subscribe(self, event_type: str, handler: Callable) -> str:
+        """Subscribe to event type, return subscription ID."""
+        ...
+
+    @abstractmethod
+    def unsubscribe(self, subscription_id: str) -> None:
+        """Unsubscribe from event."""
+        ...
+
+    @abstractmethod
+    def get_event_history(self, event_type: str | None = None) -> List[Dict[str, Any]]:
+        """Get event history, optionally filtered by type."""
+        ...
+
+
+@runtime_checkable
+class ExportServiceProtocol(Protocol):
+    """Protocol for data export operations."""
+
+    @abstractmethod
+    def export_to_csv(self, data: pd.DataFrame, filename: str) -> str:
+        """Export data to CSV format."""
+        ...
+
+    @abstractmethod
+    def export_to_excel(self, data: pd.DataFrame, filename: str) -> str:
+        """Export data to Excel format."""
+        ...
+
+    @abstractmethod
+    def export_to_pdf(self, data: Dict[str, Any], template: str) -> str:
+        """Export data to PDF using template."""
+        ...
+
+    @abstractmethod
+    def get_export_status(self, export_id: str) -> Dict[str, Any]:
+        """Get status of export operation."""
         ...
