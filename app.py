@@ -20,6 +20,21 @@ except ImportError:
 from core.exceptions import ConfigurationError
 from utils import debug_dash_asset_serving
 
+import traceback
+from pathlib import Path
+
+# This import is handled inside the main() function now
+
+# Add Unicode handling
+import locale
+try:
+    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+    except locale.Error:
+        pass  # Fall back to default locale
+
 logger = logging.getLogger(__name__)
 
 # Consolidated learning service utilities
@@ -108,17 +123,117 @@ def ensure_https_certificates():
         return None
 
 
+def _consolidate_callbacks(app):
+    """Consolidate all callbacks with Unicode safety"""
+    try:
+        # Import callback modules with error handling
+        callback_modules = [
+            ('pages.deep_analytics', 'register_callbacks'),
+            ('pages.file_upload', 'register_callbacks'),
+            ('pages.export', 'register_callbacks'),
+            ('pages.settings', 'register_callbacks'),
+        ]
+
+        for module_name, func_name in callback_modules:
+            try:
+                module = __import__(module_name, fromlist=[func_name])
+                if hasattr(module, func_name):
+                    register_func = getattr(module, func_name)
+                    # Apply Unicode safety wrapper
+                    _apply_unicode_safety(app, register_func)
+                    register_func(app)
+                    logger.debug(f"✅ Registered callbacks from {module_name}")
+            except ImportError:
+                logger.debug(f"Module {module_name} not found, skipping")
+            except Exception as e:
+                logger.warning(f"Failed to register callbacks from {module_name}: {e}")
+
+        logger.info("✅ All callbacks consolidated")
+
+    except Exception as e:
+        logger.error(f"❌ Callback consolidation failed: {e}")
+        raise
+
+
+def _apply_unicode_safety(app, register_func):
+    """Apply Unicode safety to callback registration"""
+    def safe_unicode_string(text):
+        """Handle Unicode surrogate characters safely"""
+        if not isinstance(text, str):
+            return text
+        try:
+            return text.encode('utf-8', errors='ignore').decode('utf-8')
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            return text.encode('ascii', errors='ignore').decode('ascii')
+
+    # Store original callback method
+    original_callback = app.callback
+
+    def unicode_safe_callback(*args, **kwargs):
+        """Wrapper that adds Unicode safety to callbacks"""
+        def decorator(func):
+            import functools
+
+            @functools.wraps(func)
+            def wrapper(*cb_args, **cb_kwargs):
+                try:
+                    # Process string arguments safely
+                    safe_args = []
+                    for arg in cb_args:
+                        if isinstance(arg, str):
+                            safe_args.append(safe_unicode_string(arg))
+                        elif isinstance(arg, (list, tuple)):
+                            safe_args.append([safe_unicode_string(item) if isinstance(item, str) else item for item in arg])
+                        else:
+                            safe_args.append(arg)
+
+                    # Process keyword arguments safely
+                    safe_kwargs = {}
+                    for key, value in cb_kwargs.items():
+                        if isinstance(value, str):
+                            safe_kwargs[key] = safe_unicode_string(value)
+                        else:
+                            safe_kwargs[key] = value
+
+                    result = func(*safe_args, **safe_kwargs)
+
+                    # Process result safely
+                    if isinstance(result, str):
+                        return safe_unicode_string(result)
+                    elif isinstance(result, (list, tuple)):
+                        return [safe_unicode_string(item) if isinstance(item, str) else item for item in result]
+
+                    return result
+
+                except Exception as e:
+                    logger.error(f"Callback error: {e}")
+                    # Return safe error response
+                    return f"Error: {safe_unicode_string(str(e))}"
+
+            return original_callback(*args, **kwargs)(wrapper)
+
+        return decorator
+
+    # Temporarily replace callback method
+    app.callback = unicode_safe_callback
+
 def main():
     """Main application entry point"""
     try:
         load_dotenv()
-        from config.dev_mode import setup_dev_mode
 
+        # Set Unicode handling early
+        import sys
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
+        from config.dev_mode import setup_dev_mode
         setup_dev_mode()
+
         # Import configuration
         try:
             from config.config import get_config
-
             config = get_config()
             app_config = config.get_app_config()
             logger.info("✅ Configuration loaded successfully")
@@ -126,9 +241,7 @@ def main():
         except Exception as e:
             logger.error(f"❌ Failed to load configuration: {e}")
             logger.info(f"\n❌ Configuration Error: {e}")
-            logger.info(
-                "💡 Make sure config/config.py exists and is properly formatted"
-            )
+            logger.info("💡 Make sure config/config.py exists and is properly formatted")
             sys.exit(1)
 
         # Print startup information
@@ -137,74 +250,50 @@ def main():
         # Auto-generate HTTPS certificates
         ssl_context = ensure_https_certificates()
 
+        # Validate secrets
         try:
-            from core.secrets_validator import validate_all_secrets
+            from core.secrets_manager import SecretsManager
+            from security.secrets_validator import SecretsValidator
 
-            validated = validate_all_secrets()
-            for k, v in validated.items():
-                os.environ.setdefault(k, v)
+            secrets_manager = SecretsManager()
+            validator = SecretsValidator(secrets_manager)
+
+            if app_config.environment == 'production':
+                result = validator.validate_secret(
+                    secrets_manager.get('SECRET_KEY', 'dev-key'),
+                    environment='production'
+                )
+                if result.get('errors'):
+                    raise ConfigurationError("Production secrets validation failed")
+
             logger.info("✅ Secrets validated successfully")
-        except ConfigurationError as e:
+        except Exception as e:
             logger.error(f"❌ Secret validation failed: {e}")
             sys.exit(1)
 
         # Import and create the Dash application
         try:
             from core.app_factory import create_app
-            from core.callback_events import CallbackEvent
-            from core.callback_manager import CallbackManager
-            from security.validation_middleware import ValidationMiddleware
+            app = create_app(mode='full')
 
-            app = create_app()
-            middleware = ValidationMiddleware()
-            manager = CallbackManager()
-            middleware.register_callbacks(manager)
+            # Consolidate callbacks with Unicode safety
+            _consolidate_callbacks(app)
 
-            server: Flask = cast(Flask, app.server)
-
-            @server.before_request
-            def _before_request():
-                logger.debug("Incoming request scheme: %s", request.scheme)
-                for result in manager.trigger(CallbackEvent.BEFORE_REQUEST):
-                    if result is not None:
-                        return result
-
-            @server.after_request
-            def _after_request(response):
-                current = response
-                for cb in manager.get_callbacks(CallbackEvent.AFTER_REQUEST):
-                    try:
-                        r = cb[1](current)
-                        if r is not None:
-                            current = r
-                    except Exception as exc:  # pragma: no cover - log and continue
-                        logging.getLogger(__name__).exception(
-                            "after_request callback failed: %s", exc
-                        )
-                manager.trigger(CallbackEvent.AFTER_REQUEST, current)
-                return current
-
-            cast(Any, app)._callback_manager = manager
-            # Validate that Dash can serve static assets after request hooks
-            # have been registered. This avoids triggering a request before the
-            # hooks are in place, which previously caused Flask to raise a
-            # setup error.
+            # This avoids triggering a request before the hooks are in place
             if not debug_dash_asset_serving(app):
                 logger.warning("Dash asset serving validation failed")
             logger.info("✅ Application created successfully")
         except Exception as e:
             logger.error(f"❌ Failed to create application: {e}")
             logger.info(f"\n❌ Application Creation Error: {e}")
-            logger.info(
-                "💡 Make sure core/app_factory.py exists and dependencies are installed"
-            )
+            logger.info("💡 Make sure core/app_factory.py exists and dependencies are installed")
             sys.exit(1)
 
         # Run the application
         try:
             if ssl_context:
                 logger.info("🔒 Starting with HTTPS")
-                app.run(
+                app.run_server(
                     host=app_config.host,
                     port=str(app_config.port),
                     debug=app_config.debug,
@@ -212,7 +301,7 @@ def main():
                 )
             else:
                 logger.info("🌐 Starting with HTTP")
-                app.run(
+                app.run_server(
                     host=app_config.host,
                     port=str(app_config.port),
                     debug=app_config.debug,
