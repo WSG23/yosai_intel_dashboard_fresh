@@ -185,9 +185,12 @@ def _create_full_app() -> "Dash":
     try:
         service_container = ServiceContainer()
         service_container.register_factory("config", get_config)
+        analytics_service_func = cast(
+            Callable[[], AnalyticsService], get_analytics_service
+        )
         service_container.register_factory(
             "analytics_service",
-            lambda: cast(AnalyticsService, get_analytics_service()),
+            analytics_service_func,
         )
         config_manager = service_container.get("config")
         analytics_service = service_container.get("analytics_service")
