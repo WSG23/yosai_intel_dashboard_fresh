@@ -251,7 +251,7 @@ Install dependencies before running the tests:
 # Option 1: use the helper script
 ./scripts/setup.sh
 # Option 2: install packages manually
-pip install -r requirements.txt -r requirements-dev.txt
+pip install -r requirements.txt -r requirements-test.txt
 ```
 For minimal CI environments you can run `./scripts/install_test_deps.sh` which
 only installs the Python dependencies required for the tests.
@@ -715,6 +715,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines. In short:
    ```bash
    pip install -r requirements.txt
    pip install -r requirements-dev.txt
+   pip install -r requirements-test.txt
    ```
 2. Ensure all tests pass: `pytest`
 3. Format code with `black` and run `flake8`
