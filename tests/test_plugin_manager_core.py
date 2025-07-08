@@ -4,7 +4,7 @@ import types
 from pathlib import Path
 
 from config.config import ConfigManager
-from core.container import Container as DIContainer
+from core.service_container import ServiceContainer
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
 from services.data_processing.core.protocols import PluginMetadata, PluginStatus
 
@@ -68,7 +68,7 @@ class NoHealthPlugin:
 def test_load_plugin_success(tmp_path):
     cfg = ConfigManager()
     cfg.config.plugin_settings["dummy"] = {"enabled": True}
-    manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
+    manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
     plugin = DummyPlugin()
     result = manager.load_plugin(plugin)
 
@@ -82,7 +82,7 @@ def test_load_plugin_success(tmp_path):
 def test_load_plugin_failure_missing_health():
     cfg = ConfigManager()
     cfg.config.plugin_settings["nohealth"] = {"enabled": True}
-    manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
+    manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
     plugin = NoHealthPlugin()
     result = manager.load_plugin(plugin)
 
@@ -94,7 +94,7 @@ def test_load_plugin_failure_missing_health():
 def test_get_plugin_health(monkeypatch):
     cfg = ConfigManager()
     cfg.config.plugin_settings["dummy"] = {"enabled": True}
-    manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
+    manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
     plugin = DummyPlugin()
     manager.load_plugin(plugin)
 
@@ -140,7 +140,7 @@ def create_plugin():
         cfg = ConfigManager()
         cfg.config.plugin_settings["plug_a"] = {"enabled": True}
         manager = PluginManager(
-            DIContainer(),
+            ServiceContainer(),
             cfg,
             package="testplugins",
             health_check_interval=1,
@@ -156,7 +156,7 @@ def create_plugin():
 def test_stop_all_plugins_calls_stop():
     cfg = ConfigManager()
     cfg.config.plugin_settings["dummy"] = {"enabled": True}
-    manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
+    manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
     plugin = DummyPlugin()
     manager.load_plugin(plugin)
 
@@ -179,7 +179,7 @@ class FailingStopPlugin(DummyPlugin):
 def test_stop_all_plugins_handles_errors():
     cfg = ConfigManager()
     cfg.config.plugin_settings["failstop"] = {"enabled": True}
-    manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
+    manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
     plugin = FailingStopPlugin()
     manager.load_plugin(plugin)
 

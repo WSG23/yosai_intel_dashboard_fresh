@@ -1,7 +1,7 @@
 import sys
 
 from config.config import ConfigManager
-from core.container import Container as DIContainer
+from core.service_container import ServiceContainer
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
 from services.data_processing.core.protocols import PluginPriority
 
@@ -55,7 +55,7 @@ def create_plugin():
         cfg.config.plugin_settings["a"] = {}
         cfg.config.plugin_settings["b"] = {}
         manager = PluginManager(
-            DIContainer(),
+            ServiceContainer(),
             cfg,
             package="prio_plugins",
             health_check_interval=1,

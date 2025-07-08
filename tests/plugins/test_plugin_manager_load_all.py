@@ -1,7 +1,7 @@
 import sys
 
 from config.config import ConfigManager
-from core.container import Container as DIContainer
+from core.service_container import ServiceContainer
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
 
 
@@ -56,7 +56,7 @@ def test_load_all_plugins_registers_services(tmp_path):
         cfg = ConfigManager()
         cfg.config.plugin_settings["test_plugin"] = {"enabled": True}
         manager = PluginManager(
-            DIContainer(),
+            ServiceContainer(),
             cfg,
             package="pm_plugins",
             health_check_interval=1,

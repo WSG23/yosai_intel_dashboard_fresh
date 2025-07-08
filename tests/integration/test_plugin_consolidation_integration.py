@@ -4,7 +4,7 @@ import pytest
 from dash import Dash, html
 
 from config.config import ConfigManager
-from core.container import Container as DIContainer
+from core.service_container import ServiceContainer
 from core.plugins.auto_config import setup_plugins
 from tests.test_auto_configuration import _set_env
 from tests.utils.plugin_package_builder import PluginPackageBuilder
@@ -23,7 +23,7 @@ def test_plugin_discovery_and_callback_registration(monkeypatch, tmp_path):
             cfg.config.plugin_settings[builder.plugin_name] = {"enabled": True}
             registry = setup_plugins(
                 app,
-                container=DIContainer(),
+                container=ServiceContainer(),
                 config_manager=cfg,
                 package=builder.package_name,
             )

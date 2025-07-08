@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 
 from config.config import ConfigManager
-from core.container import Container as DIContainer
+from core.service_container import ServiceContainer
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
 from services.data_processing.core.protocols import PluginMetadata
 
@@ -41,7 +41,7 @@ class SimplePlugin:
 def test_load_plugin_registers_plugin(tmp_path):
     cfg = ConfigManager()
     cfg.config.plugin_settings["simple"] = {"enabled": True}
-    manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
+    manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
     plugin = SimplePlugin()
     assert manager.load_plugin(plugin) is True
     assert "simple" in manager.plugins
@@ -86,7 +86,7 @@ def create_plugin():
         cfg = ConfigManager()
         cfg.config.plugin_settings["auto"] = {"enabled": True}
         manager = PluginManager(
-            DIContainer(),
+            ServiceContainer(),
             cfg,
             package="sampleplugins",
             health_check_interval=1,
@@ -102,7 +102,7 @@ def create_plugin():
 def test_get_plugin_health_snapshot():
     cfg = ConfigManager()
     cfg.config.plugin_settings["simple"] = {"enabled": True}
-    manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
+    manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
     plugin = SimplePlugin()
     manager.load_plugin(plugin)
     time.sleep(1.2)

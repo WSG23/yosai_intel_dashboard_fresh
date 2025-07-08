@@ -12,7 +12,7 @@ import pytest
 from flask import Flask
 
 from config.config import ConfigManager
-from core.container import Container as DIContainer
+from core.service_container import ServiceContainer
 from core.json_serialization_plugin import (
     JsonCallbackService,
     JsonSerializationConfig,
@@ -32,7 +32,7 @@ class TestJsonSerializationPlugin(unittest.TestCase):
 
     def setUp(self):
         self.plugin = JsonSerializationPlugin()
-        self.container = DIContainer()
+        self.container = ServiceContainer()
         self.config = {
             "enabled": True,
             "max_dataframe_rows": 5,
@@ -142,7 +142,7 @@ class TestPluginManager(unittest.TestCase):
     """Test plugin manager with JSON serialization plugin"""
 
     def setUp(self):
-        self.container = DIContainer()
+        self.container = ServiceContainer()
         cfg_mgr = ConfigManager()
         cfg_mgr.config.plugin_settings["json_serialization"] = {
             "max_dataframe_rows": 5,
@@ -176,7 +176,7 @@ class TestPluginManager(unittest.TestCase):
         """Plugin manager updates health snapshot periodically"""
         cfg = ConfigManager()
         cfg.config.plugin_settings["json_serialization"] = {"max_dataframe_rows": 5}
-        manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
+        manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
         plugin = JsonSerializationPlugin()
         manager.load_plugin(plugin)
         time.sleep(1.5)
@@ -189,7 +189,7 @@ class TestPluginManager(unittest.TestCase):
         app = Flask(__name__)
         cfg = ConfigManager()
         cfg.config.plugin_settings["json_serialization"] = {"max_dataframe_rows": 5}
-        manager = PluginManager(DIContainer(), cfg, health_check_interval=1)
+        manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
         manager.register_health_endpoint(app)
         rules = [str(rule) for rule in app.url_map.iter_rules()]
         self.assertIn("/health/plugins", rules)

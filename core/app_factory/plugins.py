@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Optional, cast
 
-from core.container import Container as DIContainer
+from core.service_container import ServiceContainer
 from core.plugins.auto_config import PluginAutoConfiguration
 
 
@@ -14,7 +14,7 @@ def _initialize_plugins(
     plugin_auto_cls: type[PluginAutoConfiguration] = PluginAutoConfiguration,
 ) -> None:
     """Initialize plugin system and register shutdown handlers."""
-    container = container or DIContainer()
+    container = container or ServiceContainer()
     plugin_auto = plugin_auto_cls(
         app, container=container, config_manager=config_manager
     )
