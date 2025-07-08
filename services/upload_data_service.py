@@ -3,7 +3,11 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from services.interfaces import UploadDataServiceProtocol
+from services.interfaces import (
+    UploadDataServiceProtocol,
+    get_upload_data_service,
+)
+from core.enhanced_container import ServiceContainer
 from utils.upload_store import uploaded_data_store, UploadedDataStore
 
 
@@ -32,29 +36,54 @@ class UploadDataService(UploadDataServiceProtocol):
     def load_dataframe(self, filename: str) -> pd.DataFrame:
         return self.store.load_dataframe(filename)
 
-
-# Default service used by module-level helper functions
-_default_service = UploadDataService()
-
-
-def get_uploaded_data() -> Dict[str, pd.DataFrame]:
-    return _default_service.get_uploaded_data()
-
-
-def get_uploaded_filenames() -> List[str]:
-    return _default_service.get_uploaded_filenames()
+def _resolve_service(
+    service: UploadDataServiceProtocol | None,
+    container: ServiceContainer | None,
+) -> UploadDataServiceProtocol:
+    if service is not None:
+        return service
+    return get_upload_data_service(container)
 
 
-def clear_uploaded_data() -> None:
-    _default_service.clear_uploaded_data()
+def get_uploaded_data(
+    service: UploadDataServiceProtocol | None = None,
+    container: ServiceContainer | None = None,
+) -> Dict[str, pd.DataFrame]:
+    svc = _resolve_service(service, container)
+    return svc.get_uploaded_data()
 
 
-def get_file_info() -> Dict[str, Dict[str, Any]]:
-    return _default_service.get_file_info()
+def get_uploaded_filenames(
+    service: UploadDataServiceProtocol | None = None,
+    container: ServiceContainer | None = None,
+) -> List[str]:
+    svc = _resolve_service(service, container)
+    return svc.get_uploaded_filenames()
 
 
-def load_dataframe(filename: str) -> pd.DataFrame:
-    return _default_service.load_dataframe(filename)
+def clear_uploaded_data(
+    service: UploadDataServiceProtocol | None = None,
+    container: ServiceContainer | None = None,
+) -> None:
+    svc = _resolve_service(service, container)
+    svc.clear_uploaded_data()
+
+
+def get_file_info(
+    service: UploadDataServiceProtocol | None = None,
+    container: ServiceContainer | None = None,
+) -> Dict[str, Dict[str, Any]]:
+    svc = _resolve_service(service, container)
+    return svc.get_file_info()
+
+
+def load_dataframe(
+    filename: str,
+    service: UploadDataServiceProtocol | None = None,
+    container: ServiceContainer | None = None,
+) -> pd.DataFrame:
+    svc = _resolve_service(service, container)
+    return svc.load_dataframe(filename)
 
 
 __all__ = [

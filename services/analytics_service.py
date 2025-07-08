@@ -150,8 +150,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
         # FORCE CHECK: If uploaded data exists, use it regardless of source
         try:
             from services.upload_data_service import get_uploaded_data
+            from services.interfaces import get_upload_data_service
 
-            uploaded_data = get_uploaded_data()
+            uploaded_data = get_uploaded_data(get_upload_data_service())
 
             if uploaded_data and source in ["uploaded", "sample"]:
                 logger.info(f"Forcing uploaded data usage (source was: {source})")
