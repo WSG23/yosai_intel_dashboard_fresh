@@ -4,7 +4,8 @@ from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 from services.upload import UploadProcessingService
 from upload_core import UploadCore
-from utils.upload_store import uploaded_data_store as _uploaded_data_store
+from utils.upload_store import UploadedDataStore
+from services.device_learning_service import DeviceLearningService
 
 
 def test_multi_part_upload_row_count():
@@ -20,8 +21,10 @@ def test_multi_part_upload_row_count():
     part1 = prefix + b64[:mid]
     part2 = prefix + b64[mid:]
 
-    cb = UploadCore()
-    cb.processing = UploadProcessingService(_uploaded_data_store)
+    store = UploadedDataStore()
+    learning = DeviceLearningService()
+    processing = UploadProcessingService(store, learning)
+    cb = UploadCore(processing, learning, store)
     # ensure validator attribute is initialized
     ok, msg = cb.validator.validate("sample.csv", part1)
     assert ok, msg
@@ -30,5 +33,5 @@ def test_multi_part_upload_row_count():
     )
     info = res[2]
     assert info["sample.csv"]["rows"] == len(df)
-    stored = _uploaded_data_store.get_all_data()["sample.csv"]
+    stored = store.get_all_data()["sample.csv"]
     assert len(stored) == len(df)
