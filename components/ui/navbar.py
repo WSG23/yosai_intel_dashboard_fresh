@@ -20,6 +20,7 @@ from core.plugins.decorators import safe_callback
 from core.theme_manager import DEFAULT_THEME, sanitize_theme
 from utils.assets_debug import check_navbar_assets
 from utils.assets_utils import get_nav_icon
+from .protocols import NavbarFactoryProtocol
 from services.interfaces import ExportServiceProtocol, get_export_service
 
 logger = logging.getLogger(__name__)
@@ -93,11 +94,32 @@ fallback_icons = {
 }
 
 
-def _nav_icon(app: Any, name: str, alt: str) -> Any:
+class DashNavbarFactory:
+    """Default factory that uses the active Dash application."""
+
+    def create_app(self) -> Any:
+        import dash
+
+        get_app = getattr(dash, "get_app", None)
+        if get_app is None:
+            get_app = getattr(dash.Dash, "get_app", None)
+        if get_app is None:
+            raise AttributeError("Dash app getter not available")
+        return get_app()
+
+    def get_icon_url(self, app: Any, name: str) -> str | None:
+        return get_nav_icon(app, name)
+
+
+DEFAULT_FACTORY: NavbarFactoryProtocol = DashNavbarFactory()
+
+
+def _nav_icon(factory: NavbarFactoryProtocol, name: str, alt: str) -> Any:
     """Return Img tag or Font-Awesome fallback for the given icon name."""
+    app = factory.create_app()
     url = None
     try:
-        url = get_nav_icon(app, name)
+        url = factory.get_icon_url(app, name)
     except Exception as e:  # pragma: no cover - best effort
         logger.debug(f"Icon loading failed for {name}: {e}")
 
@@ -135,25 +157,16 @@ def _nav_icon(app: Any, name: str, alt: str) -> Any:
     )
 
 
-def nav_icon(name: str, alt: str) -> Any:
+def nav_icon(
+    name: str,
+    alt: str,
+    factory: NavbarFactoryProtocol = DEFAULT_FACTORY,
+) -> Any:
     """Wrapper that handles app context safely."""
     try:
-        import dash
-
-        # dash.get_app was introduced in newer versions of Dash.
-        # Use it when available and fall back to the old method for
-        # compatibility with older Dash versions.
-        get_app = getattr(dash, "get_app", None)
-        if get_app is None:
-            get_app = getattr(dash.Dash, "get_app", None)
-
-        if get_app is None:
-            raise AttributeError("Dash app getter not available")
-
-        app = get_app()
-        return _nav_icon(app, name, alt)
+        return _nav_icon(factory, name, alt)
     except Exception as e:  # pragma: no cover - graceful fallback
-        logger.debug(f"Dash app context unavailable for {name}: {e}")
+        logger.debug(f"Navbar icon rendering failed for {name}: {e}")
         glyph = fallback_icons.get(name, "fas fa-circle")
         return html.I(
             className=f"{glyph} nav-icon nav-icon--fallback",
@@ -162,22 +175,15 @@ def nav_icon(name: str, alt: str) -> Any:
         )
 
 
-def create_navbar_layout() -> Optional[Any]:
+def create_navbar_layout(
+    factory: NavbarFactoryProtocol = DEFAULT_FACTORY,
+) -> Optional[Any]:
     """Create navbar layout with responsive grid design"""
     if not DASH_AVAILABLE:
         return None
 
     try:
-        import dash
-
-        get_app = getattr(dash, "get_app", None)
-        if get_app is None:
-            get_app = getattr(dash.Dash, "get_app", None)
-
-        if get_app is None:
-            raise AttributeError("Dash app getter not available")
-
-        app = get_app()
+        app = factory.create_app()
         check_navbar_assets(
             [
                 "dashboard",
@@ -269,8 +275,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                     html.Div(
                                                         [
                                                             html.A(
-                                                                _nav_icon(
-                                                                    app,
+                                                                _nav_icon(factory,
                                                                     "dashboard",
                                                                     str(
                                                                         _l("Dashboard")
@@ -283,8 +288,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                                 ),
                                                             ),
                                                             html.A(
-                                                                _nav_icon(
-                                                                    app,
+                                                                _nav_icon(factory,
                                                                     "analytics",
                                                                     str(
                                                                         _l(
@@ -301,8 +305,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                                 ),
                                                             ),
                                                             html.A(
-                                                                _nav_icon(
-                                                                    app,
+                                                                _nav_icon(factory,
                                                                     "graphs",
                                                                     str(_l("Graphs")),
                                                                 ),
@@ -311,8 +314,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                                 title=str(_l("Graphs")),
                                                             ),
                                                             html.A(
-                                                                _nav_icon(
-                                                                    app,
+                                                                _nav_icon(factory,
                                                                     "upload",
                                                                     str(_l("Upload")),
                                                                 ),
@@ -341,8 +343,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                                 ],
                                                                 nav=True,
                                                                 in_navbar=True,
-                                                                label=_nav_icon(
-                                                                    app,
+                                                                label=_nav_icon(factory,
                                                                     "print",
                                                                     str(_l("Export")),
                                                                 ),
@@ -404,8 +405,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                                 ],
                                                                 nav=True,
                                                                 in_navbar=True,
-                                                                label=_nav_icon(
-                                                                    app,
+                                                                label=_nav_icon(factory,
                                                                     "settings",
                                                                     str(_l("Settings")),
                                                                 ),
@@ -444,8 +444,7 @@ def create_navbar_layout() -> Optional[Any]:
                                                         id="language-toggle",
                                                     ),
                                                     html.A(
-                                                        _nav_icon(
-                                                            app,
+                                                        _nav_icon(factory,
                                                             "logout",
                                                             str(_l("Logout")),
                                                         ),
