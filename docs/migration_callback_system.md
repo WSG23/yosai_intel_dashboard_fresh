@@ -33,3 +33,18 @@ python tools/complete_callback_cleanup.py
 The script scans for deprecated imports, rewrites them to use
 `TrulyUnifiedCallbacks`, validates that `services/data_processing/callback_controller.py`
 is absent and performs a simple runtime check of the new system.
+
+## Best Practices for Migration
+
+- **Always specify `callback_id` and `component_name`** when calling
+  `TrulyUnifiedCallbacks.register_callback`. Unique identifiers allow the
+  framework to detect duplicate output registrations and group callbacks by
+  namespace.
+- **Check for conflicts** using `callbacks.get_callback_conflicts()` before
+  deploying. The registry prevents accidental duplicates but reviewing the
+  report helps catch logical errors in complex pages.
+- **Enable Unicode safety** with `unicode_safe=True` or by using
+  `UnicodeAwareTrulyUnifiedCallbacks`. Surrogate pairs and non‑printable
+  characters are sanitized automatically to avoid UTF‑8 errors.
+- **Remove legacy imports** after migration and verify that tests pass. The
+  `tools/complete_callback_cleanup.py` helper can assist with large refactors.

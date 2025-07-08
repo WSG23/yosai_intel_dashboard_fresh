@@ -641,6 +641,7 @@ The running application exposes Swagger-based API docs at `http://<host>:<port>/
 - Callback design: [docs/callback_architecture.md](docs/callback_architecture.md)
 - State stores: [docs/state_management.md](docs/state_management.md)
 - Ops reference: [docs/operations_guide.md](docs/operations_guide.md)
+- Callback migration: [docs/migration_callback_system.md](docs/migration_callback_system.md)
 
 Update the spec by running `python tools/generate_openapi.py` which writes `docs/openapi.json` for the UI.
 ## Usage Examples
