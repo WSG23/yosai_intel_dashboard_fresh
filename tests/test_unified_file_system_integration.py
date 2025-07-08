@@ -1,6 +1,7 @@
 import base64
-
 import pandas as pd
+
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 import pytest
 
 from core.callback_events import CallbackEvent
@@ -33,16 +34,17 @@ from services.unified_file_controller import (
 
 
 def _encode_df(df: pd.DataFrame) -> str:
-    header = ",".join(df.columns)
-    rows = [",".join(map(str, r)) for r in df.to_numpy()]
-    csv_text = "\n".join([header] + rows)
-    data = base64.b64encode(csv_text.encode("utf-8", "surrogatepass")).decode()
-    return f"data:text/csv;base64,{data}"
+    return UploadFileBuilder().with_dataframe(df).as_base64()
 
 
 def test_upload_workflow_and_metrics(tmp_path):
     events = []
-    df = pd.DataFrame({"na\ud83dme": [1], "<script>": ["x"]})
+    df = (
+        DataFrameBuilder()
+        .add_column("na\ud83dme", [1])
+        .add_column("<script>", ["x"])
+        .build()
+    )
     contents = _encode_df(df)
 
     storage = StorageManager(base_dir=tmp_path)
@@ -63,7 +65,7 @@ def test_upload_workflow_and_metrics(tmp_path):
 
 
 def test_batch_migration_and_progress(tmp_path):
-    df = pd.DataFrame({"a": [1]})
+    df = DataFrameBuilder().add_column("a", [1]).build()
     p1 = tmp_path / "one.pkl"
     p2 = tmp_path / "two.pkl"
     df.to_pickle(p1)
@@ -86,7 +88,7 @@ def test_batch_migration_and_progress(tmp_path):
 
 
 def test_security_validation_blocks_bad_file(tmp_path):
-    bad_df = pd.DataFrame({"=cmd": ["=1"]})
+    bad_df = DataFrameBuilder().add_column("=cmd", ["=1"]).build()
     contents = _encode_df(bad_df)
     storage = StorageManager(base_dir=tmp_path)
     with pytest.raises(Exception):

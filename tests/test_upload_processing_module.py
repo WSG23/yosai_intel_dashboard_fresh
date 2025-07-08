@@ -1,4 +1,4 @@
-import pandas as pd
+from tests.utils.builders import DataFrameBuilder
 
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.data_processing.processor import Processor
@@ -18,14 +18,14 @@ def _make_processor():
     return UploadAnalyticsProcessor(vs, processor)
 
 def test_direct_processing_helper(tmp_path):
-    df1 = pd.DataFrame(
-        {
-            "Timestamp": ["2024-01-01 10:00:00"],
-            "Person ID": ["u1"],
-            "Token ID": ["t1"],
-            "Device name": ["d1"],
-            "Access result": ["Granted"],
-        }
+    df1 = (
+        DataFrameBuilder()
+        .add_column("Timestamp", ["2024-01-01 10:00:00"])
+        .add_column("Person ID", ["u1"])
+        .add_column("Token ID", ["t1"])
+        .add_column("Device name", ["d1"])
+        .add_column("Access result", ["Granted"])
+        .build()
     )
     proc = _make_processor()
     result = proc._process_uploaded_data_directly({"f1.csv": df1})

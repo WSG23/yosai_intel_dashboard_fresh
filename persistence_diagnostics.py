@@ -69,8 +69,8 @@ def test_save_load_cycle():
     print("=" * 50)
 
     try:
-        # Import the service
-        from services.device_learning_service import get_device_learning_service
+        # Import the service via the DI container helper
+        from services.interfaces import get_device_learning_service
 
         # Create test data
         test_df = pd.DataFrame(
@@ -248,7 +248,7 @@ def verify_current_mappings():
     print("=" * 50)
 
     try:
-        from services.device_learning_service import get_device_learning_service
+        from services.interfaces import get_device_learning_service
 
         learning_service = get_device_learning_service()
 

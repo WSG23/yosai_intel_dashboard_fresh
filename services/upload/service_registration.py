@@ -21,6 +21,7 @@ from services.upload.core.validator import ClientSideValidator
 from services.upload.controllers.upload_controller import UnifiedUploadController
 from services.data_processing.async_file_processor import AsyncFileProcessor
 from utils.upload_store import UploadedDataStore
+from services.device_learning_service import DeviceLearningService
 
 
 def register_upload_services(container: ServiceContainer) -> None:
@@ -30,6 +31,12 @@ def register_upload_services(container: ServiceContainer) -> None:
         "upload_storage",
         UploadedDataStore,
         protocol=UploadStorageProtocol,
+    )
+
+    container.register_singleton(
+        "device_learning_service",
+        DeviceLearningService,
+        protocol=DeviceLearningServiceProtocol,
     )
 
     container.register_singleton(

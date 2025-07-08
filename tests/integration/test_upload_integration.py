@@ -4,6 +4,8 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 import importlib.util
 import sys
 from pathlib import Path
@@ -68,8 +70,8 @@ ChunkedUploadManager = chunk_mod.ChunkedUploadManager
 
 def test_resumable_upload_and_error_callback(tmp_path, monkeypatch, fake_upload_storage):
     data_file = tmp_path / "sample.csv"
-    df = pd.DataFrame({"a": range(15)})
-    df.to_csv(data_file, index=False)
+    df = DataFrameBuilder().add_column("a", range(15)).build()
+    UploadFileBuilder().with_dataframe(df).write_csv(data_file)
 
     store = fake_upload_storage
     cmgr = ChunkedUploadManager(store, metadata_dir=tmp_path / "meta", initial_chunk_size=5)

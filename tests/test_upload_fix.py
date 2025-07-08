@@ -2,7 +2,7 @@ from pathlib import Path
 import sys
 import shutil
 
-import pandas as pd
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 # Ensure the real Dash package is used even if test stubs are on sys.path
 stub_dir = Path(__file__).resolve().parent / "stubs"
@@ -30,13 +30,12 @@ def _skip_if_no_chromedriver() -> None:
 
 
 def create_sample_files(tmp_path: Path) -> dict[str, Path]:
-    df = pd.DataFrame({"col": ["hello", "😀"]})
-    csv = tmp_path / "sample.csv"
+    df = DataFrameBuilder().add_column("col", ["hello", "😀"]).build()
+    csv = UploadFileBuilder().with_dataframe(df).write_csv(tmp_path / "sample.csv")
+    df.to_excel(tmp_path / "sample.xlsx", index=False)
+    df.to_json(tmp_path / "sample.json", force_ascii=False, orient="records")
     excel = tmp_path / "sample.xlsx"
     jsonf = tmp_path / "sample.json"
-    df.to_csv(csv, index=False)
-    df.to_excel(excel, index=False)
-    df.to_json(jsonf, force_ascii=False, orient="records")
     return {"csv": csv, "excel": excel, "json": jsonf}
 
 

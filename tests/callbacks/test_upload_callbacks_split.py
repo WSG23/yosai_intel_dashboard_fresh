@@ -42,6 +42,7 @@ class _Dyn:
     )
 dyn_mod.dynamic_config = _Dyn()
 sys.modules["config.dynamic_config"] = dyn_mod
+
 uds_mod = types.ModuleType("utils.upload_store")
 uds_mod.uploaded_data_store = object()
 sys.modules["utils.upload_store"] = uds_mod

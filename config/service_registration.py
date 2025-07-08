@@ -1,6 +1,7 @@
 """Service registration for dependency injection container."""
 from core.service_container import ServiceContainer
 from services.upload.protocols import (
+    DeviceLearningServiceProtocol,
     UploadProcessingServiceProtocol,
     UploadValidatorProtocol,
     FileProcessorProtocol,
@@ -16,20 +17,31 @@ def register_upload_services(container: ServiceContainer) -> None:
     from services.upload.core.validator import ClientSideValidator
     from services.data_processing.async_file_processor import AsyncFileProcessor
     from utils.upload_store import UploadedDataStore
+    from services.device_learning_service import DeviceLearningService
 
     upload_store = UploadedDataStore()
-    container.register_singleton("upload_storage", upload_store)
+    container.register_singleton("upload_storage", upload_store, protocol=UploadStorageProtocol)
+
+    learning_service = DeviceLearningService()
+    container.register_singleton(
+        "device_learning_service", learning_service, protocol=DeviceLearningServiceProtocol
+    )
 
     upload_validator = ClientSideValidator()
-    container.register_singleton("upload_validator", upload_validator)
+    container.register_singleton("upload_validator", upload_validator, protocol=UploadValidatorProtocol)
 
     file_processor = AsyncFileProcessor()
-    container.register_singleton("file_processor", file_processor)
+    container.register_singleton("file_processor", file_processor, protocol=FileProcessorProtocol)
 
     upload_processor = UploadProcessingService(
         store=upload_store,
+        learning_service=learning_service,
         processor=file_processor,
         validator=upload_validator,
     )
-    container.register_singleton("upload_processor", upload_processor)
+    container.register_singleton(
+        "upload_processor",
+        upload_processor,
+        protocol=UploadProcessingServiceProtocol,
+    )
 
