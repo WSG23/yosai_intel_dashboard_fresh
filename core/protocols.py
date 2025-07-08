@@ -81,6 +81,7 @@ class AnalyticsServiceProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class FileProcessorProtocol(Protocol):
     """Protocol for file processing operations"""
 
@@ -130,6 +131,7 @@ class ConfigurationProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class SerializationProtocol(Protocol):
     """Protocol for JSON serialization services"""
 
@@ -149,6 +151,7 @@ class SerializationProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class CallbackProtocol(Protocol):
     """Protocol for services that wrap and validate callbacks"""
 
@@ -163,6 +166,7 @@ class CallbackProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class ConfigProviderProtocol(Protocol):
     """Protocol for objects that supply configuration sections."""
 

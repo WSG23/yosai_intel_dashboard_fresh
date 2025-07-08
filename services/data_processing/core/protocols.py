@@ -19,6 +19,7 @@ from typing import (
 import pandas as pd
 
 
+@runtime_checkable
 class DatabaseProtocol(Protocol):
     """Protocol defining database operations contract"""
 
@@ -38,6 +39,7 @@ class DatabaseProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class AnalyticsServiceProtocol(Protocol):
     """Protocol for analytics service operations"""
 
@@ -57,6 +59,7 @@ class AnalyticsServiceProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class FileProcessorProtocol(Protocol):
     """Protocol for file processing operations"""
 
@@ -76,6 +79,7 @@ class FileProcessorProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class ConfigurationProtocol(Protocol):
     """Protocol for configuration management"""
 
@@ -95,6 +99,7 @@ class ConfigurationProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class SerializationProtocol(Protocol):
     """Protocol for JSON serialization services"""
 
@@ -114,6 +119,7 @@ class SerializationProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class CallbackProtocol(Protocol):
     """Protocol for services that wrap and validate callbacks"""
 
@@ -128,6 +134,7 @@ class CallbackProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class AnalyticsProtocol(Protocol):
     """Protocol for analytics services"""
 
@@ -239,6 +246,7 @@ class ServicePluginProtocol(PluginProtocol, Protocol):
         ...
 
 
+@runtime_checkable
 class PluginManagerProtocol(Protocol):
     """Protocol for plugin management"""
 
