@@ -27,7 +27,6 @@ def _get_max_display_rows() -> int:
     except Exception:
         return dynamic_config.analytics.max_display_rows
 from core.unicode_processor import safe_format_number
-from services.analytics_service import MAX_DISPLAY_ROWS
 
 logger = logging.getLogger(__name__)
 

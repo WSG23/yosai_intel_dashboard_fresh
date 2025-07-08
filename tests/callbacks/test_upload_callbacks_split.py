@@ -76,7 +76,6 @@ for attr in [
     setattr(dbc_mod, attr, lambda *a, **k: None)
 sys.modules["dash_bootstrap_components"] = dbc_mod
 svc_analytics_service = types.ModuleType("services.analytics_service")
-svc_analytics_service.MAX_DISPLAY_ROWS = 100
 sys.modules["services.analytics_service"] = svc_analytics_service
 core_unicode = types.ModuleType("core.unicode")
 core_unicode.safe_unicode_decode = lambda x, **_: x

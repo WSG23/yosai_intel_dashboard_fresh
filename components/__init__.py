@@ -23,7 +23,13 @@ try:
     from config.dynamic_config import dynamic_config
 except Exception:  # pragma: no cover - optional config
     dynamic_config = None
-from services.analytics_service import MAX_DISPLAY_ROWS
+
+from config.constants import MAX_DISPLAY_ROWS as DEFAULT_MAX_DISPLAY_ROWS
+
+if dynamic_config is not None:
+    MAX_DISPLAY_ROWS = dynamic_config.analytics.max_display_rows
+else:  # pragma: no cover - fallback for optional config
+    MAX_DISPLAY_ROWS = DEFAULT_MAX_DISPLAY_ROWS
 
 logger = logging.getLogger(__name__)
 

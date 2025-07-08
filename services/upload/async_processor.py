@@ -5,12 +5,18 @@ from typing import Any
 import pandas as pd
 
 from config.config import get_analytics_config
-from services.analytics_service import MAX_DISPLAY_ROWS
+from config.dynamic_config import dynamic_config
 from services.upload.utils.file_parser import UnicodeFileProcessor
 
 
 def _get_max_display_rows() -> int:
-    return get_analytics_config().max_display_rows or 10000
+    try:
+        return (
+            get_analytics_config().max_display_rows
+            or dynamic_config.analytics.max_display_rows
+        )
+    except Exception:
+        return dynamic_config.analytics.max_display_rows
 
 
 class AsyncUploadProcessor:
