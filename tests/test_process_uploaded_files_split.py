@@ -1,7 +1,6 @@
 import asyncio
-import base64
 
-import pandas as pd
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 from pages import file_upload
 from services.upload import UploadProcessingService
@@ -10,14 +9,17 @@ from utils.upload_store import UploadedDataStore
 
 
 def _encode_df(df: pd.DataFrame) -> str:
-    data = df.to_csv(index=False).encode()
-    b64 = base64.b64encode(data).decode()
-    return f"data:text/csv;base64,{b64}"
+    return UploadFileBuilder().with_dataframe(df).as_base64()
 
 
 def test_process_uploaded_files_split(monkeypatch, tmp_path):
     # create a dataframe large enough to split
-    df = pd.DataFrame({"a": range(10), "b": range(10)})
+    df = (
+        DataFrameBuilder()
+        .add_column("a", range(10))
+        .add_column("b", range(10))
+        .build()
+    )
     df1 = df.iloc[:5]
     df2 = df.iloc[5:]
 
