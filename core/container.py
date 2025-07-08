@@ -102,9 +102,9 @@ def get_unicode_processor() -> UnicodeProcessorProtocol:
 
     provider = container.get(UnicodeProcessorProtocol)
     if provider is None:
-        from .unicode_processor import DefaultUnicodeProcessor
+        from .unicode import UnicodeProcessor
 
-        provider = DefaultUnicodeProcessor()
+        provider = UnicodeProcessor()
         container.register(
             "unicode_processor",
             provider,
