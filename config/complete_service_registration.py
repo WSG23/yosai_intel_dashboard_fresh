@@ -1,17 +1,18 @@
 """Comprehensive service registration for the DI container."""
+
 from __future__ import annotations
 
 import logging
 
-from core.service_container import ServiceContainer
 from core.protocols import (
     ConfigurationProtocol,
     DatabaseProtocol,
-    LoggingProtocol,
     EventBusProtocol,
-    StorageProtocol,
+    LoggingProtocol,
     SecurityServiceProtocol,
+    StorageProtocol,
 )
+from core.service_container import ServiceContainer
 
 
 def register_all_application_services(container: ServiceContainer) -> None:
@@ -34,8 +35,8 @@ def register_all_services(container: ServiceContainer) -> None:
 
 def register_core_infrastructure(container: ServiceContainer) -> None:
     from config.config import ConfigManager
+    from config.database_manager import DatabaseConfig, DatabaseManager
     from core.logging import LoggingService
-    from config.database_manager import DatabaseManager, DatabaseConfig
     from services.configuration_service import (
         ConfigurationServiceProtocol,
         DynamicConfigurationService,
@@ -64,25 +65,35 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
     )
 
     from core.events import EventBus
+
     container.register_singleton(
         "event_bus",
         EventBus,
         protocol=EventBusProtocol,
     )
 
+    # Register generic file storage service for analytics
+    from core.storage.file_storage import FileStorageService
+
+    container.register_singleton(
+        "file_storage",
+        FileStorageService,
+        protocol=StorageProtocol,
+    )
+
 
 def register_analytics_services(container: ServiceContainer) -> None:
     try:
-        from services.analytics_service import AnalyticsService
         from services.analytics.data_processor import DataProcessor
-        from services.analytics.report_generator import ReportGenerator
         from services.analytics.metrics_calculator import MetricsCalculator
         from services.analytics.protocols import (
             AnalyticsServiceProtocol,
             DataProcessorProtocol,
-            ReportGeneratorProtocol,
             MetricsCalculatorProtocol,
+            ReportGeneratorProtocol,
         )
+        from services.analytics.report_generator import ReportGenerator
+        from services.analytics_service import AnalyticsService
     except Exception as exc:  # pragma: no cover - optional dependency
         logging.warning(f"Analytics services unavailable: {exc}")
         return
@@ -131,8 +142,8 @@ def register_security_services(container: ServiceContainer) -> None:
 
 
 def register_export_services(container: ServiceContainer) -> None:
-    from services.export_service import ExportService
     from core.protocols import ExportServiceProtocol
+    from services.export_service import ExportService
 
     container.register_transient(
         "export_service",
@@ -150,5 +161,3 @@ def register_learning_services(container: ServiceContainer) -> None:
         "device_learning_service",
         create_device_learning_service(),
     )
-
-

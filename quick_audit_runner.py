@@ -99,6 +99,7 @@ def show_quick_summary(results):
 """)
 
 def show_detailed_results(results, auditor):
+
     """Show detailed results"""
     print(auditor.generate_detailed_report(results))
 
