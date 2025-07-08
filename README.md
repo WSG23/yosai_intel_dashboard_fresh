@@ -198,6 +198,13 @@ following steps:
    plain HTTP version from loading. Use the browser's development settings to
    clear site data, including service workers and caches, and remove any HSTS
    entries before reloading the page.
+7. If `python app.py` fails with `NameError: name '_env_file_callback' is not defined`,
+   Flask was likely installed incorrectly. Reinstall it to restore the missing
+   function:
+   ```bash
+   pip install --force-reinstall "Flask>=2.2.5"
+   ```
+   See [docs/troubleshooting.md](docs/troubleshooting.md) for details.
 
 ### Production Deployment
 
