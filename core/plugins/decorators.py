@@ -2,7 +2,7 @@ import functools
 from typing import Any, Callable, Optional
 
 
-def safe_callback(app_or_container: Any = None) -> Callable:
+def handle_safe(app_or_container: Any = None) -> Callable:
     """Plugin-aware decorator that uses the JSON serialization plugin"""
 
     def decorator(func: Callable) -> Callable:
@@ -42,7 +42,7 @@ def safe_callback(app_or_container: Any = None) -> Callable:
         return decorator
 
 
-def unified_callback(target: Any, *cb_args: Any, **cb_kwargs: Any) -> Callable:
+def handle_unified(target: Any, *cb_args: Any, **cb_kwargs: Any) -> Callable:
     """Return decorator registering callbacks on any supported target."""
     from .callback_unifier import CallbackUnifier
 

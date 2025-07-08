@@ -483,7 +483,7 @@ class Callbacks:
         except Exception as e:  # pragma: no cover - catch unforeseen errors
             return dbc.Alert(f"Analysis failed: {str(e)}", color="danger")
 
-    def refresh_data_sources_callback(self, n_clicks):
+    def handle_refresh_data_sources(self, n_clicks):
         """Refresh data sources when button clicked."""
         if not callback_context.triggered:
             raise PreventUpdate
@@ -589,7 +589,7 @@ def register_callbacks(
         return display, options, alert
 
     if controller is not None:
-        controller.register_callback(
+        controller.register_handler(
             "on_analysis_error",
             lambda aid, err: logger.error("Deep analytics error: %s", err),
         )

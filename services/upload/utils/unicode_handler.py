@@ -5,7 +5,7 @@ import base64
 import logging
 from typing import Union, Tuple
 
-from core.unicode_processor import safe_encode_text
+from core.unicode import safe_encode_text
 
 logger = logging.getLogger(__name__)
 

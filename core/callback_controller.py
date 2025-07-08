@@ -146,7 +146,7 @@ class CallbackController:
         }
         self._initialized = True
 
-    def register_callback(
+    def handle_register(
         self,
         event: CallbackEvent,
         callback: CallbackProtocol,
@@ -155,7 +155,7 @@ class CallbackController:
         self._registry.register(event, callback, weak)
         logger.debug(f"Registered callback for {event.name}")
 
-    def unregister_callback(self, event: CallbackEvent, callback: CallbackProtocol) -> bool:
+    def handle_unregister(self, event: CallbackEvent, callback: CallbackProtocol) -> bool:
         success = self._registry.unregister(event, callback)
         if success:
             logger.debug(f"Unregistered callback for {event.name}")
@@ -228,7 +228,7 @@ def callback_handler(event: CallbackEvent, weak: bool = False):
 
     def decorator(func: CallbackProtocol) -> CallbackProtocol:
         controller = CallbackController()
-        controller.register_callback(event, func, weak)
+        controller.register_handler(event, func, weak)
         return func
 
     return decorator
@@ -248,11 +248,11 @@ class TemporaryCallback:
         self.controller = controller or CallbackController()
 
     def __enter__(self) -> CallbackProtocol:
-        self.controller.register_callback(self.event, self.callback)
+        self.controller.register_handler(self.event, self.callback)
         return self.callback
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        self.controller.unregister_callback(self.event, self.callback)
+        self.controller.unregister_handler(self.event, self.callback)
 
 
 def get_callback_controller() -> CallbackController:

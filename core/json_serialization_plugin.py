@@ -172,7 +172,7 @@ class JsonCallbackService:
     def __init__(self, serialization_service: JsonSerializationService):
         self._service = serialization_service
 
-    def wrap_callback(self, func):
+    def handle_wrap(self, func):
         """Return a wrapper that sanitizes the callback result and catches errors."""
 
         def wrapper(*args, **kwargs):

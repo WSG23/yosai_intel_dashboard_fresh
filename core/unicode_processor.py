@@ -1,12 +1,21 @@
-"""Deprecated compatibility wrapper for :mod:`core.unicode`."""
-from __future__ import annotations
+#!/usr/bin/env python3
+import re, unicodedata, logging
+from typing import Any
 
-import warnings
+logger = logging.getLogger(__name__)
+SURROGATE_RE = re.compile(r'[\uD800-\uDFFF]')
 
-from .unicode import *  # noqa: F401,F403
+def sanitize_unicode_input(text: Any) -> str:
+    if not isinstance(text, str):
+        try: text = str(text)
+        except: return ""
+    try:
+        text = unicodedata.normalize('NFKC', text)
+        text = SURROGATE_RE.sub('', text)
+        return text
+    except:
+        return ''.join(ch for ch in text if not (0xD800 <= ord(ch) <= 0xDFFF))
 
-warnings.warn(
-    "core.unicode_processor is deprecated; use core.unicode instead",
-    DeprecationWarning,
-    stacklevel=2,
-)
+class UnicodeProcessor:
+    @staticmethod
+    def safe_encode(value): return sanitize_unicode_input(value)

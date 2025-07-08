@@ -19,7 +19,7 @@ from .core.validator import ClientSideValidator as UploadValidator
 from utils.upload_store import UploadedDataStore as UploadStorage
 from .controllers.upload_controller import UnifiedUploadController as UploadController
 from .utils.unicode_handler import decode_upload_content
-from core.unicode_processor import safe_encode_text
+from core.unicode import safe_encode_text
 
 __all__ = [
     "UploadProcessingServiceProtocol",

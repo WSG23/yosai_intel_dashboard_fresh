@@ -6,8 +6,39 @@ import subprocess
 import sys
 from pathlib import Path
 
-from tools.robust_file_reader import safe_read_text
 from typing import Dict, List, Tuple
+
+import chardet
+
+def safe_read_text(file_path):
+    """Direct replacement for pathlib.Path.read_text() with encoding detection."""
+    path = Path(file_path)
+    raw_bytes = path.read_bytes()
+    
+    # Try chardet detection first if available
+    try:
+        detected = chardet.detect(raw_bytes)
+        detected_encoding = detected.get('encoding') if detected else None
+        
+        if detected_encoding:
+            try:
+                return raw_bytes.decode(detected_encoding)
+            except (UnicodeDecodeError, LookupError):
+                pass
+    except:
+        pass
+    
+    # Try common encodings
+    for encoding in ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']:
+        try:
+            return raw_bytes.decode(encoding)
+        except (UnicodeDecodeError, LookupError):
+            continue
+    
+    # Final fallback
+    return raw_bytes.decode('utf-8', errors='replace')
+
+
 
 
 # ----------------------------------------------------------------------

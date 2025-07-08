@@ -524,6 +524,6 @@ def setup_isolated_security_testing(
 
         handler = _handler
         for event in SecurityEvent:
-            controller.register_callback(event, lambda d, e=event: _handler(d, e))
+            controller.register_handler(event, lambda d, e=event: _handler(d, e))
 
     return controller, handler

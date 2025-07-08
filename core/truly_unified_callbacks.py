@@ -82,7 +82,7 @@ class TrulyUnifiedCallbacks:
     unified_callback = callback
 
     # Dash callback registration ---------------------------------------
-    def register_callback(
+    def handle_register(
         self,
         outputs: Any,
         inputs: Iterable[Input] | Input | None = None,
@@ -295,8 +295,8 @@ class TrulyUnifiedCallbacks:
                 super().__init__(coord.app)
                 self._coord = coord
 
-            def register_callback(self, outputs, inputs=None, states=None, **kwargs):
-                return self._coord.register_callback(outputs, inputs, states, **kwargs)
+            def handle_register(self, outputs, inputs=None, states=None, **kwargs):
+                return self._coord.register_handler(outputs, inputs, states, **kwargs)
 
         for manager_cls in manager_classes:
             registry = _Registry(self)

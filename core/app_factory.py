@@ -739,7 +739,7 @@ def _register_router_callbacks(
 ) -> None:
     """Register page routing callbacks."""
 
-    def safe_callback(outputs, inputs, callback_id="unknown"):
+    def handle_safe(outputs, inputs, callback_id="unknown"):
         def decorator(func):
             def unicode_wrapper(*args, **kwargs):
                 try:

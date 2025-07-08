@@ -31,7 +31,7 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
         self.security = security_validator or SecurityValidator()
 
     # ------------------------------------------------------------------
-    def register_event_callback(
+    def handle_register_event(
         self,
         event: CallbackEvent,
         func: Callable[..., Any],
@@ -55,7 +55,7 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
 
             func = wrapped
 
-        self.callback_manager.register_callback(event, func, priority=priority)
+        self.callback_manager.register_handler(event, func, priority=priority)
 
     # ------------------------------------------------------------------
     def trigger_event(self, event: CallbackEvent, *args: Any, **kwargs: Any):
@@ -70,7 +70,7 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
         return await self.callback_manager.trigger_async(event, *args, **kwargs)
 
     # ------------------------------------------------------------------
-    def register_dash_callback(
+    def handle_register_dash(
         self,
         outputs: Any,
         inputs: Iterable[Input] | Input | None = None,
@@ -82,7 +82,7 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
         **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Wrap ``Dash.callback`` and track registrations."""
-        return self.register_callback(
+        return self.register_handler(
 
             outputs,
             inputs,

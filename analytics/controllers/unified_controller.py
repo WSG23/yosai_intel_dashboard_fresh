@@ -31,7 +31,7 @@ class UnifiedAnalyticsController:
         self._validator = security_validator or SecurityValidator()
 
     # ------------------------------------------------------------------
-    def register_callback(
+    def handle_register(
         self,
         event: str,
         callback: Callable[..., Any],
@@ -59,21 +59,21 @@ class UnifiedAnalyticsController:
 
             callback = wrapped
 
-        self._manager.register_callback(
+        self._manager.register_handler(
             self._EVENT_MAP[event], callback, priority=priority
         )
 
     def register_security_callbacks(self, callback_dict: Dict[str, callable]):
         """Consolidated callback registration for security analysis"""
         for event_name, callback_func in callback_dict.items():
-            self.register_callback(event_name, callback_func, secure=True)
+            self.register_handler(event_name, callback_func, secure=True)
 
     # ------------------------------------------------------------------
-    def unregister_callback(self, event: str, callback: Callable[..., Any]) -> None:
+    def handle_unregister(self, event: str, callback: Callable[..., Any]) -> None:
         """Remove a previously registered callback."""
         if event not in self._EVENT_MAP:
             return
-        self._manager.unregister_callback(self._EVENT_MAP[event], callback)
+        self._manager.unregister_handler(self._EVENT_MAP[event], callback)
 
     # ------------------------------------------------------------------
     def trigger(self, event: str, *args: Any, **kwargs: Any) -> List[Any]:

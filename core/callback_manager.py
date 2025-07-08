@@ -25,7 +25,7 @@ class CallbackManager:
         self._lock = threading.Lock()
 
     # ------------------------------------------------------------------
-    def register_callback(
+    def handle_register(
         self, event: CallbackEvent, func: Callable[..., Any], *, priority: int = 50
     ) -> None:
         """Register a callback for an event with optional priority."""
@@ -34,7 +34,7 @@ class CallbackManager:
             self._callbacks[event].sort(key=lambda x: x[0])
 
     # ------------------------------------------------------------------
-    def unregister_callback(
+    def handle_unregister(
         self, event: CallbackEvent, func: Callable[..., Any]
     ) -> None:
         """Unregister a previously registered callback."""

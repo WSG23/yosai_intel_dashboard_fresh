@@ -124,7 +124,7 @@ class CallbackProtocol(Protocol):
     """Protocol for services that wrap and validate callbacks"""
 
     @abstractmethod
-    def wrap_callback(self, callback_func: Callable) -> Callable:
+    def handle_wrap(self, callback_func: Callable) -> Callable:
         """Return a wrapped, safe callback function"""
         ...
 

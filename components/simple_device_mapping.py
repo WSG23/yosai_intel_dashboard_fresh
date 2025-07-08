@@ -565,7 +565,7 @@ def register_callbacks(
 ) -> None:
     """Register component callbacks using the provided coordinator."""
 
-    manager.register_callback(
+    manager.register_handler(
         Output("simple-device-modal", "children"),
         Input("simple-device-modal", "is_open"),
         prevent_initial_call=True,
@@ -573,7 +573,7 @@ def register_callbacks(
         component_name="simple_device_mapping",
     )(populate_simple_device_modal)
 
-    manager.register_callback(
+    manager.register_handler(
         Output("simple-device-modal", "is_open"),
         [
             Input("open-device-mapping", "n_clicks"),
@@ -586,7 +586,7 @@ def register_callbacks(
         component_name="simple_device_mapping",
     )(toggle_simple_device_modal)
 
-    manager.register_callback(
+    manager.register_handler(
         Output("device-save-status", "children"),
         [
             Input({"type": "device-floor", "index": ALL}, "value"),
@@ -600,7 +600,7 @@ def register_callbacks(
         component_name="simple_device_mapping",
     )(save_user_inputs)
 
-    manager.register_callback(
+    manager.register_handler(
         [
             Output({"type": "device-floor", "index": ALL}, "value"),
             Output({"type": "device-access", "index": ALL}, "value"),
@@ -615,7 +615,7 @@ def register_callbacks(
     )(apply_ai_device_suggestions)
 
     if controller is not None:
-        controller.register_callback(
+        controller.register_handler(
             "on_analysis_error",
             lambda aid, err: logger.error("Device mapping error: %s", err),
         )
