@@ -7,6 +7,7 @@ from services.upload.protocols import (
     FileProcessorProtocol,
     UploadControllerProtocol,
     UploadStorageProtocol,
+    UploadDataServiceProtocol,
 )
 
 
@@ -21,6 +22,14 @@ def register_upload_services(container: ServiceContainer) -> None:
 
     upload_store = UploadedDataStore()
     container.register_singleton("upload_storage", upload_store, protocol=UploadStorageProtocol)
+
+    from services.upload_data_service import UploadDataService
+    data_service = UploadDataService(upload_store)
+    container.register_singleton(
+        "upload_data_service",
+        data_service,
+        protocol=UploadDataServiceProtocol,
+    )
 
     learning_service = DeviceLearningService()
     container.register_singleton(

@@ -6,7 +6,7 @@ class ClientSideValidator: pass
 class ModalService: pass
 class UploadProcessingService:
     async_processor = None
-    def __init__(self, store):
+    def __init__(self, store, *args, **kwargs):
         pass
     async def process_files(self, *a, **k):
         return ([], [], {}, [], {}, None, None)

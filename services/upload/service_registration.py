@@ -14,6 +14,8 @@ from services.upload.protocols import (
     FileProcessorProtocol,
     UploadControllerProtocol,
     UploadStorageProtocol,
+    DeviceLearningServiceProtocol,
+    UploadDataServiceProtocol,
 )
 
 from services.upload.core.processor import UploadProcessingService
@@ -22,6 +24,7 @@ from services.upload.controllers.upload_controller import UnifiedUploadControlle
 from services.data_processing.async_file_processor import AsyncFileProcessor
 from utils.upload_store import UploadedDataStore
 from services.device_learning_service import DeviceLearningService
+from services.upload_data_service import UploadDataService
 
 
 def register_upload_services(container: ServiceContainer) -> None:
@@ -31,6 +34,13 @@ def register_upload_services(container: ServiceContainer) -> None:
         "upload_storage",
         UploadedDataStore,
         protocol=UploadStorageProtocol,
+    )
+
+    container.register_singleton(
+        "upload_data_service",
+        UploadDataService,
+        protocol=UploadDataServiceProtocol,
+        lifetime=ServiceLifetime.SINGLETON,
     )
 
     container.register_singleton(

@@ -5,13 +5,19 @@ from dash import no_update
 from core.callback_controller import CallbackEvent
 from upload_core import UploadCore
 from services.upload.core.processor import UploadProcessingService
-from tests.fakes import FakeUploadStore, FakeDeviceLearningService
+from tests.fakes import (
+    FakeUploadStore,
+    FakeDeviceLearningService,
+    FakeUploadDataService,
+)
 
 
 def _create_core(monkeypatch=None):
     store = FakeUploadStore()
-    core = UploadCore(store)
-    core.processing = UploadProcessingService(store)
+    learning = FakeDeviceLearningService()
+    data_svc = FakeUploadDataService(store)
+    processing = UploadProcessingService(store, learning, data_svc)
+    core = UploadCore(processing, learning, store)
     if monkeypatch is not None:
         monkeypatch.setattr(
             "services.device_learning_service.get_device_learning_service",
