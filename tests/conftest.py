@@ -1,14 +1,12 @@
 """Test configuration and fixtures"""
 
 import sys
-from pathlib import Path
 import types
+from pathlib import Path
 
 if "dash_bootstrap_components" not in sys.modules:
     dbc_stub = types.ModuleType("dash_bootstrap_components")
-    dbc_stub.Card = (
-        lambda *a, **k: None
-    )
+    dbc_stub.Card = lambda *a, **k: None
     dbc_stub.Navbar = dbc_stub.Container = dbc_stub.Row = dbc_stub.Col = (
         lambda *a, **k: None
     )
@@ -19,14 +17,14 @@ if "dash_bootstrap_components" not in sys.modules:
     sys.modules["dash_bootstrap_components"] = dbc_stub
 
 
-
+import asyncio
 import shutil
 import tempfile
 from typing import Any, Generator
 
 import pandas as pd
 import pytest
-import asyncio
+
 from tests.fake_unicode_processor import FakeUnicodeProcessor
 
 try:
@@ -39,9 +37,11 @@ except Exception:  # pragma: no cover - optional dep fallback
         def get_all_data(self) -> dict[str, pd.DataFrame]: ...
         def clear_all(self) -> None: ...
 
+
 try:
     from core.protocols import ConfigurationProtocol
 except Exception:  # pragma: no cover - optional dep fallback
+
     class ConfigurationProtocol(Protocol):
         def get_database_config(self) -> dict[str, Any]: ...
         def get_app_config(self) -> dict[str, Any]: ...
@@ -49,6 +49,7 @@ except Exception:  # pragma: no cover - optional dep fallback
         def get_upload_config(self) -> dict[str, Any]: ...
         def reload_config(self) -> None: ...
         def validate_config(self) -> dict[str, Any]: ...
+
 
 from core.container import Container
 
@@ -58,6 +59,19 @@ try:  # Optional real models may not be available in minimal environments
 except Exception:  # pragma: no cover - fallback stubs
     AccessEvent = Door = Person = object
     AccessResult = DoorType = object
+
+
+@pytest.fixture
+def stub_services_registry(monkeypatch: pytest.MonkeyPatch):
+    """Provide a minimal ``services.registry`` stub."""
+
+    services_mod = types.ModuleType("services")
+    registry_mod = types.ModuleType("services.registry")
+    registry_mod.get_service = lambda name: None
+    services_mod.registry = registry_mod
+    monkeypatch.setitem(sys.modules, "services", services_mod)
+    monkeypatch.setitem(sys.modules, "services.registry", registry_mod)
+    return registry_mod
 
 
 @pytest.fixture
@@ -87,8 +101,8 @@ def fake_unicode_processor() -> FakeUnicodeProcessor:
 def upload_data_service(tmp_path: Path):
     """Provide a fresh ``UploadDataService`` backed by a temp store."""
 
-    from utils.upload_store import UploadedDataStore
     from services.upload_data_service import UploadDataService
+    from utils.upload_store import UploadedDataStore
 
     store = UploadedDataStore(storage_dir=tmp_path)
     service = UploadDataService(store)
@@ -186,6 +200,7 @@ def mock_auth_env(monkeypatch: pytest.MonkeyPatch) -> None:
     }
     for key, value in auth_vars.items():
         monkeypatch.setenv(key, value)
+
 
 @pytest.fixture
 def async_runner() -> Generator[callable, None, None]:

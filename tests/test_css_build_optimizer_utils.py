@@ -1,29 +1,18 @@
+import importlib
 import json
-import importlib.util
 import sys
 import types
 from pathlib import Path
 
 import pytest
 
+
 @pytest.fixture
-def css_build_optimizer(monkeypatch: pytest.MonkeyPatch):
-    """Load ``css_build_optimizer`` with minimal service stubs."""
+def css_build_optimizer(stub_services_registry):
+    """Import ``css_build_optimizer`` with a stubbed registry."""
 
-    services_mod = types.ModuleType("services")
-    registry_mod = types.ModuleType("services.registry")
-    registry_mod.get_service = lambda name: None
-    services_mod.registry = registry_mod
-    monkeypatch.setitem(sys.modules, "services", services_mod)
-    monkeypatch.setitem(sys.modules, "services.registry", registry_mod)
-
-    spec = importlib.util.spec_from_file_location(
-        "css_build_optimizer",
-        Path(__file__).resolve().parents[1] / "models" / "css_build_optimizer.py",
-    )
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    module = importlib.import_module("models.css_build_optimizer")
+    return importlib.reload(module)
 
 
 def test_validate_css_directory_success(tmp_path, css_build_optimizer):
