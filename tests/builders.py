@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-import os
+import pathlib
+import sys
+import types
+
 from typing import Any, Dict
 
 import pandas as pd
@@ -56,15 +59,7 @@ class TestContainerBuilder:
 
     # ------------------------------------------------------------------
     def with_env_defaults(self) -> "TestContainerBuilder":
-        for var in [
-            "SECRET_KEY",
-            "DB_PASSWORD",
-            "AUTH0_CLIENT_ID",
-            "AUTH0_CLIENT_SECRET",
-            "AUTH0_DOMAIN",
-            "AUTH0_AUDIENCE",
-        ]:
-            os.environ.setdefault(var, "test")
+        """Retained for backward compatibility (no-op)."""
         return self
 
     # ------------------------------------------------------------------
