@@ -1,154 +1,98 @@
+"""Unified callback coordinator with DI integration."""
 from __future__ import annotations
 
-import logging
-import threading
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, Iterable, List, Tuple
-
-from dash import Dash
+from typing import Callable, Any, Dict, List
+import dash
 from dash.dependencies import Input, Output, State
 
-logger = logging.getLogger(__name__)
+from core.service_container import ServiceContainer
+from core.unicode_processor import safe_format_text, handle_unicode_surrogates
 
 
-@dataclass(frozen=True)
-class CallbackRegistration:
-    callback_id: str
-    component_name: str
-    outputs: Tuple[Output, ...]
-    inputs: Tuple[Input, ...]
-    states: Tuple[State, ...]
+class CallbackRegistry:
+    """Registry for managing callbacks with DI."""
 
+    def __init__(self, container: ServiceContainer):
+        self.container = container
+        self.callbacks: Dict[str, Callable] = {}
+        self.app = None
 
-class UnifiedCallbackCoordinator:
-    """Thread-safe callback registration with namespace tracking."""
-
-    def __init__(self, app: Dash) -> None:
-        self.app = app
-        self._lock = threading.Lock()
-        self._registrations: Dict[str, CallbackRegistration] = {}
-        self._output_map: Dict[str, str] = {}
-        self._namespaces: Dict[str, List[str]] = {}
-
-    # Convenience unified decorator ------------------------------------
-    def unified_callback(self, *args: Any, **kwargs: Any):
-        """Return :class:`CallbackUnifier` bound to this coordinator."""
-        from .plugins.callback_unifier import CallbackUnifier
-        from .plugins.decorators import safe_callback
-
-        return CallbackUnifier(self, safe_callback(self.app))(*args, **kwargs)
-
-    # ------------------------------------------------------------------
-    def register_component_namespace(self, component_name: str) -> None:
-        """Ensure a namespace exists for the given component."""
-        with self._lock:
-            self._namespaces.setdefault(component_name, [])
-
-    # ------------------------------------------------------------------
     def register_callback(
         self,
-        outputs: Any,
-        inputs: Iterable[Input] | Input | None = None,
-        states: Iterable[State] | State | None = None,
-        *,
-        callback_id: str,
-        component_name: str,
-        **kwargs: Any,
-    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        """Wrap ``Dash.callback`` and track registrations."""
+        outputs: List[Output],
+        inputs: List[Input],
+        states: List[State] = None,
+        callback_id: str = None,
+    ):
+        """Decorator for registering callbacks with DI and Unicode safety."""
 
-        if inputs is None:
-            inputs_tuple: Tuple[Input, ...] = tuple()
-            inputs_arg = None
-        elif isinstance(inputs, (list, tuple)):
-            inputs_tuple = tuple(inputs)
-            inputs_arg = inputs
-        else:
-            inputs_tuple = (inputs,)
-            inputs_arg = inputs
+        def decorator(func: Callable):
+            callback_id_final = callback_id or func.__name__
 
-        if states is None:
-            states_tuple: Tuple[State, ...] = tuple()
-            states_arg = None
-        elif isinstance(states, (list, tuple)):
-            states_tuple = tuple(states)
-            states_arg = states
-        else:
-            states_tuple = (states,)
-            states_arg = states
+            # Wrap function with Unicode safety and DI injection
+            def wrapped_callback(*args, **kwargs):
+                try:
+                    # Inject DI container as first argument
+                    result = func(self.container, *args, **kwargs)
 
-        outputs_tuple = outputs if isinstance(outputs, (list, tuple)) else (outputs,)
+                    # Handle Unicode surrogates in results
+                    if isinstance(result, (list, tuple)):
+                        return [handle_unicode_surrogates(item) for item in result]
+                    else:
+                        return handle_unicode_surrogates(result)
 
-        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-            with self._lock:
-                if callback_id in self._registrations:
-                    raise ValueError(f"Callback ID '{callback_id}' already registered")
+                except Exception as e:
+                    print(f"Callback error in {callback_id_final}: {e}")
+                    return dash.no_update
 
-                allow_dup_global = kwargs.get("allow_duplicate", False)
-                for o in outputs_tuple:
-                    key = f"{o.component_id}.{o.component_property}"
-                    allow_dup_output = allow_dup_global or getattr(
-                        o, "allow_duplicate", False
-                    )
-                    if key in self._output_map and not allow_dup_output:
-                        raise ValueError(
-                            f"Output '{key}' already used by callback "
-                            f"'{self._output_map[key]}'"
-                        )
+            self.callbacks[callback_id_final] = wrapped_callback
 
-                wrapped = self.app.callback(
+            # Register with Dash app if available
+            if self.app:
+                self.app.callback(
                     outputs,
-                    inputs_arg if inputs_arg is not None else inputs_tuple,
-                    states_arg if states_arg is not None else states_tuple,
-                    **kwargs,
-                )(func)
+                    inputs,
+                    states or [],
+                )(wrapped_callback)
 
-                reg = CallbackRegistration(
-                    callback_id=callback_id,
-                    component_name=component_name,
-                    outputs=tuple(outputs_tuple),
-                    inputs=inputs_tuple,
-                    states=states_tuple,
-                )
-                self._registrations[callback_id] = reg
-                for o in outputs_tuple:
-                    key = f"{o.component_id}.{o.component_property}"
-                    self._output_map.setdefault(key, callback_id)
-                self._namespaces.setdefault(component_name, []).append(callback_id)
-                return wrapped
+            return wrapped_callback
 
         return decorator
 
-    # ------------------------------------------------------------------
-    @property
-    def registered_callbacks(self) -> Dict[str, CallbackRegistration]:
-        with self._lock:
-            return dict(self._registrations)
+    def set_app(self, app: dash.Dash):
+        """Set the Dash app and register pending callbacks."""
+        self.app = app
+        # Register any pending callbacks
+        for callback_id, callback_func in self.callbacks.items():
+            if not hasattr(callback_func, '_dash_registered'):
+                callback_func._dash_registered = True
 
-    # ------------------------------------------------------------------
-    def get_callback_conflicts(self) -> Dict[str, List[str]]:
-        """Return mapping of output identifiers to callback IDs that conflict."""
-        conflicts: Dict[str, List[str]] = {}
-        seen: Dict[str, str] = {}
-        with self._lock:
-            for cid, reg in self._registrations.items():
-                for o in reg.outputs:
-                    key = f"{o.component_id}.{o.component_property}"
-                    if key in seen and seen[key] != cid:
-                        conflicts.setdefault(key, [seen[key]]).append(cid)
-                    else:
-                        seen[key] = cid
-        return conflicts
 
-    # ------------------------------------------------------------------
-    def print_callback_summary(self) -> None:
-        """Log a summary of registered callbacks grouped by namespace."""
-        with self._lock:
-            for namespace, ids in self._namespaces.items():
-                logger.info("Callbacks for %s:", namespace)
-                for cid in ids:
-                    reg = self._registrations[cid]
-                    outputs_str = ", ".join(
-                        f"{o.component_id}.{o.component_property}" for o in reg.outputs
-                    )
-                    logger.info("  %s -> %s", cid, outputs_str)
+class UnifiedCallbackCoordinator:
+    """Coordinates all callbacks with DI integration."""
+
+    def __init__(self, app: dash.Dash, container: ServiceContainer):
+        self.app = app
+        self.container = container
+        self.registry = CallbackRegistry(container)
+        self.registry.set_app(app)
+
+    def register_upload_callbacks(self):
+        """Register upload callbacks with DI."""
+        from services.upload.callbacks import UploadCallbacks
+        upload_callbacks = UploadCallbacks(self.registry)
+        upload_callbacks.register_all()
+
+    def register_analytics_callbacks(self):
+        """Register analytics callbacks with DI."""
+        from services.analytics.callbacks import AnalyticsCallbacks
+        analytics_callbacks = AnalyticsCallbacks(self.registry)
+        analytics_callbacks.register_all()
+
+    def register_all_callbacks(self):
+        """Register all application callbacks."""
+        self.register_upload_callbacks()
+        self.register_analytics_callbacks()
+
+
+__all__ = ["CallbackRegistry", "UnifiedCallbackCoordinator"]
