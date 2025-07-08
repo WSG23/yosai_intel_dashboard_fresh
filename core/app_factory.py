@@ -102,9 +102,12 @@ from components.ui.navbar import create_navbar_layout
 from config.complete_service_registration import register_all_application_services
 from config.config import get_config
 from core.container import Container as DIContainer
+# Use the protocol-aware service container for application services
+
 from core.service_container import ServiceContainer
 from core.performance_monitor import DIPerformanceMonitor
 from core.plugins.auto_config import PluginAutoConfiguration
+from core.plugins.decorators import safe_callback
 from core.secrets_manager import validate_secrets
 from core.theme_manager import DEFAULT_THEME, apply_theme_settings
 from dash_csrf_plugin import CSRFMode, setup_enhanced_csrf_protection
