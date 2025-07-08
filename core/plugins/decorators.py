@@ -47,3 +47,9 @@ def handle_unified(target: Any, *cb_args: Any, **cb_kwargs: Any) -> Callable:
     from .callback_unifier import CallbackUnifier
 
     return CallbackUnifier(target, safe_callback(target))(*cb_args, **cb_kwargs)
+
+
+# Exported decorator alias for compatibility
+safe_callback = handle_safe
+
+__all__ = ["handle_safe", "handle_unified", "safe_callback"]
