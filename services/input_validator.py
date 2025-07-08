@@ -15,7 +15,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
-from config.dynamic_config import dynamic_config
+from services.configuration_service import (
+    ConfigurationServiceProtocol,
+    DynamicConfigurationService,
+)
 
 
 @dataclass
@@ -29,8 +32,13 @@ class ValidationResult:
 class InputValidator:
     """Validate basic properties of uploaded files."""
 
-    def __init__(self, max_size_mb: Optional[int] = None) -> None:
-        self.max_size_mb = max_size_mb or dynamic_config.security.max_upload_mb
+    def __init__(
+        self,
+        max_size_mb: Optional[int] = None,
+        config: ConfigurationServiceProtocol | None = None,
+    ) -> None:
+        self.config = config or DynamicConfigurationService()
+        self.max_size_mb = max_size_mb or self.config.get_max_upload_size_mb()
 
     _DATA_URI_RE = re.compile(r"^data:.*;base64,", re.IGNORECASE)
 

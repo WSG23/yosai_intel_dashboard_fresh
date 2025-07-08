@@ -3,7 +3,9 @@ import pandas as pd
 
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
-from config.dynamic_config import dynamic_config
+from tests.fake_configuration import FakeConfiguration
+
+fake_cfg = FakeConfiguration()
 from services.data_enhancer import (
     apply_fuzzy_column_matching,
     get_mapping_suggestions,
@@ -44,18 +46,18 @@ def test_malicious_filename_rejected(tmp_path):
     contents = UploadFileBuilder().with_dataframe(
         DataFrameBuilder().add_column("id", [1]).add_column("name", ["A"]).build()
     ).as_base64()
-    result = process_uploaded_file(contents, "../../evil.csv")
+    result = process_uploaded_file(contents, "../../evil.csv", config=fake_cfg)
     assert result["success"] is False
 
 
 def test_oversized_file_rejected(tmp_path):
-    max_bytes = dynamic_config.security.max_upload_mb * 1024 * 1024
+    max_bytes = fake_cfg.security.max_upload_mb * 1024 * 1024
     data = base64.b64encode(b"A" * (max_bytes + 1)).decode()
     contents = f"data:text/csv;base64,{data}"
-    result = process_uploaded_file(contents, "big.csv")
+    result = process_uploaded_file(contents, "big.csv", config=fake_cfg)
     assert result["success"] is False
 
 
 def test_upload_limit_allows_large_files():
     """Default upload size should permit files of at least 50MB."""
-    assert dynamic_config.security.max_upload_mb >= 50
+    assert fake_cfg.security.max_upload_mb >= 50

@@ -44,11 +44,20 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
     ConfigManager = _config.ConfigManager
     from core.logging_config import LoggingService
     from core.database import DatabaseManager
+    from services.configuration_service import (
+        ConfigurationServiceProtocol,
+        DynamicConfigurationService,
+    )
 
     container.register_singleton(
         "config_manager",
         ConfigManager,
         protocol=ConfigurationProtocol,
+    )
+    container.register_singleton(
+        "configuration_service",
+        DynamicConfigurationService,
+        protocol=ConfigurationServiceProtocol,
     )
     container.register_singleton(
         "logging_service",

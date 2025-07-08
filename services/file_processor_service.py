@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 import chardet
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
+from services.configuration_service import ConfigurationServiceProtocol
 from core.performance_file_processor import PerformanceFileProcessor
 from core.unicode import process_large_csv_content, sanitize_data_frame
 from core.unicode_utils import sanitize_for_utf8
@@ -28,7 +28,6 @@ class FileProcessorService(BaseService):
     """File processing service implementation"""
 
     ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
-    MAX_FILE_SIZE_MB = dynamic_config.get_max_upload_size_mb()
 
     # Encoding detection order for robust decoding
     ENCODING_PRIORITY = [
@@ -52,8 +51,10 @@ class FileProcessorService(BaseService):
         "skipinitialspace": True,
     }
 
-    def __init__(self):
+    def __init__(self, config: ConfigurationServiceProtocol) -> None:
         super().__init__("file_processor")
+        self.config = config
+        self.max_file_size_mb = config.get_max_upload_size_mb()
 
     def _do_initialize(self) -> None:
         """Initialize file processor"""
@@ -73,9 +74,9 @@ class FileProcessorService(BaseService):
 
         # Check file size
         size_mb = len(content) / (1024 * 1024)
-        if size_mb > self.MAX_FILE_SIZE_MB:
+        if size_mb > self.max_file_size_mb:
             issues.append(
-                f"File too large: {size_mb:.1f}MB > {self.MAX_FILE_SIZE_MB}MB"
+                f"File too large: {size_mb:.1f}MB > {self.max_file_size_mb}MB"
             )
 
         # Check for empty file
