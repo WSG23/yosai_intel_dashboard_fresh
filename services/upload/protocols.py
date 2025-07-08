@@ -58,7 +58,9 @@ class FileProcessorProtocol(Protocol):
         ...
 
     @abstractmethod
-    def read_uploaded_file(self, contents: str, filename: str) -> Tuple[pd.DataFrame, str]:
+    def read_uploaded_file(
+        self, contents: str, filename: str
+    ) -> Tuple[pd.DataFrame, str]:
         """Read an uploaded file and return a DataFrame and error."""
         ...
 
@@ -146,3 +148,53 @@ class UploadSecurityProtocol(Protocol):
         """Sanitize a DataFrame for unsafe Unicode."""
         ...
 
+
+class DeviceLearningServiceProtocol(Protocol):
+    """Protocol for persistent device mapping learning."""
+
+    @abstractmethod
+    def get_learned_mappings(self, df: pd.DataFrame, filename: str) -> Dict[str, Dict]:
+        """Retrieve previously learned mappings for ``filename``."""
+        ...
+
+    @abstractmethod
+    def apply_learned_mappings_to_global_store(
+        self, df: pd.DataFrame, filename: str
+    ) -> bool:
+        """Apply learned mappings to the global AI mapping store."""
+        ...
+
+    @abstractmethod
+    def save_user_device_mappings(
+        self, df: pd.DataFrame, filename: str, user_mappings: Dict[str, Any]
+    ) -> bool:
+        """Persist user-confirmed device mappings."""
+        ...
+
+
+from core.enhanced_container import ServiceContainer
+
+
+def _get_container(
+    container: ServiceContainer | None = None,
+) -> ServiceContainer | None:
+    if container is not None:
+        return container
+    try:  # pragma: no cover - dash may be missing in tests
+        from dash import get_app
+
+        app = get_app()
+        return getattr(app, "_service_container", None)
+    except Exception:
+        return None
+
+
+def get_device_learning_service(
+    container: ServiceContainer | None = None,
+) -> DeviceLearningServiceProtocol:
+    c = _get_container(container)
+    if c and c.has("device_learning_service"):
+        return c.get("device_learning_service")
+    from services.device_learning_service import get_device_learning_service as _get
+
+    return _get()

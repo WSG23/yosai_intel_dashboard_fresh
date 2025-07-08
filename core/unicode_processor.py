@@ -43,13 +43,25 @@ def _sanitize_nested(value: Any) -> Any:
     return UnicodeProcessor.safe_encode_text(value)
 
 
-class DefaultUnicodeProcessor(UnicodeProcessorProtocol):
+class UnicodeProcessor(UnicodeProcessorProtocol):
+
     """Centralized Unicode processing with robust error handling."""
 
     # Unicode surrogate range constants
     SURROGATE_LOW = 0xD800
     SURROGATE_HIGH = 0xDFFF
-    REPLACEMENT_CHAR = "\uFFFD"
+    REPLACEMENT_CHAR = "\ufffd"
+
+    # Protocol methods -------------------------------------------------
+    @staticmethod
+    def clean_text(text: str, replacement: str = "") -> str:
+        """Clean surrogate characters and control codes from ``text``."""
+        return UnicodeProcessor.clean_surrogate_chars(text, replacement)
+
+    @staticmethod
+    def safe_decode_text(data: bytes, encoding: str = "utf-8") -> str:
+        """Safely decode bytes into text."""
+        return UnicodeProcessor.safe_decode_bytes(data, encoding)
 
     def clean_surrogate_chars(self, text: str, replacement: str = "") -> str:
         """Remove unmatched surrogate characters from ``text``."""
@@ -101,7 +113,10 @@ class DefaultUnicodeProcessor(UnicodeProcessorProtocol):
                 ch
                 for ch in text
                 if not (
-                    self.SURROGATE_LOW <= ord(ch) <= self.SURROGATE_HIGH
+                    UnicodeProcessor.SURROGATE_LOW
+                    <= ord(ch)
+                    <= UnicodeProcessor.SURROGATE_HIGH
+
                 )
             )
 
@@ -167,9 +182,10 @@ class DefaultUnicodeProcessor(UnicodeProcessorProtocol):
                 df_clean[col] = df_clean[col].apply(_sanitize_nested)
 
                 df_clean[col] = df_clean[col].apply(
-                    lambda x: _DANGEROUS_PREFIX_RE.sub("", x)
-                        if isinstance(x, str)
-                        else x
+                    lambda x: (
+                        _DANGEROUS_PREFIX_RE.sub("", x) if isinstance(x, str) else x
+                    )
+
                 )
 
                 if callable(progress):
@@ -261,10 +277,9 @@ def sanitize_data_frame(df: pd.DataFrame) -> pd.DataFrame:
     return sanitize_dataframe(df)
 
 
-
-
 # ---------------------------------------------------------------------------
 # Backwards compatibility helpers
+
 
 def handle_surrogate_characters(text: str) -> str:
     """Return text with surrogate characters replaced by ``REPLACEMENT_CHAR``."""

@@ -74,7 +74,9 @@ class AnalyticsServiceProtocol(Protocol):
         ...
 
     @abstractmethod
-    def generate_report(self, report_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_report(
+        self, report_type: str, params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Generate analytics report of specified type."""
         ...
 
@@ -280,7 +282,9 @@ class EventBusProtocol(Protocol):
     """Protocol for simple event bus operations."""
 
     @abstractmethod
-    def publish(self, event_type: str, data: Dict[str, Any], source: str | None = None) -> None:
+    def publish(
+        self, event_type: str, data: Dict[str, Any], source: str | None = None
+    ) -> None:
         """Publish event to bus."""
         ...
 
@@ -300,7 +304,9 @@ class EventBusProtocol(Protocol):
         ...
 
     @abstractmethod
-    def get_event_history(self, event_type: str | None = None, limit: int = 100) -> List[Dict[str, Any]]:
+    def get_event_history(
+        self, event_type: str | None = None, limit: int = 100
+    ) -> List[Dict[str, Any]]:
         """Get event history, optionally filtered by type."""
         ...
 
@@ -359,6 +365,7 @@ class CacheProtocol(Protocol):
         """Check if key exists in cache."""
         ...
 
+
 @runtime_checkable
 class CallbackSystemProtocol(Protocol):
     """Protocol for the unified callback system."""
@@ -378,37 +385,64 @@ class CallbackSystemProtocol(Protocol):
         ...
 
     @abstractmethod
-    def trigger_event(self, event: CallbackEvent, *args: Any, **kwargs: Any) -> List[Any]:
+    def trigger_event(
+        self, event: CallbackEvent, *args: Any, **kwargs: Any
+    ) -> List[Any]:
         """Synchronously trigger callbacks for an event."""
         ...
 
     @abstractmethod
-    async def trigger_event_async(self, event: CallbackEvent, *args: Any, **kwargs: Any) -> List[Any]:
+    async def trigger_event_async(
+        self, event: CallbackEvent, *args: Any, **kwargs: Any
+    ) -> List[Any]:
         """Asynchronously trigger callbacks for an event."""
         ...
 
 
 @runtime_checkable
 class UnicodeProcessorProtocol(Protocol):
-    """Protocol defining Unicode processing helpers."""
+    """Protocol for Unicode text processing utilities."""
 
     @abstractmethod
-    def clean_surrogate_chars(self, text: str, replacement: str = "") -> str:
-        ...
-
-    @abstractmethod
-    def safe_decode_bytes(self, data: bytes, encoding: str = "utf-8") -> str:
+    def clean_text(self, text: str, replacement: str = "") -> str:
+        """Clean surrogate characters and unsafe control codes from text."""
         ...
 
     @abstractmethod
     def safe_encode_text(self, value: Any) -> str:
+        """Safely encode any value to Unicode text."""
         ...
 
     @abstractmethod
-    def sanitize_dataframe(
-        self,
-        df: pd.DataFrame,
-        *,
-        progress: Optional[Callable[[int, int], None] | bool] = None,
-    ) -> pd.DataFrame:
+    def safe_decode_text(self, data: bytes, encoding: str = "utf-8") -> str:
+        """Safely decode byte data to text."""
         ...
+
+
+from .enhanced_container import ServiceContainer
+
+
+def _get_container(
+    container: ServiceContainer | None = None,
+) -> ServiceContainer | None:
+    if container is not None:
+        return container
+    try:  # pragma: no cover - dash may be missing in tests
+        from dash import get_app
+
+        app = get_app()
+        return getattr(app, "_service_container", None)
+    except Exception:
+        return None
+
+
+def get_unicode_processor(
+    container: ServiceContainer | None = None,
+) -> UnicodeProcessorProtocol:
+    c = _get_container(container)
+    if c and c.has("unicode_processor"):
+        return c.get("unicode_processor")
+    from .unicode_processor import UnicodeProcessor
+
+    return UnicodeProcessor()
+

@@ -3,12 +3,15 @@
 This module exposes the main interfaces for the upload domain.
 Other packages should import from here rather than submodules.
 """
+
 from .protocols import (
     UploadProcessingServiceProtocol,
     UploadValidatorProtocol,
     FileProcessorProtocol,
     UploadStorageProtocol,
     UploadControllerProtocol,
+    DeviceLearningServiceProtocol,
+    get_device_learning_service,
 )
 
 from .core.processor import UploadProcessingService
@@ -24,6 +27,8 @@ __all__ = [
     "FileProcessorProtocol",
     "UploadStorageProtocol",
     "UploadControllerProtocol",
+    "DeviceLearningServiceProtocol",
+    "get_device_learning_service",
     "UploadProcessingService",
     "UploadValidator",
     "UploadStorage",
