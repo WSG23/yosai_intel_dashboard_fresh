@@ -30,4 +30,7 @@ bandit -r .
 
 Run `isort .` to automatically sort imports before committing changes.
 
+See [docs/test_architecture.md](docs/test_architecture.md) for details on the
+protocols used in tests and examples of injecting your own test doubles.
+
 Please ensure tests and linters pass before opening a pull request.
