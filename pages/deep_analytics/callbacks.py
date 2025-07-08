@@ -12,13 +12,12 @@ import logging
 
 from analytics.controllers import UnifiedAnalyticsController
 from core.dash_profile import profile_callback
-from core.callbacks import UnifiedCallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.state import CentralizedStateManager
 
 logger = logging.getLogger(__name__)
 import dash_bootstrap_components as dbc
 
-callback_manager = UnifiedCallbackManager()
 analytics_state = CentralizedStateManager()
 
 from services.data_processing.analytics_engine import (
@@ -522,25 +521,6 @@ def register_callbacks(
 
     cb = Callbacks()
 
-    callback_manager.register_operation(
-        "analysis_buttons",
-        lambda s,t,b,a,sug,q,u,ds: cb.handle_analysis_buttons(
-            s,t,b,a,sug,q,u,ds
-        ),
-        name="handle_analysis_buttons",
-        timeout=5,
-    )
-    callback_manager.register_operation(
-        "refresh_sources",
-        lambda n: cb.refresh_data_sources_callback(n),
-        name="refresh_data_sources",
-    )
-    callback_manager.register_operation(
-        "status_alert",
-        lambda val: cb.update_status_alert(val),
-        name="update_status_alert",
-    )
-
     @manager.unified_callback(
         [
             Output("analytics-display-area", "children"),
@@ -566,8 +546,7 @@ def register_callbacks(
     def analytics_operations(
         sec, trn, beh, anom, sug, qual, uniq, refresh, trigger, data_source
     ):
-        display = callback_manager.execute_group(
-            "analysis_buttons",
+        display = cb.handle_analysis_buttons(
             sec,
             trn,
             beh,
@@ -576,13 +555,11 @@ def register_callbacks(
             qual,
             uniq,
             data_source,
-        )[0]
+        )
 
-        options = callback_manager.execute_group(
-            "refresh_sources", refresh
-        )[0]
+        options = cb.refresh_data_sources_callback(refresh)
 
-        alert = callback_manager.execute_group("status_alert", trigger)[0]
+        alert = cb.update_status_alert(trigger)
 
         analytics_state.dispatch(
             "UPDATE", {"display": display, "options": options, "alert": alert}

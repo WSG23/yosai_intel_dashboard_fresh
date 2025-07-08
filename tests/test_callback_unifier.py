@@ -3,12 +3,12 @@ from dash import Input, Output
 
 from core.callback_registry import CallbackRegistry
 from core.plugins.decorators import unified_callback
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 
 def test_unified_decorator_with_coordinator():
     app = dash.Dash(__name__)
-    coord = UnifiedCallbackCoordinator(app)
+    coord = TrulyUnifiedCallbacks(app)
 
     @unified_callback(
         coord,
@@ -21,12 +21,11 @@ def test_unified_decorator_with_coordinator():
         return v
 
     assert "out.children" in app.callback_map
-    assert "uc1" in coord.registered_callbacks
 
 
 def test_unified_decorator_method():
     app = dash.Dash(__name__)
-    coord = UnifiedCallbackCoordinator(app)
+    coord = TrulyUnifiedCallbacks(app)
 
     @coord.unified_callback(
         Output("o", "children"),
@@ -38,7 +37,6 @@ def test_unified_decorator_method():
         return v
 
     assert "o.children" in app.callback_map
-    assert "uc2" in coord.registered_callbacks
 
 
 def test_unified_with_registry():

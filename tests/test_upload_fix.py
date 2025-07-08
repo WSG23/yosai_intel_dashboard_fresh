@@ -17,7 +17,7 @@ import pytest
 if str(stub_dir) not in sys.path:
     sys.path.insert(0, str(stub_dir))
 
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from pages import file_upload
 from components.upload import UnifiedUploadComponent
 from core.unicode import safe_unicode_encode
@@ -41,7 +41,7 @@ def create_sample_files(tmp_path: Path) -> dict[str, Path]:
 
 def _create_app() -> dash.Dash:
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-    coord = UnifiedCallbackCoordinator(app)
+    coord = TrulyUnifiedCallbacks(app)
     file_upload.register_upload_callbacks(coord)
     app.layout = html.Div([dcc.Location(id="url"), file_upload.layout()])
     return app
