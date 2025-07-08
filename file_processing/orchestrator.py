@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """Prefect orchestration for access event processing pipeline."""
 
-from callbacks.controller import CallbackController
+from core.callback_controller import CallbackController
 from prefect import Flow, Parameter, task
 
 from file_processing.data_processor import DataProcessor
