@@ -7,6 +7,13 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import dash_bootstrap_components as dbc
+
+if not hasattr(dbc, "Alert"):
+    class _DummyComponent:
+        def __init__(self, *a, **k):
+            pass
+
+    dbc.Alert = _DummyComponent  # type: ignore[attr-defined]
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go

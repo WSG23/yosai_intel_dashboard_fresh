@@ -864,9 +864,9 @@ def _get_settings_page() -> Any:
 def _get_upload_page() -> Any:
     """Get upload page with complete integration"""
     try:
-        from pages.file_upload import layout
+        from pages.file_upload import layout as upload_layout
 
-        return layout()
+        return upload_layout()
     except ImportError:
         logger.exception("Upload page import failed")
     except Exception:
@@ -967,7 +967,8 @@ def _register_callbacks(app: "Dash", config_manager: Any) -> None:
                 register_callbacks as register_deep_callbacks,
             )
             from pages.file_upload import (
-                register_callbacks as register_upload_callbacks,
+                layout as upload_layout,
+                register_upload_callbacks,
             )
 
             register_upload_callbacks(coordinator)
