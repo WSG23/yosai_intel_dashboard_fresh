@@ -25,6 +25,16 @@ jobs:
           set -xe
           flake8 . --max-line-length 88 -v
 
+      - name: Bandit
+        run: |
+          set -xe
+          bandit -r . --severity-level high
+
+      - name: Safety
+        run: |
+          set -xe
+          safety check -r requirements.txt -r requirements-dev.txt --full-report
+
       - name: PyTest
         run: |
           set -xe
