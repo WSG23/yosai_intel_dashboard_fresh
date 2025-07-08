@@ -1,6 +1,14 @@
 import pandas as pd
+import sys
+import types
 
-from ai_column_mapper_adapter import AIColumnMapperAdapter
+import tests.stubs.flask as flask_stub
+
+flask_stub.request = types.SimpleNamespace(path="/")
+flask_stub.url_for = lambda *a, **k: "/"
+sys.modules["flask"] = flask_stub
+
+from utils.ai_column_mapper import AIColumnMapperAdapter
 
 
 class DummyAdapter:
