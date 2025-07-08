@@ -19,7 +19,14 @@ from services.data_processing.processor import Processor
 from core.security_validator import SecurityValidator
 from services.db_analytics_helper import DatabaseAnalyticsHelper
 from services.summary_reporting import SummaryReporter
-from core.protocols import AnalyticsServiceProtocol, DatabaseProtocol, StorageProtocol
+from services.analytics.protocols import DataProcessorProtocol
+from core.protocols import (
+    AnalyticsServiceProtocol,
+    ConfigurationProtocol,
+    DatabaseProtocol,
+    EventBusProtocol,
+    StorageProtocol,
+)
 
 
 class ConfigProviderProtocol(Protocol):

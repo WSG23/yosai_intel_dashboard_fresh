@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from services.upload.protocols import DeviceLearningServiceProtocol
 from typing import Protocol
+import pandas as pd
 
 
 class DeviceServiceProtocol(Protocol):

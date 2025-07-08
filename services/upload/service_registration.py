@@ -14,6 +14,8 @@ from services.upload.protocols import (
     FileProcessorProtocol,
     UploadControllerProtocol,
     UploadStorageProtocol,
+)
+from services.interfaces import (
     DeviceLearningServiceProtocol,
     UploadDataServiceProtocol,
 )
@@ -40,7 +42,6 @@ def register_upload_services(container: ServiceContainer) -> None:
         "upload_data_service",
         UploadDataService,
         protocol=UploadDataServiceProtocol,
-        lifetime=ServiceLifetime.SINGLETON,
     )
 
     container.register_singleton(

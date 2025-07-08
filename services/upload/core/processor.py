@@ -25,6 +25,7 @@ from ..protocols import (
     UploadProcessingServiceProtocol,
     UploadStorageProtocol,
     UploadValidatorProtocol,
+    DeviceLearningServiceProtocol,
 )
 
 logger = logging.getLogger(__name__)
