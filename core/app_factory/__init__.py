@@ -105,7 +105,6 @@ from config.config import get_config
 from core.service_container import ServiceContainer
 from core.performance_monitor import DIPerformanceMonitor
 from core.plugins.decorators import safe_callback
-from core.service_container import ServiceContainer
 from core.theme_manager import DEFAULT_THEME, apply_theme_settings
 from pages import get_page_layout
 from pages.deep_analytics import Callbacks as DeepAnalyticsCallbacks
