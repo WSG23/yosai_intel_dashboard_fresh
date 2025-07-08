@@ -1,12 +1,20 @@
 # Callback System Migration
 
-This release introduces a new `CallbackManager` and `CallbackEvent` API used across the application. Existing modules may still rely on `UnifiedCallbackCoordinator` for Dash callbacks. The helper class `UnifiedCallbackCoordinatorWrapper` bridges both systems and allows registering event callbacks while keeping the old interface intact.
+This release finalizes the move to the unified callback framework. The
+`UnifiedCallbackCoordinator` and its `UnifiedCallbackCoordinatorWrapper` helper
+have been removed. Modules should now rely solely on `TrulyUnifiedCallbacks`,
+`CallbackManager` for event hooks and, when multiple steps need to be executed,
+`UnifiedCallbackManager`.
 
 ## Migrating
 
-1. Import `CallbackManager` and `CallbackEvent` from `core`.
-2. Register hooks using `CallbackManager.register_callback` with the appropriate `CallbackEvent`.
-3. Trigger callbacks via `CallbackManager.trigger` or `trigger_async`.
-4. For modules expecting `UnifiedCallbackCoordinator`, wrap it with `UnifiedCallbackCoordinatorWrapper` and pass a `CallbackManager` instance.
+1. Replace any imports of `UnifiedCallbackCoordinator` or the wrapper with
+   `TrulyUnifiedCallbacks`.
+2. Import `CallbackManager` and `CallbackEvent` from `core` and register event
+   hooks using `CallbackManager.register_callback`.
+3. Trigger events via `CallbackManager.trigger` or `trigger_async`.
+4. Organize multi-step operations using `UnifiedCallbackManager` and call
+   `execute_group` within Dash callbacks.
 
-During migration, both systems can coexist. Once all modules use the new API directly, the wrapper can be removed.
+All modules must migrate to this API before upgrading. The legacy wrappers are
+no longer shipped with the project.

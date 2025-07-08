@@ -129,3 +129,4 @@ container.register_singleton("analytics_service", DummyAnalytics())
 ```
 
 Pass the container to the unit under test and drop the `sys.modules` setup.
+

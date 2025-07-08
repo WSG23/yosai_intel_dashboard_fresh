@@ -5,7 +5,7 @@ Allows manual verification of AI-suggested column mappings
 Feeds back to AI training data
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol, Any, Dict
 
 import pandas as pd
 from dash import ALL, MATCH, Input, Output, State, callback, dcc, html
@@ -16,6 +16,18 @@ if TYPE_CHECKING:
 import logging
 
 from analytics.controllers import UnifiedAnalyticsController
+
+
+class ColumnVerifierProtocol(Protocol):
+    """Protocol for column verification helpers."""
+
+    def create_column_verification_modal(self, file_info: Dict[str, Any]) -> Any:
+        ...
+
+    def register_callbacks(
+        self, manager: "TrulyUnifiedCallbacks", controller: UnifiedAnalyticsController | None = None
+    ) -> None:
+        ...
 
 logger = logging.getLogger(__name__)
 import json
