@@ -34,8 +34,11 @@ class SummaryReporter:
 
         try:
             from services.upload_data_service import get_uploaded_filenames
+            from services.interfaces import get_upload_data_service
 
-            health["uploaded_files"] = len(get_uploaded_filenames())
+            health["uploaded_files"] = len(
+                get_uploaded_filenames(get_upload_data_service())
+            )
         except ImportError:
             health["uploaded_files"] = "not_available"
         return health
@@ -45,8 +48,9 @@ class SummaryReporter:
         options = [{"label": "Sample Data", "value": "sample"}]
         try:
             from services.upload_data_service import get_uploaded_filenames
+            from services.interfaces import get_upload_data_service
 
-            uploaded_files = get_uploaded_filenames()
+            uploaded_files = get_uploaded_filenames(get_upload_data_service())
             if uploaded_files:
                 options.append(
                     {
@@ -80,8 +84,11 @@ class SummaryReporter:
         }
         try:
             from services.upload_data_service import get_uploaded_filenames
+            from services.interfaces import get_upload_data_service
 
-            status["uploaded_files"] = len(get_uploaded_filenames())
+            status["uploaded_files"] = len(
+                get_uploaded_filenames(get_upload_data_service())
+            )
         except ImportError:
             status["uploaded_files"] = 0
         return status

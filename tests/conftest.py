@@ -128,6 +128,18 @@ def di_container() -> Container:
 
 
 @pytest.fixture
+def upload_data_service(tmp_path: Path):
+    """Provide a fresh ``UploadDataService`` backed by a temp store."""
+
+    from utils.upload_store import UploadedDataStore
+    from services.upload_data_service import UploadDataService
+
+    store = UploadedDataStore(storage_dir=tmp_path)
+    service = UploadDataService(store)
+    yield service
+
+
+@pytest.fixture
 def sample_access_data() -> pd.DataFrame:
     """Sample access data for testing"""
 

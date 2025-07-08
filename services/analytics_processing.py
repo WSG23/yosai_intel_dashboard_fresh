@@ -10,6 +10,7 @@ from core.unicode_utils import sanitize_for_utf8
 from services import get_analytics_service
 from services.ai_suggestions import generate_column_suggestions
 from services.upload_data_service import get_uploaded_data
+from services.interfaces import get_upload_data_service
 from utils.preview_utils import serialize_dataframe_preview
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
             filename = None
             if data_source.startswith("upload:"):
                 filename = data_source.replace("upload:", "")
-            uploaded_files = get_uploaded_data()
+            uploaded_files = get_uploaded_data(get_upload_data_service())
             if not uploaded_files:
                 return {"error": "No uploaded files found"}
             if filename is None or filename not in uploaded_files:
@@ -224,7 +225,7 @@ def process_quality_analysis(data_source: str) -> Dict[str, Any]:
             filename = None
             if data_source.startswith("upload:"):
                 filename = data_source.replace("upload:", "")
-            uploaded_files = get_uploaded_data()
+            uploaded_files = get_uploaded_data(get_upload_data_service())
             if not uploaded_files:
                 return {"error": "No uploaded files found"}
             if filename is None or filename not in uploaded_files:
@@ -265,7 +266,7 @@ def create_data_quality_display(data_source: str) -> html.Div | dbc.Card | dbc.A
     try:
         if data_source.startswith("upload:"):
             filename = data_source.replace("upload:", "")
-            uploaded_files = get_uploaded_data()
+            uploaded_files = get_uploaded_data(get_upload_data_service())
             if filename in uploaded_files:
                 df = uploaded_files[filename]
                 total_rows = len(df)
@@ -341,7 +342,7 @@ def analyze_data_with_service(data_source: str, analysis_type: str) -> Dict[str,
             filename = None
             if data_source.startswith("upload:"):
                 filename = data_source.replace("upload:", "")
-            uploaded_files = get_uploaded_data()
+            uploaded_files = get_uploaded_data(get_upload_data_service())
             if not uploaded_files:
                 return {"error": "No uploaded files found"}
             if filename is None or filename not in uploaded_files:

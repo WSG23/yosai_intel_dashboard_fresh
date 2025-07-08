@@ -15,6 +15,7 @@ except Exception:  # pragma: no cover - optional AI suggestions
         return {}
 from security.unicode_security_handler import UnicodeSecurityHandler
 from utils.preview_utils import serialize_dataframe_preview
+from services.interfaces import get_upload_data_service
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ def get_data_source_options_safe() -> List[Dict[str, str]]:
     try:
         from services.upload_data_service import get_uploaded_data  # lazy import
 
-        uploaded_files = get_uploaded_data()
+        uploaded_files = get_uploaded_data(get_upload_data_service())
         for filename in uploaded_files.keys():
             options.append({"label": f"File: {filename}", "value": f"upload:{filename}"})
     except Exception:
@@ -72,7 +73,7 @@ def get_latest_uploaded_source_value() -> Optional[str]:
     try:
         from services.upload_data_service import get_uploaded_filenames  # lazy import
 
-        filenames = get_uploaded_filenames()
+        filenames = get_uploaded_filenames(get_upload_data_service())
         if filenames:
             return f"upload:{filenames[-1]}"
     except ImportError as exc:  # pragma: no cover - best effort
