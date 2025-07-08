@@ -1,7 +1,10 @@
+import pytest
 import dash
 import importlib.util
 from pathlib import Path
 from flask import Flask
+
+pytestmark = pytest.mark.usefixtures("fake_dash")
 
 spec = importlib.util.spec_from_file_location(
     "assets_utils", Path(__file__).resolve().parents[2] / "utils" / "assets_utils.py"

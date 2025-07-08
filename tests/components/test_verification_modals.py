@@ -1,5 +1,8 @@
+import pytest
 import dash_bootstrap_components as dbc
 from dash import dcc, html
+
+pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 
 from components.column_verification import create_column_verification_modal
 from components.device_verification import create_device_verification_modal

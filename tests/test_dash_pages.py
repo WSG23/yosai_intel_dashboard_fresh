@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 
+import pytest
 import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
@@ -13,6 +14,8 @@ from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from pages import file_upload
 from pages.deep_analytics import layout as analytics_layout
 from pages.deep_analytics import register_callbacks as register_analytics_callbacks
+
+pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 
 
 def _create_upload_app():

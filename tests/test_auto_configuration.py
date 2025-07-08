@@ -1,5 +1,6 @@
 import os
 import sys
+import pytest
 
 from dash import Dash, Input, Output
 
@@ -10,6 +11,8 @@ from core.plugins.auto_config import setup_plugins
 from core.plugins.callback_unifier import CallbackUnifier
 from core.plugins.decorators import safe_callback
 from services.data_processing.core.protocols import PluginMetadata
+
+pytestmark = pytest.mark.usefixtures("fake_dash")
 
 REQUIRED_VARS = [
     "SECRET_KEY",

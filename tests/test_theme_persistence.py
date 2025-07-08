@@ -1,8 +1,11 @@
+import pytest
 import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Output, Input
 
 from core.theme_manager import apply_theme_settings, sanitize_theme, DEFAULT_THEME
+
+pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 
 
 def create_theme_app():
