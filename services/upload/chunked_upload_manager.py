@@ -8,6 +8,7 @@ from typing import Optional
 import pandas as pd
 
 from config.connection_retry import ConnectionRetryManager, RetryConfig
+from config.protocols import ConnectionRetryManagerProtocol, RetryConfigProtocol
 from utils.upload_store import UploadedDataStore
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,9 @@ class ChunkedUploadManager:
         self.initial_chunk_size = initial_chunk_size
         self.min_chunk_size = 1000
         self.max_chunk_size = 100_000
-        self.retry_config = RetryConfig(max_attempts=3, base_delay=0.2, jitter=False)
+        self.retry_config: RetryConfigProtocol = RetryConfig(
+            max_attempts=3, base_delay=0.2, jitter=False
+        )
 
     # ------------------------------------------------------------------
     def _metadata_path(self, filename: str) -> Path:
