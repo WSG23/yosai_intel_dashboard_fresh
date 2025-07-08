@@ -3,7 +3,7 @@ Corrects mathematical errors in security metrics calculation"""
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -102,7 +102,7 @@ class SecurityScoreCalculator:
             "weekend_rate": weekend_rate,
         }
 
-    def calculate_security_score_fixed(self, df: pd.DataFrame) -> Dict[str, any]:
+    def calculate_security_score_fixed(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Fixed security score calculation with proper statistical methods"""
         is_valid, message = self.validate_dataframe(df)
         if not is_valid:
@@ -220,7 +220,7 @@ class SecurityScoreCalculator:
         else:
             return "critical"
 
-    def _empty_score_result(self, reason: str = "No data") -> Dict[str, any]:
+    def _empty_score_result(self, reason: str = "No data") -> Dict[str, Any]:
         return {
             "score": 0.0,
             "threat_level": "unknown",

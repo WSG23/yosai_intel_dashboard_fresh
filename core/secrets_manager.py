@@ -7,7 +7,7 @@ import secrets
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -61,7 +61,7 @@ class SecretsManager:
         return new_value
 
 
-def validate_secrets(manager: Optional[SecretsManager] = None) -> dict[str, any]:
+def validate_secrets(manager: Optional[SecretsManager] = None) -> dict[str, Any]:
     """Return summary of required secrets presence using the provided manager."""
     from config.config import get_config
 
