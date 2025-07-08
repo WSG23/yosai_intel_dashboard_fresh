@@ -5,7 +5,7 @@ Navigation bar component with grid layout using existing framework
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union, cast
 
 if TYPE_CHECKING:
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
@@ -575,7 +575,8 @@ def register_navbar_callbacks(
 
         if manager.app is None:
             return
-        manager.app.clientside_callback(
+        # Dash stubs lack clientside_callback; cast for dynamic API access
+        cast(Any, manager.app).clientside_callback(
             "function(data){if(window.setAppTheme&&data){window.setAppTheme(data);} return '';}",
             Output("theme-dummy-output", "children"),
             Input("theme-store", "data"),
