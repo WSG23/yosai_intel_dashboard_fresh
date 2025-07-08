@@ -6,7 +6,7 @@ import logging
 from typing import Any, Callable, Iterable, Optional
 
 from dash import Dash
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, State
 
 from .callback_events import CallbackEvent
 from .callback_manager import CallbackManager
@@ -26,6 +26,7 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
         security_validator: Optional[SecurityValidator] = None,
     ) -> None:
         super().__init__(app)
+
         self.callback_manager = CallbackManager()
         self.security = security_validator or SecurityValidator()
 
@@ -47,9 +48,7 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
                 if args and isinstance(args[0], str):
                     result = self.security.validate_input(args[0], "input")
                     if not result["valid"]:
-                        logger.error(
-                            "Security validation failed: %s", result["issues"]
-                        )
+                        logger.error("Security validation failed: %s", result["issues"])
                         return None
                     args = (result["sanitized"],) + args[1:]
                 return original(*args, **kwargs)
@@ -64,7 +63,9 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
         return self.callback_manager.trigger(event, *args, **kwargs)
 
     # ------------------------------------------------------------------
-    async def trigger_event_async(self, event: CallbackEvent, *args: Any, **kwargs: Any):
+    async def trigger_event_async(
+        self, event: CallbackEvent, *args: Any, **kwargs: Any
+    ):
         """Asynchronously trigger callbacks for *event*."""
         return await self.callback_manager.trigger_async(event, *args, **kwargs)
 
@@ -82,6 +83,7 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Wrap ``Dash.callback`` and track registrations."""
         return self.register_callback(
+
             outputs,
             inputs,
             states,
