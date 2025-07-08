@@ -7,6 +7,7 @@ from pages import file_upload
 from services.upload import UploadProcessingService
 from upload_core import UploadCore
 from utils.upload_store import UploadedDataStore
+from services.device_learning_service import DeviceLearningService
 
 
 def _encode_df(df: pd.DataFrame) -> str:
@@ -27,8 +28,9 @@ def test_process_uploaded_files_split(monkeypatch, tmp_path):
     store = UploadedDataStore(storage_dir=tmp_path)
     monkeypatch.setattr(file_upload, "_uploaded_data_store", store)
 
-    cb = UploadCore()
-    cb.processing = UploadProcessingService(store)
+    learning = DeviceLearningService()
+    processing = UploadProcessingService(store, learning)
+    cb = UploadCore(processing, learning, store)
     ok, msg = cb.validator.validate("big.csv", contents_list[0])
     assert ok, msg
     result = asyncio.run(cb.process_uploaded_files(contents_list, filenames_list))
