@@ -6,6 +6,7 @@ from services.upload import UploadProcessingService
 from upload_core import UploadCore
 from utils.upload_store import UploadedDataStore
 from services.device_learning_service import DeviceLearningService
+from tests.fakes import FakeUploadDataService
 
 
 def test_multi_part_upload_row_count(async_runner):
@@ -24,7 +25,8 @@ def test_multi_part_upload_row_count(async_runner):
 
     store = UploadedDataStore()
     learning = DeviceLearningService()
-    processing = UploadProcessingService(store, learning)
+    data_svc = FakeUploadDataService(store)
+    processing = UploadProcessingService(store, learning, data_svc)
     cb = UploadCore(processing, learning, store)
     # ensure validator attribute is initialized
     ok, msg = cb.validator.validate("sample.csv", part1)

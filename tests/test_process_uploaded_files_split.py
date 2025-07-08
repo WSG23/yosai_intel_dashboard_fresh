@@ -7,6 +7,7 @@ from services.upload import UploadProcessingService
 from upload_core import UploadCore
 from utils.upload_store import UploadedDataStore
 from services.device_learning_service import DeviceLearningService
+from tests.fakes import FakeUploadDataService
 
 
 def _encode_df(df: pd.DataFrame) -> str:
@@ -31,7 +32,8 @@ def test_process_uploaded_files_split(monkeypatch, tmp_path, async_runner):
     monkeypatch.setattr(file_upload, "_uploaded_data_store", store)
 
     learning = DeviceLearningService()
-    processing = UploadProcessingService(store, learning)
+    data_svc = FakeUploadDataService(store)
+    processing = UploadProcessingService(store, learning, data_svc)
     cb = UploadCore(processing, learning, store)
     ok, msg = cb.validator.validate("big.csv", contents_list[0])
     assert ok, msg

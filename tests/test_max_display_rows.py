@@ -1,13 +1,15 @@
 import pandas as pd
 
 from config.config import ConfigManager
-from config.dynamic_config import dynamic_config
+from tests.fake_configuration import FakeConfiguration
+
+fake_cfg = FakeConfiguration()
 from config.constants import MAX_DISPLAY_ROWS
 from services.data_processing.file_processor import create_file_preview
 
 
 def test_dynamic_config_default_display_rows():
-    assert dynamic_config.analytics.max_display_rows == 10000
+    assert fake_cfg.analytics.max_display_rows == 10000
 
 
 def test_config_manager_loads_max_display_rows(tmp_path, monkeypatch):

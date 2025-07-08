@@ -4,6 +4,8 @@ import types
 import os
 from pathlib import Path
 
+from tests.fake_configuration import FakeConfiguration
+
 from core.unicode import sanitize_unicode_input
 
 
@@ -71,7 +73,7 @@ def load_service():
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
-    return module.FileProcessorService()
+    return module.FileProcessorService(FakeConfiguration())
 
 
 def test_decode_with_surrogate_pairs():

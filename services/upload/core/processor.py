@@ -11,8 +11,12 @@ from components.file_preview import create_file_preview_ui
 from services.data_enhancer import get_ai_column_suggestions
 from services.data_processing.async_file_processor import AsyncFileProcessor
 from services.upload.utils.file_parser import create_file_preview
-from services.interfaces import get_device_learning_service
+from services.interfaces import (
+    get_device_learning_service,
+    UploadDataServiceProtocol,
+)
 from utils.upload_store import UploadedDataStore
+from services.upload_data_service import UploadDataService
 
 
 from ..async_processor import AsyncUploadProcessor
@@ -33,11 +37,13 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
         self,
         store: UploadStorageProtocol,
         learning_service: DeviceLearningServiceProtocol,
+        data_service: UploadDataServiceProtocol | None = None,
         processor: Optional[FileProcessorProtocol] = None,
         validator: Optional[UploadValidatorProtocol] = None,
     ) -> None:
         self.store = store
         self.learning_service = learning_service
+        self.data_service = data_service or UploadDataService(store)
         self.processor = processor or AsyncFileProcessor()
         self.validator = validator
         self.async_processor = AsyncUploadProcessor()

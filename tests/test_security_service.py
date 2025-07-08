@@ -1,6 +1,8 @@
 import pytest
 
-from config.dynamic_config import dynamic_config
+from tests.fake_configuration import FakeConfiguration
+
+fake_cfg = FakeConfiguration()
 from services.data_processing.unified_file_validator import UnifiedFileValidator
 
 
@@ -13,7 +15,7 @@ def test_malicious_filename_is_invalid():
 
 def test_oversized_upload_is_invalid():
     validator = UnifiedFileValidator()
-    too_big = dynamic_config.security.max_upload_mb * 1024 * 1024 + 1
+    too_big = fake_cfg.security.max_upload_mb * 1024 * 1024 + 1
     result = validator.validate_file_meta("big.csv", too_big)
     assert result["valid"] is False
     assert any("File too large" in issue for issue in result["issues"])

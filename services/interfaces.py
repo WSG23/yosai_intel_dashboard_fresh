@@ -63,6 +63,30 @@ class DeviceLearningServiceProtocol(Protocol):
         ...
 
 
+class UploadDataServiceProtocol(Protocol):
+    """Interface for accessing uploaded data."""
+
+    def get_uploaded_data(self) -> Dict[str, pd.DataFrame]:
+        """Return all uploaded dataframes."""
+        ...
+
+    def get_uploaded_filenames(self) -> List[str]:
+        """Return names of uploaded files."""
+        ...
+
+    def clear_uploaded_data(self) -> None:
+        """Remove all uploaded data."""
+        ...
+
+    def get_file_info(self) -> Dict[str, Dict[str, Any]]:
+        """Return info dictionary for uploaded files."""
+        ...
+
+    def load_dataframe(self, filename: str) -> pd.DataFrame:
+        """Load a specific uploaded dataframe."""
+        ...
+
+
 # ---------------------------------------------------------------------------
 # Helper accessors
 # ---------------------------------------------------------------------------
@@ -126,13 +150,28 @@ def get_device_learning_service(
     return create_device_learning_service()
 
 
+def get_upload_data_service(
+    container: ServiceContainer | None = None,
+) -> UploadDataServiceProtocol:
+    """Return the registered :class:`UploadDataService` instance."""
+    c = _get_container(container)
+    if c and c.has("upload_data_service"):
+        return c.get("upload_data_service")
+    from services.upload_data_service import UploadDataService
+    from utils.upload_store import uploaded_data_store
+
+    return UploadDataService(uploaded_data_store)
+
+
 __all__ = [
     "UploadValidatorProtocol",
     "ExportServiceProtocol",
     "DoorMappingServiceProtocol",
     "DeviceLearningServiceProtocol",
+    "UploadDataServiceProtocol",
     "get_upload_validator",
     "get_export_service",
     "get_door_mapping_service",
     "get_device_learning_service",
+    "get_upload_data_service",
 ]

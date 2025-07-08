@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
+from services.configuration_service import ConfigurationServiceProtocol
 
 # ADD after existing imports
 from services.ai_device_generator import AIDeviceGenerator
@@ -43,9 +43,10 @@ class DeviceAttributeData:
 class DoorMappingService:
     """Service for handling door mapping and device attribute assignment"""
 
-    def __init__(self):
+    def __init__(self, config: ConfigurationServiceProtocol) -> None:
         self.ai_model_version = "v2.3"
-        self.confidence_threshold = dynamic_config.get_ai_confidence_threshold()
+        self.config = config
+        self.confidence_threshold = config.get_ai_confidence_threshold()
 
     def process_uploaded_data(
         self, df: pd.DataFrame, client_profile: str = "auto"

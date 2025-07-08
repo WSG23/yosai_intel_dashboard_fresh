@@ -61,10 +61,11 @@ events.register_callback(CallbackEvent.ANALYSIS_COMPLETE, on_complete)
 `core.callbacks`) can execute a series of operations sequentially. This is
 useful when a Dash callback needs to orchestrate multiple steps.
 
-```python
-from core.callbacks import UnifiedCallbackManager
 
-ops = UnifiedCallbackManager()
+```python
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+
+ops = TrulyUnifiedCallbacks()
 ops.register_operation("refresh", load_data)
 ops.register_operation("refresh", update_summary)
 

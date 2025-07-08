@@ -15,5 +15,6 @@ on `TrulyUnifiedCallbacks`,
 4. Organize multi-step operations using `UnifiedCallbackManager` (alias of
    `TrulyUnifiedCallbacks`) and call `execute_group` within Dash callbacks.
 
+
 All modules must migrate to this API before upgrading. The legacy wrappers are
 no longer shipped with the project.

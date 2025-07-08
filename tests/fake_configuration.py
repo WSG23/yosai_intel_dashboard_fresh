@@ -1,7 +1,8 @@
 from types import SimpleNamespace
 from core.protocols import ConfigurationProtocol
+from services.configuration_service import ConfigurationServiceProtocol
 
-class FakeConfiguration(ConfigurationProtocol):
+class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol):
     """Simple config for unit tests."""
 
     def __init__(self) -> None:
@@ -50,3 +51,28 @@ class FakeConfiguration(ConfigurationProtocol):
 
     def validate_config(self) -> dict:
         return {"valid": True}
+
+    # -- ConfigurationServiceProtocol methods ---------------------------------
+    def get_max_upload_size_mb(self) -> int:
+        return self.security.max_upload_mb
+
+    def get_max_upload_size_bytes(self) -> int:
+        return self.get_max_upload_size_mb() * 1024 * 1024
+
+    def validate_large_file_support(self) -> bool:
+        return self.get_max_upload_size_mb() >= 50
+
+    def get_upload_chunk_size(self) -> int:
+        return self.uploads.DEFAULT_CHUNK_SIZE
+
+    def get_max_parallel_uploads(self) -> int:
+        return self.uploads.MAX_PARALLEL_UPLOADS
+
+    def get_validator_rules(self) -> dict:
+        return self.uploads.VALIDATOR_RULES
+
+    def get_ai_confidence_threshold(self) -> int:
+        return getattr(self.performance, "ai_confidence_threshold", 75)
+
+    def get_db_pool_size(self) -> int:
+        return getattr(self.performance, "db_pool_size", 10)

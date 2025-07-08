@@ -57,8 +57,18 @@ except ImportError as e:
 
 
 # Handle Unicode surrogates
-def handle_unicode_surrogates(text: str) -> str:
+from core.protocols import UnicodeProcessorProtocol
+
+
+def handle_unicode_surrogates(
+    text: str, processor: Optional[UnicodeProcessorProtocol] = None
+) -> str:
     """Handle Unicode surrogate characters that can't be encoded in UTF-8."""
+    if processor is not None:
+        try:
+            return processor.safe_encode_text(text)
+        except Exception:
+            pass
     if not isinstance(text, str):
         return str(text)
     try:
@@ -337,9 +347,9 @@ def _create_full_app() -> "Dash":
             except Exception as e:  # pragma: no cover - best effort
                 logger.warning(f"Failed to initialize CSRF plugin: {e}")
 
-        _initialize_plugins(app, config_manager)
+        _initialize_plugins(app, config_manager, container=service_container)
         _setup_layout(app)
-        _register_callbacks(app, config_manager)
+        _register_callbacks(app, config_manager, container=service_container)
 
         # Initialize services using the DI container
         _initialize_services(service_container)
@@ -723,7 +733,10 @@ def _create_placeholder_page(title: str, subtitle: str, message: str) -> "DbcCon
     )
 
 
-def _register_router_callbacks(manager: TrulyUnifiedCallbacksType) -> None:
+def _register_router_callbacks(
+    manager: TrulyUnifiedCallbacksType,
+    unicode_processor: Optional[UnicodeProcessorProtocol] = None,
+) -> None:
     """Register page routing callbacks."""
 
     def safe_callback(outputs, inputs, callback_id="unknown"):
@@ -731,18 +744,22 @@ def _register_router_callbacks(manager: TrulyUnifiedCallbacksType) -> None:
             def unicode_wrapper(*args, **kwargs):
                 try:
                     safe_args = [
-                        handle_unicode_surrogates(a) if isinstance(a, str) else a
+                        (
+                            handle_unicode_surrogates(a, unicode_processor)
+                            if isinstance(a, str)
+                            else a
+                        )
                         for a in args
                     ]
 
                     result = func(*safe_args, **kwargs)
 
                     if isinstance(result, str):
-                        result = handle_unicode_surrogates(result)
+                        result = handle_unicode_surrogates(result, unicode_processor)
                     elif isinstance(result, (list, tuple)):
                         result = [
                             (
-                                handle_unicode_surrogates(item)
+                                handle_unicode_surrogates(item, unicode_processor)
                                 if isinstance(item, str)
                                 else item
                             )
@@ -928,11 +945,17 @@ def _register_global_callbacks(manager: TrulyUnifiedCallbacksType) -> None:
             raise
 
 
-def _initialize_plugins(app: "Dash", config_manager: Any) -> None:
+def _initialize_plugins(
+    app: "Dash",
+    config_manager: Any,
+    *,
+    container: Optional[DIContainer] = None,
+    plugin_auto_cls: type[PluginAutoConfiguration] = PluginAutoConfiguration,
+) -> None:
     """Initialize plugin system and register health endpoints."""
 
-    container = DIContainer()
-    plugin_auto = PluginAutoConfiguration(
+    container = container or DIContainer()
+    plugin_auto = plugin_auto_cls(
         app, container=container, config_manager=config_manager
     )
     plugin_auto.scan_and_configure("plugins")
@@ -960,13 +983,23 @@ def _setup_layout(app: "Dash") -> None:
     app.layout = _serve_layout
 
 
-def _register_callbacks(app: "Dash", config_manager: Any) -> None:
+def _register_callbacks(
+    app: "Dash",
+    config_manager: Any,
+    container: Optional[ServiceContainer] = None,
+) -> None:
     """Register application callbacks using the unified coordinator."""
 
     if TrulyUnifiedCallbacks is not None:
         coordinator = TrulyUnifiedCallbacks(app)
         register_upload_callbacks(coordinator)
-        _register_router_callbacks(coordinator)
+        unicode_proc = None
+        if container:
+            try:
+                unicode_proc = container.get("unicode_processor")
+            except Exception:
+                unicode_proc = None
+        _register_router_callbacks(coordinator, unicode_proc)
         _register_global_callbacks(coordinator)
     else:  # pragma: no cover - optional dependency missing
         coordinator = None
@@ -983,12 +1016,13 @@ def _register_callbacks(app: "Dash", config_manager: Any) -> None:
                 register_callbacks as register_simple_mapping,
             )
             from components.ui.navbar import register_navbar_callbacks
+
             register_simple_mapping(coordinator)
             register_device_verification(coordinator)
             register_deep_callbacks(coordinator)
             from services.interfaces import get_export_service
 
-            register_navbar_callbacks(coordinator, get_export_service())
+            register_navbar_callbacks(coordinator, get_export_service(container))
 
             cast(Any, app)._upload_callbacks = object()
             cast(Any, app)._deep_analytics_callbacks = DeepAnalyticsCallbacks()
