@@ -28,7 +28,7 @@ classDiagram
     UnifiedFileValidator <|-- Processor
     DataEnhancer <|-- Processor
     Processor --> AnalyticsEngine
-    AnalyticsEngine --> CallbackController
+    AnalyticsEngine --> CallbackManager
 ```
 
 This separation makes the pipeline extensible and easier to test as new data sources are added.
