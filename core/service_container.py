@@ -11,7 +11,6 @@ from typing import (
     Dict,
     List,
     Optional,
-    Protocol,
     Type,
     TypeVar,
     Union,
