@@ -5,7 +5,18 @@ from __future__ import annotations
 import inspect
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Protocol, Type, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Protocol,
+    Type,
+    TypeVar,
+    Union,
+    get_type_hints,
+)
 
 T = TypeVar("T")
 
@@ -143,19 +154,22 @@ class ServiceContainer:
     def _analyze_dependencies(self, implementation: Any) -> List[tuple[str, Type]]:
         if not inspect.isclass(implementation):
             return []
-        sig = inspect.signature(implementation.__init__)
+
+        init = implementation.__init__
+        sig = inspect.signature(init)
+
+        try:
+            mod = inspect.getmodule(implementation)
+            hints = get_type_hints(init, globalns=vars(mod) if mod else None)
+        except Exception:
+            hints = {}
+
         deps: List[tuple[str, Type]] = []
         for name, param in sig.parameters.items():
             if name == "self":
                 continue
-            if param.annotation != inspect.Parameter.empty:
-                anno = param.annotation
-                if isinstance(anno, str):
-                    try:
-                        mod = inspect.getmodule(implementation)
-                        anno = eval(anno, vars(mod) if mod else {})
-                    except Exception:
-                        anno = param.annotation
+            anno = hints.get(name, param.annotation)
+            if anno != inspect.Parameter.empty:
                 deps.append((name, anno))
         return deps
 
