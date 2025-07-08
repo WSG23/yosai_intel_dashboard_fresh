@@ -3,7 +3,8 @@ from __future__ import annotations
 import pandas as pd
 
 from .base import BaseReader
-from core.callback_controller import CallbackController, CallbackEvent
+from core.callback_controller import CallbackEvent
+from core.callback_manager import CallbackManager
 from core.protocols import UnicodeProcessorProtocol
 
 
@@ -14,7 +15,7 @@ class FWFReader(BaseReader):
 
     def __init__(self, *, unicode_processor: UnicodeProcessorProtocol | None = None) -> None:
         super().__init__(unicode_processor=unicode_processor)
-        self.callback_controller = CallbackController()
+        self.callback_controller = CallbackManager()
 
     def read(self, file_path: str, hint: dict | None = None) -> pd.DataFrame:
         hint = hint or {}
@@ -27,7 +28,7 @@ class FWFReader(BaseReader):
 
         ratio = CSVReader._control_char_ratio(df)
         if ratio > 0.1:
-            self.callback_controller.fire_event(
+            self.callback_controller.trigger(
                 CallbackEvent.SYSTEM_WARNING,
                 file_path,
                 {"warning": "ControlCharWarning", "ratio": ratio},

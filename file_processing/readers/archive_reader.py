@@ -13,7 +13,8 @@ from .csv_reader import CSVReader
 from .excel_reader import ExcelReader
 from .fwf_reader import FWFReader
 from .json_reader import JSONReader
-from core.callback_controller import CallbackController, CallbackEvent
+from core.callback_controller import CallbackEvent
+from core.callback_manager import CallbackManager
 from core.protocols import UnicodeProcessorProtocol
 from ..format_detector import FormatDetector
 
@@ -25,7 +26,7 @@ class ArchiveReader(BaseReader):
 
     def __init__(self, *, unicode_processor: UnicodeProcessorProtocol | None = None) -> None:
         super().__init__(unicode_processor=unicode_processor)
-        self.callback_controller = CallbackController()
+        self.callback_controller = CallbackManager()
 
     def read(self, file_path: str, hint: dict | None = None) -> pd.DataFrame:
         path = Path(file_path)

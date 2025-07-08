@@ -6,7 +6,8 @@ from typing import Dict, Optional
 
 import pandas as pd
 
-from core.callback_controller import CallbackController, CallbackEvent
+from core.callback_controller import CallbackEvent
+from core.callback_manager import CallbackManager
 from .format_detector import FormatDetector, UnsupportedFormatError
 from .readers import ArchiveReader, CSVReader, ExcelReader, FWFReader, JSONReader
 
@@ -41,7 +42,7 @@ class DataProcessor:
         self.config = config or DataProcessorConfig()
         self.device_registry: Dict[str, Dict] = device_registry or {}
         self.pipeline_metadata: Dict[str, Dict] = {}
-        self.callback_controller = CallbackController()
+        self.callback_controller = CallbackManager()
 
     def _normalize_timestamps(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -83,7 +84,7 @@ class DataProcessor:
         invalid_p = int((~df["person_id_valid"]).sum())
         invalid_b = int((~df["badge_id_valid"]).sum())
         if invalid_p or invalid_b:
-            self.callback_controller.fire_event(
+            self.callback_controller.trigger(
                 CallbackEvent.SYSTEM_WARNING,
                 "id_standardization",
                 {
@@ -111,7 +112,7 @@ class DataProcessor:
             )
             if match:
                 return registry[match]
-            self.callback_controller.fire_event(
+            self.callback_controller.trigger(
                 CallbackEvent.SYSTEM_WARNING,
                 "device_enrichment",
                 {"warning": f"Unmatched device '{name}'", "value": name},
@@ -122,7 +123,7 @@ class DataProcessor:
             enriched = df["device_name"].apply(lookup).apply(pd.Series)
             return pd.concat([df, enriched], axis=1)
         except Exception as exc:  # pragma: no cover - log and continue
-            self.callback_controller.fire_event(
+            self.callback_controller.trigger(
                 CallbackEvent.SYSTEM_ERROR,
                 "device_enrichment",
                 {"error": str(exc)},
@@ -145,7 +146,7 @@ class DataProcessor:
             key = str(val).strip().lower().rstrip(".")
             code = mapping.get(key)
             if code is None:
-                self.callback_controller.fire_event(
+                self.callback_controller.trigger(
                     CallbackEvent.SYSTEM_WARNING,
                     "access_result_enum",
                     {"warning": f"Unknown access_result '{val}'", "value": val},
@@ -200,7 +201,7 @@ class DataProcessor:
             AccessLogSchema.validate(df, lazy=True)
         except Exception as e:  # pragma: no cover - best effort logging
             for err in getattr(e, "failure_cases", []):
-                self.callback_controller.fire_event(
+                self.callback_controller.trigger(
                     CallbackEvent.SYSTEM_WARNING,
                     "schema_validation",
                     {
@@ -226,7 +227,7 @@ class DataProcessor:
             self.pipeline_metadata["last_ingest"] = meta
             return df_raw
         except UnsupportedFormatError as exc:
-            self.callback_controller.fire_event(
+            self.callback_controller.trigger(
                 CallbackEvent.SYSTEM_ERROR,
                 file_path,
                 {"error": str(exc)},
@@ -240,7 +241,7 @@ class DataProcessor:
         try:
             df = self._normalize_timestamps(df)
         except Exception as exc:  # pragma: no cover - log and continue
-            self.callback_controller.fire_event(
+            self.callback_controller.trigger(
                 CallbackEvent.SYSTEM_WARNING,
                 "timestamp_normalization",
                 {"error": str(exc)},
@@ -249,7 +250,7 @@ class DataProcessor:
         try:
             df = self._standardize_ids(df)
         except Exception as exc:  # pragma: no cover - log and continue
-            self.callback_controller.fire_event(
+            self.callback_controller.trigger(
                 CallbackEvent.SYSTEM_WARNING,
                 "id_standardization",
                 {"error": str(exc)},
@@ -258,7 +259,7 @@ class DataProcessor:
         try:
             df = self._enrich_devices(df)
         except Exception as exc:  # pragma: no cover - log and continue
-            self.callback_controller.fire_event(
+            self.callback_controller.trigger(
                 CallbackEvent.SYSTEM_ERROR,
                 "device_enrichment",
                 {"error": str(exc)},

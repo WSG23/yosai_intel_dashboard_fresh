@@ -5,7 +5,8 @@ from typing import Dict, Iterable, List, Optional
 import pandas as pd
 from rapidfuzz import process
 
-from core.callback_controller import CallbackController, CallbackEvent
+from core.callback_controller import CallbackEvent
+from core.callback_manager import CallbackManager
 
 REQUIRED_COLUMNS = ["person_id", "door_id", "access_result", "timestamp"]
 OPTIONAL_COLUMNS = ["device_name", "location"]
@@ -16,10 +17,10 @@ def map_columns(
     canonical_names: Dict[str, Iterable[str]],
     *,
     fuzzy_threshold: int = 80,
-    controller: Optional[CallbackController] = None,
+    controller: Optional[CallbackManager] = None,
 ) -> pd.DataFrame:
     """Rename columns in ``df`` using provided mapping rules."""
-    controller = controller or CallbackController()
+    controller = controller or CallbackManager()
     df_out = df.copy()
     reverse: Dict[str, str] = {}
     for canon, aliases in canonical_names.items():
@@ -43,7 +44,7 @@ def map_columns(
             df_out = df_out.rename(columns={col: best[0]})
         else:
             suggestions = process.extract(str(col), choices, limit=3)
-            controller.fire_event(
+            controller.trigger(
                 CallbackEvent.SYSTEM_WARNING,
                 "column_mapper",
                 {

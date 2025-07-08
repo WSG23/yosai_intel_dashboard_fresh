@@ -2,7 +2,8 @@ import pandas as pd
 from pathlib import Path
 
 from file_processing.column_mapper import map_columns
-from core.callback_controller import CallbackController, CallbackEvent
+from core.callback_controller import CallbackEvent
+from core.callback_manager import CallbackManager
 
 
 def test_exact_mapping(tmp_path: Path):
@@ -15,11 +16,11 @@ def test_exact_mapping(tmp_path: Path):
 def test_fuzzy_mapping(tmp_path: Path):
     df = pd.DataFrame({"pers": [1], "dor": ["d"]})
     mapping = {"person_id": [], "door_id": []}
-    controller = CallbackController()
+    controller = CallbackManager()
     events = []
 
-    def track(ctx):
-        events.append(ctx.data)
+    def track(source, data):
+        events.append(data)
 
     controller.register_callback(CallbackEvent.SYSTEM_WARNING, track)
     out = map_columns(df, mapping, controller=controller)
