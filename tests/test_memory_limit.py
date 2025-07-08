@@ -1,14 +1,16 @@
 import pandas as pd
 import pytest
 
-from config.dynamic_config import dynamic_config
+from tests.fake_configuration import FakeConfiguration
+
+fake_cfg = FakeConfiguration()
 from core.performance import get_performance_monitor
 from services.data_processing.file_handler import process_file_simple
 from services.data_processing.unified_file_validator import process_dataframe
 
 
 def test_memory_limit_abort_csv(monkeypatch, tmp_path):
-    monkeypatch.setattr(dynamic_config.performance, "memory_usage_threshold_mb", 1)
+    monkeypatch.setattr(fake_cfg.performance, "memory_usage_threshold_mb", 1)
     monitor = get_performance_monitor()
     monitor.memory_threshold_mb = 1
     df = pd.DataFrame({"a": range(10)})
@@ -20,7 +22,7 @@ def test_memory_limit_abort_csv(monkeypatch, tmp_path):
 
 
 def test_memory_limit_abort_json(monkeypatch):
-    monkeypatch.setattr(dynamic_config.performance, "memory_usage_threshold_mb", 1)
+    monkeypatch.setattr(fake_cfg.performance, "memory_usage_threshold_mb", 1)
     monitor = get_performance_monitor()
     monitor.memory_threshold_mb = 1
     data = b"[{\"a\":1},{\"a\":2}]"
