@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 from typing import Dict, List
 
+from tools.robust_file_reader import safe_read_text
+
 import yaml
 
 _CAMEL_RE = re.compile(r"\b[a-z]+[A-Z][A-Za-z0-9]*\b")
@@ -27,14 +29,14 @@ def scan_for_violations(directory: str) -> Dict[str, List[str]]:
     """Return mapping of file paths to a list of camelCase names found."""
     violations: Dict[str, List[str]] = {}
     for path in Path(directory).rglob("*.py"):
-        text = path.read_text()
+        text = safe_read_text(path)
         found = [m.group(0) for m in _CAMEL_RE.finditer(text)]
         if found:
             violations[str(path)] = found
     for ext in ("*.yml", "*.yaml"):
         for path in Path(directory).rglob(ext):
             try:
-                data = yaml.safe_load(path.read_text()) or {}
+                data = yaml.safe_load(safe_read_text(path)) or {}
             except Exception:
                 continue
             bad_keys: List[str] = []
@@ -61,7 +63,7 @@ def scan_for_violations(directory: str) -> Dict[str, List[str]]:
 def fix_camel_case_variables(file_path: str) -> None:
     """Convert camelCase variable names in ``file_path`` to snake_case."""
     path = Path(file_path)
-    text = path.read_text()
+    text = safe_read_text(path)
 
     def repl(match: re.Match[str]) -> str:
         return camel_to_snake(match.group(0))
@@ -77,7 +79,7 @@ def standardize_config_keys(config_file: str) -> None:
     """Rewrite YAML ``config_file`` with snake_case keys."""
     path = Path(config_file)
     try:
-        data = yaml.safe_load(path.read_text())
+        data = yaml.safe_load(safe_read_text(path))
     except Exception:
         return
 

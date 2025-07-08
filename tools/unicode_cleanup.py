@@ -5,6 +5,8 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+
+from tools.robust_file_reader import safe_read_text
 from typing import Dict, List, Tuple
 
 
@@ -24,10 +26,7 @@ def scan_legacy_references(base_dir: str = ".") -> Dict[str, List[Tuple[str, int
 
     found: Dict[str, List[Tuple[str, int]]] = {}
     for path in Path(base_dir).rglob("*.py"):
-        try:
-            text = path.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
-            text = path.read_text(encoding="utf-8", errors="replace")
+        text = safe_read_text(path)
         matches: List[Tuple[str, int]] = []
         for key, pattern in patterns.items():
             for m in pattern.finditer(text):
@@ -55,7 +54,7 @@ def update_imports(base_dir: str = ".") -> Dict[str, int]:
 
     modified: Dict[str, int] = {}
     for path in Path(base_dir).rglob("*.py"):
-        text = path.read_text(encoding="utf-8")
+        text = safe_read_text(path)
         original = text
         count = 0
         for pattern, repl in replacements.items():
