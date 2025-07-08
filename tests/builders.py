@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+
 from typing import Any, Dict
 
 import pandas as pd
@@ -15,20 +16,13 @@ from tests.test_doubles import InMemoryUploadStore, SimpleUnicodeProcessor
 class TestContainerBuilder:
     """Helper for constructing ServiceContainer instances for tests."""
 
+
     def __init__(self) -> None:
         self._container = ServiceContainer()
 
     # ------------------------------------------------------------------
     def with_env_defaults(self) -> "TestContainerBuilder":
-        for var in [
-            "SECRET_KEY",
-            "DB_PASSWORD",
-            "AUTH0_CLIENT_ID",
-            "AUTH0_CLIENT_SECRET",
-            "AUTH0_DOMAIN",
-            "AUTH0_AUDIENCE",
-        ]:
-            os.environ.setdefault(var, "test")
+        """Retained for backward compatibility (no-op)."""
         return self
 
     # ------------------------------------------------------------------

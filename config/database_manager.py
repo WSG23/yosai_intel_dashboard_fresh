@@ -12,6 +12,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional, Protocol
 
+from .protocols import (
+    ConnectionRetryManagerProtocol,
+    RetryConfigProtocol,
+)
+
 from .database_exceptions import ConnectionValidationFailed, DatabaseError
 from .constants import DEFAULT_DB_HOST, DEFAULT_DB_PORT
 
@@ -341,13 +346,19 @@ __all__ = [
 class EnhancedPostgreSQLManager(DatabaseManager):
     """PostgreSQL manager with retry, pooling and Unicode safety."""
 
-    def __init__(self, config: DatabaseConfig, retry_config: RetryConfig | None = None):
+    def __init__(
+        self,
+        config: DatabaseConfig,
+        retry_config: RetryConfigProtocol | None = None,
+    ) -> None:
         super().__init__(config)
         from database.connection_pool import EnhancedConnectionPool
         from .connection_retry import ConnectionRetryManager, RetryConfig
         from .unicode_handler import UnicodeQueryHandler
 
-        self.retry_manager = ConnectionRetryManager(retry_config or RetryConfig())
+        self.retry_manager: ConnectionRetryManagerProtocol = ConnectionRetryManager(
+            retry_config or RetryConfig()
+        )
         self.pool = EnhancedConnectionPool(
             self._create_connection,
             self.config.initial_pool_size,

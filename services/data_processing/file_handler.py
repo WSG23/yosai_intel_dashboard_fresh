@@ -6,9 +6,9 @@ from typing import Any, Optional, Tuple
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
-from core.protocols import ConfigurationProtocol
 from core.performance import get_performance_monitor
-from core.unicode_processor import process_large_csv_content
+from core.protocols import ConfigurationProtocol
+from core.unicode import process_large_csv_content
 from core.unicode_utils import sanitize_for_utf8
 from security.unicode_security_processor import sanitize_dataframe
 from services.data_processing.core.exceptions import (

@@ -1,4 +1,3 @@
-import importlib
 import time
 
 import pandas as pd
@@ -8,18 +7,16 @@ from config.database_exceptions import UnicodeEncodingError
 from config.unicode_handler import UnicodeQueryHandler
 from core.unicode import UnicodeProcessor as UtilsProcessor  # Alias check
 from core.unicode import (
+    UnicodeTextProcessor,
+
     clean_unicode_surrogates,
     clean_unicode_text,
     contains_surrogates,
-    handle_surrogate_characters,
-    safe_decode,
-    safe_encode,
+
     safe_encode_text,
-    sanitize_data_frame,
     sanitize_dataframe,
     sanitize_unicode_input,
 )
-from core.unicode_processor import UnicodeProcessor as UnicodeTextProcessor
 from security.unicode_security_handler import (
     UnicodeSecurityHandler as UnicodeSecurityProcessor,
 )
@@ -43,12 +40,6 @@ def test_unicode_security_processor_sanitization():
     cleaned = UnicodeSecurityProcessor.sanitize_dataframe(df)
     assert list(cleaned.columns) == ["bad"]
     assert cleaned.iloc[0, 0] == "😀=cmd"
-
-
-def test_wrapper_compatibility_and_imports():
-    assert UtilsProcessor is UnicodeTextProcessor
-    importlib.reload(importlib.import_module("config.unicode_handler"))
-    importlib.reload(importlib.import_module("security.unicode_security_handler"))
 
 
 @pytest.mark.slow

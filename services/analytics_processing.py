@@ -5,11 +5,12 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import html
 
-from core.unicode_processor import safe_format_number
+from core.unicode import safe_format_number
 from core.unicode_utils import sanitize_for_utf8
 from services import get_analytics_service
 from services.ai_suggestions import generate_column_suggestions
 from services.upload_data_service import get_uploaded_data
+from services.interfaces import get_upload_data_service
 from utils.preview_utils import serialize_dataframe_preview
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
             filename = None
             if data_source.startswith("upload:"):
                 filename = data_source.replace("upload:", "")
-            uploaded_files = get_uploaded_data()
+            uploaded_files = get_uploaded_data(get_upload_data_service())
             if not uploaded_files:
                 return {"error": "No uploaded files found"}
             if filename is None or filename not in uploaded_files:
@@ -42,19 +43,25 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
                     field = sugg.get("field", "")
                     conf = sugg.get("confidence", 0.0)
                     status = (
-                        "🟢 High" if conf >= 0.7 else "🟡 Medium" if conf >= 0.4 else "🔴 Low"
+                        "🟢 High"
+                        if conf >= 0.7
+                        else "🟡 Medium"
+                        if conf >= 0.4
+                        else "🔴 Low"
                     )
                     try:
                         sample_data = df[column].dropna().head(3).astype(str).tolist()
                     except Exception:
                         sample_data = ["N/A"]
-                    processed.append({
-                        "column": column,
-                        "suggested_field": field or "No suggestion",
-                        "confidence": conf,
-                        "status": status,
-                        "sample_data": sample_data,
-                    })
+                    processed.append(
+                        {
+                            "column": column,
+                            "suggested_field": field or "No suggestion",
+                            "confidence": conf,
+                            "status": status,
+                            "sample_data": sample_data,
+                        }
+                    )
                     total_conf += conf
                     if conf >= 0.6:
                         confident += 1
@@ -73,13 +80,17 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
             except Exception as exc:
                 logger.exception("AI suggestions failed: %s", exc)
                 return {"error": f"AI suggestions failed: {exc}"}
-        return {"error": f"Suggests analysis not available for data source: {data_source}"}
+        return {
+            "error": f"Suggests analysis not available for data source: {data_source}"
+        }
     except Exception as exc:
         logger.exception("Failed to process suggests: %s", exc)
         return {"error": f"Failed to process suggests: {exc}"}
 
 
-def create_suggests_display(suggests_data: Dict[str, Any]) -> html.Div | dbc.Card | dbc.Alert:
+def create_suggests_display(
+    suggests_data: Dict[str, Any]
+) -> html.Div | dbc.Card | dbc.Alert:
     """Create suggests analysis display components."""
     if "error" in suggests_data:
         return dbc.Alert(f"Error: {suggests_data['error']}", color="danger")
@@ -91,61 +102,114 @@ def create_suggests_display(suggests_data: Dict[str, Any]) -> html.Div | dbc.Car
         total_columns = suggests_data.get("total_columns", 0)
         total_rows = suggests_data.get("total_rows", 0)
 
-        summary_card = dbc.Card([
-            dbc.CardHeader([html.H5(f"🤖 AI Column Mapping Analysis - {filename}")]),
-            dbc.CardBody([
-                dbc.Row([
-                    dbc.Col([
-                        html.H6("Dataset Info"),
-                        html.P(f"File: {filename}"),
-                        html.P(f"Rows: {total_rows:,}"),
-                        html.P(f"Columns: {total_columns}"),
-                    ], width=4),
-                    dbc.Col([
-                        html.H6("Overall Confidence"),
-                        dbc.Progress(
-                            value=avg_confidence * 100,
-                            label=f"{avg_confidence:.1%}",
-                            color="success" if avg_confidence >= 0.7 else "warning" if avg_confidence >= 0.4 else "danger",
-                        ),
-                    ], width=4),
-                    dbc.Col([
-                        html.H6("Confident Mappings"),
-                        html.H3(
-                            f"{confident_mappings}/{total_columns}",
-                            className="text-success" if confident_mappings >= total_columns * 0.7 else "text-warning",
-                        ),
-                    ], width=4),
-                ])
-            ])
-        ], className="mb-3")
+        summary_card = dbc.Card(
+            [
+                dbc.CardHeader([html.H5(f"🤖 AI Column Mapping Analysis - {filename}")]),
+                dbc.CardBody(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        html.H6("Dataset Info"),
+                                        html.P(f"File: {filename}"),
+                                        html.P(f"Rows: {total_rows:,}"),
+                                        html.P(f"Columns: {total_columns}"),
+                                    ],
+                                    width=4,
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.H6("Overall Confidence"),
+                                        dbc.Progress(
+                                            value=avg_confidence * 100,
+                                            label=f"{avg_confidence:.1%}",
+                                            color="success"
+                                            if avg_confidence >= 0.7
+                                            else "warning"
+                                            if avg_confidence >= 0.4
+                                            else "danger",
+                                        ),
+                                    ],
+                                    width=4,
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.H6("Confident Mappings"),
+                                        html.H3(
+                                            f"{confident_mappings}/{total_columns}",
+                                            className="text-success"
+                                            if confident_mappings >= total_columns * 0.7
+                                            else "text-warning",
+                                        ),
+                                    ],
+                                    width=4,
+                                ),
+                            ]
+                        )
+                    ]
+                ),
+            ],
+            className="mb-3",
+        )
 
         if suggestions:
             table_rows = [
-                html.Tr([
-                    html.Td(s["column"]),
-                    html.Td(s["suggested_field"]),
-                    html.Td(
-                        dbc.Progress(
-                            value=s["confidence"] * 100,
-                            label=f"{s['confidence']:.1%}",
-                            color="success" if s["confidence"] >= 0.7 else "warning" if s["confidence"] >= 0.4 else "danger",
-                        )
-                    ),
-                    html.Td(s["status"]),
-                    html.Td(html.Small(str(s["sample_data"][:2]), className="text-muted")),
-                ])
+                html.Tr(
+                    [
+                        html.Td(s["column"]),
+                        html.Td(s["suggested_field"]),
+                        html.Td(
+                            dbc.Progress(
+                                value=s["confidence"] * 100,
+                                label=f"{s['confidence']:.1%}",
+                                color="success"
+                                if s["confidence"] >= 0.7
+                                else "warning"
+                                if s["confidence"] >= 0.4
+                                else "danger",
+                            )
+                        ),
+                        html.Td(s["status"]),
+                        html.Td(
+                            html.Small(
+                                str(s["sample_data"][:2]), className="text-muted"
+                            )
+                        ),
+                    ]
+                )
                 for s in suggestions
             ]
-            suggestions_table = dbc.Card([
-                dbc.CardHeader([html.H6("📋 Column Mapping Suggestions")]),
-                dbc.CardBody([
-                    dbc.Table([
-                        html.Thead([html.Tr([html.Th("Column Name"), html.Th("Suggested Field"), html.Th("Confidence"), html.Th("Status"), html.Th("Sample Data")])]),
-                        html.Tbody(table_rows),
-                    ], responsive=True, striped=True)
-                ])
-            ], className="mb-3")
+            suggestions_table = dbc.Card(
+                [
+                    dbc.CardHeader([html.H6("📋 Column Mapping Suggestions")]),
+                    dbc.CardBody(
+                        [
+                            dbc.Table(
+                                [
+                                    html.Thead(
+                                        [
+                                            html.Tr(
+                                                [
+                                                    html.Th("Column Name"),
+                                                    html.Th("Suggested Field"),
+                                                    html.Th("Confidence"),
+                                                    html.Th("Status"),
+                                                    html.Th("Sample Data"),
+                                                ]
+                                            )
+                                        ]
+                                    ),
+                                    html.Tbody(table_rows),
+                                ],
+                                responsive=True,
+                                striped=True,
+                            )
+                        ]
+                    ),
+                ],
+                className="mb-3",
+            )
         else:
             suggestions_table = dbc.Alert("No suggestions available", color="warning")
         return html.Div([summary_card, suggestions_table])
@@ -161,7 +225,7 @@ def process_quality_analysis(data_source: str) -> Dict[str, Any]:
             filename = None
             if data_source.startswith("upload:"):
                 filename = data_source.replace("upload:", "")
-            uploaded_files = get_uploaded_data()
+            uploaded_files = get_uploaded_data(get_upload_data_service())
             if not uploaded_files:
                 return {"error": "No uploaded files found"}
             if filename is None or filename not in uploaded_files:
@@ -171,7 +235,12 @@ def process_quality_analysis(data_source: str) -> Dict[str, Any]:
             total_cols = len(df.columns)
             missing_values = df.isnull().sum().sum()
             duplicate_rows = df.duplicated().sum()
-            quality_score = max(0, 100 - (missing_values / (total_rows * total_cols) * 100) - (duplicate_rows / total_rows * 10))
+            quality_score = max(
+                0,
+                100
+                - (missing_values / (total_rows * total_cols) * 100)
+                - (duplicate_rows / total_rows * 10),
+            )
             return {
                 "analysis_type": "Data Quality",
                 "data_source": data_source,
@@ -197,36 +266,67 @@ def create_data_quality_display(data_source: str) -> html.Div | dbc.Card | dbc.A
     try:
         if data_source.startswith("upload:"):
             filename = data_source.replace("upload:", "")
-            uploaded_files = get_uploaded_data()
+            uploaded_files = get_uploaded_data(get_upload_data_service())
             if filename in uploaded_files:
                 df = uploaded_files[filename]
                 total_rows = len(df)
                 total_cols = len(df.columns)
                 missing_values = df.isnull().sum().sum()
                 duplicate_rows = df.duplicated().sum()
-                return dbc.Card([
-                    dbc.CardHeader([html.H5("📊 Data Quality Analysis")]),
-                    dbc.CardBody([
-                        dbc.Row([
-                            dbc.Col([
-                                html.H6("Dataset Overview"),
-                                html.P(f"Rows: {total_rows:,}"),
-                                html.P(f"Columns: {total_cols}"),
-                                html.P(f"Missing values: {missing_values:,}"),
-                                html.P(f"Duplicate rows: {duplicate_rows:,}"),
-                            ], width=6),
-                            dbc.Col([
-                                html.H6("Quality Score"),
-                                dbc.Progress(
-                                    value=max(0, 100 - (missing_values / total_rows * 100) - (duplicate_rows / total_rows * 10)),
-                                    label="Quality",
-                                    color="success",
-                                ),
-                            ], width=6),
-                        ])
-                    ])
-                ])
-        return dbc.Alert("Data quality analysis only available for uploaded files", color="info")
+                return dbc.Card(
+                    [
+                        dbc.CardHeader([html.H5("📊 Data Quality Analysis")]),
+                        dbc.CardBody(
+                            [
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            [
+                                                html.H6("Dataset Overview"),
+                                                html.P(f"Rows: {total_rows:,}"),
+                                                html.P(f"Columns: {total_cols}"),
+                                                html.P(
+                                                    f"Missing values: {missing_values:,}"
+                                                ),
+                                                html.P(
+                                                    f"Duplicate rows: {duplicate_rows:,}"
+                                                ),
+                                            ],
+                                            width=6,
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                html.H6("Quality Score"),
+                                                dbc.Progress(
+                                                    value=max(
+                                                        0,
+                                                        100
+                                                        - (
+                                                            missing_values
+                                                            / total_rows
+                                                            * 100
+                                                        )
+                                                        - (
+                                                            duplicate_rows
+                                                            / total_rows
+                                                            * 10
+                                                        ),
+                                                    ),
+                                                    label="Quality",
+                                                    color="success",
+                                                ),
+                                            ],
+                                            width=6,
+                                        ),
+                                    ]
+                                )
+                            ]
+                        ),
+                    ]
+                )
+        return dbc.Alert(
+            "Data quality analysis only available for uploaded files", color="info"
+        )
     except Exception as exc:
         logger.exception("Quality analysis error: %s", exc)
         return dbc.Alert(f"Quality analysis error: {exc}", color="danger")
@@ -242,7 +342,7 @@ def analyze_data_with_service(data_source: str, analysis_type: str) -> Dict[str,
             filename = None
             if data_source.startswith("upload:"):
                 filename = data_source.replace("upload:", "")
-            uploaded_files = get_uploaded_data()
+            uploaded_files = get_uploaded_data(get_upload_data_service())
             if not uploaded_files:
                 return {"error": "No uploaded files found"}
             if filename is None or filename not in uploaded_files:
@@ -262,6 +362,7 @@ def analyze_data_with_service(data_source: str, analysis_type: str) -> Dict[str,
 
 
 # Helper extraction functions for results processing
+
 
 def _extract_counts(results: Dict[str, Any]) -> Dict[str, int | float]:
     total_events = results.get("total_events", 0)
@@ -363,7 +464,9 @@ def _extract_enhanced_security_details(results: Dict[str, Any]) -> Dict[str, Any
         threat_count = len(threats)
     critical_threats = results.get("critical_threats")
     if critical_threats is None:
-        critical_threats = len([t for t in threats if str(t.get("severity", "")).lower() == "critical"])
+        critical_threats = len(
+            [t for t in threats if str(t.get("severity", "")).lower() == "critical"]
+        )
     ci_raw = results.get("confidence_interval", (0.0, 0.0))
     if isinstance(ci_raw, (list, tuple)) and len(ci_raw) == 2:
         try:
@@ -377,7 +480,9 @@ def _extract_enhanced_security_details(results: Dict[str, Any]) -> Dict[str, Any
         recommendations = [str(recommendations)] if recommendations else []
     top_threats: list[str] = []
     if threats:
-        sorted_threats = sorted(threats, key=lambda x: float(x.get("confidence", 0)), reverse=True)[:3]
+        sorted_threats = sorted(
+            threats, key=lambda x: float(x.get("confidence", 0)), reverse=True
+        )[:3]
         for t in sorted_threats:
             desc = t.get("description") or t.get("type", "Unknown")
             severity = str(t.get("severity", "unknown")).title()
@@ -391,7 +496,9 @@ def _extract_enhanced_security_details(results: Dict[str, Any]) -> Dict[str, Any
     }
 
 
-def create_analysis_results_display(results: Dict[str, Any], analysis_type: str) -> html.Div | dbc.Card | dbc.Alert:
+def create_analysis_results_display(
+    results: Dict[str, Any], analysis_type: str
+) -> html.Div | dbc.Card | dbc.Alert:
     """Create display for different analysis types."""
     try:
         counts = _extract_counts(results)
@@ -407,8 +514,10 @@ def create_analysis_results_display(results: Dict[str, Any], analysis_type: str)
             specific_content = [
                 html.P(f"Security Score: {sec_metrics['score']:.1f}/100"),
                 html.P(f"Failed Attempts: {sec_metrics['failed_attempts']:,}"),
-                html.P(f"Risk Level: {sec_metrics['risk_level']}") ,
-                html.P(f"Threats: {sec_details['threat_count']} (Critical: {sec_details['critical_threats']})"),
+                html.P(f"Risk Level: {sec_metrics['risk_level']}"),
+                html.P(
+                    f"Threats: {sec_details['threat_count']} (Critical: {sec_details['critical_threats']})"
+                ),
                 html.P(
                     "Confidence Interval: "
                     f"{sec_details['confidence_interval'][0]:.1f}-{sec_details['confidence_interval'][1]:.1f}"
@@ -416,30 +525,42 @@ def create_analysis_results_display(results: Dict[str, Any], analysis_type: str)
             ]
             if sec_details["recommendations"]:
                 specific_content.append(html.H6("Recommendations"))
-                specific_content.append(html.Ul([html.Li(r) for r in sec_details["recommendations"]]))
+                specific_content.append(
+                    html.Ul([html.Li(r) for r in sec_details["recommendations"]])
+                )
             if sec_details["top_threats"]:
                 specific_content.append(html.H6("Top Threats"))
-                specific_content.append(html.Ul([html.Li(t) for t in sec_details["top_threats"]]))
-            color = "danger" if sec_metrics["risk_level"] == "High" else "warning" if sec_metrics["risk_level"] == "Medium" else "success"
+                specific_content.append(
+                    html.Ul([html.Li(t) for t in sec_details["top_threats"]])
+                )
+            color = (
+                "danger"
+                if sec_metrics["risk_level"] == "High"
+                else "warning"
+                if sec_metrics["risk_level"] == "Medium"
+                else "success"
+            )
         elif analysis_type == "trends":
             specific_content = [
                 html.P(f"Daily Average: {results.get('daily_average', 0):.0f} events"),
-                html.P(f"Peak Usage: {results.get('peak_usage', 'Unknown')}") ,
-                html.P(f"Trend: {results.get('trend_direction', 'Unknown')}") ,
+                html.P(f"Peak Usage: {results.get('peak_usage', 'Unknown')}"),
+                html.P(f"Trend: {results.get('trend_direction', 'Unknown')}"),
             ]
             color = "info"
         elif analysis_type == "behavior":
             specific_content = [
-                html.P(f"Avg Accesses/User: {results.get('avg_accesses_per_user', 0):.1f}"),
+                html.P(
+                    f"Avg Accesses/User: {results.get('avg_accesses_per_user', 0):.1f}"
+                ),
                 html.P(f"Heavy Users: {results.get('heavy_users', 0)}"),
-                html.P(f"Behavior Score: {results.get('behavior_score', 'Unknown')}") ,
+                html.P(f"Behavior Score: {results.get('behavior_score', 'Unknown')}"),
             ]
             color = "success"
         elif analysis_type == "anomaly":
             specific_content = [
                 html.P(f"Anomalies Detected: {results.get('anomalies_detected', 0):,}"),
-                html.P(f"Threat Level: {results.get('threat_level', 'Unknown')}") ,
-                html.P(f"Status: {results.get('suspicious_activities', 'Unknown')}") ,
+                html.P(f"Threat Level: {results.get('threat_level', 'Unknown')}"),
+                html.P(f"Status: {results.get('suspicious_activities', 'Unknown')}"),
             ]
             color = "danger" if results.get("threat_level") == "Critical" else "warning"
         else:
@@ -451,33 +572,51 @@ def create_analysis_results_display(results: Dict[str, Any], analysis_type: str)
         users_safe = safe_format_number(unique_users)
         doors_safe = safe_format_number(unique_doors)
 
-        return dbc.Card([
-            dbc.CardHeader([html.H5(f"📊 {title_safe}")]),
-            dbc.CardBody([
-                dbc.Row([
-                    dbc.Col([
-                        html.H6("📈 Summary"),
-                        html.P(f"Total Events: {events_safe}"),
-                        html.P(f"Unique Users: {users_safe}"),
-                        html.P(f"Unique Doors: {doors_safe}"),
-                        dbc.Progress(
-                            value=success_rate * 100,
-                            label=f"Success Rate: {success_rate:.1%}",
-                            color="success" if success_rate > 0.8 else "warning",
+        return dbc.Card(
+            [
+                dbc.CardHeader([html.H5(f"📊 {title_safe}")]),
+                dbc.CardBody(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        html.H6("📈 Summary"),
+                                        html.P(f"Total Events: {events_safe}"),
+                                        html.P(f"Unique Users: {users_safe}"),
+                                        html.P(f"Unique Doors: {doors_safe}"),
+                                        dbc.Progress(
+                                            value=success_rate * 100,
+                                            label=f"Success Rate: {success_rate:.1%}",
+                                            color="success"
+                                            if success_rate > 0.8
+                                            else "warning",
+                                        ),
+                                    ],
+                                    width=6,
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.H6(f"🎯 {analysis_type.title()} Specific"),
+                                        html.Div(specific_content),
+                                    ],
+                                    width=6,
+                                ),
+                            ]
                         ),
-                    ], width=6),
-                    dbc.Col([
-                        html.H6(f"🎯 {analysis_type.title()} Specific"),
-                        html.Div(specific_content),
-                    ], width=6),
-                ]),
-                html.Hr(),
-                dbc.Alert([html.H6("Analysis Focus"), html.P(analysis_focus)], color=color),
-            ])
-        ])
+                        html.Hr(),
+                        dbc.Alert(
+                            [html.H6("Analysis Focus"), html.P(analysis_focus)],
+                            color=color,
+                        ),
+                    ]
+                ),
+            ]
+        )
     except Exception as exc:
         logger.exception("Error displaying results: %s", exc)
         return dbc.Alert(f"Error displaying results: {exc}", color="danger")
+
 
 __all__ = [
     "process_suggests_analysis",

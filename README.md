@@ -241,10 +241,13 @@ compression is automatically handled at runtime by `flask-compress`.
 
 Install dependencies before running the tests:
 ```bash
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-# or simply run ./scripts/setup.sh
+# Option 1: use the helper script
+./scripts/setup.sh
+# Option 2: install packages manually
+pip install -r requirements.txt -r requirements-dev.txt
 ```
+For minimal CI environments you can run `./scripts/install_test_deps.sh` which
+only installs the Python dependencies required for the tests.
 Detailed instructions are provided in
 [docs/test_setup.md](docs/test_setup.md).
 The overall design of our test protocols and injection approach is

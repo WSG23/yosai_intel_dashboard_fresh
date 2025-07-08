@@ -1,16 +1,5 @@
 import asyncio
-import importlib.util
-import sys
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location(
-    "upload_queue_manager", ROOT / "services" / "upload" / "upload_queue_manager.py"
-)
-upload_queue_manager = importlib.util.module_from_spec(spec)
-sys.modules["upload_queue_manager"] = upload_queue_manager
-spec.loader.exec_module(upload_queue_manager)  # type: ignore
-UploadQueueManager = upload_queue_manager.UploadQueueManager
+from services.upload.upload_queue_manager import UploadQueueManager
 
 
 async def _dummy_handler(item):
@@ -44,7 +33,10 @@ def test_process_queue_executes_tasks(async_runner):
         results = []
         for _ in range(10):
             results.extend(await q.process_queue(_dummy_handler))
-            if not q.get_queue_status()["pending"] and not q.get_queue_status()["active"]:
+            if (
+                not q.get_queue_status()["pending"]
+                and not q.get_queue_status()["active"]
+            ):
                 break
             await asyncio.sleep(0.02)
         processed = [r for _, r in results]

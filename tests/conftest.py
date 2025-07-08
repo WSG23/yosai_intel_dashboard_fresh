@@ -2,12 +2,6 @@
 
 import sys
 from pathlib import Path
-
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-# Ensure test stubs (e.g., a Dash stub) are available before real packages
-stub_dir = Path(__file__).resolve().parent / "stubs"
-sys.path.insert(0, str(stub_dir))
-
 import types
 if "core.unicode_processor" not in sys.modules:
     _m = types.ModuleType("core.unicode_processor")
@@ -67,13 +61,7 @@ if "dash_bootstrap_components" not in sys.modules:
     dbc_stub.DropdownMenuItem = lambda *a, **k: None
     sys.modules["dash_bootstrap_components"] = dbc_stub
 
-if "plotly" not in sys.modules:
-    plotly = types.ModuleType("plotly")
-    plotly.express = types.ModuleType("plotly.express")
-    plotly.graph_objects = types.ModuleType("plotly.graph_objects")
-    sys.modules["plotly"] = plotly
-    sys.modules["plotly.express"] = plotly.express
-    sys.modules["plotly.graph_objects"] = plotly.graph_objects
+
 
 import shutil
 import tempfile
@@ -128,6 +116,18 @@ def di_container() -> Container:
     """Create DI container for tests"""
 
     return Container()
+
+
+@pytest.fixture
+def upload_data_service(tmp_path: Path):
+    """Provide a fresh ``UploadDataService`` backed by a temp store."""
+
+    from utils.upload_store import UploadedDataStore
+    from services.upload_data_service import UploadDataService
+
+    store = UploadedDataStore(storage_dir=tmp_path)
+    service = UploadDataService(store)
+    yield service
 
 
 @pytest.fixture
@@ -195,6 +195,21 @@ def sample_doors() -> list[Door]:
     ]
 
 
+@pytest.fixture(autouse=True)
+def env_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Provide default environment variables for tests."""
+    required = {
+        "SECRET_KEY": "test",
+        "DB_PASSWORD": "pwd",
+        "AUTH0_CLIENT_ID": "cid",
+        "AUTH0_CLIENT_SECRET": "secret",
+        "AUTH0_DOMAIN": "domain",
+        "AUTH0_AUDIENCE": "aud",
+    }
+    for key, value in required.items():
+        monkeypatch.setenv(key, value)
+
+
 @pytest.fixture
 def mock_auth_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Setup required authentication environment variables"""
@@ -214,3 +229,74 @@ def async_runner() -> Generator[callable, None, None]:
     loop = asyncio.new_event_loop()
     yield lambda coro: loop.run_until_complete(coro)
     loop.close()
+
+
+@pytest.fixture
+def fake_dash(monkeypatch: pytest.MonkeyPatch, request):
+    """Provide a lightweight Dash substitute for tests."""
+
+    dash_stub = importlib.import_module("tests.stubs.dash")
+    monkeypatch.setitem(sys.modules, "dash", dash_stub)
+    monkeypatch.setitem(sys.modules, "dash.html", dash_stub.html)
+    monkeypatch.setitem(sys.modules, "dash.dcc", dash_stub.dcc)
+    monkeypatch.setitem(sys.modules, "dash.dependencies", dash_stub.dependencies)
+    monkeypatch.setitem(sys.modules, "dash._callback", dash_stub._callback)
+    monkeypatch.setitem(
+        sys.modules,
+        "dash.exceptions",
+        types.SimpleNamespace(PreventUpdate=Exception),
+    )
+    dash_stub.no_update = None
+
+    attrs = {
+        "dash": dash_stub,
+        "Dash": dash_stub.Dash,
+        "dcc": dash_stub.dcc,
+        "html": dash_stub.html,
+        "Input": dash_stub.dependencies.Input,
+        "Output": dash_stub.dependencies.Output,
+        "State": dash_stub.dependencies.State,
+        "no_update": dash_stub.no_update,
+    }
+    for name, val in attrs.items():
+        if hasattr(request.module, name):
+            monkeypatch.setattr(request.module, name, val, raising=False)
+
+    yield dash_stub
+
+
+@pytest.fixture
+def fake_dbc(monkeypatch: pytest.MonkeyPatch, request):
+    """Provide a minimal dash_bootstrap_components substitute."""
+
+    dbc_stub = types.ModuleType("dash_bootstrap_components")
+
+    class _Comp:
+        def __init__(self, *args, **kwargs):
+            self.args = args
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+    for name in [
+        "Navbar",
+        "Container",
+        "Row",
+        "Col",
+        "NavbarToggler",
+        "Collapse",
+        "DropdownMenu",
+        "DropdownMenuItem",
+        "Card",
+        "Alert",
+        "Modal",
+        "Toast",
+    ]:
+        setattr(dbc_stub, name, _Comp)
+
+    dbc_stub.themes = types.SimpleNamespace(BOOTSTRAP="bootstrap")
+
+    monkeypatch.setitem(sys.modules, "dash_bootstrap_components", dbc_stub)
+    if hasattr(request.module, "dbc"):
+        monkeypatch.setattr(request.module, "dbc", dbc_stub, raising=False)
+
+    yield dbc_stub

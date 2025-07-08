@@ -1,8 +1,8 @@
+import pytest
 from dash import html
 
 from components.ui.navbar import _nav_icon
 from tests.fake_navbar_factory import FakeNavbarFactory
-
 
 factory = FakeNavbarFactory()
 
