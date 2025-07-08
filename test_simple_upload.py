@@ -12,16 +12,16 @@ def test_simple_layout():
         
         # Check layout contains upload component
         layout_str = str(layout)
-        if 'file-upload-main' in layout_str:
+        if 'drag-drop-upload' in layout_str:
             print("✅ Upload component found")
         else:
             print("❌ Upload component missing")
             return False
-        
-        if 'Drag & Drop Files Here' in layout_str:
-            print("✅ Upload text found")
+
+        if 'Upload Data Files' in layout_str:
+            print("✅ Upload header found")
         else:
-            print("❌ Upload text missing")
+            print("❌ Upload header missing")
             return False
         
         return True
