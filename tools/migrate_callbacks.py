@@ -14,7 +14,7 @@ NAME_MAP = {
     "SecurityCallbackController": "CallbackController",
     "security_callback_controller": "callback_controller",
     "emit_security_event": "fire_event",
-    "UnifiedCallbackCoordinator": "CallbackUnifier",
+    "UnifiedCallbackCoordinator": "TrulyUnifiedCallbacks",
 }
 
 

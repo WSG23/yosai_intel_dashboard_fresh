@@ -55,14 +55,14 @@ def generate_unified_config(imports: Dict[str, Set[str]], output: Path) -> None:
 
 
 def convert_callbacks(root: Path, dry_run: bool = False) -> None:
-    """Replace ``UnifiedCallbackCoordinator`` with ``CallbackUnifier``."""
+    """Replace references to the old coordinator with ``TrulyUnifiedCallbacks``."""
     for py in root.rglob("*.py"):
         if "tests" in py.parts or "plugins" in py.parts:
             continue
         text = py.read_text()
         if "UnifiedCallbackCoordinator" in text:
             new_text = text.replace(
-                "UnifiedCallbackCoordinator", "CallbackUnifier"
+                "UnifiedCallbackCoordinator", "TrulyUnifiedCallbacks"
             )
             if not dry_run:
                 py.write_text(new_text)
