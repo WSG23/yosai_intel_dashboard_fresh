@@ -15,7 +15,7 @@ def test_imports():
         print("✅ TYPE_CHECKING import works")
         
         from components.upload import UploadArea
-        from services.upload.utils.unicode_handler import safe_unicode_encode
+        from services.upload.utils.unicode_handler import safe_encode_text
         print("✅ UploadArea import works")
         
         import pages.file_upload as upload_page
@@ -31,7 +31,7 @@ def test_unicode_handling():
     print("\n🧪 Testing Unicode handling...")
     
     try:
-        from services.upload.utils.unicode_handler import safe_unicode_encode
+        from services.upload.utils.unicode_handler import safe_encode_text
         
         test_cases = [
             "Normal text",
@@ -42,7 +42,7 @@ def test_unicode_handling():
         ]
         
         for test_case in test_cases:
-            result = safe_unicode_encode(test_case)
+            result = safe_encode_text(test_case)
             result.encode('utf-8')  # Verify it's valid UTF-8
             print(f"✅ {repr(test_case)} -> Safe")
         
