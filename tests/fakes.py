@@ -135,3 +135,10 @@ class FakeUnicodeProcessor(UnicodeProcessorProtocol):
             return data.decode(encoding, errors="ignore")
         except Exception:
             return ""
+
+
+class FakeGraphs:
+    """Minimal graphs substitute used in tests."""
+
+    GRAPH_FIGURES: dict[str, Any] = {}
+
