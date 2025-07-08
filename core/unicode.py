@@ -46,6 +46,55 @@ class UnicodeProcessor:
     REPLACEMENT_CHAR: str = "\uFFFD"
 
     # ------------------------------------------------------------------
+    @staticmethod
+    def clean_surrogate_chars(text: str, replacement: str = "") -> str:
+        """Return ``text`` with surrogate code points removed or replaced.
+
+        Valid UTF-16 surrogate pairs are converted to their corresponding
+        Unicode characters. Any unpaired surrogates are dropped or replaced
+        with ``replacement`` if provided.
+        """
+
+        if not isinstance(text, str):
+            try:
+                text = str(text)
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.error("Failed to convert %s to str: %s", type(text), exc)
+                return ""
+
+        out: list[str] = []
+        i = 0
+        while i < len(text):
+            ch = text[i]
+            code = ord(ch)
+
+            # High surrogate
+            if 0xD800 <= code <= 0xDBFF:
+                if i + 1 < len(text):
+                    next_code = ord(text[i + 1])
+                    if 0xDC00 <= next_code <= 0xDFFF:
+                        pair = ((code - 0xD800) << 10) + (next_code - 0xDC00) + 0x10000
+                        out.append(chr(pair))
+                        i += 2
+                        continue
+                if replacement:
+                    out.append(replacement)
+                i += 1
+                continue
+
+            # Low surrogate without preceding high surrogate
+            if 0xDC00 <= code <= 0xDFFF:
+                if replacement:
+                    out.append(replacement)
+                i += 1
+                continue
+
+            out.append(ch)
+            i += 1
+
+        return "".join(out)
+
+    # ------------------------------------------------------------------
     # Basic cleaning helpers
     # ------------------------------------------------------------------
     @staticmethod
@@ -211,6 +260,12 @@ class UnicodeTextProcessor:
 
         return text
 
+    @staticmethod
+    def clean_surrogate_chars(text: str, replacement: str = "") -> str:
+        """Return ``text`` with surrogate code points removed or replaced."""
+
+        return UnicodeProcessor.clean_surrogate_chars(text, replacement)
+
 
 class UnicodeSQLProcessor:
     """Safely encode SQL queries with Unicode handling."""
@@ -314,6 +369,12 @@ def clean_unicode_surrogates(text: Any) -> str:
     return UnicodeProcessor.clean_text(text)
 
 
+def clean_surrogate_chars(text: str, replacement: str = "") -> str:
+    """Return ``text`` with surrogate code points removed or replaced."""
+
+    return UnicodeProcessor.clean_surrogate_chars(text, replacement)
+
+
 def sanitize_unicode_input(text: Union[str, Any]) -> str:
     """Return ``text`` stripped of surrogate pairs and BOM characters."""
 
@@ -386,6 +447,7 @@ __all__ = [
     "handle_surrogate_characters",
     "safe_unicode_encode",
     "clean_unicode_surrogates",
+    "clean_surrogate_chars",
     "sanitize_unicode_input",
     "contains_surrogates",
     "process_large_csv_content",
