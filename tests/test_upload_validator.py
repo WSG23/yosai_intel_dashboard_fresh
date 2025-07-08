@@ -1,30 +1,28 @@
-import base64
 from pathlib import Path
 
-import pandas as pd
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 from upload_validator import UploadValidator
 
 
 def test_validate_file_upload_dataframe():
-    df = pd.DataFrame({"a": [1]})
+    df = DataFrameBuilder().add_column("a", [1]).build()
     v = UploadValidator(max_size_mb=1)
     res = v.validate_file_upload(df)
     assert res.valid
 
 
 def test_validate_file_upload_base64(tmp_path):
-    data = b"a,b\n1,2\n"
-    b64 = base64.b64encode(data).decode()
-    uri = "data:text/csv;base64," + b64
+    df = DataFrameBuilder().add_column("a", [1]).add_column("b", [2]).build()
+    uri = UploadFileBuilder().with_dataframe(df).as_base64()
     v = UploadValidator(max_size_mb=1)
     res = v.validate_file_upload(uri)
     assert res.valid
 
 
 def test_validate_file_upload_path(tmp_path):
-    path = tmp_path / "file.csv"
-    path.write_text("a,b\n1,2\n")
+    df = DataFrameBuilder().add_column("a", [1]).add_column("b", [2]).build()
+    path = UploadFileBuilder().with_dataframe(df).write_csv(tmp_path / "file.csv")
     v = UploadValidator(max_size_mb=1)
     res = v.validate_file_upload(path)
     assert res.valid
