@@ -18,6 +18,7 @@ from core.unicode import process_large_csv_content, sanitize_data_frame
 from core.unicode_utils import sanitize_for_utf8
 from services.data_processing.core.protocols import FileProcessorProtocol
 from utils.file_validator import safe_decode_with_unicode_handling
+from utils.protocols import SafeDecoderProtocol
 
 from .base import BaseService
 
@@ -51,10 +52,15 @@ class FileProcessorService(BaseService):
         "skipinitialspace": True,
     }
 
-    def __init__(self, config: ConfigurationServiceProtocol) -> None:
+    def __init__(
+        self,
+        config: ConfigurationServiceProtocol,
+        decoder: SafeDecoderProtocol = safe_decode_with_unicode_handling,
+    ) -> None:
         super().__init__("file_processor")
         self.config = config
         self.max_file_size_mb = config.get_max_upload_size_mb()
+        self._decoder = decoder
 
     def _do_initialize(self) -> None:
         """Initialize file processor"""
@@ -188,7 +194,7 @@ class FileProcessorService(BaseService):
         encoding = detected.get("encoding")
         if encoding:
             try:
-                text = safe_decode_with_unicode_handling(content, encoding)
+                text = self._decoder(content, encoding)
                 if self._is_reasonable_text(text):
                     logger.debug("Decoded content using detected %s", encoding)
                     return text
@@ -197,7 +203,7 @@ class FileProcessorService(BaseService):
 
         for enc in self.ENCODING_PRIORITY:
             try:
-                text = safe_decode_with_unicode_handling(content, enc)
+                text = self._decoder(content, enc)
                 if self._is_reasonable_text(text):
                     logger.debug("Decoded content using %s", enc)
                     return text

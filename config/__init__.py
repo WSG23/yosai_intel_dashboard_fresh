@@ -22,6 +22,7 @@ from .config import (
 )
 from .connection_pool import DatabaseConnectionPool
 from .connection_retry import ConnectionRetryManager, RetryConfig
+from .protocols import ConnectionRetryManagerProtocol, RetryConfigProtocol
 from .constants import CSSConstants, PerformanceConstants, SecurityConstants
 from .database_exceptions import (
     ConnectionRetryExhausted,
@@ -66,6 +67,8 @@ __all__ = [
     "DatabaseConnectionPool",
     "ConnectionRetryManager",
     "RetryConfig",
+    "ConnectionRetryManagerProtocol",
+    "RetryConfigProtocol",
     "UnicodeQueryHandler",
     "UnicodeSQLProcessor",
     "DatabaseError",

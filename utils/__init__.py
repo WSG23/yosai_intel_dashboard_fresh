@@ -24,6 +24,7 @@ from .assets_debug import (
 from .assets_utils import get_nav_icon
 from .preview_utils import serialize_dataframe_preview
 from .mapping_helpers import standardize_column_names, AIColumnMapperAdapter
+from .protocols import SafeDecoderProtocol
 
 __all__ = [
     "UnicodeProcessor",
@@ -46,4 +47,5 @@ __all__ = [
     "serialize_dataframe_preview",
     "standardize_column_names",
     "AIColumnMapperAdapter",
+    "SafeDecoderProtocol",
 ]
