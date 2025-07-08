@@ -19,6 +19,7 @@ if str(stub_dir) not in sys.path:
 
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from pages import file_upload
+from components.upload import UnifiedUploadComponent
 from core.unicode import safe_unicode_encode
 
 
@@ -62,6 +63,7 @@ def test_file_upload_component_integration(_skip_if_no_chromedriver, dash_duo, t
 
     uploaded = file_upload.get_uploaded_filenames()
     assert sorted(uploaded) == sorted(p.name for p in files.values())
+    assert isinstance(file_upload._upload_component, UnifiedUploadComponent)
 
 
 def test_safe_unicode_encode_edge_cases():
