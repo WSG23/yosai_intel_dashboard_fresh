@@ -1,5 +1,7 @@
 import logging
 
+from .decorators import safe_callback
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -28,4 +30,5 @@ __all__ = [
     "PluginAutoConfiguration",
     "EnhancedThreadSafePluginManager",
     "PLUGINS_AVAILABLE",
+    "safe_callback",
 ]
