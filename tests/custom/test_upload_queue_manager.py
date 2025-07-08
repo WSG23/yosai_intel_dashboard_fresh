@@ -5,7 +5,7 @@ from pathlib import Path
 spec = importlib.util.spec_from_file_location(
     "upload_queue_manager",
     str(
-        Path(__file__).resolve().parents[1] / "services/upload/upload_queue_manager.py"
+        Path(__file__).resolve().parents[2] / "services/upload/upload_queue_manager.py"
     ),
 )
 _mod = importlib.util.module_from_spec(spec)
