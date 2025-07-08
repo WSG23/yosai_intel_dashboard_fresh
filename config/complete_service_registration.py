@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict
 
 from core.protocols import (
     ConfigurationProtocol,
@@ -14,7 +13,6 @@ from core.protocols import (
     StorageProtocol,
 )
 from core.service_container import ServiceContainer
-from utils.upload_store import UploadedDataStore
 
 
 def register_all_application_services(container: ServiceContainer) -> None:
@@ -74,34 +72,38 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         protocol=EventBusProtocol,
     )
 
-    # Register file storage service
+    # Register generic file storage service for analytics
+    from core.storage.file_storage import FileStorageService
+
     container.register_singleton(
         "file_storage",
-        UploadedDataStore,
-        factory=lambda c: UploadedDataStore(),
+        FileStorageService,
+        protocol=StorageProtocol,
     )
 
 
 def register_analytics_services(container: ServiceContainer) -> None:
-    # Simple stub analytics service to get app running
     class SimpleAnalyticsService:
         def get_dashboard_summary(self, time_range: str = "30d") -> Dict[str, Any]:
             return {"status": "stub", "message": "Analytics not configured"}
-        
+
         def analyze_access_patterns(self, days: int, user_id: str | None = None) -> Dict[str, Any]:
             return {"status": "stub"}
-        
+
         def detect_anomalies(self, data, sensitivity: float = 0.5):
             return []
-        
+
         def generate_report(self, report_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
             return {"status": "stub"}
-        
+
         def get_user_activity_summary(self, user_id: str, days: int = 30) -> Dict[str, Any]:
             return {"status": "stub"}
-        
+
         def get_facility_statistics(self, facility_id: str | None = None) -> Dict[str, Any]:
             return {"status": "stub"}
+
+        def health_check(self) -> Dict[str, Any]:
+            return {"status": "healthy", "service": "analytics_stub"}
 
     container.register_singleton(
         "analytics_service",
