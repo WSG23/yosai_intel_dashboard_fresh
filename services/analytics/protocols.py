@@ -1,10 +1,13 @@
 """Analytics domain protocol definitions."""
+
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Protocol
-import pandas as pd
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
+
+import pandas as pd
 
 
+@runtime_checkable
 class AnalyticsServiceProtocol(Protocol):
     """Protocol for analytics service operations."""
 
@@ -14,17 +17,23 @@ class AnalyticsServiceProtocol(Protocol):
         ...
 
     @abstractmethod
-    def analyze_access_patterns(self, days: int, user_id: str | None = None) -> Dict[str, Any]:
+    def analyze_access_patterns(
+        self, days: int, user_id: str | None = None
+    ) -> Dict[str, Any]:
         """Analyze access patterns over specified days."""
         ...
 
     @abstractmethod
-    def detect_anomalies(self, data: pd.DataFrame, sensitivity: float = 0.5) -> List[Dict[str, Any]]:
+    def detect_anomalies(
+        self, data: pd.DataFrame, sensitivity: float = 0.5
+    ) -> List[Dict[str, Any]]:
         """Detect anomalies in access data."""
         ...
 
     @abstractmethod
-    def generate_report(self, report_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_report(
+        self, report_type: str, params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Generate analytics report of specified type."""
         ...
 
@@ -39,6 +48,7 @@ class AnalyticsServiceProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class DataProcessorProtocol(Protocol):
     """Protocol for data processing operations."""
 
@@ -48,12 +58,16 @@ class DataProcessorProtocol(Protocol):
         ...
 
     @abstractmethod
-    def clean_data(self, data: pd.DataFrame, rules: Dict[str, Any] | None = None) -> pd.DataFrame:
+    def clean_data(
+        self, data: pd.DataFrame, rules: Dict[str, Any] | None = None
+    ) -> pd.DataFrame:
         """Clean and normalize data."""
         ...
 
     @abstractmethod
-    def aggregate_data(self, data: pd.DataFrame, groupby: List[str], metrics: List[str]) -> pd.DataFrame:
+    def aggregate_data(
+        self, data: pd.DataFrame, groupby: List[str], metrics: List[str]
+    ) -> pd.DataFrame:
         """Aggregate data by specified dimensions."""
         ...
 
@@ -63,16 +77,21 @@ class DataProcessorProtocol(Protocol):
         ...
 
     @abstractmethod
-    def enrich_data(self, data: pd.DataFrame, enrichment_sources: List[str]) -> pd.DataFrame:
+    def enrich_data(
+        self, data: pd.DataFrame, enrichment_sources: List[str]
+    ) -> pd.DataFrame:
         """Enrich data with additional information."""
         ...
 
 
+@runtime_checkable
 class ReportGeneratorProtocol(Protocol):
     """Protocol for report generation."""
 
     @abstractmethod
-    def generate_summary_report(self, data: pd.DataFrame, template: str = "default") -> Dict[str, Any]:
+    def generate_summary_report(
+        self, data: pd.DataFrame, template: str = "default"
+    ) -> Dict[str, Any]:
         """Generate summary report from data."""
         ...
 
@@ -82,16 +101,21 @@ class ReportGeneratorProtocol(Protocol):
         ...
 
     @abstractmethod
-    def generate_trend_analysis(self, data: pd.DataFrame, time_column: str) -> Dict[str, Any]:
+    def generate_trend_analysis(
+        self, data: pd.DataFrame, time_column: str
+    ) -> Dict[str, Any]:
         """Generate trend analysis report."""
         ...
 
     @abstractmethod
-    def export_report(self, report_data: Dict[str, Any], format: str, filename: str) -> str:
+    def export_report(
+        self, report_data: Dict[str, Any], format: str, filename: str
+    ) -> str:
         """Export report to file in specified format."""
         ...
 
 
+@runtime_checkable
 class MetricsCalculatorProtocol(Protocol):
     """Protocol for metrics calculation."""
 
@@ -111,6 +135,8 @@ class MetricsCalculatorProtocol(Protocol):
         ...
 
     @abstractmethod
-    def calculate_trend_metrics(self, data: pd.DataFrame, window: str = "7d") -> Dict[str, Any]:
+    def calculate_trend_metrics(
+        self, data: pd.DataFrame, window: str = "7d"
+    ) -> Dict[str, Any]:
         """Calculate trend metrics over time window."""
         ...

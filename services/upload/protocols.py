@@ -3,6 +3,7 @@
 from abc import abstractmethod
 from typing import (
     Any,
+    Awaitable,
     Callable,
     Dict,
     Iterable,
@@ -11,12 +12,13 @@ from typing import (
     Protocol,
     Tuple,
     Union,
-    Awaitable,
+    runtime_checkable,
 )
 
 import pandas as pd
 
 
+@runtime_checkable
 class UploadProcessingServiceProtocol(Protocol):
     """Protocol for upload processing operations."""
 
@@ -41,6 +43,7 @@ class UploadProcessingServiceProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class UploadValidatorProtocol(Protocol):
     """Protocol for upload validation operations."""
 
@@ -55,6 +58,7 @@ class UploadValidatorProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class FileProcessorProtocol(Protocol):
     """Protocol for processing uploaded file contents."""
 
@@ -76,6 +80,7 @@ class FileProcessorProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class UploadControllerProtocol(Protocol):
     """Protocol for upload controller callbacks."""
 
@@ -94,6 +99,7 @@ class UploadControllerProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class UploadComponentProtocol(Protocol):
     """Protocol for upload UI components."""
 
@@ -113,6 +119,7 @@ class UploadComponentProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class UploadStorageProtocol(Protocol):
     """Protocol for storing uploaded data."""
 
@@ -153,6 +160,7 @@ class UploadStorageProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class UploadAnalyticsProtocol(Protocol):
     """Protocol for analyzing uploaded data."""
 
@@ -167,6 +175,7 @@ class UploadAnalyticsProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class UploadSecurityProtocol(Protocol):
     """Protocol for security validation of uploads."""
 
@@ -181,6 +190,7 @@ class UploadSecurityProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class DeviceLearningServiceProtocol(Protocol):
     """Protocol for persistent device mapping learning."""
 
@@ -204,6 +214,7 @@ class DeviceLearningServiceProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class UploadQueueManagerProtocol(Protocol):
     """Protocol for managing queued uploads."""
 

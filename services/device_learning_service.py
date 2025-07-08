@@ -5,29 +5,31 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Protocol, runtime_checkable
 
-from services.upload.protocols import DeviceLearningServiceProtocol
-from typing import Protocol
 import pandas as pd
 
+from services.upload.protocols import DeviceLearningServiceProtocol
 
+
+@runtime_checkable
 class DeviceServiceProtocol(Protocol):
     """Lightweight interface for device learning services."""
 
-    def get_learned_mappings(self, df: pd.DataFrame, filename: str) -> Dict[str, Dict]:
-        ...
+    def get_learned_mappings(
+        self, df: pd.DataFrame, filename: str
+    ) -> Dict[str, Dict]: ...
 
-    def apply_learned_mappings_to_global_store(self, df: pd.DataFrame, filename: str) -> bool:
-        ...
+    def apply_learned_mappings_to_global_store(
+        self, df: pd.DataFrame, filename: str
+    ) -> bool: ...
 
-    def get_user_device_mappings(self, filename: str) -> Dict[str, Any]:
-        ...
+    def get_user_device_mappings(self, filename: str) -> Dict[str, Any]: ...
 
     def save_user_device_mappings(
         self, df: pd.DataFrame, filename: str, user_mappings: Dict[str, Any]
-    ) -> bool:
-        ...
+    ) -> bool: ...
+
 
 import pandas as pd
 from dash import html
@@ -358,7 +360,6 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
         total = len(words1 | words2)
 
         return overlap / total >= 0.6
-
 
 
 def create_device_learning_service() -> DeviceLearningService:
