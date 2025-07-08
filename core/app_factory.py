@@ -99,7 +99,15 @@ from core.secrets_manager import validate_secrets
 from core.theme_manager import DEFAULT_THEME, apply_theme_settings
 from dash_csrf_plugin import CSRFMode, setup_enhanced_csrf_protection
 from pages import get_page_layout
-from pages.file_upload import layout as upload_layout, register_upload_callbacks
+from pages.file_upload import (
+    layout as upload_layout,
+    register_callbacks as register_upload_callbacks,
+)
+from pages.deep_analytics import (
+    layout as deep_analytics_layout,
+    register_callbacks as register_deep_callbacks,
+    Callbacks as DeepAnalyticsCallbacks,
+)
 from services import get_analytics_service
 from services.analytics_service import AnalyticsService
 from utils.assets_utils import ensure_icon_cache_headers
@@ -818,18 +826,14 @@ def _get_dashboard_page() -> Any:
 def _get_analytics_page() -> Any:
     """Get analytics page with complete integration"""
     try:
-        from pages.deep_analytics.layout import layout
-
-        return layout()
-    except ImportError:
-        logger.exception("Analytics page import failed")
+        return deep_analytics_layout()
     except Exception:
         logger.exception("Analytics page failed to load")
-    return _create_placeholder_page(
-        "📊 Analytics",
-        "Analytics page failed to load",
-        "There was an error loading the analytics page. Check logs for details.",
-    )
+        return _create_placeholder_page(
+            "📊 Analytics",
+            "Analytics page failed to load",
+            "There was an error loading the analytics page. Check logs for details.",
+        )
 
 
 def _get_graphs_page() -> Any:
@@ -886,18 +890,14 @@ def _get_settings_page() -> Any:
 def _get_upload_page() -> Any:
     """Get upload page with complete integration"""
     try:
-        from pages.file_upload import layout as upload_layout
-
         return upload_layout()
-    except ImportError:
-        logger.exception("Upload page import failed")
     except Exception:
         logger.exception("Upload page failed to load")
-    return _create_placeholder_page(
-        "File Upload",
-        "Upload page failed to load",
-        "There was an error loading the upload page. Check logs for details.",
-    )
+        return _create_placeholder_page(
+            "File Upload",
+            "Upload page failed to load",
+            "There was an error loading the upload page. Check logs for details.",
+        )
 
 
 def _register_global_callbacks(manager: TrulyUnifiedCallbacksType) -> None:
@@ -983,12 +983,6 @@ def _register_callbacks(app: "Dash", config_manager: Any) -> None:
                 register_callbacks as register_simple_mapping,
             )
             from components.ui.navbar import register_navbar_callbacks
-            from pages.deep_analytics.callbacks import (
-                Callbacks as DeepAnalyticsCallbacks,
-            )
-            from pages.deep_analytics.callbacks import (
-                register_callbacks as register_deep_callbacks,
-            )
             register_simple_mapping(coordinator)
             register_device_verification(coordinator)
             register_deep_callbacks(coordinator)
