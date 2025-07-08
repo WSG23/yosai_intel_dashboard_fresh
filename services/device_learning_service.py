@@ -340,15 +340,10 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
         return overlap / total >= 0.6
 
 
-_device_learning_service: Optional[DeviceLearningService] = None
 
-
-def get_device_learning_service() -> DeviceLearningService:
-    """Return a singleton instance of :class:`DeviceLearningService`."""
-    global _device_learning_service
-    if _device_learning_service is None:
-        _device_learning_service = DeviceLearningService()
-    return _device_learning_service
+def create_device_learning_service() -> DeviceLearningService:
+    """Factory function for :class:`DeviceLearningService`."""
+    return DeviceLearningService()
 
 
 def create_learning_callbacks(manager: "TrulyUnifiedCallbacks") -> None:

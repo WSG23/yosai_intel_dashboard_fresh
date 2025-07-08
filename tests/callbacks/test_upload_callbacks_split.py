@@ -27,6 +27,7 @@ def test_schedule_upload_task_none(monkeypatch):
 
 def test_schedule_upload_task(monkeypatch):
     cb = _create_core(monkeypatch)
+
     recorded = {}
 
     def fake_create_task(coro):
@@ -44,6 +45,7 @@ def test_schedule_upload_task(monkeypatch):
 def test_schedule_upload_task_returns_non_empty(monkeypatch):
     cb = _create_core(monkeypatch)
 
+
     def fake_create_task(coro):
         if hasattr(coro, "close"):
             coro.close()
@@ -56,6 +58,7 @@ def test_schedule_upload_task_returns_non_empty(monkeypatch):
 
 def test_schedule_upload_task_triggers_event(monkeypatch):
     cb = _create_core(monkeypatch)
+
 
     def fake_create(coro):
         if hasattr(coro, "close"):
@@ -70,6 +73,7 @@ def test_schedule_upload_task_triggers_event(monkeypatch):
 
 def test_schedule_upload_task_error(monkeypatch):
     cb = _create_core(monkeypatch)
+
 
     def boom(coro):
         if hasattr(coro, "close"):
@@ -93,6 +97,7 @@ def test_reset_upload_progress_enabled(monkeypatch):
 
 def test_update_progress_bar(monkeypatch):
     cb = _create_core(monkeypatch)
+
     cb.queue = types.SimpleNamespace(files=[])
     cb.chunked = types.SimpleNamespace(get_progress=lambda _n: 0)
     monkeypatch.setattr("upload_core.get_status", lambda tid: {"progress": 55})
@@ -107,6 +112,7 @@ def test_finalize_upload_results_not_done(monkeypatch):
 
 def test_finalize_upload_results_done(monkeypatch):
     cb = _create_core(monkeypatch)
+
     result = (1, 2, 3, 4, 5, 6, 7)
     monkeypatch.setattr("upload_core.get_status", lambda tid: {"done": True, "result": result})
     called = {}

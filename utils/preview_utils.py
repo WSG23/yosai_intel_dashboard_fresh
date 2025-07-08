@@ -6,17 +6,18 @@ import pandas as pd
 
 from config.config import get_analytics_config
 from config.dynamic_config import dynamic_config
+from core.protocols import ConfigurationProtocol
 from core.unicode_utils import sanitize_for_utf8
 
 
-def _get_max_display_rows() -> int:
+def _get_max_display_rows(config: ConfigurationProtocol = dynamic_config) -> int:
     try:
         return (
             get_analytics_config().max_display_rows
-            or dynamic_config.analytics.max_display_rows
+            or config.analytics.max_display_rows
         )
     except Exception:  # pragma: no cover - fallback path
-        return dynamic_config.analytics.max_display_rows
+        return config.analytics.max_display_rows
 
 logger = logging.getLogger(__name__)
 

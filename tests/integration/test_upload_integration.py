@@ -33,25 +33,6 @@ spec_queue = importlib.util.spec_from_file_location(
 )
 queue_mod = importlib.util.module_from_spec(spec_queue)
 
-class SimpleStore:
-    def __init__(self, path: Path):
-        self.path = Path(path)
-        self.data: dict[str, pd.DataFrame] = {}
-        self.path.mkdir(parents=True, exist_ok=True)
-
-    def add_file(self, name: str, df: pd.DataFrame) -> None:
-        self.data[name] = df
-
-    def load_dataframe(self, name: str) -> pd.DataFrame:
-        return self.data[name]
-
-    def wait_for_pending_saves(self) -> None:
-        pass
-
-upload_store_mod = types.ModuleType("utils.upload_store")
-upload_store_mod.UploadedDataStore = SimpleStore
-sys.modules["utils.upload_store"] = upload_store_mod
-
 class CallbackEvent:
     ANALYSIS_ERROR = "ANALYSIS_ERROR"
 
@@ -87,12 +68,12 @@ ChunkedUploadManager = chunk_mod.ChunkedUploadManager
 
 
 
-def test_resumable_upload_and_error_callback(tmp_path, monkeypatch):
+def test_resumable_upload_and_error_callback(tmp_path, monkeypatch, fake_upload_storage):
     data_file = tmp_path / "sample.csv"
     df = DataFrameBuilder().add_column("a", range(15)).build()
     UploadFileBuilder().with_dataframe(df).write_csv(data_file)
 
-    store = SimpleStore(tmp_path / "store")
+    store = fake_upload_storage
     cmgr = ChunkedUploadManager(store, metadata_dir=tmp_path / "meta", initial_chunk_size=5)
     queue = UploadQueueManager(max_concurrent=1)
     queue.add_files([data_file])

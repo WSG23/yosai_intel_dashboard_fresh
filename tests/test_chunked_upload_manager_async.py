@@ -15,22 +15,22 @@ def _create_csv(path, rows=30):
     return df
 
 
-def test_async_chunked_upload_manager_basic(tmp_path):
+def test_async_chunked_upload_manager_basic(tmp_path, async_runner):
     data_file = tmp_path / "sample.csv"
     df = _create_csv(data_file, rows=25)
     store = UploadedDataStore(storage_dir=tmp_path / "store")
     mgr = ChunkedUploadManager(store, metadata_dir=tmp_path / "meta", initial_chunk_size=10)
 
-    asyncio.run(mgr.upload_file(data_file))
+    async_runner(mgr.upload_file(data_file))
     store.wait_for_pending_saves()
 
-    progress = asyncio.run(mgr.get_upload_progress("sample.csv"))
+    progress = async_runner(mgr.get_upload_progress("sample.csv"))
     assert progress == pytest.approx(1.0)
     saved = store.load_dataframe("sample.csv")
     pd.testing.assert_frame_equal(saved, df)
 
 
-def test_async_chunked_upload_manager_resume(tmp_path, monkeypatch):
+def test_async_chunked_upload_manager_resume(tmp_path, monkeypatch, async_runner):
     data_file = tmp_path / "resume.csv"
     df = _create_csv(data_file, rows=30)
     store = UploadedDataStore(storage_dir=tmp_path / "store")
@@ -50,22 +50,22 @@ def test_async_chunked_upload_manager_resume(tmp_path, monkeypatch):
     from config.connection_retry import ConnectionRetryExhausted
 
     with pytest.raises(ConnectionRetryExhausted):
-        asyncio.run(mgr.upload_file(data_file))
+        async_runner(mgr.upload_file(data_file))
 
-    progress = asyncio.run(mgr.get_upload_progress("resume.csv"))
+    progress = async_runner(mgr.get_upload_progress("resume.csv"))
     assert 0 < progress < 1
 
     monkeypatch.setattr(store, "add_file", original_add_file)
-    asyncio.run(mgr.resume_upload(data_file))
+    async_runner(mgr.resume_upload(data_file))
     store.wait_for_pending_saves()
 
-    progress = asyncio.run(mgr.get_upload_progress("resume.csv"))
+    progress = async_runner(mgr.get_upload_progress("resume.csv"))
     assert progress == pytest.approx(1.0)
     saved = store.load_dataframe("resume.csv")
     pd.testing.assert_frame_equal(saved, df)
 
 
-def test_async_chunked_upload_manager_retry(tmp_path, monkeypatch):
+def test_async_chunked_upload_manager_retry(tmp_path, monkeypatch, async_runner):
     data_file = tmp_path / "retry.csv"
     df = _create_csv(data_file, rows=10)
     store = UploadedDataStore(storage_dir=tmp_path / "store")
@@ -82,10 +82,10 @@ def test_async_chunked_upload_manager_retry(tmp_path, monkeypatch):
         original_add_file(name, chunk_df)
 
     monkeypatch.setattr(store, "add_file", fail_once)
-    asyncio.run(mgr.upload_file(data_file))
+    async_runner(mgr.upload_file(data_file))
     store.wait_for_pending_saves()
 
-    progress = asyncio.run(mgr.get_upload_progress("retry.csv"))
+    progress = async_runner(mgr.get_upload_progress("retry.csv"))
     assert progress == pytest.approx(1.0)
     saved = store.load_dataframe("retry.csv")
     pd.testing.assert_frame_equal(saved, df)

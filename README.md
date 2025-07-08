@@ -20,6 +20,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Model Cards](docs/model_cards.md)
 - [Data Versioning](docs/data_versioning.md)
 - [Data Processing](docs/data_processing.md)
+- [Testing Architecture](docs/test_architecture.md)
 
 Core service protocols live in `services/interfaces.py`. Components obtain
 implementations from the `ServiceContainer` when an explicit instance is not
@@ -246,6 +247,8 @@ pip install -r requirements-dev.txt
 ```
 Detailed instructions are provided in
 [docs/test_setup.md](docs/test_setup.md).
+The overall design of our test protocols and injection approach is
+documented in [docs/test_architecture.md](docs/test_architecture.md).
 
 Run the complete test suite:
 ```bash
@@ -264,6 +267,11 @@ The `tests/` directory contains the integration and unit tests for the
 dashboard. Key entry points include `tests/test_integration.py`,
 `tests/test_analytics_integration.py`, `tests/test_ai_device_generator.py` and
 `tests/test_security_service.py`.
+
+Most asynchronous tests rely on a reusable `async_runner` fixture that
+executes coroutines on a dedicated event loop. If you need to run an async
+function inside a test simply pass `async_runner` and call it with your
+coroutine.
 
 ## 📋 Features
 

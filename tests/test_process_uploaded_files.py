@@ -8,12 +8,13 @@ from utils.upload_store import UploadedDataStore
 from services.device_learning_service import DeviceLearningService
 
 
-def test_multi_part_upload_row_count():
-    df = (
-        DataFrameBuilder()
-        .add_column("A", [1, 2, 3, 4])
-        .add_column("B", ["a", "b", "c", "d"])
-        .build()
+def test_multi_part_upload_row_count(async_runner):
+    df = pd.DataFrame(
+        {
+            "A": [1, 2, 3, 4],
+            "B": ["a", "b", "c", "d"],
+        }
+
     )
     b64 = UploadFileBuilder().with_dataframe(df).as_base64().split(",", 1)[1]
     prefix = "data:text/csv;base64,"
@@ -28,7 +29,7 @@ def test_multi_part_upload_row_count():
     # ensure validator attribute is initialized
     ok, msg = cb.validator.validate("sample.csv", part1)
     assert ok, msg
-    res = asyncio.run(
+    res = async_runner(
         cb.process_uploaded_files([part1, part2], ["sample.csv", "sample.csv"])
     )
     info = res[2]

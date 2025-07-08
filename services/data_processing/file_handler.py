@@ -6,6 +6,7 @@ from typing import Any, Optional, Tuple
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
+from core.protocols import ConfigurationProtocol
 from core.performance import get_performance_monitor
 from core.unicode_processor import process_large_csv_content
 from core.unicode_utils import sanitize_for_utf8
@@ -22,7 +23,10 @@ from upload_types import ValidationResult
 
 
 def process_file_simple(
-    content: bytes, filename: str
+    content: bytes,
+    filename: str,
+    *,
+    config: ConfigurationProtocol = dynamic_config,
 ) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
     """Parse a CSV ``content`` and return a sanitized ``DataFrame``.
 
@@ -38,7 +42,7 @@ def process_file_simple(
 
     try:
         encoding = "utf-8"
-        chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
+        chunk_size = getattr(config.analytics, "chunk_size", 50000)
 
         if len(content) > chunk_size:
             text = process_large_csv_content(content, encoding, chunk_size=chunk_size)
@@ -65,8 +69,13 @@ def process_file_simple(
 class FileHandler:
     """Combine security and basic validation for uploaded files."""
 
-    def __init__(self, max_size_mb: Optional[int] = None) -> None:
-        self.validator = UnifiedFileValidator(max_size_mb)
+    def __init__(
+        self,
+        max_size_mb: Optional[int] = None,
+        config: ConfigurationProtocol = dynamic_config,
+    ) -> None:
+        self.config = config
+        self.validator = UnifiedFileValidator(max_size_mb, config=self.config)
 
     def sanitize_filename(self, filename: str) -> str:
         return self.validator.sanitize_filename(filename)

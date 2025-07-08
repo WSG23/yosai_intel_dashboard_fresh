@@ -14,6 +14,7 @@ import pandas as pd
 
 from config.config import get_analytics_config
 from config.dynamic_config import dynamic_config
+from core.protocols import ConfigurationProtocol
 from core.performance import get_performance_monitor
 from core.unicode_decode import safe_unicode_decode
 
@@ -21,11 +22,11 @@ from core.unicode_decode import safe_unicode_decode
 from core.unicode_utils import sanitize_for_utf8
 
 
-def _get_max_display_rows() -> int:
+def _get_max_display_rows(config: ConfigurationProtocol = dynamic_config) -> int:
     try:
-        return get_analytics_config().max_display_rows or dynamic_config.analytics.max_display_rows
+        return get_analytics_config().max_display_rows or config.analytics.max_display_rows
     except Exception:
-        return dynamic_config.analytics.max_display_rows
+        return config.analytics.max_display_rows
 from core.unicode_processor import safe_format_number
 
 logger = logging.getLogger(__name__)
@@ -63,7 +64,12 @@ class UnicodeFileProcessor:
         result = process_uploaded_file(contents, filename)
         return result["data"], result["error"]
 
-def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
+def process_uploaded_file(
+    contents: str,
+    filename: str,
+    *,
+    config: ConfigurationProtocol = dynamic_config,
+) -> Dict[str, Any]:
     """
     Process uploaded file content safely
     Returns: Dict with 'data', 'filename', 'status', 'error'
@@ -77,7 +83,7 @@ def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
         # Safe Unicode processing
         text_content = UnicodeFileProcessor.safe_decode_content(decoded)
 
-        chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
+        chunk_size = getattr(config.analytics, "chunk_size", 50000)
         monitor = get_performance_monitor()
 
         # Process based on file type

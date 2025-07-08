@@ -80,7 +80,7 @@ def quick_check():
 
     # Check in-memory state if possible
     try:
-        from services.device_learning_service import get_device_learning_service
+        from services.interfaces import get_device_learning_service
 
         service = get_device_learning_service()
         print(f"   In-memory mappings: {len(service.learned_mappings)}")
