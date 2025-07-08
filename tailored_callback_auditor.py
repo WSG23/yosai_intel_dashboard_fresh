@@ -264,9 +264,10 @@ class YourSystemCallbackAuditor:
     
     def _get_decorator_source(self, decorator: ast.AST, lines: List[str]) -> str:
         """Get source code for decorator"""
-        if hasattr(decorator, 'lineno') and decorator.lineno <= len(lines):
+        lineno = getattr(decorator, 'lineno', None)
+        if lineno is not None and lineno <= len(lines):
             # Try to get the full decorator which might span multiple lines
-            start_line = decorator.lineno - 1
+            start_line = lineno - 1
             end_line = start_line
             
             # Find the full decorator by looking for the opening and closing parentheses
