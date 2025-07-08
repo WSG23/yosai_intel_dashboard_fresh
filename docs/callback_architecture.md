@@ -1,9 +1,10 @@
 # Callback Architecture
 
 The dashboard routes events through a unified callback layer. `TrulyUnifiedCallbacks`
-wraps the Dash app and exposes a single `.callback` decorator. This decorator
-behaves like `app.callback` but also registers the function with the internal
-`CallbackManager`.
+wraps the Dash app and exposes a single `.callback` (alias `.unified_callback`)
+decorator. This behaves like `app.callback` but also registers the function with
+the internal callback registry so callbacks can be tracked and grouped by
+namespace.
 
 ## Registering Callbacks
 
@@ -21,3 +22,53 @@ def handle_click(n):
 Plugins can register their own hooks by implementing `register_callbacks(manager, container)`.
 The manager dispatches events defined in `CallbackEvent` so separate modules can
 react to analytics completion, file uploads and security incidents.
+
+## Namespaced Callbacks
+
+Each Dash callback should specify a unique `callback_id` and `component_name`.
+This allows the system to group callbacks by namespace and detect conflicts.
+
+```python
+@callbacks.unified_callback(
+    Output("result", "children"),
+    Input("submit", "n_clicks"),
+    callback_id="submit_query",
+    component_name="search",
+)
+def submit_query(n):
+    return f"Submitted {n} times"
+```
+
+## Handling Events
+
+`CallbackManager` delivers application events outside of Dash callbacks.
+
+```python
+from core.callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
+
+events = CallbackManager()
+
+def on_complete(info: dict) -> None:
+    print("Analysis done", info)
+
+events.register_callback(CallbackEvent.ANALYSIS_COMPLETE, on_complete)
+```
+
+## Grouped Operations
+
+`UnifiedCallbackManager` can execute a series of operations sequentially. This
+is useful when a Dash callback needs to orchestrate multiple steps.
+
+```python
+from core.callbacks import UnifiedCallbackManager
+
+ops = UnifiedCallbackManager()
+ops.register_operation("refresh", load_data)
+ops.register_operation("refresh", update_summary)
+
+@callbacks.unified_callback(Output("out", "children"), Input("btn", "n_clicks"))
+def refresh(btn):
+    results = ops.execute_group("refresh", btn)
+    return str(results[-1])
+```
