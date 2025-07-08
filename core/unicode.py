@@ -11,7 +11,6 @@ from __future__ import annotations
 import logging
 import re
 import unicodedata
-import warnings
 from typing import Any, Callable, Iterable, Optional
 
 import pandas as pd
@@ -209,74 +208,13 @@ def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     return UnicodeProcessor.sanitize_dataframe(df)
 
-
-# ---------------------------------------------------------------------------
-# Deprecation helpers
-
-
-def deprecated(replacement: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    """Decorator to mark legacy helpers as deprecated."""
-
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            warnings.warn(
-                f"{func.__name__} is deprecated; use {replacement}",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
-@deprecated("safe_encode_text")
-def safe_encode(value: Any) -> str:
-    return safe_encode_text(value)
-
-
-@deprecated("safe_decode_bytes")
-def safe_decode(data: bytes, encoding: str = "utf-8") -> str:
-    return safe_decode_bytes(data, encoding)
-
-
-@deprecated("clean_unicode_text")
-def handle_surrogate_characters(text: str) -> str:
-    return UnicodeProcessor.clean_text(text, replacement=UnicodeProcessor.REPLACEMENT_CHAR)
-
-
-@deprecated("clean_unicode_text")
-def clean_unicode_surrogates(text: Any) -> str:
-    return clean_unicode_text(str(text))
-
-
-@deprecated("safe_encode_text")
-def sanitize_unicode_input(text: Any) -> str:
-    return safe_encode_text(text)
-
-
-@deprecated("sanitize_dataframe")
-def sanitize_data_frame(df: pd.DataFrame) -> pd.DataFrame:
-    return sanitize_dataframe(df)
-
-
 __all__ = [
-    # Preferred helpers
     "clean_unicode_text",
     "safe_decode_bytes",
     "safe_encode_text",
     "sanitize_dataframe",
-    # Classes
     "UnicodeProcessor",
     "ChunkedUnicodeProcessor",
-    # Deprecated
-    "safe_encode",
-    "safe_decode",
-    "handle_surrogate_characters",
-    "clean_unicode_surrogates",
-    "sanitize_unicode_input",
     "contains_surrogates",
-    "sanitize_data_frame",
 ]
 
