@@ -16,7 +16,7 @@ def test_clean_dataframe_removes_surrogates():
     assert list(cleaned.iloc[:, 0]) == ["A", "B"]
 
 
-def test_safe_unicode_encode_returns_utf8_without_surrogates():
+def test_safe_encode_text_returns_utf8_without_surrogates():
     text = "X" + chr(0xD800) + "Y"
     bytes_value = text.encode("utf-8", "surrogatepass")
 

@@ -65,7 +65,7 @@ def test_file_upload_component_integration(_skip_if_no_chromedriver, dash_duo, t
     assert isinstance(file_upload._upload_component, UnifiedUploadComponent)
 
 
-def test_safe_unicode_encode_edge_cases():
+def test_safe_encode_text_edge_cases():
     bytes_val = "X".encode("utf-8") + "\ud83d".encode("utf-8", "surrogatepass")
     assert safe_encode_text(bytes_val) == "X"
     assert safe_encode_text("A" + chr(0xD800) + "B") == "AB"

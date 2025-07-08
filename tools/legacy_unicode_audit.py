@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict, List, Set
 
 
-LEGACY_MODULE = "utils.unicode_utils"
+LEGACY_MODULE = "core.unicode_utils"
 LEGACY_FUNCS: Set[str] = {
     "clean_unicode_text",
     "safe_decode_bytes",

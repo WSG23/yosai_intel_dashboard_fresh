@@ -15,7 +15,7 @@ from security.unicode_security_validator import UnicodeSecurityValidator
 from security.validation_exceptions import ValidationError
 
 
-def test_safe_unicode_encode_surrogates():
+def test_safe_encode_text_surrogates():
     text = "A" + chr(0xD800) + "B"
     assert safe_encode_text(text) == "AB"
 
@@ -23,7 +23,7 @@ def test_safe_unicode_encode_surrogates():
     assert safe_encode_text(encoded) == "XY"
 
 
-def test_sanitize_data_frame():
+def test_sanitize_dataframe():
     df = pd.DataFrame({"=bad" + chr(0xDC00): ["=cmd()", "ok" + chr(0xD800)]})
     cleaned = sanitize_dataframe(df)
     assert list(cleaned.columns) == ["bad"]
