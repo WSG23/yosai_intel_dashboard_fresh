@@ -5,12 +5,11 @@ from typing import Any, Dict, List
 import pandas as pd
 
 from services.upload.protocols import UploadStorageProtocol
-from services.interfaces import DeviceLearningServiceProtocol
-from services.upload_data_service import UploadDataServiceProtocol
-from utils.upload_store import UploadStoreProtocol
-from components.column_verification import ColumnVerifierProtocol
-from config.dynamic_config import ConfigurationServiceProtocol
-from core.unicode_processor import UnicodeProcessorProtocol
+from services.interfaces import (
+    DeviceLearningServiceProtocol,
+    UploadDataServiceProtocol,
+)
+
 
 class FakeUploadStore(UploadStorageProtocol):
     def __init__(self) -> None:
@@ -42,6 +41,29 @@ class FakeUploadStore(UploadStorageProtocol):
 
     def wait_for_pending_saves(self) -> None:  # pragma: no cover - no async ops
         pass
+
+
+class FakeUploadDataService(UploadDataServiceProtocol):
+    def __init__(self, store: FakeUploadStore) -> None:
+        self.store = store
+
+    def get_uploaded_data(self) -> Dict[str, pd.DataFrame]:
+        return self.store.get_all_data()
+
+    def get_uploaded_filenames(self) -> List[str]:
+        return self.store.get_filenames()
+
+    def clear_uploaded_data(self) -> None:
+        self.store.clear_all()
+
+    def get_file_info(self) -> Dict[str, Dict[str, Any]]:
+        return self.store.get_file_info()
+
+    def load_dataframe(self, filename: str) -> pd.DataFrame:
+        df = self.store.load_dataframe(filename)
+        if df is None:
+            raise FileNotFoundError(filename)
+        return df
 
 
 class FakeDeviceLearningService(DeviceLearningServiceProtocol):
