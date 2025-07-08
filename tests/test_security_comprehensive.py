@@ -6,18 +6,18 @@ class TestSecurityVulnerabilities:
         import pytest
 
         from core.exceptions import ValidationError
-        from security.sql_validator import SQLInjectionPrevention
+        from core.security_validator import SecurityValidator
 
         malicious_inputs = [
             "'; DROP TABLE users; --",
             "1' OR '1'='1",
             "admin'/**/OR/**/1=1#",
         ]
-        validator = SQLInjectionPrevention()
+        validator = SecurityValidator()
 
         for malicious_input in malicious_inputs:
             with pytest.raises(ValidationError):
-                validator.validate_query_parameter(malicious_input)
+                validator.validate_input(malicious_input, "query_parameter")
 
     def test_unicode_surrogate_handling(self):
         """Test Unicode surrogate character handling."""

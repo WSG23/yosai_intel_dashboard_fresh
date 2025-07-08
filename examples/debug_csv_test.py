@@ -81,14 +81,13 @@ def test_stages(test_df):
     # Stage 3: Test security validation
     print(f"\n🔒 STAGE 3: Security Validation")
     try:
-        from security.dataframe_validator import DataFrameSecurityValidator
+        from core.security_validator import SecurityValidator
 
-        validator = DataFrameSecurityValidator()
-        validated_df = validator.validate_for_upload(cleaned_df)
-        print(f"   After security validation: {len(validated_df):,} rows")
-        if len(validated_df) != len(cleaned_df):
-            print(f"   ⚠️  TRUNCATION DETECTED in security validation!")
-            return validated_df
+        validator = SecurityValidator()
+        csv_bytes = cleaned_df.to_csv(index=False).encode("utf-8")
+        result = validator.validate_file_upload("debug.csv", csv_bytes)
+        print(f"   Validation issues: {result['issues']}")
+        validated_df = cleaned_df
     except Exception as e:
         print(f"   Error in security validation: {e}")
         validated_df = cleaned_df
