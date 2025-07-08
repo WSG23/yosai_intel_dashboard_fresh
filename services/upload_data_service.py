@@ -4,6 +4,26 @@ from typing import Any, Dict, List
 import pandas as pd
 
 from utils.upload_store import uploaded_data_store
+from typing import Protocol
+
+
+class UploadDataServiceProtocol(Protocol):
+    """Abstraction for accessing uploaded data."""
+
+    def get_uploaded_data(self) -> Dict[str, pd.DataFrame]:
+        ...
+
+    def get_uploaded_filenames(self) -> List[str]:
+        ...
+
+    def clear_uploaded_data(self) -> None:
+        ...
+
+    def get_file_info(self) -> Dict[str, Dict[str, Any]]:
+        ...
+
+    def load_dataframe(self, filename: str) -> pd.DataFrame:
+        ...
 
 logger = logging.getLogger(__name__)
 
