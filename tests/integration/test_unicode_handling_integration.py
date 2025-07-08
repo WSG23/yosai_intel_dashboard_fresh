@@ -1,7 +1,10 @@
 import pandas as pd
+import pytest
 
 import core.unicode as handler
 from core.unicode import UnicodeProcessor, sanitize_dataframe
+
+pytestmark = pytest.mark.integration
 
 
 def test_unicode_handler_centralization():
@@ -17,8 +20,8 @@ def test_unicode_handler_centralization():
     assert cleaned_df.iloc[0, 0] == "x"
 
     from security.unicode_security_handler import UnicodeSecurityHandler
+
     assert UnicodeSecurityHandler.sanitize_unicode_input(text) == cleaned
     sec_df = UnicodeSecurityHandler.sanitize_dataframe(df)
     assert list(sec_df.columns) == ["c"]
     assert sec_df.iloc[0, 0] == "x"
-

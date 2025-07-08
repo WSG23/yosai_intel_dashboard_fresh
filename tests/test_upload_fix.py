@@ -1,8 +1,9 @@
-from pathlib import Path
-import sys
 import shutil
+import sys
+from pathlib import Path
 
 import pandas as pd
+import pytest
 
 # Ensure the real Dash package is used even if test stubs are on sys.path
 stub_dir = Path(__file__).resolve().parent / "stubs"
@@ -10,17 +11,19 @@ if str(stub_dir) in sys.path:
     sys.path.remove(str(stub_dir))
 
 import dash
-from dash import dcc, html
 import dash_bootstrap_components as dbc
 import pytest
+from dash import dcc, html
 
 if str(stub_dir) not in sys.path:
     sys.path.insert(0, str(stub_dir))
 
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
-from pages import file_upload
+
+pytestmark = pytest.mark.integration
 from components.upload import UnifiedUploadComponent
 from core.unicode import safe_unicode_encode
+from pages import file_upload
 
 
 @pytest.fixture
@@ -48,7 +51,9 @@ def _create_app() -> dash.Dash:
     return app
 
 
-def test_file_upload_component_integration(_skip_if_no_chromedriver, dash_duo, tmp_path):
+def test_file_upload_component_integration(
+    _skip_if_no_chromedriver, dash_duo, tmp_path
+):
 
     files = create_sample_files(tmp_path)
     app = _create_app()
@@ -58,7 +63,9 @@ def test_file_upload_component_integration(_skip_if_no_chromedriver, dash_duo, t
     to_send = "\n".join(str(p) for p in files.values())
     file_input.send_keys(to_send)
 
-    dash_duo.wait_for_text_to_contain("#upload-results", "Successfully uploaded", timeout=10)
+    dash_duo.wait_for_text_to_contain(
+        "#upload-results", "Successfully uploaded", timeout=10
+    )
     dash_duo.wait_for_text_to_equal("#upload-progress", "100%", timeout=10)
 
     uploaded = file_upload.get_uploaded_filenames()

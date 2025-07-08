@@ -1,8 +1,11 @@
 import dash
 import dash_bootstrap_components as dbc
-from dash import html, dcc, Output, Input
+import pytest
+from dash import Input, Output, dcc, html
 
-from core.theme_manager import apply_theme_settings, sanitize_theme, DEFAULT_THEME
+from core.theme_manager import DEFAULT_THEME, apply_theme_settings, sanitize_theme
+
+pytestmark = pytest.mark.integration
 
 
 def create_theme_app():
@@ -47,9 +50,13 @@ def test_theme_persistence_on_reload(dash_duo):
     assert dropdown.get_attribute("value") == DEFAULT_THEME
 
     dash_duo.select_dcc_dropdown("#theme-dropdown", "light")
-    dash_duo.wait_for(lambda: "light-mode" in dash_duo.find_element("html").get_attribute("class"))
+    dash_duo.wait_for(
+        lambda: "light-mode" in dash_duo.find_element("html").get_attribute("class")
+    )
 
     dash_duo.driver.refresh()
-    dash_duo.wait_for(lambda: "light-mode" in dash_duo.find_element("html").get_attribute("class"))
+    dash_duo.wait_for(
+        lambda: "light-mode" in dash_duo.find_element("html").get_attribute("class")
+    )
     dropdown = dash_duo.find_element("#theme-dropdown")
     assert dropdown.get_attribute("value") == "light"

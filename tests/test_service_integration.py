@@ -1,7 +1,10 @@
-import pytest
+import pathlib
 import sys
 import types
-import pathlib
+
+import pytest
+
+pytestmark = pytest.mark.integration
 
 dash_mod = types.ModuleType("dash")
 dash_dash_mod = types.ModuleType("dash.dash")
@@ -21,6 +24,7 @@ from core.protocols import AnalyticsServiceProtocol
 
 analytics_stub = types.ModuleType("services.analytics_service")
 
+
 class StubAnalyticsService(AnalyticsServiceProtocol):
     def get_dashboard_summary(self):
         return {}
@@ -34,17 +38,22 @@ class StubAnalyticsService(AnalyticsServiceProtocol):
     def generate_report(self, report_type: str, params: dict):
         return {}
 
+
 analytics_stub.AnalyticsService = StubAnalyticsService
 sys.modules.setdefault("services.analytics_service", analytics_stub)
 
 upload_reg_stub = types.ModuleType("services.upload.service_registration")
+
+
 def _register_upload_services(container):
     container.register_singleton("upload_processor", object)
+
+
 upload_reg_stub.register_upload_services = _register_upload_services
 sys.modules.setdefault("services.upload.service_registration", upload_reg_stub)
 
-from core.service_container import ServiceContainer
 from config.complete_service_registration import register_all_services
+from core.service_container import ServiceContainer
 
 
 class TestServiceIntegration:

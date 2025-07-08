@@ -1,4 +1,8 @@
+import pytest
+
 from core.secrets_manager import SecretsManager
+
+pytestmark = pytest.mark.integration
 
 
 def test_env_overrides_docker(tmp_path, monkeypatch):

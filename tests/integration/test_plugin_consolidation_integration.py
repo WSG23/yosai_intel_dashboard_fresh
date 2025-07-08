@@ -1,6 +1,9 @@
 import sys
 
+import pytest
 from dash import Dash, html
+
+pytestmark = pytest.mark.integration
 
 from config.config import ConfigManager
 from core.container import Container as DIContainer

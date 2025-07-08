@@ -5,6 +5,7 @@ import logging
 import socket
 import sys
 import types
+from typing import Protocol
 
 import pytest
 
@@ -24,7 +25,13 @@ def setup_auth(monkeypatch):
     return module
 
 
-class FakeResp(io.BytesIO):
+class ResponseProtocol(Protocol):
+    def __enter__(self): ...
+
+    def __exit__(self, exc_type, exc, tb): ...
+
+
+class FakeResp(io.BytesIO, ResponseProtocol):
     def __enter__(self):
         return self
 

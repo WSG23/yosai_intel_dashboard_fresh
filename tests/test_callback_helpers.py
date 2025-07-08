@@ -1,4 +1,5 @@
 import types
+from typing import Protocol
 
 import dash_bootstrap_components as dbc
 import pytest
@@ -34,7 +35,10 @@ def test_run_service_analysis_error(monkeypatch):
 
 
 def test_run_unique_patterns_analysis(monkeypatch):
-    class FakeService:
+    class AnalyticsProtocol(Protocol):
+        def get_unique_patterns_analysis(self, data_source): ...
+
+    class FakeService(AnalyticsProtocol):
         def get_unique_patterns_analysis(self, data_source):
             return {
                 "status": "success",
@@ -89,7 +93,7 @@ def test_run_unique_patterns_analysis(monkeypatch):
 
 
 def test_run_unique_patterns_analysis_no_data(monkeypatch):
-    class FakeService:
+    class FakeService(AnalyticsProtocol):
         def get_unique_patterns_analysis(self, data_source):
             return {"status": "no_data"}
 

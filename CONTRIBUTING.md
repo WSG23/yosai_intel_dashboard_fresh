@@ -31,3 +31,12 @@ bandit -r .
 Run `isort .` to automatically sort imports before committing changes.
 
 Please ensure tests and linters pass before opening a pull request.
+
+## Test Guidelines
+
+* **Unit tests** should rely on protocol-based fakes for all dependencies. This
+  keeps them fast and ensures the test only depends on behaviour defined in a
+  `Protocol`.
+* **Integration and E2E tests** may use real services such as the database or a
+  running web server. Mark these tests with `@pytest.mark.integration` so they
+  can be selected with `-m integration` or skipped when running only unit tests.

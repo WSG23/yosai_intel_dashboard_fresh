@@ -4,6 +4,8 @@ import pandas as pd
 import pytest
 
 from core.callback_events import CallbackEvent
+
+pytestmark = pytest.mark.integration
 from core.callback_manager import CallbackManager
 
 

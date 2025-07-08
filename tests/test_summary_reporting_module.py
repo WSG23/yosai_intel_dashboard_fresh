@@ -1,7 +1,13 @@
+from typing import Protocol
+
 from services.summary_reporting import SummaryReporter
 
 
-class FakeDB:
+class DBProtocol(Protocol):
+    def health_check(self) -> bool: ...
+
+
+class FakeDB(DBProtocol):
     def __init__(self, healthy=True):
         self.healthy = healthy
 

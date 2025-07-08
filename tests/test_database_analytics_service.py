@@ -1,7 +1,13 @@
+from typing import Protocol
+
 from services.database_analytics_service import DatabaseAnalyticsService
 
 
-class FakeConnection:
+class ConnectionProtocol(Protocol):
+    def execute_query(self, query, params=None): ...
+
+
+class FakeConnection(ConnectionProtocol):
     def execute_query(self, query, params=None):
         if "GROUP BY event_type, status" in query:
             return [
@@ -21,7 +27,11 @@ class FakeConnection:
         return []
 
 
-class FakeDBManager:
+class DBManagerProtocol(Protocol):
+    def get_connection(self) -> ConnectionProtocol: ...
+
+
+class FakeDBManager(DBManagerProtocol):
     def get_connection(self):
         return FakeConnection()
 

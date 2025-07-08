@@ -1,10 +1,13 @@
 import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
+import pytest
 from dash import dcc, html
 
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from pages import file_upload
+
+pytestmark = pytest.mark.integration
 
 
 def _create_upload_app():

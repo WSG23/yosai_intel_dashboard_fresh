@@ -1,9 +1,12 @@
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
-from security.unicode_security_handler import UnicodeSecurityHandler
 from core.unicode_processor import safe_unicode_encode
+from security.unicode_security_handler import UnicodeSecurityHandler
+
+pytestmark = pytest.mark.integration
 
 
 class SimpleStore:

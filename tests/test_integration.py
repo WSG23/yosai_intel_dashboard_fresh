@@ -1,8 +1,11 @@
 """Integration tests for modular AI components."""
 
 import pandas as pd
+import pytest
 
 from services.ai_device_generator import AIDeviceGenerator
+
+pytestmark = pytest.mark.integration
 from services.consolidated_learning_service import get_learning_service
 
 

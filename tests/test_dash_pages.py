@@ -9,6 +9,8 @@ import pytest
 from dash import dcc, html
 
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+
+pytestmark = pytest.mark.integration
 from pages import file_upload
 from pages.deep_analytics import layout as analytics_layout
 from pages.deep_analytics import register_callbacks as register_analytics_callbacks

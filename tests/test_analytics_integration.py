@@ -6,6 +6,8 @@ import pandas as pd
 import pytest
 
 from models import ModelFactory
+
+pytestmark = pytest.mark.integration
 from services import create_analytics_service, get_analytics_service
 
 
