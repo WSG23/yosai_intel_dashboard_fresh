@@ -43,6 +43,8 @@ def __getattr__(name: str):
         globals()[name] = _tuc
         return _tuc
     if name == "MasterCallbackSystem":
+        # MasterCallbackSystem now wraps TrulyUnifiedCallbacks for
+        # backward compatibility.
         from .master_callback_system import MasterCallbackSystem as _mcs
 
         globals()[name] = _mcs
