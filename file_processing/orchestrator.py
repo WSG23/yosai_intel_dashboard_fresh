@@ -7,7 +7,7 @@ from prefect import Flow, Parameter, task
 from file_processing.format_detector import FormatDetector, UnsupportedFormatError
 from file_processing.data_processor import DataProcessor
 from file_processing.exporter import export_to_csv, export_to_json, ExportError
-from callbacks.controller import CallbackController
+from core.callback_controller import CallbackController
 
 
 @task
