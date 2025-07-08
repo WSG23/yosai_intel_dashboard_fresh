@@ -1,4 +1,5 @@
 """Advanced dependency injection container with protocol support."""
+
 from __future__ import annotations
 
 import inspect
@@ -48,13 +49,42 @@ class ServiceContainer:
         self._current_scope: str = "default"
 
     # ------------------------------------------------------------------
+    def register(
+        self,
+        service_key: str,
+        instance: Any,
+        *,
+        protocol: Optional[Type[Protocol]] = None,
+    ) -> "ServiceContainer":
+        """Compatibility helper mirroring :class:`DIContainer.register`."""
+        self._services[service_key] = ServiceRegistration(
+            service_type=type(instance),
+            implementation=instance,
+            protocol=protocol,
+            lifetime=ServiceLifetime.SINGLETON,
+            factory=None,
+            dependencies=[],
+        )
+        self._instances[service_key] = instance
+        self._type_map[type(instance)] = service_key
+        if protocol:
+            self._type_map[protocol] = service_key
+        return self
+
+    # ------------------------------------------------------------------
+    def has(self, service_key: str) -> bool:
+        """Return ``True`` if *service_key* is registered."""
+        return service_key in self._services
+
+    # ------------------------------------------------------------------
     def register_singleton(
         self,
         service_key: str,
-        implementation: Union[Type, Callable],
+        implementation: Any,
         protocol: Optional[Type[Protocol]] = None,
         factory: Optional[Callable] = None,
     ) -> "ServiceContainer":
+        """Register a singleton implementation or instance."""
         return self._register_service(
             service_key, implementation, protocol, ServiceLifetime.SINGLETON, factory
         )
@@ -62,7 +92,7 @@ class ServiceContainer:
     def register_transient(
         self,
         service_key: str,
-        implementation: Union[Type, Callable],
+        implementation: Any,
         protocol: Optional[Type[Protocol]] = None,
         factory: Optional[Callable] = None,
     ) -> "ServiceContainer":
@@ -73,7 +103,7 @@ class ServiceContainer:
     def register_scoped(
         self,
         service_key: str,
-        implementation: Union[Type, Callable],
+        implementation: Any,
         protocol: Optional[Type[Protocol]] = None,
         factory: Optional[Callable] = None,
     ) -> "ServiceContainer":
@@ -85,14 +115,18 @@ class ServiceContainer:
     def _register_service(
         self,
         service_key: str,
-        implementation: Union[Type, Callable],
+        implementation: Any,
         protocol: Optional[Type[Protocol]],
         lifetime: ServiceLifetime,
         factory: Optional[Callable],
     ) -> "ServiceContainer":
         deps = self._analyze_dependencies(implementation)
         reg = ServiceRegistration(
-            service_type=implementation if inspect.isclass(implementation) else type(implementation),
+            service_type=(
+                implementation
+                if inspect.isclass(implementation)
+                else type(implementation)
+            ),
             implementation=implementation,
             protocol=protocol,
             lifetime=lifetime,
@@ -106,7 +140,7 @@ class ServiceContainer:
         return self
 
     # ------------------------------------------------------------------
-    def _analyze_dependencies(self, implementation: Union[Type, Callable]) -> List[tuple[str, Type]]:
+    def _analyze_dependencies(self, implementation: Any) -> List[tuple[str, Type]]:
         if not inspect.isclass(implementation):
             return []
         sig = inspect.signature(implementation.__init__)
@@ -142,18 +176,24 @@ class ServiceContainer:
         else:  # pragma: no cover - defensive
             raise DependencyInjectionError("Unknown service lifetime")
 
-    def _get_singleton(self, key: str, reg: ServiceRegistration, proto: Optional[Type]) -> Any:
+    def _get_singleton(
+        self, key: str, reg: ServiceRegistration, proto: Optional[Type]
+    ) -> Any:
         if key not in self._instances:
             self._instances[key] = self._create_instance(key, reg, proto)
         return self._instances[key]
 
-    def _get_scoped(self, key: str, reg: ServiceRegistration, proto: Optional[Type]) -> Any:
+    def _get_scoped(
+        self, key: str, reg: ServiceRegistration, proto: Optional[Type]
+    ) -> Any:
         scope = self._scoped_instances.setdefault(self._current_scope, {})
         if key not in scope:
             scope[key] = self._create_instance(key, reg, proto)
         return scope[key]
 
-    def _create_instance(self, key: str, reg: ServiceRegistration, proto: Optional[Type]) -> Any:
+    def _create_instance(
+        self, key: str, reg: ServiceRegistration, proto: Optional[Type]
+    ) -> Any:
         self._resolution_stack.append(key)
         try:
             if reg.factory:
@@ -193,7 +233,9 @@ class ServiceContainer:
         return None
 
     # ------------------------------------------------------------------
-    def register_health_check(self, service_key: str, check: Callable[[Any], bool]) -> None:
+    def register_health_check(
+        self, service_key: str, check: Callable[[Any], bool]
+    ) -> None:
         self._health_checks[service_key] = check
 
     def check_health(self) -> Dict[str, bool]:
