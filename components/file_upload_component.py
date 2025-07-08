@@ -22,55 +22,27 @@ class FileUploadComponent:
                         dbc.Col(
                             dbc.Card(
                                 [
-                                    dbc.CardHeader(
-                                        [html.H5("Upload Data Files", className="mb-0")]
-                                    ),
-                                    dbc.CardBody([DragDropUploadArea()]),
+                                    dbc.CardHeader([
+                                        html.H5("Upload Data Files", className="mb-0")
+                                    ]),
+                                    dbc.CardBody([DragDropUploadArea("file-uploader")]),
                                 ]
                             )
                         )
                     ]
                 ),
-                dbc.Row([dbc.Col(html.Div(id="upload-results"))], className="mb-4"),
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            [
-                                dbc.Progress(
-                                    id="upload-progress",
-                                    value=0,
-                                    label="0%",
-                                    striped=True,
-                                    animated=True,
-                                ),
-                                html.Ul(
-                                    id="file-progress-list",
-                                    className="list-unstyled mt-2",
-                                ),
-                            ]
-                        )
-                    ],
-                    className="mb-3",
-                ),
-                dbc.Button("", id="progress-done-trigger", className="hidden"),
-                html.Div(id="sse-trigger", style={"display": "none"}),
-                dbc.Row([dbc.Col(html.Div(id="file-preview"))]),
-                dbc.Row([dbc.Col(html.Div(id="upload-nav"))]),
-                html.Div(id="toast-container"),
-                html.Div(
-                    [
-                        dbc.Button(
-                            "", id="verify-columns-btn-simple", className="hidden"
-                        ),
-                        dbc.Button("", id="classify-devices-btn", className="hidden"),
-                    ],
-                    className="hidden",
-                ),
+                dbc.Row([dbc.Col(dbc.Progress(id="upload-progress", value=0, label="0%", striped=True, animated=True)),], className="mb-2"),
+                dbc.Row([dbc.Col(html.Ul(id="file-progress-list", className="list-unstyled"))]),
+                dbc.Button("", id="progress-done-trigger", className="visually-hidden"),
+                html.Div(id="preview-area"),
+                dbc.Button("Next", id="to-column-map-btn", color="primary", className="mt-2", disabled=True),
+                dcc.Store(id="uploaded-df-store"),
                 dcc.Store(id="file-info-store", data={}),
                 dcc.Store(id="current-file-info-store"),
                 dcc.Store(id="current-session-id", data="session_123"),
                 dcc.Store(id="upload-task-id"),
                 dcc.Store(id="client-validation-store", data=[]),
+                dcc.Interval(id="upload-progress-interval", interval=1000, disabled=True),
                 dbc.Modal(
                     [
                         dbc.ModalHeader(dbc.ModalTitle("Column Mapping")),
