@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Tuple
 import dash_bootstrap_components as dbc
 from dash import html, no_update
 
+from services.interfaces import get_device_learning_service
 from services.task_queue import clear_task, create_task, get_status
 from services.upload import (
     AISuggestionService,

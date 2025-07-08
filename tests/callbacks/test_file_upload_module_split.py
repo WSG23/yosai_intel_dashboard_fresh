@@ -38,8 +38,8 @@ from tests.fake_configuration import FakeConfiguration
 
 container.register('config', FakeConfiguration(), protocol=ConfigurationProtocol)
 
-sys.modules['services.device_learning_service'] = types.ModuleType('services.device_learning_service')
-sys.modules['services.device_learning_service'].get_device_learning_service = lambda: None
+sys.modules['services.interfaces'] = importlib.import_module('services.interfaces')
+sys.modules['services.interfaces'].get_device_learning_service = lambda: None
 
 uds_mod = types.ModuleType('utils.upload_store')
 uds_mod.uploaded_data_store = object()
