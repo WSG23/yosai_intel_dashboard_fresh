@@ -51,6 +51,6 @@ def handle_unified(target: Any, *cb_args: Any, **cb_kwargs: Any) -> Callable:
 
     return CallbackUnifier(target, safe_callback(target))(*cb_args, **cb_kwargs)
 
-  __all__ = ["handle_safe", "handle_unified", "safe_callback"]
+__all__ = ["handle_safe", "handle_unified", "safe_callback"]
 
 
