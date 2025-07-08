@@ -4,8 +4,12 @@ Simple runner for the focused dashboard callback audit
 This avoids the 41k file issue by targeting only your dashboard directories
 """
 
+from tailored_callback_auditor import (
+    YourSystemCallbackAuditor as FocusedDashboardAuditor,
+)
+
+
 if __name__ == "__main__":
-    from focused_dashboard_auditor import FocusedDashboardAuditor
     
     print("🎯 RUNNING FOCUSED DASHBOARD CALLBACK AUDIT")
     print("Targeting: core/, pages/, components/, services/, analytics/, plugins/")
