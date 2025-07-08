@@ -32,6 +32,7 @@ from .unicode_processor import sanitize_unicode_input
 
 if TYPE_CHECKING:  # pragma: no cover - avoid circular import at runtime
     from .truly_unified_callbacks import TrulyUnifiedCallbacks
+    from .master_callback_system import MasterCallbackSystem
 
 
 def __getattr__(name: str):
@@ -41,6 +42,11 @@ def __getattr__(name: str):
 
         globals()[name] = _tuc
         return _tuc
+    if name == "MasterCallbackSystem":
+        from .master_callback_system import MasterCallbackSystem as _mcs
+
+        globals()[name] = _mcs
+        return _mcs
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 __all__ = [
@@ -48,6 +54,7 @@ __all__ = [
     "profile_callback",
     "sanitize_unicode_input",
     "TrulyUnifiedCallbacks",
+    "MasterCallbackSystem",
     "UnicodeTextProcessor",
     "UnicodeSQLProcessor",
     "UnicodeSecurityProcessor",

@@ -9,6 +9,8 @@ from abc import abstractmethod
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Protocol, runtime_checkable
 
+from .callback_events import CallbackEvent
+
 import pandas as pd
 
 
@@ -355,4 +357,32 @@ class CacheProtocol(Protocol):
     @abstractmethod
     def exists(self, key: str) -> bool:
         """Check if key exists in cache."""
+        ...
+
+@runtime_checkable
+class CallbackSystemProtocol(Protocol):
+    """Protocol for the unified callback system."""
+
+    @abstractmethod
+    def register_event_callback(
+        self,
+        event: CallbackEvent,
+        func: Callable[..., Any],
+        *,
+        priority: int = 50,
+        secure: bool = False,
+        timeout: Optional[float] = None,
+        retries: int = 0,
+    ) -> None:
+        """Register a callback for an event."""
+        ...
+
+    @abstractmethod
+    def trigger_event(self, event: CallbackEvent, *args: Any, **kwargs: Any) -> List[Any]:
+        """Synchronously trigger callbacks for an event."""
+        ...
+
+    @abstractmethod
+    async def trigger_event_async(self, event: CallbackEvent, *args: Any, **kwargs: Any) -> List[Any]:
+        """Asynchronously trigger callbacks for an event."""
         ...
