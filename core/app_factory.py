@@ -190,15 +190,15 @@ def _create_full_app() -> "Dash":
     """Create complete Dash application with full integration"""
     try:
         service_container = ServiceContainer()
-        service_container.register_factory("config", get_config)
-        analytics_service_func = cast(
-            Callable[[], AnalyticsService], get_analytics_service
-        )
-        service_container.register_factory(
-            "analytics_service",
-            analytics_service_func,
-        )
-        config_manager = service_container.get("config")
+        from config.complete_service_registration import register_all_services
+
+        register_all_services(service_container)
+
+        validation = service_container.validate_registrations()
+        if any(validation[key] for key in ["missing_dependencies", "protocol_violations", "circular_dependencies"]):
+            raise RuntimeError(f"Service registration failed: {validation}")
+
+        config_manager = service_container.get("config_manager")
         analytics_service = service_container.get("analytics_service")
         try:
             health = analytics_service.health_check()
@@ -1016,8 +1016,8 @@ def _initialize_services(container: Optional[ServiceContainer] = None) -> None:
         health = analytics_service.health_check()
         logger.info(f"Analytics service initialized: {health}")
 
-        if container.has("config"):
-            config = container.get("config")
+        if container.has("config_manager"):
+            config = container.get("config_manager")
         else:
             config = get_config()
 

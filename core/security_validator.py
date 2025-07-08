@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List
 
+from core.protocols import SecurityServiceProtocol
+
 from config.constants import FileProcessingLimits
 from core.exceptions import ValidationError
 from security.sql_validator import SQLInjectionPrevention
@@ -39,8 +41,8 @@ class SecurityIssue:
     recommendation: str
 
 
-class SecurityValidator:
-    """Comprehensive security validator"""
+class SecurityValidator(SecurityServiceProtocol):
+    """Comprehensive security validator implementing ``SecurityServiceProtocol``."""
 
     VALIDATION_CONFIG = {
         "sql_injection": True,
@@ -263,6 +265,17 @@ class SecurityValidator:
             "filename": filename,
             "size_mb": size_mb,
         }
+
+    # ------------------------------------------------------------------
+    def sanitize_output(self, content: str) -> str:
+        """Sanitize content for safe output."""
+        return sanitize_unicode_input(content)
+
+    # ------------------------------------------------------------------
+    def check_permissions(self, user_id: str, resource: str, action: str) -> bool:
+        """Placeholder permission check always allowing access."""
+        # Real implementation would query permission store
+        return True
 
 
 __all__ = ["SecurityValidator", "SecurityIssue", "SecurityLevel"]
