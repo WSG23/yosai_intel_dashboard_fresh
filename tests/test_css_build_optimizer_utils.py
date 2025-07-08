@@ -1,20 +1,37 @@
 import json
+import importlib.util
+import sys
+import types
 from pathlib import Path
 
 import pytest
 
-from models.css_build_optimizer import (
-    PathValidationError,
-    ensure_output_directory,
-    generate_css_report_safe,
-    safe_path_conversion,
-    validate_css_directory,
+# Avoid heavy service imports when loading the module under test
+services_mod = types.ModuleType("services")
+registry_mod = types.ModuleType("services.registry")
+registry_mod.get_service = lambda name: None
+services_mod.registry = registry_mod
+sys.modules.setdefault("services", services_mod)
+sys.modules.setdefault("services.registry", registry_mod)
+
+spec = importlib.util.spec_from_file_location(
+    "css_build_optimizer",
+    Path(__file__).resolve().parents[1] / "models" / "css_build_optimizer.py",
 )
+css_build_optimizer = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(css_build_optimizer)
+
+PathValidationError = css_build_optimizer.PathValidationError
+ensure_output_directory = css_build_optimizer.ensure_output_directory
+generate_css_report_safe = css_build_optimizer.generate_css_report_safe
+safe_path_conversion = css_build_optimizer.safe_path_conversion
+validate_css_directory = css_build_optimizer.validate_css_directory
 
 
 def test_validate_css_directory_success(tmp_path):
     result = validate_css_directory(tmp_path)
-    assert isinstance(result, Path)
+    assert result == tmp_path
+    assert result.exists() and result.is_dir()
 
 
 def test_validate_css_directory_failure(tmp_path):
@@ -34,6 +51,22 @@ def test_safe_path_conversion(tmp_path):
     p = tmp_path / "file.txt"
     assert safe_path_conversion(p) == str(p)
     assert safe_path_conversion(str(p)) == str(p)
+
+    class BadPath:
+        def __init__(self):
+            self.called = False
+
+        def __str__(self):
+            if not self.called:
+                self.called = True
+                raise ValueError("boom")
+            return "bad"
+
+    with pytest.raises(PathValidationError):
+        safe_path_conversion(BadPath())
+
+    windows_path = Path("C:\\path\\to\\file.txt")
+    assert safe_path_conversion(windows_path) == str(windows_path)
 
 
 def test_generate_css_report_safe(tmp_path):
