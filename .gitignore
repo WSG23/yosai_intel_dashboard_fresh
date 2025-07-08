@@ -26,28 +26,22 @@ wheels/
 venv/
 env/
 ENV/
-
 # Environment Variables
 .env
 .env.local
 .env.production
-
 # SECRET_KEY=your-secret-key-here
 AUTH0_CLIENT_ID=your-client-id
 AUTH0_CLIENT_SECRET=your-client-secret
 AUTH0_DOMAIN=your-domain.auth0.com
 AUTH0_AUDIENCE=your-api-audience
-
-
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-
 # Dash
 assets/.webassets-cache
-
 # Data
 data/uploads/*
 !data/uploads/.gitkeep
@@ -57,39 +51,30 @@ data/learned_mappings.json
 *.json
 !package.json
 logs/
-
 # Temporary uploaded files
 temp/
-
 # Database
 *.db
 *.sqlite3
-
 # Cache
 .cache/
 .pytest_cache/
-
 # Coverage
 htmlcov/
 .coverage
 .coverage.*
 coverage.xml
-
 # Documentation
 docs/_build/
-
 # Mac
 .DS_Store
-
 # Windows
 Thumbs.db
 ehthumbs.db
 Desktop.ini
-
 # Backup files
 *.backup
 *.bak
-
 # Secret files (auto-added)
 .env.development
 .env.staging
@@ -98,25 +83,18 @@ secrets/*
 !secrets/
 !secrets/*.txt
 !secrets/README.md
-
 # Training data
 data/training/
 .venv/
-
 # Node
 node_modules/
-
 # Exclude raw CSS partials but keep the compiled bundle
 assets/css/*
 !assets/dist/main.css
 !assets/dist/main.min.css
 !assets/dist/main.min.css.map
-
 # Compiled translations
 translations/**/*.mo
 cache/
-venv/
 venv
-*.pyc
-__pycache__/
 venv_dashboard/
