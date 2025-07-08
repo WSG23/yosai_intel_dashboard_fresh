@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 from typing import Dict, List, Set
 
+from tools.robust_file_reader import safe_read_text
+
 
 LEGACY_MODULE = "core.unicode_utils"
 LEGACY_FUNCS: Set[str] = {
@@ -36,7 +38,7 @@ class LegacyUnicodeAudit:
 
     def scan_path(self, path: Path) -> None:
         try:
-            tree = ast.parse(path.read_text())
+            tree = ast.parse(safe_read_text(path))
         except Exception:
             return
         for node in ast.walk(tree):
