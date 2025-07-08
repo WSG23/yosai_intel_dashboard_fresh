@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from tools.robust_file_reader import safe_read_text
+
 
 class StubModuleVisitor(ast.NodeVisitor):
     def __init__(self) -> None:
@@ -170,7 +172,7 @@ def scan_tests(root: Path) -> Dict[str, Dict[str, Dict[str, object]]]:
     visitor = StubModuleVisitor()
     for path in root.rglob("*.py"):
         try:
-            tree = ast.parse(path.read_text())
+            tree = ast.parse(safe_read_text(path))
         except Exception:
             continue
         visitor.visit(tree)
