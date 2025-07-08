@@ -1,6 +1,7 @@
-from typing import Any, Awaitable, Callable, Dict, Protocol
+from typing import Any, Awaitable, Callable, Dict, Protocol, runtime_checkable
 
 
+@runtime_checkable
 class TaskQueueProtocol(Protocol):
     """Protocol for async task management."""
 
