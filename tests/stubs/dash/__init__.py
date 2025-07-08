@@ -14,6 +14,7 @@ from . import html
 from . import dcc
 from . import dependencies
 from . import _callback
+no_update = None
 
 
 __all__ = [

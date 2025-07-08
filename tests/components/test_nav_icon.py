@@ -1,20 +1,8 @@
 import pytest
 from dash import html
-import sys
-import types
 
 from components.ui.navbar import _nav_icon
 from tests.fake_navbar_factory import FakeNavbarFactory
-
-pytestmark = pytest.mark.usefixtures("fake_dash")
-
-if "core.unicode_processor" not in sys.modules:
-    stub = types.ModuleType("core.unicode_processor")
-    class Dummy:
-        pass
-    stub.DefaultUnicodeProcessor = Dummy
-    sys.modules["core.unicode_processor"] = stub
-
 
 factory = FakeNavbarFactory()
 

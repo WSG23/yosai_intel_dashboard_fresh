@@ -34,6 +34,8 @@ def safe_encode_text(value):
 def sanitize_dataframe(df):
     return df
 
+sanitize_data_frame = sanitize_dataframe
+
 
 def contains_surrogates(text: str) -> bool:
     return False
@@ -53,3 +55,6 @@ def object_count(obj):
 
 def safe_unicode_encode(value):
     return str(value)
+
+def sanitize_unicode_input(text: str) -> str:
+    return text

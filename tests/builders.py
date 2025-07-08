@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import pathlib
-import sys
-import types
+import os
 
 from typing import Any, Dict
 
 import pandas as pd
 
 from config.complete_service_registration import register_all_services
-from core.protocols import AnalyticsServiceProtocol
 from core.service_container import ServiceContainer
+from core.protocols import UnicodeProcessorProtocol
+from services.upload.protocols import UploadStorageProtocol
+from tests.test_doubles import InMemoryUploadStore, SimpleUnicodeProcessor
 
 
 class TestContainerBuilder:
@@ -21,43 +21,6 @@ class TestContainerBuilder:
         self._container = ServiceContainer()
 
     # ------------------------------------------------------------------
-    def with_dash_stubs(self) -> "TestContainerBuilder":
-        class _Dash:
-            no_update = object()
-
-        self._container.register_singleton("dash", _Dash)
-        return self
-
-    # ------------------------------------------------------------------
-    def with_fake_analytics_service(self) -> "TestContainerBuilder":
-        class FakeAnalyticsService(AnalyticsServiceProtocol):
-            def get_dashboard_summary(self) -> Dict[str, Any]:
-                return {}
-
-            def analyze_access_patterns(self, days: int) -> Dict[str, Any]:
-                return {}
-
-            def detect_anomalies(self, data: Any) -> list[Any]:
-                return []
-
-            def generate_report(
-                self, report_type: str, params: Dict[str, Any]
-            ) -> Dict[str, Any]:
-                return {}
-
-        self._container.register_singleton(
-            "analytics_service",
-            FakeAnalyticsService,
-            protocol=AnalyticsServiceProtocol,
-        )
-        return self
-
-    # ------------------------------------------------------------------
-    def with_upload_services(self) -> "TestContainerBuilder":
-        self._container.register_singleton("upload_processor", object)
-        return self
-
-    # ------------------------------------------------------------------
     def with_env_defaults(self) -> "TestContainerBuilder":
         """Retained for backward compatibility (no-op)."""
         return self
@@ -65,6 +28,25 @@ class TestContainerBuilder:
     # ------------------------------------------------------------------
     def with_all_services(self) -> "TestContainerBuilder":
         register_all_services(self._container)
+        return self
+
+    # ------------------------------------------------------------------
+    def with_unicode_processor(self) -> "TestContainerBuilder":
+        self._container.register_singleton(
+            "unicode_processor",
+            SimpleUnicodeProcessor,
+            protocol=UnicodeProcessorProtocol,
+        )
+        return self
+
+    # ------------------------------------------------------------------
+    def with_upload_store(self) -> "TestContainerBuilder":
+        store = InMemoryUploadStore()
+        self._container.register_singleton(
+            "upload_storage",
+            lambda: store,
+            protocol=UploadStorageProtocol,
+        )
         return self
 
     # ------------------------------------------------------------------
