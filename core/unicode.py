@@ -9,13 +9,12 @@ emit :class:`DeprecationWarning` when called.
 from __future__ import annotations
 
 import logging
+import math
 import re
 import unicodedata
-from typing import Any, Callable, Iterable, Optional
+from typing import Any, Callable, Iterable, Optional, Union
 
 import pandas as pd
-
-from .unicode_processor import contains_surrogates
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +24,10 @@ logger = logging.getLogger(__name__)
 _CONTROL_RE = re.compile(r"[\x00-\x1F\x7F]")
 _SURROGATE_RE = re.compile(r"[\uD800-\uDFFF]")
 _DANGEROUS_PREFIX_RE = re.compile(r"^[=+\-@]+")
+_BOM_RE = re.compile("\ufeff")
+_UNPAIRED_SURROGATE_RE = re.compile(
+    r"(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])"
+)
 
 
 def _drop_dangerous_prefix(text: str) -> str:
@@ -35,6 +38,7 @@ def _drop_dangerous_prefix(text: str) -> str:
 
 # ---------------------------------------------------------------------------
 # Core classes
+
 
 class UnicodeProcessor:
     """Centralised Unicode processing utilities."""
@@ -77,11 +81,7 @@ class UnicodeProcessor:
             text = _SURROGATE_RE.sub(replacement, text)
         except Exception as exc:  # pragma: no cover - defensive
             logger.warning("Surrogate removal failed: %s", exc)
-            text = "".join(
-                ch
-                for ch in text
-                if not (0xD800 <= ord(ch) <= 0xDFFF)
-            )
+            text = "".join(ch for ch in text if not (0xD800 <= ord(ch) <= 0xDFFF))
 
         text = _CONTROL_RE.sub("", text)
         text = _drop_dangerous_prefix(text)
@@ -181,6 +181,81 @@ class ChunkedUnicodeProcessor:
         return "".join(parts)
 
 
+class UnicodeTextProcessor:
+    """Clean and normalise arbitrary text."""
+
+    @staticmethod
+    def clean_text(text: Any) -> str:
+        if not isinstance(text, str):
+            try:
+                text = str(text)
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.error("Failed to convert text to str: %s", exc)
+                return ""
+
+        try:
+            text = unicodedata.normalize("NFKC", text)
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.warning("Unicode normalization failed: %s", exc)
+
+        try:
+            text = _SURROGATE_RE.sub("", text)
+            text = _CONTROL_RE.sub("", text)
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error("Regex cleanup failed: %s", exc)
+            text = "".join(
+                ch
+                for ch in text
+                if not (0xD800 <= ord(ch) <= 0xDFFF or ord(ch) < 32 or ord(ch) == 0x7F)
+            )
+
+        return text
+
+
+class UnicodeSQLProcessor:
+    """Safely encode SQL queries with Unicode handling."""
+
+    @staticmethod
+    def encode_query(query: Any) -> str:
+        cleaned = UnicodeTextProcessor.clean_text(query)
+        try:
+            cleaned.encode("utf-8")
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.error("Unicode encode failed: %s", exc)
+            cleaned = cleaned.encode("utf-8", "ignore").decode("utf-8", "ignore")
+        return cleaned
+
+
+class UnicodeSecurityProcessor:
+    """Sanitize input for security sensitive contexts."""
+
+    _HTML_REPLACEMENTS = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#x27;",
+        "/": "&#x2F;",
+    }
+
+    @staticmethod
+    def sanitize_input(text: Any) -> str:
+        sanitized = UnicodeTextProcessor.clean_text(text)
+        for char, repl in UnicodeSecurityProcessor._HTML_REPLACEMENTS.items():
+            sanitized = sanitized.replace(char, repl)
+        return sanitized
+
+
+def object_count(items: Iterable[Any]) -> int:
+    """Return the number of unique strings appearing more than once."""
+
+    counts: dict[str, int] = {}
+    for item in items:
+        if isinstance(item, str):
+            counts[item] = counts.get(item, 0) + 1
+    return sum(1 for v in counts.values() if v > 1)
+
+
 # ---------------------------------------------------------------------------
 # Preferred public API
 
@@ -197,10 +272,101 @@ def safe_decode_bytes(data: bytes, encoding: str = "utf-8") -> str:
     return UnicodeProcessor.safe_decode(data, encoding)
 
 
+def safe_decode(data: bytes, encoding: str = "utf-8") -> str:
+    """Alias for :func:`safe_decode_bytes`."""
+
+    return safe_decode_bytes(data, encoding)
+
+
 def safe_encode_text(value: Any) -> str:
     """Return a UTF-8 safe string representation of ``value``."""
 
     return UnicodeProcessor.safe_encode(value)
+
+
+def safe_encode(value: Any) -> str:
+    """Alias for :func:`safe_encode_text`."""
+
+    return safe_encode_text(value)
+
+
+def sanitize_data_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """Deprecated alias for :func:`sanitize_dataframe`."""
+
+    return sanitize_dataframe(df)
+
+
+def handle_surrogate_characters(text: str) -> str:
+    """Return text with surrogate characters replaced by ``REPLACEMENT_CHAR``."""
+
+    return UnicodeProcessor.clean_text(text, UnicodeProcessor.REPLACEMENT_CHAR)
+
+
+def safe_unicode_encode(value: Any) -> str:
+    """Deprecated wrapper around :func:`safe_encode`."""
+
+    return safe_encode(value)
+
+
+def clean_unicode_surrogates(text: Any) -> str:
+    """Remove surrogate characters from ``text``."""
+
+    return UnicodeProcessor.clean_text(text)
+
+
+def sanitize_unicode_input(text: Union[str, Any]) -> str:
+    """Return ``text`` stripped of surrogate pairs and BOM characters."""
+
+    if not isinstance(text, str):
+        try:
+            text = str(text)
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.warning("Failed to convert %r to str: %s", text, exc)
+            return ""
+
+    try:
+        cleaned = _SURROGATE_RE.sub("", text)
+        cleaned = _BOM_RE.sub("", cleaned)
+        return cleaned
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("sanitize_unicode_input failed: %s", exc)
+        return "".join(ch for ch in str(text) if ch.isascii())
+
+
+def process_large_csv_content(
+    content: bytes,
+    encoding: str = "utf-8",
+    *,
+    chunk_size: int = ChunkedUnicodeProcessor.DEFAULT_CHUNK_SIZE,
+) -> str:
+    """Decode potentially large CSV content in chunks and sanitize."""
+
+    return ChunkedUnicodeProcessor.process_large_content(content, encoding, chunk_size)
+
+
+def safe_format_number(value: Union[int, float]) -> Optional[str]:
+    """Return formatted number or ``None`` for NaN/inf values."""
+
+    try:
+        if isinstance(value, bool):
+            value = int(value)
+        if isinstance(value, (int, float)) and math.isfinite(float(value)):
+            return f"{value:,}"
+    except (ValueError, TypeError) as exc:  # pragma: no cover - defensive
+        logger.warning("Failed to format number %r: %s", value, exc)
+    return None
+
+
+def contains_surrogates(text: str) -> bool:
+    """Return ``True`` if ``text`` contains any unpaired surrogate code points."""
+
+    if not isinstance(text, str):
+        try:
+            text = str(text)
+        except Exception:  # pragma: no cover - defensive
+            return False
+
+    return bool(_UNPAIRED_SURROGATE_RE.search(text))
 
 
 def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
@@ -208,13 +374,26 @@ def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     return UnicodeProcessor.sanitize_dataframe(df)
 
+
 __all__ = [
     "clean_unicode_text",
     "safe_decode_bytes",
+    "safe_decode",
     "safe_encode_text",
+    "safe_encode",
     "sanitize_dataframe",
+    "sanitize_data_frame",
+    "handle_surrogate_characters",
+    "safe_unicode_encode",
+    "clean_unicode_surrogates",
+    "sanitize_unicode_input",
+    "contains_surrogates",
+    "process_large_csv_content",
+    "safe_format_number",
     "UnicodeProcessor",
     "ChunkedUnicodeProcessor",
-    "contains_surrogates",
+    "UnicodeTextProcessor",
+    "UnicodeSQLProcessor",
+    "UnicodeSecurityProcessor",
+    "object_count",
 ]
-

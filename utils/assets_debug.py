@@ -3,6 +3,7 @@
 
 try:
     from dash import html  # type: ignore
+
     DASH_AVAILABLE = True
 except ImportError:
     # Provide fallback for when dash is not available
@@ -11,9 +12,10 @@ except ImportError:
 
 import logging
 from pathlib import Path
-from typing import Any, Optional, Dict, Iterable
+from typing import Any, Dict, Iterable, Optional
 
-from core.unicode_processor import safe_unicode_encode
+from core.unicode import safe_unicode_encode
+
 
 logger = logging.getLogger(__name__)
 
@@ -36,11 +38,11 @@ def check_navbar_assets(
         filename = f"{name}.png"
         path = NAVBAR_ICON_DIR / filename
         exists = path.is_file()
-        results[safe_unicode_encode(name)] = exists
+        results[safe_encode_text(name)] = exists
         if warn and not exists:
             logger.warning(
                 "Navbar icon missing: %s",
-                safe_unicode_encode(str(path)),
+                safe_encode_text(str(path)),
             )
     return results
 
@@ -87,7 +89,7 @@ def navbar_icon(filename: str, alt: str, fallback_text: str, *, warn: bool = Tru
             alt=alt,
         )
     if warn:
-        logger.warning("Missing navbar icon: %s", safe_unicode_encode(filename))
+        logger.warning("Missing navbar icon: %s", safe_encode_text(filename))
     return html.Span(fallback_text, className="nav-icon nav-icon--fallback")
 
 

@@ -1,8 +1,7 @@
 import pandas as pd
 
+from core.unicode import safe_unicode_encode
 from security.unicode_security_handler import UnicodeSecurityHandler
-from core.unicode_processor import safe_unicode_encode
-
 
 
 
@@ -16,7 +15,7 @@ def test_upload_dataframe_sanitization():
 def test_non_ascii_filename_persistence(fake_upload_storage):
     df = pd.DataFrame({"a": [1]})
     filename = "данные\ud83d.csv"
-    safe_name = safe_unicode_encode(filename)
+    safe_name = safe_encode_text(filename)
 
     store = fake_upload_storage
     store.add_file(safe_name, df)

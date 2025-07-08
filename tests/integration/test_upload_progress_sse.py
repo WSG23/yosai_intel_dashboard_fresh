@@ -1,3 +1,4 @@
+import pytest
 import dash
 import dash_bootstrap_components as dbc
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
@@ -6,6 +7,8 @@ from dash import dcc, html
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 from pages import file_upload
+
+pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 
 
 def _create_upload_app():

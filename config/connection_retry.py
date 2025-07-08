@@ -5,13 +5,18 @@ import time
 from dataclasses import dataclass
 from typing import Callable, Optional, Protocol, TypeVar
 
+from .protocols import (
+    ConnectionRetryManagerProtocol,
+    RetryConfigProtocol,
+)
+
 from .database_exceptions import ConnectionRetryExhausted
 
 T = TypeVar("T")
 
 
 @dataclass
-class RetryConfig:
+class RetryConfig(RetryConfigProtocol):
     """Configuration for retry behaviour."""
 
     max_attempts: int = 3
@@ -29,7 +34,7 @@ class RetryCallbacks(Protocol):
     def on_failure(self) -> None: ...
 
 
-class ConnectionRetryManager:
+class ConnectionRetryManager(ConnectionRetryManagerProtocol):
     """Utility to retry a callable with exponential backoff."""
 
     def __init__(

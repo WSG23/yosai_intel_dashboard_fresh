@@ -21,7 +21,7 @@ class TestSecurityVulnerabilities:
 
     def test_unicode_surrogate_handling(self):
         """Test Unicode surrogate character handling."""
-        from core.unicode_processor import sanitize_unicode_input
+        from core.unicode import sanitize_unicode_input
 
         # Test lone surrogates
         lone_surrogate = "\ud800\ud801"  # Invalid surrogate pair
@@ -32,7 +32,7 @@ class TestSecurityVulnerabilities:
 
     def test_sanitize_unicode_input_ascii_fallback(self):
         """Ensure ASCII-safe text is returned on failure."""
-        from core.unicode_processor import sanitize_unicode_input
+        from core.unicode import sanitize_unicode_input
 
         class BadStr:
             def __str__(self) -> str:

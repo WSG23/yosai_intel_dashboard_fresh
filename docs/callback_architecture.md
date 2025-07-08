@@ -63,9 +63,9 @@ useful when a Dash callback needs to orchestrate multiple steps.
 
 
 ```python
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from core.callbacks import UnifiedCallbackManager
 
-ops = TrulyUnifiedCallbacks()
+ops = UnifiedCallbackManager()
 ops.register_operation("refresh", load_data)
 ops.register_operation("refresh", update_summary)
 

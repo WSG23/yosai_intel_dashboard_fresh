@@ -1,4 +1,5 @@
 import enum
+import pytest
 
 from dash import Dash, html
 from flask.json.provider import DefaultJSONProvider
@@ -9,13 +10,14 @@ class EnumJSONProvider(DefaultJSONProvider):
         if isinstance(o, enum.Enum):
             return o.name
         return super().default(o)
-import os
 import sys
 
 from config.config import ConfigManager
 from core.container import Container as DIContainer
 from core.plugins.auto_config import PluginAutoConfiguration
 from core.plugins.unified_registry import UnifiedPluginRegistry
+
+pytestmark = pytest.mark.usefixtures("fake_dash")
 from services.data_processing.core.protocols import PluginMetadata
 
 
@@ -52,12 +54,6 @@ class DummyPlugin:
 
 
 def test_registry_registration_and_service():
-    os.environ.setdefault("SECRET_KEY", "test")
-    os.environ.setdefault("DB_PASSWORD", "pwd")
-    os.environ.setdefault("AUTH0_CLIENT_ID", "cid")
-    os.environ.setdefault("AUTH0_CLIENT_SECRET", "csecret")
-    os.environ.setdefault("AUTH0_DOMAIN", "domain")
-    os.environ.setdefault("AUTH0_AUDIENCE", "aud")
     app = Dash(__name__)
     container = DIContainer()
     cfg = ConfigManager()
@@ -71,12 +67,6 @@ def test_registry_registration_and_service():
 
 
 def test_auto_discovery_and_health_endpoint(tmp_path):
-    os.environ.setdefault("SECRET_KEY", "test")
-    os.environ.setdefault("DB_PASSWORD", "pwd")
-    os.environ.setdefault("AUTH0_CLIENT_ID", "cid")
-    os.environ.setdefault("AUTH0_CLIENT_SECRET", "csecret")
-    os.environ.setdefault("AUTH0_DOMAIN", "domain")
-    os.environ.setdefault("AUTH0_AUDIENCE", "aud")
     pkg = tmp_path / "auto_pkg"
     pkg.mkdir()
     (pkg / "__init__.py").write_text("")
@@ -115,12 +105,6 @@ def create_plugin():
 
 def test_validate_plugin_dependencies():
     """Ensure dependency validation reports missing dependencies."""
-    os.environ.setdefault("SECRET_KEY", "test")
-    os.environ.setdefault("DB_PASSWORD", "pwd")
-    os.environ.setdefault("AUTH0_CLIENT_ID", "cid")
-    os.environ.setdefault("AUTH0_CLIENT_SECRET", "csecret")
-    os.environ.setdefault("AUTH0_DOMAIN", "domain")
-    os.environ.setdefault("AUTH0_AUDIENCE", "aud")
     app = Dash(__name__)
     auto = PluginAutoConfiguration(app)
 

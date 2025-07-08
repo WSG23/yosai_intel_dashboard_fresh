@@ -27,12 +27,12 @@ from .unicode import (
     UnicodeSecurityProcessor,
     UnicodeSQLProcessor,
     UnicodeTextProcessor,
+    sanitize_unicode_input,
 )
-from .unicode_processor import sanitize_unicode_input
 
 if TYPE_CHECKING:  # pragma: no cover - avoid circular import at runtime
-    from .truly_unified_callbacks import TrulyUnifiedCallbacks
     from .master_callback_system import MasterCallbackSystem
+    from .truly_unified_callbacks import TrulyUnifiedCallbacks
 
 
 def __getattr__(name: str):
@@ -50,6 +50,7 @@ def __getattr__(name: str):
         globals()[name] = _mcs
         return _mcs
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
 
 __all__ = [
     "create_app",

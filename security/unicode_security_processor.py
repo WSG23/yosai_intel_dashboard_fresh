@@ -8,10 +8,8 @@ from typing import Any
 
 import pandas as pd
 
-from core.unicode_processor import (
-    UnicodeProcessor,
-)
-from core.unicode_processor import sanitize_unicode_input as core_sanitize_unicode_input
+from core.unicode import UnicodeProcessor
+from core.unicode import sanitize_unicode_input as core_sanitize_unicode_input
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +42,7 @@ class UnicodeSecurityProcessor:
                 return cleaned
         except Exception as exc:  # pragma: no cover - extreme defensive
             logger.error("sanitize_unicode_input failed: %s", exc)
-            return "".join(
-                ch for ch in str(text) if not (0xD800 <= ord(ch) <= 0xDFFF)
-            )
-
+            return "".join(ch for ch in str(text) if not (0xD800 <= ord(ch) <= 0xDFFF))
 
     @staticmethod
     def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
@@ -70,6 +65,7 @@ class UnicodeSecurityProcessor:
 
         # Normalize string cells
         for col in df_clean.select_dtypes(include=["object"]).columns:
+
             def _norm(val: Any) -> Any:
                 if isinstance(val, str):
                     try:
@@ -85,6 +81,7 @@ class UnicodeSecurityProcessor:
 
 
 # Module-level helpers for convenience ---------------------------------
+
 
 def sanitize_unicode_input(text: Any) -> str:
     return UnicodeSecurityProcessor.sanitize_unicode_input(text)

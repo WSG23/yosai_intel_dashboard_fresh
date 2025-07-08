@@ -28,7 +28,7 @@ from dash import (
     html,
 )
 
-from core.unicode_processor import safe_format_number
+from core.unicode import safe_format_number
 from security.unicode_security_handler import UnicodeSecurityHandler
 from security.unicode_security_processor import sanitize_unicode_input
 
@@ -79,9 +79,6 @@ def _get_display_title(analysis_type: str) -> str:
 # SECTION 2: SAFE SERVICE UTILITIES
 # Add these utility functions to pages/deep_analytics.py
 # =============================================================================
-
-
-
 
 
 # =============================================================================
@@ -352,6 +349,7 @@ def create_data_quality_display_corrected(
         logger.exception("Quality analysis display error: %s", e)
         return dbc.Alert(f"Quality analysis error: {str(e)}", color="danger")
 
+
 # Helper extraction functions for results processing
 def _extract_counts(results: Dict[str, Any]) -> Dict[str, int | float]:
     """Extract proper counts from results handling sets and other iterables"""
@@ -544,9 +542,6 @@ def get_initial_message_safe():
         ],
         color="info",
     )
-
-
-
 
 
 def create_analysis_results_display_safe(results, analysis_type):
