@@ -22,7 +22,9 @@ def test_csrf_plugin_enabled_in_production(monkeypatch):
         app._csrf_plugin = object()
         return app._csrf_plugin
 
-    monkeypatch.setattr(app_factory, "setup_enhanced_csrf_protection", _fake_csrf)
+    monkeypatch.setattr(
+        "core.app_factory.security.setup_enhanced_csrf_protection", _fake_csrf
+    )
     monkeypatch.setattr(app_factory, "_initialize_services", lambda *a, **k: None)
     monkeypatch.setattr(app_factory, "_register_router_callbacks", lambda manager: None)
     monkeypatch.setattr(app_factory, "_register_global_callbacks", lambda manager: None)

@@ -101,14 +101,13 @@ from flask_caching import Cache
 from components.ui.navbar import create_navbar_layout
 from config.complete_service_registration import register_all_application_services
 from config.config import get_config
-from core.container import Container as DIContainer
 from core.enhanced_container import ServiceContainer
 from core.performance_monitor import DIPerformanceMonitor
-from core.plugins.auto_config import PluginAutoConfiguration
 from core.plugins.decorators import safe_callback
-from core.secrets_manager import validate_secrets
 from core.theme_manager import DEFAULT_THEME, apply_theme_settings
-from dash_csrf_plugin import CSRFMode, setup_enhanced_csrf_protection
+from .plugins import _initialize_plugins
+from .security import initialize_csrf
+from .health import register_health_endpoints
 from pages import get_page_layout
 from pages.deep_analytics import Callbacks as DeepAnalyticsCallbacks
 from pages.deep_analytics import layout as deep_analytics_layout
@@ -332,17 +331,7 @@ def _create_full_app() -> "Dash":
             logger.warning(f"Failed to initialize Babel: {e}")
 
         # Use the working config system
-
-        if (
-            config_manager.get_security_config().csrf_enabled
-            and config_manager.get_app_config().environment == "production"
-        ):
-            try:
-                cast(Any, app)._csrf_plugin = setup_enhanced_csrf_protection(
-                    app, CSRFMode.PRODUCTION
-                )
-            except Exception as e:  # pragma: no cover - best effort
-                logger.warning(f"Failed to initialize CSRF plugin: {e}")
+        initialize_csrf(app, config_manager)
 
         _initialize_plugins(app, config_manager, container=service_container)
         _setup_layout(app)
@@ -358,35 +347,7 @@ def _create_full_app() -> "Dash":
 
         progress_events = ProgressEventManager()
 
-        @server.route("/health", methods=["GET"])
-        def health():
-            """Basic health check.
-            ---
-            get:
-              description: Return service health
-              responses:
-                200:
-                  description: Health status
-                  content:
-                    application/json:
-                      schema:
-                        type: object
-                        properties:
-                          status:
-                            type: string
-                            example: ok
-            """
-            return {"status": "ok"}, 200
-
-        @server.route("/health/secrets", methods=["GET"])
-        def health_secrets():
-            """Return validation summary for required secrets"""
-            return validate_secrets(), 200
-
-        @server.route("/upload/progress/<task_id>")
-        def upload_progress(task_id: str):
-            """Stream task progress updates as Server-Sent Events."""
-            return progress_events.stream(task_id)
+        register_health_endpoints(server, progress_events)
 
         @server.before_request
         def filter_noisy_requests():
@@ -506,30 +467,7 @@ def _create_simple_app() -> "Dash":
         server: Flask = cast(Flask, app.server)
         _configure_swagger(server)
 
-        @server.route("/health", methods=["GET"])
-        def health():
-            """Basic health check.
-            ---
-            get:
-              description: Return service health
-              responses:
-                200:
-                  description: Health status
-                  content:
-                    application/json:
-                      schema:
-                        type: object
-                        properties:
-                          status:
-                            type: string
-                            example: ok
-            """
-            return {"status": "ok"}, 200
-
-        @server.route("/health/secrets", methods=["GET"])
-        def health_secrets():
-            """Return validation summary for required secrets"""
-            return validate_secrets(), 200
+        register_health_endpoints(server)
 
         logger.info("Simple Dash application created successfully")
         return app
@@ -625,30 +563,7 @@ def _create_json_safe_app() -> "Dash":
         server: Flask = cast(Flask, app.server)
         _configure_swagger(server)
 
-        @server.route("/health", methods=["GET"])
-        def health():
-            """Basic health check.
-            ---
-            get:
-              description: Return service health
-              responses:
-                200:
-                  description: Health status
-                  content:
-                    application/json:
-                      schema:
-                        type: object
-                        properties:
-                          status:
-                            type: string
-                            example: ok
-            """
-            return {"status": "ok"}, 200
-
-        @server.route("/health/secrets", methods=["GET"])
-        def health_secrets():
-            """Return validation summary for required secrets"""
-            return validate_secrets(), 200
+        register_health_endpoints(server)
 
         logger.info("JSON-safe Dash application created")
         return app
@@ -942,28 +857,6 @@ def _register_global_callbacks(manager: TrulyUnifiedCallbacksType) -> None:
             raise
 
 
-def _initialize_plugins(
-    app: "Dash",
-    config_manager: Any,
-    *,
-    container: Optional[Any] = None,
-    plugin_auto_cls: type[PluginAutoConfiguration] = PluginAutoConfiguration,
-) -> None:
-    """Initialize plugin system and register health endpoints."""
-
-    container = container or DIContainer()
-    plugin_auto = plugin_auto_cls(
-        app, container=container, config_manager=config_manager
-    )
-    plugin_auto.scan_and_configure("plugins")
-    plugin_auto.generate_health_endpoints()
-    registry = plugin_auto.registry
-    cast(Any, app)._yosai_plugin_manager = registry.plugin_manager
-
-    @app.server.teardown_appcontext  # type: ignore[attr-defined]
-    def _shutdown_plugin_manager(exc=None):
-        registry.plugin_manager.stop_all_plugins()
-        registry.plugin_manager.stop_health_monitor()
 
 
 def _setup_layout(app: "Dash") -> None:

@@ -3,8 +3,8 @@ from types import SimpleNamespace
 
 from core.service_container import ServiceContainer
 from core.protocols import UnicodeProcessorProtocol
+from core.app_factory.plugins import _initialize_plugins
 from core.app_factory import (
-    _initialize_plugins,
     _setup_layout,
     _register_callbacks,
     _configure_swagger,
