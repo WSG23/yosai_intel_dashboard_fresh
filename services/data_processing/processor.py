@@ -8,7 +8,7 @@ import pandas as pd
 
 from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
-from services.data_validation import DataValidationService
+from core.security_validator import SecurityValidator
 from utils.mapping_helpers import map_and_clean
 
 logger = logging.getLogger(__name__)
@@ -20,12 +20,12 @@ class Processor:
     def __init__(
         self,
         base_data_path: str = "data",
-        validator: Optional[DataValidationService] = None,
+        validator: Optional[SecurityValidator] = None,
     ) -> None:
         self.base_path = Path(base_data_path)
         self.mappings_file = self.base_path / "learned_mappings.json"
         self.session_storage = self.base_path.parent / "session_storage"
-        self.validator = validator or DataValidationService()
+        self.validator = validator or SecurityValidator()
 
     # ------------------------------------------------------------------
     # Streaming helpers (from DataLoadingService)

@@ -11,17 +11,22 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List
 
+from core.protocols import SecurityServiceProtocol
+
 from config.constants import FileProcessingLimits
 from core.exceptions import ValidationError
-from security.sql_validator import SQLInjectionPrevention
+from security.attack_detection import AttackDetection
 from security.unicode_security_processor import sanitize_unicode_input
 from security_callback_controller import (
     SecurityEvent,
     emit_security_event,
 )
 
-from .security_patterns import PATH_TRAVERSAL_PATTERNS as RAW_PATH_PATTERNS
-from .security_patterns import XSS_PATTERNS as RAW_XSS_PATTERNS
+from .security_patterns import (
+    PATH_TRAVERSAL_PATTERNS as RAW_PATH_PATTERNS,
+    SQL_INJECTION_PATTERNS as RAW_SQL_PATTERNS,
+    XSS_PATTERNS as RAW_XSS_PATTERNS,
+)
 
 
 class SecurityLevel(Enum):
@@ -39,8 +44,8 @@ class SecurityIssue:
     recommendation: str
 
 
-class SecurityValidator:
-    """Comprehensive security validator"""
+class SecurityValidator(SecurityServiceProtocol):
+    """Comprehensive security validator implementing ``SecurityServiceProtocol``."""
 
     VALIDATION_CONFIG = {
         "sql_injection": True,
@@ -50,11 +55,14 @@ class SecurityValidator:
 
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
+        self.attack_detection = AttackDetection()
 
     # Compiled patterns for performance
     XSS_PATTERN_LIST = [re.compile(p, re.IGNORECASE) for p in RAW_XSS_PATTERNS]
 
     PATH_TRAVERSAL_PATTERN_LIST = [re.compile(p, re.IGNORECASE) for p in RAW_PATH_PATTERNS]
+
+    SQL_PATTERN_LIST = [re.compile(p, re.IGNORECASE) for p in RAW_SQL_PATTERNS]
 
     def validate_input(self, value: str, field_name: str = "input") -> Dict[str, Any]:
         """Orchestrate security validations for the given value."""
@@ -105,19 +113,19 @@ class SecurityValidator:
         self, value: str, field_name: str
     ) -> List[SecurityIssue]:
         """Check for SQL injection patterns."""
-        validator = SQLInjectionPrevention()
-        try:
-            validator.validate_query_parameter(value)
-            return []
-        except ValidationError:
-            return [
-                self._create_security_issue(
-                    SecurityLevel.CRITICAL,
-                    "Potential SQL injection detected",
-                    field_name,
-                    "Use parameterized queries and input sanitization",
-                )
-            ]
+        lower_val = value.lower()
+        for pattern in self.SQL_PATTERN_LIST:
+            if pattern.search(lower_val):
+                self.attack_detection.record(f"SQL injection attempt: {value}")
+                return [
+                    self._create_security_issue(
+                        SecurityLevel.CRITICAL,
+                        "Potential SQL injection detected",
+                        field_name,
+                        "Use parameterized queries and input sanitization",
+                    )
+                ]
+        return []
 
     def _validate_xss_patterns(
         self, value: str, field_name: str
@@ -263,6 +271,17 @@ class SecurityValidator:
             "filename": filename,
             "size_mb": size_mb,
         }
+
+    # ------------------------------------------------------------------
+    def sanitize_output(self, content: str) -> str:
+        """Sanitize content for safe output."""
+        return sanitize_unicode_input(content)
+
+    # ------------------------------------------------------------------
+    def check_permissions(self, user_id: str, resource: str, action: str) -> bool:
+        """Placeholder permission check always allowing access."""
+        # Real implementation would query permission store
+        return True
 
 
 __all__ = ["SecurityValidator", "SecurityIssue", "SecurityLevel"]

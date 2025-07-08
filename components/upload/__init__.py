@@ -1,8 +1,11 @@
-from .client_side_validator import ClientSideValidator
-from .drag_drop_upload_area_fixed import FileUploadComponent, create_upload_component
+"""Upload UI Components Public API."""
+from .validators.client_validator import ClientSideValidator
+from .ui.upload_area import UploadArea
 
 __all__ = [
+    "UploadArea",
     "ClientSideValidator",
-    "FileUploadComponent",
-    "create_upload_component",
 ]
+
+COMPONENT_LIBRARY_VERSION = "1.0.0"
+SUPPORTED_THEMES = ["light", "dark", "high-contrast"]

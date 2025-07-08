@@ -21,9 +21,8 @@ validator.validate_file_upload(filename, file_bytes)
 ```
 
 The `SecurityValidator` and `UnifiedFileValidator` replace the old
-`InputValidator`, `SecureFileValidator`, `DataFrameSecurityValidator`,
-`SQLInjectionPrevention`, `XSSPrevention`, `BusinessLogicValidator` and
-`SecretsValidator` classes.
+`InputValidator`, `SecureFileValidator`, `XSSPrevention`,
+`BusinessLogicValidator` and `SecretsValidator` classes.
 All of these wrappers now delegate to the unified validator and will be removed
 in a future release.
 
@@ -39,13 +38,13 @@ in a future release.
 ## Best Practices
 - Validate data as early as possible using `SecurityValidator`.
 - Run `validate_file_upload()` on files before saving or parsing.
-- Use `DataFrameSecurityValidator` when processing large data sets.
+- Use chunked processing helpers for large data sets.
 - Sanitize all query parameters with `validate_input()`.
 - Rotate secrets regularly and validate them during startup.
 
 ## Example Scenarios
 - **User search input**: `SecurityValidator.validate_input()` before constructing a query.
-- **CSV upload**: `SecurityValidator.validate_file_upload()` then `DataFrameSecurityValidator.validate_for_analysis()`.
+- **CSV upload**: `SecurityValidator.validate_file_upload()` before parsing the file.
 - **Displaying comments**: `SecurityValidator.validate_input()` when accepting the comment.
 
 

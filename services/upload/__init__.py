@@ -1,41 +1,37 @@
-from .ai import AISuggestionService, analyze_device_name_with_ai
-from .async_processor import AsyncUploadProcessor
-from .helpers import get_trigger_id, save_ai_training_data
-from .managers import ChunkedUploadManager
-from .upload_queue_manager import UploadQueueManager
+"""Upload Domain Public API
 
-from .modal import ModalService
-from .core.processor import UploadProcessingService
-from .core.validator import ClientSideValidator
+This module exposes the main interfaces for the upload domain.
+Other packages should import from here rather than submodules.
+"""
 from .protocols import (
     UploadProcessingServiceProtocol,
     UploadValidatorProtocol,
     FileProcessorProtocol,
-    UploadControllerProtocol,
-    UploadComponentProtocol,
     UploadStorageProtocol,
-    UploadAnalyticsProtocol,
-    UploadSecurityProtocol,
+    UploadControllerProtocol,
 )
 
+from .core.processor import UploadProcessingService
+from .core.validator import ClientSideValidator as UploadValidator
+from utils.upload_store import UploadedDataStore as UploadStorage
+from .controllers.upload_controller import UnifiedUploadController as UploadController
+from .utils.file_parser import FileParser
+from .utils.unicode_handler import safe_unicode_encode, decode_upload_content
+
 __all__ = [
-    "AsyncUploadProcessor",
-    "UploadProcessingService",
-    "AISuggestionService",
-    "ModalService",
-    "analyze_device_name_with_ai",
-    "get_trigger_id",
-    "save_ai_training_data",
-    "ChunkedUploadManager",
-    "AsyncChunkedUploadManager",
-    "UploadQueueManager",
-    "ClientSideValidator",
     "UploadProcessingServiceProtocol",
     "UploadValidatorProtocol",
     "FileProcessorProtocol",
-    "UploadControllerProtocol",
-    "UploadComponentProtocol",
     "UploadStorageProtocol",
-    "UploadAnalyticsProtocol",
-    "UploadSecurityProtocol",
+    "UploadControllerProtocol",
+    "UploadProcessingService",
+    "UploadValidator",
+    "UploadStorage",
+    "UploadController",
+    "FileParser",
+    "safe_unicode_encode",
+    "decode_upload_content",
 ]
+
+DOMAIN_NAME = "upload"
+DOMAIN_VERSION = "1.0.0"

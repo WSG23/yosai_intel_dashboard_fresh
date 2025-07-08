@@ -29,6 +29,7 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
     )
     container.register_singleton(
         "database_manager", DatabaseManager
+
     )
 
 
@@ -37,6 +38,7 @@ def register_analytics_services(container: ServiceContainer) -> None:
 
     container.register_singleton(
         "analytics_service", AnalyticsService
+
     )
 
 
@@ -61,4 +63,5 @@ def register_ui_service_factories(container: ServiceContainer) -> None:
 
     container.register_transient(
         "analytics_page_factory", AnalyticsPageFactory
+
     )

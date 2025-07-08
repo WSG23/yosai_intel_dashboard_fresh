@@ -3,8 +3,6 @@ import pytest
 
 from core.exceptions import ValidationError
 from core.security_validator import SecurityValidator
-from security.dataframe_validator import DataFrameSecurityValidator
-from security.sql_validator import SQLInjectionPrevention
 from security.xss_validator import XSSPrevention
 
 
@@ -32,8 +30,9 @@ def test_json_input_allowed():
 
 
 def test_sql_injection_detection():
+    validator = SecurityValidator()
     with pytest.raises(ValidationError):
-        SQLInjectionPrevention.validate_query_parameter("1; DROP TABLE users")
+        validator.validate_input("1; DROP TABLE users", "query_parameter")
 
 
 def test_xss_sanitization():
@@ -41,26 +40,29 @@ def test_xss_sanitization():
     assert "<" not in result and ">" not in result
 
 
-def test_dataframe_memory_limit(monkeypatch):
+def test_file_size_limit(monkeypatch):
     df = pd.DataFrame({"a": range(100)})
-    validator = DataFrameSecurityValidator()
+    validator = SecurityValidator()
     monkeypatch.setattr("config.dynamic_config.security.max_upload_mb", 0)
+    csv_bytes = df.to_csv(index=False).encode("utf-8")
     with pytest.raises(ValidationError):
-        validator.validate_for_upload(df)
+        validator.validate_file_upload("data.csv", csv_bytes)
 
 
 def test_csv_injection_detection():
     df = pd.DataFrame({"a": ["=cmd()"]})
-    validator = DataFrameSecurityValidator()
+    validator = SecurityValidator()
+    csv_bytes = df.to_csv(index=False).encode("utf-8")
     with pytest.raises(ValidationError):
-        validator.validate_for_upload(df)
+        validator.validate_file_upload("data.csv", csv_bytes)
 
 
 def test_csv_safe_dataframe_allowed():
     df = pd.DataFrame({"a": ["cmd()", "ok"]})
-    validator = DataFrameSecurityValidator()
-    result = validator.validate_for_upload(df)
-    assert isinstance(result, pd.DataFrame)
+    validator = SecurityValidator()
+    csv_bytes = df.to_csv(index=False).encode("utf-8")
+    result = validator.validate_file_upload("data.csv", csv_bytes)
+    assert result["valid"] is True
 
 
 def _create_test_app():

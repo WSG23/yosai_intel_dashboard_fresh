@@ -210,6 +210,7 @@ def _create_full_app() -> "Dash":
 
         service_container.get = monitored_get  # type: ignore
         service_container.register_singleton("performance_monitor", perf_monitor)
+
         config_manager = service_container.get("config_manager")
         analytics_service = service_container.get("analytics_service")
         try:

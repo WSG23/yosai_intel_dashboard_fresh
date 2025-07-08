@@ -16,8 +16,7 @@ The factory builds the container, which then instantiates services. Services ope
 
 - **Unified Validator** – Input and file validation are now handled by the
   `SecurityValidator` together with `UnifiedFileValidator`. These replace the
-  older `InputValidator`, `SecureFileValidator` and
-  `DataFrameSecurityValidator` classes.
+  older `InputValidator` and `SecureFileValidator` classes.
 - **Separated Analytics Modules** – The previously monolithic
   `AnalyticsService` has been broken into smaller modules under
 `services/data_processing/` and `analytics/`.  `UnifiedFileValidator`,

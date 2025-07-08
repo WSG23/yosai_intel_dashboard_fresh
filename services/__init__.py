@@ -8,7 +8,6 @@ from .analytics_generator import AnalyticsGenerator
 from .chunked_analysis import analyze_with_chunking
 from .data_processing.processor import Processor
 from .data_processing.unified_file_validator import UnifiedFileValidator
-from .data_validation import DataValidationService
 from .db_analytics_helper import DatabaseAnalyticsHelper
 from .registry import get_service
 from .result_formatting import (
@@ -38,7 +37,6 @@ __all__ = [
     "create_analytics_service",
     "AnalyticsService",
     "ANALYTICS_SERVICE_AVAILABLE",
-    "DataValidationService",
     "AnalyticsGenerator",
     "Processor",
     "analyze_with_chunking",
