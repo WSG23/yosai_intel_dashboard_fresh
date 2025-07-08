@@ -63,19 +63,15 @@ from core.protocols import UnicodeProcessorProtocol
 def handle_unicode_surrogates(
     text: str, processor: Optional[UnicodeProcessorProtocol] = None
 ) -> str:
-    """Handle Unicode surrogate characters that can't be encoded in UTF-8."""
-    if processor is not None:
-        try:
-            return processor.safe_encode_text(text)
-        except Exception:
-            pass
+    """Handle Unicode surrogate characters safely"""
     if not isinstance(text, str):
-        return str(text)
-    try:
-        text.encode("utf-8")
         return text
-    except UnicodeEncodeError:
+    try:
+        if processor and hasattr(processor, "safe_encode_text"):
+            return processor.safe_encode_text(text)
         return text.encode("utf-8", errors="ignore").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return text.encode("ascii", errors="ignore").decode("ascii")
 
 
 # Rest of imports
@@ -104,7 +100,6 @@ from config.config import get_config
 
 from core.service_container import ServiceContainer
 from core.performance_monitor import DIPerformanceMonitor
-from core.plugins.decorators import safe_callback
 from core.theme_manager import DEFAULT_THEME, apply_theme_settings
 from pages import get_page_layout
 from pages.deep_analytics import Callbacks as DeepAnalyticsCallbacks
@@ -653,59 +648,11 @@ def _register_router_callbacks(
 ) -> None:
     """Register page routing callbacks."""
 
-    def handle_safe(outputs, inputs, callback_id="unknown"):
-        def decorator(func):
-            def unicode_wrapper(*args, **kwargs):
-                try:
-                    safe_args = [
-                        (
-                            handle_unicode_surrogates(a, unicode_processor)
-                            if isinstance(a, str)
-                            else a
-                        )
-                        for a in args
-                    ]
-
-                    result = func(*safe_args, **kwargs)
-
-                    if isinstance(result, str):
-                        result = handle_unicode_surrogates(result, unicode_processor)
-                    elif isinstance(result, (list, tuple)):
-                        result = [
-                            (
-                                handle_unicode_surrogates(item, unicode_processor)
-                                if isinstance(item, str)
-                                else item
-                            )
-                            for item in result
-                        ]
-
-                    return result
-
-                except Exception as e:
-                    logger.error(f"Callback {callback_id} failed: {e}")
-                    if isinstance(outputs, (list, tuple)):
-                        return ["Error"] * len(outputs)
-                    return "Error"
-
-            # Wrap with plugin-safe callback and register via unified interface
-            from core.plugins.decorators import safe_callback as plugin_safe_callback
-
-            wrapped = plugin_safe_callback(manager.app)(unicode_wrapper)
-            manager.unified_callback(
-                outputs,
-                inputs,
-                callback_id=callback_id,
-                component_name="app_factory",
-            )(wrapped)
-            return wrapped
-
-        return decorator
-
-    @safe_callback(
-        [Output("page-content", "children"), Output("page-content", "className")],
-        [Input("url", "pathname")],
+    @manager.unified_callback(
+        outputs=[Output("page-content", "children"), Output("page-content", "className")],
+        inputs=[Input("url", "pathname")],
         callback_id="display_page",
+        component_name="app_factory",
     )
     def display_page(pathname: str):
         end_class = "main-content p-4 transition-fade-move transition-end"
