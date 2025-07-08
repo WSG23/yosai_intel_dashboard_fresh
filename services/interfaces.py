@@ -87,6 +87,9 @@ class UploadDataServiceProtocol(Protocol):
 # ---------------------------------------------------------------------------
 # Helper accessors
 # ---------------------------------------------------------------------------
+# Use the same ServiceContainer implementation as ``core.app_factory``
+# to avoid type mismatches when helpers are accessed through the
+# application-wide dependency injection container.
 from core.enhanced_container import ServiceContainer
 
 
