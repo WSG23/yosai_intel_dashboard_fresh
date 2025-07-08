@@ -257,7 +257,7 @@ def _create_full_app() -> "Dash":
 
         # Expose the service container on the app instance
         cast(Any, app)._service_container = service_container
-        app.container = service_container
+        cast(Any, app).container = service_container
 
         # Initialize caching once per app instance
         cache = Cache(app.server, config={"CACHE_TYPE": "simple"})
@@ -949,7 +949,7 @@ def _initialize_plugins(
     app: "Dash",
     config_manager: Any,
     *,
-    container: Optional[DIContainer] = None,
+    container: Optional[Any] = None,
     plugin_auto_cls: type[PluginAutoConfiguration] = PluginAutoConfiguration,
 ) -> None:
     """Initialize plugin system and register health endpoints."""

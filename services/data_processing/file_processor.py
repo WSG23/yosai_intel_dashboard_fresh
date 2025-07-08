@@ -22,7 +22,7 @@ from core.unicode_decode import safe_unicode_decode
 from core.unicode_utils import sanitize_for_utf8
 
 
-def _get_max_display_rows(config: ConfigurationProtocol = dynamic_config) -> int:
+def _get_max_display_rows(config: Any = dynamic_config) -> int:
     try:
         return (
             get_analytics_config().max_display_rows or config.analytics.max_display_rows
@@ -75,7 +75,7 @@ def process_uploaded_file(
     contents: str,
     filename: str,
     *,
-    config: ConfigurationProtocol = dynamic_config,
+    config: Any = dynamic_config,
 ) -> Dict[str, Any]:
     """
     Process uploaded file content safely
