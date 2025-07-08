@@ -5,6 +5,7 @@ import pandas as pd
 
 from .base import BaseReader
 from core.callback_controller import CallbackController, CallbackEvent
+from core.protocols import UnicodeProcessorProtocol
 
 
 class JSONReader(BaseReader):
@@ -12,7 +13,8 @@ class JSONReader(BaseReader):
 
     format_name = "json"
 
-    def __init__(self) -> None:
+    def __init__(self, *, unicode_processor: UnicodeProcessorProtocol | None = None) -> None:
+        super().__init__(unicode_processor=unicode_processor)
         self.callback_controller = CallbackController()
 
     def read(self, file_path: str, hint: dict | None = None) -> pd.DataFrame:

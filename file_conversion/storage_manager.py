@@ -12,7 +12,8 @@ import pandas as pd
 
 from core.callback_events import CallbackEvent
 from core.callback_manager import CallbackManager
-from core.unicode_processor import UnicodeProcessor
+from core.container import get_unicode_processor
+from core.protocols import UnicodeProcessorProtocol
 
 _logger = logging.getLogger(__name__)
 
@@ -20,12 +21,18 @@ _logger = logging.getLogger(__name__)
 class StorageManager:
     """Handle saving/loading Parquet files and tracking metadata."""
 
-    def __init__(self, base_dir: Path | str = "converted_data") -> None:
+    def __init__(
+        self,
+        base_dir: Path | str = "converted_data",
+        *,
+        unicode_processor: UnicodeProcessorProtocol | None = None,
+    ) -> None:
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self._metadata_path = self.base_dir / "metadata.json"
         self._metadata: Dict[str, Any] = {}
         self.callback_controller = CallbackManager()
+        self.unicode_processor = unicode_processor or get_unicode_processor()
         self._load_metadata()
 
     # -- metadata helpers -------------------------------------------------
@@ -58,7 +65,7 @@ class StorageManager:
                 raise FileNotFoundError(f"Pickle file not found: {pkl_path}")
 
             df = pd.read_pickle(pkl_path)
-            df_clean = UnicodeProcessor.sanitize_dataframe(df)
+            df_clean = self.unicode_processor.sanitize_dataframe(df)
             df_clean.to_parquet(parquet_path, index=False, compression="snappy")
 
             self._metadata[parquet_path.name] = {
@@ -87,7 +94,7 @@ class StorageManager:
     def save_dataframe(self, df: pd.DataFrame, name: str) -> Tuple[bool, str]:
         """Save ``df`` to a Parquet file under ``name`` with metadata."""
         try:
-            df_clean = UnicodeProcessor.sanitize_dataframe(df)
+            df_clean = self.unicode_processor.sanitize_dataframe(df)
             parquet_path = self.base_dir / f"{name}.parquet"
             df_clean.to_parquet(parquet_path, index=False, compression="snappy")
             self._metadata[parquet_path.name] = {

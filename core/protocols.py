@@ -386,3 +386,29 @@ class CallbackSystemProtocol(Protocol):
     async def trigger_event_async(self, event: CallbackEvent, *args: Any, **kwargs: Any) -> List[Any]:
         """Asynchronously trigger callbacks for an event."""
         ...
+
+
+@runtime_checkable
+class UnicodeProcessorProtocol(Protocol):
+    """Protocol defining Unicode processing helpers."""
+
+    @abstractmethod
+    def clean_surrogate_chars(self, text: str, replacement: str = "") -> str:
+        ...
+
+    @abstractmethod
+    def safe_decode_bytes(self, data: bytes, encoding: str = "utf-8") -> str:
+        ...
+
+    @abstractmethod
+    def safe_encode_text(self, value: Any) -> str:
+        ...
+
+    @abstractmethod
+    def sanitize_dataframe(
+        self,
+        df: pd.DataFrame,
+        *,
+        progress: Optional[Callable[[int, int], None] | bool] = None,
+    ) -> pd.DataFrame:
+        ...
