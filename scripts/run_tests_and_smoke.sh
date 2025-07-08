@@ -15,8 +15,7 @@ python -m file_processing.orchestrator \
   --output_base tests/output/smoke_test \
   --hint '{}' \
   --config config/config.yaml \
-  --device_registry config/device_registry.json \
-  --callback_controller settings/callback_config.yaml
+  --device_registry config/device_registry.json
 
 if [ ! -s tests/output/smoke_test.csv ] || [ ! -s tests/output/smoke_test.json ]; then
     echo "❌ Smoke test failed: missing or empty outputs"
