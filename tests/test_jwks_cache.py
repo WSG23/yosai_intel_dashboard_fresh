@@ -3,7 +3,6 @@ import io
 import json
 import logging
 import socket
-import sys
 import types
 
 import pytest
@@ -11,13 +10,15 @@ import pytest
 
 def setup_auth(monkeypatch):
     # stub jose.jwt before importing core.auth
+    import jose.jwt as orig_jwt
+
     jwt_stub = types.SimpleNamespace(
         decode=lambda *a, **kw: {"decoded": True},
         get_unverified_header=lambda token: {"kid": "testkey"},
     )
-    jose_stub = types.SimpleNamespace(jwt=jwt_stub)
-    monkeypatch.setitem(sys.modules, "jose", jose_stub)
-    monkeypatch.setitem(sys.modules, "jose.jwt", jwt_stub)
+
+    monkeypatch.setattr(orig_jwt, "decode", jwt_stub.decode)
+    monkeypatch.setattr(orig_jwt, "get_unverified_header", jwt_stub.get_unverified_header)
 
     module = importlib.import_module("core.auth")
     importlib.reload(module)
