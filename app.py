@@ -223,10 +223,9 @@ def main():
         load_dotenv()
 
         # Set Unicode handling early
-        import sys
         if hasattr(sys.stdout, 'reconfigure'):
-            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-            sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
 
         from config.dev_mode import setup_dev_mode
         setup_dev_mode()
@@ -259,8 +258,9 @@ def main():
             validator = SecretsValidator(secrets_manager)
 
             if app_config.environment == 'production':
+                secret_key: str = secrets_manager.get('SECRET_KEY', 'dev-key') or 'dev-key'
                 result = validator.validate_secret(
-                    secrets_manager.get('SECRET_KEY', 'dev-key'),
+                    secret_key,
                     environment='production'
                 )
                 if result.get('errors'):
