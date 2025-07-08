@@ -4,14 +4,12 @@ from dash import Dash, Input, Output
 from core.callback_events import CallbackEvent
 from core.callback_manager import CallbackManager
 from core.callback_migration import UnifiedCallbackCoordinatorWrapper
-from core.unified_callback_coordinator import (
-    UnifiedCallbackCoordinator,
-)
+from core import TrulyUnifiedCallbacks
 
 
 def test_duplicate_callback_registration():
     app = Dash(__name__)
-    coord = UnifiedCallbackCoordinator(app)
+    coord = TrulyUnifiedCallbacks(app)
 
     @coord.register_callback(
         Output("out", "children"),
@@ -36,7 +34,7 @@ def test_duplicate_callback_registration():
 
 def test_output_conflict_detection():
     app = Dash(__name__)
-    coord = UnifiedCallbackCoordinator(app)
+    coord = TrulyUnifiedCallbacks(app)
 
     @coord.register_callback(
         Output("out", "children"),
@@ -61,7 +59,7 @@ def test_output_conflict_detection():
 
 def test_allow_duplicate_output():
     app = Dash(__name__)
-    coord = UnifiedCallbackCoordinator(app)
+    coord = TrulyUnifiedCallbacks(app)
 
     @coord.register_callback(
         Output("out", "children"),
@@ -86,7 +84,7 @@ def test_allow_duplicate_output():
 
 def test_allow_duplicate_on_output_obj():
     app = Dash(__name__)
-    coord = UnifiedCallbackCoordinator(app)
+    coord = TrulyUnifiedCallbacks(app)
 
     @coord.register_callback(
         Output("out", "children"),
@@ -109,7 +107,7 @@ def test_allow_duplicate_on_output_obj():
 
 def test_callback_registration_to_app():
     app = Dash(__name__)
-    coord = UnifiedCallbackCoordinator(app)
+    coord = TrulyUnifiedCallbacks(app)
 
     @coord.register_callback(
         Output("out", "children"),
@@ -126,7 +124,7 @@ def test_callback_registration_to_app():
 
 def test_get_callback_conflicts():
     app = Dash(__name__)
-    coord = UnifiedCallbackCoordinator(app)
+    coord = TrulyUnifiedCallbacks(app)
 
     @coord.register_callback(
         Output("out", "children"),

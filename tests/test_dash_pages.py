@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 from dash import dcc, html
 
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core import TrulyUnifiedCallbacks
 from pages import file_upload
 from pages.deep_analytics import layout as analytics_layout
 from pages.deep_analytics import register_callbacks as register_analytics_callbacks
@@ -16,7 +16,7 @@ from pages.deep_analytics import register_callbacks as register_analytics_callba
 
 def _create_upload_app():
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-    coord = UnifiedCallbackCoordinator(app)
+    coord = TrulyUnifiedCallbacks(app)
     file_upload.register_upload_callbacks(coord)
     app.layout = html.Div([dcc.Location(id="url"), file_upload.layout()])
     return app
@@ -24,7 +24,7 @@ def _create_upload_app():
 
 def _create_analytics_app():
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-    coord = UnifiedCallbackCoordinator(app)
+    coord = TrulyUnifiedCallbacks(app)
     register_analytics_callbacks(coord)
     app.layout = html.Div([dcc.Location(id="url"), analytics_layout()])
     return app
