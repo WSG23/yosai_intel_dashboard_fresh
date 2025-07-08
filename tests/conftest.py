@@ -4,17 +4,14 @@ import sys
 import types
 from pathlib import Path
 
-if "dash_bootstrap_components" not in sys.modules:
-    dbc_stub = types.ModuleType("dash_bootstrap_components")
-    dbc_stub.Card = lambda *a, **k: None
-    dbc_stub.Navbar = dbc_stub.Container = dbc_stub.Row = dbc_stub.Col = (
-        lambda *a, **k: None
-    )
-    dbc_stub.NavbarToggler = dbc_stub.Collapse = dbc_stub.DropdownMenu = (
-        lambda *a, **k: None
-    )
-    dbc_stub.DropdownMenuItem = lambda *a, **k: None
-    sys.modules["dash_bootstrap_components"] = dbc_stub
+try:  # use real package if available
+    import dash_bootstrap_components  # noqa: F401
+except Exception:  # pragma: no cover - fallback stub
+    import tests.stubs.dash_bootstrap_components as dbc_stub
+    if "dash_bootstrap_components" not in sys.modules:
+        sys.modules["dash_bootstrap_components"] = dbc_stub
+    if not hasattr(dbc_stub, "themes"):
+        dbc_stub.themes = types.SimpleNamespace(BOOTSTRAP="bootstrap")
 
 
 import asyncio
@@ -249,31 +246,9 @@ def fake_dash(monkeypatch: pytest.MonkeyPatch, request):
 def fake_dbc(monkeypatch: pytest.MonkeyPatch, request):
     """Provide a minimal dash_bootstrap_components substitute."""
 
-    dbc_stub = types.ModuleType("dash_bootstrap_components")
-
-    class _Comp:
-        def __init__(self, *args, **kwargs):
-            self.args = args
-            for k, v in kwargs.items():
-                setattr(self, k, v)
-
-    for name in [
-        "Navbar",
-        "Container",
-        "Row",
-        "Col",
-        "NavbarToggler",
-        "Collapse",
-        "DropdownMenu",
-        "DropdownMenuItem",
-        "Card",
-        "Alert",
-        "Modal",
-        "Toast",
-    ]:
-        setattr(dbc_stub, name, _Comp)
-
-    dbc_stub.themes = types.SimpleNamespace(BOOTSTRAP="bootstrap")
+    import tests.stubs.dash_bootstrap_components as dbc_stub
+    if not hasattr(dbc_stub, "themes"):
+        dbc_stub.themes = types.SimpleNamespace(BOOTSTRAP="bootstrap")
 
     monkeypatch.setitem(sys.modules, "dash_bootstrap_components", dbc_stub)
     if hasattr(request.module, "dbc"):
