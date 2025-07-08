@@ -8,9 +8,9 @@ import logging
 from dash import html
 
 try:  # Lazy import for optional heavy dependencies
-    from components.file_upload_component import FileUploadComponent
+    from components.upload import UnifiedUploadComponent
 except Exception as exc:  # pragma: no cover - optional dependency missing
-    FileUploadComponent = None  # type: ignore[assignment]
+    UnifiedUploadComponent = None  # type: ignore[assignment]
     _import_error = exc
 else:
     _import_error = None
@@ -26,7 +26,7 @@ else:  # pragma: no cover - fallback type alias
 logger = logging.getLogger(__name__)
 
 # Single shared instance for this page
-_upload_component = FileUploadComponent() if FileUploadComponent else None
+_upload_component = UnifiedUploadComponent() if UnifiedUploadComponent else None
 
 
 def layout() -> Html.Div:
