@@ -244,7 +244,7 @@ class UploadQueueManagerProtocol(Protocol):
     ) -> List[Tuple[str, Any]]: ...
 
 
-from core.enhanced_container import ServiceContainer
+from core.service_container import ServiceContainer
 
 
 def _get_container(

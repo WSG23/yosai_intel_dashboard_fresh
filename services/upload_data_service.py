@@ -7,7 +7,7 @@ from services.interfaces import (
     UploadDataServiceProtocol,
     get_upload_data_service,
 )
-from core.enhanced_container import ServiceContainer
+from core.service_container import ServiceContainer
 from utils.upload_store import uploaded_data_store, UploadedDataStore
 
 
