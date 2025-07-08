@@ -7,6 +7,7 @@ import pandas as pd
 from services.upload import UploadProcessingService
 from upload_core import UploadCore
 from utils.upload_store import UploadedDataStore
+from services.device_learning_service import DeviceLearningService
 
 
 def _encode_df(df: pd.DataFrame) -> str:
@@ -29,8 +30,9 @@ def test_immediate_confirm_after_upload(monkeypatch, tmp_path, async_runner):
     store = UploadedDataStore(storage_dir=tmp_path)
     monkeypatch.setattr(file_upload, "_uploaded_data_store", store)
 
-    cb = Callbacks()
-    cb.processing = UploadProcessingService(store)
+    learning = DeviceLearningService()
+    processing = UploadProcessingService(store, learning)
+    cb = Callbacks(processing, learning, store)
     ok, msg = cb.validator.validate("data.csv", _encode_df(pd.DataFrame()))
     assert ok, msg
 

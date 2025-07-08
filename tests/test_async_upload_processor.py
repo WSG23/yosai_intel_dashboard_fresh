@@ -1,6 +1,6 @@
 import asyncio
 
-import pandas as pd
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 from services.upload.async_processor import AsyncUploadProcessor
 
@@ -8,10 +8,8 @@ from services.upload.async_processor import AsyncUploadProcessor
 def test_async_upload_processor_csv_parquet(tmp_path, async_runner):
     df = pd.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
     csv_path = tmp_path / "sample.csv"
-    parquet_path = tmp_path / "sample.parquet"
 
-    df.to_csv(csv_path, index=False)
-    df.to_parquet(parquet_path, index=False)
+    parquet_path = tmp_path / "sample.parquet"
 
     proc = AsyncUploadProcessor()
 

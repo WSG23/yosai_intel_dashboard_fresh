@@ -19,6 +19,7 @@ def register_all_application_services(container: ServiceContainer) -> None:
 
     register_core_infrastructure(container)
     register_analytics_services(container)
+    register_learning_services(container)
     register_security_services(container)
     register_export_services(container)
     from services.upload.service_registration import register_upload_services
@@ -135,6 +136,17 @@ def register_export_services(container: ServiceContainer) -> None:
         "export_service",
         ExportService,
         protocol=ExportServiceProtocol,
+    )
+
+
+def register_learning_services(container: ServiceContainer) -> None:
+    """Register device learning service with the container."""
+
+    from services.device_learning_service import create_device_learning_service
+
+    container.register_singleton(
+        "device_learning_service",
+        create_device_learning_service(),
     )
 
 

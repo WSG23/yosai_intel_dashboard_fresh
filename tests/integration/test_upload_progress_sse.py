@@ -1,6 +1,6 @@
 import dash
 import dash_bootstrap_components as dbc
-import pandas as pd
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 from dash import dcc, html
 
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
@@ -16,8 +16,9 @@ def _create_upload_app():
 
 
 def test_upload_progress_sse(dash_duo, tmp_path):
-    csv = tmp_path / "sample.csv"
-    pd.DataFrame({"a": [1, 2]}).to_csv(csv, index=False)
+    csv = UploadFileBuilder().with_dataframe(
+        DataFrameBuilder().add_column("a", [1, 2]).build()
+    ).write_csv(tmp_path / "sample.csv")
     app = _create_upload_app()
     dash_duo.start_server(app)
     assert not dash_duo.find_elements("#upload-progress-interval")

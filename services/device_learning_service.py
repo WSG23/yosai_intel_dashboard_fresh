@@ -7,6 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+from services.upload.protocols import DeviceLearningServiceProtocol
+
 import pandas as pd
 from dash import html
 from dash.dependencies import Input, Output
@@ -21,7 +23,7 @@ from services.consolidated_learning_service import get_learning_service
 logger = logging.getLogger(__name__)
 
 
-class DeviceLearningService:
+class DeviceLearningService(DeviceLearningServiceProtocol):
     """Persistent device mapping learning service"""
 
     def __init__(self):
@@ -338,15 +340,10 @@ class DeviceLearningService:
         return overlap / total >= 0.6
 
 
-_device_learning_service: Optional[DeviceLearningService] = None
 
-
-def get_device_learning_service() -> DeviceLearningService:
-    """Return a singleton instance of :class:`DeviceLearningService`."""
-    global _device_learning_service
-    if _device_learning_service is None:
-        _device_learning_service = DeviceLearningService()
-    return _device_learning_service
+def create_device_learning_service() -> DeviceLearningService:
+    """Factory function for :class:`DeviceLearningService`."""
+    return DeviceLearningService()
 
 
 def create_learning_callbacks(manager: "TrulyUnifiedCallbacks") -> None:

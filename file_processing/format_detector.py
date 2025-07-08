@@ -6,7 +6,8 @@ from typing import Iterable, List, Optional, Tuple, Dict
 import pandas as pd
 
 from core.callback_controller import CallbackController, CallbackEvent
-from core.unicode_processor import UnicodeProcessor
+from core.container import get_unicode_processor
+from core.protocols import UnicodeProcessorProtocol
 
 
 class UnsupportedFormatError(Exception):
@@ -16,9 +17,15 @@ class UnsupportedFormatError(Exception):
 class FormatDetector:
     """Try a series of readers to detect and load file formats."""
 
-    def __init__(self, readers: Optional[Iterable] = None) -> None:
+    def __init__(
+        self,
+        readers: Optional[Iterable] = None,
+        *,
+        unicode_processor: UnicodeProcessorProtocol | None = None,
+    ) -> None:
         self.readers: List = list(readers) if readers else []
         self.callback_controller = CallbackController()
+        self.unicode_processor = unicode_processor or get_unicode_processor()
 
     def detect_and_load(
         self, file_path: str, hint: Optional[Dict] = None
@@ -28,7 +35,7 @@ class FormatDetector:
         for reader in self.readers:
             try:
                 df = reader.read(file_path, hint=hint)
-                df = UnicodeProcessor.sanitize_dataframe(df)
+                df = self.unicode_processor.sanitize_dataframe(df)
                 meta = {
                     "source_path": file_path,
                     "ingest_ts": datetime.utcnow().isoformat(),

@@ -10,11 +10,32 @@ sys.path.insert(0, str(stub_dir))
 
 import shutil
 import tempfile
-from typing import Generator
+from typing import Any, Generator
 
 import pandas as pd
 import pytest
 import asyncio
+
+try:
+    from services.upload.protocols import UploadStorageProtocol
+except Exception:  # pragma: no cover - optional dep fallback
+    from typing import Protocol
+
+    class UploadStorageProtocol(Protocol):
+        def add_file(self, filename: str, dataframe: pd.DataFrame) -> None: ...
+        def get_all_data(self) -> dict[str, pd.DataFrame]: ...
+        def clear_all(self) -> None: ...
+
+try:
+    from core.protocols import ConfigurationProtocol
+except Exception:  # pragma: no cover - optional dep fallback
+    class ConfigurationProtocol(Protocol):
+        def get_database_config(self) -> dict[str, Any]: ...
+        def get_app_config(self) -> dict[str, Any]: ...
+        def get_security_config(self) -> dict[str, Any]: ...
+        def get_upload_config(self) -> dict[str, Any]: ...
+        def reload_config(self) -> None: ...
+        def validate_config(self) -> dict[str, Any]: ...
 
 from core.container import Container
 
@@ -118,7 +139,6 @@ def mock_auth_env(monkeypatch: pytest.MonkeyPatch) -> None:
     }
     for key, value in auth_vars.items():
         monkeypatch.setenv(key, value)
-
 
 @pytest.fixture
 def async_runner() -> Generator[callable, None, None]:

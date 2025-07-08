@@ -8,39 +8,23 @@ and provides specialized processors for different contexts.
 
 ### Text Processing Migration
 ```python
-# OLD (DEPRECATED):
-from utils.unicode_utils import sanitize_unicode_input
-from utils.unicode_utils import clean_unicode_text
-from utils.unicode_utils import handle_surrogate_characters
+from core.unicode import UnicodeTextProcessor, UnicodeSecurityProcessor
 
-# NEW (RECOMMENDED):
-from core.unicode import UnicodeTextProcessor
 processor = UnicodeTextProcessor()
 result = processor.clean_text(text)
 
-# OR for security contexts:
-from core.unicode import UnicodeSecurityProcessor
+# Security-sensitive contexts
 result = UnicodeSecurityProcessor.sanitize_input(text)
 ```
 
 ### SQL Processing Migration
 ```python
-# OLD (DEPRECATED):
-from config.unicode_handler import safe_encode_query
-from utils.unicode_utils import safe_encode
-
-# NEW (RECOMMENDED):
 from core.unicode import UnicodeSQLProcessor
 safe_query = UnicodeSQLProcessor.encode_query(query)
 ```
 
 ### DataFrame Processing Migration
 ```python
-# OLD (DEPRECATED):
-from utils.unicode_utils import sanitize_dataframe
-from security.unicode_security_handler import sanitize_dataframe
-
-# NEW (RECOMMENDED):
 from core.unicode import sanitize_dataframe
 clean_df = sanitize_dataframe(df, progress=True)
 ```

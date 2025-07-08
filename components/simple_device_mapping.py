@@ -21,10 +21,12 @@ import pandas as pd
 from dash.dependencies import ALL, Input, Output, State
 
 from services.ai_mapping_store import ai_mapping_store
-from services.device_learning_service import get_device_learning_service
-
-# ADD after existing imports
-from services.interfaces import DoorMappingServiceProtocol, get_door_mapping_service
+# Import helper to access the learning service via the DI container
+from services.interfaces import (
+    DoorMappingServiceProtocol,
+    get_door_mapping_service,
+    get_device_learning_service,
+)
 
 # Options for special device areas shared with verification component
 special_areas_options = [
