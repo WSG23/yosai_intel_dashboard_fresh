@@ -9,7 +9,6 @@ from core.app_factory import (
     _register_callbacks,
     _configure_swagger,
 )
-from tests.fake_unicode_processor import FakeUnicodeProcessor
 from tests.fake_configuration import FakeConfiguration
 
 
@@ -28,20 +27,18 @@ class DummyApp:
         self.server = DummyServer()
 
 
-def _make_container() -> ServiceContainer:
+def _make_container(proc: UnicodeProcessorProtocol) -> ServiceContainer:
     container = ServiceContainer()
     container.register_singleton("config_manager", FakeConfiguration)
     container.register_singleton(
-        "unicode_processor",
-        lambda: FakeUnicodeProcessor(),
-        protocol=UnicodeProcessorProtocol,
+        "unicode_processor", lambda: proc, protocol=UnicodeProcessorProtocol
     )
     return container
 
 
-def test_initialize_plugins():
+def test_initialize_plugins(fake_unicode_processor):
     app = DummyApp()
-    container = _make_container()
+    container = _make_container(fake_unicode_processor)
     cfg = container.get("config_manager")
 
     auto_instances = []
@@ -98,9 +95,9 @@ def test_setup_layout(monkeypatch):
     assert app.layout() == "layout1"
 
 
-def test_register_callbacks(monkeypatch):
+def test_register_callbacks(monkeypatch, fake_unicode_processor):
     app = DummyApp()
-    container = _make_container()
+    container = _make_container(fake_unicode_processor)
     cfg = container.get("config_manager")
 
     calls = {}
