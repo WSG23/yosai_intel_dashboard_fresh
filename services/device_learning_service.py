@@ -8,6 +8,25 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from services.upload.protocols import DeviceLearningServiceProtocol
+from typing import Protocol
+
+
+class DeviceServiceProtocol(Protocol):
+    """Lightweight interface for device learning services."""
+
+    def get_learned_mappings(self, df: pd.DataFrame, filename: str) -> Dict[str, Dict]:
+        ...
+
+    def apply_learned_mappings_to_global_store(self, df: pd.DataFrame, filename: str) -> bool:
+        ...
+
+    def get_user_device_mappings(self, filename: str) -> Dict[str, Any]:
+        ...
+
+    def save_user_device_mappings(
+        self, df: pd.DataFrame, filename: str, user_mappings: Dict[str, Any]
+    ) -> bool:
+        ...
 
 import pandas as pd
 from dash import html

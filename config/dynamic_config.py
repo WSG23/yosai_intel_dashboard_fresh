@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Protocol
 
 from .constants import (
     AnalyticsConstants,
@@ -10,6 +10,16 @@ from .constants import (
     UploadLimits,
 )
 from .environment import select_config_file
+
+
+class ConfigurationServiceProtocol(Protocol):
+    """Minimal configuration service interface."""
+
+    def get_max_upload_size_mb(self) -> int:
+        ...
+
+    def get_max_upload_size_bytes(self) -> int:
+        ...
 
 
 class DynamicConfigManager:
