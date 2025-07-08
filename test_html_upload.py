@@ -10,7 +10,7 @@ def test_html_upload():
         print("✅ HTML layout creates successfully")
 
         layout_str = str(layout)
-        if 'upload-area' in layout_str and 'file-input' in layout_str:
+        if 'drag-drop-upload' in layout_str and 'upload-progress' in layout_str:
             print("✅ Upload components found in layout")
         else:
             print("❌ Upload components missing from layout")
