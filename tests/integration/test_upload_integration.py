@@ -10,30 +10,19 @@ from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 from services.upload.upload_queue_manager import UploadQueueManager
 from services.upload.chunked_upload_manager import ChunkedUploadManager
 
-# provide minimal stubs for config dependencies
-import types
-
-conn_mod = types.ModuleType("config.connection_retry")
+from config.connection_retry import ConnectionRetryManager, RetryConfig
 
 
-class RetryConfig:
-    def __init__(self, max_attempts=3, base_delay=0.2, jitter=False):
-        self.max_attempts = max_attempts
-        self.base_delay = base_delay
-        self.jitter = jitter
+@pytest.fixture
+def fast_retry_manager_cls():
+    class FastRetryManager(ConnectionRetryManager):
+        def __init__(self, cfg=None):
+            super().__init__(cfg or RetryConfig(max_attempts=3, base_delay=0, jitter=False))
 
+        def run_with_retry(self, func):  # type: ignore[override]
+            return func()
 
-class ConnectionRetryManager:
-    def __init__(self, cfg=None):
-        self.cfg = cfg or RetryConfig()
-
-    def run_with_retry(self, func):
-        return func()
-
-
-conn_mod.RetryConfig = RetryConfig
-conn_mod.ConnectionRetryManager = ConnectionRetryManager
-sys.modules["config.connection_retry"] = conn_mod
+    return FastRetryManager
 
 
 class CallbackEvent:
@@ -61,7 +50,7 @@ class CallbackManager:
 
 
 def test_resumable_upload_and_error_callback(
-    tmp_path, monkeypatch, fake_upload_storage
+    tmp_path, monkeypatch, fake_upload_storage, fast_retry_manager_cls
 ):
     data_file = tmp_path / "sample.csv"
     df = DataFrameBuilder().add_column("a", range(15)).build()
@@ -72,7 +61,7 @@ def test_resumable_upload_and_error_callback(
         store,
         metadata_dir=tmp_path / "meta",
         initial_chunk_size=5,
-        retry_manager_cls=ConnectionRetryManager,
+        retry_manager_cls=fast_retry_manager_cls,
     )
     queue = UploadQueueManager(max_concurrent=1)
     queue.add_files([data_file])

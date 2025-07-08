@@ -265,3 +265,39 @@ def fake_dbc(monkeypatch: pytest.MonkeyPatch, request):
         monkeypatch.setattr(request.module, "dbc", dbc_stub, raising=False)
 
     yield dbc_stub
+
+
+class FakeUploadStore:
+    """Minimal in-memory upload store for tests."""
+
+    def __init__(self) -> None:
+        self.data: dict[str, pd.DataFrame] = {}
+
+    def add_file(self, filename: str, dataframe: pd.DataFrame) -> None:
+        self.data[filename] = dataframe
+
+    def get_all_data(self) -> dict[str, pd.DataFrame]:
+        return self.data.copy()
+
+    def clear_all(self) -> None:
+        self.data.clear()
+
+    def load_dataframe(self, filename: str) -> pd.DataFrame | None:
+        return self.data.get(filename)
+
+    def get_filenames(self) -> list[str]:
+        return list(self.data.keys())
+
+    def get_file_info(self) -> dict[str, dict[str, Any]]:
+        return {
+            name: {"rows": len(df), "columns": len(df.columns)}
+            for name, df in self.data.items()
+        }
+
+    def wait_for_pending_saves(self) -> None:  # pragma: no cover - sync store
+        pass
+
+@pytest.fixture
+def fake_upload_storage() -> FakeUploadStore:
+    """Provide a fresh in-memory upload store."""
+    return FakeUploadStore()
