@@ -19,6 +19,7 @@ from services.data_processing.processor import Processor
 from core.security_validator import SecurityValidator
 from services.db_analytics_helper import DatabaseAnalyticsHelper
 from services.summary_reporting import SummaryReporter
+from core.protocols import AnalyticsServiceProtocol, DatabaseProtocol, StorageProtocol
 
 
 class ConfigProviderProtocol(Protocol):
@@ -70,11 +71,12 @@ LARGE_DATA_THRESHOLD = 1000
 """Row count above which data is considered large."""
 
 
-class AnalyticsService(AnalyticsProviderProtocol):
-    """Complete analytics service that integrates all data sources"""
+class AnalyticsService(AnalyticsServiceProtocol):
+    """Analytics service implementing ``AnalyticsServiceProtocol``."""
 
-    def __init__(self, config_provider: ConfigProviderProtocol | None = None):
-        self._config_provider = config_provider
+    def __init__(self, database: DatabaseProtocol | None = None, storage: StorageProtocol | None = None):
+        self.database = database
+        self.storage = storage
         self.database_manager: Optional[Any] = None
         self._initialize_database()
         self.validation_service = SecurityValidator()
@@ -96,17 +98,17 @@ class AnalyticsService(AnalyticsProviderProtocol):
     def _initialize_database(self):
         """Initialize database connection"""
         try:
+            if self.database is not None:
+                self.database_manager = self.database
+                self.db_helper = DatabaseAnalyticsHelper(self.database)
+                self.summary_reporter = SummaryReporter(self.database)
+                return
+
             from config.database_manager import DatabaseConfig as ManagerConfig
-            from config.database_manager import (
-                DatabaseManager,
-            )
+            from config.database_manager import DatabaseManager
+            from config.config import get_database_config
 
-            if self._config_provider is not None:
-                cfg = self._config_provider.get_database_config()
-            else:
-                from config.config import get_database_config
-
-                cfg = get_database_config()
+            cfg = get_database_config()
             manager_cfg = ManagerConfig(
                 type=cfg.type,
                 host=cfg.host,
