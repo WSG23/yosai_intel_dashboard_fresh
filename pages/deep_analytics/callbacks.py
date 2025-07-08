@@ -12,13 +12,13 @@ import logging
 
 from analytics.controllers import UnifiedAnalyticsController
 from core.dash_profile import profile_callback
-from core.callbacks import UnifiedCallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.state import CentralizedStateManager
 
 logger = logging.getLogger(__name__)
 import dash_bootstrap_components as dbc
 
-callback_manager = UnifiedCallbackManager()
+callback_manager = TrulyUnifiedCallbacks()
 analytics_state = CentralizedStateManager()
 
 from services.data_processing.analytics_engine import (
@@ -524,8 +524,8 @@ def register_callbacks(
 
     callback_manager.register_operation(
         "analysis_buttons",
-        lambda s,t,b,a,sug,q,u,ds: cb.handle_analysis_buttons(
-            s,t,b,a,sug,q,u,ds
+        lambda s, t, b, a, sug, q, u, ds: cb.handle_analysis_buttons(
+            s, t, b, a, sug, q, u, ds
         ),
         name="handle_analysis_buttons",
         timeout=5,
@@ -578,9 +578,7 @@ def register_callbacks(
             data_source,
         )[0]
 
-        options = callback_manager.execute_group(
-            "refresh_sources", refresh
-        )[0]
+        options = callback_manager.execute_group("refresh_sources", refresh)[0]
 
         alert = callback_manager.execute_group("status_alert", trigger)[0]
 
@@ -589,7 +587,6 @@ def register_callbacks(
         )
 
         return display, options, alert
-
 
     if controller is not None:
         controller.register_callback(
