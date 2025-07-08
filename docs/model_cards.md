@@ -42,6 +42,10 @@ DataFrame with access logs containing timestamps, user IDs, door IDs and results
 ### Limitations
 Requires all mandatory columns to be present. Baseline thresholds may need tuning for different deployments.
 
+For unit tests you can reset the callback manager using
+`analytics.security_patterns.setup_isolated_security_testing()`. The helper
+currently raises a `NotImplementedError` until the final setup logic is added.
+
 ## User Behavior Analyzer
 
 ### Purpose

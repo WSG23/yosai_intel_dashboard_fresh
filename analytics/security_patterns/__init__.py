@@ -46,8 +46,15 @@ __all__ = [
 
 
 def setup_isolated_security_testing() -> None:
-    """Prepare the analytics.security_patterns module for isolated security tests."""
-    # TODO: implement test setup logic
-    return None
+    """Prepare the :mod:`analytics.security_patterns` package for isolated tests.
+
+    The concrete logic has not been implemented yet. Calling this helper makes
+    it explicit that test specific setup is unavailable and raises a
+    :class:`NotImplementedError`.
+    """
+
+    raise NotImplementedError(
+        "setup_isolated_security_testing has not been implemented yet"
+    )
 
 __all__.append("setup_isolated_security_testing")
