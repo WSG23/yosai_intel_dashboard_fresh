@@ -1,6 +1,7 @@
 import asyncio
 import base64
 
+import pytest
 import dash_bootstrap_components as dbc
 import pandas as pd
 
@@ -9,6 +10,8 @@ from upload_core import UploadCore
 from utils.upload_store import UploadedDataStore
 from services.device_learning_service import DeviceLearningService
 from tests.fakes import FakeUploadDataService
+
+pytestmark = pytest.mark.usefixtures("fake_dbc")
 
 
 def _encode_df(df: pd.DataFrame) -> str:

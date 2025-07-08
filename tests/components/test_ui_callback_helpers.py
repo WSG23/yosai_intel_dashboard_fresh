@@ -1,5 +1,5 @@
 from unittest import mock
-
+import pytest
 import dash
 
 from components.column_verification import (
@@ -15,6 +15,8 @@ from components.simple_device_mapping import (
 from components.simple_device_mapping import (
     register_callbacks as register_device_callbacks,
 )
+
+pytestmark = pytest.mark.usefixtures("fake_dash")
 
 
 def test_toggle_custom_field():

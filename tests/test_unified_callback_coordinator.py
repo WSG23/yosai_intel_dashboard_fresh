@@ -4,6 +4,8 @@ from dash import Dash, Input, Output
 from core.callback_events import CallbackEvent
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
+pytestmark = pytest.mark.usefixtures("fake_dash")
+
 
 def test_duplicate_callback_registration():
     app = Dash(__name__)

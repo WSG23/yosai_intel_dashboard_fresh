@@ -1,4 +1,5 @@
 import enum
+import pytest
 
 from dash import Dash, html
 from flask.json.provider import DefaultJSONProvider
@@ -16,6 +17,8 @@ from config.config import ConfigManager
 from core.container import Container as DIContainer
 from core.plugins.auto_config import PluginAutoConfiguration
 from core.plugins.unified_registry import UnifiedPluginRegistry
+
+pytestmark = pytest.mark.usefixtures("fake_dash")
 from services.data_processing.core.protocols import PluginMetadata
 
 
