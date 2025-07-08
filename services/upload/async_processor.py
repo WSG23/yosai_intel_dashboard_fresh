@@ -6,7 +6,7 @@ import pandas as pd
 
 from config.config import get_analytics_config
 from services.analytics_service import MAX_DISPLAY_ROWS
-from services.data_processing.file_processor import UnicodeFileProcessor
+from services.upload.utils.file_parser import UnicodeFileProcessor
 
 
 def _get_max_display_rows() -> int:

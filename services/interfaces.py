@@ -69,7 +69,7 @@ def get_upload_validator(
     c = _get_container(container)
     if c and c.has("upload_validator"):
         return c.get("upload_validator")
-    from services.upload.validators import ClientSideValidator
+    from services.upload.core.validator import ClientSideValidator
 
     return ClientSideValidator()
 
