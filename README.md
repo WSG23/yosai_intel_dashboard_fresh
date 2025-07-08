@@ -474,11 +474,11 @@ implementations can be swapped in for tests. Helper functions like
 ## 🔄 Migration Guide
 
 The dashboard now centralizes Unicode handling in `core.unicode`.
-Detect legacy usage and migrate with the helper tools:
+Detect legacy usage and validate the migration with the helper tools:
 
 ```bash
-python tools/migration_detector.py --scan .
-python tools/migration_validator.py
+python tools/legacy_unicode_audit.py --path .
+python tools/validate_unicode_migration.py
 ```
 
 The repository also includes a helper for enforcing snake_case names.

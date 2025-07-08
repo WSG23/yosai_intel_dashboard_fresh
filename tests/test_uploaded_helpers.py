@@ -1,4 +1,4 @@
-import pandas as pd
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 from analytics.file_processing_utils import (
     aggregate_counts,
@@ -11,7 +11,7 @@ from services import AnalyticsService
 
 
 def test_load_uploaded_data(monkeypatch):
-    sample = {"file.csv": pd.DataFrame({"A": [1]})}
+    sample = {"file.csv": DataFrameBuilder().add_column("A", [1]).build()}
     monkeypatch.setattr(
         "pages.file_upload.get_uploaded_data", lambda: sample, raising=False
     )
@@ -20,14 +20,14 @@ def test_load_uploaded_data(monkeypatch):
 
 
 def test_clean_uploaded_dataframe():
-    df = pd.DataFrame(
-        {
-            "Timestamp": ["2024-01-01 00:00:00"],
-            "Person ID": ["u1"],
-            "Token ID": ["t1"],
-            "Device name": ["d1"],
-            "Access result": ["Granted"],
-        }
+    df = (
+        DataFrameBuilder()
+        .add_column("Timestamp", ["2024-01-01 00:00:00"])
+        .add_column("Person ID", ["u1"])
+        .add_column("Token ID", ["t1"])
+        .add_column("Device name", ["d1"])
+        .add_column("Access result", ["Granted"])
+        .build()
     )
     service = AnalyticsService()
     cleaned = service.clean_uploaded_dataframe(df)
@@ -42,13 +42,13 @@ def test_clean_uploaded_dataframe():
 
 
 def test_summarize_dataframe():
-    df = pd.DataFrame(
-        {
-            "person_id": ["u1", "u2"],
-            "door_id": ["d1", "d2"],
-            "timestamp": pd.to_datetime(["2024-01-01", "2024-01-02"]),
-            "access_result": ["Granted", "Denied"],
-        }
+    df = (
+        DataFrameBuilder()
+        .add_column("person_id", ["u1", "u2"])
+        .add_column("door_id", ["d1", "d2"])
+        .add_column("timestamp", pd.to_datetime(["2024-01-01", "2024-01-02"]))
+        .add_column("access_result", ["Granted", "Denied"])
+        .build()
     )
     service = AnalyticsService()
     summary = service.summarize_dataframe(df)
@@ -62,12 +62,12 @@ def test_summarize_dataframe():
 def test_count_and_date_helpers():
     from collections import Counter
 
-    df = pd.DataFrame(
-        {
-            "person_id": ["u1", "u2", "u1"],
-            "door_id": ["d1", "d1", "d2"],
-            "timestamp": ["2024-01-01", "2024-01-03", "2024-01-02"],
-        }
+    df = (
+        DataFrameBuilder()
+        .add_column("person_id", ["u1", "u2", "u1"])
+        .add_column("door_id", ["d1", "d1", "d2"])
+        .add_column("timestamp", ["2024-01-01", "2024-01-03", "2024-01-02"])
+        .build()
     )
     service = AnalyticsService()
     u_counts, d_counts = Counter(), Counter()
@@ -82,15 +82,14 @@ def test_count_and_date_helpers():
 
 
 def test_stream_uploaded_file(tmp_path):
-    df = pd.DataFrame(
-        {
-            "Timestamp": ["2024-01-01 10:00:00"],
-            "Person ID": ["u1"],
-            "Device name": ["d1"],
-        }
+    df = (
+        DataFrameBuilder()
+        .add_column("Timestamp", ["2024-01-01 10:00:00"])
+        .add_column("Person ID", ["u1"])
+        .add_column("Device name", ["d1"])
+        .build()
     )
-    path = tmp_path / "x.csv"
-    df.to_csv(path, index=False)
+    path = UploadFileBuilder().with_dataframe(df).write_csv(tmp_path / "x.csv")
     service = AnalyticsService()
     chunks = list(stream_uploaded_file(service.data_loading_service, path, chunksize=1))
     assert len(chunks) == 1
@@ -100,19 +99,19 @@ def test_stream_uploaded_file(tmp_path):
 def test_aggregate_counts():
     from collections import Counter
 
-    df1 = pd.DataFrame(
-        {
-            "person_id": ["u1", "u2"],
-            "door_id": ["d1", "d2"],
-            "timestamp": ["2024-01-01", "2024-01-02"],
-        }
+    df1 = (
+        DataFrameBuilder()
+        .add_column("person_id", ["u1", "u2"])
+        .add_column("door_id", ["d1", "d2"])
+        .add_column("timestamp", ["2024-01-01", "2024-01-02"])
+        .build()
     )
-    df2 = pd.DataFrame(
-        {
-            "person_id": ["u1"],
-            "door_id": ["d1"],
-            "timestamp": ["2024-01-03"],
-        }
+    df2 = (
+        DataFrameBuilder()
+        .add_column("person_id", ["u1"])
+        .add_column("door_id", ["d1"])
+        .add_column("timestamp", ["2024-01-03"])
+        .build()
     )
 
     service = AnalyticsService()
