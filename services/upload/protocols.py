@@ -118,6 +118,26 @@ class UploadStorageProtocol(Protocol):
         """Remove all stored upload data."""
         ...
 
+    @abstractmethod
+    def load_dataframe(self, filename: str) -> pd.DataFrame | None:
+        """Load a previously stored dataframe."""
+        ...
+
+    @abstractmethod
+    def get_filenames(self) -> List[str]:
+        """Return list of stored filenames."""
+        ...
+
+    @abstractmethod
+    def get_file_info(self) -> Dict[str, Dict[str, Any]]:
+        """Return info dictionary for stored files."""
+        ...
+
+    @abstractmethod
+    def wait_for_pending_saves(self) -> None:
+        """Block until any background saves are complete."""
+        ...
+
 
 class UploadAnalyticsProtocol(Protocol):
     """Protocol for analyzing uploaded data."""

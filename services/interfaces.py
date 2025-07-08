@@ -45,6 +45,24 @@ class DoorMappingServiceProtocol(Protocol):
         ...
 
 
+class DeviceLearningServiceProtocol(Protocol):
+    """Interface for persistent device learning services."""
+
+    def get_learned_mappings(self, df: pd.DataFrame, filename: str) -> Dict[str, Dict]:
+        ...
+
+    def apply_learned_mappings_to_global_store(self, df: pd.DataFrame, filename: str) -> bool:
+        ...
+
+    def get_user_device_mappings(self, filename: str) -> Dict[str, Any]:
+        ...
+
+    def save_user_device_mappings(
+        self, df: pd.DataFrame, filename: str, user_mappings: Dict[str, Any]
+    ) -> bool:
+        ...
+
+
 # ---------------------------------------------------------------------------
 # Helper accessors
 # ---------------------------------------------------------------------------
@@ -100,6 +118,7 @@ __all__ = [
     "UploadValidatorProtocol",
     "ExportServiceProtocol",
     "DoorMappingServiceProtocol",
+    "DeviceLearningServiceProtocol",
     "get_upload_validator",
     "get_export_service",
     "get_door_mapping_service",
