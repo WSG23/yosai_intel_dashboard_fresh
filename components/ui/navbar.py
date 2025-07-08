@@ -573,6 +573,8 @@ def register_navbar_callbacks(
         def update_theme_store(value: Optional[str]):
             return sanitize_theme(value)
 
+        if manager.app is None:
+            return
         manager.app.clientside_callback(
             "function(data){if(window.setAppTheme&&data){window.setAppTheme(data);} return '';}",
             Output("theme-dummy-output", "children"),
