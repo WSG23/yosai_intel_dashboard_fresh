@@ -114,7 +114,11 @@ if TYPE_CHECKING:  # pragma: no cover - only for type hints
     from dash import dcc as Dcc
     from dash import html as Html
 
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+    from core.truly_unified_callbacks import (
+        TrulyUnifiedCallbacks as TrulyUnifiedCallbacksType,
+    )
+else:  # pragma: no cover - fallback type alias
+    TrulyUnifiedCallbacksType = Any
 
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 BUNDLE = "/assets/dist/main.min.css"
@@ -697,7 +701,7 @@ def _create_placeholder_page(title: str, subtitle: str, message: str) -> "DbcCon
     )
 
 
-def _register_router_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
+def _register_router_callbacks(manager: TrulyUnifiedCallbacksType) -> None:
     """Register page routing callbacks."""
 
     def safe_callback(outputs, inputs, callback_id="unknown"):
@@ -882,7 +886,7 @@ def _get_upload_page() -> Any:
     )
 
 
-def _register_global_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
+def _register_global_callbacks(manager: TrulyUnifiedCallbacksType) -> None:
     """Register global application callbacks with consolidated management and Unicode safety"""
 
     if not DASH_AVAILABLE:
