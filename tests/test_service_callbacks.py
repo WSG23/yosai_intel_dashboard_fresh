@@ -31,14 +31,14 @@ stub_dash.html = types.SimpleNamespace(Div=lambda *a, **k: None)
 sys.modules["dash"] = stub_dash
 sys.modules["dash.dependencies"] = stub_dep
 
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from services.upload.callbacks import UploadCallbacks
 from services.analytics.callbacks import AnalyticsCallbacks
 
 
 def test_coordinator_register_all_callbacks():
     app = stub_dash.Dash()
-    coord = UnifiedCallbackCoordinator(app)
+    coord = TrulyUnifiedCallbacks(app)
 
     coord.register_all_callbacks(UploadCallbacks, AnalyticsCallbacks)
 
