@@ -120,39 +120,25 @@ class UploadStorageProtocol(Protocol):
         """Remove all stored upload data."""
         ...
 
-    # Optional methods used by higher level services
-    def load_dataframe(self, filename: str) -> pd.DataFrame:
-        """Load a previously saved dataframe."""
-        ...  # pragma: no cover - optional protocol method
+    @abstractmethod
+    def load_dataframe(self, filename: str) -> pd.DataFrame | None:
+        """Load a previously stored dataframe."""
+        ...
 
+    @abstractmethod
+    def get_filenames(self) -> List[str]:
+        """Return list of stored filenames."""
+        ...
+
+    @abstractmethod
+    def get_file_info(self) -> Dict[str, Dict[str, Any]]:
+        """Return info dictionary for stored files."""
+        ...
+
+    @abstractmethod
     def wait_for_pending_saves(self) -> None:
-        """Wait for any background saves to finish."""
-        ...  # pragma: no cover - optional protocol method
+        """Block until any background saves are complete."""
 
-
-class DeviceLearningServiceProtocol(Protocol):
-    """Protocol for persistent device learning services."""
-
-    @abstractmethod
-    def get_learned_mappings(self, df: pd.DataFrame, filename: str) -> Dict[str, Any]:
-        """Return learned device mappings for the given file."""
-        ...
-
-    @abstractmethod
-    def apply_learned_mappings_to_global_store(self, df: pd.DataFrame, filename: str) -> bool:
-        """Apply learned mappings to the global AI mapping store."""
-        ...
-
-    @abstractmethod
-    def get_user_device_mappings(self, filename: str) -> Dict[str, Any]:
-        """Load user-confirmed device mappings for a filename."""
-        ...
-
-    @abstractmethod
-    def save_user_device_mappings(
-        self, df: pd.DataFrame, filename: str, user_mappings: Dict[str, Any]
-    ) -> bool:
-        """Persist user-confirmed device mappings."""
         ...
 
 
