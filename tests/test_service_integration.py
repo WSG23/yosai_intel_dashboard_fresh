@@ -1,58 +1,12 @@
 import pytest
-import sys
-import types
-import pathlib
 
-dash_mod = types.ModuleType("dash")
-dash_dash_mod = types.ModuleType("dash.dash")
-dash_dash_mod.no_update = object()
-sys.modules.setdefault("dash", dash_mod)
-sys.modules.setdefault("dash.dash", dash_dash_mod)
-sys.modules.setdefault("bleach", types.ModuleType("bleach"))
-sqlparse_mod = types.ModuleType("sqlparse")
-sqlparse_mod.tokens = object()
-sys.modules.setdefault("sqlparse", sqlparse_mod)
-
-services_pkg = types.ModuleType("services")
-services_pkg.__path__ = [str(pathlib.Path(__file__).resolve().parents[1] / "services")]
-sys.modules.setdefault("services", services_pkg)
-
-from core.protocols import AnalyticsServiceProtocol
-
-analytics_stub = types.ModuleType("services.analytics_service")
-
-class StubAnalyticsService(AnalyticsServiceProtocol):
-    def get_dashboard_summary(self):
-        return {}
-
-    def analyze_access_patterns(self, days: int):
-        return {}
-
-    def detect_anomalies(self, data):
-        return []
-
-    def generate_report(self, report_type: str, params: dict):
-        return {}
-
-analytics_stub.AnalyticsService = StubAnalyticsService
-sys.modules.setdefault("services.analytics_service", analytics_stub)
-
-upload_reg_stub = types.ModuleType("services.upload.service_registration")
-def _register_upload_services(container):
-    container.register_singleton("upload_processor", object)
-upload_reg_stub.register_upload_services = _register_upload_services
-sys.modules.setdefault("services.upload.service_registration", upload_reg_stub)
-
-from core.service_container import ServiceContainer
-from config.complete_service_registration import register_all_services
+from tests.builders import TestContainerBuilder
 
 
 class TestServiceIntegration:
     @pytest.fixture
     def configured_container(self):
-        c = ServiceContainer()
-        register_all_services(c)
-        return c
+        return TestContainerBuilder().with_env_defaults().with_all_services().build()
 
     def test_analytics_uses_database_protocol(self, configured_container):
         analytics = configured_container.get("analytics_service")

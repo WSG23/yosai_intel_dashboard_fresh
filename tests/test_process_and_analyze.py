@@ -1,9 +1,8 @@
-import pandas as pd
-
-from services.analytics.upload_analytics import UploadAnalyticsProcessor
-from services.data_processing.processor import Processor
-from services.data_processing.file_processor import FileProcessor
 from core.security_validator import SecurityValidator
+from services.analytics.upload_analytics import UploadAnalyticsProcessor
+from services.data_processing.file_processor import FileProcessor
+from services.data_processing.processor import Processor
+from tests.builders import TestDataBuilder
 
 
 def _create_components():
@@ -22,14 +21,8 @@ def _create_components():
 
 
 def test_process_then_analyze(monkeypatch):
-    csv = "Timestamp,Person ID,Token ID,Device name,Access result\n" \
-          "2024-01-01 00:00:00,u1,t1,d1,Granted"
     fp, ua = _create_components()
-    import base64
-    contents = "data:text/csv;base64," + base64.b64encode(csv.encode()).decode()
-    df, _ = fp.read_uploaded_file(contents, "sample.csv")
-    assert len(df) == 1
-
+    df = TestDataBuilder().add_row().build_dataframe()
     monkeypatch.setattr(ua, "load_uploaded_data", lambda: {"sample.csv": df})
     result = ua.analyze_uploaded_data()
     assert result["status"] == "success"
