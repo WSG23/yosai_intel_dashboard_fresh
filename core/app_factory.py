@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 import os
 import sys
-import types
 import time
+import types
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Optional, cast
 
@@ -99,25 +99,21 @@ class DummyConfigManager:
 from flask_caching import Cache
 
 from components.ui.navbar import create_navbar_layout
+from config.complete_service_registration import register_all_application_services
 from config.config import get_config
 from core.container import Container as DIContainer
-from core.service_container import ServiceContainer
+from core.enhanced_container import ServiceContainer
 from core.performance_monitor import DIPerformanceMonitor
-from config.complete_service_registration import register_all_application_services
 from core.plugins.auto_config import PluginAutoConfiguration
 from core.secrets_manager import validate_secrets
 from core.theme_manager import DEFAULT_THEME, apply_theme_settings
 from dash_csrf_plugin import CSRFMode, setup_enhanced_csrf_protection
 from pages import get_page_layout
-from pages.file_upload import (
-    layout as upload_layout,
-    register_callbacks as register_upload_callbacks,
-)
-from pages.deep_analytics import (
-    layout as deep_analytics_layout,
-    register_callbacks as register_deep_callbacks,
-    Callbacks as DeepAnalyticsCallbacks,
-)
+from pages.deep_analytics import Callbacks as DeepAnalyticsCallbacks
+from pages.deep_analytics import layout as deep_analytics_layout
+from pages.deep_analytics import register_callbacks as register_deep_callbacks
+from pages.file_upload import layout as upload_layout
+from pages.file_upload import register_callbacks as register_upload_callbacks
 from services import get_analytics_service
 from services.analytics_service import AnalyticsService
 from utils.assets_utils import ensure_icon_cache_headers
@@ -130,10 +126,10 @@ except Exception:  # pragma: no cover - fallback when unavailable
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
     import dash_bootstrap_components as dbc
-    from dash_bootstrap_components import Container as DbcContainer
     from dash import Dash, Input, Output
     from dash import dcc as Dcc
     from dash import html as Html
+    from dash_bootstrap_components import Container as DbcContainer
 
     from core.truly_unified_callbacks import (
         TrulyUnifiedCallbacks as TrulyUnifiedCallbacksType,
