@@ -6,7 +6,6 @@ from typing import Dict, List, Set
 LEGACY_MODULES = {
     "security_callback_controller",
     "services.data_processing.callback_controller",
-    "core.truly_unified_callbacks",
 }
 
 LEGACY_NAMES = {
