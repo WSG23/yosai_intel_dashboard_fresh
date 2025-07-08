@@ -8,9 +8,20 @@ import pandas as pd
 
 from config.complete_service_registration import register_all_services
 from core.service_container import ServiceContainer
-from core.protocols import UnicodeProcessorProtocol
-from services.upload.protocols import UploadStorageProtocol
-from tests.test_doubles import InMemoryUploadStore, SimpleUnicodeProcessor
+from core.protocols import (
+    UnicodeProcessorProtocol,
+    ConfigurationProtocol,
+)
+from services.upload.protocols import (
+    UploadStorageProtocol,
+    FileProcessorProtocol,
+)
+from tests.test_doubles import InMemoryUploadStore
+from tests.fakes import (
+    FakeConfigurationService,
+    FakeFileProcessor,
+    FakeUnicodeProcessor,
+)
 
 
 class TestContainerBuilder:
@@ -34,8 +45,26 @@ class TestContainerBuilder:
     def with_unicode_processor(self) -> "TestContainerBuilder":
         self._container.register_singleton(
             "unicode_processor",
-            SimpleUnicodeProcessor,
+            FakeUnicodeProcessor,
             protocol=UnicodeProcessorProtocol,
+        )
+        return self
+
+    # ------------------------------------------------------------------
+    def with_configuration(self, max_mb: int = 50) -> "TestContainerBuilder":
+        self._container.register_singleton(
+            "config_manager",
+            lambda: FakeConfigurationService(max_mb=max_mb),
+            protocol=ConfigurationProtocol,
+        )
+        return self
+
+    # ------------------------------------------------------------------
+    def with_file_processor(self) -> "TestContainerBuilder":
+        self._container.register_singleton(
+            "file_processor",
+            FakeFileProcessor,
+            protocol=FileProcessorProtocol,
         )
         return self
 

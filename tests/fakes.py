@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Callable
 
 import pandas as pd
 
-from services.upload.protocols import UploadStorageProtocol
+from services.upload.protocols import UploadStorageProtocol, FileProcessorProtocol
 from services.interfaces import (
     DeviceLearningServiceProtocol,
     UploadDataServiceProtocol,
@@ -121,6 +121,44 @@ class FakeConfigurationService(ConfigurationServiceProtocol):
 
     def get_max_upload_size_bytes(self) -> int:
         return self.max_mb * 1024 * 1024
+
+
+class FakeFileProcessor(FileProcessorProtocol):
+    """Very small ``FileProcessorProtocol`` implementation for tests."""
+
+    async def process_file(
+        self,
+        content: str,
+        filename: str,
+        progress_callback: Callable[[str, int], None] | None = None,
+    ) -> pd.DataFrame:
+        import base64
+        from io import BytesIO
+
+        _, data = content.split(",", 1)
+        raw = base64.b64decode(data)
+        if filename.lower().endswith(".csv"):
+            df = pd.read_csv(BytesIO(raw))
+        else:
+            df = pd.DataFrame()
+        if progress_callback:
+            try:
+                progress_callback(filename, 100)
+            except Exception:
+                pass
+        return df
+
+    def read_uploaded_file(self, contents: str, filename: str) -> tuple[pd.DataFrame, str]:
+        import base64
+        from io import BytesIO
+
+        _, data = contents.split(",", 1)
+        raw = base64.b64decode(data)
+        if filename.lower().endswith(".csv"):
+            df = pd.read_csv(BytesIO(raw))
+        else:
+            df = pd.DataFrame()
+        return df, ""
 
 
 class FakeUnicodeProcessor(UnicodeProcessorProtocol):

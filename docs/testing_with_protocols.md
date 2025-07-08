@@ -28,6 +28,19 @@ container = (
 The resulting container behaves like the real application container but avoids
 loading optional dependencies.
 
+`TestContainerBuilder` also exposes helpers for registering fake services. These
+return the builder instance so calls can be chained fluently:
+
+```python
+container = (
+    TestContainerBuilder()
+    .with_configuration()
+    .with_unicode_processor()
+    .with_file_processor()
+    .build()
+)
+```
+
 ## Available Test Doubles
 
 Several fake implementations reside in `tests/fakes.py`:
