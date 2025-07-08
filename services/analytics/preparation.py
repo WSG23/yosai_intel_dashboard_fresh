@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import pandas as pd
 
-from services.data_validation import DataValidationService
+from core.security_validator import SecurityValidator
 from utils.mapping_helpers import map_and_clean
 
 
-def prepare_dataframe(df: pd.DataFrame, validator: DataValidationService | None = None) -> pd.DataFrame:
+def prepare_dataframe(df: pd.DataFrame, validator: SecurityValidator | None = None) -> pd.DataFrame:
     """Validate and clean ``df`` for analytics."""
-    validator = validator or DataValidationService()
-    df = validator.validate(df)
+    validator = validator or SecurityValidator()
+    csv_bytes = df.to_csv(index=False).encode("utf-8")
+    validator.validate_file_upload("data.csv", csv_bytes)
     return map_and_clean(df)
 
 __all__ = ["prepare_dataframe"]

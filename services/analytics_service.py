@@ -16,7 +16,7 @@ import pandas as pd
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.analytics_summary import generate_sample_analytics
 from services.data_processing.processor import Processor
-from services.data_validation import DataValidationService
+from core.security_validator import SecurityValidator
 from services.db_analytics_helper import DatabaseAnalyticsHelper
 from services.summary_reporting import SummaryReporter
 
@@ -77,7 +77,7 @@ class AnalyticsService(AnalyticsProviderProtocol):
         self._config_provider = config_provider
         self.database_manager: Optional[Any] = None
         self._initialize_database()
-        self.validation_service = DataValidationService()
+        self.validation_service = SecurityValidator()
         self.processor = Processor(validator=self.validation_service)
         # Legacy attribute aliases
         self.data_loading_service = self.processor

@@ -3,7 +3,7 @@ import pandas as pd
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.data_processing.processor import Processor
 from services.data_processing.file_processor import FileProcessor
-from services.data_validation import DataValidationService
+from core.security_validator import SecurityValidator
 
 
 def _create_components():
@@ -14,7 +14,7 @@ def _create_components():
     cache.init_app(Flask(__name__))
 
     fp = FileProcessor()
-    vs = DataValidationService()
+    vs = SecurityValidator()
     processor = Processor(validator=vs)
 
     ua = UploadAnalyticsProcessor(vs, processor)

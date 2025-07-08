@@ -554,19 +554,17 @@ manager.execute_query_with_retry("SELECT 1")
 - Type-safe prop interfaces
 
 ### SQL Injection Prevention
-Use `security.SQLInjectionPrevention` to sanitize query parameters in both Flask and Dash routes. Example:
+Use `SecurityValidator` to sanitize query parameters in both Flask and Dash routes. Example:
 
 ```python
-from security.sql_validator import SQLInjectionPrevention
+from core.security_validator import SecurityValidator
 
-validator = SQLInjectionPrevention()
+validator = SecurityValidator()
 
 @app.route('/search')
 def search():
-    term = validator.validate_query_parameter(request.args.get('q', ''))
-    validator.enforce_parameterization(
-        'SELECT * FROM records WHERE name=?', (term,)
-    )
+    term = request.args.get('q', '')
+    validator.validate_input(term, 'query_parameter')
     return query_db(term)
 ```
 

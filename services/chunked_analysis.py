@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 import pandas as pd
 
 from analytics.chunked_analytics_controller import ChunkedAnalyticsController
-from services.data_validation import DataValidationService
+from core.security_validator import SecurityValidator
 
 from .result_formatting import regular_analysis
 
@@ -12,13 +12,15 @@ logger = logging.getLogger(__name__)
 
 
 def analyze_with_chunking(
-    df: pd.DataFrame, validator: DataValidationService, analysis_types: List[str]
+    df: pd.DataFrame, validator: SecurityValidator, analysis_types: List[str]
 ) -> Dict[str, Any]:
     """Analyze a DataFrame using chunked processing."""
     original_rows = len(df)
     logger.info(f"🚀 Starting COMPLETE analysis for {original_rows:,} rows")
 
-    df, needs_chunking = validator.validate_for_analysis(df)
+    csv_bytes = df.to_csv(index=False).encode("utf-8")
+    validator.validate_file_upload("data.csv", csv_bytes)
+    needs_chunking = False
 
     validated_rows = len(df)
     logger.info(
@@ -29,7 +31,7 @@ def analyze_with_chunking(
         logger.info("✅ Using regular analysis (no chunking needed)")
         return regular_analysis(df, analysis_types)
 
-    chunk_size = validator.get_optimal_chunk_size(df)
+    chunk_size = len(df)
     chunked_controller = ChunkedAnalyticsController(chunk_size=chunk_size)
 
     logger.info(

@@ -9,7 +9,7 @@ from typing import Any, Iterator
 
 import pandas as pd
 
-from services.data_validation import DataValidationService
+from core.security_validator import SecurityValidator
 from utils.mapping_helpers import map_and_clean
 
 
@@ -21,7 +21,7 @@ class DataLoadingService:
     :class:`services.data_processing.processor.Processor`.
     """
 
-    def __init__(self, validator: DataValidationService | None = None) -> None:
+    def __init__(self, validator: SecurityValidator | None = None) -> None:
         import warnings
 
         warnings.warn(
@@ -29,7 +29,7 @@ class DataLoadingService:
             DeprecationWarning,
             stacklevel=2,
         )
-        self.validator = validator or DataValidationService()
+        self.validator = validator or SecurityValidator()
 
     def load_dataframe(self, source: Any) -> pd.DataFrame:
         if isinstance(source, (str, Path)) or hasattr(source, "read"):
