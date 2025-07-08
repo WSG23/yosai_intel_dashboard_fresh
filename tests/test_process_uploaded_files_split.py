@@ -15,7 +15,7 @@ def _encode_df(df: pd.DataFrame) -> str:
     return f"data:text/csv;base64,{b64}"
 
 
-def test_process_uploaded_files_split(monkeypatch, tmp_path):
+def test_process_uploaded_files_split(monkeypatch, tmp_path, async_runner):
     # create a dataframe large enough to split
     df = pd.DataFrame({"a": range(10), "b": range(10)})
     df1 = df.iloc[:5]
@@ -31,7 +31,7 @@ def test_process_uploaded_files_split(monkeypatch, tmp_path):
     cb.processing = UploadProcessingService(store)
     ok, msg = cb.validator.validate("big.csv", contents_list[0])
     assert ok, msg
-    result = asyncio.run(cb.process_uploaded_files(contents_list, filenames_list))
+    result = async_runner(cb.process_uploaded_files(contents_list, filenames_list))
     info = result[2]
 
     assert info["big.csv"]["rows"] == len(df)

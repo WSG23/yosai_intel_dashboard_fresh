@@ -36,7 +36,7 @@ def test_persistence_between_instances():
     assert status["pending"] == 2
 
 
-def test_process_queue_executes_tasks():
+def test_process_queue_executes_tasks(async_runner):
     async def _run():
         q = UploadQueueManager(max_concurrent=2)
         q.add_files([1, 2, 3])
@@ -50,5 +50,5 @@ def test_process_queue_executes_tasks():
         processed = [r for _, r in results]
         return processed
 
-    processed = asyncio.run(_run())
+    processed = async_runner(_run())
     assert sorted(processed) == [2, 4, 6]

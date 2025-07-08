@@ -265,6 +265,11 @@ dashboard. Key entry points include `tests/test_integration.py`,
 `tests/test_analytics_integration.py`, `tests/test_ai_device_generator.py` and
 `tests/test_security_service.py`.
 
+Most asynchronous tests rely on a reusable `async_runner` fixture that
+executes coroutines on a dedicated event loop. If you need to run an async
+function inside a test simply pass `async_runner` and call it with your
+coroutine.
+
 ## 📋 Features
 
 - **Real-time Security Monitoring**: Live access control event monitoring

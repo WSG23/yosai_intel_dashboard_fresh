@@ -15,7 +15,7 @@ def _encode_df(df: pd.DataFrame) -> str:
     return f"data:text/csv;base64,{b64}"
 
 
-def test_immediate_confirm_after_upload(monkeypatch, tmp_path):
+def test_immediate_confirm_after_upload(monkeypatch, tmp_path, async_runner):
     import importlib
     import sys
     import types
@@ -38,7 +38,7 @@ def test_immediate_confirm_after_upload(monkeypatch, tmp_path):
     content = _encode_df(df)
 
     # Simulate upload which triggers async disk save
-    asyncio.run(cb.process_uploaded_files(content, "data.csv"))
+    async_runner(cb.process_uploaded_files(content, "data.csv"))
 
     file_info = {"filename": "data.csv", "devices": ["Door1"]}
     alert, _, _ = cb.save_confirmed_device_mappings(
