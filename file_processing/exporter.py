@@ -6,7 +6,8 @@ from typing import Dict
 
 import pandas as pd
 
-from core.callback_controller import CallbackController, CallbackEvent
+from core.callback_controller import CallbackEvent
+from core.callback_manager import CallbackManager
 from core.container import get_unicode_processor
 from core.protocols import UnicodeProcessorProtocol
 from .column_mapper import REQUIRED_COLUMNS
@@ -29,7 +30,7 @@ def export_to_csv(
     *,
     processor: UnicodeProcessorProtocol | None = None,
 ) -> None:
-    controller = CallbackController()
+    controller = CallbackManager()
     _validate_columns(df)
     processor = processor or get_unicode_processor()
     df_clean = processor.sanitize_dataframe(df)
@@ -37,7 +38,7 @@ def export_to_csv(
     df_clean.to_csv(out_path, index=False, encoding="utf-8-sig")
     meta_path = out_path.with_suffix(".meta.json")
     meta_path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
-    controller.fire_event(
+    controller.trigger(
         CallbackEvent.FILE_PROCESSING_COMPLETE,
         str(out_path),
         {"export": "csv"},
@@ -51,7 +52,7 @@ def export_to_json(
     *,
     processor: UnicodeProcessorProtocol | None = None,
 ) -> None:
-    controller = CallbackController()
+    controller = CallbackManager()
     _validate_columns(df)
     processor = processor or get_unicode_processor()
     df_clean = processor.sanitize_dataframe(df)
@@ -59,7 +60,7 @@ def export_to_json(
     out_path.write_text(df_clean.to_json(orient="records", force_ascii=False), encoding="utf-8")
     meta_path = out_path.with_suffix(".meta.json")
     meta_path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
-    controller.fire_event(
+    controller.trigger(
         CallbackEvent.FILE_PROCESSING_COMPLETE,
         str(out_path),
         {"export": "json"},
