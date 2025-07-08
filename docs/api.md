@@ -33,7 +33,7 @@ Centralized analytics service for dashboard operations.
 
 - `get_dashboard_summary() -> Dict[str, Any]`: Get dashboard overview
 - `get_access_patterns_analysis(days) -> Dict[str, Any]`: Analyze access patterns
- - `process_uploaded_file(contents, filename) -> Dict[str, Any]`: Validate and parse an uploaded file using `UnifiedFileValidator.validate_file`
+- `process_uploaded_file(contents, filename) -> Dict[str, Any]`: Validate and parse an uploaded file using `UnifiedFileValidator.validate_file`
 
 ## Models
 
@@ -51,12 +51,12 @@ Represents a single access control event.
 
 ## Service Container
 
-`ServiceContainer` in `core.enhanced_container` offers a more capable
+`ServiceContainer` in `core.service_container` offers a more capable
 dependency injection mechanism. It resolves services by name and caches
 instances created by registered factories.
 
 ```python
-from core.enhanced_container import ServiceContainer
+from core.service_container import ServiceContainer
 
 container = ServiceContainer()
 container.register_factory("db", DatabaseManager)

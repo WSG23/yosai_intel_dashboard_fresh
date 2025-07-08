@@ -90,7 +90,7 @@ class UploadDataServiceProtocol(Protocol):
 # Use the same ServiceContainer implementation as ``core.app_factory``
 # to avoid type mismatches when helpers are accessed through the
 # application-wide dependency injection container.
-from core.enhanced_container import ServiceContainer
+from core.service_container import ServiceContainer
 
 
 def _get_container(
