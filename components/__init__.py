@@ -18,18 +18,28 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import dcc, html
+from core.container import container
+from core.protocols import ConfigurationProtocol
 
-try:
-    from config.dynamic_config import dynamic_config
-except Exception:  # pragma: no cover - optional config
-    dynamic_config = None
+try:  # Prefer configuration from the DI container when available
+    _cfg = container.get(ConfigurationProtocol)  # type: ignore[arg-type]
+except Exception:  # pragma: no cover - container not initialized
+    _cfg = None
+
+if not _cfg:
+    try:
+        from config.dynamic_config import dynamic_config as _cfg  # type: ignore
+    except Exception:  # pragma: no cover - optional config
+        _cfg = None
 
 from config.constants import MAX_DISPLAY_ROWS as DEFAULT_MAX_DISPLAY_ROWS
 
-if dynamic_config is not None:
-    MAX_DISPLAY_ROWS = dynamic_config.analytics.max_display_rows
+if _cfg is not None and hasattr(_cfg, "analytics"):
+    MAX_DISPLAY_ROWS = getattr(_cfg.analytics, "max_display_rows", DEFAULT_MAX_DISPLAY_ROWS)
+    _MAX_UPLOAD_BYTES = getattr(_cfg.security, "max_upload_mb", 50) * 1024 * 1024
 else:  # pragma: no cover - fallback for optional config
     MAX_DISPLAY_ROWS = DEFAULT_MAX_DISPLAY_ROWS
+    _MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 
 logger = logging.getLogger(__name__)
 
@@ -340,10 +350,7 @@ def create_file_uploader() -> html.Div:
                     html.H5("Upload Data Files", className="mb-3"),
                     dcc.Upload(
                         id="upload-data",
-                        max_size=(
-                            dynamic_config.security.max_upload_mb * 1024 * 1024
-                            if dynamic_config else 50 * 1024 * 1024
-                        ),
+                        max_size=_MAX_UPLOAD_BYTES,
                         children=html.Div(
                             [
                                 html.I(
