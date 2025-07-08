@@ -1,7 +1,7 @@
 import pandas as pd
 
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
-from services.data_loading_service import DataLoadingService
+from services.data_processing.processor import Processor
 from services.data_processing.file_processor import FileProcessor
 from services.data_validation import DataValidationService
 
@@ -15,9 +15,9 @@ def _create_components():
 
     fp = FileProcessor()
     vs = DataValidationService()
-    dls = DataLoadingService(vs)
+    processor = Processor(validator=vs)
 
-    ua = UploadAnalyticsProcessor(vs, dls)
+    ua = UploadAnalyticsProcessor(vs, processor)
     return fp, ua
 
 

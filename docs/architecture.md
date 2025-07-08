@@ -24,9 +24,9 @@ The factory builds the container, which then instantiates services. Services ope
 `Processor` and `AnalyticsEngine` handle file loading, cleaning and metric
 generation while controllers manage UI callbacks.
 
-Developers still using the legacy `DataLoader` or `DataLoadingService` should
-migrate to `services.data_processing.processor.Processor` and update imports
-accordingly.
+The deprecated `DataLoader` and `DataLoadingService` modules have been moved
+under the `legacy/` directory.  Migrate existing code to use
+`services.data_processing.processor.Processor` and update imports accordingly.
 
 ## Service Lookup
 
