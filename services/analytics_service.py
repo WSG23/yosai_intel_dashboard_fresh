@@ -74,13 +74,28 @@ LARGE_DATA_THRESHOLD = 1000
 class AnalyticsService(AnalyticsServiceProtocol):
     """Analytics service implementing ``AnalyticsServiceProtocol``."""
 
-    def __init__(self, database: DatabaseProtocol | None = None, storage: StorageProtocol | None = None):
+    def __init__(
+        self,
+        database: DatabaseProtocol | None = None,
+        data_processor: DataProcessorProtocol | None = None,
+        config: ConfigurationProtocol | None = None,
+        event_bus: EventBusProtocol | None = None,
+        storage: StorageProtocol | None = None,
+    ):
         self.database = database
+        self.data_processor = data_processor or Processor(validator=SecurityValidator())
+        self.config = config
+        self.event_bus = event_bus
         self.storage = storage
         self.database_manager: Optional[Any] = None
         self._initialize_database()
         self.validation_service = SecurityValidator()
-        self.processor = Processor(validator=self.validation_service)
+        if data_processor is None:
+            self.processor = Processor(validator=self.validation_service)
+            self.data_processor = self.processor
+        else:
+            self.processor = data_processor
+            self.data_processor = data_processor
         # Legacy attribute aliases
         self.data_loading_service = self.processor
         from services.data_processing.unified_file_validator import UnifiedFileValidator
