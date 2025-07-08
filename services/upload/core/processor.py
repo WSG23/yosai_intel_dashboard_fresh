@@ -11,7 +11,7 @@ from components.file_preview import create_file_preview_ui
 from services.data_enhancer import get_ai_column_suggestions
 from services.data_processing.async_file_processor import AsyncFileProcessor
 from services.upload.utils.file_parser import create_file_preview
-from services.device_learning_service import get_device_learning_service
+from services.interfaces import get_device_learning_service
 from utils.upload_store import UploadedDataStore
 
 from ..async_processor import AsyncUploadProcessor

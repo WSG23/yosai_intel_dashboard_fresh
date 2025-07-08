@@ -96,6 +96,18 @@ def get_door_mapping_service(
     return door_mapping_service
 
 
+def get_device_learning_service(
+    container: ServiceContainer | None = None,
+) -> "DeviceLearningService":
+    """Return the registered :class:`DeviceLearningService` instance."""
+    c = _get_container(container)
+    if c and c.has("device_learning_service"):
+        return c.get("device_learning_service")
+    from services.device_learning_service import create_device_learning_service
+
+    return create_device_learning_service()
+
+
 __all__ = [
     "UploadValidatorProtocol",
     "ExportServiceProtocol",
@@ -103,4 +115,5 @@ __all__ = [
     "get_upload_validator",
     "get_export_service",
     "get_door_mapping_service",
+    "get_device_learning_service",
 ]
