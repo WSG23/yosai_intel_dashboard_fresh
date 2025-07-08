@@ -27,13 +27,28 @@ class DatabaseProtocol(Protocol):
         ...
 
     @abstractmethod
-    def health_check(self) -> bool:
-        """Verify database connectivity."""
+    def begin_transaction(self) -> Any:
+        """Begin database transaction."""
         ...
 
     @abstractmethod
-    def begin_transaction(self) -> Any:
-        """Begin database transaction."""
+    def commit_transaction(self, transaction: Any) -> None:
+        """Commit database transaction."""
+        ...
+
+    @abstractmethod
+    def rollback_transaction(self, transaction: Any) -> None:
+        """Rollback database transaction."""
+        ...
+
+    @abstractmethod
+    def health_check(self) -> bool:
+        """Verify database connectivity and health."""
+        ...
+
+    @abstractmethod
+    def get_connection_info(self) -> Dict[str, Any]:
+        """Get database connection information."""
         ...
 
 
@@ -96,8 +111,18 @@ class ConfigurationProtocol(Protocol):
         ...
 
     @abstractmethod
+    def get_upload_config(self) -> Dict[str, Any]:
+        """Get upload configuration settings."""
+        ...
+
+    @abstractmethod
     def reload_config(self) -> None:
         """Reload configuration from source."""
+        ...
+
+    @abstractmethod
+    def validate_config(self) -> Dict[str, Any]:
+        """Validate current configuration."""
         ...
 
 
@@ -203,6 +228,11 @@ class StorageProtocol(Protocol):
         ...
 
     @abstractmethod
+    def exists(self, key: str) -> bool:
+        """Check if key exists in storage."""
+        ...
+
+    @abstractmethod
     def get_storage_info(self) -> Dict[str, Any]:
         """Get storage system information."""
         ...
@@ -228,6 +258,16 @@ class LoggingProtocol(Protocol):
         ...
 
     @abstractmethod
+    def log_debug(self, message: str, **kwargs) -> None:
+        """Log debug message."""
+        ...
+
+    @abstractmethod
+    def set_log_level(self, level: str) -> None:
+        """Set logging level."""
+        ...
+
+    @abstractmethod
     def get_log_level(self) -> str:
         """Get current log level."""
         ...
@@ -238,12 +278,12 @@ class EventBusProtocol(Protocol):
     """Protocol for simple event bus operations."""
 
     @abstractmethod
-    def publish(self, event_type: str, data: Dict[str, Any]) -> None:
+    def publish(self, event_type: str, data: Dict[str, Any], source: str | None = None) -> None:
         """Publish event to bus."""
         ...
 
     @abstractmethod
-    def subscribe(self, event_type: str, handler: Callable) -> str:
+    def subscribe(self, event_type: str, handler: Callable, priority: int = 0) -> str:
         """Subscribe to event type, return subscription ID."""
         ...
 
@@ -253,7 +293,12 @@ class EventBusProtocol(Protocol):
         ...
 
     @abstractmethod
-    def get_event_history(self, event_type: str | None = None) -> List[Dict[str, Any]]:
+    def get_subscribers(self, event_type: str | None = None) -> List[Dict[str, Any]]:
+        """Get current subscribers for event type."""
+        ...
+
+    @abstractmethod
+    def get_event_history(self, event_type: str | None = None, limit: int = 100) -> List[Dict[str, Any]]:
         """Get event history, optionally filtered by type."""
         ...
 
@@ -280,4 +325,34 @@ class ExportServiceProtocol(Protocol):
     @abstractmethod
     def get_export_status(self, export_id: str) -> Dict[str, Any]:
         """Get status of export operation."""
+        ...
+
+
+@runtime_checkable
+class CacheProtocol(Protocol):
+    """Protocol for caching operations."""
+
+    @abstractmethod
+    def get(self, key: str) -> Any:
+        """Get value from cache."""
+        ...
+
+    @abstractmethod
+    def set(self, key: str, value: Any, ttl: int | None = None) -> None:
+        """Set value in cache with optional TTL."""
+        ...
+
+    @abstractmethod
+    def delete(self, key: str) -> bool:
+        """Delete key from cache."""
+        ...
+
+    @abstractmethod
+    def clear(self) -> None:
+        """Clear all cache entries."""
+        ...
+
+    @abstractmethod
+    def exists(self, key: str) -> bool:
+        """Check if key exists in cache."""
         ...

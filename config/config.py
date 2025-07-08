@@ -544,6 +544,10 @@ class ConfigManager(ConfigurationProtocol):
         """Get security configuration"""
         return self.config.security
 
+    def get_upload_config(self) -> Dict[str, Any]:
+        """Get upload configuration settings"""
+        return vars(dynamic_config.uploads)
+
     def get_sample_files_config(self) -> SampleFilesConfig:
         """Get sample file path configuration"""
         return self.config.sample_files
@@ -572,6 +576,14 @@ class ConfigManager(ConfigurationProtocol):
     def reload_config(self) -> None:
         """Reload configuration from source."""
         self._load_config()
+
+    def validate_config(self) -> Dict[str, Any]:
+        """Validate current configuration."""
+        try:
+            self._validate_config()
+            return {"valid": True}
+        except Exception as exc:
+            return {"valid": False, "error": str(exc)}
 
 
 # Global configuration instance

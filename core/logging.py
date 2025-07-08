@@ -27,5 +27,12 @@ class LoggingService(LoggingProtocol):
         else:
             self._logger.error(message, extra=kwargs)
 
+    def log_debug(self, message: str, **kwargs: Any) -> None:
+        self._logger.debug(message, extra=kwargs)
+
+    def set_log_level(self, level: str) -> None:
+        self._logger.setLevel(level)
+        self._level = level
+
     def get_log_level(self) -> str:
         return logging.getLevelName(self._logger.level)
