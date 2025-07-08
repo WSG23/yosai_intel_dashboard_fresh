@@ -277,7 +277,12 @@ class DashboardCallbackAuditor:
             for keyword in getattr(decorator, 'keywords', []):
                 if keyword.arg == 'callback_id':
                     if isinstance(keyword.value, ast.Constant):
-                        return keyword.value.value
+                        value = keyword.value.value
+                        if isinstance(value, str):
+                            return value
+                        if value is not None:
+                            return str(value)
+                        return None
         return None
     
     def _extract_component_name(self, decorator) -> Optional[str]:
@@ -286,7 +291,12 @@ class DashboardCallbackAuditor:
             for keyword in getattr(decorator, 'keywords', []):
                 if keyword.arg == 'component_name':
                     if isinstance(keyword.value, ast.Constant):
-                        return keyword.value.value
+                        value = keyword.value.value
+                        if isinstance(value, str):
+                            return value
+                        if value is not None:
+                            return str(value)
+                        return None
         return None
     
     def _extract_outputs(self, decorator) -> List[str]:
