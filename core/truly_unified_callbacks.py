@@ -157,6 +157,29 @@ class TrulyUnifiedCallbacks:
         return decorator
 
     # ------------------------------------------------------------------
+    def register_callback(
+        self,
+        outputs: Any,
+        inputs: Iterable[Input] | Input | None = None,
+        states: Iterable[State] | State | None = None,
+        *,
+        callback_id: str,
+        component_name: str,
+        allow_duplicate: bool = False,
+        **kwargs: Any,
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        """Alias for handle_register method - register a Dash callback and track conflicts."""
+        return self.handle_register(
+            outputs=outputs,
+            inputs=inputs,
+            states=states,
+            callback_id=callback_id,
+            component_name=component_name,
+            allow_duplicate=allow_duplicate,
+            **kwargs
+        )
+
+    # ------------------------------------------------------------------
     def get_callback_conflicts(self) -> Dict[str, List[str]]:
         """Return mapping of output identifiers to conflicting callback IDs."""
         conflicts: Dict[str, List[str]] = {}
