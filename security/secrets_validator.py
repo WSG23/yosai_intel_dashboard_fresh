@@ -3,7 +3,12 @@ import re
 from collections import Counter
 from typing import Dict, List, Optional, cast
 
-from flask import Flask
+from typing import TYPE_CHECKING
+
+from core.flask_protocol import FlaskProtocol
+
+if TYPE_CHECKING:  # pragma: no cover - optional Flask dependency
+    from flask import Flask
 
 from core.secrets_manager import SecretsManager
 
@@ -50,10 +55,12 @@ class SecretsValidator:
         return {"warnings": warnings, "errors": errors, "entropy": entropy}
 
 
-def register_health_endpoint(app, validator: Optional[SecretsValidator] = None) -> None:
+def register_health_endpoint(
+    app: FlaskProtocol, validator: Optional[SecretsValidator] = None
+) -> None:
     """Register /health/secrets endpoint on a Flask or Dash app."""
     validator = validator or SecretsValidator()
-    server: Flask = cast(Flask, app.server if hasattr(app, "server") else app)
+    server = cast(FlaskProtocol, getattr(app, "server", app))
 
     @server.route("/health/secrets", methods=["GET"])
     def secrets_health():

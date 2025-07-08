@@ -1,6 +1,3 @@
-import sys
-import types
-
 import pytest
 
 from security_callback_controller import SecurityEvent
@@ -19,30 +16,15 @@ def capture_events(monkeypatch: pytest.MonkeyPatch, validator_module) -> list:
     return events
 
 
-@pytest.fixture(autouse=True)
-def fake_flask(monkeypatch: pytest.MonkeyPatch):
-    """Provide minimal Flask stub for importing security modules."""
-
-    flask_stub = types.ModuleType("flask")
-
-    class _Flask:
-        def __init__(self, *args, **kwargs):
-            pass
-
-    flask_stub.Flask = _Flask
-    monkeypatch.setitem(sys.modules, "flask", flask_stub)
-    yield flask_stub
-
-
 @pytest.fixture
-def validator_module(fake_flask):
-    """Import the validator module with dependencies stubbed."""
+def validator_module():
+    """Import the validator module fresh for each test."""
 
     import importlib
 
-    sys.modules.pop("core.unicode", None)
-    importlib.import_module("core.unicode")
-    return importlib.import_module("security.unicode_surrogate_validator")
+    import security.unicode_surrogate_validator as mod
+    importlib.reload(mod)
+    return mod
 
 
 def test_contains_surrogates_detects(validator_module):
