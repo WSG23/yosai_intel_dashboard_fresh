@@ -1,33 +1,22 @@
-"""Security domain protocols."""
+"""Security service protocols."""
+from __future__ import annotations
+
 from abc import abstractmethod
-from typing import Any, Dict, List, Protocol, runtime_checkable
+from typing import Any, Protocol
 
 
-@runtime_checkable
+class SecurityServiceProtocol(Protocol):
+    """Perform security checks."""
+
+    @abstractmethod
+    def validate(self, data: Any) -> bool:
+        ...
+
+
 class AuthenticationProtocol(Protocol):
-    """Protocol for authentication operations."""
+    """Authentication provider."""
 
     @abstractmethod
-    def authenticate_user(self, username: str, password: str) -> Dict[str, Any]:
-        """Authenticate user credentials."""
-        ...
+    def authenticate(self, token: str) -> bool:
 
-    @abstractmethod
-    def validate_token(self, token: str) -> Dict[str, Any]:
-        """Validate authentication token."""
-        ...
-
-
-@runtime_checkable
-class AuthorizationProtocol(Protocol):
-    """Protocol for authorization operations."""
-
-    @abstractmethod
-    def check_permission(self, user_id: str, resource: str, action: str) -> bool:
-        """Check if user has permission for action on resource."""
-        ...
-
-    @abstractmethod
-    def get_user_roles(self, user_id: str) -> List[str]:
-        """Get roles assigned to user."""
         ...

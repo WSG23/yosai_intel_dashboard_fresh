@@ -13,7 +13,7 @@ class UploadCallbackManager:
 
     def register(self, manager: Any, controller: Any | None = None) -> None:
         try:
-            from services.upload.unified_controller import UnifiedUploadController
+            from services.upload.controllers.upload_controller import UnifiedUploadController
         except Exception as exc:  # pragma: no cover - import errors logged
             logger.error("Failed to import UnifiedUploadController: %s", exc)
             return

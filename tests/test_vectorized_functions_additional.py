@@ -1,6 +1,4 @@
-"""
-Save this as tests/test_vectorized_functions_fixed.py
-"""
+"""Additional tests for vectorized functions."""
 
 import pandas as pd
 import pytest

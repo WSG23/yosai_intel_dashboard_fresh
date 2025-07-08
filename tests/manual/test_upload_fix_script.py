@@ -14,8 +14,9 @@ def test_imports():
         from typing import TYPE_CHECKING
         print("✅ TYPE_CHECKING import works")
         
-        from components.upload.drag_drop_upload_area_fixed import FileUploadComponent, safe_unicode_encode
-        print("✅ Fixed upload component imports work")
+        from components.upload import UploadArea
+        from services.upload.utils.unicode_handler import safe_unicode_encode
+        print("✅ UploadArea import works")
         
         import pages.file_upload as upload_page
         print("✅ Upload page imports work")
@@ -30,7 +31,7 @@ def test_unicode_handling():
     print("\n🧪 Testing Unicode handling...")
     
     try:
-        from components.upload.drag_drop_upload_area_fixed import safe_unicode_encode
+        from services.upload.utils.unicode_handler import safe_unicode_encode
         
         test_cases = [
             "Normal text",
@@ -55,9 +56,9 @@ def test_component_creation():
     print("\n🧪 Testing component creation...")
     
     try:
-        from components.upload.drag_drop_upload_area_fixed import FileUploadComponent
-        
-        component = FileUploadComponent("test-upload")
+        from components.upload import UploadArea
+
+        component = UploadArea()
         layout = component.render()
         
         print("✅ Component created successfully")
