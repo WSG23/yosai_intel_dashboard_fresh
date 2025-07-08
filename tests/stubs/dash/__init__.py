@@ -4,6 +4,22 @@ class Dash:
             return func
         return decorator
 
-from . import html
 
-__all__ = ["Dash", "html"]
+class _SimpleComp:
+    def __init__(self, *a, **k):
+        pass
+
+
+from . import html
+from . import dcc
+from . import dependencies
+from . import _callback
+
+
+__all__ = [
+    "Dash",
+    "html",
+    "dcc",
+    "dependencies",
+    "_callback",
+]

@@ -8,6 +8,70 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 stub_dir = Path(__file__).resolve().parent / "stubs"
 sys.path.insert(0, str(stub_dir))
 
+import types
+if "core.unicode_processor" not in sys.modules:
+    _m = types.ModuleType("core.unicode_processor")
+
+    class Dummy:
+        pass
+
+    _m.DefaultUnicodeProcessor = Dummy
+    _m.safe_decode_bytes = lambda *a, **k: ""
+    _m.safe_encode_text = lambda *a, **k: ""
+    _m.safe_decode = lambda *a, **k: ""
+    _m.safe_encode = lambda *a, **k: ""
+    _m.sanitize_dataframe = lambda df, **k: df
+    _m.sanitize_data_frame = lambda df, **k: df
+    _m.handle_surrogate_characters = lambda t: t
+    _m.clean_unicode_surrogates = lambda t: t
+    _m.sanitize_unicode_input = lambda t: t
+    _m.contains_surrogates = lambda t: False
+    _m.process_large_csv_content = lambda *a, **k: ""
+    _m.safe_format_number = lambda v: str(v)
+    _m.UnicodeProcessor = Dummy
+    _m.ChunkedUnicodeProcessor = Dummy
+    _m.safe_unicode_encode = lambda t: t
+    _m.sanitize_unicode_input = lambda t: t
+    sys.modules["core.unicode_processor"] = _m
+
+if "core.unicode" not in sys.modules:
+    u = types.ModuleType("core.unicode")
+    u.UnicodeProcessor = Dummy
+    u.ChunkedUnicodeProcessor = Dummy
+    u.UnicodeTextProcessor = Dummy
+    u.UnicodeSQLProcessor = Dummy
+    u.UnicodeSecurityProcessor = Dummy
+    u.clean_unicode_text = lambda t: t
+    u.safe_decode_bytes = lambda *a, **k: ""
+    u.safe_encode_text = lambda *a, **k: ""
+    u.sanitize_dataframe = lambda df, **k: df
+    u.contains_surrogates = lambda t: False
+    u.process_large_csv_content = lambda *a, **k: ""
+    u.safe_format_number = lambda v: str(v)
+    u.object_count = lambda items: 0
+    u.safe_unicode_encode = lambda t: t
+    u.sanitize_unicode_input = lambda t: t
+    sys.modules["core.unicode"] = u
+
+if "dash_bootstrap_components" not in sys.modules:
+    dbc_stub = types.ModuleType("dash_bootstrap_components")
+    dbc_stub.Navbar = dbc_stub.Container = dbc_stub.Row = dbc_stub.Col = (
+        lambda *a, **k: None
+    )
+    dbc_stub.NavbarToggler = dbc_stub.Collapse = dbc_stub.DropdownMenu = (
+        lambda *a, **k: None
+    )
+    dbc_stub.DropdownMenuItem = lambda *a, **k: None
+    sys.modules["dash_bootstrap_components"] = dbc_stub
+
+if "plotly" not in sys.modules:
+    plotly = types.ModuleType("plotly")
+    plotly.express = types.ModuleType("plotly.express")
+    plotly.graph_objects = types.ModuleType("plotly.graph_objects")
+    sys.modules["plotly"] = plotly
+    sys.modules["plotly.express"] = plotly.express
+    sys.modules["plotly.graph_objects"] = plotly.graph_objects
+
 import shutil
 import tempfile
 from typing import Any, Generator
