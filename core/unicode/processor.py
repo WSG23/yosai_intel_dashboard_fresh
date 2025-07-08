@@ -15,7 +15,11 @@ _SURROGATE_RE = re.compile(r"[\uD800-\uDFFF]")
 
 
 class UnicodeTextProcessor:
-    """Clean and normalize arbitrary text."""
+    """Clean and normalize arbitrary text.
+
+    Additional utilities like :func:`core.unicode.object_count` help analyze
+    collections of strings.
+    """
 
     @staticmethod
     def clean_text(text: Any) -> str:
