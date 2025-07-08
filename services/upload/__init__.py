@@ -5,8 +5,8 @@ from .managers import ChunkedUploadManager
 from .upload_queue_manager import UploadQueueManager
 
 from .modal import ModalService
-from .processing import UploadProcessingService
-from .validators import ClientSideValidator
+from .core.processor import UploadProcessingService
+from .core.validator import ClientSideValidator
 from .protocols import (
     UploadProcessingServiceProtocol,
     UploadValidatorProtocol,

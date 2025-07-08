@@ -1,7 +1,7 @@
 import inspect
 
-from services.upload.processing import UploadProcessingService
-from services.upload.validators import ClientSideValidator
+from services.upload.core.processor import UploadProcessingService
+from services.upload.core.validator import ClientSideValidator
 from services.data_processing.async_file_processor import AsyncFileProcessor
 from utils.upload_store import UploadedDataStore
 from services.upload.protocols import (
