@@ -10,8 +10,8 @@ from core.unicode_processor import (
     ChunkedUnicodeProcessor,
     UnicodeProcessor,
     clean_unicode_text,
-    safe_decode,
-    safe_encode,
+    safe_decode_bytes,
+    safe_encode_text,
     sanitize_dataframe,
 )
 
@@ -309,10 +309,10 @@ class TestPublicAPI:
         assert clean_unicode_text("Hello\uD83DWorld") == "HelloWorld"
 
     def test_safe_decode_function(self):
-        assert safe_decode(b"Hello") == "Hello"
+        assert safe_decode_bytes(b"Hello") == "Hello"
 
     def test_safe_encode_function(self):
-        assert safe_encode("Hello\uD83D") == "Hello"
+        assert safe_encode_text("Hello\uD83D") == "Hello"
 
     def test_sanitize_dataframe_function(self):
         df = pd.DataFrame({"col\uD83D": ["val\uDE00"]})

@@ -11,11 +11,7 @@ from core.unicode import (
     clean_unicode_surrogates,
     clean_unicode_text,
     contains_surrogates,
-    handle_surrogate_characters,
-    safe_decode,
-    safe_encode,
     safe_encode_text,
-    sanitize_data_frame,
     sanitize_dataframe,
     sanitize_unicode_input,
 )

@@ -2,7 +2,7 @@ import pandas as pd
 
 from core.unicode_processor import (
     UnicodeProcessor,
-    safe_unicode_encode,
+    safe_encode_text,
     sanitize_dataframe,
 )
 
@@ -21,7 +21,7 @@ def test_safe_unicode_encode_returns_utf8_without_surrogates():
     bytes_value = text.encode("utf-8", "surrogatepass")
 
     for value in (text, bytes_value):
-        result = safe_unicode_encode(value)
+        result = safe_encode_text(value)
         assert isinstance(result, str)
         assert result == "XY"
         assert not any(0xD800 <= ord(ch) <= 0xDFFF for ch in result)
