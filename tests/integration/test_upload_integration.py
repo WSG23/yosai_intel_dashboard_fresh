@@ -6,35 +6,39 @@ import pandas as pd
 import pytest
 
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-import importlib.util
-import sys
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+from services.upload.upload_queue_manager import UploadQueueManager
+from services.upload.chunked_upload_manager import ChunkedUploadManager
 
 # provide minimal stubs for config dependencies
 import types
+
 conn_mod = types.ModuleType("config.connection_retry")
+
+
 class RetryConfig:
     def __init__(self, max_attempts=3, base_delay=0.2, jitter=False):
         self.max_attempts = max_attempts
         self.base_delay = base_delay
         self.jitter = jitter
+
+
 class ConnectionRetryManager:
     def __init__(self, cfg=None):
         self.cfg = cfg or RetryConfig()
+
     def run_with_retry(self, func):
         return func()
+
+
 conn_mod.RetryConfig = RetryConfig
 conn_mod.ConnectionRetryManager = ConnectionRetryManager
 sys.modules["config.connection_retry"] = conn_mod
-spec_queue = importlib.util.spec_from_file_location(
-    "upload_queue_manager", ROOT / "services" / "upload" / "upload_queue_manager.py"
-)
-queue_mod = importlib.util.module_from_spec(spec_queue)
+
 
 class CallbackEvent:
     ANALYSIS_ERROR = "ANALYSIS_ERROR"
+
 
 class CallbackContext:
     def __init__(self, event_type, source_id, timestamp, data=None):
@@ -42,6 +46,7 @@ class CallbackContext:
         self.source_id = source_id
         self.timestamp = timestamp
         self.data = data or {}
+
 
 class CallbackManager:
     def __init__(self):
@@ -54,27 +59,21 @@ class CallbackManager:
         for cb in list(self.callbacks):
             cb(ctx)
 
-sys.modules["upload_queue_manager"] = queue_mod
-spec_queue.loader.exec_module(queue_mod)  # type: ignore
-UploadQueueManager = queue_mod.UploadQueueManager
 
-spec_chunk = importlib.util.spec_from_file_location(
-    "chunked_upload_manager", ROOT / "services" / "upload" / "chunked_upload_manager.py"
-)
-chunk_mod = importlib.util.module_from_spec(spec_chunk)
-sys.modules["chunked_upload_manager"] = chunk_mod
-spec_chunk.loader.exec_module(chunk_mod)  # type: ignore
-ChunkedUploadManager = chunk_mod.ChunkedUploadManager
-
-
-
-def test_resumable_upload_and_error_callback(tmp_path, monkeypatch, fake_upload_storage):
+def test_resumable_upload_and_error_callback(
+    tmp_path, monkeypatch, fake_upload_storage
+):
     data_file = tmp_path / "sample.csv"
     df = DataFrameBuilder().add_column("a", range(15)).build()
     UploadFileBuilder().with_dataframe(df).write_csv(data_file)
 
     store = fake_upload_storage
-    cmgr = ChunkedUploadManager(store, metadata_dir=tmp_path / "meta", initial_chunk_size=5)
+    cmgr = ChunkedUploadManager(
+        store,
+        metadata_dir=tmp_path / "meta",
+        initial_chunk_size=5,
+        retry_manager_cls=ConnectionRetryManager,
+    )
     queue = UploadQueueManager(max_concurrent=1)
     queue.add_files([data_file])
 

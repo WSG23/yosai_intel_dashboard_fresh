@@ -51,7 +51,6 @@ def test_schedule_upload_task(monkeypatch):
 def test_schedule_upload_task_returns_non_empty(monkeypatch):
     cb = _create_core(monkeypatch)
 
-
     def fake_create_task(coro):
         if hasattr(coro, "close"):
             coro.close()
@@ -64,7 +63,6 @@ def test_schedule_upload_task_returns_non_empty(monkeypatch):
 
 def test_schedule_upload_task_triggers_event(monkeypatch):
     cb = _create_core(monkeypatch)
-
 
     def fake_create(coro):
         if hasattr(coro, "close"):
@@ -79,7 +77,6 @@ def test_schedule_upload_task_triggers_event(monkeypatch):
 
 def test_schedule_upload_task_error(monkeypatch):
     cb = _create_core(monkeypatch)
-
 
     def boom(coro):
         if hasattr(coro, "close"):
@@ -106,13 +103,13 @@ def test_update_progress_bar(monkeypatch):
 
     cb.queue = types.SimpleNamespace(files=[])
     cb.chunked = types.SimpleNamespace(get_progress=lambda _n: 0)
-    monkeypatch.setattr("upload_core.get_status", lambda tid: {"progress": 55})
+    monkeypatch.setattr(cb.task_queue, "get_status", lambda tid: {"progress": 55})
     assert cb.update_progress_bar(1, "tid") == (55, "55%", [])
 
 
 def test_finalize_upload_results_not_done(monkeypatch):
     cb = _create_core(monkeypatch)
-    monkeypatch.setattr("upload_core.get_status", lambda tid: {"progress": 5})
+    monkeypatch.setattr(cb.task_queue, "get_status", lambda tid: {"progress": 5})
     assert cb.finalize_upload_results(1, "tid") == (no_update,) * 8
 
 
@@ -120,9 +117,13 @@ def test_finalize_upload_results_done(monkeypatch):
     cb = _create_core(monkeypatch)
 
     result = (1, 2, 3, 4, 5, 6, 7)
-    monkeypatch.setattr("upload_core.get_status", lambda tid: {"done": True, "result": result})
+    monkeypatch.setattr(
+        cb.task_queue, "get_status", lambda tid: {"done": True, "result": result}
+    )
     called = {}
-    monkeypatch.setattr("upload_core.clear_task", lambda tid: called.setdefault("tid", tid))
+    monkeypatch.setattr(
+        cb.task_queue, "clear_task", lambda tid: called.setdefault("tid", tid)
+    )
     out = cb.finalize_upload_results(1, "tid")
     assert out == (*result, True)
     assert called["tid"] == "tid"

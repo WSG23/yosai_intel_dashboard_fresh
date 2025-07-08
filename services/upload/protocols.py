@@ -1,7 +1,18 @@
 """Upload service protocol definitions."""
 
 from abc import abstractmethod
-from typing import Any, Callable, Dict, List, Optional, Protocol, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Protocol,
+    Tuple,
+    Union,
+    Awaitable,
+)
 
 import pandas as pd
 
@@ -191,6 +202,35 @@ class DeviceLearningServiceProtocol(Protocol):
     ) -> bool:
         """Persist user-confirmed device mappings."""
         ...
+
+
+class UploadQueueManagerProtocol(Protocol):
+    """Protocol for managing queued uploads."""
+
+    files: List[Any]
+
+    @abstractmethod
+    def add_files(self, files: Iterable[Any], *, priority: int = 0) -> None: ...
+
+    @abstractmethod
+    def add_file(self, file: Any, *, priority: int = 0) -> None: ...
+
+    @abstractmethod
+    def mark_complete(self, file: Any) -> None: ...
+
+    @abstractmethod
+    def overall_progress(self) -> int: ...
+
+    @abstractmethod
+    def get_queue_status(self) -> Dict[str, Any]: ...
+
+    @abstractmethod
+    async def process_queue(
+        self,
+        handler: Callable[[Any], Awaitable[Any]],
+        *,
+        max_concurrent: int | None = None,
+    ) -> List[Tuple[str, Any]]: ...
 
 
 from core.enhanced_container import ServiceContainer
