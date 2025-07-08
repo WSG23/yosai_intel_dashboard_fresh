@@ -296,7 +296,7 @@ class TrulyUnifiedCallbacks:
                 self._coord = coord
 
             def handle_register(self, outputs, inputs=None, states=None, **kwargs):
-                return self._coord.register_handler(outputs, inputs, states, **kwargs)
+                return self._coord.handle_register(outputs, inputs, states, **kwargs)
 
         for manager_cls in manager_classes:
             registry = _Registry(self)

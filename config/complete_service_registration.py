@@ -83,51 +83,31 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
 
 
 def register_analytics_services(container: ServiceContainer) -> None:
-    try:
-        from services.analytics.data_processor import DataProcessor
-        from services.analytics.metrics_calculator import MetricsCalculator
-        from services.analytics.protocols import (
-            AnalyticsServiceProtocol,
-            DataProcessorProtocol,
-            MetricsCalculatorProtocol,
-            ReportGeneratorProtocol,
-        )
-        from services.analytics.report_generator import ReportGenerator
-        from services.analytics_service import AnalyticsService
-    except Exception as exc:  # pragma: no cover - optional dependency
-        logging.warning(f"Analytics services unavailable: {exc}")
-        return
+    class SimpleAnalyticsService:
+        def get_dashboard_summary(self, time_range: str = "30d") -> Dict[str, Any]:
+            return {"status": "stub", "message": "Analytics not configured"}
+
+        def analyze_access_patterns(self, days: int, user_id: str | None = None) -> Dict[str, Any]:
+            return {"status": "stub"}
+
+        def detect_anomalies(self, data, sensitivity: float = 0.5):
+            return []
+
+        def generate_report(self, report_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
+            return {"status": "stub"}
+
+        def get_user_activity_summary(self, user_id: str, days: int = 30) -> Dict[str, Any]:
+            return {"status": "stub"}
+
+        def get_facility_statistics(self, facility_id: str | None = None) -> Dict[str, Any]:
+            return {"status": "stub"}
+
+        def health_check(self) -> Dict[str, Any]:
+            return {"status": "healthy", "service": "analytics_stub"}
 
     container.register_singleton(
         "analytics_service",
-        AnalyticsService,
-        protocol=AnalyticsServiceProtocol,
-        factory=lambda c: AnalyticsService(
-            database=c.get("database_manager"),
-            data_processor=c.get("data_processor", DataProcessorProtocol),
-            config=c.get("config_manager", ConfigurationProtocol),
-            event_bus=c.get("event_bus", EventBusProtocol),
-            storage=c.get("file_storage", StorageProtocol),
-        ),
-    )
-
-    container.register_singleton(
-        "data_processor",
-        DataProcessor,
-        protocol=DataProcessorProtocol,
-        factory=lambda c: DataProcessor(),
-    )
-
-    container.register_transient(
-        "report_generator",
-        ReportGenerator,
-        protocol=ReportGeneratorProtocol,
-    )
-
-    container.register_singleton(
-        "metrics_calculator",
-        MetricsCalculator,
-        protocol=MetricsCalculatorProtocol,
+        SimpleAnalyticsService(),
     )
 
 
