@@ -338,6 +338,28 @@ def safe_format_number(value: Union[int, float]) -> Optional[str]:
     return None
 
 
+# ---------------------------------------------------------------------------
+# Lightweight helpers used by new components
+SURROGATE_PATTERN = re.compile(r"[\uD800-\uDFFF]")
+
+
+def handle_unicode_surrogates(text: Any) -> Any:
+    """Return text with surrogate characters replaced."""
+    if not isinstance(text, str):
+        return text
+    return SURROGATE_PATTERN.sub("\uFFFD", text)
+
+
+def safe_format_text(text: str, *args, **kwargs) -> str:
+    """Format text while ensuring Unicode surrogate safety."""
+    try:
+        formatted = text.format(*args, **kwargs)
+        return handle_unicode_surrogates(formatted)
+    except Exception:
+        cleaned = handle_unicode_surrogates(text)
+        return cleaned.format(*args, **kwargs)
+
+
 __all__ = [
     "UnicodeProcessor",
     "ChunkedUnicodeProcessor",
@@ -356,4 +378,7 @@ __all__ = [
     "contains_surrogates",
     "process_large_csv_content",
     "safe_format_number",
+    # New lightweight helpers
+    "handle_unicode_surrogates",
+    "safe_format_text",
 ]
