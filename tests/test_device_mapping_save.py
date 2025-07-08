@@ -22,11 +22,13 @@ def _encode_df(df: pd.DataFrame) -> str:
 
 def test_immediate_confirm_after_upload(monkeypatch, tmp_path, async_runner):
     import importlib
-    import sys
-    import types
+    import pages
+    from tests.fakes import FakeGraphs
 
-    sys.modules["pages.graphs"] = types.ModuleType("pages.graphs")
-    sys.modules["pages.graphs"].GRAPH_FIGURES = {}
+    fake_graphs = FakeGraphs()
+    monkeypatch.setattr(pages, "graphs", fake_graphs, raising=False)
+    if hasattr(pages, "_pages"):
+        monkeypatch.setitem(pages._pages, "graphs", fake_graphs)
 
     file_upload = importlib.import_module("pages.file_upload")
     Callbacks = UploadCore
