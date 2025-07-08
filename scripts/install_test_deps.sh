@@ -4,4 +4,4 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(realpath "$SCRIPT_DIR/..")"
 
-pip install -r "$ROOT_DIR/requirements.txt" -r "$ROOT_DIR/requirements-dev.txt"
+pip install -r "$ROOT_DIR/requirements.txt" -r "$ROOT_DIR/requirements-test.txt"

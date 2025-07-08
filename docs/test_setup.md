@@ -11,15 +11,14 @@ python -m venv venv
 source venv/bin/activate
 ```
 
-Install the application and development requirements **before** running any
-tests:
+Install the application and test requirements **before** running any tests:
 ```bash
 pip install -r requirements.txt
-pip install -r requirements-dev.txt
+pip install -r requirements-test.txt
 ```
-Alternatively you can run `./scripts/setup.sh` to install both files at once.
-`requirements-dev.txt` includes additional packages such as **PyYAML** that are
-required by the tests but not needed in production.
+Alternatively you can run `./scripts/setup.sh` to install the standard
+dependencies. `requirements-test.txt` includes additional packages such as
+**PyYAML** that are required by the tests but not needed in production.
 
 ### Required Python Packages
 
