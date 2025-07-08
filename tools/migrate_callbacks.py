@@ -6,8 +6,8 @@ import difflib
 from pathlib import Path
 
 _REPLACEMENTS = {
-    "services.data_processing.callback_controller": "core.truly_unified_callbacks",
-    "callbacks.controller": "core.truly_unified_callbacks",
+    "core.truly_unified_callbacks": "core.truly_unified_callbacks",
+    "core.truly_unified_callbacks": "core.truly_unified_callbacks",
 }
 
 

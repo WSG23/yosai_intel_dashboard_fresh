@@ -52,7 +52,7 @@ def validate_removal(root: Path) -> None:
         if "tests" in py.parts:
             continue
         text = py.read_text(errors="ignore")
-        if "services.data_processing.callback_controller" in text:
+        if "core.truly_unified_callbacks" in text:
             bad_imports.append(str(py))
     if bad_imports:
         joined = ", ".join(bad_imports)
