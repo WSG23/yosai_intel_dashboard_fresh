@@ -1,14 +1,6 @@
 import pandas as pd
-import sys
-import types
 
-import tests.stubs.flask as flask_stub
-
-flask_stub.request = types.SimpleNamespace(path="/")
-flask_stub.url_for = lambda *a, **k: "/"
-sys.modules["flask"] = flask_stub
-
-from utils.ai_column_mapper import standardize_column_names
+from utils.mapping_helpers import standardize_column_names
 
 
 def test_standardize_mixed_language_columns():
