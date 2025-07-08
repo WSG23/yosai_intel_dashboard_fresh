@@ -26,7 +26,7 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
         security_validator: Optional[SecurityValidator] = None,
     ) -> None:
         super().__init__(app)
-        self.coordinator = self
+
         self.callback_manager = CallbackManager()
         self.security = security_validator or SecurityValidator()
 
@@ -82,7 +82,8 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
         **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Wrap ``Dash.callback`` and track registrations."""
-        return super().register_callback(
+        return self.register_callback(
+
             outputs,
             inputs,
             states,
