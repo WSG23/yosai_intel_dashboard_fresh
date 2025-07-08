@@ -2,9 +2,10 @@
 """File upload page wiring the reusable upload component."""
 from __future__ import annotations
 
+import logging
+import types
 from typing import TYPE_CHECKING, Any
 
-import logging
 from dash import html
 
 try:  # Lazy import for optional heavy dependencies
@@ -17,7 +18,10 @@ else:
 
 if TYPE_CHECKING:  # pragma: no cover - import for type checking only
     from dash import html as Html
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks as TrulyUnifiedCallbacksType
+
+    from core.truly_unified_callbacks import (
+        TrulyUnifiedCallbacks as TrulyUnifiedCallbacksType,
+    )
 else:  # pragma: no cover - fallback type alias
     Html = html  # type: ignore[assignment]
     TrulyUnifiedCallbacksType = Any
@@ -27,6 +31,30 @@ logger = logging.getLogger(__name__)
 
 # Single shared instance for this page
 _upload_component = UnifiedUploadComponent() if UnifiedUploadComponent else None
+
+
+def load_page(controller=None, queue_manager=None):
+    """Return page helpers with optional dependency injection."""
+
+    component = UnifiedUploadComponent() if UnifiedUploadComponent else None
+
+    def _layout() -> Html.Div:
+        if component:
+            return html.Div(
+                [html.H2("File Upload"), component.layout()],
+                className="page-container",
+            )
+        return html.Div("Upload component unavailable")
+
+    def _register_callbacks(manager: TrulyUnifiedCallbacksType) -> None:
+        if component:
+            component.register_callbacks(manager, controller)
+
+    return types.SimpleNamespace(
+        layout=_layout,
+        register_callbacks=_register_callbacks,
+        check_upload_system_health=check_upload_system_health,
+    )
 
 
 def layout() -> Html.Div:
@@ -56,10 +84,20 @@ def check_upload_system_health() -> dict:
     return {
         "status": status,
         "components": [
-            "Upload component loaded" if _import_error is None else "Upload component missing"
+            (
+                "Upload component loaded"
+                if _import_error is None
+                else "Upload component missing"
+            )
         ],
         "errors": [] if _import_error is None else [str(_import_error)],
     }
 
 
-__all__ = ["layout", "register_upload_callbacks", "register_callbacks", "check_upload_system_health"]
+__all__ = [
+    "layout",
+    "register_upload_callbacks",
+    "register_callbacks",
+    "check_upload_system_health",
+    "load_page",
+]

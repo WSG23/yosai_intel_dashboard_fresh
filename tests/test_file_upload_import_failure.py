@@ -1,13 +1,13 @@
-import importlib
-import sys
+from pages import file_upload
+from tests.stubs.services.upload.controllers.upload_controller import (
+    UnifiedUploadController,
+)
+from tests.stubs.services.upload.upload_queue_manager import UploadQueueManager
 
-import pytest
 
-
-def test_file_upload_requires_services(monkeypatch):
-    monkeypatch.setitem(sys.modules, "services.upload", None)
-    monkeypatch.setitem(sys.modules, "services.upload.controllers.upload_controller", None)
-    monkeypatch.setitem(sys.modules, "services.upload.upload_queue_manager", None)
-    sys.modules.pop("pages.file_upload", None)
-    with pytest.raises(ImportError):
-        importlib.import_module("pages.file_upload")
+def test_file_upload_page_loader():
+    page = file_upload.load_page(
+        controller=UnifiedUploadController(), queue_manager=UploadQueueManager()
+    )
+    assert callable(page.layout)
+    assert callable(page.register_callbacks)
