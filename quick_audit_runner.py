@@ -98,7 +98,8 @@ def show_quick_summary(results):
    3. Run detailed audit: python3 quick_audit_runner.py --detailed --save
 """)
 
-def show_detailed_results(results, auditor: YourSystemCallbackAuditor) -> None:
+def show_detailed_results(results, auditor):
+
     """Show detailed results"""
     print(auditor.generate_detailed_report(results))
 
