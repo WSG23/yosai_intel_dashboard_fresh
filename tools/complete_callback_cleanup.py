@@ -4,9 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Dict, List
+import sys
 
-from .detect_legacy_callbacks import LegacyCallbackDetector
-from .migrate_callbacks import migrate_file
+# Ensure project root is on sys.path when run as a script
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from tools.detect_legacy_callbacks import LegacyCallbackDetector
+from tools.migrate_callbacks import migrate_file
 
 
 def scan_for_legacy_refs(path: Path) -> Dict[str, List[str]]:
