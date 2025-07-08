@@ -46,8 +46,6 @@ class _Dyn:
 dyn_mod.dynamic_config = _Dyn()
 sys.modules['config.dynamic_config'] = dyn_mod
 
-sys.modules['services.device_learning_service'] = types.ModuleType('services.device_learning_service')
-sys.modules['services.device_learning_service'].get_device_learning_service = lambda: None
 
 uds_mod = types.ModuleType('utils.upload_store')
 uds_mod.uploaded_data_store = object()
@@ -121,9 +119,6 @@ sys.modules['pages.deep_analytics'] = types.ModuleType('pages.deep_analytics')
 sys.modules['pages.export'] = types.ModuleType('pages.export')
 sys.modules['pages.settings'] = types.ModuleType('pages.settings')
 
-# Finally import the module under test
-file_upload = importlib.import_module('pages.file_upload')
-
-
-def test_module_imports():
+def test_module_imports(fake_device_learning_service):
+    file_upload = importlib.import_module('pages.file_upload')
     assert hasattr(file_upload, 'layout')

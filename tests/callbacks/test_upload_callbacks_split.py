@@ -1,6 +1,7 @@
 import importlib
 import sys
 import types
+import pytest
 from pathlib import Path
 
 # Ensure repository root is on the import path so local shims are found
@@ -41,8 +42,6 @@ class _Dyn:
     )
 dyn_mod.dynamic_config = _Dyn()
 sys.modules["config.dynamic_config"] = dyn_mod
-sys.modules["services.device_learning_service"] = types.ModuleType("services.device_learning_service")
-sys.modules["services.device_learning_service"].get_device_learning_service = lambda: None
 uds_mod = types.ModuleType("utils.upload_store")
 uds_mod.uploaded_data_store = object()
 sys.modules["utils.upload_store"] = uds_mod
@@ -131,17 +130,20 @@ from dash import no_update
 
 from core.callback_controller import CallbackEvent
 
-file_upload = importlib.import_module("pages.file_upload")
-Callbacks = file_upload.Callbacks
+
+@pytest.fixture
+def callbacks(fake_device_learning_service):
+    file_upload = importlib.import_module("pages.file_upload")
+    return file_upload.Callbacks
 
 
-def test_schedule_upload_task_none():
-    cb = Callbacks()
+def test_schedule_upload_task_none(callbacks):
+    cb = callbacks()
     assert cb.schedule_upload_task(None, None) == ""
 
 
-def test_schedule_upload_task(monkeypatch):
-    cb = Callbacks()
+def test_schedule_upload_task(callbacks, monkeypatch):
+    cb = callbacks()
     recorded = {}
 
     def fake_create_task(coro):
@@ -156,8 +158,8 @@ def test_schedule_upload_task(monkeypatch):
     assert recorded['called']
 
 
-def test_schedule_upload_task_returns_non_empty(monkeypatch):
-    cb = Callbacks()
+def test_schedule_upload_task_returns_non_empty(callbacks, monkeypatch):
+    cb = callbacks()
     def fake_create_task(coro):
         if hasattr(coro, "close"):
             coro.close()
@@ -168,8 +170,8 @@ def test_schedule_upload_task_returns_non_empty(monkeypatch):
     assert isinstance(tid, str) and tid
 
 
-def test_schedule_upload_task_triggers_event(monkeypatch):
-    cb = Callbacks()
+def test_schedule_upload_task_triggers_event(callbacks, monkeypatch):
+    cb = callbacks()
 
     class DummyManager:
         def __init__(self):
@@ -191,8 +193,8 @@ def test_schedule_upload_task_triggers_event(monkeypatch):
     assert CallbackEvent.FILE_UPLOAD_START in dummy.events
 
 
-def test_schedule_upload_task_error(monkeypatch):
-    cb = Callbacks()
+def test_schedule_upload_task_error(callbacks, monkeypatch):
+    cb = callbacks()
 
     class DummyManager:
         def __init__(self):
@@ -215,32 +217,32 @@ def test_schedule_upload_task_error(monkeypatch):
     assert CallbackEvent.FILE_UPLOAD_ERROR in dummy.events
 
 
-def test_reset_upload_progress_disabled():
-    cb = Callbacks()
+def test_reset_upload_progress_disabled(callbacks):
+    cb = callbacks()
     assert cb.reset_upload_progress(None) == (0, "0%", True)
 
 
-def test_reset_upload_progress_enabled():
-    cb = Callbacks()
+def test_reset_upload_progress_enabled(callbacks):
+    cb = callbacks()
     assert cb.reset_upload_progress("data") == (0, "0%", False)
 
 
-def test_update_progress_bar(monkeypatch):
-    cb = Callbacks()
+def test_update_progress_bar(callbacks, monkeypatch):
+    cb = callbacks()
     cb.queue = types.SimpleNamespace(files=[])
     cb.chunked = types.SimpleNamespace(get_progress=lambda _n: 0)
     monkeypatch.setattr("pages.file_upload.get_status", lambda tid: {"progress": 55})
     assert cb.update_progress_bar(1, "tid") == (55, "55%", [])
 
 
-def test_finalize_upload_results_not_done(monkeypatch):
-    cb = Callbacks()
+def test_finalize_upload_results_not_done(callbacks, monkeypatch):
+    cb = callbacks()
     monkeypatch.setattr("pages.file_upload.get_status", lambda tid: {"progress": 5})
     assert cb.finalize_upload_results(1, "tid") == (no_update,) * 8
 
 
-def test_finalize_upload_results_done(monkeypatch):
-    cb = Callbacks()
+def test_finalize_upload_results_done(callbacks, monkeypatch):
+    cb = callbacks()
     result = (1, 2, 3, 4, 5, 6, 7)
     monkeypatch.setattr("pages.file_upload.get_status", lambda tid: {"done": True, "result": result})
     called = {}
