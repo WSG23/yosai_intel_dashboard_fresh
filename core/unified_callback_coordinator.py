@@ -5,6 +5,8 @@ import threading
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterable, List, Tuple
 
+from core.callback_registry import CallbackRegistry, ComponentCallbackManager
+
 from dash import Dash
 from dash.dependencies import Input, Output, State
 
@@ -152,3 +154,21 @@ class UnifiedCallbackCoordinator:
                         f"{o.component_id}.{o.component_property}" for o in reg.outputs
                     )
                     logger.info("  %s -> %s", cid, outputs_str)
+
+    # ------------------------------------------------------------------
+    def register_all_callbacks(self, *manager_classes: type["ComponentCallbackManager"]) -> None:
+        """Instantiate and register callbacks from provided managers."""
+
+        class _CoordinatorRegistry(CallbackRegistry):
+            def __init__(self, coord: "UnifiedCallbackCoordinator") -> None:
+                super().__init__(coord.app)
+                self._coord = coord
+
+            def register_callback(self, outputs, inputs=None, states=None, **kwargs):
+                return self._coord.register_callback(outputs, inputs, states, **kwargs)
+
+        for manager_cls in manager_classes:
+            registry = _CoordinatorRegistry(self)
+            manager = manager_cls(registry)
+            self.register_component_namespace(manager.component_name)
+            manager.register_all()
