@@ -40,7 +40,7 @@ def main():
     if args.conflicts_only:
         show_conflicts_only(results)
     elif args.detailed:
-        show_detailed_results(results)
+        show_detailed_results(results, auditor)
     else:
         show_quick_summary(results)
     
@@ -98,7 +98,7 @@ def show_quick_summary(results):
    3. Run detailed audit: python3 quick_audit_runner.py --detailed --save
 """)
 
-def show_detailed_results(results):
+def show_detailed_results(results, auditor: YourSystemCallbackAuditor) -> None:
     """Show detailed results"""
     print(auditor.generate_detailed_report(results))
 
