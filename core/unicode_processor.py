@@ -8,6 +8,8 @@ import re
 import unicodedata
 from typing import Any, Callable, Optional, Union
 
+from .protocols import UnicodeProcessorProtocol
+
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -41,13 +43,24 @@ def _sanitize_nested(value: Any) -> Any:
     return UnicodeProcessor.safe_encode_text(value)
 
 
-class UnicodeProcessor:
+class UnicodeProcessor(UnicodeProcessorProtocol):
     """Centralized Unicode processing with robust error handling."""
 
     # Unicode surrogate range constants
     SURROGATE_LOW = 0xD800
     SURROGATE_HIGH = 0xDFFF
-    REPLACEMENT_CHAR = "\uFFFD"
+    REPLACEMENT_CHAR = "\ufffd"
+
+    # Protocol methods -------------------------------------------------
+    @staticmethod
+    def clean_text(text: str, replacement: str = "") -> str:
+        """Clean surrogate characters and control codes from ``text``."""
+        return UnicodeProcessor.clean_surrogate_chars(text, replacement)
+
+    @staticmethod
+    def safe_decode_text(data: bytes, encoding: str = "utf-8") -> str:
+        """Safely decode bytes into text."""
+        return UnicodeProcessor.safe_decode_bytes(data, encoding)
 
     @staticmethod
     def clean_surrogate_chars(text: str, replacement: str = "") -> str:
@@ -100,7 +113,9 @@ class UnicodeProcessor:
                 ch
                 for ch in text
                 if not (
-                    UnicodeProcessor.SURROGATE_LOW <= ord(ch) <= UnicodeProcessor.SURROGATE_HIGH
+                    UnicodeProcessor.SURROGATE_LOW
+                    <= ord(ch)
+                    <= UnicodeProcessor.SURROGATE_HIGH
                 )
             )
 
@@ -168,9 +183,9 @@ class UnicodeProcessor:
                 df_clean[col] = df_clean[col].apply(_sanitize_nested)
 
                 df_clean[col] = df_clean[col].apply(
-                    lambda x: _DANGEROUS_PREFIX_RE.sub("", x)
-                    if isinstance(x, str)
-                    else x
+                    lambda x: (
+                        _DANGEROUS_PREFIX_RE.sub("", x) if isinstance(x, str) else x
+                    )
                 )
 
                 if callable(progress):
@@ -258,10 +273,9 @@ def sanitize_data_frame(df: pd.DataFrame) -> pd.DataFrame:
     return sanitize_dataframe(df)
 
 
-
-
 # ---------------------------------------------------------------------------
 # Backwards compatibility helpers
+
 
 def handle_surrogate_characters(text: str) -> str:
     """Return text with surrogate characters replaced by ``REPLACEMENT_CHAR``."""
