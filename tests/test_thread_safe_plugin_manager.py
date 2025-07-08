@@ -1,4 +1,3 @@
-import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 
@@ -6,16 +5,6 @@ from config.config import ConfigManager
 from core.container import Container as DIContainer
 from core.plugins.manager import ThreadSafePluginManager
 from services.data_processing.core.protocols import PluginMetadata
-
-for var in [
-    "SECRET_KEY",
-    "DB_PASSWORD",
-    "AUTH0_CLIENT_ID",
-    "AUTH0_CLIENT_SECRET",
-    "AUTH0_DOMAIN",
-    "AUTH0_AUDIENCE",
-]:
-    os.environ.setdefault(var, "test")
 
 
 class ConcurrencyPlugin:

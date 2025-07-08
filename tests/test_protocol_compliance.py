@@ -202,6 +202,7 @@ class TestProtocolCompliance:
         csr = _load_real_registration_module()
         container = ServiceContainer()
         csr.register_all_services(container)
+
         results = container.validate_registrations()
         assert len(results["protocol_violations"]) == 0
         assert len(results["missing_dependencies"]) == 0

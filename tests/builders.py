@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import os
 import pathlib
 import sys
 import types
+
 from typing import Any, Dict
 
 import pandas as pd
@@ -16,32 +16,21 @@ from core.service_container import ServiceContainer
 class TestContainerBuilder:
     """Helper for constructing ServiceContainer instances for tests."""
 
+
     def __init__(self) -> None:
         self._container = ServiceContainer()
-        self._stub_modules()
 
     # ------------------------------------------------------------------
-    def _stub_modules(self) -> None:
-        """Insert minimal stubs for heavy optional dependencies."""
-        dash_mod = types.ModuleType("dash")
-        dash_dash_mod = types.ModuleType("dash.dash")
-        dash_dash_mod.no_update = object()
-        sys.modules.setdefault("dash", dash_mod)
-        sys.modules.setdefault("dash.dash", dash_dash_mod)
-        sys.modules.setdefault("bleach", types.ModuleType("bleach"))
-        sqlparse_mod = types.ModuleType("sqlparse")
-        sqlparse_mod.tokens = object()
-        sys.modules.setdefault("sqlparse", sqlparse_mod)
+    def with_dash_stubs(self) -> "TestContainerBuilder":
+        class _Dash:
+            no_update = object()
 
-        services_pkg = types.ModuleType("services")
-        services_pkg.__path__ = [
-            str(pathlib.Path(__file__).resolve().parents[1] / "services")
-        ]
-        sys.modules.setdefault("services", services_pkg)
+        self._container.register_singleton("dash", _Dash)
+        return self
 
-        analytics_stub = types.ModuleType("services.analytics_service")
-
-        class StubAnalyticsService(AnalyticsServiceProtocol):
+    # ------------------------------------------------------------------
+    def with_fake_analytics_service(self) -> "TestContainerBuilder":
+        class FakeAnalyticsService(AnalyticsServiceProtocol):
             def get_dashboard_summary(self) -> Dict[str, Any]:
                 return {}
 
@@ -56,28 +45,21 @@ class TestContainerBuilder:
             ) -> Dict[str, Any]:
                 return {}
 
-        analytics_stub.AnalyticsService = StubAnalyticsService
-        sys.modules.setdefault("services.analytics_service", analytics_stub)
+        self._container.register_singleton(
+            "analytics_service",
+            FakeAnalyticsService,
+            protocol=AnalyticsServiceProtocol,
+        )
+        return self
 
-        upload_reg_stub = types.ModuleType("services.upload.service_registration")
-
-        def _register_upload_services(container: ServiceContainer) -> None:
-            container.register_singleton("upload_processor", object)
-
-        upload_reg_stub.register_upload_services = _register_upload_services
-        sys.modules.setdefault("services.upload.service_registration", upload_reg_stub)
+    # ------------------------------------------------------------------
+    def with_upload_services(self) -> "TestContainerBuilder":
+        self._container.register_singleton("upload_processor", object)
+        return self
 
     # ------------------------------------------------------------------
     def with_env_defaults(self) -> "TestContainerBuilder":
-        for var in [
-            "SECRET_KEY",
-            "DB_PASSWORD",
-            "AUTH0_CLIENT_ID",
-            "AUTH0_CLIENT_SECRET",
-            "AUTH0_DOMAIN",
-            "AUTH0_AUDIENCE",
-        ]:
-            os.environ.setdefault(var, "test")
+        """Retained for backward compatibility (no-op)."""
         return self
 
     # ------------------------------------------------------------------

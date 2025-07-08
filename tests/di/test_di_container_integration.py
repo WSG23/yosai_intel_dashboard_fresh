@@ -1,5 +1,4 @@
 import importlib.util
-import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -20,15 +19,6 @@ from services.analytics_service import AnalyticsService
 
 
 def test_container_initializes_without_circular_dependencies():
-    for var in [
-        "SECRET_KEY",
-        "DB_PASSWORD",
-        "AUTH0_CLIENT_ID",
-        "AUTH0_CLIENT_SECRET",
-        "AUTH0_DOMAIN",
-        "AUTH0_AUDIENCE",
-    ]:
-        os.environ.setdefault(var, "test")
     container = Container()
     cfg = ConfigManager()
     analytics = AnalyticsService()

@@ -6,4 +6,7 @@ is simply an alias of :class:`TrulyUnifiedCallbacks`.
 
 from ..truly_unified_callbacks import Operation, TrulyUnifiedCallbacks
 
-__all__ = ["Operation", "TrulyUnifiedCallbacks"]
+# Alias kept for backwards compatibility
+UnifiedCallbackManager = TrulyUnifiedCallbacks
+
+__all__ = ["Operation", "TrulyUnifiedCallbacks", "UnifiedCallbackManager"]

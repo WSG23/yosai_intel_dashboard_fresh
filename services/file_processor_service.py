@@ -14,7 +14,7 @@ import pandas as pd
 
 from services.configuration_service import ConfigurationServiceProtocol
 from core.performance_file_processor import PerformanceFileProcessor
-from core.unicode import process_large_csv_content, sanitize_data_frame
+from core.unicode import process_large_csv_content, sanitize_dataframe
 from core.unicode_utils import sanitize_for_utf8
 from services.data_processing.core.protocols import FileProcessorProtocol
 from utils.file_validator import safe_decode_with_unicode_handling
@@ -150,7 +150,7 @@ class FileProcessorService(BaseService):
                 )
                 if len(df_alt.columns) > len(df.columns):
                     df = df_alt
-            return sanitize_data_frame(df)
+            return sanitize_dataframe(df)
         except Exception as exc:
             raise ValueError(f"Could not parse CSV file: {exc}")
 
@@ -167,7 +167,7 @@ class FileProcessorService(BaseService):
                 df = pd.DataFrame([data])
             else:
                 raise ValueError("JSON must be an object or array")
-            return sanitize_data_frame(df)
+            return sanitize_dataframe(df)
         except json.JSONDecodeError as exc:
             raise ValueError(f"Invalid JSON format: {exc}")
         except Exception as e:
@@ -178,7 +178,7 @@ class FileProcessorService(BaseService):
         logger.debug("Processing Excel content")
         try:
             df = pd.read_excel(io.BytesIO(content), dtype=str, keep_default_na=False)
-            return sanitize_data_frame(df)
+            return sanitize_dataframe(df)
         except Exception as e:
             raise ValueError(f"Error reading Excel file: {e}")
 

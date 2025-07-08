@@ -192,6 +192,21 @@ def sample_doors() -> list[Door]:
     ]
 
 
+@pytest.fixture(autouse=True)
+def env_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Provide default environment variables for tests."""
+    required = {
+        "SECRET_KEY": "test",
+        "DB_PASSWORD": "pwd",
+        "AUTH0_CLIENT_ID": "cid",
+        "AUTH0_CLIENT_SECRET": "secret",
+        "AUTH0_DOMAIN": "domain",
+        "AUTH0_AUDIENCE": "aud",
+    }
+    for key, value in required.items():
+        monkeypatch.setenv(key, value)
+
+
 @pytest.fixture
 def mock_auth_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Setup required authentication environment variables"""
