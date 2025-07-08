@@ -83,27 +83,6 @@ class FakeDeviceLearningService(DeviceLearningServiceProtocol):
         self.saved[filename] = user_mappings
         return True
 
-
-class FakeUploadDataService(UploadDataServiceProtocol):
-    def __init__(self) -> None:
-        self.store: Dict[str, pd.DataFrame] = {}
-
-    def get_uploaded_data(self) -> Dict[str, pd.DataFrame]:
-        return self.store.copy()
-
-    def get_uploaded_filenames(self) -> List[str]:
-        return list(self.store.keys())
-
-    def clear_uploaded_data(self) -> None:
-        self.store.clear()
-
-    def get_file_info(self) -> Dict[str, Dict[str, Any]]:
-        return {name: {"rows": len(df)} for name, df in self.store.items()}
-
-    def load_dataframe(self, filename: str) -> pd.DataFrame:
-        return self.store.get(filename, pd.DataFrame())
-
-
 class FakeColumnVerifier(ColumnVerifierProtocol):
     def create_column_verification_modal(self, file_info: Dict[str, Any]) -> Any:
         return {"modal": file_info}

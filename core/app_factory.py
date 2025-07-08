@@ -101,7 +101,7 @@ from flask_caching import Cache
 from components.ui.navbar import create_navbar_layout
 from config.config import get_config
 from core.container import Container as DIContainer
-from core.enhanced_container import ServiceContainer
+from core.service_container import ServiceContainer
 from core.performance_monitor import DIPerformanceMonitor
 from config.complete_service_registration import register_all_application_services
 from core.plugins.auto_config import PluginAutoConfiguration

@@ -1,14 +1,24 @@
-import pandas as pd
+import importlib.util
 import sys
-import types
+from pathlib import Path
 
-import tests.stubs.flask as flask_stub
+import pandas as pd
 
-flask_stub.request = types.SimpleNamespace(path="/")
-flask_stub.url_for = lambda *a, **k: "/"
-sys.modules["flask"] = flask_stub
 
-from utils.ai_column_mapper import AIColumnMapperAdapter
+spec = importlib.util.spec_from_file_location(
+    "ai_column_mapper",
+    Path(__file__).resolve().parents[1] / "utils" / "ai_column_mapper.py",
+)
+ai_module = importlib.util.module_from_spec(spec)
+
+# Provide a minimal stub for the optional components dependency
+sys.modules.setdefault("components.plugin_adapter", importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("components.plugin_adapter", loader=None)
+))
+setattr(sys.modules["components.plugin_adapter"], "ComponentPluginAdapter", object)
+
+spec.loader.exec_module(ai_module)
+AIColumnMapperAdapter = ai_module.AIColumnMapperAdapter
 
 
 class DummyAdapter:
@@ -19,11 +29,11 @@ class DummyAdapter:
         return {c: self._mapping.get(c, "") for c in columns}
 
 
-def test_map_and_standardize(monkeypatch):
+def test_map_and_standardize():
     df = pd.DataFrame({"RawA": [1], "RawB": [2]})
 
     dummy = DummyAdapter({"RawA": "Person ID", "RawB": "ドア名"})
-    adapter = AIColumnMapperAdapter(dummy)
+    adapter = AIColumnMapperAdapter(dummy, use_japanese=True)
 
     out = adapter.map_and_standardize(df)
     assert list(out.columns) == ["person_id", "door_id"]
