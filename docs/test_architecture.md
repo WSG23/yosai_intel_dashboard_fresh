@@ -40,3 +40,33 @@ Tests then retrieve `upload_validator` from the container and pass it to the com
 Several tests provide custom stubs that implement these protocols. They avoid heavy dependencies like Dash or database connections. See `tests/test_service_integration.py` and `tests/test_protocol_compliance.py` for examples of simple stubs providing the minimum required behaviour.
 
 Use this approach to isolate units under test and speed up execution.
+
+## Test Builders
+
+To reduce boilerplate the test suite provides small helpers in `tests/builders.py`.
+
+### `TestContainerBuilder`
+
+This builder constructs a `ServiceContainer` with lightweight module stubs so
+integration tests do not import heavy dependencies. Optional environment values
+can be populated via `with_env_defaults()` and all application services can be
+registered with `with_all_services()`.
+
+```python
+container = (
+    TestContainerBuilder()
+    .with_env_defaults()
+    .with_all_services()
+    .build()
+)
+```
+
+### `TestDataBuilder`
+
+`TestDataBuilder` creates sample analytics data. Rows are added with
+`add_row()` and the result can be retrieved as a `pandas.DataFrame` or as a
+mapping suitable for upload based tests.
+
+```python
+df = TestDataBuilder().add_row(person_id="u2").build_dataframe()
+```
