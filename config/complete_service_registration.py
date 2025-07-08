@@ -1,8 +1,9 @@
 """Comprehensive service registration for the DI container."""
 from __future__ import annotations
 
+import logging
+
 from core.service_container import ServiceContainer
-from services.upload.service_registration import register_upload_services
 from core.protocols import (
     ConfigurationProtocol,
     DatabaseProtocol,
@@ -10,12 +11,6 @@ from core.protocols import (
     EventBusProtocol,
     StorageProtocol,
     SecurityServiceProtocol,
-)
-from services.analytics.protocols import (
-    AnalyticsServiceProtocol,
-    DataProcessorProtocol,
-    ReportGeneratorProtocol,
-    MetricsCalculatorProtocol,
 )
 
 
@@ -26,8 +21,9 @@ def register_all_application_services(container: ServiceContainer) -> None:
     register_analytics_services(container)
     register_security_services(container)
     register_export_services(container)
+    from services.upload.service_registration import register_upload_services
+
     register_upload_services(container)
-    register_ui_service_factories(container)
 
 
 def register_all_services(container: ServiceContainer) -> None:
@@ -36,7 +32,15 @@ def register_all_services(container: ServiceContainer) -> None:
 
 
 def register_core_infrastructure(container: ServiceContainer) -> None:
-    from config.config import ConfigManager
+    import importlib.util
+    from pathlib import Path
+
+    cfg_path = Path(__file__).resolve().parent / "config.py"
+    spec = importlib.util.spec_from_file_location("_config_module", cfg_path)
+    _config = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(_config)
+
+    ConfigManager = _config.ConfigManager
     from core.logging_config import LoggingService
     from core.database import DatabaseManager
 
@@ -65,10 +69,20 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
 
 
 def register_analytics_services(container: ServiceContainer) -> None:
-    from services.analytics_service import AnalyticsService
-    from services.analytics.data_processor import DataProcessor
-    from services.analytics.report_generator import ReportGenerator
-    from services.analytics.metrics_calculator import MetricsCalculator
+    try:
+        from services.analytics_service import AnalyticsService
+        from services.analytics.data_processor import DataProcessor
+        from services.analytics.report_generator import ReportGenerator
+        from services.analytics.metrics_calculator import MetricsCalculator
+        from services.analytics.protocols import (
+            AnalyticsServiceProtocol,
+            DataProcessorProtocol,
+            ReportGeneratorProtocol,
+            MetricsCalculatorProtocol,
+        )
+    except Exception as exc:  # pragma: no cover - optional dependency
+        logging.warning(f"Analytics services unavailable: {exc}")
+        return
 
     container.register_singleton(
         "analytics_service",
@@ -124,10 +138,3 @@ def register_export_services(container: ServiceContainer) -> None:
     )
 
 
-def register_ui_service_factories(container: ServiceContainer) -> None:
-    from pages.factories import AnalyticsPageFactory
-
-    container.register_transient(
-        "analytics_page_factory", AnalyticsPageFactory
-
-    )
