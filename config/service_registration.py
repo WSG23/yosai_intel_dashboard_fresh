@@ -1,5 +1,5 @@
 """Service registration for dependency injection container."""
-from core.enhanced_container import ServiceContainer
+from core.service_container import ServiceContainer
 from services.upload.protocols import (
     UploadProcessingServiceProtocol,
     UploadValidatorProtocol,
