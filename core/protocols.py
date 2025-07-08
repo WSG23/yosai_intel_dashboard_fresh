@@ -423,7 +423,7 @@ class UnicodeProcessorProtocol(Protocol):
         ...
 
 
-from .enhanced_container import ServiceContainer
+from .service_container import ServiceContainer
 
 
 def _get_container(
