@@ -61,8 +61,6 @@ logger = logging.getLogger(__name__)
 
 from config.dynamic_config import dynamic_config
 
-MAX_DISPLAY_ROWS = dynamic_config.analytics.max_display_rows
-
 # Thresholds used for row count sanity checks
 ROW_LIMIT_WARNING = 150
 """Warning threshold when exactly 150 rows are returned."""

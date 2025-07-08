@@ -140,6 +140,10 @@ class CacheConstants:
     purge_count: int = 50
 
 
+# Convenience constant for data previews
+MAX_DISPLAY_ROWS: int = AnalyticsConstants.max_display_rows
+
+
 # Network defaults
 DEFAULT_APP_HOST: str = "127.0.0.1"
 DEFAULT_APP_PORT: int = 8050

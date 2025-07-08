@@ -22,9 +22,6 @@ from core.protocols import AnalyticsServiceProtocol
 # Provide lightweight stubs for heavy service modules
 analytics_service_stub = types.ModuleType("services.analytics_service")
 
-MAX_DISPLAY_ROWS = 100
-analytics_service_stub.MAX_DISPLAY_ROWS = MAX_DISPLAY_ROWS
-
 class StubAnalyticsService(AnalyticsServiceProtocol):
     def get_dashboard_summary(self):
         return {}

@@ -20,7 +20,6 @@ sys.modules.setdefault("services", services_pkg)
 from core.protocols import AnalyticsServiceProtocol
 
 analytics_stub = types.ModuleType("services.analytics_service")
-analytics_stub.MAX_DISPLAY_ROWS = 100
 
 class StubAnalyticsService(AnalyticsServiceProtocol):
     def get_dashboard_summary(self):

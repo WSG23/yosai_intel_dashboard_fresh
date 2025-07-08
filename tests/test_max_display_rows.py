@@ -2,7 +2,7 @@ import pandas as pd
 
 from config.config import ConfigManager
 from config.dynamic_config import dynamic_config
-from services.analytics_service import MAX_DISPLAY_ROWS
+from config.constants import MAX_DISPLAY_ROWS
 from services.data_processing.file_processor import create_file_preview
 
 

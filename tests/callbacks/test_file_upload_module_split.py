@@ -65,7 +65,6 @@ col_mod.save_verified_mappings = lambda *a, **k: None
 sys.modules['components.column_verification'] = col_mod
 
 svc_analytics_service = types.ModuleType('services.analytics_service')
-svc_analytics_service.MAX_DISPLAY_ROWS = 100
 sys.modules['services.analytics_service'] = svc_analytics_service
 
 core_unicode = types.ModuleType('core.unicode')
