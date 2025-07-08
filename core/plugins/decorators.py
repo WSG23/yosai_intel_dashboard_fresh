@@ -42,14 +42,15 @@ def handle_safe(app_or_container: Any = None) -> Callable:
         return decorator
 
 
+safe_callback = handle_safe
+
+
 def handle_unified(target: Any, *cb_args: Any, **cb_kwargs: Any) -> Callable:
     """Return decorator registering callbacks on any supported target."""
     from .callback_unifier import CallbackUnifier
 
     return CallbackUnifier(target, safe_callback(target))(*cb_args, **cb_kwargs)
 
+  __all__ = ["handle_safe", "handle_unified", "safe_callback"]
 
-# Exported decorator alias for compatibility
-safe_callback = handle_safe
 
-__all__ = ["handle_safe", "handle_unified", "safe_callback"]
