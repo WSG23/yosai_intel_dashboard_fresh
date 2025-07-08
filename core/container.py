@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional, Type
 
-from .protocols import AnalyticsServiceProtocol, ConfigurationProtocol
+from .protocols import (
+    AnalyticsServiceProtocol,
+    ConfigurationProtocol,
+    UnicodeProcessorProtocol,
+)
 
 
 class DIContainer:
@@ -90,6 +94,22 @@ def get_analytics_provider() -> AnalyticsServiceProtocol:
     provider = container.get(AnalyticsServiceProtocol)
     if provider is None:
         raise RuntimeError("Analytics provider not registered")
+    return provider
+
+
+def get_unicode_processor() -> UnicodeProcessorProtocol:
+    """Return the registered :class:`UnicodeProcessorProtocol` provider."""
+
+    provider = container.get(UnicodeProcessorProtocol)
+    if provider is None:
+        from .unicode_processor import DefaultUnicodeProcessor
+
+        provider = DefaultUnicodeProcessor()
+        container.register(
+            "unicode_processor",
+            provider,
+            protocol=UnicodeProcessorProtocol,
+        )
     return provider
 
 

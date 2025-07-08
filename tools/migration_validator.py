@@ -1,4 +1,9 @@
-"""Validate Unicode migration correctness and performance."""
+"""Validate Unicode migration correctness and performance.
+
+This module works together with ``legacy_unicode_audit.py`` and
+``validate_unicode_migration.py`` to ensure all legacy wrappers were
+removed and the new API functions correctly.
+"""
 from __future__ import annotations
 
 from typing import Any, Dict, List

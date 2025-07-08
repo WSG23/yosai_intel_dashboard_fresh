@@ -44,6 +44,7 @@ def _sanitize_nested(value: Any) -> Any:
 
 
 class UnicodeProcessor(UnicodeProcessorProtocol):
+
     """Centralized Unicode processing with robust error handling."""
 
     # Unicode surrogate range constants
@@ -62,8 +63,7 @@ class UnicodeProcessor(UnicodeProcessorProtocol):
         """Safely decode bytes into text."""
         return UnicodeProcessor.safe_decode_bytes(data, encoding)
 
-    @staticmethod
-    def clean_surrogate_chars(text: str, replacement: str = "") -> str:
+    def clean_surrogate_chars(self, text: str, replacement: str = "") -> str:
         """Remove unmatched surrogate characters from ``text``."""
         if not isinstance(text, str):
             text = str(text) if text is not None else ""
@@ -116,42 +116,41 @@ class UnicodeProcessor(UnicodeProcessorProtocol):
                     UnicodeProcessor.SURROGATE_LOW
                     <= ord(ch)
                     <= UnicodeProcessor.SURROGATE_HIGH
+
                 )
             )
 
-    @staticmethod
-    def safe_decode_bytes(data: bytes, encoding: str = "utf-8") -> str:
+    def safe_decode_bytes(self, data: bytes, encoding: str = "utf-8") -> str:
         """Safely decode bytes with Unicode surrogate handling."""
         try:
             text = data.decode(encoding, errors="surrogatepass")
-            return UnicodeProcessor.clean_surrogate_chars(text)
+            return self.clean_surrogate_chars(text)
         except UnicodeDecodeError:
             try:
                 text = data.decode(encoding, errors="replace")
-                return UnicodeProcessor.clean_surrogate_chars(text)
+                return self.clean_surrogate_chars(text)
             except Exception:
                 return data.decode(encoding, errors="ignore")
 
-    @staticmethod
-    def safe_encode_text(value: Any) -> str:
+    def safe_encode_text(self, value: Any) -> str:
         """Convert any value to a safe UTF-8 string."""
         if value is None or (isinstance(value, float) and pd.isna(value)):
             return ""
 
         try:
             if isinstance(value, bytes):
-                return UnicodeProcessor.safe_decode_bytes(value)
+                return self.safe_decode_bytes(value)
 
             text = str(value)
-            cleaned = UnicodeProcessor.clean_surrogate_chars(text)
+            cleaned = self.clean_surrogate_chars(text)
             cleaned.encode("utf-8")
             return cleaned
         except Exception as exc:  # pragma: no cover - best effort
             logger.error(f"Unicode encoding failed for {type(value)}: {exc}")
             return "".join(ch for ch in str(value) if ord(ch) < 128)
 
-    @staticmethod
     def sanitize_dataframe(
+        self,
         df: pd.DataFrame,
         *,
         progress: Union[bool, Callable[[int, int], None], None] = None,
@@ -173,7 +172,7 @@ class UnicodeProcessor(UnicodeProcessorProtocol):
 
             new_columns = []
             for col in df_clean.columns:
-                safe_col = UnicodeProcessor.safe_encode_text(col)
+                safe_col = self.safe_encode_text(col)
                 safe_col = _DANGEROUS_PREFIX_RE.sub("", safe_col)
                 new_columns.append(safe_col or f"col_{len(new_columns)}")
 
@@ -186,6 +185,7 @@ class UnicodeProcessor(UnicodeProcessorProtocol):
                     lambda x: (
                         _DANGEROUS_PREFIX_RE.sub("", x) if isinstance(x, str) else x
                     )
+
                 )
 
                 if callable(progress):
@@ -197,6 +197,10 @@ class UnicodeProcessor(UnicodeProcessorProtocol):
         except Exception as exc:  # pragma: no cover - defensive
             logger.error(f"DataFrame sanitization failed: {exc}")
             return df
+
+
+# Default processor instance used when dependency injection is not configured
+UnicodeProcessor = DefaultUnicodeProcessor()
 
 
 class ChunkedUnicodeProcessor:
@@ -353,6 +357,7 @@ def safe_format_number(value: Union[int, float]) -> Optional[str]:
 
 
 __all__ = [
+    "DefaultUnicodeProcessor",
     "UnicodeProcessor",
     "ChunkedUnicodeProcessor",
     "clean_unicode_text",

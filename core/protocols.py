@@ -445,3 +445,4 @@ def get_unicode_processor(
     from .unicode_processor import UnicodeProcessor
 
     return UnicodeProcessor()
+

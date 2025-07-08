@@ -1,6 +1,7 @@
 import base64
-
 import pandas as pd
+
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 from config.dynamic_config import dynamic_config
 from services.data_enhancer import (
@@ -13,13 +14,13 @@ from core.security_validator import SecurityValidator
 
 
 def test_enhanced_processor(tmp_path):
-    df = pd.DataFrame(
-        {
-            "userid": ["EMP1", "EMP2"],
-            "device name": ["Door1", "Door2"],
-            "access result": ["Granted", "Denied"],
-            "datetime": ["2024-01-01 10:00:00", "2024-01-01 11:00:00"],
-        }
+    df = (
+        DataFrameBuilder()
+        .add_column("userid", ["EMP1", "EMP2"])
+        .add_column("device name", ["Door1", "Door2"])
+        .add_column("access result", ["Granted", "Denied"])
+        .add_column("datetime", ["2024-01-01 10:00:00", "2024-01-01 11:00:00"])
+        .build()
     )
     csv_path = tmp_path / "sample.csv"
     df.to_csv(csv_path, index=False)
@@ -40,8 +41,9 @@ def test_enhanced_processor(tmp_path):
 
 
 def test_malicious_filename_rejected(tmp_path):
-    data = base64.b64encode(b"id,name\n1,A").decode()
-    contents = f"data:text/csv;base64,{data}"
+    contents = UploadFileBuilder().with_dataframe(
+        DataFrameBuilder().add_column("id", [1]).add_column("name", ["A"]).build()
+    ).as_base64()
     result = process_uploaded_file(contents, "../../evil.csv")
     assert result["success"] is False
 
