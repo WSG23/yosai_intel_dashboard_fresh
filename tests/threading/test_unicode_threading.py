@@ -2,7 +2,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))
+sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 from unicode_handler import ChunkedUnicodeProcessor, UnicodeProcessor
 

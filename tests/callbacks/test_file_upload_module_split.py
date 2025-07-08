@@ -4,7 +4,7 @@ import types
 from pathlib import Path
 
 # Ensure repository root is on the module search path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 # Stub dash modules so tests run without Dash installed
 sys.modules['dash'] = types.ModuleType('dash')

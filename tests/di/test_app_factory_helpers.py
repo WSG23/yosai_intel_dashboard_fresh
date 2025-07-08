@@ -4,7 +4,7 @@ from types import ModuleType, SimpleNamespace
 from pathlib import Path
 
 # Ensure stub modules are importable before loading the factory
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 STUB_DIR = ROOT / "tests" / "stubs"
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(STUB_DIR))

@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("container", ROOT / "core" / "container.py")
 container_module = importlib.util.module_from_spec(spec)
 sys.modules["container"] = container_module
