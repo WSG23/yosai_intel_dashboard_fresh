@@ -3,13 +3,14 @@ import dash_bootstrap_components as dbc
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 from dash import dcc, html
 
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+
 from pages import file_upload
 
 
 def _create_upload_app():
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-    coord = UnifiedCallbackCoordinator(app)
+    coord = TrulyUnifiedCallbacks(app)
     file_upload.register_upload_callbacks(coord)
     app.layout = html.Div([dcc.Location(id="url"), file_upload.layout()])
     return app

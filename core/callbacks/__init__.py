@@ -1,5 +1,5 @@
 """Unified callback utilities"""
 
-from .unified_callback_manager import Operation, UnifiedCallbackManager
+from ..truly_unified_callbacks import Operation, TrulyUnifiedCallbacks as UnifiedCallbackManager
 
 __all__ = ["Operation", "UnifiedCallbackManager"]
