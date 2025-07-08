@@ -1,9 +1,11 @@
-from core.callbacks import UnifiedCallbackManager
+from dash import Dash
+
+from core import TrulyUnifiedCallbacks
 from core.error_handling import error_handler
 
 
 def test_execute_group_with_errors_and_retry():
-    manager = UnifiedCallbackManager()
+    manager = TrulyUnifiedCallbacks(Dash(__name__))
 
     calls = {"fail": 0}
 
@@ -24,7 +26,7 @@ def test_execute_group_with_errors_and_retry():
 
 
 def test_timeout_records_error():
-    manager = UnifiedCallbackManager()
+    manager = TrulyUnifiedCallbacks(Dash(__name__))
 
     def slow():
         import time

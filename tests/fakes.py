@@ -10,6 +10,7 @@ from services.interfaces import (
     UploadDataServiceProtocol,
 )
 
+
 class FakeUploadStore(UploadStorageProtocol):
     def __init__(self) -> None:
         self.data: Dict[str, pd.DataFrame] = {}
@@ -81,3 +82,56 @@ class FakeDeviceLearningService(DeviceLearningServiceProtocol):
     def save_user_device_mappings(self, df: pd.DataFrame, filename: str, user_mappings: Dict[str, Any]) -> bool:
         self.saved[filename] = user_mappings
         return True
+
+
+class FakeUploadDataService(UploadDataServiceProtocol):
+    def __init__(self) -> None:
+        self.store: Dict[str, pd.DataFrame] = {}
+
+    def get_uploaded_data(self) -> Dict[str, pd.DataFrame]:
+        return self.store.copy()
+
+    def get_uploaded_filenames(self) -> List[str]:
+        return list(self.store.keys())
+
+    def clear_uploaded_data(self) -> None:
+        self.store.clear()
+
+    def get_file_info(self) -> Dict[str, Dict[str, Any]]:
+        return {name: {"rows": len(df)} for name, df in self.store.items()}
+
+    def load_dataframe(self, filename: str) -> pd.DataFrame:
+        return self.store.get(filename, pd.DataFrame())
+
+
+class FakeColumnVerifier(ColumnVerifierProtocol):
+    def create_column_verification_modal(self, file_info: Dict[str, Any]) -> Any:
+        return {"modal": file_info}
+
+    def register_callbacks(self, manager: Any, controller: Any | None = None) -> None:
+        pass
+
+
+class FakeConfigurationService(ConfigurationServiceProtocol):
+    def __init__(self, max_mb: int = 50) -> None:
+        self.max_mb = max_mb
+
+    def get_max_upload_size_mb(self) -> int:
+        return self.max_mb
+
+    def get_max_upload_size_bytes(self) -> int:
+        return self.max_mb * 1024 * 1024
+
+
+class FakeUnicodeProcessor(UnicodeProcessorProtocol):
+    def clean_text(self, text: str, replacement: str = "") -> str:
+        return text.replace("\ud800", replacement).replace("\udfff", replacement)
+
+    def safe_encode_text(self, value: Any) -> str:
+        return str(value) if value is not None else ""
+
+    def safe_decode_text(self, data: bytes, encoding: str = "utf-8") -> str:
+        try:
+            return data.decode(encoding, errors="ignore")
+        except Exception:
+            return ""

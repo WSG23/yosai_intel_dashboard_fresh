@@ -12,6 +12,32 @@ import pandas as pd
 
 from file_conversion.file_converter import FileConverter
 from services.upload.protocols import UploadStorageProtocol
+from typing import Protocol
+
+
+class UploadStoreProtocol(Protocol):
+    """Interface for uploaded data storage backends."""
+
+    def add_file(self, filename: str, dataframe: pd.DataFrame) -> None:
+        ...
+
+    def get_all_data(self) -> Dict[str, pd.DataFrame]:
+        ...
+
+    def clear_all(self) -> None:
+        ...
+
+    def load_dataframe(self, filename: str) -> pd.DataFrame:
+        ...
+
+    def get_filenames(self) -> List[str]:
+        ...
+
+    def get_file_info(self) -> Dict[str, Dict[str, Any]]:
+        ...
+
+    def wait_for_pending_saves(self) -> None:
+        ...
 
 logger = logging.getLogger(__name__)
 
