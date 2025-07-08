@@ -8,6 +8,7 @@ from config.database_exceptions import UnicodeEncodingError
 from config.unicode_handler import UnicodeQueryHandler
 from core.unicode import UnicodeProcessor as UtilsProcessor  # Alias check
 from core.unicode import (
+    UnicodeTextProcessor,
     clean_unicode_surrogates,
     clean_unicode_text,
     contains_surrogates,
@@ -19,7 +20,6 @@ from core.unicode import (
     sanitize_dataframe,
     sanitize_unicode_input,
 )
-from core.unicode_processor import UnicodeProcessor as UnicodeTextProcessor
 from security.unicode_security_handler import (
     UnicodeSecurityHandler as UnicodeSecurityProcessor,
 )

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from core.exceptions import ValidationError
-from core.unicode_processor import contains_surrogates
+from core.unicode import contains_surrogates
 from security_callback_controller import SecurityEvent, emit_security_event
 
 
@@ -34,14 +34,22 @@ class UnicodeSurrogateValidator:
         if not contains_surrogates(value):
             return value
 
-        emit_security_event(SecurityEvent.VALIDATION_FAILED, {"issue": "unicode_surrogates"})
+        emit_security_event(
+            SecurityEvent.VALIDATION_FAILED, {"issue": "unicode_surrogates"}
+        )
 
         if self.config.mode == "strict":
             raise ValidationError("Surrogate characters not allowed")
 
         replacement = self.config.replacement if self.config.mode == "replace" else ""
-        cleaned = "".join(ch if not (0xD800 <= ord(ch) <= 0xDFFF) else replacement for ch in value)
+        cleaned = "".join(
+            ch if not (0xD800 <= ord(ch) <= 0xDFFF) else replacement for ch in value
+        )
         return cleaned
 
 
-__all__ = ["UnicodeSurrogateValidator", "SurrogateHandlingConfig", "contains_surrogates"]
+__all__ = [
+    "UnicodeSurrogateValidator",
+    "SurrogateHandlingConfig",
+    "contains_surrogates",
+]

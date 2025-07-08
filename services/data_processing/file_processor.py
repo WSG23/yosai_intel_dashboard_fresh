@@ -14,8 +14,8 @@ import pandas as pd
 
 from config.config import get_analytics_config
 from config.dynamic_config import dynamic_config
-from core.protocols import ConfigurationProtocol
 from core.performance import get_performance_monitor
+from core.protocols import ConfigurationProtocol
 from core.unicode_decode import safe_unicode_decode
 
 # Core processing imports only - NO UI COMPONENTS
@@ -24,10 +24,14 @@ from core.unicode_utils import sanitize_for_utf8
 
 def _get_max_display_rows(config: ConfigurationProtocol = dynamic_config) -> int:
     try:
-        return get_analytics_config().max_display_rows or config.analytics.max_display_rows
+        return (
+            get_analytics_config().max_display_rows or config.analytics.max_display_rows
+        )
     except Exception:
         return config.analytics.max_display_rows
-from core.unicode_processor import safe_format_number
+
+
+from core.unicode import safe_format_number
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +45,7 @@ class UnicodeFileProcessor:
         try:
             # Detect encoding
             detected = chardet.detect(content)
-            encoding = detected.get('encoding') or 'utf-8'
+            encoding = detected.get("encoding") or "utf-8"
 
             return safe_unicode_decode(content, encoding)
         except Exception as e:
@@ -51,9 +55,11 @@ class UnicodeFileProcessor:
     @staticmethod
     def sanitize_dataframe_unicode(df: pd.DataFrame) -> pd.DataFrame:
         """Remove Unicode surrogate characters from DataFrame"""
-        for col in df.select_dtypes(include=['object']).columns:
-            df[col] = df[col].astype(str).apply(
-                lambda x: sanitize_for_utf8(x) if isinstance(x, str) else x
+        for col in df.select_dtypes(include=["object"]).columns:
+            df[col] = (
+                df[col]
+                .astype(str)
+                .apply(lambda x: sanitize_for_utf8(x) if isinstance(x, str) else x)
             )
         return df
 
@@ -63,6 +69,7 @@ class UnicodeFileProcessor:
         """Process ``contents`` and return the DataFrame and error string."""
         result = process_uploaded_file(contents, filename)
         return result["data"], result["error"]
+
 
 def process_uploaded_file(
     contents: str,
@@ -77,7 +84,8 @@ def process_uploaded_file(
     try:
         # Decode base64 content
         import base64
-        content_type, content_string = contents.split(',')
+
+        content_type, content_string = contents.split(",")
         decoded = base64.b64decode(content_string)
 
         # Safe Unicode processing
@@ -87,43 +95,36 @@ def process_uploaded_file(
         monitor = get_performance_monitor()
 
         # Process based on file type
-        if filename.endswith('.csv'):
+        if filename.endswith(".csv"):
             reader = pd.read_csv(io.StringIO(text_content), chunksize=chunk_size)
             chunks = []
             for chunk in reader:
                 monitor.throttle_if_needed()
                 chunks.append(chunk)
             df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
-        elif filename.endswith(('.xlsx', '.xls')):
+        elif filename.endswith((".xlsx", ".xls")):
             df = pd.read_excel(io.BytesIO(decoded))
         else:
             return {
-                'status': 'error',
-                'error': f'Unsupported file type: {filename}',
-                'data': None,
-                'filename': filename
+                "status": "error",
+                "error": f"Unsupported file type: {filename}",
+                "data": None,
+                "filename": filename,
             }
 
         # Sanitize Unicode in DataFrame
         df = UnicodeFileProcessor.sanitize_dataframe_unicode(df)
 
-        return {
-            'status': 'success',
-            'data': df,
-            'filename': filename,
-            'error': None
-        }
+        return {"status": "success", "data": df, "filename": filename, "error": None}
 
     except Exception as e:
         logger.error(f"File processing error for {filename}: {e}")
-        return {
-            'status': 'error',
-            'error': str(e),
-            'data': None,
-            'filename': filename
-        }
+        return {"status": "error", "error": str(e), "data": None, "filename": filename}
 
-def create_file_preview(df: pd.DataFrame, max_rows: int | None = None) -> Dict[str, Any]:
+
+def create_file_preview(
+    df: pd.DataFrame, max_rows: int | None = None
+) -> Dict[str, Any]:
     """Create safe preview data without UI components"""
     try:
         limit = _get_max_display_rows()
@@ -144,19 +145,15 @@ def create_file_preview(df: pd.DataFrame, max_rows: int | None = None) -> Dict[s
             preview_data.append(safe_row)
 
         return {
-            'preview_data': preview_data,
-            'columns': list(df.columns),
-            'total_rows': len(df),
-            'dtypes': {col: str(dtype) for col, dtype in df.dtypes.items()}
+            "preview_data": preview_data,
+            "columns": list(df.columns),
+            "total_rows": len(df),
+            "dtypes": {col: str(dtype) for col, dtype in df.dtypes.items()},
         }
     except Exception as e:
         logger.error(f"Preview creation error: {e}")
-        return {
-            'preview_data': [],
-            'columns': [],
-            'total_rows': 0,
-            'dtypes': {}
-        }
+        return {"preview_data": [], "columns": [], "total_rows": 0, "dtypes": {}}
+
 
 # For backwards compatibility expose ``UnicodeFileProcessor`` as ``FileProcessor``
 FileProcessor = UnicodeFileProcessor
@@ -167,4 +164,3 @@ __all__ = [
     "process_uploaded_file",
     "create_file_preview",
 ]
-

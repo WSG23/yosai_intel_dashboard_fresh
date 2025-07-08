@@ -1,9 +1,7 @@
 import pandas as pd
 
+from core.unicode import safe_unicode_encode
 from security.unicode_security_handler import UnicodeSecurityHandler
-from core.unicode_processor import safe_unicode_encode
-
-
 
 
 def test_upload_dataframe_sanitization():

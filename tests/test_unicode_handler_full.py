@@ -6,7 +6,7 @@ import pandas as pd
 
 from core.callback_events import CallbackEvent
 from core.callback_manager import CallbackManager
-from core.unicode_processor import (
+from core.unicode import (
     ChunkedUnicodeProcessor,
     UnicodeProcessor,
     clean_unicode_text,
@@ -18,7 +18,9 @@ from core.unicode_processor import (
 
 class CallbackController(CallbackManager):
     def fire_event(self, event: CallbackEvent, source_id: str, data=None):
-        ctx = type("Ctx", (), {"event_type": event, "source_id": source_id, "data": data or {}})
+        ctx = type(
+            "Ctx", (), {"event_type": event, "source_id": source_id, "data": data or {}}
+        )
         self.trigger(event, ctx)
 
     def register_error_handler(self, handler):
@@ -38,6 +40,7 @@ def callback_handler(event: CallbackEvent):
     def decorator(func):
         _GLOBAL.register_callback(event, func)
         return func
+
     return decorator
 
 
@@ -62,7 +65,10 @@ class TestUnicodeProcessor:
 
     def test_clean_surrogate_chars_with_replacement(self):
         text = "Hello\uD83DWorld"
-        assert UnicodeProcessor.clean_surrogate_chars(text, replacement="X") == "HelloXWorld"
+        assert (
+            UnicodeProcessor.clean_surrogate_chars(text, replacement="X")
+            == "HelloXWorld"
+        )
 
     def test_safe_decode_bytes_utf8_with_surrogates(self):
         text = "Test\uD83D\uDE00Text"
@@ -84,7 +90,9 @@ class TestUnicodeProcessor:
         assert UnicodeProcessor.safe_encode_text(bytes_val) == "hello"
 
     def test_sanitize_dataframe_columns_and_data(self):
-        df = pd.DataFrame({"col\uD83D": ["value1\uDE00", "value2"], "normal": ["n1", "n2\uD83D"]})
+        df = pd.DataFrame(
+            {"col\uD83D": ["value1\uDE00", "value2"], "normal": ["n1", "n2\uD83D"]}
+        )
         out = UnicodeProcessor.sanitize_dataframe(df)
         assert "col" in out.columns
         assert "\uD83D" not in str(out.columns)
@@ -92,7 +100,9 @@ class TestUnicodeProcessor:
         assert out.iloc[1, 1] == "n2"
 
     def test_sanitize_dataframe_dangerous_prefixes(self):
-        df = pd.DataFrame({"=danger": ["=formula", "+cmd", "-opt", "@imp"], "n": ["a", "b", "c", "d"]})
+        df = pd.DataFrame(
+            {"=danger": ["=formula", "+cmd", "-opt", "@imp"], "n": ["a", "b", "c", "d"]}
+        )
         out = UnicodeProcessor.sanitize_dataframe(df)
         assert "danger" in out.columns
         assert out.iloc[0, 0] == "formula"
@@ -155,6 +165,7 @@ class TestCallbackController:
         def cb(ctx):
             called["e"] = ctx.event_type
             called["s"] = ctx.source_id
+
         controller.register_callback(CallbackEvent.FILE_UPLOAD_START, cb)
         controller.fire_event(CallbackEvent.FILE_UPLOAD_START, "src", {"f": 1})
         assert called["e"] == CallbackEvent.FILE_UPLOAD_START
@@ -167,6 +178,7 @@ class TestCallbackController:
 
         def cb(ctx):
             hits.append(ctx.event_type)
+
         controller.register_callback(CallbackEvent.ANALYSIS_START, cb)
         controller.fire_event(CallbackEvent.ANALYSIS_START, "t", {})
         assert controller.unregister_callback(CallbackEvent.ANALYSIS_START, cb)
@@ -247,7 +259,9 @@ class TestRobustFileProcessor:
         assert df.iloc[0]["name"] == "John"
 
     def test_process_json_basic(self):
-        data = json.dumps([{"name": "John", "age": 30}, {"name": "Jane", "age": 25}]).encode("utf-8")
+        data = json.dumps(
+            [{"name": "John", "age": 30}, {"name": "Jane", "age": 25}]
+        ).encode("utf-8")
         proc = RobustFileProcessor()
         df, err = proc.process_file(data, "test.json")
         assert err is None and len(df) == 2

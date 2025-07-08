@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import pytest
 
-from core.unicode_processor import (
+from core.unicode import (
     contains_surrogates,
     safe_decode,
     safe_encode,
@@ -45,7 +45,6 @@ def test_unicode_processor_thread_safety():
 
     for result in results:
         pd.testing.assert_frame_equal(result, expected)
-
 
 
 def test_clean_surrogate_control_nfkc():
@@ -102,4 +101,3 @@ def test_sanitize_dataframe_benchmark():
     for _ in range(100):
         sanitize_data_frame(df)
     assert time.time() - start < 5
-
