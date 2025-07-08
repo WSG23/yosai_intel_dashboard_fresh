@@ -32,14 +32,20 @@ class _Cfg:
 cfg_mod.get_analytics_config = lambda: _Cfg()
 sys.modules['config.config'] = cfg_mod
 
-from core.container import container
-from core.protocols import ConfigurationProtocol
-from tests.fake_configuration import FakeConfiguration
+dyn_mod = types.ModuleType('config.dynamic_config')
+class _Dyn:
+    def get_max_upload_size_bytes(self):
+        return 1024
+    security = types.SimpleNamespace(
+        max_upload_mb=10,
+        rate_limit_requests=100,
+        rate_limit_window_minutes=1,
+        time_window=60,
+    )
 
-container.register('config', FakeConfiguration(), protocol=ConfigurationProtocol)
+dyn_mod.dynamic_config = _Dyn()
+sys.modules['config.dynamic_config'] = dyn_mod
 
-sys.modules['services.interfaces'] = importlib.import_module('services.interfaces')
-sys.modules['services.interfaces'].get_device_learning_service = lambda: None
 
 uds_mod = types.ModuleType('utils.upload_store')
 uds_mod.uploaded_data_store = object()
@@ -113,9 +119,6 @@ sys.modules['pages.deep_analytics'] = types.ModuleType('pages.deep_analytics')
 sys.modules['pages.export'] = types.ModuleType('pages.export')
 sys.modules['pages.settings'] = types.ModuleType('pages.settings')
 
-# Finally import the module under test
-file_upload = importlib.import_module('pages.file_upload')
-
-
-def test_module_imports():
+def test_module_imports(fake_device_learning_service):
+    file_upload = importlib.import_module('pages.file_upload')
     assert hasattr(file_upload, 'layout')
