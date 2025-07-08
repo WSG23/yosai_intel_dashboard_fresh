@@ -33,7 +33,7 @@ class ServiceLifetime(Enum):
 class ServiceRegistration:
     service_type: Type
     implementation: Union[Type, Callable]
-    protocol: Optional[Type[Protocol]]
+    protocol: Optional[type]
     lifetime: ServiceLifetime
     factory: Optional[Callable]
     dependencies: List[tuple[str, Type]]
@@ -65,7 +65,7 @@ class ServiceContainer:
         service_key: str,
         instance: Any,
         *,
-        protocol: Optional[Type[Protocol]] = None,
+        protocol: Optional[type] = None,
     ) -> "ServiceContainer":
         """Compatibility helper mirroring :class:`DIContainer.register`."""
         self._services[service_key] = ServiceRegistration(
@@ -92,7 +92,7 @@ class ServiceContainer:
         self,
         service_key: str,
         implementation: Any,
-        protocol: Optional[Type[Protocol]] = None,
+        protocol: Optional[type] = None,
         factory: Optional[Callable] = None,
     ) -> "ServiceContainer":
         """Register a singleton implementation or instance."""
@@ -104,7 +104,7 @@ class ServiceContainer:
         self,
         service_key: str,
         implementation: Any,
-        protocol: Optional[Type[Protocol]] = None,
+        protocol: Optional[type] = None,
         factory: Optional[Callable] = None,
     ) -> "ServiceContainer":
         return self._register_service(
@@ -115,7 +115,7 @@ class ServiceContainer:
         self,
         service_key: str,
         implementation: Any,
-        protocol: Optional[Type[Protocol]] = None,
+        protocol: Optional[type] = None,
         factory: Optional[Callable] = None,
     ) -> "ServiceContainer":
         return self._register_service(
@@ -127,7 +127,7 @@ class ServiceContainer:
         self,
         service_key: str,
         implementation: Any,
-        protocol: Optional[Type[Protocol]],
+        protocol: Optional[type],
         lifetime: ServiceLifetime,
         factory: Optional[Callable],
     ) -> "ServiceContainer":
@@ -191,14 +191,14 @@ class ServiceContainer:
             raise DependencyInjectionError("Unknown service lifetime")
 
     def _get_singleton(
-        self, key: str, reg: ServiceRegistration, proto: Optional[Type]
+        self, key: str, reg: ServiceRegistration, proto: Optional[type]
     ) -> Any:
         if key not in self._instances:
             self._instances[key] = self._create_instance(key, reg, proto)
         return self._instances[key]
 
     def _get_scoped(
-        self, key: str, reg: ServiceRegistration, proto: Optional[Type]
+        self, key: str, reg: ServiceRegistration, proto: Optional[type]
     ) -> Any:
         scope = self._scoped_instances.setdefault(self._current_scope, {})
         if key not in scope:
@@ -206,7 +206,7 @@ class ServiceContainer:
         return scope[key]
 
     def _create_instance(
-        self, key: str, reg: ServiceRegistration, proto: Optional[Type]
+        self, key: str, reg: ServiceRegistration, proto: Optional[type]
     ) -> Any:
         self._resolution_stack.append(key)
         try:
