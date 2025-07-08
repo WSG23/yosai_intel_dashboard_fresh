@@ -10,8 +10,7 @@ from core.unicode_processor import (
     clean_unicode_surrogates,
     clean_unicode_text,
     contains_surrogates,
-    handle_surrogate_characters,
-    safe_decode_bytes,
+
     safe_encode_text,
     sanitize_dataframe,
     sanitize_unicode_input,
