@@ -13,7 +13,7 @@ def _encode_df(df: pd.DataFrame) -> str:
     return UploadFileBuilder().with_dataframe(df).as_base64()
 
 
-def test_process_uploaded_files_split(monkeypatch, tmp_path):
+def test_process_uploaded_files_split(monkeypatch, tmp_path, async_runner):
     # create a dataframe large enough to split
     df = (
         DataFrameBuilder()
@@ -35,7 +35,7 @@ def test_process_uploaded_files_split(monkeypatch, tmp_path):
     cb = UploadCore(processing, learning, store)
     ok, msg = cb.validator.validate("big.csv", contents_list[0])
     assert ok, msg
-    result = asyncio.run(cb.process_uploaded_files(contents_list, filenames_list))
+    result = async_runner(cb.process_uploaded_files(contents_list, filenames_list))
     info = result[2]
 
     assert info["big.csv"]["rows"] == len(df)

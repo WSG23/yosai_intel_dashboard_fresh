@@ -2,7 +2,21 @@ import asyncio
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from services.task_queue import clear_task, create_task, get_status
+import importlib.util
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+spec = importlib.util.spec_from_file_location(
+    "task_queue", ROOT / "services" / "task_queue.py"
+)
+task_queue = importlib.util.module_from_spec(spec)
+sys.modules["task_queue"] = task_queue
+spec.loader.exec_module(task_queue)  # type: ignore
+clear_task = task_queue.clear_task
+create_task = task_queue.create_task
+get_status = task_queue.get_status
+import pytest
 
 
 def test_task_queue_basic():
@@ -45,6 +59,7 @@ def test_task_queue_progress():
     clear_task(tid)
 
 
+@pytest.mark.slow
 def test_task_queue_thread_safety():
     async def sample(progress):
         for i in range(3):
@@ -67,7 +82,5 @@ def test_task_queue_thread_safety():
         results = list(exc.map(worker, range(10)))
 
     assert all(res == "ok" for res in results)
-
-    from services import task_queue
 
     assert task_queue._tasks == {}

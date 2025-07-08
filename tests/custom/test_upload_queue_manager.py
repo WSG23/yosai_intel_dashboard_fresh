@@ -19,7 +19,7 @@ async def _handler(item: str) -> str:
     return item
 
 
-def _drain(manager: UploadQueueManager):
+def _drain(manager: UploadQueueManager, run):
     async def _run():
         results = []
         while True:
@@ -32,19 +32,19 @@ def _drain(manager: UploadQueueManager):
             await asyncio.sleep(0)
         return results
 
-    return asyncio.run(_run())
+    return run(_run())
 
 
-def test_priority_order():
+def test_priority_order(async_runner):
     state = {}
     q = UploadQueueManager(state, max_concurrent=1)
     q.add_files(["low"], priority=5)
     q.add_files(["high"], priority=0)
-    results = _drain(q)
+    results = _drain(q, async_runner)
     assert results == ["high", "low"]
 
 
-def test_persistence_roundtrip():
+def test_persistence_roundtrip(async_runner):
     state = {}
     q1 = UploadQueueManager(state)
     q1.add_files(["a", "b"], priority=1)
