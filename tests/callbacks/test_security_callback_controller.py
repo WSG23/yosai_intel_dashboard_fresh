@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 from analytics.security_patterns import (
     SecurityEvent,
@@ -80,3 +81,9 @@ def test_analyzer_triggers_callbacks():
     events = [e[0] for e in controller.history]
     assert SecurityEvent.THREAT_DETECTED in events
     assert SecurityEvent.ANALYSIS_COMPLETE in events
+
+
+def test_setup_isolated_security_testing_not_implemented():
+    """Ensure the setup helper clearly indicates unfinished logic."""
+    with pytest.raises(NotImplementedError):
+        setup_isolated_security_testing()
