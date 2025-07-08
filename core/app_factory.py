@@ -96,6 +96,7 @@ from core.secrets_manager import validate_secrets
 from core.theme_manager import DEFAULT_THEME, apply_theme_settings
 from dash_csrf_plugin import CSRFMode, setup_enhanced_csrf_protection
 from pages import get_page_layout
+from pages.file_upload import layout as upload_layout, register_upload_callbacks
 from services import get_analytics_service
 from services.analytics_service import AnalyticsService
 from utils.assets_utils import ensure_icon_cache_headers
@@ -751,18 +752,21 @@ def _register_router_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
     )
     def display_page(pathname: str):
         end_class = "main-content p-4 transition-fade-move transition-end"
-        if pathname == "/analytics":
-            return _get_analytics_page(), end_class
-        elif pathname == "/graphs":
-            return _get_graphs_page(), end_class
-        elif pathname == "/export":
-            return _get_export_page(), end_class
-        elif pathname == "/settings":
-            return _get_settings_page(), end_class
-        elif pathname in {"/upload", "/file-upload"}:
-            return _get_upload_page(), end_class
-        elif pathname in {"/", "/dashboard"}:
-            return _get_home_page(), end_class
+        page_routes = {
+            "/analytics": _get_analytics_page,
+            "/graphs": _get_graphs_page,
+            "/export": _get_export_page,
+            "/settings": _get_settings_page,
+            "/upload": upload_layout,
+            "/file-upload": upload_layout,
+            "/": _get_home_page,
+            "/dashboard": _get_home_page,
+        }
+
+        page_func = page_routes.get(pathname)
+        if page_func:
+            return page_func(), end_class
+
         return (
             html.Div(
                 [
@@ -943,6 +947,7 @@ def _register_callbacks(app: "Dash", config_manager: Any) -> None:
 
     if TrulyUnifiedCallbacks is not None:
         coordinator = TrulyUnifiedCallbacks(app)
+        register_upload_callbacks(coordinator)
         _register_router_callbacks(coordinator)
         _register_global_callbacks(coordinator)
     else:  # pragma: no cover - optional dependency missing
@@ -966,12 +971,6 @@ def _register_callbacks(app: "Dash", config_manager: Any) -> None:
             from pages.deep_analytics.callbacks import (
                 register_callbacks as register_deep_callbacks,
             )
-            from pages.file_upload import (
-                layout as upload_layout,
-                register_upload_callbacks,
-            )
-
-            register_upload_callbacks(coordinator)
             register_simple_mapping(coordinator)
             register_device_verification(coordinator)
             register_deep_callbacks(coordinator)
