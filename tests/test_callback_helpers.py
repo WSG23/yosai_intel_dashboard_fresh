@@ -4,6 +4,8 @@ import dash_bootstrap_components as dbc
 import pytest
 from dash import html
 
+pytestmark = pytest.mark.usefixtures("fake_dbc")
+
 import pages.deep_analytics.callbacks as cb
 
 

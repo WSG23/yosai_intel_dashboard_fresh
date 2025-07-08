@@ -1,9 +1,12 @@
+import pytest
 import dash
 from dash import Input, Output
 
 from core.callback_registry import CallbackRegistry
 from core.plugins.decorators import unified_callback
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+
+pytestmark = pytest.mark.usefixtures("fake_dash")
 
 
 def test_unified_decorator_with_coordinator():

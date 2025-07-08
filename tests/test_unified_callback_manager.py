@@ -1,7 +1,10 @@
+import pytest
 from dash import Dash
 
 from core import TrulyUnifiedCallbacks
 from core.error_handling import error_handler
+
+pytestmark = pytest.mark.usefixtures("fake_dash")
 
 
 def test_execute_group_with_errors_and_retry():

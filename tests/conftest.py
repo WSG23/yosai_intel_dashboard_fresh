@@ -2,75 +2,9 @@
 
 import sys
 from pathlib import Path
-
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-# Ensure test stubs (e.g., a Dash stub) are available before real packages
-stub_dir = Path(__file__).resolve().parent / "stubs"
-sys.path.insert(0, str(stub_dir))
-
 import types
-if "core.unicode_processor" not in sys.modules:
-    _m = types.ModuleType("core.unicode_processor")
+import importlib
 
-    class Dummy:
-        pass
-
-    _m.DefaultUnicodeProcessor = Dummy
-    _m.safe_decode_bytes = lambda *a, **k: ""
-    _m.safe_encode_text = lambda *a, **k: ""
-    _m.safe_decode = lambda *a, **k: ""
-    _m.safe_encode = lambda *a, **k: ""
-    _m.sanitize_dataframe = lambda df, **k: df
-    _m.sanitize_data_frame = lambda df, **k: df
-    _m.handle_surrogate_characters = lambda t: t
-    _m.clean_unicode_surrogates = lambda t: t
-    _m.sanitize_unicode_input = lambda t: t
-    _m.contains_surrogates = lambda t: False
-    _m.process_large_csv_content = lambda *a, **k: ""
-    _m.safe_format_number = lambda v: str(v)
-    _m.UnicodeProcessor = Dummy
-    _m.ChunkedUnicodeProcessor = Dummy
-    _m.safe_unicode_encode = lambda t: t
-    _m.sanitize_unicode_input = lambda t: t
-    sys.modules["core.unicode_processor"] = _m
-
-if "core.unicode" not in sys.modules:
-    u = types.ModuleType("core.unicode")
-    u.UnicodeProcessor = Dummy
-    u.ChunkedUnicodeProcessor = Dummy
-    u.UnicodeTextProcessor = Dummy
-    u.UnicodeSQLProcessor = Dummy
-    u.UnicodeSecurityProcessor = Dummy
-    u.clean_unicode_text = lambda t: t
-    u.safe_decode_bytes = lambda *a, **k: ""
-    u.safe_encode_text = lambda *a, **k: ""
-    u.sanitize_dataframe = lambda df, **k: df
-    u.contains_surrogates = lambda t: False
-    u.process_large_csv_content = lambda *a, **k: ""
-    u.safe_format_number = lambda v: str(v)
-    u.object_count = lambda items: 0
-    u.safe_unicode_encode = lambda t: t
-    u.sanitize_unicode_input = lambda t: t
-    sys.modules["core.unicode"] = u
-
-if "dash_bootstrap_components" not in sys.modules:
-    dbc_stub = types.ModuleType("dash_bootstrap_components")
-    dbc_stub.Navbar = dbc_stub.Container = dbc_stub.Row = dbc_stub.Col = (
-        lambda *a, **k: None
-    )
-    dbc_stub.NavbarToggler = dbc_stub.Collapse = dbc_stub.DropdownMenu = (
-        lambda *a, **k: None
-    )
-    dbc_stub.DropdownMenuItem = lambda *a, **k: None
-    sys.modules["dash_bootstrap_components"] = dbc_stub
-
-if "plotly" not in sys.modules:
-    plotly = types.ModuleType("plotly")
-    plotly.express = types.ModuleType("plotly.express")
-    plotly.graph_objects = types.ModuleType("plotly.graph_objects")
-    sys.modules["plotly"] = plotly
-    sys.modules["plotly.express"] = plotly.express
-    sys.modules["plotly.graph_objects"] = plotly.graph_objects
 
 import shutil
 import tempfile
@@ -211,3 +145,74 @@ def async_runner() -> Generator[callable, None, None]:
     loop = asyncio.new_event_loop()
     yield lambda coro: loop.run_until_complete(coro)
     loop.close()
+
+
+@pytest.fixture
+def fake_dash(monkeypatch: pytest.MonkeyPatch, request):
+    """Provide a lightweight Dash substitute for tests."""
+
+    dash_stub = importlib.import_module("tests.stubs.dash")
+    monkeypatch.setitem(sys.modules, "dash", dash_stub)
+    monkeypatch.setitem(sys.modules, "dash.html", dash_stub.html)
+    monkeypatch.setitem(sys.modules, "dash.dcc", dash_stub.dcc)
+    monkeypatch.setitem(sys.modules, "dash.dependencies", dash_stub.dependencies)
+    monkeypatch.setitem(sys.modules, "dash._callback", dash_stub._callback)
+    monkeypatch.setitem(
+        sys.modules,
+        "dash.exceptions",
+        types.SimpleNamespace(PreventUpdate=Exception),
+    )
+    dash_stub.no_update = None
+
+    attrs = {
+        "dash": dash_stub,
+        "Dash": dash_stub.Dash,
+        "dcc": dash_stub.dcc,
+        "html": dash_stub.html,
+        "Input": dash_stub.dependencies.Input,
+        "Output": dash_stub.dependencies.Output,
+        "State": dash_stub.dependencies.State,
+        "no_update": dash_stub.no_update,
+    }
+    for name, val in attrs.items():
+        if hasattr(request.module, name):
+            monkeypatch.setattr(request.module, name, val, raising=False)
+
+    yield dash_stub
+
+
+@pytest.fixture
+def fake_dbc(monkeypatch: pytest.MonkeyPatch, request):
+    """Provide a minimal dash_bootstrap_components substitute."""
+
+    dbc_stub = types.ModuleType("dash_bootstrap_components")
+
+    class _Comp:
+        def __init__(self, *args, **kwargs):
+            self.args = args
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+    for name in [
+        "Navbar",
+        "Container",
+        "Row",
+        "Col",
+        "NavbarToggler",
+        "Collapse",
+        "DropdownMenu",
+        "DropdownMenuItem",
+        "Card",
+        "Alert",
+        "Modal",
+        "Toast",
+    ]:
+        setattr(dbc_stub, name, _Comp)
+
+    dbc_stub.themes = types.SimpleNamespace(BOOTSTRAP="bootstrap")
+
+    monkeypatch.setitem(sys.modules, "dash_bootstrap_components", dbc_stub)
+    if hasattr(request.module, "dbc"):
+        monkeypatch.setattr(request.module, "dbc", dbc_stub, raising=False)
+
+    yield dbc_stub
