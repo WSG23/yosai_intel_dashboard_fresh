@@ -108,6 +108,7 @@ except Exception:  # pragma: no cover - fallback when unavailable
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
     import dash_bootstrap_components as dbc
+    from dash_bootstrap_components import Container as DbcContainer
     from dash import Dash, Input, Output
     from dash import dcc as Dcc
     from dash import html as Html
@@ -673,7 +674,7 @@ def _create_error_page(message: str) -> Any:
     )
 
 
-def _create_placeholder_page(title: str, subtitle: str, message: str) -> dbc.Container:
+def _create_placeholder_page(title: str, subtitle: str, message: str) -> "DbcContainer":
     """Create placeholder page for missing modules"""
     return dbc.Container(
         [
