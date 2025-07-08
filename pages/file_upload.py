@@ -2,7 +2,7 @@
 """File upload page wiring the reusable upload component."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import logging
 from dash import html
@@ -16,7 +16,11 @@ else:
     _import_error = None
 
 if TYPE_CHECKING:  # pragma: no cover - import for type checking only
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+    from dash import html as Html
+    from core.truly_unified_callbacks import TrulyUnifiedCallbacks as TrulyUnifiedCallbacksType
+else:  # pragma: no cover - fallback type alias
+    Html = html  # type: ignore[assignment]
+    TrulyUnifiedCallbacksType = Any
 
 
 logger = logging.getLogger(__name__)
@@ -25,7 +29,7 @@ logger = logging.getLogger(__name__)
 _upload_component = FileUploadComponent() if FileUploadComponent else None
 
 
-def layout() -> html.Div:
+def layout() -> Html.Div:
     """Return the upload page layout wrapped in a container."""
     if _upload_component:
         return html.Div(
@@ -35,7 +39,7 @@ def layout() -> html.Div:
     return html.Div("Upload component unavailable")
 
 
-def register_callbacks(manager: "TrulyUnifiedCallbacks", controller=None) -> None:
+def register_callbacks(manager: TrulyUnifiedCallbacksType, controller=None) -> None:
     """Register upload callbacks using the underlying component."""
     if _upload_component:
         _upload_component.register_callbacks(manager, controller)
