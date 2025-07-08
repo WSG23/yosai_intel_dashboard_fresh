@@ -1,4 +1,4 @@
-import pandas as pd
+from tests.utils.builders import DataFrameBuilder
 import pytest
 
 from utils.upload_store import UploadedDataStore
@@ -6,7 +6,7 @@ from utils.upload_store import UploadedDataStore
 
 def test_unsafe_filenames_rejected(tmp_path):
     store = UploadedDataStore(storage_dir=tmp_path)
-    df = pd.DataFrame({"a": [1]})
+    df = DataFrameBuilder().add_column("a", [1]).build()
 
     with pytest.raises(ValueError):
         store.add_file("../bad.csv", df)

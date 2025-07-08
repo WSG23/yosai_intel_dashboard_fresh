@@ -14,6 +14,7 @@ from .excel_reader import ExcelReader
 from .fwf_reader import FWFReader
 from .json_reader import JSONReader
 from core.callback_controller import CallbackController, CallbackEvent
+from core.protocols import UnicodeProcessorProtocol
 from ..format_detector import FormatDetector
 
 
@@ -22,7 +23,8 @@ class ArchiveReader(BaseReader):
 
     format_name = "archive"
 
-    def __init__(self) -> None:
+    def __init__(self, *, unicode_processor: UnicodeProcessorProtocol | None = None) -> None:
+        super().__init__(unicode_processor=unicode_processor)
         self.callback_controller = CallbackController()
 
     def read(self, file_path: str, hint: dict | None = None) -> pd.DataFrame:
@@ -55,12 +57,15 @@ class ArchiveReader(BaseReader):
         tmp_path = path.with_suffix(".tmp")
         tmp_path.write_bytes(tmp_bytes)
         try:
-            detector = FormatDetector([
-                CSVReader(),
-                JSONReader(),
-                ExcelReader(),
-                FWFReader(),
-            ])
+            detector = FormatDetector(
+                [
+                    CSVReader(unicode_processor=self.unicode_processor),
+                    JSONReader(unicode_processor=self.unicode_processor),
+                    ExcelReader(unicode_processor=self.unicode_processor),
+                    FWFReader(unicode_processor=self.unicode_processor),
+                ],
+                unicode_processor=self.unicode_processor,
+            )
             df, _ = detector.detect_and_load(str(tmp_path), hint=hint)
         finally:
             try:

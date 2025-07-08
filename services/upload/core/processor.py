@@ -14,6 +14,7 @@ from services.upload.utils.file_parser import create_file_preview
 from services.interfaces import get_device_learning_service
 from utils.upload_store import UploadedDataStore
 
+
 from ..async_processor import AsyncUploadProcessor
 from ..protocols import (
     FileProcessorProtocol,
@@ -31,10 +32,12 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
     def __init__(
         self,
         store: UploadStorageProtocol,
+        learning_service: DeviceLearningServiceProtocol,
         processor: Optional[FileProcessorProtocol] = None,
         validator: Optional[UploadValidatorProtocol] = None,
     ) -> None:
         self.store = store
+        self.learning_service = learning_service
         self.processor = processor or AsyncFileProcessor()
         self.validator = validator
         self.async_processor = AsyncUploadProcessor()
@@ -80,10 +83,9 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
 
     def auto_apply_learned_mappings(self, df: pd.DataFrame, filename: str) -> bool:
         try:
-            learning_service = get_device_learning_service()
-            learned = learning_service.get_learned_mappings(df, filename)
+            learned = self.learning_service.get_learned_mappings(df, filename)
             if learned:
-                learning_service.apply_learned_mappings_to_global_store(df, filename)
+                self.learning_service.apply_learned_mappings_to_global_store(df, filename)
                 logger.info("🤖 Auto-applied %s learned device mappings", len(learned))
                 return True
             return False
@@ -214,8 +216,7 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
                 current_file_info = file_info_dict[filename]
 
                 try:
-                    learning_service = get_device_learning_service()
-                    user_mappings = learning_service.get_user_device_mappings(filename)
+                    user_mappings = self.learning_service.get_user_device_mappings(filename)
                     if user_mappings:
                         from services.ai_mapping_store import ai_mapping_store
 

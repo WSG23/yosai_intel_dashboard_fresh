@@ -1,10 +1,15 @@
-import pandas as pd
+from tests.utils.builders import DataFrameBuilder
 
 from utils.upload_store import UploadedDataStore
 
 
 def test_pkl_migration(tmp_path):
-    df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+    df = (
+        DataFrameBuilder()
+        .add_column("a", [1, 2])
+        .add_column("b", [3, 4])
+        .build()
+    )
     pkl_path = tmp_path / "legacy.csv.pkl"
     df.to_pickle(pkl_path)
 

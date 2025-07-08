@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional, Tuple
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
+from core.protocols import ConfigurationProtocol
 from core.performance import get_performance_monitor
 from core.unicode import UnicodeProcessor, sanitize_dataframe
 from core.unicode_utils import sanitize_for_utf8
@@ -63,12 +64,15 @@ def safe_decode_file(contents: str) -> Optional[bytes]:
 
 
 def process_dataframe(
-    decoded: bytes, filename: str
+    decoded: bytes,
+    filename: str,
+    *,
+    config: ConfigurationProtocol = dynamic_config,
 ) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
     try:
         filename_lower = filename.lower()
         monitor = get_performance_monitor()
-        chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
+        chunk_size = getattr(config.analytics, "chunk_size", 50000)
 
         if filename_lower.endswith(".csv"):
             for encoding in ["utf-8", "latin-1", "cp1252"]:
@@ -205,10 +209,15 @@ class UnifiedFileValidator:
 
     ALLOWED_EXTENSIONS = ALLOWED_EXTENSIONS
 
-    def __init__(self, max_size_mb: Optional[int] = None) -> None:
-        self.max_size_mb = max_size_mb or dynamic_config.security.max_upload_mb
+    def __init__(
+        self,
+        max_size_mb: Optional[int] = None,
+        config: ConfigurationProtocol = dynamic_config,
+    ) -> None:
+        self.config = config
+        self.max_size_mb = max_size_mb or getattr(self.config.security, "max_upload_mb", dynamic_config.security.max_upload_mb)
         self._string_validator = _lazy_string_validator()
-        self._basic_validator = UploadValidator(self.max_size_mb)
+        self._basic_validator = UploadValidator(self.max_size_mb, config=self.config)
 
     def _sanitize_string(self, value: str) -> str:
         cleaned = sanitize_for_utf8(str(value))
@@ -292,7 +301,7 @@ class UnifiedFileValidator:
         if not sec_result["valid"]:
             raise ValidationError("; ".join(sec_result["issues"]))
 
-        df, err = process_dataframe(file_bytes, sanitized_name)
+        df, err = process_dataframe(file_bytes, sanitized_name, config=self.config)
         if df is None:
             raise ValidationError(err or "Unable to parse file")
 

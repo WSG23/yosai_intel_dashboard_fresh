@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from config.dynamic_config import dynamic_config
+from core.protocols import ConfigurationProtocol
 from upload_types import ValidationResult
 
 
@@ -15,8 +16,13 @@ class UploadValidator:
 
     _DATA_URI_RE = re.compile(r"^data:.*;base64,", re.IGNORECASE)
 
-    def __init__(self, max_size_mb: Optional[int] = None) -> None:
-        self.max_size_mb = max_size_mb or dynamic_config.security.max_upload_mb
+    def __init__(
+        self,
+        max_size_mb: Optional[int] = None,
+        config: ConfigurationProtocol = dynamic_config,
+    ) -> None:
+        self.config = config
+        self.max_size_mb = max_size_mb or getattr(self.config.security, "max_upload_mb", dynamic_config.security.max_upload_mb)
 
     def validate_file_upload(self, file_obj: Any) -> ValidationResult:
         if file_obj is None:

@@ -32,19 +32,11 @@ class _Cfg:
 cfg_mod.get_analytics_config = lambda: _Cfg()
 sys.modules['config.config'] = cfg_mod
 
-dyn_mod = types.ModuleType('config.dynamic_config')
-class _Dyn:
-    def get_max_upload_size_bytes(self):
-        return 1024
-    security = types.SimpleNamespace(
-        max_upload_mb=10,
-        rate_limit_requests=100,
-        rate_limit_window_minutes=1,
-        time_window=60,
-    )
+from core.container import container
+from core.protocols import ConfigurationProtocol
+from tests.fake_configuration import FakeConfiguration
 
-dyn_mod.dynamic_config = _Dyn()
-sys.modules['config.dynamic_config'] = dyn_mod
+container.register('config', FakeConfiguration(), protocol=ConfigurationProtocol)
 
 sys.modules['services.interfaces'] = importlib.import_module('services.interfaces')
 sys.modules['services.interfaces'].get_device_learning_service = lambda: None

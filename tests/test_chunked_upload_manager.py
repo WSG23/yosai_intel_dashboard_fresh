@@ -1,13 +1,15 @@
 import pandas as pd
 import pytest
 
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
+
 from services.upload.chunked_upload_manager import ChunkedUploadManager
 from utils.upload_store import UploadedDataStore
 
 
 def _create_csv(path, rows=30):
-    df = pd.DataFrame({"a": range(rows)})
-    df.to_csv(path, index=False)
+    df = DataFrameBuilder().add_column("a", range(rows)).build()
+    UploadFileBuilder().with_dataframe(df).write_csv(path)
     return df
 
 

@@ -17,12 +17,15 @@ from services.upload import (
     ChunkedUploadManager,
     ClientSideValidator,
     ModalService,
-    UploadProcessingService,
     get_trigger_id,
 )
 from services.upload.upload_queue_manager import UploadQueueManager
 from upload_validator import UploadValidator
-from utils.upload_store import uploaded_data_store as _uploaded_data_store
+from services.upload.protocols import (
+    DeviceLearningServiceProtocol,
+    UploadProcessingServiceProtocol,
+    UploadStorageProtocol,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +33,15 @@ logger = logging.getLogger(__name__)
 class UploadCore:
     """Container for upload related operations."""
 
-    def __init__(self, store=_uploaded_data_store) -> None:
+    def __init__(
+        self,
+        processing: UploadProcessingServiceProtocol,
+        learning_service: DeviceLearningServiceProtocol,
+        store: UploadStorageProtocol,
+    ) -> None:
         self.store = store
-        self.processing = UploadProcessingService(store)
+        self.processing = processing
+        self.learning_service = learning_service
         self.preview_processor = self.processing.async_processor
         self.ai = AISuggestionService()
         self.modal = ModalService()
@@ -189,14 +198,14 @@ class UploadCore:
                     "saved_at": datetime.now().isoformat(),
                 }
 
-            learning_service = get_device_learning_service()
+            learning_service = self.learning_service
             if not filename:
                 raise ValueError("No filename provided in file_info")
             if not devices:
                 raise ValueError("No devices found in file_info")
 
-            _uploaded_data_store.wait_for_pending_saves()
-            df = _uploaded_data_store.load_dataframe(filename)
+            self.store.wait_for_pending_saves()
+            df = self.store.load_dataframe(filename)
             if df is None:
                 raise ValueError(f"Data for '{filename}' could not be loaded")
             if df.empty:
