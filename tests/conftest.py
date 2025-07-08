@@ -3,49 +3,6 @@
 import sys
 from pathlib import Path
 import types
-if "core.unicode_processor" not in sys.modules:
-    _m = types.ModuleType("core.unicode_processor")
-
-    class Dummy:
-        pass
-
-    _m.DefaultUnicodeProcessor = Dummy
-    _m.safe_decode_bytes = lambda *a, **k: ""
-    _m.safe_encode_text = lambda *a, **k: ""
-    _m.safe_decode = lambda *a, **k: ""
-    _m.safe_encode = lambda *a, **k: ""
-    _m.sanitize_dataframe = lambda df, **k: df
-    _m.sanitize_data_frame = lambda df, **k: df
-    _m.handle_surrogate_characters = lambda t: t
-    _m.clean_unicode_surrogates = lambda t: t
-    _m.sanitize_unicode_input = lambda t: t
-    _m.contains_surrogates = lambda t: False
-    _m.process_large_csv_content = lambda *a, **k: ""
-    _m.safe_format_number = lambda v: str(v)
-    _m.UnicodeProcessor = Dummy
-    _m.ChunkedUnicodeProcessor = Dummy
-    _m.safe_unicode_encode = lambda t: t
-    _m.sanitize_unicode_input = lambda t: t
-    sys.modules["core.unicode_processor"] = _m
-
-if "core.unicode" not in sys.modules:
-    u = types.ModuleType("core.unicode")
-    u.UnicodeProcessor = Dummy
-    u.ChunkedUnicodeProcessor = Dummy
-    u.UnicodeTextProcessor = Dummy
-    u.UnicodeSQLProcessor = Dummy
-    u.UnicodeSecurityProcessor = Dummy
-    u.clean_unicode_text = lambda t: t
-    u.safe_decode_bytes = lambda *a, **k: ""
-    u.safe_encode_text = lambda *a, **k: ""
-    u.sanitize_dataframe = lambda df, **k: df
-    u.contains_surrogates = lambda t: False
-    u.process_large_csv_content = lambda *a, **k: ""
-    u.safe_format_number = lambda v: str(v)
-    u.object_count = lambda items: 0
-    u.safe_unicode_encode = lambda t: t
-    u.sanitize_unicode_input = lambda t: t
-    sys.modules["core.unicode"] = u
 
 if "dash_bootstrap_components" not in sys.modules:
     dbc_stub = types.ModuleType("dash_bootstrap_components")
@@ -70,6 +27,7 @@ from typing import Any, Generator
 import pandas as pd
 import pytest
 import asyncio
+from tests.fake_unicode_processor import FakeUnicodeProcessor
 
 try:
     from services.upload.protocols import UploadStorageProtocol
@@ -116,6 +74,13 @@ def di_container() -> Container:
     """Create DI container for tests"""
 
     return Container()
+
+
+@pytest.fixture
+def fake_unicode_processor() -> FakeUnicodeProcessor:
+    """Provide a minimal UnicodeProcessor for DI usage."""
+
+    return FakeUnicodeProcessor()
 
 
 @pytest.fixture

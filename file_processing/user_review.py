@@ -7,6 +7,7 @@ from file_processing.data_processor import DataProcessor
 from file_processing.format_detector import FormatDetector
 
 
+
 @click.command()
 @click.argument("input_path", type=click.Path(exists=True))
 @click.option("--hint", default=None, help="Optional ingest hint")
