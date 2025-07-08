@@ -2,9 +2,7 @@ import pytest
 from dash import Dash, Input, Output
 
 from core.callback_events import CallbackEvent
-from core.callback_manager import CallbackManager
-from core.callback_migration import UnifiedCallbackCoordinatorWrapper
-from core import TrulyUnifiedCallbacks
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 
 def test_duplicate_callback_registration():
@@ -151,8 +149,7 @@ def test_get_callback_conflicts():
 
 def test_wrapper_event_registration():
     app = Dash(__name__)
-    manager = CallbackManager()
-    wrapper = UnifiedCallbackCoordinatorWrapper(app, manager)
+    wrapper = TrulyUnifiedCallbacks(app)
 
     results = []
 
@@ -160,7 +157,7 @@ def test_wrapper_event_registration():
         results.append(arg)
 
     wrapper.register_event(CallbackEvent.BEFORE_REQUEST, _event, priority=10)
-    manager.trigger(CallbackEvent.BEFORE_REQUEST, 1)
+    wrapper.trigger_event(CallbackEvent.BEFORE_REQUEST, 1)
     assert results == [1]
 
     @wrapper.register_callback(
