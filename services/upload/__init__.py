@@ -18,7 +18,6 @@ from .core.processor import UploadProcessingService
 from .core.validator import ClientSideValidator as UploadValidator
 from utils.upload_store import UploadedDataStore as UploadStorage
 from .controllers.upload_controller import UnifiedUploadController as UploadController
-from .utils.file_parser import FileParser
 from .utils.unicode_handler import decode_upload_content
 from core.unicode_processor import safe_encode_text
 
@@ -34,7 +33,6 @@ __all__ = [
     "UploadValidator",
     "UploadStorage",
     "UploadController",
-    "FileParser",
     "safe_encode_text",
     "decode_upload_content",
 ]

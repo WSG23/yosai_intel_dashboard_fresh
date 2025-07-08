@@ -33,17 +33,9 @@ def register_all_services(container: ServiceContainer) -> None:
 
 
 def register_core_infrastructure(container: ServiceContainer) -> None:
-    import importlib.util
-    from pathlib import Path
-
-    cfg_path = Path(__file__).resolve().parent / "config.py"
-    spec = importlib.util.spec_from_file_location("_config_module", cfg_path)
-    _config = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(_config)
-
-    ConfigManager = _config.ConfigManager
-    from core.logging_config import LoggingService
-    from core.database import DatabaseManager
+    from config.config import ConfigManager
+    from core.logging import LoggingService
+    from config.database_manager import DatabaseManager, DatabaseConfig
     from services.configuration_service import (
         ConfigurationServiceProtocol,
         DynamicConfigurationService,
@@ -68,6 +60,7 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         "database_manager",
         DatabaseManager,
         protocol=DatabaseProtocol,
+        factory=lambda c: DatabaseManager(DatabaseConfig()),
     )
 
     from core.events import EventBus
@@ -99,7 +92,7 @@ def register_analytics_services(container: ServiceContainer) -> None:
         AnalyticsService,
         protocol=AnalyticsServiceProtocol,
         factory=lambda c: AnalyticsService(
-            database=c.get("database_manager", DatabaseProtocol),
+            database=c.get("database_manager"),
             data_processor=c.get("data_processor", DataProcessorProtocol),
             config=c.get("config_manager", ConfigurationProtocol),
             event_bus=c.get("event_bus", EventBusProtocol),

@@ -11,7 +11,7 @@ import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import dash_table, dcc, html, no_update
 
-from .protocols import UploadControllerProtocol
+from ..protocols import UploadControllerProtocol
 from dash.dependencies import Input, Output
 
 logger = logging.getLogger(__name__)
