@@ -55,6 +55,9 @@ if "core.unicode" not in sys.modules:
 
 if "dash_bootstrap_components" not in sys.modules:
     dbc_stub = types.ModuleType("dash_bootstrap_components")
+    dbc_stub.Card = (
+        lambda *a, **k: None
+    )
     dbc_stub.Navbar = dbc_stub.Container = dbc_stub.Row = dbc_stub.Col = (
         lambda *a, **k: None
     )
