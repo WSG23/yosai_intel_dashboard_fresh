@@ -6,13 +6,12 @@ import logging
 from typing import Any, Callable, Iterable, Optional
 
 from dash import Dash
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, State
 
 from .callback_events import CallbackEvent
 from .callback_manager import CallbackManager
 from .security_validator import SecurityValidator
 from .truly_unified_callbacks import TrulyUnifiedCallbacks
-from .unified_callback_coordinator import UnifiedCallbackCoordinator
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
         security_validator: Optional[SecurityValidator] = None,
     ) -> None:
         super().__init__(app)
-        self.coordinator = UnifiedCallbackCoordinator(app)
+        self.coordinator = self
         self.callback_manager = CallbackManager()
         self.security = security_validator or SecurityValidator()
 
@@ -49,9 +48,7 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
                 if args and isinstance(args[0], str):
                     result = self.security.validate_input(args[0], "input")
                     if not result["valid"]:
-                        logger.error(
-                            "Security validation failed: %s", result["issues"]
-                        )
+                        logger.error("Security validation failed: %s", result["issues"])
                         return None
                     args = (result["sanitized"],) + args[1:]
                 return original(*args, **kwargs)
@@ -66,7 +63,9 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
         return self.callback_manager.trigger(event, *args, **kwargs)
 
     # ------------------------------------------------------------------
-    async def trigger_event_async(self, event: CallbackEvent, *args: Any, **kwargs: Any):
+    async def trigger_event_async(
+        self, event: CallbackEvent, *args: Any, **kwargs: Any
+    ):
         """Asynchronously trigger callbacks for *event*."""
         return await self.callback_manager.trigger_async(event, *args, **kwargs)
 
@@ -83,7 +82,7 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
         **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Wrap ``Dash.callback`` and track registrations."""
-        return self.coordinator.register_callback(
+        return super().register_callback(
             outputs,
             inputs,
             states,
@@ -96,11 +95,11 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
     # ------------------------------------------------------------------
     def get_callback_conflicts(self):
         """Return mapping of output identifiers to conflicting callback IDs."""
-        return self.coordinator.get_callback_conflicts()
+        return super().get_callback_conflicts()
 
     # ------------------------------------------------------------------
     def print_callback_summary(self) -> None:  # pragma: no cover - passthrough
-        self.coordinator.print_callback_summary()
+        super().print_callback_summary()
 
     # ------------------------------------------------------------------
     def get_metrics(self, event: CallbackEvent):
