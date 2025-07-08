@@ -5,8 +5,10 @@ import pytest
 
 from config.database_exceptions import UnicodeEncodingError
 from config.unicode_handler import UnicodeQueryHandler
-from core.unicode_processor import (
-    UnicodeProcessor as UnicodeTextProcessor,
+from core.unicode import UnicodeProcessor as UtilsProcessor  # Alias check
+from core.unicode import (
+    UnicodeTextProcessor,
+
     clean_unicode_surrogates,
     clean_unicode_text,
     contains_surrogates,

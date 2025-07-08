@@ -3,6 +3,7 @@
 
 try:
     from dash import html  # type: ignore
+
     DASH_AVAILABLE = True
 except ImportError:
     # Provide fallback for when dash is not available
@@ -11,9 +12,10 @@ except ImportError:
 
 import logging
 from pathlib import Path
-from typing import Any, Optional, Dict, Iterable
+from typing import Any, Dict, Iterable, Optional
 
-from core.unicode_processor import safe_encode_text
+from core.unicode import safe_unicode_encode
+
 
 logger = logging.getLogger(__name__)
 

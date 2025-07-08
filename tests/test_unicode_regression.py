@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from core.unicode_processor import UnicodeProcessor
+from core.unicode import UnicodeProcessor
 from security.unicode_security_processor import UnicodeSecurityProcessor
 
 
