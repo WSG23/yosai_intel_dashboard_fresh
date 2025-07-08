@@ -1,13 +1,12 @@
 import importlib
 import time
-import warnings
 
 import pandas as pd
 import pytest
 
 from config.database_exceptions import UnicodeEncodingError
 from config.unicode_handler import UnicodeQueryHandler
-from core.unicode import UnicodeProcessor as UtilsProcessor  # Test deprecated functions
+from core.unicode import UnicodeProcessor as UtilsProcessor  # Alias check
 from core.unicode import (
     clean_unicode_surrogates,
     clean_unicode_text,
@@ -48,7 +47,6 @@ def test_unicode_security_processor_sanitization():
 
 def test_wrapper_compatibility_and_imports():
     assert UtilsProcessor is UnicodeTextProcessor
-    importlib.reload(importlib.import_module("utils.unicode_utils"))
     importlib.reload(importlib.import_module("config.unicode_handler"))
     importlib.reload(importlib.import_module("security.unicode_security_handler"))
 
