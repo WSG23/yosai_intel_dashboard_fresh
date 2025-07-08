@@ -3,6 +3,16 @@
 import sys
 import types
 from pathlib import Path
+import importlib.util
+
+
+_missing_packages = [pkg for pkg in ("yaml", "psutil") if importlib.util.find_spec(pkg) is None]
+if _missing_packages:
+    missing = ", ".join(_missing_packages)
+    raise RuntimeError(
+        f"Missing required test dependencies: {missing}. "
+        "Install them with `pip install -r requirements-test.txt`."
+    )
 
 try:  # use real package if available
     import dash_bootstrap_components  # noqa: F401
