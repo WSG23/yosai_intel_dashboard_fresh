@@ -6,7 +6,15 @@ from tests.builders import TestContainerBuilder
 class TestServiceIntegration:
     @pytest.fixture
     def configured_container(self):
-        return TestContainerBuilder().with_env_defaults().with_all_services().build()
+        return (
+            TestContainerBuilder()
+            .with_env_defaults()
+            .with_all_services()
+            .with_fake_analytics_service()
+            .with_upload_services()
+            .with_dash_stubs()
+            .build()
+        )
 
     def test_analytics_uses_database_protocol(self, configured_container):
         analytics = configured_container.get("analytics_service")
