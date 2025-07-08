@@ -12,7 +12,6 @@ from .callback_events import CallbackEvent
 from .callback_manager import CallbackManager
 from .security_validator import SecurityValidator
 from .truly_unified_callbacks import TrulyUnifiedCallbacks
-from .unified_callback_coordinator import UnifiedCallbackCoordinator
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,6 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
         security_validator: Optional[SecurityValidator] = None,
     ) -> None:
         super().__init__(app)
-        self.coordinator = UnifiedCallbackCoordinator(app)
         self.callback_manager = CallbackManager()
         self.security = security_validator or SecurityValidator()
 
@@ -83,7 +81,7 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
         **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Wrap ``Dash.callback`` and track registrations."""
-        return self.coordinator.register_callback(
+        return self.register_callback(
             outputs,
             inputs,
             states,
@@ -96,11 +94,11 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
     # ------------------------------------------------------------------
     def get_callback_conflicts(self):
         """Return mapping of output identifiers to conflicting callback IDs."""
-        return self.coordinator.get_callback_conflicts()
+        return super().get_callback_conflicts()
 
     # ------------------------------------------------------------------
     def print_callback_summary(self) -> None:  # pragma: no cover - passthrough
-        self.coordinator.print_callback_summary()
+        super().print_callback_summary()
 
     # ------------------------------------------------------------------
     def get_metrics(self, event: CallbackEvent):
