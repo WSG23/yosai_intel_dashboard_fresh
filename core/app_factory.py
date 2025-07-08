@@ -6,6 +6,7 @@ import logging
 import os
 import sys
 import types
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Optional, cast
 
@@ -90,7 +91,9 @@ from flask_caching import Cache
 from components.ui.navbar import create_navbar_layout
 from config.config import get_config
 from core.container import Container as DIContainer
-from core.enhanced_container import ServiceContainer
+from core.service_container import ServiceContainer
+from core.performance_monitor import DIPerformanceMonitor
+from config.complete_service_registration import register_all_application_services
 from core.plugins.auto_config import PluginAutoConfiguration
 from core.secrets_manager import validate_secrets
 from core.theme_manager import DEFAULT_THEME, apply_theme_settings
@@ -190,13 +193,23 @@ def _create_full_app() -> "Dash":
     """Create complete Dash application with full integration"""
     try:
         service_container = ServiceContainer()
-        from config.complete_service_registration import register_all_services
+        register_all_application_services(service_container)
 
-        register_all_services(service_container)
+        perf_monitor = DIPerformanceMonitor()
+        original_get = service_container.get
 
-        validation = service_container.validate_registrations()
-        if any(validation[key] for key in ["missing_dependencies", "protocol_violations", "circular_dependencies"]):
-            raise RuntimeError(f"Service registration failed: {validation}")
+        def monitored_get(service_key, protocol_type=None):
+            start = time.time()
+            try:
+                result = original_get(service_key, protocol_type)
+                perf_monitor.record_service_resolution(service_key, time.time() - start)
+                return result
+            except Exception as exc:
+                perf_monitor.record_service_error(service_key, str(exc))
+                raise
+
+        service_container.get = monitored_get  # type: ignore
+        service_container.register_singleton("performance_monitor", perf_monitor)
 
         config_manager = service_container.get("config_manager")
         analytics_service = service_container.get("analytics_service")
@@ -226,6 +239,7 @@ def _create_full_app() -> "Dash":
 
         # Expose the service container on the app instance
         cast(Any, app)._service_container = service_container
+        app.container = service_container
 
         # Initialize caching once per app instance
         cache = Cache(app.server, config={"CACHE_TYPE": "simple"})
@@ -261,7 +275,7 @@ def _create_full_app() -> "Dash":
         apply_theme_settings(app)
         Compress(app.server)
         # Use configuration service from the DI container
-        config_manager = service_container.get("config")
+        config_manager = service_container.get("config_manager")
         https_only = config_manager.get_app_config().environment == "production"
         Talisman(
             app.server,
