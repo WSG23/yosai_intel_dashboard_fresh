@@ -5,7 +5,7 @@ import click
 from file_processing.format_detector import FormatDetector
 from file_processing.column_mapper import map_columns, MappingWarning
 from file_processing.data_processor import DataProcessor
-from callbacks.controller import CallbackController
+from core.callback_controller import CallbackController
 
 
 @click.command()
