@@ -1,6 +1,8 @@
 from unittest.mock import Mock
 
+import pytest
 from core.container import Container
+from core.service_container import DependencyInjectionError
 
 
 def test_container_initialization():
@@ -18,7 +20,8 @@ def test_service_registration_and_retrieval():
     assert container.get("svc") is service
 
 
-def test_get_missing_service_returns_none():
+def test_get_missing_service_raises_error():
     container = Container()
-    assert container.get("missing") is None
+    with pytest.raises(DependencyInjectionError):
+        container.get("missing")
     assert container.has("missing") is False

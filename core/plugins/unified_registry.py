@@ -7,7 +7,7 @@ from dash import Dash
 
 from config.config import ConfigManager
 from core.callback_manager import CallbackManager
-from core.container import Container as DIContainer
+from core.service_container import ServiceContainer
 from core.plugins.manager import ThreadSafePluginManager
 from services.data_processing.core.protocols import PluginProtocol
 from services.registry import registry as service_registry
@@ -24,7 +24,7 @@ class UnifiedPluginRegistry:
     def __init__(
         self,
         app: Dash,
-        container: DIContainer,
+        container: ServiceContainer,
         config_manager: ConfigManager,
         package: str = "plugins",
         callback_manager: Optional[CallbackManager] = None,

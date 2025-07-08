@@ -22,7 +22,7 @@ from core.container import container
 from core.protocols import ConfigurationProtocol
 
 try:  # Prefer configuration from the DI container when available
-    _cfg = container.get(ConfigurationProtocol)  # type: ignore[arg-type]
+    _cfg = container.get("config_manager", ConfigurationProtocol)
 except Exception:  # pragma: no cover - container not initialized
     _cfg = None
 

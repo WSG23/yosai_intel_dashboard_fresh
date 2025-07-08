@@ -7,7 +7,7 @@ from typing import Any, Dict, List
 
 from config.config import ConfigManager
 from core.callback_manager import CallbackManager
-from core.container import Container as DIContainer
+from core.service_container import ServiceContainer
 from services.data_processing.core.protocols import (
     CallbackPluginProtocol,
     PluginPriority,
@@ -25,7 +25,7 @@ class PluginManager:
 
     def __init__(
         self,
-        container: DIContainer,
+        container: ServiceContainer,
         config_manager: ConfigManager,
         package: str = "plugins",
         health_check_interval: int = 60,

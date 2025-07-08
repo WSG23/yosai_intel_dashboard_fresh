@@ -2,7 +2,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 from config.config import ConfigManager
-from core.container import Container as DIContainer
+from core.service_container import ServiceContainer
 from core.plugins.manager import ThreadSafePluginManager
 from services.data_processing.core.protocols import PluginMetadata
 
@@ -38,7 +38,7 @@ class ConcurrencyPlugin:
 def test_concurrent_load_plugin():
     cfg = ConfigManager()
     cfg.config.plugin_settings["concurrent"] = {"enabled": True}
-    manager = ThreadSafePluginManager(DIContainer(), cfg, health_check_interval=0.1)
+    manager = ThreadSafePluginManager(ServiceContainer(), cfg, health_check_interval=0.1)
     plugin = ConcurrencyPlugin()
 
     with ThreadPoolExecutor(max_workers=5) as exe:
@@ -53,7 +53,7 @@ def test_concurrent_load_plugin():
 def test_concurrent_health_checks():
     cfg = ConfigManager()
     cfg.config.plugin_settings["concurrent"] = {"enabled": True}
-    manager = ThreadSafePluginManager(DIContainer(), cfg, health_check_interval=0.1)
+    manager = ThreadSafePluginManager(ServiceContainer(), cfg, health_check_interval=0.1)
     plugin = ConcurrencyPlugin()
     manager.load_plugin(plugin)
 

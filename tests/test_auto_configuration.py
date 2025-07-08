@@ -5,7 +5,7 @@ import pytest
 from dash import Dash, Input, Output
 
 from config.config import ConfigManager
-from core.container import Container as DIContainer
+from core.service_container import ServiceContainer
 from core.json_serialization_plugin import JsonSerializationPlugin
 from core.plugins.auto_config import setup_plugins
 from core.plugins.callback_unifier import CallbackUnifier
@@ -92,7 +92,7 @@ def test_setup_uses_provided_dependencies(monkeypatch, tmp_path):
     registry = None
     try:
         app = Dash(__name__)
-        container = DIContainer()
+        container = ServiceContainer()
         config = ConfigManager()
         config.config.plugin_settings["auto_plugin"] = {"enabled": True}
         registry = setup_plugins(app, container=container, config_manager=config, package="auto_pkg")

@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, Optional, cast
 from dash import Dash
 
 from config.config import ConfigManager
-from core.container import Container as DIContainer
+from core.service_container import ServiceContainer
 
 from .unified_registry import UnifiedPluginRegistry
 
@@ -18,12 +18,12 @@ class PluginAutoConfiguration:
         self,
         app: Dash,
         *,
-        container: Optional[DIContainer] = None,
+        container: Optional[ServiceContainer] = None,
         config_manager: Optional[ConfigManager] = None,
         package: str = "plugins",
     ) -> None:
         self.app = app
-        self.container = container or DIContainer()
+        self.container = container or ServiceContainer()
         # Expose container on the app for decorators like ``safe_callback``
         cast(Any, self.app)._yosai_container = self.container
         self.config_manager = config_manager or ConfigManager()
@@ -86,7 +86,7 @@ class PluginAutoConfiguration:
 def setup_plugins(
     app: Dash,
     *,
-    container: Optional[DIContainer] = None,
+    container: Optional[ServiceContainer] = None,
     config_manager: Optional[ConfigManager] = None,
     package: str = "plugins",
 ) -> UnifiedPluginRegistry:

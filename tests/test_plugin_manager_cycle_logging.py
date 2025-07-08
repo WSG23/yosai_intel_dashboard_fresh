@@ -1,6 +1,6 @@
 import sys
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
-from core.container import Container as DIContainer
+from core.service_container import ServiceContainer
 import types
 
 
@@ -110,7 +110,7 @@ def create_plugin():
 
 def test_cycle_logging(caplog, monkeypatch, mock_auth_env):
     cfg = DummyConfigManager()
-    mgr = PluginManager(DIContainer(), cfg, health_check_interval=1)
+    mgr = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
 
     def fail(_):
         raise ValueError("Circular dependency detected: a -> b -> a")
@@ -127,7 +127,7 @@ def test_cycle_logging(caplog, monkeypatch, mock_auth_env):
 
 def test_unknown_dep_logging(caplog, monkeypatch, mock_auth_env):
     cfg = DummyConfigManager()
-    mgr = PluginManager(DIContainer(), cfg, health_check_interval=1)
+    mgr = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
 
     def fail(_):
         raise ValueError("Unknown dependencies: x")
