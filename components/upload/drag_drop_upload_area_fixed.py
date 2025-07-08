@@ -7,6 +7,8 @@ import base64
 import logging
 from typing import Any, Dict, List, Optional, Union
 
+from services.upload.protocols import UploadComponentProtocol
+
 from dash import dcc, html, Input, Output, State, callback, no_update, ctx
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
@@ -85,7 +87,7 @@ def decode_upload_content(content: str, filename: str) -> tuple[bytes, str]:
         raise ValueError(f"Invalid file content: {e}")
 
 
-class FileUploadComponent:
+class FileUploadComponent(UploadComponentProtocol):
     """
     Modular file upload component with consolidated callbacks.
     """

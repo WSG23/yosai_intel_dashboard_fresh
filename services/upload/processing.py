@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Tuple, Callable
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import dash
 import dash_bootstrap_components as dbc
@@ -15,16 +15,28 @@ from services.device_learning_service import get_device_learning_service
 from utils.upload_store import UploadedDataStore
 
 from .async_processor import AsyncUploadProcessor
+from .protocols import (
+    FileProcessorProtocol,
+    UploadProcessingServiceProtocol,
+    UploadStorageProtocol,
+    UploadValidatorProtocol,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class UploadProcessingService:
+class UploadProcessingService(UploadProcessingServiceProtocol):
     """Service handling processing of uploaded files."""
 
-    def __init__(self, store: UploadedDataStore):
+    def __init__(
+        self,
+        store: UploadStorageProtocol,
+        processor: Optional[FileProcessorProtocol] = None,
+        validator: Optional[UploadValidatorProtocol] = None,
+    ) -> None:
         self.store = store
-        self.processor = AsyncFileProcessor()
+        self.processor = processor or AsyncFileProcessor()
+        self.validator = validator
         self.async_processor = AsyncUploadProcessor()
 
     def build_success_alert(
@@ -120,7 +132,7 @@ class UploadProcessingService:
             ]
         )
 
-    async def process_files(
+    async def process_uploaded_files(
         self,
         contents_list: List[str] | str,
         filenames_list: List[str] | str,
@@ -256,6 +268,20 @@ class UploadProcessingService:
             current_file_info,
             no_update,
             no_update,
+        )
+
+    # Backwards compatibility alias
+    async def process_files(
+        self,
+        contents_list: List[str] | str,
+        filenames_list: List[str] | str,
+        *,
+        task_progress: Callable[[int], None] | None = None,
+    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
+        return await self.process_uploaded_files(
+            contents_list,
+            filenames_list,
+            task_progress=task_progress,
         )
 
 

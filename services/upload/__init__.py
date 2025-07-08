@@ -7,6 +7,16 @@ from .upload_queue_manager import UploadQueueManager
 from .modal import ModalService
 from .processing import UploadProcessingService
 from .validators import ClientSideValidator
+from .protocols import (
+    UploadProcessingServiceProtocol,
+    UploadValidatorProtocol,
+    FileProcessorProtocol,
+    UploadControllerProtocol,
+    UploadComponentProtocol,
+    UploadStorageProtocol,
+    UploadAnalyticsProtocol,
+    UploadSecurityProtocol,
+)
 
 __all__ = [
     "AsyncUploadProcessor",
@@ -20,4 +30,12 @@ __all__ = [
     "AsyncChunkedUploadManager",
     "UploadQueueManager",
     "ClientSideValidator",
+    "UploadProcessingServiceProtocol",
+    "UploadValidatorProtocol",
+    "FileProcessorProtocol",
+    "UploadControllerProtocol",
+    "UploadComponentProtocol",
+    "UploadStorageProtocol",
+    "UploadAnalyticsProtocol",
+    "UploadSecurityProtocol",
 ]

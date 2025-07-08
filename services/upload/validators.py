@@ -1,9 +1,12 @@
 import base64
+import base64
 import json
 from typing import Any, Callable, Iterable, List, Mapping
 
+from .protocols import UploadValidatorProtocol
 
-class ClientSideValidator:
+
+class ClientSideValidator(UploadValidatorProtocol):
     """Validate uploaded file name and size before processing.
 
     The validator mirrors the behaviour of the client side checks shipped in the
