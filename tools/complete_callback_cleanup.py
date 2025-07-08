@@ -80,7 +80,7 @@ def test_unified_callbacks() -> None:
     assert results == [5]
 
     # Dash callbacks
-    @coord.register_handler(
+    @coord.register_callback(
         Output("out", "children"),
         Input("in", "value"),
         callback_id="t",

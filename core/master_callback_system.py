@@ -55,7 +55,7 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
 
             func = wrapped
 
-        self.callback_manager.register_handler(event, func, priority=priority)
+        self.callback_manager.register_callback(event, func, priority=priority)
 
     # ------------------------------------------------------------------
     def trigger_event(self, event: CallbackEvent, *args: Any, **kwargs: Any):
@@ -82,7 +82,7 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
         **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Wrap ``Dash.callback`` and track registrations."""
-        return self.register_handler(
+        return self.register_callback(
 
             outputs,
             inputs,

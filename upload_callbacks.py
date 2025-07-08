@@ -22,7 +22,7 @@ class UploadCallbackManager:
 
         for defs in [uc.upload_callbacks(), uc.progress_callbacks(), uc.validation_callbacks()]:
             for func, outputs, inputs, states, cid, extra in defs:
-                manager.register_handler(
+                manager.register_callback(
                     outputs,
                     inputs,
                     states,

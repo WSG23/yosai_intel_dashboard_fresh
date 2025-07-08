@@ -49,8 +49,8 @@ class ValidationMiddleware:
 
     def register_callbacks(self, manager: CallbackManager) -> None:
         """Register validation hooks with the callback manager."""
-        manager.register_handler(CallbackEvent.BEFORE_REQUEST, self.validate_request)
-        manager.register_handler(CallbackEvent.AFTER_REQUEST, self.sanitize_response)
+        manager.register_callback(CallbackEvent.BEFORE_REQUEST, self.validate_request)
+        manager.register_callback(CallbackEvent.AFTER_REQUEST, self.sanitize_response)
 
     def validate_request(self) -> None:
         # Enforce maximum request body size

@@ -302,7 +302,7 @@ def register_callbacks(
     )(mark_device_as_edited)
 
     if controller is not None:
-        controller.register_handler(
+        controller.register_callback(
             "on_analysis_error",
             lambda aid, err: logger.error("Device verification error: %s", err),
         )
