@@ -16,13 +16,26 @@ try:
 except Exception:  # pragma: no cover - fallback when unavailable
     TrulyUnifiedCallbacks = None  # type: ignore
 
-try:  # Lazy import for optional heavy dependencies
-    from components.upload import UnifiedUploadComponent
-except Exception as exc:  # pragma: no cover - optional dependency missing
-    UnifiedUploadComponent = None  # type: ignore[assignment]
-    _import_error = exc
-else:
-    _import_error = None
+logger = logging.getLogger(__name__)
+
+_import_error: Exception | None = None
+
+
+def _safe_import_upload_component():
+    """Attempt to import ``UnifiedUploadComponent`` with detailed logging."""
+    global _import_error
+    try:
+        from components.upload import UnifiedUploadComponent as UUC
+        logger.debug("UnifiedUploadComponent imported successfully")
+        _import_error = None
+        return UUC
+    except Exception as exc:  # pragma: no cover - optional dependency missing
+        _import_error = exc
+        logger.exception("Failed to import UnifiedUploadComponent")
+        return None
+
+
+UnifiedUploadComponent = _safe_import_upload_component()  # type: ignore[assignment]
 
 if TYPE_CHECKING:  # pragma: no cover - import for type checking only
     from dash import html as Html
@@ -35,8 +48,6 @@ else:  # pragma: no cover - fallback type alias
     TrulyUnifiedCallbacksType = Any
 
 
-logger = logging.getLogger(__name__)
-
 # Single shared instance for this page
 _upload_component = UnifiedUploadComponent() if UnifiedUploadComponent else None
 
@@ -44,7 +55,8 @@ _upload_component = UnifiedUploadComponent() if UnifiedUploadComponent else None
 def load_page(controller=None, queue_manager=None):
     """Return page helpers with optional dependency injection."""
 
-    component = UnifiedUploadComponent() if UnifiedUploadComponent else None
+    component_cls = _safe_import_upload_component()
+    component = component_cls() if component_cls else None
 
     def _layout() -> Html.Div:
         if component:
@@ -123,9 +135,18 @@ def register_callbacks(manager: Any, controller=None) -> None:
     """Register upload callbacks using the underlying component.
 
     Accepts either a ``TrulyUnifiedCallbacks`` instance or a plain Dash app.
+    Logs errors when the manager does not provide the necessary API.
     """
     if not _upload_component:
+        logger.error("Upload component unavailable - skipping callback registration")
         return
+
+    if not any(
+        hasattr(manager, attr)
+        for attr in ("register_callback", "unified_callback", "callback")
+    ):
+        logger.error("Unsupported callback manager: %s", type(manager))
+        raise ValueError(f"Unsupported callback manager: {type(manager)}")
 
     callback_prefix = "file_upload"
 
