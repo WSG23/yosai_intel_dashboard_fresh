@@ -3,12 +3,17 @@ from __future__ import annotations
 
 """File upload page wiring the reusable upload component."""
 
+import functools
 import logging
 import types
 from typing import TYPE_CHECKING, Any
 
 from dash import html
-from core.callback_registry import _callback_registry
+
+from core.callback_registry import (
+    _callback_registry,
+    handle_register_with_deduplication,
+)
 
 try:  # Lazy import for optional heavy dependencies
     from components.upload import UnifiedUploadComponent
@@ -79,32 +84,36 @@ def register_callbacks(manager: Any, controller=None) -> None:
 
     callback_prefix = "file_upload"
 
-    if _callback_registry.is_registered(f"{callback_prefix}_handle"):
-        logger.info("File upload callbacks already registered, skipping")
-        return
-
-    if not hasattr(manager, "register_callback"):
-        if hasattr(manager, "unified_callback"):
-            manager.register_callback = manager.unified_callback  # type: ignore[attr-defined]
-        elif hasattr(manager, "callback"):
-            if TrulyUnifiedCallbacks:
-                wrapper = TrulyUnifiedCallbacks(manager)
-                manager.register_callback = wrapper.register_callback
-                manager.unified_callback = wrapper.unified_callback
+    def _do_registration() -> None:
+        if not hasattr(manager, "register_callback"):
+            if hasattr(manager, "unified_callback"):
+                manager.register_callback = manager.unified_callback  # type: ignore[attr-defined]
+            elif hasattr(manager, "callback"):
+                if TrulyUnifiedCallbacks:
+                    wrapper = TrulyUnifiedCallbacks(manager)
+                    manager.register_callback = wrapper.register_callback
+                    manager.unified_callback = wrapper.unified_callback
+                else:
+                    manager.register_callback = manager.callback
+                    manager.unified_callback = manager.callback
+                    logger.warning(
+                        "Using standard Dash callbacks - advanced features unavailable"
+                    )
             else:
-                manager.register_callback = manager.callback
-                manager.unified_callback = manager.callback
-                logger.warning(
-                    "Using standard Dash callbacks - advanced features unavailable"
-                )
-        else:
-            raise ValueError(f"Unsupported callback manager: {type(manager)}")
+                raise ValueError(f"Unsupported callback manager: {type(manager)}")
 
-    _upload_component.register_callbacks(manager, controller)
+        _upload_component.register_callbacks(manager, controller)
 
-    _callback_registry.register(f"{callback_prefix}_handle", "file_upload")
-    _callback_registry.register(f"{callback_prefix}_progress", "file_upload")
-    _callback_registry.register(f"{callback_prefix}_finalize", "file_upload")
+    _callback_registry.register_deduplicated(
+        [
+            f"{callback_prefix}_handle",
+            f"{callback_prefix}_progress",
+            f"{callback_prefix}_finalize",
+        ],
+        _do_registration,
+        source_module="file_upload",
+    )
+
 
 
 register_upload_callbacks = register_callbacks

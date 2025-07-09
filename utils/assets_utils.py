@@ -1,6 +1,7 @@
 from pathlib import Path
 import logging
 from flask import request, url_for
+from utils.assets_debug import check_navbar_assets
 
 ASSET_ICON_DIR = Path(__file__).resolve().parent.parent / "assets" / "navbar_icons"
 
@@ -22,7 +23,32 @@ def get_nav_icon(app, name: str) -> str | None:
 
 
 def ensure_icon_cache_headers(app):
-    """Add cache headers for icon assets to prevent loading issues."""
+    """Add cache headers for icon assets to prevent loading issues.
+
+    This registers an ``after_request`` hook on ``app.server`` that sets
+    ``Cache-Control`` and ``ETag`` headers for responses under
+    ``/assets/navbar_icons``. It helps browsers cache navbar icons instead of
+    reloading them on every page.
+
+    Parameters
+    ----------
+    app : dash.Dash
+        The Dash application whose underlying Flask ``server`` should receive
+        the headers.
+
+    Returns
+    -------
+    dash.Dash
+        The provided ``app`` for convenience so calls can be chained.
+
+    Examples
+    --------
+    >>> from dash import Dash
+    >>> from utils.assets_utils import ensure_icon_cache_headers
+    >>> dash_app = Dash(__name__)
+    >>> ensure_icon_cache_headers(dash_app)
+    >>> # ``dash_app.server`` will now add caching headers for icon responses
+    """
 
     @app.server.after_request
     def add_icon_cache_headers(response):
@@ -36,9 +62,32 @@ def ensure_icon_cache_headers(app):
     return app
 
 
-def ensure_navbar_assets(app=None) -> None:
-    """Ensure navbar icons exist or create simple placeholders."""
+def ensure_navbar_assets(app=None) -> dict[str, bool]:
+    """Ensure navbar icons exist or create simple placeholders.
+
+    Returns a mapping of icon names to their existence state after the
+    creation attempt.
+    """
+    missing_before = [
+        name
+        for name in NAVBAR_ICON_NAMES
+        if not (ASSET_ICON_DIR / f"{name}.png").exists()
+    ]
+    if missing_before:
+        logging.getLogger(__name__).info(
+            "Attempting to create missing navbar icons: %s",
+            ", ".join(missing_before),
+        )
+
     ensure_all_navbar_assets(app)
+
+    summary = check_navbar_assets(NAVBAR_ICON_NAMES, warn=False)
+    missing_after = [n for n, ok in summary.items() if not ok]
+    if missing_after:
+        logging.getLogger(__name__).warning(
+            "Navbar icons still missing: %s", ", ".join(missing_after)
+        )
+    return summary
 
 
 def create_analytics_icon(path: Path) -> None:
@@ -119,20 +168,25 @@ def create_upload_icon(path: Path) -> None:
         path.touch()
 
 
+# Mapping of required navbar icon filenames to their creator functions
+NAVBAR_ICONS = {
+    "analytics.png": create_analytics_icon,
+    "graphs.png": create_graphs_icon,
+    "export.png": create_export_icon,
+    "settings.png": create_settings_icon,
+    "upload.png": create_upload_icon,
+}
+
+# List of icon base names without the extension for convenience
+NAVBAR_ICON_NAMES = [Path(name).stem for name in NAVBAR_ICONS]
+
+
 def ensure_all_navbar_assets(app=None) -> None:
     """Ensure all required navbar icons exist with basic creation."""
 
-    navbar_icons = {
-        "analytics.png": create_analytics_icon,
-        "graphs.png": create_graphs_icon,
-        "export.png": create_export_icon,
-        "settings.png": create_settings_icon,
-        "upload.png": create_upload_icon,
-    }
-
     ASSET_ICON_DIR.mkdir(parents=True, exist_ok=True)
 
-    for icon_name, creator in navbar_icons.items():
+    for icon_name, creator in NAVBAR_ICONS.items():
         path = ASSET_ICON_DIR / icon_name
         if path.exists():
             continue
@@ -151,4 +205,5 @@ __all__ = [
     "ensure_icon_cache_headers",
     "ensure_navbar_assets",
     "ensure_all_navbar_assets",
+    "NAVBAR_ICON_NAMES",
 ]
