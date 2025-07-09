@@ -23,9 +23,9 @@ from .protocols import (
 
 
 def create_config_manager(
+    config_path: Optional[str] = None,
     *,
     container: Optional[Any] = None,
-    config_path: Optional[str] = None,
 ) -> ConfigManager:
     """Factory that wires core config components."""
     loader: ConfigLoaderProtocol | None
