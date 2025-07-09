@@ -24,6 +24,8 @@ from core.unicode import unicode_safe_callback
 import traceback
 from pathlib import Path
 
+from config import ConfigLoader
+
 # This import is handled inside the main() function now
 
 # Add Unicode handling
@@ -233,6 +235,10 @@ def main():
 
         # Import configuration
         try:
+            loader = ConfigLoader()
+            raw_cfg = loader.load()
+            logger.debug("Loaded raw config with keys: %s", list(raw_cfg.keys()))
+
             from config.config import get_config
             config = get_config()
             app_config = config.get_app_config()

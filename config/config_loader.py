@@ -1,4 +1,4 @@
-"""Configuration loader utilities."""
+"""Load configuration files with YAML ``!include`` support."""
 from __future__ import annotations
 
 import json
@@ -6,6 +6,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Protocol
+import io
 
 
 import yaml
@@ -23,7 +24,11 @@ class ConfigLoaderProtocol(Protocol):
 
 
 class ConfigLoader(ConfigLoaderProtocol):
-    """Load configuration from YAML/JSON files or environment."""
+    """Load configuration from YAML/JSON files or environment.
+
+    The loader understands a custom ``!include`` YAML tag which allows other
+    YAML files to be recursively included relative to the current file.
+    """
 
     log = logging.getLogger(__name__)
 
@@ -49,9 +54,26 @@ class ConfigLoader(ConfigLoaderProtocol):
 
     # ------------------------------------------------------------------
     def _load_yaml(self, path: Path) -> Dict[str, Any]:
-        with open(path, "r", encoding="utf-8") as f:
-            text = self._substitute_env_vars(f.read())
-            return yaml.safe_load(text) or {}
+        def _recursive_load(file_path: Path) -> Any:
+            class Loader(yaml.SafeLoader):
+                pass
+
+            def _include(loader: Loader, node: yaml.Node) -> Any:
+                filename = loader.construct_scalar(node)
+                inc_path = (loader._root / filename).resolve()
+                return _recursive_load(inc_path)
+
+            Loader.add_constructor("!include", _include)
+
+            text = self._substitute_env_vars(file_path.read_text(encoding="utf-8"))
+            loader = Loader(io.StringIO(text))
+            loader._root = file_path.parent
+            try:
+                return loader.get_single_data() or {}
+            finally:
+                loader.dispose()
+
+        return _recursive_load(path)
 
     def _load_json(self, path: Path) -> Dict[str, Any]:
         with open(path, "r", encoding="utf-8") as f:
