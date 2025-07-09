@@ -56,3 +56,7 @@
 @import './07-utilities/_sizing.css';
 @import './07-utilities/_text.css';
 
+.nav-icon { margin-right: 0.5rem; }
+.navbar-brand-link { text-decoration: none; }
+.navbar-brand-link:hover { text-decoration: none; }
+
