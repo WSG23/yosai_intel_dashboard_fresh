@@ -1,84 +1,53 @@
-#!/usr/bin/env python3
-"""
-Simplified configuration package - Fixed imports
-"""
+"""Configuration module with proper imports and error handling."""
 
 import logging
+from typing import Any, Dict, Optional
 
-# Import the main configuration system
-from core.protocols import ConfigProviderProtocol
+from services.registry import get_service
 
-from .base import Config, ConfigTransformer
-from .config import (
+from .base import (
     AppConfig,
+    Config,
     DatabaseConfig,
     SecurityConfig,
-
-    get_app_config,
-    get_database_config,
-    get_security_config,
 )
 from .config_manager import ConfigManager, get_config, reload_config
+from .config_validator import ConfigValidator, ValidationResult
 from .config_loader import ConfigLoader
 from .config_transformer import ConfigTransformer
-from .connection_pool import DatabaseConnectionPool
-from .connection_retry import ConnectionRetryManager, RetryConfig
-from .constants import CSSConstants, PerformanceConstants, SecurityConstants
-from .database_exceptions import (
-    ConnectionRetryExhausted,
-    ConnectionValidationFailed,
-    DatabaseError,
-    UnicodeEncodingError,
-)
-
-# Import dynamic configuration helpers
-from .dynamic_config import DynamicConfigManager, dynamic_config
-from .protocols import ConnectionRetryManagerProtocol, RetryConfigProtocol
-from .unicode_handler import UnicodeQueryHandler
-from .unicode_sql_processor import UnicodeSQLProcessor
-from .unicode_processor import (
-    QueryUnicodeHandler,
-    FileUnicodeHandler,
-    UnicodeSecurityValidator,
-)
-
+from .dynamic_config import dynamic_config, DynamicConfigManager
+from .constants import SecurityConstants, PerformanceConstants, CSSConstants
 
 
 def _get_service(name: str):
-    """Retrieve a service from :mod:`services.registry` on demand."""
-    from services.registry import get_service
-
+    """Safely retrieve optional services from registry."""
     return get_service(name)
 
 
 def get_database_manager():
     """Return the optional ``DatabaseManager`` service."""
-
     return _get_service("DatabaseManager")
 
 
 def get_database_connection():
     """Return the optional ``DatabaseConnection`` service."""
-
     return _get_service("DatabaseConnection")
 
 
 def get_mock_connection():
     """Return the optional ``MockConnection`` service."""
-
     return _get_service("MockConnection")
 
 
 def get_enhanced_postgresql_manager():
     """Return the optional ``EnhancedPostgreSQLManager`` service."""
-
     return _get_service("EnhancedPostgreSQLManager")
 
 
 def create_config_manager(
     *,
-    container: "ServiceContainer | None" = None,
-    config_path: str | None = None,
+    container: Optional[Any] = None,
+    config_path: Optional[str] = None,
 ) -> ConfigManager:
     """Factory that wires core config components."""
 
@@ -96,7 +65,7 @@ def create_config_manager(
             if container.has("config_transformer")
             else None
         )
-    else:  # pragma: no cover - default behaviour
+    else:
         loader = validator = transformer = None
 
     loader = loader or ConfigLoader(config_path)
@@ -111,45 +80,64 @@ def create_config_manager(
     )
 
 
+# Convenience functions
+def get_app_config() -> AppConfig:
+    """Get app configuration"""
+    return get_config().get_app_config()
+
+
+def get_database_config() -> DatabaseConfig:
+    """Get database configuration"""
+    return get_config().get_database_config()
+
+
+def get_security_config() -> SecurityConfig:
+    """Get security configuration"""
+    return get_config().get_security_config()
+
+
+def get_plugin_config(name: str) -> Dict[str, Any]:
+    """Get configuration for a specific plugin"""
+    return get_config().get_plugin_config(name)
+
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    # Core configuration classes
     "Config",
-    "AppConfig",
+    "AppConfig", 
     "DatabaseConfig",
     "SecurityConfig",
     "ConfigManager",
-    "ConfigProviderProtocol",
+    "ConfigValidator",
+    "ValidationResult",
+    "ConfigLoader",
+    "ConfigTransformer",
+    
+    # Factory and management functions
+    "create_config_manager",
     "get_config",
     "reload_config",
+    
+    # Convenience getters
     "get_app_config",
-    "get_database_config",
+    "get_database_config", 
     "get_security_config",
-    "get_enhanced_postgresql_manager",
-    "DatabaseConnectionPool",
-    "ConnectionRetryManager",
-    "RetryConfig",
-    "ConnectionRetryManagerProtocol",
-    "RetryConfigProtocol",
-    "UnicodeQueryHandler",
-    "QueryUnicodeHandler",
-    "FileUnicodeHandler",
-    "UnicodeSecurityValidator",
-    "UnicodeSQLProcessor",
-    "DatabaseError",
-    "ConnectionRetryExhausted",
-    "ConnectionValidationFailed",
-    "UnicodeEncodingError",
+    "get_plugin_config",
+    
+    # Optional service getters
     "get_database_manager",
     "get_database_connection",
     "get_mock_connection",
+    "get_enhanced_postgresql_manager",
+    
+    # Dynamic configuration
     "dynamic_config",
     "DynamicConfigManager",
+    
+    # Constants
     "SecurityConstants",
-    "PerformanceConstants",
+    "PerformanceConstants", 
     "CSSConstants",
-    "ConfigLoader",
-    "ConfigTransformer",
-    "ConfigValidator",
-    "create_config_manager",
 ]
