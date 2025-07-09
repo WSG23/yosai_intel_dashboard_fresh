@@ -1,6 +1,6 @@
 import sys
 
-from config.config import create_config_manager
+from config import create_config_manager
 from core.service_container import ServiceContainer
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
 from services.data_processing.core.protocols import PluginPriority

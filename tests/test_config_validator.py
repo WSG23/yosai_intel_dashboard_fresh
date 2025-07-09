@@ -1,6 +1,6 @@
 import pytest
 
-from config.config import create_config_manager
+from config import create_config_manager
 from core.exceptions import ConfigurationError
 from config.config_validator import ConfigValidator
 

@@ -1,7 +1,7 @@
 """Minimal plugin config compatibility"""
 
 # Re-export from unified configuration for compatibility
-from config.config import ConfigManager, get_config
+from config import ConfigManager, get_config
 from config.database_manager import DatabaseManager
 
 

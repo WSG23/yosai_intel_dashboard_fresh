@@ -4,7 +4,7 @@ import sys
 from core.plugins.dependency_resolver import PluginDependencyResolver
 from core.plugins.manager import PluginManager
 from core.service_container import ServiceContainer
-from config.config import create_config_manager
+from config import create_config_manager
 from services.data_processing.core.protocols import PluginMetadata
 
 

@@ -1,6 +1,6 @@
 from core.container import Container
 
-from config.config import create_config_manager
+from config import create_config_manager
 from services.analytics_service import AnalyticsService
 
 
