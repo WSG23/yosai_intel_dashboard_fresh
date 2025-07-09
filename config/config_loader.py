@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Protocol
 
+
 import yaml
 
 from .environment import select_config_file
@@ -79,3 +80,4 @@ class ConfigLoader(ConfigLoaderProtocol):
 
 
 __all__ = ["ConfigLoader", "ConfigLoaderProtocol"]
+

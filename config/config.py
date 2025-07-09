@@ -12,20 +12,23 @@ import yaml
 
 from core.exceptions import ConfigurationError
 from core.protocols import ConfigurationProtocol
-from core.secrets_validator import SecretsValidator
 from core.secrets_manager import SecretsManager
+from core.secrets_validator import SecretsValidator
 
+
+from .config_loader import ConfigLoader
+from .config_transformer import ConfigTransformer
 from .config_validator import ConfigValidator
-from .dynamic_config import dynamic_config
-from .environment import get_environment, select_config_file
 from .constants import (
     DEFAULT_APP_HOST,
     DEFAULT_APP_PORT,
-    DEFAULT_DB_HOST,
-    DEFAULT_DB_PORT,
     DEFAULT_CACHE_HOST,
     DEFAULT_CACHE_PORT,
+    DEFAULT_DB_HOST,
+    DEFAULT_DB_PORT,
 )
+from .dynamic_config import dynamic_config
+from .environment import get_environment, select_config_file
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +120,6 @@ class AnalyticsConfig:
     max_display_rows: int = 10000
 
 
-
 @dataclass
 class MonitoringConfig:
     """Runtime monitoring options"""
@@ -163,7 +165,9 @@ class Config:
     analytics: AnalyticsConfig = field(default_factory=AnalyticsConfig)
     monitoring: MonitoringConfig = field(default_factory=MonitoringConfig)
     cache: CacheConfig = field(default_factory=CacheConfig)
-    secret_validation: SecretValidationConfig = field(default_factory=SecretValidationConfig)
+    secret_validation: SecretValidationConfig = field(
+        default_factory=SecretValidationConfig
+    )
     environment: str = "development"
     plugin_settings: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
@@ -171,8 +175,18 @@ class Config:
 class ConfigManager(ConfigurationProtocol):
     """Simple configuration manager"""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(
+        self,
+        config_path: Optional[str] = None,
+        *,
+        loader: Optional[ConfigLoader] = None,
+        validator: Optional[ConfigValidator] = None,
+        transformer: Optional[ConfigTransformer] = None,
+    ) -> None:
         self.config_path = config_path
+        self.loader = loader or ConfigLoader(config_path)
+        self.validator = validator or ConfigValidator()
+        self.transformer = transformer or ConfigTransformer()
         self.config = Config()
         self.validated_secrets: Dict[str, str] = {}
         self._load_config()
@@ -182,11 +196,11 @@ class ConfigManager(ConfigurationProtocol):
         self.config.environment = get_environment()
         _validate_production_secrets()
         # Load from YAML file
-        yaml_config = self._load_yaml_config()
+        yaml_config = self.loader.load()
 
         # Apply YAML config
         if yaml_config:
-            self.config = ConfigValidator.validate(yaml_config)
+            self.config = self.validator.validate(yaml_config)
             self._apply_yaml_config(yaml_config)
 
         # Apply environment overrides
@@ -199,6 +213,7 @@ class ConfigManager(ConfigurationProtocol):
 
         # Validate configuration
         self._validate_config()
+        self.config = self.transformer.transform(self.config)
 
     def _load_yaml_config(self) -> Optional[Dict[str, Any]]:
         """Load configuration from YAML file"""
@@ -343,131 +358,8 @@ class ConfigManager(ConfigurationProtocol):
 
     def _apply_env_overrides(self) -> None:
         """Apply environment variable overrides"""
-        manager = SecretsManager()
-        self._apply_app_env_overrides(manager)
-        self._apply_database_env_overrides(manager)
-        self._apply_security_env_overrides()
-        self._apply_sample_files_env_overrides()
-        self._apply_cache_env_overrides()
+        config_transformer.apply(self)
 
-    def _apply_app_env_overrides(self, manager: SecretsManager) -> None:
-        """Apply app-specific environment overrides"""
-        if os.getenv("DEBUG"):
-            self.config.app.debug = os.getenv("DEBUG", "").lower() in (
-                "true",
-                "1",
-                "yes",
-            )
-        host_env = os.getenv("HOST")
-        if host_env is not None:
-            self.config.app.host = host_env
-        port_env = os.getenv("PORT")
-        if port_env is not None:
-            self.config.app.port = int(port_env)
-        try:
-            secret_env = manager.get("SECRET_KEY")
-        except KeyError:
-            secret_env = None
-        if secret_env is not None:
-            self.config.app.secret_key = secret_env
-            self.config.security.secret_key = secret_env
-            os.environ.setdefault("SECRET_KEY", secret_env)
-        title_env = os.getenv("APP_TITLE")
-        if title_env is not None:
-            self.config.app.title = title_env
-
-    def _apply_database_env_overrides(self, manager: SecretsManager) -> None:
-        """Apply database environment overrides"""
-        db_type = os.getenv("DB_TYPE")
-        if db_type is not None:
-            self.config.database.type = db_type
-        db_host = os.getenv("DB_HOST")
-        if db_host is not None:
-            self.config.database.host = db_host
-        db_port = os.getenv("DB_PORT")
-        if db_port is not None:
-            self.config.database.port = int(db_port)
-        db_name = os.getenv("DB_NAME")
-        if db_name is not None:
-            self.config.database.name = db_name
-        db_user = os.getenv("DB_USER")
-        if db_user is not None:
-            self.config.database.user = db_user
-        try:
-            db_password = manager.get("DB_PASSWORD")
-        except KeyError:
-            db_password = None
-        if db_password is not None:
-            self.config.database.password = db_password
-            os.environ.setdefault("DB_PASSWORD", db_password)
-
-        for auth_key in [
-            "AUTH0_CLIENT_ID",
-            "AUTH0_CLIENT_SECRET",
-            "AUTH0_DOMAIN",
-            "AUTH0_AUDIENCE",
-        ]:
-            try:
-                value = manager.get(auth_key)
-            except KeyError:
-                value = None
-            if value is not None:
-                os.environ.setdefault(auth_key, value)
-
-        self.config.database.initial_pool_size = dynamic_config.get_db_pool_size()
-        self.config.database.max_pool_size = dynamic_config.get_db_pool_size() * 2
-        db_timeout = os.getenv("DB_TIMEOUT")
-        if db_timeout is not None:
-            self.config.database.connection_timeout = int(db_timeout)
-        init_pool = os.getenv("DB_INITIAL_POOL_SIZE")
-        if init_pool is not None:
-            self.config.database.initial_pool_size = int(init_pool)
-        max_pool = os.getenv("DB_MAX_POOL_SIZE")
-        if max_pool is not None:
-            self.config.database.max_pool_size = int(max_pool)
-        shrink_timeout = os.getenv("DB_SHRINK_TIMEOUT")
-        if shrink_timeout is not None:
-            self.config.database.shrink_timeout = int(shrink_timeout)
-
-    def _apply_security_env_overrides(self) -> None:
-        """Apply security-related environment overrides"""
-        csrf_enabled = os.getenv("CSRF_ENABLED")
-        if csrf_enabled is not None:
-            self.config.security.csrf_enabled = csrf_enabled.lower() in (
-                "true",
-                "1",
-                "yes",
-            )
-        max_failed = os.getenv("MAX_FAILED_ATTEMPTS")
-        if max_failed is not None:
-            self.config.security.max_failed_attempts = int(max_failed)
-
-    def _apply_sample_files_env_overrides(self) -> None:
-        """Apply sample file path overrides"""
-        sample_csv = os.getenv("SAMPLE_CSV_PATH")
-        if sample_csv is not None:
-            self.config.sample_files.csv_path = sample_csv
-        sample_json = os.getenv("SAMPLE_JSON_PATH")
-        if sample_json is not None:
-            self.config.sample_files.json_path = sample_json
-
-    def _apply_cache_env_overrides(self) -> None:
-        """Apply cache-related environment overrides"""
-        cache_type = os.getenv("CACHE_TYPE")
-        if cache_type is not None:
-            self.config.cache.type = cache_type
-        cache_host = os.getenv("CACHE_HOST")
-        if cache_host is not None:
-            self.config.cache.host = cache_host
-        cache_port = os.getenv("CACHE_PORT")
-        if cache_port is not None:
-            self.config.cache.port = int(cache_port)
-        cache_db = os.getenv("CACHE_DB")
-        if cache_db is not None:
-            self.config.cache.database = int(cache_db)
-        cache_timeout = os.getenv("CACHE_TIMEOUT")
-        if cache_timeout is not None:
-            self.config.cache.timeout_seconds = int(cache_timeout)
 
     def _apply_validated_secrets(self) -> None:
         """Apply secrets validated by SecretsValidator."""
@@ -532,6 +424,14 @@ class ConfigManager(ConfigurationProtocol):
             logger.error(error_msg)
             raise ConfigurationError(error_msg)
 
+    def validate_current_config(self) -> List[ValidationResult]:
+        """Run validation rules and return results."""
+        results: List[ValidationResult] = []
+        results.extend(ConfigValidator.validate_structure(self.config))
+        results.extend(ConfigValidator.validate_values(self.config))
+        results.extend(ConfigValidator.validate_environment_specific(self.config))
+        return results
+
     def get_app_config(self) -> AppConfig:
         """Get app configuration"""
         return self.config.app
@@ -586,6 +486,143 @@ class ConfigManager(ConfigurationProtocol):
             return {"valid": False, "error": str(exc)}
 
 
+# ------------------------------------------------------------------
+# Environment override callbacks registered with ``config_transformer``
+
+def _apply_app_env_overrides(manager: "ConfigManager") -> None:
+    """Apply app-specific environment overrides"""
+    secrets = SecretsManager()
+    if os.getenv("DEBUG"):
+        manager.config.app.debug = os.getenv("DEBUG", "").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
+    host_env = os.getenv("HOST")
+    if host_env is not None:
+        manager.config.app.host = host_env
+    port_env = os.getenv("PORT")
+    if port_env is not None:
+        manager.config.app.port = int(port_env)
+    try:
+        secret_env = secrets.get("SECRET_KEY")
+    except KeyError:
+        secret_env = None
+    if secret_env is not None:
+        manager.config.app.secret_key = secret_env
+        manager.config.security.secret_key = secret_env
+        os.environ.setdefault("SECRET_KEY", secret_env)
+    title_env = os.getenv("APP_TITLE")
+    if title_env is not None:
+        manager.config.app.title = title_env
+
+
+def _apply_database_env_overrides(manager: "ConfigManager") -> None:
+    """Apply database environment overrides"""
+    secrets = SecretsManager()
+    db_type = os.getenv("DB_TYPE")
+    if db_type is not None:
+        manager.config.database.type = db_type
+    db_host = os.getenv("DB_HOST")
+    if db_host is not None:
+        manager.config.database.host = db_host
+    db_port = os.getenv("DB_PORT")
+    if db_port is not None:
+        manager.config.database.port = int(db_port)
+    db_name = os.getenv("DB_NAME")
+    if db_name is not None:
+        manager.config.database.name = db_name
+    db_user = os.getenv("DB_USER")
+    if db_user is not None:
+        manager.config.database.user = db_user
+    try:
+        db_password = secrets.get("DB_PASSWORD")
+    except KeyError:
+        db_password = None
+    if db_password is not None:
+        manager.config.database.password = db_password
+        os.environ.setdefault("DB_PASSWORD", db_password)
+
+    for auth_key in [
+        "AUTH0_CLIENT_ID",
+        "AUTH0_CLIENT_SECRET",
+        "AUTH0_DOMAIN",
+        "AUTH0_AUDIENCE",
+    ]:
+        try:
+            value = secrets.get(auth_key)
+        except KeyError:
+            value = None
+        if value is not None:
+            os.environ.setdefault(auth_key, value)
+
+    manager.config.database.initial_pool_size = dynamic_config.get_db_pool_size()
+    manager.config.database.max_pool_size = dynamic_config.get_db_pool_size() * 2
+    db_timeout = os.getenv("DB_TIMEOUT")
+    if db_timeout is not None:
+        manager.config.database.connection_timeout = int(db_timeout)
+    init_pool = os.getenv("DB_INITIAL_POOL_SIZE")
+    if init_pool is not None:
+        manager.config.database.initial_pool_size = int(init_pool)
+    max_pool = os.getenv("DB_MAX_POOL_SIZE")
+    if max_pool is not None:
+        manager.config.database.max_pool_size = int(max_pool)
+    shrink_timeout = os.getenv("DB_SHRINK_TIMEOUT")
+    if shrink_timeout is not None:
+        manager.config.database.shrink_timeout = int(shrink_timeout)
+
+
+def _apply_security_env_overrides(manager: "ConfigManager") -> None:
+    """Apply security-related environment overrides"""
+    csrf_enabled = os.getenv("CSRF_ENABLED")
+    if csrf_enabled is not None:
+        manager.config.security.csrf_enabled = csrf_enabled.lower() in (
+            "true",
+            "1",
+            "yes",
+        )
+    max_failed = os.getenv("MAX_FAILED_ATTEMPTS")
+    if max_failed is not None:
+        manager.config.security.max_failed_attempts = int(max_failed)
+
+
+def _apply_sample_files_env_overrides(manager: "ConfigManager") -> None:
+    """Apply sample file path overrides"""
+    sample_csv = os.getenv("SAMPLE_CSV_PATH")
+    if sample_csv is not None:
+        manager.config.sample_files.csv_path = sample_csv
+    sample_json = os.getenv("SAMPLE_JSON_PATH")
+    if sample_json is not None:
+        manager.config.sample_files.json_path = sample_json
+
+
+def _apply_cache_env_overrides(manager: "ConfigManager") -> None:
+    """Apply cache-related environment overrides"""
+    cache_type = os.getenv("CACHE_TYPE")
+    if cache_type is not None:
+        manager.config.cache.type = cache_type
+    cache_host = os.getenv("CACHE_HOST")
+    if cache_host is not None:
+        manager.config.cache.host = cache_host
+    cache_port = os.getenv("CACHE_PORT")
+    if cache_port is not None:
+        manager.config.cache.port = int(cache_port)
+    cache_db = os.getenv("CACHE_DB")
+    if cache_db is not None:
+        manager.config.cache.database = int(cache_db)
+    cache_timeout = os.getenv("CACHE_TIMEOUT")
+    if cache_timeout is not None:
+        manager.config.cache.timeout_seconds = int(cache_timeout)
+
+
+# Register the environment transformers
+config_transformer.register("app", _apply_app_env_overrides)
+config_transformer.register("database", _apply_database_env_overrides)
+config_transformer.register("security", _apply_security_env_overrides)
+config_transformer.register("sample_files", _apply_sample_files_env_overrides)
+config_transformer.register("cache", _apply_cache_env_overrides)
+
+
 # Global configuration instance
 _config_manager: Optional[ConfigManager] = None
 
@@ -597,6 +634,7 @@ def get_config() -> ConfigManager:
         from .config_manager import get_config as _new_get_config
 
         _config_manager = _new_get_config()
+
     return _config_manager
 
 
@@ -655,6 +693,11 @@ def get_plugin_config(name: str) -> Dict[str, Any]:
     return get_config().get_plugin_config(name)
 
 
+def create_config_manager(config_path: Optional[str] = None) -> ConfigManager:
+    """Factory for creating :class:`ConfigManager` instances."""
+    return ConfigManager(config_path=config_path)
+
+
 # Export main classes and functions
 __all__ = [
     "Config",
@@ -678,6 +721,7 @@ __all__ = [
     "get_cache_config",
     "get_secret_validation_config",
     "get_plugin_config",
+    "create_config_manager",
 ]
 
 # Use new implementation by default

@@ -19,6 +19,7 @@ except ImportError:
 
 from core.exceptions import ConfigurationError
 from utils import debug_dash_asset_serving
+from core.unicode import unicode_safe_callback
 
 import traceback
 from pathlib import Path
@@ -246,6 +247,14 @@ def main():
         # Print startup information
         print_startup_info(app_config)
 
+        # Debug current working directory and asset existence
+        cwd = os.getcwd()
+        icon_path = os.path.normcase(
+            os.path.join(cwd, "assets", "navbar_icons", "analytics.png")
+        )
+        logger.info("Current working directory: %s", cwd)
+        logger.info("Analytics icon exists (%s): %s", icon_path, os.path.exists(icon_path))
+
         # Auto-generate HTTPS certificates
         ssl_context = ensure_https_certificates()
 
@@ -274,7 +283,9 @@ def main():
         # Import and create the Dash application
         try:
             from core.app_factory import create_app
-            app = create_app(mode='full')
+            project_root = Path(__file__).resolve().parent
+            assets_dir = os.path.normcase(os.path.abspath(project_root / "assets"))
+            app = create_app(mode='full', assets_folder=assets_dir)
 
             # Consolidate callbacks with Unicode safety
             _consolidate_callbacks(app)

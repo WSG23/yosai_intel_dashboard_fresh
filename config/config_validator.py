@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Callable, Dict, List
 
+
 from core.exceptions import ConfigurationError
 
 if TYPE_CHECKING:  # pragma: no cover - used for type hints only
@@ -29,6 +30,7 @@ class ConfigValidator:
     def register_rule(cls, func: Callable[["Config", ValidationResult], None]) -> None:
         """Register a custom validation rule."""
         cls._custom_rules.append(func)
+
 
     @classmethod
     def validate(cls, data: Dict[str, Any]) -> "Config":
@@ -92,3 +94,4 @@ class ConfigValidator:
 
 
 __all__ = ["ConfigValidator", "ValidationResult"]
+
