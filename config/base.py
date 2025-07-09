@@ -66,6 +66,14 @@ class SecurityConfig:
     cors_origins: List[str] = field(default_factory=list)
     csrf_enabled: bool = True
     max_failed_attempts: int = 5
+    max_upload_mb: int = 50
+    allowed_file_types: List[str] = field(
+        default_factory=lambda: [".csv", ".json", ".xlsx"]
+    )
+    max_file_size_bytes: int = field(init=False)
+
+    def __post_init__(self) -> None:
+        self.max_file_size_bytes = self.max_upload_mb * 1024 * 1024
 
 
 @dataclass
