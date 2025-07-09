@@ -5,7 +5,7 @@ Resolves flash/disappear issues on upload file link clicks.
 """
 
 import dash_bootstrap_components as dbc
-from dash import html, dcc, Input, Output, State, no_update
+from dash import html, Input, Output, State
 from typing import Optional, Any
 import logging
 
@@ -105,14 +105,21 @@ def create_navbar_layout() -> dbc.Navbar:
     except Exception as e:
         logger.error(f"Navbar creation failed: {e}")
         # Return minimal fallback navbar
-        return dbc.Navbar([
-            dbc.Container([
-                dbc.NavbarBrand("Dashboard", href="/"),
-                dbc.Nav([
-                    dbc.NavItem(dbc.NavLink("Upload", href="/file-upload")),
-                ], navbar=True)
-            ])
-        ])
+        return dbc.Navbar(
+            [
+                dbc.Container(
+                    [
+                        dbc.NavbarBrand("Dashboard", href="/"),
+                        dbc.Nav(
+                            [
+                                dbc.NavItem(dbc.NavLink("Upload", href="/file-upload")),
+                            ],
+                            navbar=True,
+                        ),
+                    ]
+                )
+            ]
+        )
 
 
 def register_navbar_callbacks(manager, service: Optional[Any] = None) -> None:
@@ -125,7 +132,7 @@ def register_navbar_callbacks(manager, service: Optional[Any] = None) -> None:
             State("navbar-collapse", "is_open"),
             callback_id="navbar_toggle",
             component_name="navbar",
-            prevent_initial_call=True
+            prevent_initial_call=True,
         )
         def toggle_navbar_collapse(n_clicks, is_open):
             """Toggle navbar collapse state."""
@@ -133,57 +140,18 @@ def register_navbar_callbacks(manager, service: Optional[Any] = None) -> None:
                 return not is_open
             return is_open
 
-        # Register navigation click handlers using existing system  
-        @manager.unified_callback(
-            Output("nav-upload-link", "style"),
-            Input("nav-upload-link", "n_clicks"),
-            callback_id="navbar_upload_click",
-            component_name="navbar",
-            prevent_initial_call=True
-        )
-        def handle_upload_click(n_clicks):
-            """Handle upload link clicks - prevent flash by returning stable style."""
-            if n_clicks:
-                # Return stable style to prevent flash
-                return {"pointer-events": "auto", "opacity": "1"}
-            return no_update
-
-        @manager.unified_callback(
-            Output("nav-analytics-link", "style"),
-            Input("nav-analytics-link", "n_clicks"),
-            callback_id="navbar_analytics_click", 
-            component_name="navbar",
-            prevent_initial_call=True
-        )
-        def handle_analytics_click(n_clicks):
-            """Handle analytics link clicks."""
-            if n_clicks:
-                return {"pointer-events": "auto", "opacity": "1"}
-            return no_update
-
-        @manager.unified_callback(
-            Output("nav-settings-link", "style"),
-            Input("nav-settings-link", "n_clicks"),
-            callback_id="navbar_settings_click",
-            component_name="navbar", 
-            prevent_initial_call=True
-        )
-        def handle_settings_click(n_clicks):
-            """Handle settings link clicks."""
-            if n_clicks:
-                return {"pointer-events": "auto", "opacity": "1"}
-            return no_update
-
         # Mark as registered
-        if hasattr(manager, 'navbar_registered'):
+        if hasattr(manager, "navbar_registered"):
             manager.navbar_registered = True
 
-        logger.info("Navbar callbacks registered successfully with TrulyUnifiedCallbacks")
+        logger.info(
+            "Navbar callbacks registered successfully with TrulyUnifiedCallbacks"
+        )
 
     except Exception as e:
         logger.error(f"Navbar callback registration failed: {e}")
         # Fallback: just mark as registered
-        if hasattr(manager, 'navbar_registered'):
+        if hasattr(manager, "navbar_registered"):
             manager.navbar_registered = True
 
 
