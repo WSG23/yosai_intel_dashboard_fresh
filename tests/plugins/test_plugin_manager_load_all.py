@@ -1,6 +1,6 @@
 import sys
 
-from config.config import ConfigManager
+from config.config import create_config_manager
 from core.service_container import ServiceContainer
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
 
@@ -53,7 +53,7 @@ def test_load_all_plugins_registers_services(tmp_path):
     pkg_dir = create_package(tmp_path)
     sys.path.insert(0, str(tmp_path))
     try:
-        cfg = ConfigManager()
+        cfg = create_config_manager()
         cfg.config.plugin_settings["test_plugin"] = {"enabled": True}
         manager = PluginManager(
             ServiceContainer(),

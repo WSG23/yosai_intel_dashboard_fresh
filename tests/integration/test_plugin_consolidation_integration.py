@@ -3,7 +3,7 @@ import pytest
 
 from dash import Dash, html
 
-from config.config import ConfigManager
+from config.config import create_config_manager
 from core.service_container import ServiceContainer
 from core.plugins.auto_config import setup_plugins
 from tests.test_auto_configuration import _set_env
@@ -19,7 +19,7 @@ def test_plugin_discovery_and_callback_registration(monkeypatch, tmp_path):
         try:
             app = Dash(__name__)
             app.layout = html.Div()
-            cfg = ConfigManager()
+            cfg = create_config_manager()
             cfg.config.plugin_settings[builder.plugin_name] = {"enabled": True}
             registry = setup_plugins(
                 app,

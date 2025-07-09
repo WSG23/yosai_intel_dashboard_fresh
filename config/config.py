@@ -486,141 +486,10 @@ class ConfigManager(ConfigurationProtocol):
             return {"valid": False, "error": str(exc)}
 
 
-# ------------------------------------------------------------------
-# Environment override callbacks registered with ``config_transformer``
+def create_config_manager(config_path: Optional[str] = None) -> "ConfigManager":
+    """Factory helper to instantiate :class:`ConfigManager`."""
+    return ConfigManager(config_path)
 
-def _apply_app_env_overrides(manager: "ConfigManager") -> None:
-    """Apply app-specific environment overrides"""
-    secrets = SecretsManager()
-    if os.getenv("DEBUG"):
-        manager.config.app.debug = os.getenv("DEBUG", "").lower() in (
-            "true",
-            "1",
-            "yes",
-        )
-    host_env = os.getenv("HOST")
-    if host_env is not None:
-        manager.config.app.host = host_env
-    port_env = os.getenv("PORT")
-    if port_env is not None:
-        manager.config.app.port = int(port_env)
-    try:
-        secret_env = secrets.get("SECRET_KEY")
-    except KeyError:
-        secret_env = None
-    if secret_env is not None:
-        manager.config.app.secret_key = secret_env
-        manager.config.security.secret_key = secret_env
-        os.environ.setdefault("SECRET_KEY", secret_env)
-    title_env = os.getenv("APP_TITLE")
-    if title_env is not None:
-        manager.config.app.title = title_env
-
-
-def _apply_database_env_overrides(manager: "ConfigManager") -> None:
-    """Apply database environment overrides"""
-    secrets = SecretsManager()
-    db_type = os.getenv("DB_TYPE")
-    if db_type is not None:
-        manager.config.database.type = db_type
-    db_host = os.getenv("DB_HOST")
-    if db_host is not None:
-        manager.config.database.host = db_host
-    db_port = os.getenv("DB_PORT")
-    if db_port is not None:
-        manager.config.database.port = int(db_port)
-    db_name = os.getenv("DB_NAME")
-    if db_name is not None:
-        manager.config.database.name = db_name
-    db_user = os.getenv("DB_USER")
-    if db_user is not None:
-        manager.config.database.user = db_user
-    try:
-        db_password = secrets.get("DB_PASSWORD")
-    except KeyError:
-        db_password = None
-    if db_password is not None:
-        manager.config.database.password = db_password
-        os.environ.setdefault("DB_PASSWORD", db_password)
-
-    for auth_key in [
-        "AUTH0_CLIENT_ID",
-        "AUTH0_CLIENT_SECRET",
-        "AUTH0_DOMAIN",
-        "AUTH0_AUDIENCE",
-    ]:
-        try:
-            value = secrets.get(auth_key)
-        except KeyError:
-            value = None
-        if value is not None:
-            os.environ.setdefault(auth_key, value)
-
-    manager.config.database.initial_pool_size = dynamic_config.get_db_pool_size()
-    manager.config.database.max_pool_size = dynamic_config.get_db_pool_size() * 2
-    db_timeout = os.getenv("DB_TIMEOUT")
-    if db_timeout is not None:
-        manager.config.database.connection_timeout = int(db_timeout)
-    init_pool = os.getenv("DB_INITIAL_POOL_SIZE")
-    if init_pool is not None:
-        manager.config.database.initial_pool_size = int(init_pool)
-    max_pool = os.getenv("DB_MAX_POOL_SIZE")
-    if max_pool is not None:
-        manager.config.database.max_pool_size = int(max_pool)
-    shrink_timeout = os.getenv("DB_SHRINK_TIMEOUT")
-    if shrink_timeout is not None:
-        manager.config.database.shrink_timeout = int(shrink_timeout)
-
-
-def _apply_security_env_overrides(manager: "ConfigManager") -> None:
-    """Apply security-related environment overrides"""
-    csrf_enabled = os.getenv("CSRF_ENABLED")
-    if csrf_enabled is not None:
-        manager.config.security.csrf_enabled = csrf_enabled.lower() in (
-            "true",
-            "1",
-            "yes",
-        )
-    max_failed = os.getenv("MAX_FAILED_ATTEMPTS")
-    if max_failed is not None:
-        manager.config.security.max_failed_attempts = int(max_failed)
-
-
-def _apply_sample_files_env_overrides(manager: "ConfigManager") -> None:
-    """Apply sample file path overrides"""
-    sample_csv = os.getenv("SAMPLE_CSV_PATH")
-    if sample_csv is not None:
-        manager.config.sample_files.csv_path = sample_csv
-    sample_json = os.getenv("SAMPLE_JSON_PATH")
-    if sample_json is not None:
-        manager.config.sample_files.json_path = sample_json
-
-
-def _apply_cache_env_overrides(manager: "ConfigManager") -> None:
-    """Apply cache-related environment overrides"""
-    cache_type = os.getenv("CACHE_TYPE")
-    if cache_type is not None:
-        manager.config.cache.type = cache_type
-    cache_host = os.getenv("CACHE_HOST")
-    if cache_host is not None:
-        manager.config.cache.host = cache_host
-    cache_port = os.getenv("CACHE_PORT")
-    if cache_port is not None:
-        manager.config.cache.port = int(cache_port)
-    cache_db = os.getenv("CACHE_DB")
-    if cache_db is not None:
-        manager.config.cache.database = int(cache_db)
-    cache_timeout = os.getenv("CACHE_TIMEOUT")
-    if cache_timeout is not None:
-        manager.config.cache.timeout_seconds = int(cache_timeout)
-
-
-# Register the environment transformers
-config_transformer.register("app", _apply_app_env_overrides)
-config_transformer.register("database", _apply_database_env_overrides)
-config_transformer.register("security", _apply_security_env_overrides)
-config_transformer.register("sample_files", _apply_sample_files_env_overrides)
-config_transformer.register("cache", _apply_cache_env_overrides)
 
 
 # Global configuration instance
@@ -628,20 +497,23 @@ _config_manager: Optional[ConfigManager] = None
 
 
 def get_config() -> ConfigManager:
-    """Get global configuration manager"""
+    """Get global configuration manager using new implementation."""
     global _config_manager
     if _config_manager is None:
-        from . import create_config_manager
+        from .config_manager import get_config as _new_get_config
 
-        _config_manager = create_config_manager()
+        _config_manager = _new_get_config()
+
     return _config_manager
 
 
 def reload_config() -> ConfigManager:
-    """Reload configuration (useful for testing)"""
+    """Reload configuration using new implementation."""
     global _config_manager
-    _config_manager = None
-    return get_config()
+    from .config_manager import reload_config as _new_reload
+
+    _config_manager = _new_reload()
+    return _config_manager
 
 
 # Convenience functions
@@ -707,6 +579,7 @@ __all__ = [
     "CacheConfig",
     "SecretValidationConfig",
     "ConfigManager",
+    "create_config_manager",
     "get_config",
     "reload_config",
     "get_app_config",
@@ -720,3 +593,8 @@ __all__ = [
     "get_plugin_config",
     "create_config_manager",
 ]
+
+# Use new implementation by default
+from .config_manager import ConfigManager as ConfigManager
+from .config_manager import get_config as get_config
+from .config_manager import reload_config as reload_config

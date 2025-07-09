@@ -4,7 +4,7 @@ import pytest
 
 from dash import Dash, Input, Output
 
-from config.config import ConfigManager
+from config.config import create_config_manager
 from core.service_container import ServiceContainer
 from core.json_serialization_plugin import JsonSerializationPlugin
 from core.plugins.auto_config import setup_plugins
@@ -93,7 +93,7 @@ def test_setup_uses_provided_dependencies(monkeypatch, tmp_path):
     try:
         app = Dash(__name__)
         container = ServiceContainer()
-        config = ConfigManager()
+        config = create_config_manager()
         config.config.plugin_settings["auto_plugin"] = {"enabled": True}
         registry = setup_plugins(app, container=container, config_manager=config, package="auto_pkg")
         assert registry.container is container
