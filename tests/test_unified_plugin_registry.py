@@ -12,7 +12,7 @@ class EnumJSONProvider(DefaultJSONProvider):
         return super().default(o)
 import sys
 
-from config.config import create_config_manager
+from config import create_config_manager
 from core.service_container import ServiceContainer
 from core.plugins.auto_config import PluginAutoConfiguration
 from core.plugins.unified_registry import UnifiedPluginRegistry

@@ -35,7 +35,7 @@ needed:
 
 ```python
 from core.container import Container
-from config.config import create_config_manager
+from config import create_config_manager
 from services.analytics_service import create_analytics_service
 
 container = Container()
@@ -51,7 +51,7 @@ analytics_service = container.get("analytics")  # AnalyticsServiceProtocol
 
 
 ```python
-from config.config import create_config_manager
+from config import create_config_manager
 
 config = create_config_manager()
 db_cfg = config.get_database_config()

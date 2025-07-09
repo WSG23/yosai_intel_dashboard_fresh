@@ -26,7 +26,7 @@ from flask_login import (
 from jose import jwt
 
 from .secrets_manager import SecretsManager
-from config.config import get_security_config
+from config import get_security_config
 
 auth_bp = Blueprint("auth", __name__)
 login_manager = LoginManager()

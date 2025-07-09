@@ -1,6 +1,6 @@
 import os
 
-from config.config import create_config_manager
+from config import create_config_manager
 
 
 def test_environment_overrides(monkeypatch):

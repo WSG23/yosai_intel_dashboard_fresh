@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from config.config import ConfigManager
+from config import ConfigManager
 from database.connection import create_database_connection
 
 

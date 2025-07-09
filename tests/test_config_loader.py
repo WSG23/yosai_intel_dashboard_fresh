@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from config.config import create_config_manager
+from config import create_config_manager
 from config.dynamic_config import DynamicConfigManager
 
 

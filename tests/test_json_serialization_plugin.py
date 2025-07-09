@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 from flask import Flask
 
-from config.config import create_config_manager
+from config import create_config_manager
 from core.service_container import ServiceContainer
 from core.json_serialization_plugin import (
     JsonCallbackService,

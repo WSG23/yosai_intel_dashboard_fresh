@@ -3,7 +3,7 @@ import pytest
 
 from dash import Dash, html
 
-from config.config import create_config_manager
+from config import create_config_manager
 from core.service_container import ServiceContainer
 from core.plugins.auto_config import setup_plugins
 from tests.test_auto_configuration import _set_env

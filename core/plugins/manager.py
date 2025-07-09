@@ -5,7 +5,7 @@ import threading
 import time
 from typing import Any, Dict, List
 
-from config.config import ConfigManager
+from config import ConfigManager
 from core.callback_manager import CallbackManager
 from core.service_container import ServiceContainer
 from services.data_processing.core.protocols import (

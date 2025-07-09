@@ -63,7 +63,7 @@ class SecretsManager:
 
 def validate_secrets(manager: Optional[SecretsManager] = None) -> dict[str, Any]:
     """Return summary of required secrets presence using the provided manager."""
-    from config.config import get_config
+    from config import get_config
 
     manager = manager or SecretsManager()
     config = get_config()
