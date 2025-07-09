@@ -71,6 +71,23 @@ class UnicodeFileProcessor:
         return result["data"], result["error"]
 
 
+def _safe_b64decode(contents: str) -> Tuple[Optional[bytes], Optional[str]]:
+    """Return decoded bytes or an error message."""
+    import base64
+
+    if "," not in contents:
+        return None, "Invalid data URI"
+
+    try:
+        _, content_string = contents.split(",", 1)
+        decoded = base64.b64decode(content_string, validate=True)
+        if not decoded:
+            return None, "Empty file contents"
+        return decoded, None
+    except (base64.binascii.Error, ValueError) as exc:
+        return None, f"Invalid base64 data: {exc}"
+
+
 def process_uploaded_file(
     contents: str,
     filename: str,
@@ -82,12 +99,15 @@ def process_uploaded_file(
     Returns: Dict with 'data', 'filename', 'status', 'error'
     """
     try:
-        # Decode base64 content
-        import base64
-
-        content_type, content_string = contents.split(",")
-        decoded = base64.b64decode(content_string)
-
+        decoded, decode_err = _safe_b64decode(contents)
+        if decoded is None:
+            logger.error("Base64 decode failed for %s: %s", filename, decode_err)
+            return {
+                "status": "error",
+                "error": decode_err,
+                "data": None,
+                "filename": filename,
+            }
         # Safe Unicode processing
         text_content = UnicodeFileProcessor.safe_decode_content(decoded)
 
