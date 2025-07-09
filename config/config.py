@@ -5,7 +5,6 @@ Replaces: config/yaml_config.py, config/unified_config.py, config/validator.py
 """
 import logging
 import os
-from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 import yaml
@@ -18,7 +17,18 @@ from core.secrets_validator import SecretsValidator
 
 from .config_loader import ConfigLoader
 from .config_transformer import ConfigTransformer
-from .config_validator import ConfigValidator
+from .config_validator import ConfigValidator, ValidationResult
+from .base_config import (
+    AppConfig,
+    AnalyticsConfig,
+    CacheConfig,
+    Config,
+    DatabaseConfig,
+    MonitoringConfig,
+    SampleFilesConfig,
+    SecretValidationConfig,
+    SecurityConfig,
+)
 from .constants import (
     DEFAULT_APP_HOST,
     DEFAULT_APP_PORT,
@@ -41,135 +51,6 @@ def _validate_production_secrets() -> None:
             raise ConfigurationError("SECRET_KEY required in production")
 
 
-@dataclass
-class AppConfig:
-    """Application configuration"""
-
-    title: str = "Yōsai Intel Dashboard"
-    debug: bool = True
-    host: str = DEFAULT_APP_HOST
-    port: int = DEFAULT_APP_PORT
-    secret_key: str = field(default_factory=lambda: os.getenv("SECRET_KEY", ""))
-    environment: str = "development"
-
-
-@dataclass
-class DatabaseConfig:
-    """Database configuration"""
-
-    type: str = "sqlite"
-    host: str = DEFAULT_DB_HOST
-    port: int = DEFAULT_DB_PORT
-    name: str = "yosai.db"
-    user: str = "user"
-    password: str = ""
-    connection_timeout: int = 30
-    initial_pool_size: int = dynamic_config.get_db_pool_size()
-    max_pool_size: int = dynamic_config.get_db_pool_size() * 2
-    shrink_timeout: int = 60
-
-    def get_connection_string(self) -> str:
-        """Get database connection string"""
-        if self.type == "postgresql":
-            return (
-                f"postgresql://{self.user}:{self.password}"
-                f"@{self.host}:{self.port}/{self.name}"
-            )
-        elif self.type == "sqlite":
-            return f"sqlite:///{self.name}"
-        else:
-            return f"mock://{self.name}"
-
-
-@dataclass
-class SecurityConfig:
-    """Security configuration"""
-
-    secret_key: str = field(default_factory=lambda: os.getenv("SECRET_KEY", ""))
-    session_timeout: int = 3600
-    session_timeout_by_role: Dict[str, int] = field(default_factory=dict)
-    cors_origins: List[str] = field(default_factory=list)
-    csrf_enabled: bool = True
-    max_failed_attempts: int = 5
-
-
-@dataclass
-class SampleFilesConfig:
-    """File paths for bundled sample datasets"""
-
-    csv_path: str = "data/sample_data.csv"
-    json_path: str = "data/sample_data.json"
-
-
-@dataclass
-class AnalyticsConfig:
-    """Analytics tuning options"""
-
-    cache_timeout_seconds: int = 60
-    max_records_per_query: int = 500000
-    enable_real_time: bool = True
-    batch_size: int = 25000
-    chunk_size: int = 100000
-    enable_chunked_analysis: bool = True
-    anomaly_detection_enabled: bool = True
-    ml_models_path: str = "models/ml"
-    data_retention_days: int = 30
-    query_timeout_seconds: int = 600
-    force_full_dataset_analysis: bool = True
-    max_memory_mb: int = 1024
-    max_display_rows: int = 10000
-
-
-@dataclass
-class MonitoringConfig:
-    """Runtime monitoring options"""
-
-    health_check_enabled: bool = True
-    metrics_enabled: bool = True
-    health_check_interval: int = 30
-    performance_monitoring: bool = False
-    error_reporting_enabled: bool = True
-    sentry_dsn: Optional[str] = None
-    log_retention_days: int = 30
-
-
-@dataclass
-class CacheConfig:
-    """Cache backend settings"""
-
-    type: str = "memory"
-    host: str = DEFAULT_CACHE_HOST
-    port: int = DEFAULT_CACHE_PORT
-    database: int = 0
-    timeout_seconds: int = 300
-    key_prefix: str = "yosai:"
-    compression_enabled: bool = False
-    max_memory_mb: int = 100
-
-
-@dataclass
-class SecretValidationConfig:
-    """Severity configuration for secret validator"""
-
-    severity: str = "low"
-
-
-@dataclass
-class Config:
-    """Main configuration object"""
-
-    app: AppConfig = field(default_factory=AppConfig)
-    database: DatabaseConfig = field(default_factory=DatabaseConfig)
-    security: SecurityConfig = field(default_factory=SecurityConfig)
-    sample_files: SampleFilesConfig = field(default_factory=SampleFilesConfig)
-    analytics: AnalyticsConfig = field(default_factory=AnalyticsConfig)
-    monitoring: MonitoringConfig = field(default_factory=MonitoringConfig)
-    cache: CacheConfig = field(default_factory=CacheConfig)
-    secret_validation: SecretValidationConfig = field(
-        default_factory=SecretValidationConfig
-    )
-    environment: str = "development"
-    plugin_settings: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
 
 class ConfigManager(ConfigurationProtocol):
