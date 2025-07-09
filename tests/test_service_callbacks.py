@@ -10,5 +10,5 @@ def test_coordinator_register_all_callbacks():
 
     coord.register_all_callbacks(UploadCallbacks, AnalyticsCallbacks)
 
-    assert "handle_upload" in coord.registered_callbacks
-    assert "analytics_operations" in coord.registered_callbacks
+    assert "file_upload_handle" in coord.registered_callbacks
+    assert "deep_analytics_operations" in coord.registered_callbacks
