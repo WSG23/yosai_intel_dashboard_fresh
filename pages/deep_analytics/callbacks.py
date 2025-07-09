@@ -11,10 +11,13 @@ if TYPE_CHECKING:
 import logging
 
 from analytics.controllers import UnifiedAnalyticsController
+from core.callback_registry import (
+    _callback_registry,
+    handle_register_with_deduplication,
+)
 from core.dash_profile import profile_callback
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.state import CentralizedStateManager
-from core.callback_registry import _callback_registry
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 logger = logging.getLogger(__name__)
 import dash_bootstrap_components as dbc
@@ -546,6 +549,7 @@ def register_callbacks(
             raise ValueError(f"Unsupported callback manager: {type(manager)}")
 
         callback_manager.register_operation(
+
             "analysis_buttons",
             lambda s, t, b, a, sug, q, u, ds: cb.handle_analysis_buttons(
                 s, t, b, a, sug, q, u, ds
@@ -618,6 +622,7 @@ def register_callbacks(
     _callback_registry.register_deduplicated(
         ["deep_analytics_operations"], _do_registration, source_module="deep_analytics"
     )
+
 
 
 __all__ = ["Callbacks", "register_callbacks"]

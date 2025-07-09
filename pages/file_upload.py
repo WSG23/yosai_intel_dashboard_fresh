@@ -3,12 +3,17 @@ from __future__ import annotations
 
 """File upload page wiring the reusable upload component."""
 
+import functools
 import logging
 import types
 from typing import TYPE_CHECKING, Any
 
 from dash import html
-from core.callback_registry import _callback_registry
+
+from core.callback_registry import (
+    _callback_registry,
+    handle_register_with_deduplication,
+)
 
 try:  # Lazy import for optional heavy dependencies
     from components.upload import UnifiedUploadComponent
@@ -108,6 +113,7 @@ def register_callbacks(manager: Any, controller=None) -> None:
         _do_registration,
         source_module="file_upload",
     )
+
 
 
 register_upload_callbacks = register_callbacks

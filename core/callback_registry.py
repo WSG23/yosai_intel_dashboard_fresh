@@ -3,11 +3,13 @@ Centralized Callback Registry for Dash Application
 Manages all callbacks in a modular, organized way
 """
 
+import functools
 import logging
 import time
 from functools import wraps
 from typing import Callable, List, Dict, Iterable, Any
 import functools
+
 
 from dash import no_update
 
@@ -40,12 +42,18 @@ class GlobalCallbackRegistry:
 
     def __init__(self) -> None:
         self.registered_callbacks: set[str] = set()
-        self.callback_sources: Dict[str, str] = {}
+        self.registration_sources: Dict[str, str] = {}
+        self.callback_sources = self.registration_sources  # backward compatibility
+        self.registration_attempts: Dict[str, int] = {}
+        self.registration_order: List[str] = []
 
     def is_registered(self, callback_id: str) -> bool:
         return callback_id in self.registered_callbacks
 
     def register(self, callback_id: str, module_name: str = "unknown") -> bool:
+        self.registration_attempts[callback_id] = (
+            self.registration_attempts.get(callback_id, 0) + 1
+        )
         if callback_id in self.registered_callbacks:
             existing = self.callback_sources.get(callback_id, "unknown")
             logger.warning(
@@ -57,12 +65,13 @@ class GlobalCallbackRegistry:
             return False
 
         self.registered_callbacks.add(callback_id)
-        self.callback_sources[callback_id] = module_name
+        self.registration_sources[callback_id] = module_name
+        self.registration_order.append(callback_id)
         logger.debug("Registered callback '%s' from %s", callback_id, module_name)
         return True
 
     def get_conflicts(self) -> Dict[str, str]:
-        return dict(self.callback_sources)
+        return dict(self.registration_sources)
 
     def register_deduplicated(
         self,
@@ -222,10 +231,83 @@ def safe_callback_registration(callback_id: str, module_name: str = "unknown"):
     return decorator
 
 
+def handle_register_with_deduplication(
+    manager: "TrulyUnifiedCallbacks",
+    outputs: Any,
+    inputs: List | Any | None = None,
+    states: List | Any | None = None,
+    *,
+    callback_id: str,
+    component_name: str,
+    source_module: str = "unknown",
+    allow_duplicate: bool = False,
+    **kwargs: Any,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Register callback if not already registered using the global registry."""
+
+    _callback_registry.registration_attempts[callback_id] = (
+        _callback_registry.registration_attempts.get(callback_id, 0) + 1
+    )
+
+    if _callback_registry.is_registered(callback_id):
+        logger.info(
+            "Skipping duplicate callback registration: %s from %s",
+            callback_id,
+            source_module,
+        )
+        return lambda func: func
+
+    decorator = manager.handle_register(
+        outputs,
+        inputs=inputs,
+        states=states,
+        callback_id=callback_id,
+        component_name=component_name,
+        allow_duplicate=allow_duplicate,
+        **kwargs,
+    )
+
+    def wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
+        registered = decorator(func)
+        _callback_registry.register(callback_id, source_module)
+        return registered
+
+    return wrapper
+
+
+def get_registration_diagnostics() -> Dict[str, Any]:
+    """Return diagnostic information about callback registrations."""
+
+    return {
+        "attempts": dict(_callback_registry.registration_attempts),
+        "sources": dict(_callback_registry.registration_sources),
+        "order": list(_callback_registry.registration_order),
+    }
+
+
+def validate_registration_integrity() -> bool:
+    """Return True if all registrations are unique and tracked."""
+
+    duplicates = {
+        cid: count
+        for cid, count in _callback_registry.registration_attempts.items()
+        if count > 1
+    }
+    missing = [
+        cid
+        for cid in _callback_registry.registered_callbacks
+        if cid not in _callback_registry.registration_sources
+    ]
+    return not duplicates and not missing
+
+
 __all__ = [
     "CallbackRegistry",
     "ComponentCallbackManager",
     "GlobalCallbackRegistry",
     "safe_callback_registration",
+    "handle_register_with_deduplication",
+    "get_registration_diagnostics",
+    "validate_registration_integrity",
     "_callback_registry",
 ]
