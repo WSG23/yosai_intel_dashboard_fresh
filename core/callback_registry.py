@@ -7,10 +7,9 @@ import functools
 import logging
 import time
 from functools import wraps
-from typing import TYPE_CHECKING, Any, Callable, Dict, List
+from typing import Callable, List, Dict, Iterable, Any
+import functools
 
-if TYPE_CHECKING:  # pragma: no cover - for type hints only
-    from .truly_unified_callbacks import TrulyUnifiedCallbacks
 
 from dash import no_update
 
@@ -73,6 +72,42 @@ class GlobalCallbackRegistry:
 
     def get_conflicts(self) -> Dict[str, str]:
         return dict(self.registration_sources)
+
+    def register_deduplicated(
+        self,
+        callback_ids: Iterable[str],
+        register_func: Callable[[], Any],
+        *,
+        source_module: str = "unknown",
+    ) -> bool:
+        """Register callbacks if none of ``callback_ids`` are already registered."""
+
+        duplicates = [cid for cid in callback_ids if cid in self.registered_callbacks]
+        if duplicates:
+            existing = {
+                cid: self.callback_sources.get(cid, "unknown") for cid in duplicates
+            }
+            logger.info(
+                "Skipping duplicate callback registration from %s: %s",
+                source_module,
+                existing,
+            )
+            return False
+
+        try:
+            register_func()
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error(
+                "Failed to register callbacks %s from %s: %s",
+                list(callback_ids),
+                source_module,
+                exc,
+            )
+            return False
+
+        for cid in callback_ids:
+            self.register(cid, source_module)
+        return True
 
 
 # Global instance used across the application

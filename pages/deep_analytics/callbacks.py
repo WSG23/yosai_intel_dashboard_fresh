@@ -522,88 +522,107 @@ def register_callbacks(
     manager: Any,
     controller: UnifiedAnalyticsController | None = None,
 ) -> None:
-    """Instantiate :class:`Callbacks` and register its methods.
+    """Instantiate :class:`Callbacks` and register its methods."""
 
-    Works with either a ``TrulyUnifiedCallbacks`` instance or a standard Dash app.
-    """
+    def _do_registration() -> None:
+        cb = Callbacks()
 
-    cb = Callbacks()
+        if hasattr(manager, "unified_callback"):
+            decorator = manager.unified_callback
+            extra_kwargs = {
+                "callback_id": "deep_analytics_operations",
+                "component_name": "deep_analytics",
+                "prevent_initial_call": True,
+            }
+        elif hasattr(manager, "register_callback"):
+            decorator = manager.register_callback
+            extra_kwargs = {
+                "callback_id": "deep_analytics_operations",
+                "component_name": "deep_analytics",
+                "prevent_initial_call": True,
+            }
+        elif hasattr(manager, "callback"):
+            decorator = manager.callback
+            extra_kwargs = {"prevent_initial_call": True}
+            logger.warning("Using basic Dash callbacks - unified features unavailable")
+        else:
+            raise ValueError(f"Unsupported callback manager: {type(manager)}")
 
-    decorator = handle_register_with_deduplication(
-        manager,
-        [
-            Output("analytics-display-area", "children"),
-            Output("analytics-data-source", "options"),
-            Output("status-alert", "children"),
-        ],
-        [
-            Input("security-btn", "n_clicks"),
-            Input("trends-btn", "n_clicks"),
-            Input("behavior-btn", "n_clicks"),
-            Input("anomaly-btn", "n_clicks"),
-            Input("suggests-btn", "n_clicks"),
-            Input("quality-btn", "n_clicks"),
-            Input("unique-patterns-btn", "n_clicks"),
-            Input("refresh-sources-btn", "n_clicks"),
-            Input("hidden-trigger", "children"),
-        ],
-        [State("analytics-data-source", "value")],
-        callback_id="deep_analytics_operations",
-        component_name="deep_analytics",
-        prevent_initial_call=True,
-        source_module=__name__,
-    )
+        callback_manager.register_operation(
 
-    callback_manager.register_operation(
-        "analysis_buttons",
-        lambda s, t, b, a, sug, q, u, ds: cb.handle_analysis_buttons(
-            s, t, b, a, sug, q, u, ds
-        ),
-        name="handle_analysis_buttons",
-        timeout=5,
-    )
-    callback_manager.register_operation(
-        "refresh_sources",
-        lambda n: cb.refresh_data_sources_callback(n),
-        name="refresh_data_sources",
-    )
-    callback_manager.register_operation(
-        "status_alert",
-        lambda val: cb.update_status_alert(val),
-        name="update_status_alert",
-    )
-
-    @decorator
-    def analytics_operations(
-        sec, trn, beh, anom, sug, qual, uniq, refresh, trigger, data_source
-    ):
-        display = callback_manager.execute_group(
             "analysis_buttons",
-            sec,
-            trn,
-            beh,
-            anom,
-            sug,
-            qual,
-            uniq,
-            data_source,
-        )[0]
-
-        options = callback_manager.execute_group("refresh_sources", refresh)[0]
-
-        alert = callback_manager.execute_group("status_alert", trigger)[0]
-
-        analytics_state.dispatch(
-            "UPDATE", {"display": display, "options": options, "alert": alert}
+            lambda s, t, b, a, sug, q, u, ds: cb.handle_analysis_buttons(
+                s, t, b, a, sug, q, u, ds
+            ),
+            name="handle_analysis_buttons",
+            timeout=5,
+        )
+        callback_manager.register_operation(
+            "refresh_sources",
+            lambda n: cb.refresh_data_sources_callback(n),
+            name="refresh_data_sources",
+        )
+        callback_manager.register_operation(
+            "status_alert",
+            lambda val: cb.update_status_alert(val),
+            name="update_status_alert",
         )
 
-        return display, options, alert
-
-    if controller is not None:
-        controller.register_callback(
-            "on_analysis_error",
-            lambda aid, err: logger.error("Deep analytics error: %s", err),
+        @decorator(
+            [
+                Output("analytics-display-area", "children"),
+                Output("analytics-data-source", "options"),
+                Output("status-alert", "children"),
+            ],
+            [
+                Input("security-btn", "n_clicks"),
+                Input("trends-btn", "n_clicks"),
+                Input("behavior-btn", "n_clicks"),
+                Input("anomaly-btn", "n_clicks"),
+                Input("suggests-btn", "n_clicks"),
+                Input("quality-btn", "n_clicks"),
+                Input("unique-patterns-btn", "n_clicks"),
+                Input("refresh-sources-btn", "n_clicks"),
+                Input("hidden-trigger", "children"),
+            ],
+            [State("analytics-data-source", "value")],
+            **extra_kwargs,
         )
+        def analytics_operations(
+            sec, trn, beh, anom, sug, qual, uniq, refresh, trigger, data_source
+        ):
+            display = callback_manager.execute_group(
+                "analysis_buttons",
+                sec,
+                trn,
+                beh,
+                anom,
+                sug,
+                qual,
+                uniq,
+                data_source,
+            )[0]
+
+            options = callback_manager.execute_group("refresh_sources", refresh)[0]
+
+            alert = callback_manager.execute_group("status_alert", trigger)[0]
+
+            analytics_state.dispatch(
+                "UPDATE", {"display": display, "options": options, "alert": alert}
+            )
+
+            return display, options, alert
+
+        if controller is not None:
+            controller.register_callback(
+                "on_analysis_error",
+                lambda aid, err: logger.error("Deep analytics error: %s", err),
+            )
+
+    _callback_registry.register_deduplicated(
+        ["deep_analytics_operations"], _do_registration, source_module="deep_analytics"
+    )
+
 
 
 __all__ = ["Callbacks", "register_callbacks"]
