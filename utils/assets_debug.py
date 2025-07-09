@@ -14,8 +14,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 
-from core.unicode import safe_unicode_encode
-
+from core.unicode import safe_encode_text
 
 logger = logging.getLogger(__name__)
 
