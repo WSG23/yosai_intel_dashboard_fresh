@@ -10,3 +10,13 @@ def test_validator_methods_basic():
     assert meta["valid"] is True
     with pytest.raises(ValidationError):
         validator.sanitize_filename("../bad.csv")
+
+
+def test_filename_sanitization_surrogates_removed():
+    validator = UnifiedFileValidator()
+    assert validator.sanitize_filename("good\ud800.csv") == "good.csv"
+
+
+def test_filename_sanitization_valid():
+    validator = UnifiedFileValidator()
+    assert validator.sanitize_filename("my_file.csv") == "my_file.csv"

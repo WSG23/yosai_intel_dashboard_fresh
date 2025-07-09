@@ -1,54 +1,83 @@
+"""Configuration loader utilities."""
+from __future__ import annotations
+
+import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Protocol
+
 
 import yaml
 
 from .environment import select_config_file
+from .unicode_sql_processor import UnicodeSQLProcessor
 
-logger = logging.getLogger(__name__)
+
+class ConfigLoaderProtocol(Protocol):
+    """Protocol for objects that load configuration dictionaries."""
+
+    def load(self, config_path: Optional[str] = None) -> Dict[str, Any]:
+        """Return configuration data from the given path."""
+        ...
 
 
-class ConfigLoader:
-    """Load configuration data from YAML files."""
+class ConfigLoader(ConfigLoaderProtocol):
+    """Load configuration from YAML/JSON files or environment."""
 
-    def __init__(self, config_path: Optional[str] = None) -> None:
-        self.config_path = config_path
+    log = logging.getLogger(__name__)
 
-    def load(self) -> Dict[str, Any]:
-        """Return configuration dictionary from YAML or empty dict."""
-        config_file = select_config_file(self.config_path)
-        if not config_file or not Path(config_file).exists():
-            logger.info("No YAML config file found, using defaults")
-            return {}
-        try:
-            with open(config_file, "r", encoding="utf-8") as fh:
-                content = fh.read()
-                # simple env substitution
-                import re
+    def load(self, config_path: Optional[str] = None) -> Dict[str, Any]:
+        path = select_config_file(config_path)
+        data: Dict[str, Any] = {}
+        if path and path.exists():
+            try:
+                if path.suffix.lower() in {".yaml", ".yml"}:
+                    data = self._load_yaml(path)
+                elif path.suffix.lower() == ".json":
+                    data = self._load_json(path)
+            except Exception as exc:  # pragma: no cover - defensive
+                self.log.warning("Failed to load %s: %s", path, exc)
 
-                def replacer(match: re.Match[str]) -> str:
-                    var = match.group(1)
-                    return os.getenv(var, match.group(0))
+        env_json = os.getenv("YOSAI_CONFIG_JSON")
+        if not data and env_json:
+            try:
+                data = json.loads(env_json)
+            except Exception as exc:  # pragma: no cover - defensive
+                self.log.warning("Failed to parse YOSAI_CONFIG_JSON: %s", exc)
+        return self._sanitize(data)
 
-                content = re.sub(r"\$\{([^}]+)\}", replacer, content)
+    # ------------------------------------------------------------------
+    def _load_yaml(self, path: Path) -> Dict[str, Any]:
+        with open(path, "r", encoding="utf-8") as f:
+            text = self._substitute_env_vars(f.read())
+            return yaml.safe_load(text) or {}
 
-                class IncludeLoader(yaml.SafeLoader):
-                    pass
+    def _load_json(self, path: Path) -> Dict[str, Any]:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
 
-                base_dir = Path(config_file).parent
+    def _substitute_env_vars(self, text: str) -> str:
+        import re
 
-                def _include(loader: IncludeLoader, node: yaml.Node) -> Any:
-                    filename = loader.construct_scalar(node)
-                    inc_path = base_dir / filename
-                    with open(inc_path, "r", encoding="utf-8") as inc:
-                        return yaml.load(inc, Loader=IncludeLoader)
+        def repl(match: re.Match[str]) -> str:
+            key = match.group(1)
+            return os.getenv(key, match.group(0))
 
-                IncludeLoader.add_constructor("!include", _include)
+        return re.sub(r"\$\{([^}]+)\}", repl, text)
 
-                data = yaml.load(content, Loader=IncludeLoader)
-                return data or {}
-        except Exception as exc:  # pragma: no cover - best effort
-            logger.warning("Error loading config file %s: %s", config_file, exc)
-            return {}
+    def _sanitize(self, obj: Any) -> Any:
+        if isinstance(obj, str):
+            try:
+                return UnicodeSQLProcessor.encode_query(obj)
+            except Exception:
+                return obj
+        if isinstance(obj, dict):
+            return {k: self._sanitize(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [self._sanitize(v) for v in obj]
+        return obj
+
+
+__all__ = ["ConfigLoader", "ConfigLoaderProtocol"]
+

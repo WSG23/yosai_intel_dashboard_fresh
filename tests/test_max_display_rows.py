@@ -1,6 +1,6 @@
 import pandas as pd
 
-from config.config import ConfigManager
+from config.config import create_config_manager
 from tests.fake_configuration import FakeConfiguration
 
 fake_cfg = FakeConfiguration()
@@ -35,7 +35,7 @@ analytics:
     }
     for k, v in envs.items():
         monkeypatch.setenv(k, v)
-    cfg = ConfigManager(str(path))
+    cfg = create_config_manager(str(path))
     assert cfg.get_analytics_config().max_display_rows == 123
 
 

@@ -295,7 +295,8 @@ coroutine.
 - **CSRF Protection Plugin**: Optional production-ready CSRF middleware for Dash
 - **Machine-Learned Column Mapping**: Trainable model for smarter CSV header recognition
 - **Hardened SQL Injection Prevention**: Uses `sqlparse` and `bleach` to validate queries
-- **Centralized Unicode Processing**: Normalize text with `core.unicode`.
+- **Centralized Unicode Processing**: Use `UnicodeProcessor` and related handlers
+  from `core.unicode` for safe text and SQL handling.
 - **Event Driven Callbacks**: Plugins react to events via the unified
   `TrulyUnifiedCallbacks` manager.
   This single interface replaces previous callback controllers.
@@ -533,7 +534,8 @@ The `/api/v1/plugins/performance` endpoint exposes metrics for dashboards.
 - Supports PostgreSQL, SQLite, and Mock databases
 - Type-safe connection management
 - Retry logic via `connection_retry.py` with exponential backoff
-- Safe Unicode handling with `core.unicode`
+ - Safe Unicode handling using `UnicodeSQLProcessor` for queries and
+   `UnicodeProcessor` for parameters
 - Connection pooling through `connection_pool.py`
 ```python
 from config.database_manager import EnhancedPostgreSQLManager, DatabaseConfig

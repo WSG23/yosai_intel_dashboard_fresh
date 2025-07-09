@@ -3,7 +3,7 @@ import sys
 import types
 from pathlib import Path
 
-from config.config import ConfigManager
+from config.config import create_config_manager
 from core.service_container import ServiceContainer
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
 from services.data_processing.core.protocols import PluginMetadata, PluginStatus
@@ -66,7 +66,7 @@ class NoHealthPlugin:
 
 
 def test_load_plugin_success(tmp_path):
-    cfg = ConfigManager()
+    cfg = create_config_manager()
     cfg.config.plugin_settings["dummy"] = {"enabled": True}
     manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
     plugin = DummyPlugin()
@@ -80,7 +80,7 @@ def test_load_plugin_success(tmp_path):
 
 
 def test_load_plugin_failure_missing_health():
-    cfg = ConfigManager()
+    cfg = create_config_manager()
     cfg.config.plugin_settings["nohealth"] = {"enabled": True}
     manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
     plugin = NoHealthPlugin()
@@ -92,7 +92,7 @@ def test_load_plugin_failure_missing_health():
 
 
 def test_get_plugin_health(monkeypatch):
-    cfg = ConfigManager()
+    cfg = create_config_manager()
     cfg.config.plugin_settings["dummy"] = {"enabled": True}
     manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
     plugin = DummyPlugin()
@@ -137,7 +137,7 @@ def create_plugin():
     )
     sys.path.insert(0, str(tmp_path))
     try:
-        cfg = ConfigManager()
+        cfg = create_config_manager()
         cfg.config.plugin_settings["plug_a"] = {"enabled": True}
         manager = PluginManager(
             ServiceContainer(),
@@ -154,7 +154,7 @@ def create_plugin():
 
 
 def test_stop_all_plugins_calls_stop():
-    cfg = ConfigManager()
+    cfg = create_config_manager()
     cfg.config.plugin_settings["dummy"] = {"enabled": True}
     manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
     plugin = DummyPlugin()
@@ -177,7 +177,7 @@ class FailingStopPlugin(DummyPlugin):
 
 
 def test_stop_all_plugins_handles_errors():
-    cfg = ConfigManager()
+    cfg = create_config_manager()
     cfg.config.plugin_settings["failstop"] = {"enabled": True}
     manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
     plugin = FailingStopPlugin()

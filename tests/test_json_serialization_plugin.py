@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 from flask import Flask
 
-from config.config import ConfigManager
+from config.config import create_config_manager
 from core.service_container import ServiceContainer
 from core.json_serialization_plugin import (
     JsonCallbackService,
@@ -143,7 +143,7 @@ class TestPluginManager(unittest.TestCase):
 
     def setUp(self):
         self.container = ServiceContainer()
-        cfg_mgr = ConfigManager()
+        cfg_mgr = create_config_manager()
         cfg_mgr.config.plugin_settings["json_serialization"] = {
             "max_dataframe_rows": 5,
             "auto_wrap_callbacks": True,
@@ -174,7 +174,7 @@ class TestPluginManager(unittest.TestCase):
 
     def test_periodic_health_snapshot(self):
         """Plugin manager updates health snapshot periodically"""
-        cfg = ConfigManager()
+        cfg = create_config_manager()
         cfg.config.plugin_settings["json_serialization"] = {"max_dataframe_rows": 5}
         manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
         plugin = JsonSerializationPlugin()
@@ -187,7 +187,7 @@ class TestPluginManager(unittest.TestCase):
     def test_health_endpoint_registration(self):
         """Ensure /health/plugins endpoint is registered"""
         app = Flask(__name__)
-        cfg = ConfigManager()
+        cfg = create_config_manager()
         cfg.config.plugin_settings["json_serialization"] = {"max_dataframe_rows": 5}
         manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
         manager.register_health_endpoint(app)
