@@ -109,7 +109,7 @@ from pages.file_upload import layout as upload_layout
 from pages.file_upload import register_callbacks as register_upload_callbacks
 from services import get_analytics_service
 from services.analytics_service import AnalyticsService
-from utils.assets_utils import ensure_icon_cache_headers
+from utils.assets_utils import ensure_icon_cache_headers, ensure_navbar_assets
 
 from .health import register_health_endpoints
 from .plugins import _initialize_plugins
@@ -247,6 +247,22 @@ def _create_full_app() -> "Dash":
             assets_ignore=assets_ignore,
         )
         ensure_icon_cache_headers(app)
+        try:
+            ensure_navbar_assets(app)
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.debug("ensure_navbar_assets failed: %s", exc)
+
+        if TrulyUnifiedCallbacks is not None:
+            wrapper = TrulyUnifiedCallbacks(app)
+            cast(Any, app).unified_callback = wrapper.unified_callback
+            cast(Any, app).register_callback = wrapper.register_callback
+            cast(Any, app)._unified_wrapper = wrapper
+        else:  # pragma: no cover - fallback when dependency missing
+            cast(Any, app).unified_callback = app.callback
+            cast(Any, app).register_callback = app.callback
+            logger.warning(
+                "TrulyUnifiedCallbacks not available - falling back to Dash callback"
+            )
 
         # Expose the service container on the app instance
         cast(Any, app)._service_container = service_container
@@ -649,7 +665,10 @@ def _register_router_callbacks(
     """Register page routing callbacks."""
 
     @manager.unified_callback(
-        outputs=[Output("page-content", "children"), Output("page-content", "className")],
+        outputs=[
+            Output("page-content", "children"),
+            Output("page-content", "className"),
+        ],
         inputs=[Input("url", "pathname")],
         callback_id="display_page",
         component_name="app_factory",
@@ -827,22 +846,32 @@ def _register_callbacks(
 ) -> None:
     """Register application callbacks using the unified coordinator."""
 
-    if TrulyUnifiedCallbacks is not None:
+    if hasattr(app, "_unified_wrapper"):
+        coordinator = cast(TrulyUnifiedCallbacksType, getattr(app, "_unified_wrapper"))
+    elif TrulyUnifiedCallbacks is not None:
         coordinator = TrulyUnifiedCallbacks(app)
-        register_upload_callbacks(coordinator)
-        unicode_proc = None
-        if container:
-            try:
-                unicode_proc = container.get("unicode_processor")
-            except Exception:
-                unicode_proc = None
-        _register_router_callbacks(coordinator, unicode_proc)
-        _register_global_callbacks(coordinator)
+        cast(Any, app).unified_callback = coordinator.unified_callback
+        cast(Any, app).register_callback = coordinator.register_callback
+        cast(Any, app)._unified_wrapper = coordinator
     else:  # pragma: no cover - optional dependency missing
         coordinator = None
+        cast(Any, app).unified_callback = app.callback
+        cast(Any, app).register_callback = app.callback
         logger.warning(
             "TrulyUnifiedCallbacks unavailable; skipping unified callback setup"
         )
+
+    if coordinator is not None:
+        register_upload_callbacks(coordinator)
+    unicode_proc = None
+    if coordinator is not None and container:
+        try:
+            unicode_proc = container.get("unicode_processor")
+        except Exception:
+            unicode_proc = None
+    if coordinator is not None:
+        _register_router_callbacks(coordinator, unicode_proc)
+        _register_global_callbacks(coordinator)
 
     if coordinator is not None:
         try:
