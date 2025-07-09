@@ -5,6 +5,7 @@ Replaces: config/yaml_config.py, config/unified_config.py, config/validator.py
 """
 from typing import Any, Dict
 
+
 from .base import (
     AppConfig,
     AnalyticsConfig,
@@ -22,11 +23,6 @@ from .config_manager import (
     get_config,
     reload_config,
 )
-
-
-
-
-
 
 # Convenience functions
 def get_app_config() -> AppConfig:
@@ -72,9 +68,6 @@ def get_secret_validation_config() -> SecretValidationConfig:
 def get_plugin_config(name: str) -> Dict[str, Any]:
     """Get configuration for a specific plugin"""
     return get_config().get_plugin_config(name)
-
-
-
 
 # Export main classes and functions
 __all__ = [
