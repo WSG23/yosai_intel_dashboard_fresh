@@ -7,10 +7,12 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .base import Config
 
+from .protocols import ConfigTransformerProtocol
+
 logger = logging.getLogger(__name__)
 
 
-class ConfigTransformer:
+class ConfigTransformer(ConfigTransformerProtocol):
     """Transform and enhance configuration objects."""
 
     def transform(self, config: "Config") -> "Config":

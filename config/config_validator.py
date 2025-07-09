@@ -2,8 +2,9 @@ import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Callable, Dict, List
 
-
 from core.exceptions import ConfigurationError
+
+from .protocols import ConfigValidatorProtocol
 
 if TYPE_CHECKING:  # pragma: no cover - used for type hints only
     from .base import Config
@@ -20,7 +21,7 @@ class ValidationResult:
     warnings: List[str] = field(default_factory=list)
 
 
-class ConfigValidator:
+class ConfigValidator(ConfigValidatorProtocol):
     """Validate configuration dictionaries."""
 
     REQUIRED_SECTIONS = {"app", "database", "security"}
@@ -30,7 +31,6 @@ class ConfigValidator:
     def register_rule(cls, func: Callable[["Config", ValidationResult], None]) -> None:
         """Register a custom validation rule."""
         cls._custom_rules.append(func)
-
 
     @classmethod
     def validate(cls, data: Dict[str, Any]) -> "Config":
@@ -76,7 +76,11 @@ class ConfigValidator:
         result = ValidationResult()
 
         if config.environment == "production":
-            if config.app.secret_key in {"dev-key-change-in-production", "change-me", ""}:
+            if config.app.secret_key in {
+                "dev-key-change-in-production",
+                "change-me",
+                "",
+            }:
                 result.errors.append("SECRET_KEY must be set for production")
             if not config.database.password and config.database.type != "sqlite":
                 result.warnings.append("Production database requires password")
@@ -94,4 +98,3 @@ class ConfigValidator:
 
 
 __all__ = ["ConfigValidator", "ValidationResult"]
-
