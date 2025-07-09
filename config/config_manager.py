@@ -6,7 +6,17 @@ from typing import Any, Dict, Optional
 
 from core.protocols import ConfigurationProtocol
 
-from .base import AppConfig, Config, DatabaseConfig, SecurityConfig
+from .base import (
+    AppConfig,
+    CacheConfig,
+    Config,
+    DatabaseConfig,
+    MonitoringConfig,
+    SampleFilesConfig,
+    SecretValidationConfig,
+    AnalyticsConfig,
+    SecurityConfig,
+)
 from .config_loader import ConfigLoader
 from .config_transformer import ConfigTransformer
 from .config_validator import ConfigValidator, ValidationResult
@@ -59,6 +69,30 @@ class ConfigManager(ConfigurationProtocol):
     def get_security_config(self) -> SecurityConfig:
         """Get security configuration."""
         return self.config.security
+
+    def get_sample_files_config(self) -> SampleFilesConfig:
+        """Get sample files configuration."""
+        return self.config.sample_files
+
+    def get_analytics_config(self) -> AnalyticsConfig:
+        """Get analytics configuration."""
+        return self.config.analytics
+
+    def get_monitoring_config(self) -> MonitoringConfig:
+        """Get monitoring configuration."""
+        return self.config.monitoring
+
+    def get_cache_config(self) -> CacheConfig:
+        """Get cache configuration."""
+        return self.config.cache
+
+    def get_secret_validation_config(self) -> SecretValidationConfig:
+        """Get secret validation configuration."""
+        return self.config.secret_validation
+
+    def get_plugin_config(self, name: str) -> Dict[str, Any]:
+        """Get configuration for a specific plugin."""
+        return self.config.plugin_settings.get(name, {})
 
     def get_upload_config(self) -> Dict[str, Any]:
         """Get upload configuration settings."""
