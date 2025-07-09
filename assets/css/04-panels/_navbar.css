@@ -1,1 +1,150 @@
 /* Navbar styles */
+/* =================================================================== */
+/* 04-panels/_navbar.css - Fixed Navbar Styles (APPEND TO EXISTING)   */
+/* Prevents flash/disappear issues on navigation clicks                */
+/* =================================================================== */
+
+/* Navbar Stability Fixes */
+.navbar-stable {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  will-change: auto;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Navigation Link Stability */
+.navbar .nav-link {
+  display: flex !important;
+  align-items: center;
+  transition: none !important;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent Bootstrap Conflicts */
+.navbar .nav-link:active,
+.navbar .nav-link:focus {
+  outline: none;
+  box-shadow: none;
+  background-color: transparent !important;
+  opacity: 1 !important;
+}
+
+.navbar .nav-link:hover {
+  text-decoration: none;
+  background-color: rgba(0, 0, 0, 0.04);
+  transition: background-color 0.15s ease-in-out;
+  opacity: 1 !important;
+}
+
+/* Icon Stability */
+.navbar .nav-link .nav-icon,
+.navbar .nav-link .nav-icon--image,
+.navbar .nav-link .nav-icon--fallback {
+  margin-right: 0.5rem;
+  display: inline-block;
+  vertical-align: middle;
+  width: 16px;
+  text-align: center;
+  transform: translateZ(0);
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Specific Upload Link Fixes */
+#nav-upload-link,
+#nav-analytics-link,
+#nav-settings-link {
+  position: relative;
+  overflow: visible;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+#nav-upload-link::before,
+#nav-analytics-link::before,
+#nav-settings-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Disable Bootstrap Animations That Cause Flash */
+.navbar .navbar-collapse.collapsing {
+  transition: none !important;
+}
+
+.navbar .navbar-nav .nav-link.active {
+  color: var(--bs-navbar-active-color, #007bff) !important;
+  background-color: transparent !important;
+  opacity: 1 !important;
+}
+
+/* Unicode Text Rendering Stability */
+.navbar * {
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mobile Navbar Fixes */
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+  }
+  
+  .navbar .nav-link {
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
+    margin: 0.125rem 0;
+    opacity: 1 !important;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .navbar .nav-link:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .navbar .nav-link {
+    transition: none !important;
+  }
+  
+  .navbar .navbar-collapse {
+    transition: none !important;
+  }
+}
+
+/* Force Visibility for Upload Link */
+.navbar #nav-upload-link {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Override any potential hiding CSS */
+.navbar .nav-item,
+.navbar .nav-link {
+  display: flex !important;
+  visibility: visible !important;
+}
