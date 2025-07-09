@@ -8,9 +8,9 @@ import logging
 # Import the main configuration system
 from core.protocols import ConfigProviderProtocol
 
+from .base import Config, ConfigTransformer
 from .config import (
     AppConfig,
-    Config,
     DatabaseConfig,
     SecurityConfig,
     get_app_config,

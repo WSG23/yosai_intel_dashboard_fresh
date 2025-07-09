@@ -16,9 +16,9 @@ from core.secrets_validator import SecretsValidator
 
 
 from .config_loader import ConfigLoader
-from .config_transformer import ConfigTransformer
+from .base import ConfigTransformer
 from .config_validator import ConfigValidator, ValidationResult
-from .base_config import (
+from .base import (
     AppConfig,
     AnalyticsConfig,
     CacheConfig,
