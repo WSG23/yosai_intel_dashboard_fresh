@@ -19,6 +19,12 @@ security:
     admin: 7200
     basic: 1800
   csrf_enabled: false
+  max_upload_mb: 50
+  allowed_file_types:
+    - .csv
+    - .json
+    - .xlsx
+    - .xls
 
 sample_files:
   csv_path: "data/sample_data.csv"
