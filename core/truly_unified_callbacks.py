@@ -157,7 +157,7 @@ class TrulyUnifiedCallbacks:
         return decorator
 
     # ------------------------------------------------------------------
-    def handle_register(
+    def register_callback(
         self,
         outputs: Any,
         inputs: Iterable[Input] | Input | None = None,
@@ -168,7 +168,7 @@ class TrulyUnifiedCallbacks:
         allow_duplicate: bool = False,
         **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        """Alias for handle_register method - register a Dash callback and track conflicts."""
+        """Alias for handle_register - register a Dash callback and track conflicts."""
         return self.handle_register(
             outputs=outputs,
             inputs=inputs,
@@ -176,7 +176,7 @@ class TrulyUnifiedCallbacks:
             callback_id=callback_id,
             component_name=component_name,
             allow_duplicate=allow_duplicate,
-            **kwargs
+            **kwargs,
         )
 
     # ------------------------------------------------------------------
