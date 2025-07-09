@@ -73,9 +73,9 @@ Additional icons can live in the same directory as long as their paths match the
 Run the debug helper to verify that icon files exist and can be served:
 
 ```bash
-python scripts/debug_navbar_icons.py
+python -m tools.debug assets
 ```
-Pass icon names to check custom files.
+Pass icon names after the command to check custom files.
 
 ## 🚀 Quick Start
 
