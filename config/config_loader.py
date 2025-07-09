@@ -32,8 +32,11 @@ class ConfigLoader(ConfigLoaderProtocol):
 
     log = logging.getLogger(__name__)
 
+    def __init__(self, config_path: Optional[str] = None) -> None:
+        self.config_path = config_path
+
     def load(self, config_path: Optional[str] = None) -> Dict[str, Any]:
-        path = select_config_file(config_path)
+        path = select_config_file(config_path or self.config_path)
         data: Dict[str, Any] = {}
         if path and path.exists():
             try:

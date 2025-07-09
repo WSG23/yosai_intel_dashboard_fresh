@@ -16,7 +16,7 @@ class UnicodeSQLProcessor:
         if not isinstance(query, str):
             query = str(query)
         try:
-            data = query.encode("utf-8", "surrogateescape")
+            data = query.encode("utf-8", "surrogatepass")
             return data.decode("utf-8", "replace")
         except Exception as exc:  # pragma: no cover - defensive
             raise UnicodeEncodingError(str(exc)) from exc
