@@ -1,5 +1,7 @@
 import logging
-from typing import TYPE_CHECKING, Any, Dict
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Callable, Dict, List
+
 
 from core.exceptions import ConfigurationError
 
@@ -9,10 +11,26 @@ if TYPE_CHECKING:  # pragma: no cover - used for type hints only
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class ValidationResult:
+    """Outcome of configuration validation."""
+
+    valid: bool = True
+    errors: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+
+
 class ConfigValidator:
     """Validate configuration dictionaries."""
 
     REQUIRED_SECTIONS = {"app", "database", "security"}
+    _custom_rules: List[Callable[["Config", ValidationResult], None]] = []
+
+    @classmethod
+    def register_rule(cls, func: Callable[["Config", ValidationResult], None]) -> None:
+        """Register a custom validation rule."""
+        cls._custom_rules.append(func)
+
 
     @classmethod
     def validate(cls, data: Dict[str, Any]) -> "Config":
@@ -50,3 +68,30 @@ class ConfigValidator:
         if "environment" in data:
             config.environment = str(data["environment"])
         return config
+
+    # ------------------------------------------------------------------
+    @classmethod
+    def run_checks(cls, config: "Config") -> ValidationResult:
+        """Run built-in and custom validation rules."""
+        result = ValidationResult()
+
+        if config.environment == "production":
+            if config.app.secret_key in {"dev-key-change-in-production", "change-me", ""}:
+                result.errors.append("SECRET_KEY must be set for production")
+            if not config.database.password and config.database.type != "sqlite":
+                result.warnings.append("Production database requires password")
+            if config.app.host == "127.0.0.1":
+                result.warnings.append("Production should not run on localhost")
+
+        for rule in cls._custom_rules:
+            try:
+                rule(config, result)
+            except Exception as exc:  # pragma: no cover - defensive
+                result.warnings.append(f"Custom rule error: {exc}")
+
+        result.valid = not result.errors
+        return result
+
+
+__all__ = ["ConfigValidator", "ValidationResult"]
+

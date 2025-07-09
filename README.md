@@ -335,19 +335,21 @@ for details.
 ## 🔧 Configuration
 
 This project uses **`config/config.py`** for all application settings. The
-`ConfigManager` class loads a YAML file from `config/` based on
-`YOSAI_ENV` or `YOSAI_CONFIG_FILE` and then applies any environment variable
-overrides. Earlier versions used separate modules such as `app_config.py` and
-`simple_config.py`; these have been replaced by this unified loader. Register
-the configuration with the DI container so it can be resolved from anywhere:
+`create_config_manager()` helper builds a `ConfigManager` composed of modular
+dataclasses like `AppConfig`, `DatabaseConfig` and `SecurityConfig`. It loads a
+YAML file from `config/` based on `YOSAI_ENV` or `YOSAI_CONFIG_FILE`, then
+applies environment variable overrides. Earlier versions used separate modules
+such as `app_config.py` and `simple_config.py`; these have been replaced by this
+unified loader. Register the configuration with the DI container so it can be
+resolved from anywhere:
 
 
 ```python
 from core.container import Container
-from config.config import ConfigManager
+from config.config import create_config_manager
 
 container = Container()
-container.register("config", ConfigManager())
+container.register("config", create_config_manager())
 
 config = container.get("config")
 ```
@@ -355,9 +357,9 @@ config = container.get("config")
 A short example without the container:
 
 ```python
-from config.config import ConfigManager
+from config.config import create_config_manager
 
-config = ConfigManager()
+config = create_config_manager()
 db_cfg = config.get_database_config()
 ```
 
@@ -401,11 +403,11 @@ and `security` sections exist before the server starts.
 
 ### Environment Overrides
 
-`ConfigManager` loads YAML files from `config/` and then checks for
-environment variables. When a variable name matches a key used in the YAML
-configuration (for example `DB_HOST`, `DB_USER`, `REDIS_HOST` or
-`SECRET_KEY`), its value replaces the one from the file. This lets you adjust
-settings without editing the YAML files.
+The `ConfigManager` returned by `create_config_manager()` loads YAML files from
+`config/` and then checks for environment variables. When a variable name
+matches a key used in the YAML configuration (for example `DB_HOST`, `DB_USER`,
+`REDIS_HOST` or `SECRET_KEY`), its value replaces the one from the file. This
+lets you adjust settings without editing the YAML files.
 
 Example:
 
@@ -422,8 +424,8 @@ These values override `database.host`, `database.username`, `cache.host` and
 
 ### Selecting a YAML File
 
-`ConfigManager` determines which YAML file to load by inspecting environment
-variables:
+`create_config_manager()` determines which YAML file to load by inspecting
+environment variables:
 
 - `YOSAI_ENV` – set to `development`, `staging`, `production` or `test` to
   automatically load the corresponding file under `config/`.
@@ -443,8 +445,9 @@ YOSAI_APP_MODE=simple python app.py
 
 #### Dynamic Constants
 
-`ConfigManager` uses the internal `DynamicConfigManager` to read optional
-environment variables that fine&ndash;tune security and performance defaults:
+`create_config_manager()` uses the internal `DynamicConfigManager` to read
+optional environment variables that fine&ndash;tune security and performance
+defaults:
 
 
 - `PBKDF2_ITERATIONS` – password hashing iterations
@@ -477,10 +480,10 @@ the new unified configuration through it instead:
 
 ```python
 from core.container import Container
-from config.config import ConfigManager
+from config.config import create_config_manager
 
 container = Container()
-container.register("config", ConfigManager())
+container.register("config", create_config_manager())
 
 config = container.get("config")
 ```

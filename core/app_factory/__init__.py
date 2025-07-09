@@ -148,7 +148,11 @@ BUNDLE = "/assets/dist/main.min.css"
 logger = logging.getLogger(__name__)
 
 
-def create_app(mode: Optional[str] = None) -> "Dash":
+def create_app(
+    mode: Optional[str] = None,
+    *,
+    assets_folder: Optional[str] = None,
+) -> "Dash":
     """Create a Dash application.
 
     Parameters
@@ -170,6 +174,13 @@ def create_app(mode: Optional[str] = None) -> "Dash":
 
         logger.info("🏗️ Creating Dash application...")
 
+        assets_folder = (
+            os.path.normcase(os.path.abspath(assets_folder))
+            if assets_folder
+            else os.path.normcase(os.path.abspath(str(ASSETS_DIR)))
+        )
+        logger.info(f"Assets folder resolved to: {assets_folder}")
+
         # Ensure navbar icons are available before constructing the Dash app
         try:
             ensure_all_navbar_assets()
@@ -185,41 +196,19 @@ def create_app(mode: Optional[str] = None) -> "Dash":
         logger.info(f"Application mode: {mode}")
 
         if mode == "simple":
-            return _create_simple_app()
+            return _create_simple_app(assets_folder)
         elif mode == "json-safe":
-            return _create_json_safe_app()
-
-        # Create full application
-        external_stylesheets = [dbc.themes.BOOTSTRAP]
-        built_css = ASSETS_DIR / "dist" / "main.min.css"
-        assets_ignore = r".*\.map|css/_.*|.*\.scss"
-
-        if built_css.exists():
-            logger.info("✅ Found compiled CSS bundle")
-        else:
-            logger.warning("⚠️ No compiled CSS found - using defaults")
-
-        # Initialize Dash app with error handling
-        app = dash.Dash(
-            __name__,
-            external_stylesheets=external_stylesheets,
-            assets_folder=str(ASSETS_DIR),
-            assets_ignore=assets_ignore,
-            suppress_callback_exceptions=True,
-            prevent_initial_callbacks=True,
-            title="Yōsai Intel Dashboard",
-        )
-        fix_flask_mime_types(app)
+            return _create_json_safe_app(assets_folder)
 
         logger.info("Creating application in full mode")
-        return _create_full_app()
+        return _create_full_app(assets_folder)
 
     except Exception as e:
         logger.error(f"Failed to create application: {e}")
         raise
 
 
-def _create_full_app() -> "Dash":
+def _create_full_app(assets_folder: str) -> "Dash":
     """Create complete Dash application with full integration"""
     try:
         service_container = ServiceContainer()
@@ -262,7 +251,7 @@ def _create_full_app() -> "Dash":
             __name__,
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
-            assets_folder=str(ASSETS_DIR),
+            assets_folder=assets_folder,
             assets_ignore=assets_ignore,
         )
         fix_flask_mime_types(app)
@@ -414,7 +403,7 @@ def _create_full_app() -> "Dash":
         raise
 
 
-def _create_simple_app() -> "Dash":
+def _create_simple_app(assets_folder: str) -> "Dash":
     """Create a simplified Dash application"""
     try:
         from dash import dcc, html
@@ -430,6 +419,7 @@ def _create_simple_app() -> "Dash":
             __name__,
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
+            assets_folder=assets_folder,
             assets_ignore=assets_ignore,
         )
         fix_flask_mime_types(app)
@@ -511,7 +501,7 @@ def _create_simple_app() -> "Dash":
         raise
 
 
-def _create_json_safe_app() -> "Dash":
+def _create_json_safe_app(assets_folder: str) -> "Dash":
     """Create Dash application with JSON-safe layout"""
     try:
         from dash import html
@@ -527,6 +517,7 @@ def _create_json_safe_app() -> "Dash":
             __name__,
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
+            assets_folder=assets_folder,
             assets_ignore=assets_ignore,
         )
         fix_flask_mime_types(app)
