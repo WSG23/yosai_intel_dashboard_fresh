@@ -59,8 +59,8 @@ class UnifiedUploadController(UploadControllerProtocol):
                     Output("uploaded-df-store", "data"),
                 ],
                 [
-                    Input("file-uploader", "contents"),
-                    Input("file-uploader", "filename"),
+                    Input("drag-drop-upload", "contents"),
+                    Input("drag-drop-upload", "filename"),
                 ],
                 None,
                 "file_upload_handle",
