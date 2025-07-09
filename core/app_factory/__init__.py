@@ -114,6 +114,7 @@ from utils.assets_utils import (
     ensure_icon_cache_headers,
     ensure_navbar_assets,
     ensure_all_navbar_assets,
+    fix_flask_mime_types,
     NAVBAR_ICON_NAMES,
 )
 from utils.assets_debug import check_navbar_assets
@@ -209,6 +210,7 @@ def create_app(mode: Optional[str] = None) -> "Dash":
             prevent_initial_callbacks=True,
             title="Yōsai Intel Dashboard",
         )
+        fix_flask_mime_types(app)
 
         logger.info("Creating application in full mode")
         return _create_full_app()
@@ -264,6 +266,7 @@ def _create_full_app() -> "Dash":
             assets_folder=str(ASSETS_DIR),
             assets_ignore=assets_ignore,
         )
+        fix_flask_mime_types(app)
         ensure_icon_cache_headers(app)
         try:
             ensure_navbar_assets(app)
@@ -430,6 +433,7 @@ def _create_simple_app() -> "Dash":
             suppress_callback_exceptions=True,
             assets_ignore=assets_ignore,
         )
+        fix_flask_mime_types(app)
         ensure_icon_cache_headers(app)
 
         cache = Cache(app.server, config={"CACHE_TYPE": "simple"})
@@ -526,6 +530,7 @@ def _create_json_safe_app() -> "Dash":
             suppress_callback_exceptions=True,
             assets_ignore=assets_ignore,
         )
+        fix_flask_mime_types(app)
         ensure_icon_cache_headers(app)
 
         cache = Cache(app.server, config={"CACHE_TYPE": "simple"})
@@ -891,6 +896,7 @@ def _register_callbacks(
 
         try:
             from services.interfaces import get_export_service
+
             unicode_proc = None
             if container:
                 try:

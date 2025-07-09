@@ -1,23 +1,14 @@
-import pytest
 from dash import html
 
-from components.ui.navbar import _nav_icon
-from tests.fake_navbar_factory import FakeNavbarFactory
-
-factory = FakeNavbarFactory()
+from components.ui.navbar import get_simple_icon
 
 
-def test_nav_icon_image():
-    comp = _nav_icon(factory, "analytics", "Analytics")
-    assert isinstance(comp, html.Img)
-    assert "nav-icon--image" in getattr(comp, "className", "")
-
-
-def test_nav_icon_fallback():
-    class MissingFactory(FakeNavbarFactory):
-        def get_icon_url(self, app, name: str):
-            return None
-
-    comp = _nav_icon(MissingFactory(), "missing", "Missing")
+def test_get_simple_icon_returns_icon():
+    comp = get_simple_icon("dashboard")
     assert isinstance(comp, html.I)
-    assert "nav-icon--fallback" in getattr(comp, "className", "")
+    assert "nav-icon" in getattr(comp, "className", "")
+
+
+def test_get_simple_icon_fallback():
+    comp = get_simple_icon("unknown")
+    assert "fa-circle" in getattr(comp, "className", "")

@@ -7,19 +7,8 @@ ASSET_ICON_DIR = Path(__file__).resolve().parent.parent / "assets" / "navbar_ico
 
 
 def get_nav_icon(app, name: str) -> str | None:
-    """Return an asset URL for the given navbar icon if it exists."""
-    png_path = ASSET_ICON_DIR / f"{name}.png"
-    if not png_path.is_file():
-        return None
-
-    server = getattr(app, "server", app)
-
-    try:
-        with server.test_request_context():
-            return url_for("assets", filename=f"navbar_icons/{name}.png")
-    except Exception as exc:  # pragma: no cover - best effort
-        logging.getLogger(__name__).debug(f"url_for failed for {name}: {exc}")
-        return f"/assets/navbar_icons/{name}.png"
+    """Simple icon getter - returns None to force FontAwesome fallback"""
+    return None
 
 
 def ensure_icon_cache_headers(app):
@@ -182,22 +171,23 @@ NAVBAR_ICON_NAMES = [Path(name).stem for name in NAVBAR_ICONS]
 
 
 def ensure_all_navbar_assets(app=None) -> None:
-    """Ensure all required navbar icons exist with basic creation."""
-
+    """Simplified - no complex icon generation"""
     ASSET_ICON_DIR.mkdir(parents=True, exist_ok=True)
+    logging.getLogger(__name__).info("Asset directory ensured")
 
-    for icon_name, creator in NAVBAR_ICONS.items():
-        path = ASSET_ICON_DIR / icon_name
-        if path.exists():
-            continue
-        try:
-            creator(path)
-            logging.getLogger(__name__).info("Created navbar icon %s", path)
-        except Exception as exc:  # pragma: no cover
-            path.touch()
-            logging.getLogger(__name__).warning(
-                "Created placeholder for %s due to error: %s", path, exc
-            )
+
+def fix_flask_mime_types(app):
+    """Fix CSS MIME type issues"""
+
+    @app.server.after_request
+    def fix_mime(response):
+        if request.path.endswith(".css"):
+            response.headers["Content-Type"] = "text/css; charset=utf-8"
+        elif request.path.endswith(".js"):
+            response.headers["Content-Type"] = "application/javascript"
+        return response
+
+    return app
 
 
 __all__ = [
@@ -205,5 +195,6 @@ __all__ = [
     "ensure_icon_cache_headers",
     "ensure_navbar_assets",
     "ensure_all_navbar_assets",
+    "fix_flask_mime_types",
     "NAVBAR_ICON_NAMES",
 ]
