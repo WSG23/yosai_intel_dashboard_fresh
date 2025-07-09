@@ -87,6 +87,16 @@ class ConfigValidator(ConfigValidatorProtocol):
             if config.app.host == "127.0.0.1":
                 result.warnings.append("Production should not run on localhost")
 
+        # Validate upload limits
+        max_upload = getattr(config.security, "max_upload_mb", None)
+        if max_upload is not None:
+            if max_upload <= 0:
+                result.errors.append("max_upload_mb must be greater than 0")
+            elif max_upload > 1000:
+                result.warnings.append(
+                    "max_upload_mb over 1000MB may degrade performance"
+                )
+
         for rule in cls._custom_rules:
             try:
                 rule(config, result)
