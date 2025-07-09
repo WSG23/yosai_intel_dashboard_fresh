@@ -11,6 +11,13 @@ python tools/generate_openapi.py
 The script writes `docs/openapi.json`. Once generated, this file can be served
 by Swagger UI to display the complete API reference.
 
+### Regenerating after changes
+
+`docs/openapi.json` is not committed to the repository. Whenever you modify any
+API routes or schemas, run `python tools/generate_openapi.py` and verify the
+file in `docs/` updates. This keeps the interactive documentation in sync with
+the code.
+
 ## Database Manager
 
 ### `DatabaseManager`
