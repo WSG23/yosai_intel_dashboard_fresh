@@ -3,11 +3,8 @@
 Simplified Configuration System
 Replaces: config/yaml_config.py, config/unified_config.py, config/validator.py
 """
-import logging
-import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-import yaml
 
 from core.exceptions import ConfigurationError
 from core.protocols import ConfigurationProtocol
@@ -19,7 +16,6 @@ from .base import (
     AppConfig,
     CacheConfig,
     Config,
-    ConfigTransformer,
     DatabaseConfig,
     MonitoringConfig,
     SampleFilesConfig,
@@ -442,12 +438,6 @@ def get_plugin_config(name: str) -> Dict[str, Any]:
     """Get configuration for a specific plugin"""
     return get_config().get_plugin_config(name)
 
-
-def create_config_manager(config_path: Optional[str] = None) -> ConfigManager:
-    """Factory for creating :class:`ConfigManager` instances."""
-    return ConfigManager(config_path=config_path)
-
-
 # Export main classes and functions
 __all__ = [
     "Config",
@@ -472,10 +462,5 @@ __all__ = [
     "get_cache_config",
     "get_secret_validation_config",
     "get_plugin_config",
-    "create_config_manager",
 ]
 
-# Use new implementation by default
-from .config_manager import ConfigManager as ConfigManager
-from .config_manager import get_config as get_config
-from .config_manager import reload_config as reload_config

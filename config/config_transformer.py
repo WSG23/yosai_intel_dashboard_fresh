@@ -50,7 +50,7 @@ class ConfigTransformer(ConfigTransformerProtocol):
             except ValueError:
                 logger.warning("Invalid DB_PORT value: %s", db_port)
         if db_user := os.getenv("DB_USER"):
-            config.database.username = db_user
+            config.database.user = db_user
         if db_pass := os.getenv("DB_PASSWORD"):
             config.database.password = db_pass
 
@@ -80,7 +80,7 @@ class ConfigTransformer(ConfigTransformerProtocol):
         if not config.database.url and config.database.type != "sqlite":
             if config.database.type == "postgresql":
                 url_parts = [
-                    f"postgresql://{config.database.username}:{config.database.password}",
+                    f"postgresql://{config.database.user}:{config.database.password}",
                     f"@{config.database.host}:{config.database.port}",
                     f"/{config.database.name}",
                 ]
