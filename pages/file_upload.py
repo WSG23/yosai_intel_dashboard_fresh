@@ -1,11 +1,8 @@
-from core.plugins.decorators import unicode_safe_callback
-#!/usr/bin/env python3
+#!/usr/bin/env python3#!/usr/bin/env python3
+"""File upload page wiring the reusable upload component."""
 from __future__ import annotations
 
-"""File upload page wiring the reusable upload component."""
-
-import functools
-import logging
+from core.plugins.decorators import unicode_safe_callbackimport logging
 import types
 from typing import TYPE_CHECKING, Any
 
