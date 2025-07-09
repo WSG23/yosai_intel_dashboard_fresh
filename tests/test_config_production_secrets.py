@@ -1,6 +1,6 @@
 import pytest
 
-from config.config import ConfigManager
+from config.config import create_config_manager
 
 REQUIRED_AUTH_VARS = [
     "AUTH0_CLIENT_ID",
@@ -21,4 +21,4 @@ def set_env(monkeypatch, secret: str) -> None:
 def test_invalid_secrets_raise(monkeypatch):
     set_env(monkeypatch, "change-me")
     with pytest.raises(ValueError):
-        ConfigManager()
+        create_config_manager()
