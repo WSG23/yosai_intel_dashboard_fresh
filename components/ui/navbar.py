@@ -107,3 +107,8 @@ def create_navbar_layout(theme: str = "light"):
         color="light",
         className="shadow-sm",
     )
+
+
+def register_navbar_callbacks(manager, service=None):
+    """Compatibility stub - no callbacks currently needed."""
+    manager.navbar_registered = True
