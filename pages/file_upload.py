@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""File upload page wiring the reusable upload component."""
 from __future__ import annotations
+"""File upload page wiring the reusable upload component."""
 
 import logging
 import types
