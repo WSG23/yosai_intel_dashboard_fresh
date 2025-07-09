@@ -2,11 +2,14 @@
 """Export page providing download instructions."""
 
 import dash_bootstrap_components as dbc
-from dash import dcc, html, register_page
+from dash import dcc, html, register_page as dash_register_page
 
 from security.unicode_security_processor import sanitize_unicode_input
 
-register_page(__name__, path="/export", name="Export")
+
+def register_page() -> None:
+    """Register this page with Dash after app creation."""
+    dash_register_page(__name__, path="/export", name="Export")
 
 
 def _instructions() -> dbc.Card:
@@ -63,4 +66,4 @@ def layout() -> dbc.Container:
     return dbc.Container([_instructions()], fluid=True)
 
 
-__all__ = ["layout"]
+__all__ = ["layout", "register_page"]

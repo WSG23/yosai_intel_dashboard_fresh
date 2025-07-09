@@ -17,12 +17,15 @@ except Exception as e:  # pragma: no cover - optional plotting deps
     px = None
     go = None
 
-from dash import dcc, html, register_page
+from dash import dcc, html, register_page as dash_register_page
 
 from core.cache import cache
 from security.unicode_security_processor import sanitize_unicode_input
 
-register_page(__name__, path="/graphs", name="Graphs")
+
+def register_page() -> None:
+    """Register the graphs page with Dash."""
+    dash_register_page(__name__, path="/graphs", name="Graphs")
 
 
 @cache.memoize()
@@ -87,4 +90,4 @@ def layout() -> dbc.Container:
     return dbc.Container([tabs], fluid=True)
 
 
-__all__ = ["layout"]
+__all__ = ["layout", "register_page"]
