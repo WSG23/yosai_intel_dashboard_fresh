@@ -6,7 +6,7 @@ import logging
 import types
 from typing import TYPE_CHECKING, Any
 
-from dash import html, register_page
+from dash import html, register_page as dash_register_page
 
 from core.callback_registry import _callback_registry
 from core.unicode import safe_encode_text
@@ -18,7 +18,10 @@ except Exception:  # pragma: no cover - fallback when unavailable
 
 logger = logging.getLogger(__name__)
 
-register_page(__name__, path="/file-upload", name="File Upload", aliases=["/upload"])
+
+def register_page() -> None:
+    """Register the file upload page with Dash."""
+    dash_register_page(__name__, path="/file-upload", name="File Upload", aliases=["/upload"])
 
 _import_error: Exception | None = None
 
@@ -208,6 +211,7 @@ def check_upload_system_health() -> dict:
 __all__ = [
     "layout",
     "safe_upload_layout",
+    "register_page",
     "register_upload_callbacks",
     "register_callbacks",
     "check_upload_system_health",

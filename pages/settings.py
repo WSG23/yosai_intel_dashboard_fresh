@@ -2,11 +2,14 @@
 """Settings management page with placeholders."""
 
 import dash_bootstrap_components as dbc
-from dash import html, register_page
+from dash import html, register_page as dash_register_page
 
 from security.unicode_security_processor import sanitize_unicode_input
 
-register_page(__name__, path="/settings", name="Settings")
+
+def register_page() -> None:
+    """Register the settings page with Dash."""
+    dash_register_page(__name__, path="/settings", name="Settings")
 
 
 def _settings_section(title: str) -> dbc.Card:
@@ -35,4 +38,4 @@ def layout() -> dbc.Container:
     return dbc.Container([sections], fluid=True)
 
 
-__all__ = ["layout"]
+__all__ = ["layout", "register_page"]

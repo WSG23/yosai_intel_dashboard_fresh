@@ -253,6 +253,7 @@ def _create_full_app(assets_folder: str) -> "Dash":
             suppress_callback_exceptions=True,
             assets_folder=assets_folder,
             assets_ignore=assets_ignore,
+            use_pages=True,
         )
         fix_flask_mime_types(app)
         ensure_icon_cache_headers(app)
@@ -356,6 +357,7 @@ def _create_full_app(assets_folder: str) -> "Dash":
         initialize_csrf(app, config_manager)
 
         _initialize_plugins(app, config_manager, container=service_container)
+        _register_pages()
         _setup_layout(app)
         _register_callbacks(app, config_manager, container=service_container)
 
@@ -421,6 +423,7 @@ def _create_simple_app(assets_folder: str) -> "Dash":
             suppress_callback_exceptions=True,
             assets_folder=assets_folder,
             assets_ignore=assets_ignore,
+            use_pages=True,
         )
         fix_flask_mime_types(app)
         ensure_icon_cache_headers(app)
@@ -463,6 +466,8 @@ def _create_simple_app(assets_folder: str) -> "Dash":
             ):
                 resp.headers["Cache-Control"] = "public,max-age=31536000,immutable"
             return resp
+
+        _register_pages()
 
         app.title = "Yōsai Intel Dashboard"
 
@@ -519,6 +524,7 @@ def _create_json_safe_app(assets_folder: str) -> "Dash":
             suppress_callback_exceptions=True,
             assets_folder=assets_folder,
             assets_ignore=assets_ignore,
+            use_pages=True,
         )
         fix_flask_mime_types(app)
         ensure_icon_cache_headers(app)
@@ -561,6 +567,8 @@ def _create_json_safe_app(assets_folder: str) -> "Dash":
             ):
                 resp.headers["Cache-Control"] = "public,max-age=31536000,immutable"
             return resp
+
+        _register_pages()
 
         app.title = "🏯 Yōsai Intel Dashboard"
 
@@ -801,6 +809,17 @@ def _register_global_callbacks(manager: TrulyUnifiedCallbacksType) -> None:
         # Don't raise in test mode
         if "pytest" not in sys.modules:
             raise
+
+
+def _register_pages() -> None:
+    """Register all pages once the Dash app is ready."""
+    try:
+        from pages import register_pages
+
+        register_pages()
+        logger.info("✅ Pages registered successfully")
+    except Exception as e:
+        logger.warning(f"Page registration failed: {e}")
 
 
 def _setup_layout(app: "Dash") -> None:

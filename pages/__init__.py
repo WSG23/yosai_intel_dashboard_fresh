@@ -60,4 +60,14 @@ def get_page_layout(page_name: str) -> Optional[Callable]:
     return None
 
 
-__all__ = ["get_page_layout"]
+def register_pages() -> None:
+    """Register all available pages with Dash."""
+    for name, module in _pages.items():
+        if module and hasattr(module, "register_page"):
+            try:
+                module.register_page()
+            except Exception as exc:
+                logger.warning(f"Failed to register page {name}: {exc}")
+
+
+__all__ = ["get_page_layout", "register_pages"]
