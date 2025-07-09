@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from .database_exceptions import UnicodeEncodingError
+from core.unicode import UnicodeProcessor, contains_surrogates
 
 
 class UnicodeSQLProcessor:
@@ -15,11 +16,18 @@ class UnicodeSQLProcessor:
         """Return ``query`` encoded for safe SQL execution."""
         if not isinstance(query, str):
             query = str(query)
+        if contains_surrogates(query):
+            raise UnicodeEncodingError("Surrogate characters detected", query)
         try:
-            data = query.encode("utf-8", "surrogatepass")
-            return data.decode("utf-8", "replace")
+            cleaned = UnicodeProcessor.clean_text(query)
+            cleaned.encode("utf-8")
+            return cleaned
+        except UnicodeEncodeError as exc:  # pragma: no cover - defensive
+            raise UnicodeEncodingError("Failed to encode query", query) from exc
+        except UnicodeDecodeError as exc:  # pragma: no cover - defensive
+            raise UnicodeEncodingError("Failed to decode query", query) from exc
         except Exception as exc:  # pragma: no cover - defensive
-            raise UnicodeEncodingError(str(exc)) from exc
+            raise UnicodeEncodingError(str(exc), query) from exc
 
 
 __all__ = ["UnicodeSQLProcessor"]

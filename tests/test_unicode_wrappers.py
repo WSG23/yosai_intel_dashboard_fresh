@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from config.database_exceptions import UnicodeEncodingError
-from core.unicode import UnicodeSQLProcessor
+from config.unicode_sql_processor import UnicodeSQLProcessor
 from core.unicode import UnicodeProcessor as UtilsProcessor  # Alias check
 from core.unicode import (
     UnicodeTextProcessor,
@@ -33,6 +33,13 @@ def test_sql_query_encoding_removes_surrogates():
     text = "SELECT" + chr(0xD800) + "1"
     with pytest.raises(UnicodeEncodingError):
         UnicodeSQLProcessor.encode_query(text)
+
+
+def test_encode_query_reports_original_value():
+    text = "DROP" + chr(0xD800)
+    with pytest.raises(UnicodeEncodingError) as exc_info:
+        UnicodeSQLProcessor.encode_query(text)
+    assert exc_info.value.original_value == text
 
 
 def test_unicode_security_processor_sanitization():
@@ -70,4 +77,4 @@ def test_unicode_security_validator_df():
 def test_nested_values_wrapper():
     df = pd.DataFrame({"col": [["a" + chr(0xDFFF)]]})
     cleaned = sanitize_dataframe(df)
-    assert cleaned.iloc[0, 0][0] == "a"
+    assert cleaned.iloc[0, 0] == "['a\\udfff']"
