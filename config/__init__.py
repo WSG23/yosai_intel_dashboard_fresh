@@ -11,12 +11,16 @@ from .base import (
     DatabaseConfig,
     SecurityConfig,
 )
-from .config_manager import ConfigManager, get_config, reload_config
-from .config_validator import ConfigValidator, ValidationResult
 from .config_loader import ConfigLoader
 from .config_transformer import ConfigTransformer
-from .dynamic_config import dynamic_config, DynamicConfigManager
-from .constants import SecurityConstants, PerformanceConstants, CSSConstants
+from .config_validator import ConfigValidator, ValidationResult
+from .constants import CSSConstants, PerformanceConstants, SecurityConstants
+from .dynamic_config import DynamicConfigManager, dynamic_config
+from .protocols import (
+    ConfigLoaderProtocol,
+    ConfigTransformerProtocol,
+    ConfigValidatorProtocol,
+)
 
 
 def _get_service(name: str):
@@ -50,6 +54,9 @@ def create_config_manager(
     config_path: Optional[str] = None,
 ) -> ConfigManager:
     """Factory that wires core config components."""
+    loader: ConfigLoaderProtocol | None
+    validator: ConfigValidatorProtocol | None
+    transformer: ConfigTransformerProtocol | None
 
     if container is not None:
         loader = (
@@ -106,7 +113,7 @@ logger = logging.getLogger(__name__)
 __all__ = [
     # Core configuration classes
     "Config",
-    "AppConfig", 
+    "AppConfig",
     "DatabaseConfig",
     "SecurityConfig",
     "ConfigManager",
@@ -114,30 +121,28 @@ __all__ = [
     "ValidationResult",
     "ConfigLoader",
     "ConfigTransformer",
-    
+    "ConfigLoaderProtocol",
+    "ConfigValidatorProtocol",
+    "ConfigTransformerProtocol",
     # Factory and management functions
     "create_config_manager",
     "get_config",
     "reload_config",
-    
     # Convenience getters
     "get_app_config",
-    "get_database_config", 
+    "get_database_config",
     "get_security_config",
     "get_plugin_config",
-    
     # Optional service getters
     "get_database_manager",
     "get_database_connection",
     "get_mock_connection",
     "get_enhanced_postgresql_manager",
-    
     # Dynamic configuration
     "dynamic_config",
     "DynamicConfigManager",
-    
     # Constants
     "SecurityConstants",
-    "PerformanceConstants", 
+    "PerformanceConstants",
     "CSSConstants",
 ]

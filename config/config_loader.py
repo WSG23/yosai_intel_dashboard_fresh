@@ -1,26 +1,19 @@
 """Load configuration files with YAML ``!include`` support."""
+
 from __future__ import annotations
 
+import io
 import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Protocol
-import io
-
+from typing import Any, Dict, Optional
 
 import yaml
 
 from .environment import select_config_file
+from .protocols import ConfigLoaderProtocol
 from .unicode_sql_processor import UnicodeSQLProcessor
-
-
-class ConfigLoaderProtocol(Protocol):
-    """Protocol for objects that load configuration dictionaries."""
-
-    def load(self, config_path: Optional[str] = None) -> Dict[str, Any]:
-        """Return configuration data from the given path."""
-        ...
 
 
 class ConfigLoader(ConfigLoaderProtocol):
@@ -105,4 +98,3 @@ class ConfigLoader(ConfigLoaderProtocol):
 
 
 __all__ = ["ConfigLoader", "ConfigLoaderProtocol"]
-

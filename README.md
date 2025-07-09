@@ -420,7 +420,7 @@ SECRET_KEY=supersecret
 python app.py
 ```
 
-These values override `database.host`, `database.username`, `cache.host` and
+These values override `database.host`, `database.user`, `cache.host` and
 `security.secret_key` from the loaded YAML.
 
 ### Selecting a YAML File
