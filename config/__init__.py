@@ -3,8 +3,6 @@
 import logging
 from typing import Any, Dict, Optional
 
-from services.registry import get_service
-
 from .base import (
     AppConfig,
     Config,
@@ -22,31 +20,6 @@ from .protocols import (
     ConfigTransformerProtocol,
     ConfigValidatorProtocol,
 )
-
-
-def _get_service(name: str):
-    """Safely retrieve optional services from registry."""
-    return get_service(name)
-
-
-def get_database_manager():
-    """Return the optional ``DatabaseManager`` service."""
-    return _get_service("DatabaseManager")
-
-
-def get_database_connection():
-    """Return the optional ``DatabaseConnection`` service."""
-    return _get_service("DatabaseConnection")
-
-
-def get_mock_connection():
-    """Return the optional ``MockConnection`` service."""
-    return _get_service("MockConnection")
-
-
-def get_enhanced_postgresql_manager():
-    """Return the optional ``EnhancedPostgreSQLManager`` service."""
-    return _get_service("EnhancedPostgreSQLManager")
 
 
 def create_config_manager(
@@ -134,11 +107,6 @@ __all__ = [
     "get_database_config",
     "get_security_config",
     "get_plugin_config",
-    # Optional service getters
-    "get_database_manager",
-    "get_database_connection",
-    "get_mock_connection",
-    "get_enhanced_postgresql_manager",
     # Dynamic configuration
     "dynamic_config",
     "DynamicConfigManager",
