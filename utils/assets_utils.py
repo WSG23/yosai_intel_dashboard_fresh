@@ -22,7 +22,32 @@ def get_nav_icon(app, name: str) -> str | None:
 
 
 def ensure_icon_cache_headers(app):
-    """Add cache headers for icon assets to prevent loading issues."""
+    """Add cache headers for icon assets to prevent loading issues.
+
+    This registers an ``after_request`` hook on ``app.server`` that sets
+    ``Cache-Control`` and ``ETag`` headers for responses under
+    ``/assets/navbar_icons``. It helps browsers cache navbar icons instead of
+    reloading them on every page.
+
+    Parameters
+    ----------
+    app : dash.Dash
+        The Dash application whose underlying Flask ``server`` should receive
+        the headers.
+
+    Returns
+    -------
+    dash.Dash
+        The provided ``app`` for convenience so calls can be chained.
+
+    Examples
+    --------
+    >>> from dash import Dash
+    >>> from utils.assets_utils import ensure_icon_cache_headers
+    >>> dash_app = Dash(__name__)
+    >>> ensure_icon_cache_headers(dash_app)
+    >>> # ``dash_app.server`` will now add caching headers for icon responses
+    """
 
     @app.server.after_request
     def add_icon_cache_headers(response):
