@@ -2,12 +2,12 @@
 """Complete application factory integration."""
 from __future__ import annotations
 
+import importlib
 import logging
 import os
 import sys
 import time
 import types
-import importlib
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Optional, cast
 
@@ -98,27 +98,26 @@ from flask_caching import Cache
 from components.ui.navbar import create_navbar_layout
 from config.complete_service_registration import register_all_application_services
 from config.config import get_config
-
-from core.service_container import ServiceContainer
+from core.callback_registry import GlobalCallbackRegistry, _callback_registry
 from core.performance_monitor import DIPerformanceMonitor
+from core.service_container import ServiceContainer
 from core.theme_manager import DEFAULT_THEME, apply_theme_settings
 from pages import get_page_layout
 from pages.deep_analytics import Callbacks as DeepAnalyticsCallbacks
 from pages.deep_analytics import layout as deep_analytics_layout
 from pages.deep_analytics import register_callbacks as register_deep_callbacks
-from pages.file_upload import layout as upload_layout
 from pages.file_upload import register_callbacks as register_upload_callbacks
+from pages.file_upload import safe_upload_layout
 from services import get_analytics_service
 from services.analytics_service import AnalyticsService
+from utils.assets_debug import check_navbar_assets
 from utils.assets_utils import (
+    NAVBAR_ICON_NAMES,
+    ensure_all_navbar_assets,
     ensure_icon_cache_headers,
     ensure_navbar_assets,
-    ensure_all_navbar_assets,
     fix_flask_mime_types,
-    NAVBAR_ICON_NAMES,
 )
-from utils.assets_debug import check_navbar_assets
-from core.callback_registry import GlobalCallbackRegistry, _callback_registry
 
 from .health import register_health_endpoints
 from .plugins import _initialize_plugins
@@ -712,8 +711,8 @@ def _register_router_callbacks(
             "/graphs": _get_graphs_page,
             "/export": _get_export_page,
             "/settings": _get_settings_page,
-            "/upload": upload_layout,           # Support legacy route
-            "/file-upload": upload_layout,      # Primary route
+            "/upload": safe_upload_layout,
+            "/file-upload": safe_upload_layout,
             "/": _get_home_page,
             "/dashboard": _get_home_page,
         }
@@ -829,7 +828,7 @@ def _get_settings_page() -> Any:
 def _get_upload_page() -> Any:
     """Get upload page with complete integration"""
     try:
-        return upload_layout()
+        return safe_upload_layout()
     except Exception:
         logger.exception("Upload page failed to load")
         return _create_placeholder_page(
