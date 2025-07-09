@@ -8,7 +8,6 @@ import logging
 import time
 from functools import wraps
 from typing import Callable, List, Dict, Iterable, Any
-import functools
 
 
 from dash import no_update
