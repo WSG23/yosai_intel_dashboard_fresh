@@ -17,12 +17,14 @@ from core.secrets_validator import SecretsValidator
 
 from .config_loader import ConfigLoader
 from .base import ConfigTransformer
+
 from .config_validator import ConfigValidator, ValidationResult
 from .base import (
     AppConfig,
     AnalyticsConfig,
     CacheConfig,
     Config,
+    ConfigTransformer,
     DatabaseConfig,
     MonitoringConfig,
     SampleFilesConfig,

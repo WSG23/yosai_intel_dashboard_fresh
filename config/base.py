@@ -269,5 +269,6 @@ __all__ = [
     "CacheConfig",
     "SecretValidationConfig",
     "Config",
+
     "ConfigTransformer",
 ]

@@ -9,7 +9,7 @@ from dash import dcc, html
 class UploadArea:
     """Drag and drop upload area without business logic."""
 
-    def __init__(self, upload_handler: Callable | None = None, upload_id: str = "file-upload-area") -> None:
+    def __init__(self, upload_handler: Callable | None = None, upload_id: str = "drag-drop-upload") -> None:
         self.upload_handler = upload_handler
         self.upload_id = upload_id
         self.status_id = f"{upload_id}-status"

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List
 from core.exceptions import ConfigurationError
 
 if TYPE_CHECKING:  # pragma: no cover - used for type hints only
-    from .config import Config
+    from .base import Config
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class ConfigValidator:
                 "Missing configuration sections: " + ", ".join(sorted(missing))
             )
 
-        from .config import Config
+        from .base import Config
 
         config = Config()
         for section in [
