@@ -1,7 +1,7 @@
 import pandas as pd
-import pytest
 
 from services.analytics_service import AnalyticsService
+from tests.fake_configuration import FakeConfiguration
 
 
 def _make_df():
@@ -69,3 +69,41 @@ def test_get_real_uploaded_data_no_files(monkeypatch):
     monkeypatch.setattr(service, "load_uploaded_data", lambda: {})
     res = service._get_real_uploaded_data()
     assert res["status"] == "no_data"
+
+
+def test_service_receives_config(monkeypatch):
+    """Provided config should be stored on the service instance."""
+
+    import services.analytics_service as mod
+
+    # ensure a fresh global instance
+    mod._analytics_service = None
+
+    # allow instantiation without implementing abstract methods
+    monkeypatch.setattr(mod.AnalyticsService, "__abstractmethods__", frozenset())
+
+    captured = {}
+
+    def fake_init(
+        self,
+        database=None,
+        data_processor=None,
+        *,
+        config=None,
+        event_bus=None,
+        storage=None,
+    ):
+        captured["database"] = database
+        captured["config"] = config
+        self.database = database
+        self.config = config
+
+    monkeypatch.setattr(mod.AnalyticsService, "__init__", fake_init)
+
+    cfg = FakeConfiguration()
+    service = mod.get_analytics_service(config_provider=cfg)
+
+    assert service.config is cfg
+    assert service.database is None
+    assert captured["config"] is cfg
+    assert captured["database"] is None

@@ -574,7 +574,7 @@ def get_analytics_service(
     if _analytics_service is None:
         with _analytics_service_lock:
             if _analytics_service is None:
-                _analytics_service = AnalyticsService(config_provider)
+                _analytics_service = AnalyticsService(config=config_provider)
     return _analytics_service
 
 
@@ -582,7 +582,7 @@ def create_analytics_service(
     config_provider: ConfigProviderProtocol | None = None,
 ) -> AnalyticsService:
     """Create new analytics service instance"""
-    return AnalyticsService(config_provider)
+    return AnalyticsService(config=config_provider)
 
 
 __all__ = ["AnalyticsService", "get_analytics_service", "create_analytics_service"]
