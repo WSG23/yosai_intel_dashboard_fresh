@@ -369,10 +369,6 @@ class ConfigManager(ConfigurationProtocol):
             return {"valid": False, "error": str(exc)}
 
 
-def create_config_manager(config_path: Optional[str] = None) -> "ConfigManager":
-    """Factory helper to instantiate :class:`ConfigManager`."""
-    return ConfigManager(config_path)
-
 
 
 # Global configuration instance
@@ -451,6 +447,7 @@ def create_config_manager(config_path: Optional[str] = None) -> ConfigManager:
 
 
 # Export main classes and functions
+
 __all__ = [
     "Config",
     "AppConfig",
@@ -474,9 +471,7 @@ __all__ = [
     "get_cache_config",
     "get_secret_validation_config",
     "get_plugin_config",
-    "create_config_manager",
 ]
-
 # Use new implementation by default
 from .config_manager import ConfigManager as ConfigManager
 from .config_manager import get_config as get_config
