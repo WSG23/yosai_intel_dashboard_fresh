@@ -551,6 +551,36 @@ class AnalyticsService(AnalyticsServiceProtocol):
         """Return current analytics metrics."""
         return self.get_analytics_status()
 
+    # ------------------------------------------------------------------
+    # Placeholder implementations for abstract methods
+    # ------------------------------------------------------------------
+    def analyze_access_patterns(
+        self, days: int, user_id: str | None = None
+    ) -> Dict[str, Any]:
+        """Analyze access patterns over the given timeframe."""
+        logger.debug(
+            "analyze_access_patterns called with days=%s user_id=%s",
+            days,
+            user_id,
+        )
+        return {"patterns": [], "days": days, "user_id": user_id}
+
+    def detect_anomalies(
+        self, data: pd.DataFrame, sensitivity: float = 0.5
+    ) -> List[Dict[str, Any]]:
+        """Detect anomalies in the provided data."""
+        logger.debug("detect_anomalies called with sensitivity=%s", sensitivity)
+        return []
+
+    def generate_report(self, report_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate an analytics report."""
+        logger.debug(
+            "generate_report called with report_type=%s params=%s",
+            report_type,
+            params,
+        )
+        return {"report_type": report_type, "params": params}
+
 
 # Global service instance
 _analytics_service: Optional[AnalyticsService] = None
