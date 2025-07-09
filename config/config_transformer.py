@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 from typing import Callable, List
 
-from .base_config import Config
+from .base import Config
 from .dynamic_config import dynamic_config
 from core.secrets_manager import SecretsManager
 
