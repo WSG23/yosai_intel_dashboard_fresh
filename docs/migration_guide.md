@@ -19,8 +19,9 @@ result = UnicodeSecurityProcessor.sanitize_input(text)
 
 ### SQL Processing Migration
 ```python
-from core.unicode import UnicodeSQLProcessor
+from core.unicode import UnicodeProcessor, UnicodeSQLProcessor
 safe_query = UnicodeSQLProcessor.encode_query(query)
+safe_params = UnicodeProcessor.safe_encode(params)
 ```
 
 ### DataFrame Processing Migration
