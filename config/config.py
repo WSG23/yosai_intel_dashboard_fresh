@@ -14,14 +14,9 @@ from core.protocols import ConfigurationProtocol
 from core.secrets_manager import SecretsManager
 from core.secrets_validator import SecretsValidator
 
-
-from .config_loader import ConfigLoader
-from .base import ConfigTransformer
-
-from .config_validator import ConfigValidator, ValidationResult
 from .base import (
-    AppConfig,
     AnalyticsConfig,
+    AppConfig,
     CacheConfig,
     Config,
     ConfigTransformer,
@@ -31,6 +26,8 @@ from .base import (
     SecretValidationConfig,
     SecurityConfig,
 )
+from .config_loader import ConfigLoader
+from .config_validator import ConfigValidator, ValidationResult
 from .constants import (
     DEFAULT_APP_HOST,
     DEFAULT_APP_PORT,
@@ -41,6 +38,11 @@ from .constants import (
 )
 from .dynamic_config import dynamic_config
 from .environment import get_environment, select_config_file
+from .protocols import (
+    ConfigLoaderProtocol,
+    ConfigTransformerProtocol,
+    ConfigValidatorProtocol,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +55,6 @@ def _validate_production_secrets() -> None:
             raise ConfigurationError("SECRET_KEY required in production")
 
 
-
-
 class ConfigManager(ConfigurationProtocol):
     """Simple configuration manager"""
 
@@ -62,14 +62,14 @@ class ConfigManager(ConfigurationProtocol):
         self,
         config_path: Optional[str] = None,
         *,
-        loader: Optional[ConfigLoader] = None,
-        validator: Optional[ConfigValidator] = None,
-        transformer: Optional[ConfigTransformer] = None,
+        loader: ConfigLoaderProtocol | None = None,
+        validator: ConfigValidatorProtocol | None = None,
+        transformer: ConfigTransformerProtocol | None = None,
     ) -> None:
         self.config_path = config_path
-        self.loader = loader or ConfigLoader(config_path)
-        self.validator = validator or ConfigValidator()
-        self.transformer = transformer or ConfigTransformer()
+        self.loader: ConfigLoaderProtocol = loader or ConfigLoader(config_path)
+        self.validator: ConfigValidatorProtocol = validator or ConfigValidator()
+        self.transformer: ConfigTransformerProtocol = transformer or ConfigTransformer()
         self.config = Config()
         self.validated_secrets: Dict[str, str] = {}
         self._load_config()
@@ -243,7 +243,6 @@ class ConfigManager(ConfigurationProtocol):
         """Apply environment variable overrides"""
         config_transformer.apply(self)
 
-
     def _apply_validated_secrets(self) -> None:
         """Apply secrets validated by SecretsValidator."""
         if "SECRET_KEY" in self.validated_secrets:
@@ -372,7 +371,6 @@ class ConfigManager(ConfigurationProtocol):
 def create_config_manager(config_path: Optional[str] = None) -> "ConfigManager":
     """Factory helper to instantiate :class:`ConfigManager`."""
     return ConfigManager(config_path)
-
 
 
 # Global configuration instance

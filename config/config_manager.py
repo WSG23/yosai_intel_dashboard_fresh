@@ -7,10 +7,15 @@ from typing import Any, Dict, Optional
 from core.protocols import ConfigurationProtocol
 
 from .base import AppConfig, Config, DatabaseConfig, SecurityConfig
-from .config_loader import ConfigLoader, ConfigLoaderProtocol
-from .config_validator import ConfigValidator, ValidationResult
+from .config_loader import ConfigLoader
 from .config_transformer import ConfigTransformer
+from .config_validator import ConfigValidator, ValidationResult
 from .environment import get_environment
+from .protocols import (
+    ConfigLoaderProtocol,
+    ConfigTransformerProtocol,
+    ConfigValidatorProtocol,
+)
 
 
 class ConfigManager(ConfigurationProtocol):
@@ -20,13 +25,13 @@ class ConfigManager(ConfigurationProtocol):
         self,
         config_path: Optional[str] = None,
         loader: ConfigLoaderProtocol | None = None,
-        validator: ConfigValidator | None = None,
-        transformer: ConfigTransformer | None = None,
+        validator: ConfigValidatorProtocol | None = None,
+        transformer: ConfigTransformerProtocol | None = None,
     ) -> None:
         self.config_path = config_path
-        self.loader = loader or ConfigLoader()
-        self.validator = validator or ConfigValidator()
-        self.transformer = transformer or ConfigTransformer()
+        self.loader: ConfigLoaderProtocol = loader or ConfigLoader()
+        self.validator: ConfigValidatorProtocol = validator or ConfigValidator()
+        self.transformer: ConfigTransformerProtocol = transformer or ConfigTransformer()
         self.config = Config()
         self.validation: ValidationResult | None = None
         self.reload_config()
