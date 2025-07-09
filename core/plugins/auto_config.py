@@ -1,11 +1,12 @@
 """Utility helpers for automatic plugin setup."""
+
 from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional, cast
 
 from dash import Dash
 
-from config.config import ConfigManager
+from config import ConfigManager, create_config_manager
 from core.service_container import ServiceContainer
 
 from .unified_registry import UnifiedPluginRegistry
@@ -26,7 +27,7 @@ class PluginAutoConfiguration:
         self.container = container or ServiceContainer()
         # Expose container on the app for decorators like ``safe_callback``
         cast(Any, self.app)._yosai_container = self.container
-        self.config_manager = config_manager or ConfigManager()
+        self.config_manager = config_manager or create_config_manager()
         self.package = package
         self.registry = UnifiedPluginRegistry(
             app,
@@ -80,7 +81,10 @@ class PluginAutoConfiguration:
             methods=["GET"],
         )
         self.registry.plugin_manager.register_performance_endpoint(self.app)
-        return {"/health/plugins": plugin_health, "/health/plugins/performance": self.registry.plugin_manager.get_plugin_performance_metrics}
+        return {
+            "/health/plugins": plugin_health,
+            "/health/plugins/performance": self.registry.plugin_manager.get_plugin_performance_metrics,
+        }
 
 
 def setup_plugins(

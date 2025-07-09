@@ -34,7 +34,13 @@ def register_all_services(container: ServiceContainer) -> None:
 
 
 def register_core_infrastructure(container: ServiceContainer) -> None:
-    from config.config import ConfigManager
+    from config import (
+        ConfigLoader,
+        ConfigManager,
+        ConfigTransformer,
+        ConfigValidator,
+        create_config_manager,
+    )
     from config.database_manager import DatabaseConfig, DatabaseManager
     from core.logging import LoggingService
     from services.configuration_service import (
@@ -42,10 +48,14 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         DynamicConfigurationService,
     )
 
+    container.register_singleton("config_loader", ConfigLoader)
+    container.register_singleton("config_validator", ConfigValidator)
+    container.register_singleton("config_transformer", ConfigTransformer)
     container.register_singleton(
         "config_manager",
         ConfigManager,
         protocol=ConfigurationProtocol,
+        factory=lambda c: create_config_manager(container=c),
     )
     container.register_singleton(
         "configuration_service",
@@ -87,19 +97,27 @@ def register_analytics_services(container: ServiceContainer) -> None:
         def get_dashboard_summary(self, time_range: str = "30d") -> Dict[str, Any]:
             return {"status": "stub", "message": "Analytics not configured"}
 
-        def analyze_access_patterns(self, days: int, user_id: str | None = None) -> Dict[str, Any]:
+        def analyze_access_patterns(
+            self, days: int, user_id: str | None = None
+        ) -> Dict[str, Any]:
             return {"status": "stub"}
 
         def detect_anomalies(self, data, sensitivity: float = 0.5):
             return []
 
-        def generate_report(self, report_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        def generate_report(
+            self, report_type: str, params: Dict[str, Any]
+        ) -> Dict[str, Any]:
             return {"status": "stub"}
 
-        def get_user_activity_summary(self, user_id: str, days: int = 30) -> Dict[str, Any]:
+        def get_user_activity_summary(
+            self, user_id: str, days: int = 30
+        ) -> Dict[str, Any]:
             return {"status": "stub"}
 
-        def get_facility_statistics(self, facility_id: str | None = None) -> Dict[str, Any]:
+        def get_facility_statistics(
+            self, facility_id: str | None = None
+        ) -> Dict[str, Any]:
             return {"status": "stub"}
 
         def health_check(self) -> Dict[str, Any]:
