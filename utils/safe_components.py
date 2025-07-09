@@ -32,7 +32,7 @@ def safe_navbar():
                                 dbc.NavLink(
                                     navbar_icon("upload.png", "Upload", "⬆️"),
                                     href="/file-upload",
-                                    external_link=True,
+                                    external_link=False,
                                     title="Upload",
                                 )
                             ),
@@ -42,7 +42,7 @@ def safe_navbar():
                                         "analytics.png", "Deep Analytics Page", "📊"
                                     ),
                                     href="/analytics",
-                                    external_link=True,
+                                    external_link=False,
                                     title="Deep Analytics Page",
                                 )
                             ),

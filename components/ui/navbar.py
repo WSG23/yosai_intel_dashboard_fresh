@@ -112,7 +112,13 @@ def create_navbar_layout() -> dbc.Navbar:
                         dbc.NavbarBrand("Dashboard", href="/"),
                         dbc.Nav(
                             [
-                                dbc.NavItem(dbc.NavLink("Upload", href="/file-upload")),
+                                dbc.NavItem(
+                                    dbc.NavLink(
+                                        "Upload",
+                                        href="/file-upload",
+                                        external_link=False,
+                                    )
+                                ),
                             ],
                             navbar=True,
                         ),
