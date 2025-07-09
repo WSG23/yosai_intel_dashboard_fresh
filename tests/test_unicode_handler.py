@@ -1,6 +1,7 @@
 import pytest
 
-from core.unicode import UnicodeSQLProcessor
+from config.database_exceptions import UnicodeEncodingError
+from config.unicode_sql_processor import UnicodeSQLProcessor
 
 
 def _encode_params(value):
@@ -15,12 +16,12 @@ def _encode_params(value):
 
 def test_safe_encode_query_surrogates():
     text = "test" + chr(0xD800)
-    result = UnicodeSQLProcessor.encode_query(text)
-    assert isinstance(result, str)
-    assert "\ufffd" in result
+    with pytest.raises(UnicodeEncodingError) as exc_info:
+        UnicodeSQLProcessor.encode_query(text)
+    assert exc_info.value.original_value == text
 
 
 def test_safe_encode_params_nested():
     params = {"a": ["b", {"c": "d" + chr(0xDCFF)}]}
-    encoded = _encode_params(params)
-    assert encoded["a"][1]["c"].endswith("\ufffd")
+    with pytest.raises(UnicodeEncodingError):
+        _encode_params(params)
