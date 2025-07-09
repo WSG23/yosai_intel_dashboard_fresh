@@ -19,6 +19,7 @@ except ImportError:
 
 from core.exceptions import ConfigurationError
 from utils import debug_dash_asset_serving
+from core.unicode import unicode_safe_callback
 
 import traceback
 from pathlib import Path
