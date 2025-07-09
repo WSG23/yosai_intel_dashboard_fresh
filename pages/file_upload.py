@@ -1,8 +1,11 @@
-#!/usr/bin/env python3#!/usr/bin/env python3
+#!/usr/bin/env python3
 """File upload page wiring the reusable upload component."""
 from __future__ import annotations
 
-from core.plugins.decorators import unicode_safe_callbackimport logging
+import logging
+from typing import Any, Optional
+
+from core.plugins.decorators import unicode_safe_callback
 import types
 from typing import TYPE_CHECKING, Any
 
