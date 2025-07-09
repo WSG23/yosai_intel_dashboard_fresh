@@ -6,7 +6,7 @@ import logging
 import unicodedata
 from typing import Any
 
-from .unicode_processor import sanitize_unicode_input as _sanitize_unicode_input
+from .unicode import sanitize_unicode_input as _sanitize_unicode_input
 
 logger = logging.getLogger(__name__)
 
