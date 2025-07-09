@@ -14,6 +14,8 @@ from core.protocols import ConfigurationProtocol
 from core.secrets_manager import SecretsManager
 from core.secrets_validator import SecretsValidator
 
+from .config_transformer import ConfigTransformer
+
 from .base import (
     AnalyticsConfig,
     AppConfig,
