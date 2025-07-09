@@ -674,7 +674,7 @@ def register_callbacks(
 ) -> None:
     """Register component callbacks using the coordinator."""
 
-    manager.register_callback(
+    manager.register_handler(
         Output({"type": "custom-field", "index": MATCH}, "style"),
         Input({"type": "column-mapping", "index": MATCH}, "value"),
         callback_id="toggle_custom_field",
@@ -682,7 +682,7 @@ def register_callbacks(
     )(toggle_custom_field)
 
     if controller is not None:
-        controller.register_callback(
+        controller.register_handler(
             "on_analysis_error",
             lambda aid, err: logger.error("Column verification error: %s", err),
         )

@@ -26,13 +26,13 @@ class CallbackUnifier:
 
             if hasattr(self._target, "register_callback"):
                 try:
-                    return self._target.register_callback(
+                    return self._target.register_handler(
                         outputs, inputs, states, **kwargs
                     )(wrapped)
                 except TypeError:
                     sig = inspect.signature(self._target.register_callback)
                     filtered = {k: v for k, v in kwargs.items() if k in sig.parameters}
-                    return self._target.register_callback(
+                    return self._target.register_handler(
                         outputs, inputs, states, **filtered
                     )(wrapped)
             if hasattr(self._target, "callback"):

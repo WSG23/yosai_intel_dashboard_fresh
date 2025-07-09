@@ -13,6 +13,7 @@ import warnings
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 import numpy as np
 import pandas as pd
@@ -73,7 +74,7 @@ class SecurityPatternsAnalyzer:
         self.contamination = contamination
         self.confidence_threshold = confidence_threshold
         self.logger = logger or logging.getLogger(__name__)
-        self.callback_controller = security_callback_controller
+        self.unified_callbacks = security_callback_controller
 
         # Initialize ML models
         self.isolation_forest = IsolationForest(
@@ -126,7 +127,7 @@ class SecurityPatternsAnalyzer:
             # Fire callbacks for detected critical threats
             for threat in threat_indicators:
                 if threat.severity == "critical":
-                    self.callback_controller.trigger(
+                    self.unified_callbacks.trigger(
                         SecurityEvent.THREAT_DETECTED,
                         {
                             "threat_type": threat.threat_type,
@@ -137,7 +138,7 @@ class SecurityPatternsAnalyzer:
                     self._emit_anomaly_detected(threat)
 
             # Notify completion of analysis
-            self.callback_controller.trigger(
+            self.unified_callbacks.trigger(
                 SecurityEvent.ANALYSIS_COMPLETE,
                 {"score": security_score, "risk_level": risk_level},
             )
@@ -513,7 +514,7 @@ def setup_isolated_security_testing(
 ) -> tuple[SecurityCallbackController, Optional[Callable[[Dict[str, Any]], None]]]:
     """Return a cleared controller and optional test handler."""
 
-    controller = SecurityCallbackController()
+    controller = SecurityTrulyUnifiedCallbacks()
     controller._callbacks.clear()
     controller.history = []
     handler: Optional[Callable[[Dict[str, Any]], None]] = None
@@ -524,6 +525,6 @@ def setup_isolated_security_testing(
 
         handler = _handler
         for event in SecurityEvent:
-            controller.register_callback(event, lambda d, e=event: _handler(d, e))
+            controller.register_handler(event, lambda d, e=event: _handler(d, e))
 
     return controller, handler

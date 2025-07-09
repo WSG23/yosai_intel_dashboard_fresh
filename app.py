@@ -169,7 +169,7 @@ def _apply_unicode_safety(app, register_func):
     # Store original callback method
     original_callback = app.callback
 
-    def unicode_safe_callback(*args, **kwargs):
+    def handle_unicode_safe(*args, **kwargs):
         """Wrapper that adds Unicode safety to callbacks"""
         def decorator(func):
             import functools

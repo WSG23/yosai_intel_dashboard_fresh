@@ -157,7 +157,7 @@ class TrulyUnifiedCallbacks:
         return decorator
 
     # ------------------------------------------------------------------
-    def register_callback(
+    def handle_register(
         self,
         outputs: Any,
         inputs: Iterable[Input] | Input | None = None,

@@ -1,11 +1,12 @@
 from __future__ import annotations
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 from datetime import datetime
 from typing import Iterable, List, Optional, Tuple, Dict
 
 import pandas as pd
 
-from core.callback_controller import CallbackEvent
+from core.unified_callbacks import CallbackEvent
 from core.callback_manager import CallbackManager
 from core.container import get_unicode_processor
 from core.protocols import UnicodeProcessorProtocol
@@ -25,7 +26,7 @@ class FormatDetector:
         unicode_processor: UnicodeProcessorProtocol | None = None,
     ) -> None:
         self.readers: List = list(readers) if readers else []
-        self.callback_controller = CallbackManager()
+        self.unified_callbacks = CallbackManager()
         self.unicode_processor = unicode_processor or get_unicode_processor()
 
     def detect_and_load(
@@ -46,7 +47,7 @@ class FormatDetector:
                 }
                 return df, meta
             except reader.CannotParse as exc:
-                self.callback_controller.trigger(
+                self.unified_callbacks.trigger(
                     CallbackEvent.SYSTEM_WARNING,
                     reader.format_name,
                     {"warning": str(exc)},

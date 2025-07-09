@@ -18,7 +18,7 @@ def add_register_callback_method():
         content = f.read()
     
     # Check if register_callback method already exists
-    if 'def register_callback(' in content:
+    if 'def handle_register(' in content:
         print("✅ register_callback method already exists!")
         return True
     
@@ -34,7 +34,7 @@ def add_register_callback_method():
     # The method to add
     register_callback_method = '''
     # ------------------------------------------------------------------
-    def register_callback(
+    def handle_register(
         self,
         outputs: Any,
         inputs: Iterable[Input] | Input | None = None,

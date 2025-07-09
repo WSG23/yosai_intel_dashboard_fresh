@@ -4,7 +4,7 @@ import time
 from functools import wraps
 
 
-def profile_callback(callback_id: str):
+def handle_profile(callback_id: str):
     """Measure runtime of Dash callback functions."""
 
     def decorator(func):

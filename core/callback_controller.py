@@ -228,7 +228,7 @@ def callback_handler(event: CallbackEvent, weak: bool = False):
 
     def decorator(func: CallbackProtocol) -> CallbackProtocol:
         controller = CallbackController()
-        controller.register_callback(event, func, weak)
+        controller.register_handler(event, func, weak)
         return func
 
     return decorator
@@ -248,7 +248,7 @@ class TemporaryCallback:
         self.controller = controller or CallbackController()
 
     def __enter__(self) -> CallbackProtocol:
-        self.controller.register_callback(self.event, self.callback)
+        self.controller.register_handler(self.event, self.callback)
         return self.callback
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:

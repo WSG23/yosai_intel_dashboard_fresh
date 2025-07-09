@@ -43,7 +43,7 @@ def migrate_imports(path: Path) -> int:
 
 def validate_removal(root: Path) -> None:
     """Ensure the legacy controller module is gone and not imported."""
-    legacy_file = root / "services" / "data_processing" / "callback_controller.py"
+    legacy_file = root / "services" / "data_processing" / "unified_callbacks.py"
     if legacy_file.exists():
         raise AssertionError(f"Legacy module still present: {legacy_file}")
 
@@ -80,7 +80,7 @@ def test_unified_callbacks() -> None:
     assert results == [5]
 
     # Dash callbacks
-    @coord.register_callback(
+    @coord.register_handler(
         Output("out", "children"),
         Input("in", "value"),
         callback_id="t",

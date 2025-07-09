@@ -614,7 +614,7 @@ def register_callbacks(
             return display, options, alert
 
         if controller is not None:
-            controller.register_callback(
+            controller.register_handler(
                 "on_analysis_error",
                 lambda aid, err: logger.error("Deep analytics error: %s", err),
             )

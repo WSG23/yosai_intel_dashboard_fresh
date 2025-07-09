@@ -1,6 +1,7 @@
 """Manage Parquet file storage with metadata tracking."""
 
 from __future__ import annotations
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 import json
 import logging
@@ -31,7 +32,7 @@ class StorageManager:
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self._metadata_path = self.base_dir / "metadata.json"
         self._metadata: Dict[str, Any] = {}
-        self.callback_controller = CallbackManager()
+        self.unified_callbacks = CallbackManager()
         self.unicode_processor = unicode_processor or get_unicode_processor()
         self._load_metadata()
 
@@ -56,7 +57,7 @@ class StorageManager:
     def migrate_pkl_to_parquet(self, pkl_path: Path) -> Tuple[bool, str]:
         """Convert ``pkl_path`` to Parquet in base directory."""
         parquet_path = self.base_dir / pkl_path.with_suffix(".parquet").name
-        self.callback_controller.trigger(
+        self.unified_callbacks.trigger(
             CallbackEvent.FILE_PROCESSING_START,
             str(pkl_path),
         )
@@ -76,7 +77,7 @@ class StorageManager:
             }
             self._save_metadata()
 
-            self.callback_controller.trigger(
+            self.unified_callbacks.trigger(
                 CallbackEvent.FILE_PROCESSING_COMPLETE,
                 str(pkl_path),
                 {"parquet_file": str(parquet_path)},
@@ -84,7 +85,7 @@ class StorageManager:
             return True, f"Converted {pkl_path} to {parquet_path}"
         except Exception as exc:  # pragma: no cover - best effort
             _logger.error("Failed to migrate pkl: %s", exc)
-            self.callback_controller.trigger(
+            self.unified_callbacks.trigger(
                 CallbackEvent.FILE_PROCESSING_ERROR,
                 str(pkl_path),
                 {"error": str(exc)},
