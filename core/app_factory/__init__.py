@@ -876,8 +876,10 @@ def _register_callbacks(
         coordinator = cast(TrulyUnifiedCallbacksType, getattr(app, "_unified_wrapper"))
     elif TrulyUnifiedCallbacks is not None:
         coordinator = TrulyUnifiedCallbacks(app)
-        cast(Any, app).unified_callback = coordinator.unified_callback
-        cast(Any, app).register_callback = coordinator.register_callback
+        if hasattr(coordinator, "unified_callback"):
+            cast(Any, app).unified_callback = coordinator.unified_callback
+        if hasattr(coordinator, "register_callback"):
+            cast(Any, app).register_callback = coordinator.register_callback
         cast(Any, app)._unified_wrapper = coordinator
     else:  # pragma: no cover - optional dependency missing
         coordinator = None

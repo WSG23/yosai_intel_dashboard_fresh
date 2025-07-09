@@ -107,3 +107,17 @@ def create_navbar_layout(theme: str = "light"):
         color="light",
         className="shadow-sm",
     )
+
+
+def register_navbar_callbacks(manager, service=None) -> None:
+    """Register callbacks for the navbar component.
+
+    This simply sets a flag on *manager* to indicate the navbar callbacks have
+    been registered. The optional ``service`` parameter is accepted for
+    compatibility with other callback registrars but is not used.
+    """
+
+    manager.navbar_registered = True
+
+
+__all__ = ["create_navbar_layout", "register_navbar_callbacks", "get_simple_icon"]

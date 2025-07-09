@@ -7,7 +7,7 @@ class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol):
 
     def __init__(self) -> None:
         self.database = {}
-        self.app = {}
+        self.app = SimpleNamespace(environment="development")
         self.security = SimpleNamespace(
             max_upload_mb=10,
             rate_limit_requests=100,
