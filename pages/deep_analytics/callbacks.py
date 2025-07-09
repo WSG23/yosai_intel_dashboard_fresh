@@ -1,4 +1,3 @@
-from core.plugins.decorators import unicode_safe_callback
 """Dash callback handlers for the deep analytics page."""
 
 from typing import TYPE_CHECKING, Any
@@ -550,7 +549,6 @@ def register_callbacks(
             raise ValueError(f"Unsupported callback manager: {type(manager)}")
 
         callback_manager.register_operation(
-
             "analysis_buttons",
             lambda s, t, b, a, sug, q, u, ds: cb.handle_analysis_buttons(
                 s, t, b, a, sug, q, u, ds
@@ -623,7 +621,6 @@ def register_callbacks(
     _callback_registry.register_deduplicated(
         ["deep_analytics_operations"], _do_registration, source_module="deep_analytics"
     )
-
 
 
 __all__ = ["Callbacks", "register_callbacks"]

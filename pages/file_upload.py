@@ -4,16 +4,17 @@ from __future__ import annotations
 
 import logging
 import types
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from dash import html
 
-from core.callback_registry import (
-    _callback_registry,
-    handle_register_with_deduplication,
-)
-from core.plugins.decorators import unicode_safe_callback
+from core.callback_registry import _callback_registry
 from core.unicode import safe_encode_text
+
+try:
+    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+except Exception:  # pragma: no cover - fallback when unavailable
+    TrulyUnifiedCallbacks = None  # type: ignore
 
 try:  # Lazy import for optional heavy dependencies
     from components.upload import UnifiedUploadComponent
@@ -186,4 +187,5 @@ __all__ = [
     "register_upload_callbacks",
     "register_callbacks",
     "check_upload_system_health",
-    "load_page",]
+    "load_page",
+]

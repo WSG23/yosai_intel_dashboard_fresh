@@ -12,7 +12,8 @@ import logging
 import math
 import re
 import unicodedata
-from typing import Any, Iterable, Optional, Union
+from functools import wraps
+from typing import Any, Iterable, Optional, Union, Callable
 
 import pandas as pd
 
@@ -478,6 +479,26 @@ def safe_navbar_text(text: Any) -> str:
     return cleaned.strip()
 
 
+def unicode_safe_callback(func: Callable[..., Any]) -> Callable[..., Any]:
+    """Decorator to sanitize Unicode arguments and results."""
+
+    @wraps(func)
+    def wrapper(*args: Any, **kwargs: Any):
+        safe_args = [safe_encode_text(a) if isinstance(a, str) else a for a in args]
+        safe_kwargs = {
+            k: safe_encode_text(v) if isinstance(v, str) else v
+            for k, v in kwargs.items()
+        }
+        result = func(*safe_args, **safe_kwargs)
+        if isinstance(result, str):
+            return safe_encode_text(result)
+        if isinstance(result, (list, tuple)):
+            return [safe_encode_text(r) if isinstance(r, str) else r for r in result]
+        return result
+
+    return wrapper
+
+
 __all__ = [
     "clean_unicode_text",
     "safe_decode_bytes",
@@ -501,4 +522,5 @@ __all__ = [
     "UnicodeSQLProcessor",
     "UnicodeSecurityProcessor",
     "object_count",
+    "unicode_safe_callback",
 ]
