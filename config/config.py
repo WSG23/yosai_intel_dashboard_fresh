@@ -628,20 +628,23 @@ _config_manager: Optional[ConfigManager] = None
 
 
 def get_config() -> ConfigManager:
-    """Get global configuration manager"""
+    """Get global configuration manager using new implementation."""
     global _config_manager
     if _config_manager is None:
-        from . import create_config_manager
+        from .config_manager import get_config as _new_get_config
 
-        _config_manager = create_config_manager()
+        _config_manager = _new_get_config()
+
     return _config_manager
 
 
 def reload_config() -> ConfigManager:
-    """Reload configuration (useful for testing)"""
+    """Reload configuration using new implementation."""
     global _config_manager
-    _config_manager = None
-    return get_config()
+    from .config_manager import reload_config as _new_reload
+
+    _config_manager = _new_reload()
+    return _config_manager
 
 
 # Convenience functions
@@ -720,3 +723,8 @@ __all__ = [
     "get_plugin_config",
     "create_config_manager",
 ]
+
+# Use new implementation by default
+from .config_manager import ConfigManager as ConfigManager
+from .config_manager import get_config as get_config
+from .config_manager import reload_config as reload_config
