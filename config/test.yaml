@@ -12,6 +12,7 @@ database:
   name: "yosai_db"
   user: "yosai_user"
   password: "${DB_PASSWORD}"
+  url: ""
 
 security:
   secret_key: "${SECRET_KEY}"
