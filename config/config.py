@@ -3,8 +3,11 @@
 Simplified Configuration System
 Replaces: config/yaml_config.py, config/unified_config.py, config/validator.py
 """
-from typing import Any, Dict
+import logging
+import os
+from typing import Any, Dict, List, Optional
 
+import yaml
 
 from core.exceptions import ConfigurationError
 from core.protocols import ConfigurationProtocol
@@ -237,7 +240,7 @@ class ConfigManager(ConfigurationProtocol):
 
     def _apply_env_overrides(self) -> None:
         """Apply environment variable overrides"""
-        config_transformer.apply(self)
+        self.transformer.transform(self.config)
 
     def _apply_validated_secrets(self) -> None:
         """Apply secrets validated by SecretsValidator."""
@@ -364,7 +367,6 @@ class ConfigManager(ConfigurationProtocol):
             return {"valid": False, "error": str(exc)}
 
 
-
 # Global configuration instance
 _config_manager: Optional[ConfigManager] = None
 
@@ -433,6 +435,7 @@ def get_secret_validation_config() -> SecretValidationConfig:
 def get_plugin_config(name: str) -> Dict[str, Any]:
     """Get configuration for a specific plugin"""
     return get_config().get_plugin_config(name)
+
 
 # Export main classes and functions
 
