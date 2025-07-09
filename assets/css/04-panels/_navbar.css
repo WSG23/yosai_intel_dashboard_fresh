@@ -1,69 +1,110 @@
-/* Navbar styles */
 /* =================================================================== */
-/* 04-panels/_navbar.css - Fixed Navbar Styles (APPEND TO EXISTING)   */
-/* Prevents flash/disappear issues on navigation clicks                */
+/* Enhanced Navbar Styles - Prevents Flash/Disappear Issues           */
+/* Replace existing assets/css/04-panels/_navbar.css                   */
 /* =================================================================== */
 
-/* Navbar Stability Fixes */
+/* Navbar Foundation - Stability Layer */
 .navbar-stable {
-  position: sticky;
-  top: 0;
-  z-index: 1030;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1030 !important;
   will-change: auto;
   backface-visibility: hidden;
   transform: translateZ(0);
+  transition: none !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Navigation Link Stability */
-.navbar .nav-link {
+.navbar-container-stable {
+  position: relative;
+  z-index: 1031;
+}
+
+/* Navigation Links - Core Stability */
+.nav-link-stable {
   display: flex !important;
-  align-items: center;
+  align-items: center !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
   transition: none !important;
   backface-visibility: hidden;
   transform: translateZ(0);
-  pointer-events: auto !important;
-  opacity: 1 !important;
   -webkit-tap-highlight-color: transparent;
+  text-decoration: none !important;
+  position: relative;
+  overflow: visible;
 }
 
-/* Prevent Bootstrap Conflicts */
-.navbar .nav-link:active,
-.navbar .nav-link:focus {
-  outline: none;
-  box-shadow: none;
-  background-color: transparent !important;
+.nav-item-stable {
   opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
 }
 
-.navbar .nav-link:hover {
-  text-decoration: none;
-  background-color: rgba(0, 0, 0, 0.04);
-  transition: background-color 0.15s ease-in-out;
-  opacity: 1 !important;
-}
-
-/* Icon Stability */
-.navbar .nav-link .nav-icon,
-.navbar .nav-link .nav-icon--image,
-.navbar .nav-link .nav-icon--fallback {
-  margin-right: 0.5rem;
-  display: inline-block;
-  vertical-align: middle;
-  width: 16px;
-  text-align: center;
-  transform: translateZ(0);
+.navbar-nav-stable {
   opacity: 1 !important;
   visibility: visible !important;
 }
 
-/* Specific Upload Link Fixes */
+/* Prevent Bootstrap Animation Conflicts */
+.nav-link-stable:active,
+.nav-link-stable:focus,
+.nav-link-stable:visited {
+  outline: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  opacity: 1 !important;
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+.nav-link-stable:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  opacity: 1 !important;
+  text-decoration: none !important;
+  transition: background-color 0.15s ease-in-out;
+}
+
+/* Icon Stability - Both Image and FontAwesome */
+.nav-icon,
+.nav-icon--image,
+.nav-icon--fallback {
+  margin-right: 0.5rem !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  width: 16px !important;
+  height: 16px !important;
+  text-align: center;
+  transform: translateZ(0);
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.nav-icon--image {
+  object-fit: contain;
+  max-width: 16px;
+  max-height: 16px;
+}
+
+.nav-icon--fallback {
+  font-size: 14px;
+  line-height: 16px;
+  color: #6c757d;
+}
+
+/* Specific Link Stability Fixes */
 #nav-upload-link,
-#nav-analytics-link,
+#nav-analytics-link, 
 #nav-settings-link {
-  position: relative;
-  overflow: visible;
+  position: relative !important;
+  overflow: visible !important;
   opacity: 1 !important;
   pointer-events: auto !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
 #nav-upload-link::before,
@@ -71,80 +112,123 @@
 #nav-settings-link::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
   background: transparent;
   pointer-events: none;
   z-index: -1;
+  border-radius: 4px;
 }
 
-/* Disable Bootstrap Animations That Cause Flash */
-.navbar .navbar-collapse.collapsing {
-  transition: none !important;
-}
-
-.navbar .navbar-nav .nav-link.active {
-  color: var(--bs-navbar-active-color, #007bff) !important;
-  background-color: transparent !important;
+/* Mobile Navbar Stability */
+.navbar-toggler {
+  border: none !important;
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
   opacity: 1 !important;
 }
 
-/* Unicode Text Rendering Stability */
-.navbar * {
+.navbar-toggler:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.navbar-collapse.collapsing {
+  transition: none !important;
+  height: auto !important;
+}
+
+.navbar-collapse.collapse.show {
+  display: block !important;
+  opacity: 1 !important;
+}
+
+/* Brand Link Stability */
+.navbar-brand-link {
+  text-decoration: none !important;
+  color: inherit !important;
+  opacity: 1 !important;
+  transition: none !important;
+}
+
+.navbar-brand-link:hover,
+.navbar-brand-link:focus,
+.navbar-brand-link:active {
+  text-decoration: none !important;
+  color: inherit !important;
+  opacity: 1 !important;
+}
+
+/* Active State Management */
+.nav-link-stable.active {
+  color: var(--bs-navbar-active-color, #007bff) !important;
+  background-color: rgba(0, 123, 255, 0.1) !important;
+  opacity: 1 !important;
+  font-weight: 500;
+}
+
+/* Unicode Text Rendering */
+.navbar-stable * {
   text-rendering: optimizeSpeed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Mobile Navbar Fixes */
-@media (max-width: 991.98px) {
-  .navbar-collapse {
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
-  }
-  
-  .navbar .nav-link {
-    padding: 0.75rem 1rem;
-    border-radius: 0.25rem;
-    margin: 0.125rem 0;
-    opacity: 1 !important;
-  }
+/* Force Hardware Acceleration for Smooth Rendering */
+.navbar-stable,
+.nav-link-stable,
+.nav-icon {
+  -webkit-transform: translateZ(0);
+  -moz-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  -o-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Disable Problematic CSS Transitions */
+.navbar *,
+.navbar *::before,
+.navbar *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+.navbar .nav-link:hover {
+  transition: background-color 0.15s ease-in-out !important;
+}
+
+/* Accessibility Improvements */
+.nav-link-stable:focus-visible {
+  outline: 2px solid #007bff !important;
+  outline-offset: 2px !important;
 }
 
 /* High Contrast Mode Support */
 @media (prefers-contrast: high) {
-  .navbar .nav-link:hover {
-    background-color: rgba(0, 0, 0, 0.1);
-    outline: 2px solid currentColor;
-    outline-offset: -2px;
+  .navbar-stable {
+    border-bottom: 2px solid currentColor;
+  }
+  
+  .nav-link-stable:hover {
+    background-color: rgba(0, 0, 0, 0.1) !important;
   }
 }
 
 /* Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
-  .navbar .nav-link {
+  .navbar-stable *,
+  .nav-link-stable,
+  .nav-icon {
     transition: none !important;
-  }
-  
-  .navbar .navbar-collapse {
-    transition: none !important;
+    animation: none !important;
   }
 }
 
-/* Force Visibility for Upload Link */
-.navbar #nav-upload-link {
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-}
-
-/* Override any potential hiding CSS */
-.navbar .nav-item,
-.navbar .nav-link {
-  display: flex !important;
-  visibility: visible !important;
+/* Print Styles */
+@media print {
+  .navbar-stable {
+    display: none !important;
+  }
 }
