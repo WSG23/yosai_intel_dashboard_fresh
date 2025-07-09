@@ -16,11 +16,19 @@ class FakeUnicodeProcessor(UnicodeProcessorProtocol):
         text = text.replace("\ud800", replacement).replace("\udfff", replacement)
         return text.replace("\x00", "")
 
+    def clean_text(self, text: str, replacement: str = "") -> str:
+        """Alias for ``clean_surrogate_chars`` for protocol compliance."""
+        return self.clean_surrogate_chars(text, replacement)
+
     def safe_decode_bytes(self, data: bytes, encoding: str = "utf-8") -> str:
         try:
             return data.decode(encoding, errors="ignore")
         except Exception:
             return ""
+
+    def safe_decode_text(self, data: bytes, encoding: str = "utf-8") -> str:
+        """Alias for ``safe_decode_bytes`` for protocol compliance."""
+        return self.safe_decode_bytes(data, encoding)
 
     def safe_encode_text(self, value: Any) -> str:
         if isinstance(value, bytes):
