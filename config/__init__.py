@@ -37,19 +37,38 @@ from .unicode_handler import UnicodeQueryHandler
 from .unicode_sql_processor import UnicodeSQLProcessor
 
 
-def _lazy_get_service(name: str):
-    """Import ``get_service`` lazily to avoid early registry imports."""
+def _get_service(name: str):
+    """Retrieve a service from :mod:`services.registry` on demand."""
     from services.registry import get_service
+
     return get_service(name)
 
-logger = logging.getLogger(__name__)
 
-# Resolve optional database manager via registry
-DatabaseManager = _lazy_get_service("DatabaseManager")
-DatabaseConnection = _lazy_get_service("DatabaseConnection")
-MockConnection = _lazy_get_service("MockConnection")
-EnhancedPostgreSQLManager = _lazy_get_service("EnhancedPostgreSQLManager")
-DATABASE_MANAGER_AVAILABLE = DatabaseManager is not None
+def get_database_manager():
+    """Return the optional ``DatabaseManager`` service."""
+
+    return _get_service("DatabaseManager")
+
+
+def get_database_connection():
+    """Return the optional ``DatabaseConnection`` service."""
+
+    return _get_service("DatabaseConnection")
+
+
+def get_mock_connection():
+    """Return the optional ``MockConnection`` service."""
+
+    return _get_service("MockConnection")
+
+
+def get_enhanced_postgresql_manager():
+    """Return the optional ``EnhancedPostgreSQLManager`` service."""
+
+    return _get_service("EnhancedPostgreSQLManager")
+
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "Config",
@@ -63,7 +82,7 @@ __all__ = [
     "get_app_config",
     "get_database_config",
     "get_security_config",
-    "EnhancedPostgreSQLManager",
+    "get_enhanced_postgresql_manager",
     "DatabaseConnectionPool",
     "ConnectionRetryManager",
     "RetryConfig",
@@ -75,10 +94,9 @@ __all__ = [
     "ConnectionRetryExhausted",
     "ConnectionValidationFailed",
     "UnicodeEncodingError",
-    "DatabaseManager",
-    "DatabaseConnection",
-    "MockConnection",
-    "DATABASE_MANAGER_AVAILABLE",
+    "get_database_manager",
+    "get_database_connection",
+    "get_mock_connection",
     "dynamic_config",
     "DynamicConfigManager",
     "SecurityConstants",
