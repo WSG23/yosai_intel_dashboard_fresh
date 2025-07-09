@@ -20,9 +20,11 @@ from .config import (
     get_security_config,
     reload_config,
 )
+from .config_loader import ConfigLoader
+from .config_transformer import ConfigTransformer
+from .config_validator import ConfigValidator
 from .connection_pool import DatabaseConnectionPool
 from .connection_retry import ConnectionRetryManager, RetryConfig
-from .protocols import ConnectionRetryManagerProtocol, RetryConfigProtocol
 from .constants import CSSConstants, PerformanceConstants, SecurityConstants
 from .database_exceptions import (
     ConnectionRetryExhausted,
@@ -33,6 +35,7 @@ from .database_exceptions import (
 
 # Import dynamic configuration helpers
 from .dynamic_config import DynamicConfigManager, dynamic_config
+from .protocols import ConnectionRetryManagerProtocol, RetryConfigProtocol
 from .unicode_handler import UnicodeQueryHandler
 from .unicode_sql_processor import UnicodeSQLProcessor
 
@@ -66,6 +69,42 @@ def get_enhanced_postgresql_manager():
     """Return the optional ``EnhancedPostgreSQLManager`` service."""
 
     return _get_service("EnhancedPostgreSQLManager")
+
+
+def create_config_manager(
+    *,
+    container: "ServiceContainer | None" = None,
+    config_path: str | None = None,
+) -> ConfigManager:
+    """Factory that wires core config components."""
+
+    if container is not None:
+        loader = (
+            container.get("config_loader") if container.has("config_loader") else None
+        )
+        validator = (
+            container.get("config_validator")
+            if container.has("config_validator")
+            else None
+        )
+        transformer = (
+            container.get("config_transformer")
+            if container.has("config_transformer")
+            else None
+        )
+    else:  # pragma: no cover - default behaviour
+        loader = validator = transformer = None
+
+    loader = loader or ConfigLoader(config_path)
+    validator = validator or ConfigValidator()
+    transformer = transformer or ConfigTransformer()
+
+    return ConfigManager(
+        config_path=config_path,
+        loader=loader,
+        validator=validator,
+        transformer=transformer,
+    )
 
 
 logger = logging.getLogger(__name__)
@@ -102,4 +141,8 @@ __all__ = [
     "SecurityConstants",
     "PerformanceConstants",
     "CSSConstants",
+    "ConfigLoader",
+    "ConfigTransformer",
+    "ConfigValidator",
+    "create_config_manager",
 ]

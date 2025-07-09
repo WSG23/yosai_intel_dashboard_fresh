@@ -16,9 +16,9 @@ from core.secrets_manager import SecretsManager
 from core.secrets_validator import SecretsValidator
 
 
+from .config_loader import ConfigLoader
+from .config_transformer import ConfigTransformer
 from .config_validator import ConfigValidator
-
-ValidationResult = ConfigValidator.ValidationResult
 from .constants import (
     DEFAULT_APP_HOST,
     DEFAULT_APP_PORT,
@@ -175,8 +175,18 @@ class Config:
 class ConfigManager(ConfigurationProtocol):
     """Simple configuration manager"""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(
+        self,
+        config_path: Optional[str] = None,
+        *,
+        loader: Optional[ConfigLoader] = None,
+        validator: Optional[ConfigValidator] = None,
+        transformer: Optional[ConfigTransformer] = None,
+    ) -> None:
         self.config_path = config_path
+        self.loader = loader or ConfigLoader(config_path)
+        self.validator = validator or ConfigValidator()
+        self.transformer = transformer or ConfigTransformer()
         self.config = Config()
         self.validated_secrets: Dict[str, str] = {}
         self._load_config()
@@ -186,11 +196,11 @@ class ConfigManager(ConfigurationProtocol):
         self.config.environment = get_environment()
         _validate_production_secrets()
         # Load from YAML file
-        yaml_config = self._load_yaml_config()
+        yaml_config = self.loader.load()
 
         # Apply YAML config
         if yaml_config:
-            self.config = ConfigValidator.validate(yaml_config)
+            self.config = self.validator.validate(yaml_config)
             self._apply_yaml_config(yaml_config)
 
         # Apply environment overrides
@@ -203,6 +213,7 @@ class ConfigManager(ConfigurationProtocol):
 
         # Validate configuration
         self._validate_config()
+        self.config = self.transformer.transform(self.config)
 
     def _load_yaml_config(self) -> Optional[Dict[str, Any]]:
         """Load configuration from YAML file"""
@@ -620,7 +631,9 @@ def get_config() -> ConfigManager:
     """Get global configuration manager"""
     global _config_manager
     if _config_manager is None:
-        _config_manager = ConfigManager()
+        from . import create_config_manager
+
+        _config_manager = create_config_manager()
     return _config_manager
 
 
