@@ -677,6 +677,11 @@ def get_plugin_config(name: str) -> Dict[str, Any]:
     return get_config().get_plugin_config(name)
 
 
+def create_config_manager(config_path: Optional[str] = None) -> ConfigManager:
+    """Factory for creating :class:`ConfigManager` instances."""
+    return ConfigManager(config_path=config_path)
+
+
 # Export main classes and functions
 __all__ = [
     "Config",
@@ -700,4 +705,5 @@ __all__ = [
     "get_cache_config",
     "get_secret_validation_config",
     "get_plugin_config",
+    "create_config_manager",
 ]

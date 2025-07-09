@@ -35,27 +35,32 @@ needed:
 
 ```python
 from core.container import Container
-from config.config import ConfigManager
+from config.config import create_config_manager
 from services.analytics_service import create_analytics_service
 
 container = Container()
-container.register("config", ConfigManager())
+container.register("config", create_config_manager())
 container.register("analytics", create_analytics_service())
 
 config_manager = container.get("config")  # ConfigurationProtocol
 analytics_service = container.get("analytics")  # AnalyticsServiceProtocol
 ```
 
-`ConfigManager` automatically selects the YAML file to load based on
+`create_config_manager()` automatically selects the YAML file to load based on
 `YOSAI_ENV` or `YOSAI_CONFIG_FILE`. It can also be used directly:
 
 
 ```python
-from config.config import ConfigManager
+from config.config import create_config_manager
 
-config = ConfigManager()
+config = create_config_manager()
 db_cfg = config.get_database_config()
 ```
+
+The configuration system is split into small dataclasses such as
+`AppConfig`, `DatabaseConfig`, `SecurityConfig` and more. The factory
+`create_config_manager()` assembles these pieces and applies environment
+overrides before returning a ready-to-use `ConfigManager` instance.
 
 Both services implement protocols so alternative implementations can be swapped
 in for tests or future extensions.
