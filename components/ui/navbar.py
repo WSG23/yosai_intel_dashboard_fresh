@@ -1,123 +1,190 @@
-"""Simple navbar - eliminates complex dependencies"""
+#!/usr/bin/env python3
+"""
+Fixed navbar component using existing TrulyUnifiedCallbacks system.
+Resolves flash/disappear issues on upload file link clicks.
+"""
 
-import logging
 import dash_bootstrap_components as dbc
-from dash import dcc, html
-from flask_babel import lazy_gettext as _l
+from dash import html, dcc, Input, Output, State, no_update
+from typing import Optional, Any
+import logging
+
+from core.unicode import safe_encode_text
+from utils.assets_debug import navbar_icon
 
 logger = logging.getLogger(__name__)
 
-NAVBAR_ICONS = {
-    "dashboard": "fas fa-home",
-    "analytics": "fas fa-chart-bar",
-    "graphs": "fas fa-chart-line",
-    "upload": "fas fa-cloud-upload-alt",
-    "export": "fas fa-download",
-    "settings": "fas fa-cog",
-}
+
+def get_simple_icon(icon_name: str) -> html.I:
+    """Get Unicode-safe icon for navbar using existing assets system."""
+    try:
+        # Use existing navbar_icon function with fallback
+        return navbar_icon(f"{icon_name}.png", icon_name, "📁", warn=False)
+    except Exception as e:
+        logger.warning(f"Icon creation failed for {icon_name}: {e}")
+        # Fallback to simple HTML icon
+        return html.I(className=f"fas fa-{icon_name}")
 
 
-def get_simple_icon(name: str) -> html.I:
-    icon_class = NAVBAR_ICONS.get(name, "fas fa-circle")
-    return html.I(className=f"{icon_class} nav-icon", style={"fontSize": "18px"})
+def create_navbar_layout() -> dbc.Navbar:
+    """Create Unicode-safe navbar layout."""
+    try:
+        # Unicode-safe text processing using existing system
+        upload_text = safe_encode_text(" Upload")
+        settings_text = safe_encode_text(" Settings")
+        analytics_text = safe_encode_text(" Analytics")
+        brand_text = safe_encode_text("Dashboard")
 
-
-def create_navbar_layout(theme: str = "light"):
-    return dbc.Navbar(
-        [
-            dbc.Container(
-                [
-                    dcc.Location(id="url-navbar", refresh=False),
-                    dbc.Row(
-                        [
-                            dbc.Col(
-                                [
-                                    html.A(
-                                        html.Img(
-                                            src="/assets/yosai_logo_name_black.png",
-                                            height="40px",
-                                            alt="Logo",
+        navbar = dbc.Navbar(
+            [
+                dbc.Container(
+                    [
+                        dbc.NavbarBrand(
+                            brand_text,
+                            className="navbar-brand-link",
+                            href="/",
+                        ),
+                        dbc.NavbarToggler(id="navbar-toggler"),
+                        dbc.Collapse(
+                            [
+                                dbc.Nav(
+                                    [
+                                        dbc.NavItem(
+                                            dbc.NavLink(
+                                                [
+                                                    get_simple_icon("analytics"),
+                                                    analytics_text,
+                                                ],
+                                                href="/analytics",
+                                                id="nav-analytics-link",
+                                                external_link=False,
+                                            )
                                         ),
-                                        href="/",
-                                        className="navbar-brand-link",
-                                    )
-                                ],
-                                width="auto",
-                            ),
-                            dbc.Col(
-                                [
-                                    dbc.Nav(
-                                        [
-                                            dbc.NavItem(
-                                                dbc.NavLink(
-                                                    [
-                                                        get_simple_icon("dashboard"),
-                                                        " Dashboard",
-                                                    ],
-                                                    href="/dashboard",
-                                                )
-                                            ),
-                                            dbc.NavItem(
-                                                dbc.NavLink(
-                                                    [
-                                                        get_simple_icon("analytics"),
-                                                        " Analytics",
-                                                    ],
-                                                    href="/analytics",
-                                                )
-                                            ),
-                                            dbc.NavItem(
-                                                dbc.NavLink(
-                                                    [
-                                                        get_simple_icon("graphs"),
-                                                        " Graphs",
-                                                    ],
-                                                    href="/graphs",
-                                                )
-                                            ),
-                                            dbc.NavItem(
-                                                dbc.NavLink(
-                                                    [
-                                                        get_simple_icon("upload"),
-                                                        " Upload",
-                                                    ],
-                                                    href="/file-upload",
-                                                )
-                                            ),
-                                            dbc.NavItem(
-                                                dbc.NavLink(
-                                                    [
-                                                        get_simple_icon("settings"),
-                                                        " Settings",
-                                                    ],
-                                                    href="/settings",
-                                                )
-                                            ),
-                                        ],
-                                        navbar=True,
-                                        className="ms-auto",
-                                    )
-                                ]
-                            ),
-                        ]
-                    ),
-                ]
-            )
-        ],
-        color="light",
-        className="shadow-sm",
-    )
+                                        dbc.NavItem(
+                                            dbc.NavLink(
+                                                [
+                                                    get_simple_icon("upload"),
+                                                    upload_text,
+                                                ],
+                                                href="/file-upload",
+                                                id="nav-upload-link",
+                                                external_link=False,
+                                            )
+                                        ),
+                                        dbc.NavItem(
+                                            dbc.NavLink(
+                                                [
+                                                    get_simple_icon("settings"),
+                                                    settings_text,
+                                                ],
+                                                href="/settings",
+                                                id="nav-settings-link",
+                                                external_link=False,
+                                            )
+                                        ),
+                                    ],
+                                    navbar=True,
+                                    className="ms-auto",
+                                )
+                            ],
+                            id="navbar-collapse",
+                            navbar=True,
+                        ),
+                    ],
+                    fluid=True,
+                )
+            ],
+            color="light",
+            dark=False,
+            className="shadow-sm navbar-stable",
+            id="main-navbar",
+        )
+
+        return navbar
+
+    except Exception as e:
+        logger.error(f"Navbar creation failed: {e}")
+        # Return minimal fallback navbar
+        return dbc.Navbar([
+            dbc.Container([
+                dbc.NavbarBrand("Dashboard", href="/"),
+                dbc.Nav([
+                    dbc.NavItem(dbc.NavLink("Upload", href="/file-upload")),
+                ], navbar=True)
+            ])
+        ])
 
 
-def register_navbar_callbacks(manager, service=None) -> None:
-    """Register callbacks for the navbar component.
+def register_navbar_callbacks(manager, service: Optional[Any] = None) -> None:
+    """Register navbar callbacks using TrulyUnifiedCallbacks system."""
+    try:
+        # Register toggle callback using existing system
+        @manager.unified_callback(
+            Output("navbar-collapse", "is_open"),
+            Input("navbar-toggler", "n_clicks"),
+            State("navbar-collapse", "is_open"),
+            callback_id="navbar_toggle",
+            component_name="navbar",
+            prevent_initial_call=True
+        )
+        def toggle_navbar_collapse(n_clicks, is_open):
+            """Toggle navbar collapse state."""
+            if n_clicks:
+                return not is_open
+            return is_open
 
-    This simply sets a flag on *manager* to indicate the navbar callbacks have
-    been registered. The optional ``service`` parameter is accepted for
-    compatibility with other callback registrars but is not used.
-    """
+        # Register navigation click handlers using existing system  
+        @manager.unified_callback(
+            Output("nav-upload-link", "style"),
+            Input("nav-upload-link", "n_clicks"),
+            callback_id="navbar_upload_click",
+            component_name="navbar",
+            prevent_initial_call=True
+        )
+        def handle_upload_click(n_clicks):
+            """Handle upload link clicks - prevent flash by returning stable style."""
+            if n_clicks:
+                # Return stable style to prevent flash
+                return {"pointer-events": "auto", "opacity": "1"}
+            return no_update
 
-    manager.navbar_registered = True
+        @manager.unified_callback(
+            Output("nav-analytics-link", "style"),
+            Input("nav-analytics-link", "n_clicks"),
+            callback_id="navbar_analytics_click", 
+            component_name="navbar",
+            prevent_initial_call=True
+        )
+        def handle_analytics_click(n_clicks):
+            """Handle analytics link clicks."""
+            if n_clicks:
+                return {"pointer-events": "auto", "opacity": "1"}
+            return no_update
+
+        @manager.unified_callback(
+            Output("nav-settings-link", "style"),
+            Input("nav-settings-link", "n_clicks"),
+            callback_id="navbar_settings_click",
+            component_name="navbar", 
+            prevent_initial_call=True
+        )
+        def handle_settings_click(n_clicks):
+            """Handle settings link clicks."""
+            if n_clicks:
+                return {"pointer-events": "auto", "opacity": "1"}
+            return no_update
+
+        # Mark as registered
+        if hasattr(manager, 'navbar_registered'):
+            manager.navbar_registered = True
+
+        logger.info("Navbar callbacks registered successfully with TrulyUnifiedCallbacks")
+
+    except Exception as e:
+        logger.error(f"Navbar callback registration failed: {e}")
+        # Fallback: just mark as registered
+        if hasattr(manager, 'navbar_registered'):
+            manager.navbar_registered = True
 
 
 __all__ = ["create_navbar_layout", "register_navbar_callbacks", "get_simple_icon"]

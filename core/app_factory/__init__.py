@@ -692,11 +692,20 @@ def _register_router_callbacks(
             Output("page-content", "className"),
         ],
         inputs=[Input("url", "pathname")],
-        callback_id="display_page",
+        callback_id="display_page_fixed",
         component_name="app_factory",
     )
     def display_page(pathname: str):
+        """Fixed page routing with proper Unicode handling and flash prevention."""
+        from core.unicode import safe_encode_text
+
+        # Safely process pathname
+        safe_pathname = safe_encode_text(pathname) if pathname else "/"
+
+        # Base class for all pages
         end_class = "main-content p-4 transition-fade-move transition-end"
+
+        # Route mapping with both /upload and /file-upload support
         page_routes = {
             "/analytics": _get_analytics_page,
             "/graphs": _get_graphs_page,
@@ -708,28 +717,38 @@ def _register_router_callbacks(
             "/dashboard": _get_home_page,
         }
 
-        page_func = page_routes.get(pathname)
+        # Find matching route
+        page_func = page_routes.get(safe_pathname)
         if page_func:
-            return page_func(), end_class
+            try:
+                page_content = page_func()
+                return page_content, end_class
+            except Exception as e:
+                logger.error(f"Error loading page {safe_pathname}: {e}")
+                # Return error page instead of crashing
+                error_content = html.Div([
+                    html.H3("Page Load Error"),
+                    html.P(f"Failed to load {safe_pathname}"),
+                    dbc.Button("Go Home", href="/", color="primary")
+                ])
+                return error_content, end_class
 
-        return (
-            html.Div(
-                [
-                    html.H1("Page Not Found", className="text-center mt-5"),
-                    html.P(
-                        "The page you're looking for doesn't exist.",
-                        className="text-center",
-                    ),
-                    dbc.Button(
-                        "Go Home",
-                        href="/",
-                        color="primary",
-                        className="d-block mx-auto",
-                    ),
-                ]
+        # 404 page for unknown routes
+        not_found_content = html.Div([
+            html.H1("Page Not Found", className="text-center mt-5"),
+            html.P(
+                f"The page '{safe_pathname}' doesn't exist.",
+                className="text-center",
             ),
-            end_class,
-        )
+            dbc.Button(
+                "Go Home",
+                href="/",
+                color="primary",
+                className="d-block mx-auto",
+            ),
+        ])
+
+        return not_found_content, end_class
 
 
 def _get_home_page() -> Any:

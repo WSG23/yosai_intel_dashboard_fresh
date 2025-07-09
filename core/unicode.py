@@ -12,7 +12,7 @@ import logging
 import math
 import re
 import unicodedata
-from typing import Any, Callable, Iterable, Optional, Union
+from typing import Any, Iterable, Optional, Union
 
 import pandas as pd
 
@@ -43,7 +43,7 @@ def _drop_dangerous_prefix(text: str) -> str:
 class UnicodeProcessor:
     """Centralised Unicode processing utilities."""
 
-    REPLACEMENT_CHAR: str = "\uFFFD"
+    REPLACEMENT_CHAR: str = "\ufffd"
 
     # ------------------------------------------------------------------
     @staticmethod
@@ -436,6 +436,48 @@ def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return UnicodeProcessor.sanitize_dataframe(df)
 
 
+def safe_navbar_text(text: Any) -> str:
+    """Safely process text for navbar components.
+
+    Handles Unicode surrogates that can cause UI flash/disappear issues.
+    """
+
+    if text is None:
+        return ""
+
+    # Use existing safe_encode_text with additional navbar-specific handling
+    cleaned = safe_encode_text(text)
+
+    # Additional navbar-specific cleaning
+    if not cleaned:
+        return ""
+
+    # Remove zero-width characters that can break navbar rendering
+    zero_width_chars = [
+        "\u200b",  # Zero-width space
+        "\u200c",  # Zero-width non-joiner
+        "\u200d",  # Zero-width joiner
+        "\ufeff",  # Zero-width no-break space (BOM)
+    ]
+
+    for char in zero_width_chars:
+        cleaned = cleaned.replace(char, "")
+
+    # Ensure text is renderable in HTML context
+    try:
+        # Test encoding
+        cleaned.encode("utf-8")
+        # Test HTML rendering safety
+        import html
+
+        html.escape(cleaned)
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        # Fallback to ASCII-safe version
+        cleaned = cleaned.encode("ascii", errors="ignore").decode("ascii")
+
+    return cleaned.strip()
+
+
 __all__ = [
     "clean_unicode_text",
     "safe_decode_bytes",
@@ -444,6 +486,7 @@ __all__ = [
     "safe_encode",
     "sanitize_dataframe",
     "sanitize_data_frame",
+    "safe_navbar_text",
     "handle_surrogate_characters",
     "safe_unicode_encode",
     "clean_unicode_surrogates",
