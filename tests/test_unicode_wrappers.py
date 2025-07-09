@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from config.database_exceptions import UnicodeEncodingError
-from config.unicode_handler import UnicodeQueryHandler
+from core.unicode import UnicodeSQLProcessor
 from core.unicode import UnicodeProcessor as UtilsProcessor  # Alias check
 from core.unicode import (
     UnicodeTextProcessor,
@@ -32,7 +32,7 @@ def test_unicode_text_processor_surrogate_removal():
 def test_sql_query_encoding_removes_surrogates():
     text = "SELECT" + chr(0xD800) + "1"
     with pytest.raises(UnicodeEncodingError):
-        UnicodeQueryHandler.safe_encode_query(text)
+        UnicodeSQLProcessor.encode_query(text)
 
 
 def test_unicode_security_processor_sanitization():

@@ -22,12 +22,6 @@ spec = importlib.util.spec_from_file_location("core.unicode", unicode_file)
 unicode_mod = importlib.util.module_from_spec(spec)
 sys.modules["core.unicode"] = unicode_mod
 assert spec.loader
-if "core.unicode_processor" not in sys.modules:
-    stub = types.ModuleType("core.unicode_processor")
-    def _noop_contains_surrogates(text: str) -> bool:
-        return False
-    stub.contains_surrogates = _noop_contains_surrogates
-    sys.modules["core.unicode_processor"] = stub
 spec.loader.exec_module(unicode_mod)
 try:  # Expose legacy processor classes for modules that expect them
     from core.unicode.processor import (

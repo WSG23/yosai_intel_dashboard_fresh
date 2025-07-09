@@ -100,7 +100,6 @@ class FileCleanupManager:
         # Files to remove (organized by category)
         self.removable_files = {
             'legacy_unicode': [
-                'core/unicode_processor.py',
                 'tools/migration_validator.py',
                 'tools/legacy_unicode_audit.py',
                 'scripts/unicode_migration.py',

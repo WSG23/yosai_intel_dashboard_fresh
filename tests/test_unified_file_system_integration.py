@@ -87,6 +87,19 @@ def test_batch_migration_and_progress(tmp_path):
     assert metrics["migrated_files"] == 2
 
 
+def test_batch_migration_handles_unicode_names(tmp_path):
+    df = DataFrameBuilder().add_column("a", [1]).build()
+    emoji = tmp_path / "\U0001F600.pkl"
+    df.to_pickle(emoji)
+
+    storage = StorageManager(base_dir=tmp_path / "uni")
+    calls = []
+    batch_migrate_legacy_files([emoji], storage=storage, progress=lambda i, t, n: calls.append((i, t, n)))
+
+    assert (tmp_path / "uni" / "\U0001F600.parquet").exists()
+    assert calls == [(1, 1, f"{emoji.name}")]
+
+
 def test_security_validation_blocks_bad_file(tmp_path):
     bad_df = DataFrameBuilder().add_column("=cmd", ["=1"]).build()
     contents = _encode_df(bad_df)

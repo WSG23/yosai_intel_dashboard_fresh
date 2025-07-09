@@ -354,7 +354,7 @@ class EnhancedPostgreSQLManager(DatabaseManager):
         super().__init__(config)
         from database.connection_pool import EnhancedConnectionPool
         from .connection_retry import ConnectionRetryManager, RetryConfig
-        from .unicode_handler import UnicodeQueryHandler
+        from core.unicode import UnicodeSQLProcessor
 
         self.retry_manager: ConnectionRetryManagerProtocol = ConnectionRetryManager(
             retry_config or RetryConfig()
@@ -366,11 +366,20 @@ class EnhancedPostgreSQLManager(DatabaseManager):
             self.config.connection_timeout,
             self.config.shrink_timeout,
         )
-        self.unicode_handler = UnicodeQueryHandler
 
     def execute_query_with_retry(self, query: str, params: Optional[Dict] = None):
-        encoded_query = self.unicode_handler.safe_encode_query(query)
-        encoded_params = self.unicode_handler.safe_encode_params(params)
+        encoded_query = UnicodeSQLProcessor.encode_query(query)
+
+        def _encode_params(value: Any) -> Any:
+            if isinstance(value, str):
+                return UnicodeSQLProcessor.encode_query(value)
+            if isinstance(value, dict):
+                return {k: _encode_params(v) for k, v in value.items()}
+            if isinstance(value, (list, tuple, set)):
+                return type(value)(_encode_params(v) for v in value)
+            return value
+
+        encoded_params = _encode_params(params)
 
         def run():
             conn = self.pool.get_connection()
