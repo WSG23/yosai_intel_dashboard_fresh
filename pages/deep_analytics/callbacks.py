@@ -11,10 +11,13 @@ if TYPE_CHECKING:
 import logging
 
 from analytics.controllers import UnifiedAnalyticsController
+from core.callback_registry import (
+    _callback_registry,
+    handle_register_with_deduplication,
+)
 from core.dash_profile import profile_callback
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.state import CentralizedStateManager
-from core.callback_registry import _callback_registry
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 logger = logging.getLogger(__name__)
 import dash_bootstrap_components as dbc
@@ -526,26 +529,30 @@ def register_callbacks(
 
     cb = Callbacks()
 
-    if hasattr(manager, "unified_callback"):
-        decorator = manager.unified_callback
-        extra_kwargs = {
-            "callback_id": "deep_analytics_operations",
-            "component_name": "deep_analytics",
-            "prevent_initial_call": True,
-        }
-    elif hasattr(manager, "register_callback"):
-        decorator = manager.register_callback
-        extra_kwargs = {
-            "callback_id": "deep_analytics_operations",
-            "component_name": "deep_analytics",
-            "prevent_initial_call": True,
-        }
-    elif hasattr(manager, "callback"):
-        decorator = manager.callback
-        extra_kwargs = {"prevent_initial_call": True}
-        logger.warning("Using basic Dash callbacks - unified features unavailable")
-    else:
-        raise ValueError(f"Unsupported callback manager: {type(manager)}")
+    decorator = handle_register_with_deduplication(
+        manager,
+        [
+            Output("analytics-display-area", "children"),
+            Output("analytics-data-source", "options"),
+            Output("status-alert", "children"),
+        ],
+        [
+            Input("security-btn", "n_clicks"),
+            Input("trends-btn", "n_clicks"),
+            Input("behavior-btn", "n_clicks"),
+            Input("anomaly-btn", "n_clicks"),
+            Input("suggests-btn", "n_clicks"),
+            Input("quality-btn", "n_clicks"),
+            Input("unique-patterns-btn", "n_clicks"),
+            Input("refresh-sources-btn", "n_clicks"),
+            Input("hidden-trigger", "children"),
+        ],
+        [State("analytics-data-source", "value")],
+        callback_id="deep_analytics_operations",
+        component_name="deep_analytics",
+        prevent_initial_call=True,
+        source_module=__name__,
+    )
 
     callback_manager.register_operation(
         "analysis_buttons",
@@ -566,26 +573,7 @@ def register_callbacks(
         name="update_status_alert",
     )
 
-    @decorator(
-        [
-            Output("analytics-display-area", "children"),
-            Output("analytics-data-source", "options"),
-            Output("status-alert", "children"),
-        ],
-        [
-            Input("security-btn", "n_clicks"),
-            Input("trends-btn", "n_clicks"),
-            Input("behavior-btn", "n_clicks"),
-            Input("anomaly-btn", "n_clicks"),
-            Input("suggests-btn", "n_clicks"),
-            Input("quality-btn", "n_clicks"),
-            Input("unique-patterns-btn", "n_clicks"),
-            Input("refresh-sources-btn", "n_clicks"),
-            Input("hidden-trigger", "children"),
-        ],
-        [State("analytics-data-source", "value")],
-        **extra_kwargs,
-    )
+    @decorator
     def analytics_operations(
         sec, trn, beh, anom, sug, qual, uniq, refresh, trigger, data_source
     ):
@@ -610,8 +598,6 @@ def register_callbacks(
         )
 
         return display, options, alert
-
-    _callback_registry.register("deep_analytics_operations", "deep_analytics")
 
     if controller is not None:
         controller.register_callback(

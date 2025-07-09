@@ -3,12 +3,17 @@ from __future__ import annotations
 
 """File upload page wiring the reusable upload component."""
 
+import functools
 import logging
 import types
 from typing import TYPE_CHECKING, Any
 
 from dash import html
-from core.callback_registry import _callback_registry
+
+from core.callback_registry import (
+    _callback_registry,
+    handle_register_with_deduplication,
+)
 
 try:  # Lazy import for optional heavy dependencies
     from components.upload import UnifiedUploadComponent
@@ -100,11 +105,13 @@ def register_callbacks(manager: Any, controller=None) -> None:
         else:
             raise ValueError(f"Unsupported callback manager: {type(manager)}")
 
-    _upload_component.register_callbacks(manager, controller)
+    manager.register_callback = functools.partial(
+        handle_register_with_deduplication,
+        manager,
+        source_module=__name__,
+    )
 
-    _callback_registry.register(f"{callback_prefix}_handle", "file_upload")
-    _callback_registry.register(f"{callback_prefix}_progress", "file_upload")
-    _callback_registry.register(f"{callback_prefix}_finalize", "file_upload")
+    _upload_component.register_callbacks(manager, controller)
 
 
 register_upload_callbacks = register_callbacks

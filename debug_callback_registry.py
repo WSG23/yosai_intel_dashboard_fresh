@@ -9,7 +9,7 @@ def debug_callback_conflicts():
     app = create_app()
     print("\ud83d\udd0d Callback Registration Analysis:")
     print(f"Total registered callbacks: {len(_callback_registry.registered_callbacks)}")
-    for cid, source in _callback_registry.callback_sources.items():
+    for cid, source in _callback_registry.registration_sources.items():
         print(f"  \u2705 {cid} (from {source})")
     conflicts = _callback_registry.get_conflicts()
     if conflicts:
