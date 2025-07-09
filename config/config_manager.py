@@ -1,13 +1,15 @@
 """High level configuration manager."""
+
 from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
 from core.protocols import ConfigurationProtocol
 
-from .base import AppConfig, Config, DatabaseConfig, SecurityConfig, ConfigTransformer
+from .base import AppConfig, Config, DatabaseConfig, SecurityConfig
 from .config_loader import ConfigLoader, ConfigLoaderProtocol
 from .config_validator import ConfigValidator, ValidationResult
+from .config_transformer import ConfigTransformer
 from .environment import get_environment
 
 
@@ -29,8 +31,8 @@ class ConfigManager(ConfigurationProtocol):
         self.validation: ValidationResult | None = None
         self.reload_config()
 
-    # ------------------------------------------------------------------
     def reload_config(self) -> None:
+        """Reload configuration from source."""
         data = self.loader.load(self.config_path)
         if data:
             cfg = self.validator.validate(data)
@@ -41,20 +43,24 @@ class ConfigManager(ConfigurationProtocol):
         self.validation = self.validator.run_checks(cfg)
         self.config = cfg
 
-    # ------------------------------------------------------------------
     def get_database_config(self) -> DatabaseConfig:
+        """Get database configuration."""
         return self.config.database
 
     def get_app_config(self) -> AppConfig:
+        """Get app configuration."""
         return self.config.app
 
     def get_security_config(self) -> SecurityConfig:
+        """Get security configuration."""
         return self.config.security
 
     def get_upload_config(self) -> Dict[str, Any]:
+        """Get upload configuration settings."""
         return {}
 
     def validate_config(self) -> Dict[str, Any]:
+        """Validate current configuration and return results."""
         if not self.validation:
             self.validation = self.validator.run_checks(self.config)
         return {
@@ -69,6 +75,7 @@ _manager: Optional[ConfigManager] = None
 
 
 def get_config() -> ConfigManager:
+    """Get global configuration manager instance."""
     global _manager
     if _manager is None:
         _manager = ConfigManager()
@@ -76,6 +83,7 @@ def get_config() -> ConfigManager:
 
 
 def reload_config() -> ConfigManager:
+    """Reload global configuration manager."""
     global _manager
     _manager = ConfigManager()
     return _manager
