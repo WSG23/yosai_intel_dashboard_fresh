@@ -14,6 +14,7 @@ from analytics.controllers import UnifiedAnalyticsController
 from core.dash_profile import profile_callback
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.state import CentralizedStateManager
+from core.callback_registry import _callback_registry
 
 logger = logging.getLogger(__name__)
 import dash_bootstrap_components as dbc
@@ -528,14 +529,14 @@ def register_callbacks(
     if hasattr(manager, "unified_callback"):
         decorator = manager.unified_callback
         extra_kwargs = {
-            "callback_id": "analytics_operations",
+            "callback_id": "deep_analytics_operations",
             "component_name": "deep_analytics",
             "prevent_initial_call": True,
         }
     elif hasattr(manager, "register_callback"):
         decorator = manager.register_callback
         extra_kwargs = {
-            "callback_id": "analytics_operations",
+            "callback_id": "deep_analytics_operations",
             "component_name": "deep_analytics",
             "prevent_initial_call": True,
         }
@@ -609,6 +610,8 @@ def register_callbacks(
         )
 
         return display, options, alert
+
+    _callback_registry.register("deep_analytics_operations", "deep_analytics")
 
     if controller is not None:
         controller.register_callback(

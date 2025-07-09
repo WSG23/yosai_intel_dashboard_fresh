@@ -1,4 +1,5 @@
 """Unified upload callbacks handling simple multi-step workflow."""
+
 from __future__ import annotations
 
 import base64
@@ -52,10 +53,17 @@ class UnifiedUploadController(UploadControllerProtocol):
         return [
             (
                 handle_upload,
-                [Output("preview-area", "children"), Output("to-column-map-btn", "disabled"), Output("uploaded-df-store", "data")],
-                [Input("file-uploader", "contents"), Input("file-uploader", "filename")],
+                [
+                    Output("preview-area", "children"),
+                    Output("to-column-map-btn", "disabled"),
+                    Output("uploaded-df-store", "data"),
+                ],
+                [
+                    Input("file-uploader", "contents"),
+                    Input("file-uploader", "filename"),
+                ],
                 None,
-                "handle_upload",
+                "file_upload_handle",
                 {"prevent_initial_call": True},
             ),
         ]
@@ -80,7 +88,7 @@ class UnifiedUploadController(UploadControllerProtocol):
                 ],
                 Input("upload-progress-interval", "n_intervals"),
                 None,
-                "update_progress",
+                "file_upload_progress",
                 {"prevent_initial_call": True},
             ),
         ]
@@ -102,7 +110,7 @@ class UnifiedUploadController(UploadControllerProtocol):
                 ],
                 Input("progress-done-trigger", "n_clicks"),
                 None,
-                "finalize_upload",
+                "file_upload_finalize",
                 {"prevent_initial_call": True},
             ),
         ]

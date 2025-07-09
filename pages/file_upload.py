@@ -8,6 +8,7 @@ import types
 from typing import TYPE_CHECKING, Any
 
 from dash import html
+from core.callback_registry import _callback_registry
 
 try:  # Lazy import for optional heavy dependencies
     from components.upload import UnifiedUploadComponent
@@ -76,6 +77,12 @@ def register_callbacks(manager: Any, controller=None) -> None:
     if not _upload_component:
         return
 
+    callback_prefix = "file_upload"
+
+    if _callback_registry.is_registered(f"{callback_prefix}_handle"):
+        logger.info("File upload callbacks already registered, skipping")
+        return
+
     if not hasattr(manager, "register_callback"):
         if hasattr(manager, "unified_callback"):
             manager.register_callback = manager.unified_callback  # type: ignore[attr-defined]
@@ -94,6 +101,10 @@ def register_callbacks(manager: Any, controller=None) -> None:
             raise ValueError(f"Unsupported callback manager: {type(manager)}")
 
     _upload_component.register_callbacks(manager, controller)
+
+    _callback_registry.register(f"{callback_prefix}_handle", "file_upload")
+    _callback_registry.register(f"{callback_prefix}_progress", "file_upload")
+    _callback_registry.register(f"{callback_prefix}_finalize", "file_upload")
 
 
 register_upload_callbacks = register_callbacks

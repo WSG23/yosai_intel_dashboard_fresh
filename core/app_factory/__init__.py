@@ -7,6 +7,7 @@ import os
 import sys
 import time
 import types
+import importlib
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Optional, cast
 
@@ -110,6 +111,7 @@ from pages.file_upload import register_callbacks as register_upload_callbacks
 from services import get_analytics_service
 from services.analytics_service import AnalyticsService
 from utils.assets_utils import ensure_icon_cache_headers, ensure_navbar_assets
+from core.callback_registry import GlobalCallbackRegistry, _callback_registry
 
 from .health import register_health_endpoints
 from .plugins import _initialize_plugins
@@ -846,6 +848,9 @@ def _register_callbacks(
 ) -> None:
     """Register application callbacks using the unified coordinator."""
 
+    global _callback_registry
+    _callback_registry = GlobalCallbackRegistry()
+
     if hasattr(app, "_unified_wrapper"):
         coordinator = cast(TrulyUnifiedCallbacksType, getattr(app, "_unified_wrapper"))
     elif TrulyUnifiedCallbacks is not None:
@@ -862,33 +867,32 @@ def _register_callbacks(
         )
 
     if coordinator is not None:
-        register_upload_callbacks(coordinator)
-    unicode_proc = None
-    if coordinator is not None and container:
-        try:
-            unicode_proc = container.get("unicode_processor")
-        except Exception:
-            unicode_proc = None
-    if coordinator is not None:
-        _register_router_callbacks(coordinator, unicode_proc)
-        _register_global_callbacks(coordinator)
+        registration_modules = [
+            ("pages.file_upload", "register_callbacks"),
+            ("pages.deep_analytics", "register_callbacks"),
+            ("components.ui.navbar", "register_navbar_callbacks"),
+        ]
 
-    if coordinator is not None:
         try:
-            from components.device_verification import (
-                register_callbacks as register_device_verification,
-            )
-            from components.simple_device_mapping import (
-                register_callbacks as register_simple_mapping,
-            )
-            from components.ui.navbar import register_navbar_callbacks
-
-            register_simple_mapping(coordinator)
-            register_device_verification(coordinator)
-            register_deep_callbacks(coordinator)
             from services.interfaces import get_export_service
+            unicode_proc = None
+            if container:
+                try:
+                    unicode_proc = container.get("unicode_processor")
+                except Exception:
+                    unicode_proc = None
 
-            register_navbar_callbacks(coordinator, get_export_service(container))
+            _register_router_callbacks(coordinator, unicode_proc)
+            _register_global_callbacks(coordinator)
+
+            for module_name, func_name in registration_modules:
+                module = importlib.import_module(module_name)
+                register_func = getattr(module, func_name)
+                if func_name == "register_navbar_callbacks":
+                    register_func(coordinator, get_export_service(container))
+                else:
+                    register_func(coordinator)
+                logger.info("✅ Registered callbacks from %s", module_name)
 
             cast(Any, app)._upload_callbacks = object()
             cast(Any, app)._deep_analytics_callbacks = DeepAnalyticsCallbacks()
@@ -898,11 +902,14 @@ def _register_callbacks(
             ):
                 coordinator.print_callback_summary()
         except Exception as e:  # pragma: no cover - log and continue
-            logger.warning(f"Failed to register module callbacks: {e}")
+            logger.error("❌ Failed to register callbacks from modules: %s", e)
     else:
         logger.warning(
             "Skipping registration of module callbacks due to missing coordinator"
         )
+
+    if coordinator is not None:
+        coordinator._callback_registry = _callback_registry
 
 
 def _initialize_services(container: Optional[ServiceContainer] = None) -> None:

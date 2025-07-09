@@ -6,7 +6,8 @@ Manages all callbacks in a modular, organized way
 import logging
 import time
 from functools import wraps
-from typing import Callable, List
+from typing import Callable, List, Dict
+import functools
 
 from dash import no_update
 
@@ -30,7 +31,42 @@ def debounce(wait_ms: int = 300):
 
     return decorator
 
+
 logger = logging.getLogger(__name__)
+
+
+class GlobalCallbackRegistry:
+    """Track globally registered callback IDs to prevent duplicates."""
+
+    def __init__(self) -> None:
+        self.registered_callbacks: set[str] = set()
+        self.callback_sources: Dict[str, str] = {}
+
+    def is_registered(self, callback_id: str) -> bool:
+        return callback_id in self.registered_callbacks
+
+    def register(self, callback_id: str, module_name: str = "unknown") -> bool:
+        if callback_id in self.registered_callbacks:
+            existing = self.callback_sources.get(callback_id, "unknown")
+            logger.warning(
+                "Callback ID '%s' already registered by %s, skipping registration from %s",
+                callback_id,
+                existing,
+                module_name,
+            )
+            return False
+
+        self.registered_callbacks.add(callback_id)
+        self.callback_sources[callback_id] = module_name
+        logger.debug("Registered callback '%s' from %s", callback_id, module_name)
+        return True
+
+    def get_conflicts(self) -> Dict[str, str]:
+        return dict(self.callback_sources)
+
+
+# Global instance used across the application
+_callback_registry = GlobalCallbackRegistry()
 
 
 class CallbackRegistry:
@@ -130,3 +166,30 @@ class ComponentCallbackManager:
     def register_all(self):
         """Register all callbacks for this component"""
         raise NotImplementedError("Subclasses must implement register_all")
+
+
+def safe_callback_registration(callback_id: str, module_name: str = "unknown"):
+    """Decorator to prevent duplicate callback registrations."""
+
+    def decorator(register_func: Callable):
+        @functools.wraps(register_func)
+        def wrapper(*args, **kwargs):
+            if _callback_registry.is_registered(callback_id):
+                logger.info("Skipping duplicate callback registration: %s", callback_id)
+                return None
+            result = register_func(*args, **kwargs)
+            _callback_registry.register(callback_id, module_name)
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+__all__ = [
+    "CallbackRegistry",
+    "ComponentCallbackManager",
+    "GlobalCallbackRegistry",
+    "safe_callback_registration",
+    "_callback_registry",
+]
