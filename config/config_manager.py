@@ -89,4 +89,14 @@ def reload_config() -> ConfigManager:
     return _manager
 
 
-__all__ = ["ConfigManager", "get_config", "reload_config"]
+def create_config_manager(config_path: Optional[str] = None) -> ConfigManager:
+    """Factory for creating :class:`ConfigManager` instances."""
+    return ConfigManager(config_path=config_path)
+
+
+__all__ = [
+    "ConfigManager",
+    "get_config",
+    "reload_config",
+    "create_config_manager",
+]
