@@ -12,7 +12,7 @@ class EnumJSONProvider(DefaultJSONProvider):
         return super().default(o)
 import sys
 
-from config.config import ConfigManager
+from config.config import create_config_manager
 from core.service_container import ServiceContainer
 from core.plugins.auto_config import PluginAutoConfiguration
 from core.plugins.unified_registry import UnifiedPluginRegistry
@@ -56,7 +56,7 @@ class DummyPlugin:
 def test_registry_registration_and_service():
     app = Dash(__name__)
     container = ServiceContainer()
-    cfg = ConfigManager()
+    cfg = create_config_manager()
     cfg.config.plugin_settings["dummy"] = {"enabled": True}
     registry = UnifiedPluginRegistry(app, container, cfg)
     plugin = DummyPlugin()

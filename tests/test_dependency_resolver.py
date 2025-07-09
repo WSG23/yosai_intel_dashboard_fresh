@@ -4,7 +4,7 @@ import sys
 from core.plugins.dependency_resolver import PluginDependencyResolver
 from core.plugins.manager import PluginManager
 from core.service_container import ServiceContainer
-from config.config import ConfigManager
+from config.config import create_config_manager
 from services.data_processing.core.protocols import PluginMetadata
 
 
@@ -122,7 +122,7 @@ def create_plugin():
 """
     )
     sys.path.insert(0, str(tmp_path))
-    manager = PluginManager(ServiceContainer(), ConfigManager(), package="cyclepkg", health_check_interval=1)
+    manager = PluginManager(ServiceContainer(), create_config_manager(), package="cyclepkg", health_check_interval=1)
     try:
         caplog.set_level("ERROR")
         result = manager.load_all_plugins()
@@ -163,7 +163,7 @@ def create_plugin():
 """
     )
     sys.path.insert(0, str(tmp_path))
-    manager = PluginManager(ServiceContainer(), ConfigManager(), package="unkpkg", health_check_interval=1)
+    manager = PluginManager(ServiceContainer(), create_config_manager(), package="unkpkg", health_check_interval=1)
     try:
         caplog.set_level("ERROR")
         result = manager.load_all_plugins()

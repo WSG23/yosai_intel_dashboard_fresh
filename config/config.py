@@ -586,6 +586,11 @@ class ConfigManager(ConfigurationProtocol):
             return {"valid": False, "error": str(exc)}
 
 
+def create_config_manager(config_path: Optional[str] = None) -> "ConfigManager":
+    """Factory helper to instantiate :class:`ConfigManager`."""
+    return ConfigManager(config_path)
+
+
 # Global configuration instance
 _config_manager: Optional[ConfigManager] = None
 
@@ -663,6 +668,7 @@ __all__ = [
     "CacheConfig",
     "SecretValidationConfig",
     "ConfigManager",
+    "create_config_manager",
     "get_config",
     "reload_config",
     "get_app_config",
