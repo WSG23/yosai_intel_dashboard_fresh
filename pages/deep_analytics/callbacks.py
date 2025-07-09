@@ -1,6 +1,6 @@
 """Dash callback handlers for the deep analytics page."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from dash import Input, Output, State, callback_context, html
 from dash.exceptions import PreventUpdate
@@ -515,12 +515,36 @@ class Callbacks:
 
 
 def register_callbacks(
-    manager: "TrulyUnifiedCallbacks",
+    manager: Any,
     controller: UnifiedAnalyticsController | None = None,
 ) -> None:
-    """Instantiate :class:`Callbacks` and register its methods."""
+    """Instantiate :class:`Callbacks` and register its methods.
+
+    Works with either a ``TrulyUnifiedCallbacks`` instance or a standard Dash app.
+    """
 
     cb = Callbacks()
+
+    if hasattr(manager, "unified_callback"):
+        decorator = manager.unified_callback
+        extra_kwargs = {
+            "callback_id": "analytics_operations",
+            "component_name": "deep_analytics",
+            "prevent_initial_call": True,
+        }
+    elif hasattr(manager, "register_callback"):
+        decorator = manager.register_callback
+        extra_kwargs = {
+            "callback_id": "analytics_operations",
+            "component_name": "deep_analytics",
+            "prevent_initial_call": True,
+        }
+    elif hasattr(manager, "callback"):
+        decorator = manager.callback
+        extra_kwargs = {"prevent_initial_call": True}
+        logger.warning("Using basic Dash callbacks - unified features unavailable")
+    else:
+        raise ValueError(f"Unsupported callback manager: {type(manager)}")
 
     callback_manager.register_operation(
         "analysis_buttons",
@@ -541,7 +565,7 @@ def register_callbacks(
         name="update_status_alert",
     )
 
-    @manager.unified_callback(
+    @decorator(
         [
             Output("analytics-display-area", "children"),
             Output("analytics-data-source", "options"),
@@ -559,9 +583,7 @@ def register_callbacks(
             Input("hidden-trigger", "children"),
         ],
         [State("analytics-data-source", "value")],
-        callback_id="analytics_operations",
-        component_name="deep_analytics",
-        prevent_initial_call=True,
+        **extra_kwargs,
     )
     def analytics_operations(
         sec, trn, beh, anom, sug, qual, uniq, refresh, trigger, data_source

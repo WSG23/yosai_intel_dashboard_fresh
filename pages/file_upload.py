@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+
 """File upload page wiring the reusable upload component."""
 
 import logging
@@ -67,10 +68,32 @@ def layout() -> Html.Div:
     return html.Div("Upload component unavailable")
 
 
-def register_callbacks(manager: TrulyUnifiedCallbacksType, controller=None) -> None:
-    """Register upload callbacks using the underlying component."""
-    if _upload_component:
-        _upload_component.register_callbacks(manager, controller)
+def register_callbacks(manager: Any, controller=None) -> None:
+    """Register upload callbacks using the underlying component.
+
+    Accepts either a ``TrulyUnifiedCallbacks`` instance or a plain Dash app.
+    """
+    if not _upload_component:
+        return
+
+    if not hasattr(manager, "register_callback"):
+        if hasattr(manager, "unified_callback"):
+            manager.register_callback = manager.unified_callback  # type: ignore[attr-defined]
+        elif hasattr(manager, "callback"):
+            if TrulyUnifiedCallbacks:
+                wrapper = TrulyUnifiedCallbacks(manager)
+                manager.register_callback = wrapper.register_callback
+                manager.unified_callback = wrapper.unified_callback
+            else:
+                manager.register_callback = manager.callback
+                manager.unified_callback = manager.callback
+                logger.warning(
+                    "Using standard Dash callbacks - advanced features unavailable"
+                )
+        else:
+            raise ValueError(f"Unsupported callback manager: {type(manager)}")
+
+    _upload_component.register_callbacks(manager, controller)
 
 
 register_upload_callbacks = register_callbacks
