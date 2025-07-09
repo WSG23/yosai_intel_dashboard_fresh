@@ -12,21 +12,23 @@ import yaml
 
 from core.exceptions import ConfigurationError
 from core.protocols import ConfigurationProtocol
-from core.secrets_validator import SecretsValidator
 from core.secrets_manager import SecretsManager
-from .transformer import config_transformer
+from core.secrets_validator import SecretsValidator
+
 
 from .config_validator import ConfigValidator
-from .dynamic_config import dynamic_config
-from .environment import get_environment, select_config_file
+
+ValidationResult = ConfigValidator.ValidationResult
 from .constants import (
     DEFAULT_APP_HOST,
     DEFAULT_APP_PORT,
-    DEFAULT_DB_HOST,
-    DEFAULT_DB_PORT,
     DEFAULT_CACHE_HOST,
     DEFAULT_CACHE_PORT,
+    DEFAULT_DB_HOST,
+    DEFAULT_DB_PORT,
 )
+from .dynamic_config import dynamic_config
+from .environment import get_environment, select_config_file
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +120,6 @@ class AnalyticsConfig:
     max_display_rows: int = 10000
 
 
-
 @dataclass
 class MonitoringConfig:
     """Runtime monitoring options"""
@@ -164,7 +165,9 @@ class Config:
     analytics: AnalyticsConfig = field(default_factory=AnalyticsConfig)
     monitoring: MonitoringConfig = field(default_factory=MonitoringConfig)
     cache: CacheConfig = field(default_factory=CacheConfig)
-    secret_validation: SecretValidationConfig = field(default_factory=SecretValidationConfig)
+    secret_validation: SecretValidationConfig = field(
+        default_factory=SecretValidationConfig
+    )
     environment: str = "development"
     plugin_settings: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
@@ -409,6 +412,14 @@ class ConfigManager(ConfigurationProtocol):
             error_msg = "; ".join(errors)
             logger.error(error_msg)
             raise ConfigurationError(error_msg)
+
+    def validate_current_config(self) -> List[ValidationResult]:
+        """Run validation rules and return results."""
+        results: List[ValidationResult] = []
+        results.extend(ConfigValidator.validate_structure(self.config))
+        results.extend(ConfigValidator.validate_values(self.config))
+        results.extend(ConfigValidator.validate_environment_specific(self.config))
+        return results
 
     def get_app_config(self) -> AppConfig:
         """Get app configuration"""
