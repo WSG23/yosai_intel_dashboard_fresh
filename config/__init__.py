@@ -31,7 +31,13 @@ from .database_exceptions import (
 # Import dynamic configuration helpers
 from .dynamic_config import DynamicConfigManager, dynamic_config
 from .protocols import ConnectionRetryManagerProtocol, RetryConfigProtocol
-from core.unicode import UnicodeProcessor, UnicodeSQLProcessor
+from .unicode_handler import UnicodeQueryHandler
+from .unicode_sql_processor import UnicodeSQLProcessor
+from .unicode_processor import (
+    QueryUnicodeHandler,
+    FileUnicodeHandler,
+    UnicodeSecurityValidator,
+)
 
 
 
@@ -122,7 +128,10 @@ __all__ = [
     "RetryConfig",
     "ConnectionRetryManagerProtocol",
     "RetryConfigProtocol",
-    "UnicodeProcessor",
+    "UnicodeQueryHandler",
+    "QueryUnicodeHandler",
+    "FileUnicodeHandler",
+    "UnicodeSecurityValidator",
     "UnicodeSQLProcessor",
     "DatabaseError",
     "ConnectionRetryExhausted",

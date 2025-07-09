@@ -12,7 +12,6 @@ from core.protocols import UnicodeProcessorProtocol
 from core.unicode import contains_surrogates
 from security_callback_controller import SecurityEvent, emit_security_event
 
-
 logger = logging.getLogger(__name__)
 
 
