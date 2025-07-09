@@ -2,9 +2,26 @@ from __future__ import annotations
 
 import functools
 import logging
+from functools import wraps
 from typing import Any, Callable, Optional
 
+from core.unicode_utils import sanitize_for_utf8
+
 logger = logging.getLogger(__name__)
+
+
+def unicode_safe_callback(func: Callable[..., Any]) -> Callable[..., Any]:
+    """Make callbacks Unicode-safe by sanitizing string inputs."""
+
+    @wraps(func)
+    def wrapper(*args: Any, **kwargs: Any):
+        safe_args = [sanitize_for_utf8(a) if isinstance(a, str) else a for a in args]
+        safe_kwargs = {
+            k: sanitize_for_utf8(v) if isinstance(v, str) else v for k, v in kwargs.items()
+        }
+        return func(*safe_args, **safe_kwargs)
+
+    return wrapper
 
 
 def handle_unicode_surrogates(text: str, processor: Optional[Any] = None) -> str:
@@ -128,4 +145,4 @@ def handle_unified(target: Any, *cb_args: Any, **cb_kwargs: Any) -> Callable[[Ca
     return CallbackUnifier(target, safe_callback(target))(*cb_args, **cb_kwargs)
 
 
-__all__ = ["handle_safe", "handle_unified", "safe_callback"]
+__all__ = ["unicode_safe_callback", "handle_safe", "handle_unified", "safe_callback"]
