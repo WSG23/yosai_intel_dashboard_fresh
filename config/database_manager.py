@@ -8,32 +8,17 @@ import logging
 import os
 import sqlite3
 import threading
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional, Protocol
 
+from .base import DatabaseConfig
+from .database_exceptions import ConnectionValidationFailed, DatabaseError
 from .protocols import (
     ConnectionRetryManagerProtocol,
     RetryConfigProtocol,
 )
 
-from .database_exceptions import ConnectionValidationFailed, DatabaseError
-from .constants import DEFAULT_DB_HOST, DEFAULT_DB_PORT
-
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class DatabaseConfig:
-    """Database configuration dataclass"""
-
-    type: str = "sqlite"
-    host: str = DEFAULT_DB_HOST
-    port: int = DEFAULT_DB_PORT
-    name: str = "yosai.db"
-    user: str = "user"
-    password: str = ""
-    connection_timeout: float = 5.0
 
 
 class DatabaseConnection(Protocol):
@@ -352,9 +337,10 @@ class EnhancedPostgreSQLManager(DatabaseManager):
         retry_config: RetryConfigProtocol | None = None,
     ) -> None:
         super().__init__(config)
-        from database.connection_pool import EnhancedConnectionPool
-        from .connection_retry import ConnectionRetryManager, RetryConfig
         from core.unicode import UnicodeSQLProcessor
+        from database.connection_pool import EnhancedConnectionPool
+
+        from .connection_retry import ConnectionRetryManager, RetryConfig
 
         self.retry_manager: ConnectionRetryManagerProtocol = ConnectionRetryManager(
             retry_config or RetryConfig()
