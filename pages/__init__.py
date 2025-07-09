@@ -1,68 +1,62 @@
 #!/usr/bin/env python3
 """
-Simplified Pages Package
+Page registration system for dynamic page loading.
+Replace existing pages/__init__.py entirely.
 """
+
+import importlib
 import logging
-from typing import Any, Callable, Optional
+from types import ModuleType
+from typing import Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
-# Only import existing pages
-_pages = {}
+# Mapping of page names to their module paths
+PAGE_MODULES: Dict[str, str] = {
+    "deep_analytics": "pages.deep_analytics",
+    "file_upload": "pages.file_upload",
+    "graphs": "pages.graphs",
+    "export": "pages.export",
+    "settings": "pages.settings",
+}
 
-try:
-    from . import deep_analytics
-
-    _pages["deep_analytics"] = deep_analytics
-except ImportError as e:
-    logger.warning(f"Deep analytics page not available: {e}")
-    _pages["deep_analytics"] = None
-
-try:
-    from . import file_upload
-
-    _pages["file_upload"] = file_upload
-except ImportError as e:
-    logger.warning(f"File upload page not available: {e}")
-    _pages["file_upload"] = None
+# Cache of loaded page modules
+_loaded: Dict[str, Optional[ModuleType]] = {}
 
 
-try:
-    from . import graphs
+def _load_page(name: str) -> Optional[ModuleType]:
+    """Import and cache the page module by name."""
+    if name in _loaded:
+        return _loaded[name]
 
-    _pages["graphs"] = graphs
-except ImportError as e:
-    logger.warning(f"Graphs page not available: {e}")
-    _pages["graphs"] = None
+    module_path = PAGE_MODULES.get(name)
+    if not module_path:
+        logger.warning(f"Unknown page requested: {name}")
+        _loaded[name] = None
+        return None
 
-try:
-    from . import export
-
-    _pages["export"] = export
-except ImportError as e:
-    logger.warning(f"Export page not available: {e}")
-    _pages["export"] = None
-
-try:
-    from . import settings
-
-    _pages["settings"] = settings
-except ImportError as e:
-    logger.warning(f"Settings page not available: {e}")
-    _pages["settings"] = None
+    try:
+        module = importlib.import_module(module_path)
+        _loaded[name] = module
+        return module
+    except Exception as e:
+        logger.warning(f"Failed to import page {name}: {e}")
+        _loaded[name] = None
+        return None
 
 
 def get_page_layout(page_name: str) -> Optional[Callable]:
-    """Get page layout function safely"""
-    page_module = _pages.get(page_name)
-    if page_module and hasattr(page_module, "layout"):
-        return page_module.layout
+    """Get the layout function for a given page if available."""
+    module = _load_page(page_name)
+    if module and hasattr(module, "layout"):
+        return getattr(module, "layout")
     return None
 
 
 def register_pages() -> None:
-    """Register all available pages with Dash."""
-    for name, module in _pages.items():
+    """Register all known pages with Dash."""
+    for name in PAGE_MODULES:
+        module = _load_page(name)
         if module and hasattr(module, "register_page"):
             try:
                 module.register_page()
