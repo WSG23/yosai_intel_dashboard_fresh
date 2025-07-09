@@ -10,7 +10,9 @@ except Exception:  # pragma: no cover - avoid circular import during tests
     get_analytics_service = None
 try:
     from services.ai_suggestions import generate_column_suggestions
+    AI_SUGGESTIONS_AVAILABLE = True
 except Exception:  # pragma: no cover - optional AI suggestions
+    AI_SUGGESTIONS_AVAILABLE = False
     def generate_column_suggestions(*args: Any, **kwargs: Any) -> Dict[str, Dict[str, Any]]:
         return {}
 from security.unicode_security_handler import UnicodeSecurityHandler
@@ -18,9 +20,6 @@ from utils.preview_utils import serialize_dataframe_preview
 from services.interfaces import get_upload_data_service
 
 logger = logging.getLogger(__name__)
-
-# Public flag used by UI components to toggle AI suggestions
-AI_SUGGESTIONS_AVAILABLE = True
 
 
 # ---------------------------------------------------------------------------
