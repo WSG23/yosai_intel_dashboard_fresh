@@ -100,10 +100,30 @@ def test_register_callbacks(monkeypatch, fake_unicode_processor):
     container = _make_container(fake_unicode_processor)
     cfg = container.get("config_manager")
 
+    # Ensure stub modules are used for callback registration
+    import sys
+    from pathlib import Path
+    stub_dir = Path(__file__).resolve().parents[1] / "stubs"
+    if str(stub_dir) not in sys.path:
+        sys.path.insert(0, str(stub_dir))
+    for mod in [
+        "pages",
+        "pages.file_upload",
+        "pages.deep_analytics",
+        "components.simple_device_mapping",
+        "components.device_verification",
+        "components.ui.navbar",
+    ]:
+        sys.modules.pop(mod, None)
+    import tests.stubs.dash_bootstrap_components as dbc_stub
+    sys.modules["dash_bootstrap_components"] = dbc_stub
+
     calls = {}
 
     def fake_router(mgr, proc=None):
         calls["router"] = proc
+        mgr.simple_registered = True
+        mgr.device_registered = True
 
     def fake_global(mgr):
         calls["global"] = True
@@ -127,6 +147,14 @@ def test_register_callbacks(monkeypatch, fake_unicode_processor):
             instance = self
             self.app = app
             self.summary = False
+
+        def unified_callback(self, *a, **k):  # pragma: no cover - simple stub
+            def decorator(func):
+                return func
+
+            return decorator
+
+        register_callback = unified_callback
 
         def print_callback_summary(self):
             self.summary = True
