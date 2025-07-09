@@ -108,6 +108,9 @@
 
 
     input.addEventListener('change', async function(e){
+      // Ignore synthetic events to avoid recursion when we
+      // redispatch the event after validation.
+      if(!e.isTrusted){ return; }
       e.stopImmediatePropagation();
       e.preventDefault();
       if(area){ area.classList.add('drag-drop-upload--uploading'); }
