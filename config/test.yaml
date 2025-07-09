@@ -16,6 +16,12 @@ database:
 security:
   secret_key: "${SECRET_KEY}"
   session_timeout: 3600
+  max_upload_mb: 50
+  allowed_file_types:
+    - .csv
+    - .json
+    - .xlsx
+    - .xls
 
 sample_files:
   csv_path: "data/sample_data.csv"
