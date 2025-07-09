@@ -3,11 +3,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
-
-from core.plugins.decorators import unicode_safe_callback
 import types
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from dash import html
 
@@ -15,6 +12,8 @@ from core.callback_registry import (
     _callback_registry,
     handle_register_with_deduplication,
 )
+from core.plugins.decorators import unicode_safe_callback
+from core.unicode import safe_encode_text
 
 try:  # Lazy import for optional heavy dependencies
     from components.upload import UnifiedUploadComponent
@@ -75,6 +74,50 @@ def layout() -> Html.Div:
     return html.Div("Upload component unavailable")
 
 
+def safe_upload_layout():
+    """Unicode-safe wrapper for upload layout.
+    Prevents rendering issues that cause navbar flash."""
+    try:
+        # Get the original layout
+        original_layout = layout()
+
+        # Process any text content to ensure Unicode safety
+        if hasattr(original_layout, "children"):
+            # This is a container, process its children recursively
+            def process_component(component):
+                if hasattr(component, "children"):
+                    if isinstance(component.children, str):
+                        component.children = safe_encode_text(component.children)
+                    elif isinstance(component.children, list):
+                        for child in component.children:
+                            process_component(child)
+                return component
+
+            original_layout = process_component(original_layout)
+
+        return original_layout
+
+    except Exception as e:
+        # Fallback layout if original fails
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.error(f"Upload layout creation failed: {e}")
+
+        import dash_bootstrap_components as dbc
+        from dash import html
+
+        return dbc.Container(
+            [
+                dbc.Alert(
+                    "Upload page is temporarily unavailable. Please try again later.",
+                    color="warning",
+                ),
+                html.Div(id="upload-fallback-content"),
+            ]
+        )
+
+
 def register_callbacks(manager: Any, controller=None) -> None:
     """Register upload callbacks using the underlying component.
 
@@ -116,7 +159,6 @@ def register_callbacks(manager: Any, controller=None) -> None:
     )
 
 
-
 register_upload_callbacks = register_callbacks
 
 
@@ -140,8 +182,8 @@ def check_upload_system_health() -> dict:
 
 __all__ = [
     "layout",
+    "safe_upload_layout",
     "register_upload_callbacks",
     "register_callbacks",
     "check_upload_system_health",
-    "load_page",
-]
+    "load_page",]
