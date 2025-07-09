@@ -110,7 +110,13 @@ from pages.file_upload import layout as upload_layout
 from pages.file_upload import register_callbacks as register_upload_callbacks
 from services import get_analytics_service
 from services.analytics_service import AnalyticsService
-from utils.assets_utils import ensure_icon_cache_headers, ensure_navbar_assets
+from utils.assets_utils import (
+    ensure_icon_cache_headers,
+    ensure_navbar_assets,
+    ensure_all_navbar_assets,
+    NAVBAR_ICON_NAMES,
+)
+from utils.assets_debug import check_navbar_assets
 from core.callback_registry import GlobalCallbackRegistry, _callback_registry
 
 from .health import register_health_endpoints
@@ -163,6 +169,16 @@ def create_app(mode: Optional[str] = None) -> "Dash":
         config_manager = DummyConfigManager()  # Initialize config manager
 
         logger.info("🏗️ Creating Dash application...")
+
+        # Ensure navbar icons are available before constructing the Dash app
+        try:
+            ensure_all_navbar_assets()
+            summary = check_navbar_assets(NAVBAR_ICON_NAMES, warn=False)
+            missing = [n for n, ok in summary.items() if not ok]
+            if missing:
+                logger.warning("Missing navbar icons: %s", ", ".join(missing))
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.debug("ensure_all_navbar_assets failed: %s", exc)
 
         # Determine app mode
         mode = mode or os.environ.get("YOSAI_APP_MODE", "full")
