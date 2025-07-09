@@ -14,6 +14,7 @@ from .base import (
 from .config_manager import ConfigManager, get_config, reload_config
 from .config_validator import ConfigValidator, ValidationResult
 from .config_loader import ConfigLoader
+from .config_validator import ConfigValidator
 from .config_transformer import ConfigTransformer
 from .dynamic_config import dynamic_config, DynamicConfigManager
 from .constants import SecurityConstants, PerformanceConstants, CSSConstants
