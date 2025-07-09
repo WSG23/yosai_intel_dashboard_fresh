@@ -1,3 +1,4 @@
+from core.plugins.decorators import unicode_safe_callback
 #!/usr/bin/env python3
 from __future__ import annotations
 

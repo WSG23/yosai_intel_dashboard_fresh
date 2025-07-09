@@ -1,3 +1,4 @@
+from core.plugins.decorators import unicode_safe_callback
 """Dash callback handlers for the deep analytics page."""
 
 from typing import TYPE_CHECKING, Any
