@@ -38,6 +38,11 @@ from .dynamic_config import DynamicConfigManager, dynamic_config
 from .protocols import ConnectionRetryManagerProtocol, RetryConfigProtocol
 from .unicode_handler import UnicodeQueryHandler
 from .unicode_sql_processor import UnicodeSQLProcessor
+from .unicode_processor import (
+    QueryUnicodeHandler,
+    FileUnicodeHandler,
+    UnicodeSecurityValidator,
+)
 
 
 def _get_service(name: str):
@@ -128,6 +133,9 @@ __all__ = [
     "ConnectionRetryManagerProtocol",
     "RetryConfigProtocol",
     "UnicodeQueryHandler",
+    "QueryUnicodeHandler",
+    "FileUnicodeHandler",
+    "UnicodeSecurityValidator",
     "UnicodeSQLProcessor",
     "DatabaseError",
     "ConnectionRetryExhausted",
