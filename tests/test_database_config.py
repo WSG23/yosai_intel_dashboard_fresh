@@ -1,6 +1,6 @@
 import pytest
 
-from config.config import DatabaseConfig
+from config import DatabaseConfig
 from tests.fake_configuration import FakeConfiguration
 from config.connection_pool import DatabaseConnectionPool
 from config.database_manager import MockConnection

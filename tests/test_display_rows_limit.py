@@ -1,6 +1,6 @@
 import pandas as pd
 
-from config.config import get_config
+from config import get_config
 from services.data_processing.file_processor import create_file_preview
 
 

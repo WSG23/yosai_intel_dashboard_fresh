@@ -1,6 +1,6 @@
 import pandas as pd
 
-from config.config import create_config_manager
+from config import create_config_manager
 from tests.fake_configuration import FakeConfiguration
 
 fake_cfg = FakeConfiguration()

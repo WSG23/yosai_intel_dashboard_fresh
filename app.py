@@ -239,7 +239,7 @@ def main():
             raw_cfg = loader.load()
             logger.debug("Loaded raw config with keys: %s", list(raw_cfg.keys()))
 
-            from config.config import get_config
+            from config import get_config
             config = get_config()
             app_config = config.get_app_config()
             logger.info("✅ Configuration loaded successfully")

@@ -4,7 +4,7 @@ import pytest
 
 from dash import Dash, Input, Output
 
-from config.config import create_config_manager
+from config import create_config_manager
 from core.service_container import ServiceContainer
 from core.json_serialization_plugin import JsonSerializationPlugin
 from core.plugins.auto_config import setup_plugins

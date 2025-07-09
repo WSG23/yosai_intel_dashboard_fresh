@@ -347,7 +347,7 @@ resolved from anywhere:
 
 ```python
 from core.container import Container
-from config.config import create_config_manager
+from config import create_config_manager
 
 container = Container()
 container.register("config", create_config_manager())
@@ -358,7 +358,7 @@ config = container.get("config")
 A short example without the container:
 
 ```python
-from config.config import create_config_manager
+from config import create_config_manager
 
 config = create_config_manager()
 db_cfg = config.get_database_config()
@@ -481,7 +481,7 @@ the new unified configuration through it instead:
 
 ```python
 from core.container import Container
-from config.config import create_config_manager
+from config import create_config_manager
 
 container = Container()
 container.register("config", create_config_manager())

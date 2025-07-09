@@ -126,7 +126,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
 
             from config.database_manager import DatabaseConfig as ManagerConfig
             from config.database_manager import DatabaseManager
-            from config.config import get_database_config
+            from config import get_database_config
 
             cfg = get_database_config()
             manager_cfg = ManagerConfig(

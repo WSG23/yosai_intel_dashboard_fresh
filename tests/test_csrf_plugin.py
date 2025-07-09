@@ -1,6 +1,6 @@
 import os
 
-from config.config import reload_config
+from config import reload_config
 from core import app_factory
 
 
