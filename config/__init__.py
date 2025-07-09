@@ -16,6 +16,7 @@ from .config_transformer import ConfigTransformer
 from .config_validator import ConfigValidator, ValidationResult
 from .constants import CSSConstants, PerformanceConstants, SecurityConstants
 from .dynamic_config import DynamicConfigManager, dynamic_config
+from .config_manager import ConfigManager, get_config, reload_config
 from .protocols import (
     ConfigLoaderProtocol,
     ConfigTransformerProtocol,
