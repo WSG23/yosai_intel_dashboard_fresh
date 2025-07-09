@@ -2,9 +2,11 @@
 """Export page providing download instructions."""
 
 import dash_bootstrap_components as dbc
-from dash import dcc, html
+from dash import dcc, html, register_page
 
 from security.unicode_security_processor import sanitize_unicode_input
+
+register_page(__name__, path="/export", name="Export")
 
 
 def _instructions() -> dbc.Card:

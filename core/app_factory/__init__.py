@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any, Callable, Optional, cast
 try:
     import dash
     import dash_bootstrap_components as dbc
-    from dash import Input, Output, dcc, html
+    from dash import Input, Output, dcc, html, page_container
 
     DASH_AVAILABLE = True
 except ImportError as e:
@@ -96,8 +96,8 @@ class DummyConfigManager:
 from flask_caching import Cache
 
 from components.ui.navbar import create_navbar_layout
-from config.complete_service_registration import register_all_application_services
 from config import get_config
+from config.complete_service_registration import register_all_application_services
 from core.callback_registry import GlobalCallbackRegistry, _callback_registry
 from core.performance_monitor import DIPerformanceMonitor
 from core.service_container import ServiceContainer
@@ -610,8 +610,9 @@ def _create_main_layout() -> "Html.Div":
                 _create_navbar(),
                 className="top-panel",
             ),
-            # Main content area (dynamically populated)
+            # Main content area with Dash Pages content
             html.Main(
+                page_container,
                 id="page-content",
                 className="main-content p-4 transition-fade-move transition-start",
             ),
@@ -675,71 +676,16 @@ def _register_router_callbacks(
     manager: TrulyUnifiedCallbacksType,
     unicode_processor: Optional[UnicodeProcessorProtocol] = None,
 ) -> None:
-    """Register page routing callbacks."""
+    """Register page transition callback for Dash Pages."""
 
     @manager.unified_callback(
-        outputs=[
-            Output("page-content", "children"),
-            Output("page-content", "className"),
-        ],
-        inputs=[Input("url", "pathname")],
-        callback_id="display_page_fixed",
+        Output("page-content", "className"),
+        Input("url", "pathname"),
+        callback_id="set_page_class",
         component_name="app_factory",
     )
-    def display_page(pathname: str):
-        """Fixed page routing with proper Unicode handling and flash prevention."""
-        from core.unicode import safe_encode_text
-
-        # Safely process pathname
-        safe_pathname = safe_encode_text(pathname) if pathname else "/"
-
-        # Base class for all pages
-        end_class = "main-content p-4 transition-fade-move transition-end"
-
-        # Route mapping with both /upload and /file-upload support
-        page_routes = {
-            "/analytics": _get_analytics_page,
-            "/graphs": _get_graphs_page,
-            "/export": _get_export_page,
-            "/settings": _get_settings_page,
-            "/upload": safe_upload_layout,
-            "/file-upload": safe_upload_layout,
-            "/": _get_home_page,
-            "/dashboard": _get_home_page,
-        }
-
-        # Find matching route
-        page_func = page_routes.get(safe_pathname)
-        if page_func:
-            try:
-                page_content = page_func()
-                return page_content, end_class
-            except Exception as e:
-                logger.error(f"Error loading page {safe_pathname}: {e}")
-                # Return error page instead of crashing
-                error_content = html.Div([
-                    html.H3("Page Load Error"),
-                    html.P(f"Failed to load {safe_pathname}"),
-                    dbc.Button("Go Home", href="/", color="primary")
-                ])
-                return error_content, end_class
-
-        # 404 page for unknown routes
-        not_found_content = html.Div([
-            html.H1("Page Not Found", className="text-center mt-5"),
-            html.P(
-                f"The page '{safe_pathname}' doesn't exist.",
-                className="text-center",
-            ),
-            dbc.Button(
-                "Go Home",
-                href="/",
-                color="primary",
-                className="d-block mx-auto",
-            ),
-        ])
-
-        return not_found_content, end_class
+    def set_page_class(pathname: str):
+        return "main-content p-4 transition-fade-move transition-end"
 
 
 def _get_home_page() -> Any:

@@ -6,7 +6,7 @@ import logging
 import types
 from typing import TYPE_CHECKING, Any
 
-from dash import html
+from dash import html, register_page
 
 from core.callback_registry import _callback_registry
 from core.unicode import safe_encode_text
@@ -18,6 +18,8 @@ except Exception:  # pragma: no cover - fallback when unavailable
 
 logger = logging.getLogger(__name__)
 
+register_page(__name__, path="/file-upload", name="File Upload", aliases=["/upload"])
+
 _import_error: Exception | None = None
 
 
@@ -26,6 +28,7 @@ def _safe_import_upload_component():
     global _import_error
     try:
         from components.upload import UnifiedUploadComponent as UUC
+
         logger.debug("UnifiedUploadComponent imported successfully")
         _import_error = None
         return UUC
