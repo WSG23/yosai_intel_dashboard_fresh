@@ -62,13 +62,9 @@ class ConfigTransformer(ConfigTransformerProtocol):
                 logger.warning("Invalid MAX_UPLOAD_MB value: %s", max_upload)
         if max_upload_bytes := os.getenv("MAX_UPLOAD_BYTES"):
             try:
-                config.security.max_upload_mb = int(max_upload_bytes) // (
-                    1024 * 1024
-                )
+                config.security.max_upload_mb = int(max_upload_bytes) // (1024 * 1024)
             except ValueError:
-                logger.warning(
-                    "Invalid MAX_UPLOAD_BYTES value: %s", max_upload_bytes
-                )
+                logger.warning("Invalid MAX_UPLOAD_BYTES value: %s", max_upload_bytes)
 
     def _apply_security_defaults(self, config: "Config") -> None:
         """Apply security-related defaults."""

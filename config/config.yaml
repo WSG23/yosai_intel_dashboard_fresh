@@ -12,6 +12,7 @@ database:
   echo: false
   pool_size: 10
   max_overflow: 20
+  url: ""
 
 security:
   session_timeout: 3600

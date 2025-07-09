@@ -39,10 +39,34 @@ class DatabaseConfig:
     name: str = "yosai.db"
     user: str = "user"
     password: str = ""
+    # Database connection URL. If empty, generated from other fields.
+    url: str = ""
     connection_timeout: int = 30
     initial_pool_size: int = dynamic_config.get_db_pool_size()
     max_pool_size: int = dynamic_config.get_db_pool_size() * 2
     shrink_timeout: int = 60
+
+    def __post_init__(self) -> None:
+        """Auto-generate connection URL if not explicitly provided."""
+        if not self.url:
+            if self.type == "sqlite":
+                self.url = f"sqlite:///{self.name}"
+            elif self.type == "postgresql":
+                if self.user and self.password:
+                    self.url = (
+                        f"postgresql://{self.user}:{self.password}"
+                        f"@{self.host}:{self.port}/{self.name}"
+                    )
+                else:
+                    self.url = f"postgresql://{self.host}:{self.port}/{self.name}"
+            elif self.type == "mysql":
+                if self.user and self.password:
+                    self.url = (
+                        f"mysql://{self.user}:{self.password}"
+                        f"@{self.host}:{self.port}/{self.name}"
+                    )
+                else:
+                    self.url = f"mysql://{self.host}:{self.port}/{self.name}"
 
     def get_connection_string(self) -> str:
         """Return a database connection string."""
@@ -153,8 +177,6 @@ class Config:
     )
     environment: str = "development"
     plugin_settings: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-
-
 
 
 __all__ = [
