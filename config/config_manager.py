@@ -5,10 +5,9 @@ from typing import Any, Dict, Optional
 
 from core.protocols import ConfigurationProtocol
 
-from .config import AppConfig, Config, DatabaseConfig, SecurityConfig
+from .base import AppConfig, Config, DatabaseConfig, SecurityConfig, ConfigTransformer
 from .config_loader import ConfigLoader, ConfigLoaderProtocol
 from .config_validator import ConfigValidator, ValidationResult
-from .config_transformer import ConfigTransformer
 from .environment import get_environment
 
 
