@@ -2,7 +2,7 @@ import sys
 import time
 from pathlib import Path
 
-from config.config import ConfigManager
+from config.config import create_config_manager
 from core.service_container import ServiceContainer
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
 from services.data_processing.core.protocols import PluginMetadata
@@ -39,7 +39,7 @@ class SimplePlugin:
 
 
 def test_load_plugin_registers_plugin(tmp_path):
-    cfg = ConfigManager()
+    cfg = create_config_manager()
     cfg.config.plugin_settings["simple"] = {"enabled": True}
     manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
     plugin = SimplePlugin()
@@ -83,7 +83,7 @@ def create_plugin():
     )
     sys.path.insert(0, str(tmp_path))
     try:
-        cfg = ConfigManager()
+        cfg = create_config_manager()
         cfg.config.plugin_settings["auto"] = {"enabled": True}
         manager = PluginManager(
             ServiceContainer(),
@@ -100,7 +100,7 @@ def create_plugin():
 
 
 def test_get_plugin_health_snapshot():
-    cfg = ConfigManager()
+    cfg = create_config_manager()
     cfg.config.plugin_settings["simple"] = {"enabled": True}
     manager = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
     plugin = SimplePlugin()

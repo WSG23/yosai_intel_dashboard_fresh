@@ -162,9 +162,9 @@ def env_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
 
 class TestProtocolCompliance:
     def test_configuration_service_compliance(self):
-        from config.config import ConfigManager
+        from config.config import create_config_manager
 
-        cfg = ConfigManager()
+        cfg = create_config_manager()
         assert isinstance(cfg, ConfigurationProtocol)
         assert_type(cfg, ConfigurationProtocol)
 
