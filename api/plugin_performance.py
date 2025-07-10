@@ -5,12 +5,14 @@ from flask import jsonify, request
 
 from app import app
 from core.plugins.performance_manager import EnhancedThreadSafePluginManager
+from advanced_cache import cache_with_lock
 
 
 class PluginPerformanceAPI:
     """Expose plugin performance metrics via REST endpoints."""
 
     @app.route('/api/v1/plugins/performance', methods=['GET'])
+    @cache_with_lock(ttl_seconds=10)
     def get_plugin_performance():
         manager: EnhancedThreadSafePluginManager = app._yosai_plugin_manager  # type: ignore[attr-defined]
         name = request.args.get('plugin')
@@ -18,6 +20,7 @@ class PluginPerformanceAPI:
         return jsonify(data)
 
     @app.route('/api/v1/plugins/performance/alerts', methods=['GET', 'POST'])
+    @cache_with_lock(ttl_seconds=30)
     def manage_performance_alerts():
         manager: EnhancedThreadSafePluginManager = app._yosai_plugin_manager  # type: ignore[attr-defined]
         if request.method == 'POST':
