@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
-from unicode_handler import ChunkedUnicodeProcessor, UnicodeProcessor
+from core.unicode import ChunkedUnicodeProcessor, UnicodeProcessor
 
 
 def test_clean_surrogate_chars_threaded():
