@@ -172,6 +172,20 @@ class UnicodeProcessor:
 
     # ------------------------------------------------------------------
     @staticmethod
+    def safe_encode_text(value: Any) -> str:
+        """Alias for :meth:`safe_encode`."""
+
+        return UnicodeProcessor.safe_encode(value)
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def safe_decode_text(data: bytes, encoding: str = "utf-8") -> str:
+        """Alias for :meth:`safe_decode`."""
+
+        return UnicodeProcessor.safe_decode(data, encoding)
+
+    # ------------------------------------------------------------------
+    @staticmethod
     def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         """Return ``df`` with all columns and object data sanitized."""
 
@@ -332,6 +346,12 @@ def safe_decode(data: bytes, encoding: str = "utf-8") -> str:
     """Alias for :func:`safe_decode_bytes`."""
 
     return safe_decode_bytes(data, encoding)
+
+
+def safe_decode_text(data: bytes, encoding: str = "utf-8") -> str:
+    """Safely decode byte data to text."""
+
+    return UnicodeProcessor.safe_decode_text(data, encoding)
 
 
 def safe_encode_text(value: Any) -> str:
@@ -503,6 +523,7 @@ __all__ = [
     "clean_unicode_text",
     "safe_decode_bytes",
     "safe_decode",
+    "safe_decode_text",
     "safe_encode_text",
     "safe_encode",
     "sanitize_dataframe",
