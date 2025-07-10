@@ -9,6 +9,7 @@ import pandas as pd
 import json
 import sys
 from pathlib import Path
+from config.app_config import UploadConfig
 import asyncio
 import plotly.express as px
 import plotly.graph_objects as go
@@ -144,7 +145,7 @@ def show_dashboard_overview():
     
     try:
         # Load Enhanced Security Demo data
-        parquet_path = Path("temp/uploaded_data/Enhanced_Security_Demo.csv.parquet")
+        parquet_path = Path(UploadConfig().folder) / "Enhanced_Security_Demo.csv.parquet"
         if parquet_path.exists():
             df = pd.read_parquet(parquet_path)
             
@@ -378,7 +379,7 @@ def show_analytics_engine():
         analytics = AnalyticsService()
         
         # Load Enhanced Security Demo data
-        parquet_path = Path("temp/uploaded_data/Enhanced_Security_Demo.csv.parquet")
+        parquet_path = Path(UploadConfig().folder) / "Enhanced_Security_Demo.csv.parquet"
         if parquet_path.exists():
             df = pd.read_parquet(parquet_path)
             
@@ -432,7 +433,7 @@ def show_realtime_analysis():
     
     try:
         # Load data
-        parquet_path = Path("temp/uploaded_data/Enhanced_Security_Demo.csv.parquet")
+        parquet_path = Path(UploadConfig().folder) / "Enhanced_Security_Demo.csv.parquet"
         if not parquet_path.exists():
             st.warning("Enhanced Security Demo data not found")
             return

@@ -7,6 +7,7 @@ import json
 import sys
 import asyncio
 from pathlib import Path
+from config.app_config import UploadConfig
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -19,7 +20,7 @@ async def run_real_analytics():
         import pandas as pd
         
         # Load the Enhanced Security Demo data
-        parquet_path = Path("temp/uploaded_data/Enhanced_Security_Demo.csv.parquet")
+        parquet_path = Path(UploadConfig().folder) / "Enhanced_Security_Demo.csv.parquet"
         df = pd.read_parquet(parquet_path)
         
         print(f"Data loaded: {len(df)} access events")

@@ -96,7 +96,7 @@ class ConfigManager(ConfigurationProtocol):
 
     def get_upload_config(self) -> Dict[str, Any]:
         """Get upload configuration settings."""
-        return {}
+        return vars(self.config.uploads)
 
     def validate_config(self) -> Dict[str, Any]:
         """Validate current configuration and return results."""
