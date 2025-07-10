@@ -294,7 +294,7 @@ def main():
             app = create_app(mode='full', assets_folder=assets_dir)
 
             # Consolidate callbacks with Unicode safety
-            # _register_callbacks(app, config, container=None)  # Already called during app creation
+            _consolidate_callbacks(app)
 
             # This avoids triggering a request before the hooks are in place
             if not debug_dash_asset_serving(app):
