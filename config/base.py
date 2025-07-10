@@ -15,6 +15,7 @@ from .constants import (
     DEFAULT_DB_PORT,
 )
 from .dynamic_config import dynamic_config
+from .app_config import UploadConfig
 
 
 @dataclass
@@ -172,6 +173,7 @@ class Config:
     analytics: AnalyticsConfig = field(default_factory=AnalyticsConfig)
     monitoring: MonitoringConfig = field(default_factory=MonitoringConfig)
     cache: CacheConfig = field(default_factory=CacheConfig)
+    uploads: UploadConfig = field(default_factory=UploadConfig)
     secret_validation: SecretValidationConfig = field(
         default_factory=SecretValidationConfig
     )
@@ -187,6 +189,7 @@ __all__ = [
     "AnalyticsConfig",
     "MonitoringConfig",
     "CacheConfig",
+    "UploadConfig",
     "SecretValidationConfig",
     "Config",
 ]
