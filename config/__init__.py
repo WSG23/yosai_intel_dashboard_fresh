@@ -9,6 +9,7 @@ from .base import (
     DatabaseConfig,
     SecurityConfig,
 )
+from .app_config import UploadConfig
 from .config_loader import ConfigLoader
 from .config_transformer import ConfigTransformer
 from .config_validator import ConfigValidator, ValidationResult
@@ -90,6 +91,7 @@ __all__ = [
     "AppConfig",
     "DatabaseConfig",
     "SecurityConfig",
+    "UploadConfig",
     "ConfigManager",
     "ConfigValidator",
     "ValidationResult",

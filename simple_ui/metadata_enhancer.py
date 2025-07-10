@@ -8,6 +8,7 @@ import streamlit as st
 import pandas as pd
 import json
 from pathlib import Path
+from config.app_config import UploadConfig
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
@@ -41,7 +42,7 @@ def show_user_profiles():
     
     # Load current users from Enhanced Security Demo
     try:
-        parquet_path = Path("temp/uploaded_data/Enhanced_Security_Demo.csv.parquet")
+        parquet_path = Path(UploadConfig().folder) / "Enhanced_Security_Demo.csv.parquet"
         if parquet_path.exists():
             df = pd.read_parquet(parquet_path)
             unique_employees = df['Employee Code'].unique()
