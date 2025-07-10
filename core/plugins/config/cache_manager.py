@@ -124,6 +124,30 @@ class RedisCacheManager(ICacheManager):
         except Exception as e:
             logger.warning(f"Redis SET failed: {e}")
 
+
+class AdvancedRedisCacheManager(RedisCacheManager):
+    """Redis cache manager with configurable default TTL."""
+
+    def __init__(self, cache_config):
+        super().__init__(cache_config)
+        self.default_ttl = getattr(
+            cache_config, "timeout_seconds", getattr(cache_config, "ttl", 300)
+        )
+
+    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+        """Set value with TTL from config if not provided."""
+        if not self._started:
+            return
+        try:
+            data = pickle.dumps(value)
+            expire = ttl if ttl is not None else self.default_ttl
+            if expire:
+                self._client().setex(key, expire, data)
+            else:
+                self._client().set(key, data)
+        except Exception as e:
+            logger.warning(f"Advanced Redis SET failed: {e}")
+
     def delete(self, key: str) -> bool:
         """Delete key from Redis cache"""
         if not self._started:
@@ -165,4 +189,9 @@ class RedisCacheManager(ICacheManager):
         logger.info("Redis cache manager stopped")
 
 
-__all__ = ["MemoryCacheManager", "RedisCacheManager", "CacheEntry"]
+__all__ = [
+    "MemoryCacheManager",
+    "RedisCacheManager",
+    "AdvancedRedisCacheManager",
+    "CacheEntry",
+]
