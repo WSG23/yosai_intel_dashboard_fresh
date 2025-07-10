@@ -87,6 +87,8 @@ class RedisCacheManager(ICacheManager):
         self.config = cache_config
         self.redis_client: Optional[redis.Redis] = None
         self._started = False
+        self._use_fallback = False
+        self._fallback = MemoryCacheManager(cache_config)
 
     def _client(self) -> redis.Redis:
         if self.redis_client is None:
@@ -99,6 +101,9 @@ class RedisCacheManager(ICacheManager):
 
     def get(self, key: str) -> Optional[Any]:
         """Get value from Redis cache"""
+        if self._use_fallback:
+            return self._fallback.get(key)
+
         if not self._started:
             return None
         try:
@@ -112,6 +117,10 @@ class RedisCacheManager(ICacheManager):
 
     def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
         """Set value in Redis cache"""
+        if self._use_fallback:
+            self._fallback.set(key, value, ttl)
+            return
+
         if not self._started:
             return
         try:
@@ -150,6 +159,9 @@ class AdvancedRedisCacheManager(RedisCacheManager):
 
     def delete(self, key: str) -> bool:
         """Delete key from Redis cache"""
+        if self._use_fallback:
+            return self._fallback.delete(key)
+
         if not self._started:
             return False
         try:
@@ -160,6 +172,10 @@ class AdvancedRedisCacheManager(RedisCacheManager):
 
     def clear(self) -> None:
         """Clear all Redis cache entries"""
+        if self._use_fallback:
+            self._fallback.clear()
+            return
+
         if not self._started:
             return
         try:
@@ -175,10 +191,19 @@ class AdvancedRedisCacheManager(RedisCacheManager):
             logger.info("Redis cache manager started")
         except Exception as e:
             logger.error(f"Failed to start Redis cache manager: {e}")
-            raise
+            self._use_fallback = True
+            self._fallback.start()
 
     def stop(self) -> None:
         """Stop Redis cache connection"""
+        if self._use_fallback:
+            self._fallback.stop()
+            self._use_fallback = False
+            self.redis_client = None
+            self._started = False
+            logger.info("Redis cache manager stopped (fallback)")
+            return
+
         if self.redis_client is not None:
             try:
                 self.redis_client.close()
