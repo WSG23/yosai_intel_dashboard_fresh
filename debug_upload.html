@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head><title>Upload Debug</title></head>
+<body>
+<div id="upload-zone" class="upload-dropzone" style="border: 2px dashed blue; padding: 50px; margin: 20px;">
+    <p>Drop files here or click</p>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ JavaScript loaded');
+    const zone = document.getElementById('upload-zone');
+    if (zone) {
+        console.log('✅ Upload zone found');
+        zone.addEventListener('click', () => console.log('✅ Click detected'));
+        zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            console.log('✅ Dragover detected');
+        });
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            console.log('✅ Drop detected', e.dataTransfer.files);
+        });
+    } else {
+        console.log('❌ Upload zone not found');
+    }
+});
+</script>
+</body>
+</html>
