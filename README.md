@@ -339,7 +339,9 @@ This project uses **`config/config.py`** for all application settings. The
 `create_config_manager()` helper builds a `ConfigManager` composed of modular
 dataclasses like `AppConfig`, `DatabaseConfig` and `SecurityConfig`. It loads a
 YAML file from `config/` based on `YOSAI_ENV` or `YOSAI_CONFIG_FILE`, then
-applies environment variable overrides. Earlier versions used separate modules
+applies environment variable overrides.
+The underlying loading logic lives in `config/base_loader.py` as `BaseConfigLoader`.
+It handles YAML `!include` expansion, JSON files and environment variable substitution. Earlier versions used separate modules
 such as `app_config.py` and `simple_config.py`; these have been replaced by this
 unified loader. Register the configuration with the DI container so it can be
 resolved from anywhere:
