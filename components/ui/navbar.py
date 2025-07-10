@@ -87,7 +87,14 @@ def create_navbar_layout() -> dbc.Navbar:
                     [
                         # Brand
                         dbc.NavbarBrand(
-                            brand_text,
+                            [
+                                html.Img(
+                                    src="/assets/yosai_logo_name_white.png",
+                                    height="30px",
+                                    className="me-2"
+                                ),
+                                brand_text
+                            ],
                             href="/",
                             className="navbar-brand-link text-decoration-none",
                             external_link=False
@@ -104,51 +111,66 @@ def create_navbar_layout() -> dbc.Navbar:
                             [
                                 dbc.Nav(
                                     [
-                                        # Deep Analytics
-                                        dbc.NavItem(
-                                            dbc.NavLink(
-                                                [
-                                                    create_safe_icon("charts", "chart-bar"),
-                                                    analytics_text
-                                                ],
-                                                href="/analytics",
-                                                id="nav-analytics-link",
-                                                external_link=False,
-                                                className="nav-link-stable"
-                                            ),
-                                            className="nav-item-stable"
-                                        ),
-                                        
-                                        # File Upload
-                                        dbc.NavItem(
-                                            dbc.NavLink(
-                                                [
-                                                    create_safe_icon("upload", "upload"),
-                                                    upload_text
-                                                ],
-                                                href="/upload",
-                                                id="nav-upload-link", 
-                                                external_link=False,
-                                                className="nav-link-stable"
-                                            ),
-                                            className="nav-item-stable"
-                                        ),
-                                        
-                                        # Settings
-                                        dbc.NavItem(
-                                            dbc.NavLink(
-                                                [
-                                                    create_safe_icon("settings", "cog"),
-                                                    settings_text
-                                                ],
-                                                href="/settings",
-                                                id="nav-settings-link",
-                                                external_link=False, 
-                                                className="nav-link-stable"
-                                            ),
-                                            className="nav-item-stable"
-                                        ),
-                                    ],
+                        # Analytics  
+                        dbc.NavItem(
+                            dbc.NavLink(
+                                [
+                                    create_safe_icon("analytics", "chart-bar"),
+                                    "Analytics"
+                                ],
+                                href="/analytics",
+                                id="nav-analytics-link",
+                                external_link=False,
+                                className="nav-link-stable"
+                            ),
+                            className="nav-item-stable"
+                        ),
+                        
+                        # File Upload
+                        dbc.NavItem(
+                            dbc.NavLink(
+                                [
+                                    create_safe_icon("upload", "upload"),
+                                    "Upload"
+                                ],
+                                href="/upload",
+                                id="nav-upload-link", 
+                                external_link=False,
+                                className="nav-link-stable"
+                            ),
+                            className="nav-item-stable"
+                        ),
+                        
+                        # Export
+                        dbc.NavItem(
+                            dbc.NavLink(
+                                [
+                                    create_safe_icon("export", "download"),
+                                    "Export"
+                                ],
+                                href="/export",
+                                id="nav-export-link",
+                                external_link=False,
+                                className="nav-link-stable"
+                            ),
+                            className="nav-item-stable"
+                        ),
+                        
+                        # Settings
+                        dbc.NavItem(
+                            dbc.NavLink(
+                                [
+                                    create_safe_icon("settings", "cog"),
+                                    "Settings"
+                                ],
+                                href="/settings",
+                                id="nav-settings-link",
+                                external_link=False,
+                                className="nav-link-stable"
+                            ),
+                            className="nav-item-stable"
+                        ),
+],
                                     navbar=True,
                                     className="ms-auto navbar-nav-stable"
                                 )
@@ -188,19 +210,69 @@ def create_fallback_navbar() -> dbc.Navbar:
         [
             dbc.Container(
                 [
-                    dbc.NavbarBrand("Dashboard", href="/"),
+                    dbc.NavbarBrand("Intel Dashboard", href="/"),
                     dbc.Nav(
                         [
-                            dbc.NavItem(
-                                dbc.NavLink("Analytics", href="/analytics", external_link=False)
+                        # Analytics  
+                        dbc.NavItem(
+                            dbc.NavLink(
+                                [
+                                    create_safe_icon("analytics", "chart-bar"),
+                                    "Analytics"
+                                ],
+                                href="/analytics",
+                                id="nav-analytics-link",
+                                external_link=False,
+                                className="nav-link-stable"
                             ),
-                            dbc.NavItem(
-                                dbc.NavLink("Upload", href="/upload", external_link=False)
+                            className="nav-item-stable"
+                        ),
+                        
+                        # File Upload
+                        dbc.NavItem(
+                            dbc.NavLink(
+                                [
+                                    create_safe_icon("upload", "upload"),
+                                    "Upload"
+                                ],
+                                href="/upload",
+                                id="nav-upload-link", 
+                                external_link=False,
+                                className="nav-link-stable"
                             ),
-                            dbc.NavItem(
-                                dbc.NavLink("Settings", href="/settings", external_link=False)
+                            className="nav-item-stable"
+                        ),
+                        
+                        # Export
+                        dbc.NavItem(
+                            dbc.NavLink(
+                                [
+                                    create_safe_icon("export", "download"),
+                                    "Export"
+                                ],
+                                href="/export",
+                                id="nav-export-link",
+                                external_link=False,
+                                className="nav-link-stable"
                             ),
-                        ],
+                            className="nav-item-stable"
+                        ),
+                        
+                        # Settings
+                        dbc.NavItem(
+                            dbc.NavLink(
+                                [
+                                    create_safe_icon("settings", "cog"),
+                                    "Settings"
+                                ],
+                                href="/settings",
+                                id="nav-settings-link",
+                                external_link=False,
+                                className="nav-link-stable"
+                            ),
+                            className="nav-item-stable"
+                        ),
+],
                         navbar=True,
                         className="ms-auto"
                     ),
@@ -236,37 +308,6 @@ def register_navbar_callbacks(callback_manager, service: Optional[Any] = None) -
             if n_clicks:
                 return not is_open
             return is_open
-
-        # Navigation click handlers (prevent page flash)
-        @callback_manager.register_handler(
-            Output("nav-analytics-link", "style"),
-            [Input("nav-analytics-link", "n_clicks")],
-            callback_id="handle_analytics_click",
-            component_name="navbar",
-        )
-        def handle_analytics_click(n_clicks: int) -> dict:
-            """Handle analytics navigation click."""
-            return {"opacity": "1", "pointerEvents": "auto"}
-
-        @callback_manager.register_handler(
-            Output("nav-upload-link", "style"),
-            [Input("nav-upload-link", "n_clicks")],
-            callback_id="handle_upload_click",
-            component_name="navbar",
-        )
-        def handle_upload_click(n_clicks: int) -> dict:
-            """Handle upload navigation click."""
-            return {"opacity": "1", "pointerEvents": "auto"}
-
-        @callback_manager.register_handler(
-            Output("nav-settings-link", "style"),
-            [Input("nav-settings-link", "n_clicks")],
-            callback_id="handle_settings_click",
-            component_name="navbar",
-        )
-        def handle_settings_click(n_clicks: int) -> dict:
-            """Handle settings navigation click."""
-            return {"opacity": "1", "pointerEvents": "auto"}
 
         logger.info("Navbar callbacks registered successfully")
 

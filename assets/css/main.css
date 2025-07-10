@@ -60,3 +60,97 @@
 .navbar-brand-link { text-decoration: none; }
 .navbar-brand-link:hover { text-decoration: none; }
 
+
+/* ICON VISIBILITY FIXES */
+.nav-icon,
+.nav-icon--image,
+.nav-icon--fallback {
+  width: 20px !important;
+  height: 20px !important;
+  margin-right: 0.75rem !important;
+}
+
+.nav-icon--image {
+  max-width: 20px;
+  max-height: 20px;
+  opacity: 1 !important;
+  filter: brightness(1.2) contrast(1.1);
+}
+
+.nav-icon--fallback {
+  font-size: 16px !important;
+  line-height: 20px;
+  color: #212529 !important;
+  font-weight: 600;
+}
+
+.nav-link-stable {
+  color: #212529 !important;
+  font-weight: 500;
+}
+
+/* FORCE ICON FIXES WITH MAXIMUM SPECIFICITY */
+.navbar-stable .nav-icon,
+.navbar-stable .nav-icon--image,
+.navbar-stable .nav-icon--fallback,
+nav .nav-icon,
+nav .nav-icon--image {
+  width: 24px !important;
+  height: 24px !important;
+  margin-right: 0.75rem !important;
+  opacity: 1 !important;
+  filter: brightness(1.3) contrast(1.2) !important;
+}
+
+.navbar-stable .nav-link-stable,
+nav .nav-link-stable {
+  color: #000000 !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+}
+
+/* MAKE ICONS 2X LARGER AND MUCH BRIGHTER */
+.navbar-stable .nav-icon,
+.navbar-stable .nav-icon--image,
+.navbar-stable .nav-icon--fallback,
+nav .nav-icon,
+nav .nav-icon--image {
+  width: 32px !important;      /* 2x larger: 16px -> 32px */
+  height: 32px !important;     /* 2x larger: 16px -> 32px */
+  margin-right: 1rem !important;
+  opacity: 1 !important;
+  filter: brightness(1.8) contrast(1.5) saturate(1.3) !important; /* Much brighter */
+}
+
+.navbar-stable .nav-link-stable,
+nav .nav-link-stable {
+  color: #000000 !important;
+  font-weight: 700 !important;    /* Even bolder */
+  font-size: 18px !important;     /* Larger text */
+}
+
+/* FORCE NAVBAR TEXT TO BE VISIBLE */
+.navbar-stable .nav-link-stable,
+.navbar-brand-link {
+  color: #ffffff !important;  /* White text */
+  font-weight: 600 !important;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important; /* Shadow for contrast */
+}
+
+.navbar-stable .nav-link-stable:hover {
+  color: #f8f9fa !important;  /* Light gray on hover */
+}
+
+
+/* Make upload text visible */
+#drag-drop-upload * {
+  color: #212529 !important;
+  display: block !important;
+}
+
+/* Upload icon styling */
+#drag-drop-upload .fas {
+  font-size: 48px !important;
+  color: #007bff !important;
+  margin-bottom: 16px !important;
+}
