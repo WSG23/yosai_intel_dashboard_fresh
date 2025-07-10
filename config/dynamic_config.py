@@ -9,6 +9,7 @@ from .constants import (
     SecurityConstants,
     UploadLimits,
 )
+from .app_config import UploadConfig
 from .environment import select_config_file
 
 
@@ -31,6 +32,7 @@ class DynamicConfigManager:
         self.css = CSSConstants()
         self.analytics = AnalyticsConstants()
         self.uploads = UploadLimits()
+        self.upload = UploadConfig()
         self._load_yaml_config()
         self._apply_env_overrides()
 
@@ -120,6 +122,14 @@ class DynamicConfigManager:
         if css_specificity is not None:
             self.css.specificity_high = int(css_specificity)
 
+        upload_folder = os.getenv("UPLOAD_FOLDER")
+        if upload_folder is not None:
+            self.upload.folder = upload_folder
+
+        max_file_size = os.getenv("MAX_FILE_SIZE_MB")
+        if max_file_size is not None:
+            self.upload.max_file_size_mb = int(max_file_size)
+
         analytics_cache = os.getenv("ANALYTICS_CACHE_TIMEOUT")
         if analytics_cache is not None:
             self.analytics.cache_timeout_seconds = int(analytics_cache)
@@ -187,11 +197,11 @@ class DynamicConfigManager:
 
     def get_max_upload_size_mb(self) -> int:
         """Get maximum upload size in MB."""
-        return getattr(self.security, "max_upload_mb", 100)
+        return getattr(self.upload, "max_file_size_mb", self.security.max_upload_mb)
 
     def get_max_upload_size_bytes(self) -> int:
         """Get maximum upload size in bytes."""
-        return self.get_max_upload_size_mb() * 1024 * 1024
+        return self.upload.max_file_size_bytes
 
     def validate_large_file_support(self) -> bool:
         """Check if configuration supports 50MB+ files."""
@@ -220,11 +230,10 @@ def diagnose_upload_config():
     print("=== Upload Configuration Diagnosis ===")
     print(f"Environment MAX_UPLOAD_MB: {os.getenv('MAX_UPLOAD_MB', 'Not Set')}")
     print(f"Dynamic Config max_upload_mb: {dynamic_config.security.max_upload_mb}MB")
+    print(f"Upload folder: {dynamic_config.upload.folder}")
+    print(f"Max file size: {dynamic_config.upload.max_file_size_mb}MB")
     print(f"Calculated max bytes: {dynamic_config.get_max_upload_size_bytes():,}")
     print(f"Supports 50MB+ files: {dynamic_config.validate_large_file_support()}")
-
-    if hasattr(dynamic_config.security, "max_file_size_mb"):
-        print(f"max_file_size_mb: {dynamic_config.security.max_file_size_mb}MB")
 
     # Check if environment is overriding to small value
     env_value = os.getenv("MAX_UPLOAD_MB")

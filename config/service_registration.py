@@ -18,9 +18,10 @@ def register_upload_services(container: ServiceContainer) -> None:
     from services.upload.core.validator import ClientSideValidator
     from services.data_processing.async_file_processor import AsyncFileProcessor
     from utils.upload_store import UploadedDataStore
+    from config.dynamic_config import dynamic_config
     from services.device_learning_service import DeviceLearningService
 
-    upload_store = UploadedDataStore()
+    upload_store = UploadedDataStore(dynamic_config.upload.folder)
     container.register_singleton("upload_storage", upload_store, protocol=UploadStorageProtocol)
 
     from services.upload_data_service import UploadDataService

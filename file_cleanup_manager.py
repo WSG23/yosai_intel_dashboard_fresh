@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 import re
 import subprocess
+from config.app_config import UploadConfig
 
 # Configure logging
 logging.basicConfig(
@@ -121,7 +122,7 @@ class FileCleanupManager:
                 'scripts/analyze_tests.py',
             ],
             'temp_directories': [
-                'temp/uploaded_data/*.pkl',  # Legacy pickle files
+                f"{UploadConfig().folder}/*.pkl",  # Legacy pickle files
                 '__pycache__',
                 '.pytest_cache',
                 'htmlcov',
