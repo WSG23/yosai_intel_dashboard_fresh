@@ -224,10 +224,12 @@ def register_navbar_callbacks(callback_manager, service: Optional[Any] = None) -
     """
     try:
         # Mobile navbar toggle
-        @callback_manager.callback(
+        @callback_manager.register_handler(
             Output("navbar-collapse", "is_open"),
             [Input("navbar-toggler", "n_clicks")],
-            [State("navbar-collapse", "is_open")]
+            [State("navbar-collapse", "is_open")],
+            callback_id="toggle_navbar_collapse",
+            component_name="navbar",
         )
         def toggle_navbar_collapse(n_clicks: int, is_open: bool) -> bool:
             """Toggle mobile navbar collapse state."""
@@ -236,25 +238,31 @@ def register_navbar_callbacks(callback_manager, service: Optional[Any] = None) -
             return is_open
 
         # Navigation click handlers (prevent page flash)
-        @callback_manager.callback(
+        @callback_manager.register_handler(
             Output("nav-analytics-link", "style"),
-            [Input("nav-analytics-link", "n_clicks")]
+            [Input("nav-analytics-link", "n_clicks")],
+            callback_id="handle_analytics_click",
+            component_name="navbar",
         )
         def handle_analytics_click(n_clicks: int) -> dict:
             """Handle analytics navigation click."""
             return {"opacity": "1", "pointerEvents": "auto"}
 
-        @callback_manager.callback(
-            Output("nav-upload-link", "style"), 
-            [Input("nav-upload-link", "n_clicks")]
+        @callback_manager.register_handler(
+            Output("nav-upload-link", "style"),
+            [Input("nav-upload-link", "n_clicks")],
+            callback_id="handle_upload_click",
+            component_name="navbar",
         )
         def handle_upload_click(n_clicks: int) -> dict:
             """Handle upload navigation click."""
             return {"opacity": "1", "pointerEvents": "auto"}
 
-        @callback_manager.callback(
+        @callback_manager.register_handler(
             Output("nav-settings-link", "style"),
-            [Input("nav-settings-link", "n_clicks")]
+            [Input("nav-settings-link", "n_clicks")],
+            callback_id="handle_settings_click",
+            component_name="navbar",
         )
         def handle_settings_click(n_clicks: int) -> dict:
             """Handle settings navigation click."""
