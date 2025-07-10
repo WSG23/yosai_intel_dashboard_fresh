@@ -1,23 +1,35 @@
 #!/usr/bin/env python3
-"""Enhanced navbar component with logo."""
+"""Enhanced navbar component with logo and proper import safety."""
 
 import logging
 from typing import Optional, Any
 
+logger = logging.getLogger(__name__)
+
+# Safe imports with fallbacks
 try:
     import dash_bootstrap_components as dbc
     from dash import html
     DBC_AVAILABLE = True
 except ImportError:
     DBC_AVAILABLE = False
-
-logger = logging.getLogger(__name__)
+    # Create fallback objects to prevent unbound variable errors
+    class FallbackHtml:
+        def __getattr__(self, name):
+            return lambda *args, **kwargs: f"HTML component {name} not available"
+    
+    class FallbackDbc:
+        def __getattr__(self, name):
+            return lambda *args, **kwargs: f"DBC component {name} not available"
+    
+    html = FallbackHtml()
+    dbc = FallbackDbc()
 
 def create_navbar_layout() -> Any:
     """Create navbar with logo and proper navigation."""
     
     if not DBC_AVAILABLE:
-        return html.Div("Navbar unavailable")
+        return html.Div("Navbar unavailable - Dash Bootstrap Components not installed")
     
     try:
         return dbc.Navbar(
@@ -101,7 +113,10 @@ def create_navbar_layout() -> Any:
         return create_fallback_navbar()
 
 def create_fallback_navbar():
-    """Simple fallback navbar."""
+    """Simple fallback navbar that always works."""
+    if not DBC_AVAILABLE:
+        return html.Div("Simple navbar fallback")
+    
     return dbc.Navbar(
         dbc.Container([
             dbc.NavbarBrand("Dashboard", href="/"),

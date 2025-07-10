@@ -903,7 +903,7 @@ def _register_callbacks(
 
     if coordinator is not None:
         registration_modules = [
-            ("pages.file_upload", "register_callbacks"),
+            # ("pages.file_upload", "register_callbacks"), # DISABLED TO FIX FLASH
             ("pages.deep_analytics", "register_callbacks"),
             ("components.ui.navbar", "register_navbar_callbacks"),
         ]
