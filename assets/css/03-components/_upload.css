@@ -151,3 +151,29 @@
   min-width: 44px;
   min-height: 44px;
 }
+
+/* Ensure drag-drop upload is visible and prominent */
+#drag-drop-upload {
+  display: block !important;
+  min-height: 200px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Upload page specific targeting */
+.page-container #drag-drop-upload,
+.main-content #drag-drop-upload {
+  border: 2px dashed var(--color-accent, #007bff) !important;
+  border-radius: var(--radius-lg, 8px) !important;
+  padding: var(--space-10, 40px) !important;
+  background: var(--surface-tertiary, #f8f9fa) !important;
+  text-align: center !important;
+  margin: var(--space-5, 20px) auto !important;
+  max-width: 600px !important;
+  cursor: pointer !important;
+}
+
+.page-container #drag-drop-upload:hover {
+  background: var(--color-accent-subtle, #e9ecef) !important;
+  border-color: var(--color-accent-hover, #0056b3) !important;
+}
