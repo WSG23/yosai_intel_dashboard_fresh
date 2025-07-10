@@ -75,9 +75,16 @@ def cached(ttl: int = 300, key_func: Optional[Callable] = None) -> Callable:
             if result is not None:
                 return result
 
-            result = func(*args, **kwargs)
-            cache.set(cache_key, result)
-            return result
+            # Avoid duplicate computation for the same key by holding the
+            # cache lock while checking/setting the value.
+            with cache._lock:
+                result = cache.get(cache_key)
+                if result is not None:
+                    return result
+
+                result = func(*args, **kwargs)
+                cache.set(cache_key, result)
+                return result
 
         wrapper.cache = cache
         return wrapper
