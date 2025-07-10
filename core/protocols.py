@@ -446,7 +446,7 @@ def get_unicode_processor(
     c = _get_container(container)
     if c and c.has("unicode_processor"):
         return c.get("unicode_processor")
-    from .unicode_processor import UnicodeProcessor
+    from core.unicode import UnicodeProcessor
 
     return UnicodeProcessor()
 
