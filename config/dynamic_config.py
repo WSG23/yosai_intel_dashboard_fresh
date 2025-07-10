@@ -10,6 +10,7 @@ from .constants import (
     UploadLimits,
 )
 from .environment import select_config_file
+from .env_overrides import apply_env_overrides
 
 
 class ConfigurationServiceProtocol(Protocol):
@@ -76,90 +77,7 @@ class DynamicConfigManager:
 
     def _apply_env_overrides(self) -> None:
         """Override defaults from environment variables with validation."""
-        iterations = os.getenv("PBKDF2_ITERATIONS")
-        if iterations is not None:
-            self.security.pbkdf2_iterations = int(iterations)
-
-        rate_limit_api = os.getenv("RATE_LIMIT_API")
-        if rate_limit_api is not None:
-            self.security.rate_limit_requests = int(rate_limit_api)
-
-        rate_limit_window = os.getenv("RATE_LIMIT_WINDOW")
-        if rate_limit_window is not None:
-            self.security.rate_limit_window_minutes = int(rate_limit_window)
-
-        max_upload = os.getenv("MAX_UPLOAD_MB")
-        if max_upload is not None:
-            value = int(max_upload)
-            if value < 50:  # Prevent accidentally setting too small
-                print(
-                    "WARNING: MAX_UPLOAD_MB="
-                    f"{value} is too small. Using 50MB minimum."
-                )
-                value = 50
-            self.security.max_upload_mb = value
-            self.security.max_file_size_mb = value  # Keep them in sync
-
-        db_pool = os.getenv("DB_POOL_SIZE")
-        if db_pool is not None:
-            self.performance.db_pool_size = int(db_pool)
-
-        ai_threshold = os.getenv("AI_CONFIDENCE_THRESHOLD")
-        if ai_threshold is not None:
-            self.performance.ai_confidence_threshold = int(ai_threshold)
-
-        mem_thresh = os.getenv("MEMORY_THRESHOLD_MB")
-        if mem_thresh is not None:
-            self.performance.memory_usage_threshold_mb = int(mem_thresh)
-
-        css_threshold = os.getenv("CSS_BUNDLE_THRESHOLD")
-        if css_threshold is not None:
-            self.css.bundle_threshold_kb = int(css_threshold)
-
-        css_specificity = os.getenv("CSS_SPECIFICITY_HIGH")
-        if css_specificity is not None:
-            self.css.specificity_high = int(css_specificity)
-
-        analytics_cache = os.getenv("ANALYTICS_CACHE_TIMEOUT")
-        if analytics_cache is not None:
-            self.analytics.cache_timeout_seconds = int(analytics_cache)
-
-        chunk_size = os.getenv("ANALYTICS_CHUNK_SIZE")
-        if chunk_size is not None:
-            self.analytics.chunk_size = int(chunk_size)
-
-        min_chunk_size = os.getenv("ANALYTICS_MIN_CHUNK_SIZE")
-        if min_chunk_size is not None:
-            self.analytics.min_chunk_size = int(min_chunk_size)
-
-        batch_size = os.getenv("ANALYTICS_BATCH_SIZE")
-        if batch_size is not None:
-            self.analytics.batch_size = int(batch_size)
-
-        max_memory = os.getenv("ANALYTICS_MAX_MEMORY_MB")
-        if max_memory is not None:
-            self.analytics.max_memory_mb = int(max_memory)
-
-        upload_chunk = os.getenv("UPLOAD_CHUNK_SIZE")
-        if upload_chunk is not None:
-            self.uploads.DEFAULT_CHUNK_SIZE = int(upload_chunk)
-
-        parallel_uploads = os.getenv("MAX_PARALLEL_UPLOADS")
-        if parallel_uploads is not None:
-            self.uploads.MAX_PARALLEL_UPLOADS = int(parallel_uploads)
-
-        validator_rules = os.getenv("VALIDATOR_RULES")
-        if validator_rules:
-            try:
-                import json
-
-                rules = json.loads(validator_rules)
-                if isinstance(rules, dict):
-                    self.uploads.VALIDATOR_RULES.update(rules)
-            except Exception:
-                logging.getLogger(__name__).warning(
-                    "Failed to parse VALIDATOR_RULES env var"
-                )
+        apply_env_overrides(self)
 
     def get_rate_limit(self) -> Dict[str, int]:
         return {
