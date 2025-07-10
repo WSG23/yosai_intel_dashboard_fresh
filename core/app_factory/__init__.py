@@ -703,7 +703,7 @@ def _register_router_callbacks(
         
         try:
             # Sanitize pathname for Unicode safety
-            safe_pathname = handle_unicode_surrogates(pathname or "/")
+            safe_pathname = pathname or "/"
             
             # Route to appropriate page function
             if safe_pathname == "/" or safe_pathname == "/home":

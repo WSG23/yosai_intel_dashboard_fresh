@@ -126,7 +126,7 @@ def create_navbar_layout() -> dbc.Navbar:
                                                     create_safe_icon("upload", "upload"),
                                                     upload_text
                                                 ],
-                                                href="/file-upload",
+                                                href="/upload",
                                                 id="nav-upload-link", 
                                                 external_link=False,
                                                 className="nav-link-stable"
@@ -195,7 +195,7 @@ def create_fallback_navbar() -> dbc.Navbar:
                                 dbc.NavLink("Analytics", href="/analytics", external_link=False)
                             ),
                             dbc.NavItem(
-                                dbc.NavLink("Upload", href="/file-upload", external_link=False)
+                                dbc.NavLink("Upload", href="/upload", external_link=False)
                             ),
                             dbc.NavItem(
                                 dbc.NavLink("Settings", href="/settings", external_link=False)
