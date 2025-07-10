@@ -583,7 +583,7 @@ def initialize_validation_callbacks() -> None:
     try:
         middleware = ValidationMiddleware()
         manager = CallbackManager()
-        middleware.register_callbacks(manager)
+        middleware.handle_registers(manager)
     except Exception as exc:  # pragma: no cover - log and continue
         logging.getLogger(__name__).warning(
             "Failed to initialize validation callbacks: %s", exc

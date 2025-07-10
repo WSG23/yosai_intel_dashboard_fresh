@@ -47,10 +47,10 @@ class ValidationMiddleware:
         self.orchestrator = ValidationOrchestrator([_Adapter()])
         self.max_body_size = dynamic_config.security.max_upload_mb * 1024 * 1024
 
-    def register_callbacks(self, manager: CallbackManager) -> None:
+    def handle_registers(self, manager: CallbackManager) -> None:
         """Register validation hooks with the callback manager."""
-        manager.register_handler(CallbackEvent.BEFORE_REQUEST, self.validate_request)
-        manager.register_handler(CallbackEvent.AFTER_REQUEST, self.sanitize_response)
+        manager.handle_register(CallbackEvent.BEFORE_REQUEST, self.validate_request)
+        manager.handle_register(CallbackEvent.AFTER_REQUEST, self.sanitize_response)
 
     def validate_request(self) -> None:
         # Enforce maximum request body size

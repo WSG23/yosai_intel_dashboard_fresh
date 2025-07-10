@@ -2,7 +2,7 @@
 
 from dash import register_page as dash_register_page
 
-from .deep_analytics import layout
+from .layout import layout
 
 def register_page() -> None:
     """Register the analytics page after Dash initialization."""
