@@ -73,7 +73,11 @@ class CacheManagerFactory:
     def create_manager(cls, cache_config) -> ICacheManager:
         """Create cache manager based on configuration"""
         # Import here to avoid circular imports
-        from .cache_manager import MemoryCacheManager, RedisCacheManager
+        from .cache_manager import (
+            MemoryCacheManager,
+            RedisCacheManager,
+            AdvancedRedisCacheManager,
+        )
 
         # Register default managers if not already registered
         if not cls._managers:
@@ -81,6 +85,7 @@ class CacheManagerFactory:
                 {
                     "memory": MemoryCacheManager,
                     "redis": RedisCacheManager,
+                    "advanced_redis": AdvancedRedisCacheManager,
                 }
             )
 

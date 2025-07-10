@@ -22,7 +22,7 @@ database:
   retry_attempts: ${DB_RETRY_ATTEMPTS:3}
 
 cache:
-  type: redis
+  type: advanced_redis
   host: ${REDIS_HOST:localhost}
   port: ${REDIS_PORT:6379}
   database: ${REDIS_DB:0}
