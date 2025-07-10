@@ -108,7 +108,7 @@ def create_navbar_layout() -> dbc.Navbar:
                                         dbc.NavItem(
                                             dbc.NavLink(
                                                 [
-                                                    create_safe_icon("analytics", "chart-bar"),
+                                                    create_safe_icon("charts", "chart-bar"),
                                                     analytics_text
                                                 ],
                                                 href="/analytics",
