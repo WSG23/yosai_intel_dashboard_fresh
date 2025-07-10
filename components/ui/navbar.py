@@ -8,6 +8,8 @@ import logging
 from pathlib import Path
 from typing import Any, Optional
 
+from dash.development.base_component import Component
+
 import dash_bootstrap_components as dbc
 from dash import Input, Output, State, html
 
@@ -20,7 +22,7 @@ ASSETS_DIR = Path(__file__).resolve().parent.parent.parent / "assets"
 NAVBAR_ICON_DIR = ASSETS_DIR / "navbar_icons"
 
 
-def create_safe_icon(icon_name: str, fa_fallback: str = "file") -> html.Span:
+def create_safe_icon(icon_name: str, fa_fallback: str = "file") -> Component:
     """
     Create navbar icon with FontAwesome fallback.
     
