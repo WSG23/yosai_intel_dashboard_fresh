@@ -10,8 +10,12 @@ pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 
 def create_theme_app():
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+    
+    # Import and create unified callback coordinator
+    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+    coordinator = TrulyUnifiedCallbacks(app)
+    
     apply_theme_settings(app)
-
     app.layout = html.Div(
         [
             dcc.Store(id="theme-store"),
@@ -28,17 +32,23 @@ def create_theme_app():
             html.Div(id="theme-dummy-output"),
         ]
     )
-
-    @app.callback(Output("theme-store", "data"), Input("theme-dropdown", "value"))
+    
+    # Convert to unified callback structure
+    @coordinator.unified_callback(
+        Output("theme-store", "data"), 
+        Input("theme-dropdown", "value"),
+        callback_id="update_theme_store",
+        component_name="theme_persistence_test"
+    )
     def update_theme_store(value):
         return sanitize_theme(value)
-
+    
+    # Clientside callback remains unchanged
     app.clientside_callback(
         "function(data){if(window.setAppTheme&&data){window.setAppTheme(data);}return '';}",
         Output("theme-dummy-output", "children"),
         Input("theme-store", "data"),
     )
-
     return app
 
 
