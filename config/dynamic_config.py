@@ -2,6 +2,8 @@ import logging
 import os
 from typing import Any, Dict, Protocol
 
+logger = logging.getLogger(__name__)
+
 from .constants import (
     AnalyticsConstants,
     CSSConstants,
@@ -92,9 +94,9 @@ class DynamicConfigManager:
         if max_upload is not None:
             value = int(max_upload)
             if value < 50:  # Prevent accidentally setting too small
-                print(
-                    "WARNING: MAX_UPLOAD_MB="
-                    f"{value} is too small. Using 50MB minimum."
+                logger.warning(
+                    "MAX_UPLOAD_MB=%s is too small. Using 50MB minimum.",
+                    value,
                 )
                 value = 50
             self.security.max_upload_mb = value
