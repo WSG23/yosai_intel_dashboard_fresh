@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from core.cache import cache
+from advanced_cache import cache_with_lock
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 class AnalyticsGenerator:
     """Generate summaries and sample analytics."""
 
-    @cache.memoize()
+    @cache_with_lock(ttl_seconds=600)
     def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         total_events = len(df)
         active_users = df["person_id"].nunique() if "person_id" in df.columns else 0
@@ -61,7 +62,7 @@ class AnalyticsGenerator:
             "top_doors": top_doors,
         }
 
-    @cache.memoize()
+    @cache_with_lock(ttl_seconds=3600)
     def create_sample_data(self, n_events: int = 1000) -> pd.DataFrame:
         np.random.seed(42)
         end_date = datetime.now()
@@ -95,7 +96,7 @@ class AnalyticsGenerator:
         df = pd.DataFrame(data).sort_values("timestamp").reset_index(drop=True)
         return df
 
-    @cache.memoize()
+    @cache_with_lock(ttl_seconds=600)
     def analyze_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         if df.empty:
             return {"total_events": 0}
@@ -130,7 +131,7 @@ class AnalyticsGenerator:
             "daily_distribution": daily_dist,
         }
 
-    @cache.memoize()
+    @cache_with_lock(ttl_seconds=600)
     def generate_basic_analytics(self, df: pd.DataFrame) -> Dict[str, Any]:
         try:
             analytics: Dict[str, Any] = {
@@ -163,7 +164,7 @@ class AnalyticsGenerator:
             logger.error("Error generating basic analytics: %s", exc)
             return {"status": "error", "message": str(exc)}
 
-    @cache.memoize()
+    @cache_with_lock(ttl_seconds=3600)
     def generate_sample_analytics(self) -> Dict[str, Any]:
         df = self.create_sample_data()
         basic = self.generate_basic_analytics(df)
