@@ -5,6 +5,7 @@ Investigate what data is actually loaded in the system
 import json
 import os
 from pathlib import Path
+from config.app_config import UploadConfig
 
 import pandas as pd
 
@@ -16,7 +17,7 @@ def investigate_data():
     print("=" * 50)
 
     # Check upload directory
-    upload_dir = Path("temp/uploaded_data")
+    upload_dir = Path(UploadConfig().folder)
     print(f"\n📁 Upload Directory: {upload_dir}")
 
     if upload_dir.exists():

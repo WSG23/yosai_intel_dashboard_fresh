@@ -13,6 +13,7 @@ import pandas as pd
 from file_conversion.file_converter import FileConverter
 from services.upload.protocols import UploadStorageProtocol
 from typing import Protocol
+from config.app_config import UploadConfig
 
 
 class UploadStoreProtocol(Protocol):
@@ -51,13 +52,14 @@ class UploadedDataStore(UploadStorageProtocol):
     holding the lock.
     """
 
-    def __init__(self, storage_dir: Optional[Path] = None) -> None:
+    def __init__(self, storage_dir: Optional[Path] = None, *, config: UploadConfig | None = None) -> None:
         self._lock = threading.Lock()
         self._data_store: Dict[str, pd.DataFrame] = {}
         self._file_info_store: Dict[str, Dict[str, Any]] = {}
         self._executor = ThreadPoolExecutor(max_workers=2)
         self._save_futures: Dict[str, Future] = {}
-        self.storage_dir = Path(storage_dir or "temp/uploaded_data")
+        cfg = config or UploadConfig()
+        self.storage_dir = Path(storage_dir or cfg.folder)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         self._load_info_from_disk()
 

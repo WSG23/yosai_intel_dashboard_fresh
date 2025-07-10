@@ -27,20 +27,22 @@ from services.data_processing.async_file_processor import AsyncFileProcessor
 from utils.upload_store import UploadedDataStore
 from services.device_learning_service import DeviceLearningService
 from services.upload_data_service import UploadDataService
+from config.dynamic_config import dynamic_config
 
 
 def register_upload_services(container: ServiceContainer) -> None:
     """Register upload related services with the container."""
 
+    upload_store = UploadedDataStore(dynamic_config.upload.folder)
     container.register_singleton(
         "upload_storage",
-        UploadedDataStore,
+        upload_store,
         protocol=UploadStorageProtocol,
     )
 
     container.register_singleton(
         "upload_data_service",
-        UploadDataService,
+        UploadDataService(upload_store),
         protocol=UploadDataServiceProtocol,
     )
 

@@ -1,13 +1,13 @@
 """Configuration transformation utilities."""
 
 import logging
-import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .base import Config
 
 from .protocols import ConfigTransformerProtocol
+from .env_overrides import apply_env_overrides
 
 logger = logging.getLogger(__name__)
 
@@ -24,47 +24,7 @@ class ConfigTransformer(ConfigTransformerProtocol):
 
     def _apply_environment_overrides(self, config: "Config") -> None:
         """Apply environment variable overrides."""
-        # App overrides
-        if host := os.getenv("YOSAI_HOST"):
-            config.app.host = host
-        if port := os.getenv("YOSAI_PORT"):
-            try:
-                config.app.port = int(port)
-            except ValueError:
-                logger.warning("Invalid YOSAI_PORT value: %s", port)
-        if debug := os.getenv("YOSAI_DEBUG"):
-            config.app.debug = debug.lower() in ("true", "1", "yes")
-        if secret := os.getenv("SECRET_KEY"):
-            config.app.secret_key = secret
-
-        # Database overrides
-        if db_url := os.getenv("DATABASE_URL"):
-            config.database.url = db_url
-        if db_name := os.getenv("DB_NAME"):
-            config.database.name = db_name
-        if db_host := os.getenv("DB_HOST"):
-            config.database.host = db_host
-        if db_port := os.getenv("DB_PORT"):
-            try:
-                config.database.port = int(db_port)
-            except ValueError:
-                logger.warning("Invalid DB_PORT value: %s", db_port)
-        if db_user := os.getenv("DB_USER"):
-            config.database.user = db_user
-        if db_pass := os.getenv("DB_PASSWORD"):
-            config.database.password = db_pass
-
-        # Security overrides
-        if max_upload := os.getenv("MAX_UPLOAD_MB"):
-            try:
-                config.security.max_upload_mb = int(max_upload)
-            except ValueError:
-                logger.warning("Invalid MAX_UPLOAD_MB value: %s", max_upload)
-        if max_upload_bytes := os.getenv("MAX_UPLOAD_BYTES"):
-            try:
-                config.security.max_upload_mb = int(max_upload_bytes) // (1024 * 1024)
-            except ValueError:
-                logger.warning("Invalid MAX_UPLOAD_BYTES value: %s", max_upload_bytes)
+        apply_env_overrides(config)
 
     def _apply_security_defaults(self, config: "Config") -> None:
         """Apply security-related defaults."""
