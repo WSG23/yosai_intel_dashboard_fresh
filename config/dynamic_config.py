@@ -10,6 +10,7 @@ from .constants import (
     UploadLimits,
 )
 from .environment import select_config_file
+from .base_loader import BaseConfigLoader
 
 
 class ConfigurationServiceProtocol(Protocol):
@@ -22,7 +23,7 @@ class ConfigurationServiceProtocol(Protocol):
         ...
 
 
-class DynamicConfigManager:
+class DynamicConfigManager(BaseConfigLoader):
     """Loads constants and applies environment overrides."""
 
     def __init__(self) -> None:
@@ -36,28 +37,11 @@ class DynamicConfigManager:
 
     def _load_yaml_config(self) -> None:
         """Load configuration from YAML files."""
-        import yaml
-
         try:
             config_path = select_config_file()
 
             if config_path and config_path.exists():
-
-                class IncludeLoader(yaml.SafeLoader):
-                    pass
-
-                base_dir = config_path.parent
-
-                def _include(loader: IncludeLoader, node: yaml.Node):
-                    filename = loader.construct_scalar(node)
-                    path = base_dir / filename
-                    with open(path, "r") as inc:
-                        return yaml.load(inc, Loader=IncludeLoader)
-
-                IncludeLoader.add_constructor("!include", _include)
-
-                with open(config_path, "r", encoding="utf-8") as f:
-                    config_data = yaml.load(f, Loader=IncludeLoader)
+                config_data = self.load_file(config_path)
 
                 analytics_config = config_data.get("analytics", {})
                 for key, value in analytics_config.items():
