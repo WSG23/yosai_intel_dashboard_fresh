@@ -210,24 +210,49 @@ def register_callbacks(manager):
     if not manager:
         raise RuntimeError("Callback manager is required")
 
-    @handle_register_with_deduplication(
-        manager,
-        Output('upload-status', 'children', allow_duplicate=True),
-        Input('file-upload-dropzone', 'contents'),
-        [
-            State('file-upload-dropzone', 'filename'),
-            State('file-upload-dropzone', 'last_modified'),
-            State('uploaded-files-store', 'data')
-        ],
-        callback_id="modern_file_upload",
-        component_name="file_upload",
-        prevent_initial_call=True,
-        source_module=__name__,
-        allow_duplicate=True,
+    def callback_wrapper(contents, filenames, last_modified, existing):
+        if not contents:
+            raise PreventUpdate
+        return no_update, 0, {"display": "none"}, [], "", existing or {}
 
+    def _do_registration() -> None:
+        manager.unified_callback(
+            [
+                Output('upload-status', 'children', allow_duplicate=True),
+                Output('upload-progress-bar', 'value'),
+                Output('upload-progress-bar', 'style'),
+                Output('upload-preview', 'children'),
+                Output('upload-navigation', 'children'),
+                Output('uploaded-files-store', 'data'),
+            ],
+            Input('file-upload-dropzone', 'contents'),
+            [
+                State('file-upload-dropzone', 'filename'),
+                State('file-upload-dropzone', 'last_modified'),
+                State('uploaded-files-store', 'data'),
+            ],
+            callback_id="modern_file_upload",
+            component_name="file_upload",
+            prevent_initial_call=True,
+            allow_duplicate=True,
+        )(callback_wrapper)
+
+    success = _callback_registry.register_deduplicated(
+        ["modern_file_upload"], _do_registration, source_module="file_upload"
     )
 
-
+    if success:
+        try:
+            UploadCallbackManager().register(manager)
+            for cid in [
+                "file_upload_handle",
+                "file_upload_progress",
+                "file_upload_finalize",
+            ]:
+                if cid in getattr(manager, "_dash_callbacks", {}):
+                    _callback_registry.register(cid, "file_upload_controller")
+        except Exception as exc:  # pragma: no cover - optional
+            logger.warning("Controller registration failed: %s", exc)
 
 def _process_upload_safe(contents, filename):
     """Safely process uploaded file with comprehensive error handling."""
