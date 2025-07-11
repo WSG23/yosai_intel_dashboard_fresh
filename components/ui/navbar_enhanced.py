@@ -12,6 +12,7 @@ except ImportError:
     DBC_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
+from core.callback_registry import handle_register_with_deduplication
 
 def create_navbar_layout() -> Any:
     """Create enhanced navbar with logo and proper navigation."""
@@ -131,17 +132,20 @@ def create_fallback_navbar():
 def register_navbar_callbacks(callback_manager, service: Optional[Any] = None) -> None:
     """Register navbar toggle callback for mobile."""
     try:
-        @callback_manager.register_handler(
-            [dash.dependencies.Output("navbar-collapse", "is_open")],
-            [dash.dependencies.Input("navbar-toggler", "n_clicks")],
-            [dash.dependencies.State("navbar-collapse", "is_open")],
+        @handle_register_with_deduplication(
+            callback_manager,
+            dash.dependencies.Output("navbar-collapse", "is_open"),
+            dash.dependencies.Input("navbar-toggler", "n_clicks"),
+            dash.dependencies.State("navbar-collapse", "is_open"),
             callback_id="navbar_toggle",
             component_name="navbar",
+            prevent_initial_call=True,
+            source_module=__name__,
         )
         def toggle_navbar_collapse(n, is_open):
             if n:
-                return [not is_open]
-            return [is_open]
+                return not is_open
+            return is_open
     except Exception as e:
         logger.warning(f"Navbar callback registration failed: {e}")
 
