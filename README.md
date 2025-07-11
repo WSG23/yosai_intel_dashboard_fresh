@@ -663,9 +663,11 @@ Update the spec by running `python tools/generate_openapi.py` which writes `docs
 ### Cleaning text
 ```python
 from core.unicode import get_text_processor
+from utils import sanitize_unicode_input
 raw = "Bad\uD83DText"
 processor = get_text_processor()
 clean = processor.safe_encode_text(raw)
+safe = sanitize_unicode_input("A\ud800B")
 ```
 
 ### Firing events
