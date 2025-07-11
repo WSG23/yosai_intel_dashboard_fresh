@@ -254,6 +254,7 @@ def register_callbacks(manager):
         except Exception as exc:  # pragma: no cover - optional
             logger.warning("Controller registration failed: %s", exc)
 
+
 def _process_upload_safe(contents, filename):
     """Safely process uploaded file with comprehensive error handling."""
     try:
