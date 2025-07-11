@@ -6,6 +6,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from .app_config import UploadConfig
 from .constants import (
     DEFAULT_APP_HOST,
     DEFAULT_APP_PORT,
@@ -15,7 +16,6 @@ from .constants import (
     DEFAULT_DB_PORT,
 )
 from .dynamic_config import dynamic_config
-from .app_config import UploadConfig
 
 
 @dataclass
@@ -42,7 +42,7 @@ class DatabaseConfig:
     password: str = ""
     # Database connection URL. If empty, generated from other fields.
     url: str = ""
-    connection_timeout: int = 30
+    connection_timeout: int = dynamic_config.get_db_connection_timeout()
     initial_pool_size: int = dynamic_config.get_db_pool_size()
     max_pool_size: int = dynamic_config.get_db_pool_size() * 2
     shrink_timeout: int = 60
