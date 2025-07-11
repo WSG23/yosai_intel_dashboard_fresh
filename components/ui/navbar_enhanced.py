@@ -131,7 +131,7 @@ def create_fallback_navbar():
 def register_navbar_callbacks(callback_manager, service: Optional[Any] = None) -> None:
     """Register navbar toggle callback for mobile."""
     try:
-        @callback_manager.unified_callback(
+        @callback_manager.register_handler(
             [dash.dependencies.Output("navbar-collapse", "is_open")],
             [dash.dependencies.Input("navbar-toggler", "n_clicks")],
             [dash.dependencies.State("navbar-collapse", "is_open")],

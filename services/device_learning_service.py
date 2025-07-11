@@ -370,7 +370,7 @@ def create_device_learning_service() -> DeviceLearningService:
 def create_learning_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
     """Register device learning callback with coordinator."""
 
-    @manager.unified_callback(
+    @manager.register_handler(
         Output("device-learning-status", "children"),
         [
             Input("file-upload-store", "data"),

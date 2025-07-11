@@ -52,7 +52,7 @@ def register_callbacks(manager):
         controller.validation_callbacks(),
     ]:
         for func, outputs, inputs, states, cid, extra in defs:
-            manager.register_callback(
+            manager.register_handler(
                 outputs,
                 inputs,
                 states,
