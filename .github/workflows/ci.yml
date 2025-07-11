@@ -35,9 +35,17 @@ jobs:
           set -xe
           safety check -r requirements.txt -r requirements-dev.txt --full-report
 
+      - name: Pip Audit
+        run: |
+          set -xe
+          pip-audit --format=json --output=audit-report.json
+
       - name: PyTest
         run: |
           set -xe
           pytest --maxfail=1 --disable-warnings -q --cov=.
-      - name: Upload coverage
+      - name: Upload audit report
         uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-report
+          path: audit-report.json
