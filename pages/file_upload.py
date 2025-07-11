@@ -213,6 +213,11 @@ def register_callbacks(manager):
     @handle_register_with_deduplication(
         manager,
         Output('upload-status', 'children', allow_duplicate=True),
+        Output('upload-progress-bar', 'value', allow_duplicate=True),
+        Output('upload-progress-bar', 'style', allow_duplicate=True),
+        Output('upload-preview', 'children', allow_duplicate=True),
+        Output('uploaded-files-store', 'data', allow_duplicate=True),
+        Output('upload-navigation', 'children', allow_duplicate=True),
         Input('file-upload-dropzone', 'contents'),
         [
             State('file-upload-dropzone', 'filename'),
@@ -226,7 +231,49 @@ def register_callbacks(manager):
         allow_duplicate=True,
 
     )
+    def handle_modern_upload(contents, filenames, last_modified, file_store):
+        """Process uploaded files and update UI components."""
+        if not contents:
+            raise PreventUpdate
 
+        if not isinstance(contents, list):
+            contents = [contents]
+            filenames = [filenames]
+
+        file_store = file_store or {}
+        previews = []
+        status_alerts = []
+
+        for content, fname in zip(contents, filenames):
+            df, err = _process_upload_safe(content, fname)
+            if df is None:
+                status_alerts.append(
+                    dbc.Alert(f"❌ {fname}: {err}", color="danger", dismissable=True)
+                )
+                continue
+
+            previews.append(_create_modern_preview(df, fname))
+            file_store[fname] = {"rows": len(df), "columns": len(df.columns)}
+            status_alerts.append(
+                dbc.Alert(f"✅ Uploaded {fname}", color="success", dismissable=True)
+            )
+
+        progress = 100 if previews else 0
+        progress_style = {"display": "block"} if previews else {"display": "none"}
+        navigation = (
+            _create_navigation_section(len(file_store), file_store)
+            if previews
+            else no_update
+        )
+
+        return (
+            status_alerts,
+            progress,
+            progress_style,
+            previews,
+            file_store,
+            navigation,
+        )
 
 
 def _process_upload_safe(contents, filename):
