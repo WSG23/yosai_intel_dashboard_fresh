@@ -901,7 +901,7 @@ def _register_callbacks(
     if coordinator is not None:
         coordinator._callback_registry = _callback_registry
         registration_modules = [
-            # ("pages.file_upload", "register_callbacks"), # DISABLED
+            ("pages.file_upload", "register_callbacks"),  # RE-ENABLED
             ("pages.deep_analytics", "register_callbacks"),
             ("components.ui.navbar", "register_navbar_callbacks"),
         ]
