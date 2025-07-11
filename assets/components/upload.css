@@ -1,0 +1,124 @@
+/* Modern File Upload Styling */
+.upload-dropzone {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.upload-dropzone:hover {
+    border-color: #0d6efd !important;
+    background-color: #f0f8ff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(13, 110, 253, 0.15) !important;
+}
+
+.upload-dropzone:hover .upload-dropzone-content {
+    transform: scale(1.02);
+}
+
+.upload-dropzone:hover .fas.fa-cloud-upload-alt {
+    color: #0d6efd !important;
+    transform: scale(1.1);
+}
+
+/* Active drag state */
+.upload-dropzone[data-dash-is-loading="true"] {
+    border-color: #198754 !important;
+    background-color: #f0fff4 !important;
+    animation: pulse-border 1.5s infinite;
+}
+
+@keyframes pulse-border {
+    0% { border-color: #198754; }
+    50% { border-color: #20c997; }
+    100% { border-color: #198754; }
+}
+
+/* Upload content transitions */
+.upload-dropzone-content {
+    transition: transform 0.3s ease;
+    line-height: 1.5 !important;
+}
+
+/* Badge styling improvements */
+.badge {
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+}
+
+/* Card enhancements */
+.card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Progress bar styling */
+.progress {
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+/* Alert improvements */
+.alert {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Button enhancements */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Data table improvements */
+.dash-table-container {
+    border-radius: 8px !important;
+    overflow: hidden;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .upload-dropzone {
+        height: 250px !important;
+        line-height: 250px !important;
+    }
+    
+    .upload-dropzone-content {
+        padding: 2rem 1rem !important;
+    }
+    
+    .fas.fa-cloud-upload-alt {
+        font-size: 3rem !important;
+    }
+}
+
+/* Loading state */
+.upload-loading {
+    position: relative;
+}
+
+.upload-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+}
