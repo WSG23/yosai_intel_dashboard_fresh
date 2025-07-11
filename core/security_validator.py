@@ -11,6 +11,10 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List
 
+import sqlparse
+from sqlparse.sql import Identifier, IdentifierList, Token
+from sqlparse.tokens import Keyword, DML, DDL
+
 from core.protocols import SecurityServiceProtocol
 
 from config.constants import FileProcessingLimits
@@ -24,7 +28,6 @@ from security_callback_controller import (
 
 from .security_patterns import (
     PATH_TRAVERSAL_PATTERNS as RAW_PATH_PATTERNS,
-    SQL_INJECTION_PATTERNS as RAW_SQL_PATTERNS,
     XSS_PATTERNS as RAW_XSS_PATTERNS,
 )
 
@@ -44,6 +47,43 @@ class SecurityIssue:
     recommendation: str
 
 
+class AdvancedSQLValidator:
+    """Parse SQL and detect suspicious patterns using ``sqlparse``."""
+
+    dangerous_keywords = {
+        "DROP",
+        "DELETE",
+        "INSERT",
+        "UPDATE",
+        "ALTER",
+        "EXEC",
+        "EXECUTE",
+    }
+
+    def is_malicious(self, query: str) -> bool:
+        statements = sqlparse.parse(query)
+        if len(statements) != 1:
+            return True
+
+        stmt = statements[0]
+        keywords: list[str] = []
+        for token in stmt.flatten():
+            if token.ttype in (Keyword, DML, DDL):
+                keywords.append(token.value.upper())
+
+        if any(kw in self.dangerous_keywords for kw in keywords):
+            return True
+
+        if "UNION" in keywords and "SELECT" in keywords:
+            return True
+
+        compressed = re.sub(r"\s+", "", query).lower()
+        if "or1=1" in compressed or "or'1'='1'" in compressed:
+            return True
+
+        return False
+
+
 class SecurityValidator(SecurityServiceProtocol):
     """Comprehensive security validator implementing ``SecurityServiceProtocol``."""
 
@@ -56,13 +96,13 @@ class SecurityValidator(SecurityServiceProtocol):
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
         self.attack_detection = AttackDetection()
+        self.sql_validator = AdvancedSQLValidator()
 
     # Compiled patterns for performance
     XSS_PATTERN_LIST = [re.compile(p, re.IGNORECASE) for p in RAW_XSS_PATTERNS]
 
     PATH_TRAVERSAL_PATTERN_LIST = [re.compile(p, re.IGNORECASE) for p in RAW_PATH_PATTERNS]
 
-    SQL_PATTERN_LIST = [re.compile(p, re.IGNORECASE) for p in RAW_SQL_PATTERNS]
 
     def validate_input(self, value: str, field_name: str = "input") -> Dict[str, Any]:
         """Orchestrate security validations for the given value."""
@@ -112,19 +152,17 @@ class SecurityValidator(SecurityServiceProtocol):
     def _validate_sql_injection(
         self, value: str, field_name: str
     ) -> List[SecurityIssue]:
-        """Check for SQL injection patterns."""
-        lower_val = value.lower()
-        for pattern in self.SQL_PATTERN_LIST:
-            if pattern.search(lower_val):
-                self.attack_detection.record(f"SQL injection attempt: {value}")
-                return [
-                    self._create_security_issue(
-                        SecurityLevel.CRITICAL,
-                        "Potential SQL injection detected",
-                        field_name,
-                        "Use parameterized queries and input sanitization",
-                    )
-                ]
+        """Check for SQL injection using ``AdvancedSQLValidator``."""
+        if self.sql_validator.is_malicious(value):
+            self.attack_detection.record(f"SQL injection attempt: {value}")
+            return [
+                self._create_security_issue(
+                    SecurityLevel.CRITICAL,
+                    "Potential SQL injection detected",
+                    field_name,
+                    "Use parameterized queries and input sanitization",
+                )
+            ]
         return []
 
     def _validate_xss_patterns(
@@ -284,4 +322,9 @@ class SecurityValidator(SecurityServiceProtocol):
         return True
 
 
-__all__ = ["SecurityValidator", "SecurityIssue", "SecurityLevel"]
+__all__ = [
+    "SecurityValidator",
+    "SecurityIssue",
+    "SecurityLevel",
+    "AdvancedSQLValidator",
+]
