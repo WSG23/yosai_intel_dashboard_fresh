@@ -19,20 +19,11 @@ from dash.exceptions import PreventUpdate
 import time
 
 # Core imports that should always work
-try:
-    from core.callback_registry import _callback_registry
-except ImportError:
-    _callback_registry = None
-from core.callback_registry import handle_register_with_deduplication
+from core.callback_registry import _callback_registry
 from upload_callbacks import UploadCallbackManager
+from core.unicode import safe_encode_text, safe_decode_bytes
 
-try:
-    from core.unicode import safe_encode_text, safe_decode_bytes
-except ImportError:
-    def safe_encode_text(text):
-        return str(text)
-    def safe_decode_bytes(data):
-        return data.decode('utf-8', errors='replace')
+_upload_component = None
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +82,7 @@ def layout():
         dbc.Row([
             dbc.Col([
                 dcc.Upload(
-                    id="file-upload-dropzone",
+                    id="drag-drop-upload",
                     children=html.Div([
                         # Visual upload icon
                         html.Div([
@@ -168,7 +159,7 @@ def layout():
             dbc.Col([
                 html.Div(id="upload-status", className="mb-3"),
                 dbc.Progress(
-                    id="upload-progress-bar",
+                    id="upload-progress",
                     value=0,
                     striped=True,
                     animated=False,
@@ -182,7 +173,7 @@ def layout():
         # File preview area
         dbc.Row([
             dbc.Col([
-                html.Div(id="upload-preview")
+                html.Div(id="preview-area")
             ], lg=10, md=12, sm=12, className="mx-auto")
         ]),
         
@@ -208,49 +199,33 @@ def layout():
 
 
 def register_callbacks(manager):
-    """Register upload callbacks with the provided manager."""
-    
+    """Register upload callbacks using the unified system."""
+
     global _upload_component
+
+    if manager is None:
+        raise RuntimeError("Callback manager is required")
 
     try:
         from components.upload import UnifiedUploadComponent
-    except Exception as exc:
-        import logging
-        logging.getLogger(__name__).error("Failed to import upload modules: %s", exc)
-        return
+        _upload_component = UnifiedUploadComponent()
+    except Exception:  # pragma: no cover - optional dependency
+        _upload_component = object()
 
-    _upload_component = UnifiedUploadComponent()
-    
-    if not manager:
-        raise RuntimeError("Callback manager is required")
-
-    @handle_register_with_deduplication(
-        manager,
+    @manager.unified_callback(
         [
-            Output('upload-status', 'children', allow_duplicate=True),
-            Output('upload-progress-bar', 'value', allow_duplicate=True),
-            Output('upload-progress-bar', 'style', allow_duplicate=True),
-            Output('upload-preview', 'children', allow_duplicate=True),
-            Output('uploaded-files-store', 'data', allow_duplicate=True),
-            Output('upload-navigation', 'children', allow_duplicate=True),
+            Output("preview-area", "children"),
+            Output("upload-progress", "value"),
         ],
-        Input('file-upload-dropzone', 'contents'),
-        [
-            State('file-upload-dropzone', 'filename'),
-            State('file-upload-dropzone', 'last_modified'),
-            State('uploaded-files-store', 'data'),
-        ],
-        callback_id="modern_file_upload",
+        Input("drag-drop-upload", "contents"),
+        [State("drag-drop-upload", "filename")],
+        callback_id="file_upload_handle",
         component_name="file_upload",
         prevent_initial_call=True,
-        source_module=__name__,
-        allow_duplicate=True,
-
-
     )
-    def handle_modern_upload(contents, filenames, last_modified, file_store):
-        """Process uploaded files and update UI components."""
-        debounced_callback("modern_file_upload")
+    def handle_upload(contents: List[str] | str, filenames: List[str] | str):
+        """Handle file uploads with Unicode safety."""
+
         if not contents:
             raise PreventUpdate
 
@@ -258,40 +233,52 @@ def register_callbacks(manager):
             contents = [contents]
             filenames = [filenames]
 
-        file_store = file_store or {}
         previews = []
-        status_alerts = []
+        for content, name in zip(contents, filenames):
+            try:
+                name = safe_encode_text(name)
+                _type, data = content.split(",", 1)
+                decoded = base64.b64decode(data)
+                ext = name.lower().split(".")[-1]
 
-        for content, fname in zip(contents, filenames):
-            df, err = _process_upload_safe(content, fname)
-            if df is None:
-                status_alerts.append(
-                    dbc.Alert(f"❌ {fname}: {err}", color="danger", dismissable=True)
+                if ext == "json":
+                    decoded_text = safe_decode_bytes(decoded)
+                    df = pd.DataFrame(json.loads(decoded_text))
+                elif ext in ("csv", "txt"):
+                    decoded_text = safe_decode_bytes(decoded)
+                    df = pd.read_csv(io.StringIO(decoded_text))
+                elif ext in ("xlsx", "xls"):
+                    df = pd.read_excel(io.BytesIO(decoded))
+                else:
+                    previews.append(
+                        dbc.Alert(
+                            f"Unsupported file type: {ext}", color="danger"
+                        )
+                    )
+                    continue
+
+                from dash import dash_table
+
+                table = dash_table.DataTable(
+                    data=df.head().to_dict("records"),
+                    columns=[{"name": c, "id": c} for c in df.columns],
+                    page_size=5,
                 )
-                continue
-
-            previews.append(_create_modern_preview(df, fname))
-            file_store[fname] = {"rows": len(df), "columns": len(df.columns)}
-            status_alerts.append(
-                dbc.Alert(f"✅ Uploaded {fname}", color="success", dismissable=True)
-            )
+                previews.append(dbc.Card([dbc.CardHeader(name), dbc.CardBody(table)]))
+            except Exception as exc:
+                logger.error("Failed to process %s: %s", name, exc)
+                previews.append(
+                    dbc.Alert(
+                        f"Failed to process {name}: {safe_encode_text(str(exc))}",
+                        color="danger",
+                    )
+                )
 
         progress = 100 if previews else 0
-        progress_style = {"display": "block"} if previews else {"display": "none"}
-        navigation = (
-            _create_navigation_section(len(file_store), file_store)
-            if previews
-            else no_update
-        )
+        return previews, progress
 
-        return (
-            sanitize_unicode_output(status_alerts),
-            progress,
-            progress_style,
-            sanitize_unicode_output(previews),
-            file_store,
-            navigation,
-        )
+    if _callback_registry is not None:
+        _callback_registry.register("file_upload_handle", __name__)
 
 
 
