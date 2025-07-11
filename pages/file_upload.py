@@ -3,40 +3,77 @@
 from dash import html
 import dash_bootstrap_components as dbc
 
-from components.upload import UnifiedUploadComponent
-from services.upload_data_service import get_uploaded_filenames as _get_uploaded_filenames
+_upload_component = None
 
+# Import your existing upload component function
+try:
+    from components import create_upload_card  # Use existing function
+    HAS_UPLOAD_COMPONENT = True
+except ImportError:
+    HAS_UPLOAD_COMPONENT = False
 
-# Instantiate the shared upload component once
-_upload_component = UnifiedUploadComponent()
+def layout():
+    if HAS_UPLOAD_COMPONENT:
+        return dbc.Container([
+            html.H2("File Upload"),
+            create_upload_card()  # Use existing upload component
+        ])
+    else:
+        return dbc.Container([
+            html.H2("File Upload"),
+            html.P("Upload component not available")
+        ])
 
-
-def layout() -> html.Div:
-    """Render the upload page using the unified component."""
-    return _upload_component.layout()
-
-
-def safe_upload_layout() -> html.Div:
-    """Compatibility wrapper used by legacy routing."""
+def safe_upload_layout():
     return layout()
 
+def register_callbacks(manager):
+    """Register upload callbacks with the provided manager."""
 
-def register_callbacks(manager) -> None:
-    """Delegate callback registration to the component."""
-    _upload_component.register_callbacks(manager)
+    global _upload_component
+
+    try:
+        from components.upload import UnifiedUploadComponent
+        from services.upload.controllers.upload_controller import (
+            UnifiedUploadController,
+        )
+    except Exception as exc:  # pragma: no cover - optional imports
+        import logging
+
+        logging.getLogger(__name__).error("Failed to import upload modules: %s", exc)
+        return
+
+    _upload_component = UnifiedUploadComponent()
+    controller = UnifiedUploadController(callbacks=manager)
+
+    for defs in [
+        controller.upload_callbacks(),
+        controller.progress_callbacks(),
+        controller.validation_callbacks(),
+    ]:
+        for func, outputs, inputs, states, cid, extra in defs:
+            manager.register_callback(
+                outputs,
+                inputs,
+                states,
+                callback_id=cid,
+                component_name="file_upload",
+                **extra,
+            )(func)
 
 
-# Dash tests expect this alias
-register_upload_callbacks = register_callbacks
 
+def get_uploaded_filenames(service=None, container=None):
+    from services.upload_data_service import get_uploaded_filenames as _get
 
-def get_uploaded_filenames():
-    """Expose helper for tests to query uploaded files."""
-    return _get_uploaded_filenames()
+    return _get(service=service, container=container)
+
 
 def register_page():
     from dash import register_page as dash_register_page
     dash_register_page(__name__, path="/upload", name="Upload")
+
+register_upload_callbacks = register_callbacks
 
 
 __all__ = [
@@ -46,5 +83,4 @@ __all__ = [
     "register_callbacks",
     "register_upload_callbacks",
     "get_uploaded_filenames",
-    "_upload_component",
-]
+
