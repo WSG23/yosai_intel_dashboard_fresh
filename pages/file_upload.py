@@ -194,116 +194,18 @@ def layout():
 
 
 def register_callbacks(manager):
-    """Register upload callbacks with guaranteed CSV upload functionality."""
+    """Register upload callbacks with the provided manager."""
     
-    def handle_file_upload(contents_list, filename_list, last_modified_list, existing_data):
-        """Handle file upload with modern feedback and processing."""
-        
-        if not contents_list:
-            raise PreventUpdate
-        
-        # Ensure lists
-        if not isinstance(contents_list, list):
-            contents_list = [contents_list]
-        if not isinstance(filename_list, list):
-            filename_list = [filename_list]
-        if not isinstance(last_modified_list, list):
-            last_modified_list = [last_modified_list]
-        
-        # Process uploads
-        status_components = []
-        preview_components = []
-        navigation_content = ""
-        updated_store = existing_data.copy() if existing_data else {}
-        
-        successful_uploads = 0
-        total_files = len(contents_list)
-        
-        logger.info(f"Processing {total_files} uploaded files")
-        
-        for i, (contents, filename, last_modified) in enumerate(zip(contents_list, filename_list, last_modified_list)):
-            try:
-                # Process file
-                df, error_msg = _process_upload_safe(contents, filename)
-                
-                if error_msg:
-                    # Error handling
-                    status_components.append(
-                        dbc.Alert([
-                            html.H5([
-                                html.I(className="fas fa-exclamation-triangle me-2"),
-                                f"Upload Failed: {filename}"
-                            ], className="alert-heading mb-2"),
-                            html.P(error_msg, className="mb-0")
-                        ], color="danger", className="mb-2")
-                    )
-                    logger.error(f"Upload failed for {filename}: {error_msg}")
-                    
-                else:
-                    # Success handling
-                    successful_uploads += 1
-                    
-                    # Store file data
-                    file_key = f"file_{len(updated_store)}"
-                    updated_store[file_key] = {
-                        'filename': filename,
-                        'upload_time': last_modified,
-                        'rows': len(df),
-                        'columns': len(df.columns),
-                        'column_names': df.columns.tolist(),
-                        'data_types': df.dtypes.astype(str).to_dict()
-                    }
-                    
-                    # Success status
-                    status_components.append(
-                        dbc.Alert([
-                            html.H5([
-                                html.I(className="fas fa-check-circle me-2"),
-                                f"Success: {filename}"
-                            ], className="alert-heading mb-2"),
-                            html.P([
-                                f"Processed ",
-                                html.Strong(f"{len(df):,} rows"),
-                                f" × ",
-                                html.Strong(f"{len(df.columns)} columns")
-                            ], className="mb-0")
-                        ], color="success", className="mb-2")
-                    )
-                    
-                    # Create preview
-                    preview_components.append(_create_modern_preview(df, filename))
-                    
-                    logger.info(f"Successfully processed {filename}: {len(df)} rows")
-                    
-            except Exception as e:
-                logger.error(f"Unexpected error processing {filename}: {str(e)}")
-                status_components.append(
-                    dbc.Alert([
-                        html.H5([
-                            html.I(className="fas fa-exclamation-triangle me-2"),
-                            f"Error: {filename}"
-                        ], className="alert-heading mb-2"),
-                        html.P(f"Unexpected error: {str(e)}", className="mb-0")
-                    ], color="danger", className="mb-2")
-                )
-        
-        # Progress and navigation
-        progress_value = (successful_uploads / total_files) * 100 if total_files > 0 else 0
-        progress_style = {'display': 'block'} if successful_uploads > 0 else {'display': 'none'}
-        
-        if successful_uploads > 0:
-            navigation_content = _create_navigation_section(successful_uploads, updated_store)
-        
-        logger.info(f"Upload complete: {successful_uploads}/{total_files} files successful")
-        
-        return (
-            status_components,
-            progress_value,
-            progress_style,
-            preview_components,
-            navigation_content,
-            updated_store
-        )
+    global _upload_component
+
+    try:
+        from components.upload import UnifiedUploadComponent
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).error("Failed to import upload modules: %s", exc)
+        return
+
+    _upload_component = UnifiedUploadComponent()
     
     if not manager:
         raise RuntimeError("Callback manager is required")
@@ -322,73 +224,9 @@ def register_callbacks(manager):
         prevent_initial_call=True,
         source_module=__name__,
         allow_duplicate=True,
+
     )
-    def callback_wrapper(*args, **kwargs):
-        return handle_file_upload(*args, **kwargs)
 
-    # Register legacy controller-style callbacks for compatibility
-    legacy_ids = {"file_upload_handle", "file_upload_progress", "file_upload_finalize"}
-    missing = [cid for cid in legacy_ids if cid not in getattr(manager, "_dash_callbacks", {})]
-    if missing:
-        UploadCallbackManager().register(manager)
-    if _callback_registry:
-        for cid in legacy_ids:
-            if cid in getattr(manager, "_dash_callbacks", {}) and not _callback_registry.is_registered(cid):
-                _callback_registry.register(cid, "file_upload_controller")
-
-    # Ensure expected legacy IDs exist for tests
-    legacy_ids = {"file_upload_handle", "file_upload_progress", "file_upload_finalize"}
-    for cid in legacy_ids:
-        if cid not in getattr(manager, "_dash_callbacks", {}):
-            @handle_register_with_deduplication(
-                manager,
-                Output("upload-status", "children", allow_duplicate=True),
-                Input("upload-status", "children"),
-                callback_id=cid,
-                component_name="file_upload",
-                prevent_initial_call=True,
-                source_module=__name__,
-                allow_duplicate=True,
-            )
-            def _noop(_):
-                return dash.no_update
-    
-    # Try to register advanced callbacks if controller is available
-    if CONTROLLER_AVAILABLE:
-        try:
-            controller = UnifiedUploadController(callbacks=manager)
-            callback_defs = []
-            
-            # Safely get callbacks from controller methods that exist
-            if hasattr(controller, 'upload_callbacks'):
-                callback_defs.extend(controller.upload_callbacks())
-            if hasattr(controller, 'progress_callbacks'):
-                callback_defs.extend(controller.progress_callbacks())
-            if hasattr(controller, 'validation_callbacks'):
-                callback_defs.extend(controller.validation_callbacks())
-            
-            if callback_defs and manager:  # Only if controller actually returns callbacks
-                controller_callback_ids = [cid for _, _, _, _, cid, _ in callback_defs]
-                
-                def _do_controller_registration() -> None:
-                    for func, outputs, inputs, states, cid, extra in callback_defs:
-                        manager.unified_callback(
-                            outputs, inputs, states,
-                            callback_id=cid,
-                            component_name="file_upload",
-                            **extra,
-                        )(func)
-                
-                if _callback_registry:
-                    _callback_registry.register_deduplicated(
-                        controller_callback_ids, _do_controller_registration, source_module="file_upload_controller"
-                    )
-                
-                logger.info(f"✅ Advanced controller callbacks registered: {len(controller_callback_ids)} callbacks")
-        except Exception as e:
-            logger.warning(f"Controller registration failed: {e}")
-    
-    logger.info("🚀 File upload callbacks registration completed")
 
 
 def _process_upload_safe(contents, filename):
