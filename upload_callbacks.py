@@ -20,7 +20,13 @@ class UploadCallbackManager:
 
         uc = UnifiedUploadController(callbacks=manager)
 
-        for defs in [uc.upload_callbacks(), uc.progress_callbacks(), uc.validation_callbacks()]:
+        callback_sources = [
+            getattr(uc, "upload_callbacks", lambda: [])(),
+            getattr(uc, "progress_callbacks", lambda: [])(),
+            getattr(uc, "validation_callbacks", lambda: [])(),
+        ]
+
+        for defs in callback_sources:
             for func, outputs, inputs, states, cid, extra in defs:
                 manager.register_callback(
                     outputs,

@@ -300,6 +300,21 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
     )
 
 
+def create_device_mapping_section(devices: List[str] | None = None) -> html.Div:
+    """Return button and modal for device mapping."""
+
+    open_button = dbc.Button(
+        "Map Devices",
+        id="open-device-mapping",
+        color="primary",
+        className="mb-3",
+    )
+
+    modal = create_simple_device_modal_with_ai(devices or [])
+
+    return html.Div([open_button, modal])
+
+
 def create_simple_device_modal(devices: List[str]) -> dbc.Modal:
     """Create simple device mapping modal"""
 
@@ -621,4 +636,4 @@ def register_callbacks(
         )
 
 
-__all__ = ["register_callbacks"]
+__all__ = ["register_callbacks", "create_device_mapping_section"]
