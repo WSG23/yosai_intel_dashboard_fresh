@@ -2,7 +2,7 @@ import timeit
 
 import pandas as pd
 
-from analytics.anomaly_detection import AnomalyDetection
+from analytics.anomaly_detection import AnomalyDetector
 from analytics.security_patterns import SecurityPatternsAnalyzer
 
 
@@ -22,7 +22,7 @@ def benchmark():
     df = generate_sample_df()
     analyzer = SecurityPatternsAnalyzer()
     df = analyzer._prepare_data(df)
-    detection = AnomalyDetection()
+    detection = AnomalyDetector()
 
     t1 = timeit.timeit(lambda: analyzer._extract_failure_patterns(df), number=5)
     t2 = timeit.timeit(lambda: analyzer._identify_timing_patterns(df), number=5)

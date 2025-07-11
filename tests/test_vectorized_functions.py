@@ -1,6 +1,6 @@
 import pandas as pd
 
-from analytics.anomaly_detection import AnomalyDetection
+from analytics.anomaly_detection import AnomalyDetector
 from analytics.security_patterns import SecurityPatternsAnalyzer
 
 
@@ -39,7 +39,7 @@ def test_identify_timing_patterns_vectorized():
 
 
 def test_detect_frequency_anomalies_vectorized():
-    detector = AnomalyDetection()
+    detector = AnomalyDetector()
     df = pd.DataFrame(
         {
             "event_id": range(15),

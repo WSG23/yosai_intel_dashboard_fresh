@@ -1,7 +1,6 @@
 """Anomaly detection subpackage."""
 
 from .analyzer import (
-    AnomalyDetection,
     AnomalyDetector,
     EnhancedAnomalyDetector,
     create_anomaly_detector,
@@ -17,7 +16,6 @@ from .types import AnomalyAnalysis
 
 __all__ = [
     "AnomalyDetector",
-    "AnomalyDetection",
     "create_anomaly_detector",
     "EnhancedAnomalyDetector",
     "prepare_anomaly_data",
