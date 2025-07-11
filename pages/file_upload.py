@@ -1,3 +1,5 @@
+"""File upload page wired to the unified upload component."""
+
 from dash import html
 import dash_bootstrap_components as dbc
 
@@ -66,11 +68,13 @@ def get_uploaded_filenames(service=None, container=None):
 
     return _get(service=service, container=container)
 
+
 def register_page():
     from dash import register_page as dash_register_page
     dash_register_page(__name__, path="/upload", name="Upload")
 
 register_upload_callbacks = register_callbacks
+
 
 __all__ = [
     "layout",
@@ -79,4 +83,4 @@ __all__ = [
     "register_callbacks",
     "register_upload_callbacks",
     "get_uploaded_filenames",
-]
+

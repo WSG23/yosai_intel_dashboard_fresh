@@ -55,7 +55,12 @@ class StableFileUploadComponent:
                                 dbc.Card(
                                     [
                                         dbc.CardHeader(
-                                            [html.H5("Upload Data Files", className="mb-0")]
+                                            [
+                                                html.H5(
+                                                    "Upload Data Files",
+                                                    className="mb-0",
+                                                )
+                                            ]
                                         ),
                                         dbc.CardBody(
                                             [
@@ -133,8 +138,12 @@ class StableFileUploadComponent:
                 dbc.ModalBody("Configure column mappings here", id="modal-body"),
                 dbc.ModalFooter(
                     [
-                        dbc.Button("Cancel", id="column-verify-cancel", color="secondary"),
-                        dbc.Button("Confirm", id="column-verify-confirm", color="success"),
+                        dbc.Button(
+                            "Cancel", id="column-verify-cancel", color="secondary"
+                        ),
+                        dbc.Button(
+                            "Confirm", id="column-verify-confirm", color="success"
+                        ),
                     ]
                 ),
             ],
@@ -151,8 +160,12 @@ class StableFileUploadComponent:
                 dbc.ModalBody("", id="device-modal-body"),
                 dbc.ModalFooter(
                     [
-                        dbc.Button("Cancel", id="device-verify-cancel", color="secondary"),
-                        dbc.Button("Confirm", id="device-verify-confirm", color="success"),
+                        dbc.Button(
+                            "Cancel", id="device-verify-cancel", color="secondary"
+                        ),
+                        dbc.Button(
+                            "Confirm", id="device-verify-confirm", color="success"
+                        ),
                     ]
                 ),
             ],
@@ -165,10 +178,10 @@ class StableFileUploadComponent:
         """Handle file upload with Unicode safety."""
         if not contents or not filenames:
             return "No files provided"
-            
+
         safe_contents = [safe_encode_text(c) for c in contents]
         safe_filenames = [safe_encode_text(f) for f in filenames]
-        
+
         try:
             return self.processing_service.process_files(safe_contents, safe_filenames)
         except Exception as e:
@@ -177,18 +190,20 @@ class StableFileUploadComponent:
 
     def register_consolidated_callbacks(self, manager: Any) -> None:
         """Register all callbacks in a consolidated manner."""
-        
+
         # Main upload handler callback - listens to dcc.Upload contents
-        @manager.callback(
+        @manager.register_callback(
             [
                 Output("preview-area", "children"),
                 Output("to-column-map-btn", "disabled"),
                 Output("uploaded-df-store", "data"),
                 Output("upload-progress-interval", "disabled"),
             ],
-            [Input("drag-drop-upload", "contents")],
+            Input("drag-drop-upload", "contents"),
             [State("drag-drop-upload", "filename")],
             prevent_initial_call=True,
+            callback_id="file_upload_handle",
+            component_name="stable_file_upload",
         )
         def handle_upload(contents, filenames):
             if not contents or not filenames:
@@ -201,22 +216,25 @@ class StableFileUploadComponent:
             return [], False, {"task_id": task_id}, False
 
         # Progress update callback (unchanged)
-        @manager.callback(
+        @manager.register_callback(
             [
                 Output("upload-progress", "value"),
                 Output("upload-progress", "label"),
                 Output("file-progress-list", "children"),
                 Output("progress-done-trigger", "disabled"),
             ],
-            [Input("upload-progress-interval", "n_intervals")],
+            Input("upload-progress-interval", "n_intervals"),
             prevent_initial_call=True,
+            callback_id="file_upload_progress",
+            component_name="stable_file_upload",
         )
         def update_upload_progress(n_intervals):
             try:
                 # Simulated progress logic (replace with your real tracker)
                 progress = min(100, (n_intervals or 0) * 20)
                 items = [
-                    html.Li(f"Processing file {i + 1}...") for i in range(progress // 20)
+                    html.Li(f"Processing file {i + 1}...")
+                    for i in range(progress // 20)
                 ]
                 done = progress >= 100
                 return progress, f"{progress}%", items, done
@@ -224,14 +242,16 @@ class StableFileUploadComponent:
                 return 0, "0%", [], True
 
         # Finalization callback (unchanged)
-        @manager.callback(
+        @manager.register_callback(
             [
                 Output("upload-progress-interval", "disabled", allow_duplicate=True),
-                Output("upload-progress", "style"),
-                Output("preview-area", "style"),
+                Output("upload-progress", "style", allow_duplicate=True),
+                Output("preview-area", "style", allow_duplicate=True),
             ],
-            [Input("progress-done-trigger", "n_clicks")],
+            Input("progress-done-trigger", "n_clicks"),
             prevent_initial_call=True,
+            callback_id="file_upload_finalize",
+            component_name="stable_file_upload",
         )
         def finalize_upload(n_clicks):
             if not n_clicks:
@@ -243,12 +263,11 @@ class StableFileUploadComponent:
         services = [
             "upload_store",
             "file_processor",
-            "validator", 
+            "validator",
             "processing_service",
             "upload_area",
         ]
         return all(hasattr(self, s) and getattr(self, s) is not None for s in services)
-
 
 
 def register_callbacks(manager: Any) -> None:
@@ -263,6 +282,7 @@ def register_callbacks(manager: Any) -> None:
         # Don't fail completely - provide minimal fallback
         pass
 
+
 def layout() -> html.Div:
     """Module-level layout function for compatibility."""
     try:
@@ -271,10 +291,8 @@ def layout() -> html.Div:
     except Exception as e:
         logger.error(f"❌ Failed to create upload layout: {e}")
         # Fallback minimal layout
-        return html.Div([
-            html.H4("Upload Page"),
-            html.P(f"Error: {str(e)}")
-        ])
+        return html.Div([html.H4("Upload Page"), html.P(f"Error: {str(e)}")])
+
 
 __all__ = ["StableFileUploadComponent", "register_callbacks", "layout"]
 
@@ -288,6 +306,7 @@ def register_callbacks(manager: Any) -> None:
         logger.error(f"❌ Failed to register upload callbacks: {e}")
         pass
 
+
 def layout() -> html.Div:
     """Module-level layout function for compatibility."""
     try:
@@ -297,8 +316,16 @@ def layout() -> html.Div:
         logger.error(f"❌ Failed to create upload layout: {e}")
         return html.Div([html.H4("Upload Page"), html.P(f"Error: {str(e)}")])
 
+
+
 def safe_upload_layout():
     """Unicode-safe wrapper for app_factory."""
     return layout()
 
-__all__ = ["StableFileUploadComponent", "register_callbacks", "layout", "safe_upload_layout"]
+__all__ = [
+    "StableFileUploadComponent",
+    "register_callbacks",
+    "layout",
+    "safe_upload_layout",
+]
+
