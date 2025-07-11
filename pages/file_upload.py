@@ -2,6 +2,13 @@
 
 import dash
 import dash_bootstrap_components as dbc
+from dash import dash_table, Input, Output, State
+import pandas as pd
+import base64
+import io
+import json
+from dash.exceptions import PreventUpdate
+from core.unicode import safe_encode_text, safe_decode_bytes
 
 html = dash.html
 
@@ -35,38 +42,59 @@ def safe_upload_layout():
 
 
 def register_callbacks(manager):
-    """Register upload callbacks with the provided manager."""
+    """Register upload callbacks using the unified system."""
 
-    global _upload_component
+    @manager.unified_callback(
+        [
+            Output("preview-area", "children"),
+            Output("upload-progress", "value"),
+            Output("upload-progress", "label"),
+            Output("to-column-map-btn", "disabled"),
+            Output("uploaded-df-store", "data"),
+        ],
+        [Input("drag-drop-upload", "contents"), State("drag-drop-upload", "filename")],
+        callback_id="file_upload_handle",
+        component_name="file_upload",
+        prevent_initial_call=True,
+    )
+    def handle_upload(contents, filenames):
+        if not contents or not filenames:
+            raise PreventUpdate
 
-    try:
-        from components.upload import UnifiedUploadComponent
-        from services.upload.controllers.upload_controller import (
-            UnifiedUploadController,
-        )
-    except Exception as exc:  # pragma: no cover - optional imports
-        import logging
+        if not isinstance(contents, list):
+            contents = [contents]
+            filenames = [filenames]
 
-        logging.getLogger(__name__).error("Failed to import upload modules: %s", exc)
-        return
+        previews = []
+        stored: dict[str, str] = {}
 
-    _upload_component = UnifiedUploadComponent()
-    controller = UnifiedUploadController(callbacks=manager)
+        for content, fname in zip(contents, filenames):
+            try:
+                _, data = content.split(",", 1)
+                decoded = base64.b64decode(data)
+                text = safe_decode_bytes(decoded)
+                if str(fname).lower().endswith(".json"):
+                    df = pd.DataFrame(json.loads(text))
+                else:
+                    df = pd.read_csv(io.StringIO(text))
+            except Exception as exc:  # pragma: no cover - show error to user
+                alert = dbc.Alert(
+                    f"Failed to process {safe_encode_text(fname)}: {exc}", color="danger"
+                )
+                return alert, 0, "0%", True, {}
 
-    for defs in [
-        controller.upload_callbacks(),
-        controller.progress_callbacks(),
-        controller.validation_callbacks(),
-    ]:
-        for func, outputs, inputs, states, cid, extra in defs:
-            manager.register_handler(
-                outputs,
-                inputs,
-                states,
-                callback_id=cid,
-                component_name="file_upload",
-                **extra,
-            )(func)
+            stored[str(fname)] = df.to_json(date_format="iso", orient="split")
+            if not previews:
+                previews.append(
+                    dash_table.DataTable(
+                        data=df.head().to_dict("records"),
+                        columns=[{"name": c, "id": c} for c in df.columns],
+                        page_size=5,
+                    )
+                )
+
+        preview_layout = previews[0] if previews else html.Div()
+        return preview_layout, 100, "100%", False, stored
 
 
 def get_uploaded_filenames(service=None, container=None):
