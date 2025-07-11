@@ -677,6 +677,7 @@ def register_callbacks(
     manager.register_handler(
         Output({"type": "custom-field", "index": MATCH}, "style"),
         Input({"type": "column-mapping", "index": MATCH}, "value"),
+        prevent_initial_call=True,
         callback_id="toggle_custom_field",
         component_name="column_verification",
     )(toggle_custom_field)
