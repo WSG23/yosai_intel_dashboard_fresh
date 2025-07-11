@@ -2,6 +2,10 @@
 
 import dash
 import dash_bootstrap_components as dbc
+from dash import Input, Output
+import logging
+
+logger = logging.getLogger(__name__)
 
 from core.callback_registry import _callback_registry
 
@@ -73,6 +77,7 @@ def register_callbacks(manager):
                 component_name="file_upload",
                 **extra,
             )(func)
+
 
     _callback_registry.register_deduplicated(
         callback_ids, _do_registration, source_module="file_upload"
