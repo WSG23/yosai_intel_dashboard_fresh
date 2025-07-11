@@ -3,6 +3,8 @@
 import dash
 import dash_bootstrap_components as dbc
 
+from core.callback_registry import _callback_registry
+
 html = dash.html
 
 _upload_component = None
@@ -53,13 +55,17 @@ def register_callbacks(manager):
     _upload_component = UnifiedUploadComponent()
     controller = UnifiedUploadController(callbacks=manager)
 
-    for defs in [
-        controller.upload_callbacks(),
-        controller.progress_callbacks(),
-        controller.validation_callbacks(),
-    ]:
-        for func, outputs, inputs, states, cid, extra in defs:
-            manager.register_handler(
+    callback_defs = (
+        controller.upload_callbacks()
+        + controller.progress_callbacks()
+        + controller.validation_callbacks()
+    )
+
+    callback_ids = [cid for _, _, _, _, cid, _ in callback_defs]
+
+    def _do_registration() -> None:
+        for func, outputs, inputs, states, cid, extra in callback_defs:
+            manager.unified_callback(
                 outputs,
                 inputs,
                 states,
@@ -67,6 +73,10 @@ def register_callbacks(manager):
                 component_name="file_upload",
                 **extra,
             )(func)
+
+    _callback_registry.register_deduplicated(
+        callback_ids, _do_registration, source_module="file_upload"
+    )
 
 
 def get_uploaded_filenames(service=None, container=None):
