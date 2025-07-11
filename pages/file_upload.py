@@ -16,6 +16,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import Input, Output, State, dcc, html, callback, no_update
 from dash.exceptions import PreventUpdate
+import time
 
 # Core imports that should always work
 try:
@@ -34,6 +35,26 @@ except ImportError:
         return data.decode('utf-8', errors='replace')
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Utility helpers
+_last_execution: dict[str, float] = {}
+
+
+def sanitize_unicode_output(value: Any) -> Any:
+    """Return value with invalid Unicode removed."""
+    if isinstance(value, str):
+        return value.encode("utf-8", errors="ignore").decode("utf-8")
+    return value
+
+
+def debounced_callback(callback_id: str, delay: float = 0.1) -> None:
+    """Raise :class:`PreventUpdate` if called again within ``delay`` seconds."""
+    now = time.time()
+    last = _last_execution.get(callback_id, 0.0)
+    if now - last < delay:
+        raise PreventUpdate
+    _last_execution[callback_id] = now
 
 
 
@@ -227,6 +248,7 @@ def register_callbacks(manager):
     )
     def handle_modern_upload(contents, filenames, last_modified, file_store):
         """Process uploaded files and update UI components."""
+        debounced_callback("modern_file_upload")
         if not contents:
             raise PreventUpdate
 
@@ -261,10 +283,10 @@ def register_callbacks(manager):
         )
 
         return (
-            status_alerts,
+            sanitize_unicode_output(status_alerts),
             progress,
             progress_style,
-            previews,
+            sanitize_unicode_output(previews),
             file_store,
             navigation,
         )

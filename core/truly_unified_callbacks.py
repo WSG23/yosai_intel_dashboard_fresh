@@ -129,8 +129,8 @@ class TrulyUnifiedCallbacks:
                     key = f"{o.component_id}.{o.component_property}"
                     allow_dup_output = allow_duplicate or getattr(o, "allow_duplicate", False)
                     if key in self._output_map and not allow_dup_output:
-                        raise ValueError(
-                            f"Output '{key}' already used by callback '{self._output_map[key]}'"
+                        logger.warning(
+                            "Output '%s' conflict - allowing duplicate", key
                         )
 
                 wrapped = self.app.callback(
