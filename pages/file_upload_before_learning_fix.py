@@ -296,7 +296,6 @@ def layout() -> html.Div:
 
 __all__ = ["StableFileUploadComponent", "register_callbacks", "layout"]
 
-
 def register_callbacks(manager: Any) -> None:
     """Module-level callback registration function expected by app.py."""
     try:
@@ -318,10 +317,10 @@ def layout() -> html.Div:
         return html.Div([html.H4("Upload Page"), html.P(f"Error: {str(e)}")])
 
 
+
 def safe_upload_layout():
     """Unicode-safe wrapper for app_factory."""
     return layout()
-
 
 __all__ = [
     "StableFileUploadComponent",
@@ -329,3 +328,4 @@ __all__ = [
     "layout",
     "safe_upload_layout",
 ]
+

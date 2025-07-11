@@ -135,6 +135,8 @@ def register_navbar_callbacks(callback_manager, service: Optional[Any] = None) -
             [dash.dependencies.Output("navbar-collapse", "is_open")],
             [dash.dependencies.Input("navbar-toggler", "n_clicks")],
             [dash.dependencies.State("navbar-collapse", "is_open")],
+            callback_id="navbar_toggle",
+            component_name="navbar",
         )
         def toggle_navbar_collapse(n, is_open):
             if n:

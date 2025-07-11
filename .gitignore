@@ -23,9 +23,16 @@ wheels/
 *.egg
 
 # Virtual Environment
+# Ensure venv is ignored but not deleted
 venv/
+.venv/
 env/
 ENV/
+
+# But keep requirements
+!requirements.txt
+!requirements_backup.txt
+
 # Environment Variables
 .env
 .env.local
