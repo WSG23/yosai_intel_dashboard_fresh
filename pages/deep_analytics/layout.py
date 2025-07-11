@@ -1,23 +1,89 @@
-"""Simple stable analytics layout - fixes navigation flash"""
+"""Simplified analytics layout including callback components."""
 
 import dash_bootstrap_components as dbc
-from dash import html
+from dash import dcc, html
 
-def layout():
-    """Simple stable layout like Settings page."""
-    return dbc.Container([
-        dbc.Row([
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H5("📊 Analytics Dashboard", className="card-title"),
-                        html.P("Navigation flash fixed! Advanced analytics coming soon.", className="card-text"),
-                        html.Hr(),
-                        html.I(className="fas fa-chart-line fa-3x mb-3", style={"color": "#007bff"}),
-                        html.H6("✅ Navigation Flash: FIXED"),
-                        html.H6("🔧 Advanced Features: Being Restored"),
-                    ])
-                ], className="mb-4")
-            ], md=8)
-        ])
-    ], fluid=True)
+from .analysis import (
+    get_analysis_buttons_section,
+    get_data_source_options_safe,
+    get_initial_message_safe,
+    get_latest_uploaded_source_value,
+    get_updated_button_group,
+)
+
+
+def layout() -> dbc.Container:
+    """Stable layout with necessary IDs for callbacks."""
+
+    intro_card = dbc.Card(
+        dbc.CardBody(
+            [
+                html.H5("📊 Analytics Dashboard", className="card-title"),
+                html.P(
+                    "Navigation flash fixed! Advanced analytics coming soon.",
+                    className="card-text",
+                ),
+                html.Hr(),
+                html.I(
+                    className="fas fa-chart-line fa-3x mb-3",
+                    style={"color": "#007bff"},
+                ),
+                html.H6("✅ Navigation Flash: FIXED"),
+                html.H6("🔧 Advanced Features: Being Restored"),
+            ]
+        ),
+        className="mb-4",
+    )
+
+    status_alert = dbc.Alert(id="status-alert", is_open=False, className="mb-3")
+
+    config_section = dbc.Card(
+        [
+            dbc.CardHeader(html.H5("Analysis Configuration")),
+            dbc.CardBody(
+                [
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                [
+                                    html.Label(
+                                        "Data Source",
+                                        htmlFor="analytics-data-source",
+                                        className="fw-bold",
+                                    ),
+                                    dcc.Dropdown(
+                                        id="analytics-data-source",
+                                        options=get_data_source_options_safe(),
+                                        placeholder="Select data source...",
+                                        value=get_latest_uploaded_source_value(),
+                                    ),
+                                ],
+                                width=6,
+                            ),
+                            get_analysis_buttons_section(),
+                        ],
+                        className="mb-3",
+                    ),
+                    html.Hr(),
+                    get_updated_button_group(),
+                ]
+            ),
+        ],
+        className="mb-4",
+    )
+
+    results_area = dcc.Loading(
+        id="analytics-loading",
+        type="circle",
+        children=html.Div(
+            id="analytics-display-area",
+            children=[get_initial_message_safe()],
+        ),
+    )
+
+    hidden_trigger = html.Div(id="hidden-trigger", className="hidden")
+
+    return dbc.Container(
+        [intro_card, status_alert, config_section, results_area, hidden_trigger],
+        fluid=True,
+    )
