@@ -35,14 +35,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-# Try to import your existing components - graceful fallback
-try:
-    from components import create_upload_card
-    HAS_UPLOAD_COMPONENT = True
-    logger.info("✅ Found existing upload component")
-except ImportError:
-    HAS_UPLOAD_COMPONENT = False
-    logger.info("ℹ️ No existing upload component - using built-in")
+
 
 # Try to import advanced services - graceful fallback
 try:
@@ -230,6 +223,7 @@ def register_callbacks(manager):
         source_module=__name__,
         allow_duplicate=True,
 
+
     )
     def handle_modern_upload(contents, filenames, last_modified, file_store):
         """Process uploaded files and update UI components."""
@@ -274,6 +268,7 @@ def register_callbacks(manager):
             file_store,
             navigation,
         )
+
 
 
 def _process_upload_safe(contents, filename):
@@ -520,4 +515,19 @@ __all__ = [
     "get_uploaded_filenames",
 ]
 
-logger.info(f"🚀 File upload loaded - Controller: {CONTROLLER_AVAILABLE}, Component: {HAS_UPLOAD_COMPONENT}")
+import importlib
+
+_component_available = False
+try:
+    spec = importlib.util.find_spec("components")
+    if spec:
+        module = importlib.import_module("components")
+        _component_available = hasattr(module, "create_upload_card")
+except Exception:
+    _component_available = False
+
+logger.info(
+    "🚀 File upload loaded - Controller: %s, Upload component available: %s",
+    CONTROLLER_AVAILABLE,
+    _component_available,
+)
