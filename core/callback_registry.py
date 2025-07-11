@@ -7,8 +7,7 @@ import functools
 import logging
 import time
 from functools import wraps
-from typing import Callable, List, Dict, Iterable, Any
-
+from typing import Any, Callable, Dict, Iterable, List
 
 from dash import no_update
 
@@ -107,6 +106,19 @@ class GlobalCallbackRegistry:
         for cid in callback_ids:
             self.register(cid, source_module)
         return True
+
+    def validate_registration_integrity(self) -> bool:
+        """Return True if all registrations are unique and tracked."""
+
+        duplicates = {
+            cid: count for cid, count in self.registration_attempts.items() if count > 1
+        }
+        missing = [
+            cid
+            for cid in self.registered_callbacks
+            if cid not in self.registration_sources
+        ]
+        return not duplicates and not missing
 
 
 # Global instance used across the application
@@ -287,17 +299,7 @@ def get_registration_diagnostics() -> Dict[str, Any]:
 def validate_registration_integrity() -> bool:
     """Return True if all registrations are unique and tracked."""
 
-    duplicates = {
-        cid: count
-        for cid, count in _callback_registry.registration_attempts.items()
-        if count > 1
-    }
-    missing = [
-        cid
-        for cid in _callback_registry.registered_callbacks
-        if cid not in _callback_registry.registration_sources
-    ]
-    return not duplicates and not missing
+    return _callback_registry.validate_registration_integrity()
 
 
 __all__ = [
