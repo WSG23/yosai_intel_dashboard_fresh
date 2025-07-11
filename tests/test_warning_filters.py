@@ -4,7 +4,7 @@ import pandas as pd
 
 from analytics.access_trends import AccessTrendsAnalyzer
 from analytics.anomaly_detection import AnomalyDetector
-from analytics.security_patterns import SecurityPatternsAnalyzer
+from analytics.security_patterns import PaginatedAnalyzer
 from analytics.user_behavior import UserBehaviorAnalyzer
 
 
@@ -24,7 +24,7 @@ def test_analyzers_emit_no_warnings():
     df = _sample_df()
     analyzers = [
         (AnomalyDetector(), "detect_anomalies"),
-        (SecurityPatternsAnalyzer(), "analyze_patterns"),
+        (PaginatedAnalyzer(), "analyze_patterns_chunked"),
         (AccessTrendsAnalyzer(), "analyze_trends"),
         (UserBehaviorAnalyzer(), "analyze_behavior"),
     ]

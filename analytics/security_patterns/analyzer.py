@@ -12,7 +12,7 @@ import logging
 import warnings
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Iterable
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 import numpy as np
@@ -490,6 +490,185 @@ class SecurityPatternsAnalyzer:
         }
 
 
+class PaginatedAnalyzer(SecurityPatternsAnalyzer):
+    """Chunk-aware analyzer that limits memory usage."""
+
+    def __init__(
+        self,
+        *,
+        chunk_size: int = 50000,
+        max_memory_mb: int = 500,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(**kwargs)
+        self.chunk_size = chunk_size
+        self.max_memory_mb = max_memory_mb
+
+    def _iter_chunks(self, df: pd.DataFrame) -> Iterable[pd.DataFrame]:
+        for i in range(0, len(df), self.chunk_size):
+            yield df.iloc[i : i + self.chunk_size]
+
+    def analyze_patterns_chunked(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Analyze security patterns using chunked processing."""
+        est_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
+        if est_mb <= self.max_memory_mb:
+            return self.analyze_patterns(df)
+
+        total_events = 0
+        success_sum = 0
+        after_hours_sum = 0
+        weekend_sum = 0
+        hourly_counts: Dict[int, int] = defaultdict(int)
+        user_event_count: Dict[Any, int] = defaultdict(int)
+        user_success_sum: Dict[Any, int] = defaultdict(int)
+        failure_count = 0
+        failure_users: Dict[Any, int] = defaultdict(int)
+        threats: List[ThreatIndicator] = []
+
+        for chunk in self._iter_chunks(df):
+            prepared = self._prepare_security_data(chunk)
+            total_events += len(prepared)
+            success_sum += int(prepared["access_granted"].sum())
+            after_hours_sum += int(prepared["is_after_hours"].sum())
+            weekend_sum += int(prepared["is_weekend"].sum())
+            for hour, cnt in prepared["hour"].value_counts().items():
+                hourly_counts[int(hour)] += int(cnt)
+
+            group = prepared.groupby("person_id").agg(
+                event_count=("event_id", "count"),
+                success_sum=("access_granted", "sum"),
+            )
+            for pid, row in group.iterrows():
+                user_event_count[pid] += int(row["event_count"])
+                user_success_sum[pid] += int(row["success_sum"])
+
+            failures = prepared[prepared["access_granted"] == 0]
+            failure_count += len(failures)
+            for pid, cnt in failures["person_id"].value_counts().items():
+                failure_users[pid] += int(cnt)
+
+            threats.extend(self._detect_statistical_threats(prepared))
+            threats.extend(self._detect_pattern_threats(prepared))
+
+        patterns = self._compile_patterns(
+            total_events,
+            after_hours_sum,
+            weekend_sum,
+            hourly_counts,
+            user_event_count,
+            user_success_sum,
+            failure_count,
+            failure_users,
+        )
+
+        security_score = self._calculate_score_from_counts(
+            total_events, success_sum, after_hours_sum, threats
+        )
+        recommendations = self._generate_security_recommendations(threats, patterns)
+        risk_level = self._determine_risk_level(security_score, threats)
+        confidence_interval = self._confidence_from_counts(
+            total_events, success_sum, security_score
+        )
+
+        self._trigger_threat_callbacks(threats)
+        self._trigger_analysis_complete(security_score, risk_level)
+
+        result = SecurityAssessment(
+            overall_score=security_score,
+            risk_level=risk_level,
+            confidence_interval=confidence_interval,
+            threat_indicators=threats,
+            pattern_analysis=patterns,
+            recommendations=recommendations,
+        )
+        return self._convert_to_legacy_format(result)
+
+    def _compile_patterns(
+        self,
+        total_events: int,
+        after_hours_sum: int,
+        weekend_sum: int,
+        hourly_counts: Dict[int, int],
+        user_event_count: Dict[Any, int],
+        user_success_sum: Dict[Any, int],
+        failure_count: int,
+        failure_users: Dict[Any, int],
+    ) -> Dict[str, Any]:
+        patterns = {
+            "temporal_distribution": {},
+            "user_distribution": {},
+            "failure_patterns": {},
+        }
+
+        if total_events:
+            series = pd.Series(hourly_counts).sort_index()
+            patterns["temporal_distribution"] = {
+                "peak_hours": series.nlargest(3).index.tolist(),
+                "after_hours_percentage": (after_hours_sum / total_events) * 100,
+                "weekend_percentage": (weekend_sum / total_events) * 100,
+            }
+
+            total_users = len(user_event_count)
+            total_events_all = sum(user_event_count.values())
+            avg_events = total_events_all / total_users if total_users else 0
+            avg_success = (
+                sum(user_success_sum.values()) / total_events_all
+                if total_events_all
+                else 0
+            )
+            patterns["user_distribution"] = {
+                "total_users": total_users,
+                "average_events_per_user": avg_events,
+                "average_success_rate": avg_success,
+            }
+
+            if failure_count:
+                top = sorted(
+                    failure_users.items(), key=lambda x: x[1], reverse=True
+                )[:5]
+                patterns["failure_patterns"] = {
+                    "total_failures": failure_count,
+                    "failure_rate": failure_count / total_events,
+                    "top_failure_users": {u: c for u, c in top},
+                }
+
+        return patterns
+
+    def _calculate_score_from_counts(
+        self,
+        total_events: int,
+        success_sum: int,
+        after_hours_sum: int,
+        threats: List[ThreatIndicator],
+    ) -> float:
+        severity_weights = {"critical": 25, "high": 15, "medium": 8, "low": 3}
+        total_penalty = sum(
+            severity_weights.get(t.severity, 3) * t.confidence for t in threats
+        )
+
+        if total_events == 0:
+            return 0.0
+
+        failure_rate = 1 - (success_sum / total_events)
+        after_hours_rate = after_hours_sum / total_events
+        total_penalty += min(30, failure_rate * 100)
+        total_penalty += min(10, after_hours_rate * 50)
+        return round(max(0, 100.0 - total_penalty), 2)
+
+    def _confidence_from_counts(
+        self, total_events: int, success_sum: int, score: float
+    ) -> Tuple[float, float]:
+        if total_events < 30:
+            return (max(0, score - 20), min(100, score + 20))
+
+        failure_rate = 1 - (success_sum / total_events)
+        std_error = np.sqrt(failure_rate * (1 - failure_rate) / total_events)
+        margin = 1.96 * std_error * 100
+        lower = max(0, score - margin)
+        upper = min(100, score + margin)
+        return (round(lower, 2), round(upper, 2))
+
+
 # Factory function for compatibility
 def create_security_analyzer(**kwargs) -> SecurityPatternsAnalyzer:
     """Factory function to create security analyzer"""
@@ -505,6 +684,7 @@ __all__ = [
     "SecurityPatternsAnalyzer",
     "create_security_analyzer",
     "EnhancedSecurityAnalyzer",
+    "PaginatedAnalyzer",
     "SecurityCallbackController",
     "SecurityEvent",
     "setup_isolated_security_testing",
