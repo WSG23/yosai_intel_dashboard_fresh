@@ -690,21 +690,18 @@ def _register_router_callbacks(
     """Register both page content routing and CSS transition callbacks."""
 
     @manager.unified_callback(
-        [
-            Output("page-content", "children"),
-            Output("page-content", "className")
-        ],
+        [Output("page-content", "children"), Output("page-content", "className")],
         Input("url", "pathname"),
         callback_id="main_page_router",
         component_name="app_factory",
     )
     def route_page_content(pathname: str) -> tuple[Any, str]:
         """Route URL to appropriate page content with safe Unicode handling."""
-        
+
         try:
             # Sanitize pathname for Unicode safety
             safe_pathname = pathname or "/"
-            
+
             # Route to appropriate page function
             if safe_pathname == "/" or safe_pathname == "/home":
                 content = _get_home_page()
@@ -721,12 +718,12 @@ def _register_router_callbacks(
             else:
                 # 404 page with safe Unicode handling
                 content = _create_404_page(safe_pathname)
-            
+
             # Set transition classes
             css_classes = "main-content p-4 transition-fade-move transition-end"
-            
+
             return content, css_classes
-            
+
         except Exception as e:
             logger.error(f"Routing error for {pathname}: {e}")
             error_content = _create_error_page(f"Page routing failed: {str(e)}")
@@ -902,6 +899,7 @@ def _register_callbacks(
         )
 
     if coordinator is not None:
+        coordinator._callback_registry = _callback_registry
         registration_modules = [
             # ("pages.file_upload", "register_callbacks"), # DISABLED
             ("pages.deep_analytics", "register_callbacks"),
@@ -945,7 +943,13 @@ def _register_callbacks(
         )
 
     if coordinator is not None:
-        coordinator._callback_registry = _callback_registry
+        if not _callback_registry.validate_registration_integrity():
+            duplicates = {
+                cid: count
+                for cid, count in _callback_registry.registration_attempts.items()
+                if count > 1
+            }
+            logger.warning("Duplicate callback registrations detected: %s", duplicates)
 
 
 def _initialize_services(container: Optional[ServiceContainer] = None) -> None:
@@ -1005,43 +1009,49 @@ def _create_404_page(pathname: str) -> Any:
     """Create 404 page with Unicode-safe pathname."""
     if not DASH_AVAILABLE:
         return None
-        
+
     safe_pathname = handle_unicode_surrogates(pathname)
-    
+
     return dbc.Container(
         [
             dbc.Row(
                 [
                     dbc.Col(
                         [
-                            html.H1("404 - Page Not Found", className="text-danger mb-3"),
-                            html.P(f"The requested page '{safe_pathname}' was not found.", 
-                                   className="text-muted mb-4"),
-                            dbc.ButtonGroup([
-                                dbc.Button(
-                                    "🏠 Go Home",
-                                    href="/",
-                                    color="primary",
-                                    className="me-2"
-                                ),
-                                dbc.Button(
-                                    "📊 Analytics", 
-                                    href="/analytics",
-                                    color="outline-primary",
-                                    className="me-2"
-                                ),
-                                dbc.Button(
-                                    "📁 Upload",
-                                    href="/upload", 
-                                    color="outline-secondary"
-                                )
-                            ])
+                            html.H1(
+                                "404 - Page Not Found", className="text-danger mb-3"
+                            ),
+                            html.P(
+                                f"The requested page '{safe_pathname}' was not found.",
+                                className="text-muted mb-4",
+                            ),
+                            dbc.ButtonGroup(
+                                [
+                                    dbc.Button(
+                                        "🏠 Go Home",
+                                        href="/",
+                                        color="primary",
+                                        className="me-2",
+                                    ),
+                                    dbc.Button(
+                                        "📊 Analytics",
+                                        href="/analytics",
+                                        color="outline-primary",
+                                        className="me-2",
+                                    ),
+                                    dbc.Button(
+                                        "📁 Upload",
+                                        href="/upload",
+                                        color="outline-secondary",
+                                    ),
+                                ]
+                            ),
                         ],
-                        className="text-center"
+                        className="text-center",
                     )
                 ]
             )
         ],
         fluid=True,
-        className="mt-5"
+        className="mt-5",
     )
