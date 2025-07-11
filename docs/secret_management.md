@@ -46,6 +46,37 @@ fetch the secret with a name matching the requested key. With the
 `VAULT_ADDR` and `VAULT_TOKEN` environment variables. Keys may include a
 field selector like `secret/data/db#password` to read specific values.
 
+### Vault Configuration
+
+The optional `SecureConfigManager` resolves any string starting with
+`"vault:"` in the YAML configuration. Install the `hvac` and
+`cryptography` packages and set the following environment variables:
+
+```
+VAULT_ADDR=https://vault.example.com
+VAULT_TOKEN=s.xxxxxx
+FERNET_KEY=<base64-fernet-key>
+```
+
+`VAULT_ADDR` and `VAULT_TOKEN` authenticate the Vault client. `FERNET_KEY`
+is used to decrypt any encrypted values returned from Vault.
+Update `production.yaml` to reference secrets like:
+
+```yaml
+database:
+  password: vault:secret/data/db#password
+security:
+  secret_key: vault:secret/data/app#secret_key
+```
+
+Create the manager with:
+
+```python
+from config import SecureConfigManager
+
+cfg = SecureConfigManager()
+```
+
 ## Incident Handling
 
 If you suspect a secret has been exposed:
