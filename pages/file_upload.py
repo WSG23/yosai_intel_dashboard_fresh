@@ -7,6 +7,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from core.callback_registry import _callback_registry
+
 html = dash.html
 
 _upload_component = None
@@ -39,31 +41,47 @@ def safe_upload_layout():
 
 
 def register_callbacks(manager):
-    """Register upload callbacks using unified system."""
+    """Register upload callbacks with the provided manager."""
 
-    @manager.unified_callback(
-        [Output('preview-area', 'children'),
-         Output('upload-progress', 'value')],
-        Input('drag-drop-upload', 'contents'),
-        callback_id="file_upload_handler",
-        component_name="file_upload",
-        prevent_initial_call=True
+    global _upload_component
+
+    try:
+        from components.upload import UnifiedUploadComponent
+        from services.upload.controllers.upload_controller import (
+            UnifiedUploadController,
+        )
+    except Exception as exc:  # pragma: no cover - optional imports
+        import logging
+
+        logging.getLogger(__name__).error("Failed to import upload modules: %s", exc)
+        return
+
+    _upload_component = UnifiedUploadComponent()
+    controller = UnifiedUploadController(callbacks=manager)
+
+    callback_defs = (
+        controller.upload_callbacks()
+        + controller.progress_callbacks()
+        + controller.validation_callbacks()
     )
-    def handle_upload(contents):
-        from core.unicode import safe_encode_text, safe_decode_bytes
 
-        if not contents:
-            return [], 0
+    callback_ids = [cid for _, _, _, _, cid, _ in callback_defs]
 
-        # Your existing upload logic with Unicode safety
-        try:
-            # Process upload safely
-            filename = safe_encode_text("uploaded_file.csv")
-            # Add your processing logic here
-            return [f"Uploaded: {filename}"], 100
-        except Exception as e:
-            logger.error(f"Upload error: {e}")
-            return [f"Error: {str(e)}"], 0
+    def _do_registration() -> None:
+        for func, outputs, inputs, states, cid, extra in callback_defs:
+            manager.unified_callback(
+                outputs,
+                inputs,
+                states,
+                callback_id=cid,
+                component_name="file_upload",
+                **extra,
+            )(func)
+
+
+    _callback_registry.register_deduplicated(
+        callback_ids, _do_registration, source_module="file_upload"
+    )
 
 
 def get_uploaded_filenames(service=None, container=None):
