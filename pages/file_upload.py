@@ -310,7 +310,7 @@ def register_callbacks(manager):
 
     @handle_register_with_deduplication(
         manager,
-        Output('upload-status', 'children'),
+        Output('upload-status', 'children', allow_duplicate=True),
         Input('file-upload-dropzone', 'contents'),
         [
             State('file-upload-dropzone', 'filename'),
@@ -321,6 +321,7 @@ def register_callbacks(manager):
         component_name="file_upload",
         prevent_initial_call=True,
         source_module=__name__,
+        allow_duplicate=True,
     )
     def callback_wrapper(*args, **kwargs):
         return handle_file_upload(*args, **kwargs)
