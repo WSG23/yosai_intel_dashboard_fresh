@@ -5,10 +5,7 @@ import pytest
 
 # Fixed imports
 try:
-    from analytics.anomaly_detection import (  # Both names
-        AnomalyDetection,
-        AnomalyDetector,
-    )
+    from analytics.anomaly_detection import AnomalyDetector
     from analytics.security_patterns import SecurityPatternsAnalyzer
 except ImportError as e:
     pytest.skip(f"Required modules not available: {e}", allow_module_level=True)
@@ -40,11 +37,7 @@ class TestVectorizedFunctionsFixed:
     
     def test_anomaly_detection_with_new_class(self):
         """Test anomaly detection with corrected class name"""
-        # Try both class names for compatibility
-        try:
-            detector = AnomalyDetection()
-        except NameError:
-            detector = AnomalyDetector()
+        detector = AnomalyDetector()
         
         df = pd.DataFrame({
             "event_id": range(15),
