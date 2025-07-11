@@ -16,7 +16,7 @@ The factory builds the container, which then instantiates services. Services ope
 
 - **Unified Validator** – Input and file validation are now handled by the
   `SecurityValidator` together with `UnifiedFileValidator`. The deprecated
-  `InputValidator` and `SecureFileValidator` classes have been removed.
+  `SecureFileValidator` class has been removed.
 - **Separated Analytics Modules** – The previously monolithic
   `AnalyticsService` has been broken into smaller modules under
 `services/data_processing/` and `analytics/`.  `UnifiedFileValidator`,
@@ -34,8 +34,8 @@ container. Register them during application startup and retrieve them where
 needed:
 
 ```python
-from core.container import Container
 from config import create_config_manager
+from core.container import Container
 from services.analytics_service import create_analytics_service
 
 container = Container()
