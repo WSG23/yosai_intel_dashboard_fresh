@@ -4,10 +4,8 @@ File processing service - Core data processing without UI dependencies
 Handles Unicode surrogate characters safely
 """
 import io
-import json
 import logging
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, Tuple
 
 import chardet
 import pandas as pd
@@ -15,11 +13,11 @@ import pandas as pd
 from config.config import get_analytics_config
 from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
-from core.protocols import ConfigurationProtocol
+from core.unicode import safe_format_number
 from core.unicode_decode import safe_unicode_decode
+from core.unicode_utils import sanitize_for_utf8
 
 # Core processing imports only - NO UI COMPONENTS
-from core.unicode_utils import sanitize_for_utf8
 
 
 def _get_max_display_rows(config: Any = dynamic_config) -> int:
@@ -30,8 +28,6 @@ def _get_max_display_rows(config: Any = dynamic_config) -> int:
     except Exception:
         return config.analytics.max_display_rows
 
-
-from core.unicode import safe_format_number
 
 logger = logging.getLogger(__name__)
 
@@ -53,15 +49,53 @@ class UnicodeFileProcessor:
             return safe_unicode_decode(content, "latin-1")
 
     @staticmethod
-    def sanitize_dataframe_unicode(df: pd.DataFrame) -> pd.DataFrame:
-        """Remove Unicode surrogate characters from DataFrame"""
-        for col in df.select_dtypes(include=["object"]).columns:
-            df[col] = (
-                df[col]
-                .astype(str)
-                .apply(lambda x: sanitize_for_utf8(x) if isinstance(x, str) else x)
-            )
-        return df
+    def sanitize_dataframe_unicode(
+        df: pd.DataFrame,
+        *,
+        chunk_size: int | None = None,
+        stream: bool = False,
+    ) -> pd.DataFrame | Iterable[pd.DataFrame]:
+        """Return ``df`` sanitized for UTF-8 text.
+
+        When ``stream`` is ``True`` a generator yielding cleaned DataFrame
+        chunks is returned. This avoids loading the entire DataFrame into
+        memory at once and mirrors :func:`process_large_content`.
+        """
+
+        if chunk_size is None:
+            chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
+
+        obj_cols = list(df.select_dtypes(include=["object"]).columns)
+
+        if not obj_cols:
+            if stream:
+
+                def _gen() -> Iterable[pd.DataFrame]:
+                    for start in range(0, len(df), chunk_size):
+                        yield df.iloc[start : start + chunk_size]
+
+                return _gen()
+            return df
+
+        def _generator() -> Iterable[pd.DataFrame]:
+            for start in range(0, len(df), chunk_size):
+                chunk = df.iloc[start : start + chunk_size].copy()
+                for col in obj_cols:
+                    chunk[col] = [
+                        sanitize_for_utf8(x) if isinstance(x, str) else x
+                        for x in chunk[col].astype(str)
+                    ]
+                yield chunk
+
+        if stream:
+            return _generator()
+
+        cleaned_chunks = list(_generator())
+        return (
+            pd.concat(cleaned_chunks, ignore_index=True)
+            if cleaned_chunks
+            else pd.DataFrame()
+        )
 
     def read_uploaded_file(
         self, contents: str, filename: str
