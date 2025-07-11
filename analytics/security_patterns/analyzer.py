@@ -95,54 +95,25 @@ class SecurityPatternsAnalyzer:
         """Enhanced security analysis method"""
         try:
             df_clean = self._prepare_security_data(df)
-            threat_indicators = []
 
-            # Statistical anomaly detection
-            statistical_threats = self._detect_statistical_threats(df_clean)
-            threat_indicators.extend(statistical_threats)
+            threat_indicators = self._collect_threat_indicators(df_clean)
 
-            # Pattern-based threat detection
-            pattern_threats = self._detect_pattern_threats(df_clean)
-            threat_indicators.extend(pattern_threats)
-
-            # Calculate overall security score
             security_score = self._calculate_comprehensive_score(
                 df_clean, threat_indicators
             )
 
-            # Generate pattern analysis
             pattern_analysis = self._analyze_access_patterns(df_clean)
-
-            # Generate recommendations
             recommendations = self._generate_security_recommendations(
                 threat_indicators, pattern_analysis
             )
 
-            # Determine risk level and confidence
             risk_level = self._determine_risk_level(security_score, threat_indicators)
             confidence_interval = self._calculate_confidence_interval(
                 df_clean, security_score
             )
 
-            # Fire callbacks for detected critical threats
-            for threat in threat_indicators:
-                if threat.severity == "critical":
-                    self.unified_callbacks.trigger(
-                        SecurityEvent.THREAT_DETECTED,
-                        {
-                            "threat_type": threat.threat_type,
-                            "description": threat.description,
-                            "confidence": threat.confidence,
-                        },
-                    )
-                    self._emit_anomaly_detected(threat)
-
-            # Notify completion of analysis
-            self.unified_callbacks.trigger(
-                SecurityEvent.ANALYSIS_COMPLETE,
-                {"score": security_score, "risk_level": risk_level},
-            )
-            self._emit_score_calculated(security_score, risk_level)
+            self._trigger_threat_callbacks(threat_indicators)
+            self._trigger_analysis_complete(security_score, risk_level)
 
             return SecurityAssessment(
                 overall_score=security_score,
@@ -156,6 +127,37 @@ class SecurityPatternsAnalyzer:
         except Exception as e:
             self.logger.error(f"Security analysis failed: {e}")
             return self._empty_security_assessment()
+
+    def _collect_threat_indicators(self, df: pd.DataFrame) -> List[ThreatIndicator]:
+        """Run all threat detection methods and return a combined list."""
+        threat_indicators: List[ThreatIndicator] = []
+
+        threat_indicators.extend(self._detect_statistical_threats(df))
+        threat_indicators.extend(self._detect_pattern_threats(df))
+
+        return threat_indicators
+
+    def _trigger_threat_callbacks(self, threats: List[ThreatIndicator]) -> None:
+        """Emit events for any critical threats detected."""
+        for threat in threats:
+            if threat.severity == "critical":
+                self.unified_callbacks.trigger(
+                    SecurityEvent.THREAT_DETECTED,
+                    {
+                        "threat_type": threat.threat_type,
+                        "description": threat.description,
+                        "confidence": threat.confidence,
+                    },
+                )
+                self._emit_anomaly_detected(threat)
+
+    def _trigger_analysis_complete(self, score: float, risk_level: str) -> None:
+        """Emit events signalling completion of an analysis run."""
+        self.unified_callbacks.trigger(
+            SecurityEvent.ANALYSIS_COMPLETE,
+            {"score": score, "risk_level": risk_level},
+        )
+        self._emit_score_calculated(score, risk_level)
 
     def _prepare_security_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """Prepare and clean data for security analysis"""
