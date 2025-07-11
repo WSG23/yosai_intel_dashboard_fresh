@@ -278,27 +278,8 @@ def layout() -> html.Div:
 
 __all__ = ["StableFileUploadComponent", "register_callbacks", "layout"]
 
-def register_callbacks(manager: Any) -> None:
-    """Module-level callback registration function expected by app.py."""
-    try:
-        upload_component = StableFileUploadComponent()
-        upload_component.register_consolidated_callbacks(manager)
-        logger.info("✅ Upload callbacks registered successfully")
-    except Exception as e:
-        logger.error(f"❌ Failed to register upload callbacks: {e}")
-        pass
-
-def layout() -> html.Div:
-    """Module-level layout function for compatibility."""
-    try:
-        upload_component = StableFileUploadComponent()
-        return upload_component.layout()
-    except Exception as e:
-        logger.error(f"❌ Failed to create upload layout: {e}")
-        return html.Div([html.H4("Upload Page"), html.P(f"Error: {str(e)}")])
 
 def safe_upload_layout():
     """Unicode-safe wrapper for app_factory."""
     return layout()
 
-__all__ = ["StableFileUploadComponent", "register_callbacks", "layout", "safe_upload_layout"]
