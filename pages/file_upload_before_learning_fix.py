@@ -192,7 +192,7 @@ class StableFileUploadComponent:
         """Register all callbacks in a consolidated manner."""
 
         # Main upload handler callback - listens to dcc.Upload contents
-        @manager.register_callback(
+        @manager.register_handler(
             [
                 Output("preview-area", "children"),
                 Output("to-column-map-btn", "disabled"),
@@ -216,7 +216,7 @@ class StableFileUploadComponent:
             return [], False, {"task_id": task_id}, False
 
         # Progress update callback (unchanged)
-        @manager.register_callback(
+        @manager.register_handler(
             [
                 Output("upload-progress", "value"),
                 Output("upload-progress", "label"),
@@ -242,7 +242,7 @@ class StableFileUploadComponent:
                 return 0, "0%", [], True
 
         # Finalization callback (unchanged)
-        @manager.register_callback(
+        @manager.register_handler(
             [
                 Output("upload-progress-interval", "disabled", allow_duplicate=True),
                 Output("upload-progress", "style", allow_duplicate=True),
