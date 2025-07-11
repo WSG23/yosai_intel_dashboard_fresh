@@ -31,14 +31,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-# Try to import your existing components - graceful fallback
-try:
-    from components import create_upload_card
-    HAS_UPLOAD_COMPONENT = True
-    logger.info("✅ Found existing upload component")
-except ImportError:
-    HAS_UPLOAD_COMPONENT = False
-    logger.info("ℹ️ No existing upload component - using built-in")
+
 
 # Try to import advanced services - graceful fallback
 try:
@@ -147,7 +140,51 @@ def register_callbacks(manager):
 
     _callback_registry.register_deduplicated(
         callback_ids, _do_registration, source_module=__name__
+
     )
+    def handle_modern_upload(contents, filenames, last_modified, file_store):
+        """Process uploaded files and update UI components."""
+        if not contents:
+            raise PreventUpdate
+
+        if not isinstance(contents, list):
+            contents = [contents]
+            filenames = [filenames]
+
+        file_store = file_store or {}
+        previews = []
+        status_alerts = []
+
+        for content, fname in zip(contents, filenames):
+            df, err = _process_upload_safe(content, fname)
+            if df is None:
+                status_alerts.append(
+                    dbc.Alert(f"❌ {fname}: {err}", color="danger", dismissable=True)
+                )
+                continue
+
+            previews.append(_create_modern_preview(df, fname))
+            file_store[fname] = {"rows": len(df), "columns": len(df.columns)}
+            status_alerts.append(
+                dbc.Alert(f"✅ Uploaded {fname}", color="success", dismissable=True)
+            )
+
+        progress = 100 if previews else 0
+        progress_style = {"display": "block"} if previews else {"display": "none"}
+        navigation = (
+            _create_navigation_section(len(file_store), file_store)
+            if previews
+            else no_update
+        )
+
+        return (
+            status_alerts,
+            progress,
+            progress_style,
+            previews,
+            file_store,
+            navigation,
+        )
 
 
 
@@ -393,4 +430,19 @@ __all__ = [
     "get_uploaded_filenames",
 ]
 
-logger.info(f"🚀 File upload loaded - Controller: {CONTROLLER_AVAILABLE}, Component: {HAS_UPLOAD_COMPONENT}")
+import importlib
+
+_component_available = False
+try:
+    spec = importlib.util.find_spec("components")
+    if spec:
+        module = importlib.import_module("components")
+        _component_available = hasattr(module, "create_upload_card")
+except Exception:
+    _component_available = False
+
+logger.info(
+    "🚀 File upload loaded - Controller: %s, Upload component available: %s",
+    CONTROLLER_AVAILABLE,
+    _component_available,
+)
