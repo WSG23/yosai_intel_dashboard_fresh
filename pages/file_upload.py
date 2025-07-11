@@ -226,7 +226,8 @@ def register_callbacks(manager):
         allow_duplicate=True,
 
     )
-
+    def callback_wrapper(*args, **kwargs):
+        return handle_file_upload(*args, **kwargs)
 
 
 def _process_upload_safe(contents, filename):
