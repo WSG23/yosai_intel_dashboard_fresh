@@ -43,6 +43,11 @@ def apply_env_overrides(config: Any) -> None:
                 db.port = int(db_port)
             except ValueError:
                 logger.warning("Invalid DB_PORT value: %s", db_port)
+        if db_timeout := os.getenv("DB_TIMEOUT"):
+            try:
+                db.connection_timeout = int(db_timeout)
+            except ValueError:
+                logger.warning("Invalid DB_TIMEOUT value: %s", db_timeout)
         if db_user := os.getenv("DB_USER"):
             db.user = db_user
         if db_pass := os.getenv("DB_PASSWORD"):
@@ -51,11 +56,15 @@ def apply_env_overrides(config: Any) -> None:
     # --- Security overrides -------------------------------------------
     if hasattr(config, "security"):
         sec = config.security
-        if hasattr(sec, "pbkdf2_iterations") and (val := os.getenv("PBKDF2_ITERATIONS")):
+        if hasattr(sec, "pbkdf2_iterations") and (
+            val := os.getenv("PBKDF2_ITERATIONS")
+        ):
             sec.pbkdf2_iterations = int(val)
         if hasattr(sec, "rate_limit_requests") and (val := os.getenv("RATE_LIMIT_API")):
             sec.rate_limit_requests = int(val)
-        if hasattr(sec, "rate_limit_window_minutes") and (val := os.getenv("RATE_LIMIT_WINDOW")):
+        if hasattr(sec, "rate_limit_window_minutes") and (
+            val := os.getenv("RATE_LIMIT_WINDOW")
+        ):
             sec.rate_limit_window_minutes = int(val)
         if (max_upload := os.getenv("MAX_UPLOAD_MB")) is not None:
             try:

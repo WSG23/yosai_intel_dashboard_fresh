@@ -2,27 +2,27 @@ import logging
 import os
 from typing import Any, Dict, Protocol
 
-logger = logging.getLogger(__name__)
-
+from .app_config import UploadConfig
+from .base_loader import BaseConfigLoader
 from .constants import (
     AnalyticsConstants,
     CSSConstants,
+    DatabaseConstants,
     PerformanceConstants,
     SecurityConstants,
     UploadLimits,
 )
-from .app_config import UploadConfig
 from .environment import select_config_file
-from .base_loader import BaseConfigLoader
+
+logger = logging.getLogger(__name__)
+
 
 class ConfigurationServiceProtocol(Protocol):
     """Minimal configuration service interface."""
 
-    def get_max_upload_size_mb(self) -> int:
-        ...
+    def get_max_upload_size_mb(self) -> int: ...
 
-    def get_max_upload_size_bytes(self) -> int:
-        ...
+    def get_max_upload_size_bytes(self) -> int: ...
 
 
 class DynamicConfigManager(BaseConfigLoader):
@@ -33,6 +33,7 @@ class DynamicConfigManager(BaseConfigLoader):
         self.performance = PerformanceConstants()
         self.css = CSSConstants()
         self.analytics = AnalyticsConstants()
+        self.database = DatabaseConstants()
         self.uploads = UploadLimits()
         self.upload = UploadConfig()
         self._load_yaml_config()
@@ -55,6 +56,12 @@ class DynamicConfigManager(BaseConfigLoader):
                 for key, value in uploads_config.items():
                     if hasattr(self.uploads, key):
                         setattr(self.uploads, key, value)
+
+                database_config = config_data.get("database", {})
+                if "connection_timeout" in database_config:
+                    self.database.connection_timeout_seconds = database_config[
+                        "connection_timeout"
+                    ]
 
         except Exception as exc:
             logging.getLogger(__name__).warning(
@@ -98,6 +105,10 @@ class DynamicConfigManager(BaseConfigLoader):
         mem_thresh = os.getenv("MEMORY_THRESHOLD_MB")
         if mem_thresh is not None:
             self.performance.memory_usage_threshold_mb = int(mem_thresh)
+
+        db_timeout = os.getenv("DB_TIMEOUT")
+        if db_timeout is not None:
+            self.database.connection_timeout_seconds = int(db_timeout)
 
         css_threshold = os.getenv("CSS_BUNDLE_THRESHOLD")
         if css_threshold is not None:
@@ -148,7 +159,6 @@ class DynamicConfigManager(BaseConfigLoader):
                     "Failed to parse VALIDATOR_RULES env var"
                 )
 
-
     def get_rate_limit(self) -> Dict[str, int]:
         return {
             "requests": self.security.rate_limit_requests,
@@ -163,6 +173,9 @@ class DynamicConfigManager(BaseConfigLoader):
 
     def get_db_pool_size(self) -> int:
         return self.performance.db_pool_size
+
+    def get_db_connection_timeout(self) -> int:
+        return self.database.connection_timeout_seconds
 
     def get_css_thresholds(self) -> Dict[str, Any]:
         return {

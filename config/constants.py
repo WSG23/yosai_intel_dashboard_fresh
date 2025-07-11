@@ -74,7 +74,7 @@ class SecurityConstants:
 
     pbkdf2_iterations: int = 100000
     salt_bytes: int = 32
-    rate_limit_requests: int = 100
+    rate_limit_requests: int = 200
     rate_limit_window_minutes: int = 1
     max_upload_mb: int = 500  # Changed from 100 to 500
     max_file_size_mb: int = 500  # Added for consistency
@@ -88,6 +88,13 @@ class PerformanceConstants:
     db_pool_size: int = 10
     ai_confidence_threshold: int = 75
     memory_usage_threshold_mb: int = 1024
+
+
+@dataclass
+class DatabaseConstants:
+    """Database related defaults."""
+
+    connection_timeout_seconds: int = 30
 
 
 @dataclass
@@ -119,7 +126,6 @@ class AnalyticsConstants:
     query_timeout_seconds: int = 300
     max_memory_mb: int = 1024
     max_display_rows: int = 10000
-
 
 
 @dataclass
