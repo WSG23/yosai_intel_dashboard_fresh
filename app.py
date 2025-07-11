@@ -40,6 +40,20 @@ except locale.Error:
 
 logger = logging.getLogger(__name__)
 
+# Environment / location check
+def ensure_venv() -> None:
+    """Ensure we're running from the project root and venv is active."""
+    expected_files = ["requirements.txt", "app.py", "pages", "components"]
+    current_files = os.listdir(".")
+
+    if not all(f in current_files for f in expected_files):
+        print("\u274c Wrong directory! Navigate to project root.")
+        sys.exit(1)
+
+    if not os.environ.get('VIRTUAL_ENV'):
+        print("\u26a0\ufe0f Virtual environment not activated!")
+        print("Run: source venv/bin/activate")
+
 # Consolidated learning service utilities
 from services.consolidated_learning_service import get_learning_service
 
@@ -339,5 +353,6 @@ def main():
 
 
 if __name__ == "__main__":
+    ensure_venv()
     main()
     check_learning_status()
