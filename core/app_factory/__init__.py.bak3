@@ -716,7 +716,7 @@ def _register_router_callbacks(
                 content = _get_export_page()
             elif safe_pathname == "/settings":
                 content = _get_settings_page()
-            elif safe_pathname == "/upload":
+            # elif safe_pathname == "/upload":
                 content = _get_upload_page()
             else:
                 # 404 page with safe Unicode handling
