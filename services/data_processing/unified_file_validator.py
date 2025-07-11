@@ -14,22 +14,21 @@ from typing import Any, Dict, Optional, Tuple
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
-from core.protocols import ConfigurationProtocol
+from core.exceptions import ValidationError
 from core.performance import get_performance_monitor
+from core.protocols import ConfigurationProtocol
 from core.unicode import UnicodeProcessor, sanitize_dataframe
 from core.unicode_utils import sanitize_for_utf8
 from upload_types import ValidationResult
 from upload_validator import UploadValidator
 
 
-def _lazy_string_validator() -> "StringValidator":
-    """Import ``InputValidator`` from :mod:`core.security` lazily."""
-    from core.security import InputValidator as StringValidator
+def _lazy_string_validator() -> Any:
+    """Import :class:`SecurityValidator` lazily."""
+    from core.security_validator import SecurityValidator as StringValidator
 
     return StringValidator()
 
-
-from core.exceptions import ValidationError
 
 SAFE_FILENAME_RE = re.compile(r"^[A-Za-z0-9._\- ]{1,100}$")
 ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
@@ -215,7 +214,9 @@ class UnifiedFileValidator:
         config: ConfigurationProtocol = dynamic_config,
     ) -> None:
         self.config = config
-        self.max_size_mb = max_size_mb or getattr(self.config.security, "max_upload_mb", dynamic_config.security.max_upload_mb)
+        self.max_size_mb = max_size_mb or getattr(
+            self.config.security, "max_upload_mb", dynamic_config.security.max_upload_mb
+        )
         self._string_validator = _lazy_string_validator()
         self._basic_validator = UploadValidator(self.max_size_mb, config=self.config)
 

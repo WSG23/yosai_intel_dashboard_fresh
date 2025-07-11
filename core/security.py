@@ -5,31 +5,19 @@ Implements Apple's security-by-design principles
 """
 import hashlib
 import logging
-import mimetypes
-import re
 import secrets
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from config.dynamic_config import dynamic_config
-from core.exceptions import ValidationError
 
-# Import common security regex patterns used throughout this module.
-# These constants live in ``core/security_patterns.py`` and are reused in
-# ``core/security_validator.py``. Importing them here ensures ``InputValidator``
-# has access to the pre-defined patterns without duplicating definitions.
-# Use an absolute import so this module can run standalone without relying on
-# the package context. This prevents NameError when executed directly.
-from core.security_patterns import (
-    PATH_TRAVERSAL_PATTERNS,
-    SQL_INJECTION_PATTERNS,
-    XSS_PATTERNS,
-)
-from core.unicode_utils import sanitize_for_utf8
+# Import the high-level ``SecurityValidator`` used across the application.
+# This module keeps no internal validation logic and instead delegates to
+# :class:`~core.security_validator.SecurityValidator` for sanitization tasks.
+from core.security_validator import SecurityValidator
 
 
 class SecurityLevel(Enum):
@@ -62,244 +50,6 @@ class SecurityEvent:
     user_id: Optional[str]
     details: Dict[str, Any]
     blocked: bool = False
-
-
-class InputValidator:
-    """Comprehensive input validation system"""
-
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
-        self.compiled_patterns = {
-            "sql": [
-                re.compile(pattern, re.IGNORECASE) for pattern in SQL_INJECTION_PATTERNS
-            ],
-            "xss": [re.compile(pattern, re.IGNORECASE) for pattern in XSS_PATTERNS],
-            "path": [
-                re.compile(pattern, re.IGNORECASE)
-                for pattern in PATH_TRAVERSAL_PATTERNS
-            ],
-        }
-
-    def validate(self, value: str) -> str:
-        """Validate a single value and return the sanitized result.
-
-        Parameters
-        ----------
-        value: str
-            The input value to validate.
-
-        Returns
-        -------
-        str
-            The sanitized form of ``value``.
-
-        Raises
-        ------
-        ValidationError
-            If the input fails validation checks.
-        """
-
-        result = self.validate_input(value)
-        if not result.get("valid", False):
-            raise ValidationError("Invalid input", result)
-        return result.get("sanitized", value)
-
-    def validate_input(
-        self, input_data: str, field_name: str = "unknown"
-    ) -> Dict[str, Any]:
-        """Comprehensive input validation"""
-        if not isinstance(input_data, str):
-            input_data = str(input_data)
-        input_data = sanitize_for_utf8(input_data)
-
-        result = {
-            "field": field_name,
-            "valid": True,
-            "issues": [],
-            "severity": SecurityLevel.LOW,
-            "sanitized": input_data,
-        }
-
-        # Check for SQL injection
-        sql_issues = self._check_sql_injection(input_data)
-        if sql_issues:
-            result["issues"].extend(sql_issues)
-            result["severity"] = SecurityLevel.HIGH
-            result["valid"] = False
-
-        # Check for XSS
-        xss_issues = self._check_xss(input_data)
-        if xss_issues:
-            result["issues"].extend(xss_issues)
-            result["severity"] = max(
-                result["severity"], SecurityLevel.MEDIUM, key=lambda x: x.value
-            )
-            result["valid"] = False
-
-        # Check for path traversal
-        path_issues = self._check_path_traversal(input_data)
-        if path_issues:
-            result["issues"].extend(path_issues)
-            result["severity"] = max(
-                result["severity"], SecurityLevel.MEDIUM, key=lambda x: x.value
-            )
-            result["valid"] = False
-
-        # Sanitize input
-        result["sanitized"] = self._sanitize_input(input_data)
-
-        return result
-
-    def _check_sql_injection(self, data: str) -> List[str]:
-        """Check for SQL injection patterns"""
-        issues = []
-        for pattern in self.compiled_patterns["sql"]:
-            if pattern.search(data):
-                issues.append(f"Potential SQL injection detected: {pattern.pattern}")
-        return issues
-
-    def _check_xss(self, data: str) -> List[str]:
-        """Check for XSS patterns"""
-        issues = []
-        for pattern in self.compiled_patterns["xss"]:
-            if pattern.search(data):
-                issues.append(f"Potential XSS detected: {pattern.pattern}")
-        return issues
-
-    def _check_path_traversal(self, data: str) -> List[str]:
-        """Check for path traversal patterns"""
-        issues = []
-        for pattern in self.compiled_patterns["path"]:
-            if pattern.search(data):
-                issues.append(f"Potential path traversal detected: {pattern.pattern}")
-        return issues
-
-    def _sanitize_input(self, data: str) -> str:
-        """Sanitize input data"""
-        data = sanitize_for_utf8(data)
-        # Remove null bytes
-        sanitized = data.replace("\x00", "")
-
-        # Encode HTML special characters
-        html_entities = {
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#x27;",
-            "/": "&#x2F;",
-        }
-
-        for char, entity in html_entities.items():
-            sanitized = sanitized.replace(char, entity)
-
-        return sanitized
-
-    def validate_file_upload(
-        self,
-        filename: str,
-        file_content: bytes,
-        max_size_mb: int = dynamic_config.security.max_upload_mb,
-    ) -> Dict[str, Any]:
-        """Validate file uploads"""
-        result = {
-            "valid": True,
-            "issues": [],
-            "severity": SecurityLevel.LOW,
-            "file_info": {},
-        }
-
-        # Check file size
-        file_size_mb = len(file_content) / (1024 * 1024)
-        if file_size_mb > max_size_mb:
-            result["issues"].append(
-                f"File too large: {file_size_mb:.1f}MB > {max_size_mb}MB"
-            )
-            result["valid"] = False
-            result["severity"] = SecurityLevel.MEDIUM
-
-        # Check filename
-        filename_validation = self.validate_input(filename, "filename")
-        if not filename_validation["valid"]:
-            result["issues"].extend(filename_validation["issues"])
-            result["valid"] = False
-            result["severity"] = max(
-                result["severity"],
-                filename_validation["severity"],
-                key=lambda x: x.value,
-            )
-
-        # Check file extension
-        if not self._validate_file_extension(filename):
-            result["issues"].append(f"Invalid file extension: {Path(filename).suffix}")
-            result["valid"] = False
-            result["severity"] = SecurityLevel.HIGH
-
-        # Check MIME type
-        mime_type, _ = mimetypes.guess_type(filename)
-        if not self._validate_mime_type(mime_type):
-            result["issues"].append(f"Invalid MIME type: {mime_type}")
-            result["valid"] = False
-            result["severity"] = SecurityLevel.HIGH
-
-        # Check for embedded scripts in content
-        if self._check_file_content_security(file_content):
-            result["issues"].append("Suspicious content detected in file")
-            result["valid"] = False
-            result["severity"] = SecurityLevel.CRITICAL
-
-        result["file_info"] = {
-            "size_mb": file_size_mb,
-            "mime_type": mime_type,
-            "extension": Path(filename).suffix.lower(),
-        }
-
-        return result
-
-    def _validate_file_extension(self, filename: str) -> bool:
-        """Validate file extension against allowed types"""
-        allowed_extensions = {".csv", ".xlsx", ".xls", ".json", ".txt"}
-        extension = Path(filename).suffix.lower()
-        return extension in allowed_extensions
-
-    def _validate_mime_type(self, mime_type: Optional[str]) -> bool:
-        """Validate MIME type"""
-        if not mime_type:
-            return False
-
-        allowed_mime_types = {
-            "text/csv",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "application/vnd.ms-excel",
-            "application/json",
-            "text/plain",
-        }
-
-        return mime_type in allowed_mime_types
-
-    def _check_file_content_security(self, content: bytes) -> bool:
-        """Check file content for security issues"""
-        # Convert to string for pattern matching (first 1KB)
-        try:
-            text_content = content[:1024].decode("utf-8", errors="ignore")
-            text_content = sanitize_for_utf8(text_content).lower()
-        except Exception:
-            return False
-
-        # Check for suspicious patterns
-        suspicious_patterns = [
-            "javascript:",
-            "<script",
-            "eval(",
-            "exec(",
-            "system(",
-            "shell_exec",
-            "<?php",
-            "<%",
-            "data:text/html",
-        ]
-
-        return any(pattern in text_content for pattern in suspicious_patterns)
 
 
 class RateLimiter:
@@ -502,7 +252,7 @@ class SecureHashManager:
 
 
 # Global security instances
-input_validator = InputValidator()
+security_validator = SecurityValidator()
 rate_limiter = RateLimiter()
 security_auditor = SecurityAuditor()
 
@@ -517,7 +267,7 @@ def validate_input_decorator(field_mapping: Dict[str, str] = None):
             if field_mapping:
                 for param_name, field_name in field_mapping.items():
                     if param_name in kwargs:
-                        validation = input_validator.validate_input(
+                        validation = security_validator.validate_input(
                             kwargs[param_name], field_name
                         )
                         if not validation["valid"]:
@@ -531,7 +281,8 @@ def validate_input_decorator(field_mapping: Dict[str, str] = None):
                                 },
                             )
                             raise ValueError(
-                                f"Invalid input for {field_name}: {validation['issues']}"
+                                "Invalid input for "
+                                f"{field_name}: {validation['issues']}"
                             )
 
                         # Use sanitized input
