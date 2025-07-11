@@ -205,17 +205,19 @@ def register_callbacks(manager):
 
     @handle_register_with_deduplication(
         manager,
-        Output('upload-status', 'children', allow_duplicate=True),
-        Output('upload-progress-bar', 'value', allow_duplicate=True),
-        Output('upload-progress-bar', 'style', allow_duplicate=True),
-        Output('upload-preview', 'children', allow_duplicate=True),
-        Output('uploaded-files-store', 'data', allow_duplicate=True),
-        Output('upload-navigation', 'children', allow_duplicate=True),
+        [
+            Output('upload-status', 'children', allow_duplicate=True),
+            Output('upload-progress-bar', 'value', allow_duplicate=True),
+            Output('upload-progress-bar', 'style', allow_duplicate=True),
+            Output('upload-preview', 'children', allow_duplicate=True),
+            Output('uploaded-files-store', 'data', allow_duplicate=True),
+            Output('upload-navigation', 'children', allow_duplicate=True),
+        ],
         Input('file-upload-dropzone', 'contents'),
         [
             State('file-upload-dropzone', 'filename'),
             State('file-upload-dropzone', 'last_modified'),
-            State('uploaded-files-store', 'data')
+            State('uploaded-files-store', 'data'),
         ],
         callback_id="modern_file_upload",
         component_name="file_upload",
