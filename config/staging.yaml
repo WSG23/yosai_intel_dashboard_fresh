@@ -13,11 +13,11 @@ database:
   port: 5432
   name: "yosai_db"
   user: "yosai_user"
-  password: "${DB_PASSWORD}"
+  password: "vault:secret/data/db#password"
   url: ""
 
 security:
-  secret_key: "${SECRET_KEY}"
+  secret_key: "vault:secret/data/app#secret_key"
   session_timeout_minutes: 120
   max_file_size_mb: 250
   max_upload_mb: 500
