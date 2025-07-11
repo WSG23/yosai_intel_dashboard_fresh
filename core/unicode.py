@@ -13,9 +13,16 @@ import math
 import re
 import unicodedata
 from functools import wraps
-from typing import Any, Iterable, Optional, Union, Callable
+from typing import Any, Callable, Iterable, Optional, Union
 
 import pandas as pd
+
+from .exceptions import SecurityError
+from .security_patterns import (
+    PATH_TRAVERSAL_PATTERNS,
+    SQL_INJECTION_PATTERNS,
+    XSS_PATTERNS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +36,12 @@ _BOM_RE = re.compile("\ufeff")
 _UNPAIRED_SURROGATE_RE = re.compile(
     r"(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])"
 )
+
+# Precompile common security patterns for quick detection
+_MALICIOUS_PATTERNS = [
+    re.compile(p, re.IGNORECASE)
+    for p in (SQL_INJECTION_PATTERNS + XSS_PATTERNS + PATH_TRAVERSAL_PATTERNS)
+]
 
 
 def _drop_dangerous_prefix(text: str) -> str:
@@ -451,10 +464,59 @@ def contains_surrogates(text: str) -> bool:
     return bool(_UNPAIRED_SURROGATE_RE.search(text))
 
 
+def has_malicious_patterns(text: str) -> bool:
+    """Return ``True`` if ``text`` matches known attack patterns."""
+
+    if not isinstance(text, str):
+        return False
+
+    for pattern in _MALICIOUS_PATTERNS:
+        if pattern.search(text):
+            return True
+    return False
+
+
 def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """Sanitize a :class:`~pandas.DataFrame` for unsafe Unicode."""
 
     return UnicodeProcessor.sanitize_dataframe(df)
+
+
+def secure_unicode_sanitization(value: Any, *, check_malicious: bool = True) -> str:
+    """Return a normalised, safe Unicode string.
+
+    Parameters
+    ----------
+    value:
+        Input text to sanitize. Non-string values are coerced to ``str``.
+    check_malicious:
+        When ``True``, raise :class:`SecurityError` if known malicious
+        patterns are detected.
+    """
+
+    try:
+        text = str(value)
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.error("Failed to convert %r to str: %s", value, exc)
+        return "INVALID_UNICODE_CONTENT"
+
+    try:
+        if contains_surrogates(text):
+            text = text.encode("utf-8", errors="replace").decode(
+                "utf-8", errors="replace"
+            )
+
+        text = unicodedata.normalize("NFKC", text)
+
+        if check_malicious and has_malicious_patterns(text):
+            raise SecurityError("Malicious patterns detected")
+
+        return text
+    except SecurityError:
+        raise
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.warning("secure_unicode_sanitization failed: %s", exc)
+        return "INVALID_UNICODE_CONTENT"
 
 
 def safe_navbar_text(text: Any) -> str:
@@ -535,6 +597,7 @@ __all__ = [
     "clean_surrogate_chars",
     "sanitize_unicode_input",
     "contains_surrogates",
+    "secure_unicode_sanitization",
     "process_large_csv_content",
     "safe_format_number",
     "UnicodeProcessor",
