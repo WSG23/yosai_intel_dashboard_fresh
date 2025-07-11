@@ -1,31 +1,38 @@
 """File upload page wired to the unified upload component."""
 
-from dash import html
+import dash
 import dash_bootstrap_components as dbc
+
+html = dash.html
 
 _upload_component = None
 
 # Import your existing upload component function
 try:
     from components import create_upload_card  # Use existing function
+
     HAS_UPLOAD_COMPONENT = True
 except ImportError:
     HAS_UPLOAD_COMPONENT = False
 
+
 def layout():
     if HAS_UPLOAD_COMPONENT:
-        return dbc.Container([
-            html.H2("File Upload"),
-            create_upload_card()  # Use existing upload component
-        ])
+        return dbc.Container(
+            [
+                html.H2("File Upload"),
+                create_upload_card(),  # Use existing upload component
+            ]
+        )
     else:
-        return dbc.Container([
-            html.H2("File Upload"),
-            html.P("Upload component not available")
-        ])
+        return dbc.Container(
+            [html.H2("File Upload"), html.P("Upload component not available")]
+        )
+
 
 def safe_upload_layout():
     return layout()
+
 
 def register_callbacks(manager):
     """Register upload callbacks with the provided manager."""
@@ -62,7 +69,6 @@ def register_callbacks(manager):
             )(func)
 
 
-
 def get_uploaded_filenames(service=None, container=None):
     from services.upload_data_service import get_uploaded_filenames as _get
 
@@ -71,7 +77,9 @@ def get_uploaded_filenames(service=None, container=None):
 
 def register_page():
     from dash import register_page as dash_register_page
+
     dash_register_page(__name__, path="/upload", name="Upload")
+
 
 register_upload_callbacks = register_callbacks
 
@@ -83,4 +91,4 @@ __all__ = [
     "register_callbacks",
     "register_upload_callbacks",
     "get_uploaded_filenames",
-
+]
