@@ -377,17 +377,49 @@ nav .nav-link-stable {
 /* Prevent flash during page transitions */
 #page-content {
   min-height: 400px;
-  opacity: 1;
+  opacity: 1 !important;
   transition: none !important;
+  transform: none !important;
 }
 
 /* Ensure smooth Dash Pages transitions */
 [data-dash-is-loading="true"] #page-content {
-  opacity: 0.7;
+  opacity: 0.8;
+  transition: opacity 0.1s ease;
 }
 
-/* Prevent content jumping */
+/* Prevent content jumping during page loads */
 .main-content {
   position: relative;
   overflow-x: hidden;
+  will-change: auto;
+  backface-visibility: hidden;
+}
+
+/* Disable problematic transition classes */
+.transition-fade-move,
+.transition-start,
+.transition-end {
+  transition: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+/* Ensure page container stability */
+.dash-page-container {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Prevent Bootstrap/DBC animation conflicts */
+.container-fluid,
+.container {
+  transition: none !important;
+}
+
+/* Force hardware acceleration for smooth rendering */
+#page-content,
+.main-content {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
