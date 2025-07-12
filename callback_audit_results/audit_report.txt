@@ -2,19 +2,15 @@
 ==================================================
 
 📊 SUMMARY:
-  Total Callbacks: 1
-  Files with Callbacks: 1
-  Pattern Types: 1
+  Total Callbacks: 0
+  Files with Callbacks: 0
+  Pattern Types: 0
   Conflicts: 0 (0 critical)
 
-📈 PATTERN DISTRIBUTION:
-  🔥 Legacy Dash: 1 (100.0%)
-
 🚀 RECOMMENDATIONS:
-  1. 🔥 HIGH PRIORITY: Migrate 1 legacy @app.callback patterns
+  1. 🔍 Consider expanding search or checking different directories
 
 📋 NEXT STEPS:
-  1. Review pattern distribution above
-  2. Address any high-priority recommendations
-  3. Resolve conflicts if present
-  4. Consider implementing Unicode safety wrappers
+  1. Check if callbacks are in other directories
+  2. Verify callback registration patterns
+  3. Consider running audit on broader scope
