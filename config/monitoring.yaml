@@ -7,3 +7,8 @@ alerting:
   slack_webhook: ""
   email: ""
   webhook_url: ""
+
+data_quality:
+  max_missing_ratio: 0.1
+  max_outlier_ratio: 0.01
+  max_schema_violations: 0

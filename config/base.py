@@ -142,6 +142,15 @@ class MonitoringConfig:
 
 
 @dataclass
+class DataQualityThresholds:
+    """Thresholds for data quality alerts."""
+
+    max_missing_ratio: float = 0.1
+    max_outlier_ratio: float = 0.01
+    max_schema_violations: int = 0
+
+
+@dataclass
 class CacheConfig:
     """Cache backend settings."""
 
@@ -172,6 +181,7 @@ class Config:
     sample_files: SampleFilesConfig = field(default_factory=SampleFilesConfig)
     analytics: AnalyticsConfig = field(default_factory=AnalyticsConfig)
     monitoring: MonitoringConfig = field(default_factory=MonitoringConfig)
+    data_quality: DataQualityThresholds = field(default_factory=DataQualityThresholds)
     cache: CacheConfig = field(default_factory=CacheConfig)
     uploads: UploadConfig = field(default_factory=UploadConfig)
     secret_validation: SecretValidationConfig = field(
@@ -188,6 +198,7 @@ __all__ = [
     "SampleFilesConfig",
     "AnalyticsConfig",
     "MonitoringConfig",
+    "DataQualityThresholds",
     "CacheConfig",
     "UploadConfig",
     "SecretValidationConfig",

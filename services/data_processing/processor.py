@@ -8,6 +8,10 @@ import pandas as pd
 
 from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
+from monitoring.data_quality_monitor import (
+    DataQualityMetrics,
+    get_data_quality_monitor,
+)
 from core.security_validator import SecurityValidator
 from utils.mapping_helpers import map_and_clean
 
@@ -68,7 +72,11 @@ class Processor:
         uploaded = self._get_uploaded_data()
         if not uploaded:
             return pd.DataFrame(), {}
-        return self._apply_mappings_and_combine(uploaded, mappings)
+        df, meta = self._apply_mappings_and_combine(uploaded, mappings)
+        if not df.empty:
+            metrics = self._evaluate_data_quality(df)
+            get_data_quality_monitor().emit(metrics)
+        return df, meta
 
     # Internal helpers -------------------------------------------------
     def _load_consolidated_mappings(self) -> Dict[str, Any]:
@@ -197,6 +205,28 @@ class Processor:
         attrs_df.index.name = "door_id"
         attrs_df.reset_index(inplace=True)
         return df.merge(attrs_df, on="door_id", how="left")
+
+    # ------------------------------------------------------------------
+    def _evaluate_data_quality(self, df: pd.DataFrame) -> DataQualityMetrics:
+        """Calculate basic data quality metrics for ``df``."""
+        if df.empty:
+            return DataQualityMetrics(0.0, 0.0, 4)
+
+        total_cells = df.size
+        missing_ratio = float(df.isnull().sum().sum()) / total_cells if total_cells else 0.0
+
+        numeric = df.select_dtypes(include="number")
+        if not numeric.empty and (numeric.std(ddof=0) != 0).any():
+            zscores = (numeric - numeric.mean()).abs() / numeric.std(ddof=0)
+            outliers = (zscores > 3).sum().sum()
+            outlier_ratio = float(outliers) / numeric.size if numeric.size else 0.0
+        else:
+            outlier_ratio = 0.0
+
+        required = {"timestamp", "person_id", "door_id", "access_result"}
+        schema_violations = len(required - set(df.columns))
+
+        return DataQualityMetrics(missing_ratio, outlier_ratio, schema_violations)
 
 
 __all__ = ["Processor"]
