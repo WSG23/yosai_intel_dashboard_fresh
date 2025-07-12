@@ -69,8 +69,8 @@ class UniquePatternAnalyzer:
         }
 
     def _prepare_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Prepare data for analysis"""
-        prepared_df = df.copy()
+        """Prepare data for analysis with minimal memory usage"""
+        prepared_df = df.copy(deep=False)
 
         # Ensure timestamp is datetime
         if "timestamp" in prepared_df.columns:

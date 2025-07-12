@@ -114,7 +114,7 @@ class UserBehaviorAnalyzer:
 
     def _prepare_behavior_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """Prepare and clean data for behavior analysis"""
-        df_clean = df.copy()
+        df_clean = df.copy(deep=False)
 
         # Handle Unicode issues
         from security.unicode_security_handler import UnicodeSecurityHandler
