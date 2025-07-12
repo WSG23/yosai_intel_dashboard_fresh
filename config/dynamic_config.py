@@ -110,7 +110,14 @@ class DynamicConfigManager(BaseConfigLoader):
 
         mem_thresh = os.getenv("MEMORY_THRESHOLD_MB")
         if mem_thresh is not None:
-            self.performance.memory_usage_threshold_mb = int(mem_thresh)
+            value = int(mem_thresh)
+            if value > 500:
+                logger.warning(
+                    "MEMORY_THRESHOLD_MB=%s is too high. Using 500MB maximum.",
+                    value,
+                )
+                value = 500
+            self.performance.memory_usage_threshold_mb = value
 
         db_timeout = os.getenv("DB_TIMEOUT")
         if db_timeout is not None:
@@ -142,7 +149,14 @@ class DynamicConfigManager(BaseConfigLoader):
 
         max_memory = os.getenv("ANALYTICS_MAX_MEMORY_MB")
         if max_memory is not None:
-            self.analytics.max_memory_mb = int(max_memory)
+            value = int(max_memory)
+            if value > 500:
+                logger.warning(
+                    "ANALYTICS_MAX_MEMORY_MB=%s is too high. Using 500MB maximum.",
+                    value,
+                )
+                value = 500
+            self.analytics.max_memory_mb = value
 
         upload_chunk = os.getenv("UPLOAD_CHUNK_SIZE")
         if upload_chunk is not None:

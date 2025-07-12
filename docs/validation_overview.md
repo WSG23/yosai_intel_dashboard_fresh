@@ -55,9 +55,14 @@ These classes have been COMPLETELY REMOVED:
 
 Use `SecurityValidator` for all validation needs.
 
-## Upload Limits
+## Environment Limits
 
-The dashboard allows the maximum upload size to be overridden with the
-`MAX_UPLOAD_MB` environment variable. Values below **50&nbsp;MB** or above
-**500&nbsp;MB** are clamped to those limits and a warning is logged when the
-configuration is loaded.
+When overriding configuration with environment variables, memory related values
+are clamped to a maximum of **500 MB**. The following variables are affected:
+
+- `MEMORY_THRESHOLD_MB`
+- `ANALYTICS_MAX_MEMORY_MB`
+
+If a higher value is provided, a warning will be logged and the value will be
+reduced to 500 MB.
+
