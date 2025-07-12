@@ -20,7 +20,7 @@ from core.protocols import ConfigurationProtocol
 from core.unicode import UnicodeProcessor, sanitize_dataframe
 from core.unicode_utils import sanitize_for_utf8
 from upload_types import ValidationResult
-from upload_validator import UploadValidator
+from .unified_upload_validator import UnifiedUploadValidator
 
 
 def _lazy_string_validator() -> Any:
@@ -218,7 +218,7 @@ class UnifiedFileValidator:
             self.config.security, "max_upload_mb", dynamic_config.security.max_upload_mb
         )
         self._string_validator = _lazy_string_validator()
-        self._basic_validator = UploadValidator(self.max_size_mb, config=self.config)
+        self._basic_validator = UnifiedUploadValidator(self.max_size_mb, config=self.config)
 
     def _sanitize_string(self, value: str) -> str:
         cleaned = sanitize_for_utf8(str(value))
