@@ -7,26 +7,52 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, cast
 
-import dash_bootstrap_components as dbc
+if TYPE_CHECKING:  # pragma: no cover - type hints only
+    import dash_bootstrap_components as dbc
+    from dash import (
+        ALL,
+        MATCH,
+        Input,
+        Output,
+        State,
+        callback,
+        callback_context,
+        ctx,
+        dcc,
+        html,
+    )
+else:  # pragma: no cover - fallback when Dash isn't installed
+    try:
+        import dash_bootstrap_components as dbc
+        from dash import (
+            ALL,
+            MATCH,
+            Input,
+            Output,
+            State,
+            callback,
+            callback_context,
+            ctx,
+            dcc,
+            html,
+        )
+    except Exception as e:  # pragma: no cover - minimal stubs for tests
+        logging.getLogger(__name__).warning("Dash not available: %s", e)
+        dbc = cast(Any, object())
+        ALL = MATCH = cast(Any, None)
+        Input = Output = State = cast(Any, object())
+
+        def callback(*_a: Any, **_k: Any):
+            return lambda f: f
+
+        callback_context = ctx = cast(Any, object())
+        dcc = html = cast(Any, object())
+
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-
-# Dash core imports
-from dash import (
-    ALL,
-    MATCH,
-    Input,
-    Output,
-    State,
-    callback,
-    callback_context,
-    ctx,
-    dcc,
-    html,
-)
 
 from core.unicode import safe_format_number
 from security.unicode_security_handler import UnicodeSecurityHandler
