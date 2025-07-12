@@ -225,6 +225,11 @@ class AnalyticsService(AnalyticsServiceProtocol):
         """Get a basic dashboard summary"""
         try:
             summary = self.get_analytics_from_uploaded_data()
+            if self.event_bus:
+                try:
+                    self.event_bus.publish("analytics_update", summary)
+                except Exception as exc:  # pragma: no cover - best effort
+                    logger.debug("Event bus publish failed: %s", exc)
             return summary
         except Exception as e:
             logger.error(f"Dashboard summary failed: {e}")
@@ -508,6 +513,12 @@ class AnalyticsService(AnalyticsServiceProtocol):
                     f"{result_total:,}",
                     f"{original_rows:,}",
                 )
+
+            if self.event_bus:
+                try:
+                    self.event_bus.publish("analytics_update", result)
+                except Exception as exc:  # pragma: no cover - best effort
+                    logger.debug("Event bus publish failed: %s", exc)
 
             return result
 

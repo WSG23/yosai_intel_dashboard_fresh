@@ -979,6 +979,17 @@ def _initialize_services(container: Optional[ServiceContainer] = None) -> None:
         app_config = config.get_app_config()
         logger.info(f"Configuration loaded for environment: {app_config.environment}")
 
+        # Start WebSocket server for real-time analytics
+        try:
+            if container.has("event_bus"):
+                from services.websocket_server import AnalyticsWebSocketServer
+
+                ws_server = AnalyticsWebSocketServer(container.get("event_bus"))
+                container.register_singleton("websocket_server", ws_server)
+                logger.info("WebSocket server initialized")
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.warning(f"WebSocket server failed to start: {exc}")
+
     except Exception as e:
         logger.warning(f"Service initialization completed with warnings: {e}")
 
