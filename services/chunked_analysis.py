@@ -1,7 +1,7 @@
 import hashlib
 import logging
 import os
-import pickle
+import json
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -60,13 +60,22 @@ def analyze_with_chunking(
 
     def _process(chunk_df: pd.DataFrame) -> Dict[str, Any]:
         key = _chunk_key(chunk_df)
-        cache_file = cache_dir / f"{key}.pkl"
+        cache_file = cache_dir / f"{key}.json"
         if cache_file.exists():
-            with open(cache_file, "rb") as fh:
-                return pickle.load(fh)
+            with open(cache_file, "r", encoding="utf-8") as fh:
+                cached = json.load(fh)
+            # convert list fields back to sets
+            for field in ("unique_users", "unique_doors"):
+                if isinstance(cached.get(field), list):
+                    cached[field] = set(cached[field])
+            return cached
         result = chunked_controller._process_chunk(chunk_df, analysis_types)
-        with open(cache_file, "wb") as fh:
-            pickle.dump(result, fh)
+        json_ready = {
+            k: (list(v) if isinstance(v, set) else v)
+            for k, v in result.items()
+        }
+        with open(cache_file, "w", encoding="utf-8") as fh:
+            json.dump(json_ready, fh)
         return result
 
     cluster = LocalCluster(n_workers=max_workers, threads_per_worker=1)
