@@ -5,6 +5,7 @@ from dash import dcc, html
 from flask import session
 import uuid
 
+from components.device_verification import register_modal_callback
 from components.upload import UploadArea
 from upload_callbacks import UploadCallbackManager
 
@@ -101,6 +102,7 @@ class FileUploadComponent:
 
     def register_callbacks(self, manager, controller=None) -> None:
         """Register upload callbacks with the given manager."""
+        register_modal_callback(manager)
         self.callback_manager.register(manager, controller)
 
 
