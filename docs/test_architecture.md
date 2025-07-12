@@ -130,3 +130,12 @@ container.register_singleton("analytics_service", DummyAnalytics())
 
 Pass the container to the unit under test and drop the `sys.modules` setup.
 
+The `tools/migrate_tests.py` helper automates this refactor. Running
+
+```bash
+python tools/migrate_tests.py --apply path/to/test_file.py
+```
+
+comments out the old `sys.modules` lines and imports protocol test doubles from
+`tests.stubs` so tests run against the lightweight implementations.
+

@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+"""Utility for migrating tests away from ``sys.modules`` stubs.
+
+The script comments out assignments to ``sys.modules`` and instead imports
+protocol test doubles from ``tests.stubs``. The generated code directly
+replaces the stubbed module in ``sys.modules`` so tests run against the
+lightweight doubles without further manual edits.
+"""
+
 import argparse
 import ast
 import difflib
@@ -72,10 +80,21 @@ def find_patches(path: Path) -> List[tuple[int, int, str]]:
 
 def apply_patches(text: str, patches: Iterable[tuple[int, int, str]]) -> str:
     lines = text.splitlines()
+
+    def _stub_var(mod_name: str) -> str:
+        return mod_name.replace(".", "_") + "_stub"
+
     for start, end, mod in sorted(patches, key=lambda t: t[0], reverse=True):
         for i in range(start - 1, end):
             lines[i] = f"# {lines[i]}"
-        lines.insert(end, f"# TODO: replace sys.modules stub for '{mod}' with protocol test double")
+
+        stub_var = _stub_var(mod)
+        stub_import = f"import tests.stubs.{mod} as {stub_var}"
+        assign_line = f"sys.modules['{mod}'] = {stub_var}"
+
+        lines.insert(end, stub_import)
+        lines.insert(end + 1, assign_line)
+
     return "\n".join(lines) + "\n"
 
 
@@ -95,7 +114,9 @@ def process_file(path: Path, apply: bool, show_diff: bool) -> None:
 
 
 def main(argv: list[str]) -> None:
-    parser = argparse.ArgumentParser(description="Migrate tests using sys.modules stubs")
+    parser = argparse.ArgumentParser(
+        description="Rewrite sys.modules stubs to use protocol test doubles"
+    )
     parser.add_argument("paths", nargs="*", default=["tests"], help="files or directories to scan")
     parser.add_argument("--apply", action="store_true", help="write changes to disk")
     parser.add_argument("--diff", action="store_true", help="show unified diff")
