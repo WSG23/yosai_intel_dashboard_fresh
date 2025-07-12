@@ -12,6 +12,7 @@ try:
     import dash_bootstrap_components as dbc
 
     html = dash.html
+    dcc = dash.dcc
     DBC_AVAILABLE = True
 except ImportError:
     DBC_AVAILABLE = False
@@ -25,8 +26,13 @@ except ImportError:
         def __getattr__(self, name):
             return lambda *args, **kwargs: f"DBC component {name} not available"
 
+    class FallbackDcc:
+        def __getattr__(self, name):
+            return lambda *args, **kwargs: f"DCC component {name} not available"
+
     html = FallbackHtml()
     dbc = FallbackDbc()
+    dcc = FallbackDcc()
 
 
 def create_navbar_layout() -> Any:
@@ -53,40 +59,36 @@ def create_navbar_layout() -> Any:
                     dbc.Nav(
                         [
                             dbc.NavItem(
-                                dbc.NavLink(
+                                dcc.Link(
                                     [
                                         html.I(className="fas fa-chart-bar me-2"),
                                         "Analytics",
                                     ],
                                     href="/analytics",
-                                    external_link=False,
                                     className="nav-link px-3",
                                 )
                             ),
                             dbc.NavItem(
-                                dbc.NavLink(
+                                dcc.Link(
                                     [html.I(className="fas fa-upload me-2"), "Upload"],
                                     href="/upload",
-                                    external_link=False,
                                     className="nav-link px-3",
                                 )
                             ),
                             dbc.NavItem(
-                                dbc.NavLink(
+                                dcc.Link(
                                     [
                                         html.I(className="fas fa-download me-2"),
                                         "Export",
                                     ],
                                     href="/export",
-                                    external_link=False,
                                     className="nav-link px-3",
                                 )
                             ),
                             dbc.NavItem(
-                                dbc.NavLink(
+                                dcc.Link(
                                     [html.I(className="fas fa-cog me-2"), "Settings"],
                                     href="/settings",
-                                    external_link=False,
                                     className="nav-link px-3",
                                 )
                             ),
