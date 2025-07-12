@@ -20,7 +20,7 @@ def layout() -> dbc.Container:
             [
                 html.H5("📊 Analytics Dashboard", className="card-title"),
                 html.P(
-                    "Navigation flash fixed! Advanced analytics coming soon.",
+                    "Generate detailed security, trends, and behaviour reports",
                     className="card-text",
                 ),
                 html.Hr(),
@@ -29,7 +29,7 @@ def layout() -> dbc.Container:
                     style={"color": "#007bff"},
                 ),
                 html.H6("✅ Navigation Flash: FIXED"),
-                html.H6("🔧 Advanced Features: Being Restored"),
+                html.H6("🔧 All analytics modules active"),
             ]
         ),
         className="mb-4",
