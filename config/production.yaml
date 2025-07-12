@@ -54,6 +54,7 @@ analytics:
   enable_real_time: ${ENABLE_REAL_TIME:true}
   batch_size: ${BATCH_SIZE:5000}
   chunk_size: ${ANALYTICS_CHUNK_SIZE:100000}
+  max_workers: ${ANALYTICS_MAX_WORKERS:4}
   enable_chunked_analysis: ${ENABLE_CHUNKED_ANALYSIS:true}
   anomaly_detection_enabled: ${ENABLE_ANOMALY_DETECTION:true}
   ml_models_path: ${ML_MODELS_PATH:models/ml}

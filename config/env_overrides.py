@@ -118,6 +118,8 @@ def apply_env_overrides(config: Any) -> None:
             analytics.batch_size = int(val)
         if val := os.getenv("ANALYTICS_MAX_MEMORY_MB"):
             analytics.max_memory_mb = int(val)
+        if val := os.getenv("ANALYTICS_MAX_WORKERS"):
+            analytics.max_workers = int(val)
 
     # --- Uploads overrides -------------------------------------------
     if hasattr(config, "uploads"):
