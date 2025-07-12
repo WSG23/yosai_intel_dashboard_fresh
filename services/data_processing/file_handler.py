@@ -15,8 +15,8 @@ from services.data_processing.core.exceptions import (
     FileProcessingError,
     FileValidationError,
 )
-from services.data_processing.unified_file_validator import (
-    UnifiedFileValidator,
+from services.data_processing.unified_upload_validator import (
+    UnifiedUploadValidator,
     safe_decode_with_unicode_handling,
 )
 from upload_types import ValidationResult
@@ -75,13 +75,13 @@ class FileHandler:
         config: ConfigurationProtocol = dynamic_config,
     ) -> None:
         self.config = config
-        self.validator = UnifiedFileValidator(max_size_mb, config=self.config)
+        self.validator = UnifiedUploadValidator(max_size_mb, config=self.config)
 
     def sanitize_filename(self, filename: str) -> str:
         return self.validator.sanitize_filename(filename)
 
     def validate_file_upload(self, file_obj: Any) -> ValidationResult:
-        """Run basic checks on ``file_obj`` using :class:`UnifiedFileValidator`."""
+        """Run basic checks on ``file_obj`` using :class:`UnifiedUploadValidator`."""
         if file_obj is None:
             return ValidationResult(False, "No file provided")
         try:

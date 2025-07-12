@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 from analytics.unique_patterns_analyzer import UniquePatternAnalyzer
 
@@ -42,7 +43,7 @@ def test_prepare_data_adds_columns():
         prepared.columns
     )
     assert prepared.loc[0, "hour"] == 8
-    assert prepared.loc[0, "access_granted"] is True
+    assert prepared.loc[0, "access_granted"] == True
 
 
 def test_analyze_unique_users_basic():
@@ -79,3 +80,35 @@ def test_analyze_patterns_empty_df():
     analyzer = UniquePatternAnalyzer()
     result = analyzer.analyze_patterns(pd.DataFrame(), {})
     assert result["status"] == "no_data"
+
+
+def test_prepare_data_memory_profile():
+    rows = 10000
+    df = pd.DataFrame(
+        {
+            "person_id": [f"U{i%10}" for i in range(rows)],
+            "door_id": [f"D{i%5}" for i in range(rows)],
+            "timestamp": pd.date_range("2024-01-01", periods=rows, freq="min"),
+            "access_result": ["Granted"] * rows,
+        }
+    )
+
+    analyzer = UniquePatternAnalyzer()
+
+    # Simulate deep-copy processing for baseline memory usage
+    deep_copy = df.copy()
+    deep_copy["timestamp"] = pd.to_datetime(deep_copy["timestamp"])
+    deep_copy["hour"] = deep_copy["timestamp"].dt.hour
+    deep_copy["day_of_week"] = deep_copy["timestamp"].dt.day_name()
+    deep_copy["date"] = deep_copy["timestamp"].dt.date
+    deep_copy["access_granted"] = (
+        deep_copy["access_result"].str.lower().isin(["granted", "success", "true", "1"])
+    )
+    deep_copy["event_id"] = range(len(deep_copy))
+    deep_memory = deep_copy.memory_usage(deep=True).sum()
+
+    prepared = analyzer._prepare_data(df)
+    prepared_memory = prepared.memory_usage(deep=True).sum()
+
+    # The shallow-copy approach should not use more memory than the deep-copy baseline
+    assert prepared_memory <= deep_memory

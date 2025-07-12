@@ -65,3 +65,4 @@ are clamped to a maximum of **500 MB**. The following variables are affected:
 
 If a higher value is provided, a warning will be logged and the value will be
 reduced to 500 MB.
+

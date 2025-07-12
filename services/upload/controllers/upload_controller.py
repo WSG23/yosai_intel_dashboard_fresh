@@ -33,20 +33,19 @@ class UnifiedUploadController:
                     df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
             except Exception as exc:
                 logger.error("Failed to parse uploaded file: %s", exc)
-                return [], False, {}
+                return False, {}
 
-            preview = dash_table.DataTable(
+            dash_table.DataTable(
                 data=df.head().to_dict("records"),
                 columns=[{"name": c, "id": c} for c in df.columns],
                 page_size=5,
             )
-            return preview, False, df.to_json(date_format="iso", orient="split")
+            return False, df.to_json(date_format="iso", orient="split")
 
         return [
             (
                 handle_upload,
                 [
-                    Output("preview-area", "children"),
                     Output("to-column-map-btn", "disabled"),
                     Output("uploaded-df-store", "data"),
                 ],

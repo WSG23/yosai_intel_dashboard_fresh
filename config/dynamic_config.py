@@ -91,6 +91,12 @@ class DynamicConfigManager(BaseConfigLoader):
                     value,
                 )
                 value = 50
+            elif value > 500:
+                logger.warning(
+                    "MAX_UPLOAD_MB=%s is too large. Using 500MB maximum.",
+                    value,
+                )
+                value = 500
             self.security.max_upload_mb = value
             self.security.max_file_size_mb = value  # Keep them in sync
 

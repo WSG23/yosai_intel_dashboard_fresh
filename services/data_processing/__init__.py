@@ -19,6 +19,7 @@ from .core.exceptions import (
     FileValidationError,
 )
 from .unified_file_validator import UnifiedFileValidator
+from .unified_upload_validator import UnifiedUploadValidator
 
 # Analytics helpers are intentionally loaded lazily in environments where the
 # full analytics stack is unavailable. ``AI_SUGGESTIONS_AVAILABLE`` defaults to
@@ -65,6 +66,7 @@ __all__ = [
     "FileHandler",
     "AsyncFileProcessor",
     "UnifiedFileValidator",
+    "UnifiedUploadValidator",
     "process_file_simple",
     "FileProcessingError",
     "FileValidationError",
