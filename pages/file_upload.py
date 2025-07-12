@@ -10,12 +10,24 @@ import json
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
-from dash import Input, Output, State, dcc, html, no_update
-from dash.exceptions import PreventUpdate
-from dash import register_page as dash_register_page
+from dash import dcc, html
+
+# Core imports that should always work
+try:
+    from core.callback_registry import _callback_registry
+except ImportError:
+    _callback_registry = None
+
+try:
+    from core.unicode import safe_encode_text, safe_decode_bytes
+except ImportError:
+    def safe_encode_text(text):
+        return str(text)
+    def safe_decode_bytes(data):
+        return data.decode('utf-8', errors='replace')
+
 
 from components.ui_component import UIComponent
 
@@ -216,6 +228,7 @@ def layout() -> dbc.Container:
     return _upload_component.layout()
 
 
+
 def register_callbacks(manager):
     """Compatibility wrapper using the default component."""
 
@@ -365,9 +378,14 @@ def _create_navigation_buttons(uploaded_files: Dict[str, str]) -> Any:
     ], className="mt-3")
 
 
-def get_uploaded_data() -> Dict[str, pd.DataFrame]:
-    """Get currently uploaded data for other modules."""
-    return _uploaded_files.copy()
+def safe_upload_layout():
+    """Unicode-safe layout wrapper."""
+    try:
+        return layout()
+    except Exception as e:
+        logger.error(f"Upload layout failed: {e}")
+        return _fallback_layout()
+
 
 
 def clear_uploaded_data() -> None:

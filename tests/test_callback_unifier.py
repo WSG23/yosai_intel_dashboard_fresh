@@ -1,5 +1,5 @@
-import pytest
 import dash
+import pytest
 from dash import Input, Output
 
 from core.callback_registry import CallbackRegistry
@@ -46,7 +46,8 @@ def test_unified_decorator_method():
 
 def test_unified_with_registry():
     app = dash.Dash(__name__)
-    registry = CallbackRegistry(app)
+    coord = TrulyUnifiedCallbacks(app)
+    registry = CallbackRegistry(coord)
 
     @unified_callback(
         registry,

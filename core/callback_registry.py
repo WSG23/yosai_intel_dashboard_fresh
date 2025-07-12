@@ -7,9 +7,12 @@ import functools
 import logging
 import time
 from functools import wraps
-from typing import Any, Callable, Dict, Iterable, List
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List
 
 from dash import no_update
+
+if TYPE_CHECKING:  # pragma: no cover - avoid circular import at runtime
+    from .truly_unified_callbacks import TrulyUnifiedCallbacks
 
 
 def debounce(wait_ms: int = 300):
@@ -128,10 +131,12 @@ _callback_registry = GlobalCallbackRegistry()
 class CallbackRegistry:
     """Central registry for all application callbacks"""
 
-    def __init__(self, app):
-        self.app = app
-        self.registered_callbacks = {}
-        self.clientside_callbacks = {}
+    def __init__(self, callbacks: "TrulyUnifiedCallbacks") -> None:
+        """Initialize with a :class:`TrulyUnifiedCallbacks` instance."""
+        self.callbacks = callbacks
+        self.app = callbacks.app
+        self.registered_callbacks: Dict[str, Any] = {}
+        self.clientside_callbacks: Dict[str, Any] = {}
 
     # New unified decorator -----------------------------------------------
     def handle_unified(self, *args, **kwargs):
@@ -164,14 +169,15 @@ class CallbackRegistry:
                         if hasattr(output, "allow_duplicate"):
                             output.allow_duplicate = True
 
-                @self.app.callback(
+                wrapper = self.callbacks.handle_register(
                     outputs,
                     inputs,
-                    states or [],
+                    states,
+                    callback_id=callback_id or func.__name__,
+                    component_name="callback_registry",
                     prevent_initial_call=prevent_initial_call,
-                )
-                def wrapper(*args, **kwargs):
-                    return func(*args, **kwargs)
+                    allow_duplicate=allow_duplicate,
+                )(func)
 
                 if callback_id:
                     self.registered_callbacks[callback_id] = wrapper

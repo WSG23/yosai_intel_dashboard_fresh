@@ -80,8 +80,10 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 # Backup files
-*.backup
+*.backup*
 *.bak
+*.temp
+temp_*
 # Secret files (auto-added)
 .env.development
 .env.staging

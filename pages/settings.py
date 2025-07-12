@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-"""Settings management page with placeholders."""
+"""Settings management page with live configuration controls."""
 
 import dash_bootstrap_components as dbc
-from dash import dcc, html
+from dash import dcc, html, Output, Input, State
 from dash import register_page as dash_register_page
+from dash.exceptions import PreventUpdate
+
+from core.theme_manager import sanitize_theme
 
 from config.dynamic_config import dynamic_config
 from security.unicode_security_processor import sanitize_unicode_input
 
 from components.ui_component import UIComponent
-
 
 class SettingsPage(UIComponent):
     """Settings page component."""
@@ -19,6 +21,7 @@ class SettingsPage(UIComponent):
             [
                 dbc.Col(self._settings_section("User Preferences"), md=6),
                 dbc.Col(self._system_config_section(), md=6),
+
             ]
         )
 
@@ -107,7 +110,9 @@ def register_page() -> None:
 def layout() -> dbc.Container:
     """Compatibility wrapper returning the default component layout."""
 
+
     return _settings_component.layout()
 
 
 __all__ = ["SettingsPage", "load_page", "layout", "register_page"]
+
