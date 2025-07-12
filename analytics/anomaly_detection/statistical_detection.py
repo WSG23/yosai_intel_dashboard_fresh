@@ -6,8 +6,23 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-from utils.scipy_compat import get_stats_module
-stats = get_stats_module()
+# from utils.scipy_compat import get_stats_module
+# stats = get_stats_module()
+
+try:
+    from scipy import stats  # pragma: no cover - use SciPy if available
+except ImportError:  # pragma: no cover - fallback implementation
+    import numpy as np
+
+    class FallbackStats:
+        @staticmethod
+        def zscore(a, axis=0, ddof=0, nan_policy="propagate"):
+            a = np.asarray(a)
+            mean = np.mean(a, axis=axis, keepdims=True)
+            std = np.std(a, axis=axis, ddof=ddof, keepdims=True)
+            return np.where(std == 0, 0, (a - mean) / std)
+
+    stats = FallbackStats()
 
 __all__ = [
     "detect_frequency_anomalies",
