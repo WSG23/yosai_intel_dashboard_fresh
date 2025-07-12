@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import List, Optional
+from pathlib import Path
+from typing import Dict, List, Optional
 
 import pandas as pd
+import yaml
 
 from .types import ThreatIndicator
 
@@ -12,7 +14,25 @@ __all__ = [
     "detect_pattern_threats",
     "detect_rapid_attempts",
     "detect_after_hours_anomalies",
+    "_attack_info",
 ]
+
+# ---------------------------------------------------------------------------
+# MITRE ATT&CK mapping
+# ---------------------------------------------------------------------------
+_mapping_file = Path(__file__).resolve().parents[2] / "resources" / "attack_techniques.yaml"
+try:
+    with _mapping_file.open("r", encoding="utf-8") as fh:
+        _ATTACK_MAP: Dict[str, Dict[str, str]] = yaml.safe_load(fh) or {}
+except Exception as exc:  # pragma: no cover - environment may not have file
+    logging.getLogger(__name__).warning("Failed to load ATT&CK mapping: %s", exc)
+    _ATTACK_MAP = {}
+
+
+def _attack_info(threat_type: str) -> Optional[Dict[str, str]]:
+    """Return ATT&CK technique info for a threat type."""
+    info = _ATTACK_MAP.get(threat_type)
+    return dict(info) if isinstance(info, dict) else None
 
 
 def detect_rapid_attempts(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -> List[ThreatIndicator]:
@@ -46,6 +66,7 @@ def detect_rapid_attempts(df: pd.DataFrame, logger: Optional[logging.Logger] = N
                             },
                             timestamp=datetime.now(),
                             affected_entities=[str(user_id)],
+                            attack=_attack_info("rapid_access_attempts"),
                         )
                     )
     except Exception as exc:  # pragma: no cover - log and continue
@@ -82,6 +103,7 @@ def detect_after_hours_anomalies(df: pd.DataFrame, logger: Optional[logging.Logg
                         },
                         timestamp=datetime.now(),
                         affected_entities=[str(user_id)],
+                        attack=_attack_info("excessive_after_hours_access"),
                     )
                 )
     except Exception as exc:  # pragma: no cover - log and continue

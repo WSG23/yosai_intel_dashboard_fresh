@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 __all__ = ["ThreatIndicator"]
 
@@ -15,3 +15,4 @@ class ThreatIndicator:
     evidence: Dict[str, Any]
     timestamp: datetime
     affected_entities: List[str]
+    attack: Optional[Dict[str, str]] = None
