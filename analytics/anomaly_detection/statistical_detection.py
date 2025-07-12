@@ -6,7 +6,8 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-from scipy import stats
+from utils.scipy_compat import get_stats_module
+stats = get_stats_module()
 
 __all__ = [
     "detect_frequency_anomalies",

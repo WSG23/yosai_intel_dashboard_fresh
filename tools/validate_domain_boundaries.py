@@ -22,7 +22,7 @@ class DomainBoundaryValidator:
         rules = self.DOMAIN_RULES.get(domain)
         if not rules:
             return violations
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             tree = ast.parse(f.read())
         imports = [
             self._module_name(n)

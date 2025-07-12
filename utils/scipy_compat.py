@@ -40,6 +40,7 @@ def sanitize_unicode_data(data: Any) -> Any:
     return data
 
 
+<<<<<<< HEAD
 class StatisticalAnomalyDetector:
     """Modular statistical anomaly detector with Unicode safety."""
     
@@ -202,6 +203,36 @@ class StatisticalAnomalyDetector:
             self.logger.warning(f"Statistical anomaly detection failed: {exc}")
         
         return anomalies
+=======
+import numpy as np
+
+
+class FallbackStats:
+    @staticmethod
+    def zscore(a, axis=0, ddof=0, nan_policy='propagate'):
+        a = np.asarray(a)
+        if axis is None:
+            a = a.ravel()
+            axis = 0
+        mean = np.mean(a, axis=axis, keepdims=True)
+        std = np.std(a, axis=axis, ddof=ddof, keepdims=True)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            z = (a - mean) / std
+            z = np.where(std == 0, 0, z)
+        return z
+
+
+def get_stats_module():
+    try:
+        from scipy import stats
+        return stats
+    except Exception as exc:
+        logger.warning("scipy.stats unavailable: %s", exc)
+        return FallbackStats()
+
+
+__all__ = ["get_wrap_callback", "get_stats_module"]
+>>>>>>> 2c57eafc043f5a7f39764fc0c57c57c9210a234f
 
 
 def calculate_severity_from_zscore(z_score: float) -> str:

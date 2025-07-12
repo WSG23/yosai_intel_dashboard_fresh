@@ -51,24 +51,42 @@ class DynamicConfigManager(BaseConfigLoader):
 
                 analytics_config = config_data.get("analytics", {})
                 for key, value in analytics_config.items():
-                    if hasattr(self.analytics, key):
+                    if hasattr(self.analytics, key) and isinstance(
+                        value, type(getattr(self.analytics, key))
+                    ):
                         setattr(self.analytics, key, value)
+                    else:
+                        logger.warning(
+                            "Invalid analytics config for %s: %r", key, value
+                        )
 
                 uploads_config = config_data.get("uploads", {})
                 for key, value in uploads_config.items():
-                    if hasattr(self.uploads, key):
+                    if hasattr(self.uploads, key) and isinstance(
+                        value, type(getattr(self.uploads, key))
+                    ):
                         setattr(self.uploads, key, value)
+                    else:
+                        logger.warning("Invalid uploads config for %s", key)
 
                 streaming_config = config_data.get("streaming", {})
                 for key, value in streaming_config.items():
-                    if hasattr(self.streaming, key):
+                    if hasattr(self.streaming, key) and isinstance(
+                        value, type(getattr(self.streaming, key))
+                    ):
                         setattr(self.streaming, key, value)
+                    else:
+                        logger.warning(
+                            "Invalid streaming config for %s", key
+                        )
 
                 database_config = config_data.get("database", {})
                 if "connection_timeout" in database_config:
-                    self.database.connection_timeout_seconds = database_config[
-                        "connection_timeout"
-                    ]
+                    value = database_config["connection_timeout"]
+                    if isinstance(value, int):
+                        self.database.connection_timeout_seconds = value
+                    else:
+                        logger.warning("Invalid database connection_timeout: %r", value)
 
         except Exception as exc:
             logging.getLogger(__name__).warning(

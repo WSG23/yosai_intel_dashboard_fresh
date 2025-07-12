@@ -11,7 +11,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from scipy import stats
+from utils.scipy_compat import get_stats_module
+stats = get_stats_module()
 from utils.sklearn_compat import optional_import
 
 LinearRegression = optional_import("sklearn.linear_model.LinearRegression")
