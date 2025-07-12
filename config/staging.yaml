@@ -66,5 +66,11 @@ uploads:
     xss: true
     path_traversal: true
 
+streaming:
+  service_type: kafka
+  brokers: localhost:9092
+  topic: events
+  consumer_group: staging
+
 secret_validation:
   severity: medium  # Staging environment severity

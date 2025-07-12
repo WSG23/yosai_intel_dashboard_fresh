@@ -44,6 +44,12 @@ uploads:
     xss: true
     path_traversal: true
 
+streaming:
+  service_type: "kafka"
+  brokers: "localhost:9092"
+  topic: "events"
+  consumer_group: "yosai"
+
 monitoring: !include monitoring.yaml
 
 plugins: !include plugins.yaml

@@ -7,6 +7,7 @@ from typing import Any, Dict, Iterator, Optional, Tuple
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
+from services.streaming import StreamingService
 from core.performance import get_performance_monitor
 from core.security_validator import SecurityValidator
 from utils.mapping_helpers import map_and_clean
@@ -21,11 +22,13 @@ class Processor:
         self,
         base_data_path: str = "data",
         validator: Optional[SecurityValidator] = None,
+        streaming_service: Optional[StreamingService] = None,
     ) -> None:
         self.base_path = Path(base_data_path)
         self.mappings_file = self.base_path / "learned_mappings.json"
         self.session_storage = self.base_path.parent / "session_storage"
         self.validator = validator or SecurityValidator()
+        self.streaming_service = streaming_service
 
     # ------------------------------------------------------------------
     # Streaming helpers (from DataLoadingService)
@@ -57,6 +60,22 @@ class Processor:
                 yield map_and_clean(chunk)
         else:
             df = self.validator.validate(source)
+            yield map_and_clean(df)
+
+    def consume_stream(self, timeout: float = 1.0) -> Iterator[pd.DataFrame]:
+        """Consume events from the configured streaming service."""
+        if not self.streaming_service:
+            logger.error("Streaming service not configured")
+            return iter(())
+
+        for raw in self.streaming_service.consume(timeout=timeout):
+            try:
+                data = json.loads(raw)
+            except Exception as exc:  # pragma: no cover - best effort
+                logger.error("Invalid event data: %s", exc)
+                continue
+            df = pd.DataFrame([data])
+            df = self.validator.validate(df)
             yield map_and_clean(df)
 
     # ------------------------------------------------------------------
