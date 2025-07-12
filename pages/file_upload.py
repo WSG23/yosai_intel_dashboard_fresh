@@ -5,9 +5,10 @@ File upload page - Fixed version without UI flash issues
 from __future__ import annotations
 
 import base64
-import io
 import json
 import logging
+import os
+import tempfile
 from typing import Any, Dict, List, Optional, Tuple
 
 import dash_bootstrap_components as dbc
@@ -302,12 +303,26 @@ def _process_single_file(content: str, filename: str) -> Optional[Dict[str, Any]
         # Decode base64 content
         content_type, content_string = content.split(",")
         decoded = base64.b64decode(content_string)
+        if len(decoded) > dynamic_config.get_max_upload_size_bytes():
+            logger.warning("File too large: %s bytes", len(decoded))
+            return None
 
-        # Determine file type and read accordingly
         if filename.endswith(".csv"):
-            df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp.write(decoded)
+                tmp.flush()
+                reader = pd.read_csv(
+                    tmp.name, chunksize=dynamic_config.get_upload_chunk_size()
+                )
+                chunks = list(reader)
+            df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+            os.unlink(tmp.name)
         elif filename.endswith((".xlsx", ".xls")):
-            df = pd.read_excel(io.BytesIO(decoded))
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp.write(decoded)
+                tmp.flush()
+                df = pd.read_excel(tmp.name)
+            os.unlink(tmp.name)
         elif filename.endswith(".json"):
             data = json.loads(decoded.decode("utf-8"))
             df = (
@@ -528,3 +543,4 @@ __all__ = [
     "get_uploaded_data",
     "clear_uploaded_data",
 ]
+from config.dynamic_config import dynamic_config

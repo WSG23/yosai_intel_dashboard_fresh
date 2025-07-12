@@ -56,6 +56,7 @@ class EnhancedConnectionPool:
         threshold: float = 0.8,
     ) -> None:
         self._lock = threading.RLock()
+        self._condition = threading.Condition(self._lock)
         self._factory = factory
         self._initial_size = initial_size
         self._max_pool_size = max(max_size, initial_size)
@@ -107,8 +108,8 @@ class EnhancedConnectionPool:
         if not self.circuit_breaker.allows_request():
             raise ConnectionValidationFailed("circuit open")
         deadline = start + self._timeout
-        while True:
-            with self._lock:
+        with self._condition:
+            while True:
                 self._shrink_idle_connections()
                 self._maybe_expand()
 
@@ -125,6 +126,7 @@ class EnhancedConnectionPool:
                     self.metrics["acquired"] += 1
                     self.metrics["acquire_times"].append(time.time() - start)
                     self.circuit_breaker.record_success()
+                    self._condition.notify()
                     return conn
 
                 if self._active < self._max_size:
@@ -140,17 +142,19 @@ class EnhancedConnectionPool:
                     self.metrics["acquired"] += 1
                     self.metrics["acquire_times"].append(time.time() - start)
                     self.circuit_breaker.record_success()
+                    self._condition.notify()
                     return conn
 
-            if time.time() >= deadline:
-                self.metrics["timeouts"] += 1
-                self.circuit_breaker.record_failure()
-                raise TimeoutError("No available connection in pool")
-            time.sleep(0.05)
+                remaining = deadline - time.time()
+                if remaining <= 0:
+                    self.metrics["timeouts"] += 1
+                    self.circuit_breaker.record_failure()
+                    raise TimeoutError("No available connection in pool")
+                self._condition.wait(timeout=remaining)
 
     # ------------------------------------------------------------------
     def release_connection(self, conn: DatabaseConnection) -> None:
-        with self._lock:
+        with self._condition:
             self._shrink_idle_connections()
             if not conn.health_check():
                 conn.close()
@@ -165,6 +169,7 @@ class EnhancedConnectionPool:
             else:
                 self._pool.append((conn, time.time()))
             self.metrics["released"] += 1
+            self._condition.notify()
 
     # ------------------------------------------------------------------
     def health_check(self) -> bool:

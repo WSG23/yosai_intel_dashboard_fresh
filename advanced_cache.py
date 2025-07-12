@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import functools
 import os
-import pickle
+import json
 from threading import RLock
 from typing import Any, Callable, Optional
 
@@ -38,7 +38,7 @@ def get_cache_value(key: str) -> Any:
         try:
             data = client.get(key)
             if data is not None:
-                return pickle.loads(data)
+                return json.loads(data.decode("utf-8"))
         except Exception:
             pass
     return cache.get(key)
@@ -48,7 +48,7 @@ def set_cache_value(key: str, value: Any, ttl: int | None = None) -> None:
     client = get_redis_client()
     if client is not None:
         try:
-            payload = pickle.dumps(value)
+            payload = json.dumps(value).encode("utf-8")
             if ttl:
                 client.setex(key, ttl, payload)
             else:
