@@ -14,6 +14,7 @@ from file_conversion.file_converter import FileConverter
 from services.upload.protocols import UploadStorageProtocol
 from typing import Protocol
 from config.app_config import UploadConfig
+from advanced_cache import clear_cache
 
 
 class UploadStoreProtocol(Protocol):
@@ -161,6 +162,7 @@ class UploadedDataStore(UploadStorageProtocol):
         """Persist ``df`` to disk and record its metadata."""
         # save synchronously to ensure metadata exists immediately
         self._save_to_disk(filename, df)
+        clear_cache()
 
     def load_dataframe(self, filename: str) -> pd.DataFrame:
         """Load a previously saved dataframe."""
@@ -194,6 +196,7 @@ class UploadedDataStore(UploadStorageProtocol):
                     self._info_path().unlink()
             except Exception as e:  # pragma: no cover - best effort
                 logger.error(f"Error clearing uploaded data: {e}")
+        clear_cache()
 
     def wait_for_pending_saves(self) -> None:
         """Block until all background save tasks have completed."""

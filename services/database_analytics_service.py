@@ -6,6 +6,8 @@ from typing import Any, Dict
 
 import pandas as pd
 
+from advanced_cache import cache_with_lock
+
 logger = logging.getLogger(__name__)
 
 
@@ -15,6 +17,7 @@ class DatabaseAnalyticsService:
     def __init__(self, database_manager: Any):
         self.database_manager = database_manager
 
+    @cache_with_lock(ttl_seconds=600)
     def get_analytics(self) -> Dict[str, Any]:
         if not self.database_manager:
             return {"status": "error", "message": "Database not available"}

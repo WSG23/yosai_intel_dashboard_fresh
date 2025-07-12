@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
+from advanced_cache import clear_cache
 
 class ConsolidatedLearningService:
     """Unified learning service for all mapping types."""
@@ -49,6 +50,7 @@ class ConsolidatedLearningService:
 
         self.learned_data[fingerprint] = mapping_data
         self._persist_learned_data()
+        clear_cache()
         self.logger.info(f"Saved mapping {fingerprint[:8]} for {filename}")
         return fingerprint
 

@@ -16,6 +16,7 @@ import pandas as pd
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.analytics_summary import generate_sample_analytics
 from services.data_processing.processor import Processor
+from advanced_cache import cache_with_lock
 from core.security_validator import SecurityValidator
 from services.db_analytics_helper import DatabaseAnalyticsHelper
 from services.summary_reporting import SummaryReporter
@@ -214,10 +215,12 @@ class AnalyticsService(AnalyticsServiceProtocol):
         """Get analytics using the sample file processor."""
         return self.upload_processor._get_analytics_with_fixed_processor()
 
+    @cache_with_lock(ttl_seconds=600)
     def _get_database_analytics(self) -> Dict[str, Any]:
         """Get analytics from database."""
         return self.db_helper.get_analytics()
 
+    @cache_with_lock(ttl_seconds=300)
     def get_dashboard_summary(self) -> Dict[str, Any]:
         """Get a basic dashboard summary"""
         try:
@@ -436,6 +439,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
             "recommendations": [],
         }
 
+    @cache_with_lock(ttl_seconds=600)
     def get_unique_patterns_analysis(self, data_source: str | None = None):
         """Get unique patterns analysis for the requested source."""
         logger = logging.getLogger(__name__)
