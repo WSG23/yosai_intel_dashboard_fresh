@@ -580,7 +580,7 @@ def register_callbacks(
 ) -> None:
     """Register component callbacks using the provided coordinator."""
 
-    manager.register_handler(
+    manager.register_callback(
         Output("simple-device-modal", "children"),
         Input("simple-device-modal", "is_open"),
         prevent_initial_call=True,
@@ -588,7 +588,7 @@ def register_callbacks(
         component_name="simple_device_mapping",
     )(populate_simple_device_modal)
 
-    manager.register_handler(
+    manager.register_callback(
         Output("simple-device-modal", "is_open"),
         [
             Input("open-device-mapping", "n_clicks"),
@@ -601,7 +601,7 @@ def register_callbacks(
         component_name="simple_device_mapping",
     )(toggle_simple_device_modal)
 
-    manager.register_handler(
+    manager.register_callback(
         Output("device-save-status", "children"),
         [
             Input({"type": "device-floor", "index": ALL}, "value"),
@@ -615,7 +615,7 @@ def register_callbacks(
         component_name="simple_device_mapping",
     )(save_user_inputs)
 
-    manager.register_handler(
+    manager.register_callback(
         [
             Output({"type": "device-floor", "index": ALL}, "value"),
             Output({"type": "device-access", "index": ALL}, "value"),

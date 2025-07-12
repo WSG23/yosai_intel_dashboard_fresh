@@ -674,7 +674,7 @@ def register_callbacks(
 ) -> None:
     """Register component callbacks using the coordinator."""
 
-    manager.register_handler(
+    manager.register_callback(
         Output({"type": "custom-field", "index": MATCH}, "style"),
         Input({"type": "column-mapping", "index": MATCH}, "value"),
         prevent_initial_call=True,
