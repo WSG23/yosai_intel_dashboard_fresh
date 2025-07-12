@@ -20,6 +20,7 @@ from core.protocols import ConfigurationProtocol
 from core.unicode import UnicodeProcessor, sanitize_dataframe
 from core.unicode_utils import sanitize_for_utf8
 from upload_types import ValidationResult
+from .common import process_dataframe
 
 
 def _lazy_string_validator() -> Any:
@@ -61,80 +62,7 @@ def safe_decode_file(contents: str) -> Optional[bytes]:
         raise
 
 
-def process_dataframe(
-    decoded: bytes,
-    filename: str,
-    *,
-    config: ConfigurationProtocol = dynamic_config,
-) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
-    try:
-        filename_lower = filename.lower()
-        monitor = get_performance_monitor()
-        chunk_size = getattr(config.analytics, "chunk_size", 50000)
-
-        if filename_lower.endswith(".csv"):
-            for encoding in ["utf-8", "latin-1", "cp1252"]:
-                try:
-                    text = safe_decode_with_unicode_handling(decoded, encoding)
-                    reader = pd.read_csv(
-                        io.StringIO(text),
-                        on_bad_lines="skip",
-                        encoding="utf-8",
-                        low_memory=False,
-                        dtype=str,
-                        keep_default_na=False,
-                        chunksize=chunk_size,
-                    )
-                    chunks = []
-                    for chunk in reader:
-                        monitor.throttle_if_needed()
-                        chunks.append(chunk)
-                    df = (
-                        pd.concat(chunks, ignore_index=True)
-                        if chunks
-                        else pd.DataFrame()
-                    )
-                    return df, None
-                except UnicodeDecodeError:
-                    continue
-            return None, "Could not decode CSV with any standard encoding"
-        elif filename_lower.endswith(".json"):
-            for encoding in ["utf-8", "latin-1", "cp1252"]:
-                try:
-                    text = safe_decode_with_unicode_handling(decoded, encoding)
-                    reader = pd.read_json(
-                        io.StringIO(text),
-                        lines=True,
-                        chunksize=chunk_size,
-                    )
-                    chunks = []
-                    for chunk in reader:
-                        monitor.throttle_if_needed()
-                        chunks.append(chunk)
-                    df = (
-                        pd.concat(chunks, ignore_index=True)
-                        if chunks
-                        else pd.DataFrame()
-                    )
-                    return df, None
-                except UnicodeDecodeError:
-                    continue
-            return None, "Could not decode JSON with any standard encoding"
-        elif filename_lower.endswith((".xlsx", ".xls")):
-            df = pd.read_excel(io.BytesIO(decoded))
-            return df, None
-        else:
-            return None, f"Unsupported file type: {filename}"
-    except (
-        UnicodeDecodeError,
-        ValueError,
-        pd.errors.ParserError,
-        json.JSONDecodeError,
-    ) as e:
-        return None, f"Error processing file: {str(e)}"
-    except Exception as exc:  # pragma: no cover
-        logger.exception("Unexpected error processing file", exc_info=exc)
-        raise
+# ``process_dataframe`` is provided by :mod:`services.data_processing.common`.
 
 
 def validate_dataframe_content(df: pd.DataFrame) -> Dict[str, Any]:
