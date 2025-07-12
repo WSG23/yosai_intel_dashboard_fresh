@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Page registration system for dynamic page loading.
-Replace existing pages/__init__.py entirely.
+Page registration system - simplified to prevent routing conflicts
 """
 
 import importlib
@@ -16,7 +15,7 @@ PAGE_MODULES: Dict[str, str] = {
     "deep_analytics": "pages.deep_analytics",
     "file_upload": "pages.file_upload",
     "graphs": "pages.graphs",
-    "export": "pages.export",
+    "export": "pages.export", 
     "settings": "pages.settings",
 }
 
@@ -38,9 +37,10 @@ def _load_page(name: str) -> Optional[ModuleType]:
     try:
         module = importlib.import_module(module_path)
         _loaded[name] = module
+        logger.debug(f"✅ Loaded page module: {name}")
         return module
     except Exception as e:
-        logger.warning(f"Failed to import page {name}: {e}")
+        logger.warning(f"❌ Failed to import page {name}: {e}")
         _loaded[name] = None
         return None
 
@@ -54,14 +54,38 @@ def get_page_layout(page_name: str) -> Optional[Callable]:
 
 
 def register_pages() -> None:
-    """Register all known pages with Dash."""
+    """Register all known pages with Dash - simplified version."""
+    registered_count = 0
+    
+    for name in PAGE_MODULES:
+        try:
+            module = _load_page(name)
+            if module and hasattr(module, "register_page"):
+                module.register_page()
+                registered_count += 1
+                logger.debug(f"✅ Registered page: {name}")
+            else:
+                logger.debug(f"⚠️ No register_page function in {name}")
+        except Exception as exc:
+            logger.warning(f"❌ Failed to register page {name}: {exc}")
+    
+    logger.info(f"✅ Pages registered: {registered_count}/{len(PAGE_MODULES)}")
+
+
+def clear_page_cache() -> None:
+    """Clear the page module cache."""
+    global _loaded
+    _loaded.clear()
+    logger.info("🔄 Page cache cleared")
+
+
+def get_available_pages() -> Dict[str, bool]:
+    """Get status of all available pages."""
+    status = {}
     for name in PAGE_MODULES:
         module = _load_page(name)
-        if module and hasattr(module, "register_page"):
-            try:
-                module.register_page()
-            except Exception as exc:
-                logger.warning(f"Failed to register page {name}: {exc}")
+        status[name] = module is not None
+    return status
 
 
-__all__ = ["get_page_layout", "register_pages"]
+__all__ = ["get_page_layout", "register_pages", "clear_page_cache", "get_available_pages"]
