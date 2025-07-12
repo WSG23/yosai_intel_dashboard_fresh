@@ -41,7 +41,7 @@ class ConfigProviderProtocol(Protocol):
 class AnalyticsProviderProtocol(Protocol):
     """Basic analytics provider interface."""
 
-    def process_data(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def process_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Process ``df`` and return analytics metrics."""
         ...
 
@@ -557,6 +557,10 @@ class AnalyticsService(AnalyticsServiceProtocol):
     # ------------------------------------------------------------------
     # AnalyticsProviderProtocol implementation
     # ------------------------------------------------------------------
+    def process_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Alias for :meth:`process_data` required by ``AnalyticsProviderProtocol``."""
+        return self.process_data(df)
+
     def process_data(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Process ``df`` and return a metrics dictionary."""
         cleaned = self.clean_uploaded_dataframe(df)
