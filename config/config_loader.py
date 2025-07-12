@@ -14,6 +14,28 @@ from .protocols import ConfigLoaderProtocol
 from .base_loader import BaseConfigLoader
 
 
+def validate_uploads_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Validate uploads configuration with defaults."""
+    defaults = {
+        "chunk_size": 1024000,
+        "max_parallel_uploads": 3,
+        "validator_rules": {
+            "max_file_size": 104857600,
+            "allowed_extensions": [".csv", ".xlsx", ".json"],
+            "scan_for_malware": True,
+        },
+    }
+
+    if "uploads" not in config:
+        config["uploads"] = defaults
+    else:
+        for key, default_value in defaults.items():
+            if key not in config["uploads"]:
+                config["uploads"][key] = default_value
+
+    return config
+
+
 class ConfigLoader(BaseConfigLoader, ConfigLoaderProtocol):
     """Load configuration from YAML/JSON files or environment.
 
@@ -41,7 +63,9 @@ class ConfigLoader(BaseConfigLoader, ConfigLoaderProtocol):
                 data = json.loads(env_json)
             except Exception as exc:  # pragma: no cover - defensive
                 self.log.warning("Failed to parse YOSAI_CONFIG_JSON: %s", exc)
-        return self._sanitize(data)
+
+        data = self._sanitize(data)
+        return validate_uploads_config(data)
 
 
-__all__ = ["ConfigLoader", "ConfigLoaderProtocol"]
+__all__ = ["ConfigLoader", "ConfigLoaderProtocol", "validate_uploads_config"]
