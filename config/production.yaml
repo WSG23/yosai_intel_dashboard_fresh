@@ -80,5 +80,11 @@ uploads:
     xss: true
     path_traversal: true
 
+streaming:
+  service_type: ${STREAMING_SERVICE:kafka}
+  brokers: ${STREAMING_BROKERS:localhost:9092}
+  topic: ${STREAMING_TOPIC:events}
+  consumer_group: ${STREAMING_CONSUMER_GROUP:yosai}
+
 secret_validation:
   severity: high

@@ -52,3 +52,9 @@ uploads:
     sql_injection: true
     xss: true
     path_traversal: true
+
+streaming:
+  service_type: kafka
+  brokers: localhost:9092
+  topic: events
+  consumer_group: test

@@ -8,6 +8,7 @@ from .constants import (
     AnalyticsConstants,
     CSSConstants,
     DatabaseConstants,
+    StreamingConstants,
     PerformanceConstants,
     SecurityConstants,
     UploadLimits,
@@ -34,6 +35,7 @@ class DynamicConfigManager(BaseConfigLoader):
         self.css = CSSConstants()
         self.analytics = AnalyticsConstants()
         self.database = DatabaseConstants()
+        self.streaming = StreamingConstants()
         self.uploads = UploadLimits()
         self.upload = UploadConfig()
         self._load_yaml_config()
@@ -56,6 +58,11 @@ class DynamicConfigManager(BaseConfigLoader):
                 for key, value in uploads_config.items():
                     if hasattr(self.uploads, key):
                         setattr(self.uploads, key, value)
+
+                streaming_config = config_data.get("streaming", {})
+                for key, value in streaming_config.items():
+                    if hasattr(self.streaming, key):
+                        setattr(self.streaming, key, value)
 
                 database_config = config_data.get("database", {})
                 if "connection_timeout" in database_config:
@@ -178,6 +185,30 @@ class DynamicConfigManager(BaseConfigLoader):
                 logging.getLogger(__name__).warning(
                     "Failed to parse VALIDATOR_RULES env var"
                 )
+
+        brokers = os.getenv("STREAMING_BROKERS")
+        if brokers:
+            self.streaming.brokers = brokers
+
+        topic = os.getenv("STREAMING_TOPIC")
+        if topic:
+            self.streaming.topic = topic
+
+        service_type = os.getenv("STREAMING_SERVICE")
+        if service_type:
+            self.streaming.service_type = service_type
+
+        group = os.getenv("STREAMING_CONSUMER_GROUP")
+        if group:
+            self.streaming.consumer_group = group
+
+        user = os.getenv("STREAMING_USERNAME")
+        if user:
+            self.streaming.username = user
+
+        password = os.getenv("STREAMING_PASSWORD")
+        if password:
+            self.streaming.password = password
 
     def get_rate_limit(self) -> Dict[str, int]:
         return {

@@ -98,6 +98,18 @@ class DatabaseConstants:
 
 
 @dataclass
+class StreamingConstants:
+    """Defaults for streaming configuration."""
+
+    service_type: str = "kafka"
+    brokers: str = "localhost:9092"
+    topic: str = "events"
+    consumer_group: str = "yosai"
+    username: str = ""
+    password: str = ""
+
+
+@dataclass
 class CSSConstants:
     """Thresholds for CSS quality metrics."""
 
