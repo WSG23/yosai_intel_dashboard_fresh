@@ -365,6 +365,14 @@ def _create_full_app(assets_folder: str) -> "Dash":
         try:
             from pages import register_pages
             register_pages()
+            logger.info("✅ Pages registered after app creation")
+        except Exception as e:
+            logger.warning(f"Page registration failed: {e}")
+        
+        # Register pages after app and layout are created
+        try:
+            from pages import register_pages
+            register_pages()
             logger.info("✅ Pages registered successfully")
         except Exception as e:
             logger.warning(f"Page registration failed: {e}")
@@ -619,31 +627,17 @@ def _create_json_safe_app(assets_folder: str) -> "Dash":
 
 
 def _create_main_layout() -> "Html.Div":
-    """Create main application layout with complete integration"""
-    return html.Div(
-        [
-            # URL routing component
-            dcc.Location(id="url", refresh=False),
-            # Navigation bar wrapped in semantic <nav> element
-            html.Nav(
-                _create_navbar(),
-                className="top-panel",
-            ),
-            # Main content area with Dash Pages content
-            html.Main(
-                page_container,
-                id="page-content",
-                className="main-content p-4",
-            ),
-            # Global data stores
-            dcc.Store(id="global-store", data={}),
-            dcc.Store(id="session-store", data={}),
-            dcc.Store(id="app-state-store", data={"initial": True}),
-            dcc.Store(id="theme-store", data=DEFAULT_THEME),
-            html.Div(id="theme-dummy-output", style={"display": "none"}),
-        ]
-    )
-
+    """Create main application layout with page_container for Dash Pages"""
+    return html.Div([
+        dcc.Location(id="url", refresh=False),
+        html.Nav(_create_navbar(), className="top-panel"),
+        html.Main(page_container, id="page-content", className="main-content p-4"),
+        dcc.Store(id="global-store", data={}),
+        dcc.Store(id="session-store", data={}),
+        dcc.Store(id="app-state-store", data={"initial": True}),
+        dcc.Store(id="theme-store", data=DEFAULT_THEME),
+        html.Div(id="theme-dummy-output", style={"display": "none"}),
+    ])
 
 def _create_navbar() -> Any:
     """Wrapper to create the navigation bar layout."""
@@ -751,7 +745,7 @@ def _register_callbacks(
                 except Exception:
                     unicode_proc = None
 
-            # REMOVED: _register_router_callbacks(coordinator, unicode_proc)
+            # REMOVED: # _register_router_callbacks(coordinator, unicode_proc)  # DISABLED
             _register_global_callbacks(coordinator)
 
             for module_name, func_name in registration_modules:
