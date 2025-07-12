@@ -409,7 +409,7 @@ def _create_full_app(assets_folder: str) -> "Dash":
 def _create_simple_app(assets_folder: str) -> "Dash":
     """Create a simplified Dash application"""
     try:
-        from dash import dcc, html
+        from dash import dcc, html, page_container
 
         external_stylesheets = [dbc.themes.BOOTSTRAP]
         built_css = ASSETS_DIR / "dist" / "main.min.css"
@@ -511,7 +511,7 @@ def _create_simple_app(assets_folder: str) -> "Dash":
 def _create_json_safe_app(assets_folder: str) -> "Dash":
     """Create Dash application with JSON-safe layout"""
     try:
-        from dash import html
+        from dash import html, page_container
 
         external_stylesheets = [dbc.themes.BOOTSTRAP]
         built_css = ASSETS_DIR / "dist" / "main.min.css"
@@ -743,6 +743,7 @@ def _register_callbacks(
                 except Exception:
                     unicode_proc = None
 
+            # REMOVED: _register_router_callbacks(coordinator, unicode_proc)
             _register_global_callbacks(coordinator)
 
             for module_name, func_name in registration_modules:
