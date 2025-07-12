@@ -190,7 +190,8 @@ def test_callback_connectivity(fake_dash):
     _callback_registry.registration_order.clear()
     _callback_registry.registration_attempts.clear()
 
-    file_upload.register_upload_callbacks(coord)
+    comp = file_upload.load_page()
+    comp.register_callbacks(coord)
 
     expected = {
         "file_upload_handle",
@@ -200,5 +201,5 @@ def test_callback_connectivity(fake_dash):
     assert expected.issubset(_callback_registry.registered_callbacks)
     first = len(_callback_registry.registered_callbacks)
 
-    file_upload.register_upload_callbacks(coord)
+    comp.register_callbacks(coord)
     assert len(_callback_registry.registered_callbacks) == first

@@ -17,10 +17,188 @@ from dash import Input, Output, State, dcc, html, no_update
 from dash.exceptions import PreventUpdate
 from dash import register_page as dash_register_page
 
+from components.ui_component import UIComponent
+
 logger = logging.getLogger(__name__)
 
 # Global storage for uploaded files
 _uploaded_files: Dict[str, pd.DataFrame] = {}
+
+
+class UploadPage(UIComponent):
+    """Upload page component."""
+
+    def layout(self) -> dbc.Container:  # type: ignore[override]
+        """Modern file upload layout with working drag-and-drop functionality."""
+
+        return dbc.Container([
+            # Header
+            dbc.Row([
+                dbc.Col([
+                    html.H2("📁 File Upload", className="mb-3"),
+                    html.P(
+                        "Drag and drop files or click to browse. Supports CSV, Excel, and JSON files.",
+                        className="text-muted mb-4",
+                    ),
+                ])
+            ]),
+
+            # Upload area
+            dbc.Row([
+                dbc.Col([
+                    dcc.Upload(
+                        id="drag-drop-upload",
+                        children=html.Div(
+                            [
+                                html.I(
+                                    className="fas fa-cloud-upload-alt fa-3x mb-3",
+                                    style={"color": "#6c757d"},
+                                ),
+                                html.H5("Drag & Drop Files Here"),
+                                html.P("or click to select files", className="text-muted"),
+                                html.P(
+                                    "Supports: .csv, .xlsx, .xls, .json",
+                                    className="small text-muted",
+                                ),
+                            ],
+                            style={
+                                "textAlign": "center",
+                                "padding": "60px",
+                                "border": "2px dashed #dee2e6",
+                                "borderRadius": "10px",
+                                "cursor": "pointer",
+                            },
+                        ),
+                        style={"width": "100%", "minHeight": "200px", "marginBottom": "20px"},
+                        multiple=True,
+                        accept=".csv,.xlsx,.xls,.json",
+                        max_size=50 * 1024 * 1024,  # 50MB
+                        className="upload-dropzone",
+                    )
+                ], lg=8, md=10, sm=12, className="mx-auto")
+            ], className="mb-4"),
+
+            # Upload status and progress
+            dbc.Row([
+                dbc.Col([
+                    html.Div(id="upload-status", className="mb-3"),
+                    dbc.Progress(
+                        id="upload-progress",
+                        value=0,
+                        striped=True,
+                        animated=False,
+                        color="success",
+                        style={"display": "none", "height": "8px"},
+                        className="mb-3",
+                    ),
+                ], lg=8, md=10, sm=12, className="mx-auto")
+            ]),
+
+            # File preview area
+            dbc.Row([
+                dbc.Col([html.Div(id="preview-area")], lg=10, md=12, sm=12, className="mx-auto")
+            ]),
+
+            # Navigation area
+            dbc.Row([
+                dbc.Col([html.Div(id="upload-navigation")], lg=8, md=10, sm=12, className="mx-auto")
+            ], className="mt-4"),
+
+            # Data stores
+            dcc.Store(id="uploaded-files-store", data={}),
+            dcc.Store(id="upload-session-store", data={}),
+        ], fluid=True, className="py-4")
+
+    # ------------------------------------------------------------------
+    def register_callbacks(self, manager, controller=None) -> None:  # type: ignore[override]
+        """Register upload callbacks - simplified and working."""
+
+        if manager is None:
+            logger.warning("No callback manager provided to file_upload")
+            return
+
+        try:
+            @manager.unified_callback(
+                [
+                    Output("preview-area", "children"),
+                    Output("upload-progress", "value"),
+                    Output("upload-progress", "style"),
+                    Output("upload-status", "children"),
+                    Output("uploaded-files-store", "data"),
+                ],
+                Input("drag-drop-upload", "contents"),
+                [
+                    State("drag-drop-upload", "filename"),
+                    State("uploaded-files-store", "data"),
+                ],
+                callback_id="file_upload_handler_simple",
+                component_name="file_upload",
+                prevent_initial_call=True,
+            )
+            def handle_upload(contents, filenames, existing_data):
+                if not contents:
+                    raise PreventUpdate
+
+                try:
+                    if not isinstance(contents, list):
+                        contents = [contents]
+                    if not isinstance(filenames, list):
+                        filenames = [filenames]
+
+                    results = []
+                    updated_store = existing_data or {}
+
+                    for content, filename in zip(contents, filenames):
+                        if content and filename:
+                            result = _process_single_file(content, filename)
+                            if result:
+                                results.append(result)
+                                _uploaded_files[filename] = result["dataframe"]
+                                updated_store[filename] = filename
+
+                    if results:
+                        preview = _create_file_preview(results)
+                        status = _create_success_status(len(results))
+                        progress_style = {"display": "block", "height": "8px"}
+
+                        return preview, 100, progress_style, status, updated_store
+                    else:
+                        error_status = _create_error_status("No valid files processed")
+                        progress_style = {"display": "none"}
+                        return no_update, 0, progress_style, error_status, no_update
+
+                except Exception as e:
+                    logger.error(f"Upload processing error: {e}")
+                    error_status = _create_error_status(f"Upload failed: {str(e)}")
+                    progress_style = {"display": "none"}
+                    return no_update, 0, progress_style, error_status, no_update
+
+            @manager.unified_callback(
+                Output("upload-navigation", "children"),
+                Input("uploaded-files-store", "data"),
+                callback_id="file_upload_navigation_simple",
+                component_name="file_upload",
+                prevent_initial_call=True,
+            )
+            def update_navigation(uploaded_files):
+                if not uploaded_files:
+                    return ""
+
+                return _create_navigation_buttons(uploaded_files)
+
+            logger.info("✅ File upload callbacks registered successfully")
+
+        except Exception as e:
+            logger.error(f"❌ Failed to register file upload callbacks: {e}")
+
+
+_upload_component = UploadPage()
+
+
+def load_page(**kwargs) -> UploadPage:
+    """Return a new :class:`UploadPage` instance."""
+
+    return UploadPage(**kwargs)
 
 
 def register_page() -> None:
@@ -33,172 +211,15 @@ def register_page() -> None:
 
 
 def layout() -> dbc.Container:
-    """Modern file upload layout with working drag-and-drop functionality."""
-    
-    return dbc.Container([
-        # Header
-        dbc.Row([
-            dbc.Col([
-                html.H2("📁 File Upload", className="mb-3"),
-                html.P("Drag and drop files or click to browse. Supports CSV, Excel, and JSON files.", 
-                       className="text-muted mb-4")
-            ])
-        ]),
-        
-        # Upload area
-        dbc.Row([
-            dbc.Col([
-                dcc.Upload(
-                    id="drag-drop-upload",
-                    children=html.Div([
-                        html.I(className="fas fa-cloud-upload-alt fa-3x mb-3", 
-                               style={"color": "#6c757d"}),
-                        html.H5("Drag & Drop Files Here"),
-                        html.P("or click to select files", className="text-muted"),
-                        html.P("Supports: .csv, .xlsx, .xls, .json", className="small text-muted")
-                    ], style={
-                        "textAlign": "center",
-                        "padding": "60px",
-                        "border": "2px dashed #dee2e6",
-                        "borderRadius": "10px",
-                        "cursor": "pointer"
-                    }),
-                    style={
-                        "width": "100%",
-                        "minHeight": "200px",
-                        "marginBottom": "20px"
-                    },
-                    multiple=True,
-                    accept='.csv,.xlsx,.xls,.json',
-                    max_size=50 * 1024 * 1024,  # 50MB
-                    className="upload-dropzone"
-                )
-            ], lg=8, md=10, sm=12, className="mx-auto")
-        ], className="mb-4"),
-        
-        # Upload status and progress
-        dbc.Row([
-            dbc.Col([
-                html.Div(id="upload-status", className="mb-3"),
-                dbc.Progress(
-                    id="upload-progress",
-                    value=0,
-                    striped=True,
-                    animated=False,
-                    color="success",
-                    style={'display': 'none', 'height': '8px'},
-                    className="mb-3"
-                )
-            ], lg=8, md=10, sm=12, className="mx-auto")
-        ]),
-        
-        # File preview area
-        dbc.Row([
-            dbc.Col([
-                html.Div(id="preview-area")
-            ], lg=10, md=12, sm=12, className="mx-auto")
-        ]),
-        
-        # Navigation area
-        dbc.Row([
-            dbc.Col([
-                html.Div(id="upload-navigation")
-            ], lg=8, md=10, sm=12, className="mx-auto")
-        ], className="mt-4"),
-        
-        # Data stores
-        dcc.Store(id="uploaded-files-store", data={}),
-        dcc.Store(id="upload-session-store", data={}),
-        
-    ], fluid=True, className="py-4")
+    """Compatibility wrapper returning the default component layout."""
+
+    return _upload_component.layout()
 
 
 def register_callbacks(manager):
-    """Register upload callbacks - simplified and working."""
+    """Compatibility wrapper using the default component."""
 
-    if manager is None:
-        logger.warning("No callback manager provided to file_upload")
-        return
-
-    try:
-        @manager.unified_callback(
-            [
-                Output("preview-area", "children"),
-                Output("upload-progress", "value"),
-                Output("upload-progress", "style"),
-                Output("upload-status", "children"),
-                Output("uploaded-files-store", "data")
-            ],
-            Input("drag-drop-upload", "contents"),
-            [
-                State("drag-drop-upload", "filename"),
-                State("uploaded-files-store", "data")
-            ],
-            callback_id="file_upload_handler_simple",
-            component_name="file_upload",
-            prevent_initial_call=True,
-        )
-        def handle_upload(contents, filenames, existing_data):
-            """Handle file uploads with proper error handling."""
-            
-            if not contents:
-                raise PreventUpdate
-            
-            try:
-                # Ensure inputs are lists
-                if not isinstance(contents, list):
-                    contents = [contents]
-                if not isinstance(filenames, list):
-                    filenames = [filenames]
-                
-                results = []
-                updated_store = existing_data or {}
-                
-                for content, filename in zip(contents, filenames):
-                    if content and filename:
-                        result = _process_single_file(content, filename)
-                        if result:
-                            results.append(result)
-                            # Store in global and component store
-                            _uploaded_files[filename] = result['dataframe']
-                            updated_store[filename] = filename
-                
-                if results:
-                    preview = _create_file_preview(results)
-                    status = _create_success_status(len(results))
-                    progress_style = {'display': 'block', 'height': '8px'}
-                    
-                    return preview, 100, progress_style, status, updated_store
-                else:
-                    error_status = _create_error_status("No valid files processed")
-                    progress_style = {'display': 'none'}
-                    return no_update, 0, progress_style, error_status, no_update
-                    
-            except Exception as e:
-                logger.error(f"Upload processing error: {e}")
-                error_status = _create_error_status(f"Upload failed: {str(e)}")
-                progress_style = {'display': 'none'}
-                return no_update, 0, progress_style, error_status, no_update
-
-        @manager.unified_callback(
-            Output("upload-navigation", "children"),
-            Input("uploaded-files-store", "data"),
-            callback_id="file_upload_navigation_simple",
-            component_name="file_upload",
-            prevent_initial_call=True
-        )
-        def update_navigation(uploaded_files):
-            """Update navigation options after successful upload."""
-            
-            if not uploaded_files:
-                return ""
-            
-            return _create_navigation_buttons(uploaded_files)
-
-        logger.info("✅ File upload callbacks registered successfully")
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to register file upload callbacks: {e}")
+    _upload_component.register_callbacks(manager)
 
 
 def _process_single_file(content: str, filename: str) -> Optional[Dict[str, Any]]:
@@ -370,8 +391,10 @@ def safe_upload_layout():
 register_upload_callbacks = register_callbacks
 
 __all__ = [
+    "UploadPage",
+    "load_page",
     "layout",
-    "safe_upload_layout", 
+    "safe_upload_layout",
     "register_page",
     "register_callbacks",
     "register_upload_callbacks",

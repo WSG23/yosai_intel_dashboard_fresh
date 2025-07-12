@@ -42,8 +42,10 @@ def create_sample_files(tmp_path: Path) -> dict[str, Path]:
 def _create_app() -> dash.Dash:
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     coord = TrulyUnifiedCallbacks(app)
-    file_upload.register_upload_callbacks(coord)
-    app.layout = html.Div([dcc.Location(id="url"), file_upload.layout()])
+    comp = file_upload.load_page()
+    comp.register_callbacks(coord)
+    app.layout = html.Div([dcc.Location(id="url"), comp.layout()])
+    app._component = comp
     return app
 
 
@@ -62,7 +64,7 @@ def test_file_upload_component_integration(_skip_if_no_chromedriver, dash_duo, t
 
     uploaded = file_upload.get_uploaded_filenames()
     assert sorted(uploaded) == sorted(p.name for p in files.values())
-    assert isinstance(file_upload._upload_component, UnifiedUploadComponent)
+    assert isinstance(app._component, UnifiedUploadComponent)
 
 
 def test_safe_encode_text_edge_cases():
