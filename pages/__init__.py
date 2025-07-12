@@ -3,6 +3,16 @@
 Page registration system - simplified to prevent routing conflicts
 """
 
+# Expected page modules bundled with the application. Each listed module must
+# provide at least a ``layout`` function and may optionally expose a
+# ``register_page`` hook for Dash integration.
+#
+# - ``deep_analytics``
+# - ``file_upload``
+# - ``graphs``
+# - ``export``
+# - ``settings``
+
 import importlib
 import logging
 from types import ModuleType
@@ -39,8 +49,8 @@ def _load_page(name: str) -> Optional[ModuleType]:
         _loaded[name] = module
         logger.debug(f"✅ Loaded page module: {name}")
         return module
-    except Exception as e:
-        logger.warning(f"❌ Failed to import page {name}: {e}")
+    except Exception:
+        logger.exception(f"❌ Failed to import page {name}")
         _loaded[name] = None
         return None
 
