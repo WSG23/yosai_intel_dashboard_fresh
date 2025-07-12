@@ -54,3 +54,14 @@ These classes have been COMPLETELY REMOVED:
 - ❌ `BusinessLogicValidator`
 
 Use `SecurityValidator` for all validation needs.
+
+## Environment Limits
+
+When overriding configuration with environment variables, memory related values
+are clamped to a maximum of **500 MB**. The following variables are affected:
+
+- `MEMORY_THRESHOLD_MB`
+- `ANALYTICS_MAX_MEMORY_MB`
+
+If a higher value is provided, a warning will be logged and the value will be
+reduced to 500 MB.
