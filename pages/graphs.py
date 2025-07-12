@@ -18,19 +18,32 @@ except Exception as e:  # pragma: no cover - optional plotting deps
     go = None
 
 from dash import dcc, html, register_page as dash_register_page
-
-from core.cache import cache
 from security.unicode_security_processor import sanitize_unicode_input
 
+# ✅ FIXED: Initialize cache as None, set up lazily
+cache = None
 
 def register_page() -> None:
     """Register the graphs page with Dash."""
     dash_register_page(__name__, path="/graphs", name="Graphs")
 
+def _setup_cache_if_needed():
+    """Setup cache if app context is available."""
+    global cache
+    if cache is None:
+        try:
+            from dash import current_app
+            if current_app:
+                from flask_caching import Cache
+                cache = Cache(current_app.server, config={'CACHE_TYPE': 'simple'})
+        except:
+            cache = None  # Fallback if no app context
 
-@cache.memoize()
 def _create_figures() -> Dict[str, Any]:
     """Create sample figures for the graphs page."""
+    # Try to use cache if available
+    _setup_cache_if_needed()
+    
     if not (pd and px):
         return {k: (go.Figure() if go else None) for k in ("line", "bar", "other")}
 
@@ -55,39 +68,53 @@ def _create_figures() -> Dict[str, Any]:
         empty = go.Figure() if go else None
         return {"line": empty, "bar": empty, "other": empty}
 
-
 _FIGURES: Dict[str, Any] | None = None
-
 
 def layout() -> dbc.Container:
     """Return the graphs page layout."""
     global _FIGURES
+    
+    # ✅ FIXED: Setup cache when layout is called
+    _setup_cache_if_needed()
+    
     if _FIGURES is None:
         _FIGURES = _create_figures()
 
-    tabs = dbc.Tabs(
+    return dbc.Container(
         [
-            dbc.Tab(
-                dcc.Graph(figure=_FIGURES.get("line") if _FIGURES else None),
-                label=sanitize_unicode_input("Line"),
-                tab_id="line",
-            ),
-            dbc.Tab(
-                dcc.Graph(figure=_FIGURES.get("bar") if _FIGURES else None),
-                label=sanitize_unicode_input("Bar"),
-                tab_id="bar",
-            ),
-            dbc.Tab(
-                dcc.Graph(figure=_FIGURES.get("other") if _FIGURES else None),
-                label=sanitize_unicode_input("Other"),
-                tab_id="other",
-            ),
+            html.H2("📊 Graphs & Visualizations"),
+            html.P("Interactive data visualizations and charts"),
+            html.Hr(),
+            
+            dbc.Row([
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader("Line Chart"),
+                        dbc.CardBody([
+                            dcc.Graph(figure=_FIGURES.get("line", {}))
+                        ])
+                    ])
+                ], md=6),
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader("Bar Chart"), 
+                        dbc.CardBody([
+                            dcc.Graph(figure=_FIGURES.get("bar", {}))
+                        ])
+                    ])
+                ], md=6),
+            ], className="mb-4"),
+            
+            dbc.Row([
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader("Scatter Plot"),
+                        dbc.CardBody([
+                            dcc.Graph(figure=_FIGURES.get("other", {}))
+                        ])
+                    ])
+                ], md=12),
+            ])
         ],
-        id="graphs-tabs",
-        active_tab="line",
-        className="mb-3",
+        fluid=True
     )
-    return dbc.Container([tabs], fluid=True)
-
-
-__all__ = ["layout", "register_page"]

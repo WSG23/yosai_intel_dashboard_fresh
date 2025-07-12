@@ -469,8 +469,6 @@ def _create_simple_app(assets_folder: str) -> "Dash":
                 resp.headers["Cache-Control"] = "public,max-age=31536000,immutable"
             return resp
 
-        _register_pages()
-
         app.title = "Yōsai Intel Dashboard"
 
         app.layout = html.Div(
@@ -478,6 +476,7 @@ def _create_simple_app(assets_folder: str) -> "Dash":
                 dcc.Location(id="url", refresh=False),
                 html.H1("🏯 Yōsai Intel Dashboard", className="text-center"),
                 html.Hr(),
+                html.Div(id="page-content"),
                 html.Div(
                     [
                         dbc.Alert(
@@ -493,6 +492,13 @@ def _create_simple_app(assets_folder: str) -> "Dash":
                 ),
             ]
         )
+
+        try:
+            from pages import register_pages
+            register_pages()
+            logger.info("✅ Pages registered successfully")
+        except Exception as e:
+            logger.warning(f"Page registration failed: {e}")
 
         # Expose basic health check endpoint and Swagger docs
         server: Flask = cast(Flask, app.server)
