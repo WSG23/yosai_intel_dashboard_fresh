@@ -13,6 +13,13 @@ pip install pre-commit
 pre-commit install
 ```
 
+The hook will automatically run each time you commit. To verify all files at
+once execute:
+
+```bash
+pre-commit run --all-files
+```
+
 These additional packages provide linting, type checking, security scanning and testing tools used in our CI pipeline.
 
 ## Running Tests
