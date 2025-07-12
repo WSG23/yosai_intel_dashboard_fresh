@@ -1,10 +1,44 @@
-/* Analytics styles */
+/* =================================================================== */
+/* ANALYTICS PAGE ANTI-FLASH STYLES */
+/* =================================================================== */
 
-/* Utility class for toggling visibility on analytics page */
-.hidden {
-  display: none;
+/* Analytics page container stability */
+.analytics-page,
+.main-content {
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: relative !important;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
-/* Page transition handled via utility classes */
-.main-content {
+/* Analytics cards - prevent flash */
+.analytics-page .card,
+.analytics-page .dbc,
+.analytics-page .row,
+.analytics-page .col {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+/* Chart containers */
+.analytics-page .chart-container,
+.analytics-page [id*="chart"],
+.analytics-page [id*="graph"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  min-height: 300px !important;
+  position: relative !important;
+}
+
+/* Utility class fixes */
+.hidden {
+  display: none !important;
+}
+
+/* Real-time dashboard stability */
+.realtime-dashboard {
+  opacity: 1 !important;
+  visibility: visible !important;
 }

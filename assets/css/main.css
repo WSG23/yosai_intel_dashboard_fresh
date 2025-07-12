@@ -238,3 +238,133 @@ nav .nav-link-stable {
   opacity: 1 !important;
   visibility: visible !important;
 }
+
+/* =================================================================== */
+/* CSS VARIABLE FALLBACKS - PREVENT FLASH ON MISSING VARS */
+/* =================================================================== */
+
+:root {
+  --color-accent: #007bff;
+  --color-accent-hover: #0056b3;
+  --color-accent-subtle: #e9ecef;
+  --surface-tertiary: #f8f9fa;
+  --surface-secondary: #ffffff;
+  --text-secondary: #6c757d;
+  --radius-lg: 8px;
+  --space-10: 40px;
+  --space-8: 32px;
+  --space-5: 20px;
+  --space-4: 16px;
+  --space-3: 12px;
+  --duration-normal: 0.3s;
+  --ease-out: ease-out;
+}
+
+/* Force stability on all page containers */
+.main-content,
+.page-container,
+[data-dash-app] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: relative !important;
+}
+
+/* =================================================================== */
+/* DASH UPLOAD COMPONENT ANTI-FLASH FIXES */
+/* =================================================================== */
+
+/* Prevent Dash Upload loading flash */
+[data-dash-is-loading="true"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+/* Dash Upload component stability */
+#drag-drop-upload {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  position: relative !important;
+  min-height: 200px !important;
+  transition: none !important;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Dash Upload children stability */
+#drag-drop-upload > div,
+#drag-drop-upload .fas,
+#drag-drop-upload h5,
+#drag-drop-upload p {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  transition: none !important;
+}
+
+/* Override Dash loading indicators */
+._dash-loading,
+._dash-loading::after,
+._dash-loading::before {
+  display: none !important;
+}
+
+/* Force upload area to stay visible during all states */
+#drag-drop-upload[style*="display: none"] {
+  display: block !important;
+}
+
+#drag-drop-upload[style*="visibility: hidden"] {
+  visibility: visible !important;
+}
+
+#drag-drop-upload[style*="opacity: 0"] {
+  opacity: 1 !important;
+}
+
+/* =================================================================== */
+/* UPLOAD FLASH FIX - TRANSITION DELAYS */
+/* =================================================================== */
+
+/* Delay updates to prevent simultaneous re-renders */
+#preview-area {
+  transition: opacity 0.1s ease-in-out;
+  opacity: 1 !important;
+}
+
+#upload-progress {
+  transition: all 0.05s ease-in-out 0.1s; /* Delay progress updates */
+}
+
+#upload-status {
+  transition: opacity 0.05s ease-in-out 0.15s; /* Further delay status */
+}
+
+/* Prevent all elements from updating at exactly the same time */
+#drag-drop-upload * {
+  transition-delay: 0.01s;
+}
+
+/* =================================================================== */
+/* UPLOAD FLASH FIX - TRANSITION DELAYS */
+/* =================================================================== */
+
+/* Delay updates to prevent simultaneous re-renders */
+#preview-area {
+  transition: opacity 0.1s ease-in-out;
+  opacity: 1 !important;
+}
+
+#upload-progress {
+  transition: all 0.05s ease-in-out 0.1s; /* Delay progress updates */
+}
+
+#upload-status {
+  transition: opacity 0.05s ease-in-out 0.15s; /* Further delay status */
+}
+
+/* Prevent all elements from updating at exactly the same time */
+#drag-drop-upload * {
+  transition-delay: 0.01s;
+}

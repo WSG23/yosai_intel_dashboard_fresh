@@ -1,27 +1,27 @@
 /* =================================================================== */
-/* 07-utilities/_transitions.css - Opacity/Transform Transition Helpers */
+/* 07-utilities/_transitions.css - NO FLASH Transitions */
 /* =================================================================== */
 
 .transition-fade-move {
-  transition-property: opacity, transform;
-  transition-duration: var(--duration-normal);
-  transition-timing-function: var(--ease-out);
-  will-change: opacity, transform;
+  /* Disable opacity transitions that cause flash */
+  transition-property: transform;
+  transition-duration: 0.1s;
+  transition-timing-function: ease-out;
+  will-change: transform;
 }
 
-/* Starting state - keeps element in flow while hidden */
+/* Keep elements visible - no opacity changes */
 .transition-start {
-  opacity: 0;
-  transform: translateY(16px);
-}
-
-/* Ending state shown after content loads */
-.transition-end {
-  opacity: 1;
+  opacity: 1 !important;
   transform: translateY(0);
 }
 
-/* Utility to promote its own layer and avoid layout shifts */
+.transition-end {
+  opacity: 1 !important;
+  transform: translateY(0);
+}
+
+/* Stability fix */
 .transition-fix {
   transform: translateZ(0);
 }

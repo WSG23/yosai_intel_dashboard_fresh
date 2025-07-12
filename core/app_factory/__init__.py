@@ -625,7 +625,7 @@ def _create_main_layout() -> "Html.Div":
             html.Main(
                 page_container,
                 id="page-content",
-                className="main-content p-4 transition-fade-move transition-start",
+                className="main-content p-4 ",
             ),
             # Global data stores
             dcc.Store(id="global-store", data={}),
@@ -704,7 +704,7 @@ def _register_router_callbacks(
 
             # Route to appropriate page function
             if safe_pathname == "/" or safe_pathname == "/home":
-                content = _get_home_page()
+                return page_container, "main-content p-4"
             elif safe_pathname == "/analytics":
                 content = _get_analytics_page()
             elif safe_pathname == "/graphs":
@@ -720,14 +720,14 @@ def _register_router_callbacks(
                 content = _create_404_page(safe_pathname)
 
             # Set transition classes
-            css_classes = "main-content p-4 transition-fade-move transition-end"
+            css_classes = "main-content p-4 "
 
             return content, css_classes
 
         except Exception as e:
             logger.error(f"Routing error for {pathname}: {e}")
             error_content = _create_error_page(f"Page routing failed: {str(e)}")
-            css_classes = "main-content p-4 transition-fade-move transition-end"
+            css_classes = "main-content p-4 "
             return error_content, css_classes
 
 

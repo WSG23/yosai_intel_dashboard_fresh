@@ -235,7 +235,7 @@ class UploadPage(UIComponent):
                         status = _create_success_status(len(results))
                         progress_style = {"display": "block", "height": "8px"}
 
-                        return preview, 100, progress_style, status, updated_store
+                        return preview, no_update, {"display": "none"}, status, updated_store
                     else:
                         error_status = _create_error_status("No valid files processed")
                         progress_style = {"display": "none"}
@@ -544,3 +544,4 @@ __all__ = [
     "clear_uploaded_data",
 ]
 from config.dynamic_config import dynamic_config
+

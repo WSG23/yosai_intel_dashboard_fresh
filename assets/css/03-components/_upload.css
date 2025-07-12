@@ -1,179 +1,63 @@
 /* =================================================================== */
-/* 03-components/_upload.css - File Upload Component Styles            */
+/* CONSOLIDATED UPLOAD STYLES - ANTI-FLASH */
 /* =================================================================== */
 
-/* Drag and Drop Area */
+/* Primary upload component - prevent flash */
+#drag-drop-upload,
+.drag-drop-upload,
 .upload-dropzone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-10);
-  border: 2px dashed var(--color-accent);
-  border-radius: var(--radius-lg);
-  background: var(--surface-tertiary);
-  color: var(--text-secondary);
-  text-align: center;
-  cursor: pointer;
-  transition: background var(--duration-normal) var(--ease-out),
-              border-color var(--duration-normal) var(--ease-out);
-}
-
-.upload-dropzone--active {
-  background: var(--color-accent-subtle);
-  border-color: var(--color-accent-hover);
-  animation: upload-pulse 1.2s ease-out infinite;
-}
-
-.upload-dropzone:focus-within {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
-@keyframes upload-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(0, 153, 255, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 6px rgba(0, 153, 255, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(0, 153, 255, 0);
-  }
-}
-
-/* Progress Bar */
-.upload-progress {
-  width: 100%;
-  height: var(--space-3);
-  margin-top: var(--space-4);
-  background: var(--color-gray-700);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-}
-
-.upload-progress__bar {
-  width: 0;
-  height: 100%;
-  background: var(--color-accent);
-  animation: upload-progress 2s linear infinite;
-}
-
-.upload-progress--done .upload-progress__bar {
-  width: 100%;
-  animation: none;
-}
-
-@keyframes upload-progress {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-/* High Contrast Theme */
-.high-contrast-mode .upload-dropzone {
-  border-color: var(--color-white);
-  background: var(--color-black);
-  color: var(--color-white);
-}
-
-.high-contrast-mode .upload-progress {
-  background: var(--color-gray-500);
-}
-
-.high-contrast-mode .upload-progress__bar {
-  background: var(--color-white);
-}
-
-/* -------------------------------------------------- */
-/* Accessible Drag & Drop Upload Area                 */
-/* -------------------------------------------------- */
-.drag-drop-upload {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed var(--color-accent);
-  border-radius: var(--radius-lg);
-  padding: var(--space-8);
-  background: var(--surface-tertiary);
-  transition: background var(--duration-normal) var(--ease-out),
-              border-color var(--duration-normal) var(--ease-out);
-  cursor: pointer;
-}
-
-.drag-drop-upload--hover {
-  background: var(--color-accent-subtle);
-}
-
-.drag-drop-upload--dragging {
-  border-color: var(--color-accent-hover);
-  animation: upload-pulse 1.2s ease-out infinite;
-}
-
-.drag-drop-upload--uploading::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  pointer-events: none;
-}
-
-.drag-drop-upload__previews {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-3);
-  padding: 0;
-  list-style: none;
-}
-
-.drag-drop-upload__preview {
-  width: 64px;
-  height: 64px;
-  border: 1px solid var(--color-gray-600);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  background: var(--surface-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.drag-drop-upload__preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* Minimum touch target size */
-.drag-drop-upload .btn {
-  min-width: 44px;
-  min-height: 44px;
-}
-
-/* Ensure drag-drop upload is visible and prominent */
-#drag-drop-upload {
-  display: block !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
   min-height: 200px !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* Upload page specific targeting */
-.page-container #drag-drop-upload,
-.main-content #drag-drop-upload {
-  border: 2px dashed var(--color-accent, #007bff) !important;
-  border-radius: var(--radius-lg, 8px) !important;
-  padding: var(--space-10, 40px) !important;
-  background: var(--surface-tertiary, #f8f9fa) !important;
+  padding: 40px !important;
+  border: 2px dashed #007bff !important;
+  border-radius: 8px !important;
+  background: #f8f9fa !important;
   text-align: center !important;
-  margin: var(--space-5, 20px) auto !important;
-  max-width: 600px !important;
   cursor: pointer !important;
+  
+  /* Anti-flash properties */
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: relative !important;
+  transition: none !important;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: auto;
 }
 
-.page-container #drag-drop-upload:hover {
-  background: var(--color-accent-subtle, #e9ecef) !important;
-  border-color: var(--color-accent-hover, #0056b3) !important;
+/* Upload content stability */
+#drag-drop-upload > *,
+.drag-drop-upload > * {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  color: #007bff !important;
+}
+
+/* Icon and text styling */
+#drag-drop-upload .fas,
+#drag-drop-upload i,
+#drag-drop-upload p,
+#drag-drop-upload h3 {
+  font-size: 48px !important;
+  color: #007bff !important;
+  margin-bottom: 16px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Hover states */
+#drag-drop-upload:hover,
+.drag-drop-upload:hover {
+  background: #e9ecef !important;
+  border-color: #0056b3 !important;
+}
+
+/* Loading states */
+#drag-drop-upload[data-dash-is-loading="true"] {
+  opacity: 1 !important;
+  visibility: visible !important;
 }
