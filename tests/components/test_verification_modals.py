@@ -5,7 +5,10 @@ from dash import dcc, html
 pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 
 from components.column_verification import create_column_verification_modal
-from components.device_verification import create_device_verification_modal
+from components.device_verification import (
+    create_device_verification_modal,
+    toggle_device_verification_modal,
+)
 
 
 def _collect(component, cls):
@@ -61,3 +64,10 @@ def test_create_device_verification_modal_basic():
 def test_create_device_verification_modal_empty():
     modal = create_device_verification_modal({}, "sess")
     assert isinstance(modal, html.Div)
+
+
+def test_toggle_device_verification_modal():
+    # Opens when triggered from a closed state
+    assert toggle_device_verification_modal(1, None, False) is True
+    # Closes when either button is pressed while open
+    assert toggle_device_verification_modal(None, 1, True) is False

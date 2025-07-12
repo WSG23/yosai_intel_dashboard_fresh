@@ -282,6 +282,29 @@ def mark_device_as_edited(floor, access, special, security):
     return True  # Simplified - any change marks as edited
 
 
+def toggle_device_verification_modal(confirm_clicks, cancel_clicks, is_open):
+    """Toggle the device verification modal open/close state."""
+    if confirm_clicks or cancel_clicks:
+        return not is_open
+    return is_open
+
+
+def register_modal_callback(manager: "TrulyUnifiedCallbacks") -> None:
+    """Register callbacks controlling the verification modal."""
+
+    manager.register_callback(
+        Output("device-verification-modal", "is_open"),
+        [
+            Input("device-verify-confirm", "n_clicks"),
+            Input("device-verify-cancel", "n_clicks"),
+        ],
+
+        [State("device-verification-modal", "is_open")],
+        prevent_initial_call=True,
+        callback_id="toggle_device_verification_modal",
+        component_name="device_verification",
+    )(toggle_device_verification_modal)
+
 def register_callbacks(
     manager: "TrulyUnifiedCallbacks",
     controller: UnifiedAnalyticsController | None = None,
@@ -308,4 +331,4 @@ def register_callbacks(
         )
 
 
-__all__ = ["create_device_verification_modal", "register_callbacks"]
+__all__ = ["create_device_verification_modal", "register_callbacks", "register_modal_callback"]
