@@ -13,6 +13,8 @@ import warnings
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple, Iterable
+
+from database.baseline_metrics import BaselineMetricsDB
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 import numpy as np
@@ -62,6 +64,17 @@ class SecurityAssessment:
     recommendations: List[str]
 
 
+@dataclass
+class BehaviorProfile:
+    """Baseline behavior profile for a user or door."""
+
+    entity_type: str
+    entity_id: str
+    after_hours_rate: float
+    failure_rate: float
+    total_events: int
+
+
 class SecurityPatternsAnalyzer:
     """Enhanced security patterns analyzer with ML-based threat detection"""
 
@@ -75,6 +88,7 @@ class SecurityPatternsAnalyzer:
         self.confidence_threshold = confidence_threshold
         self.logger = logger or logging.getLogger(__name__)
         self.unified_callbacks = security_callback_controller
+        self.baseline_db = BaselineMetricsDB()
 
         # Initialize ML models
         self.isolation_forest = IsolationForest(
@@ -95,6 +109,9 @@ class SecurityPatternsAnalyzer:
         """Enhanced security analysis method"""
         try:
             df_clean = self._prepare_security_data(df)
+
+            # Update stored behavior baselines
+            self._update_behavior_profiles(df_clean)
 
             threat_indicators = self._collect_threat_indicators(df_clean)
 
@@ -171,17 +188,94 @@ class SecurityPatternsAnalyzer:
             self.logger.warning(f"Data preparation failed: {e}")
             raise
 
+    def _update_behavior_profiles(self, df: pd.DataFrame) -> None:
+        """Create or update baseline behavior profiles for users and doors."""
+        try:
+            for user_id, group in df.groupby("person_id"):
+                metrics = {
+                    "after_hours_rate": float(group["is_after_hours"].mean()),
+                    "failure_rate": float(1 - group["access_granted"].mean()),
+                    "total_events": len(group),
+                }
+                self.baseline_db.update_baseline("user", str(user_id), metrics)
+
+            for door_id, group in df.groupby("door_id"):
+                metrics = {
+                    "after_hours_rate": float(group["is_after_hours"].mean()),
+                    "failure_rate": float(1 - group["access_granted"].mean()),
+                    "total_events": len(group),
+                }
+                self.baseline_db.update_baseline("door", str(door_id), metrics)
+        except Exception as exc:  # pragma: no cover - log and continue
+            self.logger.warning("Failed to update behavior profiles: %s", exc)
+
     def _detect_statistical_threats(self, df: pd.DataFrame) -> List[ThreatIndicator]:
         """Detect threats using statistical methods"""
         return detect_statistical_threats(df, self.logger)
 
     def _detect_failure_rate_anomalies(self, df: pd.DataFrame) -> List[ThreatIndicator]:
         """Detect unusual failure rate patterns"""
-        return detect_failure_rate_anomalies(df, self.logger)
+        threats = detect_failure_rate_anomalies(df, self.logger)
+        try:
+            for user_id, group in df.groupby("person_id"):
+                current_rate = float(1 - group["access_granted"].mean())
+                baseline = self.baseline_db.get_baseline("user", str(user_id)).get(
+                    "failure_rate"
+                )
+                if baseline is not None and current_rate > baseline * 1.5 and current_rate - baseline > 0.1:
+                    threats.append(
+                        ThreatIndicator(
+                            threat_type="failure_rate_deviation",
+                            severity="high" if current_rate - baseline > 0.3 else "medium",
+                            confidence=min(0.99, current_rate - baseline),
+                            description=(
+                                f"User {user_id} failure rate {current_rate:.2%} exceeds baseline {baseline:.2%}"
+                            ),
+                            evidence={
+                                "user_id": str(user_id),
+                                "current_rate": current_rate,
+                                "baseline_rate": baseline,
+                            },
+                            timestamp=pd.Timestamp.utcnow(),
+                            affected_entities=[str(user_id)],
+                        )
+                    )
+        except Exception as exc:  # pragma: no cover - log and continue
+            self.logger.warning("Baseline failure rate check failed: %s", exc)
+
+        return threats
 
     def _detect_frequency_anomalies(self, df: pd.DataFrame) -> List[ThreatIndicator]:
         """Detect unusual access frequency patterns"""
-        return detect_frequency_anomalies(df, self.logger)
+        threats = detect_frequency_anomalies(df, self.logger)
+        try:
+            event_counts = df["person_id"].value_counts()
+            for user_id, count in event_counts.items():
+                baseline = self.baseline_db.get_baseline("user", str(user_id)).get(
+                    "total_events"
+                )
+                if baseline is not None and count > baseline * 2 and count - baseline > 10:
+                    threats.append(
+                        ThreatIndicator(
+                            threat_type="access_frequency_deviation",
+                            severity="medium" if count < baseline * 3 else "high",
+                            confidence=min(0.99, (count - baseline) / max(baseline, 1)),
+                            description=(
+                                f"User {user_id} access count {count} exceeds baseline {baseline}"
+                            ),
+                            evidence={
+                                "user_id": str(user_id),
+                                "current_count": int(count),
+                                "baseline_count": baseline,
+                            },
+                            timestamp=pd.Timestamp.utcnow(),
+                            affected_entities=[str(user_id)],
+                        )
+                    )
+        except Exception as exc:  # pragma: no cover - log and continue
+            self.logger.warning("Baseline frequency check failed: %s", exc)
+
+        return threats
 
     def _detect_pattern_threats(self, df: pd.DataFrame) -> List[ThreatIndicator]:
         """Detect pattern-based security threats"""
@@ -196,8 +290,66 @@ class SecurityPatternsAnalyzer:
     def _detect_after_hours_anomalies(self, df: pd.DataFrame) -> List[ThreatIndicator]:
         """Detect suspicious after-hours access patterns"""
         from .pattern_detection import detect_after_hours_anomalies
+        threats = detect_after_hours_anomalies(df, self.logger)
 
-        return detect_after_hours_anomalies(df, self.logger)
+        try:
+            after_hours = df[df["is_after_hours"] == True]
+            user_counts = after_hours["person_id"].value_counts()
+            for user_id, count in user_counts.items():
+                total = len(df[df["person_id"] == user_id])
+                rate = count / total if total else 0
+                baseline = self.baseline_db.get_baseline("user", str(user_id)).get(
+                    "after_hours_rate"
+                )
+                if baseline is not None and rate > baseline * 1.5 and rate - baseline > 0.1:
+                    threats.append(
+                        ThreatIndicator(
+                            threat_type="after_hours_deviation",
+                            severity="medium" if rate - baseline < 0.3 else "high",
+                            confidence=min(0.99, rate - baseline),
+                            description=(
+                                f"User {user_id} after-hours rate {rate:.2%} exceeds baseline {baseline:.2%}"
+                            ),
+                            evidence={
+                                "user_id": str(user_id),
+                                "current_rate": rate,
+                                "baseline_rate": baseline,
+                            },
+                            timestamp=pd.Timestamp.utcnow(),
+                            affected_entities=[str(user_id)],
+                        )
+                    )
+
+            # Door-level deviations
+            door_counts = after_hours["door_id"].value_counts()
+            for door_id, count in door_counts.items():
+                total = len(df[df["door_id"] == door_id])
+                rate = count / total if total else 0
+                baseline = self.baseline_db.get_baseline("door", str(door_id)).get(
+                    "after_hours_rate"
+                )
+                if baseline is not None and rate > baseline * 1.5 and rate - baseline > 0.1:
+                    threats.append(
+                        ThreatIndicator(
+                            threat_type="door_after_hours_deviation",
+                            severity="medium" if rate - baseline < 0.3 else "high",
+                            confidence=min(0.99, rate - baseline),
+                            description=(
+                                f"Door {door_id} after-hours rate {rate:.2%} exceeds baseline {baseline:.2%}"
+                            ),
+                            evidence={
+                                "door_id": str(door_id),
+                                "current_rate": rate,
+                                "baseline_rate": baseline,
+                            },
+                            timestamp=pd.Timestamp.utcnow(),
+                            affected_entities=[str(door_id)],
+                        )
+                    )
+        except Exception as exc:  # pragma: no cover - log and continue
+            self.logger.warning("Baseline after-hours check failed: %s", exc)
+
+        return threats
 
     def _calculate_comprehensive_score(
         self, df: pd.DataFrame, threats: List[ThreatIndicator]
