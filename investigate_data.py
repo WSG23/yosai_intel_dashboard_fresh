@@ -33,7 +33,7 @@ def investigate_data():
     info_file = upload_dir / "file_info.json"
     if info_file.exists():
         print(f"\n📋 file_info.json contents:")
-        with open(info_file, "r") as f:
+        with open(info_file, "r", encoding="utf-8") as f:
             info = json.load(f)
         for filename, details in info.items():
             print(f"  {filename}:")
