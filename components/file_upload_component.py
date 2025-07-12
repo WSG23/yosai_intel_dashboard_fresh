@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import dash_bootstrap_components as dbc
 from dash import dcc, html
+from flask import session
+import uuid
 
 from components.upload import UploadArea
 from upload_callbacks import UploadCallbackManager
@@ -39,7 +41,10 @@ class FileUploadComponent:
                 dcc.Store(id="uploaded-df-store"),
                 dcc.Store(id="file-info-store", data={}),
                 dcc.Store(id="current-file-info-store"),
-                dcc.Store(id="current-session-id", data="session_123"),
+                dcc.Store(
+                    id="current-session-id",
+                    data=session.get("id") or str(uuid.uuid4()),
+                ),
                 dcc.Store(id="upload-task-id"),
                 dcc.Store(id="client-validation-store", data=[]),
                 dcc.Interval(id="upload-progress-interval", interval=1000, disabled=True),
