@@ -164,6 +164,7 @@ class SecurityPatternsAnalyzer:
                         "threat_type": threat.threat_type,
                         "description": threat.description,
                         "confidence": threat.confidence,
+                        "attack": threat.attack,
                     },
                 )
                 self._emit_anomaly_detected(threat)
@@ -574,6 +575,7 @@ class SecurityPatternsAnalyzer:
                 "threat_type": threat.threat_type,
                 "severity": threat.severity,
                 "confidence": threat.confidence,
+                "attack": threat.attack,
             },
         )
 
@@ -603,6 +605,7 @@ class SecurityPatternsAnalyzer:
                     "confidence": t.confidence,
                     "description": t.description,
                     "affected_entities": t.affected_entities,
+                    "attack": t.attack,
                 }
                 for t in result.threat_indicators
             ],

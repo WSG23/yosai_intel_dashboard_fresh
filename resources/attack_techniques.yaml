@@ -1,0 +1,16 @@
+rapid_access_attempts:
+  id: T1110
+  name: Brute Force
+  url: https://attack.mitre.org/techniques/T1110/
+excessive_after_hours_access:
+  id: T1078
+  name: Valid Accounts
+  url: https://attack.mitre.org/techniques/T1078/
+unusual_failure_rate:
+  id: T1059
+  name: Command and Scripting Interpreter
+  url: https://attack.mitre.org/techniques/T1059/
+excessive_access_frequency:
+  id: T1021
+  name: Remote Services
+  url: https://attack.mitre.org/techniques/T1021/

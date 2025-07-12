@@ -9,6 +9,7 @@ import pandas as pd
 from scipy import stats
 
 from .types import ThreatIndicator
+from .pattern_detection import _attack_info
 
 __all__ = [
     "detect_failure_rate_anomalies",
@@ -52,6 +53,7 @@ def detect_failure_rate_anomalies(df: pd.DataFrame, logger: Optional[logging.Log
                         },
                         timestamp=datetime.now(),
                         affected_entities=[str(user_id)],
+                        attack=_attack_info("unusual_failure_rate"),
                     )
                 )
     except Exception as exc:  # pragma: no cover - log and continue
@@ -87,6 +89,7 @@ def detect_frequency_anomalies(df: pd.DataFrame, logger: Optional[logging.Logger
                         },
                         timestamp=datetime.now(),
                         affected_entities=[str(user_id)],
+                        attack=_attack_info("excessive_access_frequency"),
                     )
                 )
     except Exception as exc:  # pragma: no cover - log and continue
