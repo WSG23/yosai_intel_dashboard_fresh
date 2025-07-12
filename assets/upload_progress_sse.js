@@ -17,8 +17,6 @@
       }
       if(val >= 100){
         source.close();
-        var btn = document.getElementById('progress-done-trigger');
-        if(btn){btn.click();}
       }
     };
   };

@@ -33,7 +33,6 @@ class FileUploadComponent:
                 ),
                 dbc.Row([dbc.Col(dbc.Progress(id="upload-progress", value=0, label="0%", striped=True, animated=True)),], className="mb-2"),
                 dbc.Row([dbc.Col(html.Ul(id="file-progress-list", className="list-unstyled"))]),
-                dbc.Button("", id="progress-done-trigger", className="visually-hidden"),
                 html.Div(id="preview-area"),
                 dbc.Button("Next", id="to-column-map-btn", color="primary", className="mt-2", disabled=True),
                 dcc.Store(id="uploaded-df-store"),
