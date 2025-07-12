@@ -14,7 +14,8 @@ from . import html
 from . import dcc
 from . import dependencies
 from . import _callback
-no_update = None
+no_update = _callback.NoUpdate()
+__version__ = "0.0.0"
 
 
 __all__ = [
