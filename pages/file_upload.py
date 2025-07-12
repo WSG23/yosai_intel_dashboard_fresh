@@ -10,12 +10,24 @@ import json
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
-from dash import Input, Output, State, dcc, html, no_update
-from dash.exceptions import PreventUpdate
-from dash import register_page as dash_register_page
+from dash import dcc, html
+
+# Core imports that should always work
+try:
+    from core.callback_registry import _callback_registry
+except ImportError:
+    _callback_registry = None
+
+try:
+    from core.unicode import safe_encode_text, safe_decode_bytes
+except ImportError:
+    def safe_encode_text(text):
+        return str(text)
+    def safe_decode_bytes(data):
+        return data.decode('utf-8', errors='replace')
+
 
 logger = logging.getLogger(__name__)
 
@@ -32,111 +44,137 @@ def register_page() -> None:
         logger.warning(f"Page registration failed: {e}")
 
 
-def layout() -> dbc.Container:
-    """Modern file upload layout with working drag-and-drop functionality."""
-    
-    return dbc.Container([
-        # Header
-        dbc.Row([
-            dbc.Col([
-                html.H2("📁 File Upload", className="mb-3"),
-                html.P("Drag and drop files or click to browse. Supports CSV, Excel, and JSON files.", 
-                       className="text-muted mb-4")
-            ])
-        ]),
-        
-        # Upload area
-        dbc.Row([
-            dbc.Col([
-                dcc.Upload(
-                    id="drag-drop-upload",
-                    children=html.Div([
-                        html.I(className="fas fa-cloud-upload-alt fa-3x mb-3", 
-                               style={"color": "#6c757d"}),
-                        html.H5("Drag & Drop Files Here"),
-                        html.P("or click to select files", className="text-muted"),
-                        html.P("Supports: .csv, .xlsx, .xls, .json", className="small text-muted")
-                    ], style={
-                        "textAlign": "center",
-                        "padding": "60px",
-                        "border": "2px dashed #dee2e6",
-                        "borderRadius": "10px",
-                        "cursor": "pointer"
-                    }),
-                    style={
-                        "width": "100%",
-                        "minHeight": "200px",
-                        "marginBottom": "20px"
-                    },
-                    multiple=True,
-                    accept='.csv,.xlsx,.xls,.json',
-                    max_size=50 * 1024 * 1024,  # 50MB
-                    className="upload-dropzone"
-                )
-            ], lg=8, md=10, sm=12, className="mx-auto")
-        ], className="mb-4"),
-        
-        # Upload status and progress
-        dbc.Row([
-            dbc.Col([
-                html.Div(id="upload-status", className="mb-3"),
-                dbc.Progress(
-                    id="upload-progress",
-                    value=0,
-                    striped=True,
-                    animated=False,
-                    color="success",
-                    style={'display': 'none', 'height': '8px'},
-                    className="mb-3"
-                )
-            ], lg=8, md=10, sm=12, className="mx-auto")
-        ]),
-        
-        # File preview area
-        dbc.Row([
-            dbc.Col([
-                html.Div(id="preview-area")
-            ], lg=10, md=12, sm=12, className="mx-auto")
-        ]),
-        
-        # Navigation area
-        dbc.Row([
-            dbc.Col([
-                html.Div(id="upload-navigation")
-            ], lg=8, md=10, sm=12, className="mx-auto")
-        ], className="mt-4"),
-        
-        # Data stores
-        dcc.Store(id="uploaded-files-store", data={}),
-        dcc.Store(id="upload-session-store", data={}),
-        
-    ], fluid=True, className="py-4")
+def layout():
+    """Return the standard upload layout or a minimal fallback."""
+
+    try:
+        from components.upload import UnifiedUploadComponent
+        return UnifiedUploadComponent().layout()
+    except Exception as exc:  # pragma: no cover - fallback for missing deps
+        logger.error("Failed to create UnifiedUploadComponent layout: %s", exc)
+        return _fallback_layout()
+
+
+def _fallback_layout() -> html.Div:
+    """Provide a minimal layout with the IDs expected by callbacks."""
+    return dbc.Container(
+        [
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dcc.Upload(id="drag-drop-upload", children=html.Div("Upload Files"), multiple=True)
+                    )
+                ]
+            ),
+            dbc.Row([
+                dbc.Col(dbc.Progress(id="upload-progress", value=0, label="0%", striped=True, animated=True))
+            ], className="mb-2"),
+            dbc.Row([
+                dbc.Col(html.Ul(id="file-progress-list", className="list-unstyled"))
+            ]),
+            dbc.Button("", id="progress-done-trigger", className="visually-hidden"),
+            html.Div(id="preview-area"),
+            dbc.Button("Next", id="to-column-map-btn", color="primary", className="mt-2", disabled=True),
+            dcc.Store(id="uploaded-df-store"),
+            dcc.Store(id="file-info-store", data={}),
+            dcc.Store(id="current-file-info-store"),
+            dcc.Store(id="current-session-id"),
+            dcc.Store(id="upload-task-id"),
+            dcc.Store(id="client-validation-store", data=[]),
+            dcc.Interval(id="upload-progress-interval", interval=1000, disabled=True),
+            dbc.Modal(
+                [
+                    dbc.ModalHeader(dbc.ModalTitle("Column Mapping")),
+                    dbc.ModalBody("", id="modal-body"),
+                    dbc.ModalFooter([
+                        dbc.Button("Cancel", id="column-verify-cancel", color="secondary"),
+                        dbc.Button("Confirm", id="column-verify-confirm", color="success"),
+                    ]),
+                ],
+                id="column-verification-modal",
+                is_open=False,
+                size="xl",
+            ),
+            dbc.Modal(
+                [
+                    dbc.ModalHeader(dbc.ModalTitle("Device Classification")),
+                    dbc.ModalBody("", id="device-modal-body"),
+                    dbc.ModalFooter([
+                        dbc.Button("Cancel", id="device-verify-cancel", color="secondary"),
+                        dbc.Button("Confirm", id="device-verify-confirm", color="success"),
+                    ]),
+                ],
+                id="device-verification-modal",
+                is_open=False,
+                size="xl",
+            ),
+        ],
+        fluid=True,
+    )
 
 
 def register_callbacks(manager):
-    """Register upload callbacks - simplified and working."""
+    """Register upload callbacks with the provided manager."""
+
+    global _upload_component
+
 
     if manager is None:
         logger.warning("No callback manager provided to file_upload")
         return
 
-    try:
-        @manager.unified_callback(
-            [
-                Output("preview-area", "children"),
-                Output("upload-progress", "value"),
-                Output("upload-progress", "style"),
-                Output("upload-status", "children"),
-                Output("uploaded-files-store", "data")
-            ],
-            Input("drag-drop-upload", "contents"),
-            [
-                State("drag-drop-upload", "filename"),
-                State("uploaded-files-store", "data")
-            ],
-            callback_id="file_upload_handler_simple",
-            component_name="file_upload",
-            prevent_initial_call=True,
+    _upload_component = UnifiedUploadComponent()
+    
+    if not manager:
+        raise RuntimeError("Callback manager is required")
+
+    def _do_registration() -> None:
+        _upload_component.register_callbacks(manager)
+
+    callback_ids = [
+        "file_upload_handle",
+        "file_upload_progress",
+        "file_upload_finalize",
+    ]
+
+    _callback_registry.register_deduplicated(
+        callback_ids, _do_registration, source_module=__name__
+
+    )
+    def handle_modern_upload(contents, filenames, last_modified, file_store):
+        """Process uploaded files and update UI components."""
+        if not contents:
+            raise PreventUpdate
+
+        if not isinstance(contents, list):
+            contents = [contents]
+            filenames = [filenames]
+
+        file_store = file_store or {}
+        previews = []
+        status_alerts = []
+
+        for content, fname in zip(contents, filenames):
+            df, err = _process_upload_safe(content, fname)
+            if df is None:
+                status_alerts.append(
+                    dbc.Alert(f"❌ {fname}: {err}", color="danger", dismissable=True)
+                )
+                continue
+
+            previews.append(_create_modern_preview(df, fname))
+            file_store[fname] = {"rows": len(df), "columns": len(df.columns)}
+            status_alerts.append(
+                dbc.Alert(f"✅ Uploaded {fname}", color="success", dismissable=True)
+            )
+
+        progress = 100 if previews else 0
+        progress_style = {"display": "block"} if previews else {"display": "none"}
+        navigation = (
+            _create_navigation_section(len(file_store), file_store)
+            if previews
+            else no_update
+
         )
         def handle_upload(contents, filenames, existing_data):
             """Handle file uploads with proper error handling."""
@@ -344,9 +382,14 @@ def _create_navigation_buttons(uploaded_files: Dict[str, str]) -> Any:
     ], className="mt-3")
 
 
-def get_uploaded_data() -> Dict[str, pd.DataFrame]:
-    """Get currently uploaded data for other modules."""
-    return _uploaded_files.copy()
+def safe_upload_layout():
+    """Unicode-safe layout wrapper."""
+    try:
+        return layout()
+    except Exception as e:
+        logger.error(f"Upload layout failed: {e}")
+        return _fallback_layout()
+
 
 
 def clear_uploaded_data() -> None:
