@@ -6,13 +6,20 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 import joblib
+from utils.sklearn_compat import optional_import
 
-try:
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.linear_model import LogisticRegression
-except Exception:  # pragma: no cover - sklearn optional
-    LogisticRegression = None  # type: ignore
-    TfidfVectorizer = None  # type: ignore
+TfidfVectorizer = optional_import("sklearn.feature_extraction.text.TfidfVectorizer")
+LogisticRegression = optional_import("sklearn.linear_model.LogisticRegression")
+
+if LogisticRegression is None:  # pragma: no cover - fallback
+    class LogisticRegression:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            raise ImportError("scikit-learn is required for LogisticRegression")
+
+if TfidfVectorizer is None:  # pragma: no cover - fallback
+    class TfidfVectorizer:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            raise ImportError("scikit-learn is required for TfidfVectorizer")
 
 
 class ColumnClassifier:

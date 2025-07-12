@@ -4,6 +4,8 @@ Text utilities for safe text handling
 
 from typing import Any, Union
 
+from core.unicode import clean_surrogate_chars
+
 
 def safe_text(text: Union[str, Any]) -> str:
     """
@@ -20,10 +22,10 @@ def safe_text(text: Union[str, Any]) -> str:
 
     # Handle different types safely
     if hasattr(text, "__str__"):
-        return str(text)
+        return clean_surrogate_chars(str(text))
 
     # Fallback for any other type
-    return repr(text)
+    return clean_surrogate_chars(repr(text))
 
 
 def sanitize_text_for_dash(text: Union[str, Any]) -> str:
@@ -37,6 +39,7 @@ def sanitize_text_for_dash(text: Union[str, Any]) -> str:
         str: Dash-safe text
     """
     safe_str = safe_text(text)
+    safe_str = clean_surrogate_chars(safe_str)
 
     # Remove any problematic characters that might cause JSON issues
     safe_str = safe_str.replace("\x00", "")  # Remove null bytes
@@ -86,3 +89,4 @@ def truncate_text(text: str, max_length: int = 100, suffix: str = "...") -> str:
 
 
 __all__ = ["safe_text", "sanitize_text_for_dash", "format_file_size", "truncate_text"]
+

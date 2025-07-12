@@ -16,6 +16,8 @@ from core.unicode import (
     sanitize_dataframe,
     sanitize_unicode_input,
     secure_unicode_sanitization,
+    utf8_safe_encode,
+    utf8_safe_decode,
 )
 
 from .assets_debug import (
@@ -46,6 +48,8 @@ __all__ = [
     "sanitize_dataframe",
     "contains_surrogates",
     "secure_unicode_sanitization",
+    "utf8_safe_encode",
+    "utf8_safe_decode",
     "process_large_csv_content",
     "safe_format_number",
     "object_count",
