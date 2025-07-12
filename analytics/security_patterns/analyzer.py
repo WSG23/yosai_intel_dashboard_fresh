@@ -19,9 +19,28 @@ from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import IsolationForest
-from sklearn.exceptions import DataConversionWarning
-from sklearn.preprocessing import StandardScaler
+from utils.sklearn_compat import optional_import
+
+IsolationForest = optional_import("sklearn.ensemble.IsolationForest")
+DataConversionWarning = optional_import("sklearn.exceptions.DataConversionWarning")
+StandardScaler = optional_import("sklearn.preprocessing.StandardScaler")
+
+if IsolationForest is None:  # pragma: no cover - fallback definitions
+    class IsolationForest:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            raise ImportError("scikit-learn is required for IsolationForest")
+
+if DataConversionWarning is None:  # pragma: no cover
+    class DataConversionWarning(RuntimeWarning):
+        pass
+
+if StandardScaler is None:  # pragma: no cover
+    class StandardScaler:  # type: ignore
+        def fit_transform(self, X):
+            return X
+
+        def transform(self, X):
+            return X
 
 from core.callback_manager import CallbackManager as SecurityCallbackController
 from security_callback_controller import (

@@ -12,7 +12,14 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 from scipy import stats
-from sklearn.linear_model import LinearRegression
+from utils.sklearn_compat import optional_import
+
+LinearRegression = optional_import("sklearn.linear_model.LinearRegression")
+
+if LinearRegression is None:  # pragma: no cover - fallback
+    class LinearRegression:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            raise ImportError("scikit-learn is required for LinearRegression")
 
 # Suppress pandas deprecation warnings regarding legacy frequency strings.
 warnings.filterwarnings(

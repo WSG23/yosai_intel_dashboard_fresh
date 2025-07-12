@@ -379,6 +379,18 @@ def safe_encode(value: Any) -> str:
     return safe_encode_text(value)
 
 
+def utf8_safe_encode(value: Any) -> bytes:
+    """Return UTF-8 encoded bytes handling surrogate pairs."""
+
+    return safe_encode_text(value).encode("utf-8", errors="surrogatepass")
+
+
+def utf8_safe_decode(data: bytes) -> str:
+    """Decode UTF-8 bytes while preserving surrogate pairs."""
+
+    return data.decode("utf-8", errors="surrogatepass")
+
+
 def sanitize_data_frame(df: pd.DataFrame) -> pd.DataFrame:
     """Deprecated alias for :func:`sanitize_dataframe`."""
 
@@ -607,4 +619,6 @@ __all__ = [
     "UnicodeSecurityProcessor",
     "object_count",
     "unicode_safe_callback",
+    "utf8_safe_encode",
+    "utf8_safe_decode",
 ]

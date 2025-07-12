@@ -10,6 +10,8 @@ from datetime import datetime
 from enum import Enum, auto
 from typing import Any, Callable, Dict, List, Optional, Protocol
 
+from .error_handling import ErrorCategory, ErrorSeverity, error_handler
+
 logger = logging.getLogger(__name__)
 
 
@@ -215,6 +217,16 @@ class CallbackController:
         logger.error(
             f"Callback error for {context.event_type.name}: {exc}",
             exc_info=True,
+        )
+        # Consolidated error handling
+        error_handler.handle_error(
+            exc,
+            category=ErrorCategory.USER_INPUT,
+            severity=ErrorSeverity.HIGH,
+            context={
+                "event": context.event_type.name,
+                "callback": getattr(callback, "__name__", str(callback)),
+            },
         )
         for handler in self._error_handlers:
             try:
