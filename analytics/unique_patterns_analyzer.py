@@ -70,7 +70,10 @@ class UniquePatternAnalyzer:
 
     def _prepare_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """Prepare data for analysis"""
-        prepared_df = df.copy()
+        # Shallow copy to avoid mutating the original DataFrame while
+        # minimizing memory usage. New columns are assigned rather than
+        # modified in place so sharing underlying blocks is safe.
+        prepared_df = df.copy(deep=False)
 
         # Ensure timestamp is datetime
         if "timestamp" in prepared_df.columns:

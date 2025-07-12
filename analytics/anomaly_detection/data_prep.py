@@ -11,7 +11,9 @@ __all__ = ["prepare_anomaly_data"]
 def prepare_anomaly_data(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -> pd.DataFrame:
     """Prepare and clean data for anomaly detection."""
     logger = logger or logging.getLogger(__name__)
-    df_clean = df.copy()
+    # Shallow copy is sufficient as new columns are assigned without
+    # modifying the original DataFrame's existing data
+    df_clean = df.copy(deep=False)
 
     from security.unicode_security_handler import UnicodeSecurityHandler
 

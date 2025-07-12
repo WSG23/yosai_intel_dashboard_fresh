@@ -153,7 +153,8 @@ class ChunkedAnalyticsController:
         if column not in df.columns:
             return df
 
-        df = df.copy()
+        # Operate on a shallow copy to avoid mutating the caller's DataFrame
+        df = df.copy(deep=False)
         df[column] = pd.to_datetime(df[column], errors="coerce")
 
         invalid_mask = df[column].isna()
