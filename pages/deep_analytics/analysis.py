@@ -292,7 +292,7 @@ def create_data_quality_display_corrected(
             else:
                 filename = None
 
-            from pages.file_upload import get_uploaded_data
+            from services.upload_data_service import get_uploaded_data
 
             uploaded_files = get_uploaded_data()
 

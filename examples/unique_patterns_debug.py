@@ -52,7 +52,7 @@ def test_unique_patterns_specific():
     # Step 2: Test get_uploaded_data directly
     print("📁 STEP 2: Testing get_uploaded_data()")
     try:
-        from pages.file_upload import get_uploaded_data
+        from services.upload_data_service import get_uploaded_data
 
         uploaded_data = get_uploaded_data()
 
@@ -151,7 +151,7 @@ def test_unique_patterns_specific():
     print("🔍 STEP 6: Manual step-by-step test of unique patterns logic")
     try:
         print("   6a. Getting uploaded data...")
-        from pages.file_upload import get_uploaded_data
+        from services.upload_data_service import get_uploaded_data
 
         uploaded_data = get_uploaded_data()
         print(f"      Found {len(uploaded_data)} files")

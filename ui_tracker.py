@@ -153,7 +153,7 @@ def check_ui_data_source():
 
     # Check uploaded data
     try:
-        from pages.file_upload import get_uploaded_data
+        from services.upload_data_service import get_uploaded_data
 
         uploaded_data = get_uploaded_data()
 

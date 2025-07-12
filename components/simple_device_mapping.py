@@ -539,7 +539,7 @@ def populate_simple_device_modal(is_open):
         logger.warning(f"Failed to get devices from global store: {e}")
 
     # Fallback: Get devices from uploaded data
-    from pages.file_upload import get_uploaded_data
+    from services.upload_data_service import get_uploaded_data
 
     uploaded_data = get_uploaded_data()
 

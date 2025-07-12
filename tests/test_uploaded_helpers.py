@@ -13,7 +13,7 @@ from services import AnalyticsService
 def test_load_uploaded_data(monkeypatch):
     sample = {"file.csv": DataFrameBuilder().add_column("A", [1]).build()}
     monkeypatch.setattr(
-        "pages.file_upload.get_uploaded_data", lambda: sample, raising=False
+        "services.upload_data_service.get_uploaded_data", lambda service=None, container=None: sample
     )
     service = AnalyticsService()
     assert service.load_uploaded_data() == sample

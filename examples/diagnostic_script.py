@@ -71,7 +71,7 @@ def test_complete_pipeline():
     # Step 3: Test file upload module
     print("📤 STEP 3: Testing file upload module")
     try:
-        from pages.file_upload import get_uploaded_data
+        from services.upload_data_service import get_uploaded_data
 
         uploaded_files = get_uploaded_data()
         print(f"✅ File upload module found {len(uploaded_files)} files")
