@@ -158,6 +158,10 @@ class DynamicConfigManager(BaseConfigLoader):
                 value = 500
             self.analytics.max_memory_mb = value
 
+        max_workers = os.getenv("ANALYTICS_MAX_WORKERS")
+        if max_workers is not None:
+            self.analytics.max_workers = int(max_workers)
+
         upload_chunk = os.getenv("UPLOAD_CHUNK_SIZE")
         if upload_chunk is not None:
             self.uploads.DEFAULT_CHUNK_SIZE = int(upload_chunk)
