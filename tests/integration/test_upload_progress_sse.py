@@ -14,8 +14,9 @@ pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 def _create_upload_app():
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     coord = TrulyUnifiedCallbacks(app)
-    file_upload.register_upload_callbacks(coord)
-    app.layout = html.Div([dcc.Location(id="url"), file_upload.layout()])
+    comp = file_upload.load_page()
+    comp.register_callbacks(coord)
+    app.layout = html.Div([dcc.Location(id="url"), comp.layout()])
     return app
 
 

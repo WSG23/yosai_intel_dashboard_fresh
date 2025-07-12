@@ -12,8 +12,7 @@ from dash import dcc, html
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 from pages import file_upload
-from pages.deep_analytics import layout as analytics_layout
-from pages.deep_analytics import register_callbacks as register_analytics_callbacks
+from pages.deep_analytics import AnalyticsPage
 
 pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 
@@ -21,16 +20,18 @@ pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 def _create_upload_app():
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     coord = TrulyUnifiedCallbacks(app)
-    file_upload.register_upload_callbacks(coord)
-    app.layout = html.Div([dcc.Location(id="url"), file_upload.layout()])
+    upload_comp = file_upload.load_page()
+    upload_comp.register_callbacks(coord)
+    app.layout = html.Div([dcc.Location(id="url"), upload_comp.layout()])
     return app
 
 
 def _create_analytics_app():
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     coord = TrulyUnifiedCallbacks(app)
-    register_analytics_callbacks(coord)
-    app.layout = html.Div([dcc.Location(id="url"), analytics_layout()])
+    analytics_comp = AnalyticsPage()
+    analytics_comp.register_callbacks(coord)
+    app.layout = html.Div([dcc.Location(id="url"), analytics_comp.layout()])
     return app
 
 
