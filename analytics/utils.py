@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 def ensure_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Return a copy of ``df`` with any datetime-like columns parsed."""
-    df = df.copy()
+    """Return a shallow copy of ``df`` with any datetime-like columns parsed."""
+    df = df.copy(deep=False)
     timestamp_columns = [
         "timestamp",
         "datetime",

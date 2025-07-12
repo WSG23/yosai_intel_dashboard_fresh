@@ -206,6 +206,7 @@ class UnifiedUploadValidator:
     """Combine all upload validation responsibilities into a single class."""
 
     ALLOWED_EXTENSIONS = ALLOWED_EXTENSIONS
+
     _DATA_URI_RE = re.compile(r"^data:.*;base64,", re.IGNORECASE)
 
     def __init__(
@@ -317,6 +318,7 @@ class UnifiedUploadValidator:
     # ------------------------------------------------------------------
     def validate_file_upload(self, file_obj: Any) -> ValidationResult:
         """Validate ``file_obj`` mimicking the legacy :class:`UploadValidator`."""
+
         if file_obj is None:
             return ValidationResult(False, "No file provided")
 
@@ -387,3 +389,4 @@ __all__ = [
     "process_dataframe",
     "validate_dataframe_content",
 ]
+

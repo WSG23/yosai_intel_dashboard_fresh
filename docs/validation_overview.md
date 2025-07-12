@@ -54,3 +54,10 @@ These classes have been COMPLETELY REMOVED:
 - ❌ `BusinessLogicValidator`
 
 Use `SecurityValidator` for all validation needs.
+
+## Upload Limits
+
+The dashboard allows the maximum upload size to be overridden with the
+`MAX_UPLOAD_MB` environment variable. Values below **50&nbsp;MB** or above
+**500&nbsp;MB** are clamped to those limits and a warning is logged when the
+configuration is loaded.
