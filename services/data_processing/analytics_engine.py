@@ -146,7 +146,7 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
             else:
                 filename = None
 
-            from pages.file_upload import get_uploaded_data  # lazy import
+            from services.upload_data_service import get_uploaded_data  # lazy import
 
             uploaded_files = get_uploaded_data()
             if not uploaded_files:
@@ -220,7 +220,7 @@ def process_quality_analysis(data_source: str) -> Dict[str, Any]:
             else:
                 filename = None
 
-            from pages.file_upload import get_uploaded_data  # lazy import
+            from services.upload_data_service import get_uploaded_data  # lazy import
 
             uploaded_files = get_uploaded_data()
             if not uploaded_files:
@@ -266,7 +266,7 @@ def analyze_data_with_service(data_source: str, analysis_type: str) -> Dict[str,
             return {"error": "Analytics service not available"}
 
         if data_source.startswith("upload:") or data_source == "service:uploaded":
-            from pages.file_upload import get_uploaded_data  # lazy import
+            from services.upload_data_service import get_uploaded_data  # lazy import
 
             uploaded_files = get_uploaded_data()
             if not uploaded_files:

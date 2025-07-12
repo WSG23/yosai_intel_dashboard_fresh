@@ -189,7 +189,7 @@ def test_deep_analytics_specific_path():
     # Step 7: Test file upload detection
     print("📁 STEP 7: Testing file upload detection")
     try:
-        from pages.file_upload import get_uploaded_data
+        from services.upload_data_service import get_uploaded_data
 
         uploaded_files = get_uploaded_data()
 

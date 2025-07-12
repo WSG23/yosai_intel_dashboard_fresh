@@ -39,6 +39,11 @@ except ImportError:
 
 
 from components.ui_component import UIComponent
+from services.upload_data_service import (
+    get_uploaded_data as _svc_get_uploaded_data,
+    get_uploaded_filenames as _svc_get_uploaded_filenames,
+    clear_uploaded_data as _svc_clear_uploaded_data,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -398,14 +403,18 @@ def safe_upload_layout():
 
 
 def clear_uploaded_data() -> None:
-    """Clear uploaded data."""
-    global _uploaded_files
-    _uploaded_files.clear()
+    """Clear uploaded data via the service layer."""
+    _svc_clear_uploaded_data()
 
 
 def get_uploaded_filenames() -> List[str]:
-    """Get list of uploaded filenames."""
-    return list(_uploaded_files.keys())
+    """Return list of uploaded filenames via the service layer."""
+    return _svc_get_uploaded_filenames()
+
+
+def get_uploaded_data() -> Dict[str, pd.DataFrame]:
+    """Return all uploaded data via the service layer."""
+    return _svc_get_uploaded_data()
 
 
 # Backward compatibility
