@@ -20,6 +20,7 @@ import plotly.graph_objects as go
 from dash import dcc, html
 from core.container import container
 from core.protocols import ConfigurationProtocol
+from components.analytics.real_time_dashboard import RealTimeAnalytics
 
 try:  # Prefer configuration from the DI container when available
     _cfg = container.get("config_manager", ConfigurationProtocol)
@@ -499,6 +500,7 @@ class ComponentRegistry:
             "success_alert": create_success_alert,
             "info_alert": create_info_alert,
             "sample_analytics": generate_sample_analytics,
+            "realtime_analytics": RealTimeAnalytics,
         }
 
     def get_component(self, name: str):
@@ -538,4 +540,5 @@ __all__ = [
     "ComponentRegistry",
     "get_component",
     "register_component",
+    "RealTimeAnalytics",
 ]

@@ -12,11 +12,16 @@ import dash_bootstrap_components as dbc
 from dash import html, register_page as dash_register_page
 
 from components.ui_component import UIComponent
+from components.analytics.real_time_dashboard import RealTimeAnalytics
 
 logger = logging.getLogger(__name__)
 
 class AnalyticsPage(UIComponent):
     """Simple analytics page component."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._realtime = RealTimeAnalytics()
 
     def layout(self) -> html.Div:  # type: ignore[override]
         return dbc.Container(
@@ -67,13 +72,15 @@ class AnalyticsPage(UIComponent):
                             ]
                         , md=8)
                     ]
-                )
+                ),
+                dbc.Row([dbc.Col(self._realtime.layout())])
             ],
             fluid=True,
         )
 
     def register_callbacks(self, manager: Any, controller: Any | None = None) -> None:  # type: ignore[override]
-        pass
+        if manager:
+            self._realtime.register_callbacks(manager)
 
 
 _analytics_component = AnalyticsPage()
