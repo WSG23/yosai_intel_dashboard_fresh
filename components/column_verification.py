@@ -642,7 +642,7 @@ def save_verified_mappings(
             today = datetime.now().strftime("%Y%m%d")
             training_file = f"data/training/column_mappings_{today}.jsonl"
 
-            with open(training_file, "a") as f:
+            with open(training_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(training_data) + "\n")
 
             logger.info(f"Training data appended to {training_file}")
