@@ -8,7 +8,7 @@ from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
 from dash_extensions import WebSocket
 
-from components import create_analytics_charts, create_summary_cards
+from .. import create_analytics_charts, create_summary_cards
 
 
 class RealTimeAnalytics:

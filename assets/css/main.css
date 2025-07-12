@@ -154,3 +154,87 @@ nav .nav-link-stable {
   color: #007bff !important;
   margin-bottom: 16px !important;
 }
+
+/* =================================================================== */
+/* ANTI-FLASH FILE UPLOAD FIXES */
+/* =================================================================== */
+
+/* Prevent upload area flash/disappear */
+#drag-drop-upload {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
+  position: relative !important;
+  min-height: 200px !important;
+  transition: none !important;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: auto;
+}
+
+/* Force upload content to be stable */
+#drag-drop-upload > * {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  position: relative !important;
+}
+
+/* Upload text and icons - prevent flash */
+#drag-drop-upload .fas,
+#drag-drop-upload i,
+#drag-drop-upload p,
+#drag-drop-upload h3 {
+  opacity: 1 !important;
+  visibility: visible !important;
+  color: #007bff !important;
+  transition: none !important;
+}
+
+/* Drag states - stable transitions */
+#drag-drop-upload[data-dash-is-loading="true"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* =================================================================== */
+/* ANTI-FLASH FILE UPLOAD FIXES */
+/* =================================================================== */
+
+/* Prevent upload area flash/disappear */
+#drag-drop-upload {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
+  position: relative !important;
+  min-height: 200px !important;
+  transition: none !important;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: auto;
+}
+
+/* Force upload content to be stable */
+#drag-drop-upload > * {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  position: relative !important;
+}
+
+/* Upload text and icons - prevent flash */
+#drag-drop-upload .fas,
+#drag-drop-upload i,
+#drag-drop-upload p,
+#drag-drop-upload h3 {
+  opacity: 1 !important;
+  visibility: visible !important;
+  color: #007bff !important;
+  transition: none !important;
+}
+
+/* Drag states - stable transitions */
+#drag-drop-upload[data-dash-is-loading="true"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+}

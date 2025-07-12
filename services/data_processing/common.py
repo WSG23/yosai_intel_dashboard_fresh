@@ -1,8 +1,8 @@
 """Common dataframe processing utilities."""
 
-"""Backwards compatibility wrapper for ``dataframe_utils.process_dataframe``."""
-
 from __future__ import annotations
+from typing import Optional, Tuple
+import pandas as pd
 
 from typing import Optional, Tuple
 

@@ -119,3 +119,18 @@ __all__ = [
     "PerformanceConstants",
     "CSSConstants",
 ]
+
+def get_monitoring_config() -> Dict[str, Any]:
+    """Get monitoring configuration."""
+    try:
+        return get_app_config().monitoring
+    except AttributeError:
+        # Return default monitoring config
+        return {
+            "enabled": True,
+            "data_quality_checks": True,
+            "alert_thresholds": {
+                "error_rate": 0.05,
+                "processing_time": 30
+            }
+        }
