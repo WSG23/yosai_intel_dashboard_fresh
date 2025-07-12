@@ -11,6 +11,26 @@ import types
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Optional, cast
 
+# ---------------------------------------------------------------------------
+# Handle orjson issues gracefully
+# ---------------------------------------------------------------------------
+try:  # pragma: no cover - best effort import
+    import orjson  # type: ignore
+
+    if not hasattr(orjson, "OPT_NON_STR_KEYS"):
+        raise AttributeError("orjson missing OPT_NON_STR_KEYS")
+except Exception:
+    fake_orjson = types.ModuleType("orjson")
+    fake_orjson.OPT_NON_STR_KEYS = 1
+    fake_orjson.OPT_SERIALIZE_NUMPY = 2
+    fake_orjson.dumps = (
+        lambda obj, **kwargs: __import__("json").dumps(obj, default=str).encode()
+    )
+    fake_orjson.loads = lambda s, **kwargs: __import__("json").loads(
+        s.decode() if isinstance(s, (bytes, bytearray)) else s
+    )
+    sys.modules["orjson"] = fake_orjson
+
 # Graceful Dash imports with fallback
 try:
     import dash
@@ -865,6 +885,12 @@ def _register_callbacks(
         logger.warning(
             "TrulyUnifiedCallbacks unavailable; skipping unified callback setup"
         )
+
+    print("\U0001f4ca Registering callbacks...")
+    print(f"Coordinator type: {type(coordinator)}")
+    print(
+        f"Callback registry: {len(_callback_registry.registered_callbacks) if _callback_registry else 'None'}"
+    )
 
     if coordinator is not None:
         registration_modules = [
