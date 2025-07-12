@@ -28,7 +28,7 @@ class AnalyticsProviderProtocol(Protocol):
     """Perform analytics operations and retrieve metrics."""
 
     @abstractmethod
-    def process_data(self, data: Any) -> Any:
+    def process_dataframe(self, data: Any) -> Any:
         """Process raw analytics data and return a result."""
         ...
 
