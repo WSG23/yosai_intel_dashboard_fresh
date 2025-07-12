@@ -346,6 +346,7 @@ nav .nav-link-stable {
   transition-delay: 0.01s;
 }
 
+
 /* =================================================================== */
 /* UPLOAD FLASH FIX - TRANSITION DELAYS */
 /* =================================================================== */
@@ -367,4 +368,26 @@ nav .nav-link-stable {
 /* Prevent all elements from updating at exactly the same time */
 #drag-drop-upload * {
   transition-delay: 0.01s;
+}
+
+/* ================================================================ */
+/* LAYOUT FLASH PREVENTION */
+/* ================================================================ */
+
+/* Prevent flash during page transitions */
+#page-content {
+  min-height: 400px;
+  opacity: 1;
+  transition: none !important;
+}
+
+/* Ensure smooth Dash Pages transitions */
+[data-dash-is-loading="true"] #page-content {
+  opacity: 0.7;
+}
+
+/* Prevent content jumping */
+.main-content {
+  position: relative;
+  overflow-x: hidden;
 }
