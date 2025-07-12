@@ -23,6 +23,24 @@ except Exception:  # pragma: no cover - fallback stub
     if not hasattr(dbc_stub, "themes"):
         dbc_stub.themes = types.SimpleNamespace(BOOTSTRAP="bootstrap")
 
+try:  # use real Dash if available
+    import dash  # noqa: F401
+except Exception:  # pragma: no cover - fallback stub
+    dash_stub = importlib.import_module("tests.stubs.dash")
+    sys.modules.setdefault("dash", dash_stub)
+    sys.modules.setdefault("dash.html", dash_stub.html)
+    sys.modules.setdefault("dash.dcc", dash_stub.dcc)
+    sys.modules.setdefault("dash.dependencies", dash_stub.dependencies)
+    sys.modules.setdefault("dash._callback", dash_stub._callback)
+    dash_stub.no_update = dash_stub._callback.NoUpdate()
+
+try:  # use real redis if available
+    import redis  # noqa: F401
+except Exception:  # pragma: no cover - fallback stub
+    redis_stub = importlib.import_module("tests.stubs.redis")
+    sys.modules.setdefault("redis", redis_stub)
+    sys.modules.setdefault("redis.asyncio", redis_stub.asyncio)
+
 
 import asyncio
 import shutil

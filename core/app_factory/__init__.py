@@ -916,7 +916,6 @@ def _register_callbacks(
                 except Exception:
                     unicode_proc = None
 
-            _register_router_callbacks(coordinator, unicode_proc)
             _register_global_callbacks(coordinator)
 
             for module_name, func_name in registration_modules:

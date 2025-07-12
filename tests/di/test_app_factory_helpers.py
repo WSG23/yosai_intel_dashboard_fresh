@@ -120,18 +120,13 @@ def test_register_callbacks(monkeypatch, fake_unicode_processor):
 
     calls = {}
 
-    def fake_router(mgr, proc=None):
-        calls["router"] = proc
-        mgr.simple_registered = True
-        mgr.device_registered = True
-
     def fake_global(mgr):
         calls["global"] = True
 
     monkeypatch.setattr(
         importlib.import_module("core.app_factory"),
         "_register_router_callbacks",
-        fake_router,
+        lambda *a, **k: None,
     )
     monkeypatch.setattr(
         importlib.import_module("core.app_factory"),
@@ -165,7 +160,6 @@ def test_register_callbacks(monkeypatch, fake_unicode_processor):
 
     _register_callbacks(app, cfg, container=container)
 
-    assert calls["router"] is container.get("unicode_processor")
     assert calls["global"]
     assert getattr(instance, "simple_registered", False)
     assert getattr(instance, "device_registered", False)
