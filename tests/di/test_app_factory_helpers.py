@@ -125,11 +125,6 @@ def test_register_callbacks(monkeypatch, fake_unicode_processor):
 
     monkeypatch.setattr(
         importlib.import_module("core.app_factory"),
-        "_register_router_callbacks",
-        lambda *a, **k: None,
-    )
-    monkeypatch.setattr(
-        importlib.import_module("core.app_factory"),
         "_register_global_callbacks",
         fake_global,
     )
