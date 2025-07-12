@@ -95,7 +95,7 @@ class AccessTrendsAnalyzer:
 
     def _prepare_time_series(self, df: pd.DataFrame) -> pd.DataFrame:
         """Prepare time series data for analysis"""
-        df_clean = df.copy()
+        df_clean = df.copy(deep=False)
 
         # Handle Unicode issues
         from security.unicode_security_handler import UnicodeSecurityHandler

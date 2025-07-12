@@ -1,4 +1,4 @@
-from services.data_processing.unified_file_validator import (
+from services.data_processing.unified_upload_validator import (
     process_dataframe,
     safe_decode_file,
 )

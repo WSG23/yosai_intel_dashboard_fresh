@@ -2,7 +2,7 @@ from pathlib import Path
 
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
-from upload_validator import UploadValidator
+from services.data_processing.unified_upload_validator import UnifiedUploadValidator as UploadValidator
 
 
 def test_validate_file_upload_dataframe():

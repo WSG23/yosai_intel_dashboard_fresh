@@ -23,7 +23,7 @@ from services.upload import (
     get_trigger_id,
 )
 from services.upload.upload_queue_manager import UploadQueueManager
-from upload_validator import UploadValidator
+from services.data_processing.unified_upload_validator import UnifiedUploadValidator
 from services.upload.protocols import (
     DeviceLearningServiceProtocol,
     UploadProcessingServiceProtocol,
@@ -50,7 +50,7 @@ class UploadCore:
         self.ai = AISuggestionService()
         self.modal = ModalService()
         self.client_validator = ClientSideValidator()
-        self.validator = UploadValidator()
+        self.validator = UnifiedUploadValidator()
         self.chunked = ChunkedUploadManager()
         self.queue = UploadQueueManager()
         self.task_queue = task_queue or TaskQueue()

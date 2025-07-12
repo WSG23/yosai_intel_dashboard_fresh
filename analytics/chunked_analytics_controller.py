@@ -154,6 +154,7 @@ class ChunkedAnalyticsController:
             return df
 
         # Operate on a shallow copy to avoid mutating the caller's DataFrame
+
         df = df.copy(deep=False)
         df[column] = pd.to_datetime(df[column], errors="coerce")
 

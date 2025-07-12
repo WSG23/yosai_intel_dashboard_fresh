@@ -1,11 +1,11 @@
 import pytest
 
 from core.exceptions import ValidationError
-from services.data_processing.unified_file_validator import UnifiedFileValidator
+from services.data_processing.unified_upload_validator import UnifiedUploadValidator
 
 
 def test_validator_methods_basic():
-    validator = UnifiedFileValidator()
+    validator = UnifiedUploadValidator()
     meta = validator.validate_file_meta("test.csv", 10)
     assert meta["valid"] is True
     with pytest.raises(ValidationError):
@@ -13,10 +13,10 @@ def test_validator_methods_basic():
 
 
 def test_filename_sanitization_surrogates_removed():
-    validator = UnifiedFileValidator()
+    validator = UnifiedUploadValidator()
     assert validator.sanitize_filename("good\ud800.csv") == "good.csv"
 
 
 def test_filename_sanitization_valid():
-    validator = UnifiedFileValidator()
+    validator = UnifiedUploadValidator()
     assert validator.sanitize_filename("my_file.csv") == "my_file.csv"

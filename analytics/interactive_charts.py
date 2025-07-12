@@ -58,6 +58,7 @@ class SecurityChartsGenerator:
         """Prepare data for chart generation"""
         # Use a shallow copy so memory usage stays low while preventing
         # accidental mutation of the caller's DataFrame
+
         df = df.copy(deep=False)
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         df["date"] = df["timestamp"].dt.date

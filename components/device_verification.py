@@ -288,7 +288,7 @@ def register_callbacks(
 ) -> None:
     """Register component callbacks using the provided coordinator."""
 
-    manager.register_handler(
+    manager.register_callback(
         Output({"type": "device-edited", "index": MATCH}, "data"),
         [
             Input({"type": "device-floor", "index": MATCH}, "value"),
