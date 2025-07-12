@@ -53,3 +53,17 @@ email settings to receive alerts.
 
 A basic dashboard is available in `dashboards/performance/` for quick visual
 checks of recent activity.
+
+### UI Monitoring
+
+Client side frame times and callback runtimes can be captured using
+`monitoring.ui_monitor.RealTimeUIMonitor`. The metrics are forwarded to the
+shared `PerformanceMonitor` instance.
+
+```python
+from monitoring.ui_monitor import get_ui_monitor
+
+ui = get_ui_monitor()
+ui.record_frame_time(16.7)
+ui.record_callback_duration("update_chart", 0.05)
+```
