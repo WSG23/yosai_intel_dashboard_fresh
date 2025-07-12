@@ -11,7 +11,18 @@ logger = logging.getLogger(__name__)
 def optional_import(name: str, fallback: Type | None = None) -> Any:
     """Attempt to import ``name`` returning ``fallback`` if unavailable."""
     try:
-        module = __import__(name, fromlist=["*"])  # type: ignore
+        # Handle specific sklearn submodule imports
+        if name.startswith("sklearn."):
+            parts = name.split(".")
+            if len(parts) > 2:  # e.g., sklearn.ensemble.IsolationForest
+                module_path = ".".join(parts[:-1])  # sklearn.ensemble
+                class_name = parts[-1]  # IsolationForest
+                module = __import__(module_path, fromlist=[class_name])
+                return getattr(module, class_name)
+            else:
+                module = __import__(name, fromlist=["*"])
+        else:
+            module = __import__(name, fromlist=["*"])
         return module
     except Exception as exc:  # pragma: no cover - optional dependency
         logger.warning("Optional dependency '%s' unavailable: %s", name, exc)
