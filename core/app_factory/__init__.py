@@ -620,6 +620,11 @@ def _create_json_safe_app(assets_folder: str) -> "Dash":
 
 def _create_main_layout() -> "Html.Div":
     """Create main application layout with complete integration"""
+    # Ensure the Dash pages container has a stable id for testing
+    try:
+        page_container.id = "page_container"
+    except Exception:
+        pass
     return html.Div(
         [
             # URL routing component
