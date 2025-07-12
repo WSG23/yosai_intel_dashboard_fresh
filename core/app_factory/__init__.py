@@ -358,24 +358,8 @@ def _create_full_app(assets_folder: str) -> "Dash":
         initialize_csrf(app, config_manager)
 
         _initialize_plugins(app, config_manager, container=service_container)
-        # _register_pages() # MOVED
+        _register_pages()
         _setup_layout(app)
-        
-        # Register pages after app and layout are created
-        try:
-            from pages import register_pages
-            register_pages()
-            logger.info("✅ Pages registered after app creation")
-        except Exception as e:
-            logger.warning(f"Page registration failed: {e}")
-        
-        # Register pages after app and layout are created
-        try:
-            from pages import register_pages
-            register_pages()
-            logger.info("✅ Pages registered successfully")
-        except Exception as e:
-            logger.warning(f"Page registration failed: {e}")
         _register_callbacks(app, config_manager, container=service_container)
 
         # Initialize services using the DI container
@@ -425,7 +409,7 @@ def _create_full_app(assets_folder: str) -> "Dash":
 def _create_simple_app(assets_folder: str) -> "Dash":
     """Create a simplified Dash application"""
     try:
-        from dash import dcc, html, page_container
+        from dash import dcc, html
 
         external_stylesheets = [dbc.themes.BOOTSTRAP]
         built_css = ASSETS_DIR / "dist" / "main.min.css"
@@ -485,7 +469,7 @@ def _create_simple_app(assets_folder: str) -> "Dash":
                 resp.headers["Cache-Control"] = "public,max-age=31536000,immutable"
             return resp
 
-        _# register_pages() # MOVED
+        _register_pages()
 
         app.title = "Yōsai Intel Dashboard"
 
@@ -527,7 +511,7 @@ def _create_simple_app(assets_folder: str) -> "Dash":
 def _create_json_safe_app(assets_folder: str) -> "Dash":
     """Create Dash application with JSON-safe layout"""
     try:
-        from dash import html, page_container
+        from dash import html
 
         external_stylesheets = [dbc.themes.BOOTSTRAP]
         built_css = ASSETS_DIR / "dist" / "main.min.css"
@@ -587,7 +571,7 @@ def _create_json_safe_app(assets_folder: str) -> "Dash":
                 resp.headers["Cache-Control"] = "public,max-age=31536000,immutable"
             return resp
 
-        _# register_pages() # MOVED
+        _register_pages()
 
         app.title = "🏯 Yōsai Intel Dashboard"
 
@@ -627,24 +611,179 @@ def _create_json_safe_app(assets_folder: str) -> "Dash":
 
 
 def _create_main_layout() -> "Html.Div":
-    """Create main application layout with page_container for Dash Pages"""
-    return html.Div([
-        dcc.Location(id="url", refresh=False),
-        html.Nav(_create_navbar(), className="top-panel"),
-        html.Main(page_container, id="page-content", className="main-content p-4"),
-        dcc.Store(id="global-store", data={}),
-        dcc.Store(id="session-store", data={}),
-        dcc.Store(id="app-state-store", data={"initial": True}),
-        dcc.Store(id="theme-store", data=DEFAULT_THEME),
-        html.Div(id="theme-dummy-output", style={"display": "none"}),
-    ])
+    """Create main application layout with complete integration"""
+    return html.Div(
+        [
+            # URL routing component
+            dcc.Location(id="url", refresh=False),
+            # Navigation bar wrapped in semantic <nav> element
+            html.Nav(
+                _create_navbar(),
+                className="top-panel",
+            ),
+            # Main content area with Dash Pages content
+            html.Main(
+                page_container,
+                id="page-content",
+                className="main-content p-4 transition-fade-move transition-start",
+            ),
+            # Global data stores
+            dcc.Store(id="global-store", data={}),
+            dcc.Store(id="session-store", data={}),
+            dcc.Store(id="app-state-store", data={"initial": True}),
+            dcc.Store(id="theme-store", data=DEFAULT_THEME),
+            html.Div(id="theme-dummy-output", style={"display": "none"}),
+        ]
+    )
+
 
 def _create_navbar() -> Any:
     """Wrapper to create the navigation bar layout."""
     return create_navbar_layout()
 
 
+def _create_error_page(message: str) -> Any:
+    """Create error page with Unicode-safe message."""
+    if not DASH_AVAILABLE:
+        return None
 
+    safe_message = handle_unicode_surrogates(message)
+    return dbc.Container(
+        [
+            dbc.Alert(
+                [
+                    html.H4("⚠️ Error", className="alert-heading"),
+                    html.P(safe_message),
+                    html.Hr(),
+                    html.P("Please check the logs for more details.", className="mb-0"),
+                ],
+                color="danger",
+            )
+        ],
+        fluid=True,
+    )
+
+
+def _create_placeholder_page(title: str, subtitle: str, message: str) -> "DbcContainer":
+    """Create placeholder page for missing modules"""
+    return dbc.Container(
+        [
+            dbc.Row(
+                [
+                    dbc.Col(
+                        [
+                            html.H1(title, className="text-primary mb-3"),
+                            html.P(subtitle, className="text-muted mb-4"),
+                            dbc.Alert(message, color="warning"),
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
+
+
+def _register_router_callbacks(
+    manager: TrulyUnifiedCallbacksType,
+    unicode_processor: Optional[UnicodeProcessorProtocol] = None,
+) -> None:
+    """Register page transition callback for Dash Pages."""
+
+    @manager.unified_callback(
+        Output("page-content", "className"),
+        Input("url", "pathname"),
+        callback_id="set_page_class",
+        component_name="app_factory",
+    )
+    def set_page_class(pathname: str):
+        return "main-content p-4 transition-fade-move transition-end"
+
+
+def _get_home_page() -> Any:
+    """Get default home page."""
+    return _get_analytics_page()
+
+
+def _get_dashboard_page() -> Any:
+    """Alias for the default dashboard page."""
+    return _get_home_page()
+
+
+def _get_analytics_page() -> Any:
+    """Get analytics page with complete integration"""
+    try:
+        return deep_analytics_layout()
+    except Exception:
+        logger.exception("Analytics page failed to load")
+        return _create_placeholder_page(
+            "📊 Analytics",
+            "Analytics page failed to load",
+            "There was an error loading the analytics page. Check logs for details.",
+        )
+
+
+def _get_graphs_page() -> Any:
+    """Get graphs page with placeholder content."""
+    try:
+        layout_func = get_page_layout("graphs")
+        if layout_func:
+            return layout_func()
+    except ImportError:
+        logger.exception("Graphs page import failed")
+    except Exception:
+        logger.exception("Graphs page failed to load")
+    return _create_placeholder_page(
+        "Graphs",
+        "Graphs page failed to load",
+        "There was an error loading the graphs page. Check logs for details.",
+    )
+
+
+def _get_export_page() -> Any:
+    """Get export page."""
+    try:
+        from pages.export import layout
+
+        return layout()
+    except ImportError:
+        logger.exception("Export page import failed")
+    except Exception:
+        logger.exception("Export page failed to load")
+    return _create_placeholder_page(
+        "Export",
+        "Export page failed to load",
+        "There was an error loading the export page. Check logs for details.",
+    )
+
+
+def _get_settings_page() -> Any:
+    """Get settings page with placeholder content."""
+    try:
+        from pages.settings import layout
+
+        return layout()
+    except ImportError:
+        logger.exception("Settings page import failed")
+    except Exception:
+        logger.exception("Settings page failed to load")
+    return _create_placeholder_page(
+        "Settings",
+        "Settings page failed to load",
+        "There was an error loading the settings page. Check logs for details.",
+    )
+
+
+def _get_upload_page() -> Any:
+    """Get upload page with complete integration"""
+    try:
+        return safe_upload_layout()
+    except Exception:
+        logger.exception("Upload page failed to load")
+        return _create_placeholder_page(
+            "File Upload",
+            "Upload page failed to load",
+            "There was an error loading the upload page. Check logs for details.",
+        )
 
 
 def _register_global_callbacks(manager: TrulyUnifiedCallbacksType) -> None:
@@ -680,7 +819,7 @@ def _register_pages() -> None:
     try:
         from pages import register_pages
 
-        # register_pages() # MOVED
+        register_pages()
         logger.info("✅ Pages registered successfully")
     except Exception as e:
         logger.warning(f"Page registration failed: {e}")
@@ -728,9 +867,8 @@ def _register_callbacks(
         )
 
     if coordinator is not None:
-        coordinator._callback_registry = _callback_registry
         registration_modules = [
-            ("pages.file_upload", "register_callbacks"),  # RE-ENABLED
+            ("pages.file_upload", "register_callbacks"),
             ("pages.deep_analytics", "register_callbacks"),
             ("components.ui.navbar", "register_navbar_callbacks"),
         ]
@@ -745,7 +883,7 @@ def _register_callbacks(
                 except Exception:
                     unicode_proc = None
 
-            # REMOVED: # _register_router_callbacks(coordinator, unicode_proc)  # DISABLED
+            # # _register_router_callbacks(coordinator, unicode_proc)  # DISABLED  # DISABLED - conflicts with Dash Pages
             _register_global_callbacks(coordinator)
 
             for module_name, func_name in registration_modules:
@@ -772,13 +910,7 @@ def _register_callbacks(
         )
 
     if coordinator is not None:
-        if not _callback_registry.validate_registration_integrity():
-            duplicates = {
-                cid: count
-                for cid, count in _callback_registry.registration_attempts.items()
-                if count > 1
-            }
-            logger.warning("Duplicate callback registrations detected: %s", duplicates)
+        coordinator._callback_registry = _callback_registry
 
 
 def _initialize_services(container: Optional[ServiceContainer] = None) -> None:
@@ -808,17 +940,6 @@ def _initialize_services(container: Optional[ServiceContainer] = None) -> None:
         app_config = config.get_app_config()
         logger.info(f"Configuration loaded for environment: {app_config.environment}")
 
-        # Start WebSocket server for real-time analytics
-        try:
-            if container.has("event_bus"):
-                from services.websocket_server import AnalyticsWebSocketServer
-
-                ws_server = AnalyticsWebSocketServer(container.get("event_bus"))
-                container.register_singleton("websocket_server", ws_server)
-                logger.info("WebSocket server initialized")
-        except Exception as exc:  # pragma: no cover - best effort
-            logger.warning(f"WebSocket server failed to start: {exc}")
-
     except Exception as e:
         logger.warning(f"Service initialization completed with warnings: {e}")
 
@@ -843,5 +964,3 @@ def _configure_swagger(server: Any) -> None:
 
 # Export the main function
 __all__ = ["create_app"]
-
-
