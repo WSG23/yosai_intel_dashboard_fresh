@@ -45,4 +45,5 @@ hvac>=2.3.0
 cryptography>=45.0.0
 kafka-python>=2.0.2
 pulsar-client>=3.2.0
+dask[distributed]==2024.4.1
 
