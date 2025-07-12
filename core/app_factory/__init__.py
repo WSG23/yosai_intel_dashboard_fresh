@@ -776,6 +776,13 @@ def _register_callbacks(
         try:
             from services.interfaces import get_export_service
 
+            unicode_proc = None
+            if container:
+                try:
+                    unicode_proc = container.get("unicode_processor")
+                except Exception:
+                    unicode_proc = None
+
             _register_global_callbacks(coordinator)
 
             for module_name, func_name in registration_modules:
