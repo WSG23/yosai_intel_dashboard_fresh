@@ -3,7 +3,7 @@ import base64
 import pandas as pd
 import pytest
 
-from services.data_processing.unified_file_validator import UnifiedFileValidator
+from services.data_processing.unified_upload_validator import UnifiedUploadValidator
 
 
 @pytest.mark.parametrize("sep", [";", "\t"])
@@ -19,7 +19,7 @@ def test_parse_csv_with_various_delimiters(tmp_path, sep):
     csv_path = tmp_path / "sample.csv"
     df.to_csv(csv_path, index=False, sep=sep)
 
-    processor = UnifiedFileValidator()
+    processor = UnifiedUploadValidator()
     with open(csv_path, "rb") as f:
         data_b64 = base64.b64encode(f.read()).decode()
     contents = f"data:text/csv;base64,{data_b64}"
