@@ -32,5 +32,32 @@ def get_wrap_callback() -> Callable[..., Any]:
             return _wrap_callback
 
 
-__all__ = ["get_wrap_callback"]
+import numpy as np
+
+
+class FallbackStats:
+    @staticmethod
+    def zscore(a, axis=0, ddof=0, nan_policy='propagate'):
+        a = np.asarray(a)
+        if axis is None:
+            a = a.ravel()
+            axis = 0
+        mean = np.mean(a, axis=axis, keepdims=True)
+        std = np.std(a, axis=axis, ddof=ddof, keepdims=True)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            z = (a - mean) / std
+            z = np.where(std == 0, 0, z)
+        return z
+
+
+def get_stats_module():
+    try:
+        from scipy import stats
+        return stats
+    except Exception as exc:
+        logger.warning("scipy.stats unavailable: %s", exc)
+        return FallbackStats()
+
+
+__all__ = ["get_wrap_callback", "get_stats_module"]
 
