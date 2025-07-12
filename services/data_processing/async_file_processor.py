@@ -124,11 +124,15 @@ class AsyncFileProcessor(FileProcessorProtocol):
                 pass
         return df
 
-    def read_uploaded_file(
+    async def read_uploaded_file(
         self, contents: str, filename: str
     ) -> Tuple[pd.DataFrame, str]:
-        """Synchronously read uploaded file using async helper."""
-        df = asyncio.run(self.process_file(contents, filename))
+        """Read uploaded file handling both async and sync contexts."""
+        try:
+            asyncio.get_running_loop()
+            df = await asyncio.create_task(self.process_file(contents, filename))
+        except RuntimeError:  # pragma: no cover - run outside event loop
+            df = asyncio.run(self.process_file(contents, filename))
         return df, ""
 
     @staticmethod
