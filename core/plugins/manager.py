@@ -1,3 +1,4 @@
+import atexit
 import importlib
 import logging
 import pkgutil
@@ -44,6 +45,7 @@ class PluginManager:
             target=self._health_monitor_loop, daemon=True
         )
         self._health_thread.start()
+        atexit.register(self.stop_health_monitor)
 
     def __enter__(self):
         """Start the health monitor when entering the context."""
@@ -58,6 +60,14 @@ class PluginManager:
     def __exit__(self, exc_type, exc, tb):
         """Ensure the health monitor thread is stopped on exit."""
         self.stop_health_monitor()
+
+    def __del__(self) -> None:
+        """Stop the health monitor when the manager is garbage collected."""
+        try:
+            self.stop_health_monitor()
+        except Exception:
+            # Suppress all exceptions during interpreter shutdown
+            pass
 
     @staticmethod
     def _get_priority(plugin: PluginProtocol) -> int:
@@ -256,7 +266,9 @@ class PluginManager:
                 return
 
         def plugin_performance():
-            return getattr(app, "_yosai_plugin_manager").get_plugin_performance_metrics()
+            return getattr(
+                app, "_yosai_plugin_manager"
+            ).get_plugin_performance_metrics()
 
         server.add_url_rule(
             "/health/plugins/performance",
