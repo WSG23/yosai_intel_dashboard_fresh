@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import pickle
+import json
 import time
 from functools import wraps
 from typing import Any, Awaitable, Callable, Dict, Optional
@@ -65,7 +65,7 @@ class AdvancedCacheManager:
         if self._redis is not None:
             try:
                 data = await self._redis.get(full_key)
-                return pickle.loads(data) if data is not None else None
+                return json.loads(data.decode("utf-8")) if data is not None else None
             except Exception as exc:  # pragma: no cover - best effort
                 logger.warning("Redis GET failed for %s: %s", full_key, exc)
                 return None
@@ -84,7 +84,7 @@ class AdvancedCacheManager:
         expire = ttl if ttl is not None else self.default_ttl
         if self._redis is not None:
             try:
-                payload = pickle.dumps(value)
+                payload = json.dumps(value).encode("utf-8")
                 if expire:
                     await self._redis.setex(full_key, expire, payload)
                 else:

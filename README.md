@@ -618,6 +618,10 @@ All secrets can be provided via the `SecretManager` which supports `env`,
 Docker secrets. See the [architecture diagram](docs/auth_flow.png) for
 implementation details.
 
+When running in development mode the application no longer sets default
+secret values automatically. Ensure all required variables above are defined
+in your environment or `.env` file or the server will fail to start.
+
 Session cookies are marked as permanent on login. The default lifetime is
 configured via `security.session_timeout` in seconds. You can override the
 timeout for specific roles using `security.session_timeout_by_role`:
