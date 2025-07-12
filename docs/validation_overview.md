@@ -11,12 +11,12 @@ from core.security_validator import SecurityValidator
 
 validator = SecurityValidator()
 
-# Input validation (replaces InputValidator, SQLInjectionPrevention, XSSPrevention)
+# Input validation
 result = validator.validate_input(user_input, "field_name")
 if not result['valid']:
     raise ValidationError(result['issues'])
 
-# File upload validation (replaces SecureFileValidator, DataFrameSecurityValidator)
+# File upload validation (replaces SecureFileValidator)
 result = validator.validate_file_upload(filename, file_bytes)
 if not result['valid']:
     raise ValidationError(result['issues'])
@@ -34,38 +34,35 @@ SecurityValidator provides comprehensive validation including:
 
 ## Migration from Deprecated Classes
 
-All deprecated validator classes have been REMOVED. Update your code:
+All legacy validators have been removed. Update your code to use
+`SecurityValidator` for both input and file checks:
 
 ```python
-# OLD (REMOVED):
-from security.dataframe_validator import DataFrameSecurityValidator
-validator = DataFrameSecurityValidator()
-result = validator.validate_for_upload(df)
-
-# NEW (CURRENT):
 from core.security_validator import SecurityValidator
+
 validator = SecurityValidator()
-csv_bytes = df.to_csv(index=False).encode('utf-8')
+csv_bytes = df.to_csv(index=False).encode("utf-8")
 result = validator.validate_file_upload("data.csv", csv_bytes)
-
-# OLD (REMOVED):
-from security.sql_validator import SQLInjectionPrevention  
-SQLInjectionPrevention.validate_query_parameter(user_input)
-
-# NEW (CURRENT):
-from core.security_validator import SecurityValidator
-validator = SecurityValidator()
 result = validator.validate_input(user_input, "query_parameter")
 ```
 
 ## Removed Classes
 
 These classes have been COMPLETELY REMOVED:
-- ❌ `InputValidator` 
-- ❌ `DataFrameSecurityValidator`
-- ❌ `SQLInjectionPrevention`
 - ❌ `XSSPrevention`
-- ❌ `SecureFileValidator` 
+- ❌ `SecureFileValidator`
 - ❌ `BusinessLogicValidator`
 
 Use `SecurityValidator` for all validation needs.
+
+## Environment Limits
+
+When overriding configuration with environment variables, memory related values
+are clamped to a maximum of **500 MB**. The following variables are affected:
+
+- `MEMORY_THRESHOLD_MB`
+- `ANALYTICS_MAX_MEMORY_MB`
+
+If a higher value is provided, a warning will be logged and the value will be
+reduced to 500 MB.
+

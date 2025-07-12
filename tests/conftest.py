@@ -233,7 +233,7 @@ def fake_dash(monkeypatch: pytest.MonkeyPatch, request):
         "dash.exceptions",
         types.SimpleNamespace(PreventUpdate=Exception),
     )
-    dash_stub.no_update = None
+    dash_stub.no_update = dash_stub._callback.NoUpdate()
 
     attrs = {
         "dash": dash_stub,
@@ -249,6 +249,17 @@ def fake_dash(monkeypatch: pytest.MonkeyPatch, request):
         if hasattr(request.module, name):
             monkeypatch.setattr(request.module, name, val, raising=False)
 
+    for mod_name in (
+        "components.column_verification",
+        "components.device_verification",
+        "components.simple_device_mapping",
+    ):
+        if mod_name in sys.modules:
+            mod = sys.modules[mod_name]
+            for name, val in attrs.items():
+                if hasattr(mod, name):
+                    monkeypatch.setattr(mod, name, val, raising=False)
+
     yield dash_stub
 
 
@@ -263,6 +274,9 @@ def fake_dbc(monkeypatch: pytest.MonkeyPatch, request):
     monkeypatch.setitem(sys.modules, "dash_bootstrap_components", dbc_stub)
     if hasattr(request.module, "dbc"):
         monkeypatch.setattr(request.module, "dbc", dbc_stub, raising=False)
+    for mod_name in ("components.column_verification", "components.device_verification"):
+        if mod_name in sys.modules:
+            monkeypatch.setattr(sys.modules[mod_name], "dbc", dbc_stub, raising=False)
 
     yield dbc_stub
 

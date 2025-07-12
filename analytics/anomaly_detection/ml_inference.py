@@ -22,7 +22,9 @@ def detect_ml_anomalies(
     anomalies: List[Dict[str, Any]] = []
     try:
         features = ['hour', 'day_of_week', 'is_weekend', 'is_after_hours', 'access_granted']
-        feature_df = df[features].copy()
+        # Shallow copy of just the features needed for inference to keep
+        # memory usage low
+        feature_df = df[features].copy(deep=False)
         if len(feature_df) < 10:
             return anomalies
         isolation_forest.set_params(contamination=1 - sensitivity)

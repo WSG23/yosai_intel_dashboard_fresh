@@ -11,7 +11,10 @@ __all__ = ["prepare_security_data"]
 def prepare_security_data(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -> pd.DataFrame:
     """Prepare and clean data for security analysis."""
     logger = logger or logging.getLogger(__name__)
-    df_clean = df.copy()
+    # Use a shallow copy to preserve memory while ensuring the original
+    # DataFrame remains unchanged
+
+    df_clean = df.copy(deep=False)
 
     # Handle Unicode issues
     from security.unicode_security_handler import UnicodeSecurityHandler

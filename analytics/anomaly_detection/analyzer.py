@@ -1,6 +1,8 @@
-"""
-Fix for analytics/anomaly_detection.py
-Replace the existing file with this corrected version that exports AnomalyDetection
+"""Enhanced anomaly detection utilities.
+
+This module provides the :class:`AnomalyDetector` class and supporting
+functions. Previous versions exposed a separate ``AnomalyDetection`` class,
+which has now been standardised to :class:`AnomalyDetector`.
 """
 
 import logging
@@ -322,10 +324,6 @@ class AnomalyDetector:
         emit_security_event(SecurityEvent.SCORE_CALCULATED, {"score": score})
 
 
-# Backward compatibility aliases
-AnomalyDetection = AnomalyDetector  # This fixes the import error!
-
-
 # Factory functions for compatibility
 def create_anomaly_detector(**kwargs) -> AnomalyDetector:
     """Factory function to create anomaly detector"""
@@ -338,9 +336,8 @@ create_enhanced_anomaly_detector = create_anomaly_detector
 
 # Export all necessary classes and functions
 __all__ = [
-    "AnomalyDetector", 
-    "AnomalyDetection",  # Key export for backward compatibility
+    "AnomalyDetector",
     "AnomalyAnalysis",
-    "create_anomaly_detector", 
+    "create_anomaly_detector",
     "EnhancedAnomalyDetector"
 ]

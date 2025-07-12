@@ -283,6 +283,10 @@ executes coroutines on a dedicated event loop. If you need to run an async
 function inside a test simply pass `async_runner` and call it with your
 coroutine.
 
+The CI workflow also stores the `audit-report.json` file produced by `pip-audit`
+as the **pip-audit-report** artifact. Download it from the **Actions** tab to
+review dependency vulnerability results.
+
 ## 📋 Features
 
 - **Real-time Security Monitoring**: Live access control event monitoring
@@ -663,9 +667,11 @@ Update the spec by running `python tools/generate_openapi.py` which writes `docs
 ### Cleaning text
 ```python
 from core.unicode import get_text_processor
+from utils import sanitize_unicode_input
 raw = "Bad\uD83DText"
 processor = get_text_processor()
 clean = processor.safe_encode_text(raw)
+safe = sanitize_unicode_input("A\ud800B")
 ```
 
 ### Firing events

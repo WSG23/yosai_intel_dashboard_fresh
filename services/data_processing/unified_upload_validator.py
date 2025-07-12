@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Unified file validation utilities consolidating legacy validators."""
+"""Unified upload validation utilities consolidating legacy validators."""
 
 import base64
 import io
@@ -20,7 +20,6 @@ from core.protocols import ConfigurationProtocol
 from core.unicode import UnicodeProcessor, sanitize_dataframe
 from core.unicode_utils import sanitize_for_utf8
 from upload_types import ValidationResult
-from .unified_upload_validator import UnifiedUploadValidator
 
 
 def _lazy_string_validator() -> Any:
@@ -203,10 +202,12 @@ def validate_dataframe_content(df: pd.DataFrame) -> Dict[str, Any]:
     }
 
 
-class UnifiedFileValidator:
-    """Combine all file validation responsibilities into a single class."""
+class UnifiedUploadValidator:
+    """Combine all upload validation responsibilities into a single class."""
 
     ALLOWED_EXTENSIONS = ALLOWED_EXTENSIONS
+
+    _DATA_URI_RE = re.compile(r"^data:.*;base64,", re.IGNORECASE)
 
     def __init__(
         self,
@@ -218,7 +219,6 @@ class UnifiedFileValidator:
             self.config.security, "max_upload_mb", dynamic_config.security.max_upload_mb
         )
         self._string_validator = _lazy_string_validator()
-        self._basic_validator = UnifiedUploadValidator(self.max_size_mb, config=self.config)
 
     def _sanitize_string(self, value: str) -> str:
         cleaned = sanitize_for_utf8(str(value))
@@ -317,8 +317,64 @@ class UnifiedFileValidator:
     # Compatibility helpers
     # ------------------------------------------------------------------
     def validate_file_upload(self, file_obj: Any) -> ValidationResult:
-        """Validate ``file_obj`` using the basic validator."""
-        return self._basic_validator.validate_file_upload(file_obj)
+        """Validate ``file_obj`` mimicking the legacy :class:`UploadValidator`."""
+
+        if file_obj is None:
+            return ValidationResult(False, "No file provided")
+
+        try:
+            import pandas as pd
+
+            if isinstance(file_obj, pd.DataFrame):
+                if file_obj.empty:
+                    return ValidationResult(False, "Empty dataframe")
+                size_mb = file_obj.memory_usage(deep=True).sum() / (1024 * 1024)
+                if size_mb > self.max_size_mb:
+                    return ValidationResult(
+                        False,
+                        f"Dataframe too large: {size_mb:.1f}MB > {self.max_size_mb}MB",
+                    )
+                return ValidationResult(True, "ok")
+        except Exception:
+            pass
+
+        if isinstance(file_obj, (str, Path)):
+            text = str(file_obj)
+            if self._DATA_URI_RE.match(text):
+                try:
+                    _, b64 = text.split(",", 1)
+                    decoded = base64.b64decode(b64)
+                except Exception:
+                    return ValidationResult(False, "Invalid base64 contents")
+                return self.validate_file_upload(decoded)
+
+            if isinstance(file_obj, Path) or Path(text).exists():
+                path = Path(file_obj)
+                if not path.exists():
+                    return ValidationResult(False, "File not found")
+                size_mb = path.stat().st_size / (1024 * 1024)
+                if size_mb == 0:
+                    return ValidationResult(False, "File is empty")
+                if size_mb > self.max_size_mb:
+                    return ValidationResult(
+                        False,
+                        f"File too large: {size_mb:.1f}MB > {self.max_size_mb}MB",
+                    )
+                return ValidationResult(True, "ok")
+            return ValidationResult(False, "File not found")
+
+        if isinstance(file_obj, (bytes, bytearray)):
+            size_mb = len(file_obj) / (1024 * 1024)
+            if size_mb == 0:
+                return ValidationResult(False, "File is empty")
+            if size_mb > self.max_size_mb:
+                return ValidationResult(
+                    False,
+                    f"File too large: {size_mb:.1f}MB > {self.max_size_mb}MB",
+                )
+            return ValidationResult(True, "ok")
+
+        return ValidationResult(False, "Unsupported file type")
 
     def process_base64_contents(self, contents: str, filename: str) -> pd.DataFrame:
         """Backward compatible wrapper for :meth:`validate_file`."""
@@ -326,10 +382,11 @@ class UnifiedFileValidator:
 
 
 __all__ = [
-    "UnifiedFileValidator",
+    "UnifiedUploadValidator",
     "ValidationResult",
     "safe_decode_with_unicode_handling",
     "safe_decode_file",
     "process_dataframe",
     "validate_dataframe_content",
 ]
+

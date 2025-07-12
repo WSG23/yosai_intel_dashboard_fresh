@@ -16,6 +16,7 @@ from .config_validator import ConfigValidator, ValidationResult
 from .constants import CSSConstants, PerformanceConstants, SecurityConstants
 from .dynamic_config import DynamicConfigManager, dynamic_config
 from .config_manager import ConfigManager, get_config, reload_config
+from .secure_config_manager import SecureConfigManager
 from .protocols import (
     ConfigLoaderProtocol,
     ConfigTransformerProtocol,
@@ -93,6 +94,7 @@ __all__ = [
     "SecurityConfig",
     "UploadConfig",
     "ConfigManager",
+    "SecureConfigManager",
     "ConfigValidator",
     "ValidationResult",
     "ConfigLoader",

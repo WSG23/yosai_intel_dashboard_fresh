@@ -10,6 +10,7 @@ from security_callback_controller import (
 from .analyzer import (
     EnhancedSecurityAnalyzer,
     SecurityPatternsAnalyzer,
+    PaginatedAnalyzer,
     create_security_analyzer,
 )
 from .data_prep import prepare_security_data
@@ -29,6 +30,7 @@ __all__ = [
     "SecurityPatternsAnalyzer",
     "create_security_analyzer",
     "EnhancedSecurityAnalyzer",
+    "PaginatedAnalyzer",
     "SecurityCallbackController",
     "SecurityEvent",
     "security_callback_controller",
