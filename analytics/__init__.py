@@ -8,6 +8,7 @@ __all__ = [
     "unique_patterns_analyzer",
     "security_metrics",
     "security_score_calculator",
+    "risk_scoring",
     "db_interface",
     "file_processing_utils",
     "utils",
@@ -18,6 +19,7 @@ __all__ = [
 
 import logging
 
+from . import risk_scoring
 from .business_service import AnalyticsBusinessService
 from .data_repository import AnalyticsDataRepository
 from .ui_controller import AnalyticsUIController
