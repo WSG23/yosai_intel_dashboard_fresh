@@ -1,36 +1,234 @@
-"""Compatibility helpers for SciPy internals."""
+"""Statistical anomaly detection with enhanced error handling and Unicode safety."""
 
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable
+import unicodedata
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-logger = logging.getLogger(__name__)
+import numpy as np
+import pandas as pd
+from utils.scipy_compat import stats
+
+__all__ = [
+    "detect_frequency_anomalies",
+    "detect_statistical_anomalies", 
+    "calculate_severity_from_zscore",
+    "sanitize_unicode_data",
+]
 
 
-def get_wrap_callback() -> Callable[..., Any]:
-    """Return SciPy's private ``_wrap_callback`` implementation.
-
-    Handles different module locations across SciPy versions.
-    """
-    try:
-        from scipy.optimize._optimize import _wrap_callback
-        return _wrap_callback
-    except Exception:
+def sanitize_unicode_data(data: Any) -> Any:
+    """Sanitize data to handle Unicode surrogate characters."""
+    if isinstance(data, str):
         try:
-            from scipy.optimize.optimize import _wrap_callback  # type: ignore
-            return _wrap_callback
-        except Exception as exc:  # pragma: no cover - fallback
-            logger.warning("_wrap_callback unavailable: %s", exc)
+            # Remove surrogate characters that can't be encoded in UTF-8
+            cleaned = data.encode('utf-8', 'replace').decode('utf-8')
+            # Normalize Unicode characters
+            cleaned = unicodedata.normalize('NFKC', cleaned)
+            return cleaned
+        except (UnicodeError, ValueError):
+            # Fallback: remove all non-ASCII characters
+            return ''.join(char for char in data if ord(char) < 128)
+    elif isinstance(data, dict):
+        return {key: sanitize_unicode_data(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [sanitize_unicode_data(item) for item in data]
+    elif isinstance(data, tuple):
+        return tuple(sanitize_unicode_data(item) for item in data)
+    return data
 
-            def _wrap_callback(f: Callable[..., Any], c: Any) -> Callable[..., Any]:
-                def wrapper(xk: Any, *a: Any, **kw: Any) -> Any:
-                    return f(xk, *a, **kw)
 
-                return wrapper
+class StatisticalAnomalyDetector:
+    """Modular statistical anomaly detector with Unicode safety."""
+    
+    def __init__(self, logger: Optional[logging.Logger] = None):
+        self.logger = logger or logging.getLogger(__name__)
+    
+    def _safe_zscore_calculation(self, data: np.ndarray) -> np.ndarray:
+        """Calculate Z-scores with error handling."""
+        try:
+            # Ensure data is numeric
+            data = np.asarray(data, dtype=float)
+            
+            if len(data) < 2:
+                return np.zeros_like(data)
+            
+            # Remove infinite values
+            finite_mask = np.isfinite(data)
+            if not np.any(finite_mask):
+                return np.zeros_like(data)
+            
+            return stats.zscore(data)
+            
+        except Exception as e:
+            self.logger.warning(f"Z-score calculation failed: {e}")
+            return np.zeros_like(data)
+    
+    def _validate_dataframe(self, df: pd.DataFrame) -> bool:
+        """Validate DataFrame for anomaly detection."""
+        required_columns = ['timestamp', 'person_id']
+        
+        if df.empty:
+            self.logger.warning("Empty DataFrame provided")
+            return False
+        
+        missing_cols = [col for col in required_columns if col not in df.columns]
+        if missing_cols:
+            self.logger.warning(f"Missing required columns: {missing_cols}")
+            return False
+        
+        return True
+    
+    def detect_frequency_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
+        """Detect frequency-based anomalies with Unicode safety."""
+        if not self._validate_dataframe(df):
+            return []
+        
+        anomalies: List[Dict[str, Any]] = []
+        
+        try:
+            # Sanitize string columns
+            df_clean = df.copy()
+            for col in df_clean.select_dtypes(include=['object']).columns:
+                df_clean[col] = df_clean[col].apply(sanitize_unicode_data)
+            
+            person_stats = df_clean.groupby('person_id').agg({
+                'timestamp': ['count', 'min', 'max'],
+                'access_granted': 'sum' if 'access_granted' in df_clean.columns else lambda x: len(x)
+            }).round(2)
+            
+            person_stats.columns = ['total_attempts', 'first_access', 'last_access', 'successful_attempts']
+            
+            if len(person_stats) < 2:
+                return anomalies
+            
+            # Use robust percentile-based threshold
+            freq_threshold = person_stats['total_attempts'].quantile(0.95)
+            
+            if freq_threshold <= 0:
+                return anomalies
+            
+            high_freq_users = person_stats[person_stats['total_attempts'] > freq_threshold]
+            
+            for person_id, stats_row in high_freq_users.iterrows():
+                # Calculate Z-score for this user's frequency
+                all_frequencies = person_stats['total_attempts'].values
+                user_freq = stats_row['total_attempts']
+                z_scores = self._safe_zscore_calculation(all_frequencies)
+                user_idx = person_stats.index.get_loc(person_id)
+                user_zscore = z_scores[user_idx] if user_idx < len(z_scores) else 0
+                
+                anomaly_data = {
+                    "type": "activity_burst",
+                    "user_id": sanitize_unicode_data(str(person_id)),
+                    "details": {
+                        "total_attempts": int(stats_row['total_attempts']),
+                        "successful_attempts": int(stats_row['successful_attempts']),
+                        "time_span": sanitize_unicode_data(str(stats_row['last_access'] - stats_row['first_access'])),
+                        "z_score": float(user_zscore),
+                    },
+                    "severity": calculate_severity_from_zscore(abs(user_zscore)),
+                    "confidence": min(0.95, abs(user_zscore) / 4.0),
+                    "timestamp": datetime.now()
+                }
+                
+                anomalies.append(sanitize_unicode_data(anomaly_data))
+                
+        except Exception as exc:
+            self.logger.warning(f"Frequency anomaly detection failed: {exc}")
+        
+        return anomalies
+    
+    def detect_statistical_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
+        """Detect statistical anomalies using Z-score and IQR methods with Unicode safety."""
+        if not self._validate_dataframe(df):
+            return []
+        
+        anomalies: List[Dict[str, Any]] = []
+        
+        try:
+            # Sanitize DataFrame
+            df_clean = df.copy()
+            for col in df_clean.select_dtypes(include=['object']).columns:
+                df_clean[col] = df_clean[col].apply(sanitize_unicode_data)
+            
+            # Ensure timestamp is datetime
+            if not pd.api.types.is_datetime64_any_dtype(df_clean['timestamp']):
+                df_clean['timestamp'] = pd.to_datetime(df_clean['timestamp'], errors='coerce')
+            
+            # Remove rows with invalid timestamps
+            df_clean = df_clean.dropna(subset=['timestamp'])
+            
+            if len(df_clean) < 5:  # Need minimum data for statistics
+                return anomalies
+            
+            # Hourly access pattern analysis
+            hourly_access = df_clean.groupby(df_clean['timestamp'].dt.hour).size()
+            
+            if len(hourly_access) < 2:
+                return anomalies
+            
+            # Calculate Z-scores for hourly patterns
+            z_scores = self._safe_zscore_calculation(hourly_access.values)
+            
+            # Adaptive threshold based on sensitivity
+            threshold = 3.0 * (1 - sensitivity) if sensitivity > 0 else 3.0
+            threshold = max(2.0, min(5.0, threshold))  # Clamp between 2-5
+            
+            anomalous_hours = hourly_access[np.abs(z_scores) > threshold]
+            
+            for hour, count in anomalous_hours.items():
+                hour_idx = hourly_access.index.get_loc(hour)
+                z_score = z_scores[hour_idx] if hour_idx < len(z_scores) else 0
+                
+                anomaly_data = {
+                    "type": "unusual_hour_activity",
+                    "details": {
+                        "hour": int(hour),
+                        "access_count": int(count),
+                        "z_score": float(z_score),
+                        "threshold_used": float(threshold),
+                    },
+                    "severity": calculate_severity_from_zscore(abs(z_score)),
+                    "confidence": min(0.95, abs(z_score) / 4.0),
+                    "timestamp": datetime.now()
+                }
+                
+                anomalies.append(sanitize_unicode_data(anomaly_data))
+                
+        except Exception as exc:
+            self.logger.warning(f"Statistical anomaly detection failed: {exc}")
+        
+        return anomalies
 
-            return _wrap_callback
+
+def calculate_severity_from_zscore(z_score: float) -> str:
+    """Calculate severity level from Z-score with input validation."""
+    try:
+        z_score = float(abs(z_score))
+        
+        if z_score >= 4.0:
+            return "critical"
+        elif z_score >= 3.5:
+            return "high"
+        elif z_score >= 3.0:
+            return "medium"
+        else:
+            return "low"
+    except (ValueError, TypeError):
+        return "low"
 
 
-__all__ = ["get_wrap_callback"]
+# Backwards compatibility functions
+def detect_frequency_anomalies(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -> List[Dict[str, Any]]:
+    """Detect frequency-based anomalies (backwards compatible interface)."""
+    detector = StatisticalAnomalyDetector(logger)
+    return detector.detect_frequency_anomalies(df)
 
+
+def detect_statistical_anomalies(df: pd.DataFrame, sensitivity: float, logger: Optional[logging.Logger] = None) -> List[Dict[str, Any]]:
+    """Detect statistical anomalies (backwards compatible interface)."""
+    detector = StatisticalAnomalyDetector(logger)
+    return detector.detect_statistical_anomalies(df, sensitivity)
