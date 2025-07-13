@@ -69,6 +69,9 @@ Copy the sample environment file and adjust any values you need:
 ```bash
 cp .env.example .env
 ```
+`setup_dev_mode` expects `DB_PASSWORD` to be set. The example `.env.example`
+already defines a placeholder. If you skip this variable the tests will only
+show a warning but any database-dependent checks may fail.
 
 If the CSS bundle has not been built yet, generate it:
 ```bash

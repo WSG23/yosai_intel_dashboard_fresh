@@ -45,6 +45,10 @@ This guide walks new contributors through setting up a local development environ
    cp .env.example .env
    # Edit .env as needed
    ```
+   The development helper `setup_dev_mode` expects `DB_PASSWORD` to be
+   defined. The placeholder value in `.env.example` is sufficient for a
+   local setup. If you omit it the app only emits a warning but database
+   features may not be available.
 
 7. **(Optional) Initialize the database or load sample data.**
    Prepare your PostgreSQL database and populate it with any example data if desired.
