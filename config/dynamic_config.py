@@ -61,11 +61,17 @@ class DynamicConfigManager(BaseConfigLoader):
                         )
 
                 uploads_config = config_data.get("uploads", {})
+                key_map = {
+                    "chunk_size": "DEFAULT_CHUNK_SIZE",
+                    "max_parallel_uploads": "MAX_PARALLEL_UPLOADS",
+                    "validator_rules": "VALIDATOR_RULES",
+                }
                 for key, value in uploads_config.items():
-                    if hasattr(self.uploads, key) and isinstance(
-                        value, type(getattr(self.uploads, key))
+                    attr = key_map.get(key, key)
+                    if hasattr(self.uploads, attr) and isinstance(
+                        value, type(getattr(self.uploads, attr))
                     ):
-                        setattr(self.uploads, key, value)
+                        setattr(self.uploads, attr, value)
                     else:
                         logger.warning("Invalid uploads config for %s", key)
 
@@ -76,9 +82,7 @@ class DynamicConfigManager(BaseConfigLoader):
                     ):
                         setattr(self.streaming, key, value)
                     else:
-                        logger.warning(
-                            "Invalid streaming config for %s", key
-                        )
+                        logger.warning("Invalid streaming config for %s", key)
 
                 database_config = config_data.get("database", {})
                 if "connection_timeout" in database_config:
