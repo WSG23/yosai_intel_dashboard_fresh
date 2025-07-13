@@ -12,10 +12,10 @@
   justify-content: center !important;
   min-height: 200px !important;
   padding: 40px !important;
-  border: 2px dashed #007bff !important;
+  border: 2px dashed var(--color-accent);
   border-radius: 8px !important;
-  background: #f8f9fa !important;
-  text-align: center !important;
+  background: var(--surface-tertiary);
+  text-align: center;
   cursor: pointer !important;
   
   /* Anti-flash properties */
@@ -34,7 +34,7 @@
   opacity: 1 !important;
   visibility: visible !important;
   display: block !important;
-  color: #007bff !important;
+  color: var(--color-accent);
 }
 
 /* Icon and text styling */
@@ -43,7 +43,7 @@
 #drag-drop-upload p,
 #drag-drop-upload h3 {
   font-size: 48px !important;
-  color: #007bff !important;
+  color: var(--color-accent);
   margin-bottom: 16px !important;
   opacity: 1 !important;
   visibility: visible !important;
@@ -52,8 +52,8 @@
 /* Hover states */
 #drag-drop-upload:hover,
 .drag-drop-upload:hover {
-  background: #e9ecef !important;
-  border-color: #0056b3 !important;
+  background: var(--surface-tertiary);
+  border-color: var(--color-accent-hover);
 }
 
 /* Loading states */
