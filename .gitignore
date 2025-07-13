@@ -107,3 +107,8 @@ translations/**/*.mo
 cache/
 venv
 venv_dashboard/
+
+# Build artifacts
+config.zip
+app.log
+callback_audit_results/
