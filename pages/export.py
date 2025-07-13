@@ -48,8 +48,8 @@ csv_content = export_service.to_csv_string(data)
                         className="mb-4",
                     ),
                     html.P(
-                        "Exported files are saved by your browser to the default download"
-                        " location, such as `~/Downloads`.",
+                        "Exported files are saved by your browser to the "
+                        "default download location, such as `~/Downloads`.",
                         className="mb-3",
                     ),
                     dcc.Markdown(code_example, className="bg-light p-3 rounded"),
@@ -68,10 +68,12 @@ def layout() -> dbc.Container:
 
 __all__ = ["layout", "register_page"]
 
+
 def __getattr__(name: str):
     if name.startswith(("create_", "get_")):
+
         def _stub(*args, **kwargs):
             return None
+
         return _stub
     raise AttributeError(f"module {__name__} has no attribute {name}")
-
