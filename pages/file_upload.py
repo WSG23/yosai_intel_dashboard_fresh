@@ -26,8 +26,9 @@ from dash.exceptions import PreventUpdate  # type: ignore[import]
 
 from components.ui_component import UIComponent
 from config.dynamic_config import dynamic_config
-from services.upload_data_service import clear_uploaded_data as _svc_clear_uploaded_data
-from config.dynamic_config import dynamic_config
+from services.upload_data_service import (
+    clear_uploaded_data as _svc_clear_uploaded_data,
+)
 
 
 # Core imports that should always work
@@ -81,17 +82,24 @@ class UploadPage(UIComponent):
                     [
                         dbc.Col(
                             [
+                                html.Label(
+                                    "Upload data files",
+                                    htmlFor="drag-drop-upload",
+                                    className="visually-hidden",
+                                ),
                                 dcc.Upload(
                                     id="drag-drop-upload",
                                     children=html.Div(
                                         [
                                             html.I(
                                                 className=(
-                                                    "fas fa-cloud-upload-alt "
-                                                    "fa-3x mb-3"
+                                                    "fas fa-cloud-upload-alt fa-3x mb-3"
                                                 ),
-                                                style={"color": "#6c757d"},
                                                 **{"aria-hidden": "true"},
+                                            ),
+                                            html.Span(
+                                                "Upload files",
+                                                className="visually-hidden",
                                             ),
                                             html.H5("Drag & Drop Files Here"),
                                             html.P(
@@ -103,23 +111,13 @@ class UploadPage(UIComponent):
                                                 className="small text-muted",
                                             ),
                                         ],
-                                        style={
-                                            "textAlign": "center",
-                                            "padding": "60px",
-                                            "border": "2px dashed #dee2e6",
-                                            "borderRadius": "10px",
-                                            "cursor": "pointer",
-                                        },
+                                        className="upload-dropzone-content",
                                     ),
-                                    style={
-                                        "width": "100%",
-                                        "minHeight": "200px",
-                                        "marginBottom": "20px",
-                                    },
                                     multiple=True,
                                     accept=".csv,.xlsx,.xls,.json",
                                     max_size=50 * 1024 * 1024,  # 50MB
                                     className="upload-dropzone",
+                                    **{"aria-label": "Upload data files"},
                                 )
                             ],
                             lg=8,
