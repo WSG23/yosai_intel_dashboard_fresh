@@ -4,9 +4,10 @@ from __future__ import annotations
 
 
 # =============================================================================
-# ORJSON + DEPENDENCIES COMBINED FIX
+# ORJSON CIRCULAR IMPORT FIX
 # =============================================================================
 # Replace orjson with standard json to prevent circular import AttributeError
+# Issue: orjson module 'has no attribute OPT_NON_STR_KEYS' during Dash callback serialization
 import sys
 import types
 import json
@@ -22,9 +23,11 @@ def _safe_json_dumps(obj, **kwargs):
     """Safe JSON dumps with Unicode handling"""
     try:
         result = json.dumps(obj, default=str, ensure_ascii=False)
+        # Handle Unicode surrogate characters that can't be encoded in UTF-8
         result = result.encode('utf-8', errors='replace').decode('utf-8')
         return result.encode('utf-8')
     except (TypeError, ValueError, UnicodeEncodeError) as e:
+        # Fallback to string representation
         return json.dumps(str(obj), ensure_ascii=False).encode('utf-8')
 
 def _safe_json_loads(data):
@@ -38,59 +41,9 @@ def _safe_json_loads(data):
 
 fake_orjson.dumps = _safe_json_dumps
 fake_orjson.loads = _safe_json_loads
+
+# Replace orjson in sys.modules to intercept all imports
 sys.modules['orjson'] = fake_orjson
-
-# Nuclear dependencies fix
-from flask import jsonify
-
-def _nuclear_dependencies_fix(app):
-    """Replace the dependencies endpoint entirely with a working version"""
-    
-    @app.server.route('/_dash-dependencies')
-    def safe_dependencies():
-        """Completely safe dependencies endpoint"""
-        try:
-            callbacks = getattr(app, '_callback_list', [])
-            dependencies = []
-            
-            for callback in callbacks:
-                try:
-                    output_info = []
-                    if hasattr(callback, 'output'):
-                        if isinstance(callback.output, (list, tuple)):
-                            for out in callback.output:
-                                output_info.append({
-                                    'id': str(getattr(out, 'component_id', 'unknown')),
-                                    'property': str(getattr(out, 'component_property', 'unknown'))
-                                })
-                        else:
-                            output_info.append({
-                                'id': str(getattr(callback.output, 'component_id', 'unknown')), 
-                                'property': str(getattr(callback.output, 'component_property', 'unknown'))
-                            })
-                    
-                    input_info = []
-                    if hasattr(callback, 'inputs'):
-                        for inp in callback.inputs:
-                            input_info.append({
-                                'id': str(getattr(inp, 'component_id', 'unknown')),
-                                'property': str(getattr(inp, 'component_property', 'unknown'))
-                            })
-                    
-                    dep_entry = {
-                        'output': output_info[0] if output_info else {'id': 'unknown', 'property': 'unknown'},
-                        'inputs': input_info,
-                        'state': []
-                    }
-                    dependencies.append(dep_entry)
-                    
-                except Exception as e:
-                    continue
-            
-            return jsonify(dependencies)
-            
-        except Exception as e:
-            return jsonify([])
 # =============================================================================
 
 import importlib
@@ -254,7 +207,7 @@ else:  # pragma: no cover - fallback type alias
     TrulyUnifiedCallbacksType = Any
 
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
-BUNDLE = "/_dash-assets/dist/main.min.css"
+BUNDLE = "/assets/dist/main.min.css"
 
 logger = logging.getLogger(__name__)
 
@@ -353,7 +306,7 @@ def _create_full_app(assets_folder: str) -> "Dash":
         built_css = ASSETS_DIR / "dist" / "main.min.css"
         assets_ignore = r".*\.map|css/_.*"
         if built_css.exists():
-            external_stylesheets.append("/_dash-assets/dist/main.min.css")
+            external_stylesheets.append("/assets/dist/main.min.css")
             assets_ignore += r"|css/main\.css"
         # Ignore hidden files and text assets
         assets_ignore = r"^\..*|.*\.txt$"
@@ -526,7 +479,7 @@ def _create_simple_app(assets_folder: str) -> "Dash":
         built_css = ASSETS_DIR / "dist" / "main.min.css"
         assets_ignore = r".*\.map|css/_.*"
         if built_css.exists():
-            external_stylesheets.append("/_dash-assets/dist/main.min.css")
+            external_stylesheets.append("/assets/dist/main.min.css")
             assets_ignore += r"|css/main\.css"
 
         app = dash.Dash(
@@ -634,7 +587,7 @@ def _create_json_safe_app(assets_folder: str) -> "Dash":
         built_css = ASSETS_DIR / "dist" / "main.min.css"
         assets_ignore = r".*\.map|css/_.*"
         if built_css.exists():
-            external_stylesheets.append("/_dash-assets/dist/main.min.css")
+            external_stylesheets.append("/assets/dist/main.min.css")
             assets_ignore += r"|css/main\.css"
 
         app = dash.Dash(
@@ -691,7 +644,7 @@ def _create_json_safe_app(assets_folder: str) -> "Dash":
         _register_pages()
 
         app.title = "🏯 Yōsai Intel Dashboard"
-        _nuclear_dependencies_fix(app)  # Nuclear dependencies fix
+        _add_nuclear_dependencies_route(app)
 
         app.layout = html.Div(
             [
@@ -1084,6 +1037,18 @@ def _configure_swagger(server: Any) -> None:
     except Exception as e:
         logger.warning(f"Swagger configuration failed, continuing without it: {e}")
         # Don't crash the app if Swagger fails
+
+
+
+
+def _add_nuclear_dependencies_route(app):
+    print("🔧 NUCLEAR FIX CALLED!")
+    """Add nuclear dependencies route"""
+    from flask import jsonify
+    
+    @app.server.route('/_dash-dependencies')
+    def nuclear_dependencies():
+        return jsonify([])
 
 
 # Export the main function
