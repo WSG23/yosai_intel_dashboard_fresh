@@ -1,28 +1,21 @@
 """Device verification component - follows exact same pattern as column_verification.py"""
 
-from typing import TYPE_CHECKING
+import logging
+from datetime import datetime
+from typing import TYPE_CHECKING, Any, Dict, List, Union
 
+import dash
+import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import dcc, html
 from dash.dependencies import ALL, MATCH, Input, Output, State
 
-if TYPE_CHECKING:
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-
-import logging
-
 from analytics.controllers import UnifiedAnalyticsController
-
-logger = logging.getLogger(__name__)
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Union
-
-import dash
-import dash_bootstrap_components as dbc
-
 from components.simple_device_mapping import special_areas_options
 from services.ai_mapping_store import ai_mapping_store
+
+if TYPE_CHECKING:
+    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 logger = logging.getLogger(__name__)
 
@@ -298,12 +291,12 @@ def register_modal_callback(manager: "TrulyUnifiedCallbacks") -> None:
             Input("device-verify-confirm", "n_clicks"),
             Input("device-verify-cancel", "n_clicks"),
         ],
-
         [State("device-verification-modal", "is_open")],
         prevent_initial_call=True,
         callback_id="toggle_device_verification_modal",
         component_name="device_verification",
     )(toggle_device_verification_modal)
+
 
 def register_callbacks(
     manager: "TrulyUnifiedCallbacks",
@@ -331,4 +324,8 @@ def register_callbacks(
         )
 
 
-__all__ = ["create_device_verification_modal", "register_callbacks", "register_modal_callback"]
+__all__ = [
+    "create_device_verification_modal",
+    "register_callbacks",
+    "register_modal_callback",
+]
