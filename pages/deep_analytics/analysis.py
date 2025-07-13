@@ -407,10 +407,10 @@ def create_suggests_display(*args, **kwargs):
 # ─────────────────────────────────────────────────────────────────────────────
 # Dynamic stub handler: any missing create_/get_ attribute returns a no-op
 def __getattr__(name: str):
-    \"\"\"
+    """
     Provide stub functions dynamically for any missing
     create_* or get_* attributes to satisfy imports.
-    \"\"\"
+    """
     if name.startswith(("create_", "get_")):
         def _stub(*args, **kwargs):
             return None

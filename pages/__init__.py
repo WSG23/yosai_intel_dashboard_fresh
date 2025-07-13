@@ -99,3 +99,10 @@ def get_available_pages() -> Dict[str, bool]:
 
 
 __all__ = ["get_page_layout", "register_pages", "clear_page_cache", "get_available_pages"]
+
+def __getattr__(name: str):
+    if name.startswith(("create_", "get_")):
+        def _stub(*args, **kwargs):
+            return None
+        return _stub
+    raise AttributeError(f"module {__name__} has no attribute {name}")
