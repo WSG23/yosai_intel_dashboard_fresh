@@ -117,7 +117,7 @@ class UploadPage(UIComponent):
                                     accept=".csv,.xlsx,.xls,.json",
                                     max_size=50 * 1024 * 1024,  # 50MB
                                     className="upload-dropzone",
-                                    **{"aria-label": "Upload data files"},
+                                    # aria-label removed for dcc.Upload compatibility
                                 )
                             ],
                             lg=8,
@@ -143,11 +143,11 @@ class UploadPage(UIComponent):
                                     style={"display": "none", "height": "8px"},
                                     className="mb-3",
                                     **{
-                                        "role": "progressbar",
+                                        # "role": "progressbar",
                                         
-                                        "aria-valuemin": 0,
-                                        "aria-valuemax": 100,
-                                        "aria-label": "File upload progress",
+                                        # "aria-valuemin": 0,
+                                        # "aria-valuemax": 100,
+                                        # "aria-label": "File upload progress",
                                     },
                                 ),
                             ],
