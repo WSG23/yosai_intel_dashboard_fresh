@@ -1,6 +1,3 @@
-from dash import register_page
-register_page(__name__, path="/export", name="Export")
-
 #!/usr/bin/env python3
 """Export page providing download instructions."""
 

@@ -29,11 +29,10 @@ from services.upload_data_service import clear_uploaded_data as _svc_clear_uploa
 from services.upload_data_service import get_uploaded_data as _svc_get_uploaded_data
 from services.upload_data_service import (
     get_uploaded_filenames as _svc_get_uploaded_filenames,
+
 )
 from config.dynamic_config import dynamic_config
 
-# Register this page with Dash when imported
-register_page(__name__, path="/upload", name="Upload")
 
 # Core imports that should always work
 try:
@@ -298,6 +297,12 @@ def load_page(**kwargs) -> UploadPage:
     return UploadPage(**kwargs)
 
 
+def register_page() -> None:
+    """Register the upload page with Dash."""
+
+    dash_register_page(__name__, path="/upload", name="Upload")
+
+
 def layout() -> dbc.Container:
     """Compatibility wrapper returning the default component layout."""
 
@@ -545,6 +550,7 @@ register_upload_callbacks = register_callbacks
 __all__ = [
     "UploadPage",
     "load_page",
+    "register_page",
     "layout",
     "safe_upload_layout",
     "register_callbacks",
