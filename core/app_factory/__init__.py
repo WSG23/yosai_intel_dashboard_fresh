@@ -178,8 +178,11 @@ if TYPE_CHECKING:  # pragma: no cover - only for type hints
 else:  # pragma: no cover - fallback type alias
     TrulyUnifiedCallbacksType = Any
 
-ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 BUNDLE = "/assets/dist/main.min.css"
+ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
+# Resolve pages directory relative to this file so Dash Pages works when
+# the application is started from any working directory
+PAGES_DIR = Path(__file__).resolve().parents[2] / "pages"
 
 logger = logging.getLogger(__name__)
 
@@ -290,7 +293,7 @@ def _create_full_app(assets_folder: str) -> "Dash":
             assets_folder=assets_folder,
             assets_ignore=assets_ignore,
             use_pages=True,
-            pages_folder="../../pages",
+            pages_folder=str(PAGES_DIR),
         )
         fix_flask_mime_types(app)
         ensure_icon_cache_headers(app)
@@ -484,7 +487,7 @@ def _create_simple_app(assets_folder: str) -> "Dash":
             assets_folder=assets_folder,
             assets_ignore=assets_ignore,
             use_pages=True,
-            pages_folder="../../pages",
+            pages_folder=str(PAGES_DIR),
         )
         fix_flask_mime_types(app)
         ensure_icon_cache_headers(app)
@@ -592,7 +595,7 @@ def _create_json_safe_app(assets_folder: str) -> "Dash":
             assets_folder=assets_folder,
             assets_ignore=assets_ignore,
             use_pages=True,
-            pages_folder="../../pages",
+            pages_folder=str(PAGES_DIR),
         )
         fix_flask_mime_types(app)
         ensure_icon_cache_headers(app)
