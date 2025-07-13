@@ -1005,6 +1005,8 @@ def _add_nuclear_dependencies_route(app: "Dash") -> None:
     def nuclear_dependencies() -> Any:
         return jsonify([])
 
+    logger.info("\u2705 Nuclear dependencies route installed")
+
 
 # Export the main function
 __all__ = ["create_app"]
