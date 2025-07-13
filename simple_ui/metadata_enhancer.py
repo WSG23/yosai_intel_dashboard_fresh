@@ -13,10 +13,16 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import sys
+import bleach
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+
+
+def _sanitize(text: str) -> str:
+    """Remove potentially unsafe HTML from user-provided text."""
+    return bleach.clean(str(text), tags=[], attributes={}, strip=True)
 
 def show_metadata_enhancement():
     st.header("👥 User & Device Metadata Enhancement")
@@ -93,7 +99,7 @@ def show_user_profiles():
         st.error(f"Error loading user data: {e}")
 
 def show_user_profile_form(employee_code, user_profiles, available_cards):
-    st.markdown(f"#### 👤 Profile for {employee_code}")
+    st.markdown(f"#### 👤 Profile for {_sanitize(employee_code)}")
     
     # Load existing profile or create new
     existing_profile = user_profiles.get(employee_code, {})
@@ -163,7 +169,9 @@ def show_user_profile_form(employee_code, user_profiles, available_cards):
             }
             
             save_user_profile(employee_code, new_profile)
-            st.success(f"✅ Profile saved for {employee_code} ({full_name})")
+            st.success(
+                f"✅ Profile saved for {_sanitize(employee_code)} ({_sanitize(full_name)})"
+            )
             st.experimental_rerun()
 
 def show_device_enhancement():
@@ -185,7 +193,9 @@ def show_device_enhancement():
             mapping_key, mapping_data = enhanced_mappings[0]
             device_mappings = mapping_data.get('device_mappings', {})
             
-            st.info(f"Enhancing devices from: {mapping_data.get('filename', 'Unknown')} ({len(device_mappings)} devices)")
+            st.info(
+                f"Enhancing devices from: {_sanitize(mapping_data.get('filename', 'Unknown'))} ({len(device_mappings)} devices)"
+            )
             
             # Load enhanced device metadata
             enhanced_devices = load_enhanced_device_metadata()
@@ -230,7 +240,7 @@ def show_device_enhancement():
         st.error(f"Device enhancement error: {e}")
 
 def show_device_enhancement_form(device_name, original_mapping, enhanced_devices):
-    st.markdown(f"#### 🚪 Enhanced Metadata for {device_name}")
+    st.markdown(f"#### 🚪 Enhanced Metadata for {_sanitize(device_name)}")
     
     # Show original mapping info
     with st.expander("📋 Original Device Mapping", expanded=False):
@@ -324,7 +334,7 @@ def show_device_enhancement_form(device_name, original_mapping, enhanced_devices
             }
             
             save_enhanced_device_metadata(device_name, enhanced_metadata)
-            st.success(f"✅ Enhanced metadata saved for {device_name}")
+            st.success(f"✅ Enhanced metadata saved for {_sanitize(device_name)}")
             st.experimental_rerun()
 
 def show_user_device_relationships():
@@ -370,7 +380,9 @@ def show_user_device_relationships():
                             permissions[bulk_user] = {}
                         permissions[bulk_user][device] = bulk_permission
                     save_access_permissions(permissions)
-                    st.success(f"Applied {bulk_permission} permission for {bulk_user} to all devices")
+                    st.success(
+                        f"Applied {_sanitize(bulk_permission)} permission for {_sanitize(bulk_user)} to all devices"
+                    )
                     st.experimental_rerun()
         
         # Individual permissions
@@ -378,7 +390,9 @@ def show_user_device_relationships():
         
         if selected_user:
             user_info = user_profiles[selected_user]
-            st.info(f"Managing permissions for: {user_info.get('full_name', selected_user)} ({user_info.get('department', 'Unknown Dept')})")
+            st.info(
+                f"Managing permissions for: {_sanitize(user_info.get('full_name', selected_user))} ({_sanitize(user_info.get('department', 'Unknown Dept'))})"
+            )
             
             user_permissions = permissions.get(selected_user, {})
             
@@ -390,8 +404,10 @@ def show_user_device_relationships():
                     device_info = enhanced_devices[device]
                     current_permission = user_permissions.get(device, "Not Set")
                     
-                    st.markdown(f"**{device}**")
-                    st.caption(f"Security Level: {device_info.get('enhanced_security_level', 'N/A')}")
+                    st.markdown(f"**{_sanitize(device)}**")
+                    st.caption(
+                        f"Security Level: {device_info.get('enhanced_security_level', 'N/A')}"
+                    )
                     
                     new_permission = st.selectbox(
                         "Permission:",
@@ -405,7 +421,7 @@ def show_user_device_relationships():
                             permissions[selected_user] = {}
                         permissions[selected_user][device] = new_permission
                         save_access_permissions(permissions)
-                        st.success(f"Updated: {new_permission}")
+                        st.success(f"Updated: {_sanitize(new_permission)}")
     
     # Permissions analytics
     st.markdown("#### 📊 Permissions Analytics")
