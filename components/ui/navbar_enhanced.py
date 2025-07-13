@@ -48,7 +48,7 @@ def create_navbar_layout() -> Any:
                                 dbc.NavItem(
                                     dbc.NavLink(
                                         [
-                                            html.I(className="fas fa-chart-bar me-2"),
+                                            html.I(className="fas fa-chart-bar me-2", aria_hidden="true"),
                                             "Analytics",
                                         ],
                                         href="/analytics",
@@ -61,7 +61,7 @@ def create_navbar_layout() -> Any:
                                 dbc.NavItem(
                                     dbc.NavLink(
                                         [
-                                            html.I(className="fas fa-chart-line me-2"),
+                                            html.I(className="fas fa-chart-line me-2", aria_hidden="true"),
                                             "Graphs",
                                         ],
                                         href="/graphs",
@@ -74,7 +74,7 @@ def create_navbar_layout() -> Any:
                                 dbc.NavItem(
                                     dbc.NavLink(
                                         [
-                                            html.I(className="fas fa-upload me-2"),
+                                            html.I(className="fas fa-upload me-2", aria_hidden="true"),
                                             "Upload",
                                         ],
                                         href="/upload",
@@ -87,7 +87,7 @@ def create_navbar_layout() -> Any:
                                 dbc.NavItem(
                                     dbc.NavLink(
                                         [
-                                            html.I(className="fas fa-download me-2"),
+                                            html.I(className="fas fa-download me-2", aria_hidden="true"),
                                             "Export",
                                         ],
                                         href="/export",
@@ -100,7 +100,7 @@ def create_navbar_layout() -> Any:
                                 dbc.NavItem(
                                     dbc.NavLink(
                                         [
-                                            html.I(className="fas fa-cog me-2"),
+                                            html.I(className="fas fa-cog me-2", aria_hidden="true"),
                                             "Settings",
                                         ],
                                         href="/settings",

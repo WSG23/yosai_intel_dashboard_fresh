@@ -16,7 +16,7 @@ app.layout = dbc.Container([
             dcc.Upload(
                 id="upload",
                 children=html.Div([
-                    html.I(className="fas fa-cloud-upload-alt fa-2x mb-2"),
+                    html.I(className="fas fa-cloud-upload-alt fa-2x mb-2", aria_hidden="true"),
                     html.Br(),
                     "Drag and drop files here or click to browse"
                 ]),

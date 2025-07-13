@@ -355,7 +355,8 @@ def create_file_uploader() -> html.Div:
                         children=html.Div(
                             [
                                 html.I(
-                                    className="fas fa-cloud-upload-alt fa-3x mb-3 text-primary"
+                                    className="fas fa-cloud-upload-alt fa-3x mb-3 text-primary",
+                                    aria_hidden="true",
                                 ),
                                 html.H6("Drag and Drop or Click to Select Files"),
                                 html.P(

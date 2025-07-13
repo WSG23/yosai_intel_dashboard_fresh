@@ -46,6 +46,7 @@ class AnalyticsPage(UIComponent):
                                                 html.I(
                                                     className="fas fa-chart-line fa-3x mb-3",
                                                     style={"color": "#007bff"},
+                                                    aria_hidden="true",
                                                 ),
                                                 html.H6("✅ Navigation Flash: FIXED"),
                                                 html.H6("🔧 Advanced Analytics: Coming Next"),
