@@ -26,11 +26,6 @@ from dash.exceptions import PreventUpdate  # type: ignore[import]
 
 from components.ui_component import UIComponent
 from services.upload_data_service import clear_uploaded_data as _svc_clear_uploaded_data
-from services.upload_data_service import get_uploaded_data as _svc_get_uploaded_data
-from services.upload_data_service import (
-    get_uploaded_filenames as _svc_get_uploaded_filenames,
-
-)
 from config.dynamic_config import dynamic_config
 
 
@@ -53,8 +48,8 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-# Global storage for uploaded files
-_uploaded_files: Dict[str, pd.DataFrame] = {}
+# On-disk store for uploaded files
+from utils.upload_store import uploaded_data_store as _uploaded_data_store
 
 
 class UploadPage(UIComponent):
@@ -243,7 +238,9 @@ class UploadPage(UIComponent):
                             result = _process_single_file(content, filename)
                             if result:
                                 results.append(result)
-                                _uploaded_files[filename] = result["dataframe"]
+                                _uploaded_data_store.add_file(
+                                    filename, result["dataframe"]
+                                )
                                 updated_store[filename] = filename
 
                     if results:
@@ -281,6 +278,17 @@ class UploadPage(UIComponent):
                     return ""
 
                 return _create_navigation_buttons(uploaded_files)
+
+            @manager.unified_callback(
+                Output("uploaded-files-store", "data"),
+                Input("upload-more-btn", "n_clicks"),
+                callback_id="reset_upload_session",
+                component_name="file_upload",
+                prevent_initial_call=True,
+            )
+            def reset_upload(_click):
+                clear_uploaded_data()
+                return {}
 
             logger.info("✅ File upload callbacks registered successfully")
 
@@ -529,19 +537,22 @@ def safe_upload_layout():
 
 
 def clear_uploaded_data() -> None:
-    """Clear uploaded data via the service layer."""
-    _svc_clear_uploaded_data()
+    """Remove all uploaded files from the on-disk store."""
+    try:
+        _uploaded_data_store.clear_all()
+    finally:
+        _svc_clear_uploaded_data()
 
 
 def get_uploaded_filenames() -> List[str]:
-    """Return list of uploaded filenames via the service layer."""
-    return _svc_get_uploaded_filenames()
+    """Return list of uploaded filenames from the on-disk store."""
+    return _uploaded_data_store.get_filenames()
 
 
 def get_uploaded_data() -> Dict[str, pd.DataFrame]:
-    """Return all uploaded data via the service layer."""
+    """Return all uploaded dataframes from the on-disk store."""
 
-    return _svc_get_uploaded_data()
+    return _uploaded_data_store.get_all_data()
 
 
 # Backward compatibility
