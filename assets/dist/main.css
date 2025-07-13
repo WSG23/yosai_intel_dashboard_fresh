@@ -40,57 +40,138 @@
 }
 /* Documentation: see docs/styleguide.md for usage guidelines */
 /* =================================================================== */
-/* 01-foundation/_variables.css - Design Token System */
+/* COMPREHENSIVE CSS VARIABLES - PREVENT FLASH ISSUES */
 /* =================================================================== */
 :root {
+  /* Colors - Base Palette */
+  --white: #ffffff;
+  --black: #000000;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --gray-950: #030712;
   
-  /* Spacing system (8pt grid) */
-  --space-0: 0;
-  --space-1: 0.25rem;    /* 4px */
-  --space-2: 0.5rem;     /* 8px */
-  --space-3: 0.75rem;    /* 12px */
-  --space-4: 1rem;       /* 16px */
-  --space-5: 1.25rem;    /* 20px */
-  --space-6: 1.5rem;     /* 24px */
-  --space-8: 2rem;       /* 32px */
-  --space-10: 2.5rem;    /* 40px */
-  --space-12: 3rem;      /* 48px */
+  /* Brand Colors */
+  --primary: #007bff;
+  --success: #28a745;
+  --warning: #ffc107;
+  --danger: #dc3545;
+  --info: #17a2b8;
   
-  /* Border radius */
-  --radius-sm: 0.25rem;   /* 4px */
-  --radius-md: 0.375rem;  /* 6px */
-  --radius-lg: 0.5rem;    /* 8px */
-  --radius-xl: 0.75rem;   /* 12px */
+  /* Color System */
+  --color-primary: #007bff;
+  --color-primary-hover: #0056b3;
+  --color-primary-active: #004085;
+  --color-accent: #007bff;
+  --color-accent-hover: #0056b3;
+  --color-accent-subtle: #e9ecef;
+  --color-success: #28a745;
+  --color-success-hover: #218838;
+  --color-success-subtle: #d4edda;
+  --color-warning: #ffc107;
+  --color-warning-subtle: #fff3cd;
+  --color-critical: #dc3545;
+  --color-critical-hover: #c82333;
+  --color-critical-subtle: #f8d7da;
+  --color-info: #17a2b8;
+  
+  /* Gray Scale */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-gray-950: #030712;
+  
+  /* Surface Colors */
+  --surface-primary: #ffffff;
+  --surface-secondary: #f8f9fa;
+  --surface-tertiary: #e9ecef;
+  --surface-app: #ffffff;
+  --surface-glass: rgba(255, 255, 255, 0.1);
+  --surface-overlay: rgba(0, 0, 0, 0.5);
+  --surface-overlay-light: rgba(255, 255, 255, 0.9);
+  --surface-interactive: #f8f9fa;
+  --surface-section: #ffffff;
+  
+  /* Text Colors */
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-tertiary: #adb5bd;
+  --text-disabled: #d6d3d1;
+  --text-inverse: #ffffff;
+  --text-on-accent: #ffffff;
+  --color-text-primary: #212529;
+  --color-background: #ffffff;
+  
+  /* Spacing Scale */
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+  --space-20: 80px;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
   --radius-full: 9999px;
   
-  /* Typography */
-  --font-family-system: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
-  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-
-  --text-xs: 0.75rem;     /* 12px */
-  --text-sm: 0.875rem;    /* 14px */
-  --text-base: 1rem;      /* 16px */
-  --text-lg: 1.125rem;    /* 18px */
-  --text-xl: 1.25rem;     /* 20px */
-  --text-2xl: 1.5rem;     /* 24px */
-  --text-3xl: 1.875rem;   /* 30px */
-  --text-4xl: 2.25rem;    /* 36px */
-  --text-5xl: 3rem;       /* 48px */
-  --text-6xl: 3.75rem;    /* 60px */
-  --text-2xs: 0.625rem;   /* 10px */
-
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.2);
+  --shadow-2xl: 0 32px 64px rgba(0, 0, 0, 0.25);
   
-  /* Font weights */
+  /* Typography */
+  --font-family-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family-mono: "SF Mono", Monaco, "Cascadia Code", monospace;
+  
+  /* Font Sizes */
+  --text-2xs: 10px;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 36px;
+  --text-5xl: 48px;
+  --text-6xl: 60px;
+  
+  /* Font Weights */
+  --font-weight-thin: 100;
+  --font-weight-light: 300;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  --font-weight-thin: 100;
-  --font-weight-light: 300;
   --font-weight-extrabold: 800;
   --font-weight-black: 900;
-
-  /* Line heights */
+  
+  /* Line Heights */
   --leading-none: 1;
   --leading-tight: 1.25;
   --leading-snug: 1.375;
@@ -98,27 +179,45 @@
   --leading-relaxed: 1.625;
   --leading-loose: 2;
   
-  /* Transitions */
-  --duration-fast: 150ms;
-  --duration-normal: 200ms;
-  --duration-slow: 300ms;
-  --ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --ease-in: cubic-bezier(0.4, 0, 1, 1);
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-
-  /* Z-index scale */
+  /* Z-Index Scale */
   --z-base: 0;
   --z-docked: 10;
   --z-dropdown: 20;
   --z-sticky: 30;
   --z-overlay: 40;
   --z-modal: 50;
+  
+  /* Transitions */
+  --duration-fast: 0.15s;
+  --duration-normal: 0.3s;
+  --duration-slow: 0.5s;
+  --ease-in: ease-in;
+  --ease-out: ease-out;
+  --ease-in-out: ease-in-out;
+  
+  /* Breakpoints */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+  
+  /* Component Specific */
+  --accent-primary: #007bff;
+  --accent-primary-hover: #0056b3;
+}
+/* Dark Mode Overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-primary: #1f2937;
+    --surface-secondary: #374151;
+    --surface-tertiary: #4b5563;
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --text-tertiary: #9ca3af;
+    --color-text-primary: #f9fafb;
+    --color-background: #1f2937;
+  }
 }
 /* =================================================================== */
 /* 01-foundation/_reset.css - Modern CSS Reset */
@@ -1381,139 +1480,62 @@ body[data-theme="contrast"] {
 .device-verification__col--security { width: 10%; }
 .device-verification__col--hidden { width: 0%; display: none; }
 /* =================================================================== */
-/* 03-components/_upload.css - File Upload Component Styles            */
+/* CONSOLIDATED UPLOAD STYLES - ANTI-FLASH */
 /* =================================================================== */
-/* Drag and Drop Area */
+/* Primary upload component - prevent flash */
+#drag-drop-upload,
+.drag-drop-upload,
 .upload-dropzone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-10);
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 200px !important;
+  padding: 40px !important;
   border: 2px dashed var(--color-accent);
-  border-radius: var(--radius-lg);
+  border-radius: 8px !important;
   background: var(--surface-tertiary);
-  color: var(--text-secondary);
   text-align: center;
-  cursor: pointer;
-  transition: background var(--duration-normal) var(--ease-out),
-              border-color var(--duration-normal) var(--ease-out);
+  cursor: pointer !important;
+  
+  /* Anti-flash properties */
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: relative !important;
+  transition: none !important;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: auto;
 }
-.upload-dropzone--active {
-  background: var(--color-accent-subtle);
-  border-color: var(--color-accent-hover);
-  animation: upload-pulse 1.2s ease-out infinite;
+/* Upload content stability */
+#drag-drop-upload > *,
+.drag-drop-upload > * {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  color: var(--color-accent);
 }
-.upload-dropzone:focus-within {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+/* Icon and text styling */
+#drag-drop-upload .fas,
+#drag-drop-upload i,
+#drag-drop-upload p,
+#drag-drop-upload h3 {
+  font-size: 48px !important;
+  color: var(--color-accent);
+  margin-bottom: 16px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
-@keyframes upload-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(0, 153, 255, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 6px rgba(0, 153, 255, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(0, 153, 255, 0);
-  }
-}
-/* Progress Bar */
-.upload-progress {
-  width: 100%;
-  height: var(--space-3);
-  margin-top: var(--space-4);
-  background: var(--color-gray-700);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-}
-.upload-progress__bar {
-  width: 0;
-  height: 100%;
-  background: var(--color-accent);
-  animation: upload-progress 2s linear infinite;
-}
-.upload-progress--done .upload-progress__bar {
-  width: 100%;
-  animation: none;
-}
-@keyframes upload-progress {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-/* High Contrast Theme */
-.high-contrast-mode .upload-dropzone {
-  border-color: var(--color-white);
-  background: var(--color-black);
-  color: var(--color-white);
-}
-.high-contrast-mode .upload-progress {
-  background: var(--color-gray-500);
-}
-.high-contrast-mode .upload-progress__bar {
-  background: var(--color-white);
-}
-/* -------------------------------------------------- */
-/* Accessible Drag & Drop Upload Area                 */
-/* -------------------------------------------------- */
-.drag-drop-upload {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed var(--color-accent);
-  border-radius: var(--radius-lg);
-  padding: var(--space-8);
+/* Hover states */
+#drag-drop-upload:hover,
+.drag-drop-upload:hover {
   background: var(--surface-tertiary);
-  transition: background var(--duration-normal) var(--ease-out),
-              border-color var(--duration-normal) var(--ease-out);
-  cursor: pointer;
-}
-.drag-drop-upload--hover {
-  background: var(--color-accent-subtle);
-}
-.drag-drop-upload--dragging {
   border-color: var(--color-accent-hover);
-  animation: upload-pulse 1.2s ease-out infinite;
 }
-.drag-drop-upload--uploading::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  pointer-events: none;
-}
-.drag-drop-upload__previews {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-3);
-  padding: 0;
-  list-style: none;
-}
-.drag-drop-upload__preview {
-  width: 64px;
-  height: 64px;
-  border: 1px solid var(--color-gray-600);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  background: var(--surface-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.drag-drop-upload__preview img {
-  width: 100%;
-  height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
-}
-/* Minimum touch target size */
-.drag-drop-upload .btn {
-  min-width: 44px;
-  min-height: 44px;
+/* Loading states */
+#drag-drop-upload[data-dash-is-loading="true"] {
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 /* Dashboard Panels */
 /* =================================================================== */
@@ -1993,7 +2015,210 @@ body[data-theme="contrast"] {
 .action-button--normal:hover {
   background: var(--color-success-hover);
 }
-/* Navbar styles */
+/* =================================================================== */
+/* Enhanced Navbar Styles - Prevents Flash/Disappear Issues           */
+/* Replace existing assets/css/04-panels/_navbar.css                   */
+/* =================================================================== */
+/* Navbar Foundation - Stability Layer */
+.navbar-stable {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1030 !important;
+  will-change: auto;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  transition: none !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.navbar-container-stable {
+  position: relative;
+  z-index: 1031;
+}
+/* Navigation Links - Core Stability */
+.nav-link-stable {
+  display: flex !important;
+  align-items: center !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transition: none !important;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-tap-highlight-color: transparent;
+  text-decoration: none !important;
+  position: relative;
+  overflow: visible;
+}
+.nav-item-stable {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+.navbar-nav-stable {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+/* Prevent Bootstrap Animation Conflicts */
+.nav-link-stable:active,
+.nav-link-stable:focus,
+.nav-link-stable:visited {
+  outline: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  opacity: 1 !important;
+  color: inherit !important;
+  text-decoration: none !important;
+}
+.nav-link-stable:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  opacity: 1 !important;
+  text-decoration: none !important;
+  transition: background-color 0.15s ease-in-out;
+}
+/* Icon Stability - Both Image and FontAwesome */
+.nav-icon,
+.nav-icon--image,
+.nav-icon--fallback {
+  margin-right: 0.5rem !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  width: 16px !important;
+  height: 16px !important;
+  text-align: center;
+  transform: translateZ(0);
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+.nav-icon--image {
+  -o-object-fit: contain;
+     object-fit: contain;
+  max-width: 16px;
+  max-height: 16px;
+}
+.nav-icon--fallback {
+  font-size: 14px;
+  line-height: 16px;
+  color: #6c757d;
+}
+/* Specific Link Stability Fixes */
+#nav-upload-link,
+#nav-analytics-link, 
+#nav-settings-link {
+  position: relative !important;
+  overflow: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  display: flex !important;
+  align-items: center !important;
+}
+#nav-upload-link::before,
+#nav-analytics-link::before,
+#nav-settings-link::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: transparent;
+  pointer-events: none;
+  z-index: -1;
+  border-radius: 4px;
+}
+/* Mobile Navbar Stability */
+.navbar-toggler {
+  border: none !important;
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
+  opacity: 1 !important;
+}
+.navbar-toggler:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+.navbar-collapse.collapsing {
+  transition: none !important;
+  height: auto !important;
+}
+.navbar-collapse.collapse.show {
+  display: block !important;
+  opacity: 1 !important;
+}
+/* Brand Link Stability */
+.navbar-brand-link {
+  text-decoration: none !important;
+  color: inherit !important;
+  opacity: 1 !important;
+  transition: none !important;
+}
+.navbar-brand-link:hover,
+.navbar-brand-link:focus,
+.navbar-brand-link:active {
+  text-decoration: none !important;
+  color: inherit !important;
+  opacity: 1 !important;
+}
+/* Active State Management */
+.nav-link-stable.active {
+  color: var(--bs-navbar-active-color, #007bff) !important;
+  background-color: rgba(0, 123, 255, 0.1) !important;
+  opacity: 1 !important;
+  font-weight: 500;
+}
+/* Unicode Text Rendering */
+.navbar-stable * {
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* Force Hardware Acceleration for Smooth Rendering */
+.navbar-stable,
+.nav-link-stable,
+.nav-icon {
+  transform: translateZ(0);
+}
+/* Disable Problematic CSS Transitions */
+.navbar *,
+.navbar *::before,
+.navbar *::after {
+  transition: none !important;
+  animation: none !important;
+}
+.navbar .nav-link:hover {
+  transition: background-color 0.15s ease-in-out !important;
+}
+/* Accessibility Improvements */
+.nav-link-stable:focus-visible {
+  outline: 2px solid #007bff !important;
+  outline-offset: 2px !important;
+}
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .navbar-stable {
+    border-bottom: 2px solid currentColor;
+  }
+  
+  .nav-link-stable:hover {
+    background-color: rgba(0, 0, 0, 0.1) !important;
+  }
+}
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .navbar-stable *,
+  .nav-link-stable,
+  .nav-icon {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+/* Print Styles */
+@media print {
+  .navbar-stable {
+    display: none !important;
+  }
+}
 /* Page-Specific Styles */
 /* =================================================================== */
 /* 05-pages/_graphs.css - Graphs Page Styles */
@@ -2009,13 +2234,44 @@ body[data-theme="contrast"] {
   min-height: 200px;
   background-color: var(--surface-section);
 }
-/* Analytics styles */
-/* Utility class for toggling visibility on analytics page */
-.hidden {
-  display: none;
-}
-/* Page transition handled via utility classes */
+/* =================================================================== */
+/* ANALYTICS PAGE ANTI-FLASH STYLES */
+/* =================================================================== */
+/* Analytics page container stability */
+.analytics-page,
 .main-content {
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: relative !important;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+/* Analytics cards - prevent flash */
+.analytics-page .card,
+.analytics-page .dbc,
+.analytics-page .row,
+.analytics-page .col {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+/* Chart containers */
+.analytics-page .chart-container,
+.analytics-page [id*="chart"],
+.analytics-page [id*="graph"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  min-height: 300px !important;
+  position: relative !important;
+}
+/* Utility class fixes */
+.hidden {
+  display: none !important;
+}
+/* Real-time dashboard stability */
+.realtime-dashboard {
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 /* =================================================================== */
 /* 05-pages/_file_upload.css - File Upload Page Styles */
@@ -2169,25 +2425,25 @@ body[data-theme="contrast"] {
   animation: fade-slide-in 0.4s ease-out both;
 }
 /* =================================================================== */
-/* 07-utilities/_transitions.css - Opacity/Transform Transition Helpers */
+/* 07-utilities/_transitions.css - NO FLASH Transitions */
 /* =================================================================== */
 .transition-fade-move {
-  transition-property: opacity, transform;
-  transition-duration: var(--duration-normal);
-  transition-timing-function: var(--ease-out);
-  will-change: opacity, transform;
+  /* Disable opacity transitions that cause flash */
+  transition-property: transform;
+  transition-duration: 0.1s;
+  transition-timing-function: ease-out;
+  will-change: transform;
 }
-/* Starting state - keeps element in flow while hidden */
+/* Keep elements visible - no opacity changes */
 .transition-start {
-  opacity: 0;
-  transform: translateY(16px);
-}
-/* Ending state shown after content loads */
-.transition-end {
-  opacity: 1;
+  opacity: 1 !important;
   transform: translateY(0);
 }
-/* Utility to promote its own layer and avoid layout shifts */
+.transition-end {
+  opacity: 1 !important;
+  transform: translateY(0);
+}
+/* Stability fix */
 .transition-fix {
   transform: translateZ(0);
 }
@@ -2346,4 +2602,140 @@ body[data-theme="contrast"] {
 .list-none { list-style-type: none; }
 .list-disc { list-style-type: disc; }
 .list-decimal { list-style-type: decimal; }
-
+/* =================================================================== */
+/* CSS VARIABLE FALLBACKS - PREVENT FLASH ON MISSING VARS */
+/* =================================================================== */
+:root {
+  --color-accent: #007bff;
+  --color-accent-hover: #0056b3;
+  --color-accent-subtle: #e9ecef;
+  --surface-tertiary: #f8f9fa;
+  --surface-secondary: #ffffff;
+  --text-secondary: #6c757d;
+  --radius-lg: 8px;
+  --space-10: 40px;
+  --space-8: 32px;
+  --space-5: 20px;
+  --space-4: 16px;
+  --space-3: 12px;
+  --duration-normal: 0.3s;
+  --ease-out: ease-out;
+}
+/* Force stability on all page containers */
+.main-content,
+.page-container,
+[data-dash-app] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: relative !important;
+}
+/* =================================================================== */
+/* DASH UPLOAD COMPONENT ANTI-FLASH FIXES */
+/* =================================================================== */
+/* Prevent Dash Upload loading flash */
+[data-dash-is-loading="true"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+/* Dash Upload component stability */
+#drag-drop-upload {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  position: relative !important;
+  min-height: 200px !important;
+  transition: none !important;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+/* Dash Upload children stability */
+#drag-drop-upload > div,
+#drag-drop-upload .fas,
+#drag-drop-upload h5,
+#drag-drop-upload p {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  transition: none !important;
+}
+/* Override Dash loading indicators */
+._dash-loading,
+._dash-loading::after,
+._dash-loading::before {
+  display: none !important;
+}
+/* Force upload area to stay visible during all states */
+#drag-drop-upload[style*="display: none"] {
+  display: block !important;
+}
+#drag-drop-upload[style*="visibility: hidden"] {
+  visibility: visible !important;
+}
+#drag-drop-upload[style*="opacity: 0"] {
+  opacity: 1 !important;
+}
+/* =================================================================== */
+/* UPLOAD FLASH FIX - TRANSITION DELAYS */
+/* =================================================================== */
+/* Delay updates to prevent simultaneous re-renders */
+#preview-area {
+  transition: opacity 0.1s ease-in-out;
+  opacity: 1 !important;
+}
+#upload-progress {
+  transition: all 0.05s ease-in-out 0.1s; /* Delay progress updates */
+}
+#upload-status {
+  transition: opacity 0.05s ease-in-out 0.15s; /* Further delay status */
+}
+/* Prevent all elements from updating at exactly the same time */
+#drag-drop-upload * {
+  transition-delay: 0.01s;
+}
+/* ================================================================ */
+/* LAYOUT FLASH PREVENTION */
+/* ================================================================ */
+/* Prevent flash during page transitions */
+#page-content {
+  min-height: 400px;
+  opacity: 1 !important;
+  transition: none !important;
+  transform: none !important;
+}
+/* Ensure smooth Dash Pages transitions */
+[data-dash-is-loading="true"] #page-content {
+  opacity: 0.8;
+  transition: opacity 0.1s ease;
+}
+/* Prevent content jumping during page loads */
+.main-content {
+  position: relative;
+  overflow-x: hidden;
+  will-change: auto;
+  backface-visibility: hidden;
+}
+/* Disable problematic transition classes */
+.transition-fade-move,
+.transition-start,
+.transition-end {
+  transition: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+/* Ensure page container stability */
+.dash-page-container {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+/* Prevent Bootstrap/DBC animation conflicts */
+.container-fluid,
+.container {
+  transition: none !important;
+}
+/* Force hardware acceleration for smooth rendering */
+#page-content,
+.main-content {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
