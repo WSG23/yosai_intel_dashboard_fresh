@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 
 import dash_bootstrap_components as dbc  # type: ignore[import]
 import pandas as pd  # type: ignore[import]
-from dash import (
+from dash import (  # type: ignore[import]
     Input,
     Output,
     State,
@@ -21,10 +21,11 @@ from dash import (
     html,
     no_update,
     register_page,
-)  # type: ignore[import]
+)
 from dash.exceptions import PreventUpdate  # type: ignore[import]
 
 from components.ui_component import UIComponent
+from config.dynamic_config import dynamic_config
 from services.upload_data_service import clear_uploaded_data as _svc_clear_uploaded_data
 from config.dynamic_config import dynamic_config
 
@@ -90,6 +91,7 @@ class UploadPage(UIComponent):
                                                     "fa-3x mb-3"
                                                 ),
                                                 style={"color": "#6c757d"},
+                                                aria_hidden="true",
                                             ),
                                             html.H5("Drag & Drop Files Here"),
                                             html.P(
@@ -485,7 +487,7 @@ def _create_navigation_buttons(uploaded_files: Dict[str, str]) -> Any:
                         [
                             dbc.Button(
                                 [
-                                    html.I(className="fas fa-chart-line me-2"),
+                                    html.I(className="fas fa-chart-line me-2", aria_hidden="true"),
                                     "Analyze Data",
                                 ],
                                 href="/analytics",
@@ -493,14 +495,14 @@ def _create_navigation_buttons(uploaded_files: Dict[str, str]) -> Any:
                                 size="lg",
                             ),
                             dbc.Button(
-                                [html.I(className="fas fa-upload me-2"), "Upload More"],
+                                [html.I(className="fas fa-upload me-2", aria_hidden="true"), "Upload More"],
                                 id="upload-more-btn",
                                 color="secondary",
                                 outline=True,
                                 href="/upload",
                             ),
                             dbc.Button(
-                                [html.I(className="fas fa-download me-2"), "Export"],
+                                [html.I(className="fas fa-download me-2", aria_hidden="true"), "Export"],
                                 href="/export",
                                 color="success",
                                 outline=True,
