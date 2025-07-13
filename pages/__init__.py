@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Mapping of page names to their module paths
 PAGE_MODULES: Dict[str, str] = {
+    "dashboard": "pages.dashboard",
     "deep_analytics": "pages.deep_analytics",
     "file_upload": "pages.file_upload",
     "graphs": "pages.graphs",
@@ -97,7 +98,7 @@ def create_manual_router(app: "Dash") -> None:
             path_mapping = {
                 "/": "deep_analytics",
                 "/analytics": "deep_analytics", 
-                "/dashboard": "deep_analytics",
+                "/dashboard": "dashboard",
                 "/upload": "file_upload",
                 "/export": "export",
                 "/settings": "settings",

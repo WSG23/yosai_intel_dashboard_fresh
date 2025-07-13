@@ -46,10 +46,3 @@ def create_app(mode=None, **kwargs):
     except Exception as e:
         logger.error(f"❌ App creation failed: {e}")
         raise
-
-# Add manual routing for page content
-def add_manual_routing(app):
-    """Add manual routing to display page content."""
-    from pages import create_manual_router
-    create_manual_router(app)
-    logger.info("✅ Manual routing enabled")

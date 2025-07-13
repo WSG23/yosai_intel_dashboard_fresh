@@ -68,6 +68,16 @@ def create_navbar_layout() -> Any:
                             dbc.NavItem(
                                 dcc.Link(
                                     [
+                                        html.I(className="fas fa-home me-2", **{"aria-hidden": "true"}),
+                                        "Dashboard",
+                                    ],
+                                    href="/dashboard",
+                                    className="nav-link px-3",
+                                )
+                            ),
+                            dbc.NavItem(
+                                dcc.Link(
+                                    [
                                         html.I(className="fas fa-chart-bar me-2", **{"aria-hidden": "true"}),
                                         "Analytics",
                                     ],
@@ -87,7 +97,7 @@ def create_navbar_layout() -> Any:
                             ),
                             dbc.NavItem(
                                 dcc.Link(
-                                    [html.I(className="fas fa-upload me-2", **{"aria-hidden": "true"}), "Upload"],
+                                    [html.I(className="fas fa-upload me-2", **{"aria-hidden": "true"}), "File Upload"],
                                     href="/upload",
                                     className="nav-link px-3",
                                 )
@@ -108,8 +118,7 @@ def create_navbar_layout() -> Any:
                                     href="/settings",
                                     className="nav-link px-3",
                                 )
-                            ),
-                        ],
+                            ),                        ],
                         navbar=True,
                         className="ms-auto",
                     ),

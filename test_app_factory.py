@@ -10,13 +10,6 @@ callbacks = TrulyUnifiedCallbacks(app)
 
 
 # Override the upload page using TrulyUnifiedCallbacks
-@callbacks.handle_register(
-    Output("page-content", "children"),
-    Input("url", "pathname"),
-    callback_id="factory_router",
-    component_name="app_factory",
-    prevent_initial_call=True,
-)
 def simple_router(pathname):
     if pathname == "/upload":
         return html.Div(

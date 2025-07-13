@@ -1,27 +1,60 @@
-import dash
-import dash_bootstrap_components as dbc
-from dash import dcc, html, Input, Output, callback
+#!/usr/bin/env python3
+"""Minimal app test to isolate the Flask/Dash issue."""
 
-# Create app WITHOUT your app factory
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+import os
+import sys
+import logging
 
-app.layout = html.Div([
-    html.H1("Minimal Upload Test"),
-    dcc.Upload(
-        id="test-upload",
-        children="Drop files here",
-        style={'border': '2px dashed blue', 'padding': '20px'}
-    ),
-    html.Div(id="test-output")
-])
+# Set required environment variables
+os.environ["DB_PASSWORD"] = "test_password"
+os.environ["SECRET_KEY"] = "test_key"
 
-@callback(
-    Output("test-output", "children"),
-    Input("test-upload", "contents"),
-    prevent_initial_call=True
-)
-def handle_test_upload(contents):
-    return "File detected!" if contents else "No file"
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
-if __name__ == "__main__":
-    app.run_server(debug=True, port=8051)
+try:
+    print("🧪 Testing basic Dash import...")
+    import dash
+    from dash import Dash, html, dcc
+    import dash_bootstrap_components as dbc
+    print("✅ Dash imports successful")
+    
+    print("🧪 Creating basic Dash app...")
+    app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+    print(f"✅ Basic Dash app created: {type(app)}")
+    print(f"✅ App.server type: {type(app.server)}")
+    
+    print("🧪 Testing imports from your modules...")
+    try:
+        from components.ui.navbar import create_navbar_layout
+        print("✅ Navbar import successful")
+    except Exception as e:
+        print(f"❌ Navbar import failed: {e}")
+    
+    try:
+        from config import get_config
+        config = get_config()
+        print("✅ Config import successful")
+    except Exception as e:
+        print(f"❌ Config import failed: {e}")
+    
+    try:
+        from core.service_container import ServiceContainer
+        container = ServiceContainer()
+        print("✅ Service container import successful")
+    except Exception as e:
+        print(f"❌ Service container import failed: {e}")
+        
+    try:
+        from config.complete_service_registration import register_all_application_services
+        print("✅ Service registration import successful")
+        # Don't call it yet, just test the import
+    except Exception as e:
+        print(f"❌ Service registration import failed: {e}")
+    
+    print("🎉 All basic tests passed!")
+    
+except Exception as e:
+    print(f"❌ Failed at: {e}")
+    import traceback
+    traceback.print_exc()

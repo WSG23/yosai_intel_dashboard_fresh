@@ -209,7 +209,7 @@ class UploadPage(UIComponent):
                     Output("upload-progress", "value"),
                     Output("upload-progress", "style"),
                     Output("upload-status", "children"),
-                    Output("uploaded-files-store", "data"),
+                    Output("uploaded-files-store", "data", allow_duplicate=True),
                 ],
                 Input("drag-drop-upload", "contents"),
                 [
@@ -280,7 +280,7 @@ class UploadPage(UIComponent):
                 return _create_navigation_buttons(uploaded_files)
 
             @manager.unified_callback(
-                Output("uploaded-files-store", "data"),
+                Output("uploaded-files-store", "data", allow_duplicate=True),
                 Input("upload-more-btn", "n_clicks"),
                 callback_id="reset_upload_session",
                 component_name="file_upload",
