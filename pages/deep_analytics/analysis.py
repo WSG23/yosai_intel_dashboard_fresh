@@ -1,5 +1,8 @@
-from dash import html, dcc
-from dash.dependencies import Input, Output
+try:
+    from dash import dcc, html  # type: ignore[import]
+    from dash.dependencies import Input, Output  # type: ignore[import]
+except Exception:  # pragma: no cover - Dash not installed during type checking
+    html = dcc = Input = Output = None  # type: ignore[assignment]
 
 __all__ = [
     "deep_analytics_layout",
@@ -14,10 +17,13 @@ __all__ = [
 
 
 def deep_analytics_layout(*args, **kwargs):
-    return html.Div([
-        html.H1("Deep Analytics"),
-        html.P("This is a placeholder for the Deep Analytics page."),
-    ], id="deep-analytics-page")
+    return html.Div(
+        [
+            html.H1("Deep Analytics"),
+            html.P("This is a placeholder for the Deep Analytics page."),
+        ],
+        id="deep-analytics-page",
+    )
 
 
 def register_page(app):
