@@ -60,6 +60,18 @@ def create_navbar_layout() -> Any:
                                 dbc.NavItem(
                                     dbc.NavLink(
                                         [
+                                            html.I(className="fas fa-chart-line me-2"),
+                                            "Graphs"
+                                        ],
+                                        href="/graphs",
+                                        external_link=False,
+                                        className="nav-link px-3",
+                                        id="nav-graphs"
+                                    )
+                                ),
+                                dbc.NavItem(
+                                    dbc.NavLink(
+                                        [
                                             html.I(className="fas fa-upload me-2"),
                                             "Upload"
                                         ],
@@ -123,6 +135,7 @@ def create_fallback_navbar():
             dbc.NavbarBrand("Dashboard", href="/"),
             dbc.Nav([
                 dbc.NavItem(dbc.NavLink("Analytics", href="/analytics", external_link=False)),
+                dbc.NavItem(dbc.NavLink("Graphs", href="/graphs", external_link=False)),
                 dbc.NavItem(dbc.NavLink("Upload", href="/upload", external_link=False)),
             ], navbar=True, className="ms-auto")
         ], fluid=True),

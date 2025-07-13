@@ -35,6 +35,12 @@ except ImportError:
     dcc = FallbackDcc()
 
 
+def get_simple_icon(name: str):
+    """Return an icon for the navbar tests."""
+    img_src = f"/assets/{name}.png"
+    return html.Img(src=img_src, className="nav-icon")
+
+
 def create_navbar_layout() -> Any:
     """Create navbar with logo and proper navigation."""
 
@@ -65,6 +71,13 @@ def create_navbar_layout() -> Any:
                                         "Analytics",
                                     ],
                                     href="/analytics",
+                                    className="nav-link px-3",
+                                )
+                            ),
+                            dbc.NavItem(
+                                dcc.Link(
+                                    [html.I(className="fas fa-chart-line me-2"), "Graphs"],
+                                    href="/graphs",
                                     className="nav-link px-3",
                                 )
                             ),
@@ -117,22 +130,25 @@ def create_fallback_navbar():
     if not DBC_AVAILABLE:
         return html.Div("Simple navbar fallback")
 
-    return dbc.Navbar(
-        dbc.Container(
-            [
-                dbc.NavbarBrand("Dashboard", href="/"),
-                dbc.Nav(
-                    [
-                        dbc.NavItem(
-                            dbc.NavLink(
-                                "Analytics", href="/analytics", external_link=False
-                            )
-                        ),
-                        dbc.NavItem(
-                            dbc.NavLink("Upload", href="/upload", external_link=False)
-                        ),
-                        dbc.NavItem(
-                            dbc.NavLink("Export", href="/export", external_link=False)
+        return dbc.Navbar(
+            dbc.Container(
+                [
+                    dbc.NavbarBrand("Dashboard", href="/"),
+                    dbc.Nav(
+                        [
+                            dbc.NavItem(
+                                dbc.NavLink(
+                                    "Analytics", href="/analytics", external_link=False
+                                )
+                            ),
+                            dbc.NavItem(
+                                dbc.NavLink("Graphs", href="/graphs", external_link=False)
+                            ),
+                            dbc.NavItem(
+                                dbc.NavLink("Upload", href="/upload", external_link=False)
+                            ),
+                            dbc.NavItem(
+                                dbc.NavLink("Export", href="/export", external_link=False)
                         ),
                         dbc.NavItem(
                             dbc.NavLink(
@@ -160,4 +176,4 @@ def register_navbar_callbacks(callback_manager, service: Optional[Any] = None) -
         logger.warning(f"Navbar callback registration failed: {e}")
 
 
-__all__ = ["create_navbar_layout", "register_navbar_callbacks"]
+__all__ = ["create_navbar_layout", "register_navbar_callbacks", "get_simple_icon"]
