@@ -10,8 +10,8 @@
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  min-height: 200px !important;
-  padding: 40px !important;
+  min-height: 12rem !important;
+  padding: 3rem !important;
   border: 2px dashed var(--color-accent);
   border-radius: 8px !important;
   background: var(--surface-tertiary);
@@ -61,3 +61,13 @@
   opacity: 1 !important;
   visibility: visible !important;
 }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .drag-drop-upload,
+  .upload-dropzone {
+    min-height: 8rem !important;
+    padding: 2rem !important;
+  }
+}
+

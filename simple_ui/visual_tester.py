@@ -20,7 +20,7 @@ sys.path.insert(0, str(project_root))
 
 # Apply our fixes
 def apply_all_fixes():
-    """Apply all the fixes we developed"""
+    """Apply development-only monkey patches for compatibility."""
     try:
         # Step 1: Callback fix
         from core.callback_manager import CallbackManager
@@ -68,6 +68,7 @@ def apply_all_fixes():
         return False
 
 # Apply fixes
+# These patches are intended for local development/testing only
 apply_all_fixes()
 
 def main():

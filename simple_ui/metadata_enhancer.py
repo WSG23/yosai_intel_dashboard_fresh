@@ -66,7 +66,7 @@ def show_user_profiles():
                 selected_employee = st.selectbox("Employee Code:", unique_employees)
                 
                 # Add new user button
-                if st.button("➕ Create New User Profile"):
+                if st.button("➕ Create New User Profile", help="Create New User Profile"):
                     st.session_state.show_user_form = True
                     st.session_state.edit_user = selected_employee
             
@@ -81,7 +81,7 @@ def show_user_profiles():
                 st.dataframe(profiles_df, use_container_width=True)
                 
                 # Download user profiles
-                if st.button("💾 Export User Profiles"):
+                if st.button("💾 Export User Profiles", help="Export User Profiles"):
                     csv = profiles_df.to_csv(index=True)
                     st.download_button(
                         label="Download as CSV",
@@ -151,7 +151,7 @@ def show_user_profile_form(employee_code, user_profiles, available_cards):
             notes = st.text_area("Notes", value=existing_profile.get('notes', ''))
         
         # Submit button
-        if st.form_submit_button("💾 Save User Profile"):
+        if st.form_submit_button("💾 Save User Profile", help="Save User Profile"):
             new_profile = {
                 'full_name': full_name,
                 'department': department,
@@ -208,7 +208,9 @@ def show_device_enhancement():
                 device_list = list(device_mappings.keys())
                 selected_device = st.selectbox("Device:", device_list)
                 
-                if st.button("🔄 Refresh Device List"):
+                if st.button(
+                    "🔄 Refresh Device List", help="Refresh Device List"
+                ):
                     st.experimental_rerun()
             
             with col2:
@@ -222,7 +224,10 @@ def show_device_enhancement():
                 st.dataframe(devices_df, use_container_width=True)
                 
                 # Download enhanced device data
-                if st.button("💾 Export Enhanced Device Data"):
+                if st.button(
+                    "💾 Export Enhanced Device Data",
+                    help="Export Enhanced Device Data",
+                ):
                     csv = devices_df.to_csv(index=True)
                     st.download_button(
                         label="Download as CSV",
@@ -374,7 +379,7 @@ def show_user_device_relationships():
             with col2:
                 bulk_permission = st.selectbox("Permission Level:", ["Denied", "Granted", "Conditional"])
             with col3:
-                if st.button("Apply to All Devices"):
+                if st.button("Apply to All Devices", help="Apply to All Devices"):
                     for device in devices:
                         if bulk_user not in permissions:
                             permissions[bulk_user] = {}
@@ -633,7 +638,7 @@ def load_user_profiles():
     profiles_file = Path("simple_ui/user_profiles.json")
     if profiles_file.exists():
         try:
-            with open(profiles_file, 'r') as f:
+            with open(profiles_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception:
             return {}
@@ -647,7 +652,7 @@ def save_user_profile(employee_code, profile_data):
     profiles_file = Path("simple_ui/user_profiles.json")
     profiles_file.parent.mkdir(exist_ok=True)
     
-    with open(profiles_file, 'w') as f:
+    with open(profiles_file, 'w', encoding='utf-8') as f:
         json.dump(profiles, f, indent=2)
 
 def load_enhanced_device_metadata():
@@ -655,7 +660,7 @@ def load_enhanced_device_metadata():
     devices_file = Path("simple_ui/enhanced_devices.json")
     if devices_file.exists():
         try:
-            with open(devices_file, 'r') as f:
+            with open(devices_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception:
             return {}
@@ -669,7 +674,7 @@ def save_enhanced_device_metadata(device_name, metadata):
     devices_file = Path("simple_ui/enhanced_devices.json")
     devices_file.parent.mkdir(exist_ok=True)
     
-    with open(devices_file, 'w') as f:
+    with open(devices_file, 'w', encoding='utf-8') as f:
         json.dump(devices, f, indent=2)
 
 def load_access_permissions():
@@ -677,7 +682,7 @@ def load_access_permissions():
     perms_file = Path("simple_ui/access_permissions.json")
     if perms_file.exists():
         try:
-            with open(perms_file, 'r') as f:
+            with open(perms_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception:
             return {}
@@ -688,5 +693,5 @@ def save_access_permissions(permissions):
     perms_file = Path("simple_ui/access_permissions.json")
     perms_file.parent.mkdir(exist_ok=True)
     
-    with open(perms_file, 'w') as f:
+    with open(perms_file, 'w', encoding='utf-8') as f:
         json.dump(permissions, f, indent=2)
