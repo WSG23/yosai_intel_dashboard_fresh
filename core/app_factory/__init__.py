@@ -273,8 +273,8 @@ def _create_full_app(assets_folder: str) -> "Dash":
             suppress_callback_exceptions=True,
             assets_folder=assets_folder,
             assets_ignore=assets_ignore,
-            use_pages=False,
-            pages_folder="",
+            use_pages=True,
+            pages_folder="../../pages",
         )
         fix_flask_mime_types(app)
         ensure_icon_cache_headers(app)
@@ -467,8 +467,8 @@ def _create_simple_app(assets_folder: str) -> "Dash":
             suppress_callback_exceptions=True,
             assets_folder=assets_folder,
             assets_ignore=assets_ignore,
-            use_pages=False,
-            pages_folder="",
+            use_pages=True,
+            pages_folder="../../pages",
         )
         fix_flask_mime_types(app)
         ensure_icon_cache_headers(app)
@@ -575,8 +575,8 @@ def _create_json_safe_app(assets_folder: str) -> "Dash":
             suppress_callback_exceptions=True,
             assets_folder=assets_folder,
             assets_ignore=assets_ignore,
-            use_pages=False,
-            pages_folder="",
+            use_pages=True,
+            pages_folder="../../pages",
         )
         fix_flask_mime_types(app)
         ensure_icon_cache_headers(app)

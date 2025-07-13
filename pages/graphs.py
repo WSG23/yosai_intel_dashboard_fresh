@@ -125,3 +125,6 @@ def __getattr__(name: str):
             return None
         return _stub
     raise AttributeError(f"module {__name__} has no attribute {name}")
+
+# Register this page when module is imported
+register_page()
