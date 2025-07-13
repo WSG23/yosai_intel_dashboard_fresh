@@ -38,7 +38,7 @@ except ImportError:
 def get_simple_icon(name: str):
     """Return an icon for the navbar tests."""
     img_src = f"/assets/{name}.png"
-    return html.Img(src=img_src, className="nav-icon")
+    return html.Img(src=img_src, className="nav-icon", alt=f"{name} icon")
 
 
 def create_navbar_layout() -> Any:
@@ -57,6 +57,7 @@ def create_navbar_layout() -> Any:
                             src="/assets/yosai_logo_name_white.png",
                             height="40px",
                             style={"filter": "brightness(1)"},
+                            alt="Yōsai logo",
                         ),
                         href="/",
                         className="navbar-brand-link d-flex align-items-center",
@@ -72,13 +73,18 @@ def create_navbar_layout() -> Any:
                                     ],
                                     href="/analytics",
                                     className="nav-link px-3",
+                                    aria_label="Analytics page",
                                 )
                             ),
                             dbc.NavItem(
                                 dcc.Link(
-                                    [html.I(className="fas fa-chart-line me-2"), "Graphs"],
+                                    [
+                                        html.I(className="fas fa-chart-line me-2"),
+                                        "Graphs",
+                                    ],
                                     href="/graphs",
                                     className="nav-link px-3",
+                                    aria_label="Graphs page",
                                 )
                             ),
                             dbc.NavItem(
@@ -86,6 +92,7 @@ def create_navbar_layout() -> Any:
                                     [html.I(className="fas fa-upload me-2"), "Upload"],
                                     href="/upload",
                                     className="nav-link px-3",
+                                    aria_label="Upload page",
                                 )
                             ),
                             dbc.NavItem(
@@ -96,6 +103,7 @@ def create_navbar_layout() -> Any:
                                     ],
                                     href="/export",
                                     className="nav-link px-3",
+                                    aria_label="Export page",
                                 )
                             ),
                             dbc.NavItem(
@@ -103,6 +111,7 @@ def create_navbar_layout() -> Any:
                                     [html.I(className="fas fa-cog me-2"), "Settings"],
                                     href="/settings",
                                     className="nav-link px-3",
+                                    aria_label="Settings page",
                                 )
                             ),
                         ],
@@ -138,34 +147,55 @@ def create_fallback_navbar():
                         [
                             dbc.NavItem(
                                 dbc.NavLink(
-                                    "Analytics", href="/analytics", external_link=False
+                                    "Analytics",
+                                    href="/analytics",
+                                    external_link=False,
+                                    aria_label="Analytics page",
                                 )
                             ),
                             dbc.NavItem(
-                                dbc.NavLink("Graphs", href="/graphs", external_link=False)
+                                dbc.NavLink(
+                                    "Graphs",
+                                    href="/graphs",
+                                    external_link=False,
+                                    aria_label="Graphs page",
+                                )
                             ),
                             dbc.NavItem(
-                                dbc.NavLink("Upload", href="/upload", external_link=False)
+                                dbc.NavLink(
+                                    "Upload",
+                                    href="/upload",
+                                    external_link=False,
+                                    aria_label="Upload page",
+                                )
                             ),
                             dbc.NavItem(
-                                dbc.NavLink("Export", href="/export", external_link=False)
-                        ),
-                        dbc.NavItem(
-                            dbc.NavLink(
-                                "Settings", href="/settings", external_link=False
-                            )
-                        ),
-                    ],
-                    navbar=True,
-                    className="ms-auto",
-                ),
-            ],
-            fluid=True,
-        ),
-        color="dark",
-        dark=True,
-        className="fixed-top",
-    )
+                                dbc.NavLink(
+                                    "Export",
+                                    href="/export",
+                                    external_link=False,
+                                    aria_label="Export page",
+                                )
+                            ),
+                            dbc.NavItem(
+                                dbc.NavLink(
+                                    "Settings",
+                                    href="/settings",
+                                    external_link=False,
+                                    aria_label="Settings page",
+                                )
+                            ),
+                        ],
+                        navbar=True,
+                        className="ms-auto",
+                    ),
+                ],
+                fluid=True,
+            ),
+            color="dark",
+            dark=True,
+            className="fixed-top",
+        )
 
 
 def register_navbar_callbacks(callback_manager, service: Optional[Any] = None) -> None:
