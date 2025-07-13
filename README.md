@@ -77,7 +77,7 @@ python -m tools.debug assets
 ```
 Pass icon names after the command to check custom files.
 
-## 🚀 Quick Start
+## <span aria-hidden="true">🚀</span> Quick Start
 
 ### Development Setup
 
@@ -291,7 +291,7 @@ The CI workflow also stores the `audit-report.json` file produced by `pip-audit`
 as the **pip-audit-report** artifact. Download it from the **Actions** tab to
 review dependency vulnerability results.
 
-## 📋 Features
+## <span aria-hidden="true">📋</span> Features
 
 - **Real-time Security Monitoring**: Live access control event monitoring
 - **AI-Powered Anomaly Detection**: Advanced pattern recognition
@@ -318,7 +318,7 @@ install all dependencies (or execute `./scripts/setup.sh`).
 `PerformanceMonitor` requires `psutil` for CPU and memory metrics, and the
 file processing utilities depend on `chardet` to detect text encoding.
 
-## 🔄 Upload Workflow
+## <span aria-hidden="true">🔄</span> Upload Workflow
 
 The upload page now streams files directly to a background task. Progress is
 reported via Server‑Sent Events at `/upload/progress/<task_id>`. Once the server
@@ -326,14 +326,14 @@ finishes processing a file it updates the `file-info-store` so analytics pages
 pick up the new dataset automatically. Mobile users can collapse the queue to
 free up space and the workflow adjusts for touch interactions.
 
-## 📱 Mobile Support
+## <span aria-hidden="true">📱</span> Mobile Support
 
 The layout is responsive down to narrow phone screens. Navigation collapses into
 a hamburger menu and the drag‑and‑drop region expands to full width. All touch
 targets meet the 44&nbsp;px guideline and alerts reposition so they remain
 readable on mobile devices.
 
-## 🛠️ Monitoring Setup
+## <span aria-hidden="true">🛠️</span> Monitoring Setup
 
 Runtime metrics are exposed at `/metrics` for Prometheus. A sample configuration
 is provided in `monitoring/prometheus.yml`. Logstash support is available via
@@ -341,7 +341,7 @@ is provided in `monitoring/prometheus.yml`. Logstash support is available via
 these data sources. See [performance_monitoring.md](docs/performance_monitoring.md)
 for details.
 
-## 🔧 Configuration
+## <span aria-hidden="true">🔧</span> Configuration
 
 This project uses **`config/config.py`** for all application settings. The
 `create_config_manager()` helper builds a `ConfigManager` composed of modular
@@ -503,7 +503,7 @@ The `ConfigManager` implements `ConfigurationProtocol` so alternative
 implementations can be swapped in for tests. Helper functions like
 `get_app_config()` and `get_database_config()` remain available for convenience.
 
-## 🔄 Migration Guide
+## <span aria-hidden="true">🔄</span> Migration Guide
 
 The dashboard now centralizes Unicode handling in `core.unicode`.
 Detect legacy usage and validate the migration with the helper tools:
@@ -524,7 +524,7 @@ python tools/naming_standardizer.py fix <path>
 See [docs/migration_guide.md](docs/migration_guide.md) for step-by-step
 instructions and benefits of the new processors.
 
-## 📊 Plugin Performance Monitoring
+## <span aria-hidden="true">📊</span> Plugin Performance Monitoring
 
 Use `EnhancedThreadSafePluginManager` to track plugin load times and
 resource usage:
@@ -537,7 +537,7 @@ data = manager.get_plugin_performance_metrics()
 
 The `/api/v1/plugins/performance` endpoint exposes metrics for dashboards.
 
-## 📊 Modular Components
+## <span aria-hidden="true">📊</span> Modular Components
 
 ### Database Layer (`config/`)
 - **database_manager.py**: Connection pooling, multiple database support
@@ -607,7 +607,7 @@ def search():
 `JsonSerializationService` uses this helper to ensure consistent results across
 Flask and Dash applications.
 
-## 🔐 Authentication & Secrets
+## <span aria-hidden="true">🔐</span> Authentication & Secrets
 
 This project uses Auth0 for OIDC login. Configure the following environment
 variables or Docker secrets:
@@ -643,21 +643,21 @@ required secrets are set. See
 [docs/secret_management.md](docs/secret_management.md) for rotation
 procedures, Docker/cloud secret usage, and incident handling guidance.
 
-## 🌐 Language Toggle
+## <span aria-hidden="true">🌐</span> Language Toggle
 
 Internationalization is built in with Flask-Babel. Click the language dropdown in the navigation bar to switch between English and Japanese. No additional environment variables are required.
 If you encounter an error like `"Babel" object has no attribute "localeselector"` when starting the app, ensure that the `Flask-Babel` package is installed and up to date (version 4 or later). The application now falls back to the new `locale_selector_func` API when needed.
 The compiled `.mo` files in `translations/` must exist at runtime. After editing any `.po` files run `pybabel compile -d translations` and commit the generated files.
 
 
-## 🎨 Theme Support
+## <span aria-hidden="true">🎨</span> Theme Support
 
 The dashboard provides light, dark and high‑contrast themes. The current
 selection is saved in the browser and applied before CSS loads to avoid a flash
 of unstyled content. Use the new dropdown on the right side of the navbar to
 switch themes at runtime.
 
-## 📚 Documentation
+## <span aria-hidden="true">📚</span> Documentation
 
 See the [data model diagram](docs/data_model.md) for an overview of key entities.
 The running application exposes Swagger-based API docs at `http://<host>:<port>/api/docs`.
@@ -704,7 +704,7 @@ from utils.mapping_helpers import standardize_column_names
 df = pd.DataFrame({"A B": [1], "C-D": [2]})
 clean_df = standardize_column_names(df)
 ```
-## 📜 Data Migration
+## <span aria-hidden="true">📜</span> Data Migration
 Use the storage utilities to convert legacy pickle files to Parquet and load them:
 ```python
 from file_conversion.migrate_existing_files import main
@@ -754,11 +754,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines. In short:
    `examples/debugcsv.py`) and can be run with
    `python examples/diagnostic_script.py`.
 
-## 📦 Versioning
+## <span aria-hidden="true">📦</span> Versioning
 
 This project adheres to [Semantic Versioning](https://semver.org). See
 [docs/release.md](docs/release.md) for details on how releases are managed.
 
-## 📄 License
+## <span aria-hidden="true">📄</span> License
 
 MIT License - see LICENSE file for details.
