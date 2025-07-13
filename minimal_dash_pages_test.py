@@ -10,8 +10,13 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Create minimal app
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+# Create minimal app with Dash Pages enabled but without scanning the main pages
+app = dash.Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    use_pages=True,
+    pages_folder="__test_pages__",
+)
 
 # Register minimal test pages
 dash.register_page("home", path="/", name="Home", layout=lambda: html.H1("🏠 HOME PAGE WORKS!"))
