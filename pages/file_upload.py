@@ -9,7 +9,7 @@ import json
 import logging
 import os
 import tempfile
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import dash_bootstrap_components as dbc
 import pandas as pd
@@ -20,9 +20,12 @@ from dash import (
     dcc,
     html,
     no_update,
+    register_page,
 )
-from dash import register_page as dash_register_page
 from dash.exceptions import PreventUpdate
+
+# Register this page with Dash when imported
+register_page(__name__, path="/upload", name="Upload")
 
 # Core imports that should always work
 try:
@@ -273,15 +276,6 @@ def load_page(**kwargs) -> UploadPage:
     """Return a new :class:`UploadPage` instance."""
 
     return UploadPage(**kwargs)
-
-
-def register_page() -> None:
-    """Register the file upload page with Dash."""
-    try:
-        dash_register_page(__name__, path="/upload", name="Upload")
-        logger.info("✅ File upload page registered")
-    except Exception as e:
-        logger.warning(f"Page registration failed: {e}")
 
 
 def layout() -> dbc.Container:
@@ -536,7 +530,6 @@ __all__ = [
     "load_page",
     "layout",
     "safe_upload_layout",
-    "register_page",
     "register_callbacks",
     "register_upload_callbacks",
     "get_uploaded_filenames",
