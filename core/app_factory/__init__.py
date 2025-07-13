@@ -283,14 +283,15 @@ def _create_full_app(assets_folder: str) -> "Dash":
         # Ignore hidden files and text assets
         assets_ignore = r"^\..*|.*\.txt$"
 
+        pages_dir = Path(__file__).resolve().parents[2] / "pages"
         app = Dash(
             __name__,
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
             assets_folder=assets_folder,
             assets_ignore=assets_ignore,
-            use_pages=False,
-            pages_folder="",
+            use_pages=True,
+            pages_folder=str(pages_dir),
         )
         fix_flask_mime_types(app)
         ensure_icon_cache_headers(app)
@@ -477,14 +478,15 @@ def _create_simple_app(assets_folder: str) -> "Dash":
             external_stylesheets.append("/assets/dist/main.min.css")
             assets_ignore += r"|css/main\.css"
 
+        pages_dir = Path(__file__).resolve().parents[2] / "pages"
         app = Dash(
             __name__,
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
             assets_folder=assets_folder,
             assets_ignore=assets_ignore,
-            use_pages=False,
-            pages_folder="",
+            use_pages=True,
+            pages_folder=str(pages_dir),
         )
         fix_flask_mime_types(app)
         ensure_icon_cache_headers(app)
@@ -535,7 +537,7 @@ def _create_simple_app(assets_folder: str) -> "Dash":
                 dcc.Location(id="url", refresh=False),
                 html.H1("🏯 Yōsai Intel Dashboard", className="text-center"),
                 html.Hr(),
-                html.Div(id="page-content"),
+                page_container,
                 html.Div(
                     [
                         dbc.Alert(
@@ -585,14 +587,15 @@ def _create_json_safe_app(assets_folder: str) -> "Dash":
             external_stylesheets.append("/assets/dist/main.min.css")
             assets_ignore += r"|css/main\.css"
 
+        pages_dir = Path(__file__).resolve().parents[2] / "pages"
         app = Dash(
             __name__,
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
             assets_folder=assets_folder,
             assets_ignore=assets_ignore,
-            use_pages=False,
-            pages_folder="",
+            use_pages=True,
+            pages_folder=str(pages_dir),
         )
         fix_flask_mime_types(app)
         ensure_icon_cache_headers(app)
@@ -642,8 +645,10 @@ def _create_json_safe_app(assets_folder: str) -> "Dash":
 
         app.layout = html.Div(
             [
+                dcc.Location(id="url", refresh=False),
                 html.H1("🏯 Yōsai Intel Dashboard", className="text-center"),
                 html.Hr(),
+                page_container,
                 dbc.Container(
                     [
                         dbc.Alert(
