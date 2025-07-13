@@ -18,8 +18,7 @@ is organized and consistent.
 FILE-BY-FILE BREAKDOWN
 ======================
 
-📋 models/enums.py - "The Dropdown Lists"
-------------------------------------------
+### <span aria-hidden="true">📋</span> models/enums.py - "The Dropdown Lists"
 WHAT IT DOES:
 This file defines all the fixed choices/options used throughout the system.
 Like dropdown menus in a form - you can only pick from specific options.
@@ -63,8 +62,7 @@ def resolve_ticket(ticket_id, resolution_type):
 ```
 
 
-👤 models/entities.py - "The People, Places, and Things"
---------------------------------------------------------
+### <span aria-hidden="true">👤</span> models/entities.py - "The People, Places, and Things"
 WHAT IT DOES:
 Defines the main "things" in your security system - people, doors, and buildings.
 These are like the nouns in your security story.
@@ -185,11 +183,7 @@ def create_security_ticket(anomaly, threat_level):
     )
     return ticket
 ```
-
-
-🏗️ models/base.py - "The Foundation Rules"
--------------------------------------------
-WHAT IT DOES:
+### <span aria-hidden="true">🏗️</span> models/base.py - "The Foundation Rules"
 Sets up the basic rules that all data access models must follow.
 Like a contract that says "every model must be able to get data and validate it."
 
@@ -228,8 +222,7 @@ def get_model_summary(model: BaseDataModel):
 ```
 
 
-📊 models/access_event.py - "The Door Activity Tracker"
--------------------------------------------------------
+### <span aria-hidden="true">📊</span> models/access_event.py - "The Door Activity Tracker"
 WHAT IT DOES:
 Handles all database operations for access control events. When someone swipes 
 their badge, this model helps you find, filter, and analyze that data.
@@ -281,8 +274,7 @@ def search_person_activity(db_connection, person_id, start_date):
 
 
 
-🚨 AnomalyDetectionModel - "The Threat Detector"
------------------------------------------------
+### <span aria-hidden="true">🚨</span> AnomalyDetectionModel - "The Threat Detector"
 WHAT IT DOES:
 Tracks suspicious activity and anomalies detected by AI. The model lives in
 `models/base.py` and can be imported directly from the `models` package.
