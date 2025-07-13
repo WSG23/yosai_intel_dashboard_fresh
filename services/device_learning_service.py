@@ -399,7 +399,7 @@ def create_learning_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
             if learning_service.apply_to_global_store(df, filename):
                 return html.Div(
                     [
-                        html.I(className="fas fa-brain me-2"),
+                        html.I(className="fas fa-brain me-2", aria_hidden="true"),
                         "Learned device mappings applied!",
                     ],
                     className="text-success",
@@ -415,7 +415,7 @@ def create_learning_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
 
             return html.Div(
                 [
-                    html.I(className="fas fa-save me-2"),
+                    html.I(className="fas fa-save me-2", aria_hidden="true"),
                     f"Mappings saved! ID: {fingerprint[:8]}",
                 ],
                 className="text-success",
