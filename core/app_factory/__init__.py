@@ -386,6 +386,22 @@ def _create_full_app(assets_folder: str) -> "Dash":
                 return jsonify([])
         # -------------------------------------------        _initialize_plugins(app, config_manager, container=service_container)
         _register_pages()
+        # Debug: list all registered page names and discovered modules
+        try:
+            registered = [getattr(p, '__name__', str(p)) for p in getattr(app, 'page_registry', [])]
+        except Exception:
+            registered = []
+        print("\U0001F50D Registered pages:", registered)
+        import glob
+        print("\U0001F50D Page modules discovered:", list(glob.glob("pages/**/*.py", recursive=True)))
+        # Debug: list all registered page names and discovered modules
+        try:
+            registered = [getattr(p, '__name__', str(p)) for p in getattr(app, 'page_registry', [])]
+        except Exception:
+            registered = []
+        print("\U0001F50D Registered pages:", registered)
+        import glob
+        print("\U0001F50D Page modules discovered:", list(glob.glob("pages/**/*.py", recursive=True)))
         _setup_layout(app)
         _register_callbacks(app, config_manager, container=service_container)
 
