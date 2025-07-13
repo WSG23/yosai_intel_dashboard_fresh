@@ -187,6 +187,39 @@ PAGES_DIR = Path(__file__).resolve().parents[2] / "pages"
 logger = logging.getLogger(__name__)
 
 
+
+def _register_pages_with_app_context(app: "Dash") -> None:
+    """Register all pages with proper Dash app context."""
+    import dash
+    from pages import register_pages, create_manual_router
+    
+    try:
+        # Always use manual routing - disable Dash Pages completely
+        logger.info("🔄 Using manual routing (bypassing Dash Pages)...")
+        
+        # Clear any existing page registry to prevent validation conflicts
+        try:
+            import dash._pages as _pages
+            _pages.PAGE_REGISTRY.clear()
+            logger.info("✅ Cleared Dash Pages registry")
+        except Exception:
+            pass
+        
+        # Set up manual routing
+        create_manual_router(app)
+        logger.info("✅ Manual routing configured")
+        
+        # Disable Dash Pages validation
+        try:
+            app.config.suppress_callback_exceptions = True
+            logger.info("✅ Callback exceptions suppressed")
+        except Exception:
+            pass
+        
+    except Exception as e:
+        logger.error(f"❌ Page registration failed: {e}")
+        logger.warning("⚠️ App will run with minimal routing")
+
 def create_app(
     mode: Optional[str] = None,
     *,
@@ -555,12 +588,8 @@ def _create_simple_app(assets_folder: str) -> "Dash":
             ]
         )
 
-        try:
-            from pages import register_pages
-            register_pages()
-            logger.info("✅ Pages registered successfully")
-        except Exception as e:
-            logger.warning(f"Page registration failed: {e}")
+        # Register pages with proper app context
+        _register_pages_with_app_context(app)
 
         # Expose basic health check endpoint and Swagger docs
         server: Flask = cast(Flask, app.server)

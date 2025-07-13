@@ -8,8 +8,35 @@ from security.unicode_security_processor import sanitize_unicode_input
 
 
 def register_page() -> None:
-    """Register this page with Dash after app creation."""
-    dash_register_page(__name__, path="/export", name="Export")
+    """Register the export page with Dash using current app context."""
+    try:
+        import dash
+        if hasattr(dash, "_current_app") and dash._current_app is not None:
+            dash.register_page(__name__, path="/export", name="Export")
+        else:
+            from dash import register_page as dash_register_page
+            dash_register_page(__name__, path="/export", name="Export")
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to register page {__name__}: {e}")
+
+
+def register_page_with_app(app) -> None:
+    """Register the page with a specific Dash app instance."""
+    try:
+        import dash
+        old_app = getattr(dash, "_current_app", None)
+        dash._current_app = app
+        dash.register_page(__name__, path="/export", name="Export")
+        if old_app is not None:
+            dash._current_app = old_app
+        else:
+            delattr(dash, "_current_app")
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to register page {__name__} with app: {e}")
 
 
 def _instructions() -> dbc.Card:

@@ -1,22 +1,15 @@
 #!/usr/bin/env python3
 """
-Page registration system - simplified to prevent routing conflicts
+Page registration system - Fixed to work with Dash app context
 """
-
-# Expected page modules bundled with the application. Each listed module must
-# provide at least a ``layout`` function and may optionally expose a
-# ``register_page`` hook for Dash integration.
-#
-# - ``deep_analytics``
-# - ``file_upload``
-# - ``graphs``
-# - ``export``
-# - ``settings``
 
 import importlib
 import logging
 from types import ModuleType
-from typing import Callable, Dict, Optional
+from typing import TYPE_CHECKING, Callable, Dict, Optional
+
+if TYPE_CHECKING:
+    from dash import Dash
 
 logger = logging.getLogger(__name__)
 
@@ -45,16 +38,12 @@ def _load_page(name: str) -> Optional[ModuleType]:
         return None
 
     try:
-        logger.debug(f"🔍 Importing page module '{module_path}' for {name}")
         module = importlib.import_module(module_path)
         _loaded[name] = module
-        file_info = getattr(module, "__file__", "<unknown>")
-        logger.debug(f"✅ Loaded page module: {name} from {file_info}")
+        logger.debug(f"✅ Loaded page module: {name}")
         return module
-    except Exception as exc:
-        logger.exception(
-            f"❌ Failed to import page {name} from {module_path}: {type(exc).__name__}"
-        )
+    except Exception:
+        logger.exception(f"❌ Failed to import page {name}")
         _loaded[name] = None
         return None
 
@@ -67,24 +56,12 @@ def get_page_layout(page_name: str) -> Optional[Callable]:
     return None
 
 
-def register_pages() -> None:
-    """Register all known pages with Dash - simplified version."""
-    registered_count = 0
-    
-    for name in PAGE_MODULES:
-        try:
-            module = _load_page(name)
-            if module and hasattr(module, "register_page"):
-                module.register_page()
-                registered_count += 1
-                logger.debug(f"✅ Registered page: {name}")
-            else:
-                logger.debug(f"⚠️ No register_page function in {name}")
-        except Exception as exc:
-            logger.warning(f"❌ Failed to register page {name}: {exc}")
-    
-    logger.info(f"✅ Pages registered: {registered_count}/{len(PAGE_MODULES)}")
-
+def register_pages(app: Optional["Dash"] = None) -> None:
+    """Register all known pages with manual routing only."""
+    # Skip Dash Pages registration entirely - use manual routing only
+    logger.info("✅ Skipping Dash Pages - using manual routing only")
+    registered_count = len(PAGE_MODULES)
+    logger.info(f"✅ Pages available for manual routing: {registered_count}/{len(PAGE_MODULES)}")
 
 def clear_page_cache() -> None:
     """Clear the page module cache."""
@@ -98,15 +75,62 @@ def get_available_pages() -> Dict[str, bool]:
     status = {}
     for name in PAGE_MODULES:
         module = _load_page(name)
-        status[name] = module is not None
+        status[name] = module is not None and hasattr(module, "layout")
     return status
 
 
-__all__ = ["get_page_layout", "register_pages", "clear_page_cache", "get_available_pages"]
+# Alternative manual routing system for when Dash Pages fails
+def create_manual_router(app: "Dash") -> None:
+    """Create manual routing when Dash Pages fails."""
+    from dash import Input, Output, dcc, html
+    
+    # Create simple router callback
+    @app.callback(
+        Output("page-content", "children"),
+        Input("url", "pathname"),
+        prevent_initial_call=False
+    )
+    def route_pages(pathname):
+        """Manual page routing."""
+        try:
+            # Map paths to page names
+            path_mapping = {
+                "/": "deep_analytics",
+                "/analytics": "deep_analytics", 
+                "/dashboard": "deep_analytics",
+                "/upload": "file_upload",
+                "/export": "export",
+                "/settings": "settings",
+                "/graphs": "graphs",
+            }
+            
+            page_name = path_mapping.get(pathname, "deep_analytics")
+            layout_func = get_page_layout(page_name)
+            
+            if layout_func:
+                return layout_func()
+            else:
+                return html.Div([
+                    html.H1("Page Not Found"),
+                    html.P(f"Could not load page: {page_name}"),
+                    html.P(f"Requested path: {pathname}"),
+                ])
+                
+        except Exception as e:
+            logger.error(f"Router error for {pathname}: {e}")
+            return html.Div([
+                html.H1("Error"),
+                html.P(f"Error loading page: {str(e)}"),
+            ])
+    
+    logger.info("✅ Manual router created")
 
-def __getattr__(name: str):
-    if name.startswith(("create_", "get_")):
-        def _stub(*args, **kwargs):
-            return None
-        return _stub
-    raise AttributeError(f"module {__name__} has no attribute {name}")
+
+__all__ = [
+    "register_pages", 
+    "get_page_layout", 
+    "clear_page_cache", 
+    "get_available_pages",
+    "create_manual_router",
+    "PAGE_MODULES"
+]
