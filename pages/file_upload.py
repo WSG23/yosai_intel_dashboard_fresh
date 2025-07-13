@@ -20,12 +20,10 @@ from dash import (
     dcc,
     html,
     no_update,
-    register_page,
+    register_page as dash_register_page,
 )
 from dash.exceptions import PreventUpdate
 
-# Register this page with Dash when imported
-register_page(__name__, path="/upload", name="Upload")
 
 # Core imports that should always work
 try:
@@ -291,6 +289,12 @@ def load_page(**kwargs) -> UploadPage:
     return UploadPage(**kwargs)
 
 
+def register_page() -> None:
+    """Register the upload page with Dash."""
+
+    dash_register_page(__name__, path="/upload", name="Upload")
+
+
 def layout() -> dbc.Container:
     """Compatibility wrapper returning the default component layout."""
 
@@ -536,6 +540,7 @@ register_upload_callbacks = register_callbacks
 __all__ = [
     "UploadPage",
     "load_page",
+    "register_page",
     "layout",
     "safe_upload_layout",
     "register_callbacks",
