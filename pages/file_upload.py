@@ -45,10 +45,10 @@ except ImportError:
 
 
 from components.ui_component import UIComponent
+from services.upload_data_service import clear_uploaded_data as _svc_clear_uploaded_data
+from services.upload_data_service import get_uploaded_data as _svc_get_uploaded_data
 from services.upload_data_service import (
-    get_uploaded_data as _svc_get_uploaded_data,
     get_uploaded_filenames as _svc_get_uploaded_filenames,
-    clear_uploaded_data as _svc_clear_uploaded_data,
 )
 
 logger = logging.getLogger(__name__)
@@ -143,6 +143,13 @@ class UploadPage(UIComponent):
                                     color="success",
                                     style={"display": "none", "height": "8px"},
                                     className="mb-3",
+                                    **{
+                                        "role": "progressbar",
+                                        "aria-valuenow": 0,
+                                        "aria-valuemin": 0,
+                                        "aria-valuemax": 100,
+                                        "aria-label": "File upload progress",
+                                    },
                                 ),
                             ],
                             lg=8,
@@ -238,7 +245,13 @@ class UploadPage(UIComponent):
                         status = _create_success_status(len(results))
                         progress_style = {"display": "block", "height": "8px"}
 
-                        return preview, no_update, {"display": "none"}, status, updated_store
+                        return (
+                            preview,
+                            no_update,
+                            {"display": "none"},
+                            status,
+                            updated_store,
+                        )
                     else:
                         error_status = _create_error_status("No valid files processed")
                         progress_style = {"display": "none"}
@@ -538,10 +551,12 @@ __all__ = [
 ]
 from config.dynamic_config import dynamic_config
 
+
 def __getattr__(name: str):
     if name.startswith(("create_", "get_")):
+
         def _stub(*args, **kwargs):
             return None
+
         return _stub
     raise AttributeError(f"module {__name__} has no attribute {name}")
-
