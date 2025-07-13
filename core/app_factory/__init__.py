@@ -11,14 +11,29 @@ import types
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Optional, cast
 
-# Placeholders for optional Dash imports to satisfy type checkers
-Dash: Any
-Input: Any
-Output: Any
-dcc: Any
-html: Any
-page_container: Any
-dbc: Any
+# ---------------------------------------------------------------------------
+# Optional Dash imports for type checking. At runtime these will be replaced
+# with the real classes if Dash is available or simple stubs when running
+# in test mode without the dependency installed.
+# ---------------------------------------------------------------------------
+if TYPE_CHECKING:  # pragma: no cover - used only for static analysis
+    import dash_bootstrap_components as dbc  # type: ignore[import]
+    from dash import (  # type: ignore[import]
+        Dash,
+        Input,
+        Output,
+        dcc,
+        html,
+        page_container,
+    )
+else:  # pragma: no cover - fallback definitions
+    Dash = cast(Any, None)
+    Input = cast(Any, None)
+    Output = cast(Any, None)
+    dcc = cast(Any, None)
+    html = cast(Any, None)
+    page_container = cast(Any, None)
+    dbc = cast(Any, None)
 
 # ---------------------------------------------------------------------------
 # Handle orjson issues gracefully
@@ -50,7 +65,14 @@ except Exception:
 try:
     import dash  # type: ignore[import]
     import dash_bootstrap_components as dbc  # type: ignore[import]
-    from dash import Dash, Input, Output, dcc, html, page_container  # type: ignore[import]
+    from dash import (  # type: ignore[import]
+        Dash,
+        Input,
+        Output,
+        dcc,
+        html,
+        page_container,
+    )
 
     DASH_AVAILABLE = True
 except ImportError as e:
@@ -170,7 +192,9 @@ if TYPE_CHECKING:  # pragma: no cover - only for type hints
     from dash import Dash, Input, Output  # type: ignore[import]
     from dash import dcc as Dcc  # type: ignore[import]
     from dash import html as Html  # type: ignore[import]
-    from dash_bootstrap_components import Container as DbcContainer  # type: ignore[import]
+    from dash_bootstrap_components import (
+        Container as DbcContainer,  # type: ignore[import]
+    )
 
     from core.truly_unified_callbacks import (
         TrulyUnifiedCallbacks as TrulyUnifiedCallbacksType,
@@ -372,7 +396,10 @@ def _create_full_app(assets_folder: str) -> "Dash":
         app.title = title
         # Nuke Dash dependencies endpoint
         _add_nuclear_dependencies_route(app)
-        print("→ dash.dependencies view is now:", app.server.view_functions["dash.dependencies"])
+        print(
+            "→ dash.dependencies view is now:",
+            app.server.view_functions["dash.dependencies"],
+        )
         # Initialize Flask-Babel before any layouts use gettext
         try:
             babel = Babel(app.server)
@@ -395,30 +422,47 @@ def _create_full_app(assets_folder: str) -> "Dash":
 
         # Use the working config system
         initialize_csrf(app, config_manager)
+
         # --- NUKE DEPENDENCIES VIA before_request ---
         @app.server.before_request
         def _nuke_dash_dependencies():
-            from flask import request, jsonify  # type: ignore[import]
+            from flask import jsonify, request  # type: ignore[import]
+
             if request.path == "/_dash-dependencies":
                 return jsonify([])
+
         # -------------------------------------------        _initialize_plugins(app, config_manager, container=service_container)
         _register_pages()
         # Debug: list all registered page names and discovered modules
         try:
-            registered = [getattr(p, '__name__', str(p)) for p in getattr(app, 'page_registry', [])]
+            registered = [
+                getattr(p, "__name__", str(p))
+                for p in getattr(app, "page_registry", [])
+            ]
         except Exception:
             registered = []
-        print("\U0001F50D Registered pages:", registered)
+        print("\U0001f50d Registered pages:", registered)
         import glob
-        print("\U0001F50D Page modules discovered:", list(glob.glob("pages/**/*.py", recursive=True)))
+
+        print(
+            "\U0001f50d Page modules discovered:",
+            list(glob.glob("pages/**/*.py", recursive=True)),
+        )
         # Debug: list all registered page names and discovered modules
         try:
-            registered = [getattr(p, '__name__', str(p)) for p in getattr(app, 'page_registry', [])]
+            registered = [
+                getattr(p, "__name__", str(p))
+                for p in getattr(app, "page_registry", [])
+            ]
         except Exception:
             registered = []
-        print("\U0001F50D Registered pages:", registered)
+        print("\U0001f50d Registered pages:", registered)
         import glob
-        print("\U0001F50D Page modules discovered:", list(glob.glob("pages/**/*.py", recursive=True)))
+
+        print(
+            "\U0001f50d Page modules discovered:",
+            list(glob.glob("pages/**/*.py", recursive=True)),
+        )
         _setup_layout(app)
         _register_callbacks(app, config_manager, container=service_container)
 
@@ -556,6 +600,7 @@ def _create_simple_app(assets_folder: str) -> "Dash":
 
         try:
             from pages import register_pages
+
             register_pages()
             logger.info("✅ Pages registered successfully")
         except Exception as e:
@@ -1044,6 +1089,7 @@ __all__ = ["create_app"]
 # --- NUCLEAR DEPENDENCIES OVERRIDE (correct version) ---
 from dash import Dash  # type: ignore[import]
 
+
 def _add_nuclear_dependencies_route(app: Dash) -> None:
     """
     Force-override Dash’s /_dash-dependencies endpoint
@@ -1056,25 +1102,28 @@ def _add_nuclear_dependencies_route(app: Dash) -> None:
 
     # replace the existing Dash view with a no-op
     app.server.view_functions["dash.dependencies"] = lambda *args, **kwargs: jsonify([])
+
+
 # --------------------------------------------
 # ─────────────────────────────────────────────────────────────────────────────
 # External/library imports & module‐patches to satisfy Pylance & runtime needs
 import orjson  # type: ignore[import]
+
 # Patch orjson to avoid circular‐import issues (Pylance will still warn without ignore)
 orjson.OPT_NON_STR_KEYS = orjson.OPT_NON_STR_KEYS  # type: ignore[attr-defined]
 orjson.OPT_SERIALIZE_NUMPY = orjson.OPT_SERIALIZE_NUMPY  # type: ignore[attr-defined]
 orjson.dumps = orjson.dumps  # type: ignore[attr-defined]
 orjson.loads = orjson.loads  # type: ignore[attr-defined]
 
+import dash_bootstrap_components as dbc  # type: ignore[import]
+import flasgger  # type: ignore[import]
 import flask  # type: ignore[import]
-from flask import Flask, request, session, jsonify  # type: ignore[import]
+from dash import Dash, dcc, html  # type: ignore[import]
+from dash.dependencies import Input, Output  # type: ignore[import]
+from flask import Flask, jsonify, request, session  # type: ignore[import]
 from flask_babel import Babel  # type: ignore[import]
+from flask_caching import Cache  # type: ignore[import]
 from flask_compress import Compress  # type: ignore[import]
 from flask_talisman import Talisman  # type: ignore[import]
-from flask_caching import Cache  # type: ignore[import]
-import flasgger  # type: ignore[import]
 
-from dash import Dash, html, dcc  # type: ignore[import]
-from dash.dependencies import Input, Output  # type: ignore[import]
-import dash_bootstrap_components as dbc  # type: ignore[import]
 # ─────────────────────────────────────────────────────────────────────────────
