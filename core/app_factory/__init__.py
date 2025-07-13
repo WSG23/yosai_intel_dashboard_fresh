@@ -11,6 +11,15 @@ import types
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Optional, cast
 
+# Placeholders for optional Dash imports to satisfy type checkers
+Dash: Any
+Input: Any
+Output: Any
+dcc: Any
+html: Any
+page_container: Any
+dbc: Any
+
 # ---------------------------------------------------------------------------
 # Handle orjson issues gracefully
 # ---------------------------------------------------------------------------
@@ -21,21 +30,27 @@ try:  # pragma: no cover - best effort import
         raise AttributeError("orjson missing OPT_NON_STR_KEYS")
 except Exception:
     fake_orjson = types.ModuleType("orjson")
-    fake_orjson.OPT_NON_STR_KEYS = 1
-    fake_orjson.OPT_SERIALIZE_NUMPY = 2
-    fake_orjson.dumps = (
-        lambda obj, **kwargs: __import__("json").dumps(obj, default=str).encode()
+    setattr(fake_orjson, "OPT_NON_STR_KEYS", 1)
+    setattr(fake_orjson, "OPT_SERIALIZE_NUMPY", 2)
+    setattr(
+        fake_orjson,
+        "dumps",
+        lambda obj, **kwargs: __import__("json").dumps(obj, default=str).encode(),
     )
-    fake_orjson.loads = lambda s, **kwargs: __import__("json").loads(
-        s.decode() if isinstance(s, (bytes, bytearray)) else s
+    setattr(
+        fake_orjson,
+        "loads",
+        lambda s, **kwargs: __import__("json").loads(
+            s.decode() if isinstance(s, (bytes, bytearray)) else s
+        ),
     )
     sys.modules["orjson"] = fake_orjson
 
 # Graceful Dash imports with fallback
 try:
-    import dash
-    import dash_bootstrap_components as dbc
-    from dash import Input, Output, dcc, html, page_container
+    import dash  # type: ignore[import]
+    import dash_bootstrap_components as dbc  # type: ignore[import]
+    from dash import Dash, Input, Output, dcc, html, page_container  # type: ignore[import]
 
     DASH_AVAILABLE = True
 except ImportError as e:
@@ -59,7 +74,8 @@ except ImportError as e:
                 pass
 
         dash = cast(Any, types.SimpleNamespace(Dash=_MockDash))
-        Input = Output = dcc = html = cast(Any, _MockComponent)
+        Dash = _MockDash
+        Input = Output = dcc = html = page_container = cast(Any, _MockComponent)
         dbc = cast(
             Any,
             types.SimpleNamespace(
@@ -96,11 +112,11 @@ def handle_unicode_surrogates(
 
 
 # Rest of imports
-from flasgger import Swagger
-from flask import Flask, session
-from flask_babel import Babel
-from flask_compress import Compress
-from flask_talisman import Talisman
+from flasgger import Swagger  # type: ignore[import]
+from flask import Flask, session  # type: ignore[import]
+from flask_babel import Babel  # type: ignore[import]
+from flask_compress import Compress  # type: ignore[import]
+from flask_talisman import Talisman  # type: ignore[import]
 
 
 class DummyConfigManager:
@@ -113,7 +129,7 @@ class DummyConfigManager:
         return self.config.plugin_settings.get(name, {})
 
 
-from flask_caching import Cache
+from flask_caching import Cache  # type: ignore[import]
 
 from components.ui.navbar import create_navbar_layout
 from config import get_config
@@ -150,11 +166,11 @@ except Exception:  # pragma: no cover - fallback when unavailable
     TrulyUnifiedCallbacks = None  # type: ignore[misc]
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
-    import dash_bootstrap_components as dbc
-    from dash import Dash, Input, Output
-    from dash import dcc as Dcc
-    from dash import html as Html
-    from dash_bootstrap_components import Container as DbcContainer
+    import dash_bootstrap_components as dbc  # type: ignore[import]
+    from dash import Dash, Input, Output  # type: ignore[import]
+    from dash import dcc as Dcc  # type: ignore[import]
+    from dash import html as Html  # type: ignore[import]
+    from dash_bootstrap_components import Container as DbcContainer  # type: ignore[import]
 
     from core.truly_unified_callbacks import (
         TrulyUnifiedCallbacks as TrulyUnifiedCallbacksType,
@@ -267,7 +283,7 @@ def _create_full_app(assets_folder: str) -> "Dash":
         # Ignore hidden files and text assets
         assets_ignore = r"^\..*|.*\.txt$"
 
-        app = dash.Dash(
+        app = Dash(
             __name__,
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
@@ -381,7 +397,7 @@ def _create_full_app(assets_folder: str) -> "Dash":
         # --- NUKE DEPENDENCIES VIA before_request ---
         @app.server.before_request
         def _nuke_dash_dependencies():
-            from flask import request, jsonify
+            from flask import request, jsonify  # type: ignore[import]
             if request.path == "/_dash-dependencies":
                 return jsonify([])
         # -------------------------------------------        _initialize_plugins(app, config_manager, container=service_container)
@@ -420,7 +436,7 @@ def _create_full_app(assets_folder: str) -> "Dash":
         @server.before_request
         def filter_noisy_requests():
             """Filter out SSL handshake attempts and bot noise"""
-            from flask import abort, request
+            from flask import abort, request  # type: ignore[import]
 
             # Block requests with suspicious headers
             user_agent = request.headers.get("User-Agent", "")
@@ -452,7 +468,7 @@ def _create_full_app(assets_folder: str) -> "Dash":
 def _create_simple_app(assets_folder: str) -> "Dash":
     """Create a simplified Dash application"""
     try:
-        from dash import dcc, html
+        from dash import dcc, html  # type: ignore[import]
 
         external_stylesheets = [dbc.themes.BOOTSTRAP]
         built_css = ASSETS_DIR / "dist" / "main.min.css"
@@ -461,7 +477,7 @@ def _create_simple_app(assets_folder: str) -> "Dash":
             external_stylesheets.append("/assets/dist/main.min.css")
             assets_ignore += r"|css/main\.css"
 
-        app = dash.Dash(
+        app = Dash(
             __name__,
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
@@ -560,7 +576,7 @@ def _create_simple_app(assets_folder: str) -> "Dash":
 def _create_json_safe_app(assets_folder: str) -> "Dash":
     """Create Dash application with JSON-safe layout"""
     try:
-        from dash import html
+        from dash import html  # type: ignore[import]
 
         external_stylesheets = [dbc.themes.BOOTSTRAP]
         built_css = ASSETS_DIR / "dist" / "main.min.css"
@@ -569,7 +585,7 @@ def _create_json_safe_app(assets_folder: str) -> "Dash":
             external_stylesheets.append("/assets/dist/main.min.css")
             assets_ignore += r"|css/main\.css"
 
-        app = dash.Dash(
+        app = Dash(
             __name__,
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
@@ -965,7 +981,7 @@ def _register_callbacks(
         )
 
     if coordinator is not None:
-        coordinator._callback_registry = _callback_registry
+        setattr(coordinator, "_callback_registry", _callback_registry)
 
 
 def _initialize_services(container: Optional[ServiceContainer] = None) -> None:
@@ -1021,14 +1037,14 @@ def _configure_swagger(server: Any) -> None:
 __all__ = ["create_app"]
 
 # --- NUCLEAR DEPENDENCIES OVERRIDE (correct version) ---
-from dash import Dash
+from dash import Dash  # type: ignore[import]
 
 def _add_nuclear_dependencies_route(app: Dash) -> None:
     """
     Force-override Dash’s /_dash-dependencies endpoint
     so it always returns an empty JSON array.
     """
-    from flask import jsonify
+    from flask import jsonify  # type: ignore[import]
 
     # console signal so we know it ran
     print("🛠️  Applying nuclear /_dash-dependencies override")
