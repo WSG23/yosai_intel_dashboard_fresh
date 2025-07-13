@@ -55,7 +55,6 @@ def create_navbar_layout() -> Any:
                                         external_link=False,
                                         className="nav-link px-3",
                                         id="nav-analytics",
-                                        aria_label="Analytics page",
                                     )
                                 ),
                                 dbc.NavItem(
@@ -68,7 +67,6 @@ def create_navbar_layout() -> Any:
                                         external_link=False,
                                         className="nav-link px-3",
                                         id="nav-graphs",
-                                        aria_label="Graphs page",
                                     )
                                 ),
                                 dbc.NavItem(
@@ -81,7 +79,6 @@ def create_navbar_layout() -> Any:
                                         external_link=False,
                                         className="nav-link px-3",
                                         id="nav-upload",
-                                        aria_label="Upload page",
                                     )
                                 ),
                                 dbc.NavItem(
@@ -94,7 +91,6 @@ def create_navbar_layout() -> Any:
                                         external_link=False,
                                         className="nav-link px-3",
                                         id="nav-export",
-                                        aria_label="Export page",
                                     )
                                 ),
                                 dbc.NavItem(
@@ -107,7 +103,6 @@ def create_navbar_layout() -> Any:
                                         external_link=False,
                                         className="nav-link px-3",
                                         id="nav-settings",
-                                        aria_label="Settings page",
                                     )
                                 ),
                             ],
@@ -147,7 +142,6 @@ def create_fallback_navbar():
                                 "Analytics",
                                 href="/analytics",
                                 external_link=False,
-                                aria_label="Analytics page",
                             )
                         ),
                         dbc.NavItem(
@@ -155,7 +149,6 @@ def create_fallback_navbar():
                                 "Graphs",
                                 href="/graphs",
                                 external_link=False,
-                                aria_label="Graphs page",
                             )
                         ),
                         dbc.NavItem(
@@ -163,7 +156,6 @@ def create_fallback_navbar():
                                 "Upload",
                                 href="/upload",
                                 external_link=False,
-                                aria_label="Upload page",
                             )
                         ),
                     ],
