@@ -52,7 +52,7 @@ def test_deep_analytics_specific_path():
     # Step 2: Test deep analytics get_analytics_service_safe
     print("🔧 STEP 2: Testing get_analytics_service_safe")
     try:
-        from pages.deep_analytics.analysis import get_analytics_service_safe
+        from pages.deep_analytics_complex.analysis import get_analytics_service_safe
 
         service = get_analytics_service_safe()
         if service:
@@ -95,7 +95,7 @@ def test_deep_analytics_specific_path():
         "🎯 STEP 4: Testing analyze_data_with_service_safe (the exact deep analytics function)"
     )
     try:
-        from pages.deep_analytics.analysis import analyze_data_with_service_safe
+        from pages.deep_analytics_complex.analysis import analyze_data_with_service_safe
 
         # Test with different data sources
         test_sources = [
@@ -163,7 +163,7 @@ def test_deep_analytics_specific_path():
     # Step 6: Test data source options
     print("📋 STEP 6: Testing get_data_source_options_safe")
     try:
-        from pages.deep_analytics.analysis import get_data_source_options_safe
+        from pages.deep_analytics_complex.analysis import get_data_source_options_safe
 
         options = get_data_source_options_safe()
         print(f"   Available data sources:")
@@ -211,7 +211,7 @@ def test_deep_analytics_specific_path():
         print("   Simulating deep analytics button click:")
 
         # 1. Get data source options
-        from pages.deep_analytics.analysis import get_data_source_options_safe
+        from pages.deep_analytics_complex.analysis import get_data_source_options_safe
 
         options = get_data_source_options_safe()
 
@@ -226,7 +226,7 @@ def test_deep_analytics_specific_path():
             print(f"   📁 Using data source: {uploaded_option['value']}")
 
             # 3. Call analyze_data_with_service_safe
-            from pages.deep_analytics.analysis import analyze_data_with_service_safe
+            from pages.deep_analytics_complex.analysis import analyze_data_with_service_safe
 
             result = analyze_data_with_service_safe(
                 uploaded_option["value"], "security"

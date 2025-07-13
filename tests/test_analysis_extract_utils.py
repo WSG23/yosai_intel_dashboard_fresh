@@ -1,7 +1,7 @@
 import importlib.util
 import pathlib
 
-analysis_path = pathlib.Path(__file__).resolve().parents[1] / "pages/deep_analytics/analysis.py"
+analysis_path = pathlib.Path(__file__).resolve().parents[1] / "pages/deep_analytics_complex/analysis.py"
 spec = importlib.util.spec_from_file_location("analysis", analysis_path)
 analysis = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(analysis)

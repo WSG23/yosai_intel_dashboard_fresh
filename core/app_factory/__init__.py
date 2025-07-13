@@ -139,9 +139,9 @@ from core.performance_monitor import DIPerformanceMonitor
 from core.service_container import ServiceContainer
 from core.theme_manager import DEFAULT_THEME, apply_theme_settings
 from pages import get_page_layout
-from pages.deep_analytics import Callbacks as DeepAnalyticsCallbacks
-from pages.deep_analytics import layout as deep_analytics_layout
-from pages.deep_analytics import register_callbacks as register_deep_callbacks
+from pages.deep_analytics_complex import Callbacks as DeepAnalyticsCallbacks
+from pages.deep_analytics_complex import layout as deep_analytics_layout
+from pages.deep_analytics_complex import register_callbacks as register_deep_callbacks
 from pages.file_upload import register_callbacks as register_upload_callbacks
 from pages.file_upload import safe_upload_layout
 from services import get_analytics_service
@@ -886,6 +886,11 @@ def _register_pages() -> None:
     """Register all pages once the Dash app is ready."""
     try:
         from pages import register_pages
+        import dash
+
+        if not dash._pages.CONFIG.get("assets_folder"):
+            logger.error("Dash pages not initialized - skipping registration")
+            return
 
         register_pages()
         logger.info("✅ Pages registered successfully")
@@ -943,7 +948,7 @@ def _register_callbacks(
     if coordinator is not None:
         registration_modules = [
             ("pages.file_upload", "register_callbacks"),
-            ("pages.deep_analytics", "register_callbacks"),
+            ("pages.deep_analytics_complex", "register_callbacks"),
             ("components.ui.navbar", "register_navbar_callbacks"),
         ]
 

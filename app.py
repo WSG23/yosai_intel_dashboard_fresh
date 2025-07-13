@@ -145,7 +145,7 @@ def _consolidate_callbacks(app):
     try:
         # Import callback modules with error handling
         callback_modules = [
-            ('pages.deep_analytics', 'register_callbacks'),
+            ('pages.deep_analytics_complex', 'register_callbacks'),
             ('pages.file_upload', 'register_callbacks'),
             ('pages.export', 'register_callbacks'),
             ('pages.settings', 'register_callbacks'),
