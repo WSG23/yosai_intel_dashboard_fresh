@@ -1,0 +1,4 @@
+Invalid uploads config for chunk_size
+Invalid uploads config for max_parallel_uploads
+Invalid uploads config for validator_rules
+❌ Failed to create application: unexpected character after line continuation character (__init__.py, line 1018)
