@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 
 import dash_bootstrap_components as dbc  # type: ignore[import]
 import pandas as pd  # type: ignore[import]
-from dash import (
+from dash import (  # type: ignore[import]
     Input,
     Output,
     State,
@@ -21,18 +21,16 @@ from dash import (
     html,
     no_update,
     register_page,
-)  # type: ignore[import]
+)
 from dash.exceptions import PreventUpdate  # type: ignore[import]
 
 from components.ui_component import UIComponent
+from config.dynamic_config import dynamic_config
 from services.upload_data_service import clear_uploaded_data as _svc_clear_uploaded_data
 from services.upload_data_service import get_uploaded_data as _svc_get_uploaded_data
 from services.upload_data_service import (
     get_uploaded_filenames as _svc_get_uploaded_filenames,
-
 )
-from config.dynamic_config import dynamic_config
-
 
 # Core imports that should always work
 try:
