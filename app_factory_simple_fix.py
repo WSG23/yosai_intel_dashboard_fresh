@@ -17,7 +17,7 @@ def _create_simple_app(assets_folder: str) -> "Dash":
             suppress_callback_exceptions=True,
             assets_folder=assets_folder,
             assets_ignore=assets_ignore,
-            use_pages=False,
+            use_pages=True,
             pages_folder="",
         )
         

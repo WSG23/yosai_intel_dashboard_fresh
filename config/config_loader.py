@@ -17,14 +17,10 @@ from .base_loader import BaseConfigLoader
 def validate_uploads_config(config: Dict[str, Any]) -> Dict[str, Any]:
     """Validate uploads configuration with defaults."""
     defaults = {
-        "chunk_size": 1024000,
-        "max_parallel_uploads": 3,
-        "validator_rules": {
             "max_file_size": 104857600,
             "allowed_extensions": [".csv", ".xlsx", ".json"],
             "scan_for_malware": True,
         },
-    }
 
     if "uploads" not in config:
         config["uploads"] = defaults
