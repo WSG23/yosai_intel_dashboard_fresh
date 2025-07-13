@@ -65,7 +65,7 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
             [
                 html.H6(
                     [
-                        html.I(className="fas fa-check-circle me-2", aria_hidden="true"),
+                        html.I(className="fas fa-check-circle me-2", **{"aria-hidden": "true"}),
                         f"{prefix} {filename}",
                     ],
                     className="alert-heading",

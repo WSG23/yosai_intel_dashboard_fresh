@@ -20,8 +20,8 @@ from dash import (  # type: ignore[import]
     dcc,
     html,
     no_update,
-    register_page,
 )
+from dash import register_page as dash_register_page
 from dash.exceptions import PreventUpdate  # type: ignore[import]
 
 from components.ui_component import UIComponent
@@ -91,7 +91,7 @@ class UploadPage(UIComponent):
                                                     "fa-3x mb-3"
                                                 ),
                                                 style={"color": "#6c757d"},
-                                                aria_hidden="true",
+                                                **{"aria-hidden": "true"},
                                             ),
                                             html.H5("Drag & Drop Files Here"),
                                             html.P(
@@ -146,7 +146,7 @@ class UploadPage(UIComponent):
                                     className="mb-3",
                                     **{
                                         "role": "progressbar",
-                                        "aria-valuenow": 0,
+                                        
                                         "aria-valuemin": 0,
                                         "aria-valuemax": 100,
                                         "aria-label": "File upload progress",
@@ -487,7 +487,7 @@ def _create_navigation_buttons(uploaded_files: Dict[str, str]) -> Any:
                         [
                             dbc.Button(
                                 [
-                                    html.I(className="fas fa-chart-line me-2", aria_hidden="true"),
+                                    html.I(className="fas fa-chart-line me-2", **{"aria-hidden": "true"}),
                                     "Analyze Data",
                                 ],
                                 href="/analytics",
@@ -495,14 +495,14 @@ def _create_navigation_buttons(uploaded_files: Dict[str, str]) -> Any:
                                 size="lg",
                             ),
                             dbc.Button(
-                                [html.I(className="fas fa-upload me-2", aria_hidden="true"), "Upload More"],
+                                [html.I(className="fas fa-upload me-2", **{"aria-hidden": "true"}), "Upload More"],
                                 id="upload-more-btn",
                                 color="secondary",
                                 outline=True,
                                 href="/upload",
                             ),
                             dbc.Button(
-                                [html.I(className="fas fa-download me-2", aria_hidden="true"), "Export"],
+                                [html.I(className="fas fa-download me-2", **{"aria-hidden": "true"}), "Export"],
                                 href="/export",
                                 color="success",
                                 outline=True,

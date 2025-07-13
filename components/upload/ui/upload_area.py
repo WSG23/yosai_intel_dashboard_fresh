@@ -31,7 +31,7 @@ class UploadArea:
     def _render_upload_area(self) -> html.Div:
         return html.Div(
             [
-                html.I(className="fas fa-cloud-upload-alt fa-3x", aria_hidden="true"),
+                html.I(className="fas fa-cloud-upload-alt fa-3x", **{"aria-hidden": "true"}),
                 html.H4("Drop files here or click to browse"),
             ]
         )
