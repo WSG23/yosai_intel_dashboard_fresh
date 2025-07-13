@@ -353,6 +353,7 @@ def _create_full_app(assets_folder: str) -> "Dash":
         analytics_cfg = config_manager.get_analytics_config()
         title = getattr(analytics_cfg, "title", config_manager.get_app_config().title)
         app.title = title
+        _add_nuclear_dependencies_route(app)
 
         # Initialize Flask-Babel before any layouts use gettext
         try:
@@ -490,6 +491,7 @@ def _create_simple_app(assets_folder: str) -> "Dash":
             return resp
 
         app.title = "Yōsai Intel Dashboard"
+        _add_nuclear_dependencies_route(app)
 
         app.layout = html.Div(
             [
@@ -600,6 +602,7 @@ def _create_json_safe_app(assets_folder: str) -> "Dash":
         _register_pages()
 
         app.title = "🏯 Yōsai Intel Dashboard"
+        _add_nuclear_dependencies_route(app)
 
         app.layout = html.Div(
             [
@@ -992,6 +995,15 @@ def _configure_swagger(server: Any) -> None:
     except Exception as e:
         logger.warning(f"Swagger configuration failed, continuing without it: {e}")
         # Don't crash the app if Swagger fails
+
+
+def _add_nuclear_dependencies_route(app: "Dash") -> None:
+    """Override Dash dependencies endpoint with simple JSON."""
+    from flask import jsonify
+
+    @app.server.route("/_dash-dependencies")
+    def nuclear_dependencies() -> Any:
+        return jsonify([])
 
 
 # Export the main function
