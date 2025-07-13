@@ -15,7 +15,7 @@ import unicodedata
 from functools import wraps
 from typing import Any, Callable, Iterable, Optional, Union
 
-import pandas as pd
+import pandas as pd  # type: ignore[import]
 
 from .exceptions import SecurityError
 from .security_patterns import (
