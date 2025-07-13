@@ -143,6 +143,13 @@ class UploadPage(UIComponent):
                                     color="success",
                                     style={"display": "none", "height": "8px"},
                                     className="mb-3",
+                                    **{
+                                        "role": "progressbar",
+                                        "aria-valuenow": 0,
+                                        "aria-valuemin": 0,
+                                        "aria-valuemax": 100,
+                                        "aria-label": "File upload progress",
+                                    },
                                 ),
                             ],
                             lg=8,
