@@ -11,8 +11,8 @@ import os
 import tempfile
 from typing import Any, Dict, List, Optional
 
-import dash_bootstrap_components as dbc
-import pandas as pd
+import dash_bootstrap_components as dbc  # type: ignore[import]
+import pandas as pd  # type: ignore[import]
 from dash import (
     Input,
     Output,
@@ -20,9 +20,18 @@ from dash import (
     dcc,
     html,
     no_update,
-    register_page as dash_register_page,
+    register_page,
+)  # type: ignore[import]
+from dash.exceptions import PreventUpdate  # type: ignore[import]
+
+from components.ui_component import UIComponent
+from services.upload_data_service import clear_uploaded_data as _svc_clear_uploaded_data
+from services.upload_data_service import get_uploaded_data as _svc_get_uploaded_data
+from services.upload_data_service import (
+    get_uploaded_filenames as _svc_get_uploaded_filenames,
+
 )
-from dash.exceptions import PreventUpdate
+from config.dynamic_config import dynamic_config
 
 
 # Core imports that should always work
@@ -35,19 +44,12 @@ try:
     from core.unicode import safe_decode_bytes, safe_encode_text
 except ImportError:
 
-    def safe_encode_text(text):
-        return str(text)
+    def safe_encode_text(value: Any) -> str:
+        return str(value)
 
-    def safe_decode_bytes(data):
+    def safe_decode_bytes(data: bytes) -> str:
         return data.decode("utf-8", errors="replace")
 
-
-from components.ui_component import UIComponent
-from services.upload_data_service import clear_uploaded_data as _svc_clear_uploaded_data
-from services.upload_data_service import get_uploaded_data as _svc_get_uploaded_data
-from services.upload_data_service import (
-    get_uploaded_filenames as _svc_get_uploaded_filenames,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +72,8 @@ class UploadPage(UIComponent):
                             [
                                 html.H2("📁 File Upload", className="mb-3"),
                                 html.P(
-                                    "Drag and drop files or click to browse. Supports CSV, Excel, and JSON files.",
+                                    "Drag and drop files or click to browse. "
+                                    "Supports CSV, Excel, and JSON files.",
                                     className="text-muted mb-4",
                                 ),
                             ]
@@ -87,7 +90,10 @@ class UploadPage(UIComponent):
                                     children=html.Div(
                                         [
                                             html.I(
-                                                className="fas fa-cloud-upload-alt fa-3x mb-3",
+                                                className=(
+                                                    "fas fa-cloud-upload-alt "
+                                                    "fa-3x mb-3"
+                                                ),
                                                 style={"color": "#6c757d"},
                                             ),
                                             html.H5("Drag & Drop Files Here"),
@@ -191,7 +197,9 @@ class UploadPage(UIComponent):
         )
 
     # ------------------------------------------------------------------
-    def register_callbacks(self, manager, controller=None) -> None:  # type: ignore[override]
+    def register_callbacks(
+        self, manager, controller=None
+    ) -> None:  # type: ignore[override]
         """Register upload callbacks - simplified and working."""
 
         if manager is None:
@@ -377,7 +385,7 @@ def _create_file_preview(results: List[Dict[str, Any]]) -> List[Any]:
         columns = [{"name": col, "id": col} for col in df.columns]
 
         try:
-            from dash import dash_table
+            from dash import dash_table  # type: ignore[import]
 
             table = dash_table.DataTable(
                 data=preview_data,
@@ -390,7 +398,7 @@ def _create_file_preview(results: List[Dict[str, Any]]) -> List[Any]:
                 },
                 page_size=5,
             )
-        except:
+        except Exception:
             # Fallback if dash_table not available
             table = html.P("Preview table not available")
 
@@ -404,7 +412,8 @@ def _create_file_preview(results: List[Dict[str, Any]]) -> List[Any]:
                                 dbc.Col(
                                     [
                                         html.P(
-                                            f"📊 {result['rows']:,} rows × {result['columns']} columns"
+                                            f"📊 {result['rows']:,} rows "
+                                            f"× {result['columns']} columns"
                                         ),
                                         html.P(f"💾 Size: {result['size_mb']} MB"),
                                     ],
@@ -413,9 +422,10 @@ def _create_file_preview(results: List[Dict[str, Any]]) -> List[Any]:
                                 dbc.Col(
                                     [
                                         html.P(
-                                            f"📅 Uploaded: {pd.Timestamp.now().strftime('%H:%M:%S')}"
+                                            "📅 Uploaded: "
+                                            f"{pd.Timestamp.now().strftime('%H:%M:%S')}"
                                         ),
-                                        html.P(f"✅ Status: Ready for analysis"),
+                                        html.P("✅ Status: Ready for analysis"),
                                     ],
                                     md=6,
                                 ),
@@ -440,7 +450,7 @@ def _create_success_status(file_count: int) -> Any:
 
     return dbc.Alert(
         [
-            html.H6(f"✅ Upload Successful!", className="mb-1"),
+            html.H6("✅ Upload Successful!", className="mb-1"),
             html.P(f"Successfully processed {file_count} file(s). Ready for analysis."),
         ],
         color="success",
@@ -549,7 +559,6 @@ __all__ = [
     "get_uploaded_data",
     "clear_uploaded_data",
 ]
-from config.dynamic_config import dynamic_config
 
 
 def __getattr__(name: str):
