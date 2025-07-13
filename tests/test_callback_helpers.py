@@ -6,7 +6,7 @@ from dash import html
 
 pytestmark = pytest.mark.usefixtures("fake_dbc")
 
-import pages.deep_analytics.callbacks as cb
+import pages.deep_analytics_complex.callbacks as cb
 
 
 def test_run_service_analysis_success(monkeypatch):

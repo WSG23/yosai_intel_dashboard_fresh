@@ -45,12 +45,16 @@ def _load_page(name: str) -> Optional[ModuleType]:
         return None
 
     try:
+        logger.debug(f"🔍 Importing page module '{module_path}' for {name}")
         module = importlib.import_module(module_path)
         _loaded[name] = module
-        logger.debug(f"✅ Loaded page module: {name}")
+        file_info = getattr(module, "__file__", "<unknown>")
+        logger.debug(f"✅ Loaded page module: {name} from {file_info}")
         return module
-    except Exception:
-        logger.exception(f"❌ Failed to import page {name}")
+    except Exception as exc:
+        logger.exception(
+            f"❌ Failed to import page {name} from {module_path}: {type(exc).__name__}"
+        )
         _loaded[name] = None
         return None
 
