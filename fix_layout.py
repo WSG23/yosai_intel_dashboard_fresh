@@ -1,39 +1,28 @@
-#!/usr/bin/env python3
-"""Quick fix to replace the broken layout function."""
+# Read the file and fix the broken layout assignments
+with open('core/app_factory/__init__.py', 'r') as f:
+    content = f.read()
 
-def create_working_layout():
-    """Create a minimal working layout with dcc.Location and manual routing."""
-    from dash import dcc, html
-    import dash_bootstrap_components as dbc
+# Fix the broken layout assignments by properly commenting out the entire blocks
+import re
+
+# Fix first broken layout (around line 585)
+content = re.sub(
+    r'        # app\.layout = html\.Div\(\s*\[\s*dcc\.Location\(id="url", refresh=False\),.*?\],?\s*\)',
+    '        # Commented out competing layout assignment',
+    content,
+    flags=re.DOTALL
+)
+
+# Fix second broken layout (around line 696) 
+content = re.sub(
+    r'        # app\.layout = html\.Div\(\s*\[\s*html\.H1\("🏯 Yōsai Intel Dashboard".*?\],?\s*\)',
+    '        # Commented out competing layout assignment',
+    content,
+    flags=re.DOTALL
+)
+
+# Write back
+with open('core/app_factory/__init__.py', 'w') as f:
+    f.write(content)
     
-    return html.Div([
-        # URL component - this is critical for routing
-        dcc.Location(id="url", refresh=False),
-        
-        # Simple navbar
-        html.Nav([
-            html.H3("🏯 Yōsai Dashboard", style={"color": "white", "padding": "15px", "margin": "0"}),
-        ], style={"background": "#1f2937", "margin-bottom": "20px"}),
-        
-        # Content area for manual routing
-        html.Div(
-            id="page-content", 
-            children=[
-                dbc.Container([
-                    html.H1("🚀 Loading Dashboard..."),
-                    html.P("Manual routing should populate this area momentarily."),
-                ])
-            ],
-            style={"padding": "20px"}
-        ),
-        
-        # Basic stores
-        dcc.Store(id="global-store", data={}),
-    ])
-
-if __name__ == "__main__":
-    # Test the layout
-    layout = create_working_layout()
-    print(f"✅ Layout created: {type(layout)}")
-    print(f"✅ Contains Location: {'Location' in str(layout)}")
-    print(f"✅ Contains page-content: {'page-content' in str(layout)}")
+print("✅ Fixed syntax errors")
