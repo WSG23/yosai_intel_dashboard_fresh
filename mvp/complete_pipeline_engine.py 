@@ -1,0 +1,74 @@
+graph TD
+    %% Input Layer
+    A[CSV/JSON/Excel Files] --> B[File Upload Interface]
+    
+    %% Stage 1: Validation
+    B --> C[Security Validator]
+    C --> D[Unified File Validator]
+    D --> E{Validation Passed?}
+    E -->|No| F[Return Error]
+    E -->|Yes| G[Stage 2: Data Processing]
+    
+    %% Stage 2: Data Enhancement
+    G --> H[Processor.load_dataframe]
+    H --> I[DataProcessor.process_access_events]
+    I --> J[Unicode Sanitization]
+    J --> K[Mapping & Cleaning]
+    K --> L[Enhanced DataFrame]
+    
+    %% Stage 3: Device Learning
+    L --> M[Device Learning Service]
+    M --> N[Learn Device Patterns]
+    N --> O[Update Device Mappings]
+    
+    %% Stage 4: Quality Analysis
+    O --> P[Data Quality Monitor]
+    P --> Q[Quality Metrics Calculation]
+    Q --> R[Quality Score Generation]
+    
+    %% Stage 5: AI Analytics
+    R --> S{AI Available?}
+    S -->|Yes| T[AI Suggestions Engine]
+    S -->|No| U[Skip AI Analytics]
+    T --> V[Analytics Service]
+    V --> W[Quality Analysis AI]
+    W --> X[AI Insights Generated]
+    U --> Y[Stage 6: Comprehensive Analytics]
+    X --> Y
+    
+    %% Stage 6: Analytics Engine
+    Y --> Z[Analytics Engine]
+    Z --> AA[Statistical Analysis]
+    AA --> BB[Column Insights]
+    BB --> CC[Comprehensive Metrics]
+    
+    %% Stage 7: Export
+    CC --> DD[Results Export]
+    DD --> EE[Enhanced CSV Export]
+    DD --> FF[JSON Results Export]
+    DD --> GG[Summary Report Export]
+    
+    %% Callback System
+    H -.-> HH[Callback Manager]
+    L -.-> HH
+    X -.-> HH
+    CC -.-> HH
+    HH -.-> II[Event Logging]
+    
+    %% Output Layer
+    EE --> JJ[Enhanced Data Files]
+    FF --> KK[Analytics Results]
+    GG --> LL[Pipeline Reports]
+    
+    %% Styling
+    classDef inputStyle fill:#e1f5fe
+    classDef processStyle fill:#f3e5f5
+    classDef aiStyle fill:#e8f5e8
+    classDef outputStyle fill:#fff3e0
+    classDef errorStyle fill:#ffebee
+    
+    class A,B inputStyle
+    class C,D,H,I,J,K,P,Q,Z,AA,BB processStyle
+    class T,V,W,X aiStyle
+    class JJ,KK,LL outputStyle
+    class F errorStyle
