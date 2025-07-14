@@ -20,8 +20,18 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 import pandas as pd
-import dash
-from dash import dcc, html, Input, Output, State, callback_context, dash_table
+from dash import (
+    Dash,
+    dcc,
+    html,
+    Input,
+    Output,
+    State,
+    callback_context,
+    dash_table,
+    no_update,
+)
+from dash.dependencies import ALL
 import dash_bootstrap_components as dbc
 from flask import Flask
 
@@ -77,8 +87,29 @@ def safe_import_device_mapping():
         from services.configuration_service import ConfigurationServiceProtocol
         
         class MockConfig:
-            def get_ai_confidence_threshold(self):
-                return 0.7
+            def get_max_upload_size_mb(self) -> int:
+                return 50
+
+            def get_max_upload_size_bytes(self) -> int:
+                return 50 * 1024 * 1024
+
+            def validate_large_file_support(self) -> bool:
+                return True
+
+            def get_upload_chunk_size(self) -> int:
+                return 1024
+
+            def get_max_parallel_uploads(self) -> int:
+                return 1
+
+            def get_validator_rules(self) -> Dict[str, Any]:
+                return {}
+
+            def get_ai_confidence_threshold(self) -> int:
+                return 70
+
+            def get_db_pool_size(self) -> int:
+                return 5
         
         return DoorMappingService(MockConfig())
     except Exception as e:
@@ -211,7 +242,7 @@ def enhance_data_with_mappings(df, column_mapping, device_mapping):
         return df, error_msg
 
 server = Flask(__name__)
-app = dash.Dash(__name__, server=server, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(__name__, server=server, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.config.suppress_callback_exceptions = True
 app.config.suppress_callback_exceptions = True
 
@@ -526,9 +557,9 @@ def update_main_content(contents, btn_column, btn_device, btn_enhanced,
     
     if trigger_id == "upload-data" and contents is not None:
         df, error = process_file_content(contents, filename)
-        if error:
-            return create_upload_stage(), 0, stored_data, dbc.Alert(error, color="danger")
-        
+        if error or df is None:
+            return create_upload_stage(), 0, stored_data, dbc.Alert(error or "Failed to load file", color="danger")
+
         stored_data.update({
             'raw_df': df.to_dict('records'),
             'filename': filename,
@@ -557,7 +588,7 @@ def update_main_content(contents, btn_column, btn_device, btn_enhanced,
             
             enhanced_df, error = enhance_data_with_mappings(df, column_mapping, device_mapping)
             if error:
-                return dash.no_update, dash.no_update, stored_data, dbc.Alert(error, color="danger")
+                return no_update, no_update, stored_data, dbc.Alert(error, color="danger")
             
             stored_data.update({
                 'enhanced_df': enhanced_df.to_dict('records'),
@@ -596,12 +627,12 @@ def update_main_content(contents, btn_column, btn_device, btn_enhanced,
         }
         return create_upload_stage(), 0, stored_data, ""
     
-    return dash.no_update, dash.no_update, stored_data, status_msg
+    return no_update, no_update, stored_data, status_msg
 
 @app.callback(
     Output("session-store", "data", allow_duplicate=True),
-    [Input({"type": "column-mapping", "index": dash.dependencies.ALL}, "value")],
-    [State({"type": "column-mapping", "index": dash.dependencies.ALL}, "id"),
+    [Input({"type": "column-mapping", "index": ALL}, "value")],
+    [State({"type": "column-mapping", "index": ALL}, "id"),
      State("session-store", "data")],
     prevent_initial_call=True
 )
@@ -620,11 +651,11 @@ def update_column_mapping(values, ids, stored_data):
 
 @app.callback(
     Output("session-store", "data", allow_duplicate=True),
-    [Input({"type": "device-floor", "index": dash.dependencies.ALL}, "value"),
-     Input({"type": "device-security", "index": dash.dependencies.ALL}, "value"),
-     Input({"type": "device-access", "index": dash.dependencies.ALL}, "value"),
-     Input({"type": "device-special", "index": dash.dependencies.ALL}, "value")],
-    [State({"type": "device-floor", "index": dash.dependencies.ALL}, "id"),
+    [Input({"type": "device-floor", "index": ALL}, "value"),
+     Input({"type": "device-security", "index": ALL}, "value"),
+     Input({"type": "device-access", "index": ALL}, "value"),
+     Input({"type": "device-special", "index": ALL}, "value")],
+    [State({"type": "device-floor", "index": ALL}, "id"),
      State("session-store", "data")],
     prevent_initial_call=True
 )
