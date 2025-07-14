@@ -7,9 +7,8 @@ import io
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
-import chardet
 import pandas as pd
 
 from services.configuration_service import ConfigurationServiceProtocol
@@ -17,7 +16,9 @@ from core.performance_file_processor import PerformanceFileProcessor
 from core.unicode import process_large_csv_content, sanitize_dataframe
 from core.unicode_utils import sanitize_for_utf8
 from services.data_processing.core.protocols import FileProcessorProtocol
-from utils.file_validator import safe_decode_with_unicode_handling
+from services.data_processing.unified_file_validator import (
+    safe_decode_with_unicode_handling,
+)
 from utils.protocols import SafeDecoderProtocol
 
 from .base import BaseService
@@ -133,7 +134,7 @@ class FileProcessorService(BaseService):
         sample = "\n".join(text_content.splitlines()[:20])
         delimiter = ","
         try:
-            dialect = csv.Sniffer().sniff(sample, delimiters=[",", ";", "\t", "|"])
+            dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
             delimiter = dialect.delimiter
         except Exception:
             logger.debug("CSV sniffer failed, falling back to manual detection")
@@ -141,9 +142,12 @@ class FileProcessorService(BaseService):
         try:
             if len(content) > 10 * 1024 * 1024:
                 processor = PerformanceFileProcessor(chunk_size=100000)
-                df = processor.process_large_csv(
-                    io.StringIO(text_content),
-                    max_memory_mb=500,
+                df = cast(
+                    pd.DataFrame,
+                    processor.process_large_csv(
+                        io.StringIO(text_content),
+                        max_memory_mb=500,
+                    ),
                 )
             else:
                 df = pd.read_csv(io.StringIO(text_content), sep=delimiter, **self.CSV_OPTIONS)
@@ -190,8 +194,14 @@ class FileProcessorService(BaseService):
 
     def _decode_with_fallback(self, content: bytes) -> str:
         """Decode bytes using multiple encodings with basic heuristics."""
-        detected = chardet.detect(content)
-        encoding = detected.get("encoding")
+        encoding = None
+        try:
+            import chardet as chardet_module  # type: ignore
+        except ImportError:  # pragma: no cover - optional dependency
+            chardet_module = None
+        if chardet_module is not None:
+            detected = chardet_module.detect(content)
+            encoding = detected.get("encoding")
         if encoding:
             try:
                 text = self._decoder(content, encoding)
