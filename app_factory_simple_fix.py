@@ -7,7 +7,8 @@ from pathlib import Path
 from typing import Any, cast
 
 import dash
-from dash import Dash, dcc, html
+html = dash.html
+dcc = dash.dcc
 import dash_bootstrap_components as dbc
 from flask import Flask
 from flask_caching import Cache
@@ -30,7 +31,7 @@ class DummyConfigManager:
         return {}
 
 
-def _register_callbacks(app: Dash, config_manager: Any, container: Any | None = None) -> None:
+def _register_callbacks(app: dash.Dash, config_manager: Any, container: Any | None = None) -> None:
     """Placeholder callback registration used in simplified mode."""
     logger.info("Registering callbacks (simplified)")
 
@@ -47,7 +48,7 @@ def _configure_swagger(server: Any) -> None:
         logger.warning(f"Swagger configuration failed: {e}")
 
 
-def _create_simple_app(assets_folder: str) -> Dash:
+def _create_simple_app(assets_folder: str) -> dash.Dash:
     """Create simple Dash application for development"""
     try:
 
