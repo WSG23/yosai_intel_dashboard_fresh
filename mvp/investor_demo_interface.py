@@ -6,9 +6,9 @@ from tempfile import NamedTemporaryFile
 
 from flask import Flask, render_template_string, request, send_file
 
-from .data_verification_component import DataVerificationComponent
-from .mvp_cli_engine import load_dataframe, generate_analytics
-from .unicode_fix_module import safe_file_write
+from mvp.data_verification_component import DataVerificationComponent
+from mvp.mvp_cli_engine import generate_analytics, load_dataframe
+from mvp.unicode_fix_module import safe_file_write
 
 app = Flask(__name__)
 
@@ -65,7 +65,9 @@ def investor_demo():
                     stages[5]["complete"] = True
                     out_path = Path("mvp_output/investor_result.json")
                     safe_file_write(out_path, json.dumps(analytics, indent=2))
-                    verifier.save_verification(mapping, Path("mvp_output/investor_verification.json"))
+                    verifier.save_verification(
+                        mapping, Path("mvp_output/investor_verification.json")
+                    )
                     stages[6]["complete"] = True
                     download_url = "/download"
                 except Exception as exc:
