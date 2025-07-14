@@ -1,4 +1,6 @@
-#!/usr/bin/env python3
+# Restore working routing for minimal app
+with open('pages/__init__.py', 'w') as f:
+    f.write('''#!/usr/bin/env python3
 """Pages routing system."""
 import logging
 logger = logging.getLogger(__name__)
@@ -62,3 +64,6 @@ def create_manual_router(app):
                 html.H1("Routing Error"), 
                 html.P(f"Error: {str(e)}")
             ])
+''')
+
+print("✅ Restored working routing")

@@ -1,33 +1,23 @@
-#!/usr/bin/env python3
-"""Pages routing system."""
-import logging
-logger = logging.getLogger(__name__)
+# Fix the initial callback issue
+with open('pages/__init__.py', 'r') as f:
+    content = f.read()
 
-def get_page_layout(page_name):
-    """Get layout function for page."""
-    try:
-        if page_name == "deep_analytics":
-            from pages.deep_analytics import layout
-            return layout
-        elif page_name == "file_upload":
-            from pages.file_upload import layout  
-            return layout
-        elif page_name == "export":
-            from pages.export import layout
-            return layout
-        elif page_name == "settings":
-            from pages.settings import layout
-            return layout
-        elif page_name == "graphs":
-            from pages.graphs import layout
-            return layout
-    except Exception as e:
-        logger.error(f"Failed to load {page_name}: {e}")
-    return None
-
+# Replace prevent_initial_call=False with suppress_callback_exceptions=False and add clientside callback
+new_routing = '''
 def create_manual_router(app):
     """Create manual routing with regular Dash callbacks."""
-    from dash import Input, Output, html
+    from dash import Input, Output, html, clientside_callback, ClientsideFunction
+    
+    # Force initial callback to fire
+    app.clientside_callback(
+        """
+        function(pathname) {
+            return pathname || window.location.pathname;
+        }
+        """,
+        Output("url", "pathname"),
+        Input("url", "pathname"),
+    )
     
     @app.callback(
         Output("page-content", "children"),
@@ -35,6 +25,7 @@ def create_manual_router(app):
     )
     def route_pages(pathname):
         try:
+            # Default to dashboard if no pathname
             if not pathname or pathname == "/":
                 pathname = "/dashboard"
                 
@@ -56,9 +47,20 @@ def create_manual_router(app):
                 return html.Div([
                     html.H1("Page Not Found"),
                     html.P(f"Could not load page: {page_name}"),
+                    html.P(f"Path: {pathname}")
                 ])
         except Exception as e:
             return html.Div([
                 html.H1("Routing Error"), 
                 html.P(f"Error: {str(e)}")
             ])
+'''
+
+# Replace the routing function
+import re
+content = re.sub(r'def create_manual_router.*?(?=\Z)', new_routing, content, flags=re.DOTALL)
+
+with open('pages/__init__.py', 'w') as f:
+    f.write(content)
+
+print("✅ Fixed initial callback firing")
