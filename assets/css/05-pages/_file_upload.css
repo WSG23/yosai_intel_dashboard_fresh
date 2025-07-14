@@ -1,34 +1,29 @@
-/* =================================================================== */
-/* 05-pages/_file_upload.css - File Upload Page Styles */
-/* =================================================================== */
-
-.file-upload-area {
-  width: 100%;
-  border: 2px dashed var(--color-accent);
-  border-radius: 8px;
-  text-align: center;
-  cursor: pointer;
-  background-color: var(--surface-secondary);
+/* File upload page - prevent component mounting flash */
+.upload-page-container,
+#drag-drop-upload,
+#preview-area,
+#upload-navigation,
+#upload-progress,
+#upload-status {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    transition: none !important;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
-.file-upload-area--highlight {
-  border: 3px dashed var(--color-accent);
-  background-color: var(--surface-secondary);
-  animation: pulse 1s infinite;
+/* Pre-mount all upload children */
+#drag-drop-upload * {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: none !important;
 }
 
-.csv-mapping-field-col {
-  width: 40%;
-}
-
-.csv-mapping-column-col {
-  width: 50%;
-}
-
-.csv-mapping-ai-col {
-  width: 10%;
-}
-
-.csv-mapping-dropdown {
-  min-width: 200px;
+/* Disable all Dash loading states */
+#drag-drop-upload[data-dash-is-loading="true"],
+#preview-area[data-dash-is-loading="true"],
+#upload-navigation[data-dash-is-loading="true"] {
+    opacity: 1 !important;
+    visibility: visible !important;
 }
