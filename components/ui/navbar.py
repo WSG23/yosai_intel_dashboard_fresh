@@ -129,8 +129,8 @@ def create_navbar_layout() -> Any:
             color="dark",
             dark=True,
             expand="lg",
-            className="navbar navbar-expand-lg fixed-top shadow-sm",
-            style={"background-color": "#000000"},
+            className="navbar navbar-expand-lg navbar-stable",
+            style={"backgroundColor": "var(--gray-900)"},
         )
 
     except Exception as e:
