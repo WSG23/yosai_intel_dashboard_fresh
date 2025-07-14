@@ -7,8 +7,13 @@ from typing import Any
 
 import pandas as pd
 
-from .unicode_fix_module import clean_text, safe_file_read, safe_file_write, sanitize_dataframe
-from .data_verification_component import DataVerificationComponent
+from mvp.data_verification_component import DataVerificationComponent
+from mvp.unicode_fix_module import (
+    clean_text,
+    safe_file_read,
+    safe_file_write,
+    sanitize_dataframe,
+)
 
 try:
     from core.security_validator import SecurityValidator
@@ -64,7 +69,9 @@ def generate_analytics(df: pd.DataFrame) -> dict:
         return {"rows": len(df)}
 
 
-def process_file(filepath: Path, output: Path, validate_only: bool, debug: bool) -> None:
+def process_file(
+    filepath: Path, output: Path, validate_only: bool, debug: bool
+) -> None:
     if debug:
         print(f"Processing {filepath} -> {output}")
     df = load_dataframe(filepath, debug=debug)
@@ -90,7 +97,9 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="MVP CLI Engine")
     parser.add_argument("file", help="Path to input file")
     parser.add_argument("--output", default="mvp_output", help="Output directory")
-    parser.add_argument("--validate-only", action="store_true", help="Only run validation steps")
+    parser.add_argument(
+        "--validate-only", action="store_true", help="Only run validation steps"
+    )
     parser.add_argument("--debug", action="store_true", help="Verbose output")
     args = parser.parse_args(argv)
 

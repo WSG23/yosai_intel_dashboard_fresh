@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-import json
 
 from flask import Flask, render_template_string, request, send_file
 
-from .data_verification_component import DataVerificationComponent
-from .mvp_cli_engine import load_dataframe, generate_analytics
-from .unicode_fix_module import safe_file_write
+from mvp.data_verification_component import DataVerificationComponent
+from mvp.mvp_cli_engine import generate_analytics, load_dataframe
+from mvp.unicode_fix_module import safe_file_write
 
 app = Flask(__name__)
 
@@ -43,12 +43,16 @@ def upload_file():
                     analytics = generate_analytics(df)
                     out_path = Path("mvp_output/web_result.json")
                     safe_file_write(out_path, json.dumps(analytics, indent=2))
-                    verifier.save_verification(mapping, Path("mvp_output/web_verification.json"))
+                    verifier.save_verification(
+                        mapping, Path("mvp_output/web_verification.json")
+                    )
                     download_url = "/download"
                     message = "Processing complete"
                 except Exception as exc:
                     message = f"Error: {exc}"
-    return render_template_string(UPLOAD_FORM, message=message, download_url=download_url)
+    return render_template_string(
+        UPLOAD_FORM, message=message, download_url=download_url
+    )
 
 
 @app.route("/download")
