@@ -38,10 +38,11 @@ ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
 logger = logging.getLogger(__name__)
 
 
-def safe_decode_with_unicode_handling(data: bytes, enc: str) -> str:
+def safe_decode_with_unicode_handling(data: bytes, encoding: str) -> str:
+    """Decode bytes using ``encoding`` and sanitize output."""
     from core.unicode_decode import safe_unicode_decode
 
-    text = safe_unicode_decode(data, enc)
+    text = safe_unicode_decode(data, encoding)
 
     cleaned = sanitize_for_utf8(text)
     return cleaned.replace("\ufffd", "")
