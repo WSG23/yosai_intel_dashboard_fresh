@@ -1,9 +1,11 @@
+from components.ui.navbar import create_navbar_layout
 #!/usr/bin/env python3
 """Minimal working app factory."""
 
 import os
 import logging
 from dash import Dash, html, dcc
+from components.ui.navbar import create_navbar_layout
 import dash_bootstrap_components as dbc
 
 logger = logging.getLogger(__name__)
@@ -12,10 +14,7 @@ def _create_main_layout():
     """Create minimal working layout."""
     return html.Div([
         dcc.Location(id="url", refresh=False),
-        html.Nav([
-            html.H3("🏯 Yōsai Dashboard", style={"color": "white", "padding": "15px", "margin": "0"}),
-        ], style={"background": "#1f2937", "margin-bottom": "20px"}),
-        html.Div(
+        create_navbar_layout(),        html.Div(
             id="page-content", 
             children=[
                 dbc.Container([
@@ -32,7 +31,7 @@ def create_app(mode=None, **kwargs):
     """Create minimal working app."""
     try:
         print('🔍 DEBUG: About to create Dash app...')
-        app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+        app = Dash(__name__, assets_folder="/Users/tombrayman/Projects/GitHub/yosai_intel_dashboard_fresh/assets", external_stylesheets=[dbc.themes.BOOTSTRAP])
         
         # Set up layout as function
         app.layout = _create_main_layout
