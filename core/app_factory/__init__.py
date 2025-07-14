@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Minimal working app factory."""
-
 import os
 import logging
 from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
+from components.ui.navbar import create_navbar_layout
 
 logger = logging.getLogger(__name__)
 
@@ -12,9 +12,7 @@ def _create_main_layout():
     """Create minimal working layout."""
     return html.Div([
         dcc.Location(id="url", refresh=False),
-        html.Nav([
-            html.H3("🏯 Yōsai Dashboard", style={"color": "white", "padding": "15px", "margin": "0"}),
-        ], style={"background": "#1f2937", "margin-bottom": "20px"}),
+        create_navbar_layout(),
         html.Div(
             id="page-content", 
             children=[
@@ -31,6 +29,7 @@ def _create_main_layout():
 def create_app(mode=None, **kwargs):
     """Create minimal working app."""
     try:
+        print('🔍 DEBUG: About to create Dash app...')
         app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
         
         # Set up layout as function
