@@ -363,7 +363,10 @@ def show_user_device_relationships():
     # Create permissions matrix
     users = list(user_profiles.keys())
     devices = list(enhanced_devices.keys())
-    
+
+    # Ensure the variable exists even if no permissions are loaded
+    permissions: dict[str, dict[str, str]] = {}
+
     if users and devices:
         # Load existing permissions
         permissions = load_access_permissions()
