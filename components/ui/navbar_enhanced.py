@@ -33,7 +33,8 @@ def create_navbar_layout() -> Any:
                         html.Img(
                             src="/assets/yosai_logo_name_white.png",
                             height="40px",
-                            style={"margin-right": "10px", "filter": "brightness(1)"},
+                            className="mr-2-5",
+                            style={"filter": "brightness(1)"},
                             alt="Yōsai logo",
                         ),
                         href="/",
@@ -48,7 +49,10 @@ def create_navbar_layout() -> Any:
                                 dbc.NavItem(
                                     dbc.NavLink(
                                         [
-                                            html.I(className="fas fa-chart-bar me-2", **{"aria-hidden": "true"}),
+                                            html.I(
+                                                className="fas fa-chart-bar me-2",
+                                                **{"aria-hidden": "true"},
+                                            ),
                                             "Analytics",
                                         ],
                                         href="/analytics",
@@ -60,7 +64,10 @@ def create_navbar_layout() -> Any:
                                 dbc.NavItem(
                                     dbc.NavLink(
                                         [
-                                            html.I(className="fas fa-chart-line me-2", **{"aria-hidden": "true"}),
+                                            html.I(
+                                                className="fas fa-chart-line me-2",
+                                                **{"aria-hidden": "true"},
+                                            ),
                                             "Graphs",
                                         ],
                                         href="/graphs",
@@ -72,7 +79,10 @@ def create_navbar_layout() -> Any:
                                 dbc.NavItem(
                                     dbc.NavLink(
                                         [
-                                            html.I(className="fas fa-upload me-2", **{"aria-hidden": "true"}),
+                                            html.I(
+                                                className="fas fa-upload me-2",
+                                                **{"aria-hidden": "true"},
+                                            ),
                                             "Upload",
                                         ],
                                         href="/upload",
@@ -84,7 +94,10 @@ def create_navbar_layout() -> Any:
                                 dbc.NavItem(
                                     dbc.NavLink(
                                         [
-                                            html.I(className="fas fa-download me-2", **{"aria-hidden": "true"}),
+                                            html.I(
+                                                className="fas fa-download me-2",
+                                                **{"aria-hidden": "true"},
+                                            ),
                                             "Export",
                                         ],
                                         href="/export",
@@ -96,7 +109,10 @@ def create_navbar_layout() -> Any:
                                 dbc.NavItem(
                                     dbc.NavLink(
                                         [
-                                            html.I(className="fas fa-cog me-2", **{"aria-hidden": "true"}),
+                                            html.I(
+                                                className="fas fa-cog me-2",
+                                                **{"aria-hidden": "true"},
+                                            ),
                                             "Settings",
                                         ],
                                         href="/settings",
@@ -120,8 +136,7 @@ def create_navbar_layout() -> Any:
             color="dark",
             dark=True,
             expand="lg",
-            className="navbar navbar-expand-lg fixed-top shadow-sm",
-            style={"background-color": "#000000"},
+            className="navbar navbar-expand-lg fixed-top shadow-sm bg-black",
         )
 
     except Exception as e:
