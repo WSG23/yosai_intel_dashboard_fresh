@@ -1,9 +1,9 @@
 import pandas as pd
 
 from mapping.storage.base import MemoryStorage
-from processors.column_processor import ColumnProcessor
-from processors.device_processor import DeviceProcessor
-from processors.ai_processor import AIColumnMapperAdapter
+from mapping.processors.column_processor import ColumnProcessor
+from mapping.processors.device_processor import DeviceProcessor
+from mapping.processors.ai_processor import AIColumnMapperAdapter
 
 
 class DummyAdapter:
@@ -25,9 +25,7 @@ def test_column_and_device_processing():
     df = pd.DataFrame({"Device name": ["Door1"], "Person ID": ["p"]})
     column_proc = ColumnProcessor(AIColumnMapperAdapter(DummyAdapter()))
     result = column_proc.process(df, "file.csv")
-    assert "data" in result and not result["data"].empty
+    assert not result.data.empty
     device_proc = DeviceProcessor()
-    devices = device_proc.process(result["data"])
-    assert devices["devices"] == ["Door1"]
-
-
+    devices = device_proc.process(result.data)
+    assert devices.metadata["devices"] == ["Door1"]

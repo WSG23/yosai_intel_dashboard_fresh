@@ -19,6 +19,8 @@ class AIColumnMapperAdapter:
         """Return AI suggestions for *df* columns."""
         return self._adapter.get_ai_column_suggestions(df, filename)
 
-    def confirm(self, filename: str, mapping: Dict[str, str], metadata: Dict[str, Any]) -> bool:
+    def confirm(
+        self, filename: str, mapping: Dict[str, str], metadata: Dict[str, Any]
+    ) -> bool:
         """Store confirmed column mapping for *filename*."""
         return self._adapter.save_verified_mappings(filename, mapping, metadata)
