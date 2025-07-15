@@ -20,7 +20,8 @@ from core.protocols import ConfigurationProtocol
 from core.unicode import UnicodeProcessor, sanitize_dataframe
 from core.unicode_utils import sanitize_for_utf8
 from upload_types import ValidationResult
-from .common import process_dataframe
+from .dataframe_utils import process_dataframe
+from utils.file_utils import safe_decode_with_unicode_handling
 
 
 def _lazy_string_validator() -> Any:
@@ -35,16 +36,6 @@ ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
 
 
 logger = logging.getLogger(__name__)
-
-
-def safe_decode_with_unicode_handling(data: bytes, encoding: str) -> str:
-    """Decode bytes using ``encoding`` and sanitize output."""
-    from core.unicode_decode import safe_unicode_decode
-
-    text = safe_unicode_decode(data, encoding)
-
-    cleaned = sanitize_for_utf8(text)
-    return cleaned.replace("\ufffd", "")
 
 
 def safe_decode_file(contents: str) -> Optional[bytes]:

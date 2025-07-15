@@ -35,6 +35,7 @@ from mapping.processors.ai_processor import AIColumnMapperAdapter
 from .mapping_helpers import standardize_column_names
 from .preview_utils import serialize_dataframe_preview
 from .protocols import SafeDecoderProtocol
+from .file_utils import safe_decode_with_unicode_handling
 
 __all__ = [
     "UnicodeProcessor",
@@ -45,6 +46,7 @@ __all__ = [
     "clean_unicode_text",
     "sanitize_unicode_input",
     "safe_decode_bytes",
+    "safe_decode_with_unicode_handling",
     "safe_encode_text",
     "sanitize_dataframe",
     "contains_surrogates",

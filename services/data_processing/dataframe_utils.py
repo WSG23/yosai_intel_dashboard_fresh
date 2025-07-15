@@ -11,6 +11,7 @@ import pandas as pd
 from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
+from utils.file_utils import safe_decode_with_unicode_handling
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +24,6 @@ def process_dataframe(
 ) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
     """Parse ``decoded`` bytes into a DataFrame based on ``filename`` extension."""
     try:
-        from services.data_processing.unified_upload_validator import (
-            safe_decode_with_unicode_handling,
-        )
         filename_lower = filename.lower()
         monitor = get_performance_monitor()
         chunk_size = getattr(config.analytics, "chunk_size", 50000)
