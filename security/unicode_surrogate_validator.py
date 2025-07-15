@@ -8,7 +8,7 @@ from typing import Any
 
 from core.exceptions import ValidationError
 from core.unicode import contains_surrogates
-from security_callback_controller import SecurityEvent, emit_security_event
+# from security_callback_controller import SecurityEvent, emit_security_event  # Lazy import to break circular
 
 
 @dataclass
@@ -33,6 +33,9 @@ class UnicodeSurrogateValidator:
 
         if not contains_surrogates(value):
             return value
+
+        from security_callback_controller import emit_security_event  # Lazy import
+
 
         emit_security_event(
             SecurityEvent.VALIDATION_FAILED, {"issue": "unicode_surrogates"}

@@ -246,3 +246,30 @@ def get_device_learning_service(
     from services.interfaces import get_device_learning_service as _get
 
     return _get()
+
+@runtime_checkable
+class UploadDataServiceProtocol(Protocol):
+    """Protocol for upload data services."""
+    
+    @abstractmethod
+    def get_upload_data(self) -> Dict[str, Any]: ...
+    
+    @abstractmethod
+    def store_upload_data(self, data: Dict[str, Any]) -> bool: ...
+    
+    @abstractmethod
+    def clear_data(self) -> None: ...
+
+@runtime_checkable  
+class DeviceLearningServiceProtocol(Protocol):
+    """Protocol for device learning services."""
+    
+    @abstractmethod
+    def get_user_device_mappings(self, filename: str) -> Dict[str, Any]: ...
+    
+    @abstractmethod
+    def save_device_mappings(self, mappings: Dict[str, Any]) -> bool: ...
+    
+    @abstractmethod
+    def learn_from_data(self, df: pd.DataFrame) -> Dict[str, Any]: ...
+

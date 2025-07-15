@@ -5,8 +5,37 @@ from __future__ import annotations
 from typing import Any
 
 from .database_exceptions import UnicodeEncodingError
-from analytics_core.utils.unicode_processor import UnicodeHelper
-from core.unicode import contains_surrogates
+# from analytics_core.utils.unicode_processor import UnicodeHelper  # Circular import - use local implementation
+
+class UnicodeHelper:
+    """Fallback Unicode helper to break circular import"""
+    
+    @staticmethod
+    def clean_text(text):
+        """Simple Unicode cleaning"""
+        if not isinstance(text, str):
+            text = str(text)
+        # Remove surrogate characters
+        return ''.join(char for char in text if not (0xD800 <= ord(char) <= 0xDFFF))
+    
+    @staticmethod
+    def safe_encode(text, encoding='utf-8'):
+        """Safe encoding"""
+        try:
+            return text.encode(encoding)
+        except UnicodeEncodeError:
+            return text.encode(encoding, errors='replace')
+
+
+# from core.unicode import contains_surrogates  # Circular import - use local implementation
+
+def contains_surrogates(text):
+    """Local implementation to break circular import"""
+    if not isinstance(text, str):
+        return False
+    return any(0xD800 <= ord(char) <= 0xDFFF for char in text)
+
+
 
 
 class UnicodeSQLProcessor:

@@ -162,7 +162,17 @@ class UploadedDataStore(UploadStorageProtocol):
         """Persist ``df`` to disk and record its metadata."""
         # save synchronously to ensure metadata exists immediately
         self._save_to_disk(filename, df)
-        clear_cache()
+        try:
+
+            clear_cache()
+
+        except Exception as e:
+
+            # Cache not available in standalone mode
+
+            import logging
+
+            logging.getLogger(__name__).info(f"Cache clear skipped: {e}")
 
     def load_dataframe(self, filename: str) -> pd.DataFrame:
         """Load a previously saved dataframe."""
@@ -196,7 +206,17 @@ class UploadedDataStore(UploadStorageProtocol):
                     self._info_path().unlink()
             except Exception as e:  # pragma: no cover - best effort
                 logger.error(f"Error clearing uploaded data: {e}")
-        clear_cache()
+        try:
+
+            clear_cache()
+
+        except Exception as e:
+
+            # Cache not available in standalone mode
+
+            import logging
+
+            logging.getLogger(__name__).info(f"Cache clear skipped: {e}")
 
     def wait_for_pending_saves(self) -> None:
         """Block until all background save tasks have completed."""

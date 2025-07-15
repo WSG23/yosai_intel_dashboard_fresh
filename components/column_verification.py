@@ -67,183 +67,68 @@ STANDARD_FIELD_OPTIONS = [
 
 
 def create_column_verification_modal(file_info: Dict[str, Any]) -> dbc.Modal:
-    """Simple modal WITH AI training components"""
+    """Complete modal with data preview and AI mapping table"""
     filename = file_info.get("filename", "Unknown File")
     columns = file_info.get("columns", [])
     ai_suggestions = file_info.get("ai_suggestions", {})
 
     if not columns:
-        return html.Div()
+        return html.Div(id="empty-column-modal")
 
-    # Create simple table with AI suggestions
+    # Create column mapping table with AI suggestions
     table_rows = []
     for i, column in enumerate(columns):
         ai_suggestion = ai_suggestions.get(column, {})
         suggested_field = ai_suggestion.get("field", "")
         confidence = ai_suggestion.get("confidence", 0.0)
         default_value = suggested_field if suggested_field else None
+        
+        # Color coding for confidence
+        confidence_class = "text-danger" if confidence < 0.5 else "text-success" if confidence > 0.7 else "text-warning"
+        dropdown_style = {"border": "2px solid red"} if confidence < 0.5 else {}
 
         table_rows.append(
-            html.Tr(
-                [
-                    html.Td(
-                        [
-                            html.Strong(column),
-                            html.Br(),
-                            html.Small(
-                                f"AI Confidence: {confidence:.0%}",
-                                className=(
-                                    "text-muted" if confidence < 0.5 else "text-success"
-                                ),
-                            ),
-                        ]
-                    ),
-                    html.Td(
-                        dcc.Dropdown(
-                            id={"type": "column-mapping", "index": i},
-                            options=STANDARD_FIELD_OPTIONS,
-                            placeholder=f"Map {column} to...",
-                            value=default_value,
-                        )
-                    ),
-                ],
-            )
+            html.Tr([
+                html.Td([
+                    html.Strong(column),
+                    html.Br(),
+                    html.Small(f"AI Confidence: {confidence:.0%}", className=confidence_class),
+                ]),
+                html.Td([
+                    dcc.Dropdown(
+                        id={"type": "column-mapping", "index": i},
+                        options=STANDARD_FIELD_OPTIONS,
+                        placeholder=f"Map {column} to...",
+                        value=default_value,
+                        style=dropdown_style
+                    )
+                ])
+            ])
         )
 
-    modal_body = html.Div(
-        [
-            html.H5(f"Map columns from {filename}"),
-            dbc.Alert(
-                [
-                    "AI has analyzed your columns and made suggestions. ",
-                    dbc.Button(
-                        "Use All AI Suggestions",
-                        id="column-verify-ai-auto",
-                        color="info",
-                        size="sm",
-                        className="ms-2",
-                    ),
-                ],
-                color="info",
-                className="mb-3",
-            ),
-            dbc.Table(
-                [
-                    html.Thead([html.Tr([html.Th("CSV Column"), html.Th("Maps To")])]),
-                    html.Tbody(table_rows),
-                ],
-                striped=True,
-            ),
-            dbc.Card(
-                [
-                    dbc.CardHeader(html.H6("Help AI Learn", className="mb-0")),
-                    dbc.CardBody(
-                        [
-                            dbc.Row(
-                                [
-                                    dbc.Col(
-                                        [
-                                            dbc.Label("Data Source Type:"),
-                                            dcc.Dropdown(
-                                                id="training-data-source-type",
-                                                options=[
-                                                    {
-                                                        "label": "Corporate Access Control",
-                                                        "value": "corporate",
-                                                    },
-                                                    {
-                                                        "label": "Educational Institution",
-                                                        "value": "education",
-                                                    },
-                                                    {
-                                                        "label": "Healthcare Facility",
-                                                        "value": "healthcare",
-                                                    },
-                                                    {
-                                                        "label": "Manufacturing/Industrial",
-                                                        "value": "manufacturing",
-                                                    },
-                                                    {
-                                                        "label": "Retail/Commercial",
-                                                        "value": "retail",
-                                                    },
-                                                    {
-                                                        "label": "Government/Public",
-                                                        "value": "government",
-                                                    },
-                                                    {
-                                                        "label": "Other",
-                                                        "value": "other",
-                                                    },
-                                                ],
-                                                value="corporate",
-                                            ),
-                                        ],
-                                        width=6,
-                                    ),
-                                    dbc.Col(
-                                        [
-                                            dbc.Label("Data Quality:"),
-                                            dcc.Dropdown(
-                                                id="training-data-quality",
-                                                options=[
-                                                    {
-                                                        "label": "Excellent - Clean, consistent data",
-                                                        "value": "excellent",
-                                                    },
-                                                    {
-                                                        "label": "Good - Minor inconsistencies",
-                                                        "value": "good",
-                                                    },
-                                                    {
-                                                        "label": "Average - Some data issues",
-                                                        "value": "average",
-                                                    },
-                                                    {
-                                                        "label": "Poor - Many inconsistencies",
-                                                        "value": "poor",
-                                                    },
-                                                ],
-                                                value="good",
-                                            ),
-                                        ],
-                                        width=6,
-                                    ),
-                                ]
-                            )
-                        ]
-                    ),
-                ],
-                className="mt-3",
-            ),
-        ]
-    )
+    modal_body = html.Div([
+        html.H5(f"Column Mapping: {filename}"),
+        html.P(f"Found {len(columns)} columns"),
+        html.H6("AI Column Mapping:", className="mb-2"),
+        dbc.Table([
+            html.Thead([
+                html.Tr([
+                    html.Th("Column Name & AI Confidence"),
+                    html.Th("Map to Standard Field")
+                ])
+            ]),
+            html.Tbody(table_rows)
+        ], striped=True, hover=True, responsive=True, className="mb-3")
+    ])
 
-    return dbc.Modal(
-        [
-            dbc.ModalHeader(dbc.ModalTitle(f"AI Column Mapping - {filename}")),
-            dbc.ModalBody(modal_body, id="modal-body"),
-            dbc.ModalFooter(
-                [
-                    dbc.Button(
-                        "Cancel",
-                        id="column-verify-cancel",
-                        color="secondary",
-                        className="me-2",
-                    ),
-                    dbc.Button(
-                        "Confirm & Train AI",
-                        id="column-verify-confirm",
-                        color="success",
-                    ),
-                ]
-            ),
-        ],
-        id="column-verification-modal",
-        size="xl",
-        is_open=False,
-        autofocus=True,
-    )
+    return dbc.Modal([
+        dbc.ModalHeader(dbc.ModalTitle(f"AI Column Mapping - {filename}")),
+        dbc.ModalBody(modal_body),
+        dbc.ModalFooter([
+            dbc.Button("Cancel", id="column-verify-cancel", color="secondary", className="me-2"),
+            dbc.Button("Confirm", id="column-verify-confirm", color="success")
+        ])
+    ], id="column-verification-modal", size="xl", is_open=False)
 
 
 def create_verification_interface(
@@ -695,8 +580,119 @@ def register_callbacks(
 
 
 __all__ = [
+    "create_complete_column_section",
+    "create_column_display_section",
     "create_column_verification_modal",
     "get_ai_column_suggestions",
     "save_verified_mappings",
     "register_callbacks",
 ]
+
+
+def create_column_display_section(file_info: Dict[str, Any]) -> html.Div:
+    """Create main column display with preview and AI mapping - called by upload processors"""
+    filename = file_info.get("filename", "Unknown File")
+    columns = file_info.get("columns", [])
+    column_names = file_info.get("column_names", columns)
+    ai_suggestions = file_info.get("ai_suggestions", {})
+    
+    if not column_names:
+        return dbc.Alert("No columns found", color="warning")
+    
+    # Column listing
+    column_list = html.Div([
+        html.H5("Column Names:"),
+        html.Ul([html.Li(col) for col in column_names])
+    ])
+    
+    # AI mapping display table
+    ai_mapping_section = html.Div()
+    if ai_suggestions:
+        mapping_rows = []
+        for column, suggestion in ai_suggestions.items():
+            confidence = suggestion.get("confidence", 0.0)
+            field = suggestion.get("field", "No suggestion")
+            
+            # Color code confidence
+            if confidence < 0.5:
+                confidence_class = "text-danger"
+                confidence_text = f"{confidence:.0%} (Low)"
+            elif confidence > 0.7:
+                confidence_class = "text-success"
+                confidence_text = f"{confidence:.0%} (High)"
+            else:
+                confidence_class = "text-warning"
+                confidence_text = f"{confidence:.0%} (Medium)"
+            
+            mapping_rows.append(html.Tr([
+                html.Td(html.Strong(column)),
+                html.Td(field if field else "No suggestion"),
+                html.Td(html.Span(confidence_text, className=confidence_class))
+            ]))
+        
+        ai_mapping_section = html.Div([
+            html.H5("AI Column Mapping:"),
+            html.P(f"Found {len(ai_suggestions)} AI suggestions"),
+            dbc.Table([
+                html.Thead([html.Tr([
+                    html.Th("Column Name"),
+                    html.Th("AI Suggested Mapping"),
+                    html.Th("Confidence Level")
+                ])]),
+                html.Tbody(mapping_rows)
+            ], striped=True, hover=True, responsive=True)
+        ])
+    else:
+        ai_mapping_section = dbc.Alert("No AI suggestions available", color="info")
+    
+    return html.Div([
+        column_list,
+        html.Hr(),
+        ai_mapping_section
+    ])
+
+
+
+def create_complete_column_section(file_info: Dict[str, Any], df: pd.DataFrame = None) -> html.Div:
+    """Create complete column section with preview and mapping interface"""
+    filename = file_info.get("filename", "Unknown File")
+    columns = file_info.get("column_names", file_info.get("columns", []))
+    ai_suggestions = file_info.get("ai_suggestions", {})
+    
+    if not columns:
+        return dbc.Alert("No columns found", color="warning")
+    
+    sections = []
+    
+    # Column listing
+    sections.append(html.Div([
+        html.H5("Column Names:"),
+        html.Ul([html.Li(html.Strong(col)) for col in columns])
+    ]))
+    
+    # Data preview if DataFrame provided
+    if df is not None and not df.empty:
+        preview_data = df.head(5)
+        preview_rows = []
+        for _, row in preview_data.iterrows():
+            preview_rows.append(html.Tr([html.Td(str(val)) for val in row]))
+        
+        sections.append(html.Div([
+            html.H5("Data Preview (first 5 rows):"),
+            dbc.Table([
+                html.Thead([html.Tr([html.Th(col) for col in columns])]),
+                html.Tbody(preview_rows)
+            ], striped=True, bordered=True, size="sm", className="mb-4")
+        ]))
+    
+    # AI Column Mapping Interface (the actual mapping UI)
+    sections.append(html.Div([
+        html.H5("AI Column Mapping:"),
+        html.P(f"Found {len(ai_suggestions)} AI suggestions"),
+        create_verification_interface(columns, {}, ai_suggestions),
+        html.Hr(),
+        dbc.Button("Save Column Mappings", id="save-column-mappings", color="primary", size="lg")
+    ]))
+    
+    return html.Div(sections)
+

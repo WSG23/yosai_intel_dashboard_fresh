@@ -11,7 +11,7 @@ from typing import Any, Awaitable, Callable, Dict, Optional
 
 import redis.asyncio as redis
 
-from config.config import get_cache_config
+# from config.config import get_cache_config  # Moved to lazy import
 from config.base import CacheConfig
 
 logger = logging.getLogger(__name__)
@@ -163,6 +163,8 @@ def cache_with_lock(
 
 async def create_advanced_cache_manager() -> AdvancedCacheManager:
     """Initialize :class:`AdvancedCacheManager` using application config."""
+    from config.config import get_cache_config  # Lazy import
+
     cfg = get_cache_config()
     manager = AdvancedCacheManager(cfg)
     await manager.start()

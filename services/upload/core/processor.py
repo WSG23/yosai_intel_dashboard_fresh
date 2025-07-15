@@ -141,23 +141,33 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
             ]
         )
 
+    
+    
     async def process_uploaded_files(
         self,
         contents_list: List[str] | str,
         filenames_list: List[str] | str,
         *,
         task_progress: Callable[[int], None] | None = None,
-    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
+        return_format: str = "legacy"
+    ) -> Dict[str, Any] | Tuple:
+        """Flexible upload processor supporting unlimited metafile types"""
+        
         if not contents_list:
-            return (
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-            )
+            empty_result = {
+                "upload_results": [],
+                "file_info_dict": {},
+                "current_file_info": {},
+                "file_preview_components": [],
+                "upload_nav": [],
+                "metadata": {},
+                "ai_suggestions": {},
+                "device_mappings": {},
+                "validation_results": {},
+                "processing_stats": {},
+                "extensions": {}
+            }
+            return self._format_return(empty_result, return_format)
 
         self.store.clear_all()
 
@@ -166,10 +176,20 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
         if not isinstance(filenames_list, list):
             filenames_list = [filenames_list]
 
-        upload_results: List[Any] = []
-        file_preview_components: List[Any] = []
-        file_info_dict: Dict[str, Any] = {}
-        current_file_info: Dict[str, Any] = {}
+        # Flexible result container - can expand for any metafile type
+        result = {
+            "upload_results": [],
+            "file_preview_components": [],
+            "file_info_dict": {},
+            "current_file_info": {},
+            "upload_nav": [],
+            "metadata": {},
+            "ai_suggestions": {},
+            "device_mappings": {},
+            "validation_results": {},
+            "processing_stats": {},
+            "extensions": {}
+        }
 
         file_parts: Dict[str, List[str]] = {}
         for content, filename in zip(contents_list, filenames_list):
@@ -190,29 +210,21 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
                 content = parts[0]
 
             try:
-
                 def _cb(name: str, pct: int) -> None:
-
                     if task_progress:
-                        overall = int(
-                            ((processed_files + pct / 100) / total_files) * 100
-                        )
+                        overall = int(((processed_files + pct / 100) / total_files) * 100)
                         task_progress(overall)
 
-                df = await self.processor.process_file(
-                    content, filename, progress_callback=_cb
-                )
+                df = await self.processor.process_file(content, filename, progress_callback=_cb)
                 rows = len(df)
                 cols = len(df.columns)
 
                 self.store.add_file(filename, df)
-                upload_results.append(self.build_success_alert(filename, rows, cols))
-                file_preview_components.append(
-                    self.build_file_preview_component(df, filename)
-                )
+                result["upload_results"].append(self.build_success_alert(filename, rows, cols))
+                result["file_preview_components"].append(self.build_file_preview_component(df, filename))
 
                 column_names = df.columns.tolist()
-                file_info_dict[filename] = {
+                file_info = {
                     "filename": filename,
                     "rows": rows,
                     "columns": cols,
@@ -220,77 +232,113 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
                     "upload_time": pd.Timestamp.now().isoformat(),
                     "ai_suggestions": get_ai_column_suggestions(column_names),
                 }
-                current_file_info = file_info_dict[filename]
+                
+                result["file_info_dict"][filename] = file_info
+                result["current_file_info"] = file_info
+                result["ai_suggestions"][filename] = file_info["ai_suggestions"]
 
+                # Handle device mappings
                 try:
                     user_mappings = self.learning_service.get_user_device_mappings(filename)
                     if user_mappings:
                         from services.ai_mapping_store import ai_mapping_store
-
                         ai_mapping_store.clear()
                         for device, mapping in user_mappings.items():
                             mapping["source"] = "user_confirmed"
                             ai_mapping_store.set(device, mapping)
-                        logger.info(
-                            "✅ Loaded %s saved mappings - AI SKIPPED",
-                            len(user_mappings),
-                        )
+                        result["device_mappings"][filename] = user_mappings
+                        logger.info("✅ Loaded %s saved mappings - AI SKIPPED", len(user_mappings))
                     else:
                         logger.info("🆕 First upload - AI will be used")
                         from services.ai_mapping_store import ai_mapping_store
-
                         ai_mapping_store.clear()
                         self.auto_apply_learned_mappings(df, filename)
-                except Exception as exc:  # pragma: no cover - best effort
+                        result["device_mappings"][filename] = {}
+                except Exception as exc:
                     logger.info("⚠️ Error: %s", exc)
-            except Exception as exc:  # pragma: no cover - best effort
-                upload_results.append(
-                    self.build_failure_alert(f"Error processing {filename}: {str(exc)}")
-                )
+                    result["validation_results"][filename] = {"error": str(exc)}
+                    
+            except Exception as exc:
+                result["upload_results"].append(self.build_failure_alert(f"Error processing {filename}: {str(exc)}"))
+                result["validation_results"][filename] = {"error": str(exc)}
 
             processed_files += 1
             if task_progress:
                 pct = int(processed_files / total_files * 100)
                 task_progress(pct)
 
-        upload_nav = []
-        if file_info_dict:
-            upload_nav = html.Div(
-                [
-                    html.Hr(),
-                    html.H5("Ready to analyze?"),
-                    dbc.Button(
-                        "🚀 Go to Analytics",
-                        href="/analytics",
-                        color="success",
-                        size="lg",
-                    ),
-                ]
-            )
+        # Add navigation if files processed
+        if result["file_info_dict"]:
+            result["upload_nav"] = html.Div([
+                html.Hr(),
+                html.H5("Ready to analyze?"),
+                dbc.Button("�� Go to Analytics", href="/analytics", color="success", size="lg")
+            ])
 
-        return (
-            upload_results,
-            file_preview_components,
-            file_info_dict,
-            upload_nav,
-            current_file_info,
-            no_update,
-            no_update,
-        )
+        # Add processing statistics
+        result["processing_stats"] = {
+            "total_files": total_files,
+            "processed_files": processed_files,
+            "total_rows": sum(info.get("rows", 0) for info in result["file_info_dict"].values()),
+            "total_columns": sum(info.get("columns", 0) for info in result["file_info_dict"].values())
+        }
+
+        return self._format_return(result, return_format)
+
+    def _format_return(self, result: Dict[str, Any], return_format: str):
+        """Format return based on caller needs - infinitely flexible"""
+        if return_format == "dict":
+            return result
+        elif return_format == "simple":
+            # For simple callers like mde.py - return just 3 core values
+            return (
+                result["upload_results"],
+                result["file_info_dict"], 
+                result["current_file_info"]
+            )
+        elif return_format == "legacy":
+            # For legacy dashboard callers expecting exactly 7 values
+            return (
+                result["upload_results"],
+                result["file_preview_components"],
+                result["file_info_dict"],
+                result["upload_nav"],
+                result["current_file_info"],
+                no_update,
+                no_update,
+            )
+        elif return_format == "extended":
+            # For future metafile processors that need more data
+            return (
+                result["upload_results"],
+                result["file_info_dict"],
+                result["current_file_info"],
+                result["ai_suggestions"],
+                result["device_mappings"],
+                result["validation_results"],
+                result["processing_stats"],
+                result["metadata"],
+                result["extensions"]
+            )
+        else:
+            # Default: return full dictionary for maximum flexibility
+            return result
+
 
     # Backwards compatibility alias
+    
+    
     async def process_files(
         self,
         contents_list: List[str] | str,
         filenames_list: List[str] | str,
         *,
         task_progress: Callable[[int], None] | None = None,
-    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
+    ) -> Dict[str, Any]:
+        """FLEXIBLE - returns dictionary, never fixed tuple"""
         return await self.process_uploaded_files(
             contents_list,
             filenames_list,
             task_progress=task_progress,
+            return_format="dict"
         )
-
-
-__all__ = ["UploadProcessingService"]

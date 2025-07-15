@@ -154,3 +154,20 @@ __all__ = [
     "get_device_learning_service",
     "get_upload_data_service",
 ]
+
+@runtime_checkable
+class UploadDataServiceProtocol(Protocol):
+    """Interface for upload data services."""
+    
+    def get_upload_data(self) -> Dict[str, Any]: ...
+    def store_upload_data(self, data: Dict[str, Any]) -> bool: ...
+    def clear_data(self) -> None: ...
+
+@runtime_checkable  
+class DeviceLearningServiceProtocol(Protocol):
+    """Interface for device learning services."""
+    
+    def get_user_device_mappings(self, filename: str) -> Dict[str, Any]: ...
+    def save_device_mappings(self, mappings: Dict[str, Any]) -> bool: ...
+    def learn_from_data(self, df: pd.DataFrame) -> Dict[str, Any]: ...
+
