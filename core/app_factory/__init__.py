@@ -30,6 +30,7 @@ def create_app(mode=None, **kwargs):
     # Simple routing callback that uses REAL pages
     @app.callback(Output("page-content", "children"), Input("url", "pathname"))
     def display_page(pathname):
+        pathname = pathname.rstrip("/") if pathname else "/"
         if pathname == "/dashboard":
             return html.Div(
                 [
