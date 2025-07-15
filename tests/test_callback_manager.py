@@ -1,7 +1,7 @@
 import threading
 
 from core.callback_events import CallbackEvent
-from core.callback_manager import CallbackManager
+from analytics_core.callbacks.unified_callback_manager import CallbackManager
 
 
 def test_thread_safe_registration_and_trigger():

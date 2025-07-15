@@ -1,10 +1,6 @@
-"""Centralized analytics package."""
+"""Central analytics utilities and services."""
 
 from .centralized_analytics_manager import CentralizedAnalyticsManager
 
+__all__ = ["CentralizedAnalyticsManager"]
 
-def create_manager() -> CentralizedAnalyticsManager:
-    """Factory returning a centralized analytics manager."""
-    return CentralizedAnalyticsManager()
-
-__all__ = ["CentralizedAnalyticsManager", "create_manager"]

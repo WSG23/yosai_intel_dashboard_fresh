@@ -7,7 +7,7 @@ import time
 from typing import Any, Dict, List
 
 from config import ConfigManager
-from core.callback_manager import CallbackManager
+from analytics_core.callbacks.unified_callback_manager import CallbackManager
 from core.service_container import ServiceContainer
 from services.data_processing.core.protocols import (
     CallbackPluginProtocol,

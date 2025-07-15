@@ -18,7 +18,7 @@ from services.data_processing.data_enhancer import sanitize_dataframe, clean_uni
 from services.data_processing.processor import Processor
 from services.data_processing.analytics_engine import AnalyticsEngine
 from core.unicode import UnicodeProcessor
-from core.callback_manager import CallbackManager
+from analytics_core.callbacks.unified_callback_manager import CallbackManager
 
 
 class ComponentTester:

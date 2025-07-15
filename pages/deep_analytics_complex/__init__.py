@@ -1,6 +1,6 @@
 """Initialize the deep analytics page and expose callbacks."""
 
-from core.callback_manager import CallbackManager
+from analytics_core.callbacks.unified_callback_manager import CallbackManager
 from security.unicode_security_processor import sanitize_dataframe
 from services.data_processing.analytics_engine import (
     AI_SUGGESTIONS_AVAILABLE,

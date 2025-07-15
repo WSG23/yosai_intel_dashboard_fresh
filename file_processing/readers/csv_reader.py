@@ -5,7 +5,7 @@ import pandas as pd
 
 from .base import BaseReader
 from core.unified_callbacks import CallbackEvent
-from core.callback_manager import CallbackManager
+from analytics_core.callbacks.unified_callback_manager import CallbackManager
 from core.protocols import UnicodeProcessorProtocol
 
 

@@ -8,7 +8,7 @@ from typing import Dict
 import pandas as pd
 
 from core.callback_controller import CallbackEvent
-from core.callback_manager import CallbackManager
+from analytics_core.callbacks.unified_callback_manager import CallbackManager
 from core.container import get_unicode_processor
 from core.protocols import UnicodeProcessorProtocol
 from .column_mapper import REQUIRED_COLUMNS

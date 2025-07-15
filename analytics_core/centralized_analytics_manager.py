@@ -1,41 +1,34 @@
-from typing import Any, Dict
+from __future__ import annotations
 
-from .services.core_analytics_service import CoreAnalyticsService
-from .services.ai_analytics_service import AIAnalyticsService
-from .services.performance_analytics_service import PerformanceAnalyticsService
-from .services.data_processing_service import DataProcessingService
+"""Lightweight centralized analytics manager coordinating sub services."""
+
+from dataclasses import dataclass, field
+from typing import Any
+
 from .callbacks.unified_callback_manager import UnifiedCallbackManager
-from .utils.unicode_processor import UnicodeProcessor
 
 
+@dataclass
 class CentralizedAnalyticsManager:
-    """Central coordinator for all analytics operations."""
+    """Aggregate analytics services behind a simple interface."""
 
-    def __init__(self) -> None:
-        self.core_service = CoreAnalyticsService()
-        self.ai_service = AIAnalyticsService()
-        self.performance_service = PerformanceAnalyticsService()
-        self.data_processing_service = DataProcessingService()
-        self.callback_manager = UnifiedCallbackManager()
-        self.unicode_processor = UnicodeProcessor()
+    core_service: Any | None = None
+    ai_service: Any | None = None
+    performance_service: Any | None = None
+    data_service: Any | None = None
+    callback_manager: UnifiedCallbackManager = field(default_factory=UnifiedCallbackManager)
 
-    def process_analytics_request(self, request_type: str, data: Any) -> Dict[str, Any]:
-        """Route analytics requests to the appropriate service."""
-        if request_type == "core":
-            return self.core_service.process(data)
-        if request_type == "ai":
-            return self.ai_service.process(data)
-        if request_type == "performance":
-            return self.performance_service.process(data)
-        if request_type == "data":
-            return self.data_processing_service.process(data)
-        raise ValueError(f"Unknown request type: {request_type}")
+    def run_full_pipeline(self, data: Any) -> None:
+        """Run the full analytics pipeline on ``data``."""
+        if self.core_service:
+            self.core_service.process(data)
+        if self.ai_service:
+            self.ai_service.analyze(data)
+        if self.performance_service:
+            self.performance_service.profile(data)
+        if self.data_service:
+            self.data_service.transform(data)
+        self.callback_manager.trigger("pipeline_complete", data)
 
-    def get_unified_metrics(self) -> Dict[str, Any]:
-        """Aggregate metrics from all services."""
-        metrics = {}
-        metrics.update(self.core_service.get_metrics())
-        metrics.update(self.ai_service.get_metrics())
-        metrics.update(self.performance_service.get_metrics())
-        metrics.update(self.data_processing_service.get_metrics())
-        return metrics
+__all__ = ["CentralizedAnalyticsManager"]
+

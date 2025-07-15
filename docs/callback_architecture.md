@@ -44,7 +44,7 @@ def submit_query(n):
 `CallbackManager` delivers application events outside of Dash callbacks.
 
 ```python
-from core.callback_manager import CallbackManager
+from analytics_core.callbacks.unified_callback_manager import CallbackManager
 from core.callback_events import CallbackEvent
 
 events = CallbackManager()

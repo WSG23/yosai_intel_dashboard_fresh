@@ -1,11 +1,14 @@
-from typing import Any, Dict
+from __future__ import annotations
+
+"""Stub for data processing helpers."""
+
+from typing import Any
 
 
 class DataProcessingService:
-    """Data processing analytics."""
+    """Placeholder for data transformation logic."""
 
-    def process(self, data: Any) -> Dict[str, Any]:
-        return {"result": "data", "data": data}
+    def transform(self, data: Any) -> None:
+        pass
 
-    def get_metrics(self) -> Dict[str, Any]:
-        return {"data": 1}
+__all__ = ["DataProcessingService"]

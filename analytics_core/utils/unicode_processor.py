@@ -1,21 +1,22 @@
-from typing import Any
+from __future__ import annotations
+
+"""Simplified Unicode helpers reused across analytics core."""
 
 import pandas as pd
+from core.unicode import UnicodeProcessor
 
-from core.unicode import sanitize_unicode_input, clean_surrogate_chars
 
-
-class UnicodeProcessor:
-    """Handle Unicode surrogate characters safely."""
-
-    @staticmethod
-    def clean_unicode_surrogates(text: str) -> str:
-        return clean_surrogate_chars(text)
+class UnicodeHelper(UnicodeProcessor):
+    """Expose :class:`core.unicode.UnicodeProcessor` under analytics_core."""
 
     @staticmethod
-    def safe_encode_utf8(text: str) -> bytes:
-        return sanitize_unicode_input(text).encode("utf-8", errors="ignore")
+    def clean_text(text: str, replacement: str = "") -> str:  # type: ignore[override]
+        return UnicodeProcessor.clean_text(text, replacement)
 
     @staticmethod
-    def process_dataframe_unicode(df: pd.DataFrame) -> pd.DataFrame:
-        return df.applymap(lambda x: clean_surrogate_chars(str(x)) if isinstance(x, str) else x)
+    def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:  # type: ignore[override]
+        return UnicodeProcessor.sanitize_dataframe(df)
+
+
+__all__ = ["UnicodeHelper"]
+

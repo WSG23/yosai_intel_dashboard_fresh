@@ -3,7 +3,7 @@ from pathlib import Path
 
 from file_processing.column_mapper import map_columns
 from core.callback_controller import CallbackEvent
-from core.callback_manager import CallbackManager
+from analytics_core.callbacks.unified_callback_manager import CallbackManager
 
 
 def test_exact_mapping(tmp_path: Path):

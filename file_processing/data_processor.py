@@ -8,7 +8,7 @@ from typing import Dict, Optional
 import pandas as pd
 
 from core.unified_callbacks import CallbackEvent
-from core.callback_manager import CallbackManager
+from analytics_core.callbacks.unified_callback_manager import CallbackManager
 from .format_detector import FormatDetector, UnsupportedFormatError
 from .readers import ArchiveReader, CSVReader, ExcelReader, FWFReader, JSONReader
 

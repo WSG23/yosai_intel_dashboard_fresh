@@ -42,7 +42,7 @@ if StandardScaler is None:  # pragma: no cover
         def transform(self, X):
             return X
 
-from core.callback_manager import CallbackManager as SecurityCallbackController
+from analytics_core.callbacks.unified_callback_manager import CallbackManager as SecurityCallbackController
 from security_callback_controller import (
     SecurityEvent,
     emit_security_event,

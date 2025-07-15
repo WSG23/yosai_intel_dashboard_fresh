@@ -17,7 +17,7 @@ def apply_both_fixes():
     
     # Step 1: Callback fix
     try:
-        from core.callback_manager import CallbackManager
+        from analytics_core.callbacks.unified_callback_manager import CallbackManager
         if hasattr(CallbackManager, 'handle_register') and not hasattr(CallbackManager, 'register_handler'):
             CallbackManager.register_handler = CallbackManager.handle_register
             print("✅ Step 1: Callback patch applied")

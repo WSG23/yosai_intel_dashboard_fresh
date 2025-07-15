@@ -13,7 +13,7 @@ def apply_callback_fix():
     """Apply the callback manager fix"""
     try:
         # Check current CallbackManager methods
-        from core.callback_manager import CallbackManager
+        from analytics_core.callbacks.unified_callback_manager import CallbackManager
         from core.callback_events import CallbackEvent
         
         print("=== CHECKING CALLBACK MANAGER METHODS ===")

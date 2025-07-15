@@ -7,7 +7,7 @@ from typing import Iterable, List, Optional, Tuple, Dict
 import pandas as pd
 
 from core.unified_callbacks import CallbackEvent
-from core.callback_manager import CallbackManager
+from analytics_core.callbacks.unified_callback_manager import CallbackManager
 from core.container import get_unicode_processor
 from core.protocols import UnicodeProcessorProtocol
 

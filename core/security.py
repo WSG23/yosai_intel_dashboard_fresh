@@ -325,7 +325,7 @@ def rate_limit_decorator(max_requests: int = 100, window_minutes: int = 1):
 def initialize_validation_callbacks() -> None:
     """Set up request validation callbacks on import."""
     try:
-        from core.callback_manager import CallbackManager
+        from analytics_core.callbacks.unified_callback_manager import CallbackManager
         from security.validation_middleware import ValidationMiddleware
     except Exception:
         # Optional components may be missing in minimal environments
