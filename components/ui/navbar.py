@@ -2,7 +2,9 @@
 """Enhanced navbar component with logo and proper import safety."""
 
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, Dict
+
+from core.callback_registry import handle_register_with_deduplication
 
 logger = logging.getLogger(__name__)
 
@@ -41,13 +43,46 @@ def get_simple_icon(name: str):
     return html.Img(src=img_src, className="nav-icon", alt=f"{name} icon")
 
 
-def create_navbar_layout() -> Any:
-    """Create navbar with logo and proper navigation."""
+def create_navbar_layout(
+    links: Optional[Dict[str, str]] = None,
+    icons: Optional[Dict[str, Any]] = None,
+) -> Any:
+    """Create navbar with logo and optional custom navigation."""
 
     if not DBC_AVAILABLE:
         return html.Div("Navbar unavailable - Dash Bootstrap Components not installed")
 
+    default_links: Dict[str, str] = {
+        "Dashboard": "/dashboard",
+        "Analytics": "/analytics",
+        "Graphs": "/graphs",
+        "File Upload": "/upload",
+        "Export": "/export",
+        "Settings": "/settings",
+    }
+    nav_links = links or default_links
+
+    default_icons: Dict[str, Any] = {
+        "Dashboard": html.I(className="fas fa-home me-2", **{"aria-hidden": "true"}),
+        "Analytics": html.I(className="fas fa-chart-bar me-2", **{"aria-hidden": "true"}),
+        "Graphs": html.I(className="fas fa-chart-line me-2", **{"aria-hidden": "true"}),
+        "File Upload": html.I(className="fas fa-upload me-2", **{"aria-hidden": "true"}),
+        "Export": html.I(className="fas fa-download me-2", **{"aria-hidden": "true"}),
+        "Settings": html.I(className="fas fa-cog me-2", **{"aria-hidden": "true"}),
+    }
+    icon_map = {**default_icons, **(icons or {})}
+
     try:
+        nav_items = []
+        for name, href in nav_links.items():
+            icon = icon_map.get(name)
+            children = [icon, name] if icon is not None else [name]
+            nav_items.append(
+                dbc.NavItem(
+                    dcc.Link(children, href=href, className="nav-link px-3")
+                )
+            )
+
         return dbc.Navbar(
             dbc.Container(
                 [
@@ -63,90 +98,7 @@ def create_navbar_layout() -> Any:
                         className="navbar-brand-link d-flex align-items-center",
                     ),
                     # Navigation Links
-                    dbc.Nav(
-                        [
-                            dbc.NavItem(
-                                dcc.Link(
-                                    [
-                                        html.I(
-                                            className="fas fa-home me-2",
-                                            **{"aria-hidden": "true"},
-                                        ),
-                                        "Dashboard",
-                                    ],
-                                    href="/dashboard",
-                                    className="nav-link px-3",
-                                )
-                            ),
-                            dbc.NavItem(
-                                dcc.Link(
-                                    [
-                                        html.I(
-                                            className="fas fa-chart-bar me-2",
-                                            **{"aria-hidden": "true"},
-                                        ),
-                                        "Analytics",
-                                    ],
-                                    href="/analytics",
-                                    className="nav-link px-3",
-                                )
-                            ),
-                            dbc.NavItem(
-                                dcc.Link(
-                                    [
-                                        html.I(
-                                            className="fas fa-chart-line me-2",
-                                            **{"aria-hidden": "true"},
-                                        ),
-                                        "Graphs",
-                                    ],
-                                    href="/graphs",
-                                    className="nav-link px-3",
-                                )
-                            ),
-                            dbc.NavItem(
-                                dcc.Link(
-                                    [
-                                        html.I(
-                                            className="fas fa-upload me-2",
-                                            **{"aria-hidden": "true"},
-                                        ),
-                                        "File Upload",
-                                    ],
-                                    href="/upload",
-                                    className="nav-link px-3",
-                                )
-                            ),
-                            dbc.NavItem(
-                                dcc.Link(
-                                    [
-                                        html.I(
-                                            className="fas fa-download me-2",
-                                            **{"aria-hidden": "true"},
-                                        ),
-                                        "Export",
-                                    ],
-                                    href="/export",
-                                    className="nav-link px-3",
-                                )
-                            ),
-                            dbc.NavItem(
-                                dcc.Link(
-                                    [
-                                        html.I(
-                                            className="fas fa-cog me-2",
-                                            **{"aria-hidden": "true"},
-                                        ),
-                                        "Settings",
-                                    ],
-                                    href="/settings",
-                                    className="nav-link px-3",
-                                )
-                            ),
-                        ],
-                        navbar=True,
-                        className="ms-auto",
-                    ),
+                    dbc.Nav(nav_items, navbar=True, className="ms-auto"),
                 ],
                 fluid=True,
                 className="px-4",
@@ -157,7 +109,7 @@ def create_navbar_layout() -> Any:
             className="navbar navbar-expand-lg navbar-stable bg-gray-900",
         )
 
-    except Exception as e:
+    except Exception as e:  # pragma: no cover - defensive
         logger.error(f"Navbar creation failed: {e}")
         return create_fallback_navbar()
 
@@ -222,10 +174,29 @@ def create_fallback_navbar():
 
 
 def register_navbar_callbacks(callback_manager, service: Optional[Any] = None) -> None:
-    """Register navbar callbacks (simplified to avoid import errors)."""
+    """Register navbar toggle callback when Dash is available."""
+    if not DBC_AVAILABLE:
+        logger.debug("Navbar callbacks registration skipped - Dash unavailable")
+        return
+
     try:
-        logger.debug("Navbar callbacks registration skipped - simple navigation mode")
-    except Exception as e:
+
+        @handle_register_with_deduplication(
+            callback_manager,
+            dash.dependencies.Output("navbar-collapse", "is_open"),
+            dash.dependencies.Input("navbar-toggler", "n_clicks"),
+            dash.dependencies.State("navbar-collapse", "is_open"),
+            callback_id="navbar_toggle",
+            component_name="navbar",
+            prevent_initial_call=True,
+            source_module=__name__,
+        )
+        def toggle_navbar_collapse(n, is_open):
+            if n:
+                return not is_open
+            return is_open
+
+    except Exception as e:  # pragma: no cover - defensive
         logger.warning(f"Navbar callback registration failed: {e}")
 
 

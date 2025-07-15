@@ -43,6 +43,9 @@ class Small(_Base):
 class Strong(_Base):
     pass
 
+class Span(_Base):
+    pass
+
 
 class Img(_Base):
     pass
