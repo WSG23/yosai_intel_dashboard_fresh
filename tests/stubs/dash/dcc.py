@@ -17,3 +17,9 @@ class Store:
         self.children = list(args)
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+class Link:
+    def __init__(self, *args, **kwargs):
+        self.children = list(args)
+        for k, v in kwargs.items():
+            setattr(self, k, v)

@@ -15,6 +15,9 @@ class Card(_Base):
 class Navbar(_Base):
     pass
 
+class NavbarBrand(_Base):
+    pass
+
 class Container(_Base):
     pass
 
@@ -64,6 +67,15 @@ class Badge(_Base):
     pass
 
 class Checklist(_Base):
+    pass
+
+class Nav(_Base):
+    pass
+
+class NavItem(_Base):
+    pass
+
+class NavLink(_Base):
     pass
 
 NavbarToggler = Collapse = DropdownMenu = lambda *a, **k: None
