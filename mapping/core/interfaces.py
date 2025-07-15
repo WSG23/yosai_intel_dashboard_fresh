@@ -4,6 +4,7 @@ from abc import abstractmethod
 from typing import Any, Dict, Protocol
 
 import pandas as pd
+from .models import ProcessingResult
 
 
 class StorageInterface(Protocol):
@@ -24,7 +25,7 @@ class ProcessorInterface(Protocol):
     """Transform raw uploaded data."""
 
     @abstractmethod
-    def process(self, df: pd.DataFrame, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+    def process(self, df: pd.DataFrame, *args: Any, **kwargs: Any) -> ProcessingResult:
         """Return processed representation of *df*."""
         ...
 
@@ -39,13 +40,12 @@ class LearningInterface(Protocol):
         filename: str,
         device_mappings: Dict[str, Any],
         column_mappings: Dict[str, str] | None = None,
-    ) -> str:
-        ...
+    ) -> str: ...
 
     @abstractmethod
-    def get_learned_mappings(self, df: pd.DataFrame, filename: str) -> Dict[str, Any]:
-        ...
+    def get_learned_mappings(
+        self, df: pd.DataFrame, filename: str
+    ) -> Dict[str, Any]: ...
 
     @abstractmethod
-    def apply_to_global_store(self, df: pd.DataFrame, filename: str) -> bool:
-        ...
+    def apply_to_global_store(self, df: pd.DataFrame, filename: str) -> bool: ...

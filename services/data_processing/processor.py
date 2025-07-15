@@ -14,7 +14,8 @@ from monitoring.data_quality_monitor import (
     get_data_quality_monitor,
 )
 from core.security_validator import SecurityValidator
-from utils.mapping_helpers import map_and_clean
+from mapping.factories.service_factory import create_mapping_service
+from mapping.service import MappingService
 
 logger = logging.getLogger(__name__)
 
@@ -27,12 +28,14 @@ class Processor:
         base_data_path: str = "data",
         validator: Optional[SecurityValidator] = None,
         streaming_service: Optional[StreamingService] = None,
+        mapping_service: MappingService | None = None,
     ) -> None:
         self.base_path = Path(base_data_path)
         self.mappings_file = self.base_path / "learned_mappings.json"
         self.session_storage = self.base_path.parent / "session_storage"
         self.validator = validator or SecurityValidator()
         self.streaming_service = streaming_service
+        self.mapping_service = mapping_service or create_mapping_service()
 
     # ------------------------------------------------------------------
     # Streaming helpers (from DataLoadingService)
@@ -52,19 +55,21 @@ class Processor:
         else:
             df = source
         df = self.validator.validate(df)
-        return map_and_clean(df)
+        return self.mapping_service.column_proc.process(df, "load").data
 
-    def stream_file(self, source: Any, chunksize: int = 50000) -> Iterator[pd.DataFrame]:
+    def stream_file(
+        self, source: Any, chunksize: int = 50000
+    ) -> Iterator[pd.DataFrame]:
         """Yield cleaned chunks from ``source``."""
         monitor = get_performance_monitor()
         if isinstance(source, (str, Path)) or hasattr(source, "read"):
             for chunk in pd.read_csv(source, chunksize=chunksize, encoding="utf-8"):
                 monitor.throttle_if_needed()
                 chunk = self.validator.validate(chunk)
-                yield map_and_clean(chunk)
+                yield self.mapping_service.column_proc.process(chunk, "stream").data
         else:
             df = self.validator.validate(source)
-            yield map_and_clean(df)
+            yield self.mapping_service.column_proc.process(df, "stream").data
 
     def consume_stream(self, timeout: float = 1.0) -> Iterator[pd.DataFrame]:
         """Consume events from the configured streaming service."""
@@ -80,7 +85,7 @@ class Processor:
                 continue
             df = pd.DataFrame([data])
             df = self.validator.validate(df)
-            yield map_and_clean(df)
+            yield self.mapping_service.column_proc.process(df, "stream").data
 
     # ------------------------------------------------------------------
     # Uploaded data processing (from DataLoader)
@@ -148,8 +153,8 @@ class Processor:
 
         for filename, df in uploaded.items():
             try:
-                mapped = self._apply_column_mappings(df, filename, mappings)
-                enriched = self._apply_device_mappings(mapped, filename, mappings)
+                processed = self.mapping_service.process_upload(df, filename)
+                enriched = processed.devices.data
                 enriched["source_file"] = filename
                 enriched["processed_at"] = datetime.now()
 
@@ -188,43 +193,6 @@ class Processor:
 
         return pd.DataFrame(), meta
 
-    def _apply_column_mappings(
-        self, df: pd.DataFrame, filename: str, mappings: Dict[str, Any]
-    ) -> pd.DataFrame:
-        for mapping in mappings.values():
-            if mapping.get("filename") == filename:
-                cols = mapping.get("column_mappings", {})
-                if cols:
-                    return df.rename(columns=cols)
-
-        standard = {
-            "Timestamp": "timestamp",
-            "Person ID": "person_id",
-            "Token ID": "token_id",
-            "Device name": "door_id",
-            "Access result": "access_result",
-        }
-        return df.rename(columns=standard)
-
-    def _apply_device_mappings(
-        self, df: pd.DataFrame, filename: str, mappings: Dict[str, Any]
-    ) -> pd.DataFrame:
-        if "door_id" not in df.columns:
-            return df
-
-        device_mappings = {}
-        for mapping in mappings.values():
-            if mapping.get("filename") == filename:
-                device_mappings = mapping.get("device_mappings", {})
-                break
-        if not device_mappings:
-            return df
-
-        attrs_df = pd.DataFrame.from_dict(device_mappings, orient="index")
-        attrs_df.index.name = "door_id"
-        attrs_df.reset_index(inplace=True)
-        return df.merge(attrs_df, on="door_id", how="left")
-
     # ------------------------------------------------------------------
     def _evaluate_data_quality(self, df: pd.DataFrame) -> DataQualityMetrics:
         """Calculate basic data quality metrics for ``df``."""
@@ -232,7 +200,9 @@ class Processor:
             return DataQualityMetrics(0.0, 0.0, 4)
 
         total_cells = df.size
-        missing_ratio = float(df.isnull().sum().sum()) / total_cells if total_cells else 0.0
+        missing_ratio = (
+            float(df.isnull().sum().sum()) / total_cells if total_cells else 0.0
+        )
 
         numeric = df.select_dtypes(include="number")
         if not numeric.empty and (numeric.std(ddof=0) != 0).any():

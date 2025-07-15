@@ -10,7 +10,8 @@ from typing import Any, Dict, Tuple
 
 import pandas as pd
 
-from utils.mapping_helpers import map_and_clean
+from mapping.factories.service_factory import create_mapping_service
+from mapping.service import MappingService
 
 logger = logging.getLogger(__name__)
 
@@ -18,10 +19,15 @@ logger = logging.getLogger(__name__)
 class AnalyticsDataAccessor:
     """Helper to load processed data and learned mappings."""
 
-    def __init__(self, base_data_path: str = "data") -> None:
+    def __init__(
+        self,
+        base_data_path: str = "data",
+        mapping_service: MappingService | None = None,
+    ) -> None:
         self.base_path = Path(base_data_path)
         self.mappings_file = self.base_path / "learned_mappings.json"
         self.session_storage = self.base_path.parent / "session_storage"
+        self.mapping_service = mapping_service or create_mapping_service()
 
     def get_processed_database(self) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         """Return the combined DataFrame and metadata using learned mappings."""
@@ -140,7 +146,11 @@ class AnalyticsDataAccessor:
             if mapping_info.get("filename") == filename:
                 column_mappings = mapping_info.get("column_mappings", {})
                 break
-        return map_and_clean(df, column_mappings)
+        result = self.mapping_service.column_proc.process(df, filename)
+        cleaned = result.data
+        if column_mappings:
+            cleaned = cleaned.rename(columns=column_mappings)
+        return cleaned
 
     def _apply_device_mappings(
         self, df: pd.DataFrame, filename: str, mappings_data: Dict[str, Any]
@@ -154,6 +164,7 @@ class AnalyticsDataAccessor:
             if mapping_info.get("filename") == filename:
                 device_mappings = mapping_info.get("device_mappings", {})
                 break
+        self.mapping_service.device_proc.process(df)
         if not device_mappings:
             return df
 

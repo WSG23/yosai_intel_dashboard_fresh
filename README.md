@@ -704,6 +704,14 @@ from utils.mapping_helpers import standardize_column_names
 df = pd.DataFrame({"A B": [1], "C-D": [2]})
 clean_df = standardize_column_names(df)
 ```
+### Using the mapping service
+```python
+from mapping import create_mapping_service
+
+service = create_mapping_service(storage_type="memory")
+result = service.process_upload(df, "sample.csv")
+print(result.columns.data.head())
+```
 ## <span aria-hidden="true">📜</span> Data Migration
 Use the storage utilities to convert legacy pickle files to Parquet and load them:
 ```python
