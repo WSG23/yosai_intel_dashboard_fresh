@@ -19,3 +19,4 @@ class UnifiedCallbackManager(_BaseCallbackManager):
 CallbackManager = UnifiedCallbackManager
 
 __all__ = ["UnifiedCallbackManager", "CallbackManager"]
+

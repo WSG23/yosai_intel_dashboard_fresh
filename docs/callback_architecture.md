@@ -74,3 +74,14 @@ def refresh(btn):
     results = ops.execute_group("refresh", btn)
     return str(results[-1])
 ```
+
+## Consolidated Callback Management
+
+A single startup task should orchestrate all callback registration steps to prevent duplicated logic:
+
+1. Auto-discover component managers and plugins.
+2. Register Dash and event callbacks through one `TrulyUnifiedCallbacks` instance.
+3. Deduplicate IDs using `GlobalCallbackRegistry` and expose conflict details.
+4. Provide a unified decorator so modules never call `app.callback` directly.
+
+Running this task at initialization ensures consistent behavior and avoids code conflicts across the application.

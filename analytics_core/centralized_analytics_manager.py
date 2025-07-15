@@ -31,3 +31,4 @@ class CentralizedAnalyticsManager:
         self.callback_manager.trigger("pipeline_complete", data)
 
 __all__ = ["CentralizedAnalyticsManager"]
+

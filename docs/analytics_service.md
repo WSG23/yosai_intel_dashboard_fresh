@@ -32,3 +32,4 @@ finally emit a `pipeline_complete` event using
 Previous documentation describing individual service classes has been removed.
 The new manager abstracts these details, allowing implementations to evolve
 independently of the calling code.
+
