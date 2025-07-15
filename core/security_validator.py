@@ -21,10 +21,7 @@ from config.constants import FileProcessingLimits
 from core.exceptions import ValidationError
 from security.attack_detection import AttackDetection
 from security.unicode_security_processor import sanitize_unicode_input
-from security_callback_controller import (
-    SecurityEvent,
-    emit_security_event,
-)
+from security.events import SecurityEvent, emit_security_event
 
 from .security_patterns import (
     PATH_TRAVERSAL_PATTERNS as RAW_PATH_PATTERNS,
