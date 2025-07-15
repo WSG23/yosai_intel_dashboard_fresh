@@ -8,8 +8,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional, Protocol, runtime_checkable
 
 import pandas as pd
+from dash import html
+from dash._callback_context import callback_context
+from dash.dependencies import Input, Output
 
-from services.upload.protocols import DeviceLearningServiceProtocol
+from services.consolidated_learning_service import get_learning_service
+from services.protocols.device_learning import DeviceLearningServiceProtocol
 
 
 @runtime_checkable
@@ -31,16 +35,8 @@ class DeviceServiceProtocol(Protocol):
     ) -> bool: ...
 
 
-import pandas as pd
-from dash import html
-from dash.dependencies import Input, Output
-
 if TYPE_CHECKING:
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-
-from dash._callback_context import callback_context
-
-from services.consolidated_learning_service import get_learning_service
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +163,7 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
         if fingerprint in self.learned_mappings:
             learned_data = self.learned_mappings[fingerprint]
             logger.info(
-                f"🔄 Loaded {len(learned_data.get('mappings', {}))} learned mappings for {filename}"
+                f"🔄 Loaded {len(learned_data.get('mappings', {}))} learned mappings for {filename}"  # noqa: E501
             )
             return learned_data.get("mappings", {})
 
@@ -182,7 +178,7 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
         """Apply learned mappings to the global AI mappings store with validation."""
 
         # DETAILED DEBUG
-        logger.info(f"🔍 DEBUG apply_learned_mappings_to_global_store called:")
+        logger.info("🔍 DEBUG apply_learned_mappings_to_global_store called:")
         logger.info(f"🔍 DEBUG - filename: {filename}")
 
         try:
@@ -195,15 +191,17 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
 
             if learned_mappings:
                 logger.info(
-                    f"🔍 DEBUG - Sample devices from learned_mappings: {list(learned_mappings.keys())[:3]}"
+                    f"🔍 DEBUG - Sample devices from learned_mappings: {list(learned_mappings.keys())[:3]}"  # noqa: E501
                 )
                 logger.info(
-                    f"🔍 DEBUG - Sample mapping content: {list(learned_mappings.values())[0] if learned_mappings else 'None'}"
+                    f"🔍 DEBUG - Sample mapping content: {list(learned_mappings.values())[0] if learned_mappings else 'None'}"  # noqa: E501
                 )
 
                 # Check store before clearing
                 store_before = ai_mapping_store.all()
-                logger.info(f"🔍 DEBUG - Store BEFORE clear: {len(store_before)} items")
+                logger.info(
+                    f"🔍 DEBUG - Store BEFORE clear: {len(store_before)} items"  # noqa: E501
+                )
 
                 # Clear existing AI mappings
                 ai_mapping_store.clear()
@@ -211,7 +209,7 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
                 # Check store after clearing
                 store_after_clear = ai_mapping_store.all()
                 logger.info(
-                    f"🔍 DEBUG - Store AFTER clear: {len(store_after_clear)} items"
+                    f"🔍 DEBUG - Store AFTER clear: {len(store_after_clear)} items"  # noqa: E501
                 )
 
                 # Apply learned mappings
@@ -220,18 +218,18 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
                 # Check store after update
                 store_after_update = ai_mapping_store.all()
                 logger.info(
-                    f"🔍 DEBUG - Store AFTER update: {len(store_after_update)} items"
+                    f"🔍 DEBUG - Store AFTER update: {len(store_after_update)} items"  # noqa: E501
                 )
                 logger.info(
-                    f"🔍 DEBUG - Store keys after update: {list(store_after_update.keys())[:3]}"
+                    f"🔍 DEBUG - Store keys after update: {list(store_after_update.keys())[:3]}"  # noqa: E501
                 )
 
                 logger.info(
-                    f"🤖 Applied {len(learned_mappings)} learned mappings to AI store"
+                    f"🤖 Applied {len(learned_mappings)} learned mappings to AI store"  # noqa: E501
                 )
                 return True
             else:
-                logger.info(f"🔍 DEBUG - No learned mappings found to apply")
+                logger.info("🔍 DEBUG - No learned mappings found to apply")
 
             return False
 
@@ -260,19 +258,21 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
         self, df: pd.DataFrame, filename: str, user_mappings: Dict[str, Any]
     ) -> bool:
         """Save user-confirmed device mappings to database"""
-        logger.info(f"🔍 DEBUG save_user_device_mappings called:")
+        logger.info("🔍 DEBUG save_user_device_mappings called:")
         logger.info(f"🔍 DEBUG - filename: {filename}")
         logger.info(f"🔍 DEBUG - user_mappings type: {type(user_mappings)}")
         logger.info(
-            f"🔍 DEBUG - user_mappings length: {len(user_mappings) if user_mappings else 'None'}"
+            f"🔍 DEBUG - user_mappings length: {len(user_mappings) if user_mappings else 'None'}"  # noqa: E501
         )
         if user_mappings:
-            logger.info(f"🔍 DEBUG - first 3 devices: {list(user_mappings.keys())[:3]}")
             logger.info(
-                f"🔍 DEBUG - sample mapping: {list(user_mappings.values())[0] if user_mappings else 'None'}"
+                f"🔍 DEBUG - first 3 devices: {list(user_mappings.keys())[:3]}"  # noqa: E501
+            )
+            logger.info(
+                f"🔍 DEBUG - sample mapping: {list(user_mappings.values())[0] if user_mappings else 'None'}"  # noqa: E501
             )
         else:
-            logger.info(f"🔍 DEBUG - user_mappings is empty or None!")
+            logger.info("🔍 DEBUG - user_mappings is empty or None!")
 
         try:
             fingerprint = self._get_file_fingerprint(df, filename)
@@ -287,10 +287,11 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
             }
 
             self.learned_mappings[fingerprint] = mapping_data
-            self._persist_learned_mappings()  # This will now raise exception if it fails
+            # This will now raise exception if it fails
+            self._persist_learned_mappings()
 
             logger.info(
-                f"✅ Saved user device mappings for {filename}: {len(user_mappings)} devices"
+                f"✅ Saved user device mappings for {filename}: {len(user_mappings)} devices"  # noqa: E501
             )
             return True
 
@@ -399,7 +400,9 @@ def create_learning_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
             if learning_service.apply_to_global_store(df, filename):
                 return html.Div(
                     [
-                        html.I(className="fas fa-brain me-2", **{"aria-hidden": "true"}),
+                        html.I(
+                            className="fas fa-brain me-2", **{"aria-hidden": "true"}
+                        ),
                         "Learned device mappings applied!",
                     ],
                     className="text-success",
