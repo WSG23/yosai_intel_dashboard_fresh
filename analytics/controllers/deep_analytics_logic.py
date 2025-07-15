@@ -1,35 +1,17 @@
-"""Dash callback handlers for the deep analytics page."""
+from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+"""Business logic helpers for the deep analytics page."""
 
-from dash import Input, Output, State, callback_context, html
-from dash.exceptions import PreventUpdate
+from typing import Any
 
-if TYPE_CHECKING:
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-
-import logging
-
-from analytics.controllers import (
-    UnifiedAnalyticsController,
-    dispatch_analysis,
-    get_data_sources,
-    get_initial_message_safe,
-    run_quality_analysis,
-    run_service_analysis,
-    run_suggests_analysis,
-    run_unique_patterns_analysis,
-)
-from analytics.controllers import update_status_alert as _controller_update_status_alert
-from core.callback_registry import _callback_registry
-from core.dash_profile import profile_callback
-from core.state import CentralizedStateManager
-
-logger = logging.getLogger(__name__)
 import dash_bootstrap_components as dbc
+from dash import html
 
-analytics_state = CentralizedStateManager()
-
+from pages.deep_analytics_complex.analysis import (
+    create_analysis_results_display,
+    create_analysis_results_display_safe,
+    get_initial_message_safe,
+)
 from services.data_processing.analytics_engine import (
     AI_SUGGESTIONS_AVAILABLE,
     analyze_data_with_service,
@@ -39,16 +21,9 @@ from services.data_processing.analytics_engine import (
     process_suggests_analysis_safe,
 )
 
-from services.analytics_processing import create_analysis_results_display
-
-# ``create_analysis_results_display`` is safe for direct use; keep
-# ``create_analysis_results_display_safe`` and ``get_initial_message_safe``
-# for backward compatibility.
-create_analysis_results_display_safe = create_analysis_results_display
-
-def get_initial_message_safe(*_args: Any, **_kwargs: Any) -> html.Div:
-    """Return the default analytics welcome message."""
-    return html.Div("Welcome to Deep Analytics")
+# ------------------------------------------------------------
+# Helper analysis functions
+# ------------------------------------------------------------
 
 
 def run_suggests_analysis(data_source: str):
@@ -68,7 +43,7 @@ def run_quality_analysis(data_source: str):
 
 
 def run_service_analysis(data_source: str, analysis_type: str):
-    """Return display for service based analyses (security, trends, etc.)."""
+    """Return display for service based analyses."""
     results = analyze_data_with_service(data_source, analysis_type)
     if isinstance(results, dict) and "error" in results:
         return dbc.Alert(str(results["error"]), color="danger")
@@ -462,152 +437,37 @@ def dispatch_analysis(button_id: str, data_source: str):
 
     return dispatch[analysis_type]()
 
-# ------------------------------------------------------------
-# Callback manager
-# ------------------------------------------------------------
+
+def update_status_alert(_trigger: Any) -> str:
+    """Return status alert message based on service health."""
+    try:
+        service = get_analytics_service_safe()
+        suggests_available = AI_SUGGESTIONS_AVAILABLE
+
+        if service and suggests_available:
+            return "✅ All services available - Full functionality enabled"
+        elif suggests_available:
+            return "⚠️ Analytics service limited - AI suggestions available"
+        elif service:
+            return "⚠️ AI suggestions unavailable - Analytics service available"
+        else:
+            return "🔄 Running in limited mode - Some features may be unavailable"
+    except Exception:
+        return "❌ Service status unknown"
 
 
-class Callbacks:
-    """Container for deep analytics callbacks."""
-
-    def handle_analysis_buttons(
-        self,
-        security_n,
-        trends_n,
-        behavior_n,
-        anomaly_n,
-        suggests_n,
-        quality_n,
-        unique_n,
-        data_source,
-    ):
-        """Handle analysis button clicks and dispatch to helper functions."""
-
-        if not callback_context.triggered:
-            return get_initial_message_safe()
-
-        if not data_source or data_source == "none":
-            return dbc.Alert("Please select a data source first", color="warning")
-
-        button_id = callback_context.triggered[0]["prop_id"].split(".")[0]
-
-        try:
-            return dispatch_analysis(button_id, data_source)
-        except Exception as e:  # pragma: no cover - catch unforeseen errors
-            return dbc.Alert(f"Analysis failed: {str(e)}", color="danger")
-
-    def handle_refresh_data_sources(self, n_clicks):
-        """Refresh data sources when button clicked."""
-        if not callback_context.triggered:
-            raise PreventUpdate
-
-        return get_data_sources()
-
-    def update_status_alert(self, trigger):
-        """Update status based on service health."""
-        return _controller_update_status_alert(trigger)
+def get_data_sources() -> list:
+    """Return available data sources for the dropdown."""
+    return get_data_source_options_safe()
 
 
-# =============================================================================
-# SECTION 7: HELPER DISPLAY FUNCTIONS
-# Add these helper functions for non-suggests analysis types
-# =============================================================================
-
-
-def register_callbacks(
-    manager: "TrulyUnifiedCallbacks",
-    controller: UnifiedAnalyticsController | None = None,
-) -> None:
-    """Instantiate :class:`Callbacks` and register its methods."""
-
-    def _do_registration() -> None:
-        cb = Callbacks()
-
-        manager.register_operation(
-            "analysis_buttons",
-            lambda s, t, b, a, sug, q, u, ds: cb.handle_analysis_buttons(
-                s, t, b, a, sug, q, u, ds
-            ),
-            name="handle_analysis_buttons",
-            timeout=5,
-        )
-        manager.register_operation(
-            "refresh_sources",
-            lambda n: cb.handle_refresh_data_sources(n),
-            name="refresh_data_sources",
-        )
-        manager.register_operation(
-            "status_alert",
-            lambda val: cb.update_status_alert(val),
-            name="update_status_alert",
-        )
-
-        @manager.register_handler(
-            [
-                Output("analytics-display-area", "children"),
-                Output("analytics-data-source", "options"),
-                Output("status-alert", "children"),
-            ],
-            [
-                Input("security-btn", "n_clicks"),
-                Input("trends-btn", "n_clicks"),
-                Input("behavior-btn", "n_clicks"),
-                Input("anomaly-btn", "n_clicks"),
-                Input("suggests-btn", "n_clicks"),
-                Input("quality-btn", "n_clicks"),
-                Input("unique-patterns-btn", "n_clicks"),
-                Input("refresh-sources-btn", "n_clicks"),
-                Input("hidden-trigger", "children"),
-            ],
-            [State("analytics-data-source", "value")],
-            callback_id="deep_analytics_operations",
-            component_name="deep_analytics",
-            prevent_initial_call=True,
-        )
-        def analytics_operations(
-            sec, trn, beh, anom, sug, qual, uniq, refresh, trigger, data_source
-        ):
-            display = manager.execute_group(
-                "analysis_buttons",
-                sec,
-                trn,
-                beh,
-                anom,
-                sug,
-                qual,
-                uniq,
-                data_source,
-            )[0]
-
-            options = manager.execute_group("refresh_sources", refresh)[0]
-
-            alert = manager.execute_group("status_alert", trigger)[0]
-
-            analytics_state.dispatch(
-                "UPDATE", {"display": display, "options": options, "alert": alert}
-            )
-
-            return display, options, alert
-
-        if controller is not None:
-            controller.register_handler(
-                "on_analysis_error",
-                lambda aid, err: logger.error("Deep analytics error: %s", err),
-            )
-
-    _callback_registry.register_deduplicated(
-        ["deep_analytics_operations"], _do_registration, source_module="deep_analytics"
-    )
-
-
-__all__ = ["Callbacks", "register_callbacks"]
-
-
-def __getattr__(name: str):
-    if name.startswith(("create_", "get_")):
-
-        def _stub(*args, **kwargs):
-            return None
-
-        return _stub
-    raise AttributeError(f"module {__name__} has no attribute {name}")
+__all__ = [
+    "run_suggests_analysis",
+    "run_quality_analysis",
+    "run_service_analysis",
+    "run_unique_patterns_analysis",
+    "dispatch_analysis",
+    "update_status_alert",
+    "get_data_sources",
+    "get_initial_message_safe",
+]
