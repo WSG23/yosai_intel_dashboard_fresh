@@ -1,7 +1,7 @@
 import pytest
 import dash_bootstrap_components as dbc
 
-from pages.deep_analytics_complex.analysis import create_analysis_results_display
+from services.analytics_processing import create_analysis_results_display
 
 pytestmark = pytest.mark.usefixtures("fake_dbc")
 

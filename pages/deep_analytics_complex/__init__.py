@@ -16,19 +16,22 @@ from services.data_processing.analytics_engine import (
     process_suggests_analysis_safe,
 )
 
-from .analysis import (
-    ANALYTICS_SERVICE_AVAILABLE,
+from services.analytics_processing import (
     create_analysis_results_display,
-    create_analysis_results_display_safe,
     create_data_quality_display,
-    create_data_quality_display_corrected,
-    create_limited_analysis_display,
     create_suggests_display,
+)
+from .layout import (
     get_analysis_buttons_section,
-    get_initial_message,
     get_initial_message_safe,
     get_updated_button_group,
 )
+
+ANALYTICS_SERVICE_AVAILABLE = True
+create_analysis_results_display_safe = create_analysis_results_display
+create_data_quality_display_corrected = create_data_quality_display
+create_limited_analysis_display = create_analysis_results_display
+get_initial_message = get_initial_message_safe
 from .callbacks import Callbacks, register_callbacks  # noqa: F401
 from .layout import layout
 

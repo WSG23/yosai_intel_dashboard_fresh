@@ -28,11 +28,16 @@ from services.data_processing.analytics_engine import (
     process_suggests_analysis_safe,
 )
 
-from .analysis import (
-    create_analysis_results_display,
-    create_analysis_results_display_safe,
-    get_initial_message_safe,
-)
+from services.analytics_processing import create_analysis_results_display
+
+# ``create_analysis_results_display`` is safe for direct use; keep
+# ``create_analysis_results_display_safe`` and ``get_initial_message_safe``
+# for backward compatibility.
+create_analysis_results_display_safe = create_analysis_results_display
+
+def get_initial_message_safe(*_args: Any, **_kwargs: Any) -> html.Div:
+    """Return the default analytics welcome message."""
+    return html.Div("Welcome to Deep Analytics")
 
 
 def run_suggests_analysis(data_source: str):
