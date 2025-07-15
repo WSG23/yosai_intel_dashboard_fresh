@@ -14,6 +14,7 @@ from analytics.controllers import UnifiedAnalyticsController
 from core.callback_registry import _callback_registry
 from core.dash_profile import profile_callback
 from core.state import CentralizedStateManager
+
 logger = logging.getLogger(__name__)
 import dash_bootstrap_components as dbc
 
@@ -406,12 +407,12 @@ def run_unique_patterns_analysis(data_source: str):
                 ],
                 color="danger",
             )
-    except Exception as e:  # pragma: no cover - safety net for unexpected errors
+    except Exception as exc:  # pragma: no cover - safety net for unexpected errors
+        logger.exception("Unexpected error during analysis")
         return dbc.Alert(
             [
                 html.H4("System Error"),
-                html.P(f"Exception: {str(e)}"),
-                html.P("Please check your configuration and try again."),
+                html.P("An unexpected error occurred. Please check the server logs."),
             ],
             color="danger",
         )
@@ -478,8 +479,12 @@ class Callbacks:
 
         try:
             return dispatch_analysis(button_id, data_source)
-        except Exception as e:  # pragma: no cover - catch unforeseen errors
-            return dbc.Alert(f"Analysis failed: {str(e)}", color="danger")
+        except Exception as exc:  # pragma: no cover - catch unforeseen errors
+            logger.exception("Analysis dispatch failed")
+            return dbc.Alert(
+                "Analysis failed. Please check the server logs for details.",
+                color="danger",
+            )
 
     def handle_refresh_data_sources(self, n_clicks):
         """Refresh data sources when button clicked."""
@@ -600,9 +605,12 @@ def register_callbacks(
 
 __all__ = ["Callbacks", "register_callbacks"]
 
+
 def __getattr__(name: str):
     if name.startswith(("create_", "get_")):
+
         def _stub(*args, **kwargs):
             return None
+
         return _stub
     raise AttributeError(f"module {__name__} has no attribute {name}")
