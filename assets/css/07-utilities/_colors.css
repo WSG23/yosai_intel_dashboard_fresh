@@ -29,3 +29,5 @@
 .bg-surface-primary { background-color: var(--surface-primary); }
 .bg-surface-secondary { background-color: var(--surface-secondary); }
 .bg-surface-tertiary { background-color: var(--surface-tertiary); }
+.bg-gray-900 { background-color: var(--color-gray-900); }
+.bg-black { background-color: var(--black); }

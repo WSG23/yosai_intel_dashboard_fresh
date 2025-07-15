@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import base64
-from io import BytesIO
 import logging
+from io import BytesIO
 from typing import List
 
 import dash_bootstrap_components as dbc
 import pandas as pd
-from dash import dcc, html, callback, Output, Input, State
+from dash import Input, Output, State, callback, dcc, html
 from dash.exceptions import PreventUpdate
 
 from utils.upload_store import uploaded_data_store
@@ -36,6 +36,7 @@ def layout() -> dbc.Container:
                 ),
             ]
         ),
+
         multiple=True,
     )
 

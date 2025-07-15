@@ -156,8 +156,7 @@ def _consolidate_callbacks(app):
                 module = __import__(module_name, fromlist=[func_name])
                 if hasattr(module, func_name):
                     register_func = getattr(module, func_name)
-                    # Apply Unicode safety wrapper
-                    _apply_unicode_safety(app, register_func)
+                    _apply_unicode_safety(app)
                     register_func(app)
                     logger.debug(f"✅ Registered callbacks from {module_name}")
             except ImportError:
@@ -172,66 +171,8 @@ def _consolidate_callbacks(app):
         raise
 
 
-def _apply_unicode_safety(app, register_func):
-    """Apply Unicode safety to callback registration"""
-    def safe_unicode_string(text):
-        """Handle Unicode surrogate characters safely"""
-        if not isinstance(text, str):
-            return text
-        try:
-            return text.encode('utf-8', errors='ignore').decode('utf-8')
-        except (UnicodeEncodeError, UnicodeDecodeError):
-            return text.encode('ascii', errors='ignore').decode('ascii')
-
-    # Store original callback method
-    original_callback = app.callback
-
-    def handle_unicode_safe(*args, **kwargs):
-        """Wrapper that adds Unicode safety to callbacks"""
-        def decorator(func):
-            import functools
-
-            @functools.wraps(func)
-            def wrapper(*cb_args, **cb_kwargs):
-                try:
-                    # Process string arguments safely
-                    safe_args = []
-                    for arg in cb_args:
-                        if isinstance(arg, str):
-                            safe_args.append(safe_unicode_string(arg))
-                        elif isinstance(arg, (list, tuple)):
-                            safe_args.append([safe_unicode_string(item) if isinstance(item, str) else item for item in arg])
-                        else:
-                            safe_args.append(arg)
-
-                    # Process keyword arguments safely
-                    safe_kwargs = {}
-                    for key, value in cb_kwargs.items():
-                        if isinstance(value, str):
-                            safe_kwargs[key] = safe_unicode_string(value)
-                        else:
-                            safe_kwargs[key] = value
-
-                    result = func(*safe_args, **safe_kwargs)
-
-                    # Process result safely
-                    if isinstance(result, str):
-                        return safe_unicode_string(result)
-                    elif isinstance(result, (list, tuple)):
-                        return [safe_unicode_string(item) if isinstance(item, str) else item for item in result]
-
-                    return result
-
-                except Exception as e:
-                    logger.error(f"Callback error: {e}")
-                    # Return safe error response
-                    return f"Error: {safe_unicode_string(str(e))}"
-
-            return original_callback(*args, **kwargs)(wrapper)
-
-        return decorator
-
-    # Temporarily replace callback method
+def _apply_unicode_safety(app):
+    """Replace Dash's ``callback`` decorator with a Unicode safe version."""
     app.callback = unicode_safe_callback
 
 def main():
@@ -306,6 +247,12 @@ def main():
             project_root = Path(__file__).resolve().parent
             assets_dir = os.path.normcase(os.path.abspath(project_root / "assets"))
             app = create_app(mode='full', assets_folder=assets_dir)
+
+            from core.master_callback_system import MasterCallbackSystem
+            from pages import register_all_pages
+
+            callback_manager = MasterCallbackSystem(app)
+            register_all_pages(app, callback_manager)
 
             # Consolidate callbacks with Unicode safety
             # _register_callbacks(app, config, container=None)  # Already called during app creation

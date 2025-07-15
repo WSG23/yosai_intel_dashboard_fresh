@@ -28,6 +28,19 @@
   will-change: auto;
 }
 
+/* Simple variant with neutral border */
+.upload-simple {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--surface-tertiary);
+  border-radius: var(--radius-md);
+  text-align: center;
+  cursor: pointer;
+  padding: var(--space-5);
+}
+
 /* Upload content stability */
 #drag-drop-upload > *,
 .drag-drop-upload > * {
