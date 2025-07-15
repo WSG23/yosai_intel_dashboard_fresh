@@ -43,13 +43,13 @@ def layout() -> dbc.Container:
             "borderStyle": "dashed",
             "borderRadius": "5px",
             "textAlign": "center",
-            "margin": "10px",
             "cursor": "pointer",
             "display": "flex",
             "flexDirection": "column",
             "justifyContent": "center",
             "alignItems": "center",
         },
+        className="m-2",
         multiple=True,
     )
 
