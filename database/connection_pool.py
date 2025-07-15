@@ -5,7 +5,7 @@ import time
 from typing import Any, Callable, Dict, List, Tuple
 
 from config.database_exceptions import ConnectionValidationFailed
-from config.database_manager import DatabaseConnection
+from database.types import DatabaseConnection
 
 
 class CircuitBreaker:

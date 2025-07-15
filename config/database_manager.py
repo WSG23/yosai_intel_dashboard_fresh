@@ -5,11 +5,16 @@ from __future__ import annotations
 Database Manager - Fixed imports for streamlined architecture
 """
 import logging
-import os
 import sqlite3
 import threading
 from pathlib import Path
-from typing import Any, Dict, Optional, Protocol
+from typing import TYPE_CHECKING, Any, Dict, Optional
+
+from core.unicode import UnicodeSQLProcessor
+from database.types import DatabaseConnection
+
+if TYPE_CHECKING:  # pragma: no cover - for type hints
+    from .connection_pool import DatabaseConnectionPool
 
 from .base import DatabaseConfig
 from .database_exceptions import ConnectionValidationFailed, DatabaseError
@@ -19,22 +24,6 @@ from .protocols import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-class DatabaseConnection(Protocol):
-    """Protocol for database connections"""
-
-    def execute_query(self, query: str, params: Optional[tuple] = None) -> Any:
-        """Execute a query and return results"""
-        ...
-
-    def execute_command(self, command: str, params: Optional[tuple] = None) -> None:
-        """Execute a command (INSERT, UPDATE, DELETE)"""
-        ...
-
-    def health_check(self) -> bool:
-        """Verify database connectivity"""
-        ...
 
 
 class MockConnection:
@@ -284,7 +273,7 @@ class ThreadSafeDatabaseManager(DatabaseManager):
         self._lock = threading.RLock()
         self._pool: Optional[Any] = None
 
-    def _create_pool(self) -> "DatabaseConnectionPool":
+    def _create_pool(self) -> DatabaseConnectionPool:
         from .connection_pool import DatabaseConnectionPool
 
         return DatabaseConnectionPool(
@@ -337,7 +326,6 @@ class EnhancedPostgreSQLManager(DatabaseManager):
         retry_config: RetryConfigProtocol | None = None,
     ) -> None:
         super().__init__(config)
-        from core.unicode import UnicodeSQLProcessor
         from database.connection_pool import EnhancedConnectionPool
 
         from .connection_retry import ConnectionRetryManager, RetryConfig

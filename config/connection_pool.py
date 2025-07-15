@@ -4,8 +4,7 @@ import threading
 import time
 from typing import Callable, List, Tuple
 
-from .database_exceptions import ConnectionValidationFailed
-from .database_manager import DatabaseConnection
+from database.types import DatabaseConnection
 
 
 class DatabaseConnectionPool:
