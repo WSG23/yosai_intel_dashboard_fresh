@@ -31,7 +31,8 @@ from .debug_tools import (
     find_repeated_imports,
     print_registration_report,
 )
-from .mapping_helpers import AIColumnMapperAdapter, standardize_column_names
+from processors.ai_processor import AIColumnMapperAdapter
+from .mapping_helpers import standardize_column_names
 from .preview_utils import serialize_dataframe_preview
 from .protocols import SafeDecoderProtocol
 

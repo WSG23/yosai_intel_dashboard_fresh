@@ -56,24 +56,8 @@ def standardize_column_names(df: pd.DataFrame) -> pd.DataFrame:
     return df_out
 
 
-class AIColumnMapperAdapter:
-    """Thin wrapper around :class:`ComponentPluginAdapter` for column mapping."""
-
-    def __init__(self) -> None:
-        from components.plugin_adapter import ComponentPluginAdapter
-
-        self._adapter = ComponentPluginAdapter()
-
-    def suggest(self, df: pd.DataFrame, filename: str) -> Dict[str, Dict[str, Any]]:
-        return self._adapter.get_ai_column_suggestions(df, filename)
-
-    def confirm(self, filename: str, mapping: Dict[str, str], metadata: Dict[str, Any]) -> bool:
-        return self._adapter.save_verified_mappings(filename, mapping, metadata)
-
-
 __all__ = [
     "STANDARD_COLUMN_MAPPING",
     "map_and_clean",
     "standardize_column_names",
-    "AIColumnMapperAdapter",
 ]
