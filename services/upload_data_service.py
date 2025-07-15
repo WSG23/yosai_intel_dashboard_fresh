@@ -3,13 +3,10 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from services.interfaces import (
-    UploadDataServiceProtocol,
-    get_upload_data_service,
-)
 from core.service_container import ServiceContainer
-from utils.upload_store import uploaded_data_store, UploadedDataStore
-
+from services.interfaces import get_upload_data_service
+from services.protocols.upload_data import UploadDataServiceProtocol
+from utils.upload_store import UploadedDataStore, uploaded_data_store
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +32,7 @@ class UploadDataService(UploadDataServiceProtocol):
 
     def load_dataframe(self, filename: str) -> pd.DataFrame:
         return self.store.load_dataframe(filename)
+
 
 def _resolve_service(
     service: UploadDataServiceProtocol | None,

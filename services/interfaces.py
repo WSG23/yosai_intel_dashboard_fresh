@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Protocol, runtime_checkable
 
 import pandas as pd
 
+from core.service_container import ServiceContainer
+
 
 @runtime_checkable
 class UploadValidatorProtocol(Protocol):
@@ -59,38 +61,12 @@ class DeviceLearningServiceProtocol(Protocol):
     ) -> bool: ...
 
 
-@runtime_checkable
-class UploadDataServiceProtocol(Protocol):
-    """Interface for accessing uploaded data."""
-
-    def get_uploaded_data(self) -> Dict[str, pd.DataFrame]:
-        """Return all uploaded dataframes."""
-        ...
-
-    def get_uploaded_filenames(self) -> List[str]:
-        """Return names of uploaded files."""
-        ...
-
-    def clear_uploaded_data(self) -> None:
-        """Remove all uploaded data."""
-        ...
-
-    def get_file_info(self) -> Dict[str, Dict[str, Any]]:
-        """Return info dictionary for uploaded files."""
-        ...
-
-    def load_dataframe(self, filename: str) -> pd.DataFrame:
-        """Load a specific uploaded dataframe."""
-        ...
-
-
 # ---------------------------------------------------------------------------
 # Helper accessors
 # ---------------------------------------------------------------------------
 # Use the same ServiceContainer implementation as ``core.app_factory``
 # to avoid type mismatches when helpers are accessed through the
 # application-wide dependency injection container.
-from core.service_container import ServiceContainer
 
 
 def _get_container(
@@ -156,6 +132,8 @@ def get_upload_data_service(
     container: ServiceContainer | None = None,
 ) -> UploadDataServiceProtocol:
     """Return the registered :class:`UploadDataService` instance."""
+    from services.protocols.upload_data import UploadDataServiceProtocol
+
     c = _get_container(container)
     if c and c.has("upload_data_service"):
         return c.get("upload_data_service")
@@ -170,7 +148,6 @@ __all__ = [
     "ExportServiceProtocol",
     "DoorMappingServiceProtocol",
     "DeviceLearningServiceProtocol",
-    "UploadDataServiceProtocol",
     "get_upload_validator",
     "get_export_service",
     "get_door_mapping_service",
