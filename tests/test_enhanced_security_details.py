@@ -1,12 +1,4 @@
-import importlib.util
-from pathlib import Path
-
-spec = importlib.util.spec_from_file_location(
-    "analysis", Path("pages/deep_analytics_complex/analysis.py")
-)
-analysis = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(analysis)
-_extract_enhanced_security_details = analysis._extract_enhanced_security_details
+from services.analytics_processing import _extract_enhanced_security_details
 
 def test_extract_enhanced_security_details_basic():
     results = {

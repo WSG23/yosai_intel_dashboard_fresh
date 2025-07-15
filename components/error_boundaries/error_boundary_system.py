@@ -12,7 +12,11 @@ class ErrorBoundary:
     """Decorate functions with error handling returning fallback UI."""
 
     def __init__(self, fallback: Callable[[Exception], Any] | None = None) -> None:
-        self.fallback = fallback or (lambda e: html.Div(str(e), className="alert alert-danger"))
+        self.fallback = fallback or (
+            lambda _exc: html.Div(
+                "An unexpected error occurred.", className="alert alert-danger"
+            )
+        )
 
     # ------------------------------------------------------------------
     def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
@@ -24,4 +28,3 @@ class ErrorBoundary:
                 return self.fallback(exc)
 
         return wrapper
-

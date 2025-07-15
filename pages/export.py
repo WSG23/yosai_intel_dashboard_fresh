@@ -43,7 +43,6 @@ def register_page_with_app(app) -> None:
         logger = logging.getLogger(__name__)
         logger.warning(f"Failed to register page {__name__} with app: {e}")
 
-
 def _instructions() -> dbc.Card:
     """Return a card describing how to export learned data."""
     code_example = """```python

@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional
 import dash_bootstrap_components as dbc
 
 if not hasattr(dbc, "Alert"):
+
     class _DummyComponent:
         def __init__(self, *a, **k):
             pass
@@ -18,8 +19,10 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import dcc, html
+
 from core.container import container
 from core.protocols import ConfigurationProtocol
+
 # from components.analytics.real_time_dashboard import RealTimeAnalytics
 
 try:  # Prefer configuration from the DI container when available
@@ -36,7 +39,9 @@ if not _cfg:
 from config.constants import MAX_DISPLAY_ROWS as DEFAULT_MAX_DISPLAY_ROWS
 
 if _cfg is not None and hasattr(_cfg, "analytics"):
-    MAX_DISPLAY_ROWS = getattr(_cfg.analytics, "max_display_rows", DEFAULT_MAX_DISPLAY_ROWS)
+    MAX_DISPLAY_ROWS = getattr(
+        _cfg.analytics, "max_display_rows", DEFAULT_MAX_DISPLAY_ROWS
+    )
     _MAX_UPLOAD_BYTES = getattr(_cfg.security, "max_upload_mb", 50) * 1024 * 1024
 else:  # pragma: no cover - fallback for optional config
     MAX_DISPLAY_ROWS = DEFAULT_MAX_DISPLAY_ROWS
@@ -366,13 +371,7 @@ def create_file_uploader() -> html.Div:
                             ],
                             className="text-center p-4",
                         ),
-                        style={
-                            "border": "2px dashed #ddd",
-                            "borderRadius": "8px",
-                            "textAlign": "center",
-                            "cursor": "pointer",
-                            "padding": "20px",
-                        },
+                        className="upload-simple",
                         multiple=True,
                     ),
                     html.Div(id="upload-output", className="mt-3"),
@@ -501,7 +500,7 @@ class ComponentRegistry:
             "success_alert": create_success_alert,
             "info_alert": create_info_alert,
             "sample_analytics": generate_sample_analytics,
-#             "realtime_analytics": RealTimeAnalytics,
+            #             "realtime_analytics": RealTimeAnalytics,
         }
 
     def get_component(self, name: str):
@@ -541,5 +540,5 @@ __all__ = [
     "ComponentRegistry",
     "get_component",
     "register_component",
-#     "RealTimeAnalytics",
+    #     "RealTimeAnalytics",
 ]

@@ -26,9 +26,7 @@ from dash.exceptions import PreventUpdate
 
 from components.ui_component import UIComponent
 from config.dynamic_config import dynamic_config
-from services.upload_data_service import (
-    clear_uploaded_data as _svc_clear_uploaded_data,
-)
+from services.upload_data_service import clear_uploaded_data as _svc_clear_uploaded_data
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +57,7 @@ class UploadPage(UIComponent):
                     ),
                 ]
             ),
+
             style={
                 "width": "100%",
                 "height": "200px",
@@ -127,6 +126,7 @@ class UploadPage(UIComponent):
                                     style={"display": "none"},
                                 ),
                                 html.Div(id="upload-status", className="mt-2"),
+
                             ],
                             lg=8,
                             md=10,
@@ -230,6 +230,7 @@ class UploadPage(UIComponent):
 
                 except Exception as e:
                     error_status = dbc.Alert(f"Upload failed: {str(e)}", color="danger")
+
                     return error_status, 0, {"display": "none"}, no_update, no_update
 
             logger.info("✅ File upload callbacks registered successfully")

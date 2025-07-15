@@ -9,12 +9,15 @@ import logging
 from typing import Any
 
 import dash_bootstrap_components as dbc
-from dash import html, register_page as dash_register_page
+from dash import html
+from dash import register_page as dash_register_page
 
-from components.ui_component import UIComponent
 from components.analytics.real_time_dashboard import RealTimeAnalytics
+from components.ui_component import UIComponent
+
 
 logger = logging.getLogger(__name__)
+
 
 class AnalyticsPage(UIComponent):
     """Simple analytics page component."""
@@ -30,9 +33,28 @@ class AnalyticsPage(UIComponent):
                     [
                         dbc.Col(
                             [
-                                dbc.Card(
+                                card(
+                                    "📊 Analytics Dashboard",
                                     [
-                                        dbc.CardBody(
+                                        html.P(
+                                            "Advanced analytics restored without navigation flash.",
+                                            className="card-text",
+                                        ),
+                                        html.Hr(),
+                                        html.I(
+                                            className="fas fa-chart-line fa-3x mb-3",
+                                            style={"color": "#007bff"},
+                                            **{"aria-hidden": "true"},
+                                        ),
+                                        html.H6("✅ Navigation Flash: FIXED"),
+                                        html.H6("🔧 Advanced Analytics: Coming Next"),
+                                        html.P(
+                                            "Page loads stable like Settings/Export",
+                                            className="text-muted",
+                                        ),
+                                        html.Hr(),
+                                        html.H6("📋 Planned Features:"),
+                                        html.Ul(
                                             [
                                                 html.H5(
                                                     "📊 Analytics Dashboard",
@@ -44,12 +66,13 @@ class AnalyticsPage(UIComponent):
                                                 ),
                                                 html.Hr(),
                                                 html.I(
-                                                    className="fas fa-chart-line fa-3x mb-3",
-                                                    style={"color": "#007bff"},
+                                                    className="fas fa-chart-line fa-3x mb-3 text-accent",
                                                     **{"aria-hidden": "true"},
                                                 ),
                                                 html.H6("✅ Navigation Flash: FIXED"),
-                                                html.H6("🔧 Advanced Analytics: Coming Next"),
+                                                html.H6(
+                                                    "🔧 Advanced Analytics: Coming Next"
+                                                ),
                                                 html.P(
                                                     "Page loads stable like Settings/Export",
                                                     className="text-muted",
@@ -58,23 +81,34 @@ class AnalyticsPage(UIComponent):
                                                 html.H6("📋 Planned Features:"),
                                                 html.Ul(
                                                     [
-                                                        html.Li("Data source selection"),
-                                                        html.Li("Interactive charts and graphs"),
-                                                        html.Li("Device pattern analysis"),
+                                                        html.Li(
+                                                            "Data source selection"
+                                                        ),
+                                                        html.Li(
+                                                            "Interactive charts and graphs"
+                                                        ),
+                                                        html.Li(
+                                                            "Device pattern analysis"
+                                                        ),
                                                         html.Li("Anomaly detection"),
                                                         html.Li("Behavior analysis"),
                                                     ]
+
                                                 ),
+                                                html.Li("Device pattern analysis"),
+                                                html.Li("Anomaly detection"),
+                                                html.Li("Behavior analysis"),
                                             ]
-                                        )
+                                        ),
                                     ],
-                                    className="mb-4",
+                                    color="light",
                                 )
-                            ]
-                        , md=8)
+                            ],
+                            md=8,
+                        )
                     ]
                 ),
-                dbc.Row([dbc.Col(self._realtime.layout())])
+                dbc.Row([dbc.Col(self._realtime.layout())]),
             ],
             fluid=True,
         )
@@ -97,32 +131,28 @@ def register_page() -> None:
     """Register the analytics page with Dash using current app context."""
     try:
         import dash
+
         if hasattr(dash, "_current_app") and dash._current_app is not None:
-            dash.register_page(__name__, path="/analytics", name="Analytics", aliases=["/", "/dashboard"])
+            dash.register_page(
+                __name__,
+                path="/analytics",
+                name="Analytics",
+                aliases=["/", "/dashboard"],
+            )
         else:
             from dash import register_page as dash_register_page
-            dash_register_page(__name__, path="/analytics", name="Analytics", aliases=["/", "/dashboard"])
+
+            dash_register_page(
+                __name__,
+                path="/analytics",
+                name="Analytics",
+                aliases=["/", "/dashboard"],
+            )
     except Exception as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.warning(f"Failed to register page {__name__}: {e}")
-
-
-def register_page_with_app(app) -> None:
-    """Register the page with a specific Dash app instance."""
-    try:
-        import dash
-        old_app = getattr(dash, "_current_app", None)
-        dash._current_app = app
-        dash.register_page(__name__, path="/analytics", name="Analytics", aliases=["/", "/dashboard"])
-        if old_app is not None:
-            dash._current_app = old_app
-        else:
-            delattr(dash, "_current_app")
-    except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.warning(f"Failed to register page {__name__} with app: {e}")
 
 
 def layout() -> html.Div:
@@ -136,10 +166,12 @@ def register_callbacks(manager: Any) -> None:
 
     _analytics_component.register_callbacks(manager)
 
+
 # For backward compatibility with app_factory
 def deep_analytics_layout():
     """Compatibility function for app_factory."""
     return layout()
+
 
 __all__ = [
     "AnalyticsPage",
@@ -150,10 +182,12 @@ __all__ = [
     "deep_analytics_layout",
 ]
 
+
 def __getattr__(name: str):
     if name.startswith(("create_", "get_")):
+
         def _stub(*args, **kwargs):
             return None
+
         return _stub
     raise AttributeError(f"module {__name__} has no attribute {name}")
-

@@ -1,5 +1,6 @@
 # Utility functions and analytics algorithms extracted from page modules.
 import logging
+from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -10,14 +11,20 @@ except Exception:  # pragma: no cover - avoid circular import during tests
     get_analytics_service = None
 try:
     from services.ai_suggestions import generate_column_suggestions
+
     AI_SUGGESTIONS_AVAILABLE = True
 except Exception:  # pragma: no cover - optional AI suggestions
     AI_SUGGESTIONS_AVAILABLE = False
-    def generate_column_suggestions(*args: Any, **kwargs: Any) -> Dict[str, Dict[str, Any]]:
+
+    def generate_column_suggestions(
+        *args: Any, **kwargs: Any
+    ) -> Dict[str, Dict[str, Any]]:
         return {}
+
+
 from security.unicode_security_handler import UnicodeSecurityHandler
-from utils.preview_utils import serialize_dataframe_preview
 from services.interfaces import get_upload_data_service
+from utils.preview_utils import serialize_dataframe_preview
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +32,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Analytics service helpers
 # ---------------------------------------------------------------------------
+
 
 def get_analytics_service_safe():
     """Return a shared :class:`AnalyticsService` instance if available."""
@@ -45,7 +53,9 @@ def get_data_source_options_safe() -> List[Dict[str, str]]:
 
         uploaded_files = get_uploaded_data(get_upload_data_service())
         for filename in uploaded_files.keys():
-            options.append({"label": f"File: {filename}", "value": f"upload:{filename}"})
+            options.append(
+                {"label": f"File: {filename}", "value": f"upload:{filename}"}
+            )
     except Exception:
         pass
     try:
@@ -59,11 +69,15 @@ def get_data_source_options_safe() -> List[Dict[str, str]]:
                 else:
                     label = str(source_dict)
                     value = str(source_dict)
-                options.append({"label": f"Service: {label}", "value": f"service:{value}"})
+                options.append(
+                    {"label": f"Service: {label}", "value": f"service:{value}"}
+                )
     except Exception as exc:  # pragma: no cover - best effort
         logger.exception("Error getting service data sources: %s", exc)
     if not options:
-        options.append({"label": "No data sources available - Upload files first", "value": "none"})
+        options.append(
+            {"label": "No data sources available - Upload files first", "value": "none"}
+        )
     return options
 
 
@@ -107,7 +121,10 @@ def clean_analysis_data_unicode(df: pd.DataFrame) -> pd.DataFrame:
 # AI suggestion helpers
 # ---------------------------------------------------------------------------
 
-def get_ai_suggestions_for_file(df: pd.DataFrame, filename: str) -> Dict[str, Dict[str, Any]]:
+
+def get_ai_suggestions_for_file(
+    df: pd.DataFrame, filename: str
+) -> Dict[str, Dict[str, Any]]:
     """Return AI column suggestions for ``df`` columns."""
     try:
         return generate_column_suggestions(list(df.columns))
@@ -134,6 +151,8 @@ def get_ai_suggestions_for_file(df: pd.DataFrame, filename: str) -> Dict[str, Di
 # Analysis processors
 # ---------------------------------------------------------------------------
 
+
+@lru_cache(maxsize=32)
 def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
     """Process AI suggestions analysis for the selected data source."""
     try:
@@ -169,7 +188,9 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
                 field = suggestion.get("field", "")
                 confidence = suggestion.get("confidence", 0.0)
                 status = (
-                    "🟢 High" if confidence >= 0.7 else "🟡 Medium" if confidence >= 0.4 else "🔴 Low"
+                    "🟢 High"
+                    if confidence >= 0.7
+                    else "🟡 Medium" if confidence >= 0.4 else "🔴 Low"
                 )
                 try:
                     sample_data = df[column].dropna().head(3).astype(str).tolist()
@@ -205,12 +226,18 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
                 "column_names": list(df.columns),
             }
         else:
-            return {"error": f"Suggests analysis not available for data source: {data_source}"}
+            return {
+                "error": (
+                    f"Suggests analysis not available for data source: "
+                    f"{data_source}"
+                )
+            }
     except Exception as exc:  # pragma: no cover - best effort
         logger.exception("Failed to process suggests: %s", exc)
         return {"error": f"Failed to process suggests: {str(exc)}"}
 
 
+@lru_cache(maxsize=32)
 def process_quality_analysis(data_source: str) -> Dict[str, Any]:
     """Perform basic data quality analysis."""
     try:
@@ -236,7 +263,9 @@ def process_quality_analysis(data_source: str) -> Dict[str, Any]:
             duplicate_rows = df.duplicated().sum()
             quality_score = max(
                 0,
-                100 - (missing_values / (total_rows * total_cols) * 100) - (duplicate_rows / total_rows * 10),
+                100
+                - (missing_values / (total_rows * total_cols) * 100)
+                - (duplicate_rows / total_rows * 10),
             )
             return {
                 "analysis_type": "Data Quality",
@@ -258,6 +287,7 @@ def process_quality_analysis(data_source: str) -> Dict[str, Any]:
         return {"error": f"Quality analysis error: {str(exc)}"}
 
 
+@lru_cache(maxsize=32)
 def analyze_data_with_service(data_source: str, analysis_type: str) -> Dict[str, Any]:
     """Run analysis using the analytics service with chunked processing."""
     try:
@@ -295,6 +325,7 @@ def analyze_data_with_service(data_source: str, analysis_type: str) -> Dict[str,
 # Simplified safe wrappers used in callbacks
 # ---------------------------------------------------------------------------
 
+
 def process_suggests_analysis_safe(data_source: str) -> Dict[str, Any]:
     """Safer variant of :func:`process_suggests_analysis`."""
     return process_suggests_analysis(data_source)
@@ -305,7 +336,9 @@ def process_quality_analysis_safe(data_source: str) -> Dict[str, Any]:
     return process_quality_analysis(data_source)
 
 
-def analyze_data_with_service_safe(data_source: str, analysis_type: str) -> Dict[str, Any]:
+def analyze_data_with_service_safe(
+    data_source: str, analysis_type: str
+) -> Dict[str, Any]:
     """Safer variant of :func:`analyze_data_with_service`."""
     return analyze_data_with_service(data_source, analysis_type)
 
