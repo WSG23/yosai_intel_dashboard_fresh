@@ -1,53 +1,58 @@
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from dash import dcc, html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 from dash_extensions import WebSocket
 
-from .. import create_analytics_charts, create_summary_cards
+from analytics.controllers import RealTimeWebSocketController
 
 
 class RealTimeAnalytics:
     """Dashboard component updating via WebSocket."""
 
-    def __init__(self, url: str = "ws://localhost:6789") -> None:
+    def __init__(self, url: str = "ws://localhost:6789", interval: int = 1000) -> None:
         self.url = url
+        self.interval = interval
+        self._controller = RealTimeWebSocketController()
 
     def layout(self) -> html.Div:
         return html.Div(
             [
                 WebSocket(id="analytics-ws", url=self.url),
                 dcc.Store(id="analytics-ws-store"),
+                dcc.Interval(id="analytics-refresh", interval=self.interval),
                 html.Div(id="analytics-summary"),
                 html.Div(id="analytics-charts"),
             ]
         )
 
     def register_callbacks(self, app: Any) -> None:
-        @app.callback(Output("analytics-ws-store", "data"), Input("analytics-ws", "message"))
+        @app.callback(
+            Output("analytics-ws-store", "data"),
+            Input("analytics-ws", "message"),
+            prevent_initial_call=True,
+        )
         def _update_data(message: dict | None) -> dict | None:
-            if not message:
+            data = self._controller.parse_message(message)
+            if data is None:
                 raise PreventUpdate
-            try:
-                return json.loads(message.get("data", "{}"))
-            except Exception:
-                raise PreventUpdate
+            return data
 
-        @app.callback(Output("analytics-summary", "children"), Input("analytics-ws-store", "data"))
-        def _update_summary(data: dict | None) -> Any:
+        @app.callback(
+            Output("analytics-summary", "children"),
+            Output("analytics-charts", "children"),
+            Input("analytics-refresh", "n_intervals"),
+            State("analytics-ws-store", "data"),
+        )
+        def _update_view(_n: int, data: dict | None) -> tuple[Any, Any]:
             if not data:
                 raise PreventUpdate
-            return create_summary_cards(data)
-
-        @app.callback(Output("analytics-charts", "children"), Input("analytics-ws-store", "data"))
-        def _update_charts(data: dict | None) -> Any:
-            if not data:
-                raise PreventUpdate
-            return create_analytics_charts(data)
+            summary = self._controller.create_summary(data)
+            charts = self._controller.create_charts(data)
+            return summary, charts
 
 
 __all__ = ["RealTimeAnalytics"]
