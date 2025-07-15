@@ -6,12 +6,12 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Tuple
 
 import pandas as pd
 
-from mapping.factories.service_factory import create_mapping_service
-from mapping.service import MappingService
+if TYPE_CHECKING:  # pragma: no cover - only for type hints
+    from mapping.service import MappingService
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,11 @@ class AnalyticsDataAccessor:
         self.base_path = Path(base_data_path)
         self.mappings_file = self.base_path / "learned_mappings.json"
         self.session_storage = self.base_path.parent / "session_storage"
-        self.mapping_service = mapping_service or create_mapping_service()
+        if mapping_service is None:
+            from mapping.factories.service_factory import create_mapping_service
+
+            mapping_service = create_mapping_service()
+        self.mapping_service = mapping_service
 
     def get_processed_database(self) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         """Return the combined DataFrame and metadata using learned mappings."""
