@@ -29,12 +29,7 @@ def create_app(mode=None, **kwargs):
         ]
     )
 
-    # Register pages using their modules so layouts stay in sync
-    deep_analytics.register_page()
-    graphs.register_page()
-    export.register_page()
-    settings.register_page()
-    file_upload.register_page()
+
 
     # Simple routing callback that uses REAL pages
     @app.callback(Output("page-content", "children"), Input("url", "pathname"))

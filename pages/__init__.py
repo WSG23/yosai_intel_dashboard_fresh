@@ -7,7 +7,7 @@ import importlib
 import logging
 import dash_bootstrap_components as dbc
 from types import ModuleType
-from typing import TYPE_CHECKING, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Callable, Dict, Optional, Any
 
 if TYPE_CHECKING:
     from dash import Dash
@@ -73,11 +73,7 @@ def register_pages(app: Optional["Dash"] = None) -> None:
         try:
             module = _load_page(name)
             if module and hasattr(module, "register_page"):
-                # Check if module has a register_page_with_app function first
-                if hasattr(module, "register_page_with_app") and app:
-                    module.register_page_with_app(app)
-                else:
-                    module.register_page()
+                module.register_page()
                 registered_count += 1
                 logger.debug(f"✅ Registered page: {name}")
             else:
@@ -162,3 +158,42 @@ def register_router_callback(manager):
         Input("url", "pathname"),
         prevent_initial_call=False
     )(route_pages_unified)
+
+
+def register_all_pages(app: "Dash", manager: Optional[Any] = None) -> None:
+    """Register every page module and its callbacks with *app*."""
+    import pkgutil
+    import dash
+    from pathlib import Path
+    
+    package_path = Path(__file__).parent
+    modules = [m.name for m in pkgutil.iter_modules([str(package_path)]) if not m.name.startswith("_")]
+
+    old_app = getattr(dash, "_current_app", None)
+    dash._current_app = app
+
+    for mod_name in modules:
+        try:
+            module = importlib.import_module(f"{__name__}.{mod_name}")
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.warning("Failed to import %s: %s", mod_name, exc)
+            continue
+
+        if hasattr(module, "register_page"):
+            try:
+                module.register_page()
+                logger.debug("Registered page %s", mod_name)
+            except Exception as exc:  # pragma: no cover - best effort
+                logger.warning("Failed to register page %s: %s", mod_name, exc)
+
+        if manager and hasattr(module, "register_callbacks"):
+            try:
+                module.register_callbacks(manager)
+                logger.debug("Registered callbacks for %s", mod_name)
+            except Exception as exc:  # pragma: no cover - best effort
+                logger.warning("Failed to register callbacks for %s: %s", mod_name, exc)
+
+    if old_app is not None:
+        dash._current_app = old_app
+    else:
+        delattr(dash, "_current_app")
