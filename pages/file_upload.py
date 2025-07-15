@@ -225,9 +225,14 @@ class UploadPage(UIComponent):
                     )
 
                     return status, 100, progress_style, updated_files, preview
+                    
+                except Exception as exc:
+                    logger.exception("Upload processing failed")
+                    error_status = dbc.Alert(
+                        "Upload failed. Please check server logs for details.",
+                        color="danger",
+                    )
 
-                except Exception as e:
-                    error_status = dbc.Alert(f"Upload failed: {str(e)}", color="danger")
                     return error_status, 0, {"display": "none"}, no_update, no_update
 
             logger.info("✅ File upload callbacks registered successfully")

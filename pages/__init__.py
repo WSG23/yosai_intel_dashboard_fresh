@@ -5,6 +5,7 @@ Page registration system - Fixed to work with Dash app context
 
 import importlib
 import logging
+import dash_bootstrap_components as dbc
 from types import ModuleType
 from typing import TYPE_CHECKING, Callable, Dict, Optional, Any
 
@@ -144,11 +145,12 @@ def register_router_callback(manager):
                     html.P(f"Could not load page: {page_name}"),
                     html.P(f"Path: {pathname}")
                 ])
-        except Exception as e:
-            return html.Div([
-                html.H1("Routing Error"), 
-                html.P(f"Error: {str(e)}")
-            ])
+        except Exception as exc:
+            logger.exception("Routing failure")
+            return dbc.Alert(
+                "There was a problem loading the requested page.",
+                color="danger",
+            )
     
     # Register with TrulyUnifiedCallbacks
     manager.unified_callback(
