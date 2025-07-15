@@ -56,8 +56,10 @@ yosai_intel_dashboard/
 
 ### Navbar Icons
 
-Store PNG images for the navigation bar in `assets/navbar_icons/`. The
-application expects the following files:
+The navigation bar now uses **FontAwesome** icons by default. PNG images in
+`assets/navbar_icons/` are optional and primarily used by the `get_simple_icon`
+helper or the debug utilities. Common filenames referenced by the debug tool
+include:
 
 * `dashboard.png`
 * `analytics.png`
@@ -67,14 +69,22 @@ application expects the following files:
 * `settings.png`
 * `logout.png`
 
-Additional icons can live in the same directory as long as their paths match the references in
-`components/ui/navbar.py`.
-
-Run the debug helper to verify that icon files exist and can be served:
+Run the debug helper to verify that PNG icons exist and can be served:
 
 ```bash
 python -m tools.debug assets
 ```
+
+You can override the default links and icons when creating the navbar:
+
+```python
+from components.ui.navbar import create_navbar_layout
+
+links = [('/admin', 'Admin'), ('/reports', 'Reports')]
+icons = ['fa-user-shield', 'fa-file-alt']
+navbar = create_navbar_layout(links=links, icons=icons)
+```
+
 Pass icon names after the command to check custom files.
 
 ## <span aria-hidden="true">🚀</span> Quick Start
