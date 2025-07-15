@@ -161,12 +161,9 @@ def create_verification_interface(
                         [
                             dcc.Dropdown(
                                 id={"type": "column-mapping", "index": i},
-                                options=[
-                                    {"label": col, "value": col} for col in columns
-                                ]
-                                + [{"label": "Skip this column", "value": "ignore"}],
-                                value=column if confidence > 0.5 else None,
-                                placeholder=f"Select column for {column}",
+                                options=STANDARD_FIELD_OPTIONS,
+                                value=suggested_field if confidence > 0.5 else None,
+                                placeholder=f"Map '{column}' to standard field",
                                 className="mb-2",
                             )
                         ],
@@ -685,14 +682,57 @@ def create_complete_column_section(file_info: Dict[str, Any], df: pd.DataFrame =
             ], striped=True, bordered=True, size="sm", className="mb-4")
         ]))
     
-    # AI Column Mapping Interface (the actual mapping UI)
-    sections.append(html.Div([
-        html.H5("AI Column Mapping:"),
-        html.P(f"Found {len(ai_suggestions)} AI suggestions"),
-        create_verification_interface(columns, {}, ai_suggestions),
-        html.Hr(),
-        dbc.Button("Save Column Mappings", id="save-column-mappings", color="primary", size="lg")
-    ]))
+    # AI Column Mapping Interface - Two Column Table
+    if ai_suggestions:
+        table_rows = []
+        for i, column in enumerate(columns):
+            ai_suggestion = ai_suggestions.get(column, {})
+            suggested_field = ai_suggestion.get("field", "")
+            confidence = ai_suggestion.get("confidence", 0.0)
+            default_value = suggested_field if suggested_field else None
+            
+            # Color coding for confidence
+            confidence_class = "text-danger" if confidence < 0.5 else "text-success" if confidence > 0.7 else "text-warning"
+            dropdown_style = {"border": "2px solid red"} if confidence < 0.5 else {}
+
+            table_rows.append(
+                html.Tr([
+                    html.Td([
+                        html.Strong(column),
+                        html.Br(),
+                        html.Small(f"AI: {suggested_field} ({confidence:.0%})", className=confidence_class),
+                    ]),
+                    html.Td([
+                        dcc.Dropdown(
+                            id={"type": "column-mapping", "index": i},
+                            options=STANDARD_FIELD_OPTIONS,
+                            placeholder=f"Map {column} to...",
+                            value=default_value,
+                            style=dropdown_style
+                        )
+                    ])
+                ])
+            )
+
+        sections.append(html.Div([
+            html.H5("AI Column Mapping:"),
+            html.P("Review AI suggestions and adjust mappings as needed:"),
+            dbc.Table([
+                html.Thead([
+                    html.Tr([
+                        html.Th("Column Name & AI Suggestion"),
+                        html.Th("Manual Mapping Override")
+                    ])
+                ]),
+                html.Tbody(table_rows)
+            ], striped=True, hover=True, responsive=True, className="mb-3"),
+            dbc.Button("Save Column Mappings", id="save-column-mappings", color="primary", size="lg")
+        ]))
+    else:
+        sections.append(html.Div([
+            html.H5("AI Column Mapping:"),
+            dbc.Alert("No AI suggestions available", color="info")
+        ]))
     
     return html.Div(sections)
 

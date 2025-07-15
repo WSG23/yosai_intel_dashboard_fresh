@@ -291,35 +291,13 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
             return result
         elif return_format == "simple":
             # For simple callers like mde.py - return just 3 core values
-            return (
-                result["upload_results"],
-                result["file_info_dict"], 
-                result["current_file_info"]
-            )
+            return result
         elif return_format == "legacy":
             # For legacy dashboard callers expecting exactly 7 values
-            return (
-                result["upload_results"],
-                result["file_preview_components"],
-                result["file_info_dict"],
-                result["upload_nav"],
-                result["current_file_info"],
-                no_update,
-                no_update,
-            )
+            return result
         elif return_format == "extended":
             # For future metafile processors that need more data
-            return (
-                result["upload_results"],
-                result["file_info_dict"],
-                result["current_file_info"],
-                result["ai_suggestions"],
-                result["device_mappings"],
-                result["validation_results"],
-                result["processing_stats"],
-                result["metadata"],
-                result["extensions"]
-            )
+            return result
         else:
             # Default: return full dictionary for maximum flexibility
             return result

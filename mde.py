@@ -15,6 +15,7 @@ import dash
 from dash import dcc, html, Input, Output, State, dash_table
 import pandas as pd
 import dash_bootstrap_components as dbc
+from components.column_verification import create_complete_column_section, register_callbacks as register_column_callbacks
 import logging
 
 # Import existing base code (no custom implementations)
@@ -146,6 +147,13 @@ class MVPTestApp:
     def _register_callbacks(self):
         """Register callbacks using base code services"""
         
+        # Register column verification callbacks (MISSING - this enables save functionality)
+        try:
+            register_column_callbacks(self)
+            logger.info("✅ Column verification callbacks registered")
+        except Exception as e:
+            logger.warning(f"⚠️ Column verification callbacks failed: {e}")
+        
         @self.app.callback(
             [Output('upload-results', 'children'),
              Output('column-mapping', 'children'),
@@ -168,9 +176,14 @@ class MVPTestApp:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 
-                upload_results, preview_components, file_info = loop.run_until_complete(
+                result_dict = loop.run_until_complete(
                     self.upload_service.process_uploaded_files([contents], [filename])
                 )
+                
+                # Extract from flexible dictionary
+                upload_results = result_dict.get('upload_results', [])
+                preview_components = result_dict.get('file_preview_components', [])
+                file_info = result_dict.get('file_info_dict', {})
                 loop.close()
                 
                 logger.info(f"✅ Base code processing complete")
@@ -202,7 +215,7 @@ class MVPTestApp:
                 
                 # Create displays using base code
                 upload_display = self._create_upload_display(upload_results, file_info.get(filename, {}))
-                column_display = self._create_column_display(ai_suggestions, df)
+                column_display = self.create_column_display(ai_suggestions, df)
                 device_display = self._create_device_display(df, filename)
                 data_display = self._create_data_display(df)
                 
@@ -251,7 +264,17 @@ class MVPTestApp:
             html.P(f"Columns: {file_info.get('columns', 0)}")
         ], color="success")
     
-    def _create_column_display(self, ai_suggestions, df):
+    def create_column_display(self, ai_suggestions, df):
+        """Use base code for complete column mapping interface"""
+        # Get current file info for base code
+        file_info = {
+            'ai_suggestions': ai_suggestions,
+            'column_names': df.columns.tolist() if df is not None else [],
+            'columns': len(df.columns) if df is not None else 0,
+            'filename': 'Test1.csv'
+        }
+        return create_complete_column_section(file_info, df)
+
         """Create AI column mapping display"""
         if not ai_suggestions:
             return dbc.Alert("No AI suggestions available", color="info")
@@ -322,4 +345,35 @@ class MVPTestApp:
 if __name__ == '__main__':
     # Create and run the minimal test app
     app = MVPTestApp()
+
+    # Test device analysis using existing base code
+    print("\n=== DEVICE ANALYSIS ===")
+    from services.device_learning_service import DeviceLearningService
+    
+    device_service = DeviceLearningService()
+    learned_mappings = device_service.learned_mappings
+    
+    if learned_mappings:
+        print(f"📋 Learned Device Mappings:")
+        
+        # Extract all device mappings using existing base code structure
+        all_device_mappings = {}
+        for fingerprint, data in learned_mappings.items():
+            device_mappings = data.get("device_mappings", {})
+            filename = data.get("filename", "Unknown")
+            for device_name, properties in device_mappings.items():
+                properties["source_file"] = filename
+                all_device_mappings[device_name] = properties
+        
+        # Display device mappings (like your screenshot)
+        for device_name, props in all_device_mappings.items():
+            print(f"• {device_name}: {props}")
+            
+        print(f"\n✅ Found {len(all_device_mappings)} learned device mappings")
+    else:
+        print("📋 No learned device mappings found")
+    
+    # Start the web UI after device analysis
+    print("\n=== STARTING WEB UI ===")
+    print("🌐 Device analysis complete - launching web interface...")
     app.run()
