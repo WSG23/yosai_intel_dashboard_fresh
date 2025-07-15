@@ -1,13 +1,7 @@
-import importlib.util
-import pathlib
-
-analysis_path = pathlib.Path(__file__).resolve().parents[1] / "pages/deep_analytics_complex/analysis.py"
-spec = importlib.util.spec_from_file_location("analysis", analysis_path)
-analysis = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(analysis)
-
-_extract_counts = analysis._extract_counts
-_extract_security_metrics = analysis._extract_security_metrics
+from services.analytics_processing import (
+    _extract_counts,
+    _extract_security_metrics,
+)
 
 
 def test_extract_counts_iterables_and_success_fallback():

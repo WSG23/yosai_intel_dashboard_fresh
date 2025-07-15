@@ -3,13 +3,29 @@
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from .analysis import (
-    get_analysis_buttons_section,
+from services.data_processing.analytics_engine import (
     get_data_source_options_safe,
-    get_initial_message_safe,
     get_latest_uploaded_source_value,
-    get_updated_button_group,
 )
+
+
+def get_analysis_buttons_section() -> html.Div:
+    """Return the dropdown and buttons used to start analyses."""
+    return html.Div(
+        [html.Button("Analyze", id="analyze-btn", className="btn btn-primary")]
+    )
+
+
+def get_initial_message_safe() -> html.Div:
+    """Initial placeholder message for the analytics page."""
+    return html.Div("Welcome to Deep Analytics")
+
+
+def get_updated_button_group() -> html.Div:
+    """Return the refresh button group used on the page."""
+    return html.Div(
+        [html.Button("Update", id="update-btn", className="btn btn-secondary")]
+    )
 
 
 def layout() -> dbc.Container:
