@@ -162,9 +162,7 @@ Run this after setting up the project structure
 def test_file_upload():
     """Test file upload functionality"""
 
-    # Generate test data
-    from utils.sample_data_generator import generate_sample_access_data
-
+    # Generate test data using function defined above
     df = generate_sample_access_data(100)
     logger.info(f"Generated test data: {len(df)} records")
     logger.info(f"Columns: {list(df.columns)}")

@@ -293,7 +293,6 @@ def diagnose_upload_config():
     """Diagnostic function to check upload configuration"""
     import os
 
-    from config.dynamic_config import dynamic_config
 
     print("=== Upload Configuration Diagnosis ===")
     print(f"Environment MAX_UPLOAD_MB: {os.getenv('MAX_UPLOAD_MB', 'Not Set')}")
