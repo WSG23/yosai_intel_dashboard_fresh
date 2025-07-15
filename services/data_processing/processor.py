@@ -1,21 +1,24 @@
+from __future__ import annotations
+
 import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterator, Optional, Tuple
 
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
-from services.streaming import StreamingService
 from core.performance import get_performance_monitor
+from core.security_validator import SecurityValidator
 from monitoring.data_quality_monitor import (
     DataQualityMetrics,
     get_data_quality_monitor,
 )
-from core.security_validator import SecurityValidator
-from mapping.factories.service_factory import create_mapping_service
-from mapping.service import MappingService
+from services.streaming import StreamingService
+
+if TYPE_CHECKING:  # pragma: no cover - used for type hints only
+    from mapping.service import MappingService
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +38,11 @@ class Processor:
         self.session_storage = self.base_path.parent / "session_storage"
         self.validator = validator or SecurityValidator()
         self.streaming_service = streaming_service
-        self.mapping_service = mapping_service or create_mapping_service()
+        if mapping_service is None:
+            from mapping.factories.service_factory import create_mapping_service
+
+            mapping_service = create_mapping_service()
+        self.mapping_service = mapping_service
 
     # ------------------------------------------------------------------
     # Streaming helpers (from DataLoadingService)
