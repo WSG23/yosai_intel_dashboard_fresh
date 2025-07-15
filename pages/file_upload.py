@@ -45,6 +45,7 @@ class UploadPage(UIComponent):
         # Pre-initialize all components to prevent flash
         upload_area = dcc.Upload(
             id="drag-drop-upload",
+            className="drag-drop-upload upload-area",
             children=html.Div([
                 html.I(
                     className="fas fa-cloud-upload-alt fa-3x mb-3",
@@ -54,23 +55,6 @@ class UploadPage(UIComponent):
                 html.P("or click to select files", className="text-muted"),
                 html.P("Supports CSV, Excel, and JSON files", className="small text-muted"),
             ]),
-            style={
-                "width": "100%",
-                "height": "200px",
-                "lineHeight": "60px",
-                "borderWidth": "2px",
-                "borderStyle": "dashed",
-                "borderRadius": "5px",
-                "textAlign": "center",
-                "margin": "10px",
-                "cursor": "pointer",
-                "display": "flex",
-                "flexDirection": "column",
-                "justifyContent": "center",
-                "alignItems": "center",
-                "opacity": "1",
-                "visibility": "visible"
-            },
             multiple=True,
         )
 
@@ -88,10 +72,7 @@ class UploadPage(UIComponent):
             
             # Upload area - Pre-rendered
             dbc.Row([
-                dbc.Col([
-                    html.Label("Upload data files", htmlFor="drag-drop-upload", className="visually-hidden"),
-                    upload_area,
-                ], lg=8, md=10, sm=12, className="mx-auto")
+                dbc.Col(upload_area, lg=8, md=10, sm=12, className="mx-auto")
             ]),
             
             # Progress area - Pre-rendered but hidden

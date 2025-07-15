@@ -21,6 +21,7 @@ def layout() -> dbc.Container:
     """Return the upload page layout."""
     upload_area = dcc.Upload(
         id="drag-drop-upload",
+        className="drag-drop-upload upload-area",
         children=html.Div(
             [
                 html.I(
@@ -35,21 +36,6 @@ def layout() -> dbc.Container:
                 ),
             ]
         ),
-        style={
-            "width": "100%",
-            "height": "200px",
-            "lineHeight": "60px",
-            "borderWidth": "2px",
-            "borderStyle": "dashed",
-            "borderRadius": "5px",
-            "textAlign": "center",
-            "margin": "10px",
-            "cursor": "pointer",
-            "display": "flex",
-            "flexDirection": "column",
-            "justifyContent": "center",
-            "alignItems": "center",
-        },
         multiple=True,
     )
 
