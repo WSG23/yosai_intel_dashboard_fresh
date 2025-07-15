@@ -5,7 +5,13 @@ import dash
 from dash import html, dcc, Input, Output
 import dash_bootstrap_components as dbc
 from components.ui.navbar import create_navbar_layout
-from pages import file_upload_simple
+from pages import (
+    file_upload,
+    deep_analytics,
+    graphs,
+    export,
+    settings,
+)
 
 
 def create_app(mode=None, **kwargs):
@@ -23,62 +29,31 @@ def create_app(mode=None, **kwargs):
         ]
     )
 
-    # Register callbacks for individual pages
-    file_upload_simple.register_page()
-    file_upload_simple.register_callbacks(app)
+    # Register pages using their modules so layouts stay in sync
+    deep_analytics.register_page()
+    graphs.register_page()
+    export.register_page()
+    settings.register_page()
+    file_upload.register_page()
 
     # Simple routing callback that uses REAL pages
     @app.callback(Output("page-content", "children"), Input("url", "pathname"))
     def display_page(pathname):
+        """Return the layout for the requested URL path."""
         pathname = pathname.rstrip("/") if pathname else "/"
-        if pathname == "/dashboard":
-            return html.Div(
-                [
-                    html.H1("🏠 Dashboard", className="mb-4"),
-                    html.P("Welcome to your Yōsai Intel Dashboard!"),
-                ]
-            )
-        elif pathname == "/analytics":
-            return html.Div(
-                [
-                    html.H1("📊 Analytics", className="mb-4"),
-                    html.P("Analytics page - working!"),
-                ]
-            )
-        elif pathname == "/graphs":
-            return html.Div(
-                [
-                    html.H1("📈 Graphs", className="mb-4"),
-                    html.P("Graphs page - working!"),
-                ]
-            )
-        elif pathname == "/upload":
-            # Delegate to simplified upload page
-            return file_upload_simple.layout()
-        elif pathname == "/export":
-            return html.Div(
-                [
-                    html.H1("📥 Export", className="mb-4"),
-                    html.P("Export page - working!"),
-                ]
-            )
-        elif pathname == "/settings":
-            return html.Div(
-                [
-                    html.H1("⚙️ Settings", className="mb-4"),
-                    html.P("Settings page - working!"),
-                ]
-            )
-        else:
-            return html.Div(
-                [
-                    html.H1("🏯 Yōsai Intel Dashboard", className="text-center mb-4"),
-                    html.P(
-                        "Select a page from the navigation menu above.",
-                        className="text-center",
-                    ),
-                ]
-            )
 
+        if pathname in {"/", "/dashboard", "/analytics"}:
+            return deep_analytics.layout()
+        if pathname == "/graphs":
+            return graphs.layout()
+        if pathname == "/upload":
+            return file_upload.layout()
+        if pathname == "/export":
+            return export.layout()
+        if pathname == "/settings":
+            return settings.layout()
+
+        # Fallback to analytics page
+        return deep_analytics.layout()
     app.title = "🏯 Yōsai Intel Dashboard"
     return app
