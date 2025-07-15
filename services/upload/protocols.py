@@ -17,6 +17,9 @@ from typing import (
 
 import pandas as pd
 
+from core.service_container import ServiceContainer
+from services.protocols.device_learning import DeviceLearningServiceProtocol
+
 
 @runtime_checkable
 class UploadProcessingServiceProtocol(Protocol):
@@ -191,30 +194,6 @@ class UploadSecurityProtocol(Protocol):
 
 
 @runtime_checkable
-class DeviceLearningServiceProtocol(Protocol):
-    """Protocol for persistent device mapping learning."""
-
-    @abstractmethod
-    def get_learned_mappings(self, df: pd.DataFrame, filename: str) -> Dict[str, Dict]:
-        """Retrieve previously learned mappings for ``filename``."""
-        ...
-
-    @abstractmethod
-    def apply_learned_mappings_to_global_store(
-        self, df: pd.DataFrame, filename: str
-    ) -> bool:
-        """Apply learned mappings to the global AI mapping store."""
-        ...
-
-    @abstractmethod
-    def save_user_device_mappings(
-        self, df: pd.DataFrame, filename: str, user_mappings: Dict[str, Any]
-    ) -> bool:
-        """Persist user-confirmed device mappings."""
-        ...
-
-
-@runtime_checkable
 class UploadQueueManagerProtocol(Protocol):
     """Protocol for managing queued uploads."""
 
@@ -244,9 +223,6 @@ class UploadQueueManagerProtocol(Protocol):
     ) -> List[Tuple[str, Any]]: ...
 
 
-from core.service_container import ServiceContainer
-
-
 def _get_container(
     container: ServiceContainer | None = None,
 ) -> ServiceContainer | None:
@@ -267,6 +243,6 @@ def get_device_learning_service(
     c = _get_container(container)
     if c and c.has("device_learning_service"):
         return c.get("device_learning_service")
-    from services.device_learning_service import get_device_learning_service as _get
+    from services.interfaces import get_device_learning_service as _get
 
     return _get()
