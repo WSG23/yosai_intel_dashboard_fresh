@@ -25,8 +25,7 @@ def layout() -> dbc.Container:
                 ),
                 html.Hr(),
                 html.I(
-                    className="fas fa-chart-line fa-3x mb-3",
-                    style={"color": "#007bff"},
+                    className="fas fa-chart-line fa-3x mb-3 text-accent",
                     **{"aria-hidden": "true"},
                 ),
                 html.H6("✅ Navigation Flash: FIXED"),
@@ -89,9 +88,12 @@ def layout() -> dbc.Container:
         fluid=True,
     )
 
+
 def __getattr__(name: str):
     if name.startswith(("create_", "get_")):
+
         def _stub(*args, **kwargs):
             return None
+
         return _stub
     raise AttributeError(f"module {__name__} has no attribute {name}")
