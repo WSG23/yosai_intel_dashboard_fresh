@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Enhanced navbar component with logo and proper import safety."""
+"""Unified configurable navbar component."""
+
+from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Safe imports with fallbacks
+# Safe imports with fallbacks for environments without Dash
 try:
     import dash
     import dash_bootstrap_components as dbc
@@ -14,113 +16,108 @@ try:
     html = dash.html
     dcc = dash.dcc
     DBC_AVAILABLE = True
-except ImportError:
+except ImportError:  # pragma: no cover - fallback for docs/tests
     DBC_AVAILABLE = False
 
-    # Create fallback objects to prevent unbound variable errors
-    class FallbackHtml:
-        def __getattr__(self, name):
-            return lambda *args, **kwargs: f"HTML component {name} not available"
+    class _Fallback:
+        def __getattr__(self, name: str) -> Any:  # pragma: no cover - simple fallback
+            return lambda *a, **k: f"{name} unavailable"
 
-    class FallbackDbc:
-        def __getattr__(self, name):
-            return lambda *args, **kwargs: f"DBC component {name} not available"
+    html = _Fallback()
+    dbc = _Fallback()
+    dcc = _Fallback()
 
-    class FallbackDcc:
-        def __getattr__(self, name):
-            return lambda *args, **kwargs: f"DCC component {name} not available"
+# Default icon class mapping and navigation links
+DEFAULT_ICONS: Dict[str, str] = {
+    "dashboard": "fas fa-home me-2",
+    "analytics": "fas fa-chart-bar me-2",
+    "graphs": "fas fa-chart-line me-2",
+    "upload": "fas fa-upload me-2",
+    "export": "fas fa-download me-2",
+    "settings": "fas fa-cog me-2",
+}
 
-    html = FallbackHtml()
-    dbc = FallbackDbc()
-    dcc = FallbackDcc()
+DEFAULT_LINKS: List[Dict[str, str]] = [
+    {"name": "dashboard", "label": "Dashboard", "href": "/dashboard"},
+    {"name": "analytics", "label": "Analytics", "href": "/analytics"},
+    {"name": "graphs", "label": "Graphs", "href": "/graphs"},
+    {"name": "upload", "label": "Upload", "href": "/upload"},
+    {"name": "export", "label": "Export", "href": "/export"},
+    {"name": "settings", "label": "Settings", "href": "/settings"},
+]
 
 
-def get_simple_icon(name: str):
-    """Return an icon for the navbar tests."""
-    img_src = f"/assets/{name}.png"
-    return html.Img(src=img_src, className="nav-icon", alt=f"{name} icon")
+def get_simple_icon(name: str, icon_urls: Optional[Dict[str, str]] = None) -> Any:
+    """Return an ``html.Img`` element for *name* using ``icon_urls`` or assets."""
+
+    src = None
+    if icon_urls:
+        src = icon_urls.get(name)
+    if src is None:
+        src = f"/assets/{name}.png"
+    return html.Img(src=src, className="nav-icon", alt=f"{name} icon")
 
 
-def create_navbar_layout() -> Any:
-    """Create navbar with logo and proper navigation."""
+def _build_nav_items(
+    links: Iterable[Dict[str, str]], icons: Dict[str, str]
+) -> List[Any]:
+    items = []
+    for link in links:
+        icon_class = icons.get(link.get("name", ""))
+        icon_elem = (
+            html.I(className=icon_class, **{"aria-hidden": "true"})
+            if icon_class
+            else None
+        )
+        children = [icon_elem, link["label"]] if icon_elem else link["label"]
+        items.append(
+            dbc.NavItem(
+                dbc.NavLink(
+                    children,
+                    href=link.get("href", "#"),
+                    external_link=False,
+                    className="nav-link px-3",
+                    id=f"nav-{link.get('name', '')}" if link.get("name") else None,
+                )
+            )
+        )
+    return items
+
+
+def create_navbar_layout(
+    links: Optional[Iterable[Dict[str, str]]] = None,
+    icons: Optional[Dict[str, str]] = None,
+    brand_img: str = "/assets/yosai_logo_name_white.png",
+) -> Any:
+    """Create a responsive navbar with configurable links and icons."""
 
     if not DBC_AVAILABLE:
         return html.Div("Navbar unavailable - Dash Bootstrap Components not installed")
 
+    links = list(links) if links is not None else list(DEFAULT_LINKS)
+    icons = icons or DEFAULT_ICONS
+
     try:
+        nav_items = _build_nav_items(links, icons)
         return dbc.Navbar(
             dbc.Container(
                 [
-                    # Brand with Logo
                     dbc.NavbarBrand(
                         html.Img(
-                            src="/assets/yosai_logo_name_white.png",
+                            src=brand_img,
                             height="40px",
-                            style={"filter": "brightness(1)"},
+                            style={"margin-right": "10px", "filter": "brightness(1)"},
                             alt="Yōsai logo",
                         ),
                         href="/",
                         className="navbar-brand-link d-flex align-items-center",
                     ),
-                    # Navigation Links
-                    dbc.Nav(
-                        [
-                            dbc.NavItem(
-                                dcc.Link(
-                                    [
-                                        html.I(className="fas fa-home me-2", **{"aria-hidden": "true"}),
-                                        "Dashboard",
-                                    ],
-                                    href="/dashboard",
-                                    className="nav-link px-3",
-                                )
-                            ),
-                            dbc.NavItem(
-                                dcc.Link(
-                                    [
-                                        html.I(className="fas fa-chart-bar me-2", **{"aria-hidden": "true"}),
-                                        "Analytics",
-                                    ],
-                                    href="/analytics",
-                                    className="nav-link px-3",
-                                )
-                            ),
-                            dbc.NavItem(
-                                dcc.Link(
-                                    [
-                                        html.I(className="fas fa-chart-line me-2", **{"aria-hidden": "true"}),
-                                        "Graphs",
-                                    ],
-                                    href="/graphs",
-                                    className="nav-link px-3",
-                                )
-                            ),
-                            dbc.NavItem(
-                                dcc.Link(
-                                    [html.I(className="fas fa-upload me-2", **{"aria-hidden": "true"}), "File Upload"],
-                                    href="/upload",
-                                    className="nav-link px-3",
-                                )
-                            ),
-                            dbc.NavItem(
-                                dcc.Link(
-                                    [
-                                        html.I(className="fas fa-download me-2", **{"aria-hidden": "true"}),
-                                        "Export",
-                                    ],
-                                    href="/export",
-                                    className="nav-link px-3",
-                                )
-                            ),
-                            dbc.NavItem(
-                                dcc.Link(
-                                    [html.I(className="fas fa-cog me-2", **{"aria-hidden": "true"}), "Settings"],
-                                    href="/settings",
-                                    className="nav-link px-3",
-                                )
-                            ),                        ],
+                    dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
+                    dbc.Collapse(
+                        dbc.Nav(nav_items, navbar=True, className="ms-auto"),
+                        id="navbar-collapse",
+                        is_open=False,
                         navbar=True,
-                        className="ms-auto",
                     ),
                 ],
                 fluid=True,
@@ -129,80 +126,66 @@ def create_navbar_layout() -> Any:
             color="dark",
             dark=True,
             expand="lg",
-            className="navbar navbar-expand-lg navbar-stable",
-            style={"backgroundColor": "var(--gray-900)"},
+            className="navbar navbar-expand-lg fixed-top shadow-sm",
+            style={"background-color": "#000000"},
         )
-
-    except Exception as e:
-        logger.error(f"Navbar creation failed: {e}")
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        logger.error("Navbar creation failed: %s", exc)
         return create_fallback_navbar()
 
 
-def create_fallback_navbar():
-    """Simple fallback navbar that always works."""
+def create_fallback_navbar() -> Any:
+    """Simple fallback navbar always available."""
     if not DBC_AVAILABLE:
         return html.Div("Simple navbar fallback")
 
-        return dbc.Navbar(
-            dbc.Container(
-                [
-                    dbc.NavbarBrand("Dashboard", href="/"),
-                    dbc.Nav(
-                        [
-                            dbc.NavItem(
-                                dbc.NavLink(
-                                    "Analytics",
-                                    href="/analytics",
-                                    external_link=False,
-                                )
-                            ),
-                            dbc.NavItem(
-                                dbc.NavLink(
-                                    "Graphs",
-                                    href="/graphs",
-                                    external_link=False,
-                                )
-                            ),
-                            dbc.NavItem(
-                                dbc.NavLink(
-                                    "Upload",
-                                    href="/upload",
-                                    external_link=False,
-                                )
-                            ),
-                            dbc.NavItem(
-                                dbc.NavLink(
-                                    "Export",
-                                    href="/export",
-                                    external_link=False,
-                                )
-                            ),
-                            dbc.NavItem(
-                                dbc.NavLink(
-                                    "Settings",
-                                    href="/settings",
-                                    external_link=False,
-                                )
-                            ),
-                        ],
-                        navbar=True,
-                        className="ms-auto",
-                    ),
-                ],
-                fluid=True,
-            ),
-            color="dark",
-            dark=True,
-            className="fixed-top",
-        )
+    items = _build_nav_items(DEFAULT_LINKS, DEFAULT_ICONS)
+    return dbc.Navbar(
+        dbc.Container(
+            [
+                dbc.NavbarBrand("Dashboard", href="/"),
+                dbc.Nav(items, navbar=True, className="ms-auto"),
+            ],
+            fluid=True,
+        ),
+        color="dark",
+        dark=True,
+        className="fixed-top",
+    )
 
 
-def register_navbar_callbacks(callback_manager, service: Optional[Any] = None) -> None:
-    """Register navbar callbacks (simplified to avoid import errors)."""
+def register_navbar_callbacks(
+    callback_manager: Any, service: Optional[Any] = None
+) -> None:
+    """Register mobile toggle callback if Dash is available."""
+
+    if not DBC_AVAILABLE:
+        return
+
     try:
-        logger.debug("Navbar callbacks registration skipped - simple navigation mode")
-    except Exception as e:
-        logger.warning(f"Navbar callback registration failed: {e}")
+        from core.callback_registry import handle_register_with_deduplication
+
+        @handle_register_with_deduplication(  # type: ignore[misc]
+            callback_manager,
+            dash.dependencies.Output("navbar-collapse", "is_open"),
+            dash.dependencies.Input("navbar-toggler", "n_clicks"),
+            dash.dependencies.State("navbar-collapse", "is_open"),
+            callback_id="navbar_toggle",
+            component_name="navbar",
+            prevent_initial_call=True,
+            source_module=__name__,
+        )
+        def toggle_navbar_collapse(n: int, is_open: bool) -> bool:
+            if n:
+                return not is_open
+            return is_open
+
+    except Exception as exc:  # pragma: no cover - environment without callbacks
+        logger.warning("Navbar callback registration failed: %s", exc)
 
 
-__all__ = ["create_navbar_layout", "register_navbar_callbacks", "get_simple_icon"]
+__all__ = [
+    "create_navbar_layout",
+    "register_navbar_callbacks",
+    "get_simple_icon",
+]
