@@ -50,6 +50,7 @@ def layout() -> dbc.Container:
             "justifyContent": "center",
             "alignItems": "center",
         },
+        className="m-2",
         multiple=True,
     )
 

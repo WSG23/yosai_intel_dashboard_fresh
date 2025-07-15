@@ -100,7 +100,13 @@ def layout() -> dbc.Container:
     hidden_trigger = html.Div(id="hidden-trigger", className="hidden")
 
     return dbc.Container(
-        [intro_card, status_alert, config_section, results_area, hidden_trigger],
+        [
+            dbc.Row(dbc.Col(intro_card)),
+            dbc.Row(dbc.Col(status_alert)),
+            dbc.Row(dbc.Col(config_section)),
+            dbc.Row(dbc.Col(results_area)),
+            dbc.Row(dbc.Col(hidden_trigger)),
+        ],
         fluid=True,
     )
 

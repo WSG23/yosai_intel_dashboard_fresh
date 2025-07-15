@@ -57,7 +57,7 @@ class UploadPage(UIComponent):
                     ),
                 ]
             ),
-            className="upload-simple m-2-5",
+
             style={
                 "width": "100%",
                 "height": "200px",
@@ -74,6 +74,7 @@ class UploadPage(UIComponent):
                 "opacity": "1",
                 "visibility": "visible",
             },
+            className="m-2",
             multiple=True,
         )
 
@@ -124,7 +125,8 @@ class UploadPage(UIComponent):
                                     animated=False,
                                     style={"display": "none"},
                                 ),
-                                html.Div(id="upload-status", className="mt-2-5"),
+                                html.Div(id="upload-status", className="mt-2"),
+
                             ],
                             lg=8,
                             md=10,
@@ -225,13 +227,9 @@ class UploadPage(UIComponent):
                     )
 
                     return status, 100, progress_style, updated_files, preview
-                    
-                except Exception as exc:
-                    logger.exception("Upload processing failed")
-                    error_status = dbc.Alert(
-                        "Upload failed. Please check server logs for details.",
-                        color="danger",
-                    )
+
+                except Exception as e:
+                    error_status = dbc.Alert(f"Upload failed: {str(e)}", color="danger")
 
                     return error_status, 0, {"display": "none"}, no_update, no_update
 
@@ -262,6 +260,19 @@ def register_page():
         logger.warning(f"Failed to register page {__name__}: {e}")
 
 
+def register_page_with_app(app):
+    try:
+        import dash
+
+        old_app = getattr(dash, "_current_app", None)
+        dash._current_app = app
+        dash.register_page(__name__, path="/upload", name="Upload")
+        if old_app is not None:
+            dash._current_app = old_app
+        else:
+            delattr(dash, "_current_app")
+    except Exception as e:
+        logger.warning(f"Failed to register page {__name__} with app: {e}")
 
 
 def layout():
