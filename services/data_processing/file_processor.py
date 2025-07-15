@@ -15,7 +15,7 @@ from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
 from core.unicode import safe_format_number
 from core.unicode_decode import safe_unicode_decode
-from core.unicode_utils import sanitize_for_utf8
+from analytics_core.utils.unicode_processor import UnicodeHelper
 
 # Core processing imports only - NO UI COMPONENTS
 
@@ -82,7 +82,7 @@ class UnicodeFileProcessor:
                 chunk = df.iloc[start : start + chunk_size].copy()
                 for col in obj_cols:
                     chunk[col] = [
-                        sanitize_for_utf8(x) if isinstance(x, str) else x
+                        UnicodeHelper.clean_text(x) if isinstance(x, str) else x
                         for x in chunk[col].astype(str)
                     ]
                 yield chunk
@@ -175,7 +175,7 @@ def create_file_preview(
                 elif isinstance(val, (int, float)):
                     safe_row[col] = safe_format_number(val)
                 else:
-                    safe_row[col] = sanitize_for_utf8(str(val))
+                    safe_row[col] = UnicodeHelper.clean_text(str(val))
             preview_data.append(safe_row)
 
         return {

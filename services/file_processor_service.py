@@ -13,8 +13,8 @@ import pandas as pd
 
 from services.configuration_service import ConfigurationServiceProtocol
 from core.performance_file_processor import PerformanceFileProcessor
-from core.unicode import process_large_csv_content, sanitize_dataframe
-from core.unicode_utils import sanitize_for_utf8
+from core.unicode import process_large_csv_content
+from analytics_core.utils.unicode_processor import UnicodeHelper
 from services.data_processing.core.protocols import FileProcessorProtocol
 from services.data_processing.unified_file_validator import (
     safe_decode_with_unicode_handling,
@@ -69,7 +69,7 @@ class FileProcessorService(BaseService):
 
     def validate_file(self, filename: str, content: bytes) -> Dict[str, Any]:
         """Validate uploaded file"""
-        filename = sanitize_for_utf8(filename)
+        filename = UnicodeHelper.clean_text(filename)
         issues = []
 
         # Check file extension
@@ -100,7 +100,7 @@ class FileProcessorService(BaseService):
     def process_file(self, file_content: bytes, filename: str) -> pd.DataFrame:
         """Process uploaded file and return DataFrame"""
         try:
-            filename = sanitize_for_utf8(filename)
+            filename = UnicodeHelper.clean_text(filename)
             file_ext = Path(filename).suffix.lower()
 
             if file_ext == ".csv":
@@ -160,7 +160,7 @@ class FileProcessorService(BaseService):
                 )
                 if len(df_alt.columns) > len(df.columns):
                     df = df_alt
-            return sanitize_dataframe(df)
+            return UnicodeHelper.sanitize_dataframe(df)
         except Exception as exc:
             raise ValueError(f"Could not parse CSV file: {exc}")
 
@@ -177,7 +177,7 @@ class FileProcessorService(BaseService):
                 df = pd.DataFrame([data])
             else:
                 raise ValueError("JSON must be an object or array")
-            return sanitize_dataframe(df)
+            return UnicodeHelper.sanitize_dataframe(df)
         except json.JSONDecodeError as exc:
             raise ValueError(f"Invalid JSON format: {exc}")
         except Exception as e:
@@ -188,7 +188,7 @@ class FileProcessorService(BaseService):
         logger.debug("Processing Excel content")
         try:
             df = pd.read_excel(io.BytesIO(content), dtype=str, keep_default_na=False)
-            return sanitize_dataframe(df)
+            return UnicodeHelper.sanitize_dataframe(df)
         except Exception as e:
             raise ValueError(f"Error reading Excel file: {e}")
 
@@ -230,7 +230,7 @@ class FileProcessorService(BaseService):
             text = data.decode(encoding, errors="surrogatepass")
         except Exception:
             text = data.decode(encoding, errors="replace")
-        return sanitize_for_utf8(text)
+        return UnicodeHelper.clean_text(text)
 
     def _is_reasonable_text(self, text: str) -> bool:
         """Basic check to ensure decoded text looks valid."""

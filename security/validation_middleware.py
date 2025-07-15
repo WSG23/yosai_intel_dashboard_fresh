@@ -6,7 +6,7 @@ from flask import Response, request
 
 from config.dynamic_config import dynamic_config
 from core.callback_events import CallbackEvent
-from core.callback_manager import CallbackManager
+from analytics_core.callbacks.unified_callback_manager import CallbackManager
 from core.exceptions import ValidationError
 from core.security_validator import SecurityValidator
 

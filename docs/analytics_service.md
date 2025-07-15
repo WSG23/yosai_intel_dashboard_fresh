@@ -1,55 +1,34 @@
-# Analytics Service
+# Centralized Analytics Manager
 
-The Analytics Service powers most data insights in the dashboard.
-It processes raw uploads or database records, applies learned mappings,
-and generates summaries for the UI.
+The analytics system is now orchestrated by `CentralizedAnalyticsManager` from
+`analytics_core`.  It coordinates the core, AI, performance and data-processing
+services while exposing a single entry point for triggering analytics flows.
 
-## Responsibilities
+## Example Usage
 
-- Load uploaded files and consolidate them with existing mappings
-- Clean and map columns and device identifiers
-- Produce analytics such as event counts and top users/doors
-- Provide sample or database based summaries when needed
+```python
+from analytics_core.centralized_analytics_manager import CentralizedAnalyticsManager
+from analytics_core.services.core_service import CoreAnalyticsService
+from analytics_core.services.ai_service import AIAnalyticsService
+from analytics_core.services.performance_service import PerformanceAnalyticsService
+from analytics_core.services.data_processing_service import DataProcessingService
 
-## Major Classes and Methods
+manager = CentralizedAnalyticsManager(
+    core_service=CoreAnalyticsService(),
+    ai_service=AIAnalyticsService(),
+    performance_service=PerformanceAnalyticsService(),
+    data_service=DataProcessingService(),
+)
 
-### `Processor`
+manager.run_full_pipeline(raw_data)
+```
 
-- `get_processed_database()` – return combined dataframe and metadata
-- `load_dataframe()` – load a single file with validation and mappings
-- `stream_file()` – yield validated chunks for large files
-- `_load_consolidated_mappings()` – read saved mapping information
-- `_get_uploaded_data()` – retrieve uploaded files from the UI layer
-- `_apply_mappings_and_combine()` – apply mappings and merge files
+`run_full_pipeline` will hand off the provided data to each service in turn and
+finally emit a `pipeline_complete` event using
+`UnifiedCallbackManager`.
 
-### `AnalyticsService`
+## Removing Legacy Details
 
-- `get_analytics_from_uploaded_data()` – process files directly
-- `get_analytics_by_source(source)` – dispatch to uploaded, sample or database data
-- `_process_uploaded_data_directly()` – internal helper for uploaded datasets
--   now streams CSV files in chunks using `pandas.read_csv` to reduce memory usage
-- `summarize_dataframe(df)` – build counts and distributions from a dataframe
-
-## Data Flow
-
-1. User uploads files or selects a data source.
-2. `Processor` loads mappings and cleans each file.
-3. Cleaned data is combined and handed to `AnalyticsService`.
-4. Analytics are computed and returned to the dashboard.
-
-### Incremental Processing
-
-`_process_uploaded_data_directly` no longer loads every uploaded file into
-memory at once. When file paths are supplied it uses the helper
-`_stream_uploaded_file` which wraps `pandas.read_csv` with a `chunksize`
-parameter. The yielded chunks are passed to `_aggregate_counts` to update user
-and door statistics.  The final dictionary is assembled by `_build_result`.
-This incremental approach prevents excessive memory usage when processing very
-large CSV uploads.
-
-### Display Row Limit
-
-Analytics previews honor the `analytics.max_display_rows` setting from
-`config`. Set this value to control how many rows of a DataFrame are loaded for
-UI previews. The default is 10,000 rows, ensuring that analytical processing
-still uses the full dataset even when previews are truncated.
+Previous documentation describing individual service classes has been removed.
+The new manager abstracts these details, allowing implementations to evolve
+independently of the calling code.

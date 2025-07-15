@@ -684,7 +684,7 @@ safe = sanitize_unicode_input("A\ud800B")
 
 ### Firing events
 ```python
-from core.callback_manager import CallbackManager
+from analytics_core.callbacks.unified_callback_manager import CallbackManager
 from core.callback_events import CallbackEvent
 
 manager = CallbackManager()

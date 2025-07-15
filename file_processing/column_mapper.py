@@ -6,7 +6,7 @@ import pandas as pd
 from rapidfuzz import process
 
 from core.callback_controller import CallbackEvent
-from core.callback_manager import CallbackManager
+from analytics_core.callbacks.unified_callback_manager import CallbackManager
 
 REQUIRED_COLUMNS = ["person_id", "door_id", "access_result", "timestamp"]
 OPTIONAL_COLUMNS = ["device_name", "location"]

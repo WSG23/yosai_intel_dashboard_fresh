@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from .database_exceptions import UnicodeEncodingError
-from core.unicode import UnicodeProcessor, contains_surrogates
+from analytics_core.utils.unicode_processor import UnicodeHelper
+from core.unicode import contains_surrogates
 
 
 class UnicodeSQLProcessor:
@@ -19,7 +20,7 @@ class UnicodeSQLProcessor:
         if contains_surrogates(query):
             raise UnicodeEncodingError("Surrogate characters detected", query)
         try:
-            cleaned = UnicodeProcessor.clean_text(query)
+            cleaned = UnicodeHelper.clean_text(query)
             cleaned.encode("utf-8")
             return cleaned
         except UnicodeEncodeError as exc:  # pragma: no cover - defensive
