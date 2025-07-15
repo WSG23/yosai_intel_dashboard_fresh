@@ -1,15 +1,13 @@
 """Compatibility wrapper exposing security-specific callback names."""
 
-from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-
-SecurityEvent = CallbackEvent
+from security.events import (
+    SecurityEvent,
+    emit_security_event,
+    security_unified_callbacks,
+)
 SecurityCallbackController = CallbackManager
 security_callback_controller = CallbackManager()
-
-def emit_security_event(event: SecurityEvent, data: dict | None = None) -> None:
-    security_unified_callbacks.trigger(event, data)
 
 __all__ = [
     "SecurityEvent",
