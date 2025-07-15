@@ -248,6 +248,12 @@ def main():
             assets_dir = os.path.normcase(os.path.abspath(project_root / "assets"))
             app = create_app(mode='full', assets_folder=assets_dir)
 
+            from core.master_callback_system import MasterCallbackSystem
+            from pages import register_all_pages
+
+            callback_manager = MasterCallbackSystem(app)
+            register_all_pages(app, callback_manager)
+
             # Consolidate callbacks with Unicode safety
             # _register_callbacks(app, config, container=None)  # Already called during app creation
 

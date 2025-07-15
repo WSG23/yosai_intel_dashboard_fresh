@@ -257,19 +257,6 @@ def register_page():
         logger.warning(f"Failed to register page {__name__}: {e}")
 
 
-def register_page_with_app(app):
-    try:
-        import dash
-
-        old_app = getattr(dash, "_current_app", None)
-        dash._current_app = app
-        dash.register_page(__name__, path="/upload", name="Upload")
-        if old_app is not None:
-            dash._current_app = old_app
-        else:
-            delattr(dash, "_current_app")
-    except Exception as e:
-        logger.warning(f"Failed to register page {__name__} with app: {e}")
 
 
 def layout():
