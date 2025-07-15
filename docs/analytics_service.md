@@ -1,55 +1,37 @@
 # Analytics Service
 
-The Analytics Service powers most data insights in the dashboard.
-It processes raw uploads or database records, applies learned mappings,
-and generates summaries for the UI.
+The Analytics Service powers data insights in the dashboard. It processes uploads or database records, applies mappings, and generates summaries for the UI.
+
+## Centralized Architecture
+
+Analytics functionality is now provided through the `analytics_core` package. Create a manager using:
+
+```python
+from analytics_core import create_manager
+manager = create_manager()
+```
+
+Services are accessed through the manager:
+
+```python
+dashboard = manager.core_service.get_dashboard_summary()
+ai_data = manager.ai_service.process(my_data)
+```
+
+All callbacks are registered via `manager.callback_manager` and Unicode handling uses `manager.unicode_processor` utilities.
 
 ## Responsibilities
 
 - Load uploaded files and consolidate them with existing mappings
 - Clean and map columns and device identifiers
 - Produce analytics such as event counts and top users/doors
-- Provide sample or database based summaries when needed
-
-## Major Classes and Methods
-
-### `Processor`
-
-- `get_processed_database()` – return combined dataframe and metadata
-- `load_dataframe()` – load a single file with validation and mappings
-- `stream_file()` – yield validated chunks for large files
-- `_load_consolidated_mappings()` – read saved mapping information
-- `_get_uploaded_data()` – retrieve uploaded files from the UI layer
-- `_apply_mappings_and_combine()` – apply mappings and merge files
-
-### `AnalyticsService`
-
-- `get_analytics_from_uploaded_data()` – process files directly
-- `get_analytics_by_source(source)` – dispatch to uploaded, sample or database data
-- `_process_uploaded_data_directly()` – internal helper for uploaded datasets
--   now streams CSV files in chunks using `pandas.read_csv` to reduce memory usage
-- `summarize_dataframe(df)` – build counts and distributions from a dataframe
+- Provide sample or database-based summaries when needed
 
 ## Data Flow
 
 1. User uploads files or selects a data source.
-2. `Processor` loads mappings and cleans each file.
-3. Cleaned data is combined and handed to `AnalyticsService`.
-4. Analytics are computed and returned to the dashboard.
+2. The manager routes processing to the appropriate analytics service.
+3. Cleaned data is combined and analytics are computed.
+4. Results are returned to the dashboard.
 
-### Incremental Processing
 
-`_process_uploaded_data_directly` no longer loads every uploaded file into
-memory at once. When file paths are supplied it uses the helper
-`_stream_uploaded_file` which wraps `pandas.read_csv` with a `chunksize`
-parameter. The yielded chunks are passed to `_aggregate_counts` to update user
-and door statistics.  The final dictionary is assembled by `_build_result`.
-This incremental approach prevents excessive memory usage when processing very
-large CSV uploads.
-
-### Display Row Limit
-
-Analytics previews honor the `analytics.max_display_rows` setting from
-`config`. Set this value to control how many rows of a DataFrame are loaded for
-UI previews. The default is 10,000 rows, ensuring that analytical processing
-still uses the full dataset even when previews are truncated.
