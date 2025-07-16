@@ -83,6 +83,7 @@ class CallbackRegistry:
                 self._weak_refs[event] = []
 
             if weak:
+
                 def cleanup(ref: weakref.ref) -> None:
                     with self._lock:
                         try:
@@ -157,7 +158,9 @@ class CallbackController:
         self._registry.register(event, callback, weak)
         logger.debug(f"Registered callback for {event.name}")
 
-    def handle_unregister(self, event: CallbackEvent, callback: CallbackProtocol) -> bool:
+    def handle_unregister(
+        self, event: CallbackEvent, callback: CallbackProtocol
+    ) -> bool:
         success = self._registry.unregister(event, callback)
         if success:
             logger.debug(f"Unregistered callback for {event.name}")
@@ -195,7 +198,9 @@ class CallbackController:
                 self._stats["errors"] += 1
                 self._handle_callback_error(exc, context, callback)
 
-    def register_error_handler(self, handler: Callable[[Exception, CallbackContext], None]) -> None:
+    def register_error_handler(
+        self, handler: Callable[[Exception, CallbackContext], None]
+    ) -> None:
         self._error_handlers.append(handler)
 
     def get_stats(self) -> Dict[str, Any]:
@@ -294,4 +299,3 @@ __all__ = [
     "get_callback_controller",
     "fire_event",
 ]
-

@@ -13,6 +13,4 @@ class FlaskProtocol(Protocol):
 
     def route(
         self, rule: str, methods: Iterable[str] | None = None
-    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        ...
-
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]: ...

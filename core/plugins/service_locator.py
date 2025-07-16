@@ -23,6 +23,7 @@ class _LocatorMeta(type):
             return lambda: _unicode
         raise AttributeError(name)
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -89,7 +90,6 @@ class PluginServiceLocator(metaclass=_LocatorMeta):
         return None
 
 
-
 # Convenience module level functions for backward compatibility ------
 
 _ai_plugin: Optional[Any] = None
@@ -116,6 +116,7 @@ def reset_ai_classification_plugin() -> None:
 def get_json_serialization_service() -> Optional[Any]:
     return PluginServiceLocator.get_json_serialization_service()
 
+
 __all__ = [
     "PluginServiceLocator",
     "get_ai_classification_service",
@@ -123,6 +124,7 @@ __all__ = [
     "reset_ai_classification_plugin",
     "get_json_serialization_service",
 ]
+
 
 # ---------------------------------------------------------------------------
 def __getattr__(name: str):
@@ -137,6 +139,7 @@ def __getattr__(name: str):
 
         return lambda: _unicode
     raise AttributeError(name)
+
 
 # Backwards compatibility for tests that patch _load_ai_plugin
 _load_ai_plugin = PluginServiceLocator._load_ai_plugin

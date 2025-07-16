@@ -131,6 +131,7 @@ class AdvancedCacheManager:
 
 # ----------------------------------------------------------------------
 
+
 def cache_with_lock(
     manager: AdvancedCacheManager,
     ttl: Optional[int] = None,
@@ -160,6 +161,7 @@ def cache_with_lock(
 
 
 # ----------------------------------------------------------------------
+
 
 async def create_advanced_cache_manager() -> AdvancedCacheManager:
     """Initialize :class:`AdvancedCacheManager` using application config."""

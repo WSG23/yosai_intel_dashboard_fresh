@@ -83,7 +83,6 @@ class MasterCallbackSystem(TrulyUnifiedCallbacks):
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Wrap ``Dash.callback`` and track registrations."""
         return self.register_handler(
-
             outputs,
             inputs,
             states,

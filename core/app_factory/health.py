@@ -19,6 +19,7 @@ def register_health_endpoints(server: Any, progress_events: Any | None = None) -
         return validate_secrets(), 200
 
     if progress_events is not None:
+
         @server.route("/upload/progress/<task_id>")
         def upload_progress(task_id: str):
             """Stream task progress updates as Server-Sent Events."""

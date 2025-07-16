@@ -98,8 +98,9 @@ class SecurityValidator(SecurityServiceProtocol):
     # Compiled patterns for performance
     XSS_PATTERN_LIST = [re.compile(p, re.IGNORECASE) for p in RAW_XSS_PATTERNS]
 
-    PATH_TRAVERSAL_PATTERN_LIST = [re.compile(p, re.IGNORECASE) for p in RAW_PATH_PATTERNS]
-
+    PATH_TRAVERSAL_PATTERN_LIST = [
+        re.compile(p, re.IGNORECASE) for p in RAW_PATH_PATTERNS
+    ]
 
     def validate_input(self, value: str, field_name: str = "input") -> Dict[str, Any]:
         """Orchestrate security validations for the given value."""

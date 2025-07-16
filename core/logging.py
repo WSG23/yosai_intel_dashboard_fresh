@@ -1,4 +1,5 @@
 """Simple logging service implementing ``LoggingProtocol``."""
+
 from __future__ import annotations
 
 import logging
@@ -21,7 +22,9 @@ class LoggingService(LoggingProtocol):
     def log_warning(self, message: str, **kwargs: Any) -> None:
         self._logger.warning(message, extra=kwargs)
 
-    def log_error(self, message: str, error: Exception | None = None, **kwargs: Any) -> None:
+    def log_error(
+        self, message: str, error: Exception | None = None, **kwargs: Any
+    ) -> None:
         if error:
             self._logger.error(message, exc_info=error, extra=kwargs)
         else:
