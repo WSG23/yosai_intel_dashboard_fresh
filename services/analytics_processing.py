@@ -8,7 +8,7 @@ from dash import html
 from core.unicode import safe_format_number
 from core.unicode_utils import sanitize_for_utf8
 from services import get_analytics_service
-from services.ai_suggestions import generate_column_suggestions
+from services.data_enhancer import get_ai_column_suggestions as generate_column_suggestions
 from services.upload_data_service import get_uploaded_data
 from services.interfaces import get_upload_data_service
 from utils.preview_utils import serialize_dataframe_preview

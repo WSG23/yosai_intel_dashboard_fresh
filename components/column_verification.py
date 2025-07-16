@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+from typing import Optional#!/usr/bin/env python3
 """
 Column Header Verification Component
 Allows manual verification of AI-suggested column mappings
@@ -15,8 +15,10 @@ if TYPE_CHECKING:
 
 import logging
 
-from analytics.controllers.unified_controller import UnifiedAnalyticsController
-
+try:
+    from analytics.controllers import UnifiedAnalyticsController
+except ImportError:
+    UnifiedAnalyticsController = None
 
 class ColumnVerifierProtocol(Protocol):
     """Protocol for column verification helpers."""
@@ -25,7 +27,7 @@ class ColumnVerifierProtocol(Protocol):
         ...
 
     def register_callbacks(
-        self, manager: "TrulyUnifiedCallbacks", controller: UnifiedAnalyticsController | None = None
+        self, manager: "TrulyUnifiedCallbacks", controller: Optional[UnifiedAnalyticsController] = None
     ) -> None:
         ...
 
@@ -551,7 +553,7 @@ def toggle_custom_field(selected_value):
 
 def register_callbacks(
     manager: "TrulyUnifiedCallbacks",
-    controller: UnifiedAnalyticsController | None = None,
+    controller: Optional[UnifiedAnalyticsController] = None,
 ) -> None:
     """Register component callbacks using the coordinator."""
 
