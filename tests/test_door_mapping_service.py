@@ -1,6 +1,7 @@
 import pandas as pd
 
 from services.ai_device_generator import AIDeviceGenerator, DeviceAttributes
+from services.configuration_service import DynamicConfigurationService
 from services.door_mapping_service import DoorMappingService
 
 
@@ -24,7 +25,7 @@ def test_standardized_output(monkeypatch):
         return dummy
 
     monkeypatch.setattr(AIDeviceGenerator, "generate_device_attributes", fake_generate)
-    service = DoorMappingService()
+    service = DoorMappingService(DynamicConfigurationService())
     df = pd.DataFrame({"door_id": ["d1"]})
     result = service.process_uploaded_data(df)
     device = result["devices"][0]

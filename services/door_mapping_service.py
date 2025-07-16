@@ -3,18 +3,19 @@ Door Mapping Service - Business logic for device attribute assignment
 Handles AI model data processing and manual override management
 """
 
-import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from services.configuration_service import ConfigurationServiceProtocol
-
 # ADD after existing imports
 from services.ai_device_generator import AIDeviceGenerator
+from services.configuration_service import (
+    ConfigurationServiceProtocol,
+    DynamicConfigurationService,
+)
 from services.consolidated_learning_service import get_learning_service
 
 logger = logging.getLogger(__name__)
@@ -100,7 +101,10 @@ class DoorMappingService:
     def _generate_ai_attributes(
         self, door_id: str, df: pd.DataFrame, client_profile: str
     ) -> DeviceAttributeData:
-        """Generate AI-based attribute assignments using enhanced modular AI generator"""
+        """Generate AI-based attribute assignments.
+
+        Uses an enhanced modular AI generator.
+        """
 
         # Use new modular AI generator
         ai_generator = AIDeviceGenerator()
@@ -128,7 +132,7 @@ class DoorMappingService:
             is_elevator=ai_attributes.is_elevator,
             is_stairwell=ai_attributes.is_stairwell,
             is_fire_escape=ai_attributes.is_fire_escape,
-            is_restricted=ai_attributes.is_restricted,  # CHANGE: Remove getattr, use direct access
+            is_restricted=ai_attributes.is_restricted,
             other=not any(
                 [
                     ai_attributes.is_entry,
@@ -428,7 +432,9 @@ class DoorMappingService:
             )
 
             logger.info(
-                f"Saved {len(device_mappings)} device mappings with ID: {fingerprint[:8]}"
+                "Saved %d device mappings with ID: %s",
+                len(device_mappings),
+                fingerprint[:8],
             )
             return fingerprint
 
@@ -438,6 +444,6 @@ class DoorMappingService:
 
 
 # Service instance
-door_mapping_service = DoorMappingService()
+door_mapping_service = DoorMappingService(DynamicConfigurationService())
 
 __all__ = ["DoorMappingService", "DeviceAttributeData", "door_mapping_service"]

@@ -27,7 +27,7 @@ class ConfigurationServiceProtocol(Protocol):
 
 
 class DynamicConfigurationService(ConfigurationServiceProtocol):
-    """Adapter exposing ``DynamicConfigManager`` via ``ConfigurationServiceProtocol``."""
+    """Expose :class:`DynamicConfigManager` via ``ConfigurationServiceProtocol``."""
 
     def __init__(self, manager: DynamicConfigManager = dynamic_config) -> None:
         self._cfg = manager
