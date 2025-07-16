@@ -60,6 +60,7 @@ from ..security_score_calculator import SecurityScoreCalculator
 from .data_prep import prepare_security_data
 from .pattern_detection import detect_pattern_threats
 from .statistical_detection import detect_statistical_threats
+from .no_access_detection import detect_no_access_anomalies
 from .types import ThreatIndicator
 
 # Ignore warnings from scikit-learn about missing feature names and automatic
@@ -177,6 +178,7 @@ class SecurityPatternsAnalyzer:
 
         threat_indicators.extend(self._detect_statistical_threats(df))
         threat_indicators.extend(self._detect_pattern_threats(df))
+        threat_indicators.extend(self._detect_no_access_anomalies(df))
 
         return threat_indicators
 
@@ -313,6 +315,10 @@ class SecurityPatternsAnalyzer:
             self.logger.warning("Baseline frequency check failed: %s", exc)
 
         return threats
+
+    def _detect_no_access_anomalies(self, df: pd.DataFrame) -> List[ThreatIndicator]:
+        """Detect repeated access denied events using baseline failure rates."""
+        return detect_no_access_anomalies(df, self.baseline_db, self.logger)
 
     def _detect_pattern_threats(self, df: pd.DataFrame) -> List[ThreatIndicator]:
         """Detect pattern-based security threats"""
