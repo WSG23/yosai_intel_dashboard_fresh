@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Callable, Dict, List, Optional
 
 
 class ErrorSeverity(Enum):
@@ -195,7 +195,7 @@ def with_error_handling(
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                error_context = error_handler.handle_error(
+                error_handler.handle_error(
                     e,
                     category=category,
                     severity=severity,
@@ -230,7 +230,7 @@ def with_async_error_handling(
             try:
                 return await func(*args, **kwargs)
             except Exception as e:
-                error_context = error_handler.handle_error(
+                error_handler.handle_error(
                     e,
                     category=category,
                     severity=severity,
@@ -274,7 +274,7 @@ class CircuitBreaker:
             result = func(*args, **kwargs)
             self._on_success()
             return result
-        except Exception as e:
+        except Exception:
             self._on_failure()
             raise
 
