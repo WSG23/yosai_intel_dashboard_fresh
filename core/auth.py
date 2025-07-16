@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import socket
+import time
 from datetime import timedelta
 
 from functools import wraps
@@ -14,11 +15,10 @@ from urllib.error import URLError
 from urllib.request import urlopen
 
 from authlib.integrations.flask_client import OAuth
-from flask import Blueprint, current_app, redirect, request, session, url_for
+from flask import Blueprint, current_app, redirect, session, url_for
 from flask_login import (
     LoginManager,
     UserMixin,
-    current_user,
     login_required,
     login_user,
     logout_user,
