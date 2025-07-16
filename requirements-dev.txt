@@ -2,6 +2,10 @@ black
 isort
 flake8
 mypy
+types-bleach
+types-hvac
+types-psutil
+types-requests
 bandit
 pytest
 pytest-cov
