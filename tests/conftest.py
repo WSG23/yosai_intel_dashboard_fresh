@@ -55,7 +55,12 @@ def pytest_ignore_collect(path, config):
 
     if path.basename == "test_secure_config_manager.py" and _missing_optional:
         reason = ", ".join(_missing_optional)
-        config.warn("C1", f"Skipping secure config tests, missing: {reason}")
+        import warnings
+        warnings.warn(
+            f"Skipping secure config tests, missing: {reason}",
+            category=pytest.PytestWarning,
+            stacklevel=2,
+        )
         return True
     return False
 
