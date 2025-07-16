@@ -5,6 +5,7 @@ Handles Unicode surrogate characters safely
 """
 import io
 import logging
+from pathlib import Path
 from typing import Any, Dict, Iterable, Tuple
 
 import chardet
@@ -14,6 +15,7 @@ from config.config import get_analytics_config
 from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
 from core.unicode import safe_format_number
+from core.performance_file_processor import PerformanceFileProcessor
 from core.unicode_decode import safe_unicode_decode
 from analytics_core.utils.unicode_processor import UnicodeHelper
 
@@ -47,6 +49,27 @@ class UnicodeFileProcessor:
         except Exception as e:
             logger.warning(f"Unicode decode error: {e}")
             return safe_unicode_decode(content, "latin-1")
+
+    @staticmethod
+    def read_large_csv(
+        file_path: str | Path | io.TextIOBase,
+        *,
+        encoding: str = "utf-8",
+        chunk_size: int | None = None,
+        max_memory_mb: int | None = None,
+        stream: bool = False,
+    ) -> pd.DataFrame | Iterable[pd.DataFrame]:
+        """Load a potentially huge CSV file via :class:`PerformanceFileProcessor`."""
+
+        if chunk_size is None:
+            chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
+
+        processor = PerformanceFileProcessor(
+            chunk_size=chunk_size, max_memory_mb=max_memory_mb
+        )
+        return processor.process_large_csv(
+            file_path, encoding=encoding, stream=stream
+        )
 
     @staticmethod
     def sanitize_dataframe_unicode(

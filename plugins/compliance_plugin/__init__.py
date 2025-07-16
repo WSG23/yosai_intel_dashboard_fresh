@@ -35,6 +35,7 @@ from .api import ComplianceAPI
 from .middleware import ComplianceMiddleware
 from .database import ComplianceDatabase
 from .config import ComplianceConfig
+from services.data_processing.file_processor import FileProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -800,7 +801,7 @@ def create_csv_upload_route_with_plugin_support():
                 )
 
             # Process CSV normally
-            df = pd.read_csv(file_path)
+            df = FileProcessor.read_large_csv(file_path)
             processing_id = str(uuid4())
 
             # Your existing processing logic
