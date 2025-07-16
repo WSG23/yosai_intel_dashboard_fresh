@@ -69,6 +69,14 @@
   border-color: var(--color-accent-hover);
 }
 
+/* Keyboard focus styling */
+#drag-drop-upload:focus-visible,
+.drag-drop-upload:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-subtle);
+}
+
 /* Loading states */
 #drag-drop-upload[data-dash-is-loading="true"] {
   opacity: 1 !important;
