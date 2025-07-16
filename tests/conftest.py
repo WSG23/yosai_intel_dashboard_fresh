@@ -16,6 +16,49 @@ if _missing_packages:
         "Install them with `pip install -r requirements-test.txt`."
     )
 
+# Optional heavy dependencies used by a subset of tests
+_optional_packages = {"hvac", "cryptography"}
+_missing_optional = [
+    pkg for pkg in _optional_packages if importlib.util.find_spec(pkg) is None
+]
+
+if "hvac" not in sys.modules and "hvac" in _missing_optional:
+    hvac_stub = types.ModuleType("hvac")
+    hvac_stub.Client = object
+    sys.modules["hvac"] = hvac_stub
+
+if "cryptography" not in sys.modules and "cryptography" in _missing_optional:
+    crypto_stub = types.ModuleType("cryptography")
+    fernet_stub = types.ModuleType("cryptography.fernet")
+
+    class DummyFernet:
+        def __init__(self, *args, **kwargs): ...
+
+        @staticmethod
+        def generate_key() -> bytes:
+            return b""
+
+        def encrypt(self, data: bytes) -> bytes:
+            return data
+
+        def decrypt(self, data: bytes) -> bytes:
+            return data
+
+    fernet_stub.Fernet = DummyFernet
+    crypto_stub.fernet = fernet_stub
+    sys.modules["cryptography"] = crypto_stub
+    sys.modules["cryptography.fernet"] = fernet_stub
+
+
+def pytest_ignore_collect(path, config):
+    """Skip tests requiring optional packages when they are not installed."""
+
+    if path.basename == "test_secure_config_manager.py" and _missing_optional:
+        reason = ", ".join(_missing_optional)
+        config.warn("C1", f"Skipping secure config tests, missing: {reason}")
+        return True
+    return False
+
 try:  # use real package if available
     import dash_bootstrap_components  # noqa: F401
 except Exception:  # pragma: no cover - fallback stub
