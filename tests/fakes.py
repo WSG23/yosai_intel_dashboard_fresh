@@ -4,11 +4,91 @@ from typing import Any, Dict, List, Callable
 
 import pandas as pd
 
-from services.upload.protocols import UploadStorageProtocol, FileProcessorProtocol
-from services.interfaces import (
-    DeviceLearningServiceProtocol,
-    UploadDataServiceProtocol,
-)
+try:
+    from services.upload.protocols import UploadStorageProtocol, FileProcessorProtocol
+except Exception:  # pragma: no cover - fallback stubs for optional deps
+    from typing import Protocol
+
+    class UploadStorageProtocol(Protocol):
+        def add_file(self, filename: str, dataframe: pd.DataFrame) -> None: ...
+        def get_all_data(self) -> Dict[str, pd.DataFrame]: ...
+        def clear_all(self) -> None: ...
+        def load_dataframe(self, filename: str) -> pd.DataFrame | None: ...
+        def get_filenames(self) -> List[str]: ...
+        def get_file_info(self) -> Dict[str, Dict[str, Any]]: ...
+        def wait_for_pending_saves(self) -> None: ...
+
+    class FileProcessorProtocol(Protocol):
+        async def process_file(
+            self,
+            content: str,
+            filename: str,
+            progress_callback: Callable[[str, int], None] | None = None,
+        ) -> pd.DataFrame: ...
+
+        def read_uploaded_file(
+            self, contents: str, filename: str
+        ) -> tuple[pd.DataFrame, str]: ...
+
+try:
+    from services.interfaces import (
+        DeviceLearningServiceProtocol,
+        UploadDataServiceProtocol,
+    )
+except Exception:  # pragma: no cover - fallback stubs
+    from typing import Protocol
+
+    class DeviceLearningServiceProtocol(Protocol):
+        def get_learned_mappings(
+            self, df: pd.DataFrame, filename: str
+        ) -> Dict[str, Dict]: ...
+
+        def apply_learned_mappings_to_global_store(
+            self, df: pd.DataFrame, filename: str
+        ) -> bool: ...
+
+        def get_user_device_mappings(self, filename: str) -> Dict[str, Any]: ...
+
+        def save_user_device_mappings(
+            self, df: pd.DataFrame, filename: str, user_mappings: Dict[str, Any]
+        ) -> bool: ...
+
+    class UploadDataServiceProtocol(Protocol):
+        def get_uploaded_data(self) -> Dict[str, pd.DataFrame]: ...
+        def get_uploaded_filenames(self) -> List[str]: ...
+        def clear_uploaded_data(self) -> None: ...
+        def get_file_info(self) -> Dict[str, Dict[str, Any]]: ...
+        def load_dataframe(self, filename: str) -> pd.DataFrame: ...
+
+try:
+    from services.configuration_service import ConfigurationServiceProtocol
+except Exception:  # pragma: no cover - fallback stub
+    from typing import Protocol
+
+    class ConfigurationServiceProtocol(Protocol):
+        def get_max_upload_size_mb(self) -> int: ...
+        def get_max_upload_size_bytes(self) -> int: ...
+
+try:
+    from core.protocols import UnicodeProcessorProtocol
+except Exception:  # pragma: no cover - fallback stub
+    from typing import Protocol
+
+    class UnicodeProcessorProtocol(Protocol):
+        def clean_text(self, text: str, replacement: str = "") -> str: ...
+        def safe_encode_text(self, value: Any) -> str: ...
+        def safe_decode_text(self, data: bytes, encoding: str = "utf-8") -> str: ...
+try:
+    from components.column_verification import ColumnVerifierProtocol
+except Exception:  # pragma: no cover - fallback stub to avoid heavy imports
+    from typing import Protocol
+
+    class ColumnVerifierProtocol(Protocol):
+        def create_column_verification_modal(self, file_info: Dict[str, Any]) -> Any: ...
+
+        def register_callbacks(
+            self, manager: Any, controller: Any | None = None
+        ) -> None: ...
 
 
 class FakeUploadStore(UploadStorageProtocol):
