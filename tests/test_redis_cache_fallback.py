@@ -1,9 +1,13 @@
 import importlib
 import types
+import sys
 
 
 def test_redis_cache_manager_fallback(monkeypatch, fake_dash):
-    cm = importlib.import_module("core.plugins.config.cache_manager")
+    sys.modules.setdefault(
+        "config.database_manager",
+        types.SimpleNamespace(DatabaseManager=object, MockConnection=object),
+    )
 
     class FakeRedis:
         def __init__(self, *args, **kwargs):
@@ -12,6 +16,12 @@ def test_redis_cache_manager_fallback(monkeypatch, fake_dash):
         def ping(self):
             raise ConnectionError("unreachable")
 
+    redis_mod = sys.modules.get("redis")
+    if redis_mod is None:
+        redis_mod = types.SimpleNamespace()
+        sys.modules["redis"] = redis_mod
+    redis_mod.Redis = FakeRedis
+    cm = importlib.import_module("core.plugins.config.cache_manager")
     monkeypatch.setattr(cm, "redis", types.SimpleNamespace(Redis=FakeRedis))
     cfg = types.SimpleNamespace(host="localhost", port=6379, db=0, ttl=1)
     manager = cm.RedisCacheManager(cfg)

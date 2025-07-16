@@ -16,8 +16,14 @@ def migrate():
         if not data:
             continue
         try:
+            json.loads(data.decode("utf-8"))
+            continue  # already JSON
+        except Exception:
+            pass
+        try:
             obj = pickle.loads(data)
         except Exception:
+            client.delete(key)
             continue
         client.set(key, json.dumps(obj).encode("utf-8"))
 

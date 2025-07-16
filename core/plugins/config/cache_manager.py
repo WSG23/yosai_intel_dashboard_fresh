@@ -1,6 +1,7 @@
 """Enhanced cache managers implementing the interface"""
 
 import logging
+import json
 import pickle
 import time
 from dataclasses import dataclass
@@ -110,7 +111,21 @@ class RedisCacheManager(ICacheManager):
             data = self._client().get(key)
             if data is None:
                 return None
-            return pickle.loads(data)
+            try:
+                return json.loads(data.decode("utf-8"))
+            except Exception:  # handle legacy pickle values
+                try:
+                    obj = pickle.loads(data)
+                except Exception as e:
+                    logger.warning(f"Redis GET failed: {e}")
+                    self.delete(key)
+                    return None
+                # migrate to JSON
+                try:
+                    self.set(key, obj)
+                except Exception as exc:
+                    logger.warning(f"Failed to migrate cache key {key}: {exc}")
+                return obj
         except Exception as e:
             logger.warning(f"Redis GET failed: {e}")
             return None
@@ -124,7 +139,15 @@ class RedisCacheManager(ICacheManager):
         if not self._started:
             return
         try:
-            data = pickle.dumps(value)
+            try:
+                data = json.dumps(
+                    value,
+                    default=lambda o: o.__dict__
+                    if hasattr(o, "__dict__")
+                    else o,
+                ).encode("utf-8")
+            except TypeError:
+                data = json.dumps(str(value)).encode("utf-8")
             expire = ttl or getattr(self.config, "ttl", None)
             if expire:
                 self._client().setex(key, expire, data)
@@ -133,29 +156,6 @@ class RedisCacheManager(ICacheManager):
         except Exception as e:
             logger.warning(f"Redis SET failed: {e}")
 
-
-class AdvancedRedisCacheManager(RedisCacheManager):
-    """Redis cache manager with configurable default TTL."""
-
-    def __init__(self, cache_config):
-        super().__init__(cache_config)
-        self.default_ttl = getattr(
-            cache_config, "timeout_seconds", getattr(cache_config, "ttl", 300)
-        )
-
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
-        """Set value with TTL from config if not provided."""
-        if not self._started:
-            return
-        try:
-            data = pickle.dumps(value)
-            expire = ttl if ttl is not None else self.default_ttl
-            if expire:
-                self._client().setex(key, expire, data)
-            else:
-                self._client().set(key, data)
-        except Exception as e:
-            logger.warning(f"Advanced Redis SET failed: {e}")
 
     def delete(self, key: str) -> bool:
         """Delete key from Redis cache"""
@@ -212,6 +212,38 @@ class AdvancedRedisCacheManager(RedisCacheManager):
         self.redis_client = None
         self._started = False
         logger.info("Redis cache manager stopped")
+
+
+class AdvancedRedisCacheManager(RedisCacheManager):
+    """Redis cache manager with configurable default TTL."""
+
+    def __init__(self, cache_config):
+        super().__init__(cache_config)
+        self.default_ttl = getattr(
+            cache_config, "timeout_seconds", getattr(cache_config, "ttl", 300)
+        )
+
+    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+        """Set value with TTL from config if not provided."""
+        if not self._started:
+            return
+        try:
+            try:
+                data = json.dumps(
+                    value,
+                    default=lambda o: o.__dict__
+                    if hasattr(o, "__dict__")
+                    else o,
+                ).encode("utf-8")
+            except TypeError:
+                data = json.dumps(str(value)).encode("utf-8")
+            expire = ttl if ttl is not None else self.default_ttl
+            if expire:
+                self._client().setex(key, expire, data)
+            else:
+                self._client().set(key, data)
+        except Exception as e:
+            logger.warning(f"Advanced Redis SET failed: {e}")
 
 
 __all__ = [
