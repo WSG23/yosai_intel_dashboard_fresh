@@ -273,6 +273,19 @@ pip install -r requirements.txt -r requirements-test.txt
 ```
 For minimal CI environments you can run `./scripts/install_test_deps.sh` which
 only installs the Python dependencies required for the tests.
+### Test Requirements
+
+The test suite relies on extra packages defined in `requirements-test.txt`. Installing them ensures that `pytest` can import all helper modules:
+
+- `pytest` and `pytest-cov`
+- `PyYAML`
+- `pandas`
+- `psutil`
+- `hvac`
+- `cryptography`
+- `selenium`
+- `requests`
+
 Detailed instructions are provided in
 [docs/test_setup.md](docs/test_setup.md).
 The overall design of our test protocols and injection approach is
