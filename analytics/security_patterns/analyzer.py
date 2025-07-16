@@ -60,6 +60,21 @@ from ..security_score_calculator import SecurityScoreCalculator
 from .data_prep import prepare_security_data
 from .pattern_detection import detect_pattern_threats
 from .statistical_detection import detect_statistical_threats
+from .critical_door_detection import detect_critical_door_anomalies
+from .tailgate_detection import detect_tailgate
+from .badge_clone_detection import detect_badge_clone
+from .odd_door_detection import detect_odd_door_usage
+from .odd_time_detection import detect_odd_time
+from .odd_path_detection import detect_odd_path
+from .odd_area_detection import detect_odd_area
+from .odd_area_time_detection import detect_odd_area_time
+from .multiple_attempts_detection import detect_multiple_attempts
+from .forced_entry_detection import detect_forced_entry
+from .access_no_exit_detection import detect_access_no_exit
+from .pattern_drift_detection import detect_pattern_drift
+from .clearance_violation_detection import detect_clearance_violations
+from .unaccompanied_visitor_detection import detect_unaccompanied_visitors
+from .composite_score import detect_composite_score
 from .types import ThreatIndicator
 
 # Ignore warnings from scikit-learn about missing feature names and automatic
@@ -177,7 +192,22 @@ class SecurityPatternsAnalyzer:
 
         threat_indicators.extend(self._detect_statistical_threats(df))
         threat_indicators.extend(self._detect_pattern_threats(df))
-        threat_indicators.extend(self._detect_critical_door_risks(df))
+        threat_indicators.extend(detect_critical_door_anomalies(df, self.logger))
+        threat_indicators.extend(detect_tailgate(df, self.logger))
+        threat_indicators.extend(detect_badge_clone(df, self.logger))
+        threat_indicators.extend(detect_odd_door_usage(df, self.logger))
+        threat_indicators.extend(detect_odd_time(df, self.logger))
+        threat_indicators.extend(detect_odd_path(df, self.logger))
+        threat_indicators.extend(detect_odd_area(df, self.logger))
+        threat_indicators.extend(detect_odd_area_time(df, self.logger))
+        threat_indicators.extend(detect_multiple_attempts(df, self.logger))
+        threat_indicators.extend(detect_forced_entry(df, self.logger))
+        threat_indicators.extend(detect_access_no_exit(df, self.logger))
+        threat_indicators.extend(detect_pattern_drift(df, self.logger))
+        threat_indicators.extend(detect_clearance_violations(df, self.logger))
+        threat_indicators.extend(detect_unaccompanied_visitors(df, self.logger))
+        threat_indicators.extend(detect_composite_score(df, self.logger))
+
 
         return threat_indicators
 
