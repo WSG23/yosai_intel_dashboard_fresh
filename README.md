@@ -302,8 +302,9 @@ function inside a test simply pass `async_runner` and call it with your
 coroutine.
 
 The CI workflow also stores the `audit-report.json` file produced by `pip-audit`
-as the **pip-audit-report** artifact. Download it from the **Actions** tab to
-review dependency vulnerability results.
+as the **pip-audit-report** artifact. It runs on pull requests and fails when
+critical vulnerabilities are detected. Download the artifact from the
+**Actions** tab to review dependency vulnerability results.
 
 ## <span aria-hidden="true">📋</span> Features
 
@@ -324,6 +325,7 @@ review dependency vulnerability results.
   This single interface replaces previous callback controllers.
 - **Metrics & Monitoring**: `PerformanceMonitor` tracks system performance
   using `psutil`.
+- **Dependabot Updates**: Python dependencies automatically kept up-to-date.
 
 **Note:** The file upload and column mapping functionality relies on `pandas`.
 If `pandas` is missing these pages will be disabled. Ensure you run
