@@ -49,6 +49,8 @@ analytics:
   query_timeout_seconds: 600
   force_full_dataset_analysis: true
   max_display_rows: 10000
+  row_limit_warning: 150
+  large_data_threshold: 1000
 
 monitoring:
   health_check_interval: 30

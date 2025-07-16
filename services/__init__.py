@@ -16,7 +16,9 @@ from .result_formatting import (
     prepare_regular_result,
     regular_analysis,
 )
-from .summary_reporting import SummaryReporter
+from .summary_reporter import SummaryReporter
+from .data_loader import DataLoader
+from .analytics_processor import AnalyticsProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -48,4 +50,6 @@ __all__ = [
     "UploadAnalyticsProcessor",
     "DatabaseAnalyticsHelper",
     "SummaryReporter",
+    "DataLoader",
+    "AnalyticsProcessor",
 ]
