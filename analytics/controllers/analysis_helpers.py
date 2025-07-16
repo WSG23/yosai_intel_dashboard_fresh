@@ -11,7 +11,6 @@ from services.analytics_processing import (
     create_analysis_results_display,
     create_analysis_results_display_safe,
 )
-from pages.deep_analytics_complex.layout import get_initial_message_safe
 from services.data_processing.analytics_engine import (
     AI_SUGGESTIONS_AVAILABLE,
     analyze_data_with_service,
@@ -460,6 +459,13 @@ def update_status_alert(_trigger: Any) -> str:
 def get_data_sources() -> list:
     """Return available data sources for the dropdown."""
     return get_data_source_options_safe()
+
+
+def get_initial_message_safe():
+    """Load and return the initial message for the analytics page."""
+    from pages.deep_analytics_complex.layout import get_initial_message_safe as _get_initial_message
+
+    return _get_initial_message()
 
 
 __all__ = [
