@@ -25,6 +25,14 @@ def test_create_navbar_layout_accepts_custom_links_icons():
     link = nav.children[0].children
     assert link.href == "/foo"
     assert getattr(link.children[0][0], "id", None) == "foo-icon"
+    assert getattr(link, "aria-label", None) == "Foo"
+
+
+def test_default_nav_links_have_labels():
+    layout = create_navbar_layout()
+    nav = layout.children.children[1]
+    first_link = nav.children[0].children
+    assert getattr(first_link, "aria-label", None) == "Dashboard"
 
 
 def test_register_navbar_callbacks_connects_toggle():
