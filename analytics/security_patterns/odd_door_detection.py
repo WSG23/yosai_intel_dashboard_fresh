@@ -8,6 +8,7 @@ import pandas as pd
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from .column_validation import ensure_columns
 from database.baseline_metrics import BaselineMetricsDB
 
 __all__ = ["detect_odd_door_usage"]
@@ -22,6 +23,8 @@ def detect_odd_door_usage(
     baseline = BaselineMetricsDB()
     try:
         if len(df) == 0:
+            return threats
+        if not ensure_columns(df, ["person_id", "door_id"], logger):
             return threats
         for person_id, group in df.groupby("person_id"):
             total = len(group)

@@ -8,6 +8,7 @@ import pandas as pd
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from .column_validation import ensure_columns
 
 __all__ = ["detect_badge_clone"]
 
@@ -20,6 +21,8 @@ def detect_badge_clone(
     threats: List[ThreatIndicator] = []
     try:
         if len(df) == 0:
+            return threats
+        if not ensure_columns(df, ["timestamp", "person_id", "door_id"], logger):
             return threats
         df_sorted = df.sort_values("timestamp")
         for person_id, group in df_sorted.groupby("person_id"):

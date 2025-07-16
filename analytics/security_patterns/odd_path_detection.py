@@ -8,6 +8,7 @@ import pandas as pd
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from .column_validation import ensure_columns
 
 __all__ = ["detect_odd_path"]
 
@@ -31,6 +32,8 @@ def detect_odd_path(
     logger = logger or logging.getLogger(__name__)
     threats: List[ThreatIndicator] = []
     try:
+        if not ensure_columns(df, ["timestamp", "person_id", "door_id"], logger):
+            return threats
         paths = _extract_paths(df)
         if not paths:
             return threats

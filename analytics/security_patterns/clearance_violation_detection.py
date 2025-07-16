@@ -8,6 +8,7 @@ import pandas as pd
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from .column_validation import ensure_columns
 
 __all__ = ["detect_clearance_violations"]
 
@@ -21,7 +22,11 @@ def detect_clearance_violations(
     try:
         if len(df) == 0:
             return threats
-        if "user_clearance" not in df.columns or "required_clearance" not in df.columns:
+        if not ensure_columns(
+            df,
+            ["timestamp", "person_id", "door_id", "user_clearance", "required_clearance"],
+            logger,
+        ):
             return threats
         violations = df[df["user_clearance"] < df["required_clearance"]]
         for _, row in violations.iterrows():

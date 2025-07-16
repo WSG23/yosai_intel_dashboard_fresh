@@ -10,6 +10,7 @@ from database.baseline_metrics import BaselineMetricsDB
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from .column_validation import ensure_columns
 
 __all__ = ["detect_pattern_drift"]
 
@@ -23,6 +24,8 @@ def detect_pattern_drift(
     baseline = BaselineMetricsDB()
     try:
         if len(df) == 0:
+            return threats
+        if not ensure_columns(df, ["is_after_hours", "access_granted"], logger):
             return threats
         overall_after_hours = float(df["is_after_hours"].mean())
         overall_failure_rate = float(1 - df["access_granted"].mean())
