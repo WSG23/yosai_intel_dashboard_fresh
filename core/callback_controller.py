@@ -7,38 +7,13 @@ import threading
 import weakref
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum, auto
+from .callback_events import CallbackEvent
 from typing import Any, Callable, Dict, List, Optional, Protocol
 
 from .error_handling import ErrorCategory, ErrorSeverity, error_handler
 
 logger = logging.getLogger(__name__)
 
-
-class CallbackEvent(Enum):
-    """Standardized callback events across the system."""
-
-    FILE_UPLOAD_START = auto()
-    FILE_UPLOAD_COMPLETE = auto()
-    FILE_UPLOAD_ERROR = auto()
-    FILE_PROCESSING_START = auto()
-    FILE_PROCESSING_COMPLETE = auto()
-    FILE_PROCESSING_ERROR = auto()
-    ANALYSIS_START = auto()
-    ANALYSIS_COMPLETE = auto()
-    ANALYSIS_ERROR = auto()
-    ANALYSIS_PROGRESS = auto()
-    DATA_QUALITY_CHECK = auto()
-    DATA_QUALITY_ISSUE = auto()
-    USER_ACTION = auto()
-    UI_UPDATE = auto()
-    SYSTEM_ERROR = auto()
-    SYSTEM_WARNING = auto()
-    # Security events
-    THREAT_DETECTED = auto()
-    ANOMALY_DETECTED = auto()
-    SCORE_CALCULATED = auto()
-    VALIDATION_FAILED = auto()
 
 
 @dataclass(frozen=True)
