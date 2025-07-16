@@ -589,29 +589,21 @@ def toggle_custom_field(selected_value):
 def save_column_mappings_callback(
     n_clicks: int | None,
     column_values: List[str | None],
-    ids: List[Dict[str, Any]],
     custom_values: List[str | None],
-    uploaded_files_data: Dict[str, Any] | None,
+    session_data: Dict[str, Any] | None,
 ) -> tuple[str, str]:
     """Persist verified column mappings when the save button is clicked."""
 
     if not n_clicks:
         return dash.no_update, dash.no_update
 
-    if not uploaded_files_data:
-        logger.warning("No uploaded file data found for saving mappings")
+    if not session_data:
+        logger.warning("No session data found for saving mappings")
         return "❌ Error", "danger"
 
     # Determine file info from store
-    file_info = {}
-    filename = "unknown.csv"
-    if "current_file_info" in uploaded_files_data:
-        file_info = uploaded_files_data.get("current_file_info", {})
-        filename = file_info.get("filename", filename)
-    elif uploaded_files_data:
-        first_key = next(iter(uploaded_files_data.keys()))
-        file_info = uploaded_files_data.get(first_key, {})
-        filename = file_info.get("filename", first_key)
+    file_info = session_data.get("file_info", {})
+    filename = session_data.get("filename", "unknown.csv")
 
     columns = file_info.get("column_names", file_info.get("columns", []))
     metadata = file_info.get("metadata", {})
@@ -660,9 +652,8 @@ def register_callbacks(
         Input("save-column-mappings", "n_clicks"),
         [
             State({"type": "column-mapping", "index": ALL}, "value"),
-            State({"type": "column-mapping", "index": ALL}, "id"),
             State({"type": "custom-field", "index": ALL}, "value"),
-            State("uploaded-files-store", "data"),
+            State("session-store", "data"),
         ],
         prevent_initial_call=True,
         callback_id="save_column_mappings",
