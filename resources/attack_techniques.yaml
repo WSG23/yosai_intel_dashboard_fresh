@@ -14,7 +14,3 @@ excessive_access_frequency:
   id: T1021
   name: Remote Services
   url: https://attack.mitre.org/techniques/T1021/
-critical_door_activity:
-  id: T1495
-  name: Active Scanning
-  url: https://attack.mitre.org/techniques/T1495/
