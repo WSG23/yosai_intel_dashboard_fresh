@@ -271,8 +271,8 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
         if result["file_info_dict"]:
             result["upload_nav"] = html.Div([
                 html.Hr(),
-                html.H5("Ready to analyze?"),
-                dbc.Button("�� Go to Analytics", href="/analytics", color="success", size="lg")
+                html.H5("Ready for device analysis?"),
+                dbc.Button("🚀 Start Device Analysis", href="/device-analysis", color="success", size="lg")
             ])
 
         # Add processing statistics
