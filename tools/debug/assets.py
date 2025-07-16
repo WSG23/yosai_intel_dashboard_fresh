@@ -10,9 +10,9 @@ from utils.assets_debug import check_navbar_assets, debug_dash_asset_serving
 from utils.assets_utils import get_nav_icon
 
 DEFAULT_ICONS = [
-    "dashboard",
     "analytics",
     "graphs",
+    "export",
     "upload",
     "print",
     "settings",
