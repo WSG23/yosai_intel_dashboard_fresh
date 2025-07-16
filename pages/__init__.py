@@ -19,8 +19,9 @@ PAGE_MODULES: Dict[str, str] = {
     "deep_analytics": "pages.deep_analytics",
     "file_upload": "pages.file_upload",
     "graphs": "pages.graphs",
-    "export": "pages.export", 
+    "export": "pages.export",
     "settings": "pages.settings",
+    "device_analysis": "pages.device_analysis",
 }
 
 # Cache of loaded page modules
@@ -119,12 +120,13 @@ def register_router_callback(manager):
         try:
             path_mapping = {
                 "/": "deep_analytics",
-                "/analytics": "deep_analytics", 
+                "/analytics": "deep_analytics",
                 "/dashboard": "deep_analytics",
                 "/upload": "file_upload",
                 "/export": "export",
                 "/settings": "settings",
                 "/graphs": "graphs",
+                "/device-analysis": "device_analysis",
             }
             
             page_name = path_mapping.get(pathname, "deep_analytics")

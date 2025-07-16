@@ -67,3 +67,4 @@ def test_register_callbacks_invoked():
     calls = [c.kwargs.get("callback_id") for c in manager.register_callback.mock_calls]
     assert "toggle_custom_field" in calls
     assert "apply_ai_device_suggestions" in calls
+    assert "populate_simple_device_modal" in calls

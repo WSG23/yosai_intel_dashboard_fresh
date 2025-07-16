@@ -16,6 +16,8 @@ from components.plugin_adapter import ComponentPluginAdapter
 from services.data_enhancer import (
     get_ai_column_suggestions as simple_column_suggestions,
 )
+from services.consolidated_learning_service import get_learning_service
+from services.upload_data_service import load_dataframe
 
 try:
     from analytics.controllers import UnifiedAnalyticsController
@@ -515,12 +517,16 @@ def _get_fallback_suggestions(columns: List[str]) -> Dict[str, Dict[str, Any]]:
 
 
 def save_verified_mappings(
-    filename: str, column_mappings: Dict[str, str], metadata: Dict[str, Any]
+    df: pd.DataFrame,
+    filename: str,
+    column_mappings: Dict[str, str],
+    metadata: Dict[str, Any],
 ) -> bool:
     """
     Save verified column mappings for AI training - FILE-SPECIFIC LEARNING
 
     Args:
+        df: DataFrame for the uploaded file
         filename: Name of the uploaded file
         column_mappings: Dict of column_name -> standard_field
         metadata: Additional metadata (data_source_type, quality, etc.)
@@ -550,8 +556,20 @@ def save_verified_mappings(
         logger.info(f"   Context: {training_data['learning_context']}")
 
         # Try to save using the plugin adapter
-        if not adapter.save_verified_mappings(filename, column_mappings, metadata):
+        plugin_saved = adapter.save_verified_mappings(filename, column_mappings, metadata)
+        if not plugin_saved:
             logger.info("AI system save failed or unavailable")
+        else:
+            try:
+                learning_service = get_learning_service()
+                learning_service.save_complete_mapping(
+                    df,
+                    filename,
+                    {},
+                    column_mappings,
+                )
+            except Exception as svc_e:
+                logger.warning(f"Learning service save failed: {svc_e}")
 
         # Save to file-specific training data
         try:
@@ -654,7 +672,13 @@ def save_column_mappings_callback(
     if missing_required:
         logger.warning("Missing required fields for %s: %s", filename, missing_required)
 
-    success = save_verified_mappings(filename, mappings, metadata)
+    try:
+        df = load_dataframe(filename)
+    except Exception as e:
+        logger.warning("Failed to load dataframe for %s: %s", filename, e)
+        df = pd.DataFrame()
+
+    success = save_verified_mappings(df, filename, mappings, metadata)
 
     if success:
         return f"✅ Saved {len(mappings)} mappings", "success"

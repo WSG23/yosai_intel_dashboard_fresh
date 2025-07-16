@@ -239,10 +239,80 @@ class AnalyticsService(AnalyticsServiceProtocol):
                     self.event_bus.publish("analytics_update", summary)
                 except RuntimeError as exc:  # pragma: no cover - best effort
                     logger.debug("Event bus publish failed: %s", exc)
+
             return summary
         except RuntimeError as e:
             logger.error(f"Dashboard summary failed: {e}")
             return {"status": "error", "message": str(e)}
+
+    def _publish_event(self, payload: Dict[str, Any], event: str = "analytics_update") -> None:
+        """Publish ``payload`` to the event bus if available."""
+        if self.event_bus:
+            try:
+                self.event_bus.publish(event, payload)
+            except Exception as exc:  # pragma: no cover - best effort
+                logger = logging.getLogger(__name__)
+                logger.debug("Event bus publish failed: %s", exc)
+
+    def _load_patterns_dataframe(self, data_source: str | None) -> tuple[pd.DataFrame, int]:
+        """Return dataframe and original row count for pattern analysis."""
+        df, original_rows = self.data_loader.load_patterns_data(data_source)
+        if not df.empty:
+            self.data_loader.verify_combined_data(df, original_rows)
+        return df, original_rows
+
+    def _analyze_patterns(self, df: pd.DataFrame, original_rows: int) -> Dict[str, Any]:
+        """Run the unique patterns analysis on ``df``."""
+        (
+            total_records,
+            unique_users,
+            unique_devices,
+            date_span,
+        ) = self.analytics_processor.calculate_pattern_stats(df)
+
+        power_users, regular_users, occasional_users = self.analytics_processor.analyze_user_patterns(
+            df, unique_users
+        )
+        (
+            high_traffic_devices,
+            moderate_traffic_devices,
+            low_traffic_devices,
+        ) = self.analytics_processor.analyze_device_patterns(df, unique_devices)
+
+        total_interactions = self.analytics_processor.count_interactions(df)
+        success_rate = self.analytics_processor.calculate_success_rate(df)
+
+        result = format_patterns_result(
+            total_records,
+            unique_users,
+            unique_devices,
+            date_span,
+            power_users,
+            regular_users,
+            occasional_users,
+            high_traffic_devices,
+            moderate_traffic_devices,
+            low_traffic_devices,
+            total_interactions,
+            success_rate,
+        )
+
+        result_total = result["data_summary"]["total_records"]
+        logger = logging.getLogger(__name__)
+        logger.info("🎉 UNIQUE PATTERNS ANALYSIS COMPLETE")
+        logger.info(f"   Result total_records: {result_total:,}")
+
+        if result_total == ROW_LIMIT_WARNING and result_total != original_rows:
+            logger.error("❌ STILL SHOWING %s - CHECK DATA PROCESSING!", ROW_LIMIT_WARNING)
+        elif result_total == original_rows:
+            logger.info(f"✅ SUCCESS: Correctly showing {result_total:,} rows")
+        else:
+            logger.warning(
+                "⚠️  Unexpected count: %s (expected %s)",
+                f"{result_total:,}",
+                f"{original_rows:,}",
+            )
+        return result
 
 
     @cache_with_lock(ttl_seconds=600)
@@ -253,7 +323,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         try:
             logger.info("🎯 Starting Unique Patterns Analysis")
 
-            df, original_rows = self.data_loader.load_patterns_data(data_source)
+            df, original_rows = self._load_patterns_dataframe(data_source)
             if df.empty:
                 logger.warning("❌ No uploaded data found for unique patterns analysis")
                 return {
@@ -262,41 +332,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
                     "data_summary": {"total_records": 0},
                 }
 
-            self.data_loader.verify_combined_data(df, original_rows)
-
-            (
-                total_records,
-                unique_users,
-                unique_devices,
-                date_span,
-            ) = self.analytics_processor.calculate_pattern_stats(df)
-
-            power_users, regular_users, occasional_users = self.analytics_processor.analyze_user_patterns(
-                df, unique_users
-            )
-            (
-                high_traffic_devices,
-                moderate_traffic_devices,
-                low_traffic_devices,
-            ) = self.analytics_processor.analyze_device_patterns(df, unique_devices)
-
-            total_interactions = self.analytics_processor.count_interactions(df)
-            success_rate = self.analytics_processor.calculate_success_rate(df)
-
-            result = format_patterns_result(
-                total_records,
-                unique_users,
-                unique_devices,
-                date_span,
-                power_users,
-                regular_users,
-                occasional_users,
-                high_traffic_devices,
-                moderate_traffic_devices,
-                low_traffic_devices,
-                total_interactions,
-                success_rate,
-            )
+            result = self._analyze_patterns(df, original_rows)
 
             result_total = result["data_summary"]["total_records"]
             logger.info("🎉 UNIQUE PATTERNS ANALYSIS COMPLETE")
@@ -320,6 +356,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
                     self.event_bus.publish("analytics_update", result)
                 except RuntimeError as exc:  # pragma: no cover - best effort
                     logger.debug("Event bus publish failed: %s", exc)
+
 
             return result
 

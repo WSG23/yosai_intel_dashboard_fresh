@@ -156,7 +156,19 @@ class UploadCore:
 
         if status.get("done") and result is not None:
             self.task_queue.clear_task(task_id)
-            if isinstance(result, Exception):
+            if not isinstance(result, Exception):
+                try:
+                    from components.simple_device_mapping import (
+                        generate_ai_device_defaults,
+                    )
+
+                    for fname in self.store.get_filenames():
+                        df = self.store.load_dataframe(fname)
+                        if df is not None and not df.empty:
+                            generate_ai_device_defaults(df, "auto")
+                except Exception as exc:  # pragma: no cover - best effort
+                    logger.error("Failed to generate AI defaults: %s", exc)
+            else:
                 result = (
                     [self.processing.build_failure_alert(str(result))],
                     [],
