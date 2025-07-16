@@ -1,29 +1,45 @@
-/* File upload page - prevent component mounting flash */
+/* File upload page - use fade-in instead of forced visibility */
 .upload-page-container,
 #drag-drop-upload,
 #preview-area,
 #upload-navigation,
 #upload-progress,
 #upload-status {
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
-    transition: none !important;
+    animation: fadeIn 0.3s ease-in forwards;
     transform: translateZ(0);
     backface-visibility: hidden;
 }
 
-/* Pre-mount all upload children */
+/* Pre-mount all upload children with the same animation */
 #drag-drop-upload * {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transition: none !important;
+    animation: fadeIn 0.3s ease-in forwards;
 }
 
-/* Disable all Dash loading states */
+/* Show skeleton pulse while Dash components load */
 #drag-drop-upload[data-dash-is-loading="true"],
 #preview-area[data-dash-is-loading="true"],
 #upload-navigation[data-dash-is-loading="true"] {
-    opacity: 1 !important;
-    visibility: visible !important;
+    animation: pulse 1.5s ease-in-out infinite;
+    visibility: visible;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.5;
+    }
 }
