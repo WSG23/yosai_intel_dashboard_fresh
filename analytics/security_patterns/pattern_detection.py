@@ -11,6 +11,7 @@ import yaml
 
 from .types import ThreatIndicator
 from utils.sklearn_compat import optional_import
+from models.enums import AnomalyType
 
 LogisticRegression = optional_import("sklearn.linear_model.LogisticRegression")
 
@@ -173,7 +174,7 @@ def detect_critical_door_risks(
             severity = "critical" if prob > 0.9 else "high"
             threats.append(
                 ThreatIndicator(
-                    threat_type="critical_door_anomaly",
+                    threat_type=AnomalyType.CRITICAL_DOOR,
                     severity=severity,
                     confidence=float(prob),
                     description=(

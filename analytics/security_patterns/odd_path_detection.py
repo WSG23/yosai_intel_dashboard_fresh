@@ -8,6 +8,7 @@ import pandas as pd
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from models.enums import AnomalyType
 
 __all__ = ["detect_odd_path"]
 
@@ -40,14 +41,14 @@ def detect_odd_path(
         for (pid, prev, nxt), _ in rare_paths.items():
             threats.append(
                 ThreatIndicator(
-                    threat_type="odd_path_anomaly",
+                    threat_type=AnomalyType.ODD_PATH,
                     severity="low",
                     confidence=0.6,
                     description=f"User {pid} rare path {prev}->{nxt}",
                     evidence={"user_id": str(pid), "path": f"{prev}->{nxt}"},
                     timestamp=datetime.now(),
                     affected_entities=[str(pid)],
-                    attack=_attack_info("odd_path_anomaly"),
+                    attack=_attack_info(AnomalyType.ODD_PATH.value),
                 )
             )
     except Exception as exc:  # pragma: no cover - log and continue

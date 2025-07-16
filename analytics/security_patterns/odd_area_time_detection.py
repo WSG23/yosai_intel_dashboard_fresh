@@ -9,6 +9,7 @@ import pandas as pd
 from .types import ThreatIndicator
 from .odd_area_detection import _door_to_area
 from .pattern_detection import _attack_info
+from models.enums import AnomalyType
 
 __all__ = ["detect_odd_area_time"]
 
@@ -31,14 +32,16 @@ def detect_odd_area_time(
                 if count <= 1:
                     threats.append(
                         ThreatIndicator(
-                            threat_type="odd_area_time_anomaly",
+                            threat_type=AnomalyType.ODD_AREA_TIME,
                             severity="medium",
                             confidence=0.65,
                             description=f"After-hours access to unusual area {area} by {person_id}",
                             evidence={"user_id": str(person_id), "area": area},
                             timestamp=datetime.now(),
                             affected_entities=[str(person_id)],
-                            attack=_attack_info("odd_area_time_anomaly"),
+                            attack=_attack_info(
+                                AnomalyType.ODD_AREA_TIME.value
+                            ),
                         )
                     )
     except Exception as exc:  # pragma: no cover - log and continue

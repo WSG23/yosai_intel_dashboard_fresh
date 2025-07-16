@@ -8,6 +8,7 @@ import pandas as pd
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from models.enums import AnomalyType
 
 __all__ = ["detect_access_no_exit"]
 
@@ -32,14 +33,16 @@ def detect_access_no_exit(
                     ):
                         threats.append(
                             ThreatIndicator(
-                                threat_type="access_granted_no_exit_anomaly",
+                                threat_type=AnomalyType.ACCESS_NO_EXIT,
                                 severity="medium",
                                 confidence=0.7,
                                 description=f"User {person_id} access without exit",
                                 evidence={"user_id": str(person_id), "door_id": str(row["door_id"])},
                                 timestamp=datetime.now(),
                                 affected_entities=[str(person_id)],
-                                attack=_attack_info("access_granted_no_exit_anomaly"),
+                                attack=_attack_info(
+                                    AnomalyType.ACCESS_NO_EXIT.value
+                                ),
                             )
                         )
     except Exception as exc:  # pragma: no cover - log and continue

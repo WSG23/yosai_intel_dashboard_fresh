@@ -9,6 +9,7 @@ from utils.sklearn_compat import optional_import
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from models.enums import AnomalyType
 
 IsolationForest = optional_import("sklearn.ensemble.IsolationForest")
 
@@ -48,7 +49,7 @@ def detect_critical_door_anomalies(
             )
             threats.append(
                 ThreatIndicator(
-                    threat_type="critical_door_anomaly",
+                    threat_type=AnomalyType.CRITICAL_DOOR,
                     severity="high",
                     confidence=confidence,
                     description=f"Door {door_id} shows abnormal usage patterns",
@@ -59,7 +60,7 @@ def detect_critical_door_anomalies(
                     },
                     timestamp=datetime.now(),
                     affected_entities=[str(door_id)],
-                    attack=_attack_info("critical_door_anomaly"),
+                    attack=_attack_info(AnomalyType.CRITICAL_DOOR.value),
                 )
             )
     except Exception as exc:  # pragma: no cover - log and continue

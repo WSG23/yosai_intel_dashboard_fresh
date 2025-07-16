@@ -10,6 +10,7 @@ from utils.sklearn_compat import optional_import
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from models.enums import AnomalyType
 
 IsolationForest = optional_import("sklearn.ensemble.IsolationForest")
 
@@ -39,7 +40,7 @@ def detect_composite_score(
             row = df.iloc[idx]
             threats.append(
                 ThreatIndicator(
-                    threat_type="composite_anomaly_score",
+                    threat_type=AnomalyType.COMPOSITE_SCORE,
                     severity="low",
                     confidence=0.6,
                     description="Composite anomaly detected",
@@ -49,7 +50,7 @@ def detect_composite_score(
                     },
                     timestamp=datetime.now(),
                     affected_entities=[str(row["person_id"])],
-                    attack=_attack_info("composite_anomaly_score"),
+                    attack=_attack_info(AnomalyType.COMPOSITE_SCORE.value),
                 )
             )
     except Exception as exc:  # pragma: no cover - log and continue

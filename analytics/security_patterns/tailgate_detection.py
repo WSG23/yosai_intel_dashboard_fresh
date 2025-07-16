@@ -8,6 +8,7 @@ import pandas as pd
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from models.enums import AnomalyType
 
 __all__ = ["detect_tailgate"]
 
@@ -26,7 +27,7 @@ def detect_tailgate(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -
             for _, row in suspicious.iterrows():
                 threats.append(
                     ThreatIndicator(
-                        threat_type="probable_tailgate",
+                        threat_type=AnomalyType.PROBABLE_TAILGATE,
                         severity="medium",
                         confidence=0.75,
                         description=f"Possible tailgate at door {door_id}",
@@ -36,7 +37,7 @@ def detect_tailgate(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -
                         },
                         timestamp=datetime.now(),
                         affected_entities=[str(row["person_id"]), str(door_id)],
-                        attack=_attack_info("probable_tailgate"),
+                        attack=_attack_info(AnomalyType.PROBABLE_TAILGATE.value),
                     )
                 )
     except Exception as exc:  # pragma: no cover - log and continue

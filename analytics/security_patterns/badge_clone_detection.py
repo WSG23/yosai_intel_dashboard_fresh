@@ -8,6 +8,7 @@ import pandas as pd
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from models.enums import AnomalyType
 
 __all__ = ["detect_badge_clone"]
 
@@ -31,7 +32,7 @@ def detect_badge_clone(
                     if diff < 60:
                         threats.append(
                             ThreatIndicator(
-                                threat_type="badge_clone_suspected",
+                                threat_type=AnomalyType.BADGE_CLONE_SUSPECTED,
                                 severity="high",
                                 confidence=0.8,
                                 description=(
@@ -45,7 +46,9 @@ def detect_badge_clone(
                                 },
                                 timestamp=datetime.now(),
                                 affected_entities=[str(person_id)],
-                                attack=_attack_info("badge_clone_suspected"),
+                                attack=_attack_info(
+                                    AnomalyType.BADGE_CLONE_SUSPECTED.value
+                                ),
                             )
                         )
                         break
