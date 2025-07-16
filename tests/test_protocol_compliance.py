@@ -29,7 +29,9 @@ class DataProcessorProtocol(Protocol):
 
     def validate_data_quality(self, data: pd.DataFrame) -> Dict[str, Any]: ...
 
-    def enrich_data(self, data: pd.DataFrame, enrichment_sources: List[str]) -> pd.DataFrame: ...
+    def enrich_data(
+        self, data: pd.DataFrame, enrichment_sources: List[str]
+    ) -> pd.DataFrame: ...
 
 
 @runtime_checkable
@@ -102,12 +104,16 @@ class DummyProcessor(DataProcessorProtocol):
     def validate_data_quality(self, data: pd.DataFrame) -> Dict[str, Any]:
         return {}
 
-    def enrich_data(self, data: pd.DataFrame, enrichment_sources: List[str]) -> pd.DataFrame:
+    def enrich_data(
+        self, data: pd.DataFrame, enrichment_sources: List[str]
+    ) -> pd.DataFrame:
         return data
 
 
 class DummyEventBus(EventBusProtocol):
-    def publish(self, event_type: str, data: Dict[str, Any], source: str | None = None) -> None:
+    def publish(
+        self, event_type: str, data: Dict[str, Any], source: str | None = None
+    ) -> None:
         pass
 
     def subscribe(self, event_type: str, handler: Callable, priority: int = 0) -> str:
@@ -158,8 +164,6 @@ def env_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv(var, "test")
 
 
-
-
 class TestProtocolCompliance:
     def test_configuration_service_compliance(self):
         from config import create_config_manager
@@ -178,7 +182,9 @@ class TestProtocolCompliance:
             def detect_anomalies(self, data: pd.DataFrame) -> List[Dict[str, Any]]:
                 return []
 
-            def generate_report(self, report_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
+            def generate_report(
+                self, report_type: str, params: Dict[str, Any]
+            ) -> Dict[str, Any]:
                 return {}
 
         service = ConcreteAnalyticsService(
@@ -200,6 +206,7 @@ class TestProtocolCompliance:
 
     def test_all_registered_services_implement_protocols(self):
         from config.complete_service_registration import register_all_services
+
         container = ServiceContainer()
         register_all_services(container)
 

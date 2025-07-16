@@ -131,6 +131,7 @@ class AdvancedCacheManager:
 
 # ----------------------------------------------------------------------
 
+
 def cache_with_lock(
     manager: AdvancedCacheManager,
     ttl: Optional[int] = None,
@@ -144,7 +145,10 @@ def cache_with_lock(
             cache_key = (
                 key_func(*args, **kwargs)
                 if key_func
-                else f"{func.__module__}.{func.__name__}:{hash(str(args) + str(sorted(kwargs.items())))}"
+                else (
+                    f"{func.__module__}.{func.__name__}:"
+                    f"{hash(str(args) + str(sorted(kwargs.items())))}"
+                )
             )
             async with manager.get_lock(cache_key):
                 cached = await manager.get(cache_key)
@@ -160,6 +164,7 @@ def cache_with_lock(
 
 
 # ----------------------------------------------------------------------
+
 
 async def create_advanced_cache_manager() -> AdvancedCacheManager:
     """Initialize :class:`AdvancedCacheManager` using application config."""

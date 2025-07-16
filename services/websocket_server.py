@@ -14,7 +14,12 @@ logger = logging.getLogger(__name__)
 class AnalyticsWebSocketServer:
     """Simple WebSocket server broadcasting analytics updates."""
 
-    def __init__(self, event_bus: Optional[EventBus] = None, host: str = "0.0.0.0", port: int = 6789) -> None:
+    def __init__(
+        self,
+        event_bus: Optional[EventBus] = None,
+        host: str = "0.0.0.0",
+        port: int = 6789,
+    ) -> None:
         self.host = host
         self.port = port
         self.event_bus = event_bus or EventBus()

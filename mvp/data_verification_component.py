@@ -18,7 +18,9 @@ class DataVerificationComponent:
     """Simple CLI-based data verification before enhancement."""
 
     def __init__(self) -> None:
-        self.learning_service = DeviceLearningService() if DeviceLearningService else None
+        self.learning_service = (
+            DeviceLearningService() if DeviceLearningService else None
+        )
 
     def verify_dataframe(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, str]]:
         """Interactively confirm column mapping and device classification."""

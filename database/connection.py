@@ -35,7 +35,7 @@ def create_database_connection() -> DatabaseConnection:
     db_manager = DatabaseManager(
         db_type=db_config.type,
         connection_string=getattr(db_config, "connection_string", ""),
-        **db_config.__dict__
+        **db_config.__dict__,
     )
 
     return db_manager.get_connection()

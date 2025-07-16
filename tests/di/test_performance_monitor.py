@@ -14,6 +14,7 @@ def test_container_records_resolution_time():
     container.register_transient("svc", factory)
 
     original_get = container.get
+
     def monitored(service_key, proto=None):
         start = time.time()
         try:
@@ -23,6 +24,7 @@ def test_container_records_resolution_time():
         except Exception as exc:
             monitor.record_service_error(service_key, str(exc))
             raise
+
     container.get = monitored  # type: ignore
 
     container.get("svc")

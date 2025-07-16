@@ -1,6 +1,8 @@
 """Security patterns analysis subpackage."""
 
-from analytics_core.callbacks.unified_callback_manager import CallbackManager as SecurityCallbackController
+from analytics_core.callbacks.unified_callback_manager import (
+    CallbackManager as SecurityCallbackController,
+)
 from security_callback_controller import (
     SecurityEvent,
     emit_security_event,
@@ -35,7 +37,6 @@ __all__ = [
     "SecurityEvent",
     "security_callback_controller",
     "emit_security_event",
-
     "prepare_security_data",
     "detect_failure_rate_anomalies",
     "detect_frequency_anomalies",
@@ -58,5 +59,6 @@ def setup_isolated_security_testing() -> None:
     raise NotImplementedError(
         "setup_isolated_security_testing has not been implemented yet"
     )
+
 
 __all__.append("setup_isolated_security_testing")

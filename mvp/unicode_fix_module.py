@@ -10,7 +10,7 @@ except Exception:  # pragma: no cover - fallback when core unavailable
     UnicodeProcessor = None
 
 
-_SURROGATE_RE = re.compile("[\uD800-\uDFFF]")
+_SURROGATE_RE = re.compile("[\ud800-\udfff]")
 
 
 def clean_text(text: str) -> str:

@@ -1,4 +1,5 @@
 """Analytics Domain Public API."""
+
 from .protocols import (
     AnalyticsServiceProtocol,
     DataProcessorProtocol,

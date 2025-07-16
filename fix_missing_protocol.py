@@ -2,7 +2,7 @@ import re
 
 # Add the missing UploadDataServiceProtocol to services/interfaces.py
 print("Adding missing UploadDataServiceProtocol...")
-with open('services/interfaces.py', 'r') as f:
+with open("services/interfaces.py", "r") as f:
     content = f.read()
 
 # Add the missing protocol after the existing ones
@@ -29,7 +29,7 @@ class DeviceLearningServiceProtocol(Protocol):
 # Insert before the end of the file
 content = content.rstrip() + missing_protocol
 
-with open('services/interfaces.py', 'w') as f:
+with open("services/interfaces.py", "w") as f:
     f.write(content)
 
 print("✅ Added missing protocols to services/interfaces.py")

@@ -71,8 +71,7 @@ def analyze_with_chunking(
             return cached
         result = chunked_controller._process_chunk(chunk_df, analysis_types)
         json_ready = {
-            k: (list(v) if isinstance(v, set) else v)
-            for k, v in result.items()
+            k: (list(v) if isinstance(v, set) else v) for k, v in result.items()
         }
         with open(cache_file, "w", encoding="utf-8") as fh:
             json.dump(json_ready, fh)

@@ -45,4 +45,3 @@ def test_circular_dependency_detection():
 
     with pytest.raises(CircularDependencyError):
         c.get("x")
-

@@ -30,15 +30,17 @@ from config import ConfigLoader
 
 # Add Unicode handling
 import locale
+
 try:
-    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+    locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 except locale.Error:
     try:
-        locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+        locale.setlocale(locale.LC_ALL, "C.UTF-8")
     except locale.Error:
         pass  # Fall back to default locale
 
 logger = logging.getLogger(__name__)
+
 
 # Environment / location check
 def ensure_venv() -> None:
@@ -50,9 +52,10 @@ def ensure_venv() -> None:
         print("\u274c Wrong directory! Navigate to project root.")
         sys.exit(1)
 
-    if not os.environ.get('VIRTUAL_ENV'):
+    if not os.environ.get("VIRTUAL_ENV"):
         print("\u26a0\ufe0f Virtual environment not activated!")
         print("Run: source venv/bin/activate")
+
 
 # Consolidated learning service utilities
 from services.consolidated_learning_service import get_learning_service
@@ -149,10 +152,10 @@ def _consolidate_callbacks(app):
     try:
         # Import callback modules with error handling
         callback_modules = [
-            ('pages.deep_analytics_complex', 'register_callbacks'),
-            ('pages.file_upload', 'register_callbacks'),
-            ('pages.export', 'register_callbacks'),
-            ('pages.settings', 'register_callbacks'),
+            ("pages.deep_analytics_complex", "register_callbacks"),
+            ("pages.file_upload", "register_callbacks"),
+            ("pages.export", "register_callbacks"),
+            ("pages.settings", "register_callbacks"),
         ]
 
         for module_name, func_name in callback_modules:
@@ -179,17 +182,19 @@ def _apply_unicode_safety(app):
     """Replace Dash's ``callback`` decorator with a Unicode safe version."""
     app.callback = unicode_safe_callback
 
+
 def main():
     """Main application entry point"""
     try:
         load_dotenv()
 
         # Set Unicode handling early
-        if hasattr(sys.stdout, 'reconfigure'):
+        if hasattr(sys.stdout, "reconfigure"):
             sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
             sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
 
         from config.dev_mode import setup_dev_mode
+
         setup_dev_mode()
 
         # Import configuration
@@ -199,6 +204,7 @@ def main():
             logger.debug("Loaded raw config with keys: %s", list(raw_cfg.keys()))
 
             from config import get_config
+
             config = get_config()
             app_config = config.get_app_config()
             logger.info("✅ Configuration loaded successfully")
@@ -206,7 +212,9 @@ def main():
         except Exception as e:
             logger.error(f"❌ Failed to load configuration: {e}")
             logger.info(f"\n❌ Configuration Error: {e}")
-            logger.info("💡 Make sure config/config.py exists and is properly formatted")
+            logger.info(
+                "💡 Make sure config/config.py exists and is properly formatted"
+            )
             sys.exit(1)
 
         # Print startup information
@@ -218,7 +226,9 @@ def main():
             os.path.join(cwd, "assets", "navbar_icons", "analytics.png")
         )
         logger.info("Current working directory: %s", cwd)
-        logger.info("Analytics icon exists (%s): %s", icon_path, os.path.exists(icon_path))
+        logger.info(
+            "Analytics icon exists (%s): %s", icon_path, os.path.exists(icon_path)
+        )
 
         # Auto-generate HTTPS certificates
         ssl_context = ensure_https_certificates()
@@ -231,13 +241,12 @@ def main():
             secrets_manager = SecretsManager()
             validator = SecretsValidator(secrets_manager)
 
-            if app_config.environment == 'production':
-                secret_key: str = secrets_manager.get('SECRET_KEY', 'dev-key') or 'dev-key'
-                result = validator.validate_secret(
-                    secret_key,
-                    environment='production'
+            if app_config.environment == "production":
+                secret_key: str = (
+                    secrets_manager.get("SECRET_KEY", "dev-key") or "dev-key"
                 )
-                if result.get('errors'):
+                result = validator.validate_secret(secret_key, environment="production")
+                if result.get("errors"):
                     raise ConfigurationError("Production secrets validation failed")
 
             logger.info("✅ Secrets validated successfully")
@@ -248,9 +257,10 @@ def main():
         # Import and create the Dash application
         try:
             from core.app_factory import create_app
+
             project_root = Path(__file__).resolve().parent
             assets_dir = os.path.normcase(os.path.abspath(project_root / "assets"))
-            app = create_app(mode='full', assets_folder=assets_dir)
+            app = create_app(mode="full", assets_folder=assets_dir)
 
             from core.master_callback_system import MasterCallbackSystem
             from pages import register_all_pages
@@ -268,7 +278,9 @@ def main():
         except Exception as e:
             logger.error(f"❌ Failed to create application: {e}")
             logger.info(f"\n❌ Application Creation Error: {e}")
-            logger.info("💡 Make sure core/app_factory.py exists and dependencies are installed")
+            logger.info(
+                "💡 Make sure core/app_factory.py exists and dependencies are installed"
+            )
             sys.exit(1)
 
         # Run the application

@@ -64,14 +64,14 @@ def _import_all_modules() -> None:
 def _run_checks() -> None:
     import pandas as pd
 
-    assert clean_unicode_text("A\uD800") == "A"
-    assert util_clean_unicode_text("A\uD800") == "A"
+    assert clean_unicode_text("A\ud800") == "A"
+    assert util_clean_unicode_text("A\ud800") == "A"
     assert safe_encode_text("test") == "test"
     assert util_safe_encode_text("test") == "test"
     assert safe_decode_bytes(b"x") == "x"
     assert util_safe_decode_bytes(b"x") == "x"
 
-    df = pd.DataFrame({"=bad": ["A\uD800"]})
+    df = pd.DataFrame({"=bad": ["A\ud800"]})
     cleaned = sanitize_dataframe(df)
     util_cleaned = util_sanitize_dataframe(df)
     assert list(cleaned.columns) == ["bad"]

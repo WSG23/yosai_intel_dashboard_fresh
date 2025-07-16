@@ -17,6 +17,7 @@ def _make_processor():
 
     return UploadAnalyticsProcessor(vs, processor)
 
+
 def test_direct_processing_helper(tmp_path):
     df1 = (
         DataFrameBuilder()

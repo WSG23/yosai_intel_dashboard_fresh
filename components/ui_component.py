@@ -5,7 +5,11 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from core.container import container as _global_container
-from core.protocols import ServiceContainer, UnicodeProcessorProtocol, get_unicode_processor
+from core.protocols import (
+    ServiceContainer,
+    UnicodeProcessorProtocol,
+    get_unicode_processor,
+)
 from security.unicode_security_processor import sanitize_unicode_input
 
 
@@ -19,7 +23,9 @@ class UIComponent:
         unicode_processor: Optional[UnicodeProcessorProtocol] = None,
     ) -> None:
         self.container = container or _global_container
-        self.unicode_processor = unicode_processor or get_unicode_processor(self.container)
+        self.unicode_processor = unicode_processor or get_unicode_processor(
+            self.container
+        )
 
     # ------------------------------------------------------------------
     def sanitize(self, text: Any) -> str:
@@ -34,7 +40,9 @@ class UIComponent:
         raise NotImplementedError
 
     # ------------------------------------------------------------------
-    def register_callbacks(self, manager: Any, controller: Any | None = None) -> None:  # pragma: no cover - interface
+    def register_callbacks(
+        self, manager: Any, controller: Any | None = None
+    ) -> None:  # pragma: no cover - interface
         return None
 
 

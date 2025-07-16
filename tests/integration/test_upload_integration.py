@@ -17,7 +17,9 @@ from config.connection_retry import ConnectionRetryManager, RetryConfig
 def fast_retry_manager_cls():
     class FastRetryManager(ConnectionRetryManager):
         def __init__(self, cfg=None):
-            super().__init__(cfg or RetryConfig(max_attempts=3, base_delay=0, jitter=False))
+            super().__init__(
+                cfg or RetryConfig(max_attempts=3, base_delay=0, jitter=False)
+            )
 
         def run_with_retry(self, func):  # type: ignore[override]
             return func()

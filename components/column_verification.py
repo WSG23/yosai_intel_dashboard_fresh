@@ -650,7 +650,9 @@ def save_column_mappings_callback(
         logger.warning("No column mappings provided for %s", filename)
         return "❌ No mappings", "danger"
 
-    missing_required = [f for f in REQUIRED_STANDARD_FIELDS if f not in mappings.values()]
+    missing_required = [
+        f for f in REQUIRED_STANDARD_FIELDS if f not in mappings.values()
+    ]
     if missing_required:
         logger.warning("Missing required fields for %s: %s", filename, missing_required)
 

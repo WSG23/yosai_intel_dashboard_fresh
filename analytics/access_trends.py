@@ -6,21 +6,23 @@ Replace the entire content of analytics/access_trends.py with this code
 import logging
 import warnings
 from dataclasses import dataclass
-from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from utils.scipy_compat import get_stats_module
-stats = get_stats_module()
 from utils.sklearn_compat import optional_import
+
+stats = get_stats_module()
 
 LinearRegression = optional_import("sklearn.linear_model.LinearRegression")
 
 if LinearRegression is None:  # pragma: no cover - fallback
+
     class LinearRegression:  # type: ignore
         def __init__(self, *args, **kwargs):
             raise ImportError("scikit-learn is required for LinearRegression")
+
 
 # Suppress pandas deprecation warnings regarding legacy frequency strings.
 warnings.filterwarnings(
@@ -110,8 +112,10 @@ class AccessTrendsAnalyzer:
 
         string_columns = df_clean.select_dtypes(include=["object"]).columns
         for col in string_columns:
-            df_clean[col] = df_clean[col].astype(str).apply(
-                UnicodeSecurityHandler.sanitize_unicode_input
+            df_clean[col] = (
+                df_clean[col]
+                .astype(str)
+                .apply(UnicodeSecurityHandler.sanitize_unicode_input)
             )
 
         # Convert timestamp
@@ -335,8 +339,11 @@ class AccessTrendsAnalyzer:
         # Statistical significance recommendations
         if trend_stats["p_value"] < 0.05:
             recommendations.append(
-                f"Statistically significant trend detected (p-value: {trend_stats['p_value']:.3f}). "
-                "Monitor closely and plan accordingly."
+                (
+                    "Statistically significant trend detected "
+                    f"(p-value: {trend_stats['p_value']:.3f}). "
+                    "Monitor closely and plan accordingly."
+                )
             )
 
         # Mann-Kendall specific recommendations
@@ -386,7 +393,10 @@ class AccessTrendsAnalyzer:
             change_rate=0.0,
             volatility=0.0,
             recommendations=[
-                "Insufficient data for reliable trend analysis. Collect more data points."
+                (
+                    "Insufficient data for reliable trend analysis. "
+                    "Collect more data points."
+                )
             ],
         )
 

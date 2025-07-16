@@ -89,7 +89,9 @@ def _get_lock(name: str) -> RLock:
     return lock
 
 
-def cache_with_lock(ttl_seconds: int = 300) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def cache_with_lock(
+    ttl_seconds: int = 300,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Cache function results with a per-function lock."""
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -117,6 +119,7 @@ def cache_with_lock(ttl_seconds: int = 300) -> Callable[[Callable[..., Any]], Ca
         return wrapper
 
     return decorator
+
 
 __all__ = [
     "cache_with_lock",

@@ -99,7 +99,12 @@ class SecurityChartsGenerator:
                 "color": "var(--graph-series-4)",
                 "radius": 40,
             },
-            {"name": "Core", "doors": [], "color": "var(--graph-series-1)", "radius": 20},
+            {
+                "name": "Core",
+                "doors": [],
+                "color": "var(--graph-series-1)",
+                "radius": 20,
+            },
         ]
 
         # Calculate metrics for each layer
@@ -283,7 +288,11 @@ class SecurityChartsGenerator:
                 x=layers,
                 y=[layer["failed_attempts"] for layer in layer_metrics],
                 marker_color=[
-                    "var(--graph-series-4)" if layer["failed_attempts"] > 0 else "var(--graph-series-3)"
+                    (
+                        "var(--graph-series-4)"
+                        if layer["failed_attempts"] > 0
+                        else "var(--graph-series-3)"
+                    )
                     for layer in layer_metrics
                 ],
                 name="Failed Attempts",
@@ -414,7 +423,12 @@ class SecurityChartsGenerator:
             vertical_spacing=0.1,
         )
 
-        colors = ["var(--graph-series-1)", "var(--graph-series-2)", "var(--graph-series-3)", "var(--graph-series-4)"]
+        colors = [
+            "var(--graph-series-1)",
+            "var(--graph-series-2)",
+            "var(--graph-series-3)",
+            "var(--graph-series-4)",
+        ]
         for i, (col, color) in enumerate(zip(daily_metrics.columns, colors)):
             row = (i // 2) + 1
             col_pos = (i % 2) + 1
@@ -442,7 +456,11 @@ class SecurityChartsGenerator:
 
         # Color bars based on business hours
         colors = [
-            "var(--graph-series-2)" if hour < 8 or hour > 18 else "var(--graph-series-1)"
+            (
+                "var(--graph-series-2)"
+                if hour < 8 or hour > 18
+                else "var(--graph-series-1)"
+            )
             for hour in hourly_counts.index
         ]
 
@@ -470,7 +488,10 @@ class SecurityChartsGenerator:
         weekend_comparison.columns = ["Weekday", "Weekend"]
 
         charts["weekend_comparison"] = go.Figure()
-        for col, color in zip(weekend_comparison.columns, ["var(--graph-series-1)", "var(--graph-series-2)"]):
+        for col, color in zip(
+            weekend_comparison.columns,
+            ["var(--graph-series-1)", "var(--graph-series-2)"],
+        ):
             charts["weekend_comparison"].add_trace(
                 go.Scatter(
                     x=weekend_comparison.index,
@@ -527,7 +548,11 @@ class SecurityChartsGenerator:
 
         # Color code by success rate
         colors = [
-            "var(--graph-series-4)" if sr < 80 else "var(--graph-series-2)" if sr < 95 else "var(--graph-series-3)"
+            (
+                "var(--graph-series-4)"
+                if sr < 80
+                else "var(--graph-series-2)" if sr < 95 else "var(--graph-series-3)"
+            )
             for sr in top_users["Success Rate"]
         ]
 
@@ -619,7 +644,11 @@ class SecurityChartsGenerator:
 
         # Color code doors by success rate
         colors = [
-            "var(--graph-series-4)" if sr < 80 else "var(--graph-series-2)" if sr < 95 else "var(--graph-series-3)"
+            (
+                "var(--graph-series-4)"
+                if sr < 80
+                else "var(--graph-series-2)" if sr < 95 else "var(--graph-series-3)"
+            )
             for sr in door_stats["Success Rate"]
         ]
 
@@ -720,7 +749,11 @@ class SecurityChartsGenerator:
         }
 
         charts["risk_breakdown"] = go.Figure()
-        colors = ["var(--graph-series-4)", "var(--graph-series-2)", "var(--graph-series-1)"]
+        colors = [
+            "var(--graph-series-4)",
+            "var(--graph-series-2)",
+            "var(--graph-series-1)",
+        ]
 
         for i, (factor, value) in enumerate(risk_factors.items()):
             charts["risk_breakdown"].add_trace(
@@ -743,7 +776,9 @@ class SecurityChartsGenerator:
         daily_risk.columns = ["Failure Rate", "After Hours Rate"]
 
         charts["risk_timeline"] = go.Figure()
-        for col, color in zip(daily_risk.columns, ["var(--graph-series-4)", "var(--graph-series-2)"]):
+        for col, color in zip(
+            daily_risk.columns, ["var(--graph-series-4)", "var(--graph-series-2)"]
+        ):
             charts["risk_timeline"].add_trace(
                 go.Scatter(
                     x=daily_risk.index,
@@ -948,7 +983,11 @@ class SecurityChartsGenerator:
         charts["compliance_summary"] = go.Figure()
 
         colors = [
-            "var(--graph-series-3)" if score >= 90 else "var(--graph-series-2)" if score >= 80 else "var(--graph-series-4)"
+            (
+                "var(--graph-series-3)"
+                if score >= 90
+                else "var(--graph-series-2)" if score >= 80 else "var(--graph-series-4)"
+            )
             for score in compliance_metrics.values()
         ]
 

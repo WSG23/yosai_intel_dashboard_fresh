@@ -19,4 +19,3 @@ class UnicodeHelper(UnicodeProcessor):
 
 
 __all__ = ["UnicodeHelper"]
-

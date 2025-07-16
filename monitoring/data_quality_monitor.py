@@ -22,16 +22,22 @@ class DataQualityMetrics:
 class DataQualityMonitor:
     """Emit data quality metrics and trigger alerts based on thresholds."""
 
-    def __init__(self, thresholds: Optional["DataQualityThresholds"] = None, dispatcher: Optional[AlertDispatcher] = None) -> None:
+    def __init__(
+        self,
+        thresholds: Optional["DataQualityThresholds"] = None,
+        dispatcher: Optional[AlertDispatcher] = None,
+    ) -> None:
         cfg = get_monitoring_config()
         dq_cfg = getattr(cfg, "data_quality", None)
         if isinstance(dq_cfg, dict):
             from config.base import DataQualityThresholds
+
             self.thresholds = DataQualityThresholds(**dq_cfg)
         elif dq_cfg is not None:
             self.thresholds = dq_cfg
         else:
             from config.base import DataQualityThresholds
+
             self.thresholds = thresholds or DataQualityThresholds()
 
         alert_cfg = getattr(cfg, "alerting", {})
@@ -53,10 +59,20 @@ class DataQualityMonitor:
     def emit(self, metrics: DataQualityMetrics) -> None:
         """Record metrics and send alerts if thresholds are exceeded."""
         monitor = get_performance_monitor()
-        monitor.record_metric("data_quality.missing_ratio", metrics.missing_ratio, MetricType.FILE_PROCESSING)
-        monitor.record_metric("data_quality.outlier_ratio", metrics.outlier_ratio, MetricType.FILE_PROCESSING)
         monitor.record_metric(
-            "data_quality.schema_violations", metrics.schema_violations, MetricType.FILE_PROCESSING
+            "data_quality.missing_ratio",
+            metrics.missing_ratio,
+            MetricType.FILE_PROCESSING,
+        )
+        monitor.record_metric(
+            "data_quality.outlier_ratio",
+            metrics.outlier_ratio,
+            MetricType.FILE_PROCESSING,
+        )
+        monitor.record_metric(
+            "data_quality.schema_violations",
+            metrics.schema_violations,
+            MetricType.FILE_PROCESSING,
         )
         self._check_thresholds(metrics)
 

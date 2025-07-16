@@ -14,6 +14,7 @@ import pandas as pd
 
 from advanced_cache import clear_cache
 
+
 class ConsolidatedLearningService:
     """Unified learning service for all mapping types."""
 

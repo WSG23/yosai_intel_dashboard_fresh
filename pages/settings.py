@@ -110,7 +110,6 @@ def register_page(app=None) -> None:
         logger.warning(f"Failed to register page {__name__}: {e}")
 
 
-
 def layout() -> dbc.Container:
     """Compatibility wrapper returning the default component layout."""
 

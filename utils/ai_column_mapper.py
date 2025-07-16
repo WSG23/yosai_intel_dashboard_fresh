@@ -75,6 +75,7 @@ JAPANESE_COLUMNS: Dict[str, List[str]] = {
 # Standardization helpers
 # ---------------------------------------------------------------------------
 
+
 def standardize_column_names(
     df: pd.DataFrame,
     custom_mappings: Optional[Dict[str, List[str]]] = None,

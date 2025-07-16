@@ -54,4 +54,3 @@ class FormatDetector:
                 )
                 continue
         raise UnsupportedFormatError(file_path)
-

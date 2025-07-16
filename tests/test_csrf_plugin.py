@@ -17,6 +17,7 @@ def test_csrf_plugin_enabled_in_production(monkeypatch):
     from core.plugins import PluginManager
 
     monkeypatch.setattr(PluginManager, "load_all_plugins", lambda self: None)
+
     def _fake_csrf(app, mode=None):
         app.server.config["WTF_CSRF_ENABLED"] = True
         app._csrf_plugin = object()

@@ -35,7 +35,9 @@ class SummaryReporter:
             from services.upload_data_service import get_uploaded_filenames
             from services.interfaces import get_upload_data_service
 
-            health["uploaded_files"] = len(get_uploaded_filenames(get_upload_data_service()))
+            health["uploaded_files"] = len(
+                get_uploaded_filenames(get_upload_data_service())
+            )
         except ImportError:
             health["uploaded_files"] = "not_available"
         return health
@@ -49,7 +51,12 @@ class SummaryReporter:
 
             uploaded_files = get_uploaded_filenames(get_upload_data_service())
             if uploaded_files:
-                options.append({"label": f"Uploaded Files ({len(uploaded_files)})", "value": "uploaded"})
+                options.append(
+                    {
+                        "label": f"Uploaded Files ({len(uploaded_files)})",
+                        "value": "uploaded",
+                    }
+                )
         except ImportError:
             pass
         if self.database_manager and self.database_manager.health_check():
@@ -78,7 +85,9 @@ class SummaryReporter:
             from services.upload_data_service import get_uploaded_filenames
             from services.interfaces import get_upload_data_service
 
-            status["uploaded_files"] = len(get_uploaded_filenames(get_upload_data_service()))
+            status["uploaded_files"] = len(
+                get_uploaded_filenames(get_upload_data_service())
+            )
         except ImportError:
             status["uploaded_files"] = 0
         return status

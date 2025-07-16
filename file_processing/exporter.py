@@ -70,7 +70,9 @@ def export_to_json(
     processor = processor or get_unicode_processor()
     df_clean = processor.sanitize_dataframe(df)
     out_path = _sanitize_path(path)
-    out_path.write_text(df_clean.to_json(orient="records", force_ascii=False), encoding="utf-8")
+    out_path.write_text(
+        df_clean.to_json(orient="records", force_ascii=False), encoding="utf-8"
+    )
     meta_path = out_path.with_suffix(".meta.json")
     meta_path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
     controller.trigger(
@@ -78,4 +80,3 @@ def export_to_json(
         str(out_path),
         {"export": "json"},
     )
-

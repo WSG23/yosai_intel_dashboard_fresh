@@ -141,5 +141,4 @@ class AsyncFileProcessor(FileProcessorProtocol):
             return max(sum(1 for _ in fh) - 1, 0)
 
 
-
 __all__ = ["AsyncFileProcessor"]

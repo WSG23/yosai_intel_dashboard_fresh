@@ -12,4 +12,3 @@ def test_load_file_updates_metadata(tmp_path: Path):
     out = processor.load_file(str(path))
     assert "last_ingest" in processor.pipeline_metadata
     assert out.equals(df)
-

@@ -1,14 +1,14 @@
 import re
 
 # Fix config/unicode_sql_processor.py - remove core.unicode dependency
-with open('config/unicode_sql_processor.py', 'r') as f:
+with open("config/unicode_sql_processor.py", "r") as f:
     content = f.read()
 
 # Remove the core.unicode import
 content = re.sub(
-    r'from core\.unicode import contains_surrogates',
-    '# from core.unicode import contains_surrogates  # Circular import - use local implementation',
-    content
+    r"from core\.unicode import contains_surrogates",
+    "# from core.unicode import contains_surrogates  # Circular import - use local implementation",
+    content,
 )
 
 # Add local implementation
@@ -24,11 +24,12 @@ def contains_surrogates(text):
 
 # Add after the commented import
 content = content.replace(
-    '# from core.unicode import contains_surrogates  # Circular import - use local implementation',
-    '# from core.unicode import contains_surrogates  # Circular import - use local implementation' + local_impl
+    "# from core.unicode import contains_surrogates  # Circular import - use local implementation",
+    "# from core.unicode import contains_surrogates  # Circular import - use local implementation"
+    + local_impl,
 )
 
-with open('config/unicode_sql_processor.py', 'w') as f:
+with open("config/unicode_sql_processor.py", "w") as f:
     f.write(content)
 
 print("✅ Fixed core.unicode circular import")

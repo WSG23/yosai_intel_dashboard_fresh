@@ -28,7 +28,9 @@ class FingerprintService:
                 return df[col].nunique()
         return df.iloc[:, 0].nunique() if len(df.columns) > 0 else 0
 
-    def find_similar(self, df: pd.DataFrame, learned: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def find_similar(
+        self, df: pd.DataFrame, learned: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         current = set(df.columns)
         best: Optional[Dict[str, Any]] = None
         best_score = 0.0

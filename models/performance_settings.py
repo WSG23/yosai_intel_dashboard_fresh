@@ -64,7 +64,9 @@ class PerformanceSettingsManager:
         cache_ttl: int = 300,
     ) -> None:
         self.db = database_manager
-        self.cache = cache_manager or MemoryCacheManager(cache_config={"timeout_seconds": cache_ttl})
+        self.cache = cache_manager or MemoryCacheManager(
+            cache_config={"timeout_seconds": cache_ttl}
+        )
         self.cache_ttl = cache_ttl
         self._ensure_schema()
 
@@ -134,14 +136,24 @@ class PerformanceSettingsManager:
 
         self.cache.delete(self._CACHE_KEY)
         return self.get_setting(name) or PerformanceSetting(
-            id=-1, setting_name=name, value=str(value), type=type or self._infer_type(value)
+            id=-1,
+            setting_name=name,
+            value=str(value),
+            type=type or self._infer_type(value),
         )
 
     # ------------------------------------------------------------------
     def _validate(self, name: str, value: Any, type_name: Optional[str]) -> None:
         if not name or len(name) > 128:
             raise ValueError("setting_name must be between 1 and 128 characters")
-        if type_name is not None and type_name not in {"int", "float", "str", "bool", "json", "string"}:
+        if type_name is not None and type_name not in {
+            "int",
+            "float",
+            "str",
+            "bool",
+            "json",
+            "string",
+        }:
             raise ValueError(f"Unsupported type: {type_name}")
         # Basic cast check
         if type_name:
@@ -161,6 +173,7 @@ class PerformanceSettingsManager:
             return bool(value)
         if type_name == "json":
             import json
+
             if isinstance(value, str):
                 json.loads(value)
             else:

@@ -6,7 +6,9 @@ from pathlib import Path
 import importlib.util
 
 
-_missing_packages = [pkg for pkg in ("yaml", "psutil") if importlib.util.find_spec(pkg) is None]
+_missing_packages = [
+    pkg for pkg in ("yaml", "psutil") if importlib.util.find_spec(pkg) is None
+]
 if _missing_packages:
     missing = ", ".join(_missing_packages)
     raise RuntimeError(
@@ -18,6 +20,7 @@ try:  # use real package if available
     import dash_bootstrap_components  # noqa: F401
 except Exception:  # pragma: no cover - fallback stub
     import tests.stubs.dash_bootstrap_components as dbc_stub
+
     if "dash_bootstrap_components" not in sys.modules:
         sys.modules["dash_bootstrap_components"] = dbc_stub
     if not hasattr(dbc_stub, "themes"):
@@ -286,13 +289,17 @@ def fake_dbc(monkeypatch: pytest.MonkeyPatch, request):
     """Provide a minimal dash_bootstrap_components substitute."""
 
     import tests.stubs.dash_bootstrap_components as dbc_stub
+
     if not hasattr(dbc_stub, "themes"):
         dbc_stub.themes = types.SimpleNamespace(BOOTSTRAP="bootstrap")
 
     monkeypatch.setitem(sys.modules, "dash_bootstrap_components", dbc_stub)
     if hasattr(request.module, "dbc"):
         monkeypatch.setattr(request.module, "dbc", dbc_stub, raising=False)
-    for mod_name in ("components.column_verification", "components.device_verification"):
+    for mod_name in (
+        "components.column_verification",
+        "components.device_verification",
+    ):
         if mod_name in sys.modules:
             monkeypatch.setattr(sys.modules[mod_name], "dbc", dbc_stub, raising=False)
 
@@ -328,6 +335,7 @@ class FakeUploadStore:
 
     def wait_for_pending_saves(self) -> None:  # pragma: no cover - sync store
         pass
+
 
 @pytest.fixture
 def fake_upload_storage() -> FakeUploadStore:

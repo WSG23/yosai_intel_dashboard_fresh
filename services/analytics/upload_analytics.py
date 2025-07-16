@@ -23,7 +23,9 @@ def summarize_dataframes(dfs: List[pd.DataFrame]) -> Dict[str, Any]:
     return summary
 
 
-def run_anomaly_detection(df: pd.DataFrame, validator: SecurityValidator) -> Dict[str, Any]:
+def run_anomaly_detection(
+    df: pd.DataFrame, validator: SecurityValidator
+) -> Dict[str, Any]:
     """Run anomaly detection using chunked analysis."""
     return analyze_with_chunking(df, validator, ["anomaly"])
 
@@ -37,4 +39,3 @@ __all__ = [
     "run_anomaly_detection",
     "UploadAnalyticsProcessor",
 ]
-

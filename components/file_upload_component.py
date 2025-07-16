@@ -25,19 +25,44 @@ class FileUploadComponent:
                         dbc.Col(
                             dbc.Card(
                                 [
-                                    dbc.CardHeader([
-                                        html.H5("Upload Data Files", className="mb-0")
-                                    ]),
+                                    dbc.CardHeader(
+                                        [html.H5("Upload Data Files", className="mb-0")]
+                                    ),
                                     dbc.CardBody([UploadArea().render()]),
                                 ]
                             )
                         )
                     ]
                 ),
-                dbc.Row([dbc.Col(dbc.Progress(id="upload-progress", value=0, label="0%", striped=True, animated=True)),], className="mb-2"),
-                dbc.Row([dbc.Col(html.Ul(id="file-progress-list", className="list-unstyled"))]),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            dbc.Progress(
+                                id="upload-progress",
+                                value=0,
+                                label="0%",
+                                striped=True,
+                                animated=True,
+                            )
+                        ),
+                    ],
+                    className="mb-2",
+                ),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.Ul(id="file-progress-list", className="list-unstyled")
+                        )
+                    ]
+                ),
                 html.Div(id="preview-area"),
-                dbc.Button("Next", id="to-column-map-btn", color="primary", className="mt-2", disabled=True),
+                dbc.Button(
+                    "Next",
+                    id="to-column-map-btn",
+                    color="primary",
+                    className="mt-2",
+                    disabled=True,
+                ),
                 dcc.Store(id="uploaded-df-store"),
                 dcc.Store(id="file-info-store", data={}),
                 dcc.Store(id="current-file-info-store"),
@@ -47,7 +72,9 @@ class FileUploadComponent:
                 ),
                 dcc.Store(id="upload-task-id"),
                 dcc.Store(id="client-validation-store", data=[]),
-                dcc.Interval(id="upload-progress-interval", interval=1000, disabled=True),
+                dcc.Interval(
+                    id="upload-progress-interval", interval=1000, disabled=True
+                ),
                 dbc.Modal(
                     [
                         dbc.ModalHeader(dbc.ModalTitle("Column Mapping")),

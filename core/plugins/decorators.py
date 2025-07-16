@@ -17,7 +17,8 @@ def unicode_safe_callback(func: Callable[..., Any]) -> Callable[..., Any]:
     def wrapper(*args: Any, **kwargs: Any):
         safe_args = [sanitize_for_utf8(a) if isinstance(a, str) else a for a in args]
         safe_kwargs = {
-            k: sanitize_for_utf8(v) if isinstance(v, str) else v for k, v in kwargs.items()
+            k: sanitize_for_utf8(v) if isinstance(v, str) else v
+            for k, v in kwargs.items()
         }
         return func(*safe_args, **safe_kwargs)
 
@@ -36,12 +37,13 @@ def handle_unicode_surrogates(text: str, processor: Optional[Any] = None) -> str
         return text.encode("ascii", errors="ignore").decode("ascii")
 
 
-
 def handle_safe(*args: Any, **kwargs: Any) -> Callable[[Callable], Callable]:
     """Unified safe callback decorator supporting multiple patterns."""
 
     # ------------------------------------------------------------------
-    def _plugin_decorator(app_or_container: Any | None, up: Optional[Any] = None) -> Callable[[Callable], Callable]:
+    def _plugin_decorator(
+        app_or_container: Any | None, up: Optional[Any] = None
+    ) -> Callable[[Callable], Callable]:
         """Return decorator for plugin style usage."""
 
         def decorator(func: Callable) -> Callable:
@@ -67,13 +69,23 @@ def handle_safe(*args: Any, **kwargs: Any) -> Callable[[Callable], Callable]:
                             unicode_proc = container.get("unicode_processor")
                         except Exception:
                             unicode_proc = None
-                safe_func = callback_service.wrap_callback(func) if callback_service else func
+                safe_func = (
+                    callback_service.wrap_callback(func) if callback_service else func
+                )
                 safe_args = [
-                    handle_unicode_surrogates(a, unicode_proc) if isinstance(a, str) else a
+                    (
+                        handle_unicode_surrogates(a, unicode_proc)
+                        if isinstance(a, str)
+                        else a
+                    )
                     for a in f_args
                 ]
                 safe_kwargs = {
-                    k: handle_unicode_surrogates(v, unicode_proc) if isinstance(v, str) else v
+                    k: (
+                        handle_unicode_surrogates(v, unicode_proc)
+                        if isinstance(v, str)
+                        else v
+                    )
                     for k, v in f_kwargs.items()
                 }
                 result = safe_func(*safe_args, **safe_kwargs)
@@ -81,7 +93,11 @@ def handle_safe(*args: Any, **kwargs: Any) -> Callable[[Callable], Callable]:
                     result = handle_unicode_surrogates(result, unicode_proc)
                 elif isinstance(result, (list, tuple)):
                     result = [
-                        handle_unicode_surrogates(r, unicode_proc) if isinstance(r, str) else r
+                        (
+                            handle_unicode_surrogates(r, unicode_proc)
+                            if isinstance(r, str)
+                            else r
+                        )
                         for r in result
                     ]
                 return result
@@ -138,7 +154,9 @@ def handle_safe(*args: Any, **kwargs: Any) -> Callable[[Callable], Callable]:
 safe_callback = handle_safe
 
 
-def handle_unified(target: Any, *cb_args: Any, **cb_kwargs: Any) -> Callable[[Callable], Callable]:
+def handle_unified(
+    target: Any, *cb_args: Any, **cb_kwargs: Any
+) -> Callable[[Callable], Callable]:
     """Return decorator registering callbacks on any supported target."""
     from .callback_unifier import CallbackUnifier
 

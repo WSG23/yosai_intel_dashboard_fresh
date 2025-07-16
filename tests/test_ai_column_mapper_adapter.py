@@ -12,9 +12,12 @@ spec = importlib.util.spec_from_file_location(
 ai_module = importlib.util.module_from_spec(spec)
 
 # Provide a minimal stub for the optional components dependency
-sys.modules.setdefault("components.plugin_adapter", importlib.util.module_from_spec(
-    importlib.util.spec_from_loader("components.plugin_adapter", loader=None)
-))
+sys.modules.setdefault(
+    "components.plugin_adapter",
+    importlib.util.module_from_spec(
+        importlib.util.spec_from_loader("components.plugin_adapter", loader=None)
+    ),
+)
 setattr(sys.modules["components.plugin_adapter"], "ComponentPluginAdapter", object)
 
 spec.loader.exec_module(ai_module)

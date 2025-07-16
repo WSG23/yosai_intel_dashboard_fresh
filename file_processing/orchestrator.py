@@ -10,7 +10,6 @@ from file_processing.exporter import ExportError, export_to_csv, export_to_json
 from file_processing.format_detector import FormatDetector, UnsupportedFormatError
 
 
-
 @task
 def ingest(file_path: str, hint: dict):
     """Load the input file and detect its format."""

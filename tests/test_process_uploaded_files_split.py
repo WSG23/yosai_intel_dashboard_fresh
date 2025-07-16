@@ -17,10 +17,7 @@ def _encode_df(df: pd.DataFrame) -> str:
 def test_process_uploaded_files_split(monkeypatch, tmp_path, async_runner):
     # create a dataframe large enough to split
     df = (
-        DataFrameBuilder()
-        .add_column("a", range(10))
-        .add_column("b", range(10))
-        .build()
+        DataFrameBuilder().add_column("a", range(10)).add_column("b", range(10)).build()
     )
     df1 = df.iloc[:5]
     df2 = df.iloc[5:]

@@ -11,4 +11,5 @@ class CoreAnalyticsService:
     def process(self, data: Any) -> None:
         pass
 
+
 __all__ = ["CoreAnalyticsService"]

@@ -34,9 +34,7 @@ class CallbackManager:
             self._callbacks[event].sort(key=lambda x: x[0])
 
     # ------------------------------------------------------------------
-    def handle_unregister(
-        self, event: CallbackEvent, func: Callable[..., Any]
-    ) -> None:
+    def handle_unregister(self, event: CallbackEvent, func: Callable[..., Any]) -> None:
         """Unregister a previously registered callback."""
         with self._lock:
             self._callbacks[event] = [

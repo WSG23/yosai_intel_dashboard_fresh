@@ -32,24 +32,28 @@ train_autoencoder_model = anomaly_models.train_autoencoder_model
 
 
 def test_prepare_anomaly_data_basic():
-    df = pd.DataFrame({
-        "timestamp": ["2024-01-01 00:00:00"],
-        "person_id": ["u1"],
-        "door_id": ["d1"],
-        "access_result": ["Granted"],
-    })
+    df = pd.DataFrame(
+        {
+            "timestamp": ["2024-01-01 00:00:00"],
+            "person_id": ["u1"],
+            "door_id": ["d1"],
+            "access_result": ["Granted"],
+        }
+    )
     cleaned = prepare_anomaly_data(df)
     assert "hour" in cleaned.columns
     assert cleaned["access_granted"].iloc[0] == 1
 
 
 def test_detect_ml_anomalies_runs():
-    df = pd.DataFrame({
-        "timestamp": pd.date_range("2024-01-01", periods=20, freq="min"),
-        "person_id": ["u1"] * 20,
-        "door_id": ["d1"] * 20,
-        "access_result": ["Granted"] * 20,
-    })
+    df = pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2024-01-01", periods=20, freq="min"),
+            "person_id": ["u1"] * 20,
+            "door_id": ["d1"] * 20,
+            "access_result": ["Granted"] * 20,
+        }
+    )
     cleaned = prepare_anomaly_data(df)
     model = IsolationForest(random_state=42, n_estimators=10, contamination=0.1)
     anomalies = detect_ml_anomalies(cleaned, 0.9, model)
@@ -57,16 +61,20 @@ def test_detect_ml_anomalies_runs():
 
 
 def test_train_models_and_ensemble():
-    df = pd.DataFrame({
-        "timestamp": pd.date_range("2024-01-01", periods=30, freq="min"),
-        "person_id": ["u1"] * 30,
-        "door_id": ["d1"] * 30,
-        "access_result": ["Granted"] * 30,
-    })
+    df = pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2024-01-01", periods=30, freq="min"),
+            "person_id": ["u1"] * 30,
+            "door_id": ["d1"] * 30,
+            "access_result": ["Granted"] * 30,
+        }
+    )
     cleaned = prepare_anomaly_data(df)
     iso = IsolationForest(random_state=42, n_estimators=10, contamination=0.1)
     db_model, db_scaler = train_dbscan_model(cleaned, eps=0.5, min_samples=3)
-    ae_model, ae_scaler = train_autoencoder_model(cleaned, hidden_layer_sizes=(5, 2, 5), max_iter=100)
+    ae_model, ae_scaler = train_autoencoder_model(
+        cleaned, hidden_layer_sizes=(5, 2, 5), max_iter=100
+    )
     anomalies = detect_ml_anomalies(
         cleaned,
         0.9,

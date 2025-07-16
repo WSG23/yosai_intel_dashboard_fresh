@@ -7,7 +7,7 @@ from core.unicode import clean_unicode_text, safe_encode_text, UnicodeSecurityPr
 
 
 def main() -> None:
-    assert clean_unicode_text("A\uD800B") == "AB"
+    assert clean_unicode_text("A\ud800B") == "AB"
     assert safe_encode_text("test") == "test"
     assert UnicodeSecurityProcessor.sanitize_input("<x>") == "&lt;x&gt;"
     print("All checks passed")

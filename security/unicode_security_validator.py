@@ -21,9 +21,12 @@ class UnicodeSecurityValidator:
     @staticmethod
     def validate_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         sanitized = df.applymap(sanitize_for_utf8)
-        if sanitized.select_dtypes(include=["object"]).applymap(
-            detect_surrogate_pairs
-        ).any().any():
+        if (
+            sanitized.select_dtypes(include=["object"])
+            .applymap(detect_surrogate_pairs)
+            .any()
+            .any()
+        ):
             raise ValidationError("Surrogate characters detected")
         return sanitized
 

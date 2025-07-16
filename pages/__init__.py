@@ -19,7 +19,7 @@ PAGE_MODULES: Dict[str, str] = {
     "deep_analytics": "pages.deep_analytics",
     "file_upload": "pages.file_upload",
     "graphs": "pages.graphs",
-    "export": "pages.export", 
+    "export": "pages.export",
     "settings": "pages.settings",
 }
 
@@ -61,7 +61,7 @@ def register_pages(app: Optional["Dash"] = None) -> None:
     """Register all known pages with a Dash app."""
     registered_count = 0
     failed_pages = []
-    
+
     for name in PAGE_MODULES:
         try:
             module = _load_page(name)
@@ -74,16 +74,17 @@ def register_pages(app: Optional["Dash"] = None) -> None:
         except Exception as exc:
             failed_pages.append(name)
             logger.warning(f"❌ Failed to register page {name}: {exc}")
-    
+
     if app is not None:
         # Check what pages were actually registered
         try:
             from dash.page_registry import page_registry
+
             actual_registered = list(page_registry.keys())
             logger.info(f"🔍 Dash page registry contains: {actual_registered}")
         except (ImportError, AttributeError):
             logger.debug("Could not access page registry")
-    
+
     logger.info(f"✅ Pages registered: {registered_count}/{len(PAGE_MODULES)}")
     if failed_pages:
         logger.warning(f"❌ Failed to register: {failed_pages}")
@@ -107,49 +108,53 @@ def get_available_pages() -> Dict[str, bool]:
 
 # Alternative manual routing system for when Dash Pages fails
 
+
 def create_manual_router(app):
     """Create manual routing - now integrated with TrulyUnifiedCallbacks."""
     pass  # Routing handled by register_router_callback
 
+
 def register_router_callback(manager):
     """Register routing callback with TrulyUnifiedCallbacks."""
     from dash import Input, Output, html
-    
+
     def route_pages_unified(pathname):
         try:
             path_mapping = {
                 "/": "deep_analytics",
-                "/analytics": "deep_analytics", 
+                "/analytics": "deep_analytics",
                 "/dashboard": "deep_analytics",
                 "/upload": "file_upload",
                 "/export": "export",
                 "/settings": "settings",
                 "/graphs": "graphs",
             }
-            
+
             page_name = path_mapping.get(pathname, "deep_analytics")
             layout_func = get_page_layout(page_name)
-            
+
             if layout_func:
                 return layout_func()
             else:
-                return html.Div([
-                    html.H1("Page Not Found"),
-                    html.P(f"Could not load page: {page_name}"),
-                    html.P(f"Path: {pathname}")
-                ])
+                return html.Div(
+                    [
+                        html.H1("Page Not Found"),
+                        html.P(f"Could not load page: {page_name}"),
+                        html.P(f"Path: {pathname}"),
+                    ]
+                )
         except Exception as exc:
             logger.exception("Routing failure")
             return dbc.Alert(
                 "There was a problem loading the requested page.",
                 color="danger",
             )
-    
+
     # Register with TrulyUnifiedCallbacks
     manager.unified_callback(
         Output("page-content", "children"),
         Input("url", "pathname"),
-        prevent_initial_call=False
+        prevent_initial_call=False,
     )(route_pages_unified)
 
 
@@ -159,7 +164,11 @@ def register_all_pages(app: "Dash", manager: Optional[Any] = None) -> None:
     from pathlib import Path
 
     package_path = Path(__file__).parent
-    modules = [m.name for m in pkgutil.iter_modules([str(package_path)]) if not m.name.startswith("_")]
+    modules = [
+        m.name
+        for m in pkgutil.iter_modules([str(package_path)])
+        if not m.name.startswith("_")
+    ]
 
     for mod_name in modules:
         try:

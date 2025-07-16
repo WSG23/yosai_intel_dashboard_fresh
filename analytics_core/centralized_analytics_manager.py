@@ -16,7 +16,9 @@ class CentralizedAnalyticsManager:
     ai_service: Any | None = None
     performance_service: Any | None = None
     data_service: Any | None = None
-    callback_manager: UnifiedCallbackManager = field(default_factory=UnifiedCallbackManager)
+    callback_manager: UnifiedCallbackManager = field(
+        default_factory=UnifiedCallbackManager
+    )
 
     def run_full_pipeline(self, data: Any) -> None:
         """Run the full analytics pipeline on ``data``."""
@@ -30,5 +32,5 @@ class CentralizedAnalyticsManager:
             self.data_service.transform(data)
         self.callback_manager.trigger("pipeline_complete", data)
 
-__all__ = ["CentralizedAnalyticsManager"]
 
+__all__ = ["CentralizedAnalyticsManager"]

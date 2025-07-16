@@ -46,7 +46,6 @@ class ChunkedUploadManager:
         self.retry_config = RetryConfig(max_attempts=3, base_delay=0.2, jitter=False)
         self._retry_manager_cls = retry_manager_cls
 
-
     # ------------------------------------------------------------------
     def _metadata_path(self, filename: str) -> Path:
         return self.metadata_dir / f"{Path(filename).name}.json"

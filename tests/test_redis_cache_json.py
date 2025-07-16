@@ -16,7 +16,9 @@ def _setup_manager(monkeypatch, fake_redis):
         sys.modules["redis"] = redis_mod
     redis_mod.Redis = lambda *a, **k: fake_redis
     cm = importlib.import_module("core.plugins.config.cache_manager")
-    monkeypatch.setattr(cm, "redis", types.SimpleNamespace(Redis=lambda *a, **k: fake_redis))
+    monkeypatch.setattr(
+        cm, "redis", types.SimpleNamespace(Redis=lambda *a, **k: fake_redis)
+    )
     cfg = types.SimpleNamespace(host="localhost", port=6379, db=0, ttl=1)
     manager = cm.RedisCacheManager(cfg)
     manager.start()

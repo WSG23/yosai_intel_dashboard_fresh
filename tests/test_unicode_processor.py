@@ -47,14 +47,14 @@ def test_unicode_processor_thread_safety():
 
 
 def test_clean_surrogate_control_nfkc():
-    text = "Ａ" + "😀" + "\x00" + chr(0xD800) + "B" + "\u212B"
+    text = "Ａ" + "😀" + "\x00" + chr(0xD800) + "B" + "\u212b"
     result = safe_encode_text(text)
     # emoji should survive, others cleaned
     assert result == "A😀BÅ"
 
 
 def test_dataframe_sanitization_edge_cases():
-    df = pd.DataFrame({"=bad\x00": ["=cmd" + chr(0xD800), "\x07\u212B"]})
+    df = pd.DataFrame({"=bad\x00": ["=cmd" + chr(0xD800), "\x07\u212b"]})
     cleaned = sanitize_dataframe(df)
     assert list(cleaned.columns) == ["bad"]
     assert cleaned.iloc[0, 0] == "cmd"

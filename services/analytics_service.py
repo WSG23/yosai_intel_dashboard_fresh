@@ -243,7 +243,6 @@ class AnalyticsService(AnalyticsServiceProtocol):
             logger.error(f"Dashboard summary failed: {e}")
             return {"status": "error", "message": str(e)}
 
-
     @cache_with_lock(ttl_seconds=600)
     def get_unique_patterns_analysis(self, data_source: str | None = None):
         """Get unique patterns analysis for the requested source."""
@@ -270,8 +269,8 @@ class AnalyticsService(AnalyticsServiceProtocol):
                 date_span,
             ) = self.analytics_processor.calculate_pattern_stats(df)
 
-            power_users, regular_users, occasional_users = self.analytics_processor.analyze_user_patterns(
-                df, unique_users
+            power_users, regular_users, occasional_users = (
+                self.analytics_processor.analyze_user_patterns(df, unique_users)
             )
             (
                 high_traffic_devices,
@@ -391,7 +390,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
         logger.debug("detect_anomalies called with sensitivity=%s", sensitivity)
         return []
 
-    def generate_report(self, report_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_report(
+        self, report_type: str, params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Generate an analytics report."""
         logger.debug(
             "generate_report called with report_type=%s params=%s",

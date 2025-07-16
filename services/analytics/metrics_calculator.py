@@ -1,4 +1,5 @@
 """Basic metrics calculator implementation."""
+
 from __future__ import annotations
 
 from typing import Any, Dict
@@ -19,5 +20,7 @@ class MetricsCalculator(MetricsCalculatorProtocol):
     def calculate_performance_metrics(self, data: pd.DataFrame) -> Dict[str, float]:
         return {"rows": float(len(data))}
 
-    def calculate_trend_metrics(self, data: pd.DataFrame, window: str = "7d") -> Dict[str, Any]:
+    def calculate_trend_metrics(
+        self, data: pd.DataFrame, window: str = "7d"
+    ) -> Dict[str, Any]:
         return {"window": window, "count": len(data)}

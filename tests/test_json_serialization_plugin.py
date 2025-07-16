@@ -25,8 +25,6 @@ from core.plugins.manager import ThreadSafePluginManager as PluginManager
 # pytest.skip("legacy DI tests skipped", allow_module_level=True)
 
 
-
-
 class TestJsonSerializationPlugin(unittest.TestCase):
     """Test the JSON Serialization Plugin"""
 

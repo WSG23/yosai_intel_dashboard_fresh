@@ -34,7 +34,9 @@ def debug_callback_registration_flow(target_class: Any | None = None) -> None:
 
     original = getattr(target_class, "handle_register_with_deduplication", None)
     if original is None:
-        logger.warning("handle_register_with_deduplication not found on %s", target_class)
+        logger.warning(
+            "handle_register_with_deduplication not found on %s", target_class
+        )
         return
 
     @functools.wraps(original)

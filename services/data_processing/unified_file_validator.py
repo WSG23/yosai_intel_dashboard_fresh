@@ -147,7 +147,9 @@ class UnifiedFileValidator:
             self.config.security, "max_upload_mb", dynamic_config.security.max_upload_mb
         )
         self._string_validator = _lazy_string_validator()
-        self._basic_validator = UnifiedUploadValidator(self.max_size_mb, config=self.config)
+        self._basic_validator = UnifiedUploadValidator(
+            self.max_size_mb, config=self.config
+        )
 
     def _sanitize_string(self, value: str) -> str:
         cleaned = sanitize_for_utf8(str(value))

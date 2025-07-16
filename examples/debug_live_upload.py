@@ -41,9 +41,7 @@ def add_debug_hooks():
     original_validate = UnifiedFileValidator.validate_file
 
     def debug_validate_file_contents(self, contents, filename):
-        logger.info(
-            f"🔒 HOOK 2: UnifiedFileValidator.validate_file() for {filename}"
-        )
+        logger.info(f"🔒 HOOK 2: UnifiedFileValidator.validate_file() for {filename}")
         df = original_validate(self, contents, filename)
         rows = len(df)
         logger.info(f"🎯 HOOK 2: UnifiedFileValidator result: {rows} rows")

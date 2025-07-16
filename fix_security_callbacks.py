@@ -2,7 +2,7 @@ import re
 
 # Fix security/events.py - provide actual implementation
 print("Fixing security/events.py...")
-with open('security/events.py', 'r') as f:
+with open("security/events.py", "r") as f:
     content = f.read()
 
 # Replace the undefined security_unified_callbacks with a working implementation
@@ -32,7 +32,7 @@ def emit_security_event(event: SecurityEvent, data: dict | None = None) -> None:
 __all__ = ["SecurityEvent", "emit_security_event", "security_unified_callbacks"]
 '''
 
-with open('security/events.py', 'w') as f:
+with open("security/events.py", "w") as f:
     f.write(new_content)
 
 print("✅ Fixed security/events.py with working implementation")

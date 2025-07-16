@@ -11,4 +11,5 @@ class DataProcessingService:
     def transform(self, data: Any) -> None:
         pass
 
+
 __all__ = ["DataProcessingService"]

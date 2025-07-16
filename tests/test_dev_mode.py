@@ -37,6 +37,4 @@ def test_dev_mode_warning_contains_instruction(monkeypatch, caplog):
     with caplog.at_level("WARNING"):
         dev_mode.setup_dev_mode()
 
-    assert any(
-        "cp .env.example .env" in r.getMessage() for r in caplog.records
-    )
+    assert any("cp .env.example .env" in r.getMessage() for r in caplog.records)

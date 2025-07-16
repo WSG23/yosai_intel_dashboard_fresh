@@ -24,18 +24,17 @@ def __getattr__(name: str):
         return _SV
     raise AttributeError(name)
 
+
 # Public API - Only current, non-deprecated classes
 __all__ = [
     # Core validation
     "SecurityValidator",
     "ValidationError",
     "SecurityViolation",
-
     # Specialized validators
     "UnicodeSecurityValidator",
     "UnicodeSurrogateValidator",
     "SurrogateHandlingConfig",
-
     # Security utilities
     "AttackDetection",
     "SecretsValidator",

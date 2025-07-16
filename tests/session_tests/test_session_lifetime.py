@@ -9,6 +9,7 @@ from core.protocols import ConfigurationProtocol
 # Ensure project root is on path
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
+
 @dataclass
 class FakeSecurityConfig:
     session_timeout: int = 3600
@@ -39,6 +40,7 @@ class FakeConfiguration(ConfigurationProtocol):
     def validate_config(self) -> dict:
         return {"valid": True}
 
+
 from core.auth import User, _determine_session_timeout, _apply_session_timeout
 
 
@@ -57,7 +59,9 @@ def test_determine_session_timeout(monkeypatch):
 
 def test_apply_session_timeout_sets_flask_values(monkeypatch):
     cfg = FakeConfiguration(
-        FakeSecurityConfig(session_timeout=3600, session_timeout_by_role={"admin": 7200})
+        FakeSecurityConfig(
+            session_timeout=3600, session_timeout_by_role={"admin": 7200}
+        )
     )
     monkeypatch.setattr("core.auth.get_security_config", cfg.get_security_config)
     app = Flask(__name__)

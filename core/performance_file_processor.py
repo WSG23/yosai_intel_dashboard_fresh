@@ -18,7 +18,9 @@ except ImportError:  # pragma: no cover - optional dependency
 class PerformanceFileProcessor:
     """Process large CSV files in chunks with memory tracking."""
 
-    def __init__(self, chunk_size: int = 50000, *, max_memory_mb: int | None = None) -> None:
+    def __init__(
+        self, chunk_size: int = 50000, *, max_memory_mb: int | None = None
+    ) -> None:
         from config.dynamic_config import dynamic_config
 
         self.chunk_size = chunk_size
@@ -98,5 +100,6 @@ class PerformanceFileProcessor:
             return gen
         chunks = list(gen)
         return pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+
 
 __all__ = ["PerformanceFileProcessor"]

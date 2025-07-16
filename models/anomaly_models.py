@@ -9,22 +9,28 @@ MLPRegressor = optional_import("sklearn.neural_network.MLPRegressor")
 StandardScaler = optional_import("sklearn.preprocessing.StandardScaler")
 
 if DBSCAN is None:  # pragma: no cover - fallback definitions
+
     class DBSCAN:  # type: ignore
         def __init__(self, *args, **kwargs):
             raise ImportError("scikit-learn is required for DBSCAN")
 
+
 if MLPRegressor is None:  # pragma: no cover - fallback definitions
+
     class MLPRegressor:  # type: ignore
         def __init__(self, *args, **kwargs):
             raise ImportError("scikit-learn is required for MLPRegressor")
 
+
 if StandardScaler is None:  # pragma: no cover - fallback definitions
+
     class StandardScaler:  # type: ignore
         def fit_transform(self, X):
             return X
 
         def transform(self, X):
             return X
+
 
 __all__ = [
     "train_dbscan_model",

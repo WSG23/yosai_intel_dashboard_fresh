@@ -5,10 +5,12 @@
 def test_import():
     """Test that the page imports correctly."""
     import pages.file_upload as upload_page
+
     layout = upload_page.layout()
     health = upload_page.check_upload_system_health()
     assert health["status"] == "healthy"
     print("✅ Upload page imports and layout is generated successfully")
+
 
 if __name__ == "__main__":
     test_import()

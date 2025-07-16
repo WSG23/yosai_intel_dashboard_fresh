@@ -73,15 +73,20 @@ class FakeDeviceLearningService(DeviceLearningServiceProtocol):
     def get_learned_mappings(self, df: pd.DataFrame, filename: str) -> Dict[str, Dict]:
         return {}
 
-    def apply_learned_mappings_to_global_store(self, df: pd.DataFrame, filename: str) -> bool:
+    def apply_learned_mappings_to_global_store(
+        self, df: pd.DataFrame, filename: str
+    ) -> bool:
         return False
 
     def get_user_device_mappings(self, filename: str) -> Dict[str, Any]:
         return self.saved.get(filename, {})
 
-    def save_user_device_mappings(self, df: pd.DataFrame, filename: str, user_mappings: Dict[str, Any]) -> bool:
+    def save_user_device_mappings(
+        self, df: pd.DataFrame, filename: str, user_mappings: Dict[str, Any]
+    ) -> bool:
         self.saved[filename] = user_mappings
         return True
+
 
 class FakeColumnVerifier(ColumnVerifierProtocol):
     def create_column_verification_modal(self, file_info: Dict[str, Any]) -> Any:
@@ -127,7 +132,9 @@ class FakeFileProcessor(FileProcessorProtocol):
                 pass
         return df
 
-    def read_uploaded_file(self, contents: str, filename: str) -> tuple[pd.DataFrame, str]:
+    def read_uploaded_file(
+        self, contents: str, filename: str
+    ) -> tuple[pd.DataFrame, str]:
         import base64
         from io import BytesIO
 
@@ -158,4 +165,3 @@ class FakeGraphs:
     """Minimal graphs substitute used in tests."""
 
     GRAPH_FIGURES: dict[str, Any] = {}
-

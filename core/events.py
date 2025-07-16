@@ -1,4 +1,5 @@
 """Simple in-memory event bus implementing ``EventBusProtocol``."""
+
 from __future__ import annotations
 
 from typing import Any, Callable, Dict, List
@@ -14,7 +15,9 @@ class EventBus(EventBusProtocol):
         self._history: List[Dict[str, Any]] = []
         self._counter = 0
 
-    def publish(self, event_type: str, data: Dict[str, Any], source: str | None = None) -> None:
+    def publish(
+        self, event_type: str, data: Dict[str, Any], source: str | None = None
+    ) -> None:
         self._history.append({"type": event_type, "data": data, "source": source})
         for _sid, handler in self._subscribers.get(event_type, []):
             handler(data)
@@ -42,6 +45,12 @@ class EventBus(EventBusProtocol):
                 all_handlers.append({"id": sid, "handler": h, "type": etype})
         return all_handlers
 
-    def get_event_history(self, event_type: str | None = None, limit: int = 100) -> List[Dict[str, Any]]:
-        history = self._history if event_type is None else [e for e in self._history if e["type"] == event_type]
+    def get_event_history(
+        self, event_type: str | None = None, limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        history = (
+            self._history
+            if event_type is None
+            else [e for e in self._history if e["type"] == event_type]
+        )
         return history[-limit:]

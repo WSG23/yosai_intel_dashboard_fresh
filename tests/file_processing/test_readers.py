@@ -5,11 +5,14 @@ from pathlib import Path
 from file_processing.readers import CSVReader, JSONReader, ExcelReader
 
 
-@pytest.mark.parametrize("reader,ext,writer", [
-    (CSVReader(), ".csv", lambda df, p: df.to_csv(p, index=False)),
-    (JSONReader(), ".json", lambda df, p: df.to_json(p, orient="records")),
-    (ExcelReader(), ".xlsx", lambda df, p: df.to_excel(p, index=False)),
-])
+@pytest.mark.parametrize(
+    "reader,ext,writer",
+    [
+        (CSVReader(), ".csv", lambda df, p: df.to_csv(p, index=False)),
+        (JSONReader(), ".json", lambda df, p: df.to_json(p, orient="records")),
+        (ExcelReader(), ".xlsx", lambda df, p: df.to_excel(p, index=False)),
+    ],
+)
 def test_reader_success(tmp_path: Path, reader, ext, writer):
     df = pd.DataFrame({"a": [1, 2]})
     path = tmp_path / f"t{ext}"
@@ -23,4 +26,3 @@ def test_cannot_parse(tmp_path: Path):
     path.write_text("")
     with pytest.raises(CSVReader.CannotParse):
         CSVReader().read(str(path))
-

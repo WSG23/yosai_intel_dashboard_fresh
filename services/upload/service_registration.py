@@ -1,4 +1,5 @@
 """Service registration for upload domain using ``ServiceContainer``."""
+
 from __future__ import annotations
 
 from core.service_container import (
@@ -92,4 +93,3 @@ def configure_upload_dependencies(container: ServiceContainer) -> None:
         raise CircularDependencyError(
             f"Circular dependencies: {results['circular_dependencies']}"
         )
-

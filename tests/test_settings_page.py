@@ -14,4 +14,3 @@ def test_apply_system_config_updates_dynamic_config():
 def test_update_theme_returns_sanitized():
     sanitized = settings.register_callbacks.__globals__["sanitize_theme"]("LIGHT")
     assert sanitized == "light"
-

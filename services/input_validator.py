@@ -1,4 +1,5 @@
 """Backward compatibility wrapper for :class:`UnifiedUploadValidator`."""
+
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -24,4 +25,3 @@ class InputValidator(UnifiedUploadValidator):
     ) -> None:
         config = config or DynamicConfigurationService()
         super().__init__(max_size_mb=max_size_mb, config=config)
-

@@ -13,7 +13,9 @@ class AnalyticsProcessor:
 
     def calculate_pattern_stats(self, df: pd.DataFrame) -> Tuple[int, int, int, int]:
         total_records = len(df)
-        unique_users = int(df["person_id"].nunique()) if "person_id" in df.columns else 0
+        unique_users = (
+            int(df["person_id"].nunique()) if "person_id" in df.columns else 0
+        )
         unique_devices = int(df["door_id"].nunique()) if "door_id" in df.columns else 0
         date_span = 0
         if "timestamp" in df.columns:
@@ -60,7 +62,9 @@ class AnalyticsProcessor:
                 q80 = float(device_stats.quantile(0.8))
                 q20 = float(device_stats.quantile(0.2))
                 high_traffic = device_stats[device_stats.gt(q80)].index.tolist()
-                moderate_traffic = device_stats[device_stats.between(q20, q80)].index.tolist()
+                moderate_traffic = device_stats[
+                    device_stats.between(q20, q80)
+                ].index.tolist()
                 low_traffic = device_stats[device_stats.lt(q20)].index.tolist()
         logger.info("   High traffic devices: %s", len(high_traffic))
         logger.info("   Moderate traffic devices: %s", len(moderate_traffic))
@@ -76,7 +80,9 @@ class AnalyticsProcessor:
     def calculate_success_rate(self, df: pd.DataFrame) -> float:
         if "access_result" in df.columns:
             success_mask = (
-                df["access_result"].str.lower().str.contains("grant|allow|success|permit", case=False, na=False)
+                df["access_result"]
+                .str.lower()
+                .str.contains("grant|allow|success|permit", case=False, na=False)
             )
             return success_mask.mean()
         return 0.0

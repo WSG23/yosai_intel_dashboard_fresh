@@ -18,7 +18,9 @@ def setup_auth(monkeypatch):
     )
 
     monkeypatch.setattr(orig_jwt, "decode", jwt_stub.decode)
-    monkeypatch.setattr(orig_jwt, "get_unverified_header", jwt_stub.get_unverified_header)
+    monkeypatch.setattr(
+        orig_jwt, "get_unverified_header", jwt_stub.get_unverified_header
+    )
 
     module = importlib.import_module("core.auth")
     importlib.reload(module)

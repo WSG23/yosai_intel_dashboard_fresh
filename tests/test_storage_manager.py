@@ -19,6 +19,8 @@ class TemporaryCallback:
 
     def __exit__(self, exc_type, exc, tb):
         self.manager.unregister_callback(self.event, self.cb)
+
+
 from file_conversion.storage_manager import StorageManager
 
 

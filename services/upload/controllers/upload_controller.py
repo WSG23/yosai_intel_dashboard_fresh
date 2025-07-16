@@ -10,6 +10,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class UnifiedUploadController:
     """Fixed upload controller with proper callback objects."""
 
@@ -22,7 +23,7 @@ class UnifiedUploadController:
         def handle_upload(contents, filename):
             if not contents or not filename:
                 raise PreventUpdate
-            
+
             try:
                 content_type, content_string = contents.split(",", 1)
                 decoded = base64.b64decode(content_string)

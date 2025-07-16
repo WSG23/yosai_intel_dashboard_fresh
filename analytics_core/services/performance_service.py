@@ -11,4 +11,5 @@ class PerformanceAnalyticsService:
     def profile(self, data: Any) -> None:
         pass
 
+
 __all__ = ["PerformanceAnalyticsService"]

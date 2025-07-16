@@ -24,7 +24,9 @@ class ArchiveReader(BaseReader):
 
     format_name = "archive"
 
-    def __init__(self, *, unicode_processor: UnicodeProcessorProtocol | None = None) -> None:
+    def __init__(
+        self, *, unicode_processor: UnicodeProcessorProtocol | None = None
+    ) -> None:
         super().__init__(unicode_processor=unicode_processor)
         self.callback_controller = CallbackManager()
 
@@ -32,7 +34,7 @@ class ArchiveReader(BaseReader):
         path = Path(file_path)
         if not path.is_file():
             raise ArchiveReader.CannotParse("not a file")
-        if path.suffix.lower() not in {'.zip', '.tar', '.gz', '.tgz'}:
+        if path.suffix.lower() not in {".zip", ".tar", ".gz", ".tgz"}:
             raise ArchiveReader.CannotParse("extension mismatch")
         try:
             if zipfile.is_zipfile(path):
@@ -74,4 +76,3 @@ class ArchiveReader(BaseReader):
             except Exception:
                 pass
         return df
-

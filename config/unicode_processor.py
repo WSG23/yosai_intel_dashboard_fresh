@@ -24,11 +24,15 @@ class QueryUnicodeHandler:
         if isinstance(value, str):
             clean = processor.safe_encode_text(value)
             if contains_surrogates(value):
-                emit_security_event(SecurityEvent.VALIDATION_FAILED, {"issue": "surrogate_query"})
+                emit_security_event(
+                    SecurityEvent.VALIDATION_FAILED, {"issue": "surrogate_query"}
+                )
                 logger.info("Surrogate characters removed from query value")
             return clean
         if isinstance(value, dict):
-            return {k: QueryUnicodeHandler._encode(v, processor) for k, v in value.items()}
+            return {
+                k: QueryUnicodeHandler._encode(v, processor) for k, v in value.items()
+            }
         if isinstance(value, (list, tuple, set)):
             return type(value)(QueryUnicodeHandler._encode(v, processor) for v in value)
         return value
@@ -55,8 +59,10 @@ class QueryUnicodeHandler:
         on_surrogate: Callable[[str], None] | None = None,
     ) -> Any:
         processor = processor or get_unicode_processor()
+
         def _cb(text: str) -> None:
             (on_surrogate or logger.info)("Surrogates detected in query parameters")
+
         if isinstance(params, str) and contains_surrogates(params):
             _cb(params)
         return cls._encode(params, processor)
@@ -80,7 +86,9 @@ class FileUnicodeHandler:
         )
         if contains_surrogates(text):
             (on_surrogate or logger.info)("Surrogates detected in file content")
-            emit_security_event(SecurityEvent.VALIDATION_FAILED, {"issue": "surrogate_file_content"})
+            emit_security_event(
+                SecurityEvent.VALIDATION_FAILED, {"issue": "surrogate_file_content"}
+            )
         return processor.safe_encode_text(text)
 
     @staticmethod
@@ -94,7 +102,9 @@ class FileUnicodeHandler:
         text = str(name)
         if contains_surrogates(text):
             (on_surrogate or logger.info)("Surrogates detected in filename")
-            emit_security_event(SecurityEvent.VALIDATION_FAILED, {"issue": "surrogate_filename"})
+            emit_security_event(
+                SecurityEvent.VALIDATION_FAILED, {"issue": "surrogate_filename"}
+            )
         text = Path(processor.safe_encode_text(text)).name
         return text
 
@@ -107,7 +117,9 @@ class UnicodeSecurityValidator:
         processor = get_unicode_processor()
         cleaned = processor.safe_encode_text(text)
         if contains_surrogates(text):
-            emit_security_event(SecurityEvent.VALIDATION_FAILED, {"issue": "surrogate_input"})
+            emit_security_event(
+                SecurityEvent.VALIDATION_FAILED, {"issue": "surrogate_input"}
+            )
             logger.info("Surrogate characters removed from input")
         return cleaned
 
@@ -126,5 +138,4 @@ __all__ = [
     "QueryUnicodeHandler",
     "FileUnicodeHandler",
     "UnicodeSecurityValidator",
-
 ]

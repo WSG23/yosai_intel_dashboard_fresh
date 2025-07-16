@@ -51,7 +51,9 @@ class DataLoader:
             all_dfs.append(cleaned_df)
             logger.info("   After cleaning: %s rows", f"{len(cleaned_df):,}")
 
-        combined_df = all_dfs[0] if len(all_dfs) == 1 else pd.concat(all_dfs, ignore_index=True)
+        combined_df = (
+            all_dfs[0] if len(all_dfs) == 1 else pd.concat(all_dfs, ignore_index=True)
+        )
         return combined_df, total_original_rows
 
     def verify_combined_data(self, df: pd.DataFrame, original_rows: int) -> None:
@@ -60,11 +62,19 @@ class DataLoader:
         logger.info("\ud83d\udcca COMBINED DATASET: %s total rows", f"{final_rows:,}")
 
         if final_rows != original_rows:
-            logger.warning("\u26a0\ufe0f  Data loss detected: %s \u2192 %s", f"{original_rows:,}", f"{final_rows:,}")
+            logger.warning(
+                "\u26a0\ufe0f  Data loss detected: %s \u2192 %s",
+                f"{original_rows:,}",
+                f"{final_rows:,}",
+            )
 
-        if final_rows == self.row_limit_warning and original_rows > self.row_limit_warning:
+        if (
+            final_rows == self.row_limit_warning
+            and original_rows > self.row_limit_warning
+        ):
             logger.error(
-                "\ud83d\udea8 FOUND %s ROW LIMIT in unique patterns analysis!", self.row_limit_warning
+                "\ud83d\udea8 FOUND %s ROW LIMIT in unique patterns analysis!",
+                self.row_limit_warning,
             )
             logger.error("   Original rows: %s", f"{original_rows:,}")
             logger.error("   Final rows: %s", f"{final_rows:,}")

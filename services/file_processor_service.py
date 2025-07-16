@@ -150,7 +150,9 @@ class FileProcessorService(BaseService):
                     ),
                 )
             else:
-                df = pd.read_csv(io.StringIO(text_content), sep=delimiter, **self.CSV_OPTIONS)
+                df = pd.read_csv(
+                    io.StringIO(text_content), sep=delimiter, **self.CSV_OPTIONS
+                )
             if len(df.columns) <= 1:
                 df_alt = pd.read_csv(
                     io.StringIO(text_content),
@@ -243,4 +245,3 @@ class FileProcessorService(BaseService):
 
         printable = sum(1 for c in text if c.isprintable() or c.isspace())
         return (printable / len(text)) > 0.7
-

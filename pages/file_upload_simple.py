@@ -9,7 +9,15 @@ from typing import List
 
 import dash_bootstrap_components as dbc
 import pandas as pd
-from dash import Input, Output, State, callback, dcc, html, register_page as dash_register_page
+from dash import (
+    Input,
+    Output,
+    State,
+    callback,
+    dcc,
+    html,
+    register_page as dash_register_page,
+)
 from dash.exceptions import PreventUpdate
 
 from utils.upload_store import uploaded_data_store

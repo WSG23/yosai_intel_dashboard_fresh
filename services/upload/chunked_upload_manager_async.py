@@ -87,7 +87,9 @@ class ChunkedUploadManager:
                 return await func()
             except Exception as exc:
                 if attempt >= self.retry_config.max_attempts:
-                    raise ConnectionRetryExhausted("maximum retry attempts reached") from exc
+                    raise ConnectionRetryExhausted(
+                        "maximum retry attempts reached"
+                    ) from exc
                 delay = self.retry_config.base_delay * (
                     self.retry_config.backoff_factor ** (attempt - 1)
                 )
@@ -103,7 +105,9 @@ class ChunkedUploadManager:
 
         await self._run_with_retry(_save)
 
-    async def upload_file(self, file_path: str | Path, *, encoding: str = "utf-8") -> None:
+    async def upload_file(
+        self, file_path: str | Path, *, encoding: str = "utf-8"
+    ) -> None:
         """Upload a file in chunks with adaptive sizing."""
         path = Path(file_path)
         meta = await self._load_metadata(path.name)
@@ -165,7 +169,9 @@ class ChunkedUploadManager:
         meta.completed = True
         await self._save_metadata(meta)
 
-    async def resume_upload(self, file_path: str | Path, *, encoding: str = "utf-8") -> None:
+    async def resume_upload(
+        self, file_path: str | Path, *, encoding: str = "utf-8"
+    ) -> None:
         """Resume an interrupted upload using stored metadata."""
         await self.upload_file(file_path, encoding=encoding)
 

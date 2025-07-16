@@ -8,7 +8,14 @@ from file_processing.exporter import export_to_csv, export_to_json, ExportError
 
 
 def test_export_csv(tmp_path: Path):
-    df = pd.DataFrame({"person_id": ["u"], "door_id": ["d"], "access_result": ["x"], "timestamp": ["2024"]})
+    df = pd.DataFrame(
+        {
+            "person_id": ["u"],
+            "door_id": ["d"],
+            "access_result": ["x"],
+            "timestamp": ["2024"],
+        }
+    )
     path = tmp_path / "out.csv"
     export_to_csv(df, str(path), {})
     assert path.exists()
@@ -19,7 +26,14 @@ def test_export_csv(tmp_path: Path):
 
 
 def test_export_json(tmp_path: Path):
-    df = pd.DataFrame({"person_id": ["u"], "door_id": ["d"], "access_result": ["x"], "timestamp": ["2024"]})
+    df = pd.DataFrame(
+        {
+            "person_id": ["u"],
+            "door_id": ["d"],
+            "access_result": ["x"],
+            "timestamp": ["2024"],
+        }
+    )
     path = tmp_path / "out.json"
     export_to_json(df, str(path), {"a": 1})
     assert path.exists() and path.with_suffix(".meta.json").exists()
@@ -31,4 +45,3 @@ def test_export_missing(tmp_path: Path):
     df = pd.DataFrame({"a": [1]})
     with pytest.raises(ExportError):
         export_to_csv(df, str(tmp_path / "f.csv"), {})
-

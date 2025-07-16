@@ -1,9 +1,9 @@
 import re
 
-with open('mde.py', 'r') as f:
+with open("mde.py", "r") as f:
     content = f.read()
 
-debug_code = '''
+debug_code = """
                 logger.info(f"📁 Processing file: {filename}")
                 
                 # Debug: Check what's available
@@ -25,16 +25,16 @@ debug_code = '''
                     logger.error(f"💥 Traceback: {traceback.format_exc()}")
                     raise inner_e
                 finally:
-                    loop.close()'''
+                    loop.close()"""
 
 content = re.sub(
     r'logger\.info\(f"📁 Processing file: \{filename\}"\).*?loop\.close\(\)',
     debug_code,
     content,
-    flags=re.DOTALL
+    flags=re.DOTALL,
 )
 
-with open('mde.py', 'w') as f:
+with open("mde.py", "w") as f:
     f.write(content)
 
 print("✅ Added detailed debug logging")

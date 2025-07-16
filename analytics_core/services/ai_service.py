@@ -11,4 +11,5 @@ class AIAnalyticsService:
     def analyze(self, data: Any) -> None:
         pass
 
+
 __all__ = ["AIAnalyticsService"]

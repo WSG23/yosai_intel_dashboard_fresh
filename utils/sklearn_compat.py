@@ -30,4 +30,3 @@ def optional_import(name: str, fallback: Type | None = None) -> Any:
 
 
 __all__ = ["optional_import"]
-

@@ -27,9 +27,10 @@ class ClientSideValidator:
             if res.get("valid", False):
                 continue
             raw = res.get("issues", [])
-            issues = ", ".join(
-                self.ISSUE_MESSAGES.get(code, str(code)) for code in raw
-            ) or "Failed validation"
+            issues = (
+                ", ".join(self.ISSUE_MESSAGES.get(code, str(code)) for code in raw)
+                or "Failed validation"
+            )
             alerts.append(
                 dbc.Alert(
                     [html.Strong(res.get("filename", "Unknown")), f": {issues}"],

@@ -1,4 +1,5 @@
 """Utility functions for safe Unicode handling in uploads."""
+
 from __future__ import annotations
 
 import base64

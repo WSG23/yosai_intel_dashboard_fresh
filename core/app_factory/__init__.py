@@ -4,10 +4,10 @@
 import dash
 from dash import html, dcc, page_container
 import dash_bootstrap_components as dbc
+
 # Import Path for building robust file paths
 from pathlib import Path
 from components.ui.navbar import create_navbar_layout
-
 
 
 def create_app(mode=None, **kwargs):

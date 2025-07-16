@@ -226,7 +226,9 @@ def test_deep_analytics_specific_path():
             print(f"   📁 Using data source: {uploaded_option['value']}")
 
             # 3. Call analyze_data_with_service_safe
-            from pages.deep_analytics_complex.analysis import analyze_data_with_service_safe
+            from pages.deep_analytics_complex.analysis import (
+                analyze_data_with_service_safe,
+            )
 
             result = analyze_data_with_service_safe(
                 uploaded_option["value"], "security"

@@ -14,7 +14,9 @@ class CSVReader(BaseReader):
 
     format_name = "csv"
 
-    def __init__(self, *, unicode_processor: UnicodeProcessorProtocol | None = None) -> None:
+    def __init__(
+        self, *, unicode_processor: UnicodeProcessorProtocol | None = None
+    ) -> None:
         super().__init__(unicode_processor=unicode_processor)
         self.unified_callbacks = CallbackManager()
 
@@ -47,4 +49,3 @@ class CSVReader(BaseReader):
             return 0.0
         ctrl = sum(1 for ch in text if ord(ch) < 32 or ord(ch) == 127)
         return ctrl / len(text)
-

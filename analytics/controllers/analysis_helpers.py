@@ -463,7 +463,9 @@ def get_data_sources() -> list:
 
 def get_initial_message_safe():
     """Load and return the initial message for the analytics page."""
-    from pages.deep_analytics_complex.layout import get_initial_message_safe as _get_initial_message
+    from pages.deep_analytics_complex.layout import (
+        get_initial_message_safe as _get_initial_message,
+    )
 
     return _get_initial_message()
 

@@ -1,4 +1,5 @@
 """Shared DataFrame parsing utilities."""
+
 from __future__ import annotations
 
 import io
@@ -45,7 +46,11 @@ def process_dataframe(
                     for chunk in reader:
                         monitor.throttle_if_needed()
                         chunks.append(chunk)
-                    df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+                    df = (
+                        pd.concat(chunks, ignore_index=True)
+                        if chunks
+                        else pd.DataFrame()
+                    )
                     return df, None
                 except UnicodeDecodeError:
                     continue
@@ -63,7 +68,11 @@ def process_dataframe(
                     for chunk in reader:
                         monitor.throttle_if_needed()
                         chunks.append(chunk)
-                    df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+                    df = (
+                        pd.concat(chunks, ignore_index=True)
+                        if chunks
+                        else pd.DataFrame()
+                    )
                     return df, None
                 except UnicodeDecodeError:
                     continue

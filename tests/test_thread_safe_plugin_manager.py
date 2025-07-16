@@ -38,7 +38,9 @@ class ConcurrencyPlugin:
 def test_concurrent_load_plugin():
     cfg = create_config_manager()
     cfg.config.plugin_settings["concurrent"] = {"enabled": True}
-    manager = ThreadSafePluginManager(ServiceContainer(), cfg, health_check_interval=0.1)
+    manager = ThreadSafePluginManager(
+        ServiceContainer(), cfg, health_check_interval=0.1
+    )
     plugin = ConcurrencyPlugin()
 
     with ThreadPoolExecutor(max_workers=5) as exe:
@@ -53,7 +55,9 @@ def test_concurrent_load_plugin():
 def test_concurrent_health_checks():
     cfg = create_config_manager()
     cfg.config.plugin_settings["concurrent"] = {"enabled": True}
-    manager = ThreadSafePluginManager(ServiceContainer(), cfg, health_check_interval=0.1)
+    manager = ThreadSafePluginManager(
+        ServiceContainer(), cfg, health_check_interval=0.1
+    )
     plugin = ConcurrencyPlugin()
     manager.load_plugin(plugin)
 
@@ -68,4 +72,3 @@ def test_concurrent_health_checks():
 
     assert manager.health_snapshot["concurrent"]["health"]["healthy"] is True
     manager.stop_health_monitor()
-

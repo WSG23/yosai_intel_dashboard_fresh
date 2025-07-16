@@ -14,13 +14,15 @@ class FWFReader(BaseReader):
 
     format_name = "fwf"
 
-    def __init__(self, *, unicode_processor: UnicodeProcessorProtocol | None = None) -> None:
+    def __init__(
+        self, *, unicode_processor: UnicodeProcessorProtocol | None = None
+    ) -> None:
         super().__init__(unicode_processor=unicode_processor)
         self.unified_callbacks = CallbackManager()
 
     def read(self, file_path: str, hint: dict | None = None) -> pd.DataFrame:
         hint = hint or {}
-        if not str(file_path).lower().endswith('.fwf'):
+        if not str(file_path).lower().endswith(".fwf"):
             raise FWFReader.CannotParse("extension mismatch")
         try:
             df = pd.read_fwf(file_path, **hint)
@@ -38,4 +40,3 @@ class FWFReader(BaseReader):
 
 
 from .csv_reader import CSVReader
-

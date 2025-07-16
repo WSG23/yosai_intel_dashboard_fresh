@@ -1,14 +1,14 @@
 import re
 
-# Fix config/unicode_sql_processor.py - remove analytics_core dependency  
-with open('config/unicode_sql_processor.py', 'r') as f:
+# Fix config/unicode_sql_processor.py - remove analytics_core dependency
+with open("config/unicode_sql_processor.py", "r") as f:
     content = f.read()
 
 # Remove the problematic import
 content = re.sub(
-    r'from analytics_core\.utils\.unicode_processor import UnicodeHelper',
-    '# from analytics_core.utils.unicode_processor import UnicodeHelper  # Circular import - use local implementation',
-    content
+    r"from analytics_core\.utils\.unicode_processor import UnicodeHelper",
+    "# from analytics_core.utils.unicode_processor import UnicodeHelper  # Circular import - use local implementation",
+    content,
 )
 
 # Add a simple fallback implementation
@@ -37,11 +37,12 @@ class UnicodeHelper:
 
 # Add the fallback after the commented import
 content = content.replace(
-    '# from analytics_core.utils.unicode_processor import UnicodeHelper  # Circular import - use local implementation',
-    '# from analytics_core.utils.unicode_processor import UnicodeHelper  # Circular import - use local implementation' + fallback_code
+    "# from analytics_core.utils.unicode_processor import UnicodeHelper  # Circular import - use local implementation",
+    "# from analytics_core.utils.unicode_processor import UnicodeHelper  # Circular import - use local implementation"
+    + fallback_code,
 )
 
-with open('config/unicode_sql_processor.py', 'w') as f:
+with open("config/unicode_sql_processor.py", "w") as f:
     f.write(content)
 
 print("✅ Fixed unicode_sql_processor circular import")

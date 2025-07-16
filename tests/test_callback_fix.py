@@ -5,9 +5,11 @@ from core.unicode import safe_encode_text, safe_decode_bytes
 
 
 def test_create_app_registers_callbacks(monkeypatch):
-    monkeypatch.setattr('core.app_factory.register_all_application_services', lambda *a, **k: None)
-    monkeypatch.setattr('core.app_factory._initialize_services', lambda *a, **k: None)
-    monkeypatch.setattr('core.app_factory._initialize_plugins', lambda *a, **k: None)
+    monkeypatch.setattr(
+        "core.app_factory.register_all_application_services", lambda *a, **k: None
+    )
+    monkeypatch.setattr("core.app_factory._initialize_services", lambda *a, **k: None)
+    monkeypatch.setattr("core.app_factory._initialize_plugins", lambda *a, **k: None)
     app = create_app(mode="full")
     assert hasattr(app, "unified_callback")
     assert hasattr(app, "_unified_wrapper")

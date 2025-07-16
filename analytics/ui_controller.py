@@ -27,9 +27,7 @@ class AnalyticsUIController:
         self.callback_manager.trigger(CallbackEvent.ANALYSIS_START, "ui", {})
         results = self.service.run_analysis(ui_data)
         formatted = self.format_results_for_ui(results)
-        self.callback_manager.trigger(
-            CallbackEvent.ANALYSIS_COMPLETE, "ui", formatted
-        )
+        self.callback_manager.trigger(CallbackEvent.ANALYSIS_COMPLETE, "ui", formatted)
         return formatted
 
     # ------------------------------------------------------------------

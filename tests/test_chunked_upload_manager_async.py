@@ -19,7 +19,9 @@ def test_async_chunked_upload_manager_basic(tmp_path, async_runner):
     data_file = tmp_path / "sample.csv"
     df = _create_csv(data_file, rows=25)
     store = UploadedDataStore(storage_dir=tmp_path / "store")
-    mgr = ChunkedUploadManager(store, metadata_dir=tmp_path / "meta", initial_chunk_size=10)
+    mgr = ChunkedUploadManager(
+        store, metadata_dir=tmp_path / "meta", initial_chunk_size=10
+    )
 
     async_runner(mgr.upload_file(data_file))
     store.wait_for_pending_saves()
@@ -34,7 +36,9 @@ def test_async_chunked_upload_manager_resume(tmp_path, monkeypatch, async_runner
     data_file = tmp_path / "resume.csv"
     df = _create_csv(data_file, rows=30)
     store = UploadedDataStore(storage_dir=tmp_path / "store")
-    mgr = ChunkedUploadManager(store, metadata_dir=tmp_path / "meta", initial_chunk_size=10)
+    mgr = ChunkedUploadManager(
+        store, metadata_dir=tmp_path / "meta", initial_chunk_size=10
+    )
 
     call_count = 0
     original_add_file = store.add_file
@@ -69,7 +73,9 @@ def test_async_chunked_upload_manager_retry(tmp_path, monkeypatch, async_runner)
     data_file = tmp_path / "retry.csv"
     df = _create_csv(data_file, rows=10)
     store = UploadedDataStore(storage_dir=tmp_path / "store")
-    mgr = ChunkedUploadManager(store, metadata_dir=tmp_path / "meta", initial_chunk_size=5)
+    mgr = ChunkedUploadManager(
+        store, metadata_dir=tmp_path / "meta", initial_chunk_size=5
+    )
 
     call_count = 0
     original_add_file = store.add_file

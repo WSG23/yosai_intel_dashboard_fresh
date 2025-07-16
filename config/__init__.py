@@ -120,6 +120,7 @@ __all__ = [
     "CSSConstants",
 ]
 
+
 def get_monitoring_config() -> Dict[str, Any]:
     """Get monitoring configuration."""
     try:
@@ -129,8 +130,5 @@ def get_monitoring_config() -> Dict[str, Any]:
         return {
             "enabled": True,
             "data_quality_checks": True,
-            "alert_thresholds": {
-                "error_rate": 0.05,
-                "processing_time": 30
-            }
+            "alert_thresholds": {"error_rate": 0.05, "processing_time": 30},
         }

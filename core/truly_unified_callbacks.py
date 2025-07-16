@@ -50,6 +50,7 @@ class DashCallbackRegistration:
     inputs: Tuple[Input, ...]
     states: Tuple[State, ...]
 
+
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
     from .plugins.callback_unifier import CallbackUnifier
 
@@ -57,7 +58,12 @@ if TYPE_CHECKING:  # pragma: no cover - for type hints only
 class TrulyUnifiedCallbacks:
     """Unified system providing event, Dash and operation callbacks."""
 
-    def __init__(self, app: Optional[Dash] = None, *, security_validator: Optional["SecurityValidator"] = None) -> None:
+    def __init__(
+        self,
+        app: Optional[Dash] = None,
+        *,
+        security_validator: Optional["SecurityValidator"] = None,
+    ) -> None:
         self.app = app
         if security_validator is None:
             from .security_validator import SecurityValidator
@@ -66,7 +72,9 @@ class TrulyUnifiedCallbacks:
         else:
             self.security = security_validator
         self._lock = threading.RLock()
-        self._event_callbacks: Dict[CallbackEvent, List[EventCallback]] = defaultdict(list)
+        self._event_callbacks: Dict[CallbackEvent, List[EventCallback]] = defaultdict(
+            list
+        )
         self._dash_callbacks: Dict[str, DashCallbackRegistration] = {}
         self._output_map: Dict[str, str] = {}
         self._namespaces: Dict[str, List[str]] = defaultdict(list)
@@ -127,11 +135,11 @@ class TrulyUnifiedCallbacks:
 
                 for o in outputs_tuple:
                     key = f"{o.component_id}.{o.component_property}"
-                    allow_dup_output = allow_duplicate or getattr(o, "allow_duplicate", False)
+                    allow_dup_output = allow_duplicate or getattr(
+                        o, "allow_duplicate", False
+                    )
                     if key in self._output_map and not allow_dup_output:
-                        logger.warning(
-                            "Output '%s' conflict - allowing duplicate", key
-                        )
+                        logger.warning("Output '%s' conflict - allowing duplicate", key)
 
                 wrapped = self.app.callback(
                     outputs,
@@ -268,7 +276,9 @@ class TrulyUnifiedCallbacks:
             self._event_callbacks[event].sort(key=lambda c: c.priority)
 
     # ------------------------------------------------------------------
-    def trigger_event(self, event: CallbackEvent, *args: Any, **kwargs: Any) -> List[Any]:
+    def trigger_event(
+        self, event: CallbackEvent, *args: Any, **kwargs: Any
+    ) -> List[Any]:
         """Synchronously trigger callbacks registered for *event*."""
         results: List[Any] = []
         callbacks = list(self._event_callbacks.get(event, []))
@@ -333,7 +343,9 @@ class TrulyUnifiedCallbacks:
         return results
 
     # ------------------------------------------------------------------
-    def register_all_callbacks(self, *manager_classes: type["ComponentCallbackManager"]) -> None:
+    def register_all_callbacks(
+        self, *manager_classes: type["ComponentCallbackManager"]
+    ) -> None:
         """Instantiate and register callbacks from provided managers."""
 
         class _Registry(CallbackRegistry):

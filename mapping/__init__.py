@@ -17,6 +17,7 @@ def create_mapping_service(*args, **kwargs):
 
     return _factory(*args, **kwargs)
 
+
 __all__ = [
     "StorageInterface",
     "ProcessorInterface",
