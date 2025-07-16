@@ -6,6 +6,8 @@ import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from core.exceptions import ConfigurationError
+
 from .app_config import UploadConfig
 from .constants import (
     DEFAULT_APP_HOST,
@@ -18,6 +20,14 @@ from .constants import (
 from .dynamic_config import dynamic_config
 
 
+def require_env_var(name: str) -> str:
+    """Return the value of ``name`` or raise ``ConfigurationError``."""
+    value = os.getenv(name)
+    if not value:
+        raise ConfigurationError(f"Environment variable {name} is required")
+    return value
+
+
 @dataclass
 class AppConfig:
     """Application configuration."""
@@ -26,7 +36,7 @@ class AppConfig:
     debug: bool = True
     host: str = DEFAULT_APP_HOST
     port: int = DEFAULT_APP_PORT
-    secret_key: str = field(default_factory=lambda: os.getenv("SECRET_KEY", ""))
+    secret_key: str = field(default_factory=lambda: require_env_var("SECRET_KEY"))
     environment: str = "development"
 
 
