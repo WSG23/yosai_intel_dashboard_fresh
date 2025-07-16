@@ -17,10 +17,10 @@ class AnalyticsProcessor:
         unique_devices = int(df["door_id"].nunique()) if "door_id" in df.columns else 0
         date_span = 0
         if "timestamp" in df.columns:
-            df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
-            valid_dates = df["timestamp"].dropna()
-            if len(valid_dates) > 0:
-                date_span = (valid_dates.max() - valid_dates.min()).days
+            ts = pd.to_datetime(df["timestamp"], errors="coerce")
+            df["timestamp"] = ts
+            if ts.notna().any():
+                date_span = (ts.max() - ts.min()).days
         logger.info("\ud83d\udcc8 STATISTICS:")
         logger.info("   Total records: %s", f"{total_records:,}")
         logger.info("   Unique users: %s", f"{unique_users:,}")
@@ -36,10 +36,9 @@ class AnalyticsProcessor:
         regular_users: List[str] = []
         occasional_users: List[str] = []
         if "person_id" in df.columns and unique_users > 0:
-            user_stats = df.groupby("person_id").size()
-            if len(user_stats) > 0:
-                q80 = float(user_stats.quantile(0.8))
-                q20 = float(user_stats.quantile(0.2))
+            user_stats = df["person_id"].value_counts()
+            if not user_stats.empty:
+                q20, q80 = user_stats.quantile([0.2, 0.8])
                 power_users = user_stats[user_stats.gt(q80)].index.tolist()
                 regular_users = user_stats[user_stats.between(q20, q80)].index.tolist()
                 occasional_users = user_stats[user_stats.lt(q20)].index.tolist()
@@ -55,10 +54,9 @@ class AnalyticsProcessor:
         moderate_traffic: List[str] = []
         low_traffic: List[str] = []
         if "door_id" in df.columns and unique_devices > 0:
-            device_stats = df.groupby("door_id").size()
-            if len(device_stats) > 0:
-                q80 = float(device_stats.quantile(0.8))
-                q20 = float(device_stats.quantile(0.2))
+            device_stats = df["door_id"].value_counts()
+            if not device_stats.empty:
+                q20, q80 = device_stats.quantile([0.2, 0.8])
                 high_traffic = device_stats[device_stats.gt(q80)].index.tolist()
                 moderate_traffic = device_stats[device_stats.between(q20, q80)].index.tolist()
                 low_traffic = device_stats[device_stats.lt(q20)].index.tolist()
@@ -75,10 +73,10 @@ class AnalyticsProcessor:
 
     def calculate_success_rate(self, df: pd.DataFrame) -> float:
         if "access_result" in df.columns:
-            success_mask = (
-                df["access_result"].str.lower().str.contains("grant|allow|success|permit", case=False, na=False)
+            success_mask = df["access_result"].str.contains(
+                "grant|allow|success|permit", case=False, na=False
             )
-            return success_mask.mean()
+            return float(success_mask.mean())
         return 0.0
 
 

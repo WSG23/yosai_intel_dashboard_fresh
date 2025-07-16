@@ -67,3 +67,21 @@ ui = get_ui_monitor()
 ui.record_frame_time(16.7)
 ui.record_callback_duration("update_chart", 0.05)
 ```
+
+## Caching Strategy
+
+Several analytics methods use `advanced_cache.cache_with_lock` to store results.
+The decorator prevents concurrent execution of expensive operations by locking
+per function and caches the return value for a configurable TTL.
+
+For example, `get_unique_patterns_analysis` is cached for 10&nbsp;minutes:
+
+```python
+@cache_with_lock(ttl_seconds=600)
+def get_unique_patterns_analysis(self, data_source: str | None = None):
+    ...
+```
+
+Cached results are stored in memory and optionally in Redis if available. Cache
+entries expire automatically after the TTL, ensuring that repeated dashboard
+requests do not trigger heavy calculations unnecessarily.
