@@ -13,6 +13,7 @@ from flask import (
     send_file,
     url_for,
 )
+import html
 
 from mvp_cli_engine import generate_analytics, load_dataframe
 from simple_mapping_interface import enhance_data_with_mappings
@@ -132,9 +133,10 @@ def map_columns() -> object:
     if request.method == "POST":
         column_mapping = {col: request.form.get(col, "") for col in current_df.columns}
         return redirect(url_for("map_devices"))
+    sanitized_columns = [html.escape(str(col)) for col in current_df.columns]
     return render_template_string(
         COLUMN_HTML,
-        columns=current_df.columns,
+        columns=sanitized_columns,
         options=options,
         mapping=column_mapping,
         stages=build_stages(1),
@@ -163,9 +165,10 @@ def map_devices() -> object:
                 }
             )
         return redirect(url_for("results"))
+    sanitized_devices = [html.escape(str(d)) for d in devices]
     return render_template_string(
         DEVICE_HTML,
-        devices=devices,
+        devices=sanitized_devices,
         stages=build_stages(2),
     )
 
