@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Export page providing download instructions."""
 
+import logging
+
 import dash_bootstrap_components as dbc
 from dash import dcc, html, register_page as dash_register_page
 
