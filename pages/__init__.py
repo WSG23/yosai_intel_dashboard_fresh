@@ -58,14 +58,7 @@ def get_page_layout(page_name: str) -> Optional[Callable]:
 
 
 def register_pages(app: Optional["Dash"] = None) -> None:
-    """Register all known pages with Dash app context."""
-    import dash
-    
-    # Set app context if provided
-    if app is not None:
-        # Set the current app context for dash.register_page()
-        dash._current_app = app
-    
+    """Register all known pages with a Dash app."""
     registered_count = 0
     failed_pages = []
     
@@ -73,7 +66,7 @@ def register_pages(app: Optional["Dash"] = None) -> None:
         try:
             module = _load_page(name)
             if module and hasattr(module, "register_page"):
-                module.register_page()
+                module.register_page(app=app)
                 registered_count += 1
                 logger.debug(f"✅ Registered page: {name}")
             else:
@@ -163,14 +156,10 @@ def register_router_callback(manager):
 def register_all_pages(app: "Dash", manager: Optional[Any] = None) -> None:
     """Register every page module and its callbacks with *app*."""
     import pkgutil
-    import dash
     from pathlib import Path
-    
+
     package_path = Path(__file__).parent
     modules = [m.name for m in pkgutil.iter_modules([str(package_path)]) if not m.name.startswith("_")]
-
-    old_app = getattr(dash, "_current_app", None)
-    dash._current_app = app
 
     for mod_name in modules:
         try:
@@ -181,7 +170,7 @@ def register_all_pages(app: "Dash", manager: Optional[Any] = None) -> None:
 
         if hasattr(module, "register_page"):
             try:
-                module.register_page()
+                module.register_page(app=app)
                 logger.debug("Registered page %s", mod_name)
             except Exception as exc:  # pragma: no cover - best effort
                 logger.warning("Failed to register page %s: %s", mod_name, exc)
@@ -192,8 +181,3 @@ def register_all_pages(app: "Dash", manager: Optional[Any] = None) -> None:
                 logger.debug("Registered callbacks for %s", mod_name)
             except Exception as exc:  # pragma: no cover - best effort
                 logger.warning("Failed to register callbacks for %s: %s", mod_name, exc)
-
-    if old_app is not None:
-        dash._current_app = old_app
-    else:
-        delattr(dash, "_current_app")

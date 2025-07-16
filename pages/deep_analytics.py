@@ -9,7 +9,7 @@ import logging
 from typing import Any
 
 import dash_bootstrap_components as dbc
-from dash import html
+from dash import html, register_page as dash_register_page
 
 from components.analytics.real_time_dashboard import RealTimeAnalytics
 from components.layout_factory import card
@@ -140,21 +140,17 @@ def load_page(**kwargs) -> AnalyticsPage:
     return AnalyticsPage(**kwargs)
 
 
-def register_page() -> None:
-    """Register the analytics page with Dash using current app context."""
+def register_page(app=None) -> None:
+    """Register the analytics page with Dash."""
     try:
-        import dash
-
-        if hasattr(dash, "_current_app") and dash._current_app is not None:
-            dash.register_page(
+        if app is not None:
+            app.register_page(
                 __name__,
                 path="/analytics",
                 name="Analytics",
                 aliases=["/", "/dashboard"],
             )
         else:
-            from dash import register_page as dash_register_page
-
             dash_register_page(
                 __name__,
                 path="/analytics",

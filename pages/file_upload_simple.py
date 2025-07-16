@@ -9,7 +9,7 @@ from typing import List
 
 import dash_bootstrap_components as dbc
 import pandas as pd
-from dash import Input, Output, State, callback, dcc, html
+from dash import Input, Output, State, callback, dcc, html, register_page as dash_register_page
 from dash.exceptions import PreventUpdate
 
 from utils.upload_store import uploaded_data_store
@@ -127,16 +127,12 @@ def handle_upload(contents: str | List[str], filenames: str | List[str]):
     return alerts, previews
 
 
-def register_page():
-    """Register this page with Dash Pages if available."""
+def register_page(app=None):
+    """Register this page with Dash."""
     try:
-        import dash
-
-        if hasattr(dash, "_current_app") and dash._current_app is not None:
-            dash.register_page(__name__, path="/upload", name="Upload")
+        if app is not None:
+            app.register_page(__name__, path="/upload", name="Upload")
         else:
-            from dash import register_page as dash_register_page
-
             dash_register_page(__name__, path="/upload", name="Upload")
     except Exception as e:  # pragma: no cover - best effort
         logger.warning("Failed to register page %s: %s", __name__, e)
