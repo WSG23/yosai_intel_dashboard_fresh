@@ -21,7 +21,6 @@ from .pattern_detection import (
     detect_pattern_threats,
     detect_rapid_attempts,
 )
-from .no_access_detection import detect_no_access_anomalies
 from .statistical_detection import (
     detect_failure_rate_anomalies,
     detect_frequency_anomalies,
@@ -45,7 +44,6 @@ __all__ = [
     "detect_pattern_threats",
     "detect_rapid_attempts",
     "detect_after_hours_anomalies",
-    "detect_no_access_anomalies",
     "ThreatIndicator",
 ]
 
