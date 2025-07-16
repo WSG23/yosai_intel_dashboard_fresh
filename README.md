@@ -494,6 +494,17 @@ For a diagram of the full process see [docs/plugin_lifecycle.md](docs/plugin_lif
 The same document includes a minimal **Hello World** plugin showcasing
 `create_plugin()` and callback registration.
 
+#### Customizing Plugins
+
+1. Copy the `plugins/example` folder (or any existing plugin) and update the
+   `PluginMetadata` values.
+2. Add a section under `plugins:` in `config/config.yaml` with `enabled: true`
+   and any custom options.
+3. Call `setup_plugins` from `core.plugins.auto_config` during app start-up to
+   load your plugin and register its callbacks.
+4. See [docs/plugin_development.md](docs/plugin_development.md) for a complete
+   walkthrough.
+
 ### Migration Notes
 
 Older modules `config/app_config.py`, `config/simple_config.py` and the
@@ -687,6 +698,40 @@ The running application exposes Swagger-based API docs at `http://<host>:<port>/
 - Callback migration: [docs/migration_callback_system.md](docs/migration_callback_system.md)
 
 Update the spec by running `python tools/generate_openapi.py` which writes `docs/openapi.json` for the UI.
+
+### API Examples
+
+Fetch plugin performance metrics:
+
+```bash
+curl http://<host>:<port>/api/v1/plugins/performance
+```
+
+Expected response:
+
+```json
+{
+  "example_plugin": {
+    "load_time": 0.2,
+    "memory_usage": 15.1,
+    "alerts": []
+  }
+}
+```
+
+Calculate risk score from analytics data:
+
+```bash
+curl -X POST http://<host>:<port>/api/v1/risk/score \
+    -H 'Content-Type: application/json' \
+    -d '{"anomaly_score": 0.25, "pattern_score": 0.1, "behavior_deviation": 0.2}'
+```
+
+Expected response:
+
+```json
+{"score": 0.55, "level": "medium"}
+```
 ## Usage Examples
 
 ### Cleaning text
