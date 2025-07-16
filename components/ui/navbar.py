@@ -50,7 +50,7 @@ def create_navbar_layout(
     """Create navbar with logo and optional custom navigation."""
 
     if not DBC_AVAILABLE:
-        return html.Div("Navbar unavailable - Dash Bootstrap Components not installed")
+        return create_fallback_navbar()
 
     default_links: Dict[str, str] = {
         "Dashboard": "/dashboard",
@@ -90,6 +90,7 @@ def create_navbar_layout(
     }
     icon_map = {**default_icons, **(icons or {})}
 
+    navbar = None
     try:
         nav_items = []
         for name, href in nav_links.items():
@@ -106,7 +107,7 @@ def create_navbar_layout(
                 )
             )
 
-        return dbc.Navbar(
+        navbar = dbc.Navbar(
             dbc.Container(
                 [
                     # Brand with Logo
@@ -134,7 +135,9 @@ def create_navbar_layout(
 
     except Exception as e:  # pragma: no cover - defensive
         logger.error(f"Navbar creation failed: {e}")
-        return create_fallback_navbar()
+        navbar = create_fallback_navbar()
+
+    return navbar
 
 
 def create_fallback_navbar():
@@ -142,58 +145,58 @@ def create_fallback_navbar():
     if not DBC_AVAILABLE:
         return html.Div("Simple navbar fallback")
 
-        return dbc.Navbar(
-            dbc.Container(
-                [
-                    dbc.NavbarBrand("Dashboard", href="/"),
-                    dbc.Nav(
-                        [
-                            dbc.NavItem(
-                                dbc.NavLink(
-                                    "Analytics",
-                                    href="/analytics",
-                                    external_link=False,
-                                )
-                            ),
-                            dbc.NavItem(
-                                dbc.NavLink(
-                                    "Graphs",
-                                    href="/graphs",
-                                    external_link=False,
-                                )
-                            ),
-                            dbc.NavItem(
-                                dbc.NavLink(
-                                    "Upload",
-                                    href="/upload",
-                                    external_link=False,
-                                )
-                            ),
-                            dbc.NavItem(
-                                dbc.NavLink(
-                                    "Export",
-                                    href="/export",
-                                    external_link=False,
-                                )
-                            ),
-                            dbc.NavItem(
-                                dbc.NavLink(
-                                    "Settings",
-                                    href="/settings",
-                                    external_link=False,
-                                )
-                            ),
-                        ],
-                        navbar=True,
-                        className="ms-auto",
-                    ),
-                ],
-                fluid=True,
-            ),
-            color="dark",
-            dark=True,
-            className="fixed-top",
-        )
+    return dbc.Navbar(
+        dbc.Container(
+            [
+                dbc.NavbarBrand("Dashboard", href="/"),
+                dbc.Nav(
+                    [
+                        dbc.NavItem(
+                            dbc.NavLink(
+                                "Analytics",
+                                href="/analytics",
+                                external_link=False,
+                            )
+                        ),
+                        dbc.NavItem(
+                            dbc.NavLink(
+                                "Graphs",
+                                href="/graphs",
+                                external_link=False,
+                            )
+                        ),
+                        dbc.NavItem(
+                            dbc.NavLink(
+                                "Upload",
+                                href="/upload",
+                                external_link=False,
+                            )
+                        ),
+                        dbc.NavItem(
+                            dbc.NavLink(
+                                "Export",
+                                href="/export",
+                                external_link=False,
+                            )
+                        ),
+                        dbc.NavItem(
+                            dbc.NavLink(
+                                "Settings",
+                                href="/settings",
+                                external_link=False,
+                            )
+                        ),
+                    ],
+                    navbar=True,
+                    className="ms-auto",
+                ),
+            ],
+            fluid=True,
+        ),
+        color="dark",
+        dark=True,
+        className="fixed-top",
+    )
 
 
 def register_navbar_callbacks(callback_manager, service: Optional[Any] = None) -> None:
