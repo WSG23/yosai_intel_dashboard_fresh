@@ -25,6 +25,11 @@ jobs:
           set -xe
           flake8 . --max-line-length 88 -v
 
+      - name: Mypy
+        run: |
+          set -xe
+          mypy .
+
       - name: Bandit
         run: |
           set -xe

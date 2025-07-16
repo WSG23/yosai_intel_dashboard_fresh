@@ -517,7 +517,8 @@ class ComplianceServices:
 
 
 # plugins/compliance_plugin/plugin_manifest.yaml
-# Plugin manifest file
+# The following YAML manifest is included for reference only.
+PLUGIN_MANIFEST = """
 name: compliance_plugin
 version: 1.0.0
 description: GDPR/APPI compliance framework
@@ -544,23 +545,23 @@ config_schema:
       type: boolean
       default: true
       description: "Enable compliance plugin"
-    
+
     jurisdiction:
       type: string
       enum: [EU, JP, US, CA]
       default: EU
       description: "Primary jurisdiction for compliance"
-    
+
     consent_enabled:
       type: boolean
       default: true
       description: "Enable consent management"
-    
+
     audit_enabled:
       type: boolean
       default: true
       description: "Enable audit logging"
-    
+
     retention_enabled:
       type: boolean
       default: true
@@ -600,6 +601,7 @@ dashboard_widgets:
   - id: consent_status
     title: "Consent Management"
     type: chart
+"""
 
 
 # plugins/compliance_plugin/install.py
