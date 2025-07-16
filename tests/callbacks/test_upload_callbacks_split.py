@@ -124,6 +124,11 @@ def test_finalize_upload_results_done(monkeypatch):
     monkeypatch.setattr(
         cb.task_queue, "clear_task", lambda tid: called.setdefault("tid", tid)
     )
+    monkeypatch.setattr(
+        "components.simple_device_mapping.generate_ai_device_defaults",
+        lambda df, profile="auto": called.setdefault("gen", True),
+    )
     out = cb.finalize_upload_results(1, "tid")
     assert out == (*result, True)
     assert called["tid"] == "tid"
+    assert called.get("gen") is True

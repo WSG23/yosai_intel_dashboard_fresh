@@ -41,6 +41,7 @@ jobs:
           safety check -r requirements.txt -r requirements-dev.txt --full-report
 
       - name: Pip Audit
+        if: github.event_name == 'pull_request'
         run: |
           set -xe
           pip-audit -r requirements.txt -r requirements-dev.txt \

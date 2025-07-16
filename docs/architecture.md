@@ -69,3 +69,53 @@ Additional interfaces such as `ExportServiceProtocol`, `UploadValidatorProtocol`
 and `DoorMappingServiceProtocol` are defined in `services/interfaces.py`. When a
 component does not receive a concrete instance it falls back to the global
 `ServiceContainer` exposed on the Dash app.
+
+## Service Container Registration
+
+During initialization the factory builds the service container and registers core
+services before any plugins are loaded.
+
+```mermaid
+graph TB
+    A[App Factory] --> B[Create ServiceContainer]
+    B --> C[register('config', ConfigManager)]
+    B --> D[register('analytics', AnalyticsService)]
+    B --> E[register('plugins', PluginManager)]
+    E --> F[Discover Plugins]
+    F --> G[register additional services]
+```
+
+## Plugin Lifecycle
+
+Plugins follow a simple lifecycle once discovered by the plugin manager.
+
+```mermaid
+graph TB
+    A[Discover Plugins] --> B[Resolve Dependencies]
+    B --> C[load()]
+    C --> D[configure()]
+    D --> E[start()]
+    E --> F[Plugin Running]
+    F --> G[periodic health_check()]
+    G --> F
+```
+
+## Callback Registration Sequence
+
+The callback manager registers Dash callbacks and tracks them in the global
+registry so plugins can avoid duplicate IDs.
+
+```mermaid
+sequenceDiagram
+    participant AF as AppFactory
+    participant PM as PluginManager
+    participant PL as Plugin
+    participant CB as TrulyUnifiedCallbacks
+    participant REG as GlobalCallbackRegistry
+
+    AF->>PM: discover_plugins()
+    PM->>PL: register_callbacks(CB, container)
+    PL->>CB: unified_callback(...)
+    CB->>REG: register(callback_id)
+    REG-->>CB: confirmation
+```

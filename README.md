@@ -21,11 +21,14 @@ This project follows a fully modular design built around a dependency injection 
 - [Data Versioning](docs/data_versioning.md)
 - [Data Processing](docs/data_processing.md)
 - [Column Verification](docs/column_verification.md)
+- [Service Container](docs/service_container.md)
 - [Testing Architecture](docs/test_architecture.md)
 
 Core service protocols live in `services/interfaces.py`. Components obtain
 implementations from the `ServiceContainer` when an explicit instance is not
-provided, allowing tests to supply lightweight mocks.
+provided, allowing tests to supply lightweight mocks. See
+[docs/service_container.md](docs/service_container.md) for registration
+patterns and lifetime options.
 
 The dashboard is extensible through a lightweight plugin system. Plugins live in the `plugins/` directory and are loaded by a `PluginManager`. See [docs/plugins.md](docs/plugins.md) for discovery, configuration details and a simple **Hello World** example. The [plugin lifecycle diagram](docs/plugin_lifecycle.md) illustrates how plugins are discovered, dependencies resolved and health checks performed.
 
@@ -299,8 +302,9 @@ function inside a test simply pass `async_runner` and call it with your
 coroutine.
 
 The CI workflow also stores the `audit-report.json` file produced by `pip-audit`
-as the **pip-audit-report** artifact. Download it from the **Actions** tab to
-review dependency vulnerability results.
+as the **pip-audit-report** artifact. It runs on pull requests and fails when
+critical vulnerabilities are detected. Download the artifact from the
+**Actions** tab to review dependency vulnerability results.
 
 ## <span aria-hidden="true">📋</span> Features
 
@@ -321,6 +325,7 @@ review dependency vulnerability results.
   This single interface replaces previous callback controllers.
 - **Metrics & Monitoring**: `PerformanceMonitor` tracks system performance
   using `psutil`.
+- **Dependabot Updates**: Python dependencies automatically kept up-to-date.
 
 **Note:** The file upload and column mapping functionality relies on `pandas`.
 If `pandas` is missing these pages will be disabled. Ensure you run

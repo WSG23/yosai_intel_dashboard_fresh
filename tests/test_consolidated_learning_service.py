@@ -127,3 +127,11 @@ class TestConsolidatedLearningService:
         service = ConsolidatedLearningService(str(self.storage_path))
         assert service.learned_data == json_content
         assert pkl_path.exists()
+
+    def test_save_column_mappings(self):
+        df = pd.DataFrame({"a": [1], "b": [2]})
+        cols = {"a": "door_id", "b": "timestamp"}
+        fingerprint = self.service.save_complete_mapping(df, "cols.csv", {}, cols)
+        reloaded = ConsolidatedLearningService(str(self.storage_path))
+        assert fingerprint in reloaded.learned_data
+        assert reloaded.learned_data[fingerprint]["column_mappings"] == cols

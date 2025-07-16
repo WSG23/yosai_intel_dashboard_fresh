@@ -8,8 +8,8 @@ from dash.dependencies import Input, Output, State
 
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
-from .device_callbacks import toggle_simple_device_modal
 from .file_callbacks import UploadCallbackManager
+from components.simple_device_mapping import register_callbacks as register_device_callbacks
 
 
 class MappingCallbackManager:
@@ -19,18 +19,7 @@ class MappingCallbackManager:
         self.service = service
 
     def register_all(self, manager: TrulyUnifiedCallbacks) -> None:
-        manager.register_callback(  # type: ignore[misc]
-            Output("simple-device-modal", "is_open"),
-            [
-                Input("open-device-mapping", "n_clicks"),
-                Input("device-modal-cancel", "n_clicks"),
-                Input("device-modal-save", "n_clicks"),
-            ],
-            [State("simple-device-modal", "is_open")],
-            callback_id="toggle_simple_device_modal",
-            component_name="device_components",
-        )(toggle_simple_device_modal)
-
+        register_device_callbacks(manager)
         UploadCallbackManager().register(manager)
 
     @classmethod

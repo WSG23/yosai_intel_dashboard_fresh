@@ -174,8 +174,14 @@ def test_complete_upload_flow(tmp_path):
 
     assert progress == 100
 
+    called = {}
+    monkeypatch.setattr(
+        "components.simple_device_mapping.generate_ai_device_defaults",
+        lambda df, profile="auto": called.setdefault("gen", True),
+    )
     result = core.finalize_upload_results(1, tid)
     assert result[-1] is True
+    assert called.get("gen") is True
 
     saved = store.load_dataframe("sample.csv")
     pd.testing.assert_frame_equal(saved, df)
