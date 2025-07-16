@@ -1,19 +1,22 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 import pandas as pd
 
-from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from .types import ThreatIndicator
 
 __all__ = ["detect_badge_clone"]
 
 
 def detect_badge_clone(
-    df: pd.DataFrame, logger: Optional[logging.Logger] = None
+    df: pd.DataFrame,
+    logger: Optional[logging.Logger] = None,
+    *,
+    travel_time_limit: timedelta = timedelta(minutes=1),
 ) -> List[ThreatIndicator]:
     """Detect potential badge cloning based on impossible travel times."""
     logger = logger or logging.getLogger(__name__)
@@ -28,14 +31,15 @@ def detect_badge_clone(
             for _, row in group.iterrows():
                 if prev_door is not None and row["door_id"] != prev_door:
                     diff = (row["timestamp"] - prev_time).total_seconds()
-                    if diff < 60:
+                    if diff < travel_time_limit.total_seconds():
                         threats.append(
                             ThreatIndicator(
                                 threat_type="badge_clone_suspected",
                                 severity="high",
                                 confidence=0.8,
                                 description=(
-                                    f"Badge for {person_id} used at multiple doors within 1 minute"
+                                    f"Badge for {person_id} used at multiple doors within "
+                                    f"{int(travel_time_limit.total_seconds())} seconds"
                                 ),
                                 evidence={
                                     "person_id": str(person_id),
