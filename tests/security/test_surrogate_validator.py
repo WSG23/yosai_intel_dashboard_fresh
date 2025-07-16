@@ -56,3 +56,15 @@ def test_strict_mode(validator_module):
     validator = validator_module.UnicodeSurrogateValidator(cfg)
     with pytest.raises(Exception):
         validator.sanitize("bad\ud800")
+
+
+def test_init_allows_valid_replacement(validator_module):
+    cfg = validator_module.SurrogateHandlingConfig(mode="replace", replacement="!")
+    validator = validator_module.UnicodeSurrogateValidator(cfg)
+    assert validator.config.replacement == "!"
+
+
+def test_init_rejects_surrogate_replacement(validator_module):
+    cfg = validator_module.SurrogateHandlingConfig(mode="replace", replacement="\ud800")
+    with pytest.raises(ValueError):
+        validator_module.UnicodeSurrogateValidator(cfg)
