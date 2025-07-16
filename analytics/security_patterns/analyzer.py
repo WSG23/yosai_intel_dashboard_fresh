@@ -177,6 +177,7 @@ class SecurityPatternsAnalyzer:
 
         threat_indicators.extend(self._detect_statistical_threats(df))
         threat_indicators.extend(self._detect_pattern_threats(df))
+        threat_indicators.extend(self._detect_critical_door_risks(df))
 
         return threat_indicators
 
@@ -396,6 +397,12 @@ class SecurityPatternsAnalyzer:
             self.logger.warning("Baseline after-hours check failed: %s", exc)
 
         return threats
+
+    def _detect_critical_door_risks(self, df: pd.DataFrame) -> List[ThreatIndicator]:
+        """Detect high risk attempts on critical doors"""
+        from .pattern_detection import detect_critical_door_risks
+
+        return detect_critical_door_risks(df, self.logger)
 
     def _calculate_comprehensive_score(
         self, df: pd.DataFrame, threats: List[ThreatIndicator]

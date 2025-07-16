@@ -20,6 +20,7 @@ from .pattern_detection import (
     detect_after_hours_anomalies,
     detect_pattern_threats,
     detect_rapid_attempts,
+    detect_critical_door_risks,
 )
 from .statistical_detection import (
     detect_failure_rate_anomalies,
@@ -44,6 +45,7 @@ __all__ = [
     "detect_pattern_threats",
     "detect_rapid_attempts",
     "detect_after_hours_anomalies",
+    "detect_critical_door_risks",
     "ThreatIndicator",
 ]
 
