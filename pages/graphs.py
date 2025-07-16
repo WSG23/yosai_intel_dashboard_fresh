@@ -3,7 +3,7 @@
 
 import logging
 import dash_bootstrap_components as dbc
-from dash import dcc, html
+from dash import dcc, html, register_page as dash_register_page
 
 logger = logging.getLogger(__name__)
 
@@ -82,13 +82,11 @@ _graphs_component = GraphsPage()
 def load_page(**kwargs):
     return GraphsPage(**kwargs)
 
-def register_page():
+def register_page(app=None):
     try:
-        import dash
-        if hasattr(dash, "_current_app") and dash._current_app is not None:
-            dash.register_page(__name__, path="/graphs", name="Graphs")
+        if app is not None:
+            app.register_page(__name__, path="/graphs", name="Graphs")
         else:
-            from dash import register_page as dash_register_page
             dash_register_page(__name__, path="/graphs", name="Graphs")
     except Exception as e:
         logger.warning(f"Failed to register page {__name__}: {e}")

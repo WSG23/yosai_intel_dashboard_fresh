@@ -99,16 +99,12 @@ def load_page(**kwargs) -> SettingsPage:
     return SettingsPage(**kwargs)
 
 
-def register_page() -> None:
-    """Register the settings page with Dash using current app context."""
+def register_page(app=None) -> None:
+    """Register the settings page with Dash."""
     try:
-        import dash
-
-        if hasattr(dash, "_current_app") and dash._current_app is not None:
-            dash.register_page(__name__, path="/settings", name="Settings")
+        if app is not None:
+            app.register_page(__name__, path="/settings", name="Settings")
         else:
-            from dash import register_page as dash_register_page
-
             dash_register_page(__name__, path="/settings", name="Settings")
     except Exception as e:
         import logging
