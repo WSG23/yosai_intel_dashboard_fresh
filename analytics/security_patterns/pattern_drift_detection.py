@@ -29,7 +29,10 @@ def detect_pattern_drift(
         metrics = baseline.get_baseline("global", "overall")
         base_after_hours = metrics.get("after_hours_rate", overall_after_hours)
         base_failure = metrics.get("failure_rate", overall_failure_rate)
-        drift_score = np.sqrt((overall_after_hours - base_after_hours) ** 2 + (overall_failure_rate - base_failure) ** 2)
+        drift_score = np.sqrt(
+            (overall_after_hours - base_after_hours) ** 2
+            + (overall_failure_rate - base_failure) ** 2
+        )
         if drift_score > 0.2:
             threats.append(
                 ThreatIndicator(
@@ -48,14 +51,17 @@ def detect_pattern_drift(
                     attack=_attack_info("access_pattern_drift_anomaly"),
                 )
             )
-        baseline.update_baseline(
-            "global",
-            "overall",
-            {
-                "after_hours_rate": overall_after_hours,
-                "failure_rate": overall_failure_rate,
-            },
-        )
+        try:
+            baseline.update_baseline(
+                "global",
+                "overall",
+                {
+                    "after_hours_rate": overall_after_hours,
+                    "failure_rate": overall_failure_rate,
+                },
+            )
+        except Exception as exc:  # pragma: no cover - log and continue
+            logger.warning("Failed to update baseline metrics: %s", exc)
     except Exception as exc:  # pragma: no cover - log and continue
         logger.warning("Pattern drift detection failed: %s", exc)
     return threats
