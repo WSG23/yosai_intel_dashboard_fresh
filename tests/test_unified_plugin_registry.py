@@ -10,6 +10,8 @@ class EnumJSONProvider(DefaultJSONProvider):
         if isinstance(o, enum.Enum):
             return o.name
         return super().default(o)
+
+
 import sys
 
 from config import create_config_manager

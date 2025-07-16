@@ -8,11 +8,9 @@ from config.unicode_sql_processor import UnicodeSQLProcessor
 from core.unicode import UnicodeProcessor as UtilsProcessor  # Alias check
 from core.unicode import (
     UnicodeTextProcessor,
-
     clean_unicode_surrogates,
     clean_unicode_text,
     contains_surrogates,
-
     safe_encode_text,
     sanitize_dataframe,
     sanitize_unicode_input,

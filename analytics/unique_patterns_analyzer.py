@@ -428,8 +428,12 @@ class UniquePatternAnalyzer:
                 ),
             },
             "unique_entities": {
-                "users": int(df["person_id"].nunique()) if "person_id" in df.columns else 0,
-                "devices": int(df["door_id"].nunique()) if "door_id" in df.columns else 0,
+                "users": (
+                    int(df["person_id"].nunique()) if "person_id" in df.columns else 0
+                ),
+                "devices": (
+                    int(df["door_id"].nunique()) if "door_id" in df.columns else 0
+                ),
                 "unique_days": int(df["date"].nunique()) if "date" in df.columns else 0,
             },
             "data_quality": {

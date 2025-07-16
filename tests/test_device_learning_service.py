@@ -16,8 +16,20 @@ def _init_service(tmp_path):
 def test_save_and_load_user_mappings(tmp_path):
     df = pd.DataFrame({"door_id": ["d1", "d2"]})
     mappings = {
-        "d1": {"floor_number": 1, "security_level": 2, "device_name": "d1", "is_entry": True, "is_exit": False},
-        "d2": {"floor_number": 2, "security_level": 3, "device_name": "d2", "is_entry": False, "is_exit": True},
+        "d1": {
+            "floor_number": 1,
+            "security_level": 2,
+            "device_name": "d1",
+            "is_entry": True,
+            "is_exit": False,
+        },
+        "d2": {
+            "floor_number": 2,
+            "security_level": 3,
+            "device_name": "d2",
+            "is_entry": False,
+            "is_exit": True,
+        },
     }
     svc = _init_service(tmp_path)
     assert svc.save_user_device_mappings(df, "test.csv", mappings) is True

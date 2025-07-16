@@ -12,11 +12,14 @@ TfidfVectorizer = optional_import("sklearn.feature_extraction.text.TfidfVectoriz
 LogisticRegression = optional_import("sklearn.linear_model.LogisticRegression")
 
 if LogisticRegression is None:  # pragma: no cover - fallback
+
     class LogisticRegression:  # type: ignore
         def __init__(self, *args, **kwargs):
             raise ImportError("scikit-learn is required for LogisticRegression")
 
+
 if TfidfVectorizer is None:  # pragma: no cover - fallback
+
     class TfidfVectorizer:  # type: ignore
         def __init__(self, *args, **kwargs):
             raise ImportError("scikit-learn is required for TfidfVectorizer")

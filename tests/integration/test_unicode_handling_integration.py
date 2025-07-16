@@ -17,8 +17,8 @@ def test_unicode_handler_centralization():
     assert cleaned_df.iloc[0, 0] == "x"
 
     from security.unicode_security_handler import UnicodeSecurityHandler
+
     assert UnicodeSecurityHandler.sanitize_unicode_input(text) == cleaned
     sec_df = UnicodeSecurityHandler.sanitize_dataframe(df)
     assert list(sec_df.columns) == ["c"]
     assert sec_df.iloc[0, 0] == "x"
-

@@ -4,12 +4,7 @@ from utils.upload_store import UploadedDataStore
 
 
 def test_pkl_migration(tmp_path):
-    df = (
-        DataFrameBuilder()
-        .add_column("a", [1, 2])
-        .add_column("b", [3, 4])
-        .build()
-    )
+    df = DataFrameBuilder().add_column("a", [1, 2]).add_column("b", [3, 4]).build()
     pkl_path = tmp_path / "legacy.csv.pkl"
     df.to_pickle(pkl_path)
 

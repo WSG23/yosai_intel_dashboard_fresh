@@ -54,34 +54,34 @@ from services.data_processing.file_processor import (
 
 class TestUnicodeProcessor:
     def test_clean_surrogate_chars_basic(self):
-        text = "Hello\uD83D\uDE00World"
-        assert UnicodeProcessor.clean_surrogate_chars(text) == "Hello\U0001F600World"
+        text = "Hello\ud83d\ude00World"
+        assert UnicodeProcessor.clean_surrogate_chars(text) == "Hello\U0001f600World"
 
     def test_clean_surrogate_chars_isolated_surrogates(self):
-        text = "Test\uD83DText"
+        text = "Test\ud83dText"
         assert UnicodeProcessor.clean_surrogate_chars(text) == "TestText"
-        text = "Test\uDE00Text"
+        text = "Test\ude00Text"
         assert UnicodeProcessor.clean_surrogate_chars(text) == "TestText"
 
     def test_clean_surrogate_chars_with_replacement(self):
-        text = "Hello\uD83DWorld"
+        text = "Hello\ud83dWorld"
         assert (
             UnicodeProcessor.clean_surrogate_chars(text, replacement="X")
             == "HelloXWorld"
         )
 
     def test_safe_decode_bytes_utf8_with_surrogates(self):
-        text = "Test\uD83D\uDE00Text"
+        text = "Test\ud83d\ude00Text"
         data = text.encode("utf-8", "surrogatepass")
         result = UnicodeProcessor.safe_decode_bytes(data)
-        assert result == "Test\U0001F600Text"
+        assert result == "Test\U0001f600Text"
 
     def test_safe_decode_bytes_fallback_encoding(self):
         text = "Caf\xe9".encode("latin-1")
         assert UnicodeProcessor.safe_decode_bytes(text, "latin-1") == "Café"
 
     def test_safe_encode_text_various_types(self):
-        assert UnicodeProcessor.safe_encode_text("Test\uD83D") == "Test"
+        assert UnicodeProcessor.safe_encode_text("Test\ud83d") == "Test"
         assert UnicodeProcessor.safe_encode_text(None) == ""
         assert UnicodeProcessor.safe_encode_text(pd.NA) == ""
         assert UnicodeProcessor.safe_encode_text(123) == "123"
@@ -91,11 +91,11 @@ class TestUnicodeProcessor:
 
     def test_sanitize_dataframe_columns_and_data(self):
         df = pd.DataFrame(
-            {"col\uD83D": ["value1\uDE00", "value2"], "normal": ["n1", "n2\uD83D"]}
+            {"col\ud83d": ["value1\ude00", "value2"], "normal": ["n1", "n2\ud83d"]}
         )
         out = UnicodeProcessor.sanitize_dataframe(df)
         assert "col" in out.columns
-        assert "\uD83D" not in str(out.columns)
+        assert "\ud83d" not in str(out.columns)
         assert out.iloc[0, 0] == "value1"
         assert out.iloc[1, 1] == "n2"
 
@@ -121,13 +121,13 @@ class TestUnicodeProcessor:
         assert list(out.columns) == ["col_0", "col_1"]
 
     def test_sanitize_dataframe_string_dtype(self):
-        df = pd.DataFrame({"a": pd.Series(["x\uD800", "y"], dtype="string")})
+        df = pd.DataFrame({"a": pd.Series(["x\ud800", "y"], dtype="string")})
         out = UnicodeProcessor.sanitize_dataframe(df)
         assert out.loc[0, "a"] == "x"
         assert out["a"].dtype == "string"
 
     def test_sanitize_dataframe_nested_structures(self):
-        df = pd.DataFrame({"col": [["a\uD83D", {"k\uD83D": "v\uDE00"}]]})
+        df = pd.DataFrame({"col": [["a\ud83d", {"k\ud83d": "v\ude00"}]]})
         out = UnicodeProcessor.sanitize_dataframe(df)
         cell = out.iloc[0, 0]
         assert cell[0] == "a"
@@ -151,9 +151,9 @@ class TestChunkedUnicodeProcessor:
         assert result == "Hello World! " * 1000
 
     def test_process_large_content_with_surrogates(self):
-        content = ("Test\uD83D\uDE00Content" * 500).encode("utf-8", "surrogatepass")
+        content = ("Test\ud83d\ude00Content" * 500).encode("utf-8", "surrogatepass")
         result = ChunkedUnicodeProcessor.process_large_content(content, chunk_size=50)
-        assert result == "Test\U0001F600Content" * 500
+        assert result == "Test\U0001f600Content" * 500
 
 
 class TestCallbackController:
@@ -244,12 +244,12 @@ class TestRobustFileProcessor:
         assert list(df.columns) == ["name", "age", "city"]
 
     def test_process_csv_with_unicode_surrogates(self):
-        csv = "name\uD83D,value\ntest\uDE00,123".encode("utf-8", "surrogatepass")
+        csv = "name\ud83d,value\ntest\ude00,123".encode("utf-8", "surrogatepass")
         proc = RobustFileProcessor()
         df, err = proc.process_file(csv, "u.csv")
         assert err is None
-        assert "\uD83D" not in str(df.columns)
-        assert "\uDE00" not in str(df.values)
+        assert "\ud83d" not in str(df.columns)
+        assert "\ude00" not in str(df.values)
 
     def test_process_csv_different_delimiters(self):
         csv = "name;age;city\nJohn;30;NYC".encode("utf-8")
@@ -267,12 +267,12 @@ class TestRobustFileProcessor:
         assert err is None and len(df) == 2
 
     def test_process_json_with_surrogates(self):
-        text = json.dumps({"name\uD83D": "val\uDE00"})
+        text = json.dumps({"name\ud83d": "val\ude00"})
         proc = RobustFileProcessor()
         df, err = proc.process_file(text.encode("utf-8", "surrogatepass"), "u.json")
         assert err is None
-        assert "\uD83D" not in str(df.columns)
-        assert "\uDE00" not in str(df.values)
+        assert "\ud83d" not in str(df.columns)
+        assert "\ude00" not in str(df.values)
 
     def test_process_excel_basic(self):
         df_original = pd.DataFrame({"name": ["John", "Jane"], "age": [30, 25]})
@@ -320,16 +320,16 @@ class TestRobustFileProcessor:
 
 class TestPublicAPI:
     def test_clean_unicode_text_function(self):
-        assert clean_unicode_text("Hello\uD83DWorld") == "HelloWorld"
+        assert clean_unicode_text("Hello\ud83dWorld") == "HelloWorld"
 
     def test_safe_decode_function(self):
         assert safe_decode_bytes(b"Hello") == "Hello"
 
     def test_safe_encode_function(self):
-        assert safe_encode_text("Hello\uD83D") == "Hello"
+        assert safe_encode_text("Hello\ud83d") == "Hello"
 
     def test_sanitize_dataframe_function(self):
-        df = pd.DataFrame({"col\uD83D": ["val\uDE00"]})
+        df = pd.DataFrame({"col\ud83d": ["val\ude00"]})
         out = sanitize_dataframe(df)
         assert "col" in out.columns and out.iloc[0, 0] == "val"
 
@@ -342,9 +342,9 @@ class TestPublicAPI:
 class TestIntegration:
     def test_end_to_end_unicode_file_processing(self):
         content = (
-            "name\uD83D,age,city\uDE00\n"
-            "John\uD83D\uDE00,30,NYC\n"
-            "=Jane\uDFFF,25,LA\uD800"
+            "name\ud83d,age,city\ude00\n"
+            "John\ud83d\ude00,30,NYC\n"
+            "=Jane\udfff,25,LA\ud800"
         ).encode("utf-8", "surrogatepass")
         events = []
 
@@ -358,7 +358,7 @@ class TestIntegration:
         proc = RobustFileProcessor(controller)
         df, err = proc.process_file(content, "complex.csv")
         assert err is None and len(df) == 2
-        assert all("\uD83D" not in c and "\uDE00" not in c for c in df.columns)
+        assert all("\ud83d" not in c and "\ude00" not in c for c in df.columns)
         jane_row = df[df.iloc[:, 0].str.contains("Jane", na=False)]
         assert len(jane_row) == 1 and not jane_row.iloc[0, 0].startswith("=")
         assert CallbackEvent.FILE_PROCESSING_START in events

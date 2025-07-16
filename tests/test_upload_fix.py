@@ -49,7 +49,9 @@ def _create_app() -> dash.Dash:
     return app
 
 
-def test_file_upload_component_integration(_skip_if_no_chromedriver, dash_duo, tmp_path):
+def test_file_upload_component_integration(
+    _skip_if_no_chromedriver, dash_duo, tmp_path
+):
 
     files = create_sample_files(tmp_path)
     app = _create_app()
@@ -59,7 +61,9 @@ def test_file_upload_component_integration(_skip_if_no_chromedriver, dash_duo, t
     to_send = "\n".join(str(p) for p in files.values())
     file_input.send_keys(to_send)
 
-    dash_duo.wait_for_text_to_contain("#upload-results", "Successfully uploaded", timeout=10)
+    dash_duo.wait_for_text_to_contain(
+        "#upload-results", "Successfully uploaded", timeout=10
+    )
     dash_duo.wait_for_text_to_equal("#upload-progress", "100%", timeout=10)
 
     uploaded = file_upload.get_uploaded_filenames()

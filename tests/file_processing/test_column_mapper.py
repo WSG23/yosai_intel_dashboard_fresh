@@ -26,4 +26,3 @@ def test_fuzzy_mapping(tmp_path: Path):
     out = map_columns(df, mapping, controller=controller)
     assert "person_id" in out.columns
     assert events
-

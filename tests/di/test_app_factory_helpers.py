@@ -103,6 +103,7 @@ def test_register_callbacks(monkeypatch, fake_unicode_processor):
     # Ensure stub modules are used for callback registration
     import sys
     from pathlib import Path
+
     stub_dir = Path(__file__).resolve().parents[1] / "stubs"
     if str(stub_dir) not in sys.path:
         sys.path.insert(0, str(stub_dir))
@@ -116,6 +117,7 @@ def test_register_callbacks(monkeypatch, fake_unicode_processor):
     ]:
         sys.modules.pop(mod, None)
     import tests.stubs.dash_bootstrap_components as dbc_stub
+
     sys.modules["dash_bootstrap_components"] = dbc_stub
 
     calls = {}

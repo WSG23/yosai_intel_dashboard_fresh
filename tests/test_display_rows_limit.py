@@ -16,4 +16,3 @@ def test_large_data_not_truncated(monkeypatch):
     df = pd.DataFrame({"a": range(200)})
     preview = create_file_preview(df)
     assert preview["total_rows"] == 200
-

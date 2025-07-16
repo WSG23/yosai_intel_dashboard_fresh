@@ -1,5 +1,6 @@
 from services.analytics_processing import _extract_enhanced_security_details
 
+
 def test_extract_enhanced_security_details_basic():
     results = {
         "threat_count": 5,
@@ -7,10 +8,30 @@ def test_extract_enhanced_security_details_basic():
         "confidence_interval": (80.5, 90.2),
         "recommendations": ["Update policies", "Review logs"],
         "threats": [
-            {"type": "brute force", "severity": "critical", "confidence": 0.95, "description": "Multiple failed logins"},
-            {"type": "tailgating", "severity": "medium", "confidence": 0.7, "description": "Piggybacking events"},
-            {"type": "unknown card", "severity": "high", "confidence": 0.9, "description": "Unknown badges"},
-            {"type": "door forced", "severity": "critical", "confidence": 0.85, "description": "Door forced open"},
+            {
+                "type": "brute force",
+                "severity": "critical",
+                "confidence": 0.95,
+                "description": "Multiple failed logins",
+            },
+            {
+                "type": "tailgating",
+                "severity": "medium",
+                "confidence": 0.7,
+                "description": "Piggybacking events",
+            },
+            {
+                "type": "unknown card",
+                "severity": "high",
+                "confidence": 0.9,
+                "description": "Unknown badges",
+            },
+            {
+                "type": "door forced",
+                "severity": "critical",
+                "confidence": 0.85,
+                "description": "Door forced open",
+            },
         ],
     }
     details = _extract_enhanced_security_details(results)
@@ -35,6 +56,3 @@ def test_extract_enhanced_security_details_defaults():
     assert details["confidence_interval"] == (0.0, 0.0)
     assert details["recommendations"] == []
     assert details["top_threats"][0].startswith("Critical")
-
-
-

@@ -14,6 +14,7 @@ class StubManager:
         def decorator(func):
             self.registered.append(kwargs.get("callback_id"))
             return func
+
         return decorator
 
 
@@ -32,6 +33,7 @@ def test_default_nav_links_have_labels():
     nav = layout.children.children[1]
     first_link = nav.children[0].children
     assert first_link.children[0][1] == "Dashboard"
+
 
 def test_register_navbar_callbacks_connects_toggle():
     mgr = StubManager()

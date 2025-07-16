@@ -32,5 +32,6 @@ def test_concurrent_add_file(tmp_path):
     assert set(reloaded.get_filenames()) == {f"file_{i}.csv" for i in range(10)}
     for i in range(10):
         pd.testing.assert_frame_equal(
-            reloaded.get_all_data()[f"file_{i}.csv"], DataFrameBuilder().add_column("val", [i]).build()
+            reloaded.get_all_data()[f"file_{i}.csv"],
+            DataFrameBuilder().add_column("val", [i]).build(),
         )

@@ -53,24 +53,30 @@ def _chunk_key(df: pd.DataFrame) -> str:
 
 
 def _simple_df():
-    return pd.DataFrame({
-        "Person ID": ["u1", "u2"],
-        "Device name": ["d1", "d2"],
-        "Access result": ["Granted", "Denied"],
-    })
+    return pd.DataFrame(
+        {
+            "Person ID": ["u1", "u2"],
+            "Device name": ["d1", "d2"],
+            "Access result": ["Granted", "Denied"],
+        }
+    )
 
 
 def test_json_cache_roundtrip(tmp_path, monkeypatch):
     df = _simple_df()
     monkeypatch.setenv("CHUNK_CACHE_DIR", str(tmp_path))
     validator = SecurityValidator()
+
     class Cfg:
         chunk_size = len(df)
         max_workers = 1
+
     monkeypatch.setattr(chunk_mod, "get_analytics_config", lambda: Cfg())
     monkeypatch.setattr(chunk_mod, "LocalCluster", DummyCluster)
     monkeypatch.setattr(chunk_mod, "Client", DummyClient)
-    monkeypatch.setattr(chunk_mod.dask, "compute", lambda *ts: [t.compute(scheduler="sync") for t in ts])
+    monkeypatch.setattr(
+        chunk_mod.dask, "compute", lambda *ts: [t.compute(scheduler="sync") for t in ts]
+    )
     first = analyze_with_chunking(df, validator, [])
     files = list(tmp_path.glob("*.json"))
     assert len(files) == 1
@@ -94,18 +100,23 @@ def test_cache_rejects_pickle(tmp_path, monkeypatch):
     class Exploit:
         def __reduce__(self):
             import builtins
+
             return (builtins.exec, (f"open('{evil_file}', 'w').close()",))
 
     cache_file.write_bytes(pickle.dumps(Exploit()))
 
     validator = SecurityValidator()
+
     class Cfg:
         chunk_size = len(df)
         max_workers = 1
+
     monkeypatch.setattr(chunk_mod, "get_analytics_config", lambda: Cfg())
     monkeypatch.setattr(chunk_mod, "LocalCluster", DummyCluster)
     monkeypatch.setattr(chunk_mod, "Client", DummyClient)
-    monkeypatch.setattr(chunk_mod.dask, "compute", lambda *ts: [t.compute(scheduler="sync") for t in ts])
+    monkeypatch.setattr(
+        chunk_mod.dask, "compute", lambda *ts: [t.compute(scheduler="sync") for t in ts]
+    )
     with pytest.raises((json.JSONDecodeError, UnicodeDecodeError)):
         analyze_with_chunking(df, validator, [])
     assert not evil_file.exists()

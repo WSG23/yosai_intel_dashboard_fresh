@@ -25,6 +25,6 @@ def test_memory_limit_abort_json(monkeypatch):
     monkeypatch.setattr(fake_cfg.performance, "memory_usage_threshold_mb", 1)
     monitor = get_performance_monitor()
     monitor.memory_threshold_mb = 1
-    data = b"[{\"a\":1},{\"a\":2}]"
+    data = b'[{"a":1},{"a":2}]'
     with pytest.raises(MemoryError):
         process_dataframe(data, "sample.json")

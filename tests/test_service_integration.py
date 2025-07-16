@@ -8,7 +8,6 @@ class TestServiceIntegration:
     def configured_container(self):
         return TestContainerBuilder().with_all_services().build()
 
-
     def test_analytics_uses_database_protocol(self, configured_container):
         analytics = configured_container.get("analytics_service")
         db = configured_container.get("database_manager")

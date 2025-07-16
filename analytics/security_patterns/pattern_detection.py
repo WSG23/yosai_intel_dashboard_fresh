@@ -20,7 +20,9 @@ __all__ = [
 # ---------------------------------------------------------------------------
 # MITRE ATT&CK mapping
 # ---------------------------------------------------------------------------
-_mapping_file = Path(__file__).resolve().parents[2] / "resources" / "attack_techniques.yaml"
+_mapping_file = (
+    Path(__file__).resolve().parents[2] / "resources" / "attack_techniques.yaml"
+)
 try:
     with _mapping_file.open("r", encoding="utf-8") as fh:
         _ATTACK_MAP: Dict[str, Dict[str, str]] = yaml.safe_load(fh) or {}
@@ -35,7 +37,9 @@ def _attack_info(threat_type: str) -> Optional[Dict[str, str]]:
     return dict(info) if isinstance(info, dict) else None
 
 
-def detect_rapid_attempts(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -> List[ThreatIndicator]:
+def detect_rapid_attempts(
+    df: pd.DataFrame, logger: Optional[logging.Logger] = None
+) -> List[ThreatIndicator]:
     """Detect rapid successive access attempts."""
     logger = logger or logging.getLogger(__name__)
     threats: List[ThreatIndicator] = []
@@ -48,7 +52,9 @@ def detect_rapid_attempts(df: pd.DataFrame, logger: Optional[logging.Logger] = N
             user_rapid_counts = rapid_attempts.groupby("person_id").size()
             for user_id, count in user_rapid_counts.items():
                 if count >= 3:
-                    user_rapid_data = rapid_attempts[rapid_attempts["person_id"] == user_id]
+                    user_rapid_data = rapid_attempts[
+                        rapid_attempts["person_id"] == user_id
+                    ]
                     failure_rate = 1 - user_rapid_data["access_granted"].mean()
                     severity = "critical" if failure_rate > 0.7 else "high"
                     confidence = min(0.95, count / 10)
@@ -74,7 +80,9 @@ def detect_rapid_attempts(df: pd.DataFrame, logger: Optional[logging.Logger] = N
     return threats
 
 
-def detect_after_hours_anomalies(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -> List[ThreatIndicator]:
+def detect_after_hours_anomalies(
+    df: pd.DataFrame, logger: Optional[logging.Logger] = None
+) -> List[ThreatIndicator]:
     """Detect suspicious after-hours access patterns."""
     logger = logger or logging.getLogger(__name__)
     threats: List[ThreatIndicator] = []
@@ -111,7 +119,9 @@ def detect_after_hours_anomalies(df: pd.DataFrame, logger: Optional[logging.Logg
     return threats
 
 
-def detect_pattern_threats(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -> List[ThreatIndicator]:
+def detect_pattern_threats(
+    df: pd.DataFrame, logger: Optional[logging.Logger] = None
+) -> List[ThreatIndicator]:
     """Run all pattern-based threat detectors."""
     threats = []
     threats.extend(detect_rapid_attempts(df, logger))

@@ -14,25 +14,33 @@ silhouette_score = optional_import("sklearn.metrics.silhouette_score")
 StandardScaler = optional_import("sklearn.preprocessing.StandardScaler")
 
 if KMeans is None:  # pragma: no cover - fallback definitions
+
     class KMeans:  # type: ignore
         def __init__(self, *args, **kwargs):
             raise ImportError("scikit-learn is required for KMeans")
 
+
 if DataConversionWarning is None:  # pragma: no cover
+
     class DataConversionWarning(RuntimeWarning):
         pass
 
+
 if silhouette_score is None:  # pragma: no cover
+
     def silhouette_score(*args, **kwargs):  # type: ignore
         raise ImportError("scikit-learn is required for silhouette_score")
 
+
 if StandardScaler is None:  # pragma: no cover
+
     class StandardScaler:  # type: ignore
         def fit_transform(self, X):
             return X
 
         def transform(self, X):
             return X
+
 
 # Ignore the upcoming default change warning for KMeans ``n_init`` and
 # suppress type conversion warnings when non-float data is passed.
@@ -139,8 +147,10 @@ class UserBehaviorAnalyzer:
 
         string_columns = df_clean.select_dtypes(include=["object"]).columns
         for col in string_columns:
-            df_clean[col] = df_clean[col].astype(str).apply(
-                UnicodeSecurityHandler.sanitize_unicode_input
+            df_clean[col] = (
+                df_clean[col]
+                .astype(str)
+                .apply(UnicodeSecurityHandler.sanitize_unicode_input)
             )
 
         # Ensure required columns

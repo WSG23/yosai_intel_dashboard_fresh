@@ -23,6 +23,7 @@ def validator_module():
     import importlib
 
     import security.unicode_surrogate_validator as mod
+
     importlib.reload(mod)
     return mod
 

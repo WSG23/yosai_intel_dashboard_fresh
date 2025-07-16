@@ -27,8 +27,11 @@ def _create_upload_app(monkeypatch):
     coord = TrulyUnifiedCallbacks(app)
     dummy_mod = types.ModuleType("components.analytics.real_time_dashboard")
     dummy_mod.RealTimeAnalytics = object
-    monkeypatch.setitem(sys.modules, "components.analytics.real_time_dashboard", dummy_mod)
+    monkeypatch.setitem(
+        sys.modules, "components.analytics.real_time_dashboard", dummy_mod
+    )
     from components.file_upload_component import FileUploadComponent
+
     comp = FileUploadComponent()
     comp.register_callbacks(coord)
     app.layout = html.Div([dcc.Location(id="url"), comp.layout()])
@@ -36,9 +39,11 @@ def _create_upload_app(monkeypatch):
 
 
 def test_upload_progress_sse(_skip_if_no_chromedriver, dash_duo, tmp_path, monkeypatch):
-    csv = UploadFileBuilder().with_dataframe(
-        DataFrameBuilder().add_column("a", [1, 2]).build()
-    ).write_csv(tmp_path / "sample.csv")
+    csv = (
+        UploadFileBuilder()
+        .with_dataframe(DataFrameBuilder().add_column("a", [1, 2]).build())
+        .write_csv(tmp_path / "sample.csv")
+    )
     app = _create_upload_app(monkeypatch)
     dash_duo.start_server(app)
     assert not dash_duo.find_elements("#upload-progress-interval")

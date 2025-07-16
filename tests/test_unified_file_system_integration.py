@@ -89,14 +89,16 @@ def test_batch_migration_and_progress(tmp_path):
 
 def test_batch_migration_handles_unicode_names(tmp_path):
     df = DataFrameBuilder().add_column("a", [1]).build()
-    emoji = tmp_path / "\U0001F600.pkl"
+    emoji = tmp_path / "\U0001f600.pkl"
     df.to_pickle(emoji)
 
     storage = StorageManager(base_dir=tmp_path / "uni")
     calls = []
-    batch_migrate_legacy_files([emoji], storage=storage, progress=lambda i, t, n: calls.append((i, t, n)))
+    batch_migrate_legacy_files(
+        [emoji], storage=storage, progress=lambda i, t, n: calls.append((i, t, n))
+    )
 
-    assert (tmp_path / "uni" / "\U0001F600.parquet").exists()
+    assert (tmp_path / "uni" / "\U0001f600.parquet").exists()
     assert calls == [(1, 1, f"{emoji.name}")]
 
 
