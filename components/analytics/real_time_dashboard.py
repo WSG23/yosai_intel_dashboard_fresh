@@ -7,7 +7,7 @@ from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 from dash_extensions import WebSocket
 
-from analytics.controllers import RealTimeWebSocketController
+from analytics.controllers.realtime_ws import RealTimeWebSocketController
 
 
 class RealTimeAnalytics:

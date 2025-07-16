@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 import logging
 
-from analytics.controllers import UnifiedAnalyticsController
+from analytics.controllers.unified_controller import UnifiedAnalyticsController
 
 
 class ColumnVerifierProtocol(Protocol):

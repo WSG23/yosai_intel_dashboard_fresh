@@ -10,7 +10,7 @@ import pandas as pd
 from dash import dcc, html
 from dash.dependencies import ALL, MATCH, Input, Output, State
 
-from analytics.controllers import UnifiedAnalyticsController
+from analytics.controllers.unified_controller import UnifiedAnalyticsController
 from components.simple_device_mapping import special_areas_options
 from services.ai_mapping_store import ai_mapping_store
 

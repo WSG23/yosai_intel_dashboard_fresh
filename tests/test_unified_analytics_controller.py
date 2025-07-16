@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from analytics.controllers import UnifiedAnalyticsController
+from analytics.controllers.unified_controller import UnifiedAnalyticsController
 
 
 def test_async_security_and_error_logging(caplog):
