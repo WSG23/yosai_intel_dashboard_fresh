@@ -143,7 +143,16 @@ def show_user_profile_form(employee_code, user_profiles, available_cards):
         col3, col4 = st.columns(2)
         
         with col3:
-            start_date = st.date_input("Start Date", value=datetime.now().date())
+            existing_start = existing_profile.get('start_date')
+            if existing_start:
+                try:
+                    default_start = datetime.fromisoformat(existing_start).date()
+                except Exception:
+                    default_start = datetime.now().date()
+            else:
+                default_start = datetime.now().date()
+
+            start_date = st.date_input("Start Date", value=default_start)
             phone = st.text_input("Phone", value=existing_profile.get('phone', ''))
             
         with col4:
@@ -304,8 +313,26 @@ def show_device_enhancement_form(device_name, original_mapping, enhanced_devices
         col3, col4 = st.columns(2)
         
         with col3:
-            installation_date = st.date_input("Installation Date", value=datetime.now().date())
-            last_maintenance = st.date_input("Last Maintenance", value=datetime.now().date())
+            existing_install = existing_enhanced.get('installation_date')
+            if existing_install:
+                try:
+                    default_install = datetime.fromisoformat(existing_install).date()
+                except Exception:
+                    default_install = datetime.now().date()
+            else:
+                default_install = datetime.now().date()
+
+            existing_maintenance = existing_enhanced.get('last_maintenance')
+            if existing_maintenance:
+                try:
+                    default_maintenance = datetime.fromisoformat(existing_maintenance).date()
+                except Exception:
+                    default_maintenance = datetime.now().date()
+            else:
+                default_maintenance = datetime.now().date()
+
+            installation_date = st.date_input("Installation Date", value=default_install)
+            last_maintenance = st.date_input("Last Maintenance", value=default_maintenance)
             
         with col4:
             responsible_person = st.text_input("Responsible Person", value=existing_enhanced.get('responsible_person', ''))
