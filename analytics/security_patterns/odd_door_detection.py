@@ -35,7 +35,11 @@ def detect_odd_door_usage(
                 metric = f"door_{door_id}_rate"
                 rate = count / total
                 base_rate = baseline_metrics.get(metric)
-                if base_rate is not None and rate > base_rate * 2 and rate - base_rate > 0.05:
+                if (
+                    base_rate is not None
+                    and rate > base_rate * 2
+                    and rate - base_rate > 0.05
+                ):
                     confidence = min(0.99, rate - base_rate)
                     threats.append(
                         ThreatIndicator(
@@ -56,7 +60,10 @@ def detect_odd_door_usage(
                     )
             # update baseline
             metrics = {f"door_{d}_rate": c / total for d, c in door_counts.items()}
-            baseline.update_baseline("user", str(person_id), metrics)
+            try:
+                baseline.update_baseline("user", str(person_id), metrics)
+            except Exception as exc:  # pragma: no cover - log and continue
+                logger.warning("Failed to update baseline metrics: %s", exc)
     except Exception as exc:  # pragma: no cover - log and continue
         logger.warning("Odd door detection failed: %s", exc)
     return threats

@@ -283,24 +283,31 @@ class SecurityPatternsAnalyzer:
 
     def _update_behavior_profiles(self, df: pd.DataFrame) -> None:
         """Create or update baseline behavior profiles for users and doors."""
-        try:
-            for user_id, group in df.groupby("person_id"):
-                metrics = {
-                    "after_hours_rate": float(group["is_after_hours"].mean()),
-                    "failure_rate": float(1 - group["access_granted"].mean()),
-                    "total_events": len(group),
-                }
+        for user_id, group in df.groupby("person_id"):
+            metrics = {
+                "after_hours_rate": float(group["is_after_hours"].mean()),
+                "failure_rate": float(1 - group["access_granted"].mean()),
+                "total_events": len(group),
+            }
+            try:
                 self.baseline_db.update_baseline("user", str(user_id), metrics)
+            except Exception as exc:  # pragma: no cover - log and continue
+                self.logger.warning(
+                    "Failed to update user baseline %s: %s", user_id, exc
+                )
 
-            for door_id, group in df.groupby("door_id"):
-                metrics = {
-                    "after_hours_rate": float(group["is_after_hours"].mean()),
-                    "failure_rate": float(1 - group["access_granted"].mean()),
-                    "total_events": len(group),
-                }
+        for door_id, group in df.groupby("door_id"):
+            metrics = {
+                "after_hours_rate": float(group["is_after_hours"].mean()),
+                "failure_rate": float(1 - group["access_granted"].mean()),
+                "total_events": len(group),
+            }
+            try:
                 self.baseline_db.update_baseline("door", str(door_id), metrics)
-        except Exception as exc:  # pragma: no cover - log and continue
-            self.logger.warning("Failed to update behavior profiles: %s", exc)
+            except Exception as exc:  # pragma: no cover - log and continue
+                self.logger.warning(
+                    "Failed to update door baseline %s: %s", door_id, exc
+                )
 
     def _detect_statistical_threats(self, df: pd.DataFrame) -> List[ThreatIndicator]:
         """Detect threats using statistical methods"""

@@ -36,7 +36,9 @@ def detect_odd_time(
             base_std = baseline_metrics.get("std_hour", std_hour)
             for _, row in group.iterrows():
                 if abs(row["hour"] - base_mean) > 2 * base_std:
-                    confidence = min(0.99, abs(row["hour"] - base_mean) / (base_std + 1e-9))
+                    confidence = min(
+                        0.99, abs(row["hour"] - base_mean) / (base_std + 1e-9)
+                    )
                     threats.append(
                         ThreatIndicator(
                             threat_type=AnomalyType.ODD_TIME,
@@ -53,11 +55,14 @@ def detect_odd_time(
                             attack=_attack_info(AnomalyType.ODD_TIME.value),
                         )
                     )
-            baseline.update_baseline(
-                "user",
-                str(person_id),
-                {"mean_hour": mean_hour, "std_hour": std_hour},
-            )
+            try:
+                baseline.update_baseline(
+                    "user",
+                    str(person_id),
+                    {"mean_hour": mean_hour, "std_hour": std_hour},
+                )
+            except Exception as exc:  # pragma: no cover - log and continue
+                logger.warning("Failed to update baseline metrics: %s", exc)
     except Exception as exc:  # pragma: no cover - log and continue
         logger.warning("Odd time detection failed: %s", exc)
     return threats
