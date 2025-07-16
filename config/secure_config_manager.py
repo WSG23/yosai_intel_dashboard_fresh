@@ -11,6 +11,7 @@ import hvac
 from cryptography.fernet import Fernet
 
 from .config_manager import ConfigManager
+from core.exceptions import ConfigurationError
 
 
 class SecureConfigManager(ConfigManager):
@@ -30,12 +31,17 @@ class SecureConfigManager(ConfigManager):
         self.vault_token = vault_token or os.getenv("VAULT_TOKEN")
         self.fernet_key = fernet_key or os.getenv("FERNET_KEY")
 
-        self.client = None
-        if self.vault_addr and self.vault_token:
-            try:
-                self.client = hvac.Client(url=self.vault_addr, token=self.vault_token)
-            except Exception as exc:  # pragma: no cover - defensive
-                self.log.warning("Failed to initialise Vault client: %s", exc)
+        if not self.vault_addr or not self.vault_token:
+            self.log.error("Vault credentials missing")
+            raise ConfigurationError(
+                "VAULT_ADDR and VAULT_TOKEN must be provided for SecureConfigManager"
+            )
+
+        try:
+            self.client = hvac.Client(url=self.vault_addr, token=self.vault_token)
+        except Exception as exc:  # pragma: no cover - defensive
+            self.log.error("Failed to initialise Vault client: %s", exc)
+            raise ConfigurationError("Unable to initialise Vault client") from exc
 
         self.fernet = None
         if self.fernet_key:
@@ -54,7 +60,8 @@ class SecureConfigManager(ConfigManager):
     # ------------------------------------------------------------------
     def _read_secret(self, path: str, field: Optional[str]) -> Optional[str]:
         if not self.client:
-            return None
+            self.log.error("Vault client not initialised")
+            raise ConfigurationError("Vault client not initialised")
         try:
             secret = self.client.secrets.kv.v2.read_secret_version(path=path)
             data: Dict[str, Any] = secret["data"]["data"]
@@ -66,8 +73,8 @@ class SecureConfigManager(ConfigManager):
                     self.log.warning("Failed to decrypt %s: %s", path, exc)
             return value  # type: ignore[return-value]
         except Exception as exc:  # pragma: no cover - defensive
-            self.log.warning("Failed to read secret %s: %s", path, exc)
-            return None
+            self.log.error("Failed to read secret %s: %s", path, exc)
+            raise ConfigurationError(f"Failed to read secret {path}") from exc
 
     def _resolve_vault_values(self, obj: Any) -> Any:
         if isinstance(obj, str) and obj.startswith("vault:"):

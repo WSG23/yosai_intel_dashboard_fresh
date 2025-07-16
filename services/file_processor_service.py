@@ -7,19 +7,19 @@ import io
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List
 
 import pandas as pd
 
 from services.configuration_service import ConfigurationServiceProtocol
-from core.performance_file_processor import PerformanceFileProcessor
+from memory_safe_processor import FileProcessor
 from core.unicode import process_large_csv_content
 from analytics_core.utils.unicode_processor import UnicodeHelper
-from services.data_processing.core.protocols import FileProcessorProtocol
 from services.data_processing.unified_file_validator import (
     safe_decode_with_unicode_handling,
 )
 from utils.protocols import SafeDecoderProtocol
+from utils.memory_utils import memory_safe
 
 from .base import BaseService
 
@@ -97,6 +97,7 @@ class FileProcessorService(BaseService):
             "extension": file_ext,
         }
 
+    @memory_safe(max_memory_mb=500)
     def process_file(self, file_content: bytes, filename: str) -> pd.DataFrame:
         """Process uploaded file and return DataFrame"""
         try:
@@ -141,14 +142,8 @@ class FileProcessorService(BaseService):
 
         try:
             if len(content) > 10 * 1024 * 1024:
-                processor = PerformanceFileProcessor(chunk_size=100000)
-                df = cast(
-                    pd.DataFrame,
-                    processor.process_large_csv(
-                        io.StringIO(text_content),
-                        max_memory_mb=500,
-                    ),
-                )
+                processor = FileProcessor(chunk_size=50000)
+                df = processor.read_large_csv(io.StringIO(text_content))
             else:
                 df = pd.read_csv(io.StringIO(text_content), sep=delimiter, **self.CSV_OPTIONS)
             if len(df.columns) <= 1:

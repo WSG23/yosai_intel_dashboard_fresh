@@ -2,6 +2,7 @@ import pandas as pd
 
 from analytics.security_patterns.pattern_detection import detect_critical_door_risks
 from analytics.security_patterns import SecurityPatternsAnalyzer, prepare_security_data
+from models.enums import AnomalyType
 from database.connection import create_database_connection
 
 
@@ -61,4 +62,4 @@ def test_detect_critical_door_risks():
     )
     prepared = prepare_security_data(df)
     threats = detect_critical_door_risks(prepared)
-    assert any(t.threat_type == "critical_door_anomaly" for t in threats)
+    assert any(t.threat_type == AnomalyType.CRITICAL_DOOR for t in threats)

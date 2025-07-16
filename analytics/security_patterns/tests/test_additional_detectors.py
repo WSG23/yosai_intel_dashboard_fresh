@@ -1,23 +1,33 @@
+from datetime import timedelta
+
 import pandas as pd
 
-from analytics.security_patterns.data_prep import prepare_security_data
+from analytics.security_patterns.access_no_exit_detection import detect_access_no_exit
 from analytics.security_patterns.analyzer import SecurityPatternsAnalyzer
-from analytics.security_patterns.critical_door_detection import detect_critical_door_anomalies
-from analytics.security_patterns.tailgate_detection import detect_tailgate
 from analytics.security_patterns.badge_clone_detection import detect_badge_clone
-from analytics.security_patterns.odd_door_detection import detect_odd_door_usage
-from analytics.security_patterns.odd_time_detection import detect_odd_time
-from analytics.security_patterns.odd_path_detection import detect_odd_path
+from analytics.security_patterns.clearance_violation_detection import (
+    detect_clearance_violations,
+)
+from analytics.security_patterns.composite_score import detect_composite_score
+from analytics.security_patterns.critical_door_detection import (
+    detect_critical_door_anomalies,
+)
+from analytics.security_patterns.data_prep import prepare_security_data
+from analytics.security_patterns.forced_entry_detection import detect_forced_entry
+from analytics.security_patterns.multiple_attempts_detection import (
+    detect_multiple_attempts,
+)
 from analytics.security_patterns.odd_area_detection import detect_odd_area
 from analytics.security_patterns.odd_area_time_detection import detect_odd_area_time
-from analytics.security_patterns.multiple_attempts_detection import detect_multiple_attempts
-from analytics.security_patterns.forced_entry_detection import detect_forced_entry
-from analytics.security_patterns.access_no_exit_detection import detect_access_no_exit
+from analytics.security_patterns.odd_door_detection import detect_odd_door_usage
+from analytics.security_patterns.odd_path_detection import detect_odd_path
+from analytics.security_patterns.odd_time_detection import detect_odd_time
 from analytics.security_patterns.pattern_drift_detection import detect_pattern_drift
 from analytics.security_patterns.clearance_violation_detection import detect_clearance_violations
 from analytics.security_patterns.unaccompanied_visitor_detection import detect_unaccompanied_visitors
 from analytics.security_patterns.composite_score import detect_composite_score
 from analytics.security_patterns.types import ThreatIndicator
+
 
 
 SAMPLE_ROWS = [
@@ -251,3 +261,12 @@ def test_analyzer_integration(monkeypatch):
     analyzer = SecurityPatternsAnalyzer()
     result = analyzer.analyze_security_patterns(df)
     assert isinstance(result.threat_indicators, list)
+
+
+def test_badge_clone_custom_threshold():
+    df = _prepare_df()
+    default_threats = detect_badge_clone(df)
+    assert default_threats
+
+    custom_threats = detect_badge_clone(df, travel_time_limit=timedelta(seconds=20))
+    assert not custom_threats

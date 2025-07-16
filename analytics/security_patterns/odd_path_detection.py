@@ -8,6 +8,8 @@ import pandas as pd
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from .column_validation import ensure_columns
+
 
 __all__ = ["detect_odd_path"]
 
@@ -31,6 +33,8 @@ def detect_odd_path(
     logger = logger or logging.getLogger(__name__)
     threats: List[ThreatIndicator] = []
     try:
+        if not ensure_columns(df, ["timestamp", "person_id", "door_id"], logger):
+            return threats
         paths = _extract_paths(df)
         if not paths:
             return threats
@@ -40,14 +44,14 @@ def detect_odd_path(
         for (pid, prev, nxt), _ in rare_paths.items():
             threats.append(
                 ThreatIndicator(
-                    threat_type="odd_path_anomaly",
+                    threat_type=AnomalyType.ODD_PATH,
                     severity="low",
                     confidence=0.6,
                     description=f"User {pid} rare path {prev}->{nxt}",
                     evidence={"user_id": str(pid), "path": f"{prev}->{nxt}"},
                     timestamp=datetime.now(),
                     affected_entities=[str(pid)],
-                    attack=_attack_info("odd_path_anomaly"),
+                    attack=_attack_info(AnomalyType.ODD_PATH.value),
                 )
             )
     except Exception as exc:  # pragma: no cover - log and continue
