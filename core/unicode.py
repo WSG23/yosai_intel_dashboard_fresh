@@ -18,6 +18,10 @@ from typing import Any, Callable, Iterable, Optional, Union
 import pandas as pd  # type: ignore[import]
 
 from .exceptions import SecurityError
+from security.unicode_security_validator import (
+    UnicodeSecurityValidator,
+    UnicodeSecurityConfig,
+)
 from .security_patterns import (
     PATH_TRAVERSAL_PATTERNS,
     SQL_INJECTION_PATTERNS,
@@ -25,6 +29,11 @@ from .security_patterns import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Global Unicode security validator used across this module
+_unicode_validator = UnicodeSecurityValidator(
+    config=UnicodeSecurityConfig(strict_mode=True, remove_surrogates=True)
+)
 
 
 # ---------------------------------------------------------------------------
@@ -200,38 +209,9 @@ class UnicodeProcessor:
     # ------------------------------------------------------------------
     @staticmethod
     def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-        """Return ``df`` with all columns and object data sanitized."""
+        """Return ``df`` sanitized using the enterprise validator."""
 
-        try:
-            df_clean = df.copy()
-        except Exception as exc:  # pragma: no cover - defensive
-            logger.error("Failed to copy dataframe: %s", exc)
-            return df
-
-        new_columns: list[str] = []
-        used: set[str] = set()
-        for col in df_clean.columns:
-            safe_col = UnicodeProcessor.safe_encode(col)
-            safe_col = _drop_dangerous_prefix(safe_col) or "col"
-            base = safe_col
-            count = 1
-            while safe_col in used:
-                safe_col = f"{base}_{count}"
-                count += 1
-            used.add(safe_col)
-            new_columns.append(safe_col)
-
-        df_clean.columns = new_columns
-
-        obj_cols = df_clean.select_dtypes(include=["object"]).columns
-        for col in obj_cols:
-            df_clean[col] = (
-                df_clean[col]
-                .apply(UnicodeProcessor.safe_encode)
-                .apply(_drop_dangerous_prefix)
-            )
-
-        return df_clean
+        return _unicode_validator.validate_dataframe(df)
 
 
 class ChunkedUnicodeProcessor:
@@ -346,7 +326,7 @@ def object_count(items: Iterable[Any]) -> int:
 def clean_unicode_text(text: str) -> str:
     """Clean ``text`` of surrogates, controls and dangerous prefixes."""
 
-    return UnicodeProcessor.clean_text(text)
+    return _unicode_validator.validate_and_sanitize(text)
 
 
 def safe_decode_bytes(data: bytes, encoding: str = "utf-8") -> str:
@@ -424,20 +404,7 @@ def clean_surrogate_chars(text: str, replacement: str = "") -> str:
 def sanitize_unicode_input(text: Union[str, Any]) -> str:
     """Return ``text`` stripped of surrogate pairs and BOM characters."""
 
-    if not isinstance(text, str):
-        try:
-            text = str(text)
-        except Exception as exc:  # pragma: no cover - defensive
-            logger.warning("Failed to convert %r to str: %s", text, exc)
-            return ""
-
-    try:
-        cleaned = _SURROGATE_RE.sub("", text)
-        cleaned = _BOM_RE.sub("", cleaned)
-        return cleaned
-    except Exception as exc:  # pragma: no cover - best effort
-        logger.error("sanitize_unicode_input failed: %s", exc)
-        return "".join(ch for ch in str(text) if ch.isascii())
+    return _unicode_validator.validate_and_sanitize(text)
 
 
 def process_large_csv_content(
@@ -467,13 +434,7 @@ def safe_format_number(value: Union[int, float]) -> Optional[str]:
 def contains_surrogates(text: str) -> bool:
     """Return ``True`` if ``text`` contains any unpaired surrogate code points."""
 
-    if not isinstance(text, str):
-        try:
-            text = str(text)
-        except Exception:  # pragma: no cover - defensive
-            return False
-
-    return bool(_UNPAIRED_SURROGATE_RE.search(text))
+    return _unicode_validator._contains_surrogates(str(text))
 
 
 def has_malicious_patterns(text: str) -> bool:
@@ -491,7 +452,7 @@ def has_malicious_patterns(text: str) -> bool:
 def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """Sanitize a :class:`~pandas.DataFrame` for unsafe Unicode."""
 
-    return UnicodeProcessor.sanitize_dataframe(df)
+    return _unicode_validator.validate_dataframe(df)
 
 
 def secure_unicode_sanitization(value: Any, *, check_malicious: bool = True) -> str:
@@ -506,29 +467,19 @@ def secure_unicode_sanitization(value: Any, *, check_malicious: bool = True) -> 
         patterns are detected.
     """
 
-    try:
-        text = str(value)
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.error("Failed to convert %r to str: %s", value, exc)
-        return "INVALID_UNICODE_CONTENT"
+    validator = _unicode_validator
+    if not check_malicious:
+        validator = UnicodeSecurityValidator(
+            UnicodeSecurityConfig(strict_mode=False, remove_surrogates=True)
+        )
 
     try:
-        if contains_surrogates(text):
-            text = text.encode("utf-8", errors="replace").decode(
-                "utf-8", errors="replace"
-            )
-
-        text = unicodedata.normalize("NFKC", text)
-
-        if check_malicious and has_malicious_patterns(text):
-            raise SecurityError("Malicious patterns detected")
-
-        return text
+        return validator.validate_and_sanitize(value)
     except SecurityError:
         raise
     except Exception as exc:  # pragma: no cover - best effort
         logger.warning("secure_unicode_sanitization failed: %s", exc)
-        return "INVALID_UNICODE_CONTENT"
+        return validator.validate_and_sanitize(str(value))
 
 
 def safe_navbar_text(text: Any) -> str:
