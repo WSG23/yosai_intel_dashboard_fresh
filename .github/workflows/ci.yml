@@ -43,7 +43,8 @@ jobs:
       - name: Pip Audit
         run: |
           set -xe
-          pip-audit --format=json --output=audit-report.json
+          pip-audit -r requirements.txt -r requirements-dev.txt \
+            --format=json --output=audit-report.json
 
       - name: PyTest
         run: |
