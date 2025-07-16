@@ -21,6 +21,7 @@ from core.security_validator import SecurityValidator
 from services.db_analytics_helper import DatabaseAnalyticsHelper
 from services.summary_reporter import SummaryReporter, format_patterns_result
 from services.data_loader import DataLoader
+from config.database_exceptions import DatabaseError
 from services.analytics_processor import AnalyticsProcessor
 from services.analytics.protocols import DataProcessorProtocol
 from core.protocols import (
@@ -61,8 +62,8 @@ def ensure_analytics_config():
             from config.constants import AnalyticsConstants
 
             dynamic_config.analytics = AnalyticsConstants()
-    except Exception:
-        pass
+    except (ImportError, AttributeError) as exc:
+        logger.error("Failed to ensure analytics configuration: %s", exc)
 
 
 ensure_analytics_config()
@@ -150,7 +151,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
             logger.info("Database manager initialized")
             self.db_helper = DatabaseAnalyticsHelper(self.database_manager)
             self.summary_reporter = SummaryReporter(self.database_manager)
-        except Exception as e:
+        except (ImportError, DatabaseError) as e:
             logger.warning(f"Database initialization failed: {e}")
             self.database_manager = None
             self.db_helper = DatabaseAnalyticsHelper(None)
@@ -174,7 +175,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
                 logger.info(f"Forcing uploaded data usage (source was: {source})")
                 return self._process_uploaded_data_directly(uploaded_data)
 
-        except Exception as e:
+        except ImportError as e:
             logger.error(f"Uploaded data check failed: {e}")
 
         # Original logic for when no uploaded data
@@ -236,10 +237,10 @@ class AnalyticsService(AnalyticsServiceProtocol):
             if self.event_bus:
                 try:
                     self.event_bus.publish("analytics_update", summary)
-                except Exception as exc:  # pragma: no cover - best effort
+                except RuntimeError as exc:  # pragma: no cover - best effort
                     logger.debug("Event bus publish failed: %s", exc)
             return summary
-        except Exception as e:
+        except RuntimeError as e:
             logger.error(f"Dashboard summary failed: {e}")
             return {"status": "error", "message": str(e)}
 
@@ -317,12 +318,12 @@ class AnalyticsService(AnalyticsServiceProtocol):
             if self.event_bus:
                 try:
                     self.event_bus.publish("analytics_update", result)
-                except Exception as exc:  # pragma: no cover - best effort
+                except RuntimeError as exc:  # pragma: no cover - best effort
                     logger.debug("Event bus publish failed: %s", exc)
 
             return result
 
-        except Exception as e:
+        except RuntimeError as e:
             logger.error(f"❌ Unique patterns analysis failed: {e}")
             import traceback
 

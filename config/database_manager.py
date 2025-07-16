@@ -73,9 +73,9 @@ class SQLiteConnection:
             )
             self._connection.row_factory = sqlite3.Row  # Enable dict-like access
             logger.info(f"SQLite connection created: {self.db_path}")
-        except Exception as e:
+        except sqlite3.Error as e:
             logger.error(f"Failed to connect to SQLite: {e}")
-            raise DatabaseError(f"SQLite connection failed: {e}")
+            raise DatabaseError(f"SQLite connection failed: {e}") from e
 
     def execute_query(self, query: str, params: Optional[tuple] = None) -> list:
         """Execute SQLite query"""
@@ -91,9 +91,9 @@ class SQLiteConnection:
 
             rows = cursor.fetchall()
             return [dict(row) for row in rows]
-        except Exception as e:
+        except sqlite3.Error as e:
             logger.error(f"SQLite query error: {e}")
-            raise DatabaseError(f"Query failed: {e}")
+            raise DatabaseError(f"Query failed: {e}") from e
 
     def execute_command(self, command: str, params: Optional[tuple] = None) -> None:
         """Execute SQLite command"""
@@ -108,9 +108,9 @@ class SQLiteConnection:
                 cursor.execute(command)
 
             self._connection.commit()
-        except Exception as e:
+        except sqlite3.Error as e:
             logger.error(f"SQLite command error: {e}")
-            raise DatabaseError(f"Command failed: {e}")
+            raise DatabaseError(f"Command failed: {e}") from e
 
     def health_check(self) -> bool:
         """Check SQLite connection health"""
@@ -121,7 +121,7 @@ class SQLiteConnection:
             cursor = self._connection.cursor()
             cursor.execute("SELECT 1")
             return True
-        except Exception:
+        except sqlite3.Error:
             return False
 
     def close(self) -> None:
@@ -145,7 +145,12 @@ class PostgreSQLConnection:
         try:
             import psycopg2
             from psycopg2.extras import RealDictCursor
+        except ImportError as exc:
+            raise DatabaseError(
+                "psycopg2 not installed - cannot connect to PostgreSQL"
+            ) from exc
 
+        try:
             self._connection = psycopg2.connect(
                 host=self.config.host,
                 port=self.config.port,
@@ -158,11 +163,9 @@ class PostgreSQLConnection:
             logger.info(
                 f"PostgreSQL connection created: {self.config.host}:{self.config.port}"
             )
-        except ImportError:
-            raise DatabaseError("psycopg2 not installed - cannot connect to PostgreSQL")
-        except Exception as e:
+        except psycopg2.Error as e:
             logger.error(f"Failed to connect to PostgreSQL: {e}")
-            raise DatabaseError(f"PostgreSQL connection failed: {e}")
+            raise DatabaseError(f"PostgreSQL connection failed: {e}") from e
 
     def execute_query(self, query: str, params: Optional[tuple] = None) -> list:
         """Execute PostgreSQL query"""
@@ -178,9 +181,9 @@ class PostgreSQLConnection:
 
                 rows = cursor.fetchall()
                 return [dict(row) for row in rows]
-        except Exception as e:
+        except psycopg2.Error as e:
             logger.error(f"PostgreSQL query error: {e}")
-            raise DatabaseError(f"Query failed: {e}")
+            raise DatabaseError(f"Query failed: {e}") from e
 
     def execute_command(self, command: str, params: Optional[tuple] = None) -> None:
         """Execute PostgreSQL command"""
@@ -195,10 +198,10 @@ class PostgreSQLConnection:
                     cursor.execute(command)
 
             self._connection.commit()
-        except Exception as e:
+        except psycopg2.Error as e:
             logger.error(f"PostgreSQL command error: {e}")
             self._connection.rollback()
-            raise DatabaseError(f"Command failed: {e}")
+            raise DatabaseError(f"Command failed: {e}") from e
 
     def health_check(self) -> bool:
         """Check PostgreSQL connection health"""
@@ -209,7 +212,7 @@ class PostgreSQLConnection:
             with self._connection.cursor() as cursor:
                 cursor.execute("SELECT 1")
                 return True
-        except Exception:
+        except psycopg2.Error:
             return False
 
     def close(self) -> None:
@@ -255,7 +258,7 @@ class DatabaseManager:
         try:
             connection = self.get_connection()
             return connection.health_check()
-        except Exception:
+        except DatabaseError:
             return False
 
     def close(self) -> None:
