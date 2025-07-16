@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -9,11 +10,21 @@ import pandas as pd
 import yaml
 
 from .types import ThreatIndicator
+from utils.sklearn_compat import optional_import
+
+LogisticRegression = optional_import("sklearn.linear_model.LogisticRegression")
+
+if LogisticRegression is None:  # pragma: no cover - fallback
+
+    class LogisticRegression:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            raise ImportError("scikit-learn is required for LogisticRegression")
 
 __all__ = [
     "detect_pattern_threats",
     "detect_rapid_attempts",
     "detect_after_hours_anomalies",
+    "detect_critical_door_risks",
     "_attack_info",
 ]
 
@@ -116,6 +127,73 @@ def detect_after_hours_anomalies(
                 )
     except Exception as exc:  # pragma: no cover - log and continue
         logger.warning("After-hours anomaly detection failed: %s", exc)
+    return threats
+
+
+def detect_critical_door_risks(
+    df: pd.DataFrame, logger: Optional[logging.Logger] = None
+) -> List[ThreatIndicator]:
+    """Detect high risk attempts on critical doors."""
+    logger = logger or logging.getLogger(__name__)
+    threats: List[ThreatIndicator] = []
+    try:
+        if "door_type" not in df.columns:
+            return threats
+
+        critical = df[df["door_type"].astype(str).str.lower() == "critical"]
+        if len(critical) == 0:
+            return threats
+
+        # Derive simple features for ML model
+        features = pd.DataFrame()
+        features["after_hours"] = critical.get("is_after_hours", False).astype(int)
+        if "required_clearance" in critical.columns and "clearance_level" in critical.columns:
+            gap = critical["required_clearance"] - critical["clearance_level"]
+            features["clearance_gap"] = gap.clip(lower=0)
+        else:
+            features["clearance_gap"] = 0
+
+        labels = (critical["access_granted"] == 0).astype(int)
+
+        if labels.nunique() < 2:
+            # Fallback heuristic if only one class present
+            base_prob = 0.8 if features["after_hours"].iloc[0] else 0.6
+            probs = base_prob + 0.1 * features["clearance_gap"].fillna(0)
+        else:
+            model = LogisticRegression(max_iter=100)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                model.fit(features, labels)
+
+            probs = model.predict_proba(features)[:, 1]
+        for idx, prob in enumerate(probs):
+            if prob < 0.7:
+                continue
+            row = critical.iloc[idx]
+            severity = "critical" if prob > 0.9 else "high"
+            threats.append(
+                ThreatIndicator(
+                    threat_type="critical_door_anomaly",
+                    severity=severity,
+                    confidence=float(prob),
+                    description=(
+                        f"High risk attempt on critical door {row['door_id']} by user"
+                        f" {row['person_id']} (risk {prob:.2f})"
+                    ),
+                    evidence={
+                        "user_id": str(row["person_id"]),
+                        "door_id": str(row["door_id"]),
+                        "risk_score": float(prob),
+                        "after_hours": bool(row.get("is_after_hours", False)),
+                        "clearance_gap": float(features.loc[row.name, "clearance_gap"]),
+                    },
+                    timestamp=row["timestamp"],
+                    affected_entities=[str(row["person_id"]), str(row["door_id"])],
+                    attack=_attack_info("critical_door_activity"),
+                )
+            )
+    except Exception as exc:  # pragma: no cover - log and continue
+        logger.warning("Critical door risk detection failed: %s", exc)
     return threats
 
 
