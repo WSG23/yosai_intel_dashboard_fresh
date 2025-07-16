@@ -66,5 +66,3 @@ __all__ = [
     "sanitize_for_utf8",
     "UnicodeNormalizationError",
 ]
-
-

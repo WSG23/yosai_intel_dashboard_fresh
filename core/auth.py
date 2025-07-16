@@ -129,7 +129,11 @@ def _decode_jwt(token: str, domain: str, audience: str, client_id: str) -> dict:
 def _determine_session_timeout(roles: List[str]) -> int:
     """Return configured session timeout in seconds for given roles."""
     cfg = get_security_config()
-    overrides = [cfg.session_timeout_by_role[r] for r in roles if r in cfg.session_timeout_by_role]
+    overrides = [
+        cfg.session_timeout_by_role[r]
+        for r in roles
+        if r in cfg.session_timeout_by_role
+    ]
     if overrides:
         return max(overrides)
     return cfg.session_timeout

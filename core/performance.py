@@ -227,7 +227,9 @@ class PerformanceMonitor:
         return summary
 
     def get_slow_operations(
-        self, threshold: float = PerformanceThresholds.SLOW_QUERY_SECONDS, hours: int = 24
+        self,
+        threshold: float = PerformanceThresholds.SLOW_QUERY_SECONDS,
+        hours: int = 24,
     ) -> List[Dict[str, Any]]:
         """Get operations that exceeded threshold"""
         cutoff = datetime.now() - timedelta(hours=hours)
@@ -552,7 +554,9 @@ class DatabaseQueryMonitor:
 
             # Keep only recent slow queries
             if len(self.slow_queries) > PerformanceThresholds.MAX_SLOW_QUERIES:
-                self.slow_queries = self.slow_queries[-PerformanceThresholds.MAX_SLOW_QUERIES:]
+                self.slow_queries = self.slow_queries[
+                    -PerformanceThresholds.MAX_SLOW_QUERIES :
+                ]
 
     def _normalize_query(self, query: str) -> str:
         """Normalize query for pattern tracking"""

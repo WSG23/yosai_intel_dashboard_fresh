@@ -41,4 +41,3 @@ __all__ = ["profile_callback"]
 
 # Alias for backward compatibility
 profile_callback = handle_profile
-

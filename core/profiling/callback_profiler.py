@@ -36,7 +36,4 @@ class CallbackProfiler:
         for rec in self.records:
             totals.setdefault(rec["name"], []).append(rec["duration"])
 
-        return {
-            name: sum(values) / len(values) for name, values in totals.items()
-        }
-
+        return {name: sum(values) / len(values) for name, values in totals.items()}

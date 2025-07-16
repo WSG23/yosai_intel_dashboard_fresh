@@ -1,4 +1,5 @@
 """Plugin performance tracking utilities."""
+
 from __future__ import annotations
 
 import threading
@@ -19,7 +20,9 @@ class PluginPerformanceManager:
         self._metrics_lock = threading.RLock()
 
     # ------------------------------------------------------------------
-    def record_plugin_metric(self, plugin_name: str, metric_type: str, value: float) -> None:
+    def record_plugin_metric(
+        self, plugin_name: str, metric_type: str, value: float
+    ) -> None:
         """Record a metric for ``plugin_name``."""
         with self._metrics_lock:
             self.metrics[plugin_name].append({metric_type: value})
@@ -34,7 +37,7 @@ class PluginPerformanceManager:
             for key, val in item.items():
                 stats.setdefault(key, []).append(val)
         summary = {m: sum(vals) / len(vals) for m, vals in stats.items() if vals}
-        summary['samples'] = len(data)
+        summary["samples"] = len(data)
         return summary
 
     # ------------------------------------------------------------------
@@ -48,22 +51,22 @@ class PluginPerformanceManager:
                         threshold = self.performance_thresholds.get(metric)
                         if threshold and value > threshold:
                             alert = {
-                                'plugin': plugin,
-                                'metric': metric,
-                                'value': value,
-                                'threshold': threshold,
+                                "plugin": plugin,
+                                "metric": metric,
+                                "value": value,
+                                "threshold": threshold,
                             }
                             self.alert_history.append(alert)
                             alerts.append(alert)
         return alerts
 
     # ------------------------------------------------------------------
-    def generate_performance_report(self, time_range: str = '1h') -> Dict[str, Any]:
+    def generate_performance_report(self, time_range: str = "1h") -> Dict[str, Any]:
         """Return a simple performance report."""
         report = {
-            'generated_at': time.time(),
-            'summary': {p: self.analyze_plugin_performance(p) for p in self.metrics},
-            'alerts': self.detect_performance_issues(),
+            "generated_at": time.time(),
+            "summary": {p: self.analyze_plugin_performance(p) for p in self.metrics},
+            "alerts": self.detect_performance_issues(),
         }
         return report
 
@@ -95,14 +98,20 @@ class EnhancedThreadSafePluginManager(ThreadSafePluginManager):
                 memory_after = self._get_memory_usage()
                 memory_delta = memory_after - memory_before
 
-                self.performance_manager.record_plugin_metric(plugin_name, 'load_time', load_time)
-                self.performance_manager.record_plugin_metric(plugin_name, 'memory_usage', memory_delta)
+                self.performance_manager.record_plugin_metric(
+                    plugin_name, "load_time", load_time
+                )
+                self.performance_manager.record_plugin_metric(
+                    plugin_name, "memory_usage", memory_delta
+                )
 
                 self._check_performance_thresholds(plugin_name, load_time, memory_delta)
                 return result
             except Exception:
                 error_time = time.time() - start_time
-                self.performance_manager.record_plugin_metric(plugin_name, 'error_time', error_time)
+                self.performance_manager.record_plugin_metric(
+                    plugin_name, "error_time", error_time
+                )
                 raise
 
     # ------------------------------------------------------------------
@@ -110,7 +119,9 @@ class EnhancedThreadSafePluginManager(ThreadSafePluginManager):
         start = time.time()
         result = super().plugins[plugin_name].start()
         duration = time.time() - start
-        self.performance_manager.record_plugin_metric(plugin_name, 'start_time', duration)
+        self.performance_manager.record_plugin_metric(
+            plugin_name, "start_time", duration
+        )
         self._check_performance_thresholds(plugin_name, duration, 0)
         return result
 
@@ -119,30 +130,44 @@ class EnhancedThreadSafePluginManager(ThreadSafePluginManager):
         start = time.time()
         result = super().plugins[plugin_name].health_check()
         duration = time.time() - start
-        self.performance_manager.record_plugin_metric(plugin_name, 'health_time', duration)
+        self.performance_manager.record_plugin_metric(
+            plugin_name, "health_time", duration
+        )
         self._check_performance_thresholds(plugin_name, duration, 0)
         return result
 
     # ------------------------------------------------------------------
-    def get_plugin_performance_metrics(self, plugin_name: str | None = None) -> Dict[str, Any]:
+    def get_plugin_performance_metrics(
+        self, plugin_name: str | None = None
+    ) -> Dict[str, Any]:
         if plugin_name:
             return self.performance_manager.analyze_plugin_performance(plugin_name)
-        return {p: self.performance_manager.analyze_plugin_performance(p) for p in self.performance_manager.metrics}
+        return {
+            p: self.performance_manager.analyze_plugin_performance(p)
+            for p in self.performance_manager.metrics
+        }
 
     # ------------------------------------------------------------------
-    def _check_performance_thresholds(self, plugin_name: str, load_time: float, memory_delta: float) -> None:
+    def _check_performance_thresholds(
+        self, plugin_name: str, load_time: float, memory_delta: float
+    ) -> None:
         alerts = []
-        lt = self.performance_manager.performance_thresholds.get('load_time')
-        mem = self.performance_manager.performance_thresholds.get('memory_usage')
+        lt = self.performance_manager.performance_thresholds.get("load_time")
+        mem = self.performance_manager.performance_thresholds.get("memory_usage")
         if lt and load_time > lt:
-            alerts.append({'plugin': plugin_name, 'metric': 'load_time', 'value': load_time})
+            alerts.append(
+                {"plugin": plugin_name, "metric": "load_time", "value": load_time}
+            )
         if mem and memory_delta > mem:
-            alerts.append({'plugin': plugin_name, 'metric': 'memory_usage', 'value': memory_delta})
+            alerts.append(
+                {"plugin": plugin_name, "metric": "memory_usage", "value": memory_delta}
+            )
         self.performance_manager.alert_history.extend(alerts)
 
     # ------------------------------------------------------------------
     def _get_memory_usage(self) -> float:
         import psutil
+
         proc = psutil.Process()
         return proc.memory_info().rss / (1024 * 1024)
 
@@ -185,4 +210,3 @@ class EnhancedThreadSafePluginManager(ThreadSafePluginManager):
 
         self._perf_thread = threading.Thread(target=monitor_loop, daemon=True)
         self._perf_thread.start()
-

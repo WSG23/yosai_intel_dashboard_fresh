@@ -453,4 +453,3 @@ def get_unicode_processor(
     from core.unicode import UnicodeProcessor
 
     return UnicodeProcessor()
-

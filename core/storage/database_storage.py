@@ -1,4 +1,5 @@
 """In-memory database style storage service."""
+
 from __future__ import annotations
 
 from typing import Any, Dict
@@ -22,7 +23,9 @@ class DatabaseStorageService(DatabaseStorageProtocol):
     def retrieve_record(self, table: str, record_id: str) -> Dict[str, Any]:
         return self._tables.get(table, {}).get(record_id, {})
 
-    def update_record(self, table: str, record_id: str, updates: Dict[str, Any]) -> bool:
+    def update_record(
+        self, table: str, record_id: str, updates: Dict[str, Any]
+    ) -> bool:
         table_dict = self._tables.get(table, {})
         if record_id in table_dict:
             table_dict[record_id].update(updates)

@@ -1,4 +1,5 @@
 """Storage domain protocols."""
+
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
 
@@ -38,6 +39,8 @@ class DatabaseStorageProtocol(Protocol):
         ...
 
     @abstractmethod
-    def update_record(self, table: str, record_id: str, updates: Dict[str, Any]) -> bool:
+    def update_record(
+        self, table: str, record_id: str, updates: Dict[str, Any]
+    ) -> bool:
         """Update record in table."""
         ...

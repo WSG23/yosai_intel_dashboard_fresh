@@ -24,7 +24,11 @@ def default_reducer(state: Dict[str, Any], action: Action) -> Dict[str, Any]:
 class CentralizedStateManager:
     """Simple Redux-style state storage with dispatch/subscribe APIs."""
 
-    def __init__(self, initial_state: Dict[str, Any] | None = None, reducer: Reducer | None = None) -> None:
+    def __init__(
+        self,
+        initial_state: Dict[str, Any] | None = None,
+        reducer: Reducer | None = None,
+    ) -> None:
         self._state: Dict[str, Any] = initial_state or {}
         self._reducer: Reducer = reducer or default_reducer
         self._subscribers: List[Subscriber] = []
@@ -62,4 +66,3 @@ class CentralizedStateManager:
     # ------------------------------------------------------------------
     def replace_reducer(self, reducer: Reducer) -> None:
         self._reducer = reducer
-

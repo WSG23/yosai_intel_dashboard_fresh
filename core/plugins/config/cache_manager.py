@@ -142,9 +142,7 @@ class RedisCacheManager(ICacheManager):
             try:
                 data = json.dumps(
                     value,
-                    default=lambda o: o.__dict__
-                    if hasattr(o, "__dict__")
-                    else o,
+                    default=lambda o: o.__dict__ if hasattr(o, "__dict__") else o,
                 ).encode("utf-8")
             except TypeError:
                 data = json.dumps(str(value)).encode("utf-8")
@@ -155,7 +153,6 @@ class RedisCacheManager(ICacheManager):
                 self._client().set(key, data)
         except Exception as e:
             logger.warning(f"Redis SET failed: {e}")
-
 
     def delete(self, key: str) -> bool:
         """Delete key from Redis cache"""
@@ -231,9 +228,7 @@ class AdvancedRedisCacheManager(RedisCacheManager):
             try:
                 data = json.dumps(
                     value,
-                    default=lambda o: o.__dict__
-                    if hasattr(o, "__dict__")
-                    else o,
+                    default=lambda o: o.__dict__ if hasattr(o, "__dict__") else o,
                 ).encode("utf-8")
             except TypeError:
                 data = json.dumps(str(value)).encode("utf-8")
