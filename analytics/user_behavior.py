@@ -1,8 +1,3 @@
-"""
-Enhanced User Behavior Analyzer
-Replace the entire content of analytics/user_behavior.py with this code
-"""
-
 import logging
 import warnings
 from dataclasses import dataclass
