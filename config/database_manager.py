@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from core.unicode import UnicodeSQLProcessor
 from database.types import DatabaseConnection
+from database.query_optimizer import DatabaseQueryOptimizer
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints
     from .connection_pool import DatabaseConnectionPool
@@ -336,6 +337,7 @@ class EnhancedPostgreSQLManager(DatabaseManager):
         self.retry_manager: ConnectionRetryManagerProtocol = ConnectionRetryManager(
             retry_config or RetryConfig()
         )
+        self.optimizer = DatabaseQueryOptimizer("postgresql")
         self.pool = EnhancedConnectionPool(
             self._create_connection,
             self.config.initial_pool_size,
@@ -346,6 +348,7 @@ class EnhancedPostgreSQLManager(DatabaseManager):
 
     def execute_query_with_retry(self, query: str, params: Optional[Dict] = None):
         encoded_query = UnicodeSQLProcessor.encode_query(query)
+        optimized_query = self.optimizer.optimize_query(encoded_query)
 
         def _encode_params(value: Any) -> Any:
             if isinstance(value, str):
@@ -361,7 +364,7 @@ class EnhancedPostgreSQLManager(DatabaseManager):
         def run():
             conn = self.pool.get_connection()
             try:
-                return conn.execute_query(encoded_query, encoded_params)
+                return conn.execute_query(optimized_query, encoded_params)
             finally:
                 self.pool.release_connection(conn)
 
