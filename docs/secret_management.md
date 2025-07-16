@@ -60,7 +60,9 @@ FERNET_KEY=<base64-fernet-key>
 ```
 
 `VAULT_ADDR` and `VAULT_TOKEN` authenticate the Vault client. `FERNET_KEY`
-is used to decrypt any encrypted values returned from Vault.
+is used to decrypt any encrypted values returned from Vault. The
+`SecureConfigManager` will raise a `ConfigurationError` if either credential is
+missing or if a secret cannot be retrieved.
 Update `production.yaml` to reference secrets like:
 
 ```yaml

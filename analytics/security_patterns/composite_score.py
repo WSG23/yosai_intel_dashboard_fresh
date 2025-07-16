@@ -10,6 +10,8 @@ from utils.sklearn_compat import optional_import
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from .column_validation import ensure_columns
+
 
 IsolationForest = optional_import("sklearn.ensemble.IsolationForest")
 
@@ -31,6 +33,18 @@ def detect_composite_score(
     try:
         if len(df) < 5:
             return threats
+        if not ensure_columns(
+            df,
+            [
+                "hour",
+                "is_after_hours",
+                "access_granted",
+                "person_id",
+                "door_id",
+            ],
+            logger,
+        ):
+            return threats
         features = df[["hour", "is_after_hours", "access_granted"]].astype(float)
         iso = IsolationForest(contamination=0.1, random_state=42)
         scores = -iso.fit_predict(features)
@@ -39,7 +53,7 @@ def detect_composite_score(
             row = df.iloc[idx]
             threats.append(
                 ThreatIndicator(
-                    threat_type="composite_anomaly_score",
+                    threat_type=AnomalyType.COMPOSITE_SCORE,
                     severity="low",
                     confidence=0.6,
                     description="Composite anomaly detected",
@@ -49,7 +63,7 @@ def detect_composite_score(
                     },
                     timestamp=datetime.now(),
                     affected_entities=[str(row["person_id"])],
-                    attack=_attack_info("composite_anomaly_score"),
+                    attack=_attack_info(AnomalyType.COMPOSITE_SCORE.value),
                 )
             )
     except Exception as exc:  # pragma: no cover - log and continue
