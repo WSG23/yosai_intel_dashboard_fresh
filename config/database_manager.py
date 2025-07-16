@@ -279,9 +279,16 @@ class ThreadSafeDatabaseManager(DatabaseManager):
         self._pool: Optional[Any] = None
 
     def _create_pool(self) -> DatabaseConnectionPool:
-        from .connection_pool import DatabaseConnectionPool
+        if getattr(self.config, "use_intelligent_pool", False):
+            from database.intelligent_connection_pool import IntelligentConnectionPool
 
-        return DatabaseConnectionPool(
+            pool_cls = IntelligentConnectionPool
+        else:
+            from .connection_pool import DatabaseConnectionPool
+
+            pool_cls = DatabaseConnectionPool
+
+        return pool_cls(
             self._create_connection,
             getattr(self.config, "initial_pool_size", 1),
             getattr(self.config, "max_pool_size", 1),
