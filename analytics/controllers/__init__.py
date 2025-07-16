@@ -1,6 +1,6 @@
 """Analytics controller utilities."""
 
-from .deep_analytics_logic import (
+from .analysis_helpers import (
     dispatch_analysis,
     get_data_sources,
     get_initial_message_safe,
