@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
+from services.data_processing.file_processor import FileProcessor
 
 # Optional Polars import with pandas fallback
 try:
@@ -105,7 +106,7 @@ class CSVProcessorService:
         if csv_text is None:
             csv_text = csv_data.decode("utf-8", errors="replace")
 
-        df = pd.read_csv(
+        df = FileProcessor.read_large_csv(
             pd.io.common.StringIO(csv_text),
             dtype=str,
             keep_default_na=False,

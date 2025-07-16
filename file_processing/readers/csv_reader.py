@@ -7,6 +7,7 @@ from .base import BaseReader
 from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
 from core.protocols import UnicodeProcessorProtocol
+from services.data_processing.file_processor import FileProcessor
 
 
 class CSVReader(BaseReader):
@@ -23,7 +24,7 @@ class CSVReader(BaseReader):
         if not str(file_path).lower().endswith(".csv"):
             raise CSVReader.CannotParse("extension mismatch")
         try:
-            df = pd.read_csv(file_path, **hint)
+            df = FileProcessor.read_large_csv(file_path, **hint)
         except Exception as exc:
             raise CSVReader.CannotParse(str(exc)) from exc
 

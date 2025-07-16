@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set
 from enum import Enum
 from dataclasses import dataclass
+from services.data_processing.file_processor import FileProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -683,7 +684,7 @@ def create_enhanced_csv_upload_with_toggles():
                 )
 
                 # Process CSV without compliance checks
-                df = pd.read_csv(file_path)
+                df = FileProcessor.read_large_csv(file_path)
                 processing_id = str(uuid4())
                 processed_data = process_csv_data(df)  # Your existing processing
                 store_csv_results(processing_id, processed_data)
@@ -718,7 +719,7 @@ def create_enhanced_csv_upload_with_toggles():
 
             # Normal compliance processing
             else:
-                df = pd.read_csv(file_path)
+                df = FileProcessor.read_large_csv(file_path)
                 processing_id = str(uuid4())
                 processed_data = process_csv_data(df)
                 store_csv_results(processing_id, processed_data)
