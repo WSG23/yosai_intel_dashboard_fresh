@@ -18,3 +18,7 @@ def setup_dev_mode():
         missing = [key for key in required if not os.getenv(key)]
         if missing:
             logger.warning(f"Missing environment variables: {missing}")
+            logger.warning(
+                "Run `cp .env.example .env` and `python scripts/generate_dev_secrets.py >> .env` "
+                "to create default secrets."
+            )
