@@ -25,6 +25,7 @@ class UploadArea:
             [
                 dcc.Upload(
                     id=self.upload_id,
+                    tabIndex=0,
                     children=self._render_upload_area(),
                     multiple=True,
                     **{"aria-label": "Upload files", "role": "button"},

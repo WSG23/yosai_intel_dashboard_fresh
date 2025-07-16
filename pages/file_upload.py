@@ -44,75 +44,118 @@ class UploadPage(UIComponent):
         upload_area = dcc.Upload(
             id="drag-drop-upload",
             className="drag-drop-upload upload-area",
-            children=html.Div([
-                html.I(
-                    className="fas fa-cloud-upload-alt fa-3x mb-3",
-                    **{"aria-hidden": "true"},
-                ),
-                html.H5("Drag & Drop Files Here"),
-                html.P("or click to select files", className="text-muted"),
-                html.P("Supports CSV, Excel, and JSON files", className="small text-muted"),
-            ]),
+            tabIndex=0,
+            children=html.Div(
+                [
+                    html.I(
+                        className="fas fa-cloud-upload-alt fa-3x mb-3",
+                        **{"aria-hidden": "true"},
+                    ),
+                    html.H5("Drag & Drop Files Here"),
+                    html.P("or click to select files", className="text-muted"),
+                    html.P(
+                        "Supports CSV, Excel, and JSON files",
+                        className="small text-muted",
+                    ),
+                ]
+            ),
             multiple=True,
         )
 
-        return dbc.Container([
-            # Header - Pre-rendered stable
-            dbc.Row([
-                dbc.Col([
-                    html.H2("📁 File Upload", className="mb-3"),
-                    html.P(
-                        "Drag and drop files or click to browse. Supports CSV, Excel, and JSON files.",
-                        className="text-muted mb-4",
-                    ),
-                ])
-            ]),
-            
-            # Upload area - Pre-rendered
-            dbc.Row([
-                dbc.Col(upload_area, lg=8, md=10, sm=12, className="mx-auto")
-            ]),
-            
-            # Progress area - Pre-rendered but hidden
-            dbc.Row([
-                dbc.Col([
-                    dbc.Progress(
-                        id="upload-progress",
-                        value=0,
-                        striped=True,
-                        animated=False,
-                        style={"display": "none"},
-                    ),
-                    html.Div(id="upload-status", style={"marginTop": "10px"}),
-                ], lg=8, md=10, sm=12, className="mx-auto")
-            ]),
-            
-            # Preview area - Pre-rendered empty
-            dbc.Row([
-                dbc.Col([
-                    html.Div(
-                        id="preview-area",
-                        style={"opacity": "1", "visibility": "visible", "minHeight": "50px"}
-                    )
-                ], lg=10, md=12, sm=12, className="mx-auto")
-            ]),
-            
-            # Navigation area - Pre-rendered empty  
-            dbc.Row([
-                dbc.Col([
-                    html.Div(
-                        id="upload-navigation",
-                        style={"opacity": "1", "visibility": "visible", "minHeight": "30px"}
-                    )
-                ], lg=8, md=10, sm=12, className="mx-auto")
-            ], className="mt-4"),
-            
-            # Data stores - Pre-initialized
-            dcc.Store(id="uploaded-files-store", data={}),
-            dcc.Store(id="upload-session-store", data={}),
-            
-        ], fluid=True, className="py-4", style={"opacity": "1", "visibility": "visible"})
-
+        return dbc.Container(
+            [
+                # Header - Pre-rendered stable
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.H2("📁 File Upload", className="mb-3"),
+                                html.P(
+                                    "Drag and drop files or click to browse. Supports CSV, Excel, and JSON files.",
+                                    className="text-muted mb-4",
+                                ),
+                            ]
+                        )
+                    ]
+                ),
+                # Upload area - Pre-rendered
+                dbc.Row(
+                    [dbc.Col(upload_area, lg=8, md=10, sm=12, className="mx-auto")]
+                ),
+                # Progress area - Pre-rendered but hidden
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                dbc.Progress(
+                                    id="upload-progress",
+                                    value=0,
+                                    striped=True,
+                                    animated=False,
+                                    style={"display": "none"},
+                                ),
+                                html.Div(
+                                    id="upload-status", style={"marginTop": "10px"}
+                                ),
+                            ],
+                            lg=8,
+                            md=10,
+                            sm=12,
+                            className="mx-auto",
+                        )
+                    ]
+                ),
+                # Preview area - Pre-rendered empty
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.Div(
+                                    id="preview-area",
+                                    style={
+                                        "opacity": "1",
+                                        "visibility": "visible",
+                                        "minHeight": "50px",
+                                    },
+                                )
+                            ],
+                            lg=10,
+                            md=12,
+                            sm=12,
+                            className="mx-auto",
+                        )
+                    ]
+                ),
+                # Navigation area - Pre-rendered empty
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.Div(
+                                    id="upload-navigation",
+                                    style={
+                                        "opacity": "1",
+                                        "visibility": "visible",
+                                        "minHeight": "30px",
+                                    },
+                                )
+                            ],
+                            lg=8,
+                            md=10,
+                            sm=12,
+                            className="mx-auto",
+                        )
+                    ],
+                    className="mt-4",
+                ),
+                # Data stores - Pre-initialized
+                dcc.Store(id="uploaded-files-store", data={}),
+                dcc.Store(id="upload-session-store", data={}),
+            ],
+            fluid=True,
+            className="py-4",
+            style={"opacity": "1", "visibility": "visible"},
+        )
 
     def register_callbacks(self, manager, controller=None):
         """Register upload callbacks with timing fixes."""
