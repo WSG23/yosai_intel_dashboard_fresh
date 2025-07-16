@@ -1,53 +1,45 @@
-from typing import Optional#!/usr/bin/env python3
-"""
-Column Header Verification Component
-Allows manual verification of AI-suggested column mappings
-Feeds back to AI training data
-"""
+#!/usr/bin/env python3
+"""Column Header Verification Component."""
 
-from typing import TYPE_CHECKING, Protocol, Any, Dict
-
-import pandas as pd
-from dash import ALL, MATCH, Input, Output, State, callback, dcc, html
-
-if TYPE_CHECKING:
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-
-import logging
-
-try:
-    from analytics.controllers import UnifiedAnalyticsController
-except ImportError:
-    UnifiedAnalyticsController = None
-
-class ColumnVerifierProtocol(Protocol):
-    """Protocol for column verification helpers."""
-
-    def create_column_verification_modal(self, file_info: Dict[str, Any]) -> Any:
-        ...
-
-    def register_callbacks(
-        self, manager: "TrulyUnifiedCallbacks", controller: Optional[UnifiedAnalyticsController] = None
-    ) -> None:
-        ...
-
-logger = logging.getLogger(__name__)
 import json
+import logging
 import re
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol
 
 import dash
 import dash_bootstrap_components as dbc
+import pandas as pd
+from dash import ALL, MATCH, Input, Output, State, dcc, html
 
 from components.plugin_adapter import ComponentPluginAdapter
 from services.data_enhancer import (
     get_ai_column_suggestions as simple_column_suggestions,
 )
 
-adapter = ComponentPluginAdapter()
+try:
+    from analytics.controllers import UnifiedAnalyticsController
+except ImportError:  # pragma: no cover - optional dependency
+    UnifiedAnalyticsController = None
+
+if TYPE_CHECKING:  # pragma: no cover - for type hints only
+    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+
+
+class ColumnVerifierProtocol(Protocol):
+    """Protocol for column verification helpers."""
+
+    def create_column_verification_modal(self, file_info: Dict[str, Any]) -> Any: ...
+
+    def register_callbacks(
+        self,
+        manager: "TrulyUnifiedCallbacks",
+        controller: Optional[UnifiedAnalyticsController] = None,
+    ) -> None: ...
+
 
 logger = logging.getLogger(__name__)
+adapter = ComponentPluginAdapter()
 
 # Standard field options for dropdown
 STANDARD_FIELD_OPTIONS = [
@@ -83,53 +75,90 @@ def create_column_verification_modal(file_info: Dict[str, Any]) -> dbc.Modal:
         suggested_field = ai_suggestion.get("field", "")
         confidence = ai_suggestion.get("confidence", 0.0)
         default_value = suggested_field if suggested_field else None
-        
+
         # Color coding for confidence
-        confidence_class = "text-danger" if confidence < 0.5 else "text-success" if confidence > 0.7 else "text-warning"
+        confidence_class = (
+            "text-danger"
+            if confidence < 0.5
+            else "text-success" if confidence > 0.7 else "text-warning"
+        )
         dropdown_style = {"border": "2px solid red"} if confidence < 0.5 else {}
 
         table_rows.append(
-            html.Tr([
-                html.Td([
-                    html.Strong(column),
-                    html.Br(),
-                    html.Small(f"AI Confidence: {confidence:.0%}", className=confidence_class),
-                ]),
-                html.Td([
-                    dcc.Dropdown(
-                        id={"type": "column-mapping", "index": i},
-                        options=STANDARD_FIELD_OPTIONS,
-                        placeholder=f"Map {column} to...",
-                        value=default_value,
-                        style=dropdown_style
-                    )
-                ])
-            ])
+            html.Tr(
+                [
+                    html.Td(
+                        [
+                            html.Strong(column),
+                            html.Br(),
+                            html.Small(
+                                f"AI Confidence: {confidence:.0%}",
+                                className=confidence_class,
+                            ),
+                        ]
+                    ),
+                    html.Td(
+                        [
+                            dcc.Dropdown(
+                                id={"type": "column-mapping", "index": i},
+                                options=STANDARD_FIELD_OPTIONS,
+                                placeholder=f"Map {column} to...",
+                                value=default_value,
+                                style=dropdown_style,
+                            )
+                        ]
+                    ),
+                ]
+            )
         )
 
-    modal_body = html.Div([
-        html.H5(f"Column Mapping: {filename}"),
-        html.P(f"Found {len(columns)} columns"),
-        html.H6("AI Column Mapping:", className="mb-2"),
-        dbc.Table([
-            html.Thead([
-                html.Tr([
-                    html.Th("Column Name & AI Confidence"),
-                    html.Th("Map to Standard Field")
-                ])
-            ]),
-            html.Tbody(table_rows)
-        ], striped=True, hover=True, responsive=True, className="mb-3")
-    ])
+    modal_body = html.Div(
+        [
+            html.H5(f"Column Mapping: {filename}"),
+            html.P(f"Found {len(columns)} columns"),
+            html.H6("AI Column Mapping:", className="mb-2"),
+            dbc.Table(
+                [
+                    html.Thead(
+                        [
+                            html.Tr(
+                                [
+                                    html.Th("Column Name & AI Confidence"),
+                                    html.Th("Map to Standard Field"),
+                                ]
+                            )
+                        ]
+                    ),
+                    html.Tbody(table_rows),
+                ],
+                striped=True,
+                hover=True,
+                responsive=True,
+                className="mb-3",
+            ),
+        ]
+    )
 
-    return dbc.Modal([
-        dbc.ModalHeader(dbc.ModalTitle(f"AI Column Mapping - {filename}")),
-        dbc.ModalBody(modal_body),
-        dbc.ModalFooter([
-            dbc.Button("Cancel", id="column-verify-cancel", color="secondary", className="me-2"),
-            dbc.Button("Confirm", id="column-verify-confirm", color="success")
-        ])
-    ], id="column-verification-modal", size="xl", is_open=False)
+    return dbc.Modal(
+        [
+            dbc.ModalHeader(dbc.ModalTitle(f"AI Column Mapping - {filename}")),
+            dbc.ModalBody(modal_body),
+            dbc.ModalFooter(
+                [
+                    dbc.Button(
+                        "Cancel",
+                        id="column-verify-cancel",
+                        color="secondary",
+                        className="me-2",
+                    ),
+                    dbc.Button("Confirm", id="column-verify-confirm", color="success"),
+                ]
+            ),
+        ],
+        id="column-verification-modal",
+        size="xl",
+        is_open=False,
+    )
 
 
 def create_verification_interface(
@@ -266,7 +295,9 @@ def create_column_mapping_card(
                                                     "type": "custom-field",
                                                     "index": column_index,
                                                 },
-                                                placeholder="Enter custom field name...",
+                                                placeholder=(
+                                                    "Enter custom field name..."
+                                                ),
                                                 style={"display": "none"},
                                             ),
                                         ],
@@ -373,7 +404,9 @@ def _analyze_file_specific_columns(
         if name_confidence["field"]:
             suggestion = name_confidence
             logger.info(
-                f"      📝 Name pattern: {suggestion['field']} ({suggestion['confidence']:.0%})"
+                "      📝 Name pattern: %s (%.0f%%)",
+                suggestion["field"],
+                suggestion["confidence"] * 100,
             )
 
         # Analyze sample data patterns
@@ -381,7 +414,9 @@ def _analyze_file_specific_columns(
         if data_confidence["confidence"] > suggestion["confidence"]:
             suggestion = data_confidence
             logger.info(
-                f"      📈 Data pattern: {suggestion['field']} ({suggestion['confidence']:.0%})"
+                "      📈 Data pattern: %s (%.0f%%)",
+                suggestion["field"],
+                suggestion["confidence"] * 100,
             )
 
         # Store the best suggestion
@@ -551,6 +586,58 @@ def toggle_custom_field(selected_value):
         return {"display": "none"}
 
 
+def save_column_mappings_callback(
+    n_clicks: int | None,
+    column_values: List[str | None],
+    ids: List[Dict[str, Any]],
+    custom_values: List[str | None],
+    uploaded_files_data: Dict[str, Any] | None,
+) -> tuple[str, str]:
+    """Persist verified column mappings when the save button is clicked."""
+
+    if not n_clicks:
+        return dash.no_update, dash.no_update
+
+    if not uploaded_files_data:
+        logger.warning("No uploaded file data found for saving mappings")
+        return "❌ Error", "danger"
+
+    # Determine file info from store
+    file_info = {}
+    filename = "unknown.csv"
+    if "current_file_info" in uploaded_files_data:
+        file_info = uploaded_files_data.get("current_file_info", {})
+        filename = file_info.get("filename", filename)
+    elif uploaded_files_data:
+        first_key = next(iter(uploaded_files_data.keys()))
+        file_info = uploaded_files_data.get(first_key, {})
+        filename = file_info.get("filename", first_key)
+
+    columns = file_info.get("column_names", file_info.get("columns", []))
+    metadata = file_info.get("metadata", {})
+
+    mappings: Dict[str, str] = {}
+    for i, value in enumerate(column_values or []):
+        if not value or i >= len(columns):
+            continue
+
+        mapped_field = value
+        if value == "other":
+            custom = custom_values[i] if i < len(custom_values) else None
+            if not custom:
+                continue
+            mapped_field = custom
+
+        mappings[columns[i]] = mapped_field
+
+    success = save_verified_mappings(filename, mappings, metadata)
+
+    if success:
+        return "✅ Confirmed", "success"
+
+    return "❌ Error", "danger"
+
+
 def register_callbacks(
     manager: "TrulyUnifiedCallbacks",
     controller: Optional[UnifiedAnalyticsController] = None,
@@ -565,21 +652,18 @@ def register_callbacks(
         component_name="column_verification",
     )(toggle_custom_field)
 
-    # Add missing save button callback
-    def save_column_mappings_callback(n_clicks):
-        """Handle save button clicks - calls base code save_verified_mappings"""
-        if not n_clicks:
-            return dash.no_update, dash.no_update
-        
-        # For now just confirm the callback works
-        # TODO: Get actual data from session and call save_verified_mappings
-        logger.info("💾 Save button clicked - callback working")
-        return "✅ Confirmed", "success"
-    
     manager.register_callback(
-        [Output("save-column-mappings", "children"),
-         Output("save-column-mappings", "color")],
+        [
+            Output("save-column-mappings", "children"),
+            Output("save-column-mappings", "color"),
+        ],
         Input("save-column-mappings", "n_clicks"),
+        [
+            State({"type": "column-mapping", "index": ALL}, "value"),
+            State({"type": "column-mapping", "index": ALL}, "id"),
+            State({"type": "custom-field", "index": ALL}, "value"),
+            State("uploaded-files-store", "data"),
+        ],
         prevent_initial_call=True,
         callback_id="save_column_mappings",
         component_name="column_verification",
@@ -607,21 +691,19 @@ __all__ = [
 
 
 def create_column_display_section(file_info: Dict[str, Any]) -> html.Div:
-    """Create main column display with preview and AI mapping - called by upload processors"""
-    filename = file_info.get("filename", "Unknown File")
+    """Create main column display with preview and AI mapping."""
     columns = file_info.get("columns", [])
     column_names = file_info.get("column_names", columns)
     ai_suggestions = file_info.get("ai_suggestions", {})
-    
+
     if not column_names:
         return dbc.Alert("No columns found", color="warning")
-    
+
     # Column listing
-    column_list = html.Div([
-        html.H5("Column Names:"),
-        html.Ul([html.Li(col) for col in column_names])
-    ])
-    
+    column_list = html.Div(
+        [html.H5("Column Names:"), html.Ul([html.Li(col) for col in column_names])]
+    )
+
     # AI mapping display table
     ai_mapping_section = html.Div()
     if ai_suggestions:
@@ -629,7 +711,7 @@ def create_column_display_section(file_info: Dict[str, Any]) -> html.Div:
         for column, suggestion in ai_suggestions.items():
             confidence = suggestion.get("confidence", 0.0)
             field = suggestion.get("field", "No suggestion")
-            
+
             # Color code confidence
             if confidence < 0.5:
                 confidence_class = "text-danger"
@@ -640,68 +722,95 @@ def create_column_display_section(file_info: Dict[str, Any]) -> html.Div:
             else:
                 confidence_class = "text-warning"
                 confidence_text = f"{confidence:.0%} (Medium)"
-            
-            mapping_rows.append(html.Tr([
-                html.Td(html.Strong(column)),
-                html.Td(field if field else "No suggestion"),
-                html.Td(html.Span(confidence_text, className=confidence_class))
-            ]))
-        
-        ai_mapping_section = html.Div([
-            html.H5("AI Column Mapping:"),
-            html.P(f"Found {len(ai_suggestions)} AI suggestions"),
-            dbc.Table([
-                html.Thead([html.Tr([
-                    html.Th("Column Name"),
-                    html.Th("AI Suggested Mapping"),
-                    html.Th("Confidence Level")
-                ])]),
-                html.Tbody(mapping_rows)
-            ], striped=True, hover=True, responsive=True)
-        ])
+
+            mapping_rows.append(
+                html.Tr(
+                    [
+                        html.Td(html.Strong(column)),
+                        html.Td(field if field else "No suggestion"),
+                        html.Td(html.Span(confidence_text, className=confidence_class)),
+                    ]
+                )
+            )
+
+        ai_mapping_section = html.Div(
+            [
+                html.H5("AI Column Mapping:"),
+                html.P(f"Found {len(ai_suggestions)} AI suggestions"),
+                dbc.Table(
+                    [
+                        html.Thead(
+                            [
+                                html.Tr(
+                                    [
+                                        html.Th("Column Name"),
+                                        html.Th("AI Suggested Mapping"),
+                                        html.Th("Confidence Level"),
+                                    ]
+                                )
+                            ]
+                        ),
+                        html.Tbody(mapping_rows),
+                    ],
+                    striped=True,
+                    hover=True,
+                    responsive=True,
+                ),
+            ]
+        )
     else:
         ai_mapping_section = dbc.Alert("No AI suggestions available", color="info")
-    
-    return html.Div([
-        column_list,
-        html.Hr(),
-        ai_mapping_section
-    ])
+
+    return html.Div([column_list, html.Hr(), ai_mapping_section])
 
 
-
-def create_complete_column_section(file_info: Dict[str, Any], df: pd.DataFrame = None) -> html.Div:
-    """Create complete column section with preview and mapping interface"""
-    filename = file_info.get("filename", "Unknown File")
+def create_complete_column_section(
+    file_info: Dict[str, Any], df: pd.DataFrame = None
+) -> html.Div:
+    """Create complete column section with preview and mapping interface."""
     columns = file_info.get("column_names", file_info.get("columns", []))
     ai_suggestions = file_info.get("ai_suggestions", {})
-    
+
     if not columns:
         return dbc.Alert("No columns found", color="warning")
-    
+
     sections = []
-    
+
     # Column listing
-    sections.append(html.Div([
-        html.H5("Column Names:"),
-        html.Ul([html.Li(html.Strong(col)) for col in columns])
-    ]))
-    
+    sections.append(
+        html.Div(
+            [
+                html.H5("Column Names:"),
+                html.Ul([html.Li(html.Strong(col)) for col in columns]),
+            ]
+        )
+    )
+
     # Data preview if DataFrame provided
     if df is not None and not df.empty:
         preview_data = df.head(5)
         preview_rows = []
         for _, row in preview_data.iterrows():
             preview_rows.append(html.Tr([html.Td(str(val)) for val in row]))
-        
-        sections.append(html.Div([
-            html.H5("Data Preview (first 5 rows):"),
-            dbc.Table([
-                html.Thead([html.Tr([html.Th(col) for col in columns])]),
-                html.Tbody(preview_rows)
-            ], striped=True, bordered=True, size="sm", className="mb-4")
-        ]))
-    
+
+        sections.append(
+            html.Div(
+                [
+                    html.H5("Data Preview (first 5 rows):"),
+                    dbc.Table(
+                        [
+                            html.Thead([html.Tr([html.Th(col) for col in columns])]),
+                            html.Tbody(preview_rows),
+                        ],
+                        striped=True,
+                        bordered=True,
+                        size="sm",
+                        className="mb-4",
+                    ),
+                ]
+            )
+        )
+
     # AI Column Mapping Interface - Two Column Table
     if ai_suggestions:
         table_rows = []
@@ -710,49 +819,84 @@ def create_complete_column_section(file_info: Dict[str, Any], df: pd.DataFrame =
             suggested_field = ai_suggestion.get("field", "")
             confidence = ai_suggestion.get("confidence", 0.0)
             default_value = suggested_field if suggested_field else None
-            
+
             # Color coding for confidence
-            confidence_class = "text-danger" if confidence < 0.5 else "text-success" if confidence > 0.7 else "text-warning"
+            confidence_class = (
+                "text-danger"
+                if confidence < 0.5
+                else "text-success" if confidence > 0.7 else "text-warning"
+            )
             dropdown_style = {"border": "2px solid red"} if confidence < 0.5 else {}
 
             table_rows.append(
-                html.Tr([
-                    html.Td([
-                        html.Strong(column),
-                        html.Br(),
-                        html.Small(f"AI: {suggested_field} ({confidence:.0%})", className=confidence_class),
-                    ]),
-                    html.Td([
-                        dcc.Dropdown(
-                            id={"type": "column-mapping", "index": i},
-                            options=STANDARD_FIELD_OPTIONS,
-                            placeholder=f"Map {column} to...",
-                            value=default_value,
-                            style=dropdown_style
-                        )
-                    ])
-                ])
+                html.Tr(
+                    [
+                        html.Td(
+                            [
+                                html.Strong(column),
+                                html.Br(),
+                                html.Small(
+                                    f"AI: {suggested_field} ({confidence:.0%})",
+                                    className=confidence_class,
+                                ),
+                            ]
+                        ),
+                        html.Td(
+                            [
+                                dcc.Dropdown(
+                                    id={"type": "column-mapping", "index": i},
+                                    options=STANDARD_FIELD_OPTIONS,
+                                    placeholder=f"Map {column} to...",
+                                    value=default_value,
+                                    style=dropdown_style,
+                                )
+                            ]
+                        ),
+                    ]
+                )
             )
 
-        sections.append(html.Div([
-            html.H5("AI Column Mapping:"),
-            html.P("Review AI suggestions and adjust mappings as needed:"),
-            dbc.Table([
-                html.Thead([
-                    html.Tr([
-                        html.Th("Column Name & AI Suggestion"),
-                        html.Th("Manual Mapping Override")
-                    ])
-                ]),
-                html.Tbody(table_rows)
-            ], striped=True, hover=True, responsive=True, className="mb-3"),
-            dbc.Button("Save Column Mappings", id="save-column-mappings", color="primary", size="lg")
-        ]))
+        sections.append(
+            html.Div(
+                [
+                    html.H5("AI Column Mapping:"),
+                    html.P("Review AI suggestions and adjust mappings as needed:"),
+                    dbc.Table(
+                        [
+                            html.Thead(
+                                [
+                                    html.Tr(
+                                        [
+                                            html.Th("Column Name & AI Suggestion"),
+                                            html.Th("Manual Mapping Override"),
+                                        ]
+                                    )
+                                ]
+                            ),
+                            html.Tbody(table_rows),
+                        ],
+                        striped=True,
+                        hover=True,
+                        responsive=True,
+                        className="mb-3",
+                    ),
+                    dbc.Button(
+                        "Save Column Mappings",
+                        id="save-column-mappings",
+                        color="primary",
+                        size="lg",
+                    ),
+                ]
+            )
+        )
     else:
-        sections.append(html.Div([
-            html.H5("AI Column Mapping:"),
-            dbc.Alert("No AI suggestions available", color="info")
-        ]))
-    
-    return html.Div(sections)
+        sections.append(
+            html.Div(
+                [
+                    html.H5("AI Column Mapping:"),
+                    dbc.Alert("No AI suggestions available", color="info"),
+                ]
+            )
+        )
 
+    return html.Div(sections)
