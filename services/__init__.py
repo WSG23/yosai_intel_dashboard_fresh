@@ -12,6 +12,7 @@ from .data_loader import DataLoader
 from .data_processing.processor import Processor
 from .data_processing.unified_file_validator import UnifiedFileValidator
 from .db_analytics_helper import DatabaseAnalyticsHelper
+from .microservices_architect import MicroservicesArchitect, ServiceBoundary
 from .registry import get_service
 from .result_formatting import (
     apply_regular_analysis,
@@ -54,4 +55,6 @@ __all__ = [
     "SummaryReporter",
     "DataLoader",
     "AnalyticsProcessor",
+    "MicroservicesArchitect",
+    "ServiceBoundary",
 ]
