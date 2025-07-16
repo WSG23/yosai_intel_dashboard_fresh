@@ -63,12 +63,30 @@ def create_navbar_layout(
     nav_links = links or default_links
 
     default_icons: Dict[str, Any] = {
-        "Dashboard": html.I(className="fas fa-home me-2", **{"aria-hidden": "true"}),
-        "Analytics": html.I(className="fas fa-chart-bar me-2", **{"aria-hidden": "true"}),
-        "Graphs": html.I(className="fas fa-chart-line me-2", **{"aria-hidden": "true"}),
-        "File Upload": html.I(className="fas fa-upload me-2", **{"aria-hidden": "true"}),
-        "Export": html.I(className="fas fa-download me-2", **{"aria-hidden": "true"}),
-        "Settings": html.I(className="fas fa-cog me-2", **{"aria-hidden": "true"}),
+        "Dashboard": html.I(
+            className="fas fa-home me-2",
+            **{"aria-hidden": "true", "aria-label": "Dashboard"},
+        ),
+        "Analytics": html.I(
+            className="fas fa-chart-bar me-2",
+            **{"aria-hidden": "true", "aria-label": "Analytics"},
+        ),
+        "Graphs": html.I(
+            className="fas fa-chart-line me-2",
+            **{"aria-hidden": "true", "aria-label": "Graphs"},
+        ),
+        "File Upload": html.I(
+            className="fas fa-upload me-2",
+            **{"aria-hidden": "true", "aria-label": "File Upload"},
+        ),
+        "Export": html.I(
+            className="fas fa-download me-2",
+            **{"aria-hidden": "true", "aria-label": "Export"},
+        ),
+        "Settings": html.I(
+            className="fas fa-cog me-2",
+            **{"aria-hidden": "true", "aria-label": "Settings"},
+        ),
     }
     icon_map = {**default_icons, **(icons or {})}
 
@@ -79,7 +97,12 @@ def create_navbar_layout(
             children = [icon, name] if icon is not None else [name]
             nav_items.append(
                 dbc.NavItem(
-                    dcc.Link(children, href=href, className="nav-link px-3")
+                    dcc.Link(
+                        children,
+                        href=href,
+                        className="nav-link px-3",
+                        **{"aria-label": name},
+                    )
                 )
             )
 
