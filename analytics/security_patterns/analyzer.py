@@ -14,6 +14,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Iterable
 
 from database.baseline_metrics import BaselineMetricsDB
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from .chunk_processor import ChunkedDataProcessor, MemoryConfig
 
 import numpy as np
 import pandas as pd
@@ -136,6 +137,10 @@ class SecurityPatternsAnalyzer:
             contamination=contamination, random_state=42, n_estimators=100
         )
         self.scaler = StandardScaler()
+        self.chunk_processor = ChunkedDataProcessor(
+            MemoryConfig(max_memory_mb=500, chunk_size=50_000),
+            logger=self.logger,
+        )
 
     def analyze_patterns(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Main analysis method with legacy compatibility"""
@@ -160,7 +165,7 @@ class SecurityPatternsAnalyzer:
                 df_clean, threat_indicators
             )
 
-            pattern_analysis = self._analyze_access_patterns(df_clean)
+            pattern_analysis = self.safe_analyze_patterns(df_clean)
             recommendations = self._generate_security_recommendations(
                 threat_indicators, pattern_analysis
             )
@@ -910,6 +915,59 @@ class PaginatedAnalyzer(SecurityPatternsAnalyzer):
         lower = max(0, score - margin)
         upper = min(100, score + margin)
         return (round(lower, 2), round(upper, 2))
+
+    # ------------------------------------------------------------------
+    def safe_analyze_patterns(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Memory-safe access pattern analysis."""
+
+        counts = {
+            "total_events": 0,
+            "after_hours_sum": 0,
+            "weekend_sum": 0,
+            "hourly_counts": defaultdict(int),
+            "user_event_count": defaultdict(int),
+            "user_success_sum": defaultdict(int),
+            "failure_count": 0,
+            "failure_users": defaultdict(int),
+        }
+
+        def _handle(chunk: pd.DataFrame) -> None:
+            prepared = self._prepare_security_data(chunk)
+            counts["total_events"] += len(prepared)
+            counts["after_hours_sum"] += int(prepared["is_after_hours"].sum())
+            counts["weekend_sum"] += int(prepared["is_weekend"].sum())
+            for hour, cnt in prepared["hour"].value_counts().items():
+                counts["hourly_counts"][int(hour)] += int(cnt)
+
+            group = prepared.groupby("person_id").agg(
+                event_count=("event_id", "count"),
+                success_sum=("access_granted", "sum"),
+            )
+            for pid, row in group.iterrows():
+                counts["user_event_count"][pid] += int(row["event_count"])
+                counts["user_success_sum"][pid] += int(row["success_sum"])
+
+            failures = prepared[prepared["access_granted"] == 0]
+            counts["failure_count"] += len(failures)
+            for pid, cnt in failures["person_id"].value_counts().items():
+                counts["failure_users"][pid] += int(cnt)
+
+        self.chunk_processor.process_dataframe_chunked(df, _handle)
+
+        return self._compile_patterns(
+            counts["total_events"],
+            counts["after_hours_sum"],
+            counts["weekend_sum"],
+            counts["hourly_counts"],
+            counts["user_event_count"],
+            counts["user_success_sum"],
+            counts["failure_count"],
+            counts["failure_users"],
+        )
+
+    # Backwards compatible wrapper ------------------------------------
+    def _analyze_access_patterns(self, df: pd.DataFrame) -> Dict[str, Any]:
+        return self.safe_analyze_patterns(df)
 
 
 # Factory function for compatibility
