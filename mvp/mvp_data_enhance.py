@@ -24,6 +24,7 @@ from dash import (
 )
 from flask import Flask
 
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from mvp.unicode_fix_module import sanitize_dataframe
 
 # ---------------------------------------------------------------------------
@@ -437,6 +438,7 @@ def layout_enhanced(df: pd.DataFrame, original_cols: List[str]) -> html.Div:
 server = Flask(__name__)
 app = Dash(__name__, server=server, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.title = "MVP Data Enhance"
+callbacks = TrulyUnifiedCallbacks(app)
 
 app.layout = dbc.Container(
     [
@@ -454,7 +456,7 @@ app.layout = dbc.Container(
 # Callback handlers
 
 
-@app.callback(
+@callbacks.callback(
     [
         Output("main", "children"),
         Output("progress", "value"),
@@ -482,6 +484,8 @@ app.layout = dbc.Container(
         State({"type": "dev-floor", "index": ALL}, "id"),
     ],
     prevent_initial_call=True,
+    callback_id="main_callback",
+    component_name="mvp_data_enhance",
 )
 def main_callback(
     upload_contents,
