@@ -135,3 +135,17 @@ async for chunk in processor.read_csv_chunks("large.csv"):
 
 The processor is registered automatically by `register_upload_services` and used
 by the upload workflow.
+
+### Index Optimizer
+
+`database.index_optimizer.IndexOptimizer` inspects how often existing indexes are
+used and can generate `CREATE INDEX` statements for missing ones. Run the CLI to
+analyze usage or create recommended indexes:
+
+```bash
+python -m services.index_optimizer_cli analyze
+python -m services.index_optimizer_cli create my_table column_a column_b
+```
+
+The CLI relies on `analyze_index_usage()` and `recommend_new_indexes()` to build
+SQL statements and execute them against the configured database.
