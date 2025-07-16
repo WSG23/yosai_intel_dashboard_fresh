@@ -112,9 +112,13 @@ def print_startup_info(app_config):
 
 
 def ensure_https_certificates():
-    """Auto-generate HTTPS certificates using mkcert if they don't exist"""
-    cert_file = "localhost+1.pem"
-    key_file = "localhost+1-key.pem"
+    """Return HTTPS certificate paths, generating with mkcert if needed.
+
+    Paths can be overridden via the ``SSL_CERT_PATH`` and ``SSL_KEY_PATH``
+    environment variables.
+    """
+    cert_file = os.getenv("SSL_CERT_PATH", "localhost+1.pem")
+    key_file = os.getenv("SSL_KEY_PATH", "localhost+1-key.pem")
 
     if os.path.exists(cert_file) and os.path.exists(key_file):
         logger.info("✅ HTTPS certificates found")

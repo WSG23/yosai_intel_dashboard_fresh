@@ -11,8 +11,17 @@ def validate_environment() -> ConfigManager:
     return config
 
 
-def ensure_ssl_certificates(cert_file: str = "localhost+1.pem", key_file: str = "localhost+1-key.pem") -> None:
-    """Ensure SSL certificate files exist."""
+def ensure_ssl_certificates(
+    cert_file: str | None = None, key_file: str | None = None
+) -> None:
+    """Ensure SSL certificate files exist.
+
+    By default this reads ``SSL_CERT_PATH`` and ``SSL_KEY_PATH`` environment
+    variables, falling back to the local development certificates.
+    """
+    cert_file = cert_file or os.getenv("SSL_CERT_PATH", "localhost+1.pem")
+    key_file = key_file or os.getenv("SSL_KEY_PATH", "localhost+1-key.pem")
+
     if not (Path(cert_file).exists() and Path(key_file).exists()):
         raise FileNotFoundError(
             f"SSL certificates not found: {cert_file}, {key_file}. "
