@@ -19,7 +19,9 @@ from services.data_processing.processor import Processor
 from advanced_cache import cache_with_lock
 from core.security_validator import SecurityValidator
 from services.db_analytics_helper import DatabaseAnalyticsHelper
-from services.summary_reporting import SummaryReporter
+from services.summary_reporter import SummaryReporter, format_patterns_result
+from services.data_loader import DataLoader
+from services.analytics_processor import AnalyticsProcessor
 from services.analytics.protocols import DataProcessorProtocol
 from core.protocols import (
     AnalyticsServiceProtocol,
@@ -70,10 +72,10 @@ logger = logging.getLogger(__name__)
 from config.dynamic_config import dynamic_config
 
 # Thresholds used for row count sanity checks
-ROW_LIMIT_WARNING = 150
+ROW_LIMIT_WARNING = dynamic_config.analytics.row_limit_warning
 """Warning threshold when exactly 150 rows are returned."""
 
-LARGE_DATA_THRESHOLD = 1000
+LARGE_DATA_THRESHOLD = dynamic_config.analytics.large_data_threshold
 """Row count above which data is considered large."""
 
 
@@ -114,7 +116,13 @@ class AnalyticsService(AnalyticsServiceProtocol):
         )
         self.db_helper = DatabaseAnalyticsHelper(self.database_manager)
         self.summary_reporter = SummaryReporter(self.database_manager)
-        self.data_loader = self.processor
+        self.analytics_processor = AnalyticsProcessor()
+        self.data_loader = DataLoader(
+            self.upload_processor,
+            self.processor,
+            ROW_LIMIT_WARNING,
+            LARGE_DATA_THRESHOLD,
+        )
 
     def _initialize_database(self):
         """Initialize database connection"""
@@ -235,214 +243,6 @@ class AnalyticsService(AnalyticsServiceProtocol):
             logger.error(f"Dashboard summary failed: {e}")
             return {"status": "error", "message": str(e)}
 
-    def _load_patterns_data(self, data_source: str | None) -> Tuple[pd.DataFrame, int]:
-        """Load and clean data for unique patterns analysis."""
-        logger = logging.getLogger(__name__)
-
-        if data_source == "database":
-            df, _meta = self.data_loader.get_processed_database()
-            uploaded_data = {"database": df} if not df.empty else {}
-        else:
-            uploaded_data = self.load_uploaded_data()
-
-        if not uploaded_data:
-            return pd.DataFrame(), 0
-
-        all_dfs: List[pd.DataFrame] = []
-        total_original_rows = 0
-
-        logger.info(f"📁 Found {len(uploaded_data)} uploaded files")
-
-        for filename, df in uploaded_data.items():
-            original_rows = len(df)
-            total_original_rows += original_rows
-            logger.info(f"   {filename}: {original_rows:,} rows")
-
-            cleaned_df = self.clean_uploaded_dataframe(df)
-            all_dfs.append(cleaned_df)
-            logger.info(f"   After cleaning: {len(cleaned_df):,} rows")
-
-        combined_df = (
-            all_dfs[0] if len(all_dfs) == 1 else pd.concat(all_dfs, ignore_index=True)
-        )
-
-        return combined_df, total_original_rows
-
-    def _verify_combined_data(self, df: pd.DataFrame, original_rows: int) -> None:
-        """Log sanity checks for the combined dataframe."""
-        logger = logging.getLogger(__name__)
-
-        final_rows = len(df)
-        logger.info(f"📊 COMBINED DATASET: {final_rows:,} total rows")
-
-        if final_rows != original_rows:
-            logger.warning(
-                "⚠️  Data loss detected: %s → %s",
-                f"{original_rows:,}",
-                f"{final_rows:,}",
-            )
-
-        if final_rows == ROW_LIMIT_WARNING and original_rows > ROW_LIMIT_WARNING:
-            logger.error("🚨 FOUND %s ROW LIMIT in unique patterns analysis!", ROW_LIMIT_WARNING)
-            logger.error(f"   Original rows: {original_rows:,}")
-            logger.error(f"   Final rows: {final_rows:,}")
-        elif final_rows > LARGE_DATA_THRESHOLD:
-            logger.info(f"✅ Processing large dataset: {final_rows:,} rows")
-
-    def _calculate_pattern_stats(self, df: pd.DataFrame) -> Tuple[int, int, int, int]:
-        """Calculate record, user, device and date span statistics."""
-        logger = logging.getLogger(__name__)
-
-        total_records = len(df)
-        unique_users = (
-            int(df["person_id"].nunique()) if "person_id" in df.columns else 0
-        )
-        unique_devices = int(df["door_id"].nunique()) if "door_id" in df.columns else 0
-
-        date_span = 0
-        if "timestamp" in df.columns:
-            df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
-            valid_dates = df["timestamp"].dropna()
-            if len(valid_dates) > 0:
-                date_span = (valid_dates.max() - valid_dates.min()).days
-
-        logger.info("📈 STATISTICS:")
-        logger.info(f"   Total records: {total_records:,}")
-        logger.info(f"   Unique users: {unique_users:,}")
-        logger.info(f"   Unique devices: {unique_devices:,}")
-        if date_span:
-            logger.info(f"   Date span: {date_span} days")
-
-        return total_records, unique_users, unique_devices, date_span
-
-    def _analyze_user_patterns(
-        self, df: pd.DataFrame, unique_users: int
-    ) -> Tuple[List[str], List[str], List[str]]:
-        """Classify users by activity level."""
-        logger = logging.getLogger(__name__)
-
-        power_users: List[str] = []
-        regular_users: List[str] = []
-        occasional_users: List[str] = []
-
-        if "person_id" in df.columns and unique_users > 0:
-            user_stats = df.groupby("person_id").size()
-            if len(user_stats) > 0:
-                q80 = float(user_stats.quantile(0.8))
-                q20 = float(user_stats.quantile(0.2))
-                power_users = user_stats[user_stats.gt(q80)].index.tolist()
-                regular_users = user_stats[user_stats.between(q20, q80)].index.tolist()
-                occasional_users = user_stats[user_stats.lt(q20)].index.tolist()
-
-        logger.info(f"   Power users: {len(power_users)}")
-        logger.info(f"   Regular users: {len(regular_users)}")
-        logger.info(f"   Occasional users: {len(occasional_users)}")
-
-        return power_users, regular_users, occasional_users
-
-    def _analyze_device_patterns(
-        self, df: pd.DataFrame, unique_devices: int
-    ) -> Tuple[List[str], List[str], List[str]]:
-        """Classify devices by activity level."""
-        logger = logging.getLogger(__name__)
-
-        high_traffic: List[str] = []
-        moderate_traffic: List[str] = []
-        low_traffic: List[str] = []
-
-        if "door_id" in df.columns and unique_devices > 0:
-            device_stats = df.groupby("door_id").size()
-            if len(device_stats) > 0:
-                q80 = float(device_stats.quantile(0.8))
-                q20 = float(device_stats.quantile(0.2))
-                high_traffic = device_stats[device_stats.gt(q80)].index.tolist()
-                moderate_traffic = device_stats[
-                    device_stats.between(q20, q80)
-                ].index.tolist()
-                low_traffic = device_stats[device_stats.lt(q20)].index.tolist()
-
-        logger.info(f"   High traffic devices: {len(high_traffic)}")
-        logger.info(f"   Moderate traffic devices: {len(moderate_traffic)}")
-        logger.info(f"   Low traffic devices: {len(low_traffic)}")
-
-        return high_traffic, moderate_traffic, low_traffic
-
-    def _count_interactions(self, df: pd.DataFrame) -> int:
-        """Count unique user-device interactions."""
-        if "person_id" in df.columns and "door_id" in df.columns:
-            interaction_pairs = df.groupby(["person_id", "door_id"]).size()
-            return len(interaction_pairs)
-        return 0
-
-    def _calculate_success_rate(self, df: pd.DataFrame) -> float:
-        """Calculate overall access success rate."""
-        if "access_result" in df.columns:
-            success_mask = (
-                df["access_result"]
-                .str.lower()
-                .str.contains("grant|allow|success|permit", case=False, na=False)
-            )
-            return success_mask.mean()
-        return 0.0
-
-    def _format_patterns_result(
-        self,
-        total_records: int,
-        unique_users: int,
-        unique_devices: int,
-        date_span: int,
-        power_users: List[str],
-        regular_users: List[str],
-        occasional_users: List[str],
-        high_traffic: List[str],
-        moderate_traffic: List[str],
-        low_traffic: List[str],
-        total_interactions: int,
-        success_rate: float,
-    ) -> Dict[str, Any]:
-        """Build the final unique patterns analysis result."""
-        return {
-            "status": "success",
-            "analysis_timestamp": datetime.now().isoformat(),
-            "data_summary": {
-                "total_records": total_records,
-                "unique_entities": {
-                    "users": unique_users,
-                    "devices": unique_devices,
-                    "interactions": total_interactions,
-                },
-                "date_range": {"span_days": date_span},
-            },
-            "user_patterns": {
-                "total_unique_users": unique_users,
-                "user_classifications": {
-                    "power_users": power_users[:10],
-                    "regular_users": regular_users[:10],
-                    "occasional_users": occasional_users[:10],
-                },
-            },
-            "device_patterns": {
-                "total_unique_devices": unique_devices,
-                "device_classifications": {
-                    "high_traffic_devices": high_traffic[:10],
-                    "moderate_traffic_devices": moderate_traffic[:10],
-                    "low_traffic_devices": low_traffic[:10],
-                    "secure_devices": [],
-                    "popular_devices": high_traffic[:5],
-                    "problematic_devices": [],
-                },
-            },
-            "interaction_patterns": {
-                "total_unique_interactions": total_interactions,
-                "interaction_statistics": {"unique_pairs": total_interactions},
-            },
-            "temporal_patterns": {"date_span_days": date_span},
-            "access_patterns": {
-                "overall_success_rate": success_rate,
-                "success_percentage": success_rate * 100,
-            },
-            "recommendations": [],
-        }
 
     @cache_with_lock(ttl_seconds=600)
     def get_unique_patterns_analysis(self, data_source: str | None = None):
@@ -452,7 +252,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         try:
             logger.info("🎯 Starting Unique Patterns Analysis")
 
-            df, original_rows = self._load_patterns_data(data_source)
+            df, original_rows = self.data_loader.load_patterns_data(data_source)
             if df.empty:
                 logger.warning("❌ No uploaded data found for unique patterns analysis")
                 return {
@@ -461,28 +261,28 @@ class AnalyticsService(AnalyticsServiceProtocol):
                     "data_summary": {"total_records": 0},
                 }
 
-            self._verify_combined_data(df, original_rows)
+            self.data_loader.verify_combined_data(df, original_rows)
 
             (
                 total_records,
                 unique_users,
                 unique_devices,
                 date_span,
-            ) = self._calculate_pattern_stats(df)
+            ) = self.analytics_processor.calculate_pattern_stats(df)
 
-            power_users, regular_users, occasional_users = self._analyze_user_patterns(
+            power_users, regular_users, occasional_users = self.analytics_processor.analyze_user_patterns(
                 df, unique_users
             )
             (
                 high_traffic_devices,
                 moderate_traffic_devices,
                 low_traffic_devices,
-            ) = self._analyze_device_patterns(df, unique_devices)
+            ) = self.analytics_processor.analyze_device_patterns(df, unique_devices)
 
-            total_interactions = self._count_interactions(df)
-            success_rate = self._calculate_success_rate(df)
+            total_interactions = self.analytics_processor.count_interactions(df)
+            success_rate = self.analytics_processor.calculate_success_rate(df)
 
-            result = self._format_patterns_result(
+            result = format_patterns_result(
                 total_records,
                 unique_users,
                 unique_devices,

@@ -50,6 +50,10 @@ streaming:
   topic: "events"
   consumer_group: "yosai"
 
+analytics:
+  row_limit_warning: 150
+  large_data_threshold: 1000
+
 monitoring: !include monitoring.yaml
 
 plugins: !include plugins.yaml

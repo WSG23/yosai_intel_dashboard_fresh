@@ -62,6 +62,8 @@ analytics:
   query_timeout_seconds: ${QUERY_TIMEOUT_SECONDS:600}
   force_full_dataset_analysis: ${FORCE_FULL_DATASET:true}
   max_display_rows: ${MAX_DISPLAY_ROWS:10000}
+  row_limit_warning: ${ROW_LIMIT_WARNING:150}
+  large_data_threshold: ${LARGE_DATA_THRESHOLD:1000}
 
 monitoring:
   health_check_enabled: true

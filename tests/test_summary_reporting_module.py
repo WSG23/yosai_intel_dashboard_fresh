@@ -1,4 +1,4 @@
-from services.summary_reporting import SummaryReporter
+from services.summary_reporter import SummaryReporter
 
 
 class FakeDB:

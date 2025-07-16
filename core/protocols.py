@@ -58,6 +58,10 @@ class DatabaseProtocol(Protocol):
 class AnalyticsServiceProtocol(Protocol):
     """Protocol for analytics service operations."""
 
+    data_loader: Any
+    analytics_processor: Any
+    summary_reporter: Any
+
     @abstractmethod
     def get_dashboard_summary(self) -> Dict[str, Any]:
         """Get main dashboard summary statistics"""

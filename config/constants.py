@@ -138,6 +138,8 @@ class AnalyticsConstants:
     query_timeout_seconds: int = 300
     max_memory_mb: int = 1024
     max_display_rows: int = 10000
+    row_limit_warning: int = 150
+    large_data_threshold: int = 1000
 
 
 @dataclass
