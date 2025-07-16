@@ -85,3 +85,53 @@ def get_unique_patterns_analysis(self, data_source: str | None = None):
 Cached results are stored in memory and optionally in Redis if available. Cache
 entries expire automatically after the TTL, ensuring that repeated dashboard
 requests do not trigger heavy calculations unnecessarily.
+
+## Upcoming Optimization Tools
+
+Several new modules extend the monitoring stack with proactive optimisation
+capabilities.
+
+### Optimizer
+
+The upcoming optimizer dynamically tunes analytics batch sizes and caching TTLs.
+Enable it with the environment variable `OPTIMIZER_ENABLED=true` and call
+`optimizer.start()` during application start-up. The optimizer consults the
+`ANALYTICS_CHUNK_SIZE` and `ANALYTICS_MAX_WORKERS` settings to balance CPU and
+I/O load.
+
+### Cache Manager
+
+Caching is handled by `MemoryCacheManager` or `RedisCacheManager` from
+`config.cache_manager`. Set `CACHE_TYPE=redis` and specify `CACHE_HOST` and
+`CACHE_PORT` to store results in Redis.
+
+```python
+from config.cache_manager import get_cache_manager
+
+cache = get_cache_manager()
+cache.start()
+```
+
+### Memory & CPU Optimizers
+
+Resource optimizers use the environment variables `MAX_MEMORY`,
+`MEMORY_WARNING_THRESHOLD`, `MAX_CPU_CORES` and `CPU_WARNING_THRESHOLD` (see
+`core/plugins/config/staging.yaml`). When the process exceeds these thresholds,
+warnings are logged and background tasks may be throttled.
+
+### Async File Processor
+
+`services.data_processing.async_file_processor.AsyncFileProcessor` loads large
+files asynchronously and yields `DataFrame` chunks. Configure chunk size and
+memory limits with `ANALYTICS_CHUNK_SIZE` and `ANALYTICS_MAX_MEMORY_MB`.
+
+```python
+from services.data_processing.async_file_processor import AsyncFileProcessor
+
+processor = AsyncFileProcessor()
+async for chunk in processor.read_csv_chunks("large.csv"):
+    handle_chunk(chunk)
+```
+
+The processor is registered automatically by `register_upload_services` and used
+by the upload workflow.

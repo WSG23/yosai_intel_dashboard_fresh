@@ -370,6 +370,15 @@ is provided in `monitoring/prometheus.yml`. Logstash support is available via
 these data sources. See [performance_monitoring.md](docs/performance_monitoring.md)
 for details.
 
+## <span aria-hidden="true">⚡</span> Performance Optimization
+
+Upcoming optimizer modules tune analytics batch sizes and cache behavior.
+The `CacheManager` selects an in-memory or Redis backend, while dedicated
+memory and CPU optimizers keep resource usage within the thresholds described in
+[performance_monitoring.md](docs/performance_monitoring.md#upcoming-optimization-tools).
+Large uploads are streamed through the `AsyncFileProcessor` to avoid blocking
+the event loop.
+
 ## <span aria-hidden="true">🔧</span> Configuration
 
 This project uses **`config/config.py`** for all application settings. The
