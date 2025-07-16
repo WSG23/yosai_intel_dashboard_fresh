@@ -8,6 +8,7 @@ import pandas as pd
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from models.enums import AnomalyType
 
 __all__ = ["detect_clearance_violations"]
 
@@ -27,7 +28,7 @@ def detect_clearance_violations(
         for _, row in violations.iterrows():
             threats.append(
                 ThreatIndicator(
-                    threat_type="access_outside_clearance_anomaly",
+                    threat_type=AnomalyType.ACCESS_OUTSIDE_CLEARANCE,
                     severity="high",
                     confidence=0.9,
                     description=f"User {row['person_id']} lacks clearance for door {row['door_id']}",
@@ -39,7 +40,9 @@ def detect_clearance_violations(
                     },
                     timestamp=datetime.now(),
                     affected_entities=[str(row["person_id"]), str(row["door_id"])],
-                    attack=_attack_info("access_outside_clearance_anomaly"),
+                    attack=_attack_info(
+                        AnomalyType.ACCESS_OUTSIDE_CLEARANCE.value
+                    ),
                 )
             )
     except Exception as exc:  # pragma: no cover - log and continue

@@ -10,6 +10,7 @@ from database.baseline_metrics import BaselineMetricsDB
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from models.enums import AnomalyType
 
 __all__ = ["detect_pattern_drift"]
 
@@ -33,7 +34,7 @@ def detect_pattern_drift(
         if drift_score > 0.2:
             threats.append(
                 ThreatIndicator(
-                    threat_type="access_pattern_drift_anomaly",
+                    threat_type=AnomalyType.PATTERN_DRIFT,
                     severity="medium",
                     confidence=min(0.99, drift_score * 2),
                     description="Significant drift in overall access patterns",
@@ -45,7 +46,7 @@ def detect_pattern_drift(
                     },
                     timestamp=datetime.now(),
                     affected_entities=[],
-                    attack=_attack_info("access_pattern_drift_anomaly"),
+                    attack=_attack_info(AnomalyType.PATTERN_DRIFT.value),
                 )
             )
         baseline.update_baseline(
