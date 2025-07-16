@@ -11,6 +11,7 @@ from database.baseline_metrics import BaselineMetricsDB
 from .pattern_detection import _attack_info
 from .types import ThreatIndicator
 
+
 __all__ = ["detect_odd_time"]
 
 
@@ -28,6 +29,8 @@ def detect_odd_time(
     try:
         if len(df) == 0:
             return threats
+        if not ensure_columns(df, ["person_id", "hour"], logger):
+            return threats
         for person_id, group in df.groupby("person_id"):
             hours = group["hour"]
             mean_hour = hours.mean()
@@ -44,7 +47,7 @@ def detect_odd_time(
                     )
                     threats.append(
                         ThreatIndicator(
-                            threat_type="odd_time_anomaly",
+                            threat_type=AnomalyType.ODD_TIME,
                             severity="medium",
                             confidence=float(confidence),
                             description=f"User {person_id} accessed at unusual hour {row['hour']}",
@@ -55,14 +58,17 @@ def detect_odd_time(
                             },
                             timestamp=datetime.now(),
                             affected_entities=[str(person_id)],
-                            attack=_attack_info("odd_time_anomaly"),
+                            attack=_attack_info(AnomalyType.ODD_TIME.value),
                         )
                     )
-            baseline.update_baseline(
-                "user",
-                str(person_id),
-                {"mean_hour": mean_hour, "std_hour": std_hour},
-            )
+            try:
+                baseline.update_baseline(
+                    "user",
+                    str(person_id),
+                    {"mean_hour": mean_hour, "std_hour": std_hour},
+                )
+            except Exception as exc:  # pragma: no cover - log and continue
+                logger.warning("Failed to update baseline metrics: %s", exc)
     except Exception as exc:  # pragma: no cover - log and continue
         logger.warning("Odd time detection failed: %s", exc)
     return threats

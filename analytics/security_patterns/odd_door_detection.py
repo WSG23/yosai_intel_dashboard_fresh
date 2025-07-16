@@ -8,6 +8,8 @@ import pandas as pd
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from .column_validation import ensure_columns
+
 from database.baseline_metrics import BaselineMetricsDB
 
 __all__ = ["detect_odd_door_usage"]
@@ -23,6 +25,8 @@ def detect_odd_door_usage(
     try:
         if len(df) == 0:
             return threats
+        if not ensure_columns(df, ["person_id", "door_id"], logger):
+            return threats
         for person_id, group in df.groupby("person_id"):
             total = len(group)
             door_counts = group["door_id"].value_counts()
@@ -31,11 +35,15 @@ def detect_odd_door_usage(
                 metric = f"door_{door_id}_rate"
                 rate = count / total
                 base_rate = baseline_metrics.get(metric)
-                if base_rate is not None and rate > base_rate * 2 and rate - base_rate > 0.05:
+                if (
+                    base_rate is not None
+                    and rate > base_rate * 2
+                    and rate - base_rate > 0.05
+                ):
                     confidence = min(0.99, rate - base_rate)
                     threats.append(
                         ThreatIndicator(
-                            threat_type="odd_door_anomaly",
+                            threat_type=AnomalyType.ODD_DOOR,
                             severity="medium",
                             confidence=confidence,
                             description=f"User {person_id} unusual access to door {door_id}",
@@ -47,12 +55,15 @@ def detect_odd_door_usage(
                             },
                             timestamp=datetime.now(),
                             affected_entities=[str(person_id), str(door_id)],
-                            attack=_attack_info("odd_door_anomaly"),
+                            attack=_attack_info(AnomalyType.ODD_DOOR.value),
                         )
                     )
             # update baseline
             metrics = {f"door_{d}_rate": c / total for d, c in door_counts.items()}
-            baseline.update_baseline("user", str(person_id), metrics)
+            try:
+                baseline.update_baseline("user", str(person_id), metrics)
+            except Exception as exc:  # pragma: no cover - log and continue
+                logger.warning("Failed to update baseline metrics: %s", exc)
     except Exception as exc:  # pragma: no cover - log and continue
         logger.warning("Odd door detection failed: %s", exc)
     return threats

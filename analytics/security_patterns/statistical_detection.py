@@ -10,6 +10,7 @@ from scipy import stats
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from .column_validation import ensure_columns
 
 __all__ = [
     "detect_failure_rate_anomalies",
@@ -25,6 +26,8 @@ def detect_failure_rate_anomalies(
     logger = logger or logging.getLogger(__name__)
     threats: List[ThreatIndicator] = []
     try:
+        if not ensure_columns(df, ["person_id", "access_granted"], logger):
+            return threats
         overall_failure_rate = 1 - df["access_granted"].mean()
         user_failure_rates = df.groupby("person_id")["access_granted"].agg(
             ["mean", "count"]
@@ -77,6 +80,8 @@ def detect_frequency_anomalies(
     logger = logger or logging.getLogger(__name__)
     threats: List[ThreatIndicator] = []
     try:
+        if not ensure_columns(df, ["person_id"], logger):
+            return threats
         user_access_counts = df.groupby("person_id").size()
         mean_access = user_access_counts.mean()
         std_access = user_access_counts.std()

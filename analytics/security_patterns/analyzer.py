@@ -10,15 +10,16 @@ import logging
 import warnings
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple, Iterable
-
-from database.baseline_metrics import BaselineMetricsDB
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from .chunk_processor import ChunkedDataProcessor, MemoryConfig
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from database.baseline_metrics import BaselineMetricsDB
 from utils.sklearn_compat import optional_import
+
+from .chunk_processor import ChunkedDataProcessor, MemoryConfig
 
 IsolationForest = optional_import("sklearn.ensemble.IsolationForest")
 DataConversionWarning = optional_import("sklearn.exceptions.DataConversionWarning")
@@ -58,25 +59,27 @@ from security_callback_controller import (
 
 from ..security_metrics import SecurityMetrics
 from ..security_score_calculator import SecurityScoreCalculator
-from .data_prep import prepare_security_data
-from .pattern_detection import detect_pattern_threats
-from .statistical_detection import detect_statistical_threats
-from .critical_door_detection import detect_critical_door_anomalies
-from .tailgate_detection import detect_tailgate
+from .access_no_exit_detection import detect_access_no_exit
 from .badge_clone_detection import detect_badge_clone
-from .odd_door_detection import detect_odd_door_usage
-from .odd_time_detection import detect_odd_time
-from .odd_path_detection import detect_odd_path
+from .clearance_violation_detection import detect_clearance_violations
+from .composite_score import detect_composite_score
+from .config import SecurityPatternsConfig
+from .critical_door_detection import detect_critical_door_anomalies
+from .data_prep import prepare_security_data
+from .forced_entry_detection import detect_forced_entry
+from .multiple_attempts_detection import detect_multiple_attempts
 from .odd_area_detection import detect_odd_area
 from .odd_area_time_detection import detect_odd_area_time
-from .multiple_attempts_detection import detect_multiple_attempts
-from .forced_entry_detection import detect_forced_entry
-from .access_no_exit_detection import detect_access_no_exit
+from .odd_door_detection import detect_odd_door_usage
+from .odd_path_detection import detect_odd_path
+from .odd_time_detection import detect_odd_time
+from .pattern_detection import detect_pattern_threats
+
 from .pattern_drift_detection import detect_pattern_drift
-from .clearance_violation_detection import detect_clearance_violations
-from .unaccompanied_visitor_detection import detect_unaccompanied_visitors
-from .composite_score import detect_composite_score
+from .statistical_detection import detect_statistical_threats
+from .tailgate_detection import detect_tailgate
 from .types import ThreatIndicator
+from .unaccompanied_visitor_detection import detect_unaccompanied_visitors
 
 # Ignore warnings from scikit-learn about missing feature names and automatic
 # data type conversions. These arise during DataFrame-based model training and
@@ -125,11 +128,13 @@ class SecurityPatternsAnalyzer:
         contamination: float = 0.1,
         confidence_threshold: float = 0.7,
         logger: Optional[logging.Logger] = None,
+        config: Optional[SecurityPatternsConfig] = None,
     ):
         self.contamination = contamination
         self.confidence_threshold = confidence_threshold
         self.logger = logger or logging.getLogger(__name__)
         self.unified_callbacks = security_callback_controller
+        self.config = config or SecurityPatternsConfig()
         self.baseline_db = BaselineMetricsDB()
 
         # Initialize ML models
@@ -199,20 +204,45 @@ class SecurityPatternsAnalyzer:
         threat_indicators.extend(self._detect_pattern_threats(df))
         threat_indicators.extend(detect_critical_door_anomalies(df, self.logger))
         threat_indicators.extend(detect_tailgate(df, self.logger))
-        threat_indicators.extend(detect_badge_clone(df, self.logger))
+        threat_indicators.extend(
+            detect_badge_clone(
+                df,
+                logger=self.logger,
+                travel_time_limit=self.config.travel_time_limit,
+            )
+        )
         threat_indicators.extend(detect_odd_door_usage(df, self.logger))
         threat_indicators.extend(detect_odd_time(df, self.logger))
         threat_indicators.extend(detect_odd_path(df, self.logger))
         threat_indicators.extend(detect_odd_area(df, self.logger))
         threat_indicators.extend(detect_odd_area_time(df, self.logger))
-        threat_indicators.extend(detect_multiple_attempts(df, self.logger))
+        threat_indicators.extend(
+            detect_multiple_attempts(
+                df,
+                logger=self.logger,
+                window=self.config.attempts_window,
+                threshold=self.config.attempts_threshold,
+            )
+        )
         threat_indicators.extend(detect_forced_entry(df, self.logger))
-        threat_indicators.extend(detect_access_no_exit(df, self.logger))
+        threat_indicators.extend(
+            detect_access_no_exit(
+                df,
+                logger=self.logger,
+                timeout=self.config.no_exit_timeout,
+            )
+        )
+
         threat_indicators.extend(detect_pattern_drift(df, self.logger))
         threat_indicators.extend(detect_clearance_violations(df, self.logger))
-        threat_indicators.extend(detect_unaccompanied_visitors(df, self.logger))
+        threat_indicators.extend(
+            detect_unaccompanied_visitors(
+                df,
+                logger=self.logger,
+                window=self.config.visitor_window,
+            )
+        )
         threat_indicators.extend(detect_composite_score(df, self.logger))
-
 
         return threat_indicators
 
@@ -253,24 +283,31 @@ class SecurityPatternsAnalyzer:
 
     def _update_behavior_profiles(self, df: pd.DataFrame) -> None:
         """Create or update baseline behavior profiles for users and doors."""
-        try:
-            for user_id, group in df.groupby("person_id"):
-                metrics = {
-                    "after_hours_rate": float(group["is_after_hours"].mean()),
-                    "failure_rate": float(1 - group["access_granted"].mean()),
-                    "total_events": len(group),
-                }
+        for user_id, group in df.groupby("person_id"):
+            metrics = {
+                "after_hours_rate": float(group["is_after_hours"].mean()),
+                "failure_rate": float(1 - group["access_granted"].mean()),
+                "total_events": len(group),
+            }
+            try:
                 self.baseline_db.update_baseline("user", str(user_id), metrics)
+            except Exception as exc:  # pragma: no cover - log and continue
+                self.logger.warning(
+                    "Failed to update user baseline %s: %s", user_id, exc
+                )
 
-            for door_id, group in df.groupby("door_id"):
-                metrics = {
-                    "after_hours_rate": float(group["is_after_hours"].mean()),
-                    "failure_rate": float(1 - group["access_granted"].mean()),
-                    "total_events": len(group),
-                }
+        for door_id, group in df.groupby("door_id"):
+            metrics = {
+                "after_hours_rate": float(group["is_after_hours"].mean()),
+                "failure_rate": float(1 - group["access_granted"].mean()),
+                "total_events": len(group),
+            }
+            try:
                 self.baseline_db.update_baseline("door", str(door_id), metrics)
-        except Exception as exc:  # pragma: no cover - log and continue
-            self.logger.warning("Failed to update behavior profiles: %s", exc)
+            except Exception as exc:  # pragma: no cover - log and continue
+                self.logger.warning(
+                    "Failed to update door baseline %s: %s", door_id, exc
+                )
 
     def _detect_statistical_threats(self, df: pd.DataFrame) -> List[ThreatIndicator]:
         """Detect threats using statistical methods"""

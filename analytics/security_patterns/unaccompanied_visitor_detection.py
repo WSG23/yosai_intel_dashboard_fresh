@@ -6,14 +6,18 @@ from typing import List, Optional
 
 import pandas as pd
 
-from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from .types import ThreatIndicator
+
 
 __all__ = ["detect_unaccompanied_visitors"]
 
 
 def detect_unaccompanied_visitors(
-    df: pd.DataFrame, logger: Optional[logging.Logger] = None
+    df: pd.DataFrame,
+    logger: Optional[logging.Logger] = None,
+    *,
+    window: timedelta = timedelta(minutes=5),
 ) -> List[ThreatIndicator]:
     """Detect visitors entering without an accompanying employee."""
     logger = logger or logging.getLogger(__name__)
@@ -21,13 +25,17 @@ def detect_unaccompanied_visitors(
     try:
         if len(df) == 0:
             return threats
-        if "badge_status" not in df.columns:
+        if not ensure_columns(
+            df,
+            ["timestamp", "person_id", "door_id", "badge_status"],
+            logger,
+        ):
             return threats
         df_sorted = df.sort_values("timestamp")
         visitors = df_sorted[df_sorted["badge_status"].str.lower() == "visitor"]
         for _, row in visitors.iterrows():
-            window_start = row["timestamp"] - timedelta(minutes=5)
-            window_end = row["timestamp"] + timedelta(minutes=5)
+            window_start = row["timestamp"] - window
+            window_end = row["timestamp"] + window
             nearby = df_sorted[
                 (df_sorted["timestamp"] >= window_start)
                 & (df_sorted["timestamp"] <= window_end)
@@ -36,14 +44,19 @@ def detect_unaccompanied_visitors(
             if nearby.empty:
                 threats.append(
                     ThreatIndicator(
-                        threat_type="unaccompanied_visitor_anomaly",
+                        threat_type=AnomalyType.UNACCOMPANIED_VISITOR,
                         severity="medium",
                         confidence=0.7,
                         description=f"Visitor badge {row['person_id']} unaccompanied",
-                        evidence={"person_id": str(row["person_id"]), "door_id": str(row["door_id"])},
+                        evidence={
+                            "person_id": str(row["person_id"]),
+                            "door_id": str(row["door_id"]),
+                        },
                         timestamp=datetime.now(),
                         affected_entities=[str(row["person_id"])],
-                        attack=_attack_info("unaccompanied_visitor_anomaly"),
+                        attack=_attack_info(
+                            AnomalyType.UNACCOMPANIED_VISITOR.value
+                        ),
                     )
                 )
     except Exception as exc:  # pragma: no cover - log and continue

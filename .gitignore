@@ -89,10 +89,8 @@ temp_*
 .env.staging
 *.key
 localhost+1-key.pem
-secrets/*
-!secrets/
-!secrets/*.txt
-!secrets/README.md
+# Secrets should not be version controlled
+secrets/
 # Training data
 data/training/
 .venv/
