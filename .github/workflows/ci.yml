@@ -15,7 +15,7 @@ jobs:
           PIP_CACHE_DIR: ~/.cache/pip
         run: |
           set -xe
-          pip install -r requirements.txt -r requirements-dev.txt
+          pip install -r requirements.txt -r requirements-dev.txt -r requirements-test.txt
       - name: Black
         run: |
           set -xe
