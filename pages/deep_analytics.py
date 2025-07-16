@@ -10,11 +10,10 @@ from typing import Any
 
 import dash_bootstrap_components as dbc
 from dash import html
-from dash import register_page as dash_register_page
 
 from components.analytics.real_time_dashboard import RealTimeAnalytics
+from components.layout_factory import card
 from components.ui_component import UIComponent
-
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +36,8 @@ class AnalyticsPage(UIComponent):
                                     "📊 Analytics Dashboard",
                                     [
                                         html.P(
-                                            "Advanced analytics restored without navigation flash.",
+                                            "Advanced analytics restored without"
+                                            " navigation flash.",
                                             className="card-text",
                                         ),
                                         html.Hr(),
@@ -61,12 +61,18 @@ class AnalyticsPage(UIComponent):
                                                     className="card-title",
                                                 ),
                                                 html.P(
-                                                    "Advanced analytics restored without navigation flash.",
+                                                    (
+                                                        "Advanced analytics restored "
+                                                        "without navigation flash."
+                                                    ),
                                                     className="card-text",
                                                 ),
                                                 html.Hr(),
                                                 html.I(
-                                                    className="fas fa-chart-line fa-3x mb-3 text-accent",
+                                                    className=(
+                                                        "fas fa-chart-line fa-3x "
+                                                        "mb-3 text-accent"
+                                                    ),
                                                     **{"aria-hidden": "true"},
                                                 ),
                                                 html.H6("✅ Navigation Flash: FIXED"),
@@ -74,7 +80,10 @@ class AnalyticsPage(UIComponent):
                                                     "🔧 Advanced Analytics: Coming Next"
                                                 ),
                                                 html.P(
-                                                    "Page loads stable like Settings/Export",
+                                                    (
+                                                        "Page loads stable like "
+                                                        "Settings/Export"
+                                                    ),
                                                     className="text-muted",
                                                 ),
                                                 html.Hr(),
@@ -85,7 +94,10 @@ class AnalyticsPage(UIComponent):
                                                             "Data source selection"
                                                         ),
                                                         html.Li(
-                                                            "Interactive charts and graphs"
+                                                            (
+                                                                "Interactive charts "
+                                                                "and graphs"
+                                                            )
                                                         ),
                                                         html.Li(
                                                             "Device pattern analysis"
@@ -93,7 +105,6 @@ class AnalyticsPage(UIComponent):
                                                         html.Li("Anomaly detection"),
                                                         html.Li("Behavior analysis"),
                                                     ]
-
                                                 ),
                                                 html.Li("Device pattern analysis"),
                                                 html.Li("Anomaly detection"),
@@ -113,7 +124,9 @@ class AnalyticsPage(UIComponent):
             fluid=True,
         )
 
-    def register_callbacks(self, manager: Any, controller: Any | None = None) -> None:  # type: ignore[override]
+    def register_callbacks(
+        self, manager: Any, controller: Any | None = None
+    ) -> None:  # type: ignore[override]
         if manager:
             self._realtime.register_callbacks(manager)
 
