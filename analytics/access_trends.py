@@ -1,8 +1,3 @@
-"""
-Enhanced Access Trends Analyzer
-Replace the entire content of analytics/access_trends.py with this code
-"""
-
 import logging
 import warnings
 from dataclasses import dataclass
