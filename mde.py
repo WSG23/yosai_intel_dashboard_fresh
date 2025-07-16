@@ -15,7 +15,11 @@ import dash
 from dash import dcc, html, Input, Output, State, dash_table
 import pandas as pd
 import dash_bootstrap_components as dbc
-from components.column_verification import create_complete_column_section, register_callbacks as register_column_callbacks
+from components.column_verification import (
+    create_complete_column_section,
+    register_callbacks as register_column_callbacks,
+)
+from core.master_callback_system import MasterCallbackSystem
 import logging
 
 # Import existing base code (no custom implementations)
@@ -66,8 +70,15 @@ class MVPTestApp:
     
     def _create_app(self):
         """Create Dash app with minimal layout"""
-        self.app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+        self.app = dash.Dash(
+            __name__,
+            external_stylesheets=[dbc.themes.BOOTSTRAP],
+            suppress_callback_exceptions=True,
+        )
         self.app.title = "MVP Data Enhancement - Base Code Test"
+
+        # Manager allowing callbacks for dynamically created components
+        self.callback_manager = MasterCallbackSystem(self.app)
         
         # Simple layout testing the complete flow
         self.app.layout = dbc.Container([
@@ -149,7 +160,7 @@ class MVPTestApp:
         
         # Register column verification callbacks (MISSING - this enables save functionality)
         try:
-            register_column_callbacks(self)
+            register_column_callbacks(self.callback_manager)
             logger.info("✅ Column verification callbacks registered")
         except Exception as e:
             logger.warning(f"⚠️ Column verification callbacks failed: {e}")
