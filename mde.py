@@ -149,6 +149,17 @@ class MVPTestApp:
                 ])
             ]),
             
+            # Device Verification Modal (base code pattern)
+            dbc.Modal([
+                dbc.ModalHeader(dbc.ModalTitle("Device Classification")),
+                dbc.ModalBody("", id="device-modal-body"),
+                dbc.ModalFooter([
+                    dbc.Button("Cancel", id="device-verify-cancel", color="secondary"),
+                    dbc.Button("Confirm", id="device-verify-confirm", color="success"),
+                ])
+            ], id="device-verification-modal", is_open=False, size="xl"),
+            
+
             # Hidden stores
             dcc.Store(id="session-store", data={})
         ], fluid=True)
@@ -309,7 +320,7 @@ class MVPTestApp:
         ])
     
     def _create_device_display(self, df, filename):
-        """Mirror base code device mapping flow exactly"""
+        """Create device mapping UI with buttons (mirror base code exactly)"""
         if df is None or df.empty:
             return dbc.Alert("No device data available", color="info")
         
@@ -325,12 +336,7 @@ class MVPTestApp:
                     mapping["source"] = "user_confirmed" 
                     ai_mapping_store.set(device, mapping)
                 
-                device_list = [html.Li(f"{device}: {attrs}") for device, attrs in user_mappings.items()]
-                return html.Div([
-                    html.H6("✅ Loaded User Confirmed Mappings:"),
-                    html.Ul(device_list[:10]),
-                    dbc.Alert(f"Loaded {len(user_mappings)} saved mappings - AI SKIPPED", color="success")
-                ])
+                logger.info(f"✅ Loaded {len(user_mappings)} saved mappings - AI SKIPPED")
             else:
                 # No user mappings - use auto_apply_learned_mappings (exactly like base code)
                 from services.ai_mapping_store import ai_mapping_store
@@ -339,43 +345,79 @@ class MVPTestApp:
                 # Mirror base code auto_apply_learned_mappings call
                 learned_applied = self.upload_service.auto_apply_learned_mappings(df, filename)
                 
-                if learned_applied:
-                    store_data = ai_mapping_store.all()
-                    device_list = [html.Li(f"{device}: {attrs}") for device, attrs in store_data.items()]
-                    return html.Div([
-                        html.H6("🎯 Applied Learned Mappings:"),
-                        html.Ul(device_list[:10]),
-                        dbc.Alert(f"Auto-applied {len(store_data)} learned device mappings", color="info")
-                    ])
-                else:
-                    return dbc.Alert("🆕 First upload - AI will be used", color="info")
+                if not learned_applied:
+                    # Generate AI device defaults for new files (base code pattern)
+                    from components.simple_device_mapping import generate_ai_device_defaults
+                    generate_ai_device_defaults(df, "auto")
+                    logger.info("🤖 Generated AI device defaults for new file")
+            
+            # Create device mapping UI section (base code pattern)
+            from components.simple_device_mapping import create_device_mapping_section
+            device_section = create_device_mapping_section()
+            
+            # Add status information
+            store_data = ai_mapping_store.all()
+            status_alert = dbc.Alert(
+                f"📋 {len(store_data)} devices ready for mapping" if store_data
+                else "🔍 No devices found in uploaded data", 
+                color="info"
+            )
+            
+            return html.Div([
+                html.H6("🚪 Device Configuration:"),
+                status_alert,
+                device_section
+            ])
                     
         except Exception as e:
-            return dbc.Alert(f"Device analysis error: {str(e)}", color="warning")    
-    def _create_data_display(self, df):
-        """Create data preview using base code"""
+            return dbc.Alert(f"Device mapping error: {str(e)}", color="warning")
+
+        """Create data configuration UI with base code button layout"""
         if df is None or df.empty:
             return dbc.Alert("No data to display", color="info")
         
-        # Use base code file preview functions
+        # Mirror base code build_file_preview_component exactly
+        from services.upload.utils.file_parser import create_file_preview
+        from components.file_preview import create_file_preview_ui
+        
         try:
             preview_info = create_file_preview(df)
-            return create_file_preview_ui(preview_info)
+            preview_ui = create_file_preview_ui(preview_info)
+            
+            # Add base code Data Configuration card with button group
+            config_card = dbc.Card([
+                dbc.CardHeader([
+                    html.H6("📋 Data Configuration", className="mb-0")
+                ]),
+                dbc.CardBody([
+                    html.P("Configure your data for analysis:", className="mb-3"),
+                    dbc.ButtonGroup([
+                        dbc.Button(
+                            "📋 Verify Columns",
+                            id="verify-columns-btn-simple", 
+                            color="primary",
+                            size="sm",
+                        ),
+                        dbc.Button(
+                            "🤖 Classify Devices",
+                            id="classify-devices-btn",
+                            color="info", 
+                            size="sm",
+                        ),
+                    ], className="w-100"),
+                ])
+            ])
+            
+            return html.Div([preview_ui, config_card])
+            
         except Exception as e:
             logger.error(f"Preview creation failed: {e}")
             # Fallback to simple table
             return dash_table.DataTable(
-                data=df.head(10).to_dict('records'),
+                data=df.head(10).to_dict("records"),
                 columns=[{"name": col, "id": col} for col in df.columns],
-                style_table={'overflowX': 'auto'}
+                style_table={"overflowX": "auto"}
             )
-    
-    def run(self, debug=True, host='0.0.0.0', port=5003):
-        """Run the test app"""
-        logger.info("🚀 Starting MVP Data Enhancement Tool - Base Code Test")
-        logger.info(f"🌐 Access: http://localhost:{port}")
-        self.app.run_server(debug=debug, host=host, port=port)
-
 if __name__ == '__main__':
     # Create and run the minimal test app
     app = MVPTestApp()
@@ -410,4 +452,4 @@ if __name__ == '__main__':
     # Start the web UI after device analysis
     print("\n=== STARTING WEB UI ===")
     print("🌐 Device analysis complete - launching web interface...")
-    app.run()
+    app.app.run()
