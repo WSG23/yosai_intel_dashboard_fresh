@@ -1,4 +1,5 @@
 """Pure Dash UI component for drag-and-drop uploads."""
+
 from __future__ import annotations
 
 from typing import Callable
@@ -9,7 +10,11 @@ from dash import dcc, html
 class UploadArea:
     """Drag and drop upload area without business logic."""
 
-    def __init__(self, upload_handler: Callable | None = None, upload_id: str = "drag-drop-upload") -> None:
+    def __init__(
+        self,
+        upload_handler: Callable | None = None,
+        upload_id: str = "drag-drop-upload",
+    ) -> None:
         self.upload_handler = upload_handler
         self.upload_id = upload_id
         self.status_id = f"{upload_id}-status"
@@ -20,6 +25,7 @@ class UploadArea:
             [
                 dcc.Upload(
                     id=self.upload_id,
+                    tabIndex=0,
                     children=self._render_upload_area(),
                     multiple=True,
                 ),
@@ -31,7 +37,9 @@ class UploadArea:
     def _render_upload_area(self) -> html.Div:
         return html.Div(
             [
-                html.I(className="fas fa-cloud-upload-alt fa-3x", **{"aria-hidden": "true"}),
+                html.I(
+                    className="fas fa-cloud-upload-alt fa-3x", **{"aria-hidden": "true"}
+                ),
                 html.H4("Drop files here or click to browse"),
             ]
         )

@@ -22,6 +22,7 @@ def layout() -> dbc.Container:
     upload_area = dcc.Upload(
         id="drag-drop-upload",
         className="drag-drop-upload upload-area",
+        tabIndex=0,
         children=html.Div(
             [
                 html.I(
@@ -36,7 +37,6 @@ def layout() -> dbc.Container:
                 ),
             ]
         ),
-
         multiple=True,
     )
 
