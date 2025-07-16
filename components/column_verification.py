@@ -58,6 +58,9 @@ STANDARD_FIELD_OPTIONS = [
     {"label": "Other/Custom", "value": "other"},
 ]
 
+# Minimum fields required for most analytics
+REQUIRED_STANDARD_FIELDS = {"timestamp", "person_id", "door_id", "access_result"}
+
 
 def create_column_verification_modal(file_info: Dict[str, Any]) -> dbc.Modal:
     """Complete modal with data preview and AI mapping table"""
@@ -590,20 +593,38 @@ def save_column_mappings_callback(
     n_clicks: int | None,
     column_values: List[str | None],
     custom_values: List[str | None],
-    session_data: Dict[str, Any] | None,
+    uploaded_files: Dict[str, Any] | None,
 ) -> tuple[str, str]:
     """Persist verified column mappings when the save button is clicked."""
 
     if not n_clicks:
         return dash.no_update, dash.no_update
 
-    if not session_data:
-        logger.warning("No session data found for saving mappings")
+    if not uploaded_files:
+        logger.warning("No uploaded file data found for saving mappings")
         return "❌ Error", "danger"
 
     # Determine file info from store
-    file_info = session_data.get("file_info", {})
-    filename = session_data.get("filename", "unknown.csv")
+    file_info: Dict[str, Any] | None = None
+    filename: str | None = None
+
+    if "current_file_info" in uploaded_files:
+        file_info = uploaded_files.get("current_file_info")
+        filename = file_info.get("filename") if isinstance(file_info, dict) else None
+    elif uploaded_files:
+        # Fallback to first item
+        first_key = next(iter(uploaded_files))
+        data = uploaded_files[first_key]
+        if isinstance(data, dict) and "filename" in data:
+            file_info = data
+            filename = data.get("filename", first_key)
+        else:
+            file_info = data if isinstance(data, dict) else {}
+            filename = first_key
+
+    if not filename or not file_info:
+        logger.warning("Filename missing from uploaded file store")
+        return "❌ Error", "danger"
 
     columns = file_info.get("column_names", file_info.get("columns", []))
     metadata = file_info.get("metadata", {})
@@ -622,10 +643,21 @@ def save_column_mappings_callback(
 
         mappings[columns[i]] = mapped_field
 
+    if filename not in uploaded_files:
+        logger.warning("Uploaded filename %s not found in store", filename)
+
+    if not mappings:
+        logger.warning("No column mappings provided for %s", filename)
+        return "❌ No mappings", "danger"
+
+    missing_required = [f for f in REQUIRED_STANDARD_FIELDS if f not in mappings.values()]
+    if missing_required:
+        logger.warning("Missing required fields for %s: %s", filename, missing_required)
+
     success = save_verified_mappings(filename, mappings, metadata)
 
     if success:
-        return "✅ Confirmed", "success"
+        return f"✅ Saved {len(mappings)} mappings", "success"
 
     return "❌ Error", "danger"
 
@@ -653,7 +685,7 @@ def register_callbacks(
         [
             State({"type": "column-mapping", "index": ALL}, "value"),
             State({"type": "custom-field", "index": ALL}, "value"),
-            State("session-store", "data"),
+            State("uploaded-files-store", "data"),
         ],
         prevent_initial_call=True,
         callback_id="save_column_mappings",
