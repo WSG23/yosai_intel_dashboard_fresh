@@ -17,6 +17,7 @@ from analytics.security_patterns.pattern_drift_detection import detect_pattern_d
 from analytics.security_patterns.clearance_violation_detection import detect_clearance_violations
 from analytics.security_patterns.unaccompanied_visitor_detection import detect_unaccompanied_visitors
 from analytics.security_patterns.composite_score import detect_composite_score
+from analytics.security_patterns.types import ThreatIndicator
 
 
 SAMPLE_ROWS = [
@@ -82,6 +83,39 @@ SAMPLE_ROWS = [
     },
 ]
 
+SAFE_ROWS = [
+    {
+        "timestamp": "2024-01-01 10:00:00",
+        "person_id": "u1",
+        "door_id": "A-1",
+        "access_result": "Granted",
+        "door_held_open_time": 0,
+        "badge_status": "Employee",
+        "user_clearance": 2,
+        "required_clearance": 1,
+    },
+    {
+        "timestamp": "2024-01-01 10:05:00",
+        "person_id": "u1",
+        "door_id": "A-1",
+        "access_result": "Granted",
+        "door_held_open_time": 0,
+        "badge_status": "Employee",
+        "user_clearance": 2,
+        "required_clearance": 1,
+    },
+    {
+        "timestamp": "2024-01-01 10:10:00",
+        "person_id": "u1",
+        "door_id": "A-1",
+        "access_result": "Granted",
+        "door_held_open_time": 0,
+        "badge_status": "Employee",
+        "user_clearance": 2,
+        "required_clearance": 1,
+    },
+]
+
 
 class DummyBaselineDB:
     def __init__(self):
@@ -94,29 +128,97 @@ class DummyBaselineDB:
         return self.store.get((entity_type, entity_id), {})
 
 
-def _prepare_df():
-    df = pd.DataFrame(SAMPLE_ROWS)
+class PreloadedBaselineDB(DummyBaselineDB):
+    """Baseline DB seeded with values to trigger anomalies."""
+
+    def __init__(self):
+        super().__init__()
+        self.store = {
+            ("user", "u1"): {"door_A-1_rate": 0.1, "mean_hour": 8, "std_hour": 1},
+            ("global", "overall"): {"after_hours_rate": 0.0, "failure_rate": 0.0},
+        }
+
+
+class SafeBaselineDB(DummyBaselineDB):
+    """Baseline values matching SAFE_ROWS so no anomalies are produced."""
+
+    def __init__(self):
+        super().__init__()
+        self.store = {
+            ("user", "u1"): {"door_A-1_rate": 1.0, "mean_hour": 10, "std_hour": 1},
+            ("global", "overall"): {"after_hours_rate": 0.0, "failure_rate": 0.0},
+        }
+
+
+def _prepare_df(rows):
+    df = pd.DataFrame(rows)
     return prepare_security_data(df)
 
 
-def test_all_detectors_return_list(monkeypatch):
-    df = _prepare_df()
+def test_detectors_produce_indicators(monkeypatch):
+    df = _prepare_df(SAMPLE_ROWS)
     monkeypatch.setattr(
         "analytics.security_patterns.odd_door_detection.BaselineMetricsDB",
-        DummyBaselineDB,
+        PreloadedBaselineDB,
     )
     monkeypatch.setattr(
         "analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
-        DummyBaselineDB,
+        PreloadedBaselineDB,
     )
     monkeypatch.setattr(
         "analytics.security_patterns.pattern_drift_detection.BaselineMetricsDB",
-        DummyBaselineDB,
+        PreloadedBaselineDB,
     )
     monkeypatch.setattr(
         "analytics.security_patterns.analyzer.BaselineMetricsDB",
-        DummyBaselineDB,
+        PreloadedBaselineDB,
     )
+
+    funcs = [
+        (detect_critical_door_anomalies, ("high", "critical_door_anomaly")),
+        (detect_tailgate, ("medium", "probable_tailgate")),
+        (detect_badge_clone, ("high", "badge_clone_suspected")),
+        (detect_odd_door_usage, ("medium", "odd_door_anomaly")),
+        (detect_odd_time, ("medium", "odd_time_anomaly")),
+        (detect_odd_path, ("low", "odd_path_anomaly")),
+        (detect_odd_area, ("low", "odd_area_anomaly")),
+        (detect_odd_area_time, ("medium", "odd_area_time_anomaly")),
+        (detect_multiple_attempts, ("high", "multiple_attempts_anomaly")),
+        (detect_forced_entry, ("high", "forced_entry_or_door_held_open")),
+        (detect_access_no_exit, ("medium", "access_granted_no_exit_anomaly")),
+        (detect_pattern_drift, ("medium", "access_pattern_drift_anomaly")),
+        (detect_clearance_violations, ("high", "access_outside_clearance_anomaly")),
+        (detect_unaccompanied_visitors, ("medium", "unaccompanied_visitor_anomaly")),
+        (detect_composite_score, ("low", "composite_anomaly_score")),
+    ]
+
+    for func, (severity, threat_type) in funcs:
+        threats = func(df)
+        assert threats, f"{func.__name__} produced no indicators"
+        assert isinstance(threats[0], ThreatIndicator)
+        assert threats[0].severity == severity
+        assert threats[0].threat_type == threat_type
+
+
+def test_detectors_no_anomalies(monkeypatch):
+    df = _prepare_df(SAFE_ROWS)
+    monkeypatch.setattr(
+        "analytics.security_patterns.odd_door_detection.BaselineMetricsDB",
+        SafeBaselineDB,
+    )
+    monkeypatch.setattr(
+        "analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
+        SafeBaselineDB,
+    )
+    monkeypatch.setattr(
+        "analytics.security_patterns.pattern_drift_detection.BaselineMetricsDB",
+        SafeBaselineDB,
+    )
+    monkeypatch.setattr(
+        "analytics.security_patterns.analyzer.BaselineMetricsDB",
+        SafeBaselineDB,
+    )
+
     funcs = [
         detect_critical_door_anomalies,
         detect_tailgate,
@@ -134,16 +236,17 @@ def test_all_detectors_return_list(monkeypatch):
         detect_unaccompanied_visitors,
         detect_composite_score,
     ]
+
     for func in funcs:
         threats = func(df)
-        assert isinstance(threats, list)
+        assert threats == []
 
 
 def test_analyzer_integration(monkeypatch):
-    df = _prepare_df()
+    df = _prepare_df(SAMPLE_ROWS)
     monkeypatch.setattr(
         "analytics.security_patterns.analyzer.BaselineMetricsDB",
-        DummyBaselineDB,
+        PreloadedBaselineDB,
     )
     analyzer = SecurityPatternsAnalyzer()
     result = analyzer.analyze_security_patterns(df)
