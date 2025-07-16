@@ -939,7 +939,7 @@ def setup_isolated_security_testing(
 ) -> tuple[SecurityCallbackController, Optional[Callable[[Dict[str, Any]], None]]]:
     """Return a cleared controller and optional test handler."""
 
-    controller = SecurityTrulyUnifiedCallbacks()
+    controller = SecurityCallbackController()
     controller._callbacks.clear()
     controller.history = []
     handler: Optional[Callable[[Dict[str, Any]], None]] = None
