@@ -262,6 +262,25 @@ class ServiceContainer:
         return status
 
     # ------------------------------------------------------------------
+    def warm_caches(self) -> None:
+        """Trigger cache warming if a cache warmer service is registered."""
+        if not self.has("cache_warmer"):
+            return
+
+        warmer = self.get("cache_warmer")
+        if not hasattr(warmer, "warm"):
+            return
+
+        try:
+            import asyncio
+
+            asyncio.run(warmer.warm())
+        except RuntimeError:  # event loop already running
+            loop = asyncio.new_event_loop()
+            loop.run_until_complete(warmer.warm())
+            loop.close()
+
+    # ------------------------------------------------------------------
     def validate_registrations(self) -> Dict[str, List[str]]:
         results = {
             "valid": [],
