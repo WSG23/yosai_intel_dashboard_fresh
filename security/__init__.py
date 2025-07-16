@@ -8,20 +8,26 @@ from core.exceptions import ValidationError
 from .attack_detection import AttackDetection
 from .secrets_validator import SecretsValidator, register_health_endpoint
 from .unicode_security_validator import UnicodeSecurityValidator
-from .unicode_surrogate_validator import (
-    SurrogateHandlingConfig,
-    UnicodeSurrogateValidator,
-)
 from .validation_exceptions import SecurityViolation
 
 
 def __getattr__(name: str):
-    """Lazily provide ``SecurityValidator`` to avoid circular imports."""
+    """Lazily provide heavy validators to avoid circular imports."""
 
     if name == "SecurityValidator":
         from core.security_validator import SecurityValidator as _SV
 
         return _SV
+    if name in {"UnicodeSurrogateValidator", "SurrogateHandlingConfig"}:
+        from .unicode_surrogate_validator import (
+            SurrogateHandlingConfig as _SHC,
+            UnicodeSurrogateValidator as _USV,
+        )
+
+        return {
+            "UnicodeSurrogateValidator": _USV,
+            "SurrogateHandlingConfig": _SHC,
+        }[name]
     raise AttributeError(name)
 
 # Public API - Only current, non-deprecated classes
