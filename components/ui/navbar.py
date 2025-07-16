@@ -56,6 +56,7 @@ def create_navbar_layout(
         "Dashboard": "/dashboard",
         "Analytics": "/analytics",
         "Graphs": "/graphs",
+        "Device Analysis": "/device-analysis",
         "File Upload": "/upload",
         "Export": "/export",
         "Settings": "/settings",
@@ -74,6 +75,10 @@ def create_navbar_layout(
         "Graphs": html.I(
             className="fas fa-chart-line me-2",
             **{"aria-hidden": "true", "aria-label": "Graphs"},
+        ),
+        "Device Analysis": html.I(
+            className="fas fa-microchip me-2",
+            **{"aria-hidden": "true", "aria-label": "Device Analysis"},
         ),
         "File Upload": html.I(
             className="fas fa-upload me-2",
@@ -161,6 +166,13 @@ def create_fallback_navbar():
                             dbc.NavLink(
                                 "Graphs",
                                 href="/graphs",
+                                external_link=False,
+                            )
+                        ),
+                        dbc.NavItem(
+                            dbc.NavLink(
+                                "Device Analysis",
+                                href="/device-analysis",
                                 external_link=False,
                             )
                         ),
