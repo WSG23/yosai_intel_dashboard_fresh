@@ -745,6 +745,19 @@ dropdown so you can revisit earlier uploads without re-uploading them.
 **Important:** keep the `temp/uploaded_data` directory intact until device
 mappings have been saved, otherwise the mapping step will fail.
 
+## Component Previews
+
+Standalone preview scripts live in the `storybook/` directory. They showcase
+common UI components without launching the entire dashboard. Run a script with
+
+```bash
+python storybook/navbar_app.py
+python storybook/upload_area_app.py
+```
+
+Each command starts a small Dash server on port `8050` so you can interact with
+the component in isolation.
+
 
 ## 🤝 Contributing
 
