@@ -44,13 +44,8 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           set -xe
-          pip-audit --format=json --output=audit-report.json || true
-
-      - name: Fail on Critical Vulns
-        if: github.event_name == 'pull_request'
-        run: |
-          set -xe
-          python scripts/check_pip_audit.py audit-report.json
+          pip-audit -r requirements.txt -r requirements-dev.txt \
+            --format=json --output=audit-report.json
 
       - name: PyTest
         run: |
