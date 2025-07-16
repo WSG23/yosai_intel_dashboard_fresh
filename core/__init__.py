@@ -2,12 +2,16 @@
 
 from typing import TYPE_CHECKING, Any
 
-from .truly_unified_callbacks import TrulyUnifiedCallbacks
 from .advanced_cache import (
     AdvancedCacheManager,
-    create_advanced_cache_manager,
     cache_with_lock,
+    create_advanced_cache_manager,
 )
+from .advanced_query_optimizer import AdvancedQueryOptimizer
+from .cpu_optimizer import CPUOptimizer
+from .hierarchical_cache_manager import HierarchicalCacheManager
+from .memory_manager import MemoryManager
+from .truly_unified_callbacks import TrulyUnifiedCallbacks
 
 if TYPE_CHECKING:  # pragma: no cover - type hints only
     from .truly_unified_callbacks import (
@@ -22,4 +26,8 @@ __all__ = [
     "AdvancedCacheManager",
     "cache_with_lock",
     "create_advanced_cache_manager",
+    "AdvancedQueryOptimizer",
+    "HierarchicalCacheManager",
+    "MemoryManager",
+    "CPUOptimizer",
 ]

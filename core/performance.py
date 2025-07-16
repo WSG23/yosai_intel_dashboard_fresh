@@ -19,6 +19,9 @@ import psutil
 
 from config.dynamic_config import dynamic_config
 
+from .cpu_optimizer import CPUOptimizer
+from .memory_manager import MemoryManager
+
 
 class PerformanceThresholds:
     """Common performance threshold values."""
@@ -81,6 +84,8 @@ class PerformanceMonitor:
         self.memory_threshold_mb = getattr(
             dynamic_config.performance, "memory_usage_threshold_mb", 1024
         )
+        self.cpu = CPUOptimizer()
+        self.memory = MemoryManager(self.memory_threshold_mb)
 
         # Start background monitoring
         self._monitoring_active = True

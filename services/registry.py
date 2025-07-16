@@ -44,11 +44,25 @@ get_service = registry.get_service
 
 
 # Register built-in optional services
-register_service("FileProcessor", "services.data_processing.unified_file_validator:UnifiedFileValidator")
-register_service("FileHandler", "services.data_processing.unified_file_validator:UnifiedFileValidator")
-register_service("UnifiedFileValidator", "services.data_processing.unified_file_validator:UnifiedFileValidator")
 register_service(
-    "UploadAnalyticsProcessor", "services.analytics.upload_analytics:UploadAnalyticsProcessor"
+    "FileProcessor",
+    "services.data_processing.unified_file_validator:UnifiedFileValidator",
+)
+register_service(
+    "FileHandler",
+    "services.data_processing.unified_file_validator:UnifiedFileValidator",
+)
+register_service(
+    "UnifiedFileValidator",
+    "services.data_processing.unified_file_validator:UnifiedFileValidator",
+)
+register_service(
+    "UploadAnalyticsProcessor",
+    "services.analytics.upload_analytics:UploadAnalyticsProcessor",
+)
+
+register_service(
+    "AsyncFileProcessor", "services.async_file_processor:AsyncFileProcessor"
 )
 
 register_service(
