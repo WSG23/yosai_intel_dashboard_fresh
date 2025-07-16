@@ -19,6 +19,9 @@ from components.column_verification import (
     create_complete_column_section,
     register_callbacks as register_column_callbacks,
 )
+from components.simple_device_mapping import (
+    register_callbacks as register_device_callbacks,
+)
 from core.master_callback_system import MasterCallbackSystem
 import logging
 
@@ -169,12 +172,19 @@ class MVPTestApp:
     def _register_callbacks(self):
         """Register callbacks using base code services"""
         
-        # Register column verification callbacks (MISSING - this enables save functionality)
+        # Register column verification callbacks
         try:
             register_column_callbacks(self.callback_manager)
             logger.info("✅ Column verification callbacks registered")
         except Exception as e:
             logger.warning(f"⚠️ Column verification callbacks failed: {e}")
+
+        # Register device mapping callbacks
+        try:
+            register_device_callbacks(self.callback_manager)
+            logger.info("✅ Device mapping callbacks registered")
+        except Exception as e:
+            logger.warning(f"⚠️ Device mapping callbacks failed: {e}")
         
         @self.app.callback(
             [Output('upload-results', 'children'),
@@ -372,51 +382,50 @@ class MVPTestApp:
         except Exception as e:
             return dbc.Alert(f"Device mapping error: {str(e)}", color="warning")
 
-        """Create data configuration UI with base code button layout"""
+    def _create_data_display(self, df):
+        """Create data configuration UI with preview and action buttons."""
         if df is None or df.empty:
             return dbc.Alert("No data to display", color="info")
-        
+
         # Mirror base code build_file_preview_component exactly
         from services.upload.utils.file_parser import create_file_preview
         from components.file_preview import create_file_preview_ui
-        
+
         try:
             preview_info = create_file_preview(df)
             preview_ui = create_file_preview_ui(preview_info)
-            
+
             # Add base code Data Configuration card with button group
             config_card = dbc.Card([
-                dbc.CardHeader([
-                    html.H6("📋 Data Configuration", className="mb-0")
-                ]),
+                dbc.CardHeader([html.H6("📋 Data Configuration", className="mb-0")]),
                 dbc.CardBody([
                     html.P("Configure your data for analysis:", className="mb-3"),
                     dbc.ButtonGroup([
                         dbc.Button(
                             "📋 Verify Columns",
-                            id="verify-columns-btn-simple", 
+                            id="verify-columns-btn-simple",
                             color="primary",
                             size="sm",
                         ),
                         dbc.Button(
                             "🤖 Classify Devices",
                             id="classify-devices-btn",
-                            color="info", 
+                            color="info",
                             size="sm",
                         ),
                     ], className="w-100"),
-                ])
+                ]),
             ])
-            
+
             return html.Div([preview_ui, config_card])
-            
+
         except Exception as e:
             logger.error(f"Preview creation failed: {e}")
             # Fallback to simple table
             return dash_table.DataTable(
                 data=df.head(10).to_dict("records"),
                 columns=[{"name": col, "id": col} for col in df.columns],
-                style_table={"overflowX": "auto"}
+                style_table={"overflowX": "auto"},
             )
 if __name__ == '__main__':
     # Create and run the minimal test app
