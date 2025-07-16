@@ -24,12 +24,14 @@ def create_app(mode=None, **kwargs):
         [
             dcc.Location(id="url", refresh=False),
             create_navbar_layout(),
-            html.Div(id="page-content", className="main-content p-4"),
+            html.Div(
+                id="page-content",
+                className="main-content p-4",
+                style={"paddingTop": "70px"},  # offset fixed-top navbar
+            ),
             dcc.Store(id="global-store", data={}),
         ]
     )
-
-
 
     # Simple routing callback that uses REAL pages
     @app.callback(Output("page-content", "children"), Input("url", "pathname"))
@@ -50,5 +52,6 @@ def create_app(mode=None, **kwargs):
 
         # Fallback to analytics page
         return deep_analytics.layout()
+
     app.title = "🏯 Yōsai Intel Dashboard"
     return app
