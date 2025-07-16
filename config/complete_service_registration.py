@@ -13,6 +13,7 @@ from core.protocols import (
     StorageProtocol,
 )
 from core.service_container import ServiceContainer
+from services.metadata_enhancement_engine import register_metadata_services
 
 
 def register_all_application_services(container: ServiceContainer) -> None:
@@ -21,6 +22,7 @@ def register_all_application_services(container: ServiceContainer) -> None:
     register_core_infrastructure(container)
     register_analytics_services(container)
     register_learning_services(container)
+    register_metadata_services(container)
     register_security_services(container)
     register_export_services(container)
     from services.upload.service_registration import register_upload_services
