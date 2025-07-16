@@ -8,15 +8,15 @@ try:
     from .auto_config import PluginAutoConfiguration
     from .manager import ThreadSafePluginManager as PluginManager
     from .performance_manager import EnhancedThreadSafePluginManager
-    from .decorators import safe_callback
-
     PLUGINS_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Plugin system not available: {e}")
     PLUGINS_AVAILABLE = False
 
     class PluginManager:
-        def __init__(self, *args, **kwargs):
+        """Minimal stub used when plugin dependencies are missing."""
+
+        def __init__(self, *args, **kwargs) -> None:  # pragma: no cover - simple stub
             pass
 
         def discover_plugins(self):
@@ -26,7 +26,9 @@ except ImportError as e:
             return False
 
     class PluginAutoConfiguration:
-        def __init__(self, *args, **kwargs):
+        """No-op auto configuration when plugins are disabled."""
+
+        def __init__(self, *args, **kwargs) -> None:  # pragma: no cover - simple stub
             pass
 
         def scan_and_configure(self, *args):
