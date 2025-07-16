@@ -12,8 +12,10 @@ PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 import dash
-from dash import dcc, html, dash_table
+from dash import dcc, html, callback_context
 from dash.dependencies import Input, Output, State
+import dash_table
+
 import pandas as pd
 import dash_bootstrap_components as dbc
 from components.column_verification import (
@@ -45,10 +47,10 @@ class MVPTestApp:
     
     def __init__(self):
         self.container = ServiceContainer()
-        self.upload_service = None
-        self.learning_service = None
-        self.analytics_accessor = None
-        self.session_data = {}
+        self.upload_service: UploadProcessingService | None = None
+        self.learning_service: DeviceLearningService | None = None
+        self.analytics_accessor: AnalyticsDataAccessor | None = None
+        self.session_data: dict = {}
         
         self._initialize_services()
         self._create_app()
@@ -75,17 +77,17 @@ class MVPTestApp:
     def _create_app(self):
         """Create Dash app with minimal layout"""
         self.app = dash.Dash(
-            __name__,
+            name=__name__,
             external_stylesheets=[dbc.themes.BOOTSTRAP],
             suppress_callback_exceptions=True,
         )
-        self.app.title = "MVP Data Enhancement - Base Code Test"
+        self.app.title = "MVP Data Enhancement - Base Code Test"  # type: ignore[attr-defined]
 
         # Manager allowing callbacks for dynamically created components
         self.callback_manager = MasterCallbackSystem(self.app)
         
         # Simple layout testing the complete flow
-        self.app.layout = dbc.Container([
+        self.app.layout = dbc.Container([  # type: ignore[attr-defined]
             dbc.Row([
                 dbc.Col([
                     html.H1("MVP Data Enhancement Tool", className="text-center mb-4"),
@@ -209,6 +211,7 @@ class MVPTestApp:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 
+                assert self.upload_service is not None
                 result_dict = loop.run_until_complete(
                     self.upload_service.process_uploaded_files([contents], [filename])
                 )
@@ -231,6 +234,7 @@ class MVPTestApp:
                     
                     # Get the stored dataframe
                     try:
+                        assert self.upload_service is not None
                         stored_data = self.upload_service.store.get_all_data()
                         df = stored_data.get(filename)
                         logger.info(f"📊 Retrieved DataFrame: {df.shape if df is not None else 'None'}")
@@ -268,7 +272,7 @@ class MVPTestApp:
         )
         def handle_download(csv_clicks, json_clicks, session_data):
             """Handle download using base code"""
-            ctx = dash.callback_context
+            ctx = callback_context
             if not ctx.triggered or not session_data.get('df'):
                 return dash.no_update
             
@@ -337,6 +341,7 @@ class MVPTestApp:
         
         try:
             # Mirror the exact base code upload processor flow
+            assert self.learning_service is not None
             user_mappings = self.learning_service.get_user_device_mappings(filename)
             
             if user_mappings:
@@ -354,17 +359,18 @@ class MVPTestApp:
                 ai_mapping_store.clear()
                 
                 # Mirror base code auto_apply_learned_mappings call
+                assert self.upload_service is not None
                 learned_applied = self.upload_service.auto_apply_learned_mappings(df, filename)
                 
                 if not learned_applied:
                     # Generate AI device defaults for new files (base code pattern)
-                    from components.simple_device_mapping import generate_ai_device_defaults
-                    generate_ai_device_defaults(df, "auto")
+                    from components import simple_device_mapping as sdm
+                    sdm.generate_ai_device_defaults(df, "auto")
                     logger.info("🤖 Generated AI device defaults for new file")
             
             # Create device mapping UI section (base code pattern)
-            from components.simple_device_mapping import create_device_mapping_section
-            device_section = create_device_mapping_section()
+            from components import simple_device_mapping as sdm
+            device_section = sdm.create_device_mapping_section()
             
             # Add status information
             store_data = ai_mapping_store.all()
@@ -462,4 +468,4 @@ if __name__ == '__main__':
     # Start the web UI after device analysis
     print("\n=== STARTING WEB UI ===")
     print("🌐 Device analysis complete - launching web interface...")
-    app.app.run()
+    app.app.run()  # type: ignore[attr-defined]
