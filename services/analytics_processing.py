@@ -8,14 +8,20 @@ from dash import html
 from core.unicode import safe_format_number
 from core.unicode_utils import sanitize_for_utf8
 from services import get_analytics_service
+
 try:
     from services.ai_suggestions import generate_column_suggestions
+
     AI_SUGGESTIONS_AVAILABLE = True
 except Exception:  # pragma: no cover - optional AI suggestions
     AI_SUGGESTIONS_AVAILABLE = False
 
-    def generate_column_suggestions(*args: Any, **kwargs: Any) -> Dict[str, Dict[str, Any]]:
+    def generate_column_suggestions(
+        *args: Any, **kwargs: Any
+    ) -> Dict[str, Dict[str, Any]]:
         return {}
+
+
 from services.upload_data_service import get_uploaded_data
 from services.interfaces import get_upload_data_service
 from utils.preview_utils import serialize_dataframe_preview
@@ -52,9 +58,7 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
                     status = (
                         "🟢 High"
                         if conf >= 0.7
-                        else "🟡 Medium"
-                        if conf >= 0.4
-                        else "🔴 Low"
+                        else "🟡 Medium" if conf >= 0.4 else "🔴 Low"
                     )
                     try:
                         sample_data = df[column].dropna().head(3).astype(str).tolist()
@@ -96,7 +100,7 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
 
 
 def create_suggests_display(
-    suggests_data: Dict[str, Any]
+    suggests_data: Dict[str, Any],
 ) -> html.Div | dbc.Card | dbc.Alert:
     """Create suggests analysis display components."""
     if "error" in suggests_data:
@@ -111,7 +115,9 @@ def create_suggests_display(
 
         summary_card = dbc.Card(
             [
-                dbc.CardHeader([html.H5(f"🤖 AI Column Mapping Analysis - {filename}")]),
+                dbc.CardHeader(
+                    [html.H5(f"🤖 AI Column Mapping Analysis - {filename}")]
+                ),
                 dbc.CardBody(
                     [
                         dbc.Row(
@@ -131,11 +137,15 @@ def create_suggests_display(
                                         dbc.Progress(
                                             value=avg_confidence * 100,
                                             label=f"{avg_confidence:.1%}",
-                                            color="success"
-                                            if avg_confidence >= 0.7
-                                            else "warning"
-                                            if avg_confidence >= 0.4
-                                            else "danger",
+                                            color=(
+                                                "success"
+                                                if avg_confidence >= 0.7
+                                                else (
+                                                    "warning"
+                                                    if avg_confidence >= 0.4
+                                                    else "danger"
+                                                )
+                                            ),
                                         ),
                                     ],
                                     width=4,
@@ -145,9 +155,12 @@ def create_suggests_display(
                                         html.H6("Confident Mappings"),
                                         html.H3(
                                             f"{confident_mappings}/{total_columns}",
-                                            className="text-success"
-                                            if confident_mappings >= total_columns * 0.7
-                                            else "text-warning",
+                                            className=(
+                                                "text-success"
+                                                if confident_mappings
+                                                >= total_columns * 0.7
+                                                else "text-warning"
+                                            ),
                                         ),
                                     ],
                                     width=4,
@@ -170,11 +183,15 @@ def create_suggests_display(
                             dbc.Progress(
                                 value=s["confidence"] * 100,
                                 label=f"{s['confidence']:.1%}",
-                                color="success"
-                                if s["confidence"] >= 0.7
-                                else "warning"
-                                if s["confidence"] >= 0.4
-                                else "danger",
+                                color=(
+                                    "success"
+                                    if s["confidence"] >= 0.7
+                                    else (
+                                        "warning"
+                                        if s["confidence"] >= 0.4
+                                        else "danger"
+                                    )
+                                ),
                             )
                         ),
                         html.Td(s["status"]),
@@ -543,9 +560,7 @@ def create_analysis_results_display(
             color = (
                 "danger"
                 if sec_metrics["risk_level"] == "High"
-                else "warning"
-                if sec_metrics["risk_level"] == "Medium"
-                else "success"
+                else "warning" if sec_metrics["risk_level"] == "Medium" else "success"
             )
         elif analysis_type == "trends":
             specific_content = [
@@ -595,9 +610,11 @@ def create_analysis_results_display(
                                         dbc.Progress(
                                             value=success_rate * 100,
                                             label=f"Success Rate: {success_rate:.1%}",
-                                            color="success"
-                                            if success_rate > 0.8
-                                            else "warning",
+                                            color=(
+                                                "success"
+                                                if success_rate > 0.8
+                                                else "warning"
+                                            ),
                                         ),
                                     ],
                                     width=6,
@@ -625,6 +642,13 @@ def create_analysis_results_display(
         return dbc.Alert(f"Error displaying results: {exc}", color="danger")
 
 
+def create_analysis_results_display_safe(
+    results: Dict[str, Any], analysis_type: str
+) -> html.Div | dbc.Card | dbc.Alert:
+    """Safer variant of :func:`create_analysis_results_display`."""
+    return create_analysis_results_display(results, analysis_type)
+
+
 __all__ = [
     "process_suggests_analysis",
     "create_suggests_display",
@@ -632,4 +656,5 @@ __all__ = [
     "create_data_quality_display",
     "analyze_data_with_service",
     "create_analysis_results_display",
+    "create_analysis_results_display_safe",
 ]
