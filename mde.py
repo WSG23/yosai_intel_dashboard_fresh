@@ -12,7 +12,8 @@ PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 import dash
-from dash import dcc, html, Input, Output, State, dash_table
+from dash import dcc, html, dash_table
+from dash.dependencies import Input, Output, State
 import pandas as pd
 import dash_bootstrap_components as dbc
 from components.column_verification import (
