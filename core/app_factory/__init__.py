@@ -4,6 +4,7 @@
 import dash
 from dash import html, dcc, Input, Output
 import dash_bootstrap_components as dbc
+from pathlib import Path
 from components.ui.navbar import create_navbar_layout
 from pages import (
     file_upload,
@@ -35,8 +36,6 @@ def create_app(mode=None, **kwargs):
         ]
     )
 
-
-
     # Simple routing callback that uses REAL pages
     @app.callback(Output("page-content", "children"), Input("url", "pathname"))
     def display_page(pathname):
@@ -56,5 +55,6 @@ def create_app(mode=None, **kwargs):
 
         # Fallback to analytics page
         return deep_analytics.layout()
+
     app.title = "🏯 Yōsai Intel Dashboard"
     return app
