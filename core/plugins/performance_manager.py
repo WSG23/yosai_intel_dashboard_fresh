@@ -148,5 +148,41 @@ class EnhancedThreadSafePluginManager(ThreadSafePluginManager):
 
     # ------------------------------------------------------------------
     def _start_monitoring(self) -> None:
-        pass
+        import psutil
+
+        self._perf_monitor_active = True
+        self._monitor_interval = 60
+
+        proc = psutil.Process()
+
+        def monitor_loop() -> None:
+            while self._perf_monitor_active:
+                cpu = proc.cpu_percent(interval=None)
+                mem = proc.memory_info().rss / (1024 * 1024)
+
+                self.performance_manager.record_plugin_metric(
+                    "system", "cpu_usage", cpu
+                )
+                self.performance_manager.record_plugin_metric(
+                    "system", "memory_usage", mem
+                )
+
+                thresholds = self.performance_manager.performance_thresholds
+                if thresholds.get("cpu_usage") and cpu > thresholds["cpu_usage"]:
+                    self.performance_manager.alert_history.append(
+                        {"plugin": "system", "metric": "cpu_usage", "value": cpu}
+                    )
+                if thresholds.get("memory_usage") and mem > thresholds["memory_usage"]:
+                    self.performance_manager.alert_history.append(
+                        {
+                            "plugin": "system",
+                            "metric": "memory_usage",
+                            "value": mem,
+                        }
+                    )
+
+                time.sleep(self._monitor_interval)
+
+        self._perf_thread = threading.Thread(target=monitor_loop, daemon=True)
+        self._perf_thread.start()
 
