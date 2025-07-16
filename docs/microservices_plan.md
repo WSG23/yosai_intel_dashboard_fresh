@@ -1,13 +1,19 @@
-# Microservices Gateway and Mesh Plan
+# Microservices Decomposition Plan
 
-This document outlines a proposed architecture for integrating an API gateway and a service mesh.
+This document summarizes the initial planning work for splitting the monolithic
+application into smaller services.
 
-## API Gateway
+## Service Boundary Identification
 
-The gateway will sit at the edge of the deployment and expose a single entry point for all HTTP traffic. Each service boundary is mapped to a set of routes in the gateway configuration. Security policies such as authentication and rate limiting are applied globally, while observability hooks forward metrics and traces to the monitoring stack.
+The `MicroservicesArchitect` inspects existing modules and groups related
+responsibilities into draft service boundaries. In this simplified placeholder
+implementation each module maps directly to a boundary so that the
+architecture can be visualised early.
 
-## Service Mesh
+## Decomposition Roadmap
 
-Internal communication between microservices occurs inside a lightweight service mesh. Service entries represent each deployable unit. Traffic policies define how requests flow between them, enabling retries and circuit breaking. Observability is built in through distributed tracing and metrics collection.
+After boundaries are identified the next phase is **decomposition**. This phase
+iteratively extracts modules into standalone services and defines integration
+points between them. The generated roadmap lists the planned phases and the
+order in which services will be carved out.
 
-The planner in `services/api_gateway_planner.py` produces skeleton configurations that can be expanded as the platform evolves.
