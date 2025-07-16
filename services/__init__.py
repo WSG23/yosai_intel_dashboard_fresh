@@ -5,7 +5,10 @@ import logging
 from .ai_mapping_store import ai_mapping_store
 from .analytics.upload_analytics import UploadAnalyticsProcessor
 from .analytics_generator import AnalyticsGenerator
+from .analytics_processor import AnalyticsProcessor
+from .async_file_processor import AsyncFileProcessor
 from .chunked_analysis import analyze_with_chunking
+from .data_loader import DataLoader
 from .data_processing.processor import Processor
 from .data_processing.unified_file_validator import UnifiedFileValidator
 from .db_analytics_helper import DatabaseAnalyticsHelper
@@ -17,8 +20,6 @@ from .result_formatting import (
     regular_analysis,
 )
 from .summary_reporter import SummaryReporter
-from .data_loader import DataLoader
-from .analytics_processor import AnalyticsProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,7 @@ __all__ = [
     "regular_analysis",
     "ai_mapping_store",
     "UploadAnalyticsProcessor",
+    "AsyncFileProcessor",
     "DatabaseAnalyticsHelper",
     "SummaryReporter",
     "DataLoader",

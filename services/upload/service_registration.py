@@ -1,33 +1,32 @@
 """Service registration for upload domain using ``ServiceContainer``."""
+
 from __future__ import annotations
 
+from config.dynamic_config import dynamic_config
 from core.service_container import (
+    CircularDependencyError,
+    DependencyInjectionError,
     ServiceContainer,
     ServiceLifetime,
-    DependencyInjectionError,
-    CircularDependencyError,
 )
-
-from services.upload.protocols import (
-    UploadProcessingServiceProtocol,
-    UploadValidatorProtocol,
-    FileProcessorProtocol,
-    UploadControllerProtocol,
-    UploadStorageProtocol,
-)
+from services.async_file_processor import AsyncFileProcessor
+from services.device_learning_service import DeviceLearningService
 from services.interfaces import (
     DeviceLearningServiceProtocol,
     UploadDataServiceProtocol,
 )
-
+from services.upload.controllers.upload_controller import UnifiedUploadController
 from services.upload.core.processor import UploadProcessingService
 from services.upload.core.validator import ClientSideValidator
-from services.upload.controllers.upload_controller import UnifiedUploadController
-from services.data_processing.async_file_processor import AsyncFileProcessor
-from utils.upload_store import UploadedDataStore
-from services.device_learning_service import DeviceLearningService
+from services.upload.protocols import (
+    FileProcessorProtocol,
+    UploadControllerProtocol,
+    UploadProcessingServiceProtocol,
+    UploadStorageProtocol,
+    UploadValidatorProtocol,
+)
 from services.upload_data_service import UploadDataService
-from config.dynamic_config import dynamic_config
+from utils.upload_store import UploadedDataStore
 
 
 def register_upload_services(container: ServiceContainer) -> None:
@@ -92,4 +91,3 @@ def configure_upload_dependencies(container: ServiceContainer) -> None:
         raise CircularDependencyError(
             f"Circular dependencies: {results['circular_dependencies']}"
         )
-
