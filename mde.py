@@ -309,26 +309,49 @@ class MVPTestApp:
         ])
     
     def _create_device_display(self, df, filename):
-        """Create device analysis display using base code"""
+        """Mirror base code device mapping flow exactly"""
         if df is None or df.empty:
             return dbc.Alert("No device data available", color="info")
         
-        # Use base code device learning service
         try:
-            device_mappings = self.learning_service.get_user_device_mappings(filename)
+            # Mirror the exact base code upload processor flow
+            user_mappings = self.learning_service.get_user_device_mappings(filename)
             
-            if device_mappings:
-                device_list = [html.Li(f"{device}: {attrs}") for device, attrs in device_mappings.items()]
+            if user_mappings:
+                # Load user mappings into ai_mapping_store (exactly like base code)
+                from services.ai_mapping_store import ai_mapping_store
+                ai_mapping_store.clear()
+                for device, mapping in user_mappings.items():
+                    mapping["source"] = "user_confirmed" 
+                    ai_mapping_store.set(device, mapping)
+                
+                device_list = [html.Li(f"{device}: {attrs}") for device, attrs in user_mappings.items()]
                 return html.Div([
-                    html.H6("🚪 Learned Device Mappings:"),
-                    html.Ul(device_list[:10])  # Show first 10
+                    html.H6("✅ Loaded User Confirmed Mappings:"),
+                    html.Ul(device_list[:10]),
+                    dbc.Alert(f"Loaded {len(user_mappings)} saved mappings - AI SKIPPED", color="success")
                 ])
             else:
-                return dbc.Alert("No learned device mappings found", color="info")
+                # No user mappings - use auto_apply_learned_mappings (exactly like base code)
+                from services.ai_mapping_store import ai_mapping_store
+                ai_mapping_store.clear()
                 
+                # Mirror base code auto_apply_learned_mappings call
+                learned_applied = self.upload_service.auto_apply_learned_mappings(df, filename)
+                
+                if learned_applied:
+                    store_data = ai_mapping_store.all()
+                    device_list = [html.Li(f"{device}: {attrs}") for device, attrs in store_data.items()]
+                    return html.Div([
+                        html.H6("🎯 Applied Learned Mappings:"),
+                        html.Ul(device_list[:10]),
+                        dbc.Alert(f"Auto-applied {len(store_data)} learned device mappings", color="info")
+                    ])
+                else:
+                    return dbc.Alert("🆕 First upload - AI will be used", color="info")
+                    
         except Exception as e:
-            return dbc.Alert(f"Device analysis error: {str(e)}", color="warning")
-    
+            return dbc.Alert(f"Device analysis error: {str(e)}", color="warning")    
     def _create_data_display(self, df):
         """Create data preview using base code"""
         if df is None or df.empty:
