@@ -11,16 +11,17 @@ from security_callback_controller import (
 
 from .analyzer import (
     EnhancedSecurityAnalyzer,
-    SecurityPatternsAnalyzer,
     PaginatedAnalyzer,
+    SecurityPatternsAnalyzer,
     create_security_analyzer,
 )
+from .config import SecurityPatternsConfig
 from .data_prep import prepare_security_data
 from .pattern_detection import (
     detect_after_hours_anomalies,
+    detect_critical_door_risks,
     detect_pattern_threats,
     detect_rapid_attempts,
-    detect_critical_door_risks,
 )
 from .no_access_detection import detect_no_access
 from .statistical_detection import (
@@ -49,6 +50,7 @@ __all__ = [
     "detect_critical_door_risks",
     "detect_no_access",
     "ThreatIndicator",
+    "SecurityPatternsConfig",
 ]
 
 
