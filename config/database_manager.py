@@ -7,6 +7,7 @@ Database Manager - Fixed imports for streamlined architecture
 import logging
 import sqlite3
 import threading
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
@@ -330,12 +331,14 @@ class EnhancedPostgreSQLManager(DatabaseManager):
     ) -> None:
         super().__init__(config)
         from database.connection_pool import EnhancedConnectionPool
+        from database.performance_analyzer import DatabasePerformanceAnalyzer
 
         from .connection_retry import ConnectionRetryManager, RetryConfig
 
         self.retry_manager: ConnectionRetryManagerProtocol = ConnectionRetryManager(
             retry_config or RetryConfig()
         )
+        self.performance_analyzer = DatabasePerformanceAnalyzer()
         self.pool = EnhancedConnectionPool(
             self._create_connection,
             self.config.initial_pool_size,
@@ -361,7 +364,13 @@ class EnhancedPostgreSQLManager(DatabaseManager):
         def run():
             conn = self.pool.get_connection()
             try:
-                return conn.execute_query(encoded_query, encoded_params)
+                start = time.perf_counter()
+                result = conn.execute_query(encoded_query, encoded_params)
+                elapsed = time.perf_counter() - start
+                self.performance_analyzer.analyze_query_performance(
+                    encoded_query, elapsed
+                )
+                return result
             finally:
                 self.pool.release_connection(conn)
 
