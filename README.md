@@ -61,9 +61,9 @@ The navigation bar now uses **FontAwesome** icons by default. PNG images in
 helper or the debug utilities. Common filenames referenced by the debug tool
 include:
 
-* `dashboard.png`
 * `analytics.png`
 * `graphs.png`
+* `export.png`
 * `upload.png`
 * `print.png`
 * `settings.png`
