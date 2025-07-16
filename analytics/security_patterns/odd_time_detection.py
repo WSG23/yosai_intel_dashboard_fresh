@@ -9,7 +9,8 @@ from database.baseline_metrics import BaselineMetricsDB
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
-from models.enums import AnomalyType
+from .column_validation import ensure_columns
+
 
 __all__ = ["detect_odd_time"]
 
@@ -23,6 +24,8 @@ def detect_odd_time(
     baseline = BaselineMetricsDB()
     try:
         if len(df) == 0:
+            return threats
+        if not ensure_columns(df, ["person_id", "hour"], logger):
             return threats
         for person_id, group in df.groupby("person_id"):
             hours = group["hour"]

@@ -8,7 +8,8 @@ import pandas as pd
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
-from models.enums import AnomalyType
+from .column_validation import ensure_columns
+
 
 __all__ = ["detect_forced_entry"]
 
@@ -22,7 +23,7 @@ def detect_forced_entry(
     try:
         if len(df) == 0:
             return threats
-        if "door_held_open_time" not in df.columns:
+        if not ensure_columns(df, ["door_held_open_time", "door_id"], logger):
             return threats
         suspicious = df[df["door_held_open_time"] > 10]
         for _, row in suspicious.iterrows():

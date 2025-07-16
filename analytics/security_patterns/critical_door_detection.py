@@ -9,7 +9,8 @@ from utils.sklearn_compat import optional_import
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
-from models.enums import AnomalyType
+from .column_validation import ensure_columns
+
 
 IsolationForest = optional_import("sklearn.ensemble.IsolationForest")
 
@@ -30,6 +31,12 @@ def detect_critical_door_anomalies(
     threats: List[ThreatIndicator] = []
     try:
         if len(df) == 0:
+            return threats
+        if not ensure_columns(
+            df,
+            ["timestamp", "person_id", "door_id", "is_after_hours", "access_granted"],
+            logger,
+        ):
             return threats
 
         door_stats = df.groupby("door_id").agg(

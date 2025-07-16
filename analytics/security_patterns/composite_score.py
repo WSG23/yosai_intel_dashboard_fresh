@@ -10,7 +10,8 @@ from utils.sklearn_compat import optional_import
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
-from models.enums import AnomalyType
+from .column_validation import ensure_columns
+
 
 IsolationForest = optional_import("sklearn.ensemble.IsolationForest")
 
@@ -31,6 +32,18 @@ def detect_composite_score(
     threats: List[ThreatIndicator] = []
     try:
         if len(df) < 5:
+            return threats
+        if not ensure_columns(
+            df,
+            [
+                "hour",
+                "is_after_hours",
+                "access_granted",
+                "person_id",
+                "door_id",
+            ],
+            logger,
+        ):
             return threats
         features = df[["hour", "is_after_hours", "access_granted"]].astype(float)
         iso = IsolationForest(contamination=0.1, random_state=42)

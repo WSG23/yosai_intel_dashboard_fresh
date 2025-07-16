@@ -9,7 +9,8 @@ import pandas as pd
 from .types import ThreatIndicator
 from .odd_area_detection import _door_to_area
 from .pattern_detection import _attack_info
-from models.enums import AnomalyType
+from .column_validation import ensure_columns
+
 
 __all__ = ["detect_odd_area_time"]
 
@@ -22,6 +23,8 @@ def detect_odd_area_time(
     threats: List[ThreatIndicator] = []
     try:
         if len(df) == 0:
+            return threats
+        if not ensure_columns(df, ["door_id", "person_id", "is_after_hours"], logger):
             return threats
         df = df.copy(deep=False)
         df["area"] = df["door_id"].apply(_door_to_area)
