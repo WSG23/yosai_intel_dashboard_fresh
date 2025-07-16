@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Export page providing download instructions."""
 
+import logging
 import dash_bootstrap_components as dbc
 from dash import dcc, html, register_page as dash_register_page
 
@@ -10,10 +11,7 @@ from security.unicode_security_processor import sanitize_unicode_input
 def register_page(app=None) -> None:
     """Register the export page with Dash."""
     try:
-        if app is not None:
-            app.register_page(__name__, path="/export", name="Export")
-        else:
-            dash_register_page(__name__, path="/export", name="Export")
+        dash_register_page(__name__, path="/export", name="Export", app=app)
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.warning(f"Failed to register page {__name__}: {e}")

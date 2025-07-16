@@ -130,10 +130,7 @@ def handle_upload(contents: str | List[str], filenames: str | List[str]):
 def register_page(app=None):
     """Register this page with Dash."""
     try:
-        if app is not None:
-            app.register_page(__name__, path="/upload", name="Upload")
-        else:
-            dash_register_page(__name__, path="/upload", name="Upload")
+        dash_register_page(__name__, path="/upload", name="Upload", app=app)
     except Exception as e:  # pragma: no cover - best effort
         logger.warning("Failed to register page %s: %s", __name__, e)
 

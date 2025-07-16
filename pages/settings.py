@@ -102,10 +102,7 @@ def load_page(**kwargs) -> SettingsPage:
 def register_page(app=None) -> None:
     """Register the settings page with Dash."""
     try:
-        if app is not None:
-            app.register_page(__name__, path="/settings", name="Settings")
-        else:
-            dash_register_page(__name__, path="/settings", name="Settings")
+        dash_register_page(__name__, path="/settings", name="Settings", app=app)
     except Exception as e:
         import logging
 

@@ -218,10 +218,7 @@ def load_page(**kwargs):
 
 def register_page(app=None):
     try:
-        if app is not None:
-            app.register_page(__name__, path="/upload", name="Upload")
-        else:
-            dash_register_page(__name__, path="/upload", name="Upload")
+        dash_register_page(__name__, path="/upload", name="Upload", app=app)
     except Exception as e:
         logger.warning(f"Failed to register page {__name__}: {e}")
 
