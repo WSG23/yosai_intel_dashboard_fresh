@@ -13,6 +13,7 @@ from .types import ThreatIndicator
 from utils.sklearn_compat import optional_import
 from .column_validation import ensure_columns
 
+
 LogisticRegression = optional_import("sklearn.linear_model.LogisticRegression")
 
 if LogisticRegression is None:  # pragma: no cover - fallback
@@ -188,7 +189,7 @@ def detect_critical_door_risks(
             severity = "critical" if prob > 0.9 else "high"
             threats.append(
                 ThreatIndicator(
-                    threat_type="critical_door_anomaly",
+                    threat_type=AnomalyType.CRITICAL_DOOR,
                     severity=severity,
                     confidence=float(prob),
                     description=(

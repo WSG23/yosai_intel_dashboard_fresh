@@ -9,6 +9,7 @@ import pandas as pd
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
 from .column_validation import ensure_columns
+
 from database.baseline_metrics import BaselineMetricsDB
 
 __all__ = ["detect_odd_door_usage"]
@@ -38,7 +39,7 @@ def detect_odd_door_usage(
                     confidence = min(0.99, rate - base_rate)
                     threats.append(
                         ThreatIndicator(
-                            threat_type="odd_door_anomaly",
+                            threat_type=AnomalyType.ODD_DOOR,
                             severity="medium",
                             confidence=confidence,
                             description=f"User {person_id} unusual access to door {door_id}",
@@ -50,7 +51,7 @@ def detect_odd_door_usage(
                             },
                             timestamp=datetime.now(),
                             affected_entities=[str(person_id), str(door_id)],
-                            attack=_attack_info("odd_door_anomaly"),
+                            attack=_attack_info(AnomalyType.ODD_DOOR.value),
                         )
                     )
             # update baseline

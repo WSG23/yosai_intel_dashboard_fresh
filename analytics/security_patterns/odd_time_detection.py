@@ -11,6 +11,7 @@ from .types import ThreatIndicator
 from .pattern_detection import _attack_info
 from .column_validation import ensure_columns
 
+
 __all__ = ["detect_odd_time"]
 
 
@@ -38,7 +39,7 @@ def detect_odd_time(
                     confidence = min(0.99, abs(row["hour"] - base_mean) / (base_std + 1e-9))
                     threats.append(
                         ThreatIndicator(
-                            threat_type="odd_time_anomaly",
+                            threat_type=AnomalyType.ODD_TIME,
                             severity="medium",
                             confidence=float(confidence),
                             description=f"User {person_id} accessed at unusual hour {row['hour']}",
@@ -49,7 +50,7 @@ def detect_odd_time(
                             },
                             timestamp=datetime.now(),
                             affected_entities=[str(person_id)],
-                            attack=_attack_info("odd_time_anomaly"),
+                            attack=_attack_info(AnomalyType.ODD_TIME.value),
                         )
                     )
             baseline.update_baseline(
