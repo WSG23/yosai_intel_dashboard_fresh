@@ -143,20 +143,13 @@ def load_page(**kwargs) -> AnalyticsPage:
 def register_page(app=None) -> None:
     """Register the analytics page with Dash."""
     try:
-        if app is not None:
-            app.register_page(
-                __name__,
-                path="/analytics",
-                name="Analytics",
-                aliases=["/", "/dashboard"],
-            )
-        else:
-            dash_register_page(
-                __name__,
-                path="/analytics",
-                name="Analytics",
-                aliases=["/", "/dashboard"],
-            )
+        dash_register_page(
+            __name__,
+            path="/analytics",
+            name="Analytics",
+            aliases=["/", "/dashboard"],
+            app=app,
+        )
     except Exception as e:
         import logging
 
