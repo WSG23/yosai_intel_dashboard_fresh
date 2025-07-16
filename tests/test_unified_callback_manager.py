@@ -33,10 +33,13 @@ def test_timeout_records_error():
 
     def slow():
         import time
+
         time.sleep(0.05)
         return True
 
     manager.register_operation("grp", slow, name="slow", timeout=0.01)
     res = manager.execute_group("grp")
     assert res == [None]
-    assert any(ctx.message.startswith("Operation slow") for ctx in error_handler.error_history)
+    assert any(
+        ctx.message.startswith("Operation slow") for ctx in error_handler.error_history
+    )

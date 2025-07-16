@@ -1,4 +1,3 @@
-
 """Security Patterns Analyzer.
 
 This module applies machine learning techniques to identify suspicious
@@ -6,7 +5,6 @@ access behavior. It combines statistical anomaly detection, pattern
 analysis and risk scoring to generate a comprehensive security assessment
 with actionable recommendations.
 """
-
 
 import logging
 import warnings
@@ -26,15 +24,20 @@ DataConversionWarning = optional_import("sklearn.exceptions.DataConversionWarnin
 StandardScaler = optional_import("sklearn.preprocessing.StandardScaler")
 
 if IsolationForest is None:  # pragma: no cover - fallback definitions
+
     class IsolationForest:  # type: ignore
         def __init__(self, *args, **kwargs):
             raise ImportError("scikit-learn is required for IsolationForest")
 
+
 if DataConversionWarning is None:  # pragma: no cover
+
     class DataConversionWarning(RuntimeWarning):
         pass
 
+
 if StandardScaler is None:  # pragma: no cover
+
     class StandardScaler:  # type: ignore
         def fit_transform(self, X):
             return X
@@ -42,7 +45,10 @@ if StandardScaler is None:  # pragma: no cover
         def transform(self, X):
             return X
 
-from analytics_core.callbacks.unified_callback_manager import CallbackManager as SecurityCallbackController
+
+from analytics_core.callbacks.unified_callback_manager import (
+    CallbackManager as SecurityCallbackController,
+)
 from security_callback_controller import (
     SecurityEvent,
     emit_security_event,
@@ -70,6 +76,7 @@ warnings.filterwarnings(
     category=DataConversionWarning,
     module="sklearn",
 )
+
 
 @dataclass
 class SecurityAssessment:
@@ -242,11 +249,17 @@ class SecurityPatternsAnalyzer:
                 baseline = self.baseline_db.get_baseline("user", str(user_id)).get(
                     "failure_rate"
                 )
-                if baseline is not None and current_rate > baseline * 1.5 and current_rate - baseline > 0.1:
+                if (
+                    baseline is not None
+                    and current_rate > baseline * 1.5
+                    and current_rate - baseline > 0.1
+                ):
                     threats.append(
                         ThreatIndicator(
                             threat_type="failure_rate_deviation",
-                            severity="high" if current_rate - baseline > 0.3 else "medium",
+                            severity=(
+                                "high" if current_rate - baseline > 0.3 else "medium"
+                            ),
                             confidence=min(0.99, current_rate - baseline),
                             description=(
                                 f"User {user_id} failure rate {current_rate:.2%} exceeds baseline {baseline:.2%}"
@@ -274,7 +287,11 @@ class SecurityPatternsAnalyzer:
                 baseline = self.baseline_db.get_baseline("user", str(user_id)).get(
                     "total_events"
                 )
-                if baseline is not None and count > baseline * 2 and count - baseline > 10:
+                if (
+                    baseline is not None
+                    and count > baseline * 2
+                    and count - baseline > 10
+                ):
                     threats.append(
                         ThreatIndicator(
                             threat_type="access_frequency_deviation",
@@ -310,6 +327,7 @@ class SecurityPatternsAnalyzer:
     def _detect_after_hours_anomalies(self, df: pd.DataFrame) -> List[ThreatIndicator]:
         """Detect suspicious after-hours access patterns"""
         from .pattern_detection import detect_after_hours_anomalies
+
         threats = detect_after_hours_anomalies(df, self.logger)
 
         try:
@@ -321,7 +339,11 @@ class SecurityPatternsAnalyzer:
                 baseline = self.baseline_db.get_baseline("user", str(user_id)).get(
                     "after_hours_rate"
                 )
-                if baseline is not None and rate > baseline * 1.5 and rate - baseline > 0.1:
+                if (
+                    baseline is not None
+                    and rate > baseline * 1.5
+                    and rate - baseline > 0.1
+                ):
                     threats.append(
                         ThreatIndicator(
                             threat_type="after_hours_deviation",
@@ -348,7 +370,11 @@ class SecurityPatternsAnalyzer:
                 baseline = self.baseline_db.get_baseline("door", str(door_id)).get(
                     "after_hours_rate"
                 )
-                if baseline is not None and rate > baseline * 1.5 and rate - baseline > 0.1:
+                if (
+                    baseline is not None
+                    and rate > baseline * 1.5
+                    and rate - baseline > 0.1
+                ):
                     threats.append(
                         ThreatIndicator(
                             threat_type="door_after_hours_deviation",
@@ -553,8 +579,12 @@ class SecurityPatternsAnalyzer:
                     )
 
                 summary["patterns"] = {
-                    "after_hours_rate": float(failed.get("is_after_hours", pd.Series([])).mean()),
-                    "weekend_rate": float(failed.get("is_weekend", pd.Series([])).mean()),
+                    "after_hours_rate": float(
+                        failed.get("is_after_hours", pd.Series([])).mean()
+                    ),
+                    "weekend_rate": float(
+                        failed.get("is_weekend", pd.Series([])).mean()
+                    ),
                 }
 
                 rate = summary["failure_rate"]
@@ -575,7 +605,9 @@ class SecurityPatternsAnalyzer:
             return SecurityMetrics(
                 score=float(result.get("score", 0.0)),
                 threat_level=result.get("threat_level", "unknown"),
-                confidence_interval=tuple(result.get("confidence_interval", (0.0, 0.0))),
+                confidence_interval=tuple(
+                    result.get("confidence_interval", (0.0, 0.0))
+                ),
                 method=result.get("method", "unknown"),
             )
         except Exception as e:
@@ -797,9 +829,9 @@ class PaginatedAnalyzer(SecurityPatternsAnalyzer):
             }
 
             if failure_count:
-                top = sorted(
-                    failure_users.items(), key=lambda x: x[1], reverse=True
-                )[:5]
+                top = sorted(failure_users.items(), key=lambda x: x[1], reverse=True)[
+                    :5
+                ]
                 patterns["failure_patterns"] = {
                     "total_failures": failure_count,
                     "failure_rate": failure_count / total_events,
@@ -876,7 +908,10 @@ def setup_isolated_security_testing(
     handler: Optional[Callable[[Dict[str, Any]], None]] = None
 
     if register_handler:
-        def _handler(data: Dict[str, Any], event: SecurityEvent = SecurityEvent.ANALYSIS_COMPLETE) -> None:
+
+        def _handler(
+            data: Dict[str, Any], event: SecurityEvent = SecurityEvent.ANALYSIS_COMPLETE
+        ) -> None:
             controller.history.append((event, data))
 
         handler = _handler

@@ -8,6 +8,7 @@ from core.security_validator import SecurityValidator
 def _make_processor():
     from flask import Flask
     from core.cache import cache
+
     cache.init_app(Flask(__name__))
     vs = SecurityValidator()
     processor = Processor(validator=vs)
@@ -48,4 +49,3 @@ def test_format_results():
     formatted = ua._format_results({"total_events": 1})
     assert formatted["status"] == "success"
     assert formatted["total_events"] == 1
-

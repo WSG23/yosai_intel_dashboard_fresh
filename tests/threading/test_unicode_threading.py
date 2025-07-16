@@ -28,10 +28,14 @@ def test_process_large_content_threaded():
     content = (pattern * 100000).encode("utf-8", "surrogatepass")  # >1MB
     chunk_size = 50 * 1024
 
-    expected = ChunkedUnicodeProcessor.process_large_content(content, chunk_size=chunk_size)
+    expected = ChunkedUnicodeProcessor.process_large_content(
+        content, chunk_size=chunk_size
+    )
 
     def worker(_: int) -> str:
-        return ChunkedUnicodeProcessor.process_large_content(content, chunk_size=chunk_size)
+        return ChunkedUnicodeProcessor.process_large_content(
+            content, chunk_size=chunk_size
+        )
 
     with ThreadPoolExecutor(max_workers=5) as exc:
         results = list(exc.map(worker, range(10)))

@@ -44,7 +44,9 @@ class FakeUnicodeProcessor(UnicodeProcessorProtocol):
         progress: Union[bool, Callable[[int, int], None], None] = None,
     ) -> pd.DataFrame:
         df_clean = df.copy()
-        df_clean.columns = [self.safe_encode_text(c).lstrip("=+-@") for c in df_clean.columns]
+        df_clean.columns = [
+            self.safe_encode_text(c).lstrip("=+-@") for c in df_clean.columns
+        ]
         for col in df_clean.select_dtypes(include=["object"]).columns:
             df_clean[col] = df_clean[col].apply(self.safe_encode_text)
         return df_clean

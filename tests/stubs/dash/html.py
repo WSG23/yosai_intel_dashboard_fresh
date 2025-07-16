@@ -13,35 +13,46 @@ class _Base:
 class Div(_Base):
     pass
 
+
 class H5(_Base):
     pass
+
 
 class H6(_Base):
     pass
 
+
 class Tr(_Base):
     pass
+
 
 class Td(_Base):
     pass
 
+
 class Th(_Base):
     pass
+
 
 class Thead(_Base):
     pass
 
+
 class Tbody(_Base):
     pass
+
 
 class Br(_Base):
     pass
 
+
 class Small(_Base):
     pass
 
+
 class Strong(_Base):
     pass
+
 
 class Span(_Base):
     pass

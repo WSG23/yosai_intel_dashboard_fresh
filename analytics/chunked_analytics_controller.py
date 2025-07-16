@@ -211,8 +211,12 @@ class ChunkedAnalyticsController:
             result_series = chunk_df[result_col].astype(str).str.lower()
             success_patterns = ["grant", "allow", "success", "permit", "approved"]
             failure_patterns = ["deny", "fail", "block", "reject", "denied", "failed"]
-            success_mask = result_series.str.contains("|".join(success_patterns), na=False)
-            failure_mask = result_series.str.contains("|".join(failure_patterns), na=False)
+            success_mask = result_series.str.contains(
+                "|".join(success_patterns), na=False
+            )
+            failure_mask = result_series.str.contains(
+                "|".join(failure_patterns), na=False
+            )
             results["successful_events"] = int(success_mask.sum())
             if failure_mask.any():
                 results["failed_events"] = int(failure_mask.sum())

@@ -20,20 +20,20 @@ from core.security_validator import SecurityValidator
 logger = logging.getLogger(__name__)
 
 # Create blueprint for compliance endpoints
-compliance_bp = Blueprint('compliance', __name__, url_prefix='/api/v1/compliance')
+compliance_bp = Blueprint("compliance", __name__, url_prefix="/api/v1/compliance")
 
 
 def get_services() -> tuple[ConsentService, DSARService, ComplianceAuditLogger]:
     """Get compliance services from DI container"""
     container = Container()
     return (
-        container.get('consent_service'),
-        container.get('dsar_service'),
-        container.get('audit_logger')
+        container.get("consent_service"),
+        container.get("dsar_service"),
+        container.get("audit_logger"),
     )
 
 
-@compliance_bp.route('/consent', methods=['POST'])
+@compliance_bp.route("/consent", methods=["POST"])
 @login_required
 def grant_consent():
     """
@@ -67,53 +67,58 @@ def grant_consent():
     try:
         data = request.get_json()
         validator = SecurityValidator()
-        
+
         # Validate input
-        if not data or not validator.validate_input(str(data), 'json_data'):
-            return jsonify({'error': 'Invalid request data'}), 400
-        
-        consent_type_str = data.get('consent_type')
-        jurisdiction = data.get('jurisdiction', 'EU')
-        
+        if not data or not validator.validate_input(str(data), "json_data"):
+            return jsonify({"error": "Invalid request data"}), 400
+
+        consent_type_str = data.get("consent_type")
+        jurisdiction = data.get("jurisdiction", "EU")
+
         if not consent_type_str:
-            return jsonify({'error': 'consent_type is required'}), 400
-        
+            return jsonify({"error": "consent_type is required"}), 400
+
         try:
             consent_type = ConsentType(consent_type_str)
         except ValueError:
-            return jsonify({'error': f'Invalid consent_type: {consent_type_str}'}), 400
-        
-        if jurisdiction not in ['EU', 'JP', 'US']:
-            return jsonify({'error': f'Invalid jurisdiction: {jurisdiction}'}), 400
-        
+            return jsonify({"error": f"Invalid consent_type: {consent_type_str}"}), 400
+
+        if jurisdiction not in ["EU", "JP", "US"]:
+            return jsonify({"error": f"Invalid jurisdiction: {jurisdiction}"}), 400
+
         # Get services
         consent_service, _, audit_logger = get_services()
-        
+
         # Grant consent
         success = consent_service.grant_consent(
             user_id=current_user.id,
             consent_type=consent_type,
             jurisdiction=jurisdiction,
             ip_address=request.remote_addr,
-            user_agent=request.headers.get('User-Agent')
+            user_agent=request.headers.get("User-Agent"),
         )
-        
+
         if success:
-            return jsonify({
-                'message': f'Consent granted for {consent_type_str}',
-                'consent_type': consent_type_str,
-                'jurisdiction': jurisdiction,
-                'granted_at': datetime.now(timezone.utc).isoformat()
-            }), 200
+            return (
+                jsonify(
+                    {
+                        "message": f"Consent granted for {consent_type_str}",
+                        "consent_type": consent_type_str,
+                        "jurisdiction": jurisdiction,
+                        "granted_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                ),
+                200,
+            )
         else:
-            return jsonify({'error': 'Failed to grant consent'}), 500
-    
+            return jsonify({"error": "Failed to grant consent"}), 500
+
     except Exception as e:
         logger.error(f"Error granting consent: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
-@compliance_bp.route('/consent/<consent_type>', methods=['DELETE'])
+@compliance_bp.route("/consent/<consent_type>", methods=["DELETE"])
 @login_required
 def withdraw_consent(consent_type: str):
     """
@@ -141,39 +146,44 @@ def withdraw_consent(consent_type: str):
           description: No active consent found
     """
     try:
-        jurisdiction = request.args.get('jurisdiction', 'EU')
-        
+        jurisdiction = request.args.get("jurisdiction", "EU")
+
         try:
             consent_type_enum = ConsentType(consent_type)
         except ValueError:
-            return jsonify({'error': f'Invalid consent_type: {consent_type}'}), 400
-        
+            return jsonify({"error": f"Invalid consent_type: {consent_type}"}), 400
+
         # Get services
         consent_service, _, audit_logger = get_services()
-        
+
         # Withdraw consent
         success = consent_service.withdraw_consent(
             user_id=current_user.id,
             consent_type=consent_type_enum,
-            jurisdiction=jurisdiction
+            jurisdiction=jurisdiction,
         )
-        
+
         if success:
-            return jsonify({
-                'message': f'Consent withdrawn for {consent_type}',
-                'consent_type': consent_type,
-                'jurisdiction': jurisdiction,
-                'withdrawn_at': datetime.now(timezone.utc).isoformat()
-            }), 200
+            return (
+                jsonify(
+                    {
+                        "message": f"Consent withdrawn for {consent_type}",
+                        "consent_type": consent_type,
+                        "jurisdiction": jurisdiction,
+                        "withdrawn_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                ),
+                200,
+            )
         else:
-            return jsonify({'error': 'No active consent found to withdraw'}), 404
-    
+            return jsonify({"error": "No active consent found to withdraw"}), 404
+
     except Exception as e:
         logger.error(f"Error withdrawing consent: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
-@compliance_bp.route('/consent/status', methods=['GET'])
+@compliance_bp.route("/consent/status", methods=["GET"])
 @login_required
 def get_consent_status():
     """
@@ -205,33 +215,40 @@ def get_consent_status():
                       type: object
     """
     try:
-        jurisdiction = request.args.get('jurisdiction', 'EU')
-        
+        jurisdiction = request.args.get("jurisdiction", "EU")
+
         # Get services
         consent_service, _, _ = get_services()
-        
+
         # Get all user consents
         consents = consent_service.get_user_consents(current_user.id)
-        
+
         # Filter by jurisdiction and active status
         active_consents = [
-            consent for consent in consents
-            if consent.get('jurisdiction') == jurisdiction and consent.get('is_active', False)
+            consent
+            for consent in consents
+            if consent.get("jurisdiction") == jurisdiction
+            and consent.get("is_active", False)
         ]
-        
-        return jsonify({
-            'user_id': current_user.id,
-            'jurisdiction': jurisdiction,
-            'consents': active_consents,
-            'retrieved_at': datetime.now(timezone.utc).isoformat()
-        }), 200
-    
+
+        return (
+            jsonify(
+                {
+                    "user_id": current_user.id,
+                    "jurisdiction": jurisdiction,
+                    "consents": active_consents,
+                    "retrieved_at": datetime.now(timezone.utc).isoformat(),
+                }
+            ),
+            200,
+        )
+
     except Exception as e:
         logger.error(f"Error getting consent status: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
-@compliance_bp.route('/dsar/request', methods=['POST'])
+@compliance_bp.route("/dsar/request", methods=["POST"])
 @login_required
 def create_dsar_request():
     """
@@ -269,55 +286,60 @@ def create_dsar_request():
     try:
         data = request.get_json()
         validator = SecurityValidator()
-        
+
         # Validate input
-        if not data or not validator.validate_input(str(data), 'json_data'):
-            return jsonify({'error': 'Invalid request data'}), 400
-        
-        request_type_str = data.get('request_type')
-        email = data.get('email')
-        jurisdiction = data.get('jurisdiction', 'EU')
-        details = data.get('details', {})
-        
+        if not data or not validator.validate_input(str(data), "json_data"):
+            return jsonify({"error": "Invalid request data"}), 400
+
+        request_type_str = data.get("request_type")
+        email = data.get("email")
+        jurisdiction = data.get("jurisdiction", "EU")
+        details = data.get("details", {})
+
         if not request_type_str or not email:
-            return jsonify({'error': 'request_type and email are required'}), 400
-        
+            return jsonify({"error": "request_type and email are required"}), 400
+
         # Validate email format
-        if not validator.validate_input(email, 'email'):
-            return jsonify({'error': 'Invalid email format'}), 400
-        
+        if not validator.validate_input(email, "email"):
+            return jsonify({"error": "Invalid email format"}), 400
+
         try:
             request_type = DSARRequestType(request_type_str)
         except ValueError:
-            return jsonify({'error': f'Invalid request_type: {request_type_str}'}), 400
-        
+            return jsonify({"error": f"Invalid request_type: {request_type_str}"}), 400
+
         # Get services
         _, dsar_service, audit_logger = get_services()
-        
+
         # Create DSAR request
         request_id = dsar_service.create_request(
             user_id=current_user.id,
             request_type=request_type,
             requestor_email=email,
             jurisdiction=jurisdiction,
-            request_details=details
+            request_details=details,
         )
-        
-        return jsonify({
-            'request_id': request_id,
-            'request_type': request_type_str,
-            'status': 'pending',
-            'jurisdiction': jurisdiction,
-            'created_at': datetime.now(timezone.utc).isoformat(),
-            'message': f'DSAR request created. You will receive a response within 30 days.'
-        }), 201
-    
+
+        return (
+            jsonify(
+                {
+                    "request_id": request_id,
+                    "request_type": request_type_str,
+                    "status": "pending",
+                    "jurisdiction": jurisdiction,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "message": f"DSAR request created. You will receive a response within 30 days.",
+                }
+            ),
+            201,
+        )
+
     except Exception as e:
         logger.error(f"Error creating DSAR request: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
-@compliance_bp.route('/dsar/requests', methods=['GET'])
+@compliance_bp.route("/dsar/requests", methods=["GET"])
 @login_required
 def get_user_dsar_requests():
     """
@@ -332,8 +354,8 @@ def get_user_dsar_requests():
     try:
         # Get database connection through container
         container = Container()
-        db = container.get('database')
-        
+        db = container.get("database")
+
         query_sql = """
             SELECT request_id, request_type, status, jurisdiction, received_date,
                    due_date, fulfilled_date, requestor_email
@@ -341,24 +363,29 @@ def get_user_dsar_requests():
             WHERE user_id = %s
             ORDER BY received_date DESC
         """
-        
+
         df = db.execute_query(query_sql, (current_user.id,))
-        requests = df.to_dict('records') if not df.empty else []
-        
-        return jsonify({
-            'user_id': current_user.id,
-            'requests': requests,
-            'retrieved_at': datetime.now(timezone.utc).isoformat()
-        }), 200
-    
+        requests = df.to_dict("records") if not df.empty else []
+
+        return (
+            jsonify(
+                {
+                    "user_id": current_user.id,
+                    "requests": requests,
+                    "retrieved_at": datetime.now(timezone.utc).isoformat(),
+                }
+            ),
+            200,
+        )
+
     except Exception as e:
         logger.error(f"Error getting DSAR requests: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
-@compliance_bp.route('/admin/dsar/pending', methods=['GET'])
+@compliance_bp.route("/admin/dsar/pending", methods=["GET"])
 @login_required
-@role_required('admin')
+@role_required("admin")
 def get_pending_dsar_requests():
     """
     Get pending DSAR requests (admin only)
@@ -376,36 +403,41 @@ def get_pending_dsar_requests():
           description: Pending DSAR requests retrieved
     """
     try:
-        due_within_days = request.args.get('due_within_days', 7, type=int)
-        
+        due_within_days = request.args.get("due_within_days", 7, type=int)
+
         # Get services
         _, dsar_service, audit_logger = get_services()
-        
+
         pending_requests = dsar_service.get_pending_requests(due_within_days)
-        
+
         # Log admin access to pending requests
         audit_logger.log_action(
             actor_user_id=current_user.id,
-            action_type='VIEW_PENDING_DSAR_REQUESTS',
-            resource_type='dsar_request',
-            description=f'Accessed pending DSAR requests (due within {due_within_days} days)',
-            legal_basis='administrative_obligation'
+            action_type="VIEW_PENDING_DSAR_REQUESTS",
+            resource_type="dsar_request",
+            description=f"Accessed pending DSAR requests (due within {due_within_days} days)",
+            legal_basis="administrative_obligation",
         )
-        
-        return jsonify({
-            'pending_requests': pending_requests,
-            'due_within_days': due_within_days,
-            'retrieved_at': datetime.now(timezone.utc).isoformat()
-        }), 200
-    
+
+        return (
+            jsonify(
+                {
+                    "pending_requests": pending_requests,
+                    "due_within_days": due_within_days,
+                    "retrieved_at": datetime.now(timezone.utc).isoformat(),
+                }
+            ),
+            200,
+        )
+
     except Exception as e:
         logger.error(f"Error getting pending DSAR requests: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
-@compliance_bp.route('/admin/dsar/<request_id>/process', methods=['POST'])
+@compliance_bp.route("/admin/dsar/<request_id>/process", methods=["POST"])
 @login_required
-@role_required('admin')
+@role_required("admin")
 def process_dsar_request(request_id: str):
     """
     Process a DSAR request (admin only)
@@ -428,33 +460,38 @@ def process_dsar_request(request_id: str):
     """
     try:
         validator = SecurityValidator()
-        
+
         # Validate request ID format
-        if not validator.validate_input(request_id, 'alphanumeric'):
-            return jsonify({'error': 'Invalid request ID format'}), 400
-        
+        if not validator.validate_input(request_id, "alphanumeric"):
+            return jsonify({"error": "Invalid request ID format"}), 400
+
         # Get services
         _, dsar_service, audit_logger = get_services()
-        
+
         # Process the request
         success = dsar_service.process_request(request_id, current_user.id)
-        
+
         if success:
-            return jsonify({
-                'request_id': request_id,
-                'message': 'DSAR request processed successfully',
-                'processed_by': current_user.id,
-                'processed_at': datetime.now(timezone.utc).isoformat()
-            }), 200
+            return (
+                jsonify(
+                    {
+                        "request_id": request_id,
+                        "message": "DSAR request processed successfully",
+                        "processed_by": current_user.id,
+                        "processed_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                ),
+                200,
+            )
         else:
-            return jsonify({'error': 'Failed to process DSAR request'}), 400
-    
+            return jsonify({"error": "Failed to process DSAR request"}), 400
+
     except Exception as e:
         logger.error(f"Error processing DSAR request {request_id}: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
-@compliance_bp.route('/audit/my-data', methods=['GET'])
+@compliance_bp.route("/audit/my-data", methods=["GET"])
 @login_required
 def get_my_audit_trail():
     """
@@ -475,30 +512,35 @@ def get_my_audit_trail():
           description: Audit trail retrieved
     """
     try:
-        days = request.args.get('days', 30, type=int)
+        days = request.args.get("days", 30, type=int)
         if days < 1 or days > 365:
-            return jsonify({'error': 'Days must be between 1 and 365'}), 400
-        
+            return jsonify({"error": "Days must be between 1 and 365"}), 400
+
         # Get services
         _, _, audit_logger = get_services()
-        
+
         audit_trail = audit_logger.get_user_audit_trail(current_user.id, days)
-        
-        return jsonify({
-            'user_id': current_user.id,
-            'audit_trail': audit_trail,
-            'period_days': days,
-            'retrieved_at': datetime.now(timezone.utc).isoformat()
-        }), 200
-    
+
+        return (
+            jsonify(
+                {
+                    "user_id": current_user.id,
+                    "audit_trail": audit_trail,
+                    "period_days": days,
+                    "retrieved_at": datetime.now(timezone.utc).isoformat(),
+                }
+            ),
+            200,
+        )
+
     except Exception as e:
         logger.error(f"Error getting audit trail: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
-@compliance_bp.route('/admin/compliance-report', methods=['GET'])
+@compliance_bp.route("/admin/compliance-report", methods=["GET"])
 @login_required
-@role_required('admin')
+@role_required("admin")
 def generate_compliance_report():
     """
     Generate compliance report (admin only)
@@ -521,43 +563,47 @@ def generate_compliance_report():
           description: Compliance report generated
     """
     try:
-        start_date_str = request.args.get('start_date')
-        end_date_str = request.args.get('end_date')
-        
+        start_date_str = request.args.get("start_date")
+        end_date_str = request.args.get("end_date")
+
         # Default to last 30 days if no dates provided
         if not start_date_str or not end_date_str:
             end_date = datetime.now(timezone.utc)
             start_date = end_date - timedelta(days=30)
         else:
             try:
-                start_date = datetime.fromisoformat(start_date_str).replace(tzinfo=timezone.utc)
-                end_date = datetime.fromisoformat(end_date_str).replace(tzinfo=timezone.utc)
+                start_date = datetime.fromisoformat(start_date_str).replace(
+                    tzinfo=timezone.utc
+                )
+                end_date = datetime.fromisoformat(end_date_str).replace(
+                    tzinfo=timezone.utc
+                )
             except ValueError:
-                return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
-        
+                return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
+
         # Get services
         _, _, audit_logger = get_services()
-        
+
         # Generate report
         report = audit_logger.generate_compliance_report(start_date, end_date)
-        
+
         # Log report generation
         audit_logger.log_action(
             actor_user_id=current_user.id,
-            action_type='GENERATE_COMPLIANCE_REPORT',
-            resource_type='compliance_report',
-            description=f'Generated compliance report for {start_date.date()} to {end_date.date()}',
-            legal_basis='regulatory_compliance'
+            action_type="GENERATE_COMPLIANCE_REPORT",
+            resource_type="compliance_report",
+            description=f"Generated compliance report for {start_date.date()} to {end_date.date()}",
+            legal_basis="regulatory_compliance",
         )
-        
+
         return jsonify(report), 200
-    
+
     except Exception as e:
         logger.error(f"Error generating compliance report: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
-@compliance_bp.route('/health', methods=['GET'])
+@compliance_bp.route("/health", methods=["GET"])
 def compliance_health_check():
     """
     Health check for compliance services
@@ -573,45 +619,53 @@ def compliance_health_check():
     try:
         # Test database connectivity
         container = Container()
-        db = container.get('database')
-        
+        db = container.get("database")
+
         # Simple query to test database
         test_query = "SELECT 1 as health_check"
         result = db.execute_query(test_query)
-        
+
         if result.empty:
-            return jsonify({'status': 'unhealthy', 'error': 'Database test failed'}), 503
-        
-        return jsonify({
-            'status': 'healthy',
-            'services': ['consent_service', 'dsar_service', 'audit_logger'],
-            'timestamp': datetime.now(timezone.utc).isoformat()
-        }), 200
-    
+            return (
+                jsonify({"status": "unhealthy", "error": "Database test failed"}),
+                503,
+            )
+
+        return (
+            jsonify(
+                {
+                    "status": "healthy",
+                    "services": ["consent_service", "dsar_service", "audit_logger"],
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            ),
+            200,
+        )
+
     except Exception as e:
         logger.error(f"Compliance health check failed: {e}")
-        return jsonify({'status': 'unhealthy', 'error': str(e)}), 503
+        return jsonify({"status": "unhealthy", "error": str(e)}), 503
 
 
 # Error handlers
 @compliance_bp.errorhandler(400)
 def bad_request(error):
-    return jsonify({'error': 'Bad request'}), 400
+    return jsonify({"error": "Bad request"}), 400
 
 
 @compliance_bp.errorhandler(403)
 def forbidden(error):
-    return jsonify({'error': 'Forbidden - insufficient permissions'}), 403
+    return jsonify({"error": "Forbidden - insufficient permissions"}), 403
 
 
 @compliance_bp.errorhandler(404)
 def not_found(error):
-    return jsonify({'error': 'Resource not found'}), 404
+    return jsonify({"error": "Resource not found"}), 404
 
 
 @compliance_bp.errorhandler(500)
 def internal_error(error):
-    return jsonify({'error': 'Internal server error'}), 500
+    return jsonify({"error": "Internal server error"}), 500
 
 
 # Register blueprint function

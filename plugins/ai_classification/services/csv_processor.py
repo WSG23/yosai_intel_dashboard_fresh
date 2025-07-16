@@ -10,6 +10,7 @@ import pandas as pd
 # Optional Polars import with pandas fallback
 try:
     import polars as pl  # type: ignore
+
     POLARS_AVAILABLE = True
 except ImportError:  # pragma: no cover - optional dependency
     POLARS_AVAILABLE = False
@@ -148,9 +149,7 @@ class CSVProcessorService:
                 if self.japanese_handler.contains_japanese(col):
                     japanese_columns.append(col)
 
-                sample_text = " ".join(
-                    str(v) for v in df[col].dropna().head(5)
-                )
+                sample_text = " ".join(str(v) for v in df[col].dropna().head(5))
                 if self.japanese_handler.contains_japanese(sample_text):
                     if col not in japanese_columns:
                         japanese_columns.append(col)
@@ -222,7 +221,9 @@ class PandasOnlyCSVProcessor:
     def process_csv_data(
         self, csv_data: bytes, filename: str, session_id: str
     ) -> Dict[str, Any]:
-        service = CSVProcessorService(self.repository, self.japanese_handler, self.config)
+        service = CSVProcessorService(
+            self.repository, self.japanese_handler, self.config
+        )
         service.use_polars = False
         return service.process_csv_data(csv_data, filename, session_id)
 
@@ -242,4 +243,3 @@ __all__ = [
     "create_csv_processor",
     "POLARS_AVAILABLE",
 ]
-

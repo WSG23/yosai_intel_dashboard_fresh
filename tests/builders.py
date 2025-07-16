@@ -27,7 +27,6 @@ from tests.fakes import (
 class TestContainerBuilder:
     """Helper for constructing ServiceContainer instances for tests."""
 
-
     def __init__(self) -> None:
         self._container = ServiceContainer()
 

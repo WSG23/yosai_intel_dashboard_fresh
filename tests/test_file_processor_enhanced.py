@@ -43,9 +43,13 @@ def test_enhanced_processor(tmp_path):
 
 
 def test_malicious_filename_rejected(tmp_path):
-    contents = UploadFileBuilder().with_dataframe(
-        DataFrameBuilder().add_column("id", [1]).add_column("name", ["A"]).build()
-    ).as_base64()
+    contents = (
+        UploadFileBuilder()
+        .with_dataframe(
+            DataFrameBuilder().add_column("id", [1]).add_column("name", ["A"]).build()
+        )
+        .as_base64()
+    )
     result = process_uploaded_file(contents, "../../evil.csv", config=fake_cfg)
     assert result["success"] is False
 

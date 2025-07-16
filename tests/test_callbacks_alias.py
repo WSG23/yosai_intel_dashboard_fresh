@@ -10,4 +10,3 @@ from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 def test_unified_callback_manager_alias():
     assert UnifiedCallbackManager is TrulyUnifiedCallbacks
-

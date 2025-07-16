@@ -18,23 +18,32 @@ __all__ = [
 ]
 
 
-def detect_failure_rate_anomalies(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -> List[ThreatIndicator]:
+def detect_failure_rate_anomalies(
+    df: pd.DataFrame, logger: Optional[logging.Logger] = None
+) -> List[ThreatIndicator]:
     """Detect unusual failure rate patterns."""
     logger = logger or logging.getLogger(__name__)
     threats: List[ThreatIndicator] = []
     try:
         overall_failure_rate = 1 - df["access_granted"].mean()
-        user_failure_rates = df.groupby("person_id")["access_granted"].agg(["mean", "count"])
+        user_failure_rates = df.groupby("person_id")["access_granted"].agg(
+            ["mean", "count"]
+        )
         user_failure_rates["failure_rate"] = 1 - user_failure_rates["mean"]
         Q1 = user_failure_rates["failure_rate"].quantile(0.25)
         Q3 = user_failure_rates["failure_rate"].quantile(0.75)
         iqr = Q3 - Q1
         outlier_threshold = Q3 + 1.5 * iqr
-        high_failure_users = user_failure_rates[(user_failure_rates["failure_rate"] > outlier_threshold) & (user_failure_rates["count"] >= 5)]
+        high_failure_users = user_failure_rates[
+            (user_failure_rates["failure_rate"] > outlier_threshold)
+            & (user_failure_rates["count"] >= 5)
+        ]
         for user_id, data in high_failure_users.iterrows():
             n_attempts = data["count"]
             n_failures = int(n_attempts * data["failure_rate"])
-            p_value = stats.binomtest(n_failures, n_attempts, overall_failure_rate).pvalue
+            p_value = stats.binomtest(
+                n_failures, n_attempts, overall_failure_rate
+            ).pvalue
             if p_value < 0.05:
                 confidence = 1 - p_value
                 severity = "critical" if data["failure_rate"] > 0.8 else "high"
@@ -61,7 +70,9 @@ def detect_failure_rate_anomalies(df: pd.DataFrame, logger: Optional[logging.Log
     return threats
 
 
-def detect_frequency_anomalies(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -> List[ThreatIndicator]:
+def detect_frequency_anomalies(
+    df: pd.DataFrame, logger: Optional[logging.Logger] = None
+) -> List[ThreatIndicator]:
     """Detect unusual access frequency patterns."""
     logger = logger or logging.getLogger(__name__)
     threats: List[ThreatIndicator] = []
@@ -97,7 +108,9 @@ def detect_frequency_anomalies(df: pd.DataFrame, logger: Optional[logging.Logger
     return threats
 
 
-def detect_statistical_threats(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -> List[ThreatIndicator]:
+def detect_statistical_threats(
+    df: pd.DataFrame, logger: Optional[logging.Logger] = None
+) -> List[ThreatIndicator]:
     """Aggregate statistical threat detectors."""
     threats = []
     threats.extend(detect_failure_rate_anomalies(df, logger))

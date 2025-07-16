@@ -2,6 +2,7 @@ from types import SimpleNamespace
 from core.protocols import ConfigurationProtocol
 from services.configuration_service import ConfigurationServiceProtocol
 
+
 class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol):
     """Simple config for unit tests."""
 

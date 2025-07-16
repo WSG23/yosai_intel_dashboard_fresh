@@ -107,7 +107,6 @@ def create_plugin():
     return pkg_dir
 
 
-
 def test_cycle_logging(caplog, monkeypatch, mock_auth_env):
     cfg = DummyConfigManager()
     mgr = PluginManager(ServiceContainer(), cfg, health_check_interval=1)
@@ -117,11 +116,13 @@ def test_cycle_logging(caplog, monkeypatch, mock_auth_env):
 
     monkeypatch.setattr(mgr._resolver, "resolve", fail)
 
-    with caplog.at_level('ERROR', logger='core.plugins.manager'):
+    with caplog.at_level("ERROR", logger="core.plugins.manager"):
         result = mgr.load_all_plugins()
 
     assert result == []
-    assert any('Plugin dependency cycle detected' in r.getMessage() for r in caplog.records)
+    assert any(
+        "Plugin dependency cycle detected" in r.getMessage() for r in caplog.records
+    )
     mgr.stop_health_monitor()
 
 
@@ -134,9 +135,9 @@ def test_unknown_dep_logging(caplog, monkeypatch, mock_auth_env):
 
     monkeypatch.setattr(mgr._resolver, "resolve", fail)
 
-    with caplog.at_level('ERROR', logger='core.plugins.manager'):
+    with caplog.at_level("ERROR", logger="core.plugins.manager"):
         result = mgr.load_all_plugins()
 
     assert result == []
-    assert any('Unknown dependencies' in r.getMessage() for r in caplog.records)
+    assert any("Unknown dependencies" in r.getMessage() for r in caplog.records)
     mgr.stop_health_monitor()

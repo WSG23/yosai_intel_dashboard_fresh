@@ -19,21 +19,27 @@ DataConversionWarning = optional_import("sklearn.exceptions.DataConversionWarnin
 StandardScaler = optional_import("sklearn.preprocessing.StandardScaler")
 
 if IsolationForest is None:  # pragma: no cover - fallback
+
     class IsolationForest:  # type: ignore
         def __init__(self, *args, **kwargs):
             raise ImportError("scikit-learn is required for IsolationForest")
 
+
 if DataConversionWarning is None:  # pragma: no cover
+
     class DataConversionWarning(RuntimeWarning):
         pass
 
+
 if StandardScaler is None:  # pragma: no cover
+
     class StandardScaler:  # type: ignore
         def fit_transform(self, X):
             return X
 
         def transform(self, X):
             return X
+
 
 from security_callback_controller import (
     SecurityEvent,
@@ -127,10 +133,14 @@ class AnomalyDetector:
             unique_anomalies = self._deduplicate_anomalies(all_anomalies)
 
             # Generate analysis summaries
-            severity_distribution = self._calculate_severity_distribution(unique_anomalies)
+            severity_distribution = self._calculate_severity_distribution(
+                unique_anomalies
+            )
             detection_summary = self._generate_detection_summary(unique_anomalies)
             risk_assessment = self._assess_overall_risk(unique_anomalies)
-            recommendations = self._generate_recommendations(unique_anomalies, risk_assessment)
+            recommendations = self._generate_recommendations(
+                unique_anomalies, risk_assessment
+            )
 
             self._emit_anomaly_detected(
                 len(unique_anomalies), risk_assessment.get("risk_level", "low")
@@ -161,16 +171,22 @@ class AnomalyDetector:
         """Detect frequency-based anomalies"""
         return detect_frequency_anomalies(df, self.logger)
 
-    def _detect_statistical_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
+    def _detect_statistical_anomalies(
+        self, df: pd.DataFrame, sensitivity: float
+    ) -> List[Dict[str, Any]]:
         """Detect statistical anomalies using Z-score and IQR methods"""
         return detect_statistical_anomalies(df, sensitivity, self.logger)
 
-    def _detect_pattern_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
+    def _detect_pattern_anomalies(
+        self, df: pd.DataFrame, sensitivity: float
+    ) -> List[Dict[str, Any]]:
         """Detect pattern-based anomalies"""
         # reuse frequency anomalies for pattern check based on sensitivity
         return detect_frequency_anomalies(df, self.logger)
 
-    def _detect_ml_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
+    def _detect_ml_anomalies(
+        self, df: pd.DataFrame, sensitivity: float
+    ) -> List[Dict[str, Any]]:
         """Detect anomalies using machine learning"""
         return detect_ml_anomalies(df, sensitivity, self.isolation_forest, self.logger)
 
@@ -178,7 +194,9 @@ class AnomalyDetector:
         """Calculate severity level from Z-score"""
         return calculate_severity_from_zscore(z_score)
 
-    def _deduplicate_anomalies(self, anomalies: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _deduplicate_anomalies(
+        self, anomalies: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Remove duplicate anomalies"""
         if not anomalies:
             return anomalies
@@ -189,7 +207,9 @@ class AnomalyDetector:
         for anomaly in anomalies:
             # Create a key for deduplication
             anomaly_type = anomaly.get("type", "unknown")
-            user_id = anomaly.get("user_id", anomaly.get("details", {}).get("person_id", "unknown"))
+            user_id = anomaly.get(
+                "user_id", anomaly.get("details", {}).get("person_id", "unknown")
+            )
             dedup_key = (anomaly_type, user_id)
 
             if dedup_key not in seen_combinations:
@@ -198,7 +218,9 @@ class AnomalyDetector:
 
         return unique_anomalies
 
-    def _calculate_severity_distribution(self, anomalies: List[Dict[str, Any]]) -> Dict[str, int]:
+    def _calculate_severity_distribution(
+        self, anomalies: List[Dict[str, Any]]
+    ) -> Dict[str, int]:
         """Calculate distribution of anomalies by severity"""
         severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
 
@@ -208,13 +230,17 @@ class AnomalyDetector:
 
         return severity_counts
 
-    def _generate_detection_summary(self, anomalies: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _generate_detection_summary(
+        self, anomalies: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Generate detection summary"""
         return {
             "total_anomalies": len(anomalies),
             "anomaly_types": list(set(a.get("type", "unknown") for a in anomalies)),
-            "average_confidence": np.mean([a.get("confidence", 0) for a in anomalies]) if anomalies else 0,
-            "detection_timestamp": datetime.now().isoformat()
+            "average_confidence": (
+                np.mean([a.get("confidence", 0) for a in anomalies]) if anomalies else 0
+            ),
+            "detection_timestamp": datetime.now().isoformat(),
         }
 
     def _assess_overall_risk(self, anomalies: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -223,7 +249,9 @@ class AnomalyDetector:
             return {"risk_level": "low", "risk_score": 0}
 
         severity_weights = {"critical": 4, "high": 3, "medium": 2, "low": 1}
-        total_score = sum(severity_weights.get(a.get("severity", "low"), 1) for a in anomalies)
+        total_score = sum(
+            severity_weights.get(a.get("severity", "low"), 1) for a in anomalies
+        )
         max_possible_score = len(anomalies) * 4
 
         risk_score = total_score / max_possible_score if max_possible_score > 0 else 0
@@ -239,7 +267,9 @@ class AnomalyDetector:
 
         return {"risk_level": risk_level, "risk_score": risk_score}
 
-    def _generate_recommendations(self, anomalies: List[Dict[str, Any]], risk_assessment: Dict[str, Any]) -> List[str]:
+    def _generate_recommendations(
+        self, anomalies: List[Dict[str, Any]], risk_assessment: Dict[str, Any]
+    ) -> List[str]:
         """Generate recommendations based on anomalies"""
         recommendations = []
 
@@ -251,7 +281,9 @@ class AnomalyDetector:
         anomaly_types = set(a.get("type", "unknown") for a in anomalies)
 
         if "activity_burst" in anomaly_types:
-            recommendations.append("Investigate users with unusually high access frequency")
+            recommendations.append(
+                "Investigate users with unusually high access frequency"
+            )
 
         if "frequent_after_hours" in anomaly_types:
             recommendations.append("Review after-hours access policies and permissions")
@@ -292,7 +324,7 @@ class AnomalyDetector:
             detection_summary={
                 "total_anomalies": 0,
                 "message": "Insufficient data for anomaly detection (minimum 10 records required)",
-                "detection_timestamp": datetime.now().isoformat()
+                "detection_timestamp": datetime.now().isoformat(),
             },
             risk_assessment={"risk_level": "unknown", "risk_score": 0},
             recommendations=["Collect more data for meaningful anomaly detection"],
@@ -306,7 +338,7 @@ class AnomalyDetector:
             detection_summary={
                 "total_anomalies": 0,
                 "message": "Error in anomaly detection",
-                "detection_timestamp": datetime.now().isoformat()
+                "detection_timestamp": datetime.now().isoformat(),
             },
             risk_assessment={"risk_level": "error", "risk_score": 0},
             recommendations=["Unable to perform anomaly detection due to data issues"],
@@ -323,7 +355,9 @@ class AnomalyDetector:
                 "message": "Error in anomaly detection",
             },
             "risk_assessment": {"risk_level": "error", "risk_score": 0},
-            "recommendations": ["Unable to perform anomaly detection due to data issues"],
+            "recommendations": [
+                "Unable to perform anomaly detection due to data issues"
+            ],
             "statistical_anomalies": [],
             "pattern_anomalies": [],
             "ml_anomalies": [],
@@ -358,5 +392,5 @@ __all__ = [
     "AnomalyDetector",
     "AnomalyAnalysis",
     "create_anomaly_detector",
-    "EnhancedAnomalyDetector"
+    "EnhancedAnomalyDetector",
 ]

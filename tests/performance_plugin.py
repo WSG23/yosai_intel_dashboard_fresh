@@ -41,6 +41,4 @@ def pytest_collection_finish(session: pytest.Session) -> None:
 
     if offenders:
         lines = "\n".join(offenders)
-        raise pytest.UsageError(
-            "sys.modules manipulation detected in tests:\n" + lines
-        )
+        raise pytest.UsageError("sys.modules manipulation detected in tests:\n" + lines)

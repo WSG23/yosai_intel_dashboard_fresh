@@ -59,7 +59,9 @@ class _Store(UploadStorageProtocol):
         return list(self.data.keys())
 
     def get_file_info(self) -> Dict[str, Dict[str, Any]]:
-        return {k: {"rows": len(v), "columns": len(v.columns)} for k, v in self.data.items()}
+        return {
+            k: {"rows": len(v), "columns": len(v.columns)} for k, v in self.data.items()
+        }
 
     def wait_for_pending_saves(self) -> None:  # pragma: no cover - sync
         pass
@@ -91,7 +93,11 @@ class _DataService(UploadDataServiceProtocol):
 def _create_engine() -> Tuple[Any, _Store]:
     store = _Store()
     analytics = _Analytics()
-    mod_path = Path(__file__).resolve().parents[2] / "services" / "metadata_enhancement_engine.py"
+    mod_path = (
+        Path(__file__).resolve().parents[2]
+        / "services"
+        / "metadata_enhancement_engine.py"
+    )
     spec = import_util.spec_from_file_location("metadata", mod_path)
     metadata = import_util.module_from_spec(spec)
     assert spec.loader is not None
@@ -110,14 +116,22 @@ def _create_engine() -> Tuple[Any, _Store]:
     sys.modules.setdefault("services.analytics", analytics_mod)
     sys.modules.setdefault("services.analytics.protocols", analytics_proto_mod)
     import tests.stubs.dash as dash_stub
+
     sys.modules.setdefault("dash", dash_stub)
     sys.modules.setdefault("dash.html", dash_stub.html)
     sys.modules.setdefault("dash.dcc", dash_stub.dcc)
     sys.modules.setdefault("dash.dependencies", dash_stub.dependencies)
     sys.modules.setdefault("dash._callback", dash_stub._callback)
     dash_stub.no_update = dash_stub._callback.NoUpdate()
-    sys.modules.setdefault("dash.exceptions", types.SimpleNamespace(PreventUpdate=Exception))
-    sys.modules.setdefault("flask_caching", import_util.module_from_spec(import_util.spec_from_loader("flask_caching", loader=None)))
+    sys.modules.setdefault(
+        "dash.exceptions", types.SimpleNamespace(PreventUpdate=Exception)
+    )
+    sys.modules.setdefault(
+        "flask_caching",
+        import_util.module_from_spec(
+            import_util.spec_from_loader("flask_caching", loader=None)
+        ),
+    )
     sys.modules["flask_caching"].Cache = type("Cache", (), {})
     sys.modules.setdefault(spec.name, metadata)
     spec.loader.exec_module(metadata)

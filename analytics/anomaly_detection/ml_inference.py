@@ -14,27 +14,35 @@ MLPRegressor = optional_import("sklearn.neural_network.MLPRegressor")
 StandardScaler = optional_import("sklearn.preprocessing.StandardScaler")
 
 if IsolationForest is None:
+
     class IsolationForest:  # type: ignore
         def __init__(self, *args, **kwargs):
             raise ImportError("scikit-learn is required for IsolationForest")
 
+
 if DBSCAN is None:
+
     class DBSCAN:  # type: ignore
         def __init__(self, *args, **kwargs):
             raise ImportError("scikit-learn is required for DBSCAN")
 
+
 if MLPRegressor is None:
+
     class MLPRegressor:  # type: ignore
         def __init__(self, *args, **kwargs):
             raise ImportError("scikit-learn is required for MLPRegressor")
 
+
 if StandardScaler is None:
+
     class StandardScaler:  # type: ignore
         def fit_transform(self, X):
             return X
 
         def transform(self, X):
             return X
+
 
 __all__ = ["detect_ml_anomalies"]
 
@@ -53,7 +61,13 @@ def detect_ml_anomalies(
     logger = logger or logging.getLogger(__name__)
     anomalies: List[Dict[str, Any]] = []
     try:
-        features = ["hour", "day_of_week", "is_weekend", "is_after_hours", "access_granted"]
+        features = [
+            "hour",
+            "day_of_week",
+            "is_weekend",
+            "is_after_hours",
+            "access_granted",
+        ]
         feature_df = df[features].copy(deep=False)
         if len(feature_df) < 10:
             return anomalies
@@ -68,14 +82,22 @@ def detect_ml_anomalies(
 
         # DBSCAN score if model provided
         if dbscan_model is not None:
-            db_data = feature_df if dbscan_scaler is None else dbscan_scaler.transform(feature_df)
+            db_data = (
+                feature_df
+                if dbscan_scaler is None
+                else dbscan_scaler.transform(feature_df)
+            )
             db_labels = dbscan_model.fit_predict(db_data)
             db_scores = (db_labels == -1).astype(float)
             scores.append(db_scores)
 
         # Autoencoder reconstruction error if model provided
         if autoencoder_model is not None:
-            ae_data = feature_df if autoencoder_scaler is None else autoencoder_scaler.transform(feature_df)
+            ae_data = (
+                feature_df
+                if autoencoder_scaler is None
+                else autoencoder_scaler.transform(feature_df)
+            )
             ae_recon = autoencoder_model.predict(ae_data)
             if ae_recon.ndim == 1:
                 ae_recon = ae_recon.reshape(-1, 1)

@@ -16,13 +16,13 @@ def _make_app():
 def test_icon_cache_headers():
     flask_app, dummy = _make_app()
 
-    @flask_app.route('/assets/navbar_icons/foo.png')
+    @flask_app.route("/assets/navbar_icons/foo.png")
     def icon():
-        return Response(b'data', content_type='image/png')
+        return Response(b"data", content_type="image/png")
 
     ensure_icon_cache_headers(dummy)
 
     client = flask_app.test_client()
-    res = client.get('/assets/navbar_icons/foo.png')
-    assert res.headers.get('Cache-Control') == 'public, max-age=3600'
-    assert 'ETag' in res.headers
+    res = client.get("/assets/navbar_icons/foo.png")
+    assert res.headers.get("Cache-Control") == "public, max-age=3600"
+    assert "ETag" in res.headers

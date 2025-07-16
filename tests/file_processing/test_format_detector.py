@@ -14,7 +14,9 @@ from file_processing.readers import (
 
 @pytest.fixture()
 def detector():
-    return FormatDetector([CSVReader(), JSONReader(), ExcelReader(), FWFReader(), ArchiveReader()])
+    return FormatDetector(
+        [CSVReader(), JSONReader(), ExcelReader(), FWFReader(), ArchiveReader()]
+    )
 
 
 def test_detect_csv(tmp_path: Path, detector):
@@ -49,4 +51,3 @@ def test_unsupported(tmp_path: Path, detector):
     txt.write_text("hello")
     with pytest.raises(UnsupportedFormatError):
         detector.detect_and_load(str(txt))
-

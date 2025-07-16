@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 
 __all__ = ["ThreatIndicator"]
 
+
 @dataclass
 class ThreatIndicator:
     """Individual threat indicator used by security analysis"""

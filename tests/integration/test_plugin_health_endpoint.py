@@ -5,7 +5,9 @@ import enum
 from flask.json.provider import DefaultJSONProvider
 
 # Minimal services stubs
-spec = importlib.util.spec_from_file_location("services.data_processing.core.protocols", "tests/stubs/protocols_stub.py")
+spec = importlib.util.spec_from_file_location(
+    "services.data_processing.core.protocols", "tests/stubs/protocols_stub.py"
+)
 protocols_mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(protocols_mod)
 
@@ -34,11 +36,13 @@ from core.plugins.manager import PluginManager
 from config import create_config_manager
 from services.data_processing.core.protocols import PluginMetadata
 
+
 class EnumJSONProvider(DefaultJSONProvider):
     def default(self, o):
         if isinstance(o, enum.Enum):
             return o.name
         return super().default(o)
+
 
 class DummyPlugin:
     metadata = PluginMetadata(name="dummy", version="0.1", description="d", author="t")

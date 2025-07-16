@@ -53,10 +53,7 @@ def test_callback_registration_and_fire():
     controller.fire_event(SecurityEvent.THREAT_DETECTED, {"msg": "alert"})
 
     assert results == [{"msg": "alert"}]
-    assert controller.history == [
-        (SecurityEvent.THREAT_DETECTED, {"msg": "alert"})
-    ]
-
+    assert controller.history == [(SecurityEvent.THREAT_DETECTED, {"msg": "alert"})]
 
 
 def test_analyzer_triggers_callbacks():
@@ -72,7 +69,6 @@ def test_analyzer_triggers_callbacks():
         SecurityEvent.ANALYSIS_COMPLETE,
         lambda d: events.append(("complete", d)),
     )
-
 
     analyzer = SecurityPatternsAnalyzer()
     df = create_df_with_critical_threat()

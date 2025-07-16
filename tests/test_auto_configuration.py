@@ -33,7 +33,7 @@ def _create_package(tmp_path):
     pkg = tmp_path / "auto_pkg"
     pkg.mkdir()
     (pkg / "__init__.py").write_text("")
-    plugin_code = '''
+    plugin_code = """
 from dash import Output, Input
 from services.data_processing.core.protocols import PluginMetadata
 from core.plugins.callback_unifier import CallbackUnifier
@@ -80,7 +80,7 @@ class AutoPlugin:
 
 def create_plugin():
     return AutoPlugin()
-'''
+"""
     (pkg / "plug.py").write_text(plugin_code)
     return pkg
 
@@ -95,7 +95,9 @@ def test_setup_uses_provided_dependencies(monkeypatch, tmp_path):
         container = ServiceContainer()
         config = create_config_manager()
         config.config.plugin_settings["auto_plugin"] = {"enabled": True}
-        registry = setup_plugins(app, container=container, config_manager=config, package="auto_pkg")
+        registry = setup_plugins(
+            app, container=container, config_manager=config, package="auto_pkg"
+        )
         assert registry.container is container
         assert registry.plugin_manager.container is container
         assert registry.plugin_manager.config_manager is config

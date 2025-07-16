@@ -9,9 +9,7 @@ class DataFrameBuilder:
     """Fluent helper for constructing ``pandas`` DataFrames in tests."""
 
     def __init__(self, data: Dict[str, Iterable[Any]] | None = None) -> None:
-        self._data: Dict[str, list[Any]] = {
-            k: list(v) for k, v in (data or {}).items()
-        }
+        self._data: Dict[str, list[Any]] = {k: list(v) for k, v in (data or {}).items()}
 
     def add_column(self, name: str, values: Iterable[Any]) -> "DataFrameBuilder":
         self._data[name] = list(values)

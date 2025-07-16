@@ -15,7 +15,6 @@ def test_multi_part_upload_row_count(async_runner):
             "A": [1, 2, 3, 4],
             "B": ["a", "b", "c", "d"],
         }
-
     )
     b64 = UploadFileBuilder().with_dataframe(df).as_base64().split(",", 1)[1]
     prefix = "data:text/csv;base64,"

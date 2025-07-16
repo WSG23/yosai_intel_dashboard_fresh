@@ -122,12 +122,19 @@ def create_plugin():
 """
     )
     sys.path.insert(0, str(tmp_path))
-    manager = PluginManager(ServiceContainer(), create_config_manager(), package="cyclepkg", health_check_interval=1)
+    manager = PluginManager(
+        ServiceContainer(),
+        create_config_manager(),
+        package="cyclepkg",
+        health_check_interval=1,
+    )
     try:
         caplog.set_level("ERROR")
         result = manager.load_all_plugins()
         assert result == []
-        assert any("Plugin dependency cycle detected" in r.getMessage() for r in caplog.records)
+        assert any(
+            "Plugin dependency cycle detected" in r.getMessage() for r in caplog.records
+        )
     finally:
         sys.path.remove(str(tmp_path))
         manager.stop_health_monitor()
@@ -163,12 +170,20 @@ def create_plugin():
 """
     )
     sys.path.insert(0, str(tmp_path))
-    manager = PluginManager(ServiceContainer(), create_config_manager(), package="unkpkg", health_check_interval=1)
+    manager = PluginManager(
+        ServiceContainer(),
+        create_config_manager(),
+        package="unkpkg",
+        health_check_interval=1,
+    )
     try:
         caplog.set_level("ERROR")
         result = manager.load_all_plugins()
         assert result == []
-        assert any("Failed to resolve plugin dependencies" in r.getMessage() for r in caplog.records)
+        assert any(
+            "Failed to resolve plugin dependencies" in r.getMessage()
+            for r in caplog.records
+        )
     finally:
         sys.path.remove(str(tmp_path))
         manager.stop_health_monitor()

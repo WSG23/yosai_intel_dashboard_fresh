@@ -40,8 +40,8 @@ def test_get_ai_column_suggestions_fallback(monkeypatch):
 
 
 def test_unicode_helpers():
-    df = pd.DataFrame({"col\uD83D": ["val\uDE00"]})
+    df = pd.DataFrame({"col\ud83d": ["val\ude00"]})
     out = sanitize_dataframe(df)
-    assert "\uD83D" not in str(out.columns)
-    assert "\uDE00" not in str(out.values)
-    assert clean_unicode_text("t\uD83D") == "t"
+    assert "\ud83d" not in str(out.columns)
+    assert "\ude00" not in str(out.values)
+    assert clean_unicode_text("t\ud83d") == "t"

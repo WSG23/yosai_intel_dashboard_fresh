@@ -5,12 +5,16 @@ import pytest
 
 from models.entities import Person, Door, AccessEvent
 from models.enums import AccessResult, BadgeStatus, DoorType
-from repositories.implementations import PersonRepository, DoorRepository, AccessEventRepository
+from repositories.implementations import (
+    PersonRepository,
+    DoorRepository,
+    AccessEventRepository,
+)
 
 
 class _SQLiteConn:
     def __init__(self):
-        self.conn = sqlite3.connect(':memory:')
+        self.conn = sqlite3.connect(":memory:")
         self.conn.row_factory = sqlite3.Row
 
     def execute_query(self, query: str, params: tuple | None = None):
@@ -27,7 +31,7 @@ class _SQLiteConn:
 
     def health_check(self) -> bool:
         try:
-            self.conn.execute('SELECT 1')
+            self.conn.execute("SELECT 1")
             return True
         except Exception:
             return False
@@ -90,12 +94,12 @@ def db():
 
 def test_person_repository_crud(async_runner, db):
     repo = PersonRepository(db)
-    p1 = Person(person_id='P1', name='Alpha')
+    p1 = Person(person_id="P1", name="Alpha")
     async_runner(repo.create(p1))
-    fetched = async_runner(repo.get_by_id('P1'))
+    fetched = async_runner(repo.get_by_id("P1"))
     assert fetched == p1
 
-    p2 = Person(person_id='P2', name='Beta')
+    p2 = Person(person_id="P2", name="Beta")
     async_runner(repo.create(p2))
 
     all_people = async_runner(repo.get_all(limit=1, offset=1))
@@ -103,17 +107,17 @@ def test_person_repository_crud(async_runner, db):
     assert all_people[0] == p2
 
     updated = Person(
-        person_id='P1',
-        name='Gamma',
+        person_id="P1",
+        name="Gamma",
         clearance_level=1,
         created_at=fetched.created_at,
     )
     async_runner(repo.update(updated))
-    fetched2 = async_runner(repo.get_by_id('P1'))
-    assert fetched2.name == 'Gamma'
+    fetched2 = async_runner(repo.get_by_id("P1"))
+    assert fetched2.name == "Gamma"
 
-    async_runner(repo.delete('P1'))
-    assert async_runner(repo.get_by_id('P1')) is None
+    async_runner(repo.delete("P1"))
+    assert async_runner(repo.get_by_id("P1")) is None
 
 
 def _insert_door(db, door: Door):
@@ -136,19 +140,21 @@ def _insert_door(db, door: Door):
 
 def test_door_repository(async_runner, db):
     repo = DoorRepository(db)
-    d1 = Door(door_id='D1', door_name='Front', facility_id='F1', area_id='A1')
-    d2 = Door(door_id='D2', door_name='Side', facility_id='F1', area_id='A1', is_critical=True)
+    d1 = Door(door_id="D1", door_name="Front", facility_id="F1", area_id="A1")
+    d2 = Door(
+        door_id="D2", door_name="Side", facility_id="F1", area_id="A1", is_critical=True
+    )
     _insert_door(db, d1)
     _insert_door(db, d2)
 
-    door = async_runner(repo.get_by_id('D1'))
-    assert door.door_name == 'Front'
+    door = async_runner(repo.get_by_id("D1"))
+    assert door.door_name == "Front"
 
-    doors = async_runner(repo.get_by_facility('F1'))
+    doors = async_runner(repo.get_by_facility("F1"))
     assert len(doors) == 2
 
     critical = async_runner(repo.get_critical_doors())
-    assert any(d.door_id == 'D2' for d in critical)
+    assert any(d.door_id == "D2" for d in critical)
 
 
 def test_access_event_repository(async_runner, db):
@@ -156,46 +162,46 @@ def test_access_event_repository(async_runner, db):
     door_repo = DoorRepository(db)
     event_repo = AccessEventRepository(db)
 
-    p = Person(person_id='P1', name='Tester')
+    p = Person(person_id="P1", name="Tester")
     async_runner(person_repo.create(p))
-    d = Door(door_id='D1', door_name='Main', facility_id='F1', area_id='A1')
+    d = Door(door_id="D1", door_name="Main", facility_id="F1", area_id="A1")
     _insert_door(db, d)
 
     now = datetime.now()
     e1 = AccessEvent(
-        event_id='E1',
+        event_id="E1",
         timestamp=now - timedelta(minutes=1),
-        person_id='P1',
-        door_id='D1',
+        person_id="P1",
+        door_id="D1",
         badge_id=None,
         access_result=AccessResult.GRANTED,
         badge_status=BadgeStatus.VALID,
         door_held_open_time=0.0,
         entry_without_badge=False,
-        device_status='normal',
+        device_status="normal",
         raw_data={},
     )
     e2 = AccessEvent(
-        event_id='E2',
+        event_id="E2",
         timestamp=now,
-        person_id='P1',
-        door_id='D1',
+        person_id="P1",
+        door_id="D1",
         badge_id=None,
         access_result=AccessResult.DENIED,
         badge_status=BadgeStatus.VALID,
         door_held_open_time=0.0,
         entry_without_badge=False,
-        device_status='normal',
+        device_status="normal",
         raw_data={},
     )
     async_runner(event_repo.create_event(e1))
     async_runner(event_repo.create_event(e2))
 
-    by_person = async_runner(event_repo.get_events_by_person('P1', limit=1))
+    by_person = async_runner(event_repo.get_events_by_person("P1", limit=1))
     assert len(by_person) == 1
 
-    by_door = async_runner(event_repo.get_events_by_door('D1'))
+    by_door = async_runner(event_repo.get_events_by_door("D1"))
     assert len(by_door) == 2
 
     recent = async_runner(event_repo.get_recent_events(limit=1))
-    assert recent[0].event_id == 'E2'
+    assert recent[0].event_id == "E2"
