@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from core.unicode import UnicodeSQLProcessor
 from database.types import DatabaseConnection
+from database.query_optimizer import DatabaseQueryOptimizer
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints
     from .connection_pool import DatabaseConnectionPool
@@ -278,9 +279,16 @@ class ThreadSafeDatabaseManager(DatabaseManager):
         self._pool: Optional[Any] = None
 
     def _create_pool(self) -> DatabaseConnectionPool:
-        from .connection_pool import DatabaseConnectionPool
+        if getattr(self.config, "use_intelligent_pool", False):
+            from database.intelligent_connection_pool import IntelligentConnectionPool
 
-        return DatabaseConnectionPool(
+            pool_cls = IntelligentConnectionPool
+        else:
+            from .connection_pool import DatabaseConnectionPool
+
+            pool_cls = DatabaseConnectionPool
+
+        return pool_cls(
             self._create_connection,
             getattr(self.config, "initial_pool_size", 1),
             getattr(self.config, "max_pool_size", 1),
@@ -339,6 +347,7 @@ class EnhancedPostgreSQLManager(DatabaseManager):
             retry_config or RetryConfig()
         )
         self.performance_analyzer = DatabasePerformanceAnalyzer()
+
         self.pool = EnhancedConnectionPool(
             self._create_connection,
             self.config.initial_pool_size,
@@ -349,6 +358,7 @@ class EnhancedPostgreSQLManager(DatabaseManager):
 
     def execute_query_with_retry(self, query: str, params: Optional[Dict] = None):
         encoded_query = UnicodeSQLProcessor.encode_query(query)
+        optimized_query = self.optimizer.optimize_query(encoded_query)
 
         def _encode_params(value: Any) -> Any:
             if isinstance(value, str):
@@ -371,6 +381,7 @@ class EnhancedPostgreSQLManager(DatabaseManager):
                     encoded_query, elapsed
                 )
                 return result
+
             finally:
                 self.pool.release_connection(conn)
 

@@ -57,6 +57,8 @@ class DatabaseConfig:
     initial_pool_size: int = dynamic_config.get_db_pool_size()
     max_pool_size: int = dynamic_config.get_db_pool_size() * 2
     shrink_timeout: int = 60
+    # Use the IntelligentConnectionPool instead of the default pool
+    use_intelligent_pool: bool = False
 
     def __post_init__(self) -> None:
         """Auto-generate connection URL if not explicitly provided."""
