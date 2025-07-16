@@ -20,9 +20,20 @@ def register_upload_services(container: ServiceContainer) -> None:
     from utils.upload_store import UploadedDataStore
     from config.dynamic_config import dynamic_config
     from services.device_learning_service import DeviceLearningService
+    from services.configuration_service import DynamicConfigurationService
+    from services.door_mapping_service import DoorMappingService
+    from services.interfaces import DoorMappingServiceProtocol
 
     upload_store = UploadedDataStore(dynamic_config.upload.folder)
-    container.register_singleton("upload_storage", upload_store, protocol=UploadStorageProtocol)
+    door_mapping_service = DoorMappingService(DynamicConfigurationService())
+    container.register_singleton(
+        "door_mapping_service",
+        door_mapping_service,
+        protocol=DoorMappingServiceProtocol,
+    )
+    container.register_singleton(
+        "upload_storage", upload_store, protocol=UploadStorageProtocol
+    )
 
     from services.upload_data_service import UploadDataService
     data_service = UploadDataService(upload_store)
