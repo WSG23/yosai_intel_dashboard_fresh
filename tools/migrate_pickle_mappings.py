@@ -1,7 +1,12 @@
 """Legacy pickle to JSON migration utility.
 
 This script converts a ``learned_mappings.pkl`` file into a JSON file
-compatible with :class:`services.consolidated_learning_service.ConsolidatedLearningService`.
+compatible with
+:class:`services.consolidated_learning_service.ConsolidatedLearningService`.
+
+**Important**: Pickle files are inherently insecure and support for them has
+been removed from the dashboard. Convert any existing pickle mapping files to
+JSON and remove the pickle versions from your deployment.
 
 .. warning::
     Only run this script on pickle files from trusted sources. Loading
@@ -9,13 +14,17 @@ compatible with :class:`services.consolidated_learning_service.ConsolidatedLearn
 
 Usage::
 
-    python tools/migrate_pickle_mappings.py /path/to/learned_mappings.pkl
+    python tools/migrate_pickle_mappings.py [--remove-pickle] \
+        /path/to/learned_mappings.pkl
 
 The JSON output will be written next to the pickle file using the
-``.json`` extension.
+``.json`` extension. When ``--remove-pickle`` is supplied the original pickle
+file is deleted after a successful conversion.
 """
+
 from __future__ import annotations
 
+import argparse
 import json
 import pickle
 import sys
@@ -39,16 +48,28 @@ def migrate(pkl_file: Path) -> Path:
 
 
 def main(argv: list[str]) -> None:
-    if len(argv) != 2:
-        print("Usage: python migrate_pickle_mappings.py <pickle_file>")
-        raise SystemExit(1)
+    parser = argparse.ArgumentParser(description="Migrate pickle mappings to JSON")
+    parser.add_argument("pickle_file", help="Path to learned_mappings.pkl")
+    parser.add_argument(
+        "--remove-pickle",
+        action="store_true",
+        help="Delete the pickle file after successful conversion",
+    )
+    args = parser.parse_args(argv[1:])
 
-    pkl_path = Path(argv[1])
+    pkl_path = Path(args.pickle_file)
     try:
         json_path = migrate(pkl_path)
     except Exception as exc:
         print(f"Failed to migrate {pkl_path}: {exc}")
         raise SystemExit(1)
+
+    if args.remove_pickle:
+        try:
+            pkl_path.unlink()
+            print(f"Removed {pkl_path}")
+        except Exception as exc:  # pragma: no cover - manual removal
+            print(f"Failed to remove {pkl_path}: {exc}")
 
     print(f"Wrote JSON mappings to {json_path}")
 
