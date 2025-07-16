@@ -18,7 +18,9 @@ from pages import (
 def create_app(mode=None, **kwargs):
     """Create a working Dash app with logo, navigation, and routing - HTTPS ready."""
 
-    pages_path = Path(__file__).resolve().parent.parent / "pages"
+    # The pages module lives in the project root, not under ``core``.
+    # Resolve the project root and point Dash to the correct directory.
+    pages_path = Path(__file__).resolve().parent.parent.parent / "pages"
     app = dash.Dash(
         __name__,
         use_pages=True,
