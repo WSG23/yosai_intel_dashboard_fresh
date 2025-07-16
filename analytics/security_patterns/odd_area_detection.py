@@ -8,14 +8,10 @@ import pandas as pd
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
-from .column_validation import ensure_columns
+from .utils import _door_to_area
 
 
 __all__ = ["detect_odd_area"]
-
-
-def _door_to_area(door_id: str) -> str:
-    return str(door_id).split("-")[0]
 
 
 def detect_odd_area(

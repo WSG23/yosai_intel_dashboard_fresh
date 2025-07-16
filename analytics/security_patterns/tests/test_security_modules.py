@@ -4,6 +4,7 @@ from analytics.security_patterns.data_prep import prepare_security_data
 from analytics.security_patterns.statistical_detection import (
     detect_failure_rate_anomalies,
 )
+from analytics.security_patterns.utils import _door_to_area
 
 
 def test_prepare_security_data_basic():
@@ -44,3 +45,8 @@ def test_detect_failure_rate_anomalies():
     cleaned = prepare_security_data(df)
     threats = detect_failure_rate_anomalies(cleaned)
     assert isinstance(threats, list)
+
+
+def test_door_to_area_helper():
+    assert _door_to_area("A-1") == "A"
+    assert _door_to_area("B-12") == "B"
