@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import warnings
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -124,8 +125,21 @@ class AnalyticsConfig:
     data_retention_days: int = 30
     query_timeout_seconds: int = 600
     force_full_dataset_analysis: bool = True
-    max_memory_mb: int = 1024
+    max_memory_mb: int = 500
     max_display_rows: int = 10000
+
+    def __post_init__(self) -> None:
+        if self.max_memory_mb > 500:
+            warnings.warn(
+                (
+                    "max_memory_mb %s exceeds security limit of 500 MB; "
+                    "clamping to 500"
+                )
+                % self.max_memory_mb,
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            self.max_memory_mb = 500
 
 
 @dataclass
