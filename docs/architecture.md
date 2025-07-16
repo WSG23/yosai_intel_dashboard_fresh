@@ -119,3 +119,12 @@ sequenceDiagram
     CB->>REG: register(callback_id)
     REG-->>CB: confirmation
 ```
+
+## Threat Intelligence Integration
+
+Security callbacks can subscribe to updates from `ThreatIntelligenceSystem`.
+External feeds are gathered asynchronously and correlated with internal
+logs.  When suspicious patterns are found the
+`AutomatedResponseOrchestrator` queues response actions using the global
+`task_queue`.  Callback handlers may listen for these queued actions and
+respond accordingly.
