@@ -15,6 +15,7 @@ import dash
 from dash import dcc, html, callback_context
 from dash.dependencies import Input, Output, State
 import dash_table
+
 import pandas as pd
 import dash_bootstrap_components as dbc
 from components.column_verification import (
