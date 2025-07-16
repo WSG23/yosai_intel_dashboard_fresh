@@ -2,7 +2,10 @@
 
 from .analyzer import (
     AnomalyDetector,
-    EnhancedAnomalyDetector,
+    AnomalyConfig,
+    AnomalyResult,
+    SecurityCallbackController,
+    MemoryManager,
     create_anomaly_detector,
 )
 from .data_prep import prepare_anomaly_data
@@ -16,8 +19,11 @@ from .types import AnomalyAnalysis
 
 __all__ = [
     "AnomalyDetector",
+    "AnomalyConfig",
+    "AnomalyResult",
+    "SecurityCallbackController",
+    "MemoryManager",
     "create_anomaly_detector",
-    "EnhancedAnomalyDetector",
     "prepare_anomaly_data",
     "detect_frequency_anomalies",
     "detect_statistical_anomalies",
