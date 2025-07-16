@@ -1,95 +1,32 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-import functools
+import io
 import logging
-import os
-import time
-from typing import Any, Callable, Generator, Iterable
+from typing import IO, Iterable, Union
 
-import psutil
+import pandas as pd
+
+from utils.memory_utils import check_memory_limit
+
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class MemoryConfig:
-    """Configuration for memory usage monitoring."""
+class FileProcessor:
+    """Process CSV files in chunks while guarding memory usage."""
 
-    max_usage_mb: int = 1024
-    check_interval: float = 1.0
-    chunk_size: int = 1024 * 1024
+    def __init__(self, chunk_size: int = 50000, *, max_memory_mb: int = 500) -> None:
+        self.chunk_size = chunk_size
+        self.max_memory_mb = max_memory_mb
 
-
-class MemoryMonitor:
-    """Monitors process RSS memory usage."""
-
-    def __init__(self, config: MemoryConfig) -> None:
-        self.config = config
-        self.process = psutil.Process(os.getpid())
-        self.last_check = 0.0
-
-    def check(self) -> None:
-        now = time.time()
-        if now - self.last_check < self.config.check_interval:
-            return
-        self.last_check = now
-        usage_mb = self.process.memory_info().rss / (1024**2)
-        if usage_mb > self.config.max_usage_mb:
-            raise MemoryError(
-                f"Memory usage {usage_mb:.2f}MB exceeded limit {self.config.max_usage_mb}MB"
-            )
+    def read_large_csv(self, file_like: Union[str, IO[str]]) -> pd.DataFrame:
+        """Read ``file_like`` in chunks and concatenate safely."""
+        reader = pd.read_csv(file_like, chunksize=self.chunk_size)
+        chunks: list[pd.DataFrame] = []
+        for chunk in reader:
+            check_memory_limit(self.max_memory_mb, logger)
+            chunks.append(chunk)
+        return pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
 
 
-class ChunkedDataProcessor:
-    """Processes iterables while periodically checking memory."""
-
-    def __init__(self, monitor: MemoryMonitor) -> None:
-        self.monitor = monitor
-
-    def process(self, data_iter: Iterable[Any]) -> Generator[Any, None, None]:
-        for chunk in data_iter:
-            self.monitor.check()
-            yield chunk
-
-
-class FileProcessor(ChunkedDataProcessor):
-    """Reads files in chunks while monitoring memory usage."""
-
-    def __init__(self, monitor: MemoryMonitor, chunk_size: int | None = None) -> None:
-        super().__init__(monitor)
-        self.chunk_size = chunk_size or monitor.config.chunk_size
-
-    def read(self, path: str) -> Generator[bytes, None, None]:
-        with open(path, "rb") as fh:
-            while True:
-                self.monitor.check()
-                data = fh.read(self.chunk_size)
-                if not data:
-                    break
-                yield data
-
-
-def memory_safe(
-    config: MemoryConfig,
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    """Decorator to add memory monitoring to a function."""
-
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            monitor = MemoryMonitor(config)
-            return func(*args, monitor=monitor, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
-__all__ = [
-    "MemoryConfig",
-    "MemoryMonitor",
-    "ChunkedDataProcessor",
-    "FileProcessor",
-    "memory_safe",
-]
+__all__ = ["FileProcessor"]

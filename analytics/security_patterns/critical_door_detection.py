@@ -9,6 +9,8 @@ from utils.sklearn_compat import optional_import
 
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from .column_validation import ensure_columns
+
 
 IsolationForest = optional_import("sklearn.ensemble.IsolationForest")
 
@@ -30,6 +32,12 @@ def detect_critical_door_anomalies(
     try:
         if len(df) == 0:
             return threats
+        if not ensure_columns(
+            df,
+            ["timestamp", "person_id", "door_id", "is_after_hours", "access_granted"],
+            logger,
+        ):
+            return threats
 
         door_stats = df.groupby("door_id").agg(
             after_hours_rate=("is_after_hours", "mean"),
@@ -48,7 +56,7 @@ def detect_critical_door_anomalies(
             )
             threats.append(
                 ThreatIndicator(
-                    threat_type="critical_door_anomaly",
+                    threat_type=AnomalyType.CRITICAL_DOOR,
                     severity="high",
                     confidence=confidence,
                     description=f"Door {door_id} shows abnormal usage patterns",
@@ -59,7 +67,7 @@ def detect_critical_door_anomalies(
                     },
                     timestamp=datetime.now(),
                     affected_entities=[str(door_id)],
-                    attack=_attack_info("critical_door_anomaly"),
+                    attack=_attack_info(AnomalyType.CRITICAL_DOOR.value),
                 )
             )
     except Exception as exc:  # pragma: no cover - log and continue

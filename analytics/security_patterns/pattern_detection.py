@@ -11,6 +11,8 @@ import yaml
 
 from .types import ThreatIndicator
 from utils.sklearn_compat import optional_import
+from .column_validation import ensure_columns
+
 
 LogisticRegression = optional_import("sklearn.linear_model.LogisticRegression")
 
@@ -55,6 +57,8 @@ def detect_rapid_attempts(
     logger = logger or logging.getLogger(__name__)
     threats: List[ThreatIndicator] = []
     try:
+        if not ensure_columns(df, ["timestamp", "person_id", "access_granted"], logger):
+            return threats
         df_sorted = df.sort_values(["person_id", "timestamp"])
         df_sorted["time_diff"] = df_sorted.groupby("person_id")["timestamp"].diff()
         rapid_threshold = pd.Timedelta(seconds=30)
@@ -98,6 +102,8 @@ def detect_after_hours_anomalies(
     logger = logger or logging.getLogger(__name__)
     threats: List[ThreatIndicator] = []
     try:
+        if not ensure_columns(df, ["person_id", "is_after_hours"], logger):
+            return threats
         after_hours_data = df[df["is_after_hours"] == True]
         if len(after_hours_data) == 0:
             return threats
@@ -137,7 +143,17 @@ def detect_critical_door_risks(
     logger = logger or logging.getLogger(__name__)
     threats: List[ThreatIndicator] = []
     try:
-        if "door_type" not in df.columns:
+        if not ensure_columns(
+            df,
+            [
+                "timestamp",
+                "person_id",
+                "door_id",
+                "door_type",
+                "access_granted",
+            ],
+            logger,
+        ):
             return threats
 
         critical = df[df["door_type"].astype(str).str.lower() == "critical"]
@@ -173,7 +189,7 @@ def detect_critical_door_risks(
             severity = "critical" if prob > 0.9 else "high"
             threats.append(
                 ThreatIndicator(
-                    threat_type="critical_door_anomaly",
+                    threat_type=AnomalyType.CRITICAL_DOOR,
                     severity=severity,
                     confidence=float(prob),
                     description=(

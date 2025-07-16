@@ -74,6 +74,7 @@ from .odd_door_detection import detect_odd_door_usage
 from .odd_path_detection import detect_odd_path
 from .odd_time_detection import detect_odd_time
 from .pattern_detection import detect_pattern_threats
+
 from .pattern_drift_detection import detect_pattern_drift
 from .statistical_detection import detect_statistical_threats
 from .tailgate_detection import detect_tailgate
@@ -231,6 +232,7 @@ class SecurityPatternsAnalyzer:
                 timeout=self.config.no_exit_timeout,
             )
         )
+
         threat_indicators.extend(detect_pattern_drift(df, self.logger))
         threat_indicators.extend(detect_clearance_violations(df, self.logger))
         threat_indicators.extend(

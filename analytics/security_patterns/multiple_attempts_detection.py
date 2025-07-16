@@ -9,6 +9,7 @@ import pandas as pd
 from .pattern_detection import _attack_info
 from .types import ThreatIndicator
 
+
 __all__ = ["detect_multiple_attempts"]
 
 
@@ -25,6 +26,8 @@ def detect_multiple_attempts(
     try:
         if len(df) == 0:
             return threats
+        if not ensure_columns(df, ["timestamp", "person_id", "door_id"], logger):
+            return threats
         df_sorted = df.sort_values("timestamp")
         for (person_id, door_id), group in df_sorted.groupby(["person_id", "door_id"]):
             times = group["timestamp"]
@@ -35,7 +38,7 @@ def detect_multiple_attempts(
                 if i - start_idx + 1 >= threshold:
                     threats.append(
                         ThreatIndicator(
-                            threat_type="multiple_attempts_anomaly",
+                            threat_type=AnomalyType.MULTIPLE_ATTEMPTS,
                             severity="high",
                             confidence=0.8,
                             description=f"Multiple attempts by {person_id} at door {door_id}",
@@ -45,7 +48,9 @@ def detect_multiple_attempts(
                             },
                             timestamp=datetime.now(),
                             affected_entities=[str(person_id), str(door_id)],
-                            attack=_attack_info("multiple_attempts_anomaly"),
+                            attack=_attack_info(
+                                AnomalyType.MULTIPLE_ATTEMPTS.value
+                            ),
                         )
                     )
                     break

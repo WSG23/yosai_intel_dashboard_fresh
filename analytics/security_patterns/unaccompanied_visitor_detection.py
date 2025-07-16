@@ -9,6 +9,7 @@ import pandas as pd
 from .pattern_detection import _attack_info
 from .types import ThreatIndicator
 
+
 __all__ = ["detect_unaccompanied_visitors"]
 
 
@@ -24,7 +25,11 @@ def detect_unaccompanied_visitors(
     try:
         if len(df) == 0:
             return threats
-        if "badge_status" not in df.columns:
+        if not ensure_columns(
+            df,
+            ["timestamp", "person_id", "door_id", "badge_status"],
+            logger,
+        ):
             return threats
         df_sorted = df.sort_values("timestamp")
         visitors = df_sorted[df_sorted["badge_status"].str.lower() == "visitor"]
@@ -39,7 +44,7 @@ def detect_unaccompanied_visitors(
             if nearby.empty:
                 threats.append(
                     ThreatIndicator(
-                        threat_type="unaccompanied_visitor_anomaly",
+                        threat_type=AnomalyType.UNACCOMPANIED_VISITOR,
                         severity="medium",
                         confidence=0.7,
                         description=f"Visitor badge {row['person_id']} unaccompanied",
@@ -49,7 +54,9 @@ def detect_unaccompanied_visitors(
                         },
                         timestamp=datetime.now(),
                         affected_entities=[str(row["person_id"])],
-                        attack=_attack_info("unaccompanied_visitor_anomaly"),
+                        attack=_attack_info(
+                            AnomalyType.UNACCOMPANIED_VISITOR.value
+                        ),
                     )
                 )
     except Exception as exc:  # pragma: no cover - log and continue

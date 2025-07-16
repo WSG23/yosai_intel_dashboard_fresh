@@ -9,6 +9,7 @@ import pandas as pd
 from .pattern_detection import _attack_info
 from .types import ThreatIndicator
 
+
 __all__ = ["detect_access_no_exit"]
 
 
@@ -24,6 +25,12 @@ def detect_access_no_exit(
     try:
         if len(df) == 0:
             return threats
+        if not ensure_columns(
+            df,
+            ["timestamp", "person_id", "door_id", "access_granted"],
+            logger,
+        ):
+            return threats
         df_sorted = df.sort_values("timestamp")
         for person_id, group in df_sorted.groupby("person_id"):
             events = group.reset_index(drop=True)
@@ -35,7 +42,7 @@ def detect_access_no_exit(
                     ):
                         threats.append(
                             ThreatIndicator(
-                                threat_type="access_granted_no_exit_anomaly",
+                                threat_type=AnomalyType.ACCESS_NO_EXIT,
                                 severity="medium",
                                 confidence=0.7,
                                 description=f"User {person_id} access without exit",
@@ -45,7 +52,9 @@ def detect_access_no_exit(
                                 },
                                 timestamp=datetime.now(),
                                 affected_entities=[str(person_id)],
-                                attack=_attack_info("access_granted_no_exit_anomaly"),
+                                attack=_attack_info(
+                                    AnomalyType.ACCESS_NO_EXIT.value
+                                ),
                             )
                         )
     except Exception as exc:  # pragma: no cover - log and continue
