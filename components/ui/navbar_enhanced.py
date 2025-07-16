@@ -33,7 +33,7 @@ def create_navbar_layout() -> Any:
                         html.Img(
                             src="/assets/yosai_logo_name_white.png",
                             height="40px",
-                            className="mr-2-5",
+                            className="me-2",
                             style={"filter": "brightness(1)"},
                             alt="Yōsai logo",
                         ),
