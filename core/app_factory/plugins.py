@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-from typing import Any, Optional, cast
+from typing import TYPE_CHECKING, Any, Optional, cast
+
+if TYPE_CHECKING:  # pragma: no cover - imported for type checking only
+    from dash import Dash
 
 from core.service_container import ServiceContainer
 from core.plugins.auto_config import PluginAutoConfiguration
 
 
 def _initialize_plugins(
-    app: "Dash",
+    app: Dash,
     config_manager: Any,
     *,
     container: Optional[Any] = None,

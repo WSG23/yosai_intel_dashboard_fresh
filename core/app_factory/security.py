@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # pragma: no cover - imported for type checking only
+    from dash import Dash
 
 from dash_csrf_plugin import CSRFMode, setup_enhanced_csrf_protection
 
 logger = logging.getLogger(__name__)
 
 
-def initialize_csrf(app: "Dash", config_manager: Any) -> None:
+def initialize_csrf(app: Dash, config_manager: Any) -> None:
     """Initialize CSRF protection if enabled."""
     if (
         config_manager.get_security_config().csrf_enabled
