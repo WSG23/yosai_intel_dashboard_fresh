@@ -5,11 +5,11 @@ from datetime import datetime
 from typing import List, Optional
 
 import pandas as pd
+
 from database.baseline_metrics import BaselineMetricsDB
 
-from .types import ThreatIndicator
 from .pattern_detection import _attack_info
-from .column_validation import ensure_columns
+from .types import ThreatIndicator
 
 
 __all__ = ["detect_odd_time"]
@@ -18,7 +18,11 @@ __all__ = ["detect_odd_time"]
 def detect_odd_time(
     df: pd.DataFrame, logger: Optional[logging.Logger] = None
 ) -> List[ThreatIndicator]:
-    """Detect access events occurring at unusual times for the user."""
+    """Detect access events occurring at unusual times for the user.
+
+    If the baseline standard deviation is zero, a small epsilon is used
+    instead to avoid divide-by-zero errors.
+    """
     logger = logger or logging.getLogger(__name__)
     threats: List[ThreatIndicator] = []
     baseline = BaselineMetricsDB()
@@ -34,6 +38,8 @@ def detect_odd_time(
             baseline_metrics = baseline.get_baseline("user", str(person_id))
             base_mean = baseline_metrics.get("mean_hour", mean_hour)
             base_std = baseline_metrics.get("std_hour", std_hour)
+            if base_std == 0:
+                base_std = 1e-9
             for _, row in group.iterrows():
                 if abs(row["hour"] - base_mean) > 2 * base_std:
                     confidence = min(
