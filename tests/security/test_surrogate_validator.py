@@ -1,5 +1,6 @@
 import pytest
 
+import security_callback_controller
 from security_callback_controller import SecurityEvent
 
 
@@ -9,7 +10,7 @@ def capture_events(monkeypatch: pytest.MonkeyPatch, validator_module) -> list:
 
     events: list = []
     monkeypatch.setattr(
-        validator_module,
+        security_callback_controller,
         "emit_security_event",
         lambda event, data=None: events.append(event),
     )
@@ -25,6 +26,8 @@ def validator_module():
     import security.unicode_surrogate_validator as mod
 
     importlib.reload(mod)
+    # Provide SecurityEvent for the lazy import pattern used in the module
+    mod.SecurityEvent = SecurityEvent
     return mod
 
 
