@@ -1,7 +1,7 @@
 import pandas as pd
 
-from analytics.security_patterns.pattern_detection import detect_critical_door_risks
 from analytics.security_patterns import SecurityPatternsAnalyzer, prepare_security_data
+from analytics.security_patterns.pattern_detection import detect_critical_door_risks
 from database.connection import create_database_connection
 
 
@@ -62,3 +62,43 @@ def test_detect_critical_door_risks():
     prepared = prepare_security_data(df)
     threats = detect_critical_door_risks(prepared)
     assert any(t.threat_type == "critical_door_anomaly" for t in threats)
+
+
+def test_detect_odd_time_zero_variance(monkeypatch):
+    class DummyBaseline:
+        def get_baseline(self, *a, **kw):
+            return {}
+
+        def update_baseline(self, *a, **kw):
+            pass
+
+    monkeypatch.setattr(
+        "analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
+        lambda: DummyBaseline(),
+    )
+
+    df = pd.DataFrame({"person_id": ["u1", "u1"], "hour": [10, 10]})
+    from analytics.security_patterns.odd_time_detection import detect_odd_time
+
+    threats = detect_odd_time(df)
+    assert threats == []
+
+
+def test_detect_odd_time_zero_baseline_std(monkeypatch):
+    class DummyBaseline:
+        def get_baseline(self, *a, **kw):
+            return {"mean_hour": 10, "std_hour": 0}
+
+        def update_baseline(self, *a, **kw):
+            pass
+
+    monkeypatch.setattr(
+        "analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
+        lambda: DummyBaseline(),
+    )
+
+    df = pd.DataFrame({"person_id": ["u1", "u1"], "hour": [10, 12]})
+    from analytics.security_patterns.odd_time_detection import detect_odd_time
+
+    threats = detect_odd_time(df)
+    assert len(threats) == 1
