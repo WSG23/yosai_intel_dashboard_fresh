@@ -17,7 +17,13 @@ from pages import (
 def create_app(mode=None, **kwargs):
     """Create a working Dash app with logo, navigation, and routing - HTTPS ready."""
 
-    app = dash.Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.BOOTSTRAP])
+    pages_path = Path(__file__).resolve().parent.parent / "pages"
+    app = dash.Dash(
+        __name__,
+        use_pages=True,
+        pages_folder=str(pages_path),
+        external_stylesheets=[dbc.themes.BOOTSTRAP],
+    )
 
     # Simple working layout
     app.layout = html.Div(
