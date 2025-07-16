@@ -7,7 +7,7 @@ from typing import Any
 import dash_bootstrap_components as dbc
 from dash import html
 
-from pages.deep_analytics_complex.analysis import (
+from pages.deep_analytics_complex import (
     create_analysis_results_display,
     create_analysis_results_display_safe,
     get_initial_message_safe,

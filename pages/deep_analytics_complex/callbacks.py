@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 
 import logging
 
-from analytics.controllers import (
-    UnifiedAnalyticsController,
+from analytics.controllers.unified_controller import UnifiedAnalyticsController
+from analytics.controllers.deep_analytics_logic import (
     dispatch_analysis,
     get_data_sources,
     get_initial_message_safe,
@@ -19,8 +19,8 @@ from analytics.controllers import (
     run_service_analysis,
     run_suggests_analysis,
     run_unique_patterns_analysis,
+    update_status_alert as _controller_update_status_alert,
 )
-from analytics.controllers import update_status_alert as _controller_update_status_alert
 from core.callback_registry import _callback_registry
 from core.dash_profile import profile_callback
 from core.state import CentralizedStateManager

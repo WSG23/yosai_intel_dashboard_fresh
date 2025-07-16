@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 import logging
 
-from analytics.controllers import UnifiedAnalyticsController
+from analytics.controllers.unified_controller import UnifiedAnalyticsController
 
 logger = logging.getLogger(__name__)
 from typing import Any, Dict, List
