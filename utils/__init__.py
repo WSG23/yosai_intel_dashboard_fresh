@@ -19,6 +19,11 @@ from core.unicode import (
     utf8_safe_encode,
     utf8_safe_decode,
 )
+from core.unicode_enhanced import (
+    EnhancedUnicodeProcessor,
+    SurrogateHandlingConfig,
+    SurrogateHandlingStrategy,
+)
 
 from .assets_debug import (
     check_navbar_assets,
@@ -43,6 +48,9 @@ __all__ = [
     "UnicodeTextProcessor",
     "UnicodeSQLProcessor",
     "UnicodeSecurityProcessor",
+    "EnhancedUnicodeProcessor",
+    "SurrogateHandlingConfig",
+    "SurrogateHandlingStrategy",
     "clean_unicode_text",
     "sanitize_unicode_input",
     "safe_decode_bytes",
