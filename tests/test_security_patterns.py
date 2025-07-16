@@ -1,9 +1,24 @@
 import pandas as pd
 
-from analytics.security_patterns import SecurityPatternsAnalyzer
+from analytics.security_patterns.pattern_detection import detect_critical_door_risks
+from analytics.security_patterns import SecurityPatternsAnalyzer, prepare_security_data
+from database.connection import create_database_connection
 
 
-def test_analyze_failed_access_returns_expected_keys():
+def test_analyze_failed_access_returns_expected_keys(monkeypatch):
+    class DummyConn:
+        def execute_query(self, *a, **kw):
+            return []
+
+        def execute_command(self, *a, **kw):
+            return 0
+
+        def health_check(self) -> bool:
+            return True
+
+    monkeypatch.setattr(
+        "database.baseline_metrics.create_database_connection", lambda: DummyConn()
+    )
     analyzer = SecurityPatternsAnalyzer()
     df = pd.DataFrame(
         {
@@ -26,3 +41,24 @@ def test_analyze_failed_access_returns_expected_keys():
         "risk_level",
     }
     assert set(result.keys()) == expected_keys
+
+
+def test_detect_critical_door_risks():
+    df = pd.DataFrame(
+        {
+            "event_id": [1, 2],
+            "timestamp": [
+                "2024-01-01 23:30:00",
+                "2024-01-01 23:45:00",
+            ],
+            "person_id": ["u1", "u1"],
+            "door_id": ["d_critical", "d_critical"],
+            "access_result": ["Denied", "Denied"],
+            "door_type": ["critical", "critical"],
+            "required_clearance": [4, 4],
+            "clearance_level": [1, 1],
+        }
+    )
+    prepared = prepare_security_data(df)
+    threats = detect_critical_door_risks(prepared)
+    assert any(t.threat_type == "critical_door_anomaly" for t in threats)
