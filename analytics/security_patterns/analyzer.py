@@ -72,6 +72,7 @@ from .odd_area_time_detection import detect_odd_area_time
 from .multiple_attempts_detection import detect_multiple_attempts
 from .forced_entry_detection import detect_forced_entry
 from .access_no_exit_detection import detect_access_no_exit
+from .no_access_detection import detect_no_access
 from .pattern_drift_detection import detect_pattern_drift
 from .clearance_violation_detection import detect_clearance_violations
 from .unaccompanied_visitor_detection import detect_unaccompanied_visitors
@@ -208,6 +209,7 @@ class SecurityPatternsAnalyzer:
         threat_indicators.extend(detect_multiple_attempts(df, self.logger))
         threat_indicators.extend(detect_forced_entry(df, self.logger))
         threat_indicators.extend(detect_access_no_exit(df, self.logger))
+        threat_indicators.extend(detect_no_access(df, self.logger))
         threat_indicators.extend(detect_pattern_drift(df, self.logger))
         threat_indicators.extend(detect_clearance_violations(df, self.logger))
         threat_indicators.extend(detect_unaccompanied_visitors(df, self.logger))
