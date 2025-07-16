@@ -101,7 +101,6 @@ def create_navbar_layout(
                         children,
                         href=href,
                         className="nav-link px-3",
-                        **{"aria-label": name},
                     )
                 )
             )
