@@ -14,6 +14,7 @@ from core.audit_logger import ComplianceAuditLogger
 from services.compliance.consent_service import ConsentService
 from services.compliance.data_retention_service import DataRetentionService
 from models.compliance import ConsentType, DataSensitivityLevel
+from services.data_processing.file_processor import FileProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +94,7 @@ class ComplianceCSVProcessor:
             processing_id = f"CSV-PROC-{str(uuid4())[:8].upper()}"
 
             # 1. Load and analyze CSV data
-            df = pd.read_csv(file_path)
+            df = FileProcessor.read_large_csv(file_path)
 
             # 2. Classify data types and sensitivity
             classification = self._classify_csv_data(df, upload_context)

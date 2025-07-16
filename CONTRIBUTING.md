@@ -24,9 +24,21 @@ pre-commit run --all-files
 
 These additional packages provide linting, type checking, security scanning and testing tools used in our CI pipeline.
 
+## Installing Test Dependencies
+
+The unit test suite requires additional packages specified in
+`requirements-test.txt`. Install them prior to running the tests:
+
+```bash
+./scripts/install_test_deps.sh
+```
+
+Alternatively you can run `pip install -r requirements-test.txt` directly.
+
 ## Running Tests
 
-After installing the dependencies you can run the tests and code quality checks:
+After installing the dependencies (including those from
+`requirements-test.txt`) you can run the tests and code quality checks:
 
 ```bash
 pytest

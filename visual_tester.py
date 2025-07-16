@@ -6,6 +6,7 @@ A simple Streamlit UI to test the complete pipeline visually
 
 import streamlit as st
 import pandas as pd
+from services.data_processing.file_processor import FileProcessor
 import json
 import sys
 from pathlib import Path
@@ -239,7 +240,10 @@ def show_file_processing():
             # Process the file
             with st.spinner("Processing file..."):
                 if uploaded_file.name.endswith('.csv'):
-                    df = pd.read_csv(uploaded_file)
+                    if uploaded_file.size and uploaded_file.size > 10 * 1024 * 1024:
+                        df = FileProcessor.read_large_csv(uploaded_file)
+                    else:
+                        df = pd.read_csv(uploaded_file)
                 elif uploaded_file.name.endswith('.json'):
                     df = pd.read_json(uploaded_file)
                 elif uploaded_file.name.endswith(('.xlsx', '.xls')):
