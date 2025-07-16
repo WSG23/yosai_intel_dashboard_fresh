@@ -4,10 +4,12 @@ Thank you for considering a contribution! Follow these steps to get the developm
 
 ## Setup
 
-Install the core and development dependencies:
+Install the core and development dependencies along with the packages
+required for running the tests:
 
 ```bash
 ./scripts/setup.sh
+pip install -r requirements-test.txt
 npm install
 pip install pre-commit
 pre-commit install
