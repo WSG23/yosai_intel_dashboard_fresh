@@ -5,24 +5,16 @@ Handles all JSON serialization issues internally with minimal external dependenc
 
 import json
 import logging
-import os
 from dataclasses import asdict, dataclass, is_dataclass
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, Optional, cast
 
 import pandas as pd
 
 from core.serialization import SafeJSONSerializer
 from services.data_processing.core.protocols import PluginMetadata
 
-# Optional Babel support
-try:
-    from flask_babel import LazyString
-
-    BABEL_AVAILABLE = True
-except ImportError:
-    LazyString = None
-    BABEL_AVAILABLE = False
+# Optional Babel support is handled at runtime
 
 logger = logging.getLogger(__name__)
 
@@ -126,8 +118,12 @@ class YosaiJSONEncoder(json.JSONEncoder):
 
     def _is_lazystring(self, obj: Any) -> bool:
         """Check if object is a LazyString"""
-        if BABEL_AVAILABLE and LazyString and isinstance(obj, LazyString):
-            return True
+        try:
+            from flask_babel import LazyString as BabelLazyString  # type: ignore
+            if isinstance(obj, BabelLazyString):
+                return True
+        except Exception:
+            pass
         # Additional check for LazyString-like objects
         return hasattr(obj, "__class__") and "LazyString" in str(obj.__class__)
 
@@ -207,8 +203,6 @@ class JsonSerializationPlugin:
     def _handle_babel_safely(self):
         """Handle babel imports and LazyString conversion within the plugin"""
         try:
-            from flask_babel import LazyString
-
             self._babel_available = True
 
             # Patch any babel lazy_gettext to return strings immediately
@@ -334,8 +328,6 @@ class JsonSerializationPlugin:
     def _patch_flask_json(self):
         """Patch Flask JSON provider if available"""
         try:
-            from flask import Flask
-
             # Create custom JSON provider class
             class YosaiJSONProvider:
                 def __init__(self, app):
@@ -473,4 +465,5 @@ def quick_start() -> JsonSerializationPlugin:
     return plugin
 
 
-# Auto-start removed to avoid side effects on import. Use ``quick_start`` explicitly if needed.
+# Auto-start removed to avoid side effects on import.
+# Use ``quick_start`` explicitly if needed.
