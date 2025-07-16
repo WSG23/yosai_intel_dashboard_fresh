@@ -10,6 +10,7 @@ from .advanced_cache import (
 from .advanced_query_optimizer import AdvancedQueryOptimizer
 from .cpu_optimizer import CPUOptimizer
 from .hierarchical_cache_manager import HierarchicalCacheManager
+from .cache_warmer import IntelligentCacheWarmer
 from .memory_manager import MemoryManager
 from .truly_unified_callbacks import TrulyUnifiedCallbacks
 
@@ -28,6 +29,7 @@ __all__ = [
     "create_advanced_cache_manager",
     "AdvancedQueryOptimizer",
     "HierarchicalCacheManager",
+    "IntelligentCacheWarmer",
     "MemoryManager",
     "CPUOptimizer",
 ]
