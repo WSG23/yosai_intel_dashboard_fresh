@@ -245,6 +245,12 @@ async def upload_file():
         return jsonify({"error": "No file selected"}), 400
 
     task_id = str(uuid.uuid4())
+    # Track active upload task so status endpoint can report progress
+    api_adapter._active_tasks[task_id] = {
+        "status": "processing",
+        "progress": 0,
+        "result": None,
+    }
 
     results: List[Dict[str, Any]] = []
     for file in files:
@@ -271,6 +277,7 @@ async def upload_file():
 
             def progress_callback(current: int, total: int = 100) -> None:
                 progress = int((current / total) * 100) if total > 0 else 0
+                api_adapter._active_tasks[task_id]["progress"] = progress
                 socketio.emit(
                     "upload_progress",
                     {
@@ -312,6 +319,10 @@ async def upload_file():
                     "message": str(e),
                 }
             )
+
+    api_adapter._active_tasks[task_id].update(
+        {"status": "completed", "progress": 100, "result": results}
+    )
 
     return jsonify(
         {
