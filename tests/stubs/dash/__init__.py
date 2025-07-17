@@ -1,3 +1,14 @@
+from . import html
+from . import dcc
+from . import dependencies
+from . import _callback
+
+# Re-export commonly used classes for convenience
+Input = dependencies.Input
+Output = dependencies.Output
+State = dependencies.State
+
+
 class Dash:
     def callback(self, *args, **kwargs):
         def decorator(func):
@@ -11,11 +22,6 @@ class _SimpleComp:
         pass
 
 
-from . import html
-from . import dcc
-from . import dependencies
-from . import _callback
-
 no_update = _callback.NoUpdate()
 __version__ = "0.0.0"
 page_container = _SimpleComp()
@@ -27,5 +33,8 @@ __all__ = [
     "dcc",
     "dependencies",
     "_callback",
-    "page_container",
+    "Input",
+    "Output",
+    "State",
+    "no_update",
 ]

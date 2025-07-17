@@ -3,17 +3,15 @@
 Visual Testing Interface for Yōsai Intel Dashboard
 A simple Streamlit UI to test the complete pipeline visually
 """
+# mypy: ignore-errors
 
-import streamlit as st
+import streamlit as st  # type: ignore
 import pandas as pd
 from services.data_processing.file_processor import FileProcessor
-import json
 import sys
 from pathlib import Path
 from config.app_config import UploadConfig
-import asyncio
 import plotly.express as px
-import plotly.graph_objects as go
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -21,7 +19,6 @@ sys.path.insert(0, str(project_root))
 
 
 # Apply our fixes
-
 
 def apply_all_fixes():
     """Apply development-only monkey patches for compatibility."""
@@ -257,7 +254,7 @@ def show_file_processing():
                 elif uploaded_file.name.endswith((".xlsx", ".xls")):
                     df = pd.read_excel(uploaded_file)
 
-            st.success(f"✅ File processed successfully!")
+            st.success("✅ File processed successfully!")
 
             # Show file info
             col1, col2, col3 = st.columns(3)
@@ -372,9 +369,7 @@ def show_device_mapping():
                             "Security Level": details.get("security_level", "N/A"),
                             "Entry Point": "✅" if details.get("is_entry") else "❌",
                             "Exit Point": "✅" if details.get("is_exit") else "❌",
-                            "Restricted": (
-                                "🔒" if details.get("is_restricted") else "🔓"
-                            ),
+                            "Restricted": "🔒" if details.get("is_restricted") else "🔓",
                             "Confidence": details.get("confidence", 0),
                         }
                     )
@@ -448,8 +443,11 @@ def show_analytics_engine():
         parquet_path = (
             Path(UploadConfig().folder) / "Enhanced_Security_Demo.csv.parquet"
         )
+
         if parquet_path.exists():
             df = pd.read_parquet(parquet_path)
+
+
             st.success(f"✅ Loaded Enhanced Security Demo: {len(df)} access events")
 
             # Analytics tests
@@ -490,7 +488,6 @@ def show_analytics_engine():
                                 st.write(f"**Result**: {result}")
                         except Exception as e:
                             st.error(f"❌ Test failed: {e}")
-
         else:
             st.warning(
                 "Enhanced Security Demo data not found. Upload data to test analytics."
