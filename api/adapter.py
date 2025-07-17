@@ -10,7 +10,8 @@ from datetime import datetime
 from functools import wraps
 from typing import Any, Dict, List
 
-import pandas as pd
+import json
+
 from flask import Blueprint, jsonify, request
 from flask_cors import cross_origin
 from flask_socketio import SocketIO, emit, join_room
@@ -38,6 +39,42 @@ socketio = SocketIO(
     logger=True,
     engineio_logger=True,
 )
+
+
+def safe_emit(event: str, data: Any | None = None, **kwargs: Any) -> None:
+    """Emit Socket.IO data after Unicode sanitization."""
+    payload = api_adapter.unicode_processor.process_dict(data or {})
+    socketio.emit(event, payload, **kwargs)
+
+
+@api_bp.before_request
+def _validate_request_params() -> Any | None:
+    """Validate query string and JSON payload using ``SecurityValidator``."""
+    for key, value in request.args.items():
+        result = api_adapter.validator.validate_input(value, key)
+        if not result["valid"]:
+            return jsonify({"status": "error", "message": f"Invalid parameter: {key}", "issues": result["issues"]}), 400
+
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+        for key, value in data.items():
+            result = api_adapter.validator.validate_input(str(value), key)
+            if not result["valid"]:
+                return jsonify({"status": "error", "message": f"Invalid parameter: {key}", "issues": result["issues"]}), 400
+    return None
+
+
+@api_bp.after_request
+def _sanitize_response(response: Any) -> Any:
+    """Sanitize JSON responses using the Unicode processor."""
+    try:
+        if response.is_json:
+            data = response.get_json()
+            sanitized = api_adapter.unicode_processor.process_dict(data)
+            response.set_data(json.dumps(sanitized))
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("Response sanitization failed: %s", exc)
+    return response
 
 
 class APIAdapter:
@@ -277,8 +314,8 @@ async def upload_file():
 
             def progress_callback(current: int, total: int = 100) -> None:
                 progress = int((current / total) * 100) if total > 0 else 0
-                api_adapter._active_tasks[task_id]["progress"] = progress
-                socketio.emit(
+                safe_emit(
+
                     "upload_progress",
                     {
                         "task_id": task_id,
@@ -531,7 +568,7 @@ def handle_connect():
     client_id = request.sid
     logger.info(f"Client connected: {client_id}")
 
-    emit(
+    safe_emit(
         "connected",
         {
             "client_id": client_id,
@@ -560,7 +597,7 @@ def handle_analytics_subscription(data: Dict[str, Any]):
             summary = service.get_dashboard_summary()
             safe_summary = api_adapter.unicode_processor.process_dict(summary)
 
-            emit(
+            safe_emit(
                 "analytics_update",
                 {
                     "type": "initial",
@@ -571,7 +608,7 @@ def handle_analytics_subscription(data: Dict[str, Any]):
             )
     except Exception as e:
         logger.error(f"Error sending initial analytics: {e}")
-        emit(
+        safe_emit(
             "analytics_error",
             {"error": str(e), "timestamp": datetime.utcnow().isoformat()},
         )
@@ -599,7 +636,7 @@ def handle_data_refresh(data: Dict[str, Any]):
                     service._cache.clear()
 
                 summary = service.get_dashboard_summary()
-                emit(
+                safe_emit(
                     "data_refreshed",
                     {
                         "type": data_type,
@@ -608,7 +645,7 @@ def handle_data_refresh(data: Dict[str, Any]):
                     },
                 )
     except Exception as e:
-        emit("refresh_error", {"error": str(e), "type": data_type})
+        safe_emit("refresh_error", {"error": str(e), "type": data_type})
 
 
 # ============= Health & Status Endpoints =============

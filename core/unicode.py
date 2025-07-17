@@ -213,6 +213,37 @@ class UnicodeProcessor:
 
         return _unicode_validator.validate_dataframe(df)
 
+    # ------------------------------------------------------------------
+    @staticmethod
+    def process_dict(data: Any) -> Any:
+        """Recursively sanitize ``data`` for safe JSON transport."""
+
+        if isinstance(data, dict):
+            return {
+                UnicodeProcessor.safe_encode_text(k): UnicodeProcessor.process_dict(v)
+                for k, v in data.items()
+            }
+
+        if isinstance(data, list):
+            return [UnicodeProcessor.process_dict(v) for v in data]
+
+        if isinstance(data, tuple):
+            return type(data)(UnicodeProcessor.process_dict(v) for v in data)
+
+        if isinstance(data, set):
+            return {UnicodeProcessor.process_dict(v) for v in data}
+
+        if isinstance(data, bytes):
+            return UnicodeProcessor.safe_decode_text(data)
+
+        if hasattr(data, "__dict__"):
+            return UnicodeProcessor.process_dict(vars(data))
+
+        if isinstance(data, (int, float, bool)) or data is None:
+            return data
+
+        return UnicodeProcessor.safe_encode_text(data)
+
 
 class ChunkedUnicodeProcessor:
     """Process byte content in manageable chunks."""
