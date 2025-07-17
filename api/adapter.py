@@ -10,13 +10,19 @@ from datetime import datetime
 from functools import wraps
 from typing import Any, Dict, List
 
+import pandas as pd
 from flask import Blueprint, jsonify, request
 from flask_cors import cross_origin
 from flask_socketio import SocketIO, emit, join_room
 
+from components import column_verification
+from components.simple_device_mapping import generate_ai_device_defaults
 from core.security_validator import SecurityValidator
 from core.unicode import UnicodeProcessor
+from services.ai_mapping_store import ai_mapping_store
 from services.analytics_service import get_analytics_service
+from services.data_enhancer import apply_manual_mapping
+from services.interfaces import get_device_learning_service
 from services.upload.core.processor import UploadProcessingService
 from utils.upload_store import uploaded_data_store
 
@@ -357,6 +363,149 @@ def get_uploaded_files():
     except Exception as e:
         logger.error(f"Error getting uploaded files: {e}")
         return jsonify({"files": [], "total": 0, "error": str(e)})
+
+
+@api_bp.route("/upload/column-suggestions", methods=["POST"])
+@cross_origin()
+@handle_errors
+def get_column_suggestions():
+    """Return AI column mapping suggestions for uploaded data."""
+    data = request.get_json() or {}
+    filename = data.get("filename", "")
+    columns = data.get("columns", [])
+    sample_data = data.get("sample_data", {})
+
+    if not filename or not columns:
+        return jsonify({"status": "error", "message": "Invalid parameters"}), 400
+
+    validation = api_adapter.validator.validate_input(filename, "filename")
+    if not validation["valid"]:
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": "Invalid filename",
+                    "issues": validation["issues"],
+                }
+            ),
+            400,
+        )
+
+    try:
+        df = pd.DataFrame(sample_data, columns=columns)
+    except Exception:
+        df = pd.DataFrame(sample_data)
+
+    suggestions = column_verification.get_ai_column_suggestions(df, filename)
+
+    return jsonify(
+        {
+            "suggestions": suggestions,
+            "required_fields": [
+                "timestamp",
+                "person_id",
+                "door_id",
+                "access_result",
+            ],
+        }
+    )
+
+
+@api_bp.route("/upload/device-mappings", methods=["POST"])
+@cross_origin()
+@handle_errors
+def get_device_mappings():
+    """Provide device mapping suggestions using AI learning."""
+    data = request.get_json() or {}
+    filename = data.get("filename", "")
+    devices: List[str] = data.get("devices", [])
+
+    if not filename or not isinstance(devices, list):
+        return jsonify({"status": "error", "message": "Invalid parameters"}), 400
+
+    learning_service = get_device_learning_service(api_adapter.container)
+
+    mappings: Dict[str, Dict[str, Any]] = {}
+    unknown_devices: List[str] = []
+
+    for dev in devices:
+        learned = learning_service.get_device_mapping_by_name(dev)
+        if learned:
+            mappings[dev] = learned
+        else:
+            unknown_devices.append(dev)
+
+    if unknown_devices:
+        df = pd.DataFrame({"door_id": unknown_devices})
+        generate_ai_device_defaults(df, "auto")
+        for dev in unknown_devices:
+            mappings[dev] = ai_mapping_store.get(dev)
+
+    clean = {
+        d: {
+            "floor_number": m.get("floor_number"),
+            "is_entry": m.get("is_entry"),
+            "is_exit": m.get("is_exit"),
+            "security_level": m.get("security_level"),
+            "confidence": m.get("confidence"),
+        }
+        for d, m in mappings.items()
+    }
+
+    return jsonify({"mappings": clean})
+
+
+@api_bp.route("/upload/save-mappings", methods=["POST"])
+@cross_origin()
+@handle_errors
+def save_mappings():
+    """Persist verified column and device mappings."""
+    data = request.get_json() or {}
+    filename = data.get("filename")
+    column_mappings = data.get("column_mappings", {})
+    device_mappings = data.get("device_mappings", {})
+
+    if not filename:
+        return jsonify({"status": "error", "message": "Filename required"}), 400
+
+    df = uploaded_data_store.load_dataframe(filename)
+    column_verification.save_verified_mappings(df, filename, column_mappings, {})
+
+    learning_service = get_device_learning_service(api_adapter.container)
+    verified = {
+        d: m
+        for d, m in device_mappings.items()
+        if isinstance(m, dict) and m.get("manually_verified")
+    }
+    if verified:
+        learning_service.save_user_device_mappings(df, filename, verified)
+
+    return jsonify({"status": "success"})
+
+
+@api_bp.route("/upload/apply-mappings", methods=["POST"])
+@cross_origin()
+@handle_errors
+def apply_mappings():
+    """Apply provided column mappings to stored data."""
+    data = request.get_json() or {}
+    filename = data.get("filename")
+    column_mappings = data.get("column_mappings", {})
+
+    if not filename:
+        return jsonify({"status": "error", "message": "Filename required"}), 400
+
+    df = uploaded_data_store.load_dataframe(filename)
+    processed = apply_manual_mapping(df, column_mappings)
+    uploaded_data_store.add_file(filename, processed)
+
+    devices = (
+        sorted(processed["door_id"].dropna().unique().tolist())
+        if "door_id" in processed.columns
+        else []
+    )
+
+    return jsonify({"devices": devices, "filename": filename, "processed": True})
 
 
 # ============= WebSocket Event Handlers =============
