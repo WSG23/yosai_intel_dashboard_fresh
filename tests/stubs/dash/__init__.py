@@ -18,6 +18,7 @@ from . import _callback
 
 no_update = _callback.NoUpdate()
 __version__ = "0.0.0"
+page_container = _SimpleComp()
 
 
 __all__ = [
@@ -26,4 +27,5 @@ __all__ = [
     "dcc",
     "dependencies",
     "_callback",
+    "page_container",
 ]
