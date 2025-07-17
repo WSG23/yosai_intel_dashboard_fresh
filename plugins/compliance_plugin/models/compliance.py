@@ -189,7 +189,7 @@ class ComplianceAuditLog(Base):
     description = Column(Text, nullable=False)
     legal_basis = Column(String(50), nullable=True)  # Which legal basis was used
     data_categories = Column(JSONB, nullable=True)  # What types of data were involved
-    metadata = Column(JSONB, nullable=True)  # Additional context
+    additional_metadata = Column(JSONB, nullable=True)  # Additional context
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -204,7 +204,7 @@ class ComplianceAuditLog(Base):
             "description": self.description,
             "legal_basis": self.legal_basis,
             "data_categories": self.data_categories,
-            "metadata": self.metadata,
+            "additional_metadata": self.additional_metadata,
         }
 
 
