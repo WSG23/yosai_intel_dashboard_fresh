@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.secrets_manager import validate_secrets
+from core.secret_manager import validate_secrets
 
 
 def register_health_endpoints(server: Any, progress_events: Any | None = None) -> None:

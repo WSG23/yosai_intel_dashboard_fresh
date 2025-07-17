@@ -8,7 +8,6 @@ import os
 import socket
 import time
 from datetime import timedelta
-
 from functools import wraps
 from typing import List, Optional
 from urllib.error import URLError
@@ -25,8 +24,9 @@ from flask_login import (
 )
 from jose import jwt
 
-from .secrets_manager import SecretsManager
 from config import get_security_config
+
+from .secret_manager import SecretsManager
 
 auth_bp = Blueprint("auth", __name__)
 login_manager = LoginManager()
