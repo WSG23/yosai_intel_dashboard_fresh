@@ -54,3 +54,6 @@ openpyxl>=3.1.0
 xlsxwriter>=3.0.0
 python-dateutil>=2.8.0
 
+# Enable cross-origin resource sharing support
+Flask-Cors>=3.0.10
+
