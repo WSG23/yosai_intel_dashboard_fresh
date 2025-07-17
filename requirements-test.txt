@@ -6,3 +6,4 @@ psutil>=5.9.0
 selenium>=4.20.0
 requests>=2.32.0
 pandas>=2.0.0
+openpyxl>=3.0.0
