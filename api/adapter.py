@@ -47,7 +47,7 @@ class APIAdapter:
         self.validator = SecurityValidator()
         self.unicode_processor = UnicodeProcessor()
         self.analytics_service = None
-        self.upload_service = None
+        self.upload_processor = None
         self.container = None
         self._active_tasks: Dict[str, Dict[str, Any]] = {}
 
@@ -57,10 +57,12 @@ class APIAdapter:
 
         try:
             self.analytics_service = container.get("analytics_service")
-            self.upload_service = container.get("upload_service")
+            # UploadProcessingService is registered as "upload_processor" in
+            # services/upload/service_registration.py
+            self.upload_processor = container.get("upload_processor")
 
-            if not self.upload_service:
-                self.upload_service = UploadProcessingService()
+            if not self.upload_processor:
+                self.upload_processor = UploadProcessingService()
 
             logger.info("API Adapter initialized successfully")
         except Exception as e:
@@ -281,7 +283,7 @@ async def upload_file():
                     room=task_id,
                 )
 
-            processor = api_adapter.upload_service or UploadProcessingService()
+            processor = api_adapter.upload_processor or UploadProcessingService()
 
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -607,7 +609,7 @@ def health_check():
     """API health check"""
     try:
         analytics_ok = api_adapter.analytics_service is not None
-        upload_ok = api_adapter.upload_service is not None
+        upload_ok = api_adapter.upload_processor is not None
 
         db_ok = False
         try:
