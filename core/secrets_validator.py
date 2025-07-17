@@ -67,6 +67,14 @@ def validate_all_secrets(manager: Optional[SecretsManager] = None) -> Dict[str, 
     return validator.validate_all_secrets()
 
 
+def validate_production_secrets(
+    manager: Optional[SecretsManager] = None,
+) -> list[str]:
+    """Convenience wrapper for :meth:`SecretsValidator.validate_production_secrets`."""
+    validator = SecretsValidator(manager)
+    return validator.validate_production_secrets()
+
+
 __all__ = [
     "SecretsValidator",
     "validate_all_secrets",
