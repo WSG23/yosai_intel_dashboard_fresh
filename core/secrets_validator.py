@@ -7,7 +7,7 @@ from typing import Dict, Optional
 
 from core.exceptions import ConfigurationError
 
-from .secrets_manager import SecretsManager
+from .secret_manager import SecretsManager
 
 
 class SecretsValidator:

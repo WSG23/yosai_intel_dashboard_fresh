@@ -1,5 +1,5 @@
-import os
 import builtins
+import os
 import types
 
 import pytest

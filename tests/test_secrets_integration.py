@@ -1,4 +1,4 @@
-from core.secrets_manager import SecretsManager
+from core.secret_manager import SecretsManager
 
 
 def test_env_overrides_docker(tmp_path, monkeypatch):

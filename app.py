@@ -17,28 +17,29 @@ except ImportError:
     )
     sys.exit(1)
 
-from core.exceptions import ConfigurationError
-from utils import debug_dash_asset_serving
-from core.unicode import unicode_safe_callback
-
+# Add Unicode handling
+import locale
 import traceback
 from pathlib import Path
 
 from config import ConfigLoader
+from core.exceptions import ConfigurationError
+from core.unicode import unicode_safe_callback
+from utils import debug_dash_asset_serving
 
 # This import is handled inside the main() function now
 
-# Add Unicode handling
-import locale
+
 try:
-    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+    locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 except locale.Error:
     try:
-        locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+        locale.setlocale(locale.LC_ALL, "C.UTF-8")
     except locale.Error:
         pass  # Fall back to default locale
 
 logger = logging.getLogger(__name__)
+
 
 # Environment / location check
 def ensure_venv() -> None:
@@ -50,9 +51,10 @@ def ensure_venv() -> None:
         print("\u274c Wrong directory! Navigate to project root.")
         sys.exit(1)
 
-    if not os.environ.get('VIRTUAL_ENV'):
+    if not os.environ.get("VIRTUAL_ENV"):
         print("\u26a0\ufe0f Virtual environment not activated!")
         print("Run: source venv/bin/activate")
+
 
 # Consolidated learning service utilities
 from services.consolidated_learning_service import get_learning_service
@@ -149,10 +151,10 @@ def _consolidate_callbacks(app):
     try:
         # Import callback modules with error handling
         callback_modules = [
-            ('pages.deep_analytics_complex', 'register_callbacks'),
-            ('pages.file_upload', 'register_callbacks'),
-            ('pages.export', 'register_callbacks'),
-            ('pages.settings', 'register_callbacks'),
+            ("pages.deep_analytics_complex", "register_callbacks"),
+            ("pages.file_upload", "register_callbacks"),
+            ("pages.export", "register_callbacks"),
+            ("pages.settings", "register_callbacks"),
         ]
 
         for module_name, func_name in callback_modules:
@@ -184,6 +186,7 @@ def _load_config():
     """Load application configuration and return the app config."""
     load_dotenv()
     from config.dev_mode import setup_dev_mode
+
     setup_dev_mode()
 
     loader = ConfigLoader()
@@ -201,7 +204,7 @@ def _load_config():
 
 def _validate_secrets(app_config):
     """Validate application secrets for the given environment."""
-    from core.secrets_manager import SecretsManager
+    from core.secret_manager import SecretsManager
     from security.secrets_validator import SecretsValidator
 
     secrets_manager = SecretsManager()
@@ -263,6 +266,7 @@ def _run_server(app, ssl_context):
         logger.error(f"❌ Application runtime error: {e}")
         raise
 
+
 def main():
     """Main application entry point."""
     try:
@@ -275,9 +279,13 @@ def main():
         print_startup_info(app_config)
 
         cwd = os.getcwd()
-        icon_path = os.path.normcase(os.path.join(cwd, "assets", "navbar_icons", "analytics.png"))
+        icon_path = os.path.normcase(
+            os.path.join(cwd, "assets", "navbar_icons", "analytics.png")
+        )
         logger.info("Current working directory: %s", cwd)
-        logger.info("Analytics icon exists (%s): %s", icon_path, os.path.exists(icon_path))
+        logger.info(
+            "Analytics icon exists (%s): %s", icon_path, os.path.exists(icon_path)
+        )
 
         ssl_context = ensure_https_certificates()
 
@@ -292,7 +300,6 @@ def main():
         logger.info(f"\n❌ Unexpected Error: {e}")
         logger.info("💡 Check logs for more details")
         sys.exit(1)
-
 
 
 if __name__ == "__main__":
