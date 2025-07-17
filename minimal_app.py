@@ -25,35 +25,42 @@ uploaded_data = {}
 def upload_files():
     """Handle file upload and return expected structure"""
     try:
-        data = request.json
-        contents = data.get('contents', [])
-        filenames = data.get('filenames', [])
-        
-        if not contents or not filenames:
-            return jsonify({'error': 'No files provided'}), 400
-        
-        # Process first file
-        content = contents[0]
-        filename = filenames[0]
-        
-        # Parse base64 content
-        import base64
+        # Support both multipart/form-data and JSON payloads
+        if 'file' in request.files:
+            file = request.files['file']
+            if not file.filename:
+                return jsonify({'error': 'No file selected'}), 400
+
+            filename = file.filename
+            file_bytes = file.read()
+        else:
+            data = request.get_json(silent=True)
+            if not data:
+                return jsonify({'error': 'No data provided'}), 400
+
+            contents = data.get('contents', [])
+            filenames = data.get('filenames', [])
+
+            if not contents or not filenames:
+                return jsonify({'error': 'No files provided'}), 400
+
+            content = contents[0]
+            filename = filenames[0]
+
+            import base64
+            if ',' in content:
+                content = content.split(',')[1]
+            file_bytes = base64.b64decode(content)
+
         import io
-        
-        # Remove data URL prefix
-        if ',' in content:
-            content = content.split(',')[1]
-        
-        # Decode base64
-        decoded = base64.b64decode(content)
         
         # Read into pandas based on file type
         if filename.endswith('.csv'):
-            df = pd.read_csv(io.BytesIO(decoded))
+            df = pd.read_csv(io.BytesIO(file_bytes))
         elif filename.endswith(('.xlsx', '.xls')):
-            df = pd.read_excel(io.BytesIO(decoded))
+            df = pd.read_excel(io.BytesIO(file_bytes))
         elif filename.endswith('.json'):
-            df = pd.read_json(io.BytesIO(decoded))
+            df = pd.read_json(io.BytesIO(file_bytes))
         else:
             return jsonify({'error': 'Unsupported file type'}), 400
         
