@@ -184,7 +184,7 @@ def get_data_sources():
             filename = option["value"].replace("upload:", "")
             enriched["metadata"] = {
                 "filename": filename,
-                "exists": filename in uploaded_data_store.get_all_files(),
+                "exists": filename in uploaded_data_store.get_filenames(),
             }
 
         enriched_options.append(enriched)
@@ -345,10 +345,11 @@ def get_upload_status(task_id: str):
 def get_uploaded_files():
     """Get list of uploaded files"""
     try:
-        files = uploaded_data_store.get_all_files()
+        filenames = uploaded_data_store.get_filenames()
 
         file_info: List[Dict[str, Any]] = []
-        for filename, df in files.items():
+        for filename in filenames:
+            df = uploaded_data_store.load_dataframe(filename)
             info = {
                 "filename": filename,
                 "rows": len(df),
