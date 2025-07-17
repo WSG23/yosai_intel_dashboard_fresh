@@ -20,11 +20,38 @@ class APIGatewayArchitect:
         }
 
     def design_service_mesh(self, services: List[str]) -> Dict[str, Any]:
-        """Return a skeleton service mesh configuration."""
+        """Return a skeleton service mesh configuration.
+
+        Parameters
+        ----------
+        services:
+            A list of service names that should participate in the mesh.
+
+        Returns
+        -------
+        Dict[str, Any]
+            A dictionary containing three keys:
+            ``service_entries`` for basic service definitions,
+            ``traffic_policies`` describing default routing behaviour and
+            ``observability`` for metrics and tracing configuration.
+        """
+
+        service_entries = [{"name": name} for name in services]
+
+        traffic_policies = [
+            {
+                "destination": name,
+                "policy": {"retries": 3, "timeout": "5s"},
+            }
+            for name in services
+        ]
+
+        observability = {"tracing": True, "metrics": True}
+
         return {
-            "service_entries": [{"name": name} for name in services],
-            "traffic_policies": [],  # TODO: define mesh traffic policies
-            "observability": [],  # TODO: configure distributed tracing hooks
+            "service_entries": service_entries,
+            "traffic_policies": traffic_policies,
+            "observability": observability,
         }
 
     # ------------------------------------------------------------------
