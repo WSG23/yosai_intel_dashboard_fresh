@@ -7,18 +7,10 @@ services while exposing a single entry point for triggering analytics flows.
 ## Example Usage
 
 ```python
-from analytics_core.centralized_analytics_manager import CentralizedAnalyticsManager
-from analytics_core.services.core_service import CoreAnalyticsService
-from analytics_core.services.ai_service import AIAnalyticsService
-from analytics_core.services.performance_service import PerformanceAnalyticsService
-from analytics_core.services.data_processing_service import DataProcessingService
+from analytics_core import create_manager
 
-manager = CentralizedAnalyticsManager(
-    core_service=CoreAnalyticsService(),
-    ai_service=AIAnalyticsService(),
-    performance_service=PerformanceAnalyticsService(),
-    data_service=DataProcessingService(),
-)
+# Build a manager with the default stub services
+manager = create_manager()
 
 manager.run_full_pipeline(raw_data)
 ```
