@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 
 import json
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Flask, jsonify, request
 from flask_cors import cross_origin
 from flask_socketio import SocketIO, emit, join_room
 
@@ -697,3 +697,15 @@ def initialize_api(app: Any, container: Any) -> None:
     register_analytics_blueprints(app)
     socketio.init_app(app)
     logger.info("API routes registered successfully")
+
+
+def create_api_app(container: Any | None = None) -> Flask:
+    """Create a Flask application with API routes registered."""
+    if container is None:
+        from core.container import container as default_container
+
+        container = default_container
+
+    app = Flask(__name__)
+    initialize_api(app, container)
+    return app
