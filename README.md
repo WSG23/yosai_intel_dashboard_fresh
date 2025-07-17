@@ -163,8 +163,18 @@ with this Python release and newer.
    plain HTTP by default; configure a reverse proxy with TLS if you need HTTPS.
    The development server does not support HTTPS, so be sure to visit
    `http://<host>:<port>` rather than `https://` when testing locally.
-   Using an HTTPS URL will produce "Bad request version" errors because the
-   built-in server is not configured for TLS.
+Using an HTTPS URL will produce "Bad request version" errors because the
+built-in server is not configured for TLS.
+
+9. **Generate a local certificate (optional):**
+   If you want to test through HTTPS, create a self-signed certificate:
+   ```bash
+   openssl req -x509 -newkey rsa:2048 -sha256 -days 365 -nodes \
+       -keyout certs/localhost.key -out certs/localhost.pem \
+       -subj "/CN=localhost"
+   ```
+   The [local_certificate.md](docs/local_certificate.md) document contains
+   additional details.
 
 ## Developer Onboarding
 
