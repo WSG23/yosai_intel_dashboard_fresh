@@ -179,128 +179,120 @@ def _apply_unicode_safety(app):
     """Replace Dash's ``callback`` decorator with a Unicode safe version."""
     app.callback = unicode_safe_callback
 
-def main():
-    """Main application entry point"""
-    try:
-        load_dotenv()
 
-        # Set Unicode handling early
-        if hasattr(sys.stdout, 'reconfigure'):
+def _load_config():
+    """Load application configuration and return the app config."""
+    load_dotenv()
+    from config.dev_mode import setup_dev_mode
+    setup_dev_mode()
+
+    loader = ConfigLoader()
+    raw_cfg = loader.load()
+    logger.debug("Loaded raw config with keys: %s", list(raw_cfg.keys()))
+
+    from config import get_config
+
+    config = get_config()
+    app_config = config.get_app_config()
+    logger.info("✅ Configuration loaded successfully")
+    verify_dependencies()
+    return app_config
+
+
+def _validate_secrets(app_config):
+    """Validate application secrets for the given environment."""
+    from core.secrets_manager import SecretsManager
+    from security.secrets_validator import SecretsValidator
+
+    secrets_manager = SecretsManager()
+    validator = SecretsValidator(secrets_manager)
+
+    if app_config.environment == "production":
+        secret_key = secrets_manager.get("SECRET_KEY", "dev-key") or "dev-key"
+        result = validator.validate_secret(secret_key, environment="production")
+        if result.get("errors"):
+            raise ConfigurationError("Production secrets validation failed")
+
+    logger.info("✅ Secrets validated successfully")
+    return validator
+
+
+def _create_app():
+    """Create and return the Dash application."""
+    from core.app_factory import create_app
+    from core.master_callback_system import MasterCallbackSystem
+    from pages import register_all_pages
+
+    project_root = Path(__file__).resolve().parent
+    assets_dir = os.path.normcase(os.path.abspath(project_root / "assets"))
+    app = create_app(mode="full", assets_folder=assets_dir)
+
+    callback_manager = MasterCallbackSystem(app)
+    register_all_pages(app, callback_manager)
+
+    if not debug_dash_asset_serving(app):
+        logger.warning("Dash asset serving validation failed")
+    logger.info("✅ Application created successfully")
+    return app
+
+
+def _run_server(app, ssl_context):
+    """Run the Dash application with the provided SSL context."""
+    from config import get_config
+
+    app_config = get_config().get_app_config()
+    try:
+        if ssl_context:
+            logger.info("🔒 Starting with HTTPS")
+            app.run(
+                host=app_config.host,
+                port=str(app_config.port),
+                debug=app_config.debug,
+                ssl_context=ssl_context,
+            )
+        else:
+            logger.info("🌐 Starting with HTTP")
+            app.run(
+                host=app_config.host,
+                port=str(app_config.port),
+                debug=app_config.debug,
+            )
+    except KeyboardInterrupt:
+        logger.info("\n👋 Application stopped by user")
+    except Exception as e:  # pragma: no cover - defensive
+        logger.error(f"❌ Application runtime error: {e}")
+        raise
+
+def main():
+    """Main application entry point."""
+    try:
+        if hasattr(sys.stdout, "reconfigure"):
             sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
             sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
 
-        from config.dev_mode import setup_dev_mode
-        setup_dev_mode()
+        app_config = _load_config()
 
-        # Import configuration
-        try:
-            loader = ConfigLoader()
-            raw_cfg = loader.load()
-            logger.debug("Loaded raw config with keys: %s", list(raw_cfg.keys()))
-
-            from config import get_config
-            config = get_config()
-            app_config = config.get_app_config()
-            logger.info("✅ Configuration loaded successfully")
-            verify_dependencies()
-        except Exception as e:
-            logger.error(f"❌ Failed to load configuration: {e}")
-            logger.info(f"\n❌ Configuration Error: {e}")
-            logger.info("💡 Make sure config/config.py exists and is properly formatted")
-            sys.exit(1)
-
-        # Print startup information
         print_startup_info(app_config)
 
-        # Debug current working directory and asset existence
         cwd = os.getcwd()
-        icon_path = os.path.normcase(
-            os.path.join(cwd, "assets", "navbar_icons", "analytics.png")
-        )
+        icon_path = os.path.normcase(os.path.join(cwd, "assets", "navbar_icons", "analytics.png"))
         logger.info("Current working directory: %s", cwd)
         logger.info("Analytics icon exists (%s): %s", icon_path, os.path.exists(icon_path))
 
-        # Auto-generate HTTPS certificates
         ssl_context = ensure_https_certificates()
 
-        # Validate secrets
-        try:
-            from core.secrets_manager import SecretsManager
-            from security.secrets_validator import SecretsValidator
+        _validate_secrets(app_config)
 
-            secrets_manager = SecretsManager()
-            validator = SecretsValidator(secrets_manager)
+        app = _create_app()
 
-            if app_config.environment == 'production':
-                secret_key: str = secrets_manager.get('SECRET_KEY', 'dev-key') or 'dev-key'
-                result = validator.validate_secret(
-                    secret_key,
-                    environment='production'
-                )
-                if result.get('errors'):
-                    raise ConfigurationError("Production secrets validation failed")
-
-            logger.info("✅ Secrets validated successfully")
-        except Exception as e:
-            logger.error(f"❌ Secret validation failed: {e}")
-            sys.exit(1)
-
-        # Import and create the Dash application
-        try:
-            from core.app_factory import create_app
-            project_root = Path(__file__).resolve().parent
-            assets_dir = os.path.normcase(os.path.abspath(project_root / "assets"))
-            app = create_app(mode='full', assets_folder=assets_dir)
-
-            from core.master_callback_system import MasterCallbackSystem
-            from pages import register_all_pages
-
-            callback_manager = MasterCallbackSystem(app)
-            register_all_pages(app, callback_manager)
-
-            # Consolidate callbacks with Unicode safety
-            # _register_callbacks(app, config, container=None)  # Already called during app creation
-
-            # This avoids triggering a request before the hooks are in place
-            if not debug_dash_asset_serving(app):
-                logger.warning("Dash asset serving validation failed")
-            logger.info("✅ Application created successfully")
-        except Exception as e:
-            logger.error(f"❌ Failed to create application: {e}")
-            logger.info(f"\n❌ Application Creation Error: {e}")
-            logger.info("💡 Make sure core/app_factory.py exists and dependencies are installed")
-            sys.exit(1)
-
-        # Run the application
-        try:
-            if ssl_context:
-                logger.info("🔒 Starting with HTTPS")
-                app.run(
-                    host=app_config.host,
-                    port=str(app_config.port),
-                    debug=app_config.debug,
-                    ssl_context=ssl_context,
-                )
-            else:
-                logger.info("🌐 Starting with HTTP")
-                app.run(
-                    host=app_config.host,
-                    port=str(app_config.port),
-                    debug=app_config.debug,
-                )
-
-        except KeyboardInterrupt:
-            logger.info("\n👋 Application stopped by user")
-        except Exception as e:
-            logger.error(f"❌ Application runtime error: {e}")
-            logger.info(f"\n❌ Runtime Error: {e}")
-            sys.exit(1)
+        _run_server(app, ssl_context)
 
     except Exception as e:
         logger.error(f"❌ Unexpected error: {e}")
         logger.info(f"\n❌ Unexpected Error: {e}")
         logger.info("💡 Check logs for more details")
         sys.exit(1)
+
 
 
 if __name__ == "__main__":
