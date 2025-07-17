@@ -159,12 +159,9 @@ with this Python release and newer.
    uwsgi --module wsgi:server
    ```
 8. **Access the dashboard:**
-   Open http://127.0.0.1:8050 in your browser. The application runs over
-   plain HTTP by default; configure a reverse proxy with TLS if you need HTTPS.
-   The development server does not support HTTPS, so be sure to visit
-   `http://<host>:<port>` rather than `https://` when testing locally.
-   Using an HTTPS URL will produce "Bad request version" errors because the
-   built-in server is not configured for TLS.
+   Open http://127.0.0.1:8050 in your browser.
+   The server runs over HTTP by default but will automatically serve HTTPS
+   whenever certificates are available.
 
 ## Developer Onboarding
 
