@@ -20,6 +20,8 @@ from utils.upload_store import UploadedDataStore as UploadStorage
 from .controllers.upload_controller import UnifiedUploadController as UploadController
 from .utils.unicode_handler import decode_upload_content
 from core.unicode import safe_encode_text
+from .ai import AISuggestionService, analyze_device_name_with_ai
+from .helpers import save_ai_training_data
 
 __all__ = [
     "UploadProcessingServiceProtocol",
@@ -35,6 +37,9 @@ __all__ = [
     "UploadController",
     "safe_encode_text",
     "decode_upload_content",
+    "AISuggestionService",
+    "analyze_device_name_with_ai",
+    "save_ai_training_data",
 ]
 
 DOMAIN_NAME = "upload"
