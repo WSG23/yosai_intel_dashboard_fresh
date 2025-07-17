@@ -200,63 +200,67 @@ class MVPTestApp:
              State('session-store', 'data')]
         )
         def handle_upload(contents, filename, session_data):
-            """Process upload via UploadProcessingService"""
+            """Process upload using existing base code"""
             if not contents:
                 return "", "", "", "", session_data
-
+            
             try:
                 logger.info(f"📁 Processing file: {filename}")
-
+                
+                # Use existing base code upload service
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-
+                
                 assert self.upload_service is not None
-                result = loop.run_until_complete(
-                    self.upload_service.process_uploaded_files(
-                        [contents],
-                        [filename],
-                        return_format="simple",
-                    )
+                result_dict = loop.run_until_complete(
+                    self.upload_service.process_uploaded_files([contents], [filename])
                 )
+                
+                # Extract from flexible dictionary
+                upload_results = result_dict.get('upload_results', [])
+                preview_components = result_dict.get('file_preview_components', [])
+                file_info = result_dict.get('file_info_dict', {})
                 loop.close()
-
-                formatted = self.upload_service._format_return(result, "simple")
-
-                file_info = formatted.get("file_info_dict", {})
-                df = self.upload_service.store.get_all_data().get(filename)
-                ai_suggestions = file_info.get(filename, {}).get("ai_suggestions", {})
-
-                session_data.update(
-                    {
-                        "df": df.to_dict("records") if df is not None else [],
-                        "columns": df.columns.tolist() if df is not None else [],
-                        "filename": filename,
-                        "ai_suggestions": ai_suggestions,
-                        "file_info": file_info,
-                    }
-                )
-
-                upload_display = self._create_upload_display(
-                    formatted.get("upload_results", []),
-                    file_info.get(filename, {}),
-                )
+                
+                logger.info(f"✅ Base code processing complete")
+                
+                # Extract processed data  
+                df = None
+                ai_suggestions = {}
+                
+                if filename in file_info:
+                    info = file_info[filename]
+                    ai_suggestions = info.get('ai_suggestions', {})
+                    
+                    # Get the stored dataframe
+                    try:
+                        assert self.upload_service is not None
+                        stored_data = self.upload_service.store.get_all_data()
+                        df = stored_data.get(filename)
+                        logger.info(f"📊 Retrieved DataFrame: {df.shape if df is not None else 'None'}")
+                    except Exception as e:
+                        logger.warning(f"Could not retrieve stored data: {e}")
+                
+                # Update session
+                session_data.update({
+                    'df': df.to_dict('records') if df is not None else [],
+                    'columns': df.columns.tolist() if df is not None else [],
+                    'filename': filename,
+                    'ai_suggestions': ai_suggestions,
+                    'file_info': file_info
+                })
+                
+                # Create displays using base code
+                upload_display = self._create_upload_display(upload_results, file_info.get(filename, {}))
                 column_display = self.create_column_display(ai_suggestions, df)
                 device_display = self._create_device_display(df, filename)
                 data_display = self._create_data_display(df)
-
-                return (
-                    upload_display,
-                    column_display,
-                    device_display,
-                    data_display,
-                    session_data,
-                )
-
+                
+                return upload_display, column_display, device_display, data_display, session_data
+                
             except Exception as e:
                 logger.error(f"💥 Upload processing failed: {e}")
-                error_display = dbc.Alert(
-                    f"Processing failed: {str(e)}", color="danger"
-                )
+                error_display = dbc.Alert(f"Processing failed: {str(e)}", color="danger")
                 return error_display, "", "", "", session_data
         
         @self.app.callback(

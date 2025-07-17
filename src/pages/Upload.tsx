@@ -1,317 +1,292 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { CloudArrowUpIcon, DocumentIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
-import { toast } from 'react-hot-toast';
-import { motion, AnimatePresence } from 'framer-motion';
-import { uploadAPI } from '../api/upload';
-import { ColumnMappingModal } from '../components/upload/ColumnMappingModal';
-import { DeviceMappingModal } from '../components/upload/DeviceMappingModal';
-import { FilePreview } from '../components/upload/FilePreview';
-import { ProgressBar } from '../components/shared/ProgressBar';
-import { Card } from '../components/shared/Card';
-import { useWebSocket } from '../hooks/useWebSocket';
+import React, { useState, useCallback } from 'react';
+import { Upload as UploadIcon, FileText, AlertCircle, CheckCircle, X } from 'lucide-react';
+import './Upload.css';
 
-interface UploadFile {
+interface UploadedFile {
   id: string;
-  file: File;
-  status: 'pending' | 'uploading' | 'processing' | 'column_mapping' | 'device_mapping' | 'complete' | 'error';
+  name: string;
+  size: number;
+  type: string;
+  status: 'pending' | 'processing' | 'mapping' | 'completed' | 'error';
   progress: number;
-  data?: any;
-  columnMappings?: Record<string, string>;
-  deviceMappings?: Record<string, any>;
   error?: string;
+  columns?: string[];
+  mappedColumns?: Record<string, string>;
+  devices?: string[];
+  mappedDevices?: Record<string, string>;
 }
 
-interface ProcessingStage {
-  stage: 'upload' | 'columns' | 'devices' | 'complete';
-  file: UploadFile;
-}
+const Upload: React.FC = () => {
+  const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState<string>('');
 
-export const Upload: React.FC = () => {
-  const [files, setFiles] = useState<UploadFile[]>([]);
-  const [processingStage, setProcessingStage] = useState<ProcessingStage | null>(null);
-  const [showColumnModal, setShowColumnModal] = useState(false);
-  const [showDeviceModal, setShowDeviceModal] = useState(false);
-  const processingRef = useRef<boolean>(false);
-  
-  const { subscribeToUploadProgress } = useWebSocket();
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
 
-  // Handle file drop
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newFiles: UploadFile[] = acceptedFiles.map(file => ({
-      id: `${Date.now()}-${Math.random()}`,
-      file,
-      status: 'pending',
-      progress: 0,
-    }));
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
     
-    setFiles(prev => [...prev, ...newFiles]);
-    
-    // Auto-start processing if not already running
-    if (!processingRef.current) {
-      processNextFile([...files, ...newFiles]);
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    handleFiles(droppedFiles);
+  }, []);
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFiles(Array.from(e.target.files));
     }
-  }, [files]);
+  };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'text/csv': ['.csv'],
-      'application/json': ['.json'],
-      'application/vnd.ms-excel': ['.xls'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-    },
-    multiple: true,
-  });
+  const handleFiles = async (fileList: File[]) => {
+    const validFiles = fileList.filter(file => {
+      const validTypes = ['.csv', '.xlsx', '.xls', '.json', '.log'];
+      return validTypes.some(type => file.name.toLowerCase().endsWith(type));
+    });
 
-  // Process next file in queue
-  const processNextFile = async (fileList: UploadFile[]) => {
-    const nextFile = fileList.find(f => f.status === 'pending');
-    if (!nextFile) {
-      processingRef.current = false;
+    if (validFiles.length === 0) {
+      alert('Please upload valid file types: CSV, Excel, JSON, or LOG files');
       return;
     }
 
-    processingRef.current = true;
-    await processFile(nextFile);
-    
-    // Process next file
-    processNextFile(files);
-  };
+    const newFiles: UploadedFile[] = validFiles.map(file => ({
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: file.name,
+      size: file.size,
+      type: file.type || 'application/octet-stream',
+      status: 'pending',
+      progress: 0
+    }));
 
-  // Process individual file through all stages
-  const processFile = async (uploadFile: UploadFile) => {
-    try {
-      // Stage 1: Upload
-      setFiles(prev => prev.map(f => 
-        f.id === uploadFile.id ? { ...f, status: 'uploading' } : f
-      ));
+    setFiles(prev => [...prev, ...newFiles]);
 
-      const { taskId, data } = await uploadAPI.uploadFile(uploadFile.file);
-      
-      // Subscribe to progress updates
-      subscribeToUploadProgress(taskId, (progress) => {
-        setFiles(prev => prev.map(f => 
-          f.id === uploadFile.id ? { ...f, progress } : f
-        ));
-      });
-
-      // Wait for processing to complete
-      const processed = await uploadAPI.waitForProcessing(taskId);
-      
-      // Update file with processed data
-      const updatedFile: UploadFile = {
-        ...uploadFile,
-        status: 'processing',
-        data: processed,
-        progress: 100,
-      };
-      
-      setFiles(prev => prev.map(f => 
-        f.id === uploadFile.id ? updatedFile : f
-      ));
-
-      // Stage 2: Column Mapping
-      setProcessingStage({ stage: 'columns', file: updatedFile });
-      setShowColumnModal(true);
-      
-    } catch (error: any) {
-      console.error('Processing error:', error);
-      setFiles(prev => prev.map(f => 
-        f.id === uploadFile.id 
-          ? { ...f, status: 'error', error: error.message } 
-          : f
-      ));
-      toast.error(`Failed to process ${uploadFile.file.name}`);
+    for (const file of validFiles) {
+      await uploadFile(file, newFiles.find(f => f.name === file.name)!.id);
     }
   };
 
-  // Handle column mapping confirmation
-  const handleColumnMappingConfirm = async (mappings: Record<string, string>) => {
-    if (!processingStage) return;
+  const uploadFile = async (file: File, fileId: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
 
-    const { file } = processingStage;
-    
-    // Update file with column mappings
-    const updatedFile: UploadFile = {
-      ...file,
-      columnMappings: mappings,
-      status: 'column_mapping',
-    };
-    
-    setFiles(prev => prev.map(f => 
-      f.id === file.id ? updatedFile : f
-    ));
-    
-    // Close column modal and open device modal
-    setShowColumnModal(false);
-    
-    // Apply column mappings and get device list
-    const devicesData = await uploadAPI.applyColumnMappings(
-      file.data.filename,
-      mappings
-    );
-    
-    updatedFile.data = { ...updatedFile.data, ...devicesData };
-    
-    // Stage 3: Device Mapping
-    setProcessingStage({ stage: 'devices', file: updatedFile });
-    setShowDeviceModal(true);
+    try {
+      console.log('Starting upload for:', file.name);
+      setFiles(prev => prev.map(f => 
+        f.id === fileId ? { ...f, status: 'processing', progress: 25 } : f
+      ));
+
+      const response = await fetch('http://localhost:5001/api/v1/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      console.log('Response received:', response.status);
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      setFiles(prev => prev.map(f => 
+        f.id === fileId ? { 
+          ...f, 
+          status: 'completed',
+          progress: 100,
+          columns: data.columns || [],
+          devices: data.detected_devices || []
+        } : f
+      ));
+
+      setUploadMessage(`Upload successful! File: ${file.name}`);
+      setTimeout(() => setUploadMessage(''), 3000);
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      setFiles(prev => prev.map(f => 
+        f.id === fileId ? { 
+          ...f, 
+          status: 'error',
+          error: error instanceof Error ? error.message : 'Upload failed'
+        } : f
+      ));
+    }
   };
 
-  // Handle device mapping confirmation
-  const handleDeviceMappingConfirm = async (deviceMappings: Record<string, any>) => {
-    if (!processingStage) return;
-
-    const { file } = processingStage;
-    
-    // Save device mappings
-    await uploadAPI.saveDeviceMappings(
-      file.data.filename,
-      deviceMappings
-    );
-    
-    // Update file status to complete
-    const completedFile: UploadFile = {
-      ...file,
-      deviceMappings,
-      status: 'complete',
-    };
-    
-    setFiles(prev => prev.map(f => 
-      f.id === file.id ? completedFile : f
-    ));
-    
-    toast.success(`${file.file.name} processed successfully!`);
-    
-    // Close modal and reset
-    setShowDeviceModal(false);
-    setProcessingStage(null);
-    processingRef.current = false;
-    
-    // Process next file if any
-    processNextFile(files);
+  const removeFile = (fileId: string) => {
+    setFiles(prev => prev.filter(f => f.id !== fileId));
   };
-
-  // Calculate overall progress
-  const overallProgress = files.length > 0
-    ? files.reduce((sum, f) => sum + f.progress, 0) / files.length
-    : 0;
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          File Upload & Processing
-        </h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Upload CSV, JSON, or Excel files for AI-powered analysis and device mapping
-        </p>
+    <div className="upload-container">
+      <div className="upload-header">
+        <h1>Upload Security Data</h1>
+        <p>Upload CSV, Excel, JSON, or LOG files for analysis</p>
       </div>
 
-      {/* Upload Zone */}
-      <Card>
-        <div
-          {...getRootProps()}
-          className={`
-            relative p-12 text-center cursor-pointer
-            border-2 border-dashed rounded-lg
-            transition-all duration-200
-            ${isDragActive 
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-              : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
-            }
-          `}
-        >
-          <input {...getInputProps()} />
-          
-          <CloudArrowUpIcon className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-          
-          <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            {isDragActive
-              ? 'Drop files here...'
-              : 'Drag & drop files here, or click to browse'}
+      <div
+        className={`upload-dropzone ${isDragging ? 'dragging' : ''}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <input
+          type="file"
+          id="file-input"
+          className="file-input"
+          multiple
+          accept=".csv,.xlsx,.xls,.json,.log"
+          onChange={handleFileInput}
+        />
+        <label htmlFor="file-input" className="dropzone-content">
+          <UploadIcon size={48} className="upload-icon" />
+          <p className="dropzone-text">
+            Drag and drop files here or click to browse
           </p>
-          
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Supports CSV, JSON, XLS, and XLSX files up to 100MB
+          <p className="dropzone-subtext">
+            Supports CSV, Excel, JSON, and LOG files
           </p>
-          
-          <div className="mt-6 flex items-center justify-center gap-6 text-xs text-gray-500">
-            <span className="flex items-center gap-1">
-              <CheckCircleIcon className="h-4 w-4 text-green-500" />
-              AI Column Matching
-            </span>
-            <span className="flex items-center gap-1">
-              <CheckCircleIcon className="h-4 w-4 text-green-500" />
-              Smart Device Mapping
-            </span>
-            <span className="flex items-center gap-1">
-              <CheckCircleIcon className="h-4 w-4 text-green-500" />
-              Learning System
-            </span>
-          </div>
+        </label>
+      </div>
+
+      {uploadMessage && (
+        <div style={{
+          background: 'green',
+          color: 'white',
+          padding: '10px',
+          borderRadius: '5px',
+          margin: '20px 0',
+          textAlign: 'center'
+        }}>
+          {uploadMessage}
         </div>
-      </Card>
+      )}
 
-      {/* Overall Progress */}
       {files.length > 0 && (
-        <Card>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Overall Progress</h3>
-              <span className="text-sm text-gray-500">
-                {files.filter(f => f.status === 'complete').length} of {files.length} complete
-              </span>
+        <div className="files-list">
+          <h2>Uploaded Files</h2>
+          {files.map(file => (
+            <div key={file.id} className={`file-item ${file.status}`}>
+              <div className="file-info">
+                <FileText size={20} className="file-icon" />
+                <div className="file-details">
+                  <span className="file-name">{file.name}</span>
+                  <span className="file-size">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </span>
+                </div>
+              </div>
+              
+              <div className="file-status">
+                {file.status === 'pending' && (
+                  <span className="status-text">Waiting...</span>
+                )}
+                {file.status === 'processing' && (
+                  <span className="status-text">Uploading...</span>
+                )}
+                {file.status === 'completed' && (
+                  <>
+                    <CheckCircle size={20} className="success-icon" />
+                    <span className="status-text">Completed</span>
+                  </>
+                )}
+                {file.status === 'error' && (
+                  <>
+                    <AlertCircle size={20} className="error-icon" />
+                    <span className="status-text">{file.error}</span>
+                  </>
+                )}
+              </div>
+
+              <div className="file-progress">
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill"
+                    style={{ width: `${file.progress}%` }}
+                  />
+                </div>
+              </div>
+
+              <button
+                className="remove-button"
+                onClick={() => removeFile(file.id)}
+                aria-label="Remove file"
+              >
+                <X size={16} />
+              </button>
             </div>
-            <ProgressBar progress={overallProgress} />
-          </div>
-        </Card>
+          ))}
+        </div>
       )}
 
-      {/* File List */}
-      <AnimatePresence>
-        {files.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-4"
-          >
-            <h3 className="text-lg font-medium">Processing Queue</h3>
-            
-            {files.map(file => (
-              <FilePreview
-                key={file.id}
-                file={file}
-                onRemove={() => setFiles(prev => prev.filter(f => f.id !== file.id))}
-              />
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Column Mapping Modal */}
-      {processingStage && (
-        <ColumnMappingModal
-          isOpen={showColumnModal}
-          onClose={() => setShowColumnModal(false)}
-          fileData={processingStage.file.data}
-          onConfirm={handleColumnMappingConfirm}
-        />
-      )}
-
-      {/* Device Mapping Modal */}
-      {processingStage && (
-        <DeviceMappingModal
-          isOpen={showDeviceModal}
-          onClose={() => setShowDeviceModal(false)}
-          devices={processingStage.file.data?.devices || []}
-          filename={processingStage.file.data?.filename}
-          onConfirm={handleDeviceMappingConfirm}
-        />
+      {/* File Info Section for Completed Uploads */}
+      {files.filter(f => f.status === 'completed').length > 0 && (
+        <div style={{ marginTop: '20px' }}>
+          <h2>Uploaded File Details</h2>
+          {files.filter(f => f.status === 'completed').map(file => (
+            <div key={`info-${file.id}`} style={{
+              background: '#1e293b',
+              border: '1px solid #334155',
+              padding: '15px',
+              margin: '10px 0',
+              borderRadius: '5px'
+            }}>
+              <h3 style={{ color: '#f1f5f9', marginBottom: '10px' }}>File: {file.name}</h3>
+              <p style={{ color: '#94a3b8' }}>Columns detected: {file.columns?.join(', ') || 'None'}</p>
+              <p style={{ color: '#94a3b8' }}>Devices detected: {file.devices?.join(', ') || 'None'}</p>
+              <div style={{ marginTop: '10px' }}>
+                <button 
+                  onClick={() => {
+                    console.log('Column mapping for:', file);
+                    alert(`Column mapping would open for ${file.name}\nColumns: ${file.columns?.join(', ')}`);
+                  }}
+                  style={{
+                    background: '#3b82f6',
+                    color: 'white',
+                    padding: '8px 16px',
+                    border: 'none',
+                    borderRadius: '4px',
+                    margin: '5px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Map Columns
+                </button>
+                <button 
+                  onClick={() => {
+                    console.log('Device mapping for:', file);
+                    alert(`Device mapping would open for ${file.name}\nDevices: ${file.devices?.join(', ')}`);
+                  }}
+                  style={{
+                    background: '#22c55e',
+                    color: 'white',
+                    padding: '8px 16px',
+                    border: 'none',
+                    borderRadius: '4px',
+                    margin: '5px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Map Devices
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
 };
+
+export default Upload;

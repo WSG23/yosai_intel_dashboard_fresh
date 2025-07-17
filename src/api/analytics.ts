@@ -114,7 +114,7 @@ export const useAnalyticsSummary = (dataSource: string) =>
     queryKey: ['analytics', 'summary', dataSource],
     queryFn: () => analyticsAPI.getSummary(dataSource),
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
 export const useDataSources = () =>

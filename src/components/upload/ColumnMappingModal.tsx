@@ -123,7 +123,6 @@ export const ColumnMappingModal: React.FC<Props> = ({
       className="fixed inset-0 z-50 overflow-y-auto"
     >
       <div className="flex min-h-screen items-center justify-center p-4">
-        <Dialog.Overlay className="fixed inset-0 bg-black/30" />
         
         <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
           <Dialog.Title className="text-xl font-semibold p-6 border-b border-gray-200 dark:border-gray-700">
