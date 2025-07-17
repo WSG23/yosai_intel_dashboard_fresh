@@ -381,6 +381,28 @@ memory and CPU optimizers keep resource usage within the thresholds described in
 Large uploads are streamed through the `AsyncFileProcessor` to avoid blocking
 the event loop.
 
+### Cache Warming
+
+Use `IntelligentCacheWarmer` with a `HierarchicalCacheManager` to prefill
+caches during start-up. This avoids expensive database queries on the first
+request.
+
+```python
+from core.cache_warmer import IntelligentCacheWarmer
+from core.hierarchical_cache_manager import HierarchicalCacheManager
+
+cache = HierarchicalCacheManager()
+warmer = IntelligentCacheWarmer(cache, loader=load_from_db)
+
+warmer.record_usage("recent_events")
+warmer.record_usage("top_users")
+
+await warmer.warm()
+```
+
+Calling `ServiceContainer.warm_caches()` runs the warmer automatically if it is
+registered with the container.
+
 ## <span aria-hidden="true">🔧</span> Configuration
 
 This project uses **`config/config.py`** for all application settings. The
