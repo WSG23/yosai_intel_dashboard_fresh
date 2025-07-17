@@ -4,6 +4,7 @@ import logging
 from typing import Any, Callable, Dict, List, Type
 
 from .interfaces import ICacheManager, IDatabaseManager
+from core.intelligent_multilevel_cache import IntelligentMultiLevelCache
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,7 @@ class CacheManagerFactory:
                     "memory": MemoryCacheManager,
                     "redis": RedisCacheManager,
                     "advanced_redis": AdvancedRedisCacheManager,
+                    "intelligent": IntelligentMultiLevelCache,
                 }
             )
 

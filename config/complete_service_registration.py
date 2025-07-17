@@ -93,6 +93,13 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         protocol=StorageProtocol,
     )
 
+    from config.cache_manager import get_cache_manager
+
+    container.register_singleton(
+        "cache_manager",
+        get_cache_manager(),
+    )
+
 
 def register_analytics_services(container: ServiceContainer) -> None:
     class SimpleAnalyticsService:

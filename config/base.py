@@ -188,6 +188,7 @@ class CacheConfig:
     key_prefix: str = "yosai:"
     compression_enabled: bool = False
     max_memory_mb: int = 100
+    disk_path: str = "/tmp/yosai_cache"
 
 
 @dataclass

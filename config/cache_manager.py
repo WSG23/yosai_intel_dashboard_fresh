@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 from .constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
+from core.intelligent_multilevel_cache import IntelligentMultiLevelCache
 
 
 @dataclass
@@ -15,6 +16,7 @@ class CacheConfig:
     type: str = "memory"
     host: str = DEFAULT_CACHE_HOST
     port: int = DEFAULT_CACHE_PORT
+    disk_path: str = "/tmp/yosai_cache"
 
 
 logger = logging.getLogger(__name__)
@@ -76,6 +78,7 @@ def from_environment() -> CacheConfig:
         type=os.getenv("CACHE_TYPE", "memory"),
         host=os.getenv("CACHE_HOST", DEFAULT_CACHE_HOST),
         port=int(os.getenv("CACHE_PORT", DEFAULT_CACHE_PORT)),
+        disk_path=os.getenv("CACHE_DISK_PATH", "/tmp/yosai_cache"),
     )
 
 
@@ -84,12 +87,15 @@ def get_cache_manager() -> Any:
     cfg = from_environment()
     if cfg.type == "redis":
         return RedisCacheManager(cfg)
+    if cfg.type == "intelligent":
+        return IntelligentMultiLevelCache(cfg)
     return MemoryCacheManager(cfg)
 
 
 __all__ = [
     "MemoryCacheManager",
     "RedisCacheManager",
+    "IntelligentMultiLevelCache",
     "CacheConfig",
     "from_environment",
     "get_cache_manager",

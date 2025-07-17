@@ -105,6 +105,11 @@ Caching is handled by `MemoryCacheManager` or `RedisCacheManager` from
 `config.cache_manager`. Set `CACHE_TYPE=redis` and specify `CACHE_HOST` and
 `CACHE_PORT` to store results in Redis.
 
+The `IntelligentMultiLevelCache` combines memory, Redis and disk. Enable it with
+`CACHE_TYPE=intelligent` and optionally set `CACHE_DISK_PATH` for the on-disk
+layer. The manager promotes entries between levels automatically and exposes a
+`report()` method for basic statistics.
+
 ```python
 from config.cache_manager import get_cache_manager
 
