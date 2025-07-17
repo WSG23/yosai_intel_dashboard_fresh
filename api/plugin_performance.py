@@ -3,6 +3,9 @@ from __future__ import annotations
 
 from flask import jsonify, request
 
+from api.adapter import api_adapter
+from core.security_validator import SecurityValidator
+
 from app import app
 from core.plugins.performance_manager import EnhancedThreadSafePluginManager
 from advanced_cache import cache_with_lock
@@ -15,9 +18,13 @@ class PluginPerformanceAPI:
     @cache_with_lock(ttl_seconds=10)
     def get_plugin_performance():
         manager: EnhancedThreadSafePluginManager = app._yosai_plugin_manager  # type: ignore[attr-defined]
-        name = request.args.get('plugin')
+        name = request.args.get('plugin', '')
+        result = SecurityValidator().validate_input(name, 'plugin')
+        if not result['valid']:
+            return jsonify({'error': 'Invalid plugin', 'issues': result['issues']}), 400
         data = manager.get_plugin_performance_metrics(name)
-        return jsonify(data)
+        safe = api_adapter.unicode_processor.process_dict(data)
+        return jsonify(safe)
 
     @app.route('/api/v1/plugins/performance/alerts', methods=['GET', 'POST'])
     @cache_with_lock(ttl_seconds=30)
@@ -25,19 +32,32 @@ class PluginPerformanceAPI:
         manager: EnhancedThreadSafePluginManager = app._yosai_plugin_manager  # type: ignore[attr-defined]
         if request.method == 'POST':
             payload = request.json or {}
+            for k, v in payload.items():
+                check = SecurityValidator().validate_input(str(v), k)
+                if not check['valid']:
+                    return jsonify({'error': 'Invalid payload', 'issues': check['issues']}), 400
             manager.performance_manager.performance_thresholds.update(payload)
             return jsonify({'status': 'updated'})
-        return jsonify(manager.performance_manager.alert_history)
+        history = manager.performance_manager.alert_history
+        safe_history = api_adapter.unicode_processor.process_dict(history)
+        return jsonify(safe_history)
 
     @app.route('/api/v1/plugins/performance/benchmark', methods=['POST'])
     def benchmark_plugin_performance():
-        return jsonify({'status': 'not_implemented'})
+        return jsonify(api_adapter.unicode_processor.process_dict({'status': 'not_implemented'}))
 
     @app.route('/api/v1/plugins/performance/config', methods=['GET', 'PUT'])
     def manage_performance_config():
         manager: EnhancedThreadSafePluginManager = app._yosai_plugin_manager  # type: ignore[attr-defined]
         if request.method == 'PUT':
-            manager.performance_manager.performance_thresholds.update(request.json or {})
+            payload = request.json or {}
+            for k, v in payload.items():
+                check = SecurityValidator().validate_input(str(v), k)
+                if not check['valid']:
+                    return jsonify({'error': 'Invalid payload', 'issues': check['issues']}), 400
+            manager.performance_manager.performance_thresholds.update(payload)
             return jsonify({'status': 'updated'})
-        return jsonify(manager.performance_manager.performance_thresholds)
+        cfg = manager.performance_manager.performance_thresholds
+        safe_cfg = api_adapter.unicode_processor.process_dict(cfg)
+        return jsonify(safe_cfg)
 
