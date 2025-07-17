@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from flask import Flask, jsonify, request, Blueprint
 import sys
 import os
@@ -193,6 +197,103 @@ def save_mappings():
         return safe_json_response({
             'success': True,
             'message': 'Mappings saved for future use'
+        })
+        
+    except Exception as e:
+        logging.error(f"Save mappings error: {str(e)}", exc_info=True)
+        return safe_json_response({'error': str(e)}, 500)
+# Add these to api/adapter.py after the existing endpoints
+
+@api_bp.route('/ai/suggest-columns', methods=['POST'])
+def suggest_column_mappings():
+    """Get AI suggestions for column mappings"""
+    try:
+        data = request.json
+        columns = data.get('columns', [])
+        
+        # Use existing function from base code
+        from services.data_enhancer import get_ai_column_suggestions
+        ai_suggestions = get_ai_column_suggestions(columns)
+        
+        # Format: {'column': {'field': 'mapped_field', 'confidence': 0.8}}
+        return safe_json_response({
+            'suggestions': ai_suggestions,
+            'success': True
+        })
+        
+    except Exception as e:
+        logging.error(f"AI column suggestion error: {str(e)}", exc_info=True)
+        return safe_json_response({'error': str(e)}, 500)
+
+@api_bp.route('/ai/suggest-devices', methods=['POST'])
+def suggest_device_mappings():
+    """Get AI suggestions for device mappings using DeviceLearningService"""
+    try:
+        data = request.json
+        devices = data.get('devices', [])
+        filename = data.get('filename', '')
+        
+        # Use existing DeviceLearningService
+        from services.device_learning_service import DeviceLearningService
+        from services.ai_device_generator import ai_mapping_store
+        
+        device_service = DeviceLearningService()
+        
+        # Get AI suggestions for each device
+        suggestions = {}
+        for device in devices:
+            # Check AI mapping store first
+            ai_data = ai_mapping_store.get(device)
+            if ai_data:
+                suggestions[device] = ai_data
+            else:
+                # Default structure based on your base code
+                suggestions[device] = {
+                    'floor_number': '',
+                    'security_level': 5,
+                    'is_entry': 'entry' in device.lower(),
+                    'is_exit': 'exit' in device.lower(),
+                    'is_elevator': 'elevator' in device.lower(),
+                    'is_stairwell': 'stair' in device.lower()
+                }
+        
+        return safe_json_response({
+            'suggestions': suggestions,
+            'success': True
+        })
+        
+    except Exception as e:
+        logging.error(f"AI device suggestion error: {str(e)}", exc_info=True)
+        return safe_json_response({'error': str(e)}, 500)
+
+@api_bp.route('/mappings/save', methods=['POST'])
+def save_mappings():
+    """Save mappings for learning using existing services"""
+    try:
+        data = request.json
+        
+        # Use consolidated learning service
+        from services.consolidated_learning_service import get_learning_service
+        
+        learning_service = get_learning_service()
+        
+        # Save column mappings
+        if data.get('column_mappings'):
+            learning_service.remember_column_mappings(
+                data['filename'],
+                data['column_mappings']
+            )
+        
+        # Save device mappings
+        if data.get('device_mappings'):
+            learning_service.remember_device_mappings(
+                data['filename'],
+                data['device_mappings']
+            )
+        
+        return safe_json_response({
+            'success': True,
+            'message': 'Mappings saved for future learning'
         })
         
     except Exception as e:

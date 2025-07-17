@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Upload as UploadIcon, FileText, AlertCircle, CheckCircle, X } from 'lucide-react';
-import './Upload.css';
 import SimpleModal from '../components/upload/SimpleModal';
+import './Upload.css';
 
 interface UploadedFile {
   id: string;
@@ -15,17 +15,23 @@ interface UploadedFile {
   mappedColumns?: Record<string, string>;
   devices?: string[];
   mappedDevices?: Record<string, string>;
+  aiSuggestions?: Record<string, any>;
 }
 
 const Upload: React.FC = () => {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string>('');
+  
+  // Modal states
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<UploadedFile | null>(null);
-  const [columnMappings, setColumnMappings] = useState<Record<string, string>>({});
   const [deviceModalOpen, setDeviceModalOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<UploadedFile | null>(null);
+  
+  // Mapping states
+  const [columnMappings, setColumnMappings] = useState<Record<string, string>>({});
   const [deviceMappings, setDeviceMappings] = useState<Record<string, string>>({});
+  const [aiSuggestions, setAiSuggestions] = useState<Record<string, any>>({});
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -103,8 +109,8 @@ const Upload: React.FC = () => {
       }
 
       const data = await response.json();
-        console.log('AI Column Suggestions received:', data.suggestions);
       console.log('Response data:', data);
+      console.log('AI suggestions from upload:', data.ai_suggestions);
 
       setFiles(prev => prev.map(f => 
         f.id === fileId ? { 
@@ -112,7 +118,8 @@ const Upload: React.FC = () => {
           status: 'completed',
           progress: 100,
           columns: data.columns || [],
-          devices: data.detected_devices || []
+          devices: data.detected_devices || [],
+          aiSuggestions: data.ai_suggestions || {}
         } : f
       ));
 
@@ -133,6 +140,123 @@ const Upload: React.FC = () => {
 
   const removeFile = (fileId: string) => {
     setFiles(prev => prev.filter(f => f.id !== fileId));
+  };
+
+  // Open column mapping modal with AI suggestions
+  const openColumnMapping = (file: UploadedFile) => {
+    console.log('Opening column mapping for:', file);
+    setSelectedFile(file);
+    
+    // Pre-fill mappings with AI suggestions from upload
+    if (file.aiSuggestions) {
+      const mappings: Record<string, string> = {};
+      Object.entries(file.aiSuggestions).forEach(([col, suggestion]: [string, any]) => {
+        if (suggestion.field) {
+          mappings[col] = suggestion.field;
+        }
+      });
+      console.log('Pre-filling with AI mappings:', mappings);
+      setColumnMappings(mappings);
+      setAiSuggestions(file.aiSuggestions);
+    }
+    
+    setModalOpen(true);
+  };
+
+  // Save column mappings and open device modal
+  const handleColumnMappingSave = async () => {
+    if (!selectedFile) return;
+    
+    console.log('Saving column mappings:', columnMappings);
+    setFiles(prev => prev.map(f => 
+      f.id === selectedFile.id 
+        ? { ...f, mappedColumns: columnMappings }
+        : f
+    ));
+    
+    setModalOpen(false);
+    
+    // Fetch device AI suggestions
+    try {
+      const response = await fetch('http://localhost:5001/api/v1/ai/suggest-devices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          devices: selectedFile.devices || [],
+          filename: selectedFile.name 
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Device AI suggestions:', data.suggestions);
+        
+        // Pre-fill device mappings
+        const devMappings: Record<string, string> = {};
+        Object.entries(data.suggestions || {}).forEach(([device, info]: [string, any]) => {
+          const parts = [];
+          if (info.floor_number) parts.push(`Floor ${info.floor_number}`);
+          if (info.is_entry) parts.push('Entry');
+          if (info.is_exit) parts.push('Exit');
+          if (info.is_elevator) parts.push('Elevator');
+          if (info.is_stairwell) parts.push('Stairwell');
+          parts.push(`Security: ${info.security_level || 5}/10`);
+          devMappings[device] = parts.join(', ');
+        });
+        setDeviceMappings(devMappings);
+      }
+    } catch (error) {
+      console.error('Error fetching device suggestions:', error);
+    }
+    
+    setDeviceModalOpen(true);
+  };
+
+  // Process file with all mappings
+  const handleDeviceMappingSave = async () => {
+    if (!selectedFile) return;
+    
+    console.log('Saving device mappings:', deviceMappings);
+    setFiles(prev => prev.map(f => 
+      f.id === selectedFile.id 
+        ? { ...f, mappedDevices: deviceMappings, status: 'completed' as const }
+        : f
+    ));
+    
+    try {
+      // Process file
+      const processResponse = await fetch('http://localhost:5001/api/v1/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileId: selectedFile.id,
+          fileName: selectedFile.name,
+          columnMappings: selectedFile.mappedColumns || columnMappings,
+          deviceMappings: deviceMappings
+        })
+      });
+      
+      if (processResponse.ok) {
+        // Save mappings for learning
+        await fetch('http://localhost:5001/api/v1/mappings/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: selectedFile.name,
+            column_mappings: selectedFile.mappedColumns || columnMappings,
+            device_mappings: deviceMappings
+          })
+        });
+        
+        alert('File processed successfully! Mappings saved for future use.');
+      }
+    } catch (error) {
+      console.error('Process error:', error);
+    }
+    
+    setDeviceModalOpen(false);
+    setDeviceMappings({});
+    setSelectedFile(null);
   };
 
   return (
@@ -237,140 +361,110 @@ const Upload: React.FC = () => {
         </div>
       )}
 
-      {/* File Info Section for Completed Uploads */}
+      {/* Show file details and mapping buttons for completed uploads */}
       {files.filter(f => f.status === 'completed').length > 0 && (
         <div style={{ marginTop: '20px' }}>
-          <h2>Uploaded File Details</h2>
+          <h2>Process Files</h2>
           {files.filter(f => f.status === 'completed').map(file => (
-            <div key={`info-${file.id}`} style={{
+            <div key={`process-${file.id}`} style={{
               background: '#1e293b',
               border: '1px solid #334155',
               padding: '15px',
               margin: '10px 0',
               borderRadius: '5px'
             }}>
-              <h3 style={{ color: '#f1f5f9', marginBottom: '10px' }}>File: {file.name}</h3>
-              <p style={{ color: '#94a3b8' }}>Columns detected: {file.columns?.join(', ') || 'None'}</p>
-              <p style={{ color: '#94a3b8' }}>Devices detected: {file.devices?.join(', ') || 'None'}</p>
-              <div style={{ marginTop: '10px' }}>
-                <button 
-                  onClick={() => {
-                    console.log('Opening modal for:', file);
-                    setSelectedFile(file);
-                    setModalOpen(true);
-                  }}
-                  style={{
-                    background: '#3b82f6',
-                    color: 'white',
-                    padding: '8px 16px',
-                    border: 'none',
-                    borderRadius: '4px',
-                    margin: '5px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Map Columns
-                </button>
-                <button 
-                  onClick={() => {
-                    console.log('Device mapping for:', file);
-                    alert(`Device mapping would open for ${file.name}\nDevices: ${file.devices?.join(', ')}`);
-                  }}
-                  style={{
-                    background: '#22c55e',
-                    color: 'white',
-                    padding: '8px 16px',
-                    border: 'none',
-                    borderRadius: '4px',
-                    margin: '5px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Map Devices
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      <SimpleModal 
-        isOpen={modalOpen} 
-        onClose={() => {
-          setModalOpen(false);
-          setSelectedFile(null);
-        }}
-        title={selectedFile ? `Map Columns for ${selectedFile.name}` : 'Map Columns'}
-      >
-        {selectedFile && (
-          <div>
-            <p style={{ marginBottom: '20px' }}>Map the columns from your file to standard fields:</p>
-            
-            {selectedFile.columns?.map((col, idx) => (
-              <div key={idx} style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', color: '#94a3b8' }}>
-                  {col}
-                </label>
-                <select
-                  value={columnMappings[col] || ''}
-                  onChange={(e) => setColumnMappings({
-                    ...columnMappings,
-                    [col]: e.target.value
-                  })}
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    border: '1px solid #334155',
-                    background: '#0f172a',
-                    color: '#f1f5f9'
-                  }}
-                >
-                  <option value="">-- Select mapping --</option>
-                  <option value="timestamp">Timestamp</option>
-                  <option value="source_ip">Source IP</option>
-                  <option value="dest_ip">Destination IP</option>
-                  <option value="action">Action</option>
-                  <option value="protocol">Protocol</option>
-                  <option value="port">Port</option>
-                  <option value="device">Device</option>
-                  <option value="user">User</option>
-                  <option value="message">Message</option>
-                  <option value="severity">Severity</option>
-                </select>
-              </div>
-            ))}
-            
-            <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+              <h3 style={{ color: '#f1f5f9', marginBottom: '10px' }}>{file.name}</h3>
+              <p style={{ color: '#94a3b8' }}>Columns: {file.columns?.join(', ') || 'None'}</p>
+              <p style={{ color: '#94a3b8' }}>Devices: {file.devices?.join(', ') || 'None'}</p>
               <button 
-                onClick={() => {
-                  console.log('Saving mappings:', columnMappings);
-                  if (selectedFile) {
-                    setFiles(prev => prev.map(f => 
-                      f.id === selectedFile.id 
-                        ? { ...f, mappedColumns: columnMappings }
-                        : f
-                    ));
-                  }
-                  setModalOpen(false);
-                  setColumnMappings({});
-                  setDeviceModalOpen(true);
-                }}
+                onClick={() => openColumnMapping(file)}
                 style={{
                   background: '#3b82f6',
                   color: 'white',
                   padding: '8px 16px',
                   border: 'none',
                   borderRadius: '4px',
+                  marginTop: '10px',
                   cursor: 'pointer'
                 }}
               >
-                Save Mappings
+                Start Processing
               </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Column Mapping Modal */}
+      <SimpleModal 
+        isOpen={modalOpen} 
+        onClose={() => {
+          setModalOpen(false);
+          setColumnMappings({});
+        }}
+        title={selectedFile ? `Map Columns for ${selectedFile.name}` : 'Map Columns'}
+      >
+        {selectedFile && (
+          <div>
+            <p style={{ marginBottom: '20px' }}>
+              Map the columns from your file to standard fields. AI suggestions are pre-filled based on column names.
+            </p>
+            
+            {selectedFile.columns?.map((col, idx) => {
+              const suggestion = aiSuggestions[col] || {};
+              const confidence = suggestion.confidence || 0;
+              const confidenceColor = confidence > 0.7 ? '#22c55e' : confidence > 0.5 ? '#f59e0b' : '#ef4444';
+              
+              return (
+                <div key={idx} style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px', color: '#94a3b8' }}>
+                    {col}
+                    {confidence > 0 && (
+                      <span style={{ 
+                        marginLeft: '10px', 
+                        fontSize: '0.8em', 
+                        color: confidenceColor 
+                      }}>
+                        (AI: {(confidence * 100).toFixed(0)}% confident)
+                      </span>
+                    )}
+                  </label>
+                  <select
+                    value={columnMappings[col] || ''}
+                    onChange={(e) => setColumnMappings({
+                      ...columnMappings,
+                      [col]: e.target.value
+                    })}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      borderRadius: '4px',
+                      border: '1px solid #334155',
+                      background: '#0f172a',
+                      color: '#f1f5f9'
+                    }}
+                  >
+                    <option value="">-- Select mapping --</option>
+                    <option value="timestamp">Timestamp</option>
+                    <option value="person_id">Person/User ID</option>
+                    <option value="door_id">Door/Location ID</option>
+                    <option value="access_result">Access Result</option>
+                    <option value="token_id">Token/Badge ID</option>
+                    <option value="source_ip">Source IP</option>
+                    <option value="dest_ip">Destination IP</option>
+                    <option value="action">Action</option>
+                    <option value="protocol">Protocol</option>
+                    <option value="device">Device</option>
+                    <option value="message">Message</option>
+                    <option value="severity">Severity</option>
+                  </select>
+                </div>
+              );
+            })}
+            
+            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button 
-                onClick={() => {
-                  setModalOpen(false);
-                  setColumnMappings({});
-                }}
+                onClick={() => setModalOpen(false)}
                 style={{
                   background: '#6b7280',
                   color: 'white',
@@ -381,6 +475,19 @@ const Upload: React.FC = () => {
                 }}
               >
                 Cancel
+              </button>
+              <button 
+                onClick={handleColumnMappingSave}
+                style={{
+                  background: '#3b82f6',
+                  color: 'white',
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Next: Map Devices
               </button>
             </div>
           </div>
@@ -396,11 +503,13 @@ const Upload: React.FC = () => {
         }}
         title={selectedFile ? `Map Devices for ${selectedFile.name}` : 'Map Devices'}
       >
-        {selectedFile && selectedFile.devices && (
+        {selectedFile && (
           <div>
-            <p style={{ marginBottom: '20px' }}>Map the devices found in your file:</p>
+            <p style={{ marginBottom: '20px' }}>
+              Map the devices found in your file. AI suggestions are based on device names and patterns.
+            </p>
             
-            {selectedFile.devices.length > 0 ? (
+            {selectedFile.devices && selectedFile.devices.length > 0 ? (
               selectedFile.devices.map((device, idx) => (
                 <div key={idx} style={{ marginBottom: '15px' }}>
                   <label style={{ display: 'block', marginBottom: '5px', color: '#94a3b8' }}>
@@ -413,7 +522,7 @@ const Upload: React.FC = () => {
                       ...deviceMappings,
                       [device]: e.target.value
                     })}
-                    placeholder="Enter device name or description"
+                    placeholder="e.g., Main Entrance, Floor 2, High Security"
                     style={{
                       width: '100%',
                       padding: '8px',
@@ -426,60 +535,12 @@ const Upload: React.FC = () => {
                 </div>
               ))
             ) : (
-              <p style={{ color: '#94a3b8' }}>No devices detected. You can skip this step.</p>
+              <p style={{ color: '#94a3b8' }}>No devices detected. Click Process to continue.</p>
             )}
             
-            <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-              <button 
-                onClick={async () => {
-                  console.log('Saving device mappings:', deviceMappings);
-                  if (selectedFile) {
-                    setFiles(prev => prev.map(f => 
-                      f.id === selectedFile.id 
-                        ? { ...f, mappedDevices: deviceMappings, status: 'completed' as const }
-                        : f
-                    ));
-                    
-                    // Send to backend
-                    try {
-                      const response = await fetch('http://localhost:5001/api/v1/process', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                          fileId: selectedFile.id,
-                          fileName: selectedFile.name,
-                          columnMappings: selectedFile.mappedColumns || columnMappings,
-                          deviceMappings: deviceMappings
-                        })
-                      });
-                      
-                      if (response.ok) {
-                        alert('File processed successfully! In production, this would show results.');
-                      }
-                    } catch (error) {
-                      console.error('Process error:', error);
-                    }
-                  }
-                  setDeviceModalOpen(false);
-                  setDeviceMappings({});
-                  setSelectedFile(null);
-                }}
-                style={{
-                  background: '#22c55e',
-                  color: 'white',
-                  padding: '8px 16px',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Process File
-              </button>
+            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button 
                 onClick={() => {
-                  // Skip device mapping
                   if (selectedFile) {
                     setFiles(prev => prev.map(f => 
                       f.id === selectedFile.id 
@@ -501,6 +562,19 @@ const Upload: React.FC = () => {
               >
                 Skip
               </button>
+              <button 
+                onClick={handleDeviceMappingSave}
+                style={{
+                  background: '#22c55e',
+                  color: 'white',
+                  padding: '8px 16px',	
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Process File
+              </button>
             </div>
           </div>
         )}
@@ -510,3 +584,5 @@ const Upload: React.FC = () => {
 };
 
 export default Upload;
+
+
