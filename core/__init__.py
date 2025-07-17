@@ -7,6 +7,10 @@ from .advanced_cache import (
     cache_with_lock,
     create_advanced_cache_manager,
 )
+from .intelligent_multilevel_cache import (
+    IntelligentMultiLevelCache,
+    create_intelligent_cache_manager,
+)
 from .advanced_query_optimizer import AdvancedQueryOptimizer
 from .cpu_optimizer import CPUOptimizer
 from .hierarchical_cache_manager import HierarchicalCacheManager
@@ -32,4 +36,6 @@ __all__ = [
     "IntelligentCacheWarmer",
     "MemoryManager",
     "CPUOptimizer",
+    "IntelligentMultiLevelCache",
+    "create_intelligent_cache_manager",
 ]
