@@ -1,5 +1,4 @@
 import base64
-import base64
 import json
 from typing import Any, Callable, Iterable, List, Mapping
 
@@ -33,8 +32,7 @@ class ClientSideValidator(UploadValidatorProtocol):
         self.magic_numbers: dict[str, List[bytes]] = {}
         for ext, vals in (magic_numbers or {}).items():
             self.magic_numbers[ext.lower()] = [
-                v if isinstance(v, bytes) else bytes.fromhex(v)
-                for v in vals
+                v if isinstance(v, bytes) else bytes.fromhex(v) for v in vals
             ]
         self.track_duplicates = track_duplicates
         self.hooks = list(hooks or [])
@@ -103,8 +101,7 @@ class ClientSideValidator(UploadValidatorProtocol):
                 "max_size": self.max_size,
                 "size_limits": self.size_limits,
                 "magic_numbers": {
-                    k: [m.hex() for m in v]
-                    for k, v in self.magic_numbers.items()
+                    k: [m.hex() for m in v] for k, v in self.magic_numbers.items()
                 },
                 "track_duplicates": self.track_duplicates,
             }
