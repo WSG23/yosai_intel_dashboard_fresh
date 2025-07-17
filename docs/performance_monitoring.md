@@ -86,6 +86,21 @@ Cached results are stored in memory and optionally in Redis if available. Cache
 entries expire automatically after the TTL, ensuring that repeated dashboard
 requests do not trigger heavy calculations unnecessarily.
 
+### L1/L2/L3 Cache Levels
+
+The caching subsystem is organised into three tiers managed by
+`HierarchicalCacheManager`:
+
+* **L1** – in‑process memory for the fastest access. The maximum number of
+  entries is controlled by `CACHE_L1_SIZE`.
+* **L2** – a shared Redis cache enabled when `CACHE_TYPE=redis` and configured
+  with `CACHE_HOST`, `CACHE_PORT` and `CACHE_DATABASE`.
+* **L3** – an optional file‑based cache activated via `CACHE_L3_PATH`. Use
+  `CACHE_L3_TTL` to set the expiry for this tier.
+
+`IntelligentCacheWarmer` can prefill these layers on start‑up so the most common
+queries are readily available.
+
 ## Upcoming Optimization Tools
 
 Several new modules extend the monitoring stack with proactive optimisation
