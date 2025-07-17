@@ -6,7 +6,11 @@ import subprocess
 import sys
 from typing import Any, cast
 
+from api.adapter import api_bp, initialize_api, socketio
 from flask import Flask, request
+from flask_cors import CORS
+
+from core.container import container
 
 try:
     from dotenv import load_dotenv
@@ -247,7 +251,8 @@ def _run_server(app, ssl_context):
     try:
         if ssl_context:
             logger.info("🔒 Starting with HTTPS")
-            app.run(
+            socketio.run(
+                app.server,
                 host=app_config.host,
                 port=str(app_config.port),
                 debug=app_config.debug,
@@ -255,7 +260,8 @@ def _run_server(app, ssl_context):
             )
         else:
             logger.info("🌐 Starting with HTTP")
-            app.run(
+            socketio.run(
+                app.server,
                 host=app_config.host,
                 port=str(app_config.port),
                 debug=app_config.debug,
@@ -292,6 +298,11 @@ def main():
         _validate_secrets(app_config)
 
         app = _create_app()
+
+        initialize_api(app.server, container)
+        CORS(app.server, resources={r"/api/*": {"origins": "http://localhost:5173"}})
+        if os.getenv("FLASK_ENV") == "production":
+            app.server.static_folder = "frontend/dist"
 
         _run_server(app, ssl_context)
 
