@@ -1,16 +1,14 @@
 import math
 import re
 from collections import Counter
-from typing import Dict, List, Optional, cast
-
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional, cast
 
 from core.flask_protocol import FlaskProtocol
 
 if TYPE_CHECKING:  # pragma: no cover - optional Flask dependency
     from flask import Flask
 
-from core.secrets_manager import SecretsManager
+from core.secret_manager import SecretsManager
 
 
 class SecretsValidator:

@@ -92,4 +92,7 @@ def validate_secrets(manager: Optional[SecretsManager] = None) -> dict[str, Any]
     return summary
 
 
-__all__ = ["SecretMetadata", "SecretsManager", "validate_secrets"]
+# Backwards compatibility alias
+SecretManager = SecretsManager
+
+__all__ = ["SecretMetadata", "SecretsManager", "SecretManager", "validate_secrets"]

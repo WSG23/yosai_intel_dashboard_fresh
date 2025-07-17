@@ -24,6 +24,7 @@ class _SimpleComp:
 
 no_update = _callback.NoUpdate()
 __version__ = "0.0.0"
+page_container = _SimpleComp()
 
 
 __all__ = [

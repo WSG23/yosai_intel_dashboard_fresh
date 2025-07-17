@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Simplified Services Package"""
 import logging
+import sys
+from types import ModuleType
+from pathlib import Path
 
 from .ai_mapping_store import ai_mapping_store
 from .analytics.upload_analytics import UploadAnalyticsProcessor
@@ -23,6 +26,18 @@ from .result_formatting import (
 from .summary_reporter import SummaryReporter
 
 logger = logging.getLogger(__name__)
+
+# Expose optional compliance services if the plugin is available
+plugin_compliance_path = (
+    Path(__file__).resolve().parent / ".." / "plugins" / "compliance_plugin" / "services"
+).resolve()
+if plugin_compliance_path.is_dir():
+    module_name = __name__ + ".compliance"
+    compliance_pkg = ModuleType(module_name)
+    compliance_pkg.__path__ = [str(plugin_compliance_path)]
+    sys.modules[module_name] = compliance_pkg
+else:  # pragma: no cover - optional dependency
+    compliance_pkg = None
 
 # Resolve optional services from the registry
 UnifiedFileValidatorService = get_service("UnifiedFileValidator")

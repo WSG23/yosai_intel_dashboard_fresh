@@ -20,9 +20,7 @@ sys.path.insert(0, str(project_root))
 
 # Apply our fixes
 
-
 def apply_all_fixes():
-
     """Apply development-only monkey patches for compatibility."""
     try:
         # Step 1: Callback fix
@@ -448,6 +446,7 @@ def show_analytics_engine():
 
         if parquet_path.exists():
             df = pd.read_parquet(parquet_path)
+
 
             st.success(f"✅ Loaded Enhanced Security Demo: {len(df)} access events")
 

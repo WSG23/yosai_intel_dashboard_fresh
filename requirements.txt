@@ -2,6 +2,7 @@
 # These packages must be installed before running the application.
 # The Dockerfiles and scripts/setup.sh handle this automatically.
 Flask>=2.2.5
+werkzeug==2.3.7
 Flask-Babel==4.0.0
 Flask-Login==0.6.2
 Flask-WTF==1.1.1
@@ -46,4 +47,5 @@ cryptography>=45.0.0
 kafka-python>=2.0.2
 pulsar-client>=3.2.0
 dask[distributed]==2024.4.1
+rapidfuzz>=3.0.0
 
