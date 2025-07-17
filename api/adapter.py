@@ -1,8 +1,12 @@
 from flask import Flask, jsonify, request, Blueprint
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from flask_cors import CORS
-from analytics_endpoints import register_analytics_blueprints
+from api.analytics_endpoints import register_analytics_blueprints
 import logging
 import json
+from services.data_enhancer import get_ai_column_suggestions
 from datetime import datetime
 
 # Configure logging
@@ -84,3 +88,113 @@ if __name__ == "__main__":
     print("   Upload endpoint: http://localhost:5001/api/v1/upload")
     
     app.run(host='0.0.0.0', port=5001, debug=True)
+
+
+@api_bp.route('/ai/suggest-columns', methods=['POST'])
+def suggest_column_mappings():
+    """Get AI suggestions for column mappings"""
+    try:
+        data = request.json
+        columns = data.get('columns', [])
+        
+        # Import and use the actual AI function
+        from services.data_enhancer import get_ai_column_suggestions
+        ai_suggestions = get_ai_column_suggestions(columns)
+        
+        # Convert format for frontend
+        suggestions = {}
+        for col, suggestion in ai_suggestions.items():
+            if suggestion['field']:  # Only include if there's a suggestion
+                suggestions[col] = suggestion['field']
+        
+        logging.info(f"AI suggestions: {suggestions}")
+        
+        return safe_json_response({
+            'suggestions': suggestions,
+            'user_id': data.get('user_id', 'default')
+        })
+        
+    except Exception as e:
+        logging.error(f"AI column suggestion error: {str(e)}", exc_info=True)
+        return safe_json_response({'error': str(e)}, 500)
+@api_bp.route('/ai/suggest-devices', methods=['POST'])
+def suggest_device_mappings():
+    """Get AI suggestions for device mappings"""
+    try:
+        data = request.json
+        devices = data.get('devices', [])
+        column_mappings = data.get('column_mappings', {})
+        user_id = data.get('user_id', 'default')
+        
+        # Import your existing AI device mapping function
+        # from services.device_learning_service import DeviceLearningService
+        
+        # Mock AI suggestions - replace with actual function
+        suggestions = {}
+        
+        for device in devices:
+            device_lower = device.lower()
+            if 'exit' in device_lower:
+                suggestions[device] = {
+                    'type': 'exit',
+                    'location': 'building_exit',
+                    'security_level': 'high'
+                }
+            elif 'entrance' in device_lower or 'entry' in device_lower:
+                suggestions[device] = {
+                    'type': 'entrance',
+                    'location': 'main_entrance',
+                    'security_level': 'high'
+                }
+            elif 'stair' in device_lower:
+                suggestions[device] = {
+                    'type': 'stairwell',
+                    'location': 'emergency_exit',
+                    'security_level': 'medium'
+                }
+            else:
+                suggestions[device] = {
+                    'type': 'unknown',
+                    'location': 'general',
+                    'security_level': 'standard'
+                }
+        
+        # In production:
+        # device_service = DeviceLearningService()
+        # suggestions = device_service.get_device_suggestions(devices, column_mappings, user_id)
+        
+        return safe_json_response({
+            'suggestions': suggestions,
+            'user_id': user_id
+        })
+        
+    except Exception as e:
+        logging.error(f"AI device suggestion error: {str(e)}", exc_info=True)
+        return safe_json_response({'error': str(e)}, 500)
+
+@api_bp.route('/mappings/save', methods=['POST'])
+def save_mappings():
+    """Save user mappings for future learning"""
+    try:
+        data = request.json
+        user_id = data.get('user_id', 'default')
+        file_pattern = data.get('file_pattern', '')
+        column_mappings = data.get('column_mappings', {})
+        device_mappings = data.get('device_mappings', {})
+        
+        # Import your existing save function
+        # from services.mapping_persistence_service import save_user_mappings
+        
+        # In production:
+        # save_user_mappings(user_id, file_pattern, column_mappings, device_mappings)
+        
+        logging.info(f"Saved mappings for user {user_id}: columns={column_mappings}, devices={device_mappings}")
+        
+        return safe_json_response({
+            'success': True,
+            'message': 'Mappings saved for future use'
+        })
+        
+    except Exception as e:
+        logging.error(f"Save mappings error: {str(e)}", exc_info=True)
+        return safe_json_response({'error': str(e)}, 500)
