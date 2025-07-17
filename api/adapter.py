@@ -26,6 +26,7 @@ from services.data_enhancer import apply_manual_mapping
 from services.interfaces import get_device_learning_service
 from services.upload.core.processor import UploadProcessingService
 from utils.upload_store import uploaded_data_store
+from api.analytics_endpoints import register_analytics_blueprints
 
 logger = logging.getLogger(__name__)
 
@@ -692,5 +693,7 @@ def initialize_api(app: Any, container: Any) -> None:
     """Initialize API with app and container"""
     api_adapter.initialize(app, container)
     app.register_blueprint(api_bp)
+    # Register analytics, graphs and export blueprints from analytics_endpoints
+    register_analytics_blueprints(app)
     socketio.init_app(app)
     logger.info("API routes registered successfully")
