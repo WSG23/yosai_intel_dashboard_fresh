@@ -22,12 +22,13 @@ sys.path.insert(0, str(project_root))
 
 # Apply our fixes
 
-def apply_all_fixes():
 
+def apply_all_fixes():
     """Apply development-only monkey patches for compatibility."""
     try:
         # Step 1: Callback fix
         from analytics_core.callbacks.unified_callback_manager import CallbackManager
+
         if hasattr(CallbackManager, "handle_register") and not hasattr(
             CallbackManager, "register_handler"
         ):
@@ -36,7 +37,8 @@ def apply_all_fixes():
         # Step 2: Missing methods fix
         from services.upload_processing import UploadAnalyticsProcessor
 
-        if not hasattr(UploadAnalyticsProcessor, 'get_analytics_from_uploaded_data'):
+        if not hasattr(UploadAnalyticsProcessor, "get_analytics_from_uploaded_data"):
+
             def get_analytics_from_uploaded_data(self):
                 try:
                     data = self.load_uploaded_data()
@@ -50,21 +52,24 @@ def apply_all_fixes():
                     return result
                 except Exception as e:
                     return {"status": "error", "message": str(e)}
+
             UploadAnalyticsProcessor.get_analytics_from_uploaded_data = (
                 get_analytics_from_uploaded_data
             )
 
-        if not hasattr(UploadAnalyticsProcessor, 'clean_uploaded_dataframe'):
+        if not hasattr(UploadAnalyticsProcessor, "clean_uploaded_dataframe"):
+
             def clean_uploaded_dataframe(self, df):
-                cleaned_df = df.dropna(how='all').copy()
+                cleaned_df = df.dropna(how="all").copy()
                 cleaned_df.columns = [
-                    col.strip().replace(" ", "_").lower()
-                    for col in cleaned_df.columns
+                    col.strip().replace(" ", "_").lower() for col in cleaned_df.columns
                 ]
                 return cleaned_df
+
             UploadAnalyticsProcessor.clean_uploaded_dataframe = clean_uploaded_dataframe
 
-        if not hasattr(UploadAnalyticsProcessor, 'summarize_dataframe'):
+        if not hasattr(UploadAnalyticsProcessor, "summarize_dataframe"):
+
             def summarize_dataframe(self, df):
                 return {
                     "rows": len(df),
@@ -72,14 +77,16 @@ def apply_all_fixes():
                     "column_names": list(df.columns),
                     "dtypes": {col: str(dtype) for col, dtype in df.dtypes.items()},
                     "memory_usage_mb": df.memory_usage(deep=True).sum() / 1024 / 1024,
-                    "null_counts": df.isnull().sum().to_dict()
+                    "null_counts": df.isnull().sum().to_dict(),
                 }
+
             UploadAnalyticsProcessor.summarize_dataframe = summarize_dataframe
 
         return True
     except Exception as e:
         st.error(f"Failed to apply fixes: {e}")
         return False
+
 
 # Apply fixes
 # These patches are intended for local development/testing only
@@ -91,13 +98,12 @@ def main():
         page_title="Yōsai Intel Dashboard - Visual Tester",
         page_icon="🏢",
         layout="wide",
-        initial_sidebar_state="expanded"
+        initial_sidebar_state="expanded",
     )
 
     st.title("🏢 Yōsai Intel Dashboard - Visual Testing Interface")
     st.markdown(
-        "### Complete Pipeline Testing: File Processing → "
-        "AI Mapping → Analytics"
+        "### Complete Pipeline Testing: File Processing → " "AI Mapping → Analytics"
     )
 
     # Sidebar navigation
@@ -110,8 +116,8 @@ def main():
             "📁 File Processing",
             "🗺️ Device Mapping Viewer",
             "📊 Analytics Engine",
-            "🔍 Real-Time Analysis"
-        ]
+            "🔍 Real-Time Analysis",
+        ],
     )
 
     if test_mode == "🏠 Dashboard Overview":
@@ -135,23 +141,24 @@ def show_dashboard_overview():
 
         try:
             from services.analytics_service import AnalyticsService
+
             analytics = AnalyticsService()
             health = analytics.health_check()
 
             with col1:
-                if health.get('service') == 'healthy':
+                if health.get("service") == "healthy":
                     st.success("✅ Analytics Service")
                 else:
                     st.error("❌ Analytics Service")
 
             with col2:
-                if health.get('database') == 'healthy':
+                if health.get("database") == "healthy":
                     st.success("✅ Database")
                 else:
                     st.error("❌ Database")
 
             with col3:
-                files = health.get('uploaded_files', 0)
+                files = health.get("uploaded_files", 0)
                 if files > 0:
                     st.success(f"✅ {files} Uploaded Files")
                 else:
@@ -175,11 +182,11 @@ def show_dashboard_overview():
             with col1:
                 st.metric("Access Events", len(df))
             with col2:
-                st.metric("Unique Employees", df['Employee Code'].nunique())
+                st.metric("Unique Employees", df["Employee Code"].nunique())
             with col3:
-                st.metric("Unique Doors", df['Door Location'].nunique())
+                st.metric("Unique Doors", df["Door Location"].nunique())
             with col4:
-                granted = len(df[df['Entry Status'] == 'Granted'])
+                granted = len(df[df["Entry Status"] == "Granted"])
                 st.metric("Access Granted", f"{granted}/{len(df)}")
         else:
             st.info("Load Enhanced Security Demo data to see statistics")
@@ -192,6 +199,7 @@ def show_dashboard_overview():
 
     try:
         from services.device_learning_service import DeviceLearningService
+
         device_service = DeviceLearningService()
         mappings = device_service.learned_mappings
 
@@ -212,8 +220,8 @@ def show_dashboard_overview():
             # Show recent mappings
             st.write("**Recent Mappings:**")
             for i, (key, value) in enumerate(list(mappings.items())[:3]):
-                filename = value.get('filename', 'Unknown')
-                device_count = value.get('device_count', 0)
+                filename = value.get("filename", "Unknown")
+                device_count = value.get("device_count", 0)
                 st.write(f"• {filename}: {device_count} devices")
 
         else:
@@ -231,22 +239,22 @@ def show_file_processing():
     # File upload
     uploaded_file = st.file_uploader(
         "Upload a file to test processing",
-        type=['csv', 'json', 'xlsx', 'xls'],
-        help="Upload CSV, JSON, or Excel files to test the processing pipeline"
+        type=["csv", "json", "xlsx", "xls"],
+        help="Upload CSV, JSON, or Excel files to test the processing pipeline",
     )
 
     if uploaded_file is not None:
         try:
             # Process the file
             with st.spinner("Processing file..."):
-                if uploaded_file.name.endswith('.csv'):
+                if uploaded_file.name.endswith(".csv"):
                     if uploaded_file.size and uploaded_file.size > 10 * 1024 * 1024:
                         df = FileProcessor.read_large_csv(uploaded_file)
                     else:
                         df = pd.read_csv(uploaded_file)
-                elif uploaded_file.name.endswith('.json'):
+                elif uploaded_file.name.endswith(".json"):
                     df = pd.read_json(uploaded_file)
-                elif uploaded_file.name.endswith(('.xlsx', '.xls')):
+                elif uploaded_file.name.endswith((".xlsx", ".xls")):
                     df = pd.read_excel(uploaded_file)
 
             st.success(f"✅ File processed successfully!")
@@ -260,17 +268,19 @@ def show_file_processing():
             with col3:
                 st.metric(
                     "Memory (MB)",
-                    f"{df.memory_usage(deep=True).sum() / 1024 / 1024:.2f}"
+                    f"{df.memory_usage(deep=True).sum() / 1024 / 1024:.2f}",
                 )
 
             # Show column info
             st.subheader("Column Information")
-            col_info = pd.DataFrame({
-                'Column': df.columns,
-                'Type': df.dtypes,
-                'Non-Null': df.count(),
-                'Null Count': df.isnull().sum()
-            })
+            col_info = pd.DataFrame(
+                {
+                    "Column": df.columns,
+                    "Type": df.dtypes,
+                    "Non-Null": df.count(),
+                    "Null Count": df.isnull().sum(),
+                }
+            )
             st.dataframe(col_info)
 
             # Show sample data
@@ -282,12 +292,13 @@ def show_file_processing():
             if st.button("Get AI Suggestions"):
                 try:
                     from services.data_enhancer import get_ai_column_suggestions
+
                     suggestions = get_ai_column_suggestions(df)
 
                     if suggestions:
                         for col, suggestion in suggestions.items():
-                            field = suggestion.get('field', '')
-                            confidence = suggestion.get('confidence', 0)
+                            field = suggestion.get("field", "")
+                            confidence = suggestion.get("confidence", 0)
                             if field and confidence > 0:
                                 st.write(
                                     f"• **{col}** → `{field}` (confidence: "
@@ -309,6 +320,7 @@ def show_device_mapping():
 
     try:
         from services.device_learning_service import DeviceLearningService
+
         device_service = DeviceLearningService()
         mappings = device_service.learned_mappings
 
@@ -337,15 +349,15 @@ def show_device_mapping():
             col1, col2, col3 = st.columns(3)
 
             with col1:
-                st.metric("Filename", mapping_data.get('filename', 'Unknown'))
+                st.metric("Filename", mapping_data.get("filename", "Unknown"))
             with col2:
-                st.metric("Device Count", mapping_data.get('device_count', 0))
+                st.metric("Device Count", mapping_data.get("device_count", 0))
             with col3:
-                saved_at = mapping_data.get('saved_at', '')
-                st.metric("Saved", saved_at[:10] if saved_at else 'Unknown')
+                saved_at = mapping_data.get("saved_at", "")
+                st.metric("Saved", saved_at[:10] if saved_at else "Unknown")
 
             # Show device mappings
-            device_mappings = mapping_data.get('device_mappings', {})
+            device_mappings = mapping_data.get("device_mappings", {})
 
             if device_mappings:
                 st.subheader("🚪 Device Details")
@@ -353,15 +365,19 @@ def show_device_mapping():
                 # Create DataFrame for better visualization
                 device_data = []
                 for device_name, details in device_mappings.items():
-                    device_data.append({
-                        'Device': device_name,
-                        'Floor': details.get('floor_number', 'N/A'),
-                        'Security Level': details.get('security_level', 'N/A'),
-                        'Entry Point': '✅' if details.get('is_entry') else '❌',
-                        'Exit Point': '✅' if details.get('is_exit') else '❌',
-                        'Restricted': '🔒' if details.get('is_restricted') else '🔓',
-                        'Confidence': details.get('confidence', 0)
-                    })
+                    device_data.append(
+                        {
+                            "Device": device_name,
+                            "Floor": details.get("floor_number", "N/A"),
+                            "Security Level": details.get("security_level", "N/A"),
+                            "Entry Point": "✅" if details.get("is_entry") else "❌",
+                            "Exit Point": "✅" if details.get("is_exit") else "❌",
+                            "Restricted": (
+                                "🔒" if details.get("is_restricted") else "🔓"
+                            ),
+                            "Confidence": details.get("confidence", 0),
+                        }
+                    )
 
                 device_df = pd.DataFrame(device_data)
                 # Filter options
@@ -395,22 +411,22 @@ def show_device_mapping():
 
                 with col1:
                     # Security level distribution
-                    security_counts = device_df['Security Level'].value_counts()
+                    security_counts = device_df["Security Level"].value_counts()
                     fig = px.bar(
                         x=security_counts.index,
                         y=security_counts.values,
                         title="Devices by Security Level",
-                        labels={'x': 'Security Level', 'y': 'Count'}
+                        labels={"x": "Security Level", "y": "Count"},
                     )
                     st.plotly_chart(fig, use_container_width=True)
 
                 with col2:
                     # Floor distribution
-                    floor_counts = device_df['Floor'].value_counts()
+                    floor_counts = device_df["Floor"].value_counts()
                     fig = px.pie(
                         values=floor_counts.values,
                         names=floor_counts.index,
-                        title="Devices by Floor"
+                        title="Devices by Floor",
                     )
                     st.plotly_chart(fig, use_container_width=True)
 
@@ -425,13 +441,15 @@ def show_analytics_engine():
     # Initialize analytics
     try:
         from services.analytics_service import AnalyticsService
+
         analytics = AnalyticsService()
 
         # Load Enhanced Security Demo data
         parquet_path = (
             Path(UploadConfig().folder) / "Enhanced_Security_Demo.csv.parquet"
         )
-
+        if parquet_path.exists():
+            df = pd.read_parquet(parquet_path)
             st.success(f"✅ Loaded Enhanced Security Demo: {len(df)} access events")
 
             # Analytics tests
@@ -504,51 +522,51 @@ def show_realtime_analysis():
         with col1:
             st.metric("Total Events", len(df))
         with col2:
-            st.metric("Unique Employees", df['Employee Code'].nunique())
+            st.metric("Unique Employees", df["Employee Code"].nunique())
         with col3:
-            st.metric("Unique Doors", df['Door Location'].nunique())
+            st.metric("Unique Doors", df["Door Location"].nunique())
         with col4:
-            granted_pct = (len(df[df['Entry Status'] == 'Granted']) / len(df)) * 100
+            granted_pct = (len(df[df["Entry Status"] == "Granted"]) / len(df)) * 100
             st.metric("Access Rate", f"{granted_pct:.1f}%")
 
         # Time analysis
         st.subheader("⏰ Time Analysis")
-        df['Event Time'] = pd.to_datetime(df['Event Time'])
-        df['Hour'] = df['Event Time'].dt.hour
-        df['Minute'] = df['Event Time'].dt.minute
+        df["Event Time"] = pd.to_datetime(df["Event Time"])
+        df["Hour"] = df["Event Time"].dt.hour
+        df["Minute"] = df["Event Time"].dt.minute
 
-        hourly_activity = df['Hour'].value_counts().sort_index()
+        hourly_activity = df["Hour"].value_counts().sort_index()
 
         fig = px.bar(
             x=hourly_activity.index,
             y=hourly_activity.values,
             title="Access Activity by Hour",
-            labels={'x': 'Hour of Day', 'y': 'Number of Access Events'}
+            labels={"x": "Hour of Day", "y": "Number of Access Events"},
         )
         st.plotly_chart(fig, use_container_width=True)
 
         # Top locations
         st.subheader("🚪 Most Active Locations")
-        location_counts = df['Door Location'].value_counts().head(10)
+        location_counts = df["Door Location"].value_counts().head(10)
 
         fig = px.bar(
             x=location_counts.values,
             y=location_counts.index,
-            orientation='h',
+            orientation="h",
             title="Top 10 Most Accessed Doors",
-            labels={'x': 'Access Count', 'y': 'Door Location'}
+            labels={"x": "Access Count", "y": "Door Location"},
         )
         st.plotly_chart(fig, use_container_width=True)
 
         # Employee activity
         st.subheader("👥 Employee Activity")
-        employee_counts = df['Employee Code'].value_counts().head(10)
+        employee_counts = df["Employee Code"].value_counts().head(10)
 
         fig = px.bar(
             x=employee_counts.index,
             y=employee_counts.values,
             title="Most Active Employees",
-            labels={'x': 'Employee Code', 'y': 'Access Count'}
+            labels={"x": "Employee Code", "y": "Access Count"},
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -560,23 +578,23 @@ def show_realtime_analysis():
         with col1:
             selected_status = st.multiselect(
                 "Filter by Entry Status:",
-                df['Entry Status'].unique(),
-                default=df['Entry Status'].unique()
+                df["Entry Status"].unique(),
+                default=df["Entry Status"].unique(),
             )
 
         with col2:
             hour_range = st.slider(
                 "Filter by Hour Range:",
-                min_value=int(df['Hour'].min()),
-                max_value=int(df['Hour'].max()),
-                value=(int(df['Hour'].min()), int(df['Hour'].max()))
+                min_value=int(df["Hour"].min()),
+                max_value=int(df["Hour"].max()),
+                value=(int(df["Hour"].min()), int(df["Hour"].max())),
             )
 
         # Apply filters
         filtered_df = df[
-            (df['Entry Status'].isin(selected_status)) &
-            (df['Hour'] >= hour_range[0]) &
-            (df['Hour'] <= hour_range[1])
+            (df["Entry Status"].isin(selected_status))
+            & (df["Hour"] >= hour_range[0])
+            & (df["Hour"] <= hour_range[1])
         ]
 
         st.write(f"**Filtered Data**: {len(filtered_df)} events")
@@ -584,6 +602,7 @@ def show_realtime_analysis():
 
     except Exception as e:
         st.error(f"Real-time analysis error: {e}")
+
 
 if __name__ == "__main__":
     main()
