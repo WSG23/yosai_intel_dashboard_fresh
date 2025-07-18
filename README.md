@@ -893,6 +893,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines. In short:
    `examples/diagnostic_script.py` (replacing the old
    `examples/debugcsv.py`) and can be run with
    `python examples/diagnostic_script.py`.
+10. Outdated prototype scripts, such as the legacy adapters, have been moved
+   to the `archive/` directory for reference.
 
 ## <span aria-hidden="true">📦</span> Versioning
 
