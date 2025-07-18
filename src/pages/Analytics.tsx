@@ -35,7 +35,8 @@ const Analytics: React.FC = () => {
     setError(null);
     
     try {
-      const response = await fetch(`http://localhost:5001/api/v1/analytics/${sourceType}`);
+      const apiBase = process.env.REACT_APP_API_BASE || '/api/v1';
+      const response = await fetch(`${apiBase}/analytics/${sourceType}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
