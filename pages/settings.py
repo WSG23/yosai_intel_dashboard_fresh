@@ -117,6 +117,20 @@ def layout() -> dbc.Container:
     return _settings_component.layout()
 
 
+def apply_system_config(rate_limit: int, db_timeout: int, batch_size: int) -> dbc.Alert:
+    """Update dynamic config values for tests and return a success alert."""
+
+    dynamic_config.security.rate_limit_requests = rate_limit
+    dynamic_config.database.connection_timeout_seconds = db_timeout
+    dynamic_config.analytics.batch_size = batch_size
+    return dbc.Alert("Configuration updated", color="success")
+
+
+def register_callbacks(manager) -> None:
+    """Placeholder callback registrar used in tests."""
+    return None
+
+
 __all__ = ["SettingsPage", "load_page", "layout", "register_page"]
 
 

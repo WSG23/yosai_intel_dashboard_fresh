@@ -83,6 +83,10 @@ except Exception:  # pragma: no cover - fallback stub
     sys.modules.setdefault("dash.dcc", dash_stub.dcc)
     sys.modules.setdefault("dash.dependencies", dash_stub.dependencies)
     sys.modules.setdefault("dash._callback", dash_stub._callback)
+    sys.modules.setdefault(
+        "dash.exceptions",
+        types.SimpleNamespace(PreventUpdate=Exception),
+    )
     dash_stub.no_update = dash_stub._callback.NoUpdate()
 
 try:  # use real redis if available
