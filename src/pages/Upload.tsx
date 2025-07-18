@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Upload as UploadIcon, FileText, AlertCircle, CheckCircle, X } from 'lucide-react';
 import SimpleModal from '../components/upload/SimpleModal';
+import { saveColumnMappings, saveDeviceMappings } from '../api/upload';
 import './Upload.css';
 
 interface UploadedFile {
@@ -166,14 +167,21 @@ const Upload: React.FC = () => {
   // Save column mappings and open device modal
   const handleColumnMappingSave = async () => {
     if (!selectedFile) return;
-    
+
     console.log('Saving column mappings:', columnMappings);
-    setFiles(prev => prev.map(f => 
-      f.id === selectedFile.id 
+    setFiles(prev => prev.map(f =>
+      f.id === selectedFile.id
         ? { ...f, mappedColumns: columnMappings }
         : f
     ));
-    
+    try {
+      await saveColumnMappings(selectedFile.id, columnMappings);
+      alert('Column mappings saved successfully!');
+    } catch (error) {
+      console.error('Error saving column mappings:', error);
+      alert('Failed to save column mappings.');
+    }
+
     setModalOpen(false);
     
     // Fetch device AI suggestions
@@ -237,18 +245,13 @@ const Upload: React.FC = () => {
       });
       
       if (processResponse.ok) {
-        // Save mappings for learning
-        await fetch('http://localhost:5001/api/v1/mappings/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            filename: selectedFile.name,
-            column_mappings: selectedFile.mappedColumns || columnMappings,
-            device_mappings: deviceMappings
-          })
-        });
-        
-        alert('File processed successfully! Mappings saved for future use.');
+        try {
+          await saveDeviceMappings(selectedFile.id, deviceMappings);
+          alert('File processed successfully! Mappings saved for future use.');
+        } catch (error) {
+          console.error('Error saving device mappings:', error);
+          alert('File processed but failed to save device mappings.');
+        }
       }
     } catch (error) {
       console.error('Process error:', error);

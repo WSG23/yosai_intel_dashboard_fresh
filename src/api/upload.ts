@@ -22,3 +22,15 @@ export const uploadAPI = {
     return api.post(`/upload/${filename}/devices`, { devices });
   },
 };
+
+export async function saveColumnMappings(fileId: string, mappings: Record<string, string>) {
+  return api.post('/mappings/columns', { file_id: fileId, mappings });
+}
+
+export async function saveDeviceMappings(
+  fileId: string,
+  mappings: Record<string, any>
+) {
+  return api.post('/mappings/devices', { file_id: fileId, mappings });
+}
+
