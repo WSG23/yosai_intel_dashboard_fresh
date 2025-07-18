@@ -1,6 +1,7 @@
 """Application-wide constants for Yōsai Intel Dashboard."""
 
 from dataclasses import dataclass
+import os
 
 
 class SecurityLimits:
@@ -167,6 +168,10 @@ MAX_DISPLAY_ROWS: int = AnalyticsConstants.max_display_rows
 # Network defaults
 DEFAULT_APP_HOST: str = "127.0.0.1"
 DEFAULT_APP_PORT: int = 8050
+
+# Default port for the Flask API
+DEFAULT_API_PORT: int = 5001
+API_PORT: int = int(os.getenv("API_PORT", DEFAULT_API_PORT))
 
 DEFAULT_DB_HOST: str = "localhost"
 DEFAULT_DB_PORT: int = 5432

@@ -5,7 +5,7 @@ from api.analytics_endpoints import register_analytics_blueprints
 from upload_endpoint import upload_bp
 from device_endpoint import device_bp
 from mappings_endpoint import mappings_bp
-from settings_endpoint import settings_bp
+from config.constants import API_PORT
 
 
 def create_api_app() -> Flask:
@@ -28,6 +28,6 @@ def create_api_app() -> Flask:
 if __name__ == "__main__":
     app = create_api_app()
     print("\n🚀 Starting Yosai Intel Dashboard API...")
-    print("   Available at: http://localhost:5001")
-    print("   Upload endpoint: http://localhost:5001/api/v1/upload")
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    print(f"   Available at: http://localhost:{API_PORT}")
+    print(f"   Upload endpoint: http://localhost:{API_PORT}/api/v1/upload")
+    app.run(host="0.0.0.0", port=API_PORT, debug=True)

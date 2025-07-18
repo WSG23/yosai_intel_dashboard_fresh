@@ -10,6 +10,7 @@ import asyncio
 import json
 import sys
 from pathlib import Path
+from config.constants import API_PORT
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent
@@ -284,10 +285,10 @@ def create_device_suggestions(devices):
 
 if __name__ == '__main__':
     print("Starting minimal Flask API server...")
-    print("Server running on http://localhost:5001")
+    print(f"Server running on http://localhost:{API_PORT}")
     print("Endpoints:")
     print("  POST /api/v1/upload")
     print("  POST /api/v1/ai/suggest-devices")
     print("  POST /api/v1/mappings/save")
     print("  POST /api/v1/process-enhanced")
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=API_PORT, debug=True)
