@@ -51,23 +51,23 @@ class AccessEventModel(BaseModel):
 
         # Build dynamic query with filters
         if "start_date" in filters:
-            base_query += " AND timestamp >= ?"
+            base_query += " AND timestamp >= %s"
             params.append(filters["start_date"])
 
         if "end_date" in filters:
-            base_query += " AND timestamp <= ?"
+            base_query += " AND timestamp <= %s"
             params.append(filters["end_date"])
 
         if "person_id" in filters:
-            base_query += " AND person_id = ?"
+            base_query += " AND person_id = %s"
             params.append(filters["person_id"])
 
         if "door_id" in filters:
-            base_query += " AND door_id = ?"
+            base_query += " AND door_id = %s"
             params.append(filters["door_id"])
 
         if "access_result" in filters:
-            base_query += " AND access_result = ?"
+            base_query += " AND access_result = %s"
             params.append(filters["access_result"])
 
         base_query += (
@@ -158,7 +158,7 @@ class AccessEventModel(BaseModel):
             COUNT(*) as event_count,
             SUM(CASE WHEN access_result = 'Granted' THEN 1 ELSE 0 END) as granted_count
         FROM access_events
-        WHERE timestamp >= date('now', ?)
+        WHERE timestamp >= date('now', %s)
         GROUP BY strftime('%H', timestamp)
         ORDER BY hour
         """
@@ -184,7 +184,7 @@ class AccessEventModel(BaseModel):
         WHERE timestamp >= date('now', '-30 days')
         GROUP BY person_id
         ORDER BY total_events DESC
-        LIMIT ?
+        LIMIT %s
         """
 
         try:
@@ -207,7 +207,7 @@ class AccessEventModel(BaseModel):
         WHERE timestamp >= date('now', '-30 days')
         GROUP BY door_id
         ORDER BY total_events DESC
-        LIMIT ?
+        LIMIT %s
         """
 
         try:
@@ -229,7 +229,7 @@ class AccessEventModel(BaseModel):
             COUNT(DISTINCT person_id) as unique_users,
             COUNT(DISTINCT door_id) as unique_doors
         FROM access_events
-        WHERE timestamp >= date('now', ?)
+        WHERE timestamp >= date('now', %s)
         GROUP BY date(timestamp)
         ORDER BY date
         """
@@ -306,10 +306,10 @@ class AccessEventModel(BaseModel):
             return False
 
         query = """
-        INSERT INTO access_events 
-        (event_id, timestamp, person_id, door_id, badge_id, access_result, 
+        INSERT INTO access_events
+        (event_id, timestamp, person_id, door_id, badge_id, access_result,
          badge_status, door_held_open_time, entry_without_badge, device_status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
 
         params = (

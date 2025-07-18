@@ -14,18 +14,22 @@ from repositories.implementations import (
 
 class _SQLiteConn:
     def __init__(self):
-        self.conn = sqlite3.connect(":memory:")
+        self.conn = sqlite3.connect(":memory:", check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
+
+    @staticmethod
+    def _adapt(sql: str) -> str:
+        return sql.replace("%s", "?")
 
     def execute_query(self, query: str, params: tuple | None = None):
         cur = self.conn.cursor()
-        cur.execute(query, params or ())
+        cur.execute(self._adapt(query), params or ())
         rows = cur.fetchall()
         return [dict(r) for r in rows]
 
     def execute_command(self, command: str, params: tuple | None = None):
         cur = self.conn.cursor()
-        cur.execute(command, params or ())
+        cur.execute(self._adapt(command), params or ())
         self.conn.commit()
         return cur.rowcount
 
@@ -123,7 +127,7 @@ def test_person_repository_crud(async_runner, db):
 def _insert_door(db, door: Door):
     db.execute_command(
         "INSERT INTO doors (door_id, door_name, facility_id, area_id, door_type, required_clearance, is_critical, is_active, created_at) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
         (
             door.door_id,
             door.door_name,

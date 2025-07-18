@@ -7,8 +7,12 @@ app:
   environment: "development"
 
 database:
-  type: "sqlite"
-  path: "data/yosai.db"
+  type: "postgresql"
+  host: "localhost"
+  port: 5432
+  name: "yosai"
+  user: "postgres"
+  password: "postgres"
   echo: false
   pool_size: 10
   max_overflow: 20
