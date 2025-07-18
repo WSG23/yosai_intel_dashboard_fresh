@@ -195,6 +195,22 @@ class UploadedDataStore(UploadStorageProtocol):
     def get_file_info(self) -> Dict[str, Dict[str, Any]]:
         return self._file_info_store.copy()
 
+    def save_column_mappings(self, filename: str, mappings: Dict[str, str]) -> None:
+        """Persist column mappings for *filename* to disk."""
+        with self._lock:
+            info = self._file_info_store.setdefault(filename, {})
+            info["column_mappings"] = mappings
+            with open(self._info_path(), "w", encoding="utf-8") as f:
+                json.dump(self._file_info_store, f, indent=2)
+
+    def save_device_mappings(self, filename: str, mappings: Dict[str, Any]) -> None:
+        """Persist device mappings for *filename* to disk."""
+        with self._lock:
+            info = self._file_info_store.setdefault(filename, {})
+            info["device_mappings"] = mappings
+            with open(self._info_path(), "w", encoding="utf-8") as f:
+                json.dump(self._file_info_store, f, indent=2)
+
     def clear_all(self) -> None:
         with self._lock:
             self._data_store.clear()
