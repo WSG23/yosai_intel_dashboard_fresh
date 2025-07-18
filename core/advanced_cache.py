@@ -12,7 +12,7 @@ from typing import Any, Awaitable, Callable, Dict, Optional
 import redis.asyncio as redis
 
 # from config.config import get_cache_config  # Moved to lazy import
-from config.base import CacheConfig
+from config.cache_config import CacheConfig
 
 logger = logging.getLogger(__name__)
 

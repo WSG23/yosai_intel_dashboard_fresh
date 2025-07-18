@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from core.exceptions import ConfigurationError
+from .cache_config import CacheConfig
 
 from .app_config import UploadConfig
 from .constants import (
@@ -177,18 +178,6 @@ class DataQualityThresholds:
 
 
 @dataclass
-class CacheConfig:
-    """Cache backend settings."""
-
-    type: str = "memory"
-    host: str = DEFAULT_CACHE_HOST
-    port: int = DEFAULT_CACHE_PORT
-    database: int = 0
-    timeout_seconds: int = 300
-    key_prefix: str = "yosai:"
-    compression_enabled: bool = False
-    max_memory_mb: int = 100
-    disk_path: str = "/tmp/yosai_cache"
 
 
 @dataclass

@@ -1,8 +1,6 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Upload as UploadIcon, FileText, AlertCircle, CheckCircle, X } from 'lucide-react';
-import Papa from 'papaparse';
+import React, { useState, useCallback } from 'react';
+import { Upload as UploadIcon, FileText, AlertCircle, CheckCircle, X, Loader } from 'lucide-react';
 import SimpleModal from '../components/upload/SimpleModal';
-import { saveColumnMappings, saveDeviceMappings } from '../api/upload';
 import './Upload.css';
 
 interface UploadedFile {
@@ -18,56 +16,36 @@ interface UploadedFile {
   devices?: string[];
   mappedDevices?: Record<string, string>;
   aiSuggestions?: Record<string, any>;
-  rawFile?: File;
+  deviceSuggestions?: Record<string, any>;
+  fileInfo?: any;
+  previewHtml?: string;
 }
 
-/** Convert an uploaded file to an array of row objects or JSON blob. */
-const parseFile = async (file: File) => {
-  const text = await file.text();
-  return file.name.toLowerCase().endsWith('.json')
-    ? JSON.parse(text)
-    : Papa.parse(text, { header: true, skipEmptyLines: true }).data;
-};
-
-/** POST JSON to the given endpoint and return the parsed result. */
-const postJson = async (url: string, body: unknown) => {
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-
-  if (!resp.ok) {
-    const message = await resp.text();
-    throw new Error(`Request failed (${resp.status}): ${message}`);
-  }
-
-  return resp.json();
-};
-
-/** Request AI column suggestions from the backend. */
-const requestColumnSuggestions = async (file: File) => {
-  const data = await parseFile(file);
-  return postJson('/api/v1/ai/suggest-columns', {
-    filename: file.name,
-    data
-  });
-};
-
-/** Request AI device mapping suggestions using the "auto" mode. */
-const requestDeviceSuggestions = async (file: File) => {
-  const data = await parseFile(file);
-  return postJson('/api/v1/ai/suggest-devices', {
-    filename: file.name,
-    data,
-    mode: 'auto'
-  });
-};
+// Column mapping options that match your analytics system
+const COLUMN_MAPPING_OPTIONS = [
+  { value: '', label: '-- Select mapping --' },
+  { value: 'timestamp', label: 'Event Time' },
+  { value: 'employee_code', label: 'Employee Code' },
+  { value: 'access_card', label: 'Access Card' },
+  { value: 'door_location', label: 'Door Location' },
+  { value: 'entry_status', label: 'Entry Status' },
+  { value: 'person_id', label: 'Person/User ID' },
+  { value: 'token_id', label: 'Token/Badge ID' },
+  { value: 'access_result', label: 'Access Result' },
+  { value: 'device', label: 'Device' },
+  { value: 'action', label: 'Action' },
+  { value: 'source_ip', label: 'Source IP' },
+  { value: 'dest_ip', label: 'Destination IP' },
+  { value: 'protocol', label: 'Protocol' },
+  { value: 'message', label: 'Message' },
+  { value: 'severity', label: 'Severity' }
+];
 
 const Upload: React.FC = () => {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Modal states
   const [modalOpen, setModalOpen] = useState(false);
@@ -78,6 +56,7 @@ const Upload: React.FC = () => {
   const [columnMappings, setColumnMappings] = useState<Record<string, string>>({});
   const [deviceMappings, setDeviceMappings] = useState<Record<string, string>>({});
   const [aiSuggestions, setAiSuggestions] = useState<Record<string, any>>({});
+  const [validationResults, setValidationResults] = useState<Record<string, any>>({});
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -90,21 +69,6 @@ const Upload: React.FC = () => {
     e.stopPropagation();
     setIsDragging(false);
   }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    handleFiles(droppedFiles);
-  }, []);
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      handleFiles(Array.from(e.target.files));
-    }
-  };
 
   const handleFiles = async (fileList: File[]) => {
     const validFiles = fileList.filter(file => {
@@ -123,14 +87,28 @@ const Upload: React.FC = () => {
       size: file.size,
       type: file.type || 'application/octet-stream',
       status: 'pending',
-      progress: 0,
-      rawFile: file
+      progress: 0
     }));
 
     setFiles(prev => [...prev, ...newFiles]);
 
     for (const file of validFiles) {
       await uploadFile(file, newFiles.find(f => f.name === file.name)!.id);
+    }
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    handleFiles(droppedFiles);
+  }, []);
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFiles(Array.from(e.target.files));
     }
   };
 
@@ -144,7 +122,8 @@ const Upload: React.FC = () => {
         f.id === fileId ? { ...f, status: 'processing', progress: 25 } : f
       ));
 
-      const response = await fetch('/api/v1/upload', {
+      // Use the Python backend processing endpoint
+      const response = await fetch('/api/v1/upload/process', {
         method: 'POST',
         body: formData
       });
@@ -152,26 +131,44 @@ const Upload: React.FC = () => {
       console.log('Response received:', response.status);
 
       if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Upload failed: ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('Response data:', data);
-      console.log('AI suggestions from upload:', data.ai_suggestions);
+      console.log('Python backend response:', data);
+      
+      // Extract all the Python-processed data
+      const fileInfo = data.file_info_dict?.[file.name] || {};
+      const suggestions = fileInfo.ai_suggestions || {};
+      const columns = fileInfo.column_names || data.columns || [];
+      const previewHtml = data.preview_html || '';
+      const deviceSuggestions = data.device_suggestions || {};
+      const hasLearnedMappings = fileInfo.learned_mappings || false;
+      
+      console.log('AI suggestions from Python:', suggestions);
+      console.log('Device suggestions from Python:', deviceSuggestions);
+      console.log('Has learned mappings:', hasLearnedMappings);
 
       setFiles(prev => prev.map(f => 
         f.id === fileId ? { 
           ...f, 
           status: 'completed',
           progress: 100,
-          columns: data.columns || [],
+          columns: columns,
           devices: data.detected_devices || [],
-          aiSuggestions: data.ai_suggestions || {}
+          aiSuggestions: suggestions,
+          deviceSuggestions: deviceSuggestions,
+          fileInfo: fileInfo,
+          previewHtml: previewHtml
         } : f
       ));
 
-      setUploadMessage(`Upload successful! File: ${file.name}`);
-      setTimeout(() => setUploadMessage(''), 3000);
+      const statusIcon = hasLearnedMappings ? '📋' : '🤖';
+      const statusText = hasLearnedMappings ? 'Using learned mappings' : 'AI suggestions generated';
+      
+      setUploadMessage(`✅ Upload Successful! ${statusIcon} ${statusText} | File: ${file.name}, Rows: ${fileInfo.rows || 0}, Columns: ${columns.length}`);
+      setTimeout(() => setUploadMessage(''), 5000);
 
     } catch (error) {
       console.error('Upload error:', error);
@@ -189,99 +186,127 @@ const Upload: React.FC = () => {
     setFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
-  // Open column mapping modal with AI suggestions
+  // Validate mappings with analytics DB
+  const validateMappings = async (mappings: Record<string, string>) => {
+    try {
+      const response = await fetch('/api/v1/analytics/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ column_mappings: mappings })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setValidationResults(data.validation_results || {});
+        return data.valid;
+      }
+    } catch (error) {
+      console.error('Validation error:', error);
+    }
+    return true; // Default to valid if validation fails
+  };
+
+  // Open column mapping modal with Python AI suggestions
   const openColumnMapping = async (file: UploadedFile) => {
     console.log('Opening column mapping for:', file);
     setSelectedFile(file);
-
+    setIsProcessing(true);
+    
     try {
-      if (file.rawFile) {
-        const data = await requestColumnSuggestions(file.rawFile);
-        const suggestions = data.suggestions || {};
-        const mappings: Record<string, string> = {};
-        Object.entries(suggestions).forEach(([col, suggestion]: [string, any]) => {
-          if (suggestion.field) {
-            mappings[col] = suggestion.field;
-          }
-        });
-        setColumnMappings(mappings);
-        setAiSuggestions(suggestions);
-      } else if (file.aiSuggestions) {
-        const mappings: Record<string, string> = {};
+      // Use AI suggestions from Python backend
+      const mappings: Record<string, string> = {};
+      
+      if (file.aiSuggestions && Object.keys(file.aiSuggestions).length > 0) {
+        // Python backend already analyzed the data and provided suggestions
         Object.entries(file.aiSuggestions).forEach(([col, suggestion]: [string, any]) => {
           if (suggestion.field) {
             mappings[col] = suggestion.field;
           }
         });
-        setColumnMappings(mappings);
         setAiSuggestions(file.aiSuggestions);
       }
-    } catch (err) {
-      console.error('Error fetching column suggestions:', err);
+      
+      console.log('Python AI mappings:', mappings);
+      setColumnMappings(mappings);
+      
+      // Validate initial mappings
+      await validateMappings(mappings);
+      
+    } finally {
+      setIsProcessing(false);
+      setModalOpen(true);
     }
-
-    setModalOpen(true);
   };
 
   // Save column mappings and open device modal
   const handleColumnMappingSave = async () => {
     if (!selectedFile) return;
-
+    
     console.log('Saving column mappings:', columnMappings);
-    setFiles(prev => prev.map(f =>
-      f.id === selectedFile.id
+    
+    // Validate before saving
+    const isValid = await validateMappings(columnMappings);
+    if (!isValid) {
+      const confirmSave = window.confirm('Some mappings may not be valid. Continue anyway?');
+      if (!confirmSave) return;
+    }
+    
+    setFiles(prev => prev.map(f => 
+      f.id === selectedFile.id 
         ? { ...f, mappedColumns: columnMappings }
         : f
     ));
-    try {
-      await saveColumnMappings(selectedFile.id, columnMappings);
-      alert('Column mappings saved successfully!');
-    } catch (error) {
-      console.error('Error saving column mappings:', error);
-      alert('Failed to save column mappings.');
-    }
-
+    
     setModalOpen(false);
     
-    // Fetch device AI suggestions
-    try {
-      if (selectedFile.rawFile) {
-        const data = await requestDeviceSuggestions(selectedFile.rawFile);
-        console.log('Device AI suggestions:', data.suggestions);
-
-        // Pre-fill device mappings
-        const devMappings: Record<string, string> = {};
-        Object.entries(data.suggestions || {}).forEach(([device, info]: [string, any]) => {
-          const parts = [];
-          if (info.floor_number) parts.push(`Floor ${info.floor_number}`);
-          if (info.is_entry) parts.push('Entry');
-          if (info.is_exit) parts.push('Exit');
-          if (info.is_elevator) parts.push('Elevator');
-          if (info.is_stairwell) parts.push('Stairwell');
-          parts.push(`Security: ${info.security_level || 5}/10`);
-          devMappings[device] = parts.join(', ');
-        });
-        setDeviceMappings(devMappings);
-      }
-    } catch (error) {
-      console.error('Error fetching device suggestions:', error);
+    // Use device suggestions from Python backend
+    if (selectedFile.deviceSuggestions) {
+      const devMappings: Record<string, string> = {};
+      Object.entries(selectedFile.deviceSuggestions).forEach(([device, info]: [string, any]) => {
+        const parts = [];
+        if (info.floor_number) parts.push(`Floor ${info.floor_number}`);
+        if (info.is_entry) parts.push('Entry');
+        if (info.is_exit) parts.push('Exit');
+        if (info.is_elevator) parts.push('Elevator');
+        if (info.is_stairwell) parts.push('Stairwell');
+        if (info.security_level) parts.push(`Security: ${info.security_level}/10`);
+        devMappings[device] = parts.join(', ') || info.classification || 'Unknown';
+      });
+      setDeviceMappings(devMappings);
     }
     
     setDeviceModalOpen(true);
   };
 
-  // Process file with all mappings
+  // Process file and save learned mappings
   const handleDeviceMappingSave = async () => {
     if (!selectedFile) return;
     
     console.log('Saving device mappings:', deviceMappings);
-    setFiles(prev => prev.map(f => 
-      f.id === selectedFile.id 
-        ? { ...f, mappedDevices: deviceMappings, status: 'completed' as const }
-        : f
-    ));
+    setIsProcessing(true);
     
     try {
+      setFiles(prev => prev.map(f => 
+        f.id === selectedFile.id 
+          ? { ...f, mappedDevices: deviceMappings, status: 'completed' as const }
+          : f
+      ));
+      
+      // Save mappings to Python learning service
+      const learnResponse = await fetch('/api/v1/mappings/learn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: selectedFile.name,
+          column_mappings: selectedFile.mappedColumns || columnMappings,
+          device_mappings: deviceMappings
+        })
+      });
+      
+      if (learnResponse.ok) {
+        console.log('Mappings saved to learning service');
+      }
+      
       // Process file
       const processResponse = await fetch('/api/v1/process', {
         method: 'POST',
@@ -295,22 +320,39 @@ const Upload: React.FC = () => {
       });
       
       if (processResponse.ok) {
-        try {
-          await saveDeviceMappings(selectedFile.id, deviceMappings);
-          alert('File processed successfully! Mappings saved for future use.');
-        } catch (error) {
-          console.error('Error saving device mappings:', error);
-          alert('File processed but failed to save device mappings.');
-        }
-
+        alert('✅ File processed successfully! Mappings learned for future use.');
+      } else {
+        throw new Error('Failed to process file');
       }
     } catch (error) {
       console.error('Process error:', error);
+      alert('❌ Failed to save mappings. Please check the console for details.');
+    } finally {
+      setIsProcessing(false);
+      setDeviceModalOpen(false);
+      setDeviceMappings({});
+      setSelectedFile(null);
+    }
+  };
+
+  // Create data preview with actual data from Python
+  const createDataPreview = (file: UploadedFile) => {
+    if (!file.fileInfo) return null;
+    
+    // Use the preview HTML from Python backend
+    if (file.previewHtml) {
+      return (
+        <div style={{ marginTop: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '5px' }}>
+          <h4 style={{ marginBottom: '10px' }}>Data Preview (first 5 rows):</h4>
+          <div 
+            style={{ overflowX: 'auto' }}
+            dangerouslySetInnerHTML={{ __html: file.previewHtml }}
+          />
+        </div>
+      );
     }
     
-    setDeviceModalOpen(false);
-    setDeviceMappings({});
-    setSelectedFile(null);
+    return null;
   };
 
   return (
@@ -347,12 +389,14 @@ const Upload: React.FC = () => {
 
       {uploadMessage && (
         <div style={{
-          background: 'green',
+          background: '#10b981',
           color: 'white',
-          padding: '10px',
+          padding: '15px',
           borderRadius: '5px',
           margin: '20px 0',
-          textAlign: 'center'
+          textAlign: 'left',
+          fontSize: '16px',
+          fontWeight: '500'
         }}>
           {uploadMessage}
         </div>
@@ -378,12 +422,12 @@ const Upload: React.FC = () => {
                   <span className="status-text">Waiting...</span>
                 )}
                 {file.status === 'processing' && (
-                  <span className="status-text">Uploading...</span>
+                  <span className="status-text">Processing with Python AI...</span>
                 )}
                 {file.status === 'completed' && (
                   <>
                     <CheckCircle size={20} className="success-icon" />
-                    <span className="status-text">Completed</span>
+                    <span className="status-text">Ready</span>
                   </>
                 )}
                 {file.status === 'error' && (
@@ -415,35 +459,80 @@ const Upload: React.FC = () => {
         </div>
       )}
 
-      {/* Show file details and mapping buttons for completed uploads */}
+      {/* Show AI Column Mapping section for completed uploads */}
       {files.filter(f => f.status === 'completed').length > 0 && (
-        <div style={{ marginTop: '20px' }}>
-          <h2>Process Files</h2>
+        <div style={{ marginTop: '30px' }}>
+          <h2>AI Column Mapping</h2>
           {files.filter(f => f.status === 'completed').map(file => (
-            <div key={`process-${file.id}`} style={{
-              background: '#1e293b',
-              border: '1px solid #334155',
-              padding: '15px',
+            <div key={`mapping-${file.id}`} style={{
+              background: '#f8f9fa',
+              border: '1px solid #dee2e6',
+              padding: '20px',
               margin: '10px 0',
               borderRadius: '5px'
             }}>
-              <h3 style={{ color: '#f1f5f9', marginBottom: '10px' }}>{file.name}</h3>
-              <p style={{ color: '#94a3b8' }}>Columns: {file.columns?.join(', ') || 'None'}</p>
-              <p style={{ color: '#94a3b8' }}>Devices: {file.devices?.join(', ') || 'None'}</p>
-              <button 
-                onClick={() => openColumnMapping(file)}
-                style={{
-                  background: '#3b82f6',
-                  color: 'white',
-                  padding: '8px 16px',
-                  border: 'none',
-                  borderRadius: '4px',
-                  marginTop: '10px',
-                  cursor: 'pointer'
-                }}
-              >
-                Start Processing
-              </button>
+              <div style={{ marginBottom: '15px' }}>
+                <strong>Column Names:</strong>
+                <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
+                  {file.columns?.map((col, idx) => (
+                    <li key={idx} style={{ fontSize: '14px' }}>{col}</li>
+                  )) || <li>No columns detected</li>}
+                </ul>
+              </div>
+
+              {createDataPreview(file)}
+
+              <div style={{ marginTop: '20px' }}>
+                <h4 style={{ marginBottom: '10px' }}>AI Column Mapping:</h4>
+                <p style={{ fontSize: '14px', color: '#6c757d', marginBottom: '15px' }}>
+                  Review AI suggestions and adjust mappings as needed.
+                </p>
+                
+                {/* Show Python AI analysis results */}
+                {file.aiSuggestions && Object.keys(file.aiSuggestions).length > 0 && (
+                  <div style={{ marginBottom: '15px', fontSize: '14px' }}>
+                    <strong>Column Name & AI Suggestion</strong>
+                    <div style={{ marginTop: '10px' }}>
+                      {Object.entries(file.aiSuggestions).map(([col, suggestion]: [string, any]) => (
+                        <div key={col} style={{ marginBottom: '5px' }}>
+                          <span style={{ color: '#495057' }}>{col}:</span>
+                          {suggestion.field && (
+                            <span style={{ 
+                              marginLeft: '10px',
+                              color: suggestion.confidence > 0.7 ? '#28a745' : '#ffc107',
+                              fontWeight: 'bold'
+                            }}>
+                              {COLUMN_MAPPING_OPTIONS.find(opt => opt.value === suggestion.field)?.label || suggestion.field}
+                              ({(suggestion.confidence * 100).toFixed(0)}%)
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <button 
+                  onClick={() => openColumnMapping(file)}
+                  disabled={isProcessing}
+                  style={{
+                    background: isProcessing ? '#6c757d' : '#007bff',
+                    color: 'white',
+                    padding: '10px 20px',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: isProcessing ? 'not-allowed' : 'pointer',
+                    fontSize: '16px',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  {isProcessing && <Loader size={16} className="animate-spin" />}
+                  Save Column Mappings
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -455,63 +544,75 @@ const Upload: React.FC = () => {
         onClose={() => {
           setModalOpen(false);
           setColumnMappings({});
+          setValidationResults({});
         }}
         title={selectedFile ? `Map Columns for ${selectedFile.name}` : 'Map Columns'}
       >
         {selectedFile && (
           <div>
             <p style={{ marginBottom: '20px' }}>
-              Map the columns from your file to standard fields. AI suggestions are pre-filled based on column names.
+              Map the columns from your file to standard fields. AI suggestions are based on data analysis.
             </p>
             
             {selectedFile.columns?.map((col, idx) => {
               const suggestion = aiSuggestions[col] || {};
-              const confidence = suggestion.confidence || 0;
-              const confidenceColor = confidence > 0.7 ? '#22c55e' : confidence > 0.5 ? '#f59e0b' : '#ef4444';
+              const currentMapping = columnMappings[col] || '';
+              const hasAISuggestion = suggestion.field && suggestion.confidence;
+              const validation = validationResults[col];
               
               return (
                 <div key={idx} style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px', color: '#94a3b8' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '5px', 
+                    color: '#495057',
+                    fontWeight: '500'
+                  }}>
                     {col}
-                    {confidence > 0 && (
+                    {hasAISuggestion && (
                       <span style={{ 
                         marginLeft: '10px', 
-                        fontSize: '0.8em', 
-                        color: confidenceColor 
+                        fontSize: '0.875rem',
+                        color: suggestion.confidence > 0.7 ? '#28a745' : 
+                               suggestion.confidence > 0.5 ? '#ffc107' : '#dc3545',
+                        fontWeight: 'normal'
                       }}>
-                        (AI: {(confidence * 100).toFixed(0)}% confident)
+                        (AI: {(suggestion.confidence * 100).toFixed(0)}% - based on data analysis)
                       </span>
                     )}
                   </label>
                   <select
-                    value={columnMappings[col] || ''}
-                    onChange={(e) => setColumnMappings({
-                      ...columnMappings,
-                      [col]: e.target.value
-                    })}
+                    value={currentMapping}
+                    onChange={async (e) => {
+                      const newMappings = {
+                        ...columnMappings,
+                        [col]: e.target.value
+                      };
+                      setColumnMappings(newMappings);
+                      // Validate on change
+                      await validateMappings(newMappings);
+                    }}
                     style={{
                       width: '100%',
                       padding: '8px',
                       borderRadius: '4px',
-                      border: '1px solid #334155',
-                      background: '#0f172a',
-                      color: '#f1f5f9'
+                      border: validation && !validation.valid ? '2px solid #dc3545' : '1px solid #ced4da',
+                      background: currentMapping ? '#e8f5e9' : 'white',
+                      color: '#495057',
+                      fontSize: '14px'
                     }}
                   >
-                    <option value="">-- Select mapping --</option>
-                    <option value="timestamp">Timestamp</option>
-                    <option value="person_id">Person/User ID</option>
-                    <option value="door_id">Door/Location ID</option>
-                    <option value="access_result">Access Result</option>
-                    <option value="token_id">Token/Badge ID</option>
-                    <option value="source_ip">Source IP</option>
-                    <option value="dest_ip">Destination IP</option>
-                    <option value="action">Action</option>
-                    <option value="protocol">Protocol</option>
-                    <option value="device">Device</option>
-                    <option value="message">Message</option>
-                    <option value="severity">Severity</option>
+                    {COLUMN_MAPPING_OPTIONS.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
+                  {validation && !validation.valid && (
+                    <small style={{ color: '#dc3545', marginTop: '2px', display: 'block' }}>
+                      {validation.message}
+                    </small>
+                  )}
                 </div>
               );
             })}
@@ -520,7 +621,7 @@ const Upload: React.FC = () => {
               <button 
                 onClick={() => setModalOpen(false)}
                 style={{
-                  background: '#6b7280',
+                  background: '#6c757d',
                   color: 'white',
                   padding: '8px 16px',
                   border: 'none',
@@ -533,7 +634,7 @@ const Upload: React.FC = () => {
               <button 
                 onClick={handleColumnMappingSave}
                 style={{
-                  background: '#3b82f6',
+                  background: '#007bff',
                   color: 'white',
                   padding: '8px 16px',
                   border: 'none',
@@ -560,13 +661,13 @@ const Upload: React.FC = () => {
         {selectedFile && (
           <div>
             <p style={{ marginBottom: '20px' }}>
-              Map the devices found in your file. AI suggestions are based on device names and patterns.
+              Device mappings {selectedFile.fileInfo?.learned_mappings ? 'loaded from previous sessions' : 'generated by AI analysis'}.
             </p>
             
             {selectedFile.devices && selectedFile.devices.length > 0 ? (
               selectedFile.devices.map((device, idx) => (
                 <div key={idx} style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px', color: '#94a3b8' }}>
+                  <label style={{ display: 'block', marginBottom: '5px', color: '#495057' }}>
                     {device}
                   </label>
                   <input
@@ -581,15 +682,15 @@ const Upload: React.FC = () => {
                       width: '100%',
                       padding: '8px',
                       borderRadius: '4px',
-                      border: '1px solid #334155',
-                      background: '#0f172a',
-                      color: '#f1f5f9'
+                      border: '1px solid #ced4da',
+                      background: deviceMappings[device] ? '#e8f5e9' : 'white',
+                      color: '#495057'
                     }}
                   />
                 </div>
               ))
             ) : (
-              <p style={{ color: '#94a3b8' }}>No devices detected. Click Process to continue.</p>
+              <p style={{ color: '#6c757d' }}>No devices detected. Click Process to continue.</p>
             )}
             
             <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
@@ -606,7 +707,7 @@ const Upload: React.FC = () => {
                   setDeviceMappings({});
                 }}
                 style={{
-                  background: '#6b7280',
+                  background: '#6c757d',
                   color: 'white',
                   padding: '8px 16px',
                   border: 'none',
@@ -618,15 +719,20 @@ const Upload: React.FC = () => {
               </button>
               <button 
                 onClick={handleDeviceMappingSave}
+                disabled={isProcessing}
                 style={{
-                  background: '#22c55e',
+                  background: isProcessing ? '#6c757d' : '#28a745',
                   color: 'white',
-                  padding: '8px 16px',	
+                  padding: '8px 16px',
                   border: 'none',
                   borderRadius: '4px',
-                  cursor: 'pointer'
+                  cursor: isProcessing ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
                 }}
               >
+                {isProcessing && <Loader size={16} className="animate-spin" />}
                 Process File
               </button>
             </div>
@@ -638,5 +744,3 @@ const Upload: React.FC = () => {
 };
 
 export default Upload;
-
-
