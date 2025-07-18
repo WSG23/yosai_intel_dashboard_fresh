@@ -18,6 +18,7 @@ import html
 from mvp_cli_engine import generate_analytics, load_dataframe
 from simple_mapping_interface import enhance_data_with_mappings
 from unicode_fix_module import safe_file_write
+from config.constants import API_PORT
 
 app = Flask(__name__)
 
@@ -192,4 +193,4 @@ def download() -> object:
 
 
 if __name__ == "__main__":
-    app.run(port=5001)
+    app.run(port=API_PORT)

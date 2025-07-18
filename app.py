@@ -7,6 +7,7 @@ from core.service_container import ServiceContainer
 from upload_endpoint import upload_bp
 from device_endpoint import device_bp
 from mappings_endpoint import mappings_bp
+from config.constants import API_PORT
 
 app = Flask(__name__)
 CORS(app)
@@ -21,4 +22,4 @@ app.register_blueprint(device_bp)
 app.register_blueprint(mappings_bp)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=API_PORT, debug=True)

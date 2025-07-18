@@ -1,8 +1,10 @@
+import os
 import requests
 import json
 
 # Test endpoints
-base_url = "http://localhost:5001"
+API_PORT = os.getenv("API_PORT", "5001")
+base_url = f"http://localhost:{API_PORT}"
 
 def test_upload():
     """Test upload endpoint"""
