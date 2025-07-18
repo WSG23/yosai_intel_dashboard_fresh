@@ -23,6 +23,11 @@ class _SimpleComp:
 
 
 no_update = _callback.NoUpdate()
+
+def register_page(name=None, path="/", app=None, **kwargs):
+    """Stub for `dash.register_page` used in tests."""
+    return None
+
 __version__ = "0.0.0"
 page_container = _SimpleComp()
 
@@ -37,4 +42,5 @@ __all__ = [
     "Output",
     "State",
     "no_update",
+    "register_page",
 ]
