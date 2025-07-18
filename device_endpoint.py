@@ -1,6 +1,13 @@
 from flask import Blueprint, request, jsonify
 import pandas as pd
 
+# Use the shared DI container for dependency resolution
+from core.container import container
+from config.service_registration import register_upload_services
+
+if not container.has("upload_processor"):
+    register_upload_services(container)
+
 device_bp = Blueprint('device', __name__)
 
 @device_bp.route('/api/v1/ai/suggest-devices', methods=['POST'])
@@ -11,10 +18,7 @@ def suggest_devices():
         filename = data.get('filename')
         column_mappings = data.get('column_mappings', {})
         
-        # Get services from container
-        from core.service_container import ServiceContainer
-        container = ServiceContainer()
-        
+        # Get services from shared container
         device_service = container.get("device_learning_service")
         upload_service = container.get("upload_processor")
         

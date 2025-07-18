@@ -146,10 +146,19 @@ const Upload: React.FC = () => {
       console.log("Response received:", response.status);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.error || `Upload failed: ${response.statusText}`,
-        );
+        let message = `Upload failed: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          if (errorData && errorData.error) {
+            message = errorData.error;
+          }
+        } catch (_e) {
+          const text = await response.text();
+          if (text) {
+            message = `${message} - ${text}`;
+          }
+        }
+        throw new Error(message);
       }
 
       const data = await response.json();
