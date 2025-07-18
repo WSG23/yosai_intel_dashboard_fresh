@@ -184,6 +184,26 @@ class UploadedDataStore(UploadStorageProtocol):
                 self._save_futures.pop(filename, None)
         return pd.read_parquet(self._get_file_path(filename))
 
+    def load_mapping(self, filename: str) -> Dict[str, Any]:
+        """Load saved column mapping for *filename* if present."""
+        path = self._get_file_path(filename).with_suffix(".mapping.json")
+        if path.exists():
+            try:
+                with open(path, "r", encoding="utf-8", errors="replace") as fh:
+                    return json.load(fh)
+            except Exception as exc:  # pragma: no cover - best effort
+                logger.error("Error loading mapping %s: %s", filename, exc)
+        return {}
+
+    def save_mapping(self, filename: str, mapping: Dict[str, Any]) -> None:
+        """Persist *mapping* for *filename*."""
+        path = self._get_file_path(filename).with_suffix(".mapping.json")
+        try:
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump(mapping, fh, indent=2)
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.error("Error saving mapping %s: %s", filename, exc)
+
     def get_all_data(self) -> Dict[str, pd.DataFrame]:
         return {fname: self.load_dataframe(fname) for fname in self.get_filenames()}
 
@@ -244,4 +264,7 @@ class UploadedDataStore(UploadStorageProtocol):
 # Global persistent storage instance
 uploaded_data_store = UploadedDataStore()
 
-__all__ = ["UploadedDataStore", "uploaded_data_store"]
+__all__ = [
+    "UploadedDataStore",
+    "uploaded_data_store",
+]

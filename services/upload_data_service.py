@@ -33,11 +33,12 @@ class UploadDataService(UploadDataServiceProtocol):
     def load_dataframe(self, filename: str) -> pd.DataFrame:
         return self.store.load_dataframe(filename)
 
-    def save_column_mappings(self, file_id: str, mappings: Dict[str, str]) -> None:
-        self.store.save_column_mappings(file_id, mappings)
+    def load_mapping(self, filename: str) -> Dict[str, Any]:
+        return self.store.load_mapping(filename)
 
-    def save_device_mappings(self, file_id: str, mappings: Dict[str, Any]) -> None:
-        self.store.save_device_mappings(file_id, mappings)
+    def save_mapping(self, filename: str, mapping: Dict[str, Any]) -> None:
+        self.store.save_mapping(filename, mapping)
+
 
 
 def _resolve_service(
@@ -90,26 +91,25 @@ def load_dataframe(
     return svc.load_dataframe(filename)
 
 
-def save_column_mappings(
-    file_id: str,
-    mapping_dict: Dict[str, str],
+def load_mapping(
+    filename: str,
+    service: UploadDataServiceProtocol | None = None,
+    container: ServiceContainer | None = None,
+) -> Dict[str, Any]:
+    svc = _resolve_service(service, container)
+    return svc.load_mapping(filename)
+
+
+def save_mapping(
+    filename: str,
+    mapping: Dict[str, Any],
+
     service: UploadDataServiceProtocol | None = None,
     container: ServiceContainer | None = None,
 ) -> None:
     svc = _resolve_service(service, container)
-    if hasattr(svc, "save_column_mappings"):
-        svc.save_column_mappings(file_id, mapping_dict)
+    svc.save_mapping(filename, mapping)
 
-
-def save_device_mappings(
-    file_id: str,
-    mapping_dict: Dict[str, Any],
-    service: UploadDataServiceProtocol | None = None,
-    container: ServiceContainer | None = None,
-) -> None:
-    svc = _resolve_service(service, container)
-    if hasattr(svc, "save_device_mappings"):
-        svc.save_device_mappings(file_id, mapping_dict)
 
 
 __all__ = [
@@ -119,6 +119,7 @@ __all__ = [
     "clear_uploaded_data",
     "get_file_info",
     "load_dataframe",
-    "save_column_mappings",
-    "save_device_mappings",
+    "load_mapping",
+    "save_mapping",
+
 ]

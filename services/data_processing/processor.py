@@ -112,6 +112,7 @@ class Processor:
     # Internal helpers -------------------------------------------------
     def _load_consolidated_mappings(self) -> Dict[str, Any]:
         try:
+            data = {}
             if self.mappings_file.exists():
                 with open(
                     self.mappings_file,
@@ -119,8 +120,23 @@ class Processor:
                     encoding="utf-8",
                     errors="replace",
                 ) as fh:
-                    return json.load(fh)
-            return {}
+                    data = json.load(fh)
+
+            from services.upload_data_service import get_uploaded_filenames, load_mapping
+
+            for fname in get_uploaded_filenames():
+                try:
+                    m = load_mapping(fname)
+                    if m:
+                        data[fname] = {
+                            "filename": fname,
+                            "column_mappings": m,
+                            "device_mappings": {},
+                        }
+                except Exception as exc:  # pragma: no cover - best effort
+                    logger.error("Error loading mapping for %s: %s", fname, exc)
+
+            return data
         except Exception as exc:  # pragma: no cover - best effort
             logger.error(f"Error loading mappings: {exc}")
             return {}
@@ -156,6 +172,7 @@ class Processor:
             "unique_users": set(),
             "unique_devices": set(),
             "date_range": {"start": None, "end": None},
+            "column_mappings": {},
         }
 
         for filename, df in uploaded.items():
@@ -165,6 +182,11 @@ class Processor:
                 enriched["source_file"] = filename
                 enriched["processed_at"] = datetime.now()
 
+                if filename in mappings:
+                    meta["column_mappings"][filename] = mappings[filename].get(
+                        "column_mappings", {}
+                    )
+                
                 combined.append(enriched)
                 meta["processed_files"] += 1
                 meta["total_records"] += len(enriched)
