@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import json
 import logging
 import uuid
 from datetime import datetime
 from functools import wraps
 from typing import Any, Dict, List
 
-import json
-
+from api.analytics_endpoints import register_analytics_blueprints
 from flask import Blueprint, Flask, jsonify, request
 from flask_cors import cross_origin
 from flask_socketio import SocketIO, emit, join_room
@@ -26,7 +26,6 @@ from services.data_enhancer import apply_manual_mapping
 from services.interfaces import get_device_learning_service
 from services.upload.core.processor import UploadProcessingService
 from utils.upload_store import uploaded_data_store
-from api.analytics_endpoints import register_analytics_blueprints
 
 logger = logging.getLogger(__name__)
 
@@ -54,14 +53,32 @@ def _validate_request_params() -> Any | None:
     for key, value in request.args.items():
         result = api_adapter.validator.validate_input(value, key)
         if not result["valid"]:
-            return jsonify({"status": "error", "message": f"Invalid parameter: {key}", "issues": result["issues"]}), 400
+            return (
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": f"Invalid parameter: {key}",
+                        "issues": result["issues"],
+                    }
+                ),
+                400,
+            )
 
     if request.is_json:
         data = request.get_json(silent=True) or {}
         for key, value in data.items():
             result = api_adapter.validator.validate_input(str(value), key)
             if not result["valid"]:
-                return jsonify({"status": "error", "message": f"Invalid parameter: {key}", "issues": result["issues"]}), 400
+                return (
+                    jsonify(
+                        {
+                            "status": "error",
+                            "message": f"Invalid parameter: {key}",
+                            "issues": result["issues"],
+                        }
+                    ),
+                    400,
+                )
     return None
 
 
@@ -316,7 +333,6 @@ async def upload_file():
             def progress_callback(current: int, total: int = 100) -> None:
                 progress = int((current / total) * 100) if total > 0 else 0
                 safe_emit(
-
                     "upload_progress",
                     {
                         "task_id": task_id,
