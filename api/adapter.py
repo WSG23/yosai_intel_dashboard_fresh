@@ -29,7 +29,7 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"]}})
 
 # Create API blueprint
-api_bp = Blueprint("api_v1", __name__, url_prefix="/api/v1")
+api_bp = Blueprint("api_v1", __name__)
 
 # Register analytics blueprints
 register_analytics_blueprints(app)
@@ -83,7 +83,7 @@ def process_file():
         }, 500)
 
 # Register the API blueprint
-app.register_blueprint(api_bp)
+app.register_blueprint(api_bp, url_prefix="/api/v1")
 
 if __name__ == "__main__":
     print("\n🚀 Starting Yosai Intel Dashboard API...")
@@ -584,7 +584,7 @@ def save_mappings():
 
 # ============= Enhanced Upload with Python Services =============
 
-@api_bp.route('/upload/process', methods=['POST'])
+@app.route('/api/v1/upload/process', methods=['POST'])
 def process_upload_with_ai():
     """Process upload using Python base code services"""
     try:
