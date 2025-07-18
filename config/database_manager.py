@@ -165,6 +165,9 @@ class PostgreSQLConnection:
             logger.info(
                 f"PostgreSQL connection created: {self.config.host}:{self.config.port}"
             )
+            with self._connection.cursor() as cursor:
+                cursor.execute("CREATE EXTENSION IF NOT EXISTS timescaledb;")
+                self._connection.commit()
         except psycopg2.Error as e:
             logger.error(f"Failed to connect to PostgreSQL: {e}")
             raise DatabaseError(f"PostgreSQL connection failed: {e}") from e

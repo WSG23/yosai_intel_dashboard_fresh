@@ -21,17 +21,23 @@ def _row_to_person(row: dict) -> Person:
         employee_id=row.get("employee_id"),
         department=row.get("department"),
         clearance_level=int(row.get("clearance_level", 1)),
-        access_groups=tuple(row.get("access_groups", "").split(","))
-        if row.get("access_groups")
-        else tuple(),
+        access_groups=(
+            tuple(row.get("access_groups", "").split(","))
+            if row.get("access_groups")
+            else tuple()
+        ),
         is_visitor=bool(row.get("is_visitor")),
         host_person_id=row.get("host_person_id"),
-        created_at=datetime.fromisoformat(row["created_at"])
-        if row.get("created_at")
-        else datetime.now(),
-        last_active=datetime.fromisoformat(row["last_active"])
-        if row.get("last_active")
-        else None,
+        created_at=(
+            datetime.fromisoformat(row["created_at"])
+            if row.get("created_at")
+            else datetime.now()
+        ),
+        last_active=(
+            datetime.fromisoformat(row["last_active"])
+            if row.get("last_active")
+            else None
+        ),
         risk_score=float(row.get("risk_score", 0.0)),
     )
 
@@ -65,9 +71,11 @@ def _row_to_door(row: dict) -> Door:
         location_coordinates=None,
         device_id=row.get("device_id"),
         is_active=bool(row.get("is_active", True)),
-        created_at=datetime.fromisoformat(row["created_at"])
-        if row.get("created_at")
-        else datetime.now(),
+        created_at=(
+            datetime.fromisoformat(row["created_at"])
+            if row.get("created_at")
+            else datetime.now()
+        ),
     )
 
 
@@ -79,7 +87,7 @@ class PersonRepository(IPersonRepository):
 
     # --------------------------------------------------------------
     async def get_by_id(self, person_id: str) -> Optional[Person]:
-        query = "SELECT * FROM people WHERE person_id = ?"
+        query = "SELECT * FROM people WHERE person_id = %s"
 
         rows = await asyncio.to_thread(self.conn.execute_query, query, (person_id,))
         if rows:
@@ -88,10 +96,8 @@ class PersonRepository(IPersonRepository):
 
     # --------------------------------------------------------------
     async def get_all(self, limit: int = 100, offset: int = 0) -> List[Person]:
-        query = "SELECT * FROM people ORDER BY person_id LIMIT ? OFFSET ?"
-        rows = await asyncio.to_thread(
-            self.conn.execute_query, query, (limit, offset)
-        )
+        query = "SELECT * FROM people ORDER BY person_id LIMIT %s OFFSET %s"
+        rows = await asyncio.to_thread(self.conn.execute_query, query, (limit, offset))
         return [_row_to_person(r) for r in rows]
 
     # --------------------------------------------------------------
@@ -100,7 +106,7 @@ class PersonRepository(IPersonRepository):
             "INSERT INTO people (person_id, name, employee_id, department, "
             "clearance_level, access_groups, is_visitor, host_person_id, "
             "created_at, last_active, risk_score) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         params = (
             person.person_id,
@@ -121,9 +127,9 @@ class PersonRepository(IPersonRepository):
     # --------------------------------------------------------------
     async def update(self, person: Person) -> Person:
         query = (
-            "UPDATE people SET name=?, employee_id=?, department=?, "
-            "clearance_level=?, access_groups=?, is_visitor=?, host_person_id=?, "
-            "last_active=?, risk_score=? WHERE person_id=?"
+            "UPDATE people SET name=%s, employee_id=%s, department=%s, "
+            "clearance_level=%s, access_groups=%s, is_visitor=%s, host_person_id=%s, "
+            "last_active=%s, risk_score=%s WHERE person_id=%s"
         )
         params = (
             person.name,
@@ -142,7 +148,7 @@ class PersonRepository(IPersonRepository):
 
     # --------------------------------------------------------------
     async def delete(self, person_id: str) -> bool:
-        query = "DELETE FROM people WHERE person_id=?"
+        query = "DELETE FROM people WHERE person_id=%s"
         await asyncio.to_thread(self.conn.execute_command, query, (person_id,))
         return True
 
@@ -163,20 +169,18 @@ class AccessEventRepository(IAccessEventRepository):
         limit: int = 100,
         offset: int = 0,
     ) -> List[AccessEvent]:
-        query = "SELECT * FROM access_events WHERE person_id=?"
+        query = "SELECT * FROM access_events WHERE person_id=%s"
         params: list = [person_id]
         if start_date:
-            query += " AND timestamp >= ?"
+            query += " AND timestamp >= %s"
             params.append(start_date.isoformat())
         if end_date:
-            query += " AND timestamp <= ?"
+            query += " AND timestamp <= %s"
             params.append(end_date.isoformat())
-        query += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
+        query += " ORDER BY timestamp DESC LIMIT %s OFFSET %s"
         params.extend([limit, offset])
 
-        rows = await asyncio.to_thread(
-            self.conn.execute_query, query, tuple(params)
-        )
+        rows = await asyncio.to_thread(self.conn.execute_query, query, tuple(params))
         return [_row_to_event(r) for r in rows]
 
     # --------------------------------------------------------------
@@ -189,19 +193,17 @@ class AccessEventRepository(IAccessEventRepository):
         limit: int = 100,
         offset: int = 0,
     ) -> List[AccessEvent]:
-        query = "SELECT * FROM access_events WHERE door_id=?"
+        query = "SELECT * FROM access_events WHERE door_id=%s"
         params: list = [door_id]
         if start_date:
-            query += " AND timestamp >= ?"
+            query += " AND timestamp >= %s"
             params.append(start_date.isoformat())
         if end_date:
-            query += " AND timestamp <= ?"
+            query += " AND timestamp <= %s"
             params.append(end_date.isoformat())
-        query += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
+        query += " ORDER BY timestamp DESC LIMIT %s OFFSET %s"
         params.extend([limit, offset])
-        rows = await asyncio.to_thread(
-            self.conn.execute_query, query, tuple(params)
-        )
+        rows = await asyncio.to_thread(self.conn.execute_query, query, tuple(params))
         return [_row_to_event(r) for r in rows]
 
     # --------------------------------------------------------------
@@ -210,7 +212,7 @@ class AccessEventRepository(IAccessEventRepository):
             "INSERT INTO access_events (event_id, timestamp, person_id, door_id, "
             "badge_id, access_result, badge_status, door_held_open_time, "
             "entry_without_badge, device_status, raw_data, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         params = (
             event.event_id,
@@ -231,7 +233,7 @@ class AccessEventRepository(IAccessEventRepository):
 
     # --------------------------------------------------------------
     async def get_recent_events(self, limit: int = 100) -> List[AccessEvent]:
-        query = "SELECT * FROM access_events ORDER BY timestamp DESC LIMIT ?"
+        query = "SELECT * FROM access_events ORDER BY timestamp DESC LIMIT %s"
         rows = await asyncio.to_thread(self.conn.execute_query, query, (limit,))
         return [_row_to_event(r) for r in rows]
 
@@ -244,15 +246,17 @@ class DoorRepository(IDoorRepository):
 
     # --------------------------------------------------------------
     async def get_by_id(self, door_id: str) -> Optional[Door]:
-        query = "SELECT * FROM doors WHERE door_id=?"
+        query = "SELECT * FROM doors WHERE door_id=%s"
         rows = await asyncio.to_thread(self.conn.execute_query, query, (door_id,))
         if rows:
             return _row_to_door(rows[0])
         return None
 
     # --------------------------------------------------------------
-    async def get_by_facility(self, facility_id: str, *, limit: int = 100, offset: int = 0) -> List[Door]:
-        query = "SELECT * FROM doors WHERE facility_id=? ORDER BY door_id LIMIT ? OFFSET ?"
+    async def get_by_facility(
+        self, facility_id: str, *, limit: int = 100, offset: int = 0
+    ) -> List[Door]:
+        query = "SELECT * FROM doors WHERE facility_id=%s ORDER BY door_id LIMIT %s OFFSET %s"
         rows = await asyncio.to_thread(
             self.conn.execute_query, query, (facility_id, limit, offset)
         )
