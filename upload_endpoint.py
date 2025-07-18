@@ -3,6 +3,13 @@ import base64
 
 from flask import Blueprint, jsonify, request
 
+# Use the shared DI container configured at application startup
+from core.container import container
+from config.service_registration import register_upload_services
+
+if not container.has("upload_processor"):
+    register_upload_services(container)
+
 upload_bp = Blueprint("upload", __name__)
 
 
@@ -28,10 +35,7 @@ def upload_files():
             contents = data.get("contents", [])
             filenames = data.get("filenames", [])
 
-        # Get services from container
-        from core.service_container import ServiceContainer
-
-        container = ServiceContainer()
+        # Get services from shared container
         upload_service = container.get("upload_processor")
 
         # Process files using existing base code

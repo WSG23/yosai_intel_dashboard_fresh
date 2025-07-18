@@ -1,5 +1,12 @@
 from flask import Blueprint, request, jsonify
 
+# Shared container ensures services are available across blueprints
+from core.container import container
+from config.service_registration import register_upload_services
+
+if not container.has("upload_processor"):
+    register_upload_services(container)
+
 mappings_bp = Blueprint('mappings', __name__)
 
 @mappings_bp.route('/api/v1/mappings/columns', methods=['POST'])
@@ -13,8 +20,6 @@ def save_column_mappings_route():
         if not file_id:
             return jsonify({'error': 'file_id is required'}), 400
 
-        from core.service_container import ServiceContainer
-        container = ServiceContainer()
         service = container.get('consolidated_learning_service')
         service.save_column_mappings(file_id, mappings)
 
@@ -35,8 +40,6 @@ def save_device_mappings_route():
         if not file_id:
             return jsonify({'error': 'file_id is required'}), 400
 
-        from core.service_container import ServiceContainer
-        container = ServiceContainer()
         service = container.get('device_learning_service')
         service.save_device_mappings(file_id, mappings)
 
@@ -55,9 +58,7 @@ def save_mappings():
         mapping_type = data.get('mapping_type')
         
         # Get services
-        from core.service_container import ServiceContainer
-        container = ServiceContainer()
-        
+
         if mapping_type == 'column':
             # Save column mappings
             column_mappings = data.get('column_mappings', {})
@@ -98,8 +99,6 @@ def process_enhanced_data():
         device_mappings = data.get('device_mappings', {})
         
         # Get services
-        from core.service_container import ServiceContainer
-        container = ServiceContainer()
         upload_service = container.get("upload_processor")
         
         # Get the dataframe
