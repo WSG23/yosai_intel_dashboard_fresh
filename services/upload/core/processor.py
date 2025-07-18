@@ -165,6 +165,7 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
                 "metadata": {},
                 "ai_suggestions": {},
                 "device_mappings": {},
+                "column_mappings": {},
                 "validation_results": {},
                 "processing_stats": {},
                 "extensions": {},
@@ -188,6 +189,7 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
             "metadata": {},
             "ai_suggestions": {},
             "device_mappings": {},
+            "column_mappings": {},
             "validation_results": {},
             "processing_stats": {},
             "extensions": {},
@@ -223,6 +225,15 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
                 df = await self.processor.process_file(
                     content, filename, progress_callback=_cb
                 )
+                # Apply any stored column mappings before validation/analysis
+                try:
+                    stored_map = self.data_service.load_mapping(filename)
+                    if stored_map:
+                        df = df.rename(columns=stored_map)
+                        result["column_mappings"][filename] = stored_map
+                except Exception as exc:  # pragma: no cover - best effort
+                    logger.error("Failed to load mappings for %s: %s", filename, exc)
+                    result["column_mappings"][filename] = {}
                 rows = len(df)
                 cols = len(df.columns)
 

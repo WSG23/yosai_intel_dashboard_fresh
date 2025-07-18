@@ -33,6 +33,12 @@ class UploadDataService(UploadDataServiceProtocol):
     def load_dataframe(self, filename: str) -> pd.DataFrame:
         return self.store.load_dataframe(filename)
 
+    def load_mapping(self, filename: str) -> Dict[str, Any]:
+        return self.store.load_mapping(filename)
+
+    def save_mapping(self, filename: str, mapping: Dict[str, Any]) -> None:
+        self.store.save_mapping(filename, mapping)
+
 
 def _resolve_service(
     service: UploadDataServiceProtocol | None,
@@ -84,6 +90,25 @@ def load_dataframe(
     return svc.load_dataframe(filename)
 
 
+def load_mapping(
+    filename: str,
+    service: UploadDataServiceProtocol | None = None,
+    container: ServiceContainer | None = None,
+) -> Dict[str, Any]:
+    svc = _resolve_service(service, container)
+    return svc.load_mapping(filename)
+
+
+def save_mapping(
+    filename: str,
+    mapping: Dict[str, Any],
+    service: UploadDataServiceProtocol | None = None,
+    container: ServiceContainer | None = None,
+) -> None:
+    svc = _resolve_service(service, container)
+    svc.save_mapping(filename, mapping)
+
+
 __all__ = [
     "UploadDataService",
     "get_uploaded_data",
@@ -91,4 +116,6 @@ __all__ = [
     "clear_uploaded_data",
     "get_file_info",
     "load_dataframe",
+    "load_mapping",
+    "save_mapping",
 ]

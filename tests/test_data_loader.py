@@ -29,3 +29,4 @@ def test_get_processed_database_basic(monkeypatch):
     assert "location" in df.columns
     assert meta["processed_files"] == 1
     assert meta["total_records"] == 1
+    assert meta["column_mappings"]["sample.csv"] == {"ts": "timestamp"}
