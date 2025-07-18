@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Upload as UploadIcon, FileText, AlertCircle, CheckCircle, X } from 'lucide-react';
+import Papa from 'papaparse';
 import SimpleModal from '../components/upload/SimpleModal';
 import { saveColumnMappings, saveDeviceMappings } from '../api/upload';
 import './Upload.css';
@@ -17,7 +18,50 @@ interface UploadedFile {
   devices?: string[];
   mappedDevices?: Record<string, string>;
   aiSuggestions?: Record<string, any>;
+  rawFile?: File;
 }
+
+/** Convert an uploaded file to an array of row objects. */
+const parseFile = async (file: File) => {
+  const text = await file.text();
+  return file.name.endsWith('.json')
+    ? JSON.parse(text)
+    : Papa.parse(text, { header: true }).data;
+};
+
+/** Request AI column suggestions from the backend. */
+const requestColumnSuggestions = async (file: File) => {
+  const data = await parseFile(file);
+
+  const resp = await fetch('/api/v1/ai/suggest-columns', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename: file.name, data })
+  });
+
+  if (!resp.ok) {
+    throw new Error(`Column suggestion request failed: ${resp.statusText}`);
+  }
+
+  return resp.json();
+};
+
+/** Request AI device mapping suggestions using the "auto" mode. */
+const requestDeviceSuggestions = async (file: File) => {
+  const data = await parseFile(file);
+
+  const resp = await fetch('/api/v1/ai/suggest-devices', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename: file.name, data, mode: 'auto' })
+  });
+
+  if (!resp.ok) {
+    throw new Error(`Device suggestion request failed: ${resp.statusText}`);
+  }
+
+  return resp.json();
+};
 
 const Upload: React.FC = () => {
   const [files, setFiles] = useState<UploadedFile[]>([]);
@@ -78,7 +122,8 @@ const Upload: React.FC = () => {
       size: file.size,
       type: file.type || 'application/octet-stream',
       status: 'pending',
-      progress: 0
+      progress: 0,
+      rawFile: file
     }));
 
     setFiles(prev => [...prev, ...newFiles]);
@@ -98,7 +143,7 @@ const Upload: React.FC = () => {
         f.id === fileId ? { ...f, status: 'processing', progress: 25 } : f
       ));
 
-      const response = await fetch('http://localhost:5001/api/v1/upload', {
+      const response = await fetch('/api/v1/upload', {
         method: 'POST',
         body: formData
       });
@@ -144,23 +189,36 @@ const Upload: React.FC = () => {
   };
 
   // Open column mapping modal with AI suggestions
-  const openColumnMapping = (file: UploadedFile) => {
+  const openColumnMapping = async (file: UploadedFile) => {
     console.log('Opening column mapping for:', file);
     setSelectedFile(file);
-    
-    // Pre-fill mappings with AI suggestions from upload
-    if (file.aiSuggestions) {
-      const mappings: Record<string, string> = {};
-      Object.entries(file.aiSuggestions).forEach(([col, suggestion]: [string, any]) => {
-        if (suggestion.field) {
-          mappings[col] = suggestion.field;
-        }
-      });
-      console.log('Pre-filling with AI mappings:', mappings);
-      setColumnMappings(mappings);
-      setAiSuggestions(file.aiSuggestions);
+
+    try {
+      if (file.rawFile) {
+        const data = await requestColumnSuggestions(file.rawFile);
+        const suggestions = data.suggestions || {};
+        const mappings: Record<string, string> = {};
+        Object.entries(suggestions).forEach(([col, suggestion]: [string, any]) => {
+          if (suggestion.field) {
+            mappings[col] = suggestion.field;
+          }
+        });
+        setColumnMappings(mappings);
+        setAiSuggestions(suggestions);
+      } else if (file.aiSuggestions) {
+        const mappings: Record<string, string> = {};
+        Object.entries(file.aiSuggestions).forEach(([col, suggestion]: [string, any]) => {
+          if (suggestion.field) {
+            mappings[col] = suggestion.field;
+          }
+        });
+        setColumnMappings(mappings);
+        setAiSuggestions(file.aiSuggestions);
+      }
+    } catch (err) {
+      console.error('Error fetching column suggestions:', err);
     }
-    
+
     setModalOpen(true);
   };
 
@@ -186,19 +244,10 @@ const Upload: React.FC = () => {
     
     // Fetch device AI suggestions
     try {
-      const response = await fetch('http://localhost:5001/api/v1/ai/suggest-devices', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          devices: selectedFile.devices || [],
-          filename: selectedFile.name 
-        })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
+      if (selectedFile.rawFile) {
+        const data = await requestDeviceSuggestions(selectedFile.rawFile);
         console.log('Device AI suggestions:', data.suggestions);
-        
+
         // Pre-fill device mappings
         const devMappings: Record<string, string> = {};
         Object.entries(data.suggestions || {}).forEach(([device, info]: [string, any]) => {
@@ -233,7 +282,7 @@ const Upload: React.FC = () => {
     
     try {
       // Process file
-      const processResponse = await fetch('http://localhost:5001/api/v1/process', {
+      const processResponse = await fetch('/api/v1/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -252,6 +301,7 @@ const Upload: React.FC = () => {
           console.error('Error saving device mappings:', error);
           alert('File processed but failed to save device mappings.');
         }
+
       }
     } catch (error) {
       console.error('Process error:', error);
