@@ -20,6 +20,7 @@ def create_api_app() -> Flask:
     app.register_blueprint(upload_bp)
     app.register_blueprint(device_bp)
     app.register_blueprint(mappings_bp)
+    app.register_blueprint(settings_bp)
 
     return app
 
