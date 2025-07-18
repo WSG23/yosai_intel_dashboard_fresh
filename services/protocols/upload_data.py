@@ -31,5 +31,13 @@ class UploadDataServiceProtocol(Protocol):
         """Load a specific uploaded dataframe."""
         ...
 
+    def save_column_mappings(self, file_id: str, mappings: Dict[str, str]) -> None:
+        """Persist column mappings for a file."""
+        ...
+
+    def save_device_mappings(self, file_id: str, mappings: Dict[str, Any]) -> None:
+        """Persist device mappings for a file."""
+        ...
+
 
 __all__ = ["UploadDataServiceProtocol"]

@@ -2,6 +2,50 @@ from flask import Blueprint, request, jsonify
 
 mappings_bp = Blueprint('mappings', __name__)
 
+@mappings_bp.route('/api/v1/mappings/columns', methods=['POST'])
+def save_column_mappings_route():
+    """Persist column mappings for a processed file."""
+    try:
+        payload = request.get_json(force=True)
+        file_id = payload.get('file_id')
+        mappings = payload.get('mappings', {})
+
+        if not file_id:
+            return jsonify({'error': 'file_id is required'}), 400
+
+        from core.service_container import ServiceContainer
+        container = ServiceContainer()
+        service = container.get('consolidated_learning_service')
+        service.save_column_mappings(file_id, mappings)
+
+        return jsonify({'status': 'success'}), 200
+    except KeyError as exc:
+        return jsonify({'error': str(exc)}), 400
+    except Exception as exc:
+        return jsonify({'error': str(exc)}), 500
+
+@mappings_bp.route('/api/v1/mappings/devices', methods=['POST'])
+def save_device_mappings_route():
+    """Persist device mappings for a processed file."""
+    try:
+        payload = request.get_json(force=True)
+        file_id = payload.get('file_id')
+        mappings = payload.get('mappings', {})
+
+        if not file_id:
+            return jsonify({'error': 'file_id is required'}), 400
+
+        from core.service_container import ServiceContainer
+        container = ServiceContainer()
+        service = container.get('device_learning_service')
+        service.save_device_mappings(file_id, mappings)
+
+        return jsonify({'status': 'success'}), 200
+    except KeyError as exc:
+        return jsonify({'error': str(exc)}), 400
+    except Exception as exc:
+        return jsonify({'error': str(exc)}), 500
+
 @mappings_bp.route('/api/v1/mappings/save', methods=['POST'])
 def save_mappings():
     """Save column or device mappings"""
