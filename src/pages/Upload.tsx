@@ -21,46 +21,47 @@ interface UploadedFile {
   rawFile?: File;
 }
 
-/** Convert an uploaded file to an array of row objects. */
+/** Convert an uploaded file to an array of row objects or JSON blob. */
 const parseFile = async (file: File) => {
   const text = await file.text();
-  return file.name.endsWith('.json')
+  return file.name.toLowerCase().endsWith('.json')
     ? JSON.parse(text)
-    : Papa.parse(text, { header: true }).data;
+    : Papa.parse(text, { header: true, skipEmptyLines: true }).data;
+};
+
+/** POST JSON to the given endpoint and return the parsed result. */
+const postJson = async (url: string, body: unknown) => {
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  if (!resp.ok) {
+    const message = await resp.text();
+    throw new Error(`Request failed (${resp.status}): ${message}`);
+  }
+
+  return resp.json();
 };
 
 /** Request AI column suggestions from the backend. */
 const requestColumnSuggestions = async (file: File) => {
   const data = await parseFile(file);
-
-  const resp = await fetch('/api/v1/ai/suggest-columns', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ filename: file.name, data })
+  return postJson('/api/v1/ai/suggest-columns', {
+    filename: file.name,
+    data
   });
-
-  if (!resp.ok) {
-    throw new Error(`Column suggestion request failed: ${resp.statusText}`);
-  }
-
-  return resp.json();
 };
 
 /** Request AI device mapping suggestions using the "auto" mode. */
 const requestDeviceSuggestions = async (file: File) => {
   const data = await parseFile(file);
-
-  const resp = await fetch('/api/v1/ai/suggest-devices', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ filename: file.name, data, mode: 'auto' })
+  return postJson('/api/v1/ai/suggest-devices', {
+    filename: file.name,
+    data,
+    mode: 'auto'
   });
-
-  if (!resp.ok) {
-    throw new Error(`Device suggestion request failed: ${resp.statusText}`);
-  }
-
-  return resp.json();
 };
 
 const Upload: React.FC = () => {
