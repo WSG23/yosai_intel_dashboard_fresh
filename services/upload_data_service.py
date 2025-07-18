@@ -33,6 +33,12 @@ class UploadDataService(UploadDataServiceProtocol):
     def load_dataframe(self, filename: str) -> pd.DataFrame:
         return self.store.load_dataframe(filename)
 
+    def save_column_mappings(self, file_id: str, mappings: Dict[str, str]) -> None:
+        self.store.save_column_mappings(file_id, mappings)
+
+    def save_device_mappings(self, file_id: str, mappings: Dict[str, Any]) -> None:
+        self.store.save_device_mappings(file_id, mappings)
+
 
 def _resolve_service(
     service: UploadDataServiceProtocol | None,
@@ -84,6 +90,28 @@ def load_dataframe(
     return svc.load_dataframe(filename)
 
 
+def save_column_mappings(
+    file_id: str,
+    mapping_dict: Dict[str, str],
+    service: UploadDataServiceProtocol | None = None,
+    container: ServiceContainer | None = None,
+) -> None:
+    svc = _resolve_service(service, container)
+    if hasattr(svc, "save_column_mappings"):
+        svc.save_column_mappings(file_id, mapping_dict)
+
+
+def save_device_mappings(
+    file_id: str,
+    mapping_dict: Dict[str, Any],
+    service: UploadDataServiceProtocol | None = None,
+    container: ServiceContainer | None = None,
+) -> None:
+    svc = _resolve_service(service, container)
+    if hasattr(svc, "save_device_mappings"):
+        svc.save_device_mappings(file_id, mapping_dict)
+
+
 __all__ = [
     "UploadDataService",
     "get_uploaded_data",
@@ -91,4 +119,6 @@ __all__ = [
     "clear_uploaded_data",
     "get_file_info",
     "load_dataframe",
+    "save_column_mappings",
+    "save_device_mappings",
 ]
