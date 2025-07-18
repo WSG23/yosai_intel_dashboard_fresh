@@ -5,6 +5,7 @@ from api.analytics_endpoints import register_analytics_blueprints
 from upload_endpoint import upload_bp
 from device_endpoint import device_bp
 from mappings_endpoint import mappings_bp
+from settings_endpoint import settings_bp
 
 
 def create_api_app() -> Flask:
@@ -19,6 +20,7 @@ def create_api_app() -> Flask:
     app.register_blueprint(upload_bp)
     app.register_blueprint(device_bp)
     app.register_blueprint(mappings_bp)
+    app.register_blueprint(settings_bp)
 
     return app
 
