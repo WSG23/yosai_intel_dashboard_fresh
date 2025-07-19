@@ -2,7 +2,10 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import json
+import pandas as pd
+import hashlib
 from werkzeug.utils import secure_filename
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -11,60 +14,110 @@ CORS(app)
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'csv', 'xls', 'xlsx'}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs('mappings', exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/api/upload', methods=['POST'])
-def upload_file():
+def get_file_fingerprint(content):
+    """Generate a unique fingerprint for file content"""
+    return hashlib.md5(content).hexdigest()
+
+@app.route('/api/v1/upload', methods=['POST'])
+def upload_files():
+    """Handle file upload with the structure expected by the React frontend"""
     try:
-        if 'file' not in request.files:
-            return jsonify({'error': 'No file part'}), 400
+        results = []
         
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({'error': 'No selected file'}), 400
+        # Process each uploaded file
+        for file_key in request.files:
+            file = request.files[file_key]
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                filepath = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(filepath)
+                
+                # Read file content for fingerprint
+                with open(filepath, 'rb') as f:
+                    content = f.read()
+                fingerprint = get_file_fingerprint(content)
+                
+                # Analyze file
+                try:
+                    if filename.endswith('.csv'):
+                        df = pd.read_csv(filepath)
+                    else:
+                        df = pd.read_excel(filepath)
+                    
+                    columns = df.columns.tolist()
+                    rows = len(df)
+                    
+                    # Prepare file info
+                    file_info = {
+                        'filename': filename,
+                        'fingerprint': fingerprint,
+                        'rows': rows,
+                        'columns': columns,
+                        'size': os.path.getsize(filepath),
+                        'uploaded_at': datetime.now().isoformat()
+                    }
+                    
+                    # Check if we have standard columns
+                    standard_columns = ['timestamp', 'device_id', 'user_id', 'event_type']
+                    has_standard_columns = all(col in columns for col in standard_columns)
+                    
+                    # Get unique devices if device_id column exists
+                    devices = []
+                    if 'device_id' in columns:
+                        devices = df['device_id'].dropna().unique().tolist()[:20]
+                    
+                    result = {
+                        'success': True,
+                        'file_info': file_info,
+                        'requires_column_mapping': not has_standard_columns,
+                        'requires_device_mapping': len(devices) > 0,
+                        'devices': devices,
+                        'preview_data': df.head(5).to_dict('records')
+                    }
+                    
+                except Exception as e:
+                    result = {
+                        'success': False,
+                        'error': f'Error processing file: {str(e)}',
+                        'file_info': {'filename': filename}
+                    }
+                
+                results.append(result)
         
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(filepath)
-            
-            # Determine if mapping is required based on file type
-            file_ext = filename.rsplit('.', 1)[1].lower()
-            requires_mapping = file_ext in ['csv', 'xls', 'xlsx']
-            
-            return jsonify({
-                'success': True,
-                'filename': filename,
-                'filepath': filepath,
-                'requiresColumnMapping': requires_mapping,
-                'requiresDeviceMapping': False  # Implement logic as needed
-            })
-        
-        return jsonify({'error': 'File type not allowed'}), 400
+        return jsonify({
+            'status': 'success',
+            'results': results,
+            'session_id': request.form.get('session_id', 'default-session')
+        })
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@app.route('/api/upload/process', methods=['POST'])
+@app.route('/api/v1/upload/process', methods=['POST'])
 def process_upload():
+    """Process uploaded file with mappings"""
     try:
-        session_id = request.form.get('session_id')
-        file_info = json.loads(request.form.get('file_info'))
+        data = request.json
+        session_id = data.get('session_id')
+        file_info = data.get('file_info')
+        column_mappings = data.get('column_mappings', {})
+        device_mappings = data.get('device_mappings', {})
         
-        if 'file' in request.files:
-            file = request.files['file']
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(filepath)
+        # Here you would process the file with the mappings
+        # For now, just return success
         
-        # Process file (implement your logic)
         result = {
             'success': True,
             'message': 'File processed successfully',
             'file_id': file_info.get('fingerprint'),
-            'rows_processed': file_info.get('rows', 0)
+            'rows_processed': file_info.get('rows', 0),
+            'column_mappings_applied': len(column_mappings),
+            'device_mappings_applied': len(device_mappings)
         }
         
         return jsonify(result)
@@ -72,24 +125,38 @@ def process_upload():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/mappings/save', methods=['POST'])
+@app.route('/api/v1/mappings/save', methods=['POST'])
 def save_mappings():
+    """Save learned mappings for future use"""
     try:
         data = request.json
-        session_id = data.get('session_id')
-        learned_mapping = data.get('learned_mapping')
+        learned_mapping = data.get('learned_mapping', {})
+        fingerprint = learned_mapping.get('fingerprint', 'unknown')
         
-        # Save to database or file
-        mapping_file = f"mappings/{learned_mapping['fingerprint']}.json"
-        os.makedirs('mappings', exist_ok=True)
-        
+        # Save mapping to file
+        mapping_file = os.path.join('mappings', f'{fingerprint}.json')
         with open(mapping_file, 'w') as f:
-            json.dump(learned_mapping, f)
+            json.dump(learned_mapping, f, indent=2)
         
-        return jsonify({'success': True})
+        return jsonify({
+            'success': True,
+            'message': 'Mappings saved successfully',
+            'fingerprint': fingerprint
+        })
     
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/v1/devices', methods=['GET'])
+def get_devices():
+    """Get list of known devices"""
+    # For demo, return some sample devices
+    devices = [
+        {'id': 'DEV001', 'name': 'Main Entrance', 'floor': 1, 'type': 'entry'},
+        {'id': 'DEV002', 'name': 'Emergency Exit', 'floor': 1, 'type': 'exit'},
+        {'id': 'DEV003', 'name': 'Elevator Bank A', 'floor': 1, 'type': 'elevator'},
+    ]
+    return jsonify({'devices': devices})
+
 if __name__ == '__main__':
-    app.run(debug=True, port=8050)
+    app.run(debug=True, port=5001)

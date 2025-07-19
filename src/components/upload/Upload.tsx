@@ -1,13 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload as UploadIcon, X, FileText, AlertCircle } from 'lucide-react';
+import { Upload as UploadIcon } from 'lucide-react';
 import { FilePreview } from './FilePreview';
-import ProcessingStatus from './ProcessingStatus';
 import { ColumnMappingModal } from './ColumnMappingModal';
 import { DeviceMappingModal } from './DeviceMappingModal';
 import { UploadedFile, ProcessingStatus as Status } from './types';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8050';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 const Upload: React.FC = () => {
   const [files, setFiles] = useState<UploadedFile[]>([]);

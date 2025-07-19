@@ -9,7 +9,7 @@ export const useWebSocket = () => {
 
   const subscribeToUploadProgress = (taskId: string, cb: ProgressCallback) => {
     if (sockets.current[taskId]) return;
-    const ws = new WebSocket(`ws://localhost:8050/ws/upload/${taskId}`);
+    const ws = new WebSocket(`ws://localhost:5001/ws/upload/${taskId}`);
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.progress !== undefined) {
