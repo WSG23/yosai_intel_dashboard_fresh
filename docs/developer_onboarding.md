@@ -63,7 +63,7 @@ This guide walks new contributors through setting up a local development environ
    
 9. **Start the application:**
    ```bash
-   python app.py
+   python start_api.py
    ```
 
 The dashboard will be available at `http://127.0.0.1:8050` once the server starts.
