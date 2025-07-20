@@ -64,6 +64,8 @@ jobs:
           node-version: '18'
       - name: Install Node deps
         run: npm install
+      - name: Jest Tests
+        run: npm test -- --watchAll=false
       - name: Cypress Tests
         run: npx cypress run
       - name: Upload audit report
