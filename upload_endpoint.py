@@ -39,13 +39,9 @@ def upload_files():
         upload_service = container.get("upload_processor")
 
         # Process files using existing base code
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-        result_dict = loop.run_until_complete(
+        result_dict = asyncio.run(
             upload_service.process_uploaded_files(contents, filenames)
         )
-        loop.close()
 
         # Ensure structure matches what React expects
         response = {
