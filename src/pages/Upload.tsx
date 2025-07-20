@@ -1,6 +1,7 @@
 // Upload.tsx
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
+import Papa from 'papaparse';
 import {
   Card,
   CardHeader,
@@ -70,6 +71,16 @@ interface ValidationResult {
   warnings?: string[];
 }
 
+export interface CSVRow {
+  [key: string]: string;
+}
+
+export interface CSVParseResult {
+  rows: CSVRow[];
+  columns: string[];
+  devices: string[];
+}
+
 // Constants matching Python configuration
 const MAX_FILE_SIZE_MB = 50;
 const ALLOWED_EXTENSIONS = ['.csv', '.json', '.xlsx', '.xls'];
@@ -83,6 +94,45 @@ const MALICIOUS_PATTERNS = [
   /union\s+select/gi, // SQL injection
   /\x00/g, // Null bytes
 ];
+
+export const sanitizeUnicode = (text: string): string => {
+  const surrogatePattern = /[\uD800-\uDFFF]/g;
+  let cleaned = text.replace(surrogatePattern, '');
+
+  if ('normalize' in String.prototype) {
+    cleaned = cleaned.normalize('NFKC');
+  }
+
+  cleaned = cleaned.replace(/[\u200B-\u200D\uFEFF]/g, '');
+
+  return cleaned;
+};
+
+export const parseCSV = (content: string): CSVParseResult => {
+  const result = Papa.parse<CSVRow>(content, {
+    header: true,
+    skipEmptyLines: true,
+  });
+
+  const headers = result.meta.fields?.map(h => sanitizeUnicode(h.trim())) || [];
+  const rows = result.data.map(row => {
+    const sanitizedRow: CSVRow = {};
+    headers.forEach(header => {
+      sanitizedRow[header] = sanitizeUnicode((row as any)[header] ?? '');
+    });
+    return sanitizedRow;
+  });
+
+  const deviceColumn = headers.find(h =>
+    h.toLowerCase().includes('door') ||
+    h.toLowerCase().includes('device')
+  );
+  const devices = deviceColumn
+    ? Array.from(new Set(rows.map(r => r[deviceColumn])))
+    : [];
+
+  return { rows, columns: headers, devices };
+};
 
 export const Upload: React.FC = () => {
   // State management
@@ -101,22 +151,6 @@ export const Upload: React.FC = () => {
   const uploadQueueRef = useRef<Array<{ file: File; taskId: string }>>([]);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Unicode sanitization function matching Python's implementation
-  const sanitizeUnicode = (text: string): string => {
-    // Remove surrogate pairs
-    const surrogatePattern = /[\uD800-\uDFFF]/g;
-    let cleaned = text.replace(surrogatePattern, '');
-
-    // Normalize using NFKC
-    if ('normalize' in String.prototype) {
-      cleaned = cleaned.normalize('NFKC');
-    }
-
-    // Remove zero-width characters
-    cleaned = cleaned.replace(/[\u200B-\u200D\uFEFF]/g, '');
-
-    return cleaned;
-  };
 
   // File validation matching Python's security checks
   const validateFile = (file: File): ValidationResult => {
@@ -186,31 +220,6 @@ export const Upload: React.FC = () => {
     });
   };
 
-  // CSV parsing helper
-  const parseCSV = (content: string): any => {
-    const lines = content.split('\n').filter(line => line.trim());
-    if (lines.length === 0) return { rows: [], columns: [] };
-
-    const headers = lines[0].split(',').map(h => sanitizeUnicode(h.trim()));
-    const rows = lines.slice(1).map(line => {
-      const values = line.split(',');
-      return headers.reduce((obj, header, index) => {
-        obj[header] = sanitizeUnicode(values[index]?.trim() || '');
-        return obj;
-      }, {} as any);
-    });
-
-    // Extract unique devices if door_id column exists
-    const deviceColumn = headers.find(h =>
-      h.toLowerCase().includes('door') ||
-      h.toLowerCase().includes('device')
-    );
-    const devices = deviceColumn
-      ? Array.from(new Set(rows.map(r => r[deviceColumn])))
-      : [];
-
-    return { rows, columns: headers, devices };
-  };
 
   // AI column suggestion (matching Python's get_ai_column_suggestions)
   const getAIColumnSuggestions = (columns: string[]): ColumnMapping[] => {
