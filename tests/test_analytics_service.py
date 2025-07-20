@@ -1,3 +1,24 @@
+import sys, types
+
+sys.modules.setdefault("flask_caching", types.SimpleNamespace(Cache=object))
+if "dask" not in sys.modules:
+    dask_stub = types.ModuleType("dask")
+    dask_stub.__path__ = []
+    dist_stub = types.ModuleType("dask.distributed")
+    dist_stub.Client = object
+    dist_stub.LocalCluster = object
+    sys.modules["dask"] = dask_stub
+    sys.modules["dask.distributed"] = dist_stub
+if "dash" not in sys.modules:
+    dash_stub = types.ModuleType("dash")
+    sys.modules.setdefault("dash", dash_stub)
+    sys.modules.setdefault("dash.dash", dash_stub)
+    sys.modules.setdefault("dash.html", types.ModuleType("dash.html"))
+    sys.modules.setdefault("dash.dcc", types.ModuleType("dash.dcc"))
+    sys.modules.setdefault("dash.dependencies", types.ModuleType("dash.dependencies"))
+    sys.modules.setdefault("dash._callback", types.ModuleType("dash._callback"))
+if "chardet" not in sys.modules:
+    sys.modules["chardet"] = types.ModuleType("chardet")
 import pandas as pd
 
 from services.analytics_service import AnalyticsService
@@ -107,3 +128,16 @@ def test_service_receives_config(monkeypatch):
     assert service.database is None
     assert captured["config"] is cfg
     assert captured["database"] is None
+
+
+def test_summarize_dataframe_basic():
+    service = AnalyticsService()
+    df = _make_df()
+    summary = service.summarize_dataframe(df)
+    assert summary["total_events"] == 3
+    assert summary["active_users"] == 2
+    assert summary["active_doors"] == 2
+    assert summary["access_patterns"] == {"Granted": 2, "Denied": 1}
+    assert summary["date_range"] == {"start": "2024-01-01", "end": "2024-01-02"}
+    assert summary["top_users"][0]["user_id"] == "u1"
+    assert summary["top_users"][0]["count"] == 2
