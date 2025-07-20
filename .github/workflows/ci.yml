@@ -51,6 +51,14 @@ jobs:
         run: |
           set -xe
           pytest --maxfail=1 --disable-warnings -q --cov=.
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install Node deps
+        run: npm install
+      - name: Cypress Tests
+        run: npx cypress run
       - name: Upload audit report
         uses: actions/upload-artifact@v4
         with:

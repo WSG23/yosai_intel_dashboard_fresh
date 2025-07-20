@@ -130,17 +130,15 @@ def get_device_learning_service(
 
 def get_upload_data_service(
     container: ServiceContainer | None = None,
-) -> UploadDataServiceProtocol:
+) -> UploadDataService:
     """Return the registered :class:`UploadDataService` instance."""
-    from services.protocols.upload_data import UploadDataServiceProtocol
-
     c = _get_container(container)
     if c and c.has("upload_data_service"):
         return c.get("upload_data_service")
-    from services.upload_data_service import UploadDataService
+    from services.upload_data_service import UploadDataService as UploadDataSvc
     from utils.upload_store import uploaded_data_store
 
-    return UploadDataService(uploaded_data_store)
+    return UploadDataSvc(uploaded_data_store)
 
 
 __all__ = [
@@ -148,6 +146,7 @@ __all__ = [
     "ExportServiceProtocol",
     "DoorMappingServiceProtocol",
     "DeviceLearningServiceProtocol",
+    "UploadDataService",
     "get_upload_validator",
     "get_export_service",
     "get_door_mapping_service",
@@ -162,6 +161,25 @@ class UploadDataServiceProtocol(Protocol):
     def get_upload_data(self) -> Dict[str, Any]: ...
     def store_upload_data(self, data: Dict[str, Any]) -> bool: ...
     def clear_data(self) -> None: ...
+
+
+@runtime_checkable
+class UploadDataService(Protocol):
+    """Interface for accessing uploaded dataframes."""
+
+    def get_uploaded_data(self) -> Dict[str, pd.DataFrame]: ...
+
+    def get_uploaded_filenames(self) -> List[str]: ...
+
+    def clear_uploaded_data(self) -> None: ...
+
+    def get_file_info(self) -> Dict[str, Dict[str, Any]]: ...
+
+    def load_dataframe(self, filename: str) -> pd.DataFrame: ...
+
+    def load_mapping(self, filename: str) -> Dict[str, Any]: ...
+
+    def save_mapping(self, filename: str, mapping: Dict[str, Any]) -> None: ...
 
 @runtime_checkable  
 class DeviceLearningServiceProtocol(Protocol):

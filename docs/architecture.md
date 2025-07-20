@@ -12,6 +12,8 @@ The dashboard is organized around a small core that wires together services and 
 
 The factory builds the container, which then instantiates services. Services operate on models retrieved from the database layer. This layered approach keeps components loosely coupled and easy to test.
 
+See [React Component Architecture](react_component_architecture.md) for an overview of the front-end structure.
+
 ## Latest Changes
 
 - **Unified Validator** – Input and file validation are now handled by the

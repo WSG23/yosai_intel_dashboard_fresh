@@ -1,6 +1,6 @@
-// Upload.tsx
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import Papa from 'papaparse';
 import {
   Card,
   CardHeader,
@@ -70,6 +70,16 @@ interface ValidationResult {
   warnings?: string[];
 }
 
+export interface CSVRow {
+  [key: string]: string;
+}
+
+export interface CSVParseResult {
+  rows: CSVRow[];
+  columns: string[];
+  devices: string[];
+}
+
 // Constants matching Python configuration
 const MAX_FILE_SIZE_MB = 50;
 const ALLOWED_EXTENSIONS = ['.csv', '.json', '.xlsx', '.xls'];
@@ -83,6 +93,45 @@ const MALICIOUS_PATTERNS = [
   /union\s+select/gi, // SQL injection
   /\x00/g, // Null bytes
 ];
+
+export const sanitizeUnicode = (text: string): string => {
+  const surrogatePattern = /[\uD800-\uDFFF]/g;
+  let cleaned = text.replace(surrogatePattern, '');
+
+  if ('normalize' in String.prototype) {
+    cleaned = cleaned.normalize('NFKC');
+  }
+
+  cleaned = cleaned.replace(/[\u200B-\u200D\uFEFF]/g, '');
+
+  return cleaned;
+};
+
+export const parseCSV = (content: string): CSVParseResult => {
+  const result = Papa.parse<CSVRow>(content, {
+    header: true,
+    skipEmptyLines: true,
+  });
+
+  const headers = result.meta.fields?.map(h => sanitizeUnicode(h.trim())) || [];
+  const rows = result.data.map(row => {
+    const sanitizedRow: CSVRow = {};
+    headers.forEach(header => {
+      sanitizedRow[header] = sanitizeUnicode((row as any)[header] ?? '');
+    });
+    return sanitizedRow;
+  });
+
+  const deviceColumn = headers.find(h =>
+    h.toLowerCase().includes('door') ||
+    h.toLowerCase().includes('device')
+  );
+  const devices = deviceColumn
+    ? Array.from(new Set(rows.map(r => r[deviceColumn])))
+    : [];
+
+  return { rows, columns: headers, devices };
+};
 
 export const Upload: React.FC = () => {
   // State management
@@ -101,22 +150,6 @@ export const Upload: React.FC = () => {
   const uploadQueueRef = useRef<Array<{ file: File; taskId: string }>>([]);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Unicode sanitization function matching Python's implementation
-  const sanitizeUnicode = (text: string): string => {
-    // Remove surrogate pairs
-    const surrogatePattern = /[\uD800-\uDFFF]/g;
-    let cleaned = text.replace(surrogatePattern, '');
-
-    // Normalize using NFKC
-    if ('normalize' in String.prototype) {
-      cleaned = cleaned.normalize('NFKC');
-    }
-
-    // Remove zero-width characters
-    cleaned = cleaned.replace(/[\u200B-\u200D\uFEFF]/g, '');
-
-    return cleaned;
-  };
 
   // File validation matching Python's security checks
   const validateFile = (file: File): ValidationResult => {
@@ -186,31 +219,6 @@ export const Upload: React.FC = () => {
     });
   };
 
-  // CSV parsing helper
-  const parseCSV = (content: string): any => {
-    const lines = content.split('\n').filter(line => line.trim());
-    if (lines.length === 0) return { rows: [], columns: [] };
-
-    const headers = lines[0].split(',').map(h => sanitizeUnicode(h.trim()));
-    const rows = lines.slice(1).map(line => {
-      const values = line.split(',');
-      return headers.reduce((obj, header, index) => {
-        obj[header] = sanitizeUnicode(values[index]?.trim() || '');
-        return obj;
-      }, {} as any);
-    });
-
-    // Extract unique devices if door_id column exists
-    const deviceColumn = headers.find(h =>
-      h.toLowerCase().includes('door') ||
-      h.toLowerCase().includes('device')
-    );
-    const devices = deviceColumn
-      ? Array.from(new Set(rows.map(r => r[deviceColumn])))
-      : [];
-
-    return { rows, columns: headers, devices };
-  };
 
   // AI column suggestion (matching Python's get_ai_column_suggestions)
   const getAIColumnSuggestions = (columns: string[]): ColumnMapping[] => {
@@ -700,49 +708,37 @@ export const Upload: React.FC = () => {
   };
 
   // Main render
+
   return (
-    <div className="upload-container">
-      {/* Alerts */}
-      <div className="alerts-container" style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999 }}>
-        {alerts.map(alert => (
-          <Toast key={alert.id}>
-            <Alert color={alert.type === 'error' ? 'danger' : alert.type}>
-              {alert.message}
-            </Alert>
-          </Toast>
-        ))}
+    <div>
+      <div {...getRootProps()} className="upload-dropzone" style={{border:'2px dashed #007bff', padding:'2rem'}}>
+        <input {...getInputProps()} />
+        {isDragActive ? 'Drop files here' : 'Drag files here or click'}
       </div>
-
-      {/* Main upload card */}
-      <Card>
-        <CardHeader>
-          <h5>Upload Data Files</h5>
-        </CardHeader>
-        <CardBody>
-          {renderUploadArea()}
-          {uploadProgress.length > 0 && renderProgress()}
-
-          {/* Uploaded files list */}
-          {uploadedFiles.length > 0 && (
-            <div className="mt-4">
-              <h6>Uploaded Files:</h6>
-              <ul>
-                {uploadedFiles.map((file, idx) => (
-                  <li key={idx}>
-                    {file.filename} - {file.rows} rows, {file.columns?.length} columns
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </CardBody>
-      </Card>
-
-      {/* Modals */}
-      {renderColumnModal()}
-      {renderDeviceModal()}
+      {progress > 0 && <ProgressIndicator progress={progress} message={message} />}
+      {files.map(({ file, data }) => (
+        <div key={file.name} className="mt-3">
+          <strong>{file.name}</strong>
+          <AIColumnSuggestions data={data || null} />
+        </div>
+      ))}
+      <ColumnMappingModal isOpen={false} onClose={() => {}} fileData={{}} onConfirm={() => {}} />
+      <DeviceMappingModal isOpen={false} onClose={() => {}} devices={[]} filename="" onConfirm={() => {}} />
     </div>
   );
 };
 
-export default Upload;
+const UploadPage: React.FC = () => (
+  <UploadProvider>
+    <Card>
+      <CardHeader>
+        <h5>Upload Data Files</h5>
+      </CardHeader>
+      <CardBody>
+        <UploadInner />
+      </CardBody>
+    </Card>
+  </UploadProvider>
+);
+
+export default UploadPage;

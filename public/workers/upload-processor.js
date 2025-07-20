@@ -1,4 +1,5 @@
 // Web Worker for processing file chunks
+importScripts('https://cdn.jsdelivr.net/npm/papaparse@5.5.3/papaparse.min.js');
 self.onmessage = function (e) {
     const { type, taskId, data } = e.data;
 
@@ -43,21 +44,8 @@ function processChunk(data) {
 }
 
 function parseCSVData(content) {
-    // Basic CSV parsing
-    const lines = content.split('\n');
-    const headers = lines[0].split(',');
-    const rows = [];
-
-    for (let i = 1; i < lines.length; i++) {
-        if (lines[i].trim()) {
-            const values = lines[i].split(',');
-            const row = {};
-            headers.forEach((header, index) => {
-                row[header.trim()] = values[index]?.trim() || '';
-            });
-            rows.push(row);
-        }
-    }
-
+    const result = Papa.parse(content, { header: true, skipEmptyLines: true });
+    const headers = result.meta.fields || [];
+    const rows = result.data;
     return { headers, rows };
 }

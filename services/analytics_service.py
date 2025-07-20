@@ -33,6 +33,7 @@ from services.db_analytics_helper import DatabaseAnalyticsHelper
 from services.summary_reporter import SummaryReporter, format_patterns_result
 
 
+
 class ConfigProviderProtocol(Protocol):
     """Provide configuration values to services."""
 
@@ -88,12 +89,14 @@ class AnalyticsService(AnalyticsServiceProtocol):
         config: ConfigurationProtocol | None = None,
         event_bus: EventBusProtocol | None = None,
         storage: StorageProtocol | None = None,
+        upload_data_service: UploadDataService | None = None,
     ):
         self.database = database
         self.data_processor = data_processor or Processor(validator=SecurityValidator())
         self.config = config
         self.event_bus = event_bus
         self.storage = storage
+        self.upload_data_service = upload_data_service or get_upload_data_service()
         self.database_manager: Optional[Any] = None
         self._initialize_database()
         self.validation_service = SecurityValidator()
@@ -169,11 +172,12 @@ class AnalyticsService(AnalyticsServiceProtocol):
 
             uploaded_data = get_uploaded_data(get_upload_data_service())
 
+
             if uploaded_data and source in ["uploaded", "sample"]:
                 logger.info(f"Forcing uploaded data usage (source was: {source})")
                 return self._process_uploaded_data_directly(uploaded_data)
 
-        except ImportError as e:
+        except Exception as e:
             logger.error(f"Uploaded data check failed: {e}")
 
         # Original logic for when no uploaded data
@@ -194,6 +198,8 @@ class AnalyticsService(AnalyticsServiceProtocol):
 
     def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
         """Load uploaded data from the file upload page."""
+        if self.upload_data_service:
+            return self.upload_data_service.get_uploaded_data()
         return self.upload_processor.load_uploaded_data()
 
     def clean_uploaded_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
