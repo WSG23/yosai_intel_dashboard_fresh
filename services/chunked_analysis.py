@@ -1,7 +1,7 @@
 import hashlib
+import json
 import logging
 import os
-import json
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -18,39 +18,31 @@ from .result_formatting import regular_analysis
 logger = logging.getLogger(__name__)
 
 
-def analyze_with_chunking(
-    df: pd.DataFrame, validator: SecurityValidator, analysis_types: List[str]
-) -> Dict[str, Any]:
-    """Analyze a DataFrame using chunked processing."""
+def _validate_dataframe(
+    df: pd.DataFrame, validator: SecurityValidator
+) -> tuple[int, int, bool]:
+    """Validate ``df`` and return original and validated row counts."""
     original_rows = len(df)
-    logger.info(f"🚀 Starting COMPLETE analysis for {original_rows:,} rows")
-
     csv_bytes = df.to_csv(index=False).encode("utf-8")
     validator.validate_file_upload("data.csv", csv_bytes)
     needs_chunking = True
-
     validated_rows = len(df)
     logger.info(
-        f"📋 After validation: {validated_rows:,} rows, chunking needed: {needs_chunking}"
+        "📋 After validation: %s rows, chunking needed: %s",
+        f"{validated_rows:,}",
+        needs_chunking,
     )
+    return original_rows, validated_rows, needs_chunking
 
-    if not needs_chunking:
-        logger.info("✅ Using regular analysis (no chunking needed)")
-        return regular_analysis(df, analysis_types)
 
-    cfg = get_analytics_config()
-    chunk_size = cfg.chunk_size or len(df)
-    max_workers = cfg.max_workers or 1
-    chunked_controller = ChunkedAnalyticsController(
-        chunk_size=chunk_size, max_workers=max_workers
-    )
-
-    logger.info(
-        f"🔄 Using chunked analysis: {validated_rows:,} rows, {chunk_size:,} per chunk"
-    )
-
-    cache_dir = Path(os.getenv("CHUNK_CACHE_DIR", "./chunk_cache"))
-    cache_dir.mkdir(parents=True, exist_ok=True)
+def _process_chunks(
+    df: pd.DataFrame,
+    chunked_controller: ChunkedAnalyticsController,
+    analysis_types: List[str],
+    cache_dir: Path,
+    max_workers: int,
+) -> Dict[str, Any]:
+    """Process dataframe chunks using Dask."""
 
     def _chunk_key(chunk_df: pd.DataFrame) -> str:
         digest = hashlib.sha256(
@@ -64,15 +56,13 @@ def analyze_with_chunking(
         if cache_file.exists():
             with open(cache_file, "r", encoding="utf-8") as fh:
                 cached = json.load(fh)
-            # convert list fields back to sets
             for field in ("unique_users", "unique_doors"):
                 if isinstance(cached.get(field), list):
                     cached[field] = set(cached[field])
             return cached
         result = chunked_controller._process_chunk(chunk_df, analysis_types)
         json_ready = {
-            k: (list(v) if isinstance(v, set) else v)
-            for k, v in result.items()
+            k: (list(v) if isinstance(v, set) else v) for k, v in result.items()
         }
         with open(cache_file, "w", encoding="utf-8") as fh:
             json.dump(json_ready, fh)
@@ -95,7 +85,16 @@ def analyze_with_chunking(
         chunked_controller._aggregate_results(aggregated, res)
         aggregated["rows_processed"] += len(chunk_df)
 
-    result = chunked_controller._finalize_results(aggregated)
+    return chunked_controller._finalize_results(aggregated)
+
+
+def _add_processing_summary(
+    result: Dict[str, Any],
+    original_rows: int,
+    validated_rows: int,
+    chunk_size: int,
+) -> None:
+    """Attach processing summary and log basic checks."""
 
     result["processing_summary"] = {
         "original_input_rows": original_rows,
@@ -112,10 +111,44 @@ def analyze_with_chunking(
     rows_processed = result.get("rows_processed", 0)
     if rows_processed != validated_rows:
         logger.error(
-            f"❌ PROCESSING ERROR: Expected {validated_rows:,} rows, got {rows_processed:,}"
+            "❌ PROCESSING ERROR: Expected %s rows, got %s",
+            f"{validated_rows:,}",
+            f"{rows_processed:,}",
         )
     else:
         logger.info(f"✅ SUCCESS: Processed ALL {rows_processed:,} rows successfully")
+
+
+def analyze_with_chunking(
+    df: pd.DataFrame, validator: SecurityValidator, analysis_types: List[str]
+) -> Dict[str, Any]:
+    """Analyze a DataFrame using chunked processing."""
+
+    original_rows, validated_rows, needs_chunking = _validate_dataframe(df, validator)
+
+    if not needs_chunking:
+        logger.info("✅ Using regular analysis (no chunking needed)")
+        return regular_analysis(df, analysis_types)
+
+    cfg = get_analytics_config()
+    chunk_size = cfg.chunk_size or len(df)
+    max_workers = cfg.max_workers or 1
+    chunked_controller = ChunkedAnalyticsController(
+        chunk_size=chunk_size, max_workers=max_workers
+    )
+
+    logger.info(
+        f"🔄 Using chunked analysis: {validated_rows:,} rows, {chunk_size:,} per chunk"
+    )
+
+    cache_dir = Path(os.getenv("CHUNK_CACHE_DIR", "./chunk_cache"))
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    result = _process_chunks(
+        df, chunked_controller, analysis_types, cache_dir, max_workers
+    )
+
+    _add_processing_summary(result, original_rows, validated_rows, chunk_size)
 
     return result
 
