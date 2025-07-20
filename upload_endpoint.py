@@ -2,6 +2,7 @@ import asyncio
 import base64
 
 from flask import Blueprint, jsonify, request
+from flask_wtf.csrf import validate_csrf
 
 # Use the shared DI container configured at application startup
 from core.container import container
@@ -17,6 +18,16 @@ upload_bp = Blueprint("upload", __name__)
 def upload_files():
     """Handle file upload and return expected structure for React frontend"""
     try:
+        token = (
+            request.headers.get("X-CSRFToken")
+            or request.headers.get("X-CSRF-Token")
+            or request.form.get("csrf_token")
+        )
+        try:
+            validate_csrf(token)
+        except Exception:
+            return jsonify({"error": "Invalid CSRF token"}), 400
+
         contents = []
         filenames = []
 
