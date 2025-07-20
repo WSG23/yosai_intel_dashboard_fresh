@@ -895,7 +895,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines. In short:
    `examples/debugcsv.py`) and can be run with
    `python examples/diagnostic_script.py`.
 10. Outdated prototype scripts, such as the legacy adapters, have been moved
-   to the `archive/` directory for reference.
+    to the `archive/` directory for reference.
+11. The original MVP demo modules now live under `archive/mvp/` and are not
+    part of the production application.
 
 ## <span aria-hidden="true">📦</span> Versioning
 
