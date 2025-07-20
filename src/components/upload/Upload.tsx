@@ -49,7 +49,7 @@ const Upload: React.FC = () => {
     formData.append('file', uploadedFile.file);
 
     try {
-      const response = await fetch(`${API_URL}/api/upload`, {
+      const response = await fetch(`${API_URL}/api/v1/upload`, {
         method: 'POST',
         body: formData,
       });
