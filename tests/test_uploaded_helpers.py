@@ -8,15 +8,16 @@ from analytics.file_processing_utils import (
     update_timestamp_range,
 )
 from services import AnalyticsService
+from tests.fakes import FakeUploadDataService, FakeUploadStore
 
 
-def test_load_uploaded_data(monkeypatch):
+def test_load_uploaded_data():
     sample = {"file.csv": DataFrameBuilder().add_column("A", [1]).build()}
-    monkeypatch.setattr(
-        "services.upload_data_service.get_uploaded_data",
-        lambda service=None, container=None: sample,
-    )
-    service = AnalyticsService()
+    store = FakeUploadStore()
+    for name, df in sample.items():
+        store.add_file(name, df)
+    data_service = FakeUploadDataService(store)
+    service = AnalyticsService(upload_data_service=data_service)
     assert service.load_uploaded_data() == sample
 
 
