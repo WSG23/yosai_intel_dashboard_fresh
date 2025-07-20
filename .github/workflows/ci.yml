@@ -16,6 +16,13 @@ jobs:
         run: |
           set -xe
           pip install -r requirements.txt -r requirements-dev.txt -r requirements-test.txt
+      - name: Generate OpenAPI spec
+        run: python tools/generate_openapi.py
+      - name: Upload OpenAPI
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-spec
+          path: docs/openapi.json
       - name: Black
         run: |
           set -xe

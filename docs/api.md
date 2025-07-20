@@ -11,6 +11,9 @@ python tools/generate_openapi.py
 The script writes `docs/openapi.json`. Once generated, this file can be served
 by Swagger UI to display the complete API reference.
 
+The CI workflow runs this command and uploads the generated `openapi.json` as an
+artifact so the specification is available from workflow runs.
+
 ### Regenerating after changes
 
 `docs/openapi.json` is not committed to the repository. Whenever you modify any
