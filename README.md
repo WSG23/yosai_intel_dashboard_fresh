@@ -34,7 +34,7 @@ The dashboard is extensible through a lightweight plugin system. Plugins live in
 
 ```
 yosai_intel_dashboard/
-├── app.py                     # Main application entry point
+├── start_api.py               # Start the API for development
 ├── config/                    # Configuration management
 │   ├── config.py              # Unified configuration loader
 │   ├── database_manager.py    # Database connections and pooling
@@ -150,7 +150,7 @@ with this Python release and newer.
 7. **Run the application (development only):**
    The app now loads variables from `.env` automatically.
    ```bash
-   python app.py  # use only for local development
+   python start_api.py  # use only for local development
    ```
    For production deployments start a WSGI server instead:
    ```bash
@@ -213,7 +213,7 @@ following steps:
    plain HTTP version from loading. Use the browser's development settings to
    clear site data, including service workers and caches, and remove any HSTS
    entries before reloading the page.
-7. If `python app.py` fails with `NameError: name '_env_file_callback' is not defined`,
+7. If `python start_api.py` fails with `NameError: name '_env_file_callback' is not defined`,
    Flask was likely installed incorrectly. Reinstall it to restore the missing
    function:
    ```bash
@@ -486,7 +486,7 @@ DB_HOST=localhost
 DB_USER=postgres
 REDIS_HOST=localhost
 SECRET_KEY=supersecret
-python app.py
+python start_api.py
 ```
 
 These values override `database.host`, `database.user`, `cache.host` and
@@ -507,10 +507,10 @@ environment variables:
 Example:
 
 ```bash
-YOSAI_ENV=production python app.py
+YOSAI_ENV=production python start_api.py
 # or
-YOSAI_CONFIG_FILE=/path/to/custom.yaml python app.py
-YOSAI_APP_MODE=simple python app.py
+YOSAI_CONFIG_FILE=/path/to/custom.yaml python start_api.py
+YOSAI_APP_MODE=simple python start_api.py
 ```
 
 #### Dynamic Constants

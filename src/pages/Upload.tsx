@@ -1,5 +1,4 @@
-// Upload.tsx
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
 import {
@@ -709,49 +708,37 @@ export const Upload: React.FC = () => {
   };
 
   // Main render
+
   return (
-    <div className="upload-container">
-      {/* Alerts */}
-      <div className="alerts-container" style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999 }}>
-        {alerts.map(alert => (
-          <Toast key={alert.id}>
-            <Alert color={alert.type === 'error' ? 'danger' : alert.type}>
-              {alert.message}
-            </Alert>
-          </Toast>
-        ))}
+    <div>
+      <div {...getRootProps()} className="upload-dropzone" style={{border:'2px dashed #007bff', padding:'2rem'}}>
+        <input {...getInputProps()} />
+        {isDragActive ? 'Drop files here' : 'Drag files here or click'}
       </div>
-
-      {/* Main upload card */}
-      <Card>
-        <CardHeader>
-          <h5>Upload Data Files</h5>
-        </CardHeader>
-        <CardBody>
-          {renderUploadArea()}
-          {uploadProgress.length > 0 && renderProgress()}
-
-          {/* Uploaded files list */}
-          {uploadedFiles.length > 0 && (
-            <div className="mt-4">
-              <h6>Uploaded Files:</h6>
-              <ul>
-                {uploadedFiles.map((file, idx) => (
-                  <li key={idx}>
-                    {file.filename} - {file.rows} rows, {file.columns?.length} columns
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </CardBody>
-      </Card>
-
-      {/* Modals */}
-      {renderColumnModal()}
-      {renderDeviceModal()}
+      {progress > 0 && <ProgressIndicator progress={progress} message={message} />}
+      {files.map(({ file, data }) => (
+        <div key={file.name} className="mt-3">
+          <strong>{file.name}</strong>
+          <AIColumnSuggestions data={data || null} />
+        </div>
+      ))}
+      <ColumnMappingModal isOpen={false} onClose={() => {}} fileData={{}} onConfirm={() => {}} />
+      <DeviceMappingModal isOpen={false} onClose={() => {}} devices={[]} filename="" onConfirm={() => {}} />
     </div>
   );
 };
 
-export default Upload;
+const UploadPage: React.FC = () => (
+  <UploadProvider>
+    <Card>
+      <CardHeader>
+        <h5>Upload Data Files</h5>
+      </CardHeader>
+      <CardBody>
+        <UploadInner />
+      </CardBody>
+    </Card>
+  </UploadProvider>
+);
+
+export default UploadPage;
