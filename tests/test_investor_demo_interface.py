@@ -1,22 +1,24 @@
 import io
 import sys
 import types
+
 import pandas as pd
 import pytest
 
 # Provide minimal stubs for external modules used by investor_demo_interface
 sys.modules.setdefault(
-    "mvp_cli_engine",
+    "archive.mvp.mvp_cli_engine",
     types.SimpleNamespace(
         load_dataframe=lambda p: pd.DataFrame(), generate_analytics=lambda df: {}
     ),
 )
 sys.modules.setdefault(
-    "simple_mapping_interface",
+    "archive.mvp.simple_mapping_interface",
     types.SimpleNamespace(enhance_data_with_mappings=lambda df, c, d: (df, {})),
 )
 sys.modules.setdefault(
-    "unicode_fix_module", types.SimpleNamespace(safe_file_write=lambda p, d: None)
+    "archive.mvp.unicode_fix_module",
+    types.SimpleNamespace(safe_file_write=lambda p, d: None),
 )
 
 import investor_demo_interface as demo

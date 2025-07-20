@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -13,11 +14,10 @@ from flask import (
     send_file,
     url_for,
 )
-import html
 
-from mvp_cli_engine import generate_analytics, load_dataframe
-from simple_mapping_interface import enhance_data_with_mappings
-from unicode_fix_module import safe_file_write
+from archive.mvp.mvp_cli_engine import generate_analytics, load_dataframe
+from archive.mvp.simple_mapping_interface import enhance_data_with_mappings
+from archive.mvp.unicode_fix_module import safe_file_write
 from config.constants import API_PORT
 
 app = Flask(__name__)
