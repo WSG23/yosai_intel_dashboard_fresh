@@ -16,6 +16,7 @@ This project follows a fully modular design built around a dependency injection 
 - [UI Flows](docs/ui_flows.md)
 - [Upload Interface Guide](docs/upload_interface.md)
 - [UI Design Assets](docs/ui_design/README.md)
+- [React Component Architecture](docs/react_component_architecture.md)
 - [Validation Overview](docs/validation_overview.md)
 - [Model Cards](docs/model_cards.md)
 - [Data Versioning](docs/data_versioning.md)
