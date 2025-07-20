@@ -8,22 +8,13 @@ limits.
 """
 import logging
 import threading
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Protocol, Tuple
+from typing import Any, Dict, List, Optional, Protocol
 
 import pandas as pd
 
-from services.analytics.upload_analytics import UploadAnalyticsProcessor
-from services.analytics_summary import generate_sample_analytics
-from services.data_processing.processor import Processor
 from advanced_cache import cache_with_lock
-from core.security_validator import SecurityValidator
-from services.db_analytics_helper import DatabaseAnalyticsHelper
-from services.summary_reporter import SummaryReporter, format_patterns_result
-from services.data_loader import DataLoader
 from config.database_exceptions import DatabaseError
-from services.analytics_processor import AnalyticsProcessor
-from services.analytics.protocols import DataProcessorProtocol
+from config.dynamic_config import dynamic_config
 from core.protocols import (
     AnalyticsServiceProtocol,
     ConfigurationProtocol,
@@ -31,6 +22,15 @@ from core.protocols import (
     EventBusProtocol,
     StorageProtocol,
 )
+from core.security_validator import SecurityValidator
+from services.analytics.protocols import DataProcessorProtocol
+from services.analytics.upload_analytics import UploadAnalyticsProcessor
+from services.analytics_processor import AnalyticsProcessor
+from services.analytics_summary import generate_sample_analytics
+from services.data_loader import DataLoader
+from services.data_processing.processor import Processor
+from services.db_analytics_helper import DatabaseAnalyticsHelper
+from services.summary_reporter import SummaryReporter, format_patterns_result
 
 
 class ConfigProviderProtocol(Protocol):
@@ -66,11 +66,9 @@ def ensure_analytics_config():
         logger.error("Failed to ensure analytics configuration: %s", exc)
 
 
-ensure_analytics_config()
-
 logger = logging.getLogger(__name__)
 
-from config.dynamic_config import dynamic_config
+ensure_analytics_config()
 
 # Thresholds used for row count sanity checks
 ROW_LIMIT_WARNING = dynamic_config.analytics.row_limit_warning
@@ -134,9 +132,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
                 self.summary_reporter = SummaryReporter(self.database)
                 return
 
+            from config import get_database_config
             from config.database_manager import DatabaseConfig as ManagerConfig
             from config.database_manager import DatabaseManager
-            from config import get_database_config
 
             cfg = get_database_config()
             manager_cfg = ManagerConfig(
@@ -166,8 +164,8 @@ class AnalyticsService(AnalyticsServiceProtocol):
 
         # FORCE CHECK: If uploaded data exists, use it regardless of source
         try:
-            from services.upload_data_service import get_uploaded_data
             from services.interfaces import get_upload_data_service
+            from services.upload_data_service import get_uploaded_data
 
             uploaded_data = get_uploaded_data(get_upload_data_service())
 
@@ -245,7 +243,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
             logger.error(f"Dashboard summary failed: {e}")
             return {"status": "error", "message": str(e)}
 
-    def _publish_event(self, payload: Dict[str, Any], event: str = "analytics_update") -> None:
+    def _publish_event(
+        self, payload: Dict[str, Any], event: str = "analytics_update"
+    ) -> None:
         """Publish ``payload`` to the event bus if available."""
         if self.event_bus:
             try:
@@ -254,30 +254,67 @@ class AnalyticsService(AnalyticsServiceProtocol):
                 logger = logging.getLogger(__name__)
                 logger.debug("Event bus publish failed: %s", exc)
 
-    def _load_patterns_dataframe(self, data_source: str | None) -> tuple[pd.DataFrame, int]:
+    def _load_patterns_dataframe(
+        self, data_source: str | None
+    ) -> tuple[pd.DataFrame, int]:
         """Return dataframe and original row count for pattern analysis."""
         df, original_rows = self.data_loader.load_patterns_data(data_source)
         if not df.empty:
             self.data_loader.verify_combined_data(df, original_rows)
         return df, original_rows
 
+    # ------------------------------------------------------------------
+    # Pattern analysis helpers
+    # ------------------------------------------------------------------
+    def _calculate_stats(self, df: pd.DataFrame) -> tuple[int, int, int, int]:
+        """Return basic statistics for pattern analysis."""
+        return self.analytics_processor.calculate_pattern_stats(df)
+
+    def _analyze_users(
+        self, df: pd.DataFrame, unique_users: int
+    ) -> tuple[list[str], list[str], list[str]]:
+        """Return user activity groupings."""
+        return self.analytics_processor.analyze_user_patterns(df, unique_users)
+
+    def _analyze_devices(
+        self, df: pd.DataFrame, unique_devices: int
+    ) -> tuple[list[str], list[str], list[str]]:
+        """Return device activity groupings."""
+        return self.analytics_processor.analyze_device_patterns(df, unique_devices)
+
+    def _log_analysis_summary(self, result_total: int, original_rows: int) -> None:
+        """Log summary details after pattern analysis."""
+        logger = logging.getLogger(__name__)
+        logger.info("🎉 UNIQUE PATTERNS ANALYSIS COMPLETE")
+        logger.info(f"   Result total_records: {result_total:,}")
+
+        if result_total == ROW_LIMIT_WARNING and result_total != original_rows:
+            logger.error(
+                "❌ STILL SHOWING %s - CHECK DATA PROCESSING!", ROW_LIMIT_WARNING
+            )
+        elif result_total == original_rows:
+            logger.info(f"✅ SUCCESS: Correctly showing {result_total:,} rows")
+        else:
+            logger.warning(
+                "⚠️  Unexpected count: %s (expected %s)",
+                f"{result_total:,}",
+                f"{original_rows:,}",
+            )
+
     def _analyze_patterns(self, df: pd.DataFrame, original_rows: int) -> Dict[str, Any]:
         """Run the unique patterns analysis on ``df``."""
-        (
-            total_records,
-            unique_users,
-            unique_devices,
-            date_span,
-        ) = self.analytics_processor.calculate_pattern_stats(df)
+        total_records, unique_users, unique_devices, date_span = self._calculate_stats(
+            df
+        )
 
-        power_users, regular_users, occasional_users = self.analytics_processor.analyze_user_patterns(
+        power_users, regular_users, occasional_users = self._analyze_users(
             df, unique_users
         )
         (
             high_traffic_devices,
             moderate_traffic_devices,
             low_traffic_devices,
-        ) = self.analytics_processor.analyze_device_patterns(df, unique_devices)
+        ) = self._analyze_devices(df, unique_devices)
 
         total_interactions = self.analytics_processor.count_interactions(df)
         success_rate = self.analytics_processor.calculate_success_rate(df)
@@ -298,22 +335,8 @@ class AnalyticsService(AnalyticsServiceProtocol):
         )
 
         result_total = result["data_summary"]["total_records"]
-        logger = logging.getLogger(__name__)
-        logger.info("🎉 UNIQUE PATTERNS ANALYSIS COMPLETE")
-        logger.info(f"   Result total_records: {result_total:,}")
-
-        if result_total == ROW_LIMIT_WARNING and result_total != original_rows:
-            logger.error("❌ STILL SHOWING %s - CHECK DATA PROCESSING!", ROW_LIMIT_WARNING)
-        elif result_total == original_rows:
-            logger.info(f"✅ SUCCESS: Correctly showing {result_total:,} rows")
-        else:
-            logger.warning(
-                "⚠️  Unexpected count: %s (expected %s)",
-                f"{result_total:,}",
-                f"{original_rows:,}",
-            )
+        self._log_analysis_summary(result_total, original_rows)
         return result
-
 
     @cache_with_lock(ttl_seconds=600)
     def get_unique_patterns_analysis(self, data_source: str | None = None):
@@ -335,28 +358,13 @@ class AnalyticsService(AnalyticsServiceProtocol):
             result = self._analyze_patterns(df, original_rows)
 
             result_total = result["data_summary"]["total_records"]
-            logger.info("🎉 UNIQUE PATTERNS ANALYSIS COMPLETE")
-            logger.info(f"   Result total_records: {result_total:,}")
-
-            if result_total == ROW_LIMIT_WARNING and result_total != original_rows:
-                logger.error(
-                    "❌ STILL SHOWING %s - CHECK DATA PROCESSING!", ROW_LIMIT_WARNING
-                )
-            elif result_total == original_rows:
-                logger.info(f"✅ SUCCESS: Correctly showing {result_total:,} rows")
-            else:
-                logger.warning(
-                    "⚠️  Unexpected count: %s (expected %s)",
-                    f"{result_total:,}",
-                    f"{original_rows:,}",
-                )
+            self._log_analysis_summary(result_total, original_rows)
 
             if self.event_bus:
                 try:
                     self.event_bus.publish("analytics_update", result)
                 except RuntimeError as exc:  # pragma: no cover - best effort
                     logger.debug("Event bus publish failed: %s", exc)
-
 
             return result
 
@@ -429,7 +437,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
         logger.debug("detect_anomalies called with sensitivity=%s", sensitivity)
         return []
 
-    def generate_report(self, report_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_report(
+        self, report_type: str, params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Generate an analytics report."""
         logger.debug(
             "generate_report called with report_type=%s params=%s",
