@@ -1,5 +1,9 @@
-from flask import Flask
+import os
+from flask import Flask, jsonify
 from flask_cors import CORS
+from flask_wtf.csrf import CSRFProtect, generate_csrf
+
+csrf = CSRFProtect()
 
 from api.analytics_endpoints import register_analytics_blueprints
 from upload_endpoint import upload_bp
@@ -12,6 +16,9 @@ from config.constants import API_PORT
 def create_api_app() -> Flask:
     """Create Flask API app with all blueprints registered."""
     app = Flask(__name__)
+    app.config.setdefault("SECRET_KEY", os.getenv("SECRET_KEY", "change-me"))
+
+    csrf.init_app(app)
     CORS(app)
 
     # Third-party analytics demo endpoints
@@ -22,6 +29,11 @@ def create_api_app() -> Flask:
     app.register_blueprint(device_bp)
     app.register_blueprint(mappings_bp)
     app.register_blueprint(settings_bp)
+
+    @app.route("/api/v1/csrf-token", methods=["GET"])
+    def get_csrf_token():
+        """Provide CSRF token for clients."""
+        return jsonify({"csrf_token": generate_csrf()})
 
     return app
 
