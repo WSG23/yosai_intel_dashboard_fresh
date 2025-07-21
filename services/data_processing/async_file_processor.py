@@ -10,14 +10,15 @@ import logging
 import os
 import tempfile
 from pathlib import Path
-from typing import AsyncIterator, Callable, List, Optional
-
-from services.upload.protocols import FileProcessorProtocol
+from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
+from services.task_queue import create_task, get_status
+from services.upload.protocols import FileProcessorProtocol
 from utils.memory_utils import check_memory_limit
+
 from .file_processor import UnicodeFileProcessor
 
 
@@ -135,11 +136,25 @@ class AsyncFileProcessor(FileProcessorProtocol):
             df = asyncio.run(self.process_file(contents, filename))
         return df, ""
 
+    def process_file_async(self, contents: str, filename: str) -> str:
+        """Schedule ``process_file`` in a background task and return job ID."""
+
+        async def _job(progress: Callable[[int], None]):
+            df = await self.process_file(
+                contents, filename, progress_callback=lambda _f, pct: progress(pct)
+            )
+            return {"rows": len(df), "columns": len(df.columns)}
+
+        return create_task(_job)
+
+    def get_job_status(self, job_id: str) -> Dict[str, Any]:
+        """Return current status for ``job_id`` from the task queue."""
+        return get_status(job_id)
+
     @staticmethod
     def _count_lines(path: Path) -> int:
         with open(path, "rb") as fh:
             return max(sum(1 for _ in fh) - 1, 0)
-
 
 
 __all__ = ["AsyncFileProcessor"]
