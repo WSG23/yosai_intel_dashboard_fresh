@@ -380,6 +380,19 @@ is provided in `monitoring/prometheus.yml`. Logstash support is available via
 these data sources. See [performance_monitoring.md](docs/performance_monitoring.md)
 for details.
 
+## Kafka Setup
+
+`docker-compose.kafka.yml` spins up a three-node Kafka cluster with Schema Registry,
+Kafka Connect and a Kafka Manager UI. Start the services with:
+
+```bash
+docker-compose -f docker-compose.kafka.yml up -d
+```
+
+Broker data is persisted in named volumes so messages survive container restarts.
+The configuration sets a replication factor of **3** and enables health checks
+for all components.
+
 ## <span aria-hidden="true">⚡</span> Performance Optimization
 
 Upcoming optimizer modules tune analytics batch sizes and cache behavior.
