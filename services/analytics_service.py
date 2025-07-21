@@ -177,8 +177,11 @@ class AnalyticsService(AnalyticsServiceProtocol):
                 logger.info(f"Forcing uploaded data usage (source was: {source})")
                 return self._process_uploaded_data_directly(uploaded_data)
 
-        except Exception as e:
-            logger.error(f"Uploaded data check failed: {e}")
+        except (ImportError, FileNotFoundError, OSError, RuntimeError) as e:
+            logger.error("Uploaded data check failed: %s", e, exc_info=True)
+        except Exception:
+            logger.exception("Unexpected error during uploaded data check")
+            raise
 
         # Original logic for when no uploaded data
         if source == "sample":
@@ -256,9 +259,13 @@ class AnalyticsService(AnalyticsServiceProtocol):
         if self.event_bus:
             try:
                 self.event_bus.publish(event, payload)
-            except Exception as exc:  # pragma: no cover - best effort
+            except RuntimeError as exc:  # pragma: no cover - best effort
                 logger = logging.getLogger(__name__)
-                logger.debug("Event bus publish failed: %s", exc)
+                logger.debug("Event bus publish failed: %s", exc, exc_info=True)
+            except Exception:
+                logger = logging.getLogger(__name__)
+                logger.exception("Unexpected error during event publish")
+                raise
 
     def _load_patterns_dataframe(
         self, data_source: str | None
