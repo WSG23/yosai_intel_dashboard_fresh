@@ -158,50 +158,35 @@ services:
       - event-ingestion
     restart: unless-stopped
 
-  zookeeper1:
+  zookeeper:
     extends:
       file: docker-compose.kafka.yml
-      service: zookeeper-1
-
-  zookeeper2:
-    extends:
-      file: docker-compose.kafka.yml
-      service: zookeeper-2
-
-  zookeeper3:
-    extends:
-      file: docker-compose.kafka.yml
-      service: zookeeper-3
+      service: zookeeper
 
   kafka1:
     extends:
       file: docker-compose.kafka.yml
-      service: kafka-1
+      service: kafka1
 
   kafka2:
     extends:
       file: docker-compose.kafka.yml
-      service: kafka-2
+      service: kafka2
 
   kafka3:
     extends:
       file: docker-compose.kafka.yml
-      service: kafka-3
+      service: kafka3
 
   schema-registry:
     extends:
       file: docker-compose.kafka.yml
       service: schema-registry
 
-  connect:
+  kafka-init:
     extends:
       file: docker-compose.kafka.yml
-      service: kafka-connect
-
-  kafka-manager:
-    extends:
-      file: docker-compose.kafka.yml
-      service: kafka-manager
+      service: kafka-init
 
   kafka-ui:
     extends:

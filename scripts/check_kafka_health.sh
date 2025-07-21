@@ -7,9 +7,9 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.kafka.yml}"
 
 SERVICES=(
-  zookeeper-1 zookeeper-2 zookeeper-3
-  kafka-1 kafka-2 kafka-3
-  schema-registry kafka-connect kafka-ui
+  zookeeper
+  kafka1 kafka2 kafka3
+  schema-registry kafka-ui kafka-init
 )
 
 MAX_RETRIES=${MAX_RETRIES:-30}

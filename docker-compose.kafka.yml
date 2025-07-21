@@ -1,281 +1,159 @@
 version: '3.8'
 
 services:
-  zookeeper-1:
+  zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
-    hostname: zookeeper-1
-    environment:
-      ZOOKEEPER_SERVER_ID: 1
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-      ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;2181,zookeeper-2:2888:3888;2182,zookeeper-3:2888:3888;2183
+    hostname: zookeeper
+    container_name: yosai-zookeeper
     ports:
       - "2181:2181"
-    volumes:
-      - zookeeper1_data:/var/lib/zookeeper/data
-      - zookeeper1_log:/var/lib/zookeeper/log
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "bash", "-c", "echo ruok | nc 127.0.0.1 2181 | grep imok"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - yosai-network
-
-  zookeeper-2:
-    image: confluentinc/cp-zookeeper:7.5.0
-    hostname: zookeeper-2
     environment:
-      ZOOKEEPER_SERVER_ID: 2
-      ZOOKEEPER_CLIENT_PORT: 2182
+      ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-      ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;2181,zookeeper-2:2888:3888;2182,zookeeper-3:2888:3888;2183
-    ports:
-      - "2182:2182"
     volumes:
-      - zookeeper2_data:/var/lib/zookeeper/data
-      - zookeeper2_log:/var/lib/zookeeper/log
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "bash", "-c", "echo ruok | nc 127.0.0.1 2182 | grep imok"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - yosai-network
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
 
-  zookeeper-3:
-    image: confluentinc/cp-zookeeper:7.5.0
-    hostname: zookeeper-3
-    environment:
-      ZOOKEEPER_SERVER_ID: 3
-      ZOOKEEPER_CLIENT_PORT: 2183
-      ZOOKEEPER_TICK_TIME: 2000
-      ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;2181,zookeeper-2:2888:3888;2182,zookeeper-3:2888:3888;2183
-    ports:
-      - "2183:2183"
-    volumes:
-      - zookeeper3_data:/var/lib/zookeeper/data
-      - zookeeper3_log:/var/lib/zookeeper/log
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "bash", "-c", "echo ruok | nc 127.0.0.1 2183 | grep imok"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - yosai-network
-
-  kafka-1:
+  kafka1:
     image: confluentinc/cp-kafka:7.5.0
-    hostname: kafka-1
+    hostname: kafka1
+    container_name: yosai-kafka1
     depends_on:
-      - zookeeper-1
-      - zookeeper-2
-      - zookeeper-3
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2182,zookeeper-3:2183
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
-      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
-      KAFKA_NUM_PARTITIONS: 3
-      KAFKA_COMPRESSION_TYPE: lz4
-      KAFKA_NUM_NETWORK_THREADS: 3
-      KAFKA_NUM_IO_THREADS: 8
-      KAFKA_SOCKET_SEND_BUFFER_BYTES: 102400
-      KAFKA_SOCKET_RECEIVE_BUFFER_BYTES: 102400
-      KAFKA_SOCKET_REQUEST_MAX_BYTES: 104857600
+      - zookeeper
     ports:
       - "9092:9092"
+      - "19092:19092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_METRICS_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka1:29092
+      KAFKA_CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 3
+      KAFKA_CONFLUENT_METRICS_ENABLE: 'true'
+      KAFKA_CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_LOG_RETENTION_HOURS: 168  # 7 days
     volumes:
-      - kafka1_data:/var/lib/kafka/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "bash", "-c", "cub kafka-ready -b localhost:9092 1 20"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - yosai-network
+      - kafka1-data:/var/lib/kafka/data
 
-  kafka-2:
+  kafka2:
     image: confluentinc/cp-kafka:7.5.0
-    hostname: kafka-2
+    hostname: kafka2
+    container_name: yosai-kafka2
     depends_on:
-      - zookeeper-1
-      - zookeeper-2
-      - zookeeper-3
+      - zookeeper
+    ports:
+      - "9093:9093"
+      - "19093:19093"
     environment:
       KAFKA_BROKER_ID: 2
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2182,zookeeper-3:2183
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:29092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:29093,PLAINTEXT_HOST://localhost:9093
+      KAFKA_METRICS_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
-      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
-      KAFKA_NUM_PARTITIONS: 3
-      KAFKA_COMPRESSION_TYPE: lz4
-      KAFKA_NUM_NETWORK_THREADS: 3
-      KAFKA_NUM_IO_THREADS: 8
-      KAFKA_SOCKET_SEND_BUFFER_BYTES: 102400
-      KAFKA_SOCKET_RECEIVE_BUFFER_BYTES: 102400
-      KAFKA_SOCKET_REQUEST_MAX_BYTES: 104857600
-    ports:
-      - "9093:9092"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka2:29093
+      KAFKA_CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 3
+      KAFKA_CONFLUENT_METRICS_ENABLE: 'true'
+      KAFKA_CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_LOG_RETENTION_HOURS: 168
     volumes:
-      - kafka2_data:/var/lib/kafka/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "bash", "-c", "cub kafka-ready -b localhost:9092 1 20"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - yosai-network
+      - kafka2-data:/var/lib/kafka/data
 
-  kafka-3:
+  kafka3:
     image: confluentinc/cp-kafka:7.5.0
-    hostname: kafka-3
+    hostname: kafka3
+    container_name: yosai-kafka3
     depends_on:
-      - zookeeper-1
-      - zookeeper-2
-      - zookeeper-3
+      - zookeeper
+    ports:
+      - "9094:9094"
+      - "19094:19094"
     environment:
       KAFKA_BROKER_ID: 3
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2182,zookeeper-3:2183
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-3:29092,PLAINTEXT_HOST://localhost:9094
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:29094,PLAINTEXT_HOST://localhost:9094
+      KAFKA_METRICS_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
-      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
-      KAFKA_NUM_PARTITIONS: 3
-      KAFKA_COMPRESSION_TYPE: lz4
-      KAFKA_NUM_NETWORK_THREADS: 3
-      KAFKA_NUM_IO_THREADS: 8
-      KAFKA_SOCKET_SEND_BUFFER_BYTES: 102400
-      KAFKA_SOCKET_RECEIVE_BUFFER_BYTES: 102400
-      KAFKA_SOCKET_REQUEST_MAX_BYTES: 104857600
-    ports:
-      - "9094:9092"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka3:29094
+      KAFKA_CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 3
+      KAFKA_CONFLUENT_METRICS_ENABLE: 'true'
+      KAFKA_CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_LOG_RETENTION_HOURS: 168
     volumes:
-      - kafka3_data:/var/lib/kafka/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "bash", "-c", "cub kafka-ready -b localhost:9092 1 20"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - yosai-network
+      - kafka3-data:/var/lib/kafka/data
 
   schema-registry:
     image: confluentinc/cp-schema-registry:7.5.0
+    hostname: schema-registry
+    container_name: yosai-schema-registry
     depends_on:
-      - kafka-1
-      - kafka-2
-      - kafka-3
-    environment:
-      SCHEMA_REGISTRY_HOST_NAME: schema-registry
-      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-1:9092,PLAINTEXT://kafka-2:9093,PLAINTEXT://kafka-3:9094
+      - kafka1
+      - kafka2
+      - kafka3
     ports:
       - "8081:8081"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - yosai-network
-
-  kafka-connect:
-    image: confluentinc/cp-kafka-connect:7.5.0
-    depends_on:
-      - kafka-1
-      - kafka-2
-      - kafka-3
-      - schema-registry
     environment:
-      CONNECT_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9093,kafka-3:9094
-      CONNECT_REST_PORT: 8083
-      CONNECT_GROUP_ID: compose-connect-group
-      CONNECT_CONFIG_STORAGE_TOPIC: docker-connect-configs
-      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 3
-      CONNECT_OFFSET_STORAGE_TOPIC: docker-connect-offsets
-      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 3
-      CONNECT_STATUS_STORAGE_TOPIC: docker-connect-status
-      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 3
-      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
-      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.storage.StringConverter
-      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
-      CONNECT_PLUGIN_PATH: /usr/share/java,/etc/kafka-connect/jars
-      CONNECT_LOG4J_ROOT_LOGLEVEL: INFO
-      CONNECT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-    ports:
-      - "8083:8083"
-    volumes:
-      - connect_data:/var/lib/kafka-connect
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083/connectors"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - yosai-network
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka1:29092,kafka2:29093,kafka3:29094'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
+    container_name: yosai-kafka-ui
     depends_on:
-      - kafka-1
-      - kafka-2
-      - kafka-3
+      - kafka1
+      - kafka2
+      - kafka3
       - schema-registry
-    environment:
-      KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-1:9092,kafka-2:9093,kafka-3:9094
-      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
     ports:
       - "8080:8080"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - yosai-network
+    environment:
+      KAFKA_CLUSTERS_0_NAME: yosai-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:29092,kafka2:29093,kafka3:29094
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
+
+  # Initialize topics
+  kafka-init:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      # Wait for Kafka to be ready
+      echo 'Waiting for Kafka...'
+      cub kafka-ready -b kafka1:29092 3 60
+
+      # Create topics
+      echo 'Creating topics...'
+      kafka-topics --create --if-not-exists --bootstrap-server kafka1:29092 --partitions 6 --replication-factor 3 --topic access-events
+      kafka-topics --create --if-not-exists --bootstrap-server kafka1:29092 --partitions 3 --replication-factor 3 --topic analytics-requests
+      kafka-topics --create --if-not-exists --bootstrap-server kafka1:29092 --partitions 3 --replication-factor 3 --topic alerts
+      kafka-topics --create --if-not-exists --bootstrap-server kafka1:29092 --partitions 3 --replication-factor 3 --topic audit-logs
+      
+      # Configure retention
+      kafka-configs --bootstrap-server kafka1:29092 --alter --entity-type topics --entity-name access-events --add-config retention.ms=604800000
+      kafka-configs --bootstrap-server kafka1:29092 --alter --entity-type topics --entity-name analytics-requests --add-config retention.ms=2592000000
+      
+      echo 'Topics created successfully!'
+      "
 
 volumes:
-  zookeeper1_data:
-  zookeeper1_log:
-  zookeeper2_data:
-  zookeeper2_log:
-  zookeeper3_data:
-  zookeeper3_log:
-  kafka1_data:
-  kafka2_data:
-  kafka3_data:
-  connect_data:
-
-networks:
-  yosai-network:
+  zookeeper-data:
+  zookeeper-logs:
+  kafka1-data:
+  kafka2-data:
+  kafka3-data:
