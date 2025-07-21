@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterator, List
 import numpy as np
 import pandas as pd
 
-from config.constants import AnalysisThresholds, AnalyticsConstants
+from config.constants import AnalysisThresholds, AnalyticsConstants, DEFAULT_CHUNK_SIZE
 
 logger = logging.getLogger(__name__)
 
@@ -24,16 +24,16 @@ class ChunkedAnalyticsController:
 
             if hasattr(dynamic_config, "analytics"):
                 self.chunk_size = chunk_size or getattr(
-                    dynamic_config.analytics, "chunk_size", 50000
+                    dynamic_config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE
                 )
                 self.max_workers = max_workers or getattr(
                     dynamic_config.analytics, "max_workers", 4
                 )
             else:
-                self.chunk_size = chunk_size or 50000
+                self.chunk_size = chunk_size or DEFAULT_CHUNK_SIZE
                 self.max_workers = max_workers or 4
         except Exception:
-            self.chunk_size = chunk_size or 50000
+            self.chunk_size = chunk_size or DEFAULT_CHUNK_SIZE
             self.max_workers = max_workers or 4
 
         # Ensure chunk size is at least the configured minimum

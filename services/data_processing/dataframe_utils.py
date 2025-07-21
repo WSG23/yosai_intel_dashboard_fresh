@@ -9,6 +9,7 @@ from typing import Optional, Tuple
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
+from config.constants import DEFAULT_CHUNK_SIZE
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
 from utils.file_utils import safe_decode_with_unicode_handling
@@ -26,7 +27,7 @@ def process_dataframe(
     try:
         filename_lower = filename.lower()
         monitor = get_performance_monitor()
-        chunk_size = getattr(config.analytics, "chunk_size", 50000)
+        chunk_size = getattr(config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE)
 
         if filename_lower.endswith(".csv"):
             for encoding in ["utf-8", "latin-1", "cp1252"]:

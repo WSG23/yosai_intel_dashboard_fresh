@@ -29,6 +29,7 @@ import pandas as pd
 from dash import Input, Output, State, callback_context, dash_table, dcc, html
 
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from config.constants import DEFAULT_CHUNK_SIZE
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -83,7 +84,7 @@ except ImportError:
             return 50
 
         def get_upload_chunk_size(self) -> int:
-            return 50000
+            return DEFAULT_CHUNK_SIZE
 
 
 class AdvancedUnicodeHandler:

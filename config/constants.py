@@ -3,6 +3,9 @@
 from dataclasses import dataclass
 import os
 
+# Default chunk size used across services when reading or uploading large files
+DEFAULT_CHUNK_SIZE: int = 50_000
+
 
 class SecurityLimits:
     """Security-related validation limits."""
