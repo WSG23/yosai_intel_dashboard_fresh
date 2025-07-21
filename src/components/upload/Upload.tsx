@@ -4,7 +4,13 @@ import { Upload as UploadIcon } from 'lucide-react';
 import { FilePreview } from './FilePreview';
 import { ColumnMappingModal } from './ColumnMappingModal';
 import { DeviceMappingModal } from './DeviceMappingModal';
-import { UploadedFile, ProcessingStatus as Status, FileData } from './types';
+import { UploadedFile, ProcessingStatus as Status } from './types';
+import axios from 'axios/dist/node/axios.cjs';
+
+const CONCURRENCY_LIMIT = parseInt(
+  process.env.REACT_APP_UPLOAD_CONCURRENCY || '3',
+  10
+);
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
@@ -48,18 +54,30 @@ const Upload: React.FC = () => {
     const formData = new FormData();
     formData.append('file', uploadedFile.file);
 
+    setFiles((prev) =>
+      prev.map((f) =>
+        f.id === uploadedFile.id
+          ? { ...f, status: 'uploading' as Status, progress: 0, error: undefined }
+          : f
+      )
+    );
+
     try {
-      const response = await fetch(`${API_URL}/api/v1/upload`, {
-        method: 'POST',
-        body: formData,
+      const response = await axios.post(`${API_URL}/api/v1/upload`, formData, {
+        onUploadProgress: (evt) => {
+          if (evt.total) {
+            const progress = Math.round((evt.loaded * 100) / evt.total);
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === uploadedFile.id ? { ...f, progress } : f
+              )
+            );
+          }
+        },
       });
 
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
-      }
+      const data = response.data;
 
-      const data = await response.json();
-      
       setFiles((prev) =>
         prev.map((f) =>
           f.id === uploadedFile.id
@@ -68,7 +86,6 @@ const Upload: React.FC = () => {
         )
       );
 
-      // Show mapping modal based on file type
       if (data.requiresColumnMapping) {
         setCurrentFile(uploadedFile);
         setFileData(data.fileData || null);
@@ -83,7 +100,11 @@ const Upload: React.FC = () => {
       setFiles((prev) =>
         prev.map((f) =>
           f.id === uploadedFile.id
-            ? { ...f, status: 'error' as Status, error: (error as Error).message || "Unknown error" }
+            ? {
+                ...f,
+                status: 'error' as Status,
+                error: (error as Error).message || 'Unknown error',
+              }
             : f
         )
       );
@@ -92,19 +113,18 @@ const Upload: React.FC = () => {
 
   const uploadAllFiles = async () => {
     setUploading(true);
-    const pendingFiles = files.filter((f) => f.status === 'pending');
-    
-    for (const file of pendingFiles) {
-      setFiles((prev) =>
-        prev.map((f) =>
-          f.id === file.id
-            ? { ...f, status: 'uploading' as Status }
-            : f
-        )
-      );
-      await uploadFile(file);
-    }
-    
+    const pendingFiles = files.filter((f) => f.status === 'pending' || f.status === 'error');
+    let index = 0;
+
+    const uploadNext = async (): Promise<void> => {
+      if (index >= pendingFiles.length) return;
+      const next = pendingFiles[index++];
+      await uploadFile(next);
+      await uploadNext();
+    };
+
+    const workers = Array.from({ length: Math.min(CONCURRENCY_LIMIT, pendingFiles.length) }, () => uploadNext());
+    await Promise.all(workers);
     setUploading(false);
   };
 
