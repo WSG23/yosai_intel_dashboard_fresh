@@ -68,3 +68,39 @@ def test_upload_files_uses_asyncio_run(monkeypatch):
     assert resp.status_code == 200
     assert used.get("called") is True
     assert service.called_args == ([content], ["test.csv"])
+
+class FailingUploadService:
+    def __init__(self):
+        self.store = DummyStore()
+
+    async def process_uploaded_files(self, contents, filenames):
+        raise RuntimeError("boom")
+
+
+def test_upload_returns_error_on_exception(monkeypatch):
+    fake_reg = types.ModuleType("config.service_registration")
+    fake_reg.register_upload_services = lambda c: None
+    monkeypatch.setitem(sys.modules, "config.service_registration", fake_reg)
+
+    cont = ServiceContainer()
+    service = FailingUploadService()
+    cont.register_singleton("upload_processor", service)
+
+    container_mod = types.ModuleType("core.container")
+    container_mod.container = cont
+    monkeypatch.setitem(sys.modules, "core.container", container_mod)
+
+    import importlib
+    upload_ep = importlib.import_module("upload_endpoint")
+
+    app = Flask(__name__)
+    app.register_blueprint(upload_ep.upload_bp)
+    monkeypatch.setattr(upload_ep, "container", cont, raising=False)
+
+    client = app.test_client()
+    resp = client.post(
+        "/api/v1/upload",
+        json={"contents": ["data:text/csv;base64,YSx6"], "filenames": ["t.csv"]},
+    )
+    assert resp.status_code == 500
+    assert resp.get_json()["error"] == "boom"
