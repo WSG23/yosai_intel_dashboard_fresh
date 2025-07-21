@@ -23,16 +23,17 @@ from core.protocols import (
 )
 from core.security_validator import SecurityValidator
 from services.analytics.protocols import DataProcessorProtocol
-from services.analytics_processor import AnalyticsProcessor
 from services.analytics_summary import generate_sample_analytics
 from services.data_loader import DataLoader
 from services.data_processing.processor import Processor
-from services.summary_reporter import format_patterns_result
 from services.interfaces import get_upload_data_service
 from services.upload_data_service import UploadDataService
 from services.helpers.database_initializer import initialize_database
 from services.controllers.upload_controller import UploadProcessingController
-from services.utils.event_publisher import publish_event
+from services.data_handler import DataHandler
+from services.database_retriever import DatabaseAnalyticsRetriever
+from services.summary_report_generator import SummaryReportGenerator
+from services.event_publisher import publish_event
 
 
 class ConfigProviderProtocol(Protocol):
@@ -122,13 +123,15 @@ class AnalyticsService(AnalyticsServiceProtocol):
             self.db_helper,
             self.summary_reporter,
         ) = initialize_database(self.database)
-        self.analytics_processor = AnalyticsProcessor()
         self.data_loader = DataLoader(
             self.upload_processor,
             self.processor,
             ROW_LIMIT_WARNING,
             LARGE_DATA_THRESHOLD,
         )
+        self.data_handler = DataHandler(self.upload_controller)
+        self.database_retriever = DatabaseAnalyticsRetriever(self.db_helper)
+        self.report_generator = SummaryReportGenerator()
 
     def _initialize_database(self):
         """Initialize database connection via helper."""
@@ -177,38 +180,38 @@ class AnalyticsService(AnalyticsServiceProtocol):
 
     def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
         """Load uploaded data from the file upload page."""
-        return self.upload_controller.load_uploaded_data()
+        return self.data_handler.load_uploaded_data()
 
     def clean_uploaded_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply standard column mappings and basic cleaning."""
-        return self.upload_controller.clean_uploaded_dataframe(df)
+        return self.data_handler.clean_uploaded_dataframe(df)
 
     def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Create a summary dictionary from a combined DataFrame."""
-        return self.upload_controller.summarize_dataframe(df)
+        return self.data_handler.summarize_dataframe(df)
 
     def analyze_with_chunking(
         self, df: pd.DataFrame, analysis_types: List[str]
     ) -> Dict[str, Any]:
         """Analyze a DataFrame using chunked processing."""
-        return self.upload_controller.analyze_with_chunking(df, analysis_types)
+        return self.data_handler.analyze_with_chunking(df, analysis_types)
 
     def diagnose_data_flow(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Diagnostic method to check data processing flow."""
-        return self.upload_controller.diagnose_data_flow(df)
+        return self.data_handler.diagnose_data_flow(df)
 
     def _get_real_uploaded_data(self) -> Dict[str, Any]:
         """Load and summarize all uploaded records."""
-        return self.upload_controller.get_real_uploaded_data()
+        return self.data_handler.get_real_uploaded_data()
 
     def _get_analytics_with_fixed_processor(self) -> Dict[str, Any]:
         """Get analytics using the sample file processor."""
-        return self.upload_controller.get_analytics_with_fixed_processor()
+        return self.data_handler.get_analytics_with_fixed_processor()
 
     @cache_with_lock(ttl_seconds=600)
     def _get_database_analytics(self) -> Dict[str, Any]:
         """Get analytics from database."""
-        return self.db_helper.get_analytics()
+        return self.database_retriever.get_analytics()
 
     @cache_with_lock(ttl_seconds=300)
     def get_dashboard_summary(self) -> Dict[str, Any]:
@@ -226,16 +229,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self, payload: Dict[str, Any], event: str = "analytics_update"
     ) -> None:
         """Publish ``payload`` to the event bus if available."""
-        if self.event_bus:
-            try:
-                self.event_bus.publish(event, payload)
-            except RuntimeError as exc:  # pragma: no cover - best effort
-                logger = logging.getLogger(__name__)
-                logger.debug("Event bus publish failed: %s", exc, exc_info=True)
-            except Exception:
-                logger = logging.getLogger(__name__)
-                logger.exception("Unexpected error during event publish")
-                raise
+        publish_event(self.event_bus, payload, event)
 
     def _load_patterns_dataframe(
         self, data_source: str | None
@@ -251,71 +245,27 @@ class AnalyticsService(AnalyticsServiceProtocol):
     # ------------------------------------------------------------------
     def _calculate_stats(self, df: pd.DataFrame) -> tuple[int, int, int, int]:
         """Return basic statistics for pattern analysis."""
-        return self.analytics_processor.calculate_pattern_stats(df)
+        return self.report_generator.calculate_stats(df)
 
     def _analyze_users(
         self, df: pd.DataFrame, unique_users: int
     ) -> tuple[list[str], list[str], list[str]]:
         """Return user activity groupings."""
-        return self.analytics_processor.analyze_user_patterns(df, unique_users)
+        return self.report_generator.analyze_users(df, unique_users)
 
     def _analyze_devices(
         self, df: pd.DataFrame, unique_devices: int
     ) -> tuple[list[str], list[str], list[str]]:
         """Return device activity groupings."""
-        return self.analytics_processor.analyze_device_patterns(df, unique_devices)
+        return self.report_generator.analyze_devices(df, unique_devices)
 
     def _log_analysis_summary(self, result_total: int, original_rows: int) -> None:
         """Log summary details after pattern analysis."""
-        logger = logging.getLogger(__name__)
-        logger.info("🎉 UNIQUE PATTERNS ANALYSIS COMPLETE")
-        logger.info(f"   Result total_records: {result_total:,}")
-
-        if result_total == ROW_LIMIT_WARNING and result_total != original_rows:
-            logger.error(
-                "❌ STILL SHOWING %s - CHECK DATA PROCESSING!", ROW_LIMIT_WARNING
-            )
-        elif result_total == original_rows:
-            logger.info(f"✅ SUCCESS: Correctly showing {result_total:,} rows")
-        else:
-            logger.warning(
-                "⚠️  Unexpected count: %s (expected %s)",
-                f"{result_total:,}",
-                f"{original_rows:,}",
-            )
+        self.report_generator.log_analysis_summary(result_total, original_rows)
 
     def _analyze_patterns(self, df: pd.DataFrame, original_rows: int) -> Dict[str, Any]:
         """Run the unique patterns analysis on ``df``."""
-        total_records, unique_users, unique_devices, date_span = self._calculate_stats(
-            df
-        )
-
-        power_users, regular_users, occasional_users = self._analyze_users(
-            df, unique_users
-        )
-        (
-            high_traffic_devices,
-            moderate_traffic_devices,
-            low_traffic_devices,
-        ) = self._analyze_devices(df, unique_devices)
-
-        total_interactions = self.analytics_processor.count_interactions(df)
-        success_rate = self.analytics_processor.calculate_success_rate(df)
-
-        result = format_patterns_result(
-            total_records,
-            unique_users,
-            unique_devices,
-            date_span,
-            power_users,
-            regular_users,
-            occasional_users,
-            high_traffic_devices,
-            moderate_traffic_devices,
-            low_traffic_devices,
-            total_interactions,
-            success_rate,
-        )
+        result = self.report_generator.analyze_patterns(df)
 
         result_total = result["data_summary"]["total_records"]
         self._log_analysis_summary(result_total, original_rows)
