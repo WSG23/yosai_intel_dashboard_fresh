@@ -4,16 +4,24 @@
 The script copies tables using chunked inserts and validates each chunk via
 row count and checksum comparison. Progress for the ``access_events`` table is
 shown with ``tqdm``. A ``migration_checkpoint`` table stores the last processed
-ID to allow resuming the migration.
+ID to allow resuming the migration. Additional tables like ``people``, ``doors``
+and ``facilities`` are included. Timestamp columns are converted to
+``TIMESTAMPTZ`` and UUIDs are normalised. Metadata JSON is cleaned before
+insertion. A ``--rollback`` option removes migrated data and checkpoints so the
+migration can be restarted from scratch.
 """
 
 from __future__ import annotations
 
 import argparse
 import hashlib
+import json
+import logging
 import os
 import threading
 import time
+import uuid
+from datetime import datetime, timezone
 from typing import Any, Iterable, List, Mapping, Sequence, cast
 
 import psycopg2
@@ -23,6 +31,12 @@ from tqdm import tqdm
 
 CHUNK_SIZE = 10_000
 CHECKPOINT_TABLE = "migration_checkpoint"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+)
+LOG = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -74,11 +88,52 @@ def update_checkpoint(cur: cursor, table: str, last_id: int) -> None:
     )
 
 
+def rollback_table(conn: connection, table: str) -> None:
+    """Delete data and checkpoint for the given table."""
+    with conn.cursor() as cur:
+        ensure_checkpoint_table(cur)
+        LOG.info("Rolling back table %s", table)
+        cur.execute(f"DELETE FROM {table}")
+        cur.execute(
+            f"DELETE FROM {CHECKPOINT_TABLE} WHERE table_name = %s",
+            (table,),
+        )
+    conn.commit()
+
+
 def rows_checksum(rows: Iterable[Mapping[str, Any] | Sequence[Any]]) -> str:
     m = hashlib.md5()
     for row in rows:
         m.update(str(tuple(row)).encode())
     return m.hexdigest()
+
+
+def normalize_row(row: dict[str, Any]) -> None:
+    """Normalize timestamps, UUIDs and JSON metadata in-place."""
+    for key, value in list(row.items()):
+        if isinstance(value, datetime) and value.tzinfo is None:
+            row[key] = value.replace(tzinfo=timezone.utc)
+        elif isinstance(value, str):
+            try:
+                row[key] = str(uuid.UUID(value))
+                continue
+            except (ValueError, TypeError):
+                pass
+            try:
+                obj = json.loads(value)
+            except Exception:
+                continue
+            if isinstance(obj, dict):
+                row[key] = {k: v for k, v in obj.items() if v is not None}
+            else:
+                row[key] = obj
+        elif isinstance(value, dict):
+            row[key] = {k: v for k, v in value.items() if v is not None}
+
+
+def normalize_rows(rows: List[dict[str, Any]]) -> None:
+    for row in rows:
+        normalize_row(row)
 
 
 # ---------------------------------------------------------------------------
@@ -144,6 +199,7 @@ def migrate_table(
     ) as tgt:
         ensure_checkpoint_table(tgt)
         last_id = get_checkpoint(tgt, table) if resume else 0
+        LOG.info("Starting migration for %s at id %s", table, last_id)
         if table == "access_events":
             src.execute(f"SELECT COUNT(*) FROM {table}")
             total = src.fetchone()[0]
@@ -154,6 +210,7 @@ def migrate_table(
             rows = fetch_chunk(src, table, last_id, CHUNK_SIZE)
             if not rows:
                 break
+            normalize_rows(rows)
             start_id = rows[0]["id"]
             last_id = rows[-1]["id"]
             checksum = rows_checksum(rows)
@@ -162,12 +219,20 @@ def migrate_table(
                 validate_chunk(tgt, table, start_id - 1, last_id, checksum, len(rows))
                 update_checkpoint(tgt, table, last_id)
                 target_conn.commit()
+            LOG.info(
+                "migrated %s rows for %s (id %s-%s)",
+                len(rows),
+                table,
+                start_id,
+                last_id,
+            )
             if pbar:
                 pbar.update(len(rows))
             if test_mode:
                 break
         if pbar:
             pbar.close()
+        LOG.info("Completed migration for %s", table)
 
 
 def migrate_other_tables(
@@ -194,17 +259,17 @@ def run_verification(target_conn: connection) -> None:
     with target_conn.cursor() as cur:
         cur.execute("SELECT COUNT(*) FROM access_events")
         count = cur.fetchone()[0]
-        print(f"access_events rows: {count}")
+        LOG.info("access_events rows: %s", count)
         cur.execute(
             "SELECT table_name FROM information_schema.tables "
             "WHERE table_schema='public'"
         )
         tables = [r[0] for r in cur.fetchall()]
-        print("Tables:", ", ".join(tables))
+        LOG.info("Tables: %s", ", ".join(tables))
         cur.execute("SELECT * FROM timescaledb_information.compressed_hypertables")
-        print("Compressed hypertables:")
+        LOG.info("Compressed hypertables:")
         for row in cur.fetchall():
-            print(row)
+            LOG.info(str(row))
 
 
 # ---------------------------------------------------------------------------
@@ -217,6 +282,11 @@ def main() -> None:
     parser.add_argument("--resume", action="store_true", help="Resume from checkpoint")
     parser.add_argument(
         "--test-mode", action="store_true", help="Run a single chunk without writing"
+    )
+    parser.add_argument(
+        "--rollback",
+        action="store_true",
+        help="Clear target tables and checkpoints before migrating",
     )
     parser.add_argument(
         "--source-dsn",
@@ -234,8 +304,31 @@ def main() -> None:
     tgt_conn = connect_with_retry(args.target_dsn)
 
     try:
+        all_tables = [
+            "access_events",
+            "users",
+            "devices",
+            "alerts",
+            "people",
+            "doors",
+            "facilities",
+            "anomaly_detections",
+            "incident_tickets",
+        ]
+        if args.rollback:
+            for table in all_tables:
+                rollback_table(tgt_conn, table)
         migrate_table(src_conn, tgt_conn, "access_events", args.resume, args.test_mode)
-        other_tables = ["users", "devices", "alerts"]
+        other_tables = [
+            "users",
+            "devices",
+            "alerts",
+            "people",
+            "doors",
+            "facilities",
+            "anomaly_detections",
+            "incident_tickets",
+        ]
         migrate_other_tables(
             src_conn, tgt_conn, other_tables, args.resume, args.test_mode
         )
