@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional, Protocol
 import pandas as pd
 
 from advanced_cache import cache_with_lock
-from config.database_exceptions import DatabaseError
 from config.dynamic_config import dynamic_config
 from core.protocols import (
     AnalyticsServiceProtocol,
@@ -24,14 +23,16 @@ from core.protocols import (
 )
 from core.security_validator import SecurityValidator
 from services.analytics.protocols import DataProcessorProtocol
-from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.analytics_processor import AnalyticsProcessor
 from services.analytics_summary import generate_sample_analytics
 from services.data_loader import DataLoader
 from services.data_processing.processor import Processor
-from services.db_analytics_helper import DatabaseAnalyticsHelper
-from services.summary_reporter import SummaryReporter, format_patterns_result
-
+from services.summary_reporter import format_patterns_result
+from services.interfaces import get_upload_data_service
+from services.upload_data_service import UploadDataService
+from services.helpers.database_initializer import initialize_database
+from services.controllers.upload_controller import UploadProcessingController
+from services.utils.event_publisher import publish_event
 
 
 class ConfigProviderProtocol(Protocol):
@@ -97,8 +98,6 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self.event_bus = event_bus
         self.storage = storage
         self.upload_data_service = upload_data_service or get_upload_data_service()
-        self.database_manager: Optional[Any] = None
-        self._initialize_database()
         self.validation_service = SecurityValidator()
         if data_processor is None:
             self.processor = Processor(validator=self.validation_service)
@@ -112,12 +111,17 @@ class AnalyticsService(AnalyticsServiceProtocol):
 
         self.file_handler = UnifiedFileValidator()
 
-        self.upload_processor = UploadAnalyticsProcessor(
+        self.upload_controller = UploadProcessingController(
             self.validation_service,
             self.processor,
+            self.upload_data_service,
         )
-        self.db_helper = DatabaseAnalyticsHelper(self.database_manager)
-        self.summary_reporter = SummaryReporter(self.database_manager)
+        self.upload_processor = self.upload_controller.upload_processor
+        (
+            self.database_manager,
+            self.db_helper,
+            self.summary_reporter,
+        ) = initialize_database(self.database)
         self.analytics_processor = AnalyticsProcessor()
         self.data_loader = DataLoader(
             self.upload_processor,
@@ -127,51 +131,23 @@ class AnalyticsService(AnalyticsServiceProtocol):
         )
 
     def _initialize_database(self):
-        """Initialize database connection"""
-        try:
-            if self.database is not None:
-                self.database_manager = self.database
-                self.db_helper = DatabaseAnalyticsHelper(self.database)
-                self.summary_reporter = SummaryReporter(self.database)
-                return
-
-            from config import get_database_config
-            from config.database_manager import DatabaseConfig as ManagerConfig
-            from config.database_manager import DatabaseManager
-
-            cfg = get_database_config()
-            manager_cfg = ManagerConfig(
-                type=cfg.type,
-                host=cfg.host,
-                port=cfg.port,
-                name=cfg.name,
-                user=cfg.user,
-                password=cfg.password,
-            )
-            self.database_manager = DatabaseManager(manager_cfg)
-            logger.info("Database manager initialized")
-            self.db_helper = DatabaseAnalyticsHelper(self.database_manager)
-            self.summary_reporter = SummaryReporter(self.database_manager)
-        except (ImportError, DatabaseError) as e:
-            logger.warning(f"Database initialization failed: {e}")
-            self.database_manager = None
-            self.db_helper = DatabaseAnalyticsHelper(None)
-            self.summary_reporter = SummaryReporter(None)
+        """Initialize database connection via helper."""
+        (
+            self.database_manager,
+            self.db_helper,
+            self.summary_reporter,
+        ) = initialize_database(self.database)
 
     def get_analytics_from_uploaded_data(self) -> Dict[str, Any]:
         """Get analytics from uploaded files using helper."""
-        return self.upload_processor.get_analytics_from_uploaded_data()
+        return self.upload_controller.get_analytics_from_uploaded_data()
 
     def get_analytics_by_source(self, source: str) -> Dict[str, Any]:
         """Get analytics from specified source with forced uploaded data check"""
 
         # FORCE CHECK: If uploaded data exists, use it regardless of source
         try:
-            from services.interfaces import get_upload_data_service
-            from services.upload_data_service import get_uploaded_data
-
-            uploaded_data = get_uploaded_data(get_upload_data_service())
-
+            uploaded_data = self.load_uploaded_data()
 
             if uploaded_data and source in ["uploaded", "sample"]:
                 logger.info(f"Forcing uploaded data usage (source was: {source})")
@@ -194,39 +170,37 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self, uploaded_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Process uploaded files using chunked streaming."""
-        return self.upload_processor._process_uploaded_data_directly(uploaded_data)
+        return self.upload_controller.process_uploaded_data_directly(uploaded_data)
 
     def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
         """Load uploaded data from the file upload page."""
-        if self.upload_data_service:
-            return self.upload_data_service.get_uploaded_data()
-        return self.upload_processor.load_uploaded_data()
+        return self.upload_controller.load_uploaded_data()
 
     def clean_uploaded_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply standard column mappings and basic cleaning."""
-        return self.upload_processor.clean_uploaded_dataframe(df)
+        return self.upload_controller.clean_uploaded_dataframe(df)
 
     def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Create a summary dictionary from a combined DataFrame."""
-        return self.upload_processor.summarize_dataframe(df)
+        return self.upload_controller.summarize_dataframe(df)
 
     def analyze_with_chunking(
         self, df: pd.DataFrame, analysis_types: List[str]
     ) -> Dict[str, Any]:
         """Analyze a DataFrame using chunked processing."""
-        return self.upload_processor.analyze_with_chunking(df, analysis_types)
+        return self.upload_controller.analyze_with_chunking(df, analysis_types)
 
     def diagnose_data_flow(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Diagnostic method to check data processing flow."""
-        return self.upload_processor.diagnose_data_flow(df)
+        return self.upload_controller.diagnose_data_flow(df)
 
     def _get_real_uploaded_data(self) -> Dict[str, Any]:
         """Load and summarize all uploaded records."""
-        return self.upload_processor._get_real_uploaded_data()
+        return self.upload_controller.get_real_uploaded_data()
 
     def _get_analytics_with_fixed_processor(self) -> Dict[str, Any]:
         """Get analytics using the sample file processor."""
-        return self.upload_processor._get_analytics_with_fixed_processor()
+        return self.upload_controller.get_analytics_with_fixed_processor()
 
     @cache_with_lock(ttl_seconds=600)
     def _get_database_analytics(self) -> Dict[str, Any]:
@@ -238,11 +212,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         """Get a basic dashboard summary"""
         try:
             summary = self.get_analytics_from_uploaded_data()
-            if self.event_bus:
-                try:
-                    self.event_bus.publish("analytics_update", summary)
-                except RuntimeError as exc:  # pragma: no cover - best effort
-                    logger.debug("Event bus publish failed: %s", exc)
+            publish_event(self.event_bus, summary)
 
             return summary
         except RuntimeError as e:
@@ -253,12 +223,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self, payload: Dict[str, Any], event: str = "analytics_update"
     ) -> None:
         """Publish ``payload`` to the event bus if available."""
-        if self.event_bus:
-            try:
-                self.event_bus.publish(event, payload)
-            except Exception as exc:  # pragma: no cover - best effort
-                logger = logging.getLogger(__name__)
-                logger.debug("Event bus publish failed: %s", exc)
+        publish_event(self.event_bus, payload, event)
 
     def _load_patterns_dataframe(
         self, data_source: str | None
@@ -366,11 +331,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
             result_total = result["data_summary"]["total_records"]
             self._log_analysis_summary(result_total, original_rows)
 
-            if self.event_bus:
-                try:
-                    self.event_bus.publish("analytics_update", result)
-                except RuntimeError as exc:  # pragma: no cover - best effort
-                    logger.debug("Event bus publish failed: %s", exc)
+            publish_event(self.event_bus, result)
 
             return result
 

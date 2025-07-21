@@ -29,3 +29,15 @@ export interface DeviceMapping {
   is_restricted: boolean;
   security_level: number;
 }
+
+export interface AISuggestion {
+  field: string;
+  confidence: number;
+}
+
+export interface FileData {
+  filename: string;
+  columns: string[];
+  ai_suggestions: Record<string, AISuggestion>;
+  sample_data?: Record<string, any[]>;
+}

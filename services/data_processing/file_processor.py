@@ -13,6 +13,7 @@ import pandas as pd
 
 from config.config import get_analytics_config
 from config.dynamic_config import dynamic_config
+from config.constants import DEFAULT_CHUNK_SIZE
 from core.performance import get_performance_monitor
 from core.unicode import safe_format_number
 from core.performance_file_processor import PerformanceFileProcessor
@@ -63,7 +64,7 @@ class UnicodeFileProcessor:
         """Load a potentially huge CSV file via :class:`PerformanceFileProcessor`."""
 
         if chunk_size is None:
-            chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
+            chunk_size = getattr(dynamic_config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE)
 
         processor = PerformanceFileProcessor(
             chunk_size=chunk_size, max_memory_mb=max_memory_mb
@@ -87,7 +88,7 @@ class UnicodeFileProcessor:
         """
 
         if chunk_size is None:
-            chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
+            chunk_size = getattr(dynamic_config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE)
 
         obj_cols = list(df.select_dtypes(include=["object"]).columns)
 
@@ -149,7 +150,7 @@ def process_uploaded_file(
         # Safe Unicode processing
         text_content = UnicodeFileProcessor.safe_decode_content(decoded)
 
-        chunk_size = getattr(config.analytics, "chunk_size", 50000)
+        chunk_size = getattr(config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE)
         monitor = get_performance_monitor()
 
         # Process based on file type

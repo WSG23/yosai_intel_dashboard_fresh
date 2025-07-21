@@ -7,6 +7,9 @@ from pathlib import Path
 
 from .ai_mapping_store import ai_mapping_store
 from .analytics.upload_analytics import UploadAnalyticsProcessor
+from .controllers.upload_controller import UploadProcessingController
+from .helpers.database_initializer import initialize_database
+from .utils.event_publisher import publish_event
 from .analytics_generator import AnalyticsGenerator
 from .analytics_processor import AnalyticsProcessor
 from .async_file_processor import AsyncFileProcessor
@@ -29,7 +32,11 @@ logger = logging.getLogger(__name__)
 
 # Expose optional compliance services if the plugin is available
 plugin_compliance_path = (
-    Path(__file__).resolve().parent / ".." / "plugins" / "compliance_plugin" / "services"
+    Path(__file__).resolve().parent
+    / ".."
+    / "plugins"
+    / "compliance_plugin"
+    / "services"
 ).resolve()
 if plugin_compliance_path.is_dir():
     module_name = __name__ + ".compliance"
@@ -65,6 +72,9 @@ __all__ = [
     "regular_analysis",
     "ai_mapping_store",
     "UploadAnalyticsProcessor",
+    "UploadProcessingController",
+    "initialize_database",
+    "publish_event",
     "AsyncFileProcessor",
     "DatabaseAnalyticsHelper",
     "SummaryReporter",

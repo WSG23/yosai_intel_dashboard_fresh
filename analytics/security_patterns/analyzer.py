@@ -18,6 +18,7 @@ import pandas as pd
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from database.baseline_metrics import BaselineMetricsDB
 from utils.sklearn_compat import optional_import
+from config.constants import DEFAULT_CHUNK_SIZE
 
 from .chunk_processor import ChunkedDataProcessor, MemoryConfig
 
@@ -781,7 +782,7 @@ class PaginatedAnalyzer(SecurityPatternsAnalyzer):
     def __init__(
         self,
         *,
-        chunk_size: int = 50000,
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
         max_memory_mb: int = 500,
         **kwargs: Any,
     ) -> None:

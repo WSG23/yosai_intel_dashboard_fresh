@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Dict, Iterator, Optional, Tuple
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
+from config.constants import DEFAULT_CHUNK_SIZE
 from core.performance import get_performance_monitor
 from core.security_validator import SecurityValidator
 from monitoring.data_quality_monitor import (
@@ -49,7 +50,7 @@ class Processor:
     # ------------------------------------------------------------------
     def load_dataframe(self, source: Any) -> pd.DataFrame:
         """Load ``source`` into a validated and mapped dataframe."""
-        chunk_size = getattr(dynamic_config.analytics, "chunk_size", 50000)
+        chunk_size = getattr(dynamic_config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE)
         monitor = get_performance_monitor()
 
         if isinstance(source, (str, Path)) or hasattr(source, "read"):
@@ -65,7 +66,7 @@ class Processor:
         return self.mapping_service.column_proc.process(df, "load").data
 
     def stream_file(
-        self, source: Any, chunksize: int = 50000
+        self, source: Any, chunksize: int = DEFAULT_CHUNK_SIZE
     ) -> Iterator[pd.DataFrame]:
         """Yield cleaned chunks from ``source``."""
         monitor = get_performance_monitor()
