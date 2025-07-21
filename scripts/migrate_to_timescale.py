@@ -136,6 +136,115 @@ def normalize_rows(rows: List[dict[str, Any]]) -> None:
         normalize_row(row)
 
 
+def setup_timescale(conn: connection) -> None:
+    """Ensure TimescaleDB extension and hypertable configuration."""
+    with conn.cursor() as cur:
+        # enable extension
+        cur.execute("CREATE EXTENSION IF NOT EXISTS timescaledb")
+
+        # base table and hypertable
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS access_events (
+                time TIMESTAMPTZ NOT NULL,
+                event_id UUID PRIMARY KEY,
+                person_id VARCHAR(50),
+                door_id VARCHAR(50),
+                facility_id VARCHAR(50),
+                access_result VARCHAR(20),
+                badge_status VARCHAR(20),
+                response_time_ms INTEGER,
+                metadata JSONB
+            )
+            """,
+        )
+        cur.execute(
+            """
+            SELECT create_hypertable(
+                'access_events',
+                'time',
+                chunk_time_interval => INTERVAL '1 day',
+                if_not_exists => TRUE
+            )
+            """
+        )
+
+        # indexes for common query patterns
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_access_events_person ON access_events(person_id)"
+        )
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_access_events_device ON access_events(door_id)"
+        )
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_access_events_location ON access_events(facility_id)"
+        )
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_access_events_decision ON access_events(access_result)"
+        )
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_access_events_metadata ON access_events USING GIN(metadata)"
+        )
+
+        # continuous aggregate
+        cur.execute("SELECT to_regclass('access_events_5min')")
+        if cur.fetchone()[0] is None:
+            cur.execute(
+                """
+                CREATE MATERIALIZED VIEW access_events_5min
+                WITH (timescaledb.continuous) AS
+                SELECT time_bucket('5 minutes', time) AS bucket,
+                       COUNT(*) AS event_count
+                FROM access_events
+                GROUP BY bucket
+                WITH NO DATA
+                """
+            )
+
+        cur.execute(
+            """
+            SELECT add_continuous_aggregate_policy(
+                'access_events_5min',
+                schedule_interval => INTERVAL '5 minutes',
+                start_offset => INTERVAL '90 days',
+                end_offset => INTERVAL '1 hour',
+                if_not_exists => TRUE
+            )
+            """
+        )
+
+        # compression and retention
+        cur.execute(
+            """
+            ALTER TABLE access_events
+                SET (
+                    timescaledb.compress,
+                    timescaledb.compress_orderby = 'time DESC',
+                    timescaledb.compress_segmentby = 'facility_id'
+                )
+            """
+        )
+        cur.execute(
+            """
+            SELECT add_compression_policy(
+                'access_events',
+                INTERVAL '7 days',
+                if_not_exists => TRUE
+            )
+            """
+        )
+        cur.execute(
+            """
+            SELECT add_retention_policy(
+                'access_events',
+                INTERVAL '90 days',
+                if_not_exists => TRUE
+            )
+            """
+        )
+    conn.commit()
+
+
 # ---------------------------------------------------------------------------
 # Migration helpers
 # ---------------------------------------------------------------------------
@@ -304,6 +413,7 @@ def main() -> None:
     tgt_conn = connect_with_retry(args.target_dsn)
 
     try:
+        setup_timescale(tgt_conn)
         all_tables = [
             "access_events",
             "users",
