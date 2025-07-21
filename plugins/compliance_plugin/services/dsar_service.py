@@ -195,27 +195,23 @@ class DSARService:
             user_data = {}
 
             # Get user profile data
-            profile_sql = """
-                SELECT person_id, name, employee_id, department, clearance_level,
-                       access_groups, is_visitor, created_at, last_active, risk_score,
-                       data_sensitivity_level, consent_status
-                FROM people WHERE person_id = %s
-            """
-            profile_df = self.db.execute_query(profile_sql, (user_id,))
-            if not profile_df.empty:
-                user_data["profile"] = profile_df.iloc[0].to_dict()
+            from services.optimized_queries import OptimizedQueryService
+
+            query_service = OptimizedQueryService(self.db)
+            users = query_service.batch_get_users([user_id])
+            if users:
+                user_data["profile"] = users[0]
 
             # Get access events
-            events_sql = """
-                SELECT event_id, timestamp, door_id, badge_id, access_result,
-                       badge_status, door_held_open_time, entry_without_badge,
-                       device_status, created_at
-                FROM access_events 
-                WHERE person_id = %s
-                ORDER BY timestamp DESC
+            events_query = """
+                SELECT ae.*, p.*
+                FROM access_events ae
+                JOIN people p ON ae.person_id = p.person_id
+                WHERE ae.person_id = %s
+                ORDER BY ae.timestamp DESC
                 LIMIT 1000
             """
-            events_df = self.db.execute_query(events_sql, (user_id,))
+            events_df = self.db.execute_query(events_query, (user_id,))
             user_data["access_events"] = (
                 events_df.to_dict("records") if not events_df.empty else []
             )
