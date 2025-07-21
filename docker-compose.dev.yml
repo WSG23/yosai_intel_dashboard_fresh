@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  app:
+    extends:
+      file: docker-compose.yml
+      service: app
+    environment:
+      YOSAI_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+    depends_on:
+      - postgres
+      - timescaledb
+      - kafka
+
+  postgres:
+    extends:
+      file: docker-compose.yml
+      service: postgres
+
+  timescaledb:
+    image: timescale/timescaledb:2.13.0-pg15
+    environment:
+      POSTGRES_DB: yosai_intel
+      POSTGRES_USER: postgres
+    secrets:
+      - db_password
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+      - ./scripts/init_timescaledb.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@local.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+      - timescaledb
+    restart: unless-stopped
+
+  api-gateway:
+    image: nginx:1.25
+    volumes:
+      - ./nginx/dev_gateway.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8081:80"
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  zookeeper:
+    extends:
+      file: docker-compose.kafka.yml
+      service: zookeeper
+
+  kafka:
+    extends:
+      file: docker-compose.kafka.yml
+      service: kafka
+
+  kafka-ui:
+    extends:
+      file: docker-compose.kafka.yml
+      service: kafka-ui
+
+volumes:
+  timescaledb_data:
+  pgadmin_data:
+
+secrets:
+  db_password:
+    file: ./secrets/db_password
