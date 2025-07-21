@@ -1,0 +1,10 @@
+apiVersion: linkerd.io/v1alpha2
+kind: ServiceProfile
+metadata:
+  name: yosai-dashboard.yosai-dev.svc.cluster.local
+  namespace: yosai-dev
+spec:
+  failureAccrual:
+    consecutive:
+      failures: 5
+      window: 1m
