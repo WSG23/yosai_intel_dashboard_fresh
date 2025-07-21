@@ -1,0 +1,21 @@
+{
+  "name": "timescaledb-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "timescaledb",
+    "database.port": "5432",
+    "database.user": "postgres",
+    "database.password": "${DB_PASSWORD}",
+    "database.dbname": "postgres",
+    "topic.prefix": "dbserver1",
+    "plugin.name": "pgoutput",
+    "schema.include.list": "_timescaledb_internal",
+    "transforms": "timescaledb",
+    "transforms.timescaledb.type": "io.debezium.connector.postgresql.transforms.timescaledb.TimescaleDb",
+    "transforms.timescaledb.database.hostname": "timescaledb",
+    "transforms.timescaledb.database.port": "5432",
+    "transforms.timescaledb.database.user": "postgres",
+    "transforms.timescaledb.database.password": "${DB_PASSWORD}",
+    "transforms.timescaledb.database.dbname": "postgres"
+  }
+}
