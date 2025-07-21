@@ -32,3 +32,11 @@ helm repo update
 helm install monitoring prometheus-community/kube-prometheus-stack \
   --namespace monitoring --create-namespace
 
+# Create application namespaces
+for ns in yosai-prod yosai-staging yosai-dev; do
+  kubectl create namespace "$ns" --dry-run=client -o yaml | kubectl apply -f -
+done
+
+# Apply base manifests
+kubectl apply -f k8s/base
+
