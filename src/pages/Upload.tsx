@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
 import {
@@ -21,6 +21,7 @@ import {
 } from 'reactstrap';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
+import { useSessionStore } from '../state/store';
 
 // Types matching the Python data structures
 interface FileInfo {
@@ -143,12 +144,18 @@ export const Upload: React.FC = () => {
   const [showColumnModal, setShowColumnModal] = useState(false);
   const [showDeviceModal, setShowDeviceModal] = useState(false);
   const [currentFile, setCurrentFile] = useState<FileInfo | null>(null);
-  const [sessionId] = useState(() => uuidv4());
+  const { sessionId, setSessionId } = useSessionStore();
   const [alerts, setAlerts] = useState<Array<{ id: string; type: string; message: string }>>([]);
 
   // Refs for background processing
   const uploadQueueRef = useRef<Array<{ file: File; taskId: string }>>([]);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!sessionId) {
+      setSessionId(uuidv4());
+    }
+  }, [sessionId, setSessionId]);
 
 
   // File validation matching Python's security checks
