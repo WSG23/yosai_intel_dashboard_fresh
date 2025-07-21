@@ -55,3 +55,25 @@ def test_env_overrides_applied(monkeypatch):
     db = cfg.get_database_config()
     assert db.host == "db.example.com"
     assert db.port == 1234
+
+
+def test_password_from_env(monkeypatch, tmp_path):
+    yaml_text = """
+app: {}
+database:
+  user: demo
+security: {}
+"""
+    path = tmp_path / "cfg.yaml"
+    path.write_text(yaml_text, encoding="utf-8")
+
+    monkeypatch.setenv("YOSAI_CONFIG_FILE", str(path))
+    monkeypatch.setenv("SECRET_KEY", "secret")
+    monkeypatch.setenv("DB_PASSWORD", "envpass")
+    monkeypatch.setenv("AUTH0_CLIENT_ID", "cid")
+    monkeypatch.setenv("AUTH0_CLIENT_SECRET", "csecret")
+    monkeypatch.setenv("AUTH0_DOMAIN", "domain")
+    monkeypatch.setenv("AUTH0_AUDIENCE", "aud")
+
+    cfg = create_config_manager()
+    assert cfg.get_database_config().password == "envpass"
