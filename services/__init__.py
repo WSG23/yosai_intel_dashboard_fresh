@@ -9,7 +9,7 @@ from .ai_mapping_store import ai_mapping_store
 from .analytics.upload_analytics import UploadAnalyticsProcessor
 from .controllers.upload_controller import UploadProcessingController
 from .helpers.database_initializer import initialize_database
-from .utils.event_publisher import publish_event
+from .event_publisher import publish_event
 from .analytics_generator import AnalyticsGenerator
 from .analytics_processor import AnalyticsProcessor
 from .async_file_processor import AsyncFileProcessor
@@ -18,6 +18,9 @@ from .data_loader import DataLoader
 from .data_processing.processor import Processor
 from .data_processing.unified_file_validator import UnifiedFileValidator
 from .db_analytics_helper import DatabaseAnalyticsHelper
+from .data_handler import DataHandler
+from .database_retriever import DatabaseAnalyticsRetriever
+from .summary_report_generator import SummaryReportGenerator
 from .microservices_architect import MicroservicesArchitect, ServiceBoundary
 from .registry import get_service
 from .result_formatting import (
@@ -79,6 +82,9 @@ __all__ = [
     "DatabaseAnalyticsHelper",
     "SummaryReporter",
     "DataLoader",
+    "DataHandler",
+    "DatabaseAnalyticsRetriever",
+    "SummaryReportGenerator",
     "AnalyticsProcessor",
     "MicroservicesArchitect",
     "ServiceBoundary",

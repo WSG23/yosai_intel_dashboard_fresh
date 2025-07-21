@@ -1,6 +1,6 @@
 import pandas as pd
 
-from services.analytics_service import AnalyticsService
+from services.summary_report_generator import SummaryReportGenerator
 
 
 def _make_df():
@@ -19,9 +19,9 @@ def _make_df():
 
 
 def test_calculate_stats():
-    service = AnalyticsService()
+    gen = SummaryReportGenerator()
     df = _make_df()
-    total, users, devices, span = service._calculate_stats(df)
+    total, users, devices, span = gen.calculate_stats(df)
     assert total == len(df)
     assert users == 2
     assert devices == 2
@@ -29,27 +29,27 @@ def test_calculate_stats():
 
 
 def test_analyze_users():
-    service = AnalyticsService()
+    gen = SummaryReportGenerator()
     df = _make_df()
-    power, regular, occasional = service._analyze_users(df, 2)
+    power, regular, occasional = gen.analyze_users(df, 2)
     assert power == ["u1"]
     assert regular == []
     assert occasional == ["u2"]
 
 
 def test_analyze_devices():
-    service = AnalyticsService()
+    gen = SummaryReportGenerator()
     df = _make_df()
-    high, moderate, low = service._analyze_devices(df, 2)
+    high, moderate, low = gen.analyze_devices(df, 2)
     assert high == ["d1"]
     assert moderate == []
     assert low == ["d2"]
 
 
 def test_log_analysis_summary(caplog):
-    service = AnalyticsService()
+    gen = SummaryReportGenerator()
     with caplog.at_level("INFO"):
-        service._log_analysis_summary(3, 3)
+        gen.log_analysis_summary(3, 3)
     messages = [r.getMessage() for r in caplog.records]
     assert any("UNIQUE PATTERNS ANALYSIS COMPLETE" in m for m in messages)
     assert any("Correctly showing 3" in m for m in messages)
