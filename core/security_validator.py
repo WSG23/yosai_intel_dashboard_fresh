@@ -7,11 +7,11 @@ import logging
 import os
 import re
 import secrets
-import json
-from pathlib import Path
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List
+
+import requests
 
 import sqlparse
 from sqlparse.sql import Identifier, IdentifierList, Token
@@ -325,40 +325,24 @@ class SecurityValidator(SecurityServiceProtocol):
 
     # ------------------------------------------------------------------
     def check_permissions(self, user_id: str, resource: str, action: str) -> bool:
-        """Check whether ``user_id`` can perform ``action`` on ``resource``.
+        """Check whether ``user_id`` can perform ``action`` on ``resource`` using
+        the centralized permission service."""
 
-        Permissions are loaded from a JSON file defined by the ``PERMISSIONS_FILE``
-        environment variable or ``simple_ui/access_permissions.json`` by default.
-        The file is expected to have a structure like::
-
-            {
-                "alice": {"door1": "Granted"}
-            }
-
-        Only the ``"Granted"`` value is treated as allowing access.  If the file
-        does not exist, a ``NotImplementedError`` is raised as a reminder to
-        integrate with the real permission service in the future.
-        """
-
-        perm_file = os.environ.get("PERMISSIONS_FILE", "simple_ui/access_permissions.json")
-        path = Path(perm_file)
-        if not path.exists():
-            raise NotImplementedError(
-                "Permission store missing. TODO integrate with centralized permission service."
-            )
-
+        service_url = os.environ.get("PERMISSION_SERVICE_URL", "http://localhost:8081")
+        url = f"{service_url.rstrip('/')}/permissions/check"
         try:
-            with path.open(encoding="utf-8") as f:
-                permissions = json.load(f)
+            resp = requests.get(
+                url,
+                params={"user_id": user_id, "resource": resource, "action": action},
+                timeout=5,
+            )
+            resp.raise_for_status()
+            data = resp.json()
         except Exception as exc:  # pragma: no cover - log unexpected errors
-            self.logger.error("Failed to load permission store: %s", exc)
+            self.logger.error("Permission service request failed: %s", exc)
             return False
 
-        value = (
-            permissions.get(user_id, {})
-            .get(resource)
-        )
-        return str(value).lower() == "granted"
+        return bool(data.get("allowed"))
 
 
 __all__ = [

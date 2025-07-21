@@ -34,17 +34,33 @@ def test_main_validation_orchestration():
     assert "sanitized" in result
 
 
-def test_check_permissions_allows(tmp_path, monkeypatch):
-    perm_file = tmp_path / "perms.json"
-    perm_file.write_text('{"alice": {"door1": "Granted"}}')
-    monkeypatch.setenv("PERMISSIONS_FILE", str(perm_file))
+def test_check_permissions_allows(monkeypatch):
+    def fake_get(url, params=None, timeout=None):
+        class Resp:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {"allowed": True}
+
+        return Resp()
+
+    monkeypatch.setattr("requests.get", fake_get)
     validator = SecurityValidator()
     assert validator.check_permissions("alice", "door1", "open") is True
 
 
-def test_check_permissions_denied(tmp_path, monkeypatch):
-    perm_file = tmp_path / "perms.json"
-    perm_file.write_text('{"alice": {"door1": "Denied"}}')
-    monkeypatch.setenv("PERMISSIONS_FILE", str(perm_file))
+def test_check_permissions_denied(monkeypatch):
+    def fake_get(url, params=None, timeout=None):
+        class Resp:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {"allowed": False}
+
+        return Resp()
+
+    monkeypatch.setattr("requests.get", fake_get)
     validator = SecurityValidator()
     assert validator.check_permissions("alice", "door1", "open") is False
