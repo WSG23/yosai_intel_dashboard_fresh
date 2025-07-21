@@ -32,3 +32,19 @@ def test_main_validation_orchestration():
     assert not result["valid"]
     assert result["issues"]
     assert "sanitized" in result
+
+
+def test_check_permissions_allows(tmp_path, monkeypatch):
+    perm_file = tmp_path / "perms.json"
+    perm_file.write_text('{"alice": {"door1": "Granted"}}')
+    monkeypatch.setenv("PERMISSIONS_FILE", str(perm_file))
+    validator = SecurityValidator()
+    assert validator.check_permissions("alice", "door1", "open") is True
+
+
+def test_check_permissions_denied(tmp_path, monkeypatch):
+    perm_file = tmp_path / "perms.json"
+    perm_file.write_text('{"alice": {"door1": "Denied"}}')
+    monkeypatch.setenv("PERMISSIONS_FILE", str(perm_file))
+    validator = SecurityValidator()
+    assert validator.check_permissions("alice", "door1", "open") is False
