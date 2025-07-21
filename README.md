@@ -961,7 +961,15 @@ Use `scripts/migrate_to_timescale.py` to copy data from the legacy
 row counts are validated for every chunk while a `migration_checkpoint` table
 tracks the last processed ID so the migration can resume if interrupted.
 
-Run the migration with the default DSNs or specify them explicitly:
+Run the migration with the default DSNs or specify them explicitly.  Ensure
+TimescaleDB has been initialised by loading `scripts/init_timescaledb.sql`
+first.  The included compose file exposes Timescale on port `5433`:
+
+```bash
+psql -h localhost -p 5433 -U postgres -f scripts/init_timescaledb.sql
+```
+
+Then execute the Python migration script:
 
 ```bash
 python scripts/migrate_to_timescale.py --source-dsn "dbname=yosai_intel" \
@@ -969,6 +977,31 @@ python scripts/migrate_to_timescale.py --source-dsn "dbname=yosai_intel" \
 ```
 
 Add `--test-mode` to perform a dry run on the first chunk only.
+
+The SQL file creates an `access_events` hypertable with policies:
+
+* **Compression** after one day: `add_compression_policy('access_events', INTERVAL '1 day')`
+* **Retention** after seven days: `add_retention_policy('access_events', INTERVAL '7 days')`
+
+It also defines indexes used by the migration:
+
+* `idx_access_events_timestamp` on the event timestamp
+* `idx_access_events_person_id` on `person_id`
+* `idx_access_events_door_id` on `door_id`
+* `idx_anomaly_detections_detected_at` on anomaly detection timestamps
+* `idx_anomaly_detections_type` on anomaly type
+* `idx_incident_tickets_status` on incident ticket status
+
+A continuous aggregate `access_event_hourly` summarises hourly counts per facility and refreshes automatically once the migration is complete.
+
+Set the connection strings via the environment variables `SOURCE_DSN` and `TARGET_DSN`.  In Kubernetes deployments the following variables control the Timescale connection:
+
+```text
+TIMESCALE_HOST, TIMESCALE_PORT, TIMESCALE_DB_NAME,
+TIMESCALE_DB_USER, TIMESCALE_DB_PASSWORD
+```
+
+The default `docker-compose.dev.yml` exposes TimescaleDB on port `5433`.
 
 
 
