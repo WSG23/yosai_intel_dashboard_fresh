@@ -15,7 +15,7 @@ jobs:
           PIP_CACHE_DIR: ~/.cache/pip
         run: |
           set -xe
-          pip install -r requirements.txt -r requirements-dev.txt -r requirements-test.txt
+          pip install -r requirements.lock -r requirements-dev.txt -r requirements-test.txt
       - name: Generate OpenAPI spec
         run: python tools/generate_openapi.py
       - name: Upload OpenAPI
@@ -45,13 +45,13 @@ jobs:
       - name: Safety
         run: |
           set -xe
-          safety check -r requirements.txt -r requirements-dev.txt --full-report
+          safety check -r requirements.lock -r requirements-dev.txt --full-report
 
       - name: Pip Audit
         if: github.event_name == 'pull_request'
         run: |
           set -xe
-          pip-audit -r requirements.txt -r requirements-dev.txt \
+          pip-audit -r requirements.lock -r requirements-dev.txt \
             --format=json --output=audit-report.json
 
       - name: PyTest
@@ -63,7 +63,7 @@ jobs:
         with:
           node-version: '18'
       - name: Install Node deps
-        run: npm install
+        run: npm ci
       - name: Jest Tests
         run: npm test -- --watchAll=false
       - name: Cypress Tests
