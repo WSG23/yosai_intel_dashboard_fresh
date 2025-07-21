@@ -299,18 +299,12 @@ script to create them (pass the broker list if not running on localhost):
 ./scripts/create_kafka_topics.sh kafka:9092 # custom broker
 ```
 
-The script requires `kafka-topics.sh` in your `PATH`.
-
-After creating the topics, register the Avro schema with your schema registry:
-
-```bash
-curl -X POST \
-  -H "Content-Type: application/vnd.schemaregistry.v1+json" \
-  --data @schemas/access-event.avsc \
-  http://localhost:8081/subjects/access-events-value/versions
-```
-
-Replace the URL with the address of your registry.
+The script requires `kafka-topics.sh` and `curl` in your `PATH`. It
+creates the topics `access-events`, `access-events-enriched`,
+`analytics-requests`, `analytics-responses`, `anomaly-events` and
+`audit-logs` with sensible defaults. It also registers the Avro schema in
+`schemas/access-event.avsc` with your schema registry (set
+`SCHEMA_REGISTRY_URL` to override the default `http://localhost:8081`).
 
 ## 🧪 Testing
 
