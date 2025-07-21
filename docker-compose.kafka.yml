@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   zookeeper-1:
-    image: confluentinc/cp-zookeeper:7.4.0
+    image: confluentinc/cp-zookeeper:7.5.0
     hostname: zookeeper-1
     environment:
       ZOOKEEPER_SERVER_ID: 1
@@ -15,9 +15,17 @@ services:
       - zookeeper1_data:/var/lib/zookeeper/data
       - zookeeper1_log:/var/lib/zookeeper/log
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo ruok | nc 127.0.0.1 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - yosai-network
 
   zookeeper-2:
-    image: confluentinc/cp-zookeeper:7.4.0
+    image: confluentinc/cp-zookeeper:7.5.0
     hostname: zookeeper-2
     environment:
       ZOOKEEPER_SERVER_ID: 2
@@ -30,9 +38,17 @@ services:
       - zookeeper2_data:/var/lib/zookeeper/data
       - zookeeper2_log:/var/lib/zookeeper/log
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo ruok | nc 127.0.0.1 2182 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - yosai-network
 
   zookeeper-3:
-    image: confluentinc/cp-zookeeper:7.4.0
+    image: confluentinc/cp-zookeeper:7.5.0
     hostname: zookeeper-3
     environment:
       ZOOKEEPER_SERVER_ID: 3
@@ -45,9 +61,17 @@ services:
       - zookeeper3_data:/var/lib/zookeeper/data
       - zookeeper3_log:/var/lib/zookeeper/log
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo ruok | nc 127.0.0.1 2183 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - yosai-network
 
   kafka-1:
-    image: confluentinc/cp-kafka:7.4.0
+    image: confluentinc/cp-kafka:7.5.0
     hostname: kafka-1
     depends_on:
       - zookeeper-1
@@ -63,15 +87,28 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       KAFKA_DEFAULT_REPLICATION_FACTOR: 3
       KAFKA_NUM_PARTITIONS: 3
-      KAFKA_COMPRESSION_TYPE: gzip
+      KAFKA_COMPRESSION_TYPE: lz4
+      KAFKA_NUM_NETWORK_THREADS: 3
+      KAFKA_NUM_IO_THREADS: 8
+      KAFKA_SOCKET_SEND_BUFFER_BYTES: 102400
+      KAFKA_SOCKET_RECEIVE_BUFFER_BYTES: 102400
+      KAFKA_SOCKET_REQUEST_MAX_BYTES: 104857600
     ports:
       - "9092:9092"
     volumes:
       - kafka1_data:/var/lib/kafka/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "bash", "-c", "cub kafka-ready -b localhost:9092 1 20"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - yosai-network
 
   kafka-2:
-    image: confluentinc/cp-kafka:7.4.0
+    image: confluentinc/cp-kafka:7.5.0
     hostname: kafka-2
     depends_on:
       - zookeeper-1
@@ -87,15 +124,28 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       KAFKA_DEFAULT_REPLICATION_FACTOR: 3
       KAFKA_NUM_PARTITIONS: 3
-      KAFKA_COMPRESSION_TYPE: gzip
+      KAFKA_COMPRESSION_TYPE: lz4
+      KAFKA_NUM_NETWORK_THREADS: 3
+      KAFKA_NUM_IO_THREADS: 8
+      KAFKA_SOCKET_SEND_BUFFER_BYTES: 102400
+      KAFKA_SOCKET_RECEIVE_BUFFER_BYTES: 102400
+      KAFKA_SOCKET_REQUEST_MAX_BYTES: 104857600
     ports:
       - "9093:9092"
     volumes:
       - kafka2_data:/var/lib/kafka/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "bash", "-c", "cub kafka-ready -b localhost:9092 1 20"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - yosai-network
 
   kafka-3:
-    image: confluentinc/cp-kafka:7.4.0
+    image: confluentinc/cp-kafka:7.5.0
     hostname: kafka-3
     depends_on:
       - zookeeper-1
@@ -111,15 +161,28 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       KAFKA_DEFAULT_REPLICATION_FACTOR: 3
       KAFKA_NUM_PARTITIONS: 3
-      KAFKA_COMPRESSION_TYPE: gzip
+      KAFKA_COMPRESSION_TYPE: lz4
+      KAFKA_NUM_NETWORK_THREADS: 3
+      KAFKA_NUM_IO_THREADS: 8
+      KAFKA_SOCKET_SEND_BUFFER_BYTES: 102400
+      KAFKA_SOCKET_RECEIVE_BUFFER_BYTES: 102400
+      KAFKA_SOCKET_REQUEST_MAX_BYTES: 104857600
     ports:
       - "9094:9092"
     volumes:
       - kafka3_data:/var/lib/kafka/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "bash", "-c", "cub kafka-ready -b localhost:9092 1 20"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - yosai-network
 
   schema-registry:
-    image: confluentinc/cp-schema-registry:7.4.0
+    image: confluentinc/cp-schema-registry:7.5.0
     depends_on:
       - kafka-1
       - kafka-2
@@ -131,9 +194,17 @@ services:
     ports:
       - "8081:8081"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - yosai-network
 
   kafka-connect:
-    image: confluentinc/cp-kafka-connect:7.4.0
+    image: confluentinc/cp-kafka-connect:7.5.0
     depends_on:
       - kafka-1
       - kafka-2
@@ -162,6 +233,14 @@ services:
     volumes:
       - connect_data:/var/lib/kafka-connect
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/connectors"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - yosai-network
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -177,6 +256,14 @@ services:
     ports:
       - "8080:8080"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - yosai-network
 
 volumes:
   zookeeper1_data:
@@ -189,3 +276,6 @@ volumes:
   kafka2_data:
   kafka3_data:
   connect_data:
+
+networks:
+  yosai-network:
