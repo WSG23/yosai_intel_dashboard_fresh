@@ -171,6 +171,23 @@ may not function.
    The server runs over HTTP by default but will automatically serve HTTPS
    whenever certificates are available.
 
+### Docker Compose Development Environment
+
+To spin up the monolith together with the new microservices run:
+
+```bash
+docker-compose \
+  -f docker-compose.yml \
+  -f docker-compose.kafka.yml \
+  -f docker-compose.dev.yml up --build
+```
+
+This starts PostgreSQL, TimescaleDB (port `5433`), the Kafka stack with a
+web UI on `http://localhost:8080`, pgAdmin on `http://localhost:5050`, the
+API gateway on `http://localhost:8081` and the main dashboard on
+`http://localhost:8050`.
+Stop all containers with `docker-compose down` when finished.
+
 ## Developer Onboarding
 
 For a more detailed walkthrough of the environment setup and testing workflow,
