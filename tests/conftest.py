@@ -56,6 +56,7 @@ def pytest_ignore_collect(path, config):
     if path.basename == "test_secure_config_manager.py" and _missing_optional:
         reason = ", ".join(_missing_optional)
         import warnings
+
         warnings.warn(
             f"Skipping secure config tests, missing: {reason}",
             category=pytest.PytestWarning,
@@ -63,6 +64,7 @@ def pytest_ignore_collect(path, config):
         )
         return True
     return False
+
 
 try:  # use real package if available
     import dash_bootstrap_components  # noqa: F401
@@ -393,3 +395,15 @@ class FakeUploadStore:
 def fake_upload_storage() -> FakeUploadStore:
     """Provide a fresh in-memory upload store."""
     return FakeUploadStore()
+
+
+@pytest.fixture
+def query_recorder():
+    """Wrap a database connection to record executed queries."""
+
+    from tests.utils.query_recorder import QueryRecordingConnection
+
+    def factory(connection: Any) -> QueryRecordingConnection:
+        return QueryRecordingConnection(connection)
+
+    return factory
