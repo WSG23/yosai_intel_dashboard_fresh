@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAnalyticsStore } from '../state/store';
 import { BarChart3, Filter, Download, AlertCircle } from 'lucide-react';
 import './Analytics.css';
 
@@ -23,27 +24,35 @@ interface AnalyticsData {
 const Analytics: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+  const { analyticsCache, setAnalytics } = useAnalyticsStore();
   const [sourceType, setSourceType] = useState('all');
+  const analyticsData = analyticsCache[sourceType] || null;
 
   useEffect(() => {
+    if (analyticsData) {
+      setLoading(false);
+      return;
+    }
     fetchAnalytics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sourceType]);
 
   const fetchAnalytics = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const port = process.env.REACT_APP_API_PORT || '5001';
-      const response = await fetch(`http://localhost:${port}/api/v1/analytics/${sourceType}`);
+      const response = await fetch(
+        `http://localhost:${port}/api/v1/analytics/${sourceType}`
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      setAnalyticsData(data);
+      setAnalytics(sourceType, data);
     } catch (err) {
       console.error('Analytics fetch error:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch analytics');
