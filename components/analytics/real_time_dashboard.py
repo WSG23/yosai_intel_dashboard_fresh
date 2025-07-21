@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from dash import dcc, html
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
 from dash_extensions import WebSocket
 
@@ -23,8 +23,6 @@ class RealTimeAnalytics:
         return html.Div(
             [
                 WebSocket(id="analytics-ws", url=self.url),
-                dcc.Store(id="analytics-ws-store"),
-                dcc.Interval(id="analytics-refresh", interval=self.interval),
                 html.Div(id="analytics-summary"),
                 html.Div(id="analytics-charts"),
             ]
@@ -32,27 +30,15 @@ class RealTimeAnalytics:
 
     def register_callbacks(self, manager: TrulyUnifiedCallbacks) -> None:
         @manager.callback(
-            Output("analytics-ws-store", "data"),
-            Input("analytics-ws", "message"),
-            prevent_initial_call=True,
-            callback_id="update_data",
-            component_name="real_time_analytics",
-        )
-        def _update_data(message: dict | None) -> dict | None:
-            data = self._controller.parse_message(message)
-            if data is None:
-                raise PreventUpdate
-            return data
-
-        @manager.callback(
             Output("analytics-summary", "children"),
             Output("analytics-charts", "children"),
-            Input("analytics-refresh", "n_intervals"),
-            State("analytics-ws-store", "data"),
-            callback_id="update_view",
+            Input("analytics-ws", "message"),
+            prevent_initial_call=True,
+            callback_id="ws_update",
             component_name="real_time_analytics",
         )
-        def _update_view(_n: int, data: dict | None) -> tuple[Any, Any]:
+        def _update(message: dict | None) -> tuple[Any, Any]:
+            data = self._controller.parse_message(message)
             if not data:
                 raise PreventUpdate
             summary = self._controller.create_summary(data)
