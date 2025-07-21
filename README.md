@@ -302,9 +302,11 @@ script to create them (pass the broker list if not running on localhost):
 
 The script requires `kafka-topics.sh` and `curl` in your `PATH`. It
 creates the topics `access-events`, `access-events-enriched`,
-`analytics-requests`, `analytics-responses`, `anomaly-events` and
-`audit-logs` with sensible defaults. It also registers the Avro schema in
-`schemas/access-event.avsc` with your schema registry (set
+`analytics-requests`, `analytics-responses`, `anomaly-events`,
+`alerts`, `system-metrics`, `dead-letter`, `app-state` and
+`audit-logs` with sensible defaults. A replication factor of **3** is
+used with `min.insync.replicas=2`. The script also registers the Avro
+schema in `schemas/access-event.avsc` with your schema registry (set
 `SCHEMA_REGISTRY_URL` to override the default `http://localhost:8081`).
 
 ## 🧪 Testing

@@ -5,3 +5,4 @@ set -e
 
 echo "Starting Kafka services..."
 docker-compose -f docker-compose.kafka.yml up -d
+
