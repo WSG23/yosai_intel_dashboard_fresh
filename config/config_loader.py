@@ -5,13 +5,12 @@ from __future__ import annotations
 import json
 import logging
 import os
+from pathlib import Path
 from typing import Any, Dict, Optional
 
-from pathlib import Path
-
+from .base_loader import BaseConfigLoader
 from .environment import select_config_file
 from .protocols import ConfigLoaderProtocol
-from .base_loader import BaseConfigLoader
 
 
 def validate_uploads_config(config: Dict[str, Any]) -> Dict[str, Any]:
@@ -61,6 +60,11 @@ class ConfigLoader(BaseConfigLoader, ConfigLoaderProtocol):
                 self.log.warning("Failed to parse YOSAI_CONFIG_JSON: %s", exc)
 
         data = self._sanitize(data)
+
+        if "database" in data and not data["database"].get("password"):
+            if env_pwd := os.getenv("DB_PASSWORD"):
+                data.setdefault("database", {})["password"] = env_pwd
+
         return validate_uploads_config(data)
 
 
