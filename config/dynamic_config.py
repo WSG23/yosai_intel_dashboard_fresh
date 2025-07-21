@@ -12,6 +12,7 @@ from .constants import (
     PerformanceConstants,
     SecurityConstants,
     UploadLimits,
+    DEFAULT_CHUNK_SIZE,
 )
 from .environment import select_config_file
 
@@ -276,7 +277,7 @@ class DynamicConfigManager(BaseConfigLoader):
         return self.get_max_upload_size_mb() >= 50
 
     def get_upload_chunk_size(self) -> int:
-        return getattr(self.uploads, "DEFAULT_CHUNK_SIZE", 50000)
+        return getattr(self.uploads, "DEFAULT_CHUNK_SIZE", DEFAULT_CHUNK_SIZE)
 
     def get_max_parallel_uploads(self) -> int:
         return getattr(self.uploads, "MAX_PARALLEL_UPLOADS", 4)

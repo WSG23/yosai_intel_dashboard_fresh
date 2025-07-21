@@ -9,6 +9,7 @@ import pandas as pd
 
 from config.connection_retry import ConnectionRetryManager, RetryConfig
 from config.protocols import ConnectionRetryManagerProtocol, RetryConfigProtocol
+from config.constants import DEFAULT_CHUNK_SIZE
 from utils.upload_store import UploadedDataStore
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ class ChunkedUploadManager:
         store: UploadedDataStore,
         metadata_dir: Optional[Path | str] = None,
         *,
-        initial_chunk_size: int = 50000,
+        initial_chunk_size: int = DEFAULT_CHUNK_SIZE,
         retry_manager_cls: type[ConnectionRetryManager] = ConnectionRetryManager,
     ) -> None:
         self.store = store
