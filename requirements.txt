@@ -49,6 +49,10 @@ pulsar-client==3.8.0
 dask==2024.4.1
 RapidFuzz==3.13.0
 
+# Kafka integration
+confluent-kafka==2.11.0
+fastavro==1.11.1
+
 # New dependencies for enhanced functionality
 openpyxl==3.1.5
 xlsxwriter==3.2.5
