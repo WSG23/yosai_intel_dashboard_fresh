@@ -1,0 +1,13 @@
+{
+  "namespace": "com.yosai.audit",
+  "type": "record",
+  "name": "AuditEvent",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "timestamp", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "user_id", "type": ["null", "string"], "default": null},
+    {"name": "action", "type": "string"},
+    {"name": "resource", "type": ["null", "string"], "default": null},
+    {"name": "status", "type": "string"}
+  ]
+}
