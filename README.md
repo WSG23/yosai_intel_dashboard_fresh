@@ -124,9 +124,10 @@ with this Python release and newer.
    ```
    The script installs both `requirements.txt` and `requirements-dev.txt` from
    PyPI (or a local `packages/` directory if present) and runs `npm install` to
-   fetch Node dependencies. Ensure dependencies are installed **before** running
-   Pyright or using the Pylance extension. Missing packages will otherwise
-   appear as unresolved imports.
+   fetch Node dependencies. The Python requirements now include the Kafka
+   clients `confluent-kafka` and `fastavro`. Ensure dependencies are installed
+   **before** running Pyright or using the Pylance extension. Missing packages
+   will otherwise appear as unresolved imports.
 
 4. **Install Node dependencies (optional):**
    PostCSS and other build tools live in `package.json`. `./scripts/setup.sh`
@@ -417,10 +418,18 @@ for details.
 ## Kafka Setup
 
 `docker-compose.kafka.yml` spins up a three-node Kafka cluster with Schema Registry,
-Kafka Connect and a Kafka Manager UI. Start the services with:
+Kafka Connect and a Kafka Manager UI. The helper script `start_kafka.sh` launches
+the stack and detaches from the terminal:
 
 ```bash
-docker-compose -f docker-compose.kafka.yml up -d
+./scripts/start_kafka.sh
+```
+
+Monitor the brokers at <http://localhost:8080> while services are running.
+Stop the cluster when finished:
+
+```bash
+docker-compose -f docker-compose.kafka.yml down
 ```
 
 Broker data is persisted in named volumes so messages survive container restarts.
