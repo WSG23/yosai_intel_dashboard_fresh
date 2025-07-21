@@ -9,10 +9,13 @@ services:
       YOSAI_ENV: development
       DB_HOST: postgres
       DB_PORT: 5432
+      SERVICE_DISCOVERY_URL: http://api-gateway
     depends_on:
       - postgres
       - timescaledb
-      - kafka
+      - kafka1
+      - kafka2
+      - kafka3
 
   postgres:
     extends:
@@ -53,19 +56,57 @@ services:
       - ./nginx/dev_gateway.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "8081:80"
+    environment:
+      APP_HOST: app
+      APP_PORT: 8050
     depends_on:
       - app
     restart: unless-stopped
 
-  zookeeper:
+  zookeeper1:
     extends:
       file: docker-compose.kafka.yml
-      service: zookeeper
+      service: zookeeper1
 
-  kafka:
+  zookeeper2:
     extends:
       file: docker-compose.kafka.yml
-      service: kafka
+      service: zookeeper2
+
+  zookeeper3:
+    extends:
+      file: docker-compose.kafka.yml
+      service: zookeeper3
+
+  kafka1:
+    extends:
+      file: docker-compose.kafka.yml
+      service: kafka1
+
+  kafka2:
+    extends:
+      file: docker-compose.kafka.yml
+      service: kafka2
+
+  kafka3:
+    extends:
+      file: docker-compose.kafka.yml
+      service: kafka3
+
+  schema-registry:
+    extends:
+      file: docker-compose.kafka.yml
+      service: schema-registry
+
+  connect:
+    extends:
+      file: docker-compose.kafka.yml
+      service: connect
+
+  kafka-manager:
+    extends:
+      file: docker-compose.kafka.yml
+      service: kafka-manager
 
   kafka-ui:
     extends:
