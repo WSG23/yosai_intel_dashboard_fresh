@@ -1,13 +1,15 @@
 import asyncio
+import importlib
+import importlib.util
+import sys
 import time
-import pytest
+import types
+from pathlib import Path
 
 import pandas as pd
-import importlib.util
-import importlib
-import types
-import sys
-from pathlib import Path
+import pytest
+
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 services_root = Path(__file__).resolve().parents[1] / "services"
 services_pkg = types.ModuleType("services")
@@ -49,8 +51,6 @@ async_module = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
 spec.loader.exec_module(async_module)
 AsyncFileProcessor = async_module.AsyncFileProcessor
-
-from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 
 def test_async_file_processor_progress(tmp_path):
@@ -102,3 +102,25 @@ async def test_read_uploaded_file_inside_loop(tmp_path):
 
     assert err == ""
     assert len(loaded) == len(df)
+
+
+def test_process_file_async(tmp_path):
+    df = DataFrameBuilder().add_column("a", range(3)).build()
+    content = UploadFileBuilder().with_dataframe(df).as_base64()
+
+    processor = AsyncFileProcessor()
+    job_id = processor.process_file_async(content, "sample.csv")
+
+    last = 0
+    while True:
+        status = processor.get_job_status(job_id)
+        cur = status["progress"]
+        assert cur >= last
+        last = cur
+        if status.get("done"):
+            break
+        time.sleep(0.01)
+
+    result = status["result"]
+    assert result["rows"] == len(df)
+    clear_task(job_id)
