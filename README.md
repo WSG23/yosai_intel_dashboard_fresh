@@ -428,6 +428,12 @@ the stack and detaches from the terminal:
 ```
 
 Monitor the brokers at <http://localhost:8080> while services are running.
+Run the health check tool to verify that all brokers are reachable:
+
+```bash
+python tools/cli_kafka_health.py --brokers localhost:9092
+```
+
 Stop the cluster when finished:
 
 ```bash
