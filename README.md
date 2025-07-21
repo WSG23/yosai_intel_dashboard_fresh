@@ -1,5 +1,8 @@
 # Yōsai Intel Dashboard
 
+[![CI](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci.yml/badge.svg)](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci.yml)
+[![CI/CD](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci-cd.yml)
+
 An AI-powered modular security intelligence dashboard for physical access control monitoring.
 
 ## Architecture Overview
@@ -286,6 +289,29 @@ reflected until you rebuild the bundle with `npm run build-css` (or
 loads `assets/dist/main.min.css` instead of the source CSS. Gzip or Brotli
 compression is automatically handled at runtime by `flask-compress`.
 
+## Kafka Setup
+
+Kafka topics must exist before starting the streaming service. Use the helper
+script to create them (pass the broker list if not running on localhost):
+
+```bash
+./scripts/create_kafka_topics.sh            # uses localhost:9092
+./scripts/create_kafka_topics.sh kafka:9092 # custom broker
+```
+
+The script requires `kafka-topics.sh` in your `PATH`.
+
+After creating the topics, register the Avro schema with your schema registry:
+
+```bash
+curl -X POST \
+  -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+  --data @schemas/access-event.avsc \
+  http://localhost:8081/subjects/access-events-value/versions
+```
+
+Replace the URL with the address of your registry.
+
 ## 🧪 Testing
 
 Install dependencies before running the tests:
@@ -393,6 +419,19 @@ is provided in `monitoring/prometheus.yml`. Logstash support is available via
 `logging/logstash.conf`. Dashboards can be built in Grafana or Kibana using
 these data sources. See [performance_monitoring.md](docs/performance_monitoring.md)
 for details.
+
+## Kafka Setup
+
+`docker-compose.kafka.yml` spins up a three-node Kafka cluster with Schema Registry,
+Kafka Connect and a Kafka Manager UI. Start the services with:
+
+```bash
+docker-compose -f docker-compose.kafka.yml up -d
+```
+
+Broker data is persisted in named volumes so messages survive container restarts.
+The configuration sets a replication factor of **3** and enables health checks
+for all components.
 
 ## <span aria-hidden="true">⚡</span> Performance Optimization
 
