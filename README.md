@@ -419,9 +419,9 @@ for details.
 
 ## Kafka Setup
 
-`docker-compose.kafka.yml` spins up a three-node Kafka cluster with Schema Registry,
-Kafka Connect and a Kafka Manager UI. The helper script `start_kafka.sh` launches
-the stack and detaches from the terminal:
+`docker-compose.kafka.yml` spins up a three-node Kafka cluster with Schema Registry
+and a Kafka UI. A `kafka-init` service automatically creates the required topics.
+The helper script `start_kafka.sh` launches the stack and detaches from the terminal:
 
 ```bash
 ./scripts/start_kafka.sh
