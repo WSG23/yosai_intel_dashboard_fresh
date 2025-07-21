@@ -1,0 +1,11 @@
+{
+  "namespace": "com.yosai.analytics",
+  "type": "record",
+  "name": "AnalyticsRequest",
+  "fields": [
+    {"name": "request_id", "type": "string"},
+    {"name": "timestamp", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "analysis_type", "type": "string"},
+    {"name": "parameters", "type": ["null", "string"], "default": null}
+  ]
+}
