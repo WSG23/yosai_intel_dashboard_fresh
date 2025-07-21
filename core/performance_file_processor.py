@@ -7,6 +7,8 @@ import logging
 from pathlib import Path
 from typing import IO, Callable, Iterable, List, Optional, Union
 
+from config.constants import DEFAULT_CHUNK_SIZE
+
 import pandas as pd
 
 try:
@@ -19,7 +21,7 @@ class PerformanceFileProcessor:
     """Process large CSV files in chunks with memory tracking."""
 
     def __init__(
-        self, chunk_size: int = 50000, *, max_memory_mb: int | None = None
+        self, chunk_size: int = DEFAULT_CHUNK_SIZE, *, max_memory_mb: int | None = None
     ) -> None:
         from config.dynamic_config import dynamic_config
 

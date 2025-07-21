@@ -17,6 +17,7 @@ from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
 from core.unicode_decode import safe_unicode_decode
+from config.constants import DEFAULT_CHUNK_SIZE
 
 # Core processing imports only - NO UI COMPONENTS
 from core.unicode_utils import sanitize_for_utf8
@@ -111,7 +112,7 @@ def process_uploaded_file(
         # Safe Unicode processing
         text_content = UnicodeFileProcessor.safe_decode_content(decoded)
 
-        chunk_size = getattr(config.analytics, "chunk_size", 50000)
+        chunk_size = getattr(config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE)
         monitor = get_performance_monitor()
 
         # Process based on file type

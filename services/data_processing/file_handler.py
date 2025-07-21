@@ -6,6 +6,7 @@ from typing import Any, Optional, Tuple
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
+from config.constants import DEFAULT_CHUNK_SIZE
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
 from core.unicode import process_large_csv_content
@@ -42,7 +43,7 @@ def process_file_simple(
 
     try:
         encoding = "utf-8"
-        chunk_size = getattr(config.analytics, "chunk_size", 50000)
+        chunk_size = getattr(config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE)
 
         if len(content) > chunk_size:
             text = process_large_csv_content(content, encoding, chunk_size=chunk_size)

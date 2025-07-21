@@ -7,12 +7,14 @@ from collections import Counter
 from datetime import datetime
 from typing import Any, Dict, Iterable, Tuple
 
+from config.constants import DEFAULT_CHUNK_SIZE
+
 import pandas as pd
 
 logger = logging.getLogger(__name__)
 
 
-def stream_uploaded_file(data_loader, source: Any, chunksize: int = 50000):
+def stream_uploaded_file(data_loader, source: Any, chunksize: int = DEFAULT_CHUNK_SIZE):
     """Yield cleaned ``DataFrame`` chunks from ``source`` using ``data_loader``."""
     yield from data_loader.stream_file(source, chunksize)
 
