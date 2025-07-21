@@ -463,9 +463,11 @@ SECRET_KEY=your-key  # Change for production
 For Gunicorn deployments, host, port and log level defaults are also
 defined in `gunicorn.conf.py`.
 
-The secret key is not included in the default YAML files. Define
-`SECRET_KEY` in your environment or a `.env` file before starting the
-application. The example scripts under `examples/` also rely on this
+
+The secret key is not included in the default YAML files. **You must**
+set `SECRET_KEY` in your environment or a `.env` file before starting
+the application. The API now raises a `RuntimeError` if the variable is
+missing. The example scripts under `examples/` also rely on this
 variable through the `SecretManager` helper.
 
 When `YOSAI_ENV=production` the application will refuse to start unless both

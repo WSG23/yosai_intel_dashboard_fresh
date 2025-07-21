@@ -1,4 +1,5 @@
 import os
+
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect, generate_csrf
@@ -6,17 +7,23 @@ from flask_wtf.csrf import CSRFProtect, generate_csrf
 csrf = CSRFProtect()
 
 from api.analytics_endpoints import register_analytics_blueprints
-from upload_endpoint import upload_bp
+from settings_endpoint import settings_bp
+
+from config.constants import API_PORT
 from device_endpoint import device_bp
 from mappings_endpoint import mappings_bp
-from settings_endpoint import settings_bp
-from config.constants import API_PORT
+from upload_endpoint import upload_bp
 
 
 def create_api_app() -> Flask:
     """Create Flask API app with all blueprints registered."""
     app = Flask(__name__)
-    app.config.setdefault("SECRET_KEY", os.getenv("SECRET_KEY", "change-me"))
+
+    secret_key = os.getenv("SECRET_KEY")
+    if not secret_key:
+        raise RuntimeError("SECRET_KEY environment variable is required")
+
+    app.config["SECRET_KEY"] = secret_key
 
     csrf.init_app(app)
     CORS(app)
