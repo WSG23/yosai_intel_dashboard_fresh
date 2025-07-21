@@ -1,12 +1,12 @@
-import asyncio
 import base64
 
 from flask import Blueprint, jsonify, request
 from flask_wtf.csrf import validate_csrf
 
+from config.service_registration import register_upload_services
+
 # Use the shared DI container configured at application startup
 from core.container import container
-from config.service_registration import register_upload_services
 
 if not container.has("upload_processor"):
     register_upload_services(container)
@@ -46,42 +46,22 @@ def upload_files():
             contents = data.get("contents", [])
             filenames = data.get("filenames", [])
 
-        # Get services from shared container
-        upload_service = container.get("upload_processor")
+        file_processor = container.get("file_processor")
+        if not contents or not filenames:
+            return jsonify({"error": "No file provided"}), 400
 
-        # Process files using existing base code
-        result_dict = asyncio.run(
-            upload_service.process_uploaded_files(contents, filenames)
-        )
+        job_id = file_processor.process_file_async(contents[0], filenames[0])
 
-        # Ensure structure matches what React expects
-        response = {
-            "upload_results": result_dict.get("upload_results", []),
-            "file_preview_components": result_dict.get("file_preview_components", []),
-            "file_info_dict": {},
-        }
-
-        # Process each file's info
-        file_info_dict = result_dict.get("file_info_dict", {})
-        for filename, info in file_info_dict.items():
-            # Get AI column suggestions
-            from services.data_enhancer import get_ai_column_suggestions
-
-            df = upload_service.store.get_all_data().get(filename)
-
-            ai_suggestions = {}
-            if df is not None:
-                ai_suggestions = get_ai_column_suggestions(df)
-
-            response["file_info_dict"][filename] = {
-                "filename": filename,
-                "rows": info.get("rows", 0),
-                "columns": info.get("columns", 0),
-                "ai_suggestions": ai_suggestions,
-                "column_names": info.get("column_names", []),
-            }
-
-        return jsonify(response), 200
+        return jsonify({"job_id": job_id}), 202
 
     except Exception as e:
+
         return jsonify({"error": str(e)}), 500
+
+
+@upload_bp.route("/api/v1/upload/status/<job_id>", methods=["GET"])
+def upload_status(job_id: str):
+    """Return background processing status for ``job_id``."""
+    file_processor = container.get("file_processor")
+    status = file_processor.get_job_status(job_id)
+    return jsonify(status)
