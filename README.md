@@ -864,9 +864,19 @@ common UI components without launching the entire dashboard. Run a script with
 python storybook/navbar_app.py
 python storybook/upload_area_app.py
 ```
-
 Each command starts a small Dash server on port `8050` so you can interact with
 the component in isolation.
+## Callback Graph
+
+Run the helper script to visualize Dash callback dependencies:
+
+```bash
+python scripts/callback_graph.py
+```
+
+The command writes `docs/callback_graph.dot` and `docs/callback_graph.png`
+showing edges from each callback output to its inputs.
+
 
 
 ## 🤝 Contributing
