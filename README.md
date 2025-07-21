@@ -138,10 +138,13 @@ with this Python release and newer.
    python scripts/generate_dev_secrets.py >> .env
    # Edit .env with your configuration (e.g. set HOST and database info)
    ```
-   `setup_dev_mode` checks for the `DB_PASSWORD` variable. The sample
-   `.env.example` includes a placeholder value. If this variable is
-   missing only a warning is emitted on startup, but database features
-   may not function.
+`setup_dev_mode` checks for the `DB_PASSWORD` variable. The sample
+`.env.example` includes a placeholder value. If this variable is
+missing only a warning is emitted on startup, but database features
+may not function.
+
+`SECRET_KEY` **must** be defined. The API will exit with a
+`RuntimeError` if the variable is missing.
 6. **Build the CSS bundle:**
    Ensure `node` and `npm` are available if you use the npm command.
    ```bash
