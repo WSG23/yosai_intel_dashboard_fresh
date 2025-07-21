@@ -15,7 +15,7 @@ jobs:
           PIP_CACHE_DIR: ~/.cache/pip
         run: |
           set -xe
-          pip install -r requirements.lock -r requirements-dev.txt -r requirements-test.txt
+          pip install -r requirements.lock
       - name: Generate OpenAPI spec
         run: python tools/generate_openapi.py
       - name: Upload OpenAPI
