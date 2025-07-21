@@ -1,0 +1,214 @@
+"""Adapters for gradually migrating the monolith to microservices."""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List
+
+import aiohttp
+import pandas as pd
+from kafka import KafkaProducer
+
+from core.service_container import ServiceContainer
+from services.interfaces import AnalyticsServiceProtocol
+
+
+class ServiceAdapter(ABC):
+    """Base adapter for migrating services to microservices."""
+
+    @abstractmethod
+    async def call(self, method: str, **kwargs: Any) -> Any:
+        """Invoke *method* with *kwargs* on the underlying service."""
+        pass
+
+
+class EventServiceAdapter(ServiceAdapter):
+    """Adapter for the Go event ingestion service."""
+
+    def __init__(self, base_url: str | None = None) -> None:
+        self.base_url = base_url or os.getenv(
+            "EVENT_SERVICE_URL", "http://localhost:8002"
+        )
+        self.kafka_producer: KafkaProducer | None = None
+        self._init_kafka()
+
+    def _init_kafka(self) -> None:
+        """Initialize Kafka producer if brokers are available."""
+        try:
+            self.kafka_producer = KafkaProducer(
+                bootstrap_servers=os.getenv("KAFKA_BROKERS", "localhost:9092"),
+                value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+                key_serializer=lambda k: k.encode("utf-8") if k else None,
+            )
+        except Exception as exc:  # pragma: no cover - runtime setup
+            print(f"Kafka initialization failed, using HTTP fallback: {exc}")
+            self.kafka_producer = None
+
+    async def call(self, method: str, **kwargs: Any) -> Any:
+        if method == "process_event":
+            return await self._process_event(kwargs.get("event"))
+        if method == "process_batch":
+            return await self._process_batch(kwargs.get("events"))
+        raise ValueError(f"Unknown method: {method}")
+
+    async def _process_event(self, event: Dict[str, Any]) -> Dict[str, Any]:
+        """Send a single event via Kafka or HTTP."""
+        if self.kafka_producer is not None:
+            try:
+                future = self.kafka_producer.send(
+                    "access-events",
+                    key=event.get("event_id"),
+                    value=event,
+                )
+                future.get(timeout=0.05)
+                return {
+                    "event_id": event.get("event_id"),
+                    "status": "accepted",
+                    "method": "kafka",
+                }
+            except Exception as exc:  # pragma: no cover - network failures
+                print(f"Kafka send failed, falling back to HTTP: {exc}")
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{self.base_url}/api/v1/events",
+                json=event,
+                timeout=aiohttp.ClientTimeout(total=0.1),
+            ) as response:
+                return await response.json()
+
+    async def _process_batch(
+        self, events: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """Send a batch of events via HTTP."""
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{self.base_url}/api/v1/events/batch",
+                json={"events": events},
+                timeout=aiohttp.ClientTimeout(total=1.0),
+            ) as response:
+                return await response.json()
+
+
+class AnalyticsServiceAdapter(ServiceAdapter, AnalyticsServiceProtocol):
+    """Adapter for routing analytics calls to a microservice with fallback."""
+
+    def __init__(
+        self, python_service: Any, microservice_url: str | None = None
+    ) -> None:
+        self.python_service = python_service
+        self.microservice_url = microservice_url or os.getenv(
+            "ANALYTICS_SERVICE_URL", "http://localhost:8001"
+        )
+        self.use_microservice = (
+            os.getenv("USE_ANALYTICS_MICROSERVICE", "false").lower() == "true"
+        )
+
+    async def call(self, method: str, **kwargs: Any) -> Any:
+        if self.use_microservice:
+            try:
+                return await self._call_microservice(method, kwargs)
+            except Exception as exc:  # pragma: no cover - network failures
+                print(f"Microservice call failed, falling back to Python: {exc}")
+
+        python_method = getattr(self.python_service, method)
+        result = python_method(**kwargs)
+        if asyncio.iscoroutine(result):
+            return await result
+        return result
+
+    async def _call_microservice(self, method: str, params: Dict[str, Any]) -> Any:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{self.microservice_url}/api/v1/analytics/{method}",
+                json=params,
+                timeout=aiohttp.ClientTimeout(total=30.0),
+            ) as response:
+                return await response.json()
+
+    # ``AnalyticsServiceProtocol`` methods ---------------------------------
+    def get_dashboard_summary(self) -> Dict[str, Any]:
+        loop = asyncio.new_event_loop()
+        return loop.run_until_complete(self.call("get_dashboard_summary"))
+
+    def get_access_patterns_analysis(self, days: int = 7) -> Dict[str, Any]:
+        loop = asyncio.new_event_loop()
+        return loop.run_until_complete(
+            self.call("get_access_patterns_analysis", days=days)
+        )
+
+    def process_dataframe(
+        self, df: pd.DataFrame
+    ) -> Dict[str, Any]:  # pragma: no cover - passthrough
+        return self.python_service.process_dataframe(df)
+
+
+class MigrationContainer(ServiceContainer):
+    """Service container with migration feature flags and adapters."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._adapters: Dict[str, ServiceAdapter] = {}
+        self._migration_flags = self._load_migration_flags()
+
+    def _load_migration_flags(self) -> Dict[str, bool]:
+        return {
+            "use_go_events": os.getenv("USE_GO_EVENTS", "false").lower() == "true",
+            "use_go_analytics": os.getenv("USE_GO_ANALYTICS", "false").lower()
+            == "true",
+            "use_kafka_events": os.getenv("USE_KAFKA_EVENTS", "false").lower()
+            == "true",
+            "use_timescaledb": os.getenv("USE_TIMESCALEDB", "false").lower() == "true",
+        }
+
+    def register_with_adapter(
+        self, name: str, python_service: Any, adapter: ServiceAdapter
+    ) -> None:
+        self._adapters[name] = adapter
+        self.register_singleton(name, adapter)
+
+    def get_migration_status(self) -> Dict[str, Any]:
+        return {
+            "flags": self._migration_flags,
+            "services": {
+                name: {
+                    "using_microservice": isinstance(self.get(name), ServiceAdapter),
+                    "adapter_type": (
+                        type(self._adapters.get(name)).__name__
+                        if name in self._adapters
+                        else None
+                    ),
+                }
+                for name in self._services
+            },
+        }
+
+
+def register_migration_services(container: MigrationContainer) -> None:
+    """Register services with their migration adapters if enabled."""
+
+    if container._migration_flags["use_go_events"]:
+        event_adapter = EventServiceAdapter()
+        container.register_with_adapter("event_processor", None, event_adapter)
+
+    from services.analytics_service import create_analytics_service
+
+    python_analytics = create_analytics_service()
+    if container._migration_flags["use_go_analytics"]:
+        analytics_adapter = AnalyticsServiceAdapter(python_analytics)
+        container.register_with_adapter(
+            "analytics_service", python_analytics, analytics_adapter
+        )
+    else:
+        container.register_singleton("analytics_service", python_analytics)
+
+    if container._migration_flags["use_timescaledb"]:
+        try:
+            from config.database_manager import TimescaleDBManager
+        except Exception:  # pragma: no cover - optional dependency
+            pass
+        else:
+            container.register_factory("database", TimescaleDBManager)
