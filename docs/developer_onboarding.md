@@ -50,6 +50,9 @@ This guide walks new contributors through setting up a local development environ
    local setup. If you omit it the app only emits a warning but database
    features may not be available.
 
+   `SECRET_KEY` **must** also be set. The API exits with a
+   `RuntimeError` if this variable is missing.
+
 7. **(Optional) Initialize the database or load sample data.**
    Prepare your PostgreSQL database and populate it with any example data if desired.
 

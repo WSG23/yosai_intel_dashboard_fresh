@@ -14,9 +14,10 @@ variables, Docker secrets, or a cloud secret manager:
 - `AUTH0_DOMAIN` – Auth0 domain used for OIDC
 - `AUTH0_AUDIENCE` – expected API audience
 
-Ensure these values are defined before starting the application. When
-`YOSAI_ENV=production` the configuration validation step will refuse to
-start if `SECRET_KEY` or `DB_PASSWORD` is missing.
+Ensure these values are defined before starting the application. The API
+raises a `RuntimeError` if `SECRET_KEY` is not set. When
+`YOSAI_ENV=production` the configuration validation step will also refuse
+to start if `DB_PASSWORD` is missing.
 
 ## Rotation Procedures
 
