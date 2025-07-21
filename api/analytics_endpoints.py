@@ -1,13 +1,23 @@
 import logging
 from typing import Dict, Any, List, Optional
 from flask import Blueprint, request, jsonify, Response
+import asyncio
 import json
+
+from core.advanced_cache import AdvancedCacheManager
+from config.base import CacheConfig
+from services.cached_analytics import CachedAnalyticsService
 
 logger = logging.getLogger(__name__)
 
 analytics_bp = Blueprint('analytics', __name__, url_prefix='/api/v1/analytics')
 graphs_bp = Blueprint('graphs', __name__, url_prefix='/api/v1/graphs')
 export_bp = Blueprint('export', __name__, url_prefix='/api/v1/export')
+
+# Cached analytics helper
+_cache_manager = AdvancedCacheManager(CacheConfig(timeout_seconds=300))
+asyncio.run(_cache_manager.start())
+_cached_service = CachedAnalyticsService(_cache_manager)
 
 MOCK_DATA = {
     "status": "success",
@@ -41,7 +51,10 @@ MOCK_DATA = {
 
 @analytics_bp.route('/patterns', methods=['GET'])
 def get_patterns_analysis():
-    return jsonify(MOCK_DATA)
+    facility = request.args.get('facility_id', 'default')
+    date_range = request.args.get('range', '30d')
+    data = asyncio.run(_cached_service.get_analytics_summary(facility, date_range))
+    return jsonify(data)
 
 @analytics_bp.route('/sources', methods=['GET'])
 def get_data_sources():
@@ -53,15 +66,21 @@ def analytics_health():
 
 @graphs_bp.route('/chart/<chart_type>', methods=['GET'])
 def get_chart_data(chart_type):
+    facility = request.args.get('facility_id', 'default')
+    date_range = request.args.get('range', '30d')
+    data = asyncio.run(_cached_service.get_analytics_summary(facility, date_range))
     if chart_type == "patterns":
-        return jsonify({"type": "patterns", "data": MOCK_DATA})
-    elif chart_type == "timeline":
-        return jsonify({"type": "timeline", "data": MOCK_DATA["temporal_patterns"]})
+        return jsonify({"type": "patterns", "data": data})
+    if chart_type == "timeline":
+        return jsonify({"type": "timeline", "data": data.get("hourly_distribution", {})})
     return jsonify({"error": "Unknown chart type"}), 400
 
 @export_bp.route('/analytics/json', methods=['GET'])
 def export_analytics_json():
-    response = Response(json.dumps(MOCK_DATA, indent=2), mimetype="application/json")
+    facility = request.args.get('facility_id', 'default')
+    date_range = request.args.get('range', '30d')
+    data = asyncio.run(_cached_service.get_analytics_summary(facility, date_range))
+    response = Response(json.dumps(data, indent=2), mimetype="application/json")
     response.headers["Content-Disposition"] = "attachment; filename=analytics_export.json"
     return response
 
@@ -97,27 +116,10 @@ def get_export_formats():
 def get_analytics_by_source(source_type='all'):
     """Get analytics data by source type"""
     try:
-        # Return mock data matching the React component's expected format
-        return jsonify({
-            'total_records': 15234,
-            'unique_devices': 47,
-            'date_range': {
-                'start': '2024-01-01',
-                'end': '2024-12-31'
-            },
-            'patterns': [
-                {'pattern': 'Port Scan Detected', 'count': 523, 'percentage': 35},
-                {'pattern': 'Brute Force Attempt', 'count': 312, 'percentage': 25},
-                {'pattern': 'Suspicious Traffic', 'count': 245, 'percentage': 20},
-                {'pattern': 'Policy Violation', 'count': 198, 'percentage': 15},
-                {'pattern': 'Malware Detected', 'count': 67, 'percentage': 5}
-            ],
-            'device_distribution': [
-                {'device': 'Firewall-01', 'count': 8234},
-                {'device': 'Router-Main', 'count': 4521},
-                {'device': 'Switch-Core', 'count': 2479}
-            ]
-        })
+        facility = request.args.get('facility_id', 'default')
+        date_range = request.args.get('range', '30d')
+        data = asyncio.run(_cached_service.get_analytics_summary(facility, date_range))
+        return jsonify(data)
     except Exception as e:
         logger.error(f"Analytics error: {str(e)}")
         return jsonify({'error': str(e)}), 500
