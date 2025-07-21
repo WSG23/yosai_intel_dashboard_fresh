@@ -7,3 +7,8 @@ selenium>=4.20.0
 requests>=2.32.0
 pandas>=2.0.0
 openpyxl>=3.0.0
+scipy==1.11.3
+sqlparse==0.5.3
+plotly==5.15.0
+dask[distributed]==2024.4.1
+tqdm>=4.0
