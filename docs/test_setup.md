@@ -73,8 +73,8 @@ cp .env.example .env
 already defines a placeholder. If you skip this variable the tests will only
 show a warning but any database-dependent checks may fail.
 
-`SECRET_KEY` must also be defined or the API initialization will fail with a
-`RuntimeError` when the tests create the application context.
+`SECRET_KEY` is **mandatory**. If it is missing the API initialization fails
+with a `RuntimeError` when the tests create the application context.
 
 If the CSS bundle has not been built yet, generate it:
 ```bash

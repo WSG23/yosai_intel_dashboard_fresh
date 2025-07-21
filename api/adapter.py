@@ -19,11 +19,10 @@ def create_api_app() -> Flask:
     """Create Flask API app with all blueprints registered."""
     app = Flask(__name__)
 
-    secret_key = os.getenv("SECRET_KEY")
-    if not secret_key:
-        raise RuntimeError("SECRET_KEY environment variable is required")
-
-    app.config["SECRET_KEY"] = secret_key
+    try:
+        app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+    except KeyError as exc:
+        raise RuntimeError("SECRET_KEY environment variable is required") from exc
 
     csrf.init_app(app)
     CORS(app)
