@@ -942,6 +942,23 @@ python scripts/callback_graph.py
 The command writes `docs/callback_graph.dot` and `docs/callback_graph.png`
 showing edges from each callback output to its inputs.
 
+## TimescaleDB Migration
+
+Use `scripts/migrate_to_timescale.py` to copy data from the legacy
+`yosai_intel` database into TimescaleDB. The script processes the large
+`access_events` table in 10k-row chunks with progress reporting. Checksums and
+row counts are validated for every chunk while a `migration_checkpoint` table
+tracks the last processed ID so the migration can resume if interrupted.
+
+Run the migration with the default DSNs or specify them explicitly:
+
+```bash
+python scripts/migrate_to_timescale.py --source-dsn "dbname=yosai_intel" \
+    --target-dsn "dbname=yosai_timescale" --resume
+```
+
+Add `--test-mode` to perform a dry run on the first chunk only.
+
 
 
 ## 🤝 Contributing
