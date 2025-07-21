@@ -9,10 +9,19 @@ BROKERS=${1:-localhost:9092}
 # URL of the schema registry used for Avro schemas
 SCHEMA_REGISTRY_URL=${SCHEMA_REGISTRY_URL:-http://localhost:8081}
 
+# Default topic configuration values
+DEFAULT_SEGMENT_MS=${SEGMENT_MS:-604800000}
+DEFAULT_MAX_MESSAGE_BYTES=${MAX_MESSAGE_BYTES:-1048576}
+DEFAULT_COMPRESSION_TYPE=${COMPRESSION_TYPE:-gzip}
+
 create_topic() {
   local name=$1
   local partitions=$2
   local retention=$3
+  local segment_ms=${4:-$DEFAULT_SEGMENT_MS}
+  local max_bytes=${5:-$DEFAULT_MAX_MESSAGE_BYTES}
+  local compression=${6:-$DEFAULT_COMPRESSION_TYPE}
+  local cleanup=${7:-}
   echo "Creating topic $name"
   kafka-topics.sh \
     --bootstrap-server "$BROKERS" \
@@ -20,8 +29,13 @@ create_topic() {
     --if-not-exists \
     --topic "$name" \
     --partitions "$partitions" \
-    --replication-factor 1 \
-    --config retention.ms="$retention"
+    --replication-factor 3 \
+    --config min.insync.replicas=2 \
+    --config segment.ms="$segment_ms" \
+    --config retention.ms="$retention" \
+    --config max.message.bytes="$max_bytes" \
+    --config compression.type="$compression" \
+    ${cleanup:+--config cleanup.policy=$cleanup}
 }
 
 # Register an Avro schema with the schema registry
@@ -49,6 +63,18 @@ create_topic analytics-requests 3 $((7 * 24 * 60 * 60 * 1000))
 
 # Analytics results, one month retention
 create_topic analytics-responses 3 $((30 * 24 * 60 * 60 * 1000))
+
+# Alerts, one week retention
+create_topic alerts 3 $((7 * 24 * 60 * 60 * 1000))
+
+# System metrics, one week retention
+create_topic system-metrics 3 $((7 * 24 * 60 * 60 * 1000))
+
+# Dead letter queue, one month retention
+create_topic dead-letter 3 $((30 * 24 * 60 * 60 * 1000))
+
+# Compacted application state topic
+create_topic app-state 3 $((365 * 24 * 60 * 60 * 1000)) $DEFAULT_SEGMENT_MS $DEFAULT_MAX_MESSAGE_BYTES $DEFAULT_COMPRESSION_TYPE compact
 
 # Audit logs, one month retention
 create_topic audit-logs 1 $((30 * 24 * 60 * 60 * 1000))
