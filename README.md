@@ -1,5 +1,8 @@
 # Yōsai Intel Dashboard
 
+[![CI](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci.yml/badge.svg)](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci.yml)
+[![CI/CD](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci-cd.yml)
+
 An AI-powered modular security intelligence dashboard for physical access control monitoring.
 
 ## Architecture Overview
