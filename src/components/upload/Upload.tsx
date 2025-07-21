@@ -4,7 +4,7 @@ import { Upload as UploadIcon } from 'lucide-react';
 import { FilePreview } from './FilePreview';
 import { ColumnMappingModal } from './ColumnMappingModal';
 import { DeviceMappingModal } from './DeviceMappingModal';
-import { UploadedFile, ProcessingStatus as Status } from './types';
+import { UploadedFile, ProcessingStatus as Status, FileData } from './types';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
@@ -14,7 +14,7 @@ const Upload: React.FC = () => {
   const [showColumnMapping, setShowColumnMapping] = useState(false);
   const [showDeviceMapping, setShowDeviceMapping] = useState(false);
   const [currentFile, setCurrentFile] = useState<UploadedFile | null>(null);
-  const [fileData, setFileData] = useState<any>(null);
+  const [fileData, setFileData] = useState<FileData | null>(null);
   const [devices, setDevices] = useState<string[]>([]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -71,7 +71,7 @@ const Upload: React.FC = () => {
       // Show mapping modal based on file type
       if (data.requiresColumnMapping) {
         setCurrentFile(uploadedFile);
-        setFileData(data.fileData || {});
+        setFileData(data.fileData || null);
         setShowColumnMapping(true);
       } else if (data.requiresDeviceMapping) {
         setCurrentFile(uploadedFile);

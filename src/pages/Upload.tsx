@@ -22,6 +22,7 @@ import {
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { useSessionStore } from '../state/store';
+import { FileData } from '../components/upload/types';
 
 // Types matching the Python data structures
 interface FileInfo {
@@ -729,7 +730,12 @@ export const Upload: React.FC = () => {
           <AIColumnSuggestions data={data || null} />
         </div>
       ))}
-      <ColumnMappingModal isOpen={false} onClose={() => {}} fileData={{}} onConfirm={() => {}} />
+      <ColumnMappingModal
+        isOpen={false}
+        onClose={() => {}}
+        fileData={{ filename: '', columns: [], ai_suggestions: {} } as FileData}
+        onConfirm={() => {}}
+      />
       <DeviceMappingModal isOpen={false} onClose={() => {}} devices={[]} filename="" onConfirm={() => {}} />
     </div>
   );
