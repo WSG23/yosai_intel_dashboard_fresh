@@ -25,6 +25,10 @@ This project follows a fully modular design built around a dependency injection 
 - [Service Container](docs/service_container.md)
 - [Testing Architecture](docs/test_architecture.md)
 
+<p align="center">
+  <img src="docs/architecture.svg" alt="High-level architecture diagram" width="600" />
+</p>
+
 Core service protocols live in `services/interfaces.py`. Components obtain
 implementations from the `ServiceContainer` when an explicit instance is not
 provided, allowing tests to supply lightweight mocks. See
