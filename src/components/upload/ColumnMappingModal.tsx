@@ -4,6 +4,7 @@ import { ExclamationTriangleIcon, CheckIcon } from '@heroicons/react/24/outline'
 import { Button } from '../shared/Button';
 import { Select } from '../shared/Select';
 import { Badge } from '../shared/Badge';
+import { FileData } from './types';
 
 interface ColumnMapping {
   originalColumn: string;
@@ -15,7 +16,7 @@ interface ColumnMapping {
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  fileData: any;
+  fileData: FileData | null;
   onConfirm: (mappings: Record<string, string>) => void;
 }
 
