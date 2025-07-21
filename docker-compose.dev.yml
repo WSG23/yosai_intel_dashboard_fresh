@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  app:
+  python-monolith:
     extends:
       file: docker-compose.yml
       service: app
@@ -9,18 +9,33 @@ services:
       YOSAI_ENV: development
       DB_HOST: postgres
       DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       SERVICE_DISCOVERY_URL: http://api-gateway
     depends_on:
-      - postgres
-      - timescaledb
-      - kafka1
-      - kafka2
-      - kafka3
+      postgres:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka1:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+      kafka3:
+        condition: service_healthy
+    restart: unless-stopped
 
   postgres:
     extends:
       file: docker-compose.yml
       service: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
   timescaledb:
     image: timescale/timescaledb:2.13.0-pg15
@@ -35,6 +50,24 @@ services:
     ports:
       - "5433:5432"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -57,41 +90,103 @@ services:
     ports:
       - "8081:80"
     environment:
-      APP_HOST: app
+      APP_HOST: python-monolith
       APP_PORT: 8050
     depends_on:
-      - app
+      - python-monolith
+    restart: unless-stopped
+
+  event-ingestion:
+    build:
+      context: ./services/event-ingestion
+      dockerfile: Dockerfile
+    environment:
+      KAFKA_BROKERS: kafka1:9092,kafka2:9093,kafka3:9094
+      SCHEMA_REGISTRY_URL: http://schema-registry:8081
+    depends_on:
+      kafka1:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+      kafka3:
+        condition: service_healthy
+      schema-registry:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.54
+    ports:
+      - "16686:16686"
+      - "6831:6831/udp"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.3.1
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  traefik:
+    image: traefik:v3.0
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --entrypoints.web.address=:80
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - api-gateway
+      - python-monolith
+      - event-ingestion
     restart: unless-stopped
 
   zookeeper1:
     extends:
       file: docker-compose.kafka.yml
-      service: zookeeper1
+      service: zookeeper-1
 
   zookeeper2:
     extends:
       file: docker-compose.kafka.yml
-      service: zookeeper2
+      service: zookeeper-2
 
   zookeeper3:
     extends:
       file: docker-compose.kafka.yml
-      service: zookeeper3
+      service: zookeeper-3
 
   kafka1:
     extends:
       file: docker-compose.kafka.yml
-      service: kafka1
+      service: kafka-1
 
   kafka2:
     extends:
       file: docker-compose.kafka.yml
-      service: kafka2
+      service: kafka-2
 
   kafka3:
     extends:
       file: docker-compose.kafka.yml
-      service: kafka3
+      service: kafka-3
 
   schema-registry:
     extends:
@@ -101,7 +196,7 @@ services:
   connect:
     extends:
       file: docker-compose.kafka.yml
-      service: connect
+      service: kafka-connect
 
   kafka-manager:
     extends:
@@ -116,7 +211,14 @@ services:
 volumes:
   timescaledb_data:
   pgadmin_data:
+  redis_data:
 
 secrets:
   db_password:
     file: ./secrets/db_password
+  secret_key:
+    file: ./secrets/secret_key
+
+networks:
+  default:
+    name: yosai-network
