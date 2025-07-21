@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-ingestion
+  labels:
+    app: event-ingestion
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: event-ingestion
+  template:
+    metadata:
+      labels:
+        app: event-ingestion
+    spec:
+      containers:
+        - name: event-ingestion
+          image: yosai-intel-dashboard:latest
+          command: ["python", "tools/streaming_producer.py"]
+          envFrom:
+            - configMapRef:
+                name: yosai-config
+            - secretRef:
+                name: yosai-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
