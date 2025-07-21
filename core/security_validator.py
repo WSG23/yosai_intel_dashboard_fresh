@@ -223,9 +223,12 @@ class SecurityValidator(SecurityServiceProtocol):
         """Execute a validator and handle exceptions gracefully."""
         try:
             return validator_func(value, field_name)
-        except Exception as exc:
+        except (ValidationError, ValueError, re.error, UnicodeError) as exc:
             self.logger.error(
-                "Validation error in %s: %s", validator_func.__name__, exc
+                "Validation error in %s: %s",
+                validator_func.__name__,
+                exc,
+                exc_info=True,
             )
             return [
                 self._create_security_issue(
@@ -235,6 +238,11 @@ class SecurityValidator(SecurityServiceProtocol):
                     "Review input validation system",
                 )
             ]
+        except Exception:
+            self.logger.exception(
+                "Unexpected error in %s", validator_func.__name__
+            )
+            raise
 
     def _compile_validation_results(
         self, issues: List[SecurityIssue], sanitized_value: str
