@@ -480,6 +480,13 @@ defer shutdown(context.Background())
 
 This ensures traces from Python and Go components are reported consistently.
 
+### Monitoring Environment Variables
+
+Set the following variables to configure tracing and metrics endpoints:
+
+- `JAEGER_ENDPOINT` – URL of the Jaeger collector (defaults to `http://localhost:14268/api/traces`).
+- `REPLICATION_METRICS_PORT` – Port used by `scripts/replicate_to_timescale.py` to expose Prometheus metrics (defaults to `8004`).
+
 ## Kafka Setup
 
 `docker-compose.kafka.yml` spins up a three-node Kafka cluster with Schema Registry
