@@ -8,6 +8,8 @@ import os
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
+from services.registry import ServiceDiscovery
+
 from services.resilience.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
@@ -175,14 +177,11 @@ class MigrationContainer(ServiceContainer):
         super().__init__()
         self._adapters: Dict[str, ServiceAdapter] = {}
         self._migration_flags = self._load_migration_flags()
+        self.discovery = ServiceDiscovery()
 
     def _load_migration_flags(self) -> Dict[str, bool]:
         return {
-            "use_go_events": os.getenv("USE_GO_EVENTS", "false").lower() == "true",
-            "use_go_analytics": os.getenv("USE_GO_ANALYTICS", "false").lower()
-            == "true",
-            "use_kafka_events": os.getenv("USE_KAFKA_EVENTS", "false").lower()
-            == "true",
+            "use_kafka_events": os.getenv("USE_KAFKA_EVENTS", "false").lower() == "true",
             "use_timescaledb": os.getenv("USE_TIMESCALEDB", "false").lower() == "true",
         }
 
@@ -212,17 +211,23 @@ class MigrationContainer(ServiceContainer):
 def register_migration_services(container: MigrationContainer) -> None:
     """Register services with their migration adapters if enabled."""
 
-    if container._migration_flags["use_go_events"]:
-        event_adapter = EventServiceAdapter()
+    event_addr = container.discovery.resolve("events")
+    if event_addr:
+        event_adapter = EventServiceAdapter(base_url=f"http://{event_addr}")
         container.register_with_adapter("event_processor", None, event_adapter)
 
     from services.analytics_service import create_analytics_service
 
     python_analytics = create_analytics_service()
-    if container._migration_flags["use_go_analytics"]:
-        analytics_adapter = AnalyticsServiceAdapter(python_analytics)
+    analytics_addr = container.discovery.resolve("analytics")
+    if analytics_addr:
+        analytics_adapter = AnalyticsServiceAdapter(
+            python_analytics, microservice_url=f"http://{analytics_addr}"
+        )
         container.register_with_adapter(
-            "analytics_service", python_analytics, analytics_adapter
+            "analytics_service",
+            python_analytics,
+            analytics_adapter,
         )
     else:
         container.register_singleton("analytics_service", python_analytics)
