@@ -22,7 +22,7 @@ security:
   session_timeout_by_role:
     admin: 7200
     basic: 1800
-  csrf_enabled: false
+  csrf_enabled: true
   max_upload_mb: 50
   allowed_file_types:
     - .csv

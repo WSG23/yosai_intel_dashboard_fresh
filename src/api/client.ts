@@ -54,10 +54,6 @@ const processQueue = async () => {
 
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
 
     config.headers['X-Request-ID'] = generateRequestId();
     config.headers['X-Request-Time'] = new Date().toISOString();
@@ -91,7 +87,6 @@ apiClient.interceptors.response.use(
 
     switch (response.status) {
       case 401:
-        localStorage.removeItem('auth_token');
         window.location.href = '/login';
         break;
       case 403:
