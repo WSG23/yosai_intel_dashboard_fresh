@@ -26,3 +26,20 @@ Run them with:
 ```bash
 pytest tests/database/test_query_limits.py
 ```
+
+## Load Testing
+
+A standalone script exercises the event processing pipeline. It relies on
+`aiohttp` to issue HTTP requests, so install it first:
+
+```bash
+pip install aiohttp
+```
+
+Run the load test with:
+
+```bash
+python tests/performance/test_event_processing.py
+```
+
+The script targets the gateway at `http://localhost:8081`.
