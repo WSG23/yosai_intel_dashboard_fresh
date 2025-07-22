@@ -58,7 +58,7 @@ data/learned_mappings.json
 *.json
 !package.json
 !package-lock.json
-!tsconfig.json
+!dashboards/grafana/*.json
 logs/
 # Temporary uploaded files
 temp/
