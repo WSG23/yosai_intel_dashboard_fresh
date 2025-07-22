@@ -1,10 +1,9 @@
 package proxy
 
 import (
-	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"os"
+        "net/http/httputil"
+        "net/url"
+        "os"
 )
 
 // NewProxy returns a reverse proxy to the target service.
