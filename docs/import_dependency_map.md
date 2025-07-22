@@ -5,7 +5,7 @@ packages.  Understanding these connections helps avoid circular imports and
 clarifies where lazy loading is required.
 
 ```
-app.py
+start_api.py
  └─ utils
      └─ preview_utils
          └─ config
