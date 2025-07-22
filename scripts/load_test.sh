@@ -2,6 +2,6 @@
 set -e
 
 echo "📊 Running load tests..."
-echo "No load tests defined. Skipping."
+python tests/performance/test_event_processing.py
 
 exit 0
