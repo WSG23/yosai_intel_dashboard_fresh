@@ -6,16 +6,18 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
-from flask import Blueprint, request, jsonify, current_app
-from flask_login import login_required, current_user
 
-from core.auth import role_required
-from models.compliance import ConsentType, DSARRequestType, DataSensitivityLevel
-from services.compliance.consent_service import ConsentService
-from services.compliance.dsar_service import DSARService
+from flask import Blueprint, current_app, jsonify, request
+from flask_login import current_user, login_required
+
 from core.audit_logger import ComplianceAuditLogger
+from core.auth import role_required
 from core.container import Container
 from core.security_validator import SecurityValidator
+from models.compliance import ConsentType, DataSensitivityLevel, DSARRequestType
+from services.compliance.consent_service import ConsentService
+from services.compliance.dsar_service import DSARService
+from services.security import require_role
 
 logger = logging.getLogger(__name__)
 
@@ -385,7 +387,7 @@ def get_user_dsar_requests():
 
 @compliance_bp.route("/admin/dsar/pending", methods=["GET"])
 @login_required
-@role_required("admin")
+@require_role("admin")
 def get_pending_dsar_requests():
     """
     Get pending DSAR requests (admin only)
@@ -437,7 +439,7 @@ def get_pending_dsar_requests():
 
 @compliance_bp.route("/admin/dsar/<request_id>/process", methods=["POST"])
 @login_required
-@role_required("admin")
+@require_role("admin")
 def process_dsar_request(request_id: str):
     """
     Process a DSAR request (admin only)
@@ -540,7 +542,7 @@ def get_my_audit_trail():
 
 @compliance_bp.route("/admin/compliance-report", methods=["GET"])
 @login_required
-@role_required("admin")
+@require_role("admin")
 def generate_compliance_report():
     """
     Generate compliance report (admin only)
