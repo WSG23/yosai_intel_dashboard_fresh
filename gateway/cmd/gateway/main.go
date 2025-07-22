@@ -21,6 +21,7 @@ import (
 	"github.com/WSG23/yosai-gateway/internal/gateway"
 	reg "github.com/WSG23/yosai-gateway/internal/registry"
 	"github.com/WSG23/yosai-gateway/internal/tracing"
+	"github.com/WSG23/yosai-gateway/plugins"
 	"github.com/sony/gobreaker"
 )
 
@@ -104,12 +105,13 @@ func main() {
 		tracing.Logger.Fatalf("failed to create gateway: %v", err)
 	}
 
-	// enable middleware based on env vars
-	if os.Getenv("ENABLE_AUTH") == "1" {
-		g.UseAuth()
+	// load plugins from configuration
+	loaded, err := plugins.LoadPlugins("")
+	if err != nil {
+		tracing.Logger.WithError(err).Warn("failed to load gateway plugins")
 	}
-	if os.Getenv("ENABLE_RATELIMIT") == "1" {
-		g.UseRateLimit()
+	for _, p := range loaded {
+		g.RegisterPlugin(p)
 	}
 
 	addr := ":8080"
