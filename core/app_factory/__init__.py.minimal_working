@@ -35,11 +35,7 @@ def create_app(mode=None, **kwargs):
         # Set up layout as function
         app.layout = _create_main_layout
         
-        # Register manual routing
-        from pages import create_manual_router
-        create_manual_router(app)
-        
-        logger.info("✅ Minimal app created with working layout and routing")
+        logger.info("✅ Minimal app created")
         return app
     except Exception as e:
         logger.error(f"❌ App creation failed: {e}")
