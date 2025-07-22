@@ -1,26 +1,30 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-interface ProgressCallback {
-  (progress: number): void;
-}
+export const useWebSocket = (
+  path: string,
+  socketFactory?: (url: string) => WebSocket
+) => {
+  const [data, setData] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
 
-export const useWebSocket = () => {
-  const sockets = useRef<Record<string, WebSocket>>({});
+  useEffect(() => {
+    const fullUrl = path.startsWith('ws')
+      ? path
+      : `ws://${window.location.host}${path}`;
+    const ws = socketFactory ? socketFactory(fullUrl) : new WebSocket(fullUrl);
+    wsRef.current = ws;
 
-  const subscribeToUploadProgress = (taskId: string, cb: ProgressCallback) => {
-    if (sockets.current[taskId]) return;
-    const ws = new WebSocket(`ws://localhost:5001/ws/upload/${taskId}`);
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.progress !== undefined) {
-        cb(data.progress);
-      }
+    ws.onopen = () => setIsConnected(true);
+    ws.onclose = () => setIsConnected(false);
+    ws.onmessage = (ev: MessageEvent) => setData(ev.data as string);
+
+    return () => {
+      ws.close();
     };
-    ws.onclose = () => {
-      delete sockets.current[taskId];
-    };
-    sockets.current[taskId] = ws;
-  };
+  }, [path, socketFactory]);
 
-  return { subscribeToUploadProgress };
+  return { data, isConnected };
 };
+
+export default useWebSocket;
