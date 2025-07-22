@@ -28,8 +28,9 @@ optional `Sidebar` live under `src/components/layout`.
 
 ## Hooks
 
-Custom hooks live in `src/hooks`. Currently `useWebSocket` provides a simple way
-to subscribe to server‑sent progress updates during uploads. Pages primarily use
+Custom hooks live in `src/hooks`. `useUploadWebSocket` provides a simple way to
+subscribe to server‑sent progress updates during uploads, while
+`useWebSocket` can be used for general real-time feeds. Pages primarily use
 `useState` and `useEffect` for local state management.
 
 ## Data Flow
@@ -54,7 +55,7 @@ graph TD
     UU --> FP(FilePreview)
     UU --> CM(ColumnMappingModal)
     UU --> DM(DeviceMappingModal)
-    UU --> WS(useWebSocket)
+    UU --> WS(useUploadWebSocket)
     AN --> CH(Charts)
 ```
 
