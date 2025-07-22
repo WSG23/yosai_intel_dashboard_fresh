@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/WSG23/yosai-gateway/events"
+	"github.com/WSG23/yosai-gateway/internal/cache"
 	"github.com/WSG23/yosai-gateway/internal/gateway"
 )
 
@@ -18,7 +19,8 @@ func main() {
 	if brokers == "" {
 		brokers = "localhost:9092"
 	}
-	processor, err := events.NewEventProcessor(brokers)
+	cacheSvc := cache.NewRedisCache()
+	processor, err := events.NewEventProcessor(brokers, cacheSvc)
 	if err != nil {
 		log.Fatalf("failed to init event processor: %v", err)
 	}
