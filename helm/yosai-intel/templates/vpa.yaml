@@ -1,0 +1,15 @@
+{{- if .Values.verticalPodAutoscaler.enabled }}
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ include "yosai-intel.fullname" . }}
+  labels:
+    {{- include "yosai-intel.labels" . | nindent 4 }}
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "yosai-intel.fullname" . }}
+  updatePolicy:
+    updateMode: {{ .Values.verticalPodAutoscaler.updatePolicy.updateMode }}
+{{- end }}
