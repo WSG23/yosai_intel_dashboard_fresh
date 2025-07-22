@@ -1,0 +1,121 @@
+openapi: 3.0.2
+info:
+  title: Access Event Service
+  version: 1.0.0
+servers:
+- url: /
+paths:
+  /api/v1/events:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccessEvent"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventResponse"
+          description: Acknowledgement
+      summary: Submit an access event
+  /api/v1/events/batch:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/_api_v1_events_batch_post_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/_api_v1_events_batch_post_200_response"
+          description: Batch status
+      summary: Submit a batch of access events
+components:
+  schemas:
+    AccessEvent:
+      example:
+        device_status: device_status
+        event_id: event_id
+        entry_without_badge: true
+        door_id: door_id
+        badge_id: badge_id
+        badge_status: badge_status
+        access_result: access_result
+        door_held_open_time: 0.8008281904610115
+        timestamp: 2000-01-23T04:56:07.000+00:00
+        person_id: person_id
+      properties:
+        event_id:
+          type: string
+        timestamp:
+          format: date-time
+          type: string
+        person_id:
+          nullable: true
+          type: string
+        door_id:
+          nullable: true
+          type: string
+        badge_id:
+          nullable: true
+          type: string
+        access_result:
+          type: string
+        badge_status:
+          nullable: true
+          type: string
+        door_held_open_time:
+          format: double
+          nullable: true
+          type: number
+        entry_without_badge:
+          nullable: true
+          type: boolean
+        device_status:
+          nullable: true
+          type: string
+      required:
+      - access_result
+      - event_id
+      - timestamp
+      type: object
+    EventResponse:
+      example:
+        event_id: event_id
+        status: status
+      properties:
+        event_id:
+          type: string
+        status:
+          type: string
+      required:
+      - event_id
+      - status
+      type: object
+    _api_v1_events_batch_post_request:
+      properties:
+        events:
+          items:
+            $ref: "#/components/schemas/AccessEvent"
+          type: array
+      type: object
+    _api_v1_events_batch_post_200_response:
+      example:
+        results:
+        - event_id: event_id
+          status: status
+        - event_id: event_id
+          status: status
+      properties:
+        results:
+          items:
+            $ref: "#/components/schemas/EventResponse"
+          type: array
+      type: object
