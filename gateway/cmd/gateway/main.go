@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -30,11 +31,16 @@ func main() {
 	brokers := os.Getenv("KAFKA_BROKERS")
 	if brokers == "" {
 		brokers = "localhost:9092"
+
 	}
 	cacheSvc := cache.NewRedisCache()
 
-	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"), os.Getenv("DB_PASSWORD"))
+       dbName := os.Getenv("DB_GATEWAY_NAME")
+       if dbName == "" {
+               dbName = os.Getenv("DB_NAME")
+       }
+       dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
+               os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), dbName, os.Getenv("DB_PASSWORD"))
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		log.Fatalf("failed to connect db: %v", err)
@@ -50,6 +56,14 @@ func main() {
 		log.Fatalf("failed to init event processor: %v", err)
 	}
 	defer processor.Close()
+
+	analyticsAddr, err := reg.ResolveService(context.Background(), "analytics")
+	if err == nil && analyticsAddr != "" {
+		if host, port, err2 := net.SplitHostPort(analyticsAddr); err2 == nil {
+			os.Setenv("APP_HOST", host)
+			os.Setenv("APP_PORT", port)
+		}
+	}
 
 	g, err := gateway.New()
 	if err != nil {
