@@ -462,6 +462,25 @@ Example Prometheus expressions:
   rate(circuit_breaker_state{state="open"}[5m])
   ```
 
+### Tracing Setup
+
+All services use OpenTelemetry with Jaeger for distributed tracing. Set the
+`JAEGER_ENDPOINT` environment variable to the collector endpoint
+(`http://localhost:14268/api/traces` by default) before starting a service.
+
+```python
+from tracing import init_tracing
+
+init_tracing("my-service")
+```
+
+```go
+shutdown, _ := tracing.InitTracing("my-service")
+defer shutdown(context.Background())
+```
+
+This ensures traces from Python and Go components are reported consistently.
+
 ## Kafka Setup
 
 `docker-compose.kafka.yml` spins up a three-node Kafka cluster with Schema Registry

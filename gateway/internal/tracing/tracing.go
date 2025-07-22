@@ -14,15 +14,20 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	JaegerEndpointEnv     = "JAEGER_ENDPOINT"
+	DefaultJaegerEndpoint = "http://localhost:14268/api/traces"
+)
+
 // Logger is the structured logger used across gateway services.
 var Logger = logrus.New()
 
 // InitTracing configures OpenTelemetry with a Jaeger exporter and returns
 // a shutdown function to flush spans.
 func InitTracing(serviceName string) (func(context.Context) error, error) {
-	endpoint := os.Getenv("JAEGER_ENDPOINT")
+	endpoint := os.Getenv(JaegerEndpointEnv)
 	if endpoint == "" {
-		endpoint = "http://localhost:14268/api/traces"
+		endpoint = DefaultJaegerEndpoint
 	}
 	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(endpoint)))
 	if err != nil {
