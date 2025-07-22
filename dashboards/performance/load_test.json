@@ -1,0 +1,22 @@
+{
+  "uid": "load-test",
+  "title": "Load Test Results",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Events Processed/s",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "rate(event_processor_events_processed_total[1m])", "legendFormat": "processed"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "HTTP Requests/s",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "sum(rate(http_requests_total[1m]))", "legendFormat": "req"}
+      ]
+    }
+  ]
+}

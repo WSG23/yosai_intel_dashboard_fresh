@@ -59,6 +59,7 @@ data/learned_mappings.json
 !package.json
 !package-lock.json
 !dashboards/grafana/*.json
+!dashboards/performance/*.json
 logs/
 # Temporary uploaded files
 temp/
