@@ -1,0 +1,23 @@
+{
+  "uid": "gateway",
+  "title": "Gateway Metrics",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Cache Hits vs Misses",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "gateway_cache_hits_total", "legendFormat": "hits"},
+        {"expr": "gateway_cache_misses_total", "legendFormat": "misses"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Events Processed",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "gateway_events_processed_total", "legendFormat": "processed"}
+      ]
+    }
+  ]
+}

@@ -5,6 +5,9 @@ from typing import Optional, Protocol
 import pandas as pd
 
 from config.database_manager import DatabaseManager, MockConnection
+from opentelemetry import trace
+
+from database.metrics import queries_total, query_errors_total
 
 
 class DatabaseConnection(Protocol):
@@ -38,7 +41,33 @@ def create_database_connection() -> DatabaseConnection:
         **db_config.__dict__
     )
 
-    return db_manager.get_connection()
+    conn = db_manager.get_connection()
+
+    tracer = trace.get_tracer("database")
+
+    class InstrumentedConnection:
+        def execute_query(self, query: str, params: Optional[tuple] = None) -> pd.DataFrame:
+            with tracer.start_as_current_span("execute_query"):
+                queries_total.inc()
+                try:
+                    return conn.execute_query(query, params)
+                except Exception:
+                    query_errors_total.inc()
+                    raise
+
+        def execute_command(self, command: str, params: Optional[tuple] = None) -> int:
+            with tracer.start_as_current_span("execute_command"):
+                queries_total.inc()
+                try:
+                    return conn.execute_command(command, params)
+                except Exception:
+                    query_errors_total.inc()
+                    raise
+
+        def health_check(self) -> bool:
+            return conn.health_check()
+
+    return InstrumentedConnection()
 
 
 # For compatibility with existing imports

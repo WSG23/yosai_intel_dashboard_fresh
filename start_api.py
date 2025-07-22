@@ -8,10 +8,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Import Flask app directly from adapter
 import api.adapter
 from config.constants import API_PORT
+from tracing import init_tracing
 
 
 def main() -> None:
     """Start the API development server."""
+    init_tracing("api")
     app = api.adapter.app
 
     print("\n🚀 Starting Yosai Intel Dashboard API...")
