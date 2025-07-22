@@ -17,11 +17,6 @@ spec:
       containers:
         - name: api-gateway
           image: yosai-gateway:latest
-          env:
-            - name: APP_HOST
-              value: "app"
-            - name: APP_PORT
-              value: "8050"
           ports:
             - containerPort: 8080
           readinessProbe:
