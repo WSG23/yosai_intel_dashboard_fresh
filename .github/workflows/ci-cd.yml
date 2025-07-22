@@ -46,6 +46,12 @@ jobs:
       - name: Run migration tests
         if: matrix.job == 'migration'
         run: pytest tests/migration tests/test_migrations.py -q
+      - name: Alembic upgrade check
+        if: matrix.job == 'migration'
+        run: alembic -c database/migrations/alembic.ini upgrade head
+      - name: Compile replication script
+        if: matrix.job == 'migration'
+        run: python -m py_compile scripts/replicate_to_timescale.py
   container-build:
     runs-on: ubuntu-latest
     needs: tests
