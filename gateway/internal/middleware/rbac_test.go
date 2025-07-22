@@ -3,7 +3,6 @@ package middleware
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -14,7 +13,7 @@ import (
 )
 
 func TestRequirePermission(t *testing.T) {
-	os.Setenv("PERMISSIONS_ALICE", "read")
+	t.Setenv("PERMISSIONS_ALICE", "read")
 	svc := rbac.New(time.Minute)
 
 	h := RequirePermission(svc, "read")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

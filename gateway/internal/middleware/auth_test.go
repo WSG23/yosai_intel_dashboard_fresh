@@ -3,7 +3,6 @@ package middleware
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -13,7 +12,7 @@ import (
 )
 
 func TestAuthMiddlewareSuccessAndFailure(t *testing.T) {
-	os.Setenv("JWT_SECRET", "test")
+	t.Setenv("JWT_SECRET", "test")
 	h := Auth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -47,7 +46,7 @@ func TestAuthMiddlewareSuccessAndFailure(t *testing.T) {
 }
 
 func TestAuthMiddlewareExpired(t *testing.T) {
-	os.Setenv("JWT_SECRET", "test")
+	t.Setenv("JWT_SECRET", "test")
 	h := Auth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))

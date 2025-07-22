@@ -2,13 +2,12 @@ package rbac
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 )
 
 func TestRBACServiceCaching(t *testing.T) {
-	os.Setenv("PERMISSIONS_ALICE", "read,write")
+	t.Setenv("PERMISSIONS_ALICE", "read,write")
 	svc := New(100 * time.Millisecond)
 
 	perms, err := svc.Permissions(context.Background(), "alice")
@@ -19,7 +18,7 @@ func TestRBACServiceCaching(t *testing.T) {
 		t.Fatalf("unexpected perms: %v", perms)
 	}
 
-	os.Setenv("PERMISSIONS_ALICE", "read")
+	t.Setenv("PERMISSIONS_ALICE", "read")
 	perms, err = svc.Permissions(context.Background(), "alice")
 	if err != nil {
 		t.Fatal(err)
@@ -39,7 +38,7 @@ func TestRBACServiceCaching(t *testing.T) {
 }
 
 func TestRBACServiceHasPermission(t *testing.T) {
-	os.Setenv("PERMISSIONS_BOB", "alpha")
+	t.Setenv("PERMISSIONS_BOB", "alpha")
 	svc := New(time.Minute)
 	ok, err := svc.HasPermission(context.Background(), "bob", "alpha")
 	if err != nil {

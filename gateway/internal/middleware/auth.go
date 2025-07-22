@@ -41,7 +41,7 @@ func Auth(next http.Handler) http.Handler {
 			return
 		}
 
-		if claims.ExpiresAt != nil && claims.ExpiresAt.Time.Before(time.Now()) {
+		if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
