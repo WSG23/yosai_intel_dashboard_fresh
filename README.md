@@ -193,6 +193,8 @@ API gateway on `http://localhost:8081` and the main dashboard on
 
 ### Go API Gateway
 
+The source code for the gateway lives under the `gateway/` directory.
+
 The gateway forwards all requests to the dashboard service defined by the
 `APP_HOST` and `APP_PORT` environment variables (defaults are `app` and
 `8050`). Additional middleware can be toggled with:
