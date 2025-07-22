@@ -2,9 +2,12 @@ import os
 import logging
 
 from flask import Flask, jsonify, Response, request
+
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
+
+from services.security import require_token
 
 csrf = CSRFProtect()
 
@@ -51,6 +54,7 @@ def create_api_app() -> Flask:
     @app.route("/metrics")
     def metrics():
         return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+
 
     # Third-party analytics demo endpoints
     register_analytics_blueprints(app)

@@ -58,6 +58,7 @@ data/learned_mappings.json
 *.json
 !package.json
 !package-lock.json
+!tsconfig.json
 logs/
 # Temporary uploaded files
 temp/

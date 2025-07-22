@@ -1087,6 +1087,23 @@ TIMESCALE_DB_USER, TIMESCALE_DB_PASSWORD
 
 The default `docker-compose.dev.yml` exposes TimescaleDB on port `5433`.
 
+### Schema Migrations and Replication
+
+Database schema changes are managed with **Alembic** under `database/migrations/`.
+Run migrations with:
+
+```bash
+alembic -c database/migrations/alembic.ini upgrade head
+```
+
+New access events are replicated from PostgreSQL to TimescaleDB by
+`scripts/replicate_to_timescale.py`. Set `SOURCE_DSN` and `TARGET_DSN` to run the
+job periodically (for example via `cron` or a Kubernetes CronJob):
+
+```bash
+python scripts/replicate_to_timescale.py
+```
+
 
 
 ## 🤝 Contributing

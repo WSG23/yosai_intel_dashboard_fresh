@@ -16,8 +16,22 @@ spec:
     spec:
       containers:
         - name: event-ingestion
-          image: yosai-intel-dashboard:latest
+          image: event-ingestion:latest
           command: ["python", "tools/streaming_producer.py"]
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
           envFrom:
             - configMapRef:
                 name: yosai-config
