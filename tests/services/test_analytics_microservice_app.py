@@ -62,7 +62,21 @@ def load_app():
 
 @pytest.fixture()
 def app_fixture(monkeypatch):
-    monkeypatch.setenv("JWT_SECRET", "secret")
+    class DummyVault:
+        def get_secret(self, path, field=None):
+            return "secret"
+
+        def invalidate(self, key=None):
+            pass
+
+    common_stub = types.ModuleType("services.common")
+    secrets_stub = types.ModuleType("services.common.secrets")
+    secrets_stub._init_client = lambda: DummyVault()
+    secrets_stub.get_secret = lambda key: "secret"
+    secrets_stub.invalidate_secret = lambda key=None: None
+    common_stub.secrets = secrets_stub
+    monkeypatch.setitem(sys.modules, "services.common", common_stub)
+    monkeypatch.setitem(sys.modules, "services.common.secrets", secrets_stub)
     module, dummy = load_app()
     client = TestClient(module.app)
     return client, dummy

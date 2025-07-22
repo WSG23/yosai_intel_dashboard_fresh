@@ -15,6 +15,40 @@ services_stub = types.ModuleType("services")
 services_stub.__path__ = [str(SERVICES_PATH)]
 sys.modules.setdefault("services", services_stub)
 
+otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
+otel_stub.FastAPIInstrumentor = types.SimpleNamespace(instrument_app=lambda *a, **k: None)
+sys.modules.setdefault("opentelemetry.instrumentation.fastapi", otel_stub)
+
+prom_stub = types.ModuleType("prometheus_fastapi_instrumentator")
+class DummyInstr:
+    def instrument(self, app):
+        return self
+    def expose(self, app):
+        return self
+prom_stub.Instrumentator = lambda: DummyInstr()
+sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
+
+class DummyVault:
+    def get_secret(self, path, field=None):
+        return "test"
+
+    def invalidate(self, key=None):
+        pass
+
+common_stub = types.ModuleType("services.common")
+secrets_stub = types.ModuleType("services.common.secrets")
+secrets_stub._init_client = lambda: DummyVault()
+secrets_stub.VaultClient = object
+secrets_stub.get_secret = lambda key: "test"
+secrets_stub.invalidate_secret = lambda key=None: None
+common_stub.secrets = secrets_stub
+sys.modules["services.common"] = common_stub
+sys.modules["services.common.secrets"] = secrets_stub
+
+tracing_stub = types.ModuleType("tracing")
+tracing_stub.init_tracing = lambda name: None
+sys.modules["tracing"] = tracing_stub
+
 
 class DummyAnalytics:
     def get_dashboard_summary(self) -> dict:
@@ -37,8 +71,7 @@ app_spec.loader.exec_module(app_module)
 
 
 @pytest.mark.integration
-def test_requests_without_valid_token_return_401(monkeypatch):
-    monkeypatch.setenv("JWT_SECRET", "test")
+def test_requests_without_valid_token_return_401():
     client = TestClient(app_module.app)
 
     # No Authorization header
