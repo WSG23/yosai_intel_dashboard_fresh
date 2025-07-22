@@ -166,6 +166,31 @@ startup. Ensure the following variables are set:
 from the defaults. For production deployments store these secrets in
 HashiCorp Vault or AWS Secrets Manager as described in
 [docs/secret_management.md](docs/secret_management.md).
+
+### RBAC Setup
+
+Apply the initial database schema before enabling role based access
+control:
+
+```bash
+python scripts/db_migration_cli.py upgrade  # create RBAC tables
+```
+
+Set the permission service URL in your environment if it differs from
+`http://localhost:8081`:
+
+```bash
+export PERMISSION_SERVICE_URL="http://rbac-service:8081"
+```
+
+Test the service with a simple request:
+
+```bash
+curl "$PERMISSION_SERVICE_URL/permissions/check?user_id=alice&resource=door:101&action=open"
+```
+
+See [docs/rbac.md](docs/rbac.md) for a full overview of resources,
+actions and role assignment.
 6. **Build the CSS bundle:**
    Ensure `node` and `npm` are available if you use the npm command.
    ```bash
