@@ -1,4 +1,3 @@
-import os
 import time
 
 from fastapi import Depends, FastAPI, Header, HTTPException, status
@@ -24,9 +23,8 @@ def verify_token(authorization: str = Header("")) -> None:
             status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized"
         )
     token = authorization.split(" ", 1)[1]
-    secret = os.getenv("JWT_SECRET", "")
     try:
-        claims = jwt.decode(token, secret, algorithms=["HS256"])
+        claims = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized"
