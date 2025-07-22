@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 
 from utils.api_error import error_response
 from flask_cors import CORS
@@ -8,6 +8,7 @@ import pandas as pd
 import hashlib
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from tracing import init_tracing
 
 # Initialize tracing before the app is created
@@ -15,6 +16,21 @@ init_tracing("backend")
 
 app = Flask(__name__)
 CORS(app)
+
+REQUEST_COUNT = Counter(
+    "http_requests_total", "Total HTTP requests", ["method", "endpoint", "status"]
+)
+
+
+@app.after_request
+def record_metrics(response):
+    REQUEST_COUNT.labels(request.method, request.path, response.status_code).inc()
+    return response
+
+
+@app.route("/metrics")
+def metrics():
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 # Configure upload
 UPLOAD_FOLDER = 'uploads'

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import os
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, Response
 from utils.api_error import error_response
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from tracing import init_tracing
 
 from flask_cors import CORS
@@ -16,6 +17,21 @@ init_tracing("backend")
 # Create Flask app
 app = Flask(__name__, static_folder="../build", static_url_path="")
 CORS(app, origins=["http://localhost:3000", "http://localhost:3001"])
+
+REQUEST_COUNT = Counter(
+    "http_requests_total", "Total HTTP requests", ["method", "endpoint", "status"]
+)
+
+
+@app.after_request
+def record_metrics(response):
+    REQUEST_COUNT.labels(request.method, request.path, response.status_code).inc()
+    return response
+
+
+@app.route("/metrics")
+def metrics():
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 
 @app.before_request

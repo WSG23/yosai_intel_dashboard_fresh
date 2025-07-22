@@ -46,6 +46,9 @@ seconds between `NOW()` and the timestamp of the most recently replicated access
 event. Set the `REPLICATION_METRICS_PORT` environment variable to change the
 HTTP port (defaults to `8004`).
 
+All services expose their runtime metrics at `/metrics` so Prometheus can scrape
+them without additional configuration.
+
 ### Logstash
 
 `logging/logstash.conf` reads the application, Postgres and Redis logs and can
