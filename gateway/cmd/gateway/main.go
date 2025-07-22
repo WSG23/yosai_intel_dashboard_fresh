@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 
 	"net/http"
 	"os"
@@ -16,9 +15,11 @@ import (
 
 	"github.com/WSG23/yosai-gateway/events"
 	"github.com/WSG23/yosai-gateway/internal/cache"
+	cfg "github.com/WSG23/yosai-gateway/internal/config"
 	"github.com/WSG23/yosai-gateway/internal/engine"
 	"github.com/WSG23/yosai-gateway/internal/gateway"
 	"github.com/WSG23/yosai-gateway/internal/tracing"
+	"github.com/sony/gobreaker"
 )
 
 func main() {
@@ -35,6 +36,12 @@ func main() {
 	}
 	cacheSvc := cache.NewRedisCache()
 
+	cbConf, err := cfg.Load(os.Getenv("CIRCUIT_BREAKER_CONFIG"))
+	if err != nil {
+		tracing.Logger.WithError(err).Warn("failed to load circuit breaker config, using defaults")
+		cbConf = &cfg.Config{}
+	}
+
 	dbName := os.Getenv("DB_GATEWAY_NAME")
 	if dbName == "" {
 		dbName = os.Getenv("DB_NAME")
@@ -45,13 +52,35 @@ func main() {
 	if err != nil {
 		tracing.Logger.Fatalf("failed to connect db: %v", err)
 	}
-	engCore, err := engine.NewRuleEngine(db)
+	dbSettings := gobreaker.Settings{
+		Name:    "rule-engine",
+		Timeout: cbConf.Database.Timeout(),
+		ReadyToTrip: func(c gobreaker.Counts) bool {
+			t := cbConf.Database.FailureThreshold
+			if t <= 0 {
+				t = 5
+			}
+			return c.ConsecutiveFailures >= uint32(t)
+		},
+	}
+	engCore, err := engine.NewRuleEngineWithSettings(db, dbSettings)
 	if err != nil {
 		tracing.Logger.Fatalf("failed to init rule engine: %v", err)
 	}
 	ruleEngine := &engine.CachedRuleEngine{Engine: engCore, Cache: cacheSvc}
 
-	processor, err := events.NewEventProcessor(brokers, cacheSvc, ruleEngine)
+	epSettings := gobreaker.Settings{
+		Name:    "event-processor",
+		Timeout: cbConf.EventProcessor.Timeout(),
+		ReadyToTrip: func(c gobreaker.Counts) bool {
+			t := cbConf.EventProcessor.FailureThreshold
+			if t <= 0 {
+				t = 10
+			}
+			return c.ConsecutiveFailures >= uint32(t)
+		},
+	}
+	processor, err := events.NewEventProcessor(brokers, cacheSvc, ruleEngine, epSettings)
 	if err != nil {
 		tracing.Logger.Fatalf("failed to init event processor: %v", err)
 	}
@@ -70,7 +99,6 @@ func main() {
 	           }
 	   }
 	*/
-
 
 	g, err := gateway.New()
 	if err != nil {
