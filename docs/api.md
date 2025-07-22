@@ -5,7 +5,7 @@ available at `/api/docs` when the application is running. To regenerate the
 OpenAPI specification run:
 
 ```bash
-python tools/generate_openapi.py
+go run ./api/openapi
 ```
 
 The script writes `docs/openapi.json`. Once generated, this file can be served
