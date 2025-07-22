@@ -1,4 +1,6 @@
 from flask import Blueprint, request, jsonify
+
+from utils.api_error import error_response
 import pandas as pd
 
 # Use the shared DI container for dependency resolution
@@ -10,7 +12,7 @@ if not container.has("upload_processor"):
 
 device_bp = Blueprint('device', __name__)
 
-@device_bp.route('/api/v1/ai/suggest-devices', methods=['POST'])
+@device_bp.route('/v1/ai/suggest-devices', methods=['POST'])
 def suggest_devices():
     """Get device suggestions using DeviceLearningService"""
     try:
@@ -27,7 +29,7 @@ def suggest_devices():
         df = stored_data.get(filename)
         
         if df is None:
-            return jsonify({'error': 'File data not found'}), 404
+            return error_response('not_found', 'File data not found'), 404
         
         # Get unique devices from data
         devices = []
@@ -88,4 +90,4 @@ def suggest_devices():
         }), 200
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return error_response('server_error', str(e)), 500

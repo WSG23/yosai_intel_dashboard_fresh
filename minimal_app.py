@@ -4,7 +4,9 @@ Minimal Flask API for React Upload component
 Bypasses circular imports by using services directly
 """
 from flask import Flask, request, jsonify
-from services.security import require_token
+
+from utils.api_error import error_response
+
 from flask_cors import CORS
 import pandas as pd
 import asyncio
@@ -29,8 +31,8 @@ def _auth():
 # Global storage for uploaded data
 uploaded_data = {}
 
+@app.route('/v1/upload', methods=['POST'])
 
-@app.route("/api/v1/upload", methods=["POST"])
 def upload_files():
     """Handle file upload and return expected structure"""
     try:
@@ -38,20 +40,23 @@ def upload_files():
         if "file" in request.files:
             file = request.files["file"]
             if not file.filename:
-                return jsonify({"error": "No file selected"}), 400
+                return error_response('no_file_selected', 'No file selected'), 400
+
 
             filename = file.filename
             file_bytes = file.read()
         else:
             data = request.get_json(silent=True)
             if not data:
-                return jsonify({"error": "No data provided"}), 400
+                return error_response('no_data', 'No data provided'), 400
+
 
             contents = data.get("contents", [])
             filenames = data.get("filenames", [])
 
             if not contents or not filenames:
-                return jsonify({"error": "No files provided"}), 400
+                return error_response('no_files', 'No files provided'), 400
+
 
             content = contents[0]
             filename = filenames[0]
@@ -72,7 +77,8 @@ def upload_files():
         elif filename.endswith(".json"):
             df = pd.read_json(io.BytesIO(file_bytes))
         else:
-            return jsonify({"error": "Unsupported file type"}), 400
+            return error_response('unsupported_type', 'Unsupported file type'), 400
+        
 
         # Store dataframe
         uploaded_data[filename] = df
@@ -106,10 +112,10 @@ def upload_files():
 
     except Exception as e:
         print(f"Upload error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return error_response('server_error', str(e)), 500
 
+@app.route('/v1/ai/suggest-devices', methods=['POST'])
 
-@app.route("/api/v1/ai/suggest-devices", methods=["POST"])
 def suggest_devices():
     """Get device suggestions"""
     try:
@@ -120,7 +126,8 @@ def suggest_devices():
         # Get dataframe
         df = uploaded_data.get(filename)
         if df is None:
-            return jsonify({"error": "File not found"}), 404
+            return error_response('not_found', 'File not found'), 404
+        
 
         # Find device column
         devices = []
@@ -166,10 +173,10 @@ def suggest_devices():
 
     except Exception as e:
         print(f"Device suggestion error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return error_response('server_error', str(e)), 500
 
+@app.route('/v1/mappings/save', methods=['POST'])
 
-@app.route("/api/v1/mappings/save", methods=["POST"])
 def save_mappings():
     """Save mappings"""
     try:
@@ -183,10 +190,10 @@ def save_mappings():
         return jsonify({"status": "success"}), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return error_response('server_error', str(e)), 500
 
+@app.route('/v1/process-enhanced', methods=['POST'])
 
-@app.route("/api/v1/process-enhanced", methods=["POST"])
 def process_enhanced_data():
     """Process data with mappings"""
     try:
@@ -198,7 +205,8 @@ def process_enhanced_data():
         # Get dataframe
         df = uploaded_data.get(filename)
         if df is None:
-            return jsonify({"error": "File not found"}), 404
+            return error_response('not_found', 'File not found'), 404
+        
 
         # Apply column mappings
         if column_mappings:
@@ -230,7 +238,7 @@ def process_enhanced_data():
         )
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return error_response('server_error', str(e)), 500
 
 
 # Helper functions for fallback suggestions
@@ -306,8 +314,8 @@ if __name__ == "__main__":
     print("Starting minimal Flask API server...")
     print(f"Server running on http://localhost:{API_PORT}")
     print("Endpoints:")
-    print("  POST /api/v1/upload")
-    print("  POST /api/v1/ai/suggest-devices")
-    print("  POST /api/v1/mappings/save")
-    print("  POST /api/v1/process-enhanced")
-    app.run(host="0.0.0.0", port=API_PORT, debug=True)
+    print("  POST /v1/upload")
+    print("  POST /v1/ai/suggest-devices")
+    print("  POST /v1/mappings/save")
+    print("  POST /v1/process-enhanced")
+    app.run(host='0.0.0.0', port=API_PORT, debug=True)

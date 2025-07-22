@@ -3,7 +3,7 @@ info:
   title: Access Event Service
   version: 1.0.0
 paths:
-  /api/v1/events:
+  /v1/events:
     post:
       summary: Submit an access event
       requestBody:
@@ -18,8 +18,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventResponse'
-  /api/v1/events/batch:
+                $ref: "#/components/schemas/EventResponse"
+          description: Acknowledgement
+      summary: Submit an access event
+  /v1/events/batch:
+
     post:
       summary: Submit a batch of access events
       requestBody:
@@ -27,24 +30,19 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                events:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/AccessEvent'
+              $ref: "#/components/schemas/_v1_events_batch_post_request"
+        required: true
+
       responses:
         '200':
           description: Batch status
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  results:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/EventResponse'
+                $ref: "#/components/schemas/_v1_events_batch_post_200_response"
+          description: Batch status
+      summary: Submit a batch of access events
+
 components:
   schemas:
     AccessEvent:
@@ -91,5 +89,39 @@ components:
         status:
           type: string
       required:
-        - event_id
-        - status
+      - event_id
+      - status
+      type: object
+    _v1_events_batch_post_request:
+      properties:
+        events:
+          items:
+            $ref: "#/components/schemas/AccessEvent"
+          type: array
+      type: object
+    _v1_events_batch_post_200_response:
+      example:
+        results:
+        - event_id: event_id
+          status: status
+        - event_id: event_id
+          status: status
+      properties:
+        results:
+          items:
+            $ref: "#/components/schemas/EventResponse"
+          type: array
+      type: object
+    ErrorResponse:
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          nullable: true
+          type: string
+      required:
+      - code
+      - message
+

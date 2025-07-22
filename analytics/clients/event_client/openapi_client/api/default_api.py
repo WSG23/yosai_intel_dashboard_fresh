@@ -17,9 +17,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
 
 from openapi_client.models.access_event import AccessEvent
-from openapi_client.models.api_v1_events_batch_post200_response import ApiV1EventsBatchPost200Response
-from openapi_client.models.api_v1_events_batch_post_request import ApiV1EventsBatchPostRequest
 from openapi_client.models.event_response import EventResponse
+from openapi_client.models.v1_events_batch_post200_response import V1EventsBatchPost200Response
+from openapi_client.models.v1_events_batch_post_request import V1EventsBatchPostRequest
 
 from openapi_client.api_client import ApiClient, RequestSerialized
 from openapi_client.api_response import ApiResponse
@@ -40,9 +40,9 @@ class DefaultApi:
 
 
     @validate_call
-    def api_v1_events_batch_post(
+    def v1_events_batch_post(
         self,
-        api_v1_events_batch_post_request: ApiV1EventsBatchPostRequest,
+        v1_events_batch_post_request: V1EventsBatchPostRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -55,12 +55,12 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiV1EventsBatchPost200Response:
+    ) -> V1EventsBatchPost200Response:
         """Submit a batch of access events
 
 
-        :param api_v1_events_batch_post_request: (required)
-        :type api_v1_events_batch_post_request: ApiV1EventsBatchPostRequest
+        :param v1_events_batch_post_request: (required)
+        :type v1_events_batch_post_request: V1EventsBatchPostRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -83,8 +83,8 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._api_v1_events_batch_post_serialize(
-            api_v1_events_batch_post_request=api_v1_events_batch_post_request,
+        _param = self._v1_events_batch_post_serialize(
+            v1_events_batch_post_request=v1_events_batch_post_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -92,7 +92,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ApiV1EventsBatchPost200Response",
+            '200': "V1EventsBatchPost200Response",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -106,9 +106,9 @@ class DefaultApi:
 
 
     @validate_call
-    def api_v1_events_batch_post_with_http_info(
+    def v1_events_batch_post_with_http_info(
         self,
-        api_v1_events_batch_post_request: ApiV1EventsBatchPostRequest,
+        v1_events_batch_post_request: V1EventsBatchPostRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -121,12 +121,12 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ApiV1EventsBatchPost200Response]:
+    ) -> ApiResponse[V1EventsBatchPost200Response]:
         """Submit a batch of access events
 
 
-        :param api_v1_events_batch_post_request: (required)
-        :type api_v1_events_batch_post_request: ApiV1EventsBatchPostRequest
+        :param v1_events_batch_post_request: (required)
+        :type v1_events_batch_post_request: V1EventsBatchPostRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -149,8 +149,8 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._api_v1_events_batch_post_serialize(
-            api_v1_events_batch_post_request=api_v1_events_batch_post_request,
+        _param = self._v1_events_batch_post_serialize(
+            v1_events_batch_post_request=v1_events_batch_post_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -158,7 +158,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ApiV1EventsBatchPost200Response",
+            '200': "V1EventsBatchPost200Response",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -172,9 +172,9 @@ class DefaultApi:
 
 
     @validate_call
-    def api_v1_events_batch_post_without_preload_content(
+    def v1_events_batch_post_without_preload_content(
         self,
-        api_v1_events_batch_post_request: ApiV1EventsBatchPostRequest,
+        v1_events_batch_post_request: V1EventsBatchPostRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -191,8 +191,8 @@ class DefaultApi:
         """Submit a batch of access events
 
 
-        :param api_v1_events_batch_post_request: (required)
-        :type api_v1_events_batch_post_request: ApiV1EventsBatchPostRequest
+        :param v1_events_batch_post_request: (required)
+        :type v1_events_batch_post_request: V1EventsBatchPostRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -215,8 +215,8 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._api_v1_events_batch_post_serialize(
-            api_v1_events_batch_post_request=api_v1_events_batch_post_request,
+        _param = self._v1_events_batch_post_serialize(
+            v1_events_batch_post_request=v1_events_batch_post_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -224,7 +224,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ApiV1EventsBatchPost200Response",
+            '200': "V1EventsBatchPost200Response",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -233,9 +233,9 @@ class DefaultApi:
         return response_data.response
 
 
-    def _api_v1_events_batch_post_serialize(
+    def _v1_events_batch_post_serialize(
         self,
-        api_v1_events_batch_post_request,
+        v1_events_batch_post_request,
         _request_auth,
         _content_type,
         _headers,
@@ -261,8 +261,8 @@ class DefaultApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if api_v1_events_batch_post_request is not None:
-            _body_params = api_v1_events_batch_post_request
+        if v1_events_batch_post_request is not None:
+            _body_params = v1_events_batch_post_request
 
 
         # set the HTTP header `Accept`
@@ -293,7 +293,7 @@ class DefaultApi:
 
         return self.api_client.param_serialize(
             method='POST',
-            resource_path='/api/v1/events/batch',
+            resource_path='/v1/events/batch',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -310,7 +310,7 @@ class DefaultApi:
 
 
     @validate_call
-    def api_v1_events_post(
+    def v1_events_post(
         self,
         access_event: AccessEvent,
         _request_timeout: Union[
@@ -353,7 +353,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._api_v1_events_post_serialize(
+        _param = self._v1_events_post_serialize(
             access_event=access_event,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -376,7 +376,7 @@ class DefaultApi:
 
 
     @validate_call
-    def api_v1_events_post_with_http_info(
+    def v1_events_post_with_http_info(
         self,
         access_event: AccessEvent,
         _request_timeout: Union[
@@ -419,7 +419,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._api_v1_events_post_serialize(
+        _param = self._v1_events_post_serialize(
             access_event=access_event,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -442,7 +442,7 @@ class DefaultApi:
 
 
     @validate_call
-    def api_v1_events_post_without_preload_content(
+    def v1_events_post_without_preload_content(
         self,
         access_event: AccessEvent,
         _request_timeout: Union[
@@ -485,7 +485,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._api_v1_events_post_serialize(
+        _param = self._v1_events_post_serialize(
             access_event=access_event,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -503,7 +503,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _api_v1_events_post_serialize(
+    def _v1_events_post_serialize(
         self,
         access_event,
         _request_auth,
@@ -563,7 +563,7 @@ class DefaultApi:
 
         return self.api_client.param_serialize(
             method='POST',
-            resource_path='/api/v1/events',
+            resource_path='/v1/events',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,

@@ -67,15 +67,15 @@ configuration = openapi_client.Configuration(
 with openapi_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = openapi_client.DefaultApi(api_client)
-    api_v1_events_batch_post_request = openapi_client.ApiV1EventsBatchPostRequest() # ApiV1EventsBatchPostRequest | 
+    v1_events_batch_post_request = openapi_client.V1EventsBatchPostRequest() # V1EventsBatchPostRequest | 
 
     try:
         # Submit a batch of access events
-        api_response = api_instance.api_v1_events_batch_post(api_v1_events_batch_post_request)
-        print("The response of DefaultApi->api_v1_events_batch_post:\n")
+        api_response = api_instance.v1_events_batch_post(v1_events_batch_post_request)
+        print("The response of DefaultApi->v1_events_batch_post:\n")
         pprint(api_response)
     except ApiException as e:
-        print("Exception when calling DefaultApi->api_v1_events_batch_post: %s\n" % e)
+        print("Exception when calling DefaultApi->v1_events_batch_post: %s\n" % e)
 
 ```
 
@@ -85,16 +85,17 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*DefaultApi* | [**api_v1_events_batch_post**](docs/DefaultApi.md#api_v1_events_batch_post) | **POST** /api/v1/events/batch | Submit a batch of access events
-*DefaultApi* | [**api_v1_events_post**](docs/DefaultApi.md#api_v1_events_post) | **POST** /api/v1/events | Submit an access event
+*DefaultApi* | [**v1_events_batch_post**](docs/DefaultApi.md#v1_events_batch_post) | **POST** /v1/events/batch | Submit a batch of access events
+*DefaultApi* | [**v1_events_post**](docs/DefaultApi.md#v1_events_post) | **POST** /v1/events | Submit an access event
 
 
 ## Documentation For Models
 
  - [AccessEvent](docs/AccessEvent.md)
- - [ApiV1EventsBatchPost200Response](docs/ApiV1EventsBatchPost200Response.md)
- - [ApiV1EventsBatchPostRequest](docs/ApiV1EventsBatchPostRequest.md)
+ - [ErrorResponse](docs/ErrorResponse.md)
  - [EventResponse](docs/EventResponse.md)
+ - [V1EventsBatchPost200Response](docs/V1EventsBatchPost200Response.md)
+ - [V1EventsBatchPostRequest](docs/V1EventsBatchPostRequest.md)
 
 
 <a id="documentation-for-authorization"></a>

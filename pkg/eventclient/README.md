@@ -78,16 +78,17 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*DefaultAPI* | [**ApiV1EventsBatchPost**](docs/DefaultAPI.md#apiv1eventsbatchpost) | **Post** /api/v1/events/batch | Submit a batch of access events
-*DefaultAPI* | [**ApiV1EventsPost**](docs/DefaultAPI.md#apiv1eventspost) | **Post** /api/v1/events | Submit an access event
+*DefaultAPI* | [**V1EventsBatchPost**](docs/DefaultAPI.md#v1eventsbatchpost) | **Post** /v1/events/batch | Submit a batch of access events
+*DefaultAPI* | [**V1EventsPost**](docs/DefaultAPI.md#v1eventspost) | **Post** /v1/events | Submit an access event
 
 
 ## Documentation For Models
 
  - [AccessEvent](docs/AccessEvent.md)
- - [ApiV1EventsBatchPost200Response](docs/ApiV1EventsBatchPost200Response.md)
- - [ApiV1EventsBatchPostRequest](docs/ApiV1EventsBatchPostRequest.md)
+ - [ErrorResponse](docs/ErrorResponse.md)
  - [EventResponse](docs/EventResponse.md)
+ - [V1EventsBatchPost200Response](docs/V1EventsBatchPost200Response.md)
+ - [V1EventsBatchPostRequest](docs/V1EventsBatchPostRequest.md)
 
 
 ## Documentation For Authorization

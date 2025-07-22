@@ -15,7 +15,7 @@ def test_upload():
     contents = f"data:text/csv;base64,{base64.b64encode(test_csv.encode()).decode()}"
     
     response = requests.post(
-        f"{base_url}/api/v1/upload",
+        f"{base_url}/v1/upload",
         json={"contents": [contents], "filenames": ["test.csv"]}
     )
     print(f"Status: {response.status_code}")

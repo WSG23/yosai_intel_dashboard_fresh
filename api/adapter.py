@@ -65,7 +65,7 @@ def create_api_app() -> Flask:
     app.register_blueprint(mappings_bp)
     app.register_blueprint(settings_bp)
 
-    @app.route("/api/v1/csrf-token", methods=["GET"])
+    @app.route("/v1/csrf-token", methods=["GET"])
     def get_csrf_token():
         """Provide CSRF token for clients."""
         return jsonify({"csrf_token": generate_csrf()})
@@ -75,8 +75,8 @@ def create_api_app() -> Flask:
 
 if __name__ == "__main__":
     app = create_api_app()
-    logger.info("Starting Yosai Intel Dashboard API", extra={"port": API_PORT})
-    logger.info(
-        "Upload endpoint", extra={"url": f"http://localhost:{API_PORT}/api/v1/upload"}
-    )
+    print("\n🚀 Starting Yosai Intel Dashboard API...")
+    print(f"   Available at: http://localhost:{API_PORT}")
+    print(f"   Upload endpoint: http://localhost:{API_PORT}/v1/upload")
+
     app.run(host="0.0.0.0", port=API_PORT, debug=True)

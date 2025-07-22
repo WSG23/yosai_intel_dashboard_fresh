@@ -22,56 +22,56 @@ import (
 // DefaultAPIService DefaultAPI service
 type DefaultAPIService service
 
-type ApiApiV1EventsBatchPostRequest struct {
+type ApiV1EventsBatchPostRequest struct {
 	ctx context.Context
 	ApiService *DefaultAPIService
-	apiV1EventsBatchPostRequest *ApiV1EventsBatchPostRequest
+	v1EventsBatchPostRequest *V1EventsBatchPostRequest
 }
 
-func (r ApiApiV1EventsBatchPostRequest) ApiV1EventsBatchPostRequest(apiV1EventsBatchPostRequest ApiV1EventsBatchPostRequest) ApiApiV1EventsBatchPostRequest {
-	r.apiV1EventsBatchPostRequest = &apiV1EventsBatchPostRequest
+func (r ApiV1EventsBatchPostRequest) V1EventsBatchPostRequest(v1EventsBatchPostRequest V1EventsBatchPostRequest) ApiV1EventsBatchPostRequest {
+	r.v1EventsBatchPostRequest = &v1EventsBatchPostRequest
 	return r
 }
 
-func (r ApiApiV1EventsBatchPostRequest) Execute() (*ApiV1EventsBatchPost200Response, *http.Response, error) {
-	return r.ApiService.ApiV1EventsBatchPostExecute(r)
+func (r ApiV1EventsBatchPostRequest) Execute() (*V1EventsBatchPost200Response, *http.Response, error) {
+	return r.ApiService.V1EventsBatchPostExecute(r)
 }
 
 /*
-ApiV1EventsBatchPost Submit a batch of access events
+V1EventsBatchPost Submit a batch of access events
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiApiV1EventsBatchPostRequest
+ @return ApiV1EventsBatchPostRequest
 */
-func (a *DefaultAPIService) ApiV1EventsBatchPost(ctx context.Context) ApiApiV1EventsBatchPostRequest {
-	return ApiApiV1EventsBatchPostRequest{
+func (a *DefaultAPIService) V1EventsBatchPost(ctx context.Context) ApiV1EventsBatchPostRequest {
+	return ApiV1EventsBatchPostRequest{
 		ApiService: a,
 		ctx: ctx,
 	}
 }
 
 // Execute executes the request
-//  @return ApiV1EventsBatchPost200Response
-func (a *DefaultAPIService) ApiV1EventsBatchPostExecute(r ApiApiV1EventsBatchPostRequest) (*ApiV1EventsBatchPost200Response, *http.Response, error) {
+//  @return V1EventsBatchPost200Response
+func (a *DefaultAPIService) V1EventsBatchPostExecute(r ApiV1EventsBatchPostRequest) (*V1EventsBatchPost200Response, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *ApiV1EventsBatchPost200Response
+		localVarReturnValue  *V1EventsBatchPost200Response
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ApiV1EventsBatchPost")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.V1EventsBatchPost")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/api/v1/events/batch"
+	localVarPath := localBasePath + "/v1/events/batch"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.apiV1EventsBatchPostRequest == nil {
-		return localVarReturnValue, nil, reportError("apiV1EventsBatchPostRequest is required and must be specified")
+	if r.v1EventsBatchPostRequest == nil {
+		return localVarReturnValue, nil, reportError("v1EventsBatchPostRequest is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -92,7 +92,7 @@ func (a *DefaultAPIService) ApiV1EventsBatchPostExecute(r ApiApiV1EventsBatchPos
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.apiV1EventsBatchPostRequest
+	localVarPostBody = r.v1EventsBatchPostRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -130,29 +130,29 @@ func (a *DefaultAPIService) ApiV1EventsBatchPostExecute(r ApiApiV1EventsBatchPos
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiApiV1EventsPostRequest struct {
+type ApiV1EventsPostRequest struct {
 	ctx context.Context
 	ApiService *DefaultAPIService
 	accessEvent *AccessEvent
 }
 
-func (r ApiApiV1EventsPostRequest) AccessEvent(accessEvent AccessEvent) ApiApiV1EventsPostRequest {
+func (r ApiV1EventsPostRequest) AccessEvent(accessEvent AccessEvent) ApiV1EventsPostRequest {
 	r.accessEvent = &accessEvent
 	return r
 }
 
-func (r ApiApiV1EventsPostRequest) Execute() (*EventResponse, *http.Response, error) {
-	return r.ApiService.ApiV1EventsPostExecute(r)
+func (r ApiV1EventsPostRequest) Execute() (*EventResponse, *http.Response, error) {
+	return r.ApiService.V1EventsPostExecute(r)
 }
 
 /*
-ApiV1EventsPost Submit an access event
+V1EventsPost Submit an access event
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiApiV1EventsPostRequest
+ @return ApiV1EventsPostRequest
 */
-func (a *DefaultAPIService) ApiV1EventsPost(ctx context.Context) ApiApiV1EventsPostRequest {
-	return ApiApiV1EventsPostRequest{
+func (a *DefaultAPIService) V1EventsPost(ctx context.Context) ApiV1EventsPostRequest {
+	return ApiV1EventsPostRequest{
 		ApiService: a,
 		ctx: ctx,
 	}
@@ -160,7 +160,7 @@ func (a *DefaultAPIService) ApiV1EventsPost(ctx context.Context) ApiApiV1EventsP
 
 // Execute executes the request
 //  @return EventResponse
-func (a *DefaultAPIService) ApiV1EventsPostExecute(r ApiApiV1EventsPostRequest) (*EventResponse, *http.Response, error) {
+func (a *DefaultAPIService) V1EventsPostExecute(r ApiV1EventsPostRequest) (*EventResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -168,12 +168,12 @@ func (a *DefaultAPIService) ApiV1EventsPostExecute(r ApiApiV1EventsPostRequest) 
 		localVarReturnValue  *EventResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ApiV1EventsPost")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.V1EventsPost")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/api/v1/events"
+	localVarPath := localBasePath + "/v1/events"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}

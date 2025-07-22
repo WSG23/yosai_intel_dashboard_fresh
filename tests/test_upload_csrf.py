@@ -37,7 +37,7 @@ def _create_app(monkeypatch):
         werkzeug.__version__ = "3"
     app.register_blueprint(upload_endpoint.upload_bp)
 
-    @app.route("/api/v1/csrf-token")
+    @app.route("/v1/csrf-token")
     def csrf_token():
         return jsonify({"csrf_token": generate_csrf()})
 
@@ -48,13 +48,13 @@ def test_upload_requires_csrf(monkeypatch):
     app = _create_app(monkeypatch)
     client = app.test_client()
 
-    resp = client.post("/api/v1/upload", json={"contents": [], "filenames": []})
+    resp = client.post("/v1/upload", json={"contents": [], "filenames": []})
     assert resp.status_code == 400
 
     with client:
-        token = client.get("/api/v1/csrf-token").get_json()["csrf_token"]
+        token = client.get("/v1/csrf-token").get_json()["csrf_token"]
         resp = client.post(
-            "/api/v1/upload",
+            "/v1/upload",
             json={"contents": [], "filenames": []},
             headers={"X-CSRFToken": token},
         )

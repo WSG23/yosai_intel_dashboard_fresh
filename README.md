@@ -759,7 +759,7 @@ manager = EnhancedThreadSafePluginManager(container, config)
 data = manager.get_plugin_performance_metrics()
 ```
 
-The `/api/v1/plugins/performance` endpoint exposes metrics for dashboards.
+The `/v1/plugins/performance` endpoint exposes metrics for dashboards.
 
 ## <span aria-hidden="true">📊</span> Modular Components
 
@@ -922,7 +922,7 @@ Update the spec by running `python tools/generate_openapi.py` which writes `docs
 Fetch plugin performance metrics:
 
 ```bash
-curl http://<host>:<port>/api/v1/plugins/performance
+curl http://<host>:<port>/v1/plugins/performance
 ```
 
 Expected response:
@@ -940,7 +940,7 @@ Expected response:
 Calculate risk score from analytics data:
 
 ```bash
-curl -X POST http://<host>:<port>/api/v1/risk/score \
+curl -X POST http://<host>:<port>/v1/risk/score \
     -H 'Content-Type: application/json' \
     -d '{"anomaly_score": 0.25, "pattern_score": 0.1, "behavior_deviation": 0.2}'
 ```
