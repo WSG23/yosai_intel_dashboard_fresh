@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -9,8 +11,11 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/lib/pq"
+
 	"github.com/WSG23/yosai-gateway/events"
 	"github.com/WSG23/yosai-gateway/internal/cache"
+	"github.com/WSG23/yosai-gateway/internal/engine"
 	"github.com/WSG23/yosai-gateway/internal/gateway"
 )
 
@@ -20,7 +25,20 @@ func main() {
 		brokers = "localhost:9092"
 	}
 	cacheSvc := cache.NewRedisCache()
-	processor, err := events.NewEventProcessor(brokers, cacheSvc)
+
+	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
+		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"), os.Getenv("DB_PASSWORD"))
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		log.Fatalf("failed to connect db: %v", err)
+	}
+	engCore, err := engine.NewRuleEngine(db)
+	if err != nil {
+		log.Fatalf("failed to init rule engine: %v", err)
+	}
+	ruleEngine := &engine.CachedRuleEngine{Engine: engCore, Cache: cacheSvc}
+
+	processor, err := events.NewEventProcessor(brokers, cacheSvc, ruleEngine)
 	if err != nil {
 		log.Fatalf("failed to init event processor: %v", err)
 	}
