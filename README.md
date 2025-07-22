@@ -206,8 +206,8 @@ The gateway forwards all requests to the dashboard service defined by the
 Run it locally with:
 
 ```bash
-cd api-gateway
-go run .
+cd gateway
+go run ./cmd/gateway
 ```
 
 The service listens on port `8080` inside the container. You can reach it at
