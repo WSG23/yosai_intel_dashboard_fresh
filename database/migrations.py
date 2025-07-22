@@ -16,7 +16,14 @@ class MigrationManager:
         self.config = Config(config_path)
         self._history: List[str] = []
 
-    def upgrade(self, revision: str = "head") -> None:
+    def upgrade(self, revision: str = "head", *, dry_run: bool = False) -> None:
+        """Upgrade to ``revision``. If ``dry_run`` is True, emit SQL only."""
+        if dry_run:
+            target = "heads" if revision == "head" else revision
+            command.upgrade(self.config, target, sql=True)
+            logger.info("Dry-run upgrade to %s", target)
+            return
+
         command.upgrade(self.config, revision)
         self._history.append(revision)
         logger.info("Upgraded to %s", revision)
