@@ -51,6 +51,12 @@ docker run -p 5044:5044 \
 
 Adjust the `elasticsearch` output section if you have a different destination.
 
+### Distributed Tracing
+
+All services export OpenTelemetry traces to Jaeger. Set the `JAEGER_ENDPOINT`
+environment variable to the collector URL (`http://localhost:14268/api/traces`
+by default). Invoke `init_tracing("analytics-microservice")` during startup of
+the analytics microservice so spans are reported correctly.
 
 ## Real-time Performance Tracking
 
