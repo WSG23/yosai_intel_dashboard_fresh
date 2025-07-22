@@ -5,18 +5,20 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, jsonify, request
+
 from flask_login import current_user, login_required
 
 from core.audit_logger import ComplianceAuditLogger
 from core.container import Container
 from core.rbac import require_role
 from core.security_validator import SecurityValidator
-from models.compliance import ConsentType, DataSensitivityLevel, DSARRequestType
+from models.compliance import ConsentType, DSARRequestType
 from services.compliance.consent_service import ConsentService
 from services.compliance.dsar_service import DSARService
+from services.security import require_role
+
 
 logger = logging.getLogger(__name__)
 

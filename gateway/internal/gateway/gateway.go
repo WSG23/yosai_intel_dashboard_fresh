@@ -29,6 +29,24 @@ func New() (*Gateway, error) {
 	r.HandleFunc("/health", handlers.HealthCheck).Methods(http.MethodGet)
 	r.Handle("/metrics", promhttp.Handler()).Methods(http.MethodGet)
 	r.HandleFunc("/breaker", handlers.BreakerMetrics).Methods(http.MethodGet)
+
+	// Sensitive endpoint subrouters with access control
+	doors := r.PathPrefix("/api/v1/doors").Subrouter()
+	doors.Use(middleware.RequirePermission("doors.control"))
+	doors.PathPrefix("/").Handler(p)
+
+	analytics := r.PathPrefix("/api/v1/analytics").Subrouter()
+	analytics.Use(middleware.RequirePermission("analytics.read"))
+	analytics.PathPrefix("/").Handler(p)
+
+	events := r.PathPrefix("/api/v1/events").Subrouter()
+	events.Use(middleware.RequirePermission("events.write"))
+	events.PathPrefix("/").Handler(p)
+
+	admin := r.PathPrefix("/admin").Subrouter()
+	admin.Use(middleware.RequireRole("admin"))
+	admin.PathPrefix("/").Handler(p)
+
 	r.PathPrefix("/").Handler(p)
 
 	g := &Gateway{router: r, plugins: plugins.PluginRegistry{}}

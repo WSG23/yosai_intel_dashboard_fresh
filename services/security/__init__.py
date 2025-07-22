@@ -1,16 +1,17 @@
 """Security Domain Public API."""
 
-from .protocols import SecurityServiceProtocol, AuthenticationProtocol
-from security.unicode_security_validator import (
-    UnicodeSecurityValidator as SecurityValidator,
-)
-
 import secrets
 import time
 from functools import wraps
 from typing import Callable
 
 from flask import jsonify, request
+
+from security.unicode_security_validator import (
+    UnicodeSecurityValidator as SecurityValidator,
+)
+
+from .protocols import AuthenticationProtocol, SecurityServiceProtocol
 
 
 class ServiceTokenManager:
@@ -77,6 +78,46 @@ def require_token(func: Callable) -> Callable:
     return wrapper
 
 
+def require_permission(permission: str) -> Callable:
+    """Flask decorator enforcing a permission header."""
+
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            perms = [
+                p.strip()
+                for p in request.headers.get("X-Permissions", "").split(",")
+                if p.strip()
+            ]
+            if permission not in perms:
+                return jsonify({"error": "forbidden"}), 403
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def require_role(role: str) -> Callable:
+    """Flask decorator enforcing a role header."""
+
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            roles = [
+                r.strip()
+                for r in request.headers.get("X-Roles", "").split(",")
+                if r.strip()
+            ]
+            if role not in roles:
+                return jsonify({"error": "forbidden"}), 403
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 __all__ = [
     "SecurityServiceProtocol",
     "AuthenticationProtocol",
@@ -86,4 +127,6 @@ __all__ = [
     "generate_service_token",
     "rotate_service_token",
     "require_token",
+    "require_permission",
+    "require_role",
 ]
