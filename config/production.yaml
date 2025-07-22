@@ -94,3 +94,6 @@ streaming:
 
 secret_validation:
   severity: high
+
+gateway:
+  ratelimit_config: gateway/config/ratelimit.yaml
