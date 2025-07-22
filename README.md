@@ -60,8 +60,6 @@ yosai_intel_dashboard/
 │   ├── analytics/            # Analytics-specific components
 │   ├── ui/                   # Shared UI components
 │   └── map_panel.py          # Map visualization
-├── pages/                    # Multi-page application pages
-│   └── deep_analytics.py     # Analytics page
 ├── utils/                    # Utility functions
 └── assets/                   # Static assets and CSS
     └── css/                  # Modular CSS architecture
