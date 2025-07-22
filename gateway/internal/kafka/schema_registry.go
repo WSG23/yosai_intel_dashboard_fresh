@@ -9,10 +9,10 @@ import (
 	"github.com/riferrei/srclient"
 )
 
-// SchemaRegistry wraps srclient.SchemaRegistryClient and provides helper
+// SchemaRegistry wraps srclient.ISchemaRegistryClient and provides helper
 // methods for schema-based serialization.
 type SchemaRegistry struct {
-	client *srclient.SchemaRegistryClient
+	client srclient.ISchemaRegistryClient
 }
 
 // NewSchemaRegistry creates a SchemaRegistry using the given URL. If url is

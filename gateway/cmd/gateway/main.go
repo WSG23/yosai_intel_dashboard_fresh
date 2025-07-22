@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
+
 	"net/http"
 	"os"
 	"os/signal"
@@ -54,6 +56,21 @@ func main() {
 		tracing.Logger.Fatalf("failed to init event processor: %v", err)
 	}
 	defer processor.Close()
+
+	// Service registry integration is not yet wired in during tests.
+	// Once available the resolved analytics service address will be used to
+	// configure the gateway. Until then this block is intentionally
+	// disabled to avoid compile errors when running `go test`.
+	/*
+	   analyticsAddr, err := reg.ResolveService(context.Background(), "analytics")
+	   if err == nil && analyticsAddr != "" {
+	           if host, port, err2 := net.SplitHostPort(analyticsAddr); err2 == nil {
+	                   os.Setenv("APP_HOST", host)
+	                   os.Setenv("APP_PORT", port)
+	           }
+	   }
+	*/
+
 
 	g, err := gateway.New()
 	if err != nil {
