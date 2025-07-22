@@ -7,9 +7,8 @@ import logging
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import Flask app directly from adapter
-import api.adapter
+from api.adapter import create_api_app
 from config.constants import API_PORT
-from tracing import init_tracing
 
 logger = logging.getLogger("start")
 handler = logging.StreamHandler()
@@ -24,8 +23,7 @@ logger.setLevel(logging.INFO)
 
 def main() -> None:
     """Start the API development server."""
-    init_tracing("api")
-    app = api.adapter.app
+    app = create_api_app()
 
     print("\n🚀 Starting Yosai Intel Dashboard API...")
     print(f"   Available at: http://localhost:{API_PORT}")

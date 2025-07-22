@@ -176,7 +176,7 @@ may not function.
 
 ### Docker Compose Development Environment
 
-To spin up the monolith together with the new microservices run:
+To spin up the microservices stack run:
 
 ```bash
 docker-compose \
@@ -185,10 +185,7 @@ docker-compose \
   -f docker-compose.dev.yml up --build
 ```
 
-This starts PostgreSQL, TimescaleDB (port `5433`), the Kafka stack with a
-web UI on `http://localhost:8080`, pgAdmin on `http://localhost:5050`, the
-API gateway on `http://localhost:8081` and the main dashboard on
-`http://localhost:8050`.
+web UI on `http://localhost:8080`, pgAdmin on `http://localhost:5050`, and the API gateway on `http://localhost:8081`.
 
 ### Go API Gateway
 
@@ -280,7 +277,7 @@ following steps:
 
 ### Production Deployment
 
-Using Docker Compose:
+Using Docker Compose to start the microservices stack:
 ```bash
 docker-compose -f docker-compose.prod.yml up -d
 ```
@@ -291,18 +288,6 @@ provided via Docker secrets or environment variables. Create
 file-based Docker secrets, set `DB_PASSWORD` and `SECRET_KEY` in the
 environment, or let the `ConfigManager` load them from your secret
 backend. **Do not commit these files to version control.**
-
-Alternatively you can launch the app with Gunicorn or uWSGI. This is the
-recommended approach for any production deployment. A sample Gunicorn
-configuration is provided at `gunicorn.conf.py`:
-```bash
-gunicorn -c gunicorn.conf.py wsgi:server
-# or
-uwsgi --module wsgi:server
-```
-
-When `YOSAI_ENV=production` and CSRF protection is enabled, the application
-initializes the `DashCSRFPlugin` to enforce strict CSRF checks.
 
 ### Production Build
 
@@ -486,6 +471,7 @@ Set the following variables to configure tracing and metrics endpoints:
 
 - `JAEGER_ENDPOINT` – URL of the Jaeger collector (defaults to `http://localhost:14268/api/traces`).
 - `REPLICATION_METRICS_PORT` – Port used by `scripts/replicate_to_timescale.py` to expose Prometheus metrics (defaults to `8004`).
+- All services expose Prometheus metrics at the `/metrics` endpoint. No additional configuration is required.
 
 ## Kafka Setup
 

@@ -36,22 +36,67 @@ kubectl get pods -l track=canary
 
 If the canary remains healthy the workflow promotes the image by applying the regular manifests in `k8s/production` and then deletes the canary deployment. No manual intervention is required.
 
+## Zero-Downtime Updates
+
+For full releases we perform either a rolling update or a blue/green switch. Both methods keep
+the service available while new pods start and pass health checks.
+
+### Rolling Update
+
+Kubernetes handles rolling updates natively. Update the deployment with the new
+image and monitor the rollout status:
+
+```bash
+kubectl set image deployment/yosai-dashboard yosai-dashboard=yosai-intel-dashboard:<new-tag>
+kubectl rollout status deployment/yosai-dashboard
+```
+
+Pods are replaced gradually based on the deployment strategy. If the new
+version fails readiness or liveness probes you can roll back with:
+
+```bash
+kubectl rollout undo deployment/yosai-dashboard
+```
+
+### Blue/Green Switch
+
+Manifests under `k8s/bluegreen` deploy parallel `blue` and `green` deployments
+alongside a shared service. Start the new color, wait for all pods to become
+ready and then patch the service selector to shift traffic:
+
+```bash
+# deploy the new color
+kubectl apply -f k8s/bluegreen/dashboard-green.yaml
+
+# direct the service to the green deployment
+kubectl patch service yosai-dashboard -p '{"spec":{"selector":{"app":"yosai-dashboard","color":"green"}}}'
+```
+
+If problems appear after the switch, revert the service selector to the previous
+color and delete the failed deployment:
+
+```bash
+kubectl patch service yosai-dashboard -p '{"spec":{"selector":{"app":"yosai-dashboard","color":"blue"}}}'
+kubectl delete -f k8s/bluegreen/dashboard-green.yaml
+```
+
 ## Secret Rotation
 
-Secrets for the dashboard are rotated automatically via GitHub Actions. The
-`Rotate Secrets` workflow runs every Sunday at **03:00 UTC** for the staging
-cluster and **03:30 UTC** for production. It executes
-`scripts/rotate_secrets.py` and restarts the `yosai-dashboard` deployment so the
-new credentials are loaded.
+Secrets used by the dashboard are rotated automatically via the **Rotate Secrets**
+workflow. This job runs every Sunday at **03:00 UTC** for the staging environment
+and **03:30 UTC** for production. After new credentials are generated with
+`scripts/rotate_secrets.py`, the deployment is restarted so pods reload the
+updated secrets.
 
-If a rotation fails you can recover manually:
+If a rotation fails or you need to recover manually, run the script locally and
+restart the deployment:
 
 ```bash
 python scripts/rotate_secrets.py
 kubectl rollout restart deployment/yosai-dashboard -n yosai-dev
 ```
 
-Verify the pods become healthy and application functionality is restored before
+Verify the pods become healthy and the application functions correctly before
 revoking any previous credentials.
 
 ## Zero Downtime Updates
@@ -111,3 +156,4 @@ scripts/rollback.sh
 ```
 
 Then scale down or delete the faulty pods once the service is stable.
+
