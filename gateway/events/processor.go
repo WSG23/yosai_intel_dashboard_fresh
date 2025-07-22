@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -67,11 +68,14 @@ func (ep *EventProcessor) ProcessAccessEvent(event AccessEvent) error {
 
 	// store decision in cache if available
 	if ep.cache != nil {
-		_ = ep.cache.SetDecision(context.Background(), cache.Decision{
+		if err := ep.cache.SetDecision(context.Background(), cache.Decision{
 			PersonID: event.PersonID,
 			DoorID:   event.DoorID,
 			Decision: event.AccessResult,
-		})
+		}); err != nil {
+			// log failure but continue so access events are not lost
+			log.Printf("failed to cache decision: %v", err)
+		}
 	}
 
 	event.ProcessedAt = time.Now()
