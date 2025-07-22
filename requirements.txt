@@ -59,3 +59,4 @@ xlsxwriter==3.2.5
 python-dateutil==2.9.0.post0
 
 flask-cors==6.0.1
+fastapi==0.116.1
