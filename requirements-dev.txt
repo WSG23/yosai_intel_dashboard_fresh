@@ -9,7 +9,7 @@ types-requests
 bandit
 pytest
 pytest-cov
-safety==2.3.5
-PyYAML==6.0.1
+safety==3.6.0
+PyYAML==6.0.2
 psutil>=5.9.0
 pip-audit
