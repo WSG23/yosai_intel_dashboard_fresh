@@ -60,12 +60,20 @@ The dashboard can be updated without service interruption using either rolling o
 
 ### Rolling Update
 
-Kubernetes performs a rolling update when the container image of a deployment is changed. New pods are created one at a time while the old ones are terminated only after the new pods pass their readiness checks.
+Kubernetes performs a rolling update when the container image of a deployment is changed. New pods are created gradually while the old ones are terminated only after the new pods pass their readiness checks. You can monitor progress and pause if needed.
 
 ```bash
 # replace the image tag to trigger a rolling update
 kubectl set image deployment/yosai-dashboard yosai-dashboard=registry.example.com/yosai-dashboard:<new-tag> -n yosai-dev
 kubectl rollout status deployment/yosai-dashboard -n yosai-dev
+```
+
+To pause the rollout and check health before continuing:
+
+```bash
+kubectl rollout pause deployment/yosai-dashboard -n yosai-dev
+# inspect pods or run smoke tests here
+kubectl rollout resume deployment/yosai-dashboard -n yosai-dev
 ```
 
 ### Blue/Green
@@ -96,6 +104,8 @@ If the new deployment fails its health checks, revert immediately:
 ```bash
 # send traffic back to the previous deployment
 kubectl patch service yosai-dashboard -p '{"spec":{"selector":{"app":"yosai-dashboard","color":"blue"}}}'
+# rollback the deployment to the previous replica set
+kubectl rollout undo deployment/yosai-dashboard -n yosai-dev
 # or use the provided helper script
 scripts/rollback.sh
 ```
