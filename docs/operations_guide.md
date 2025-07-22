@@ -35,3 +35,47 @@ kubectl get pods -l track=canary
 ```
 
 If the canary remains healthy the workflow promotes the image by applying the regular manifests in `k8s/production` and then deletes the canary deployment. No manual intervention is required.
+
+## Zero-Downtime Updates
+
+For full releases we perform either a rolling update or a blue/green switch. Both methods keep
+the service available while new pods start and pass health checks.
+
+### Rolling Update
+
+Kubernetes handles rolling updates natively. Update the deployment with the new
+image and monitor the rollout status:
+
+```bash
+kubectl set image deployment/yosai-dashboard yosai-dashboard=yosai-intel-dashboard:<new-tag>
+kubectl rollout status deployment/yosai-dashboard
+```
+
+Pods are replaced gradually based on the deployment strategy. If the new
+version fails readiness or liveness probes you can roll back with:
+
+```bash
+kubectl rollout undo deployment/yosai-dashboard
+```
+
+### Blue/Green Switch
+
+Manifests under `k8s/bluegreen` deploy parallel `blue` and `green` deployments
+alongside a shared service. Start the new color, wait for all pods to become
+ready and then patch the service selector to shift traffic:
+
+```bash
+# deploy the new color
+kubectl apply -f k8s/bluegreen/dashboard-green.yaml
+
+# direct the service to the green deployment
+kubectl patch service yosai-dashboard -p '{"spec":{"selector":{"app":"yosai-dashboard","color":"green"}}}'
+```
+
+If problems appear after the switch, revert the service selector to the previous
+color and delete the failed deployment:
+
+```bash
+kubectl patch service yosai-dashboard -p '{"spec":{"selector":{"app":"yosai-dashboard","color":"blue"}}}'
+kubectl delete -f k8s/bluegreen/dashboard-green.yaml
+```
