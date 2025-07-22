@@ -378,10 +378,21 @@ def safe_decode_text(data: bytes, encoding: str = "utf-8") -> str:
     return UnicodeProcessor.safe_decode_text(data, encoding)
 
 
-def safe_encode_text(value: Any) -> str:
-    """Return a UTF-8 safe string representation of ``value``."""
+def safe_encode_text(
+    text: str, encoding: str = "utf-8", errors: str = "surrogatepass"
+) -> bytes:
+    """Safely encode text handling surrogates with configurable strategy."""
 
-    return UnicodeProcessor.safe_encode(value)
+    if not isinstance(text, str):
+        return b""
+
+    try:
+        # First attempt with surrogatepass
+        return text.encode(encoding, errors="surrogatepass")
+    except UnicodeEncodeError:
+        # Remove surrogates and retry
+        cleaned = "".join(char for char in text if not (0xD800 <= ord(char) <= 0xDFFF))
+        return cleaned.encode(encoding, errors="replace")
 
 
 def safe_encode(value: Any) -> str:
