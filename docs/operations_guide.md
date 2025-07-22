@@ -80,3 +80,22 @@ kubectl patch service yosai-dashboard -p '{"spec":{"selector":{"app":"yosai-dash
 kubectl delete -f k8s/bluegreen/dashboard-green.yaml
 ```
 
+## Secret Rotation
+
+Secrets used by the dashboard are rotated automatically via the **Rotate Secrets**
+workflow. This job runs every Sunday at **03:00 UTC** for the staging environment
+and **03:30 UTC** for production. After new credentials are generated with
+`scripts/rotate_secrets.py`, the deployment is restarted so pods reload the
+updated secrets.
+
+If a rotation fails or you need to recover manually, run the script locally and
+restart the deployment:
+
+```bash
+python scripts/rotate_secrets.py
+kubectl rollout restart deployment/yosai-dashboard -n yosai-dev
+```
+
+Verify the pods become healthy and the application functions correctly before
+revoking any previous credentials.
+
