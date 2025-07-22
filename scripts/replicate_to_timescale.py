@@ -4,10 +4,12 @@ from __future__ import annotations
 import logging
 import os
 import time
+from datetime import datetime, timezone
 from typing import Any
 
 import psycopg2
 from psycopg2.extras import DictCursor, execute_values
+from prometheus_client import Gauge, start_http_server
 
 LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -15,6 +17,12 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 SRC_DSN = os.getenv("SOURCE_DSN", "dbname=yosai_intel")
 TGT_DSN = os.getenv("TARGET_DSN", "dbname=yosai_timescale")
 POLL_INTERVAL = int(os.getenv("REPLICATION_INTERVAL", "60"))
+METRICS_PORT = int(os.getenv("REPLICATION_METRICS_PORT", "8004"))
+
+replication_lag_seconds = Gauge(
+    "replication_lag_seconds",
+    "Seconds between NOW() and the newest replicated event timestamp",
+)
 
 CHECKPOINT_TABLE = "replication_state"
 
@@ -87,13 +95,16 @@ def replicate_once(src, tgt) -> None:
         insert_rows(tcur, rows)
         new_ts = rows[-1]["time"]
         update_timestamp(tcur, new_ts)
+        lag = (datetime.now(timezone.utc) - new_ts).total_seconds()
+        replication_lag_seconds.set(lag)
         tgt.commit()
-        LOG.info("Replicated %s rows", len(rows))
+        LOG.info("Replicated %s rows (lag %.1fs)", len(rows), lag)
 
 
 def main() -> None:
     src_conn = psycopg2.connect(SRC_DSN)
     tgt_conn = psycopg2.connect(TGT_DSN)
+    start_http_server(METRICS_PORT)
     try:
         while True:
             replicate_once(src_conn, tgt_conn)

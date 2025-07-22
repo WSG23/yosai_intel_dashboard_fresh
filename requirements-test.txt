@@ -13,3 +13,5 @@ plotly==5.15.0
 dask[distributed]==2024.4.1
 tqdm>=4.0
 aiohttp>=3.8
+testcontainers[postgresql,redis]==3.7.1
+prometheus_client==0.22.1

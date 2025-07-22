@@ -26,3 +26,12 @@ Immediately page the on-call database engineer through Slack `#db-oncall` or pho
 3. Update any load balancers or application configs to point at the new primary.
 4. Monitor replication status once the old primary comes back online.
 5. Plan a switchover back to the original primary during the next maintenance window.
+
+## Database Migrations
+Use the migration CLI to manage schema changes:
+
+```bash
+python scripts/db_migration_cli.py upgrade      # apply latest migrations
+python scripts/db_migration_cli.py downgrade <rev>
+python scripts/db_migration_cli.py rollback
+```
