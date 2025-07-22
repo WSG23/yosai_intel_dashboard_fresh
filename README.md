@@ -18,6 +18,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Sequence Diagrams](docs/sequence_diagrams.md)
 - [UI Flows](docs/ui_flows.md)
 - [Upload Interface Guide](docs/upload_interface.md)
+- [Integration Guide](docs/integration-guide.md)
 - [UI Design Assets](docs/ui_design/README.md)
 - [React Component Architecture](docs/react_component_architecture.md)
 - [Validation Overview](docs/validation_overview.md)
@@ -915,7 +916,7 @@ The running application exposes Swagger-based API docs at `http://<host>:<port>/
 - Ops reference: [docs/operations_guide.md](docs/operations_guide.md)
 - Callback migration: [docs/migration_callback_system.md](docs/migration_callback_system.md)
 
-Update the spec by running `python tools/generate_openapi.py` which writes `docs/openapi.json` for the UI.
+Update the spec by running `go run ./api/openapi` which writes `docs/openapi.json` for the UI.
 
 ### API Examples
 

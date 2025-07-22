@@ -1,0 +1,46 @@
+replicaCount: 2
+
+image:
+  repository: yosai-intel-dashboard
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8050
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  linkerd.io/inject: enabled
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPU: 70
+  targetMemory: 75
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+verticalPodAutoscaler:
+  enabled: false
+  updatePolicy:
+    updateMode: Auto
+
+networkPolicy:
+  enabled: false
+  allowNamespace: ""

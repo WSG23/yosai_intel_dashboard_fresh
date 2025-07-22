@@ -39,9 +39,13 @@ jobs:
         with:
           name: python-coverage
           path: coverage.xml
-      - name: Run Go tests
+      - name: Run Go tests (gateway)
         if: matrix.job == 'go'
         working-directory: ./gateway
+        run: go test ./...
+      - name: Run Go tests (tests)
+        if: matrix.job == 'go'
+        working-directory: ./tests
         run: go test ./...
       - name: Run migration tests
         if: matrix.job == 'migration'

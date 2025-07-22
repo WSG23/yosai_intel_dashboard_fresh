@@ -11,11 +11,13 @@ import (
 	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sony/gobreaker"
+
 	"go.opentelemetry.io/otel"
 
 	"github.com/WSG23/yosai-gateway/internal/cache"
 	"github.com/WSG23/yosai-gateway/internal/engine"
 	ikafka "github.com/WSG23/yosai-gateway/internal/kafka"
+
 )
 
 var accessEventsTopic = "access-events"
@@ -119,6 +121,7 @@ func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEv
 		}, nil)
 	})
 	return err
+
 }
 
 // Run consumes AccessEvent messages from Kafka until ctx is cancelled. Messages

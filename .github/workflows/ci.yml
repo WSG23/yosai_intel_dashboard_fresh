@@ -20,7 +20,8 @@ jobs:
           set -xe
           pip install -r requirements.lock
       - name: Generate OpenAPI spec
-        run: python tools/generate_openapi.py
+        working-directory: ./api/openapi
+        run: go run .
       - name: Upload OpenAPI
         uses: actions/upload-artifact@v4
         with:
@@ -61,17 +62,10 @@ jobs:
         run: |
           set -xe
           pytest --maxfail=1 --disable-warnings -q --cov=.
-      - name: Go Test
-        working-directory: ./gateway
+      - name: Go Coverage
         run: |
           set -xe
-          go test ./... -coverprofile=coverage.out
-          cov=$(go tool cover -func=coverage.out | tail -n 1 | awk '{print substr($3,1,length($3)-1)}')
-          echo "Go coverage: $cov%"
-          if [ "$(echo "$cov < 10" | bc)" -eq 1 ]; then
-            echo "Coverage $cov% is below threshold" >&2
-            exit 1
-          fi
+          ./scripts/test-coverage.sh
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
