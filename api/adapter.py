@@ -42,6 +42,11 @@ def create_api_app() -> Flask:
         raise RuntimeError("SECRET_KEY environment variable is required") from exc
 
     csrf.init_app(app)
+
+    @app.before_request
+    def enforce_csrf() -> None:
+        if request.method not in {"GET", "HEAD", "OPTIONS"}:
+            csrf.protect()
     CORS(app)
 
     REQUEST_COUNT = Counter(
