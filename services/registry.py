@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 
 import os
 import requests
+from tracing import propagate_context
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +50,13 @@ class ServiceDiscovery:
     def resolve(self, name: str) -> Optional[str]:
         """Return ``host:port`` for *name* or ``None`` if lookup fails."""
         try:
+            headers: Dict[str, str] = {}
+            propagate_context(headers)
             resp = self.session.get(
-                f"{self.base_url}/v1/health/service/{name}", params={"passing": 1}, timeout=2
+                f"{self.base_url}/v1/health/service/{name}",
+                params={"passing": 1},
+                headers=headers,
+                timeout=2,
             )
             resp.raise_for_status()
             data = resp.json()

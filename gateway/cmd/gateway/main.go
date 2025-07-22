@@ -19,8 +19,11 @@ import (
 	cfg "github.com/WSG23/yosai-gateway/internal/config"
 	"github.com/WSG23/yosai-gateway/internal/engine"
 	"github.com/WSG23/yosai-gateway/internal/gateway"
+	"github.com/WSG23/yosai-gateway/internal/rbac"
 	reg "github.com/WSG23/yosai-gateway/internal/registry"
 	"github.com/WSG23/yosai-gateway/internal/tracing"
+	"github.com/WSG23/yosai-gateway/plugins/transform"
+
 	"github.com/sony/gobreaker"
 )
 
@@ -37,6 +40,7 @@ func main() {
 
 	}
 	cacheSvc := cache.NewRedisCache()
+	rbacSvc := rbac.New(time.Minute)
 
 	cbConf, err := cfg.Load(os.Getenv("CIRCUIT_BREAKER_CONFIG"))
 	if err != nil {
@@ -104,12 +108,17 @@ func main() {
 		tracing.Logger.Fatalf("failed to create gateway: %v", err)
 	}
 
+	// register example transform plugin
+	g.RegisterPlugin(&transform.TransformPlugin{})
+
 	// enable middleware based on env vars
 	if os.Getenv("ENABLE_AUTH") == "1" {
 		g.UseAuth()
+
 	}
 	if os.Getenv("ENABLE_RATELIMIT") == "1" {
 		g.UseRateLimit()
+
 	}
 
 	addr := ":8080"

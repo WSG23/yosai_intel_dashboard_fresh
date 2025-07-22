@@ -33,9 +33,13 @@ Step 3: Use the plugin in your callbacks
 
 from core.plugins.decorators import safe_callback
 
+
 @app.callback(...)
 @safe_callback(app)  # This now uses the plugin automatically!
-@role_required("admin")
+from core.rbac import require_role
+
+
+@require_role("admin")
 def your_callback_function(inputs...):
     # Your existing logic
     # All outputs are now automatically JSON-safe

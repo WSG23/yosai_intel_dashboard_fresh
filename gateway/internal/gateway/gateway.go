@@ -7,13 +7,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/WSG23/yosai-gateway/internal/handlers"
-	"github.com/WSG23/yosai-gateway/internal/middleware"
 	"github.com/WSG23/yosai-gateway/internal/proxy"
+	"github.com/WSG23/yosai-gateway/internal/rbac"
+
 )
 
 // Gateway represents the HTTP gateway service.
 type Gateway struct {
-	router *mux.Router
+	router  *mux.Router
+	plugins plugins.PluginRegistry
 }
 
 // New creates a configured Gateway.
@@ -47,7 +49,7 @@ func New() (*Gateway, error) {
 
 	r.PathPrefix("/").Handler(p)
 
-	g := &Gateway{router: r}
+	g := &Gateway{router: r, plugins: plugins.PluginRegistry{}}
 
 	return g, nil
 }
@@ -62,7 +64,17 @@ func (g *Gateway) UseRateLimit() {
 	g.router.Use(middleware.RateLimit)
 }
 
+// UseRBAC enables RBAC permission checks for all requests using the provided service and permission string.
+func (g *Gateway) UseRBAC(s *rbac.RBACService, perm string) {
+	g.router.Use(middleware.RequirePermission(s, perm))
+}
+
 // Handler returns the root HTTP handler.
 func (g *Gateway) Handler() http.Handler {
-	return g.router
+	return g.plugins.BuildMiddlewareChain(g.router)
+}
+
+// RegisterPlugin registers a gateway plugin.
+func (g *Gateway) RegisterPlugin(p plugins.Plugin) {
+	g.plugins.Register(p)
 }

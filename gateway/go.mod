@@ -8,9 +8,11 @@ require (
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/confluentinc/confluent-kafka-go v1.9.3-RC3
 	github.com/golang-jwt/jwt/v5 v5.2.3
+	github.com/gorilla/websocket v1.5.0
 	github.com/hashicorp/consul/api v1.32.1
 	github.com/lib/pq v1.10.9
 	github.com/prometheus/client_golang v1.22.0
+	github.com/rabbitmq/amqp091-go v1.5.0
 	github.com/redis/go-redis/v9 v9.11.0
 	github.com/riferrei/srclient v0.7.3
 	github.com/sirupsen/logrus v1.9.3
@@ -18,6 +20,8 @@ require (
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0
 	go.opentelemetry.io/otel/sdk v1.37.0
+	go.opentelemetry.io/otel/trace v1.37.0
+	golang.org/x/time v0.8.0
 	gopkg.in/yaml.v3 v3.0.1
 
 )
@@ -54,7 +58,6 @@ require (
 	github.com/yuin/gopher-lua v1.1.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/otel/metric v1.37.0 // indirect
-	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
