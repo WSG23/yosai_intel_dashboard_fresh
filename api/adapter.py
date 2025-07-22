@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 
@@ -6,6 +7,7 @@ from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
 
+from core.rbac import RBACService, create_rbac_service
 from core.secrets_validator import validate_all_secrets
 from services.security import require_token
 from tracing import init_tracing
@@ -37,6 +39,13 @@ def create_api_app() -> Flask:
     init_tracing("api")
     app = Flask(__name__)
 
+    # Initialize RBAC service
+    try:
+        app.config["RBAC_SERVICE"] = asyncio.run(create_rbac_service())
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("Failed to initialize RBAC service: %s", exc)
+        app.config["RBAC_SERVICE"] = None
+
     app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
 
     csrf.init_app(app)
@@ -45,6 +54,7 @@ def create_api_app() -> Flask:
     def enforce_csrf() -> None:
         if request.method not in {"GET", "HEAD", "OPTIONS"}:
             csrf.protect()
+
     CORS(app)
 
     REQUEST_COUNT = Counter(
