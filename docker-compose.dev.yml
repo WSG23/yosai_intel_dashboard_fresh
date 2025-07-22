@@ -1,35 +1,6 @@
 version: '3.8'
 
 services:
-  python-monolith:
-    extends:
-      file: docker-compose.yml
-      service: app
-    environment:
-      YOSAI_ENV: development
-      DB_HOST: postgres
-      DB_PORT: 5432
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      SERVICE_DISCOVERY_URL: http://api-gateway
-    labels:
-      - "prometheus.scrape=true"
-      - "prometheus.port=8050"
-      - "prometheus.path=/metrics"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      timescaledb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka1:
-        condition: service_healthy
-      kafka2:
-        condition: service_healthy
-      kafka3:
-        condition: service_healthy
-    restart: unless-stopped
 
   postgres:
     extends:
@@ -98,9 +69,10 @@ services:
       - "prometheus.port=8080"
       - "prometheus.path=/metrics"
     environment:
+      SERVICE_REGISTRY_URL: http://service-registry:8500
     depends_on:
-      - python-monolith
       - analytics-service
+      - service-registry
     restart: unless-stopped
 
   event-ingestion:
@@ -110,7 +82,9 @@ services:
     environment:
       KAFKA_BROKERS: kafka1:9092,kafka2:9093,kafka3:9094
       SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      SERVICE_REGISTRY_URL: http://service-registry:8500
     depends_on:
+      - service-registry
       kafka1:
         condition: service_healthy
       kafka2:
@@ -134,8 +108,9 @@ services:
     command: ["python", "-m", "uvicorn", "services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
     environment:
       YOSAI_ENV: development
+      SERVICE_REGISTRY_URL: http://service-registry:8500
     depends_on:
-      - python-monolith
+      - service-registry
     restart: unless-stopped
 
   jaeger:
@@ -172,8 +147,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - api-gateway
-      - python-monolith
       - event-ingestion
+      - service-registry
     restart: unless-stopped
 
   zookeeper:
@@ -210,6 +185,13 @@ services:
     extends:
       file: docker-compose.kafka.yml
       service: kafka-ui
+
+  service-registry:
+    image: consul:1.15
+    command: consul agent -dev -client=0.0.0.0
+    ports:
+      - "8500:8500"
+    restart: unless-stopped
 
 volumes:
   timescaledb_data:
