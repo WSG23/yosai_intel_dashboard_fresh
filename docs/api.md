@@ -99,3 +99,14 @@ container.register_factory("db", DatabaseManager)
 if container.has("db"):
     db = container.get("db")
 ```
+
+## Route Permissions
+
+The following table lists the required role or permission for key API route groups.
+
+| Route Prefix | Required Role | Required Permission |
+|--------------|---------------|--------------------|
+| `/admin` | `admin` | - |
+| `/api/v1/analytics` | - | `analytics.read` |
+| `/api/v1/events` | - | `events.write` |
+| `/api/v1/doors` | - | `doors.control` |
