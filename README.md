@@ -18,6 +18,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Sequence Diagrams](docs/sequence_diagrams.md)
 - [UI Flows](docs/ui_flows.md)
 - [Upload Interface Guide](docs/upload_interface.md)
+- [Integration Guide](docs/integration-guide.md)
 - [UI Design Assets](docs/ui_design/README.md)
 - [React Component Architecture](docs/react_component_architecture.md)
 - [Validation Overview](docs/validation_overview.md)
