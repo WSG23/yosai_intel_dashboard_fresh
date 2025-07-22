@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-feature-flags
+  namespace: yosai-dev
+data:
+  BETA_UI: "false"
+  ADVANCED_CHARTS: "false"
+  DATA_EXPORT: "false"
+  USER_PREFERENCES: "true"
