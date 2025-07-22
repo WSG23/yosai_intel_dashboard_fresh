@@ -1,0 +1,18 @@
+gateway:
+  plugins:
+    - name: rate-limit
+      enabled: true
+      config:
+        rules:
+          - path: /api/v1/events
+            limit_per_min: 100
+            burst_size: 20
+    - name: cache
+      enabled: true
+      config:
+        rules:
+          - path: /api/v1/analytics
+            ttl: 300s
+  queue:
+    type: rabbitmq
+    url: amqp://rabbitmq:5672

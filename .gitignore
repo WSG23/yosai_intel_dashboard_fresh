@@ -109,6 +109,7 @@ assets/css/*
 translations/**/*.mo
 cache/
 !gateway/internal/cache/
+!gateway/plugins/cache/
 venv
 venv_dashboard/
 

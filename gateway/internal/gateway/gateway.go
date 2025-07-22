@@ -9,11 +9,13 @@ import (
 	"github.com/WSG23/yosai-gateway/internal/handlers"
 	"github.com/WSG23/yosai-gateway/internal/middleware"
 	"github.com/WSG23/yosai-gateway/internal/proxy"
+	"github.com/WSG23/yosai-gateway/plugins"
 )
 
 // Gateway represents the HTTP gateway service.
 type Gateway struct {
-	router *mux.Router
+	router  *mux.Router
+	plugins plugins.PluginRegistry
 }
 
 // New creates a configured Gateway.
@@ -29,7 +31,7 @@ func New() (*Gateway, error) {
 	r.HandleFunc("/breaker", handlers.BreakerMetrics).Methods(http.MethodGet)
 	r.PathPrefix("/").Handler(p)
 
-	g := &Gateway{router: r}
+	g := &Gateway{router: r, plugins: plugins.PluginRegistry{}}
 
 	return g, nil
 }
@@ -46,5 +48,10 @@ func (g *Gateway) UseRateLimit() {
 
 // Handler returns the root HTTP handler.
 func (g *Gateway) Handler() http.Handler {
-	return g.router
+	return g.plugins.BuildMiddlewareChain(g.router)
+}
+
+// RegisterPlugin registers a gateway plugin.
+func (g *Gateway) RegisterPlugin(p plugins.Plugin) {
+	g.plugins.Register(p)
 }
