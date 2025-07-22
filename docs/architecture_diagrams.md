@@ -7,7 +7,7 @@ These diagrams complement `architecture.md` by illustrating component interactio
 ```mermaid
 graph TD
     UI[Browser UI] --> D(Dash frontend)
-    D --> F(Flask backend)
+    D --> F(API microservice)
     F --> S(Service layer)
     S --> M(Data models)
     M --> DB[(Database)]
@@ -19,7 +19,7 @@ graph TD
 sequenceDiagram
     participant U as User
     participant FE as Dash frontend
-    participant BE as Flask backend
+    participant BE as API microservice
     participant S as Service layer
     participant DB as Database
 
