@@ -20,5 +20,7 @@ func NewProxy() (*httputil.ReverseProxy, error) {
 	if err != nil {
 		return nil, err
 	}
-	return httputil.NewSingleHostReverseProxy(target), nil
+	p := httputil.NewSingleHostReverseProxy(target)
+	p.Transport = newTracingTransport(p.Transport)
+	return p, nil
 }
