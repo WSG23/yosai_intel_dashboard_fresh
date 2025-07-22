@@ -21,6 +21,10 @@ spec:
       containers:
         - name: api-gateway
           image: yosai-gateway:latest
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
           ports:
             - containerPort: 8080
           readinessProbe:
