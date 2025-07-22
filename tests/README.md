@@ -1,9 +1,16 @@
 # Running the Test Suite
 
-The core test dependencies are listed in `requirements-test.txt` and can be installed with:
+Before running any tests, install the required packages listed in
+`requirements-test.txt`:
 
 ```bash
 pip install -r requirements-test.txt
+```
+
+You can also run the helper script:
+
+```bash
+scripts/setup_tests.sh
 ```
 
 Some tests exercise features that rely on heavy optional packages. These extras are defined in `requirements-extra.txt` and are **not** required for the majority of the suite. Install them only when you need to run every test:

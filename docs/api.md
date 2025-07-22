@@ -14,6 +14,19 @@ by Swagger UI to display the complete API reference.
 The CI workflow runs this command and uploads the generated `openapi.json` as an
 artifact so the specification is available from workflow runs.
 
+### Generating API clients
+
+Use [OpenAPI Generator](https://openapi-generator.tech/) to create typed clients
+for the access event service:
+
+```bash
+npx openapi-generator-cli generate -i api/contracts/access-event.yaml -g go -o pkg/eventclient
+npx openapi-generator-cli generate -i api/contracts/access-event.yaml -g python -o analytics/clients/event_client
+```
+
+The commands write the Go client under `pkg/eventclient` and the Python client
+under `analytics/clients/event_client`.
+
 ### Regenerating after changes
 
 `docs/openapi.json` is not committed to the repository. Whenever you modify any
