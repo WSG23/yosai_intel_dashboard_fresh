@@ -35,3 +35,21 @@ kubectl get pods -l track=canary
 ```
 
 If the canary remains healthy the workflow promotes the image by applying the regular manifests in `k8s/production` and then deletes the canary deployment. No manual intervention is required.
+
+## Secret Rotation
+
+Secrets for the dashboard are rotated automatically via GitHub Actions. The
+`Rotate Secrets` workflow runs every Sunday at **03:00 UTC** for the staging
+cluster and **03:30 UTC** for production. It executes
+`scripts/rotate_secrets.py` and restarts the `yosai-dashboard` deployment so the
+new credentials are loaded.
+
+If a rotation fails you can recover manually:
+
+```bash
+python scripts/rotate_secrets.py
+kubectl rollout restart deployment/yosai-dashboard -n yosai-dev
+```
+
+Verify the pods become healthy and application functionality is restored before
+revoking any previous credentials.

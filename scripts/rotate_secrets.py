@@ -10,7 +10,7 @@ from __future__ import annotations
 import secrets
 import subprocess
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 import yaml
 
@@ -60,12 +60,25 @@ def apply_config(file_path: Path = SECRETS_FILE) -> None:
     subprocess.run(["kubectl", "apply", "-f", str(file_path)], check=True)
 
 
+def restart_deployment(
+    deployment: str = "yosai-dashboard", namespace: str = "yosai-dev"
+) -> None:
+    """Trigger a rolling restart of the given deployment."""
+    if not cluster_reachable():
+        return
+    subprocess.run(
+        ["kubectl", "rollout", "restart", f"deployment/{deployment}", "-n", namespace],
+        check=True,
+    )
+
+
 def main() -> None:
     updates = update_secrets()
     print("Secrets rotated:")
     for key, value in updates.items():
         print(f"- {key}: {value}")
     apply_config()
+    restart_deployment()
 
 
 if __name__ == "__main__":
