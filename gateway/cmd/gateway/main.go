@@ -16,13 +16,15 @@ import (
 
 	"github.com/WSG23/yosai-gateway/events"
 	"github.com/WSG23/yosai-gateway/internal/cache"
-	cfg "github.com/WSG23/yosai-gateway/internal/config"
+	cbcfg "github.com/WSG23/yosai-gateway/internal/config"
+	gwconfig "github.com/WSG23/yosai-gateway/internal/config"
 	"github.com/WSG23/yosai-gateway/internal/engine"
 	"github.com/WSG23/yosai-gateway/internal/gateway"
 	"github.com/WSG23/yosai-gateway/internal/rbac"
 	reg "github.com/WSG23/yosai-gateway/internal/registry"
 	"github.com/WSG23/yosai-gateway/internal/tracing"
-	"github.com/WSG23/yosai-gateway/plugins/transform"
+	apicache "github.com/WSG23/yosai-gateway/plugins/cache"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/sony/gobreaker"
 )
@@ -42,10 +44,10 @@ func main() {
 	cacheSvc := cache.NewRedisCache()
 	rbacSvc := rbac.New(time.Minute)
 
-	cbConf, err := cfg.Load(os.Getenv("CIRCUIT_BREAKER_CONFIG"))
+	cbConf, err := cbcfg.Load(os.Getenv("CIRCUIT_BREAKER_CONFIG"))
 	if err != nil {
 		tracing.Logger.WithError(err).Warn("failed to load circuit breaker config, using defaults")
-		cbConf = &cfg.Config{}
+		cbConf = &cbcfg.Config{}
 	}
 
 	dbName := os.Getenv("DB_GATEWAY_NAME")
@@ -108,8 +110,40 @@ func main() {
 		tracing.Logger.Fatalf("failed to create gateway: %v", err)
 	}
 
-	// register example transform plugin
-	g.RegisterPlugin(&transform.TransformPlugin{})
+	// Load plugin configuration and register plugins
+	gwConf, err := gwconfig.LoadGateway(os.Getenv("GATEWAY_CONFIG"))
+	if err != nil {
+		tracing.Logger.Fatalf("failed to load gateway config: %v", err)
+	}
+	for _, pc := range gwConf.Gateway.Plugins {
+		if !pc.Enabled {
+			continue
+		}
+		switch pc.Name {
+		case "cache":
+			host := os.Getenv("REDIS_HOST")
+			if host == "" {
+				host = "localhost"
+			}
+			port := os.Getenv("REDIS_PORT")
+			if port == "" {
+				port = "6379"
+			}
+			client := redis.NewClient(&redis.Options{Addr: host + ":" + port})
+			var rules []apicache.CacheRule
+			for _, r := range pc.Config.Rules {
+				rules = append(rules, apicache.CacheRule{
+					Path:            r.Path,
+					TTL:             r.TTL,
+					VaryHeaders:     r.VaryHeaders,
+					VaryParams:      r.VaryParams,
+					InvalidatePaths: r.InvalidatePaths,
+				})
+			}
+			g.RegisterPlugin(apicache.NewCachePlugin(client, rules))
+		}
+	}
+
 
 	// enable middleware based on env vars
 	if os.Getenv("ENABLE_AUTH") == "1" {

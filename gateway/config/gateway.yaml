@@ -13,13 +13,10 @@ gateway:
         rules:
           - path: /api/v1/analytics
             ttl: 300s
-    - name: transform
-      enabled: true
-      config:
-        rules:
-          - path: /api/v1/*
-            add_headers:
-              X-Gateway-Version: "2.0"
+            vary_headers: [Authorization]
+            vary_params: [user]
+            invalidate_paths:
+              - /api/v1/analytics/update
 
   queue:
     type: rabbitmq
