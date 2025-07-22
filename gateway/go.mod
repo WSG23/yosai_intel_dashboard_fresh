@@ -18,6 +18,7 @@ require (
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0
 	go.opentelemetry.io/otel/sdk v1.37.0
+	gopkg.in/yaml.v3 v3.0.1
 
 )
 

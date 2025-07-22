@@ -7,14 +7,17 @@ import (
 	"log"
 	"time"
 
+	"github.com/WSG23/yosai-gateway/internal/tracing"
 	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sony/gobreaker"
+
 	"go.opentelemetry.io/otel"
 
 	"github.com/WSG23/yosai-gateway/internal/cache"
 	"github.com/WSG23/yosai-gateway/internal/engine"
 	ikafka "github.com/WSG23/yosai-gateway/internal/kafka"
-	"github.com/WSG23/yosai-gateway/internal/tracing"
+
 )
 
 var accessEventsTopic = "access-events"
@@ -36,9 +39,10 @@ type EventProcessor struct {
 	cache    cache.CacheService
 	engine   *engine.CachedRuleEngine
 	registry *ikafka.SchemaRegistry
+	breaker  *gobreaker.CircuitBreaker
 }
 
-func NewEventProcessor(brokers string, c cache.CacheService, e *engine.CachedRuleEngine) (*EventProcessor, error) {
+func NewEventProcessor(brokers string, c cache.CacheService, e *engine.CachedRuleEngine, settings gobreaker.Settings) (*EventProcessor, error) {
 	producer, err := ckafka.NewProducer(&ckafka.ConfigMap{"bootstrap.servers": brokers})
 	if err != nil {
 		return nil, err
@@ -52,8 +56,9 @@ func NewEventProcessor(brokers string, c cache.CacheService, e *engine.CachedRul
 		producer.Close()
 		return nil, err
 	}
-	reg := ikafka.NewSchemaRegistry("")
-	return &EventProcessor{producer: producer, consumer: consumer, cache: c, engine: e, registry: reg}, nil
+	reg := ikafka.NewSchemaRegistry("", settings)
+	cb := gobreaker.NewCircuitBreaker(settings)
+	return &EventProcessor{producer: producer, consumer: consumer, cache: c, engine: e, registry: reg, breaker: cb}, nil
 }
 
 func (ep *EventProcessor) Close() {
@@ -109,10 +114,14 @@ func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEv
 		data, _ = json.Marshal(event)
 	}
 	eventsProcessed.Inc()
-	return ep.producer.Produce(&ckafka.Message{
-		TopicPartition: ckafka.TopicPartition{Topic: &accessEventsTopic, Partition: ckafka.PartitionAny},
-		Value:          data,
-	}, nil)
+	_, err = ep.breaker.Execute(func() (interface{}, error) {
+		return nil, ep.producer.Produce(&ckafka.Message{
+			TopicPartition: ckafka.TopicPartition{Topic: &accessEventsTopic, Partition: ckafka.PartitionAny},
+			Value:          data,
+		}, nil)
+	})
+	return err
+
 }
 
 // Run consumes AccessEvent messages from Kafka until ctx is cancelled. Messages
