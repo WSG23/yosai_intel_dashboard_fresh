@@ -746,6 +746,13 @@ manager.execute_query_with_retry("SELECT 1")
   
   The `AnalyticsService` conforms to `AnalyticsServiceProtocol`, so you can
   substitute your own implementation during tests.
+
+  A FastAPI wrapper is available for quick testing:
+
+  ```bash
+  uvicorn services.analytics.fastapi_wrapper:app
+  ```
+
 - **device_learning_service.py**: Persists learned device mappings ([docs](docs/device_learning_service.md))
 - Caching and performance optimization
 - Modular and testable
