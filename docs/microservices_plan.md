@@ -48,3 +48,13 @@ During migration set these variables for each service and run the schema
 migrations against the corresponding database. Existing deployments using
 `DB_NAME` continue to work, allowing an incremental rollout.
 
+## Service Discovery
+
+Microservices register themselves with a central discovery backend such as
+Consul.  The application uses a lightweight client to resolve the network
+address for a service at runtime instead of relying on static environment
+variables.  The registry endpoint is configured via `SERVICE_REGISTRY_URL`
+(defaults to `http://localhost:8500`).  When the analytics or events services
+are available in the registry, the application automatically routes requests to
+them through the corresponding adapters.
+

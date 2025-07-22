@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,6 +19,7 @@ import (
 	cfg "github.com/WSG23/yosai-gateway/internal/config"
 	"github.com/WSG23/yosai-gateway/internal/engine"
 	"github.com/WSG23/yosai-gateway/internal/gateway"
+	reg "github.com/WSG23/yosai-gateway/internal/registry"
 	"github.com/WSG23/yosai-gateway/internal/tracing"
 	"github.com/sony/gobreaker"
 )
@@ -86,19 +88,16 @@ func main() {
 	}
 	defer processor.Close()
 
-	// Service registry integration is not yet wired in during tests.
-	// Once available the resolved analytics service address will be used to
-	// configure the gateway. Until then this block is intentionally
-	// disabled to avoid compile errors when running `go test`.
-	/*
-	   analyticsAddr, err := reg.ResolveService(context.Background(), "analytics")
-	   if err == nil && analyticsAddr != "" {
-	           if host, port, err2 := net.SplitHostPort(analyticsAddr); err2 == nil {
-	                   os.Setenv("APP_HOST", host)
-	                   os.Setenv("APP_PORT", port)
-	           }
-	   }
-	*/
+	registryAddr := os.Getenv("SERVICE_REGISTRY_URL")
+	r, err := reg.NewConsulRegistry(registryAddr)
+	if err == nil {
+		if analyticsAddr, err := r.ResolveService(context.Background(), "analytics"); err == nil && analyticsAddr != "" {
+			if host, port, err2 := net.SplitHostPort(analyticsAddr); err2 == nil {
+				os.Setenv("APP_HOST", host)
+				os.Setenv("APP_PORT", port)
+			}
+		}
+	}
 
 	g, err := gateway.New()
 	if err != nil {
