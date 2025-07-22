@@ -80,5 +80,7 @@ create_topic app-state 3 $((365 * 24 * 60 * 60 * 1000)) $DEFAULT_SEGMENT_MS $DEF
 create_topic audit-logs 1 $((30 * 24 * 60 * 60 * 1000))
 
 # Register schemas
-register_schema schemas/access-event.avsc access-events-value
-register_schema schemas/access-event.avsc access-events-enriched-value
+register_schema schemas/avro/access_event_v1.avsc access-events-value
+register_schema schemas/avro/access_event_v1.avsc access-events-enriched-value
+register_schema schemas/avro/analytics_event_v1.avsc analytics-events-value
+register_schema schemas/avro/anomaly_event_v1.avsc anomaly-events-value

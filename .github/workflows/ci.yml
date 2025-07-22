@@ -43,6 +43,11 @@ jobs:
           set -xe
           mypy .
 
+      - name: Avro schema compatibility
+        run: |
+          set -xe
+          python scripts/check_schema_compatibility.py
+
       - name: Bandit
         run: |
           set -xe
