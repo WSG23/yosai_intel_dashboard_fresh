@@ -8,6 +8,12 @@ import os
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
+from services.resilience.circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerOpen,
+    circuit_breaker,
+)
+
 import aiohttp
 import pandas as pd
 from kafka import KafkaProducer
@@ -33,6 +39,7 @@ class EventServiceAdapter(ServiceAdapter):
             "EVENT_SERVICE_URL", "http://localhost:8002"
         )
         self.kafka_producer: KafkaProducer | None = None
+        self.circuit_breaker = CircuitBreaker(5, 60, name="event_service")
         self._init_kafka()
 
     def _init_kafka(self) -> None:
@@ -58,39 +65,50 @@ class EventServiceAdapter(ServiceAdapter):
         """Send a single event via Kafka or HTTP."""
         if self.kafka_producer is not None:
             try:
-                future = self.kafka_producer.send(
-                    "access-events",
-                    key=event.get("event_id"),
-                    value=event,
-                )
-                future.get(timeout=0.05)
-                return {
-                    "event_id": event.get("event_id"),
-                    "status": "accepted",
-                    "method": "kafka",
-                }
+                async with self.circuit_breaker:
+                    future = self.kafka_producer.send(
+                        "access-events",
+                        key=event.get("event_id"),
+                        value=event,
+                    )
+                    future.get(timeout=0.05)
+                    return {
+                        "event_id": event.get("event_id"),
+                        "status": "accepted",
+                        "method": "kafka",
+                    }
+            except CircuitBreakerOpen:
+                print("Event service circuit open, skipping Kafka")
             except Exception as exc:  # pragma: no cover - network failures
                 print(f"Kafka send failed, falling back to HTTP: {exc}")
 
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                f"{self.base_url}/api/v1/events",
-                json=event,
-                timeout=aiohttp.ClientTimeout(total=0.1),
-            ) as response:
-                return await response.json()
+        try:
+            async with self.circuit_breaker:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(
+                        f"{self.base_url}/api/v1/events",
+                        json=event,
+                        timeout=aiohttp.ClientTimeout(total=0.1),
+                    ) as response:
+                        return await response.json()
+        except CircuitBreakerOpen:
+            return {"event_id": event.get("event_id"), "status": "unavailable"}
 
     async def _process_batch(
         self, events: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """Send a batch of events via HTTP."""
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                f"{self.base_url}/api/v1/events/batch",
-                json={"events": events},
-                timeout=aiohttp.ClientTimeout(total=1.0),
-            ) as response:
-                return await response.json()
+        try:
+            async with self.circuit_breaker:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(
+                        f"{self.base_url}/api/v1/events/batch",
+                        json={"events": events},
+                        timeout=aiohttp.ClientTimeout(total=1.0),
+                    ) as response:
+                        return await response.json()
+        except CircuitBreakerOpen:
+            return []
 
 
 class AnalyticsServiceAdapter(ServiceAdapter, AnalyticsServiceProtocol):
@@ -106,11 +124,14 @@ class AnalyticsServiceAdapter(ServiceAdapter, AnalyticsServiceProtocol):
         self.use_microservice = (
             os.getenv("USE_ANALYTICS_MICROSERVICE", "false").lower() == "true"
         )
+        self.circuit_breaker = CircuitBreaker(5, 60, name="analytics_service")
 
     async def call(self, method: str, **kwargs: Any) -> Any:
         if self.use_microservice:
             try:
                 return await self._call_microservice(method, kwargs)
+            except CircuitBreakerOpen:
+                print("Analytics microservice circuit open, using Python fallback")
             except Exception as exc:  # pragma: no cover - network failures
                 print(f"Microservice call failed, falling back to Python: {exc}")
 
@@ -121,13 +142,14 @@ class AnalyticsServiceAdapter(ServiceAdapter, AnalyticsServiceProtocol):
         return result
 
     async def _call_microservice(self, method: str, params: Dict[str, Any]) -> Any:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                f"{self.microservice_url}/api/v1/analytics/{method}",
-                json=params,
-                timeout=aiohttp.ClientTimeout(total=30.0),
-            ) as response:
-                return await response.json()
+        async with self.circuit_breaker:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.microservice_url}/api/v1/analytics/{method}",
+                    json=params,
+                    timeout=aiohttp.ClientTimeout(total=30.0),
+                ) as response:
+                    return await response.json()
 
     # ``AnalyticsServiceProtocol`` methods ---------------------------------
     def get_dashboard_summary(self) -> Dict[str, Any]:
