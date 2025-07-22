@@ -2,12 +2,16 @@
 import os
 from flask import Flask, jsonify, request, send_from_directory
 from utils.api_error import error_response
+from tracing import init_tracing
 
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import pandas as pd
 import json
 from datetime import datetime
+
+# Initialize tracing before the app is created
+init_tracing("backend")
 
 # Create Flask app
 app = Flask(__name__, static_folder="../build", static_url_path="")
