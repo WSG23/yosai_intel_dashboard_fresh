@@ -105,6 +105,7 @@ assets/css/*
 # Compiled translations
 translations/**/*.mo
 cache/
+!gateway/internal/cache/
 venv
 venv_dashboard/
 
