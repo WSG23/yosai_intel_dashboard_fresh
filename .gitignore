@@ -117,3 +117,5 @@ venv_dashboard/
 config.zip
 app.log
 callback_audit_results/
+
+!load-tests/thresholds.json
