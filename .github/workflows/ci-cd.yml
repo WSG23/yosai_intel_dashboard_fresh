@@ -72,6 +72,18 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix:
+        include:
+          - name: gateway
+            context: .
+            dockerfile: Dockerfile.gateway
+          - name: analytics
+            context: .
+            dockerfile: Dockerfile
+          - name: event-ingestion
+            context: ./services/event-ingestion
+            dockerfile: Dockerfile
     steps:
       - uses: actions/checkout@v3
       - uses: docker/setup-buildx-action@v3
@@ -91,10 +103,12 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
+          context: ${{ matrix.context }}
+          dockerfile: ${{ matrix.dockerfile }}
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ steps.vars.outputs.tag }}
+            ghcr.io/${{ github.repository }}-${{ matrix.name }}:latest
+            ghcr.io/${{ github.repository }}-${{ matrix.name }}:${{ steps.vars.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

@@ -1,44 +1,42 @@
 version: '3.8'
 
 services:
-  yosai-app:
+
+  service-registry:
+    image: consul:1.15
+    command: consul agent -dev -client=0.0.0.0
+    ports:
+      - "8500:8500"
+    restart: unless-stopped
+
+  analytics-service:
     build:
       context: .
-      dockerfile: Dockerfile.prod
+      dockerfile: Dockerfile
+    command: ["python", "-m", "uvicorn", "services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
     environment:
       YOSAI_ENV: production
-      SECRET_KEY: ${SECRET_KEY}
-      DB_TYPE: postgresql
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: yosai_intel
-      DB_USER: postgres
-      DB_PASSWORD: ${DB_PASSWORD}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
-      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
-      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
-      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      SERVICE_REGISTRY_URL: http://service-registry:8500
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    deploy:
-      replicas: 3
+      - service-registry
     restart: unless-stopped
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    ports:
+      - "8081:8080"
     labels:
       - "prometheus.scrape=true"
-      - "prometheus.port=8050"
+      - "prometheus.port=8080"
       - "prometheus.path=/metrics"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8050/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
+    environment:
+      SERVICE_REGISTRY_URL: http://service-registry:8500
+    depends_on:
+      - analytics-service
+      - service-registry
+    restart: unless-stopped
   nginx:
     image: nginx:1.25
     volumes:
@@ -48,7 +46,7 @@ services:
       - "80:80"
       - "443:443"
     depends_on:
-      - yosai-app
+      - api-gateway
     restart: unless-stopped
 
   db:

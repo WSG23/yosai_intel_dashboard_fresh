@@ -1,34 +1,42 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
-    env_file:
-      - .env
+
+  service-registry:
+    image: consul:1.15
+    command: consul agent -dev -client=0.0.0.0
     ports:
-      - "8050:8050"
+      - "8500:8500"
+    restart: unless-stopped
+
+  analytics-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-m", "uvicorn", "services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
+    environment:
+      YOSAI_ENV: production
+      SERVICE_REGISTRY_URL: http://service-registry:8500
+    depends_on:
+      - service-registry
+    restart: unless-stopped
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    ports:
+      - "8081:8080"
     labels:
       - "prometheus.scrape=true"
-      - "prometheus.port=8050"
+      - "prometheus.port=8080"
       - "prometheus.path=/metrics"
     environment:
-      - DB_TYPE=postgresql
-      - DB_HOST=postgres
-      - DB_NAME=yosai_intel
-      - DB_USER=postgres
+      SERVICE_REGISTRY_URL: http://service-registry:8500
     depends_on:
-      - postgres
-    volumes:
-      - ./data:/app/data
+      - analytics-service
+      - service-registry
     restart: unless-stopped
-    secrets:
-      - db_password
-      - secret_key
-      - auth0_client_id
-      - auth0_client_secret
-      - auth0_domain
-      - auth0_audience
-
   postgres:
     image: postgres:15
     environment:
