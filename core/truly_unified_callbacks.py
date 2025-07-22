@@ -7,7 +7,18 @@ import threading
 import time
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Set,
+)
 
 from dash import Dash
 from dash.dependencies import Input, Output, State
@@ -79,6 +90,7 @@ class TrulyUnifiedCallbacks:
         self._output_map: Dict[str, str] = {}
         self._namespaces: Dict[str, List[str]] = defaultdict(list)
         self._groups: Dict[str, List[Operation]] = defaultdict(list)
+        self._registered_components: Set[str] = set()
 
     # ------------------------------------------------------------------
     def callback(self, *args: Any, **kwargs: Any):
@@ -341,6 +353,27 @@ class TrulyUnifiedCallbacks:
                 )
                 results.append(None)
         return results
+
+    # ------------------------------------------------------------------
+    def register_component_callbacks(
+        self, component_class: Type[ComponentCallbackManager]
+    ) -> None:
+        """Register all callbacks from a component in one consolidated call."""
+
+        component_id = getattr(component_class, "COMPONENT_ID", component_class.__name__)
+
+        if component_id in self._registered_components:
+            logger.warning("Component %s already registered, skipping", component_id)
+            return
+
+        try:
+            component = component_class()
+            if hasattr(component, "register_callbacks"):
+                component.register_callbacks(self)
+                self._registered_components.add(component_id)
+                logger.info("Registered callbacks for %s", component_id)
+        except Exception as e:  # pragma: no cover - defensive
+            logger.error("Failed to register %s: %s", component_id, e)
 
     # ------------------------------------------------------------------
     def register_all_callbacks(
