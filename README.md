@@ -445,6 +445,22 @@ is provided in `monitoring/prometheus.yml`. Logstash support is available via
 these data sources. See [performance_monitoring.md](docs/performance_monitoring.md)
 for details.
 
+### Prometheus Queries
+
+Example Prometheus expressions:
+
+- **Cache hit rate** – percentage of requests served from cache:
+  ```promql
+  sum(rate(cache_default_hit[5m]))
+  /
+  (sum(rate(cache_default_hit[5m])) + sum(rate(cache_default_miss[5m]))) * 100
+  ```
+
+- **Circuit breaker state** – see how often the circuit is open:
+  ```promql
+  rate(circuit_breaker_state{state="open"}[5m])
+  ```
+
 ## Kafka Setup
 
 `docker-compose.kafka.yml` spins up a three-node Kafka cluster with Schema Registry
@@ -502,6 +518,35 @@ await warmer.warm()
 
 Calling `ServiceContainer.warm_caches()` runs the warmer automatically if it is
 registered with the container.
+
+### Redis Cache Layer
+
+Set `CACHE_TYPE=redis` to store cached results in Redis instead of the
+in‑process memory cache. Configure the connection with:
+
+```bash
+REDIS_HOST=localhost  # Redis server host
+REDIS_PORT=6379       # Redis port
+CACHE_TTL_SECONDS=300 # Default TTL for cached analytics
+```
+
+Each cached entry is stored with the specified TTL. When running multiple
+application instances the Redis backend keeps the caches in sync across all
+workers.
+
+### Circuit Breaker Settings
+
+The connection pool and error-handling utilities include a circuit breaker to
+prevent repeated failures from overwhelming external services. Tune its
+behaviour via environment variables:
+
+```bash
+CIRCUIT_BREAKER_THRESHOLD=5   # Failures before opening the circuit
+CIRCUIT_BREAKER_TIMEOUT=30    # Seconds to wait before retrying requests
+```
+
+If the failure count exceeds the threshold, new requests are rejected until the
+timeout expires.
 
 ## <span aria-hidden="true">🔧</span> Configuration
 
