@@ -23,10 +23,11 @@ import (
 var accessEventsTopic = "access-events"
 
 var (
-	eventsProcessed = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "gateway_events_processed_total",
-		Help: "Number of access events processed",
-	})
+       eventsProcessed = prometheus.NewCounter(prometheus.CounterOpts{
+               Name: "event_processor_events_processed_total",
+               Help: "Number of access events processed",
+       })
+
 )
 
 func init() {
