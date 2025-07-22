@@ -1,0 +1,4 @@
+{
+  "http_req_failed_rate": 0.01,
+  "http_req_duration_p95": 500
+}
