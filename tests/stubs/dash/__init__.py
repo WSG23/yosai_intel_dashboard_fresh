@@ -7,6 +7,9 @@ from . import _callback
 Input = dependencies.Input
 Output = dependencies.Output
 State = dependencies.State
+import types
+
+dash_table = types.ModuleType("dash_table")
 
 
 class Dash:
@@ -24,9 +27,11 @@ class _SimpleComp:
 
 no_update = _callback.NoUpdate()
 
+
 def register_page(name=None, path="/", app=None, **kwargs):
     """Stub for `dash.register_page` used in tests."""
     return None
+
 
 __version__ = "0.0.0"
 page_container = _SimpleComp()
@@ -43,4 +48,5 @@ __all__ = [
     "State",
     "no_update",
     "register_page",
+    "dash_table",
 ]
