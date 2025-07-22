@@ -11,7 +11,7 @@ groups:
 - name: event_processor
   rules:
   - alert: EventProcessorStalled
-    expr: rate(gateway_events_processed_total[5m]) == 0
+    expr: rate(event_processor_events_processed_total[5m]) == 0
     for: 5m
     labels:
       severity: critical
