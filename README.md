@@ -555,6 +555,13 @@ Each cached entry is stored with the specified TTL. When running multiple
 application instances the Redis backend keeps the caches in sync across all
 workers.
 
+You can override TTLs for specific cached endpoints by defining environment
+variables of the form `CACHE_TTL_<ENDPOINT_NAME>`. For example:
+
+```bash
+CACHE_TTL_ACCESS_EVENTS=60  # 60 second TTL for the access events analytics
+```
+
 ### Circuit Breaker Settings
 
 The connection pool and error-handling utilities include a circuit breaker to

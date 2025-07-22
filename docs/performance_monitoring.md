@@ -111,6 +111,14 @@ The caching subsystem is organised into three tiers managed by
 `IntelligentCacheWarmer` can prefill these layers on start‑up so the most common
 queries are readily available.
 
+### Interpreting Cache Metrics
+
+Cache hit and miss counts are exported for Prometheus scraping via the metrics
+`dashboard_cache_hits_total` and `dashboard_cache_misses_total`. A healthy
+installation should see a hit ratio above **80%** for frequently requested
+analytics. A consistently low ratio indicates that the TTL may be too short or
+that the workload is too varied for caching to be effective.
+
 ## Upcoming Optimization Tools
 
 Several new modules extend the monitoring stack with proactive optimisation
