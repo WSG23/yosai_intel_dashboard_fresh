@@ -8,6 +8,10 @@ import pandas as pd
 import hashlib
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from tracing import init_tracing
+
+# Initialize tracing before the app is created
+init_tracing("backend")
 
 app = Flask(__name__)
 CORS(app)
