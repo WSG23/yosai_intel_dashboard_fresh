@@ -153,8 +153,8 @@ services:
 
   event-ingestion:
     build:
-      context: .
-      dockerfile: Dockerfile.ingestion
+      context: ./services/event-ingestion
+      dockerfile: Dockerfile
     environment:
       KAFKA_BROKERS: kafka1:29092,kafka2:29093,kafka3:29094
       SCHEMA_REGISTRY_URL: http://schema-registry:8081
