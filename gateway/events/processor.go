@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"time"
 
 	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
@@ -12,6 +11,7 @@ import (
 	"github.com/WSG23/yosai-gateway/internal/cache"
 	"github.com/WSG23/yosai-gateway/internal/engine"
 	ikafka "github.com/WSG23/yosai-gateway/internal/kafka"
+	"github.com/WSG23/yosai-gateway/internal/tracing"
 )
 
 var accessEventsTopic = "access-events"
@@ -73,7 +73,7 @@ func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEv
 			Decision: event.AccessResult,
 		}); err != nil {
 			// log failure but continue so access events are not lost
-			log.Printf("failed to cache decision: %v", err)
+			tracing.Logger.WithError(err).Warn("failed to cache decision")
 		}
 
 	}
@@ -83,7 +83,7 @@ func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEv
 	if ep.registry != nil {
 		record, err := ep.registry.Serialize("access-events-value", event)
 		if err != nil {
-			log.Printf("schema serialization failed: %v", err)
+			tracing.Logger.WithError(err).Warn("schema serialization failed")
 			data, _ = json.Marshal(event)
 		} else {
 			data = record
@@ -124,7 +124,7 @@ func (ep *EventProcessor) Run(ctx context.Context) error {
 					continue
 				}
 			}
-			log.Printf("consumer error: %v", err)
+			tracing.Logger.WithError(err).Error("consumer error")
 			continue
 		}
 
@@ -136,11 +136,11 @@ func (ep *EventProcessor) Run(ctx context.Context) error {
 		for _, m := range batch {
 			var ev AccessEvent
 			if err := json.Unmarshal(m.Value, &ev); err != nil {
-				log.Printf("malformed access event: %v", err)
+				tracing.Logger.WithError(err).Warn("malformed access event")
 				continue
 			}
 			if err := engine.Evaluate(ctx, &ev); err != nil {
-				log.Printf("rule evaluation error: %v", err)
+				tracing.Logger.WithError(err).Error("rule evaluation error")
 				continue
 			}
 			_, _ = ep.consumer.CommitMessage(m)

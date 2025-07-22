@@ -10,7 +10,12 @@ import (
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+
+	"github.com/sirupsen/logrus"
 )
+
+// Logger is the structured logger used across gateway services.
+var Logger = logrus.New()
 
 // InitTracing configures OpenTelemetry with a Jaeger exporter and returns
 // a shutdown function to flush spans.
@@ -32,5 +37,9 @@ func InitTracing(serviceName string) (func(context.Context) error, error) {
 	)
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
+
+	Logger.SetFormatter(&logrus.JSONFormatter{})
+	Logger.SetOutput(os.Stdout)
+
 	return tp.Shutdown, nil
 }

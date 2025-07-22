@@ -1,10 +1,22 @@
 import os
+import logging
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, Response, request
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect, generate_csrf
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 
 csrf = CSRFProtect()
+
+logger = logging.getLogger("api")
+handler = logging.StreamHandler()
+handler.setFormatter(
+    logging.Formatter(
+        '{"time":"%(asctime)s","level":"%(levelname)s","msg":"%(message)s"}'
+    )
+)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 from api.analytics_endpoints import register_analytics_blueprints
 from settings_endpoint import settings_bp
@@ -27,6 +39,19 @@ def create_api_app() -> Flask:
     csrf.init_app(app)
     CORS(app)
 
+    REQUEST_COUNT = Counter(
+        "http_requests_total", "Total HTTP requests", ["method", "endpoint", "status"]
+    )
+
+    @app.after_request
+    def record_metrics(response):
+        REQUEST_COUNT.labels(request.method, request.path, response.status_code).inc()
+        return response
+
+    @app.route("/metrics")
+    def metrics():
+        return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+
     # Third-party analytics demo endpoints
     register_analytics_blueprints(app)
 
@@ -46,7 +71,8 @@ def create_api_app() -> Flask:
 
 if __name__ == "__main__":
     app = create_api_app()
-    print("\n🚀 Starting Yosai Intel Dashboard API...")
-    print(f"   Available at: http://localhost:{API_PORT}")
-    print(f"   Upload endpoint: http://localhost:{API_PORT}/api/v1/upload")
+    logger.info("Starting Yosai Intel Dashboard API", extra={"port": API_PORT})
+    logger.info(
+        "Upload endpoint", extra={"url": f"http://localhost:{API_PORT}/api/v1/upload"}
+    )
     app.run(host="0.0.0.0", port=API_PORT, debug=True)
