@@ -6,27 +6,29 @@ import (
 	"log"
 	"time"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
 
 	"github.com/WSG23/yosai-gateway/internal/cache"
 	"github.com/WSG23/yosai-gateway/internal/engine"
+	ikafka "github.com/WSG23/yosai-gateway/internal/kafka"
 )
 
 var accessEventsTopic = "access-events"
 
 type EventProcessor struct {
-	producer *kafka.Producer
-	consumer *kafka.Consumer
+	producer *ckafka.Producer
+	consumer *ckafka.Consumer
 	cache    cache.CacheService
 	engine   *engine.CachedRuleEngine
+	registry *ikafka.SchemaRegistry
 }
 
 func NewEventProcessor(brokers string, c cache.CacheService, e *engine.CachedRuleEngine) (*EventProcessor, error) {
-	producer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": brokers})
+	producer, err := ckafka.NewProducer(&ckafka.ConfigMap{"bootstrap.servers": brokers})
 	if err != nil {
 		return nil, err
 	}
-	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
+	consumer, err := ckafka.NewConsumer(&ckafka.ConfigMap{
 		"bootstrap.servers": brokers,
 		"group.id":          "gateway",
 		"auto.offset.reset": "latest",
@@ -35,7 +37,8 @@ func NewEventProcessor(brokers string, c cache.CacheService, e *engine.CachedRul
 		producer.Close()
 		return nil, err
 	}
-	return &EventProcessor{producer: producer, consumer: consumer, cache: c, engine: e}, nil
+	reg := ikafka.NewSchemaRegistry("")
+	return &EventProcessor{producer: producer, consumer: consumer, cache: c, engine: e, registry: reg}, nil
 }
 
 func (ep *EventProcessor) Close() {
@@ -75,9 +78,20 @@ func (ep *EventProcessor) ProcessAccessEvent(event AccessEvent) error {
 	}
 
 	event.ProcessedAt = time.Now()
-	data, _ := json.Marshal(event)
-	return ep.producer.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &accessEventsTopic, Partition: kafka.PartitionAny},
+	var data []byte
+	if ep.registry != nil {
+		record, err := ep.registry.Serialize("access-events-value", event)
+		if err != nil {
+			log.Printf("schema serialization failed: %v", err)
+			data, _ = json.Marshal(event)
+		} else {
+			data = record
+		}
+	} else {
+		data, _ = json.Marshal(event)
+	}
+	return ep.producer.Produce(&ckafka.Message{
+		TopicPartition: ckafka.TopicPartition{Topic: &accessEventsTopic, Partition: ckafka.PartitionAny},
 		Value:          data,
 	}, nil)
 }
@@ -91,7 +105,7 @@ func (ep *EventProcessor) Run(ctx context.Context) error {
 
 	engine := NewCachedRuleEngine(ep.cache)
 	const batchSize = 50
-	batch := make([]*kafka.Message, 0, batchSize)
+	batch := make([]*ckafka.Message, 0, batchSize)
 
 	for {
 		if ctx.Err() != nil {
@@ -100,11 +114,11 @@ func (ep *EventProcessor) Run(ctx context.Context) error {
 
 		msg, err := ep.consumer.ReadMessage(500 * time.Millisecond)
 		if err != nil {
-			if kerr, ok := err.(kafka.Error); ok {
+			if kerr, ok := err.(ckafka.Error); ok {
 				if kerr.IsFatal() {
 					return err
 				}
-				if kerr.IsRetriable() || kerr.Code() == kafka.ErrTimedOut {
+				if kerr.IsRetriable() || kerr.Code() == ckafka.ErrTimedOut {
 					time.Sleep(time.Second)
 					continue
 				}

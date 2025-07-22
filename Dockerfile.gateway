@@ -3,6 +3,7 @@ FROM golang:1.22 AS build
 WORKDIR /src
 COPY gateway/go.mod gateway/go.sum ./
 RUN go mod download
+RUN go mod download github.com/riferrei/srclient@v0.7.3
 COPY gateway .
 RUN CGO_ENABLED=0 GOOS=linux go build -o /gateway ./gateway/cmd/gateway
 
