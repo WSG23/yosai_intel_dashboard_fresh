@@ -43,6 +43,10 @@ jobs:
         if: matrix.job == 'go'
         working-directory: ./gateway
         run: go test ./...
+      - name: Run Go tests (registry)
+        if: matrix.job == 'go'
+        working-directory: ./gateway
+        run: go test ./internal/registry
       - name: Run Go tests (tests)
         if: matrix.job == 'go'
         working-directory: ./tests
