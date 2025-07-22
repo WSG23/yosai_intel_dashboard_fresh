@@ -1,8 +1,10 @@
 import os
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect, generate_csrf
+
+from services.security import require_token
 
 csrf = CSRFProtect()
 
@@ -26,6 +28,12 @@ def create_api_app() -> Flask:
 
     csrf.init_app(app)
     CORS(app)
+
+    @app.before_request
+    def _check_token():
+        if request.endpoint == "get_csrf_token":
+            return None
+        return require_token(lambda: None)()  # type: ignore
 
     # Third-party analytics demo endpoints
     register_analytics_blueprints(app)
