@@ -20,3 +20,16 @@ into a single `services/analytics_service.py` module.
 2. Review the new `AnalyticsService` methods if you relied on
    `working_analytics_service` or `analytics.AnalyticsService`.
 3. Run your tests to ensure compatibility.
+
+## TimescaleDB Migration Checks
+
+Continuous integration now runs a smoke test for the TimescaleDB migration
+scripts. The workflow executes:
+
+```bash
+python scripts/migrate_to_timescale.py --test-mode
+python scripts/verify_timescale_migration.py
+```
+
+The build fails if verification returns a non-zero status, ensuring schema
+changes do not break the migration process.
