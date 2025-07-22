@@ -13,7 +13,6 @@ from services.registry import ServiceDiscovery
 from services.resilience.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
-    circuit_breaker,
 )
 
 import aiohttp
@@ -139,9 +138,7 @@ class AnalyticsServiceAdapter(ServiceAdapter, AnalyticsServiceProtocol):
         try:
             return await self._call_microservice(method, kwargs)
         except Exception as exc:
-            raise RuntimeError(
-                f"Analytics microservice call failed: {exc}"
-            ) from exc
+            raise RuntimeError(f"Analytics microservice call failed: {exc}") from exc
 
     async def _call_microservice(self, method: str, params: Dict[str, Any]) -> Any:
         async with self.circuit_breaker:
@@ -181,7 +178,8 @@ class MigrationContainer(ServiceContainer):
 
     def _load_migration_flags(self) -> Dict[str, bool]:
         return {
-            "use_kafka_events": os.getenv("USE_KAFKA_EVENTS", "false").lower() == "true",
+            "use_kafka_events": os.getenv("USE_KAFKA_EVENTS", "false").lower()
+            == "true",
             "use_timescaledb": os.getenv("USE_TIMESCALEDB", "false").lower() == "true",
         }
 
@@ -234,7 +232,8 @@ def register_migration_services(container: MigrationContainer) -> None:
 
     if container._migration_flags["use_timescaledb"]:
         try:
-            from config.database_manager import TimescaleDBManager
+            from services.timescale.manager import TimescaleDBManager
+            from services.timescale import models as timescale_models  # noqa:F401
         except Exception:  # pragma: no cover - optional dependency
             pass
         else:
