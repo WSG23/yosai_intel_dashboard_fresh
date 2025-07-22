@@ -46,6 +46,12 @@ jobs:
       - name: Run migration tests
         if: matrix.job == 'migration'
         run: pytest tests/migration tests/test_migrations.py -q
+      - name: Alembic upgrade check
+        if: matrix.job == 'migration'
+        run: alembic -c database/migrations/alembic.ini upgrade head
+      - name: Compile replication script
+        if: matrix.job == 'migration'
+        run: python -m py_compile scripts/replicate_to_timescale.py
   container-build:
     runs-on: ubuntu-latest
     needs: tests
@@ -60,11 +66,21 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Determine image tag
+        id: vars
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ghcr.io/${{ github.repository }}:latest
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ steps.vars.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
