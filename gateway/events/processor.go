@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -60,8 +59,19 @@ func (ep *EventProcessor) ProcessAccessEvent(event AccessEvent) error {
 	}
 	event.AccessResult = dec.Decision
 
-	if err := event.Validate(); err != nil {
-		return err
+	// compute decision according to access rules - not implemented here
+
+	// store decision in cache if available
+	if ep.cache != nil {
+		if err := ep.cache.SetDecision(context.Background(), cache.Decision{
+			PersonID: event.PersonID,
+			DoorID:   event.DoorID,
+			Decision: event.AccessResult,
+		}); err != nil {
+			// log failure but continue so access events are not lost
+			log.Printf("failed to cache decision: %v", err)
+		}
+
 	}
 
 	event.ProcessedAt = time.Now()
