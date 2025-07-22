@@ -2,14 +2,14 @@ module github.com/WSG23/yosai-gateway
 
 go 1.22
 
+require github.com/gorilla/mux v1.8.1
+
 require (
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/confluentinc/confluent-kafka-go v1.9.3-RC3
-	github.com/gorilla/mux v1.8.1
-	github.com/lib/pq v1.10.9
 	github.com/prometheus/client_golang v1.22.0
 	github.com/redis/go-redis/v9 v9.11.0
-	github.com/sony/gobreaker v0.4.1
+
 )
 
 require (
