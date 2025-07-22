@@ -12,3 +12,4 @@ sqlparse==0.5.3
 plotly==5.15.0
 dask[distributed]==2024.4.1
 tqdm>=4.0
+aiohttp>=3.8
