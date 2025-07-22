@@ -62,7 +62,7 @@ jobs:
         run: |
           set -xe
           pytest --maxfail=1 --disable-warnings -q --cov=.
-      - name: Go Test
+      - name: Go Test (gateway)
         working-directory: ./gateway
         run: |
           set -xe
@@ -73,6 +73,9 @@ jobs:
             echo "Coverage $cov% is below threshold" >&2
             exit 1
           fi
+      - name: Go Test (tests)
+        working-directory: ./tests
+        run: go test ./...
       - name: Setup Node
         uses: actions/setup-node@v3
         with:

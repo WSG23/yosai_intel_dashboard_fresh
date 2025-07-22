@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 
 	"net/http"
 	"os"
@@ -70,7 +69,6 @@ func main() {
 	           }
 	   }
 	*/
-
 
 	g, err := gateway.New()
 	if err != nil {
