@@ -41,6 +41,7 @@ jobs:
           path: coverage.xml
       - name: Run Go tests
         if: matrix.job == 'go'
+        working-directory: ./api-gateway
         run: go test ./...
       - name: Run migration tests
         if: matrix.job == 'migration'

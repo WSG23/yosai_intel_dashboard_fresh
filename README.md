@@ -193,12 +193,20 @@ API gateway on `http://localhost:8081` and the main dashboard on
 
 ### Go API Gateway
 
-The gateway forwards all requests to the dashboard service defined by the
-`APP_HOST` and `APP_PORT` environment variables (defaults are `app` and
-`8050`). Additional middleware can be toggled with:
+The Go gateway lives in the `api-gateway` directory. It forwards all requests
+to the dashboard service defined by the `APP_HOST` and `APP_PORT` environment
+variables (defaults are `app` and `8050`). Additional middleware can be
+toggled with:
 
 * `ENABLE_AUTH=1` – require an `Authorization` header
 * `ENABLE_RATELIMIT=1` – enable a simple token bucket rate limiter
+
+Run it locally with:
+
+```bash
+cd api-gateway
+go run .
+```
 
 The service listens on port `8080` inside the container. You can reach it at
 `http://localhost:8081` when running via Docker Compose.
