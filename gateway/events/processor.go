@@ -3,7 +3,8 @@ package events
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"log"
+
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -69,4 +70,56 @@ func (ep *EventProcessor) ProcessAccessEvent(event AccessEvent) error {
 		TopicPartition: kafka.TopicPartition{Topic: &accessEventsTopic, Partition: kafka.PartitionAny},
 		Value:          data,
 	}, nil)
+}
+
+// Run consumes AccessEvent messages from Kafka until ctx is cancelled. Messages
+// are processed in batches and evaluated using a CachedRuleEngine.
+func (ep *EventProcessor) Run(ctx context.Context) error {
+	if err := ep.consumer.SubscribeTopics([]string{accessEventsTopic}, nil); err != nil {
+		return err
+	}
+
+	engine := NewCachedRuleEngine(ep.cache)
+	const batchSize = 50
+	batch := make([]*kafka.Message, 0, batchSize)
+
+	for {
+		if ctx.Err() != nil {
+			return nil
+		}
+
+		msg, err := ep.consumer.ReadMessage(500 * time.Millisecond)
+		if err != nil {
+			if kerr, ok := err.(kafka.Error); ok {
+				if kerr.IsFatal() {
+					return err
+				}
+				if kerr.IsRetriable() || kerr.Code() == kafka.ErrTimedOut {
+					time.Sleep(time.Second)
+					continue
+				}
+			}
+			log.Printf("consumer error: %v", err)
+			continue
+		}
+
+		batch = append(batch, msg)
+		if len(batch) < batchSize {
+			continue
+		}
+
+		for _, m := range batch {
+			var ev AccessEvent
+			if err := json.Unmarshal(m.Value, &ev); err != nil {
+				log.Printf("malformed access event: %v", err)
+				continue
+			}
+			if err := engine.Evaluate(ctx, &ev); err != nil {
+				log.Printf("rule evaluation error: %v", err)
+				continue
+			}
+			_, _ = ep.consumer.CommitMessage(m)
+		}
+		batch = batch[:0]
+	}
 }
