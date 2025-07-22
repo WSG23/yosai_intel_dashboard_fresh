@@ -13,16 +13,14 @@ gateway:
         rules:
           - path: /api/v1/analytics
             ttl: 300s
-    - name: request-transform
+    - name: transform
       enabled: true
       config:
         rules:
-          - path: /api/v1/update
-            headers:
-              X-Added: transformed
-            query:
-              injected: "1"
-            body: '{"patched":true}'
+          - path: /api/v1/*
+            add_headers:
+              X-Gateway-Version: "2.0"
+
   queue:
     type: rabbitmq
     url: amqp://rabbitmq:5672

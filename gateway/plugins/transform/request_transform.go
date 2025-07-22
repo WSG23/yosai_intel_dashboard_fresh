@@ -1,117 +1,98 @@
 package transform
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"strings"
-
-	"gopkg.in/yaml.v3"
 )
 
-// Rule defines how to transform a request matching a path.
-type Rule struct {
-	Path     string            `yaml:"path"`
-	Headers  map[string]string `yaml:"headers,omitempty"`
-	Query    map[string]string `yaml:"query,omitempty"`
-	Body     string            `yaml:"body,omitempty"`
-	Response *ResponseRule     `yaml:"response,omitempty"`
+type TransformPlugin struct {
+	rules []TransformRule
 }
 
-// ResponseRule defines optional transformation applied to the response.
-type ResponseRule struct {
-	Headers map[string]string `yaml:"headers,omitempty"`
-	Body    string            `yaml:"body,omitempty"`
+type TransformRule struct {
+	Path              string
+	AddHeaders        map[string]string
+	RemoveHeaders     []string
+	RenameHeaders     map[string]string
+	AddQuery          map[string]string
+	RemoveQuery       []string
+	BodyTransform     func([]byte) ([]byte, error)
+	ResponseTransform func([]byte) ([]byte, error)
 }
 
-// RequestTransformPlugin modifies requests according to rules.
-type RequestTransformPlugin struct {
-	rules []Rule
-}
+func (t *TransformPlugin) Name() string                             { return "request-transform" }
+func (t *TransformPlugin) Priority() int                            { return 40 }
+func (t *TransformPlugin) Init(config map[string]interface{}) error { return nil }
 
-func (r *RequestTransformPlugin) Name() string  { return "request-transform" }
-func (r *RequestTransformPlugin) Priority() int { return 40 }
+func (t *TransformPlugin) findRule(req *http.Request) *TransformRule {
+	for i := range t.rules {
+		if t.rules[i].Path == req.URL.Path {
+			return &t.rules[i]
 
-// Init loads rules from config/gateway.yaml. Config parameter is unused.
-func (r *RequestTransformPlugin) Init(_ map[string]interface{}) error {
-	data, err := os.ReadFile("gateway/config/gateway.yaml")
-	if err != nil {
-		return err
-	}
-	var cfg struct {
-		Gateway struct {
-			Plugins []struct {
-				Name    string `yaml:"name"`
-				Enabled bool   `yaml:"enabled"`
-				Config  struct {
-					Rules []Rule `yaml:"rules"`
-				} `yaml:"config"`
-			} `yaml:"plugins"`
-		} `yaml:"gateway"`
-	}
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return err
-	}
-	for _, p := range cfg.Gateway.Plugins {
-		if p.Name == "request-transform" && p.Enabled {
-			r.rules = p.Config.Rules
-			break
 		}
 	}
 	return nil
 }
 
-func (r *RequestTransformPlugin) Process(ctx context.Context, req *http.Request, resp http.ResponseWriter, next http.Handler) {
-	var matched *Rule
-	for i := range r.rules {
-		if r.rules[i].Path == req.URL.Path {
-			matched = &r.rules[i]
-			break
-		}
-	}
-	if matched == nil {
+func (t *TransformPlugin) Process(ctx context.Context, req *http.Request, resp http.ResponseWriter, next http.Handler) {
+	rule := t.findRule(req)
+	if rule == nil {
+
 		next.ServeHTTP(resp, req)
 		return
 	}
 
-	// modify headers
-	for k, v := range matched.Headers {
+	for k, v := range rule.AddHeaders {
 		req.Header.Set(k, v)
 	}
-	// modify query params
-	if len(matched.Query) > 0 {
-		q := req.URL.Query()
-		for k, v := range matched.Query {
-			q.Set(k, v)
-		}
-		req.URL.RawQuery = q.Encode()
+	for _, h := range rule.RemoveHeaders {
+		req.Header.Del(h)
 	}
-	// modify body
-	if matched.Body != "" {
-		req.Body = io.NopCloser(strings.NewReader(matched.Body))
-		req.ContentLength = int64(len(matched.Body))
+	for old, newKey := range rule.RenameHeaders {
+		if val := req.Header.Get(old); val != "" {
+			req.Header.Set(newKey, val)
+			req.Header.Del(old)
+		}
 	}
 
-	if matched.Response != nil {
-		// capture response
+	query := req.URL.Query()
+	for k, v := range rule.AddQuery {
+		query.Set(k, v)
+	}
+	for _, q := range rule.RemoveQuery {
+		query.Del(q)
+	}
+	req.URL.RawQuery = query.Encode()
+
+	if rule.BodyTransform != nil && req.Body != nil {
+		body, _ := io.ReadAll(req.Body)
+		req.Body.Close()
+		transformed, err := rule.BodyTransform(body)
+		if err == nil {
+			req.Body = io.NopCloser(bytes.NewReader(transformed))
+			req.ContentLength = int64(len(transformed))
+		} else {
+			req.Body = io.NopCloser(bytes.NewReader(body))
+		}
+	}
+
+	if rule.ResponseTransform != nil {
 		recorder := httptest.NewRecorder()
 		next.ServeHTTP(recorder, req)
-		res := recorder.Result()
-		body, _ := io.ReadAll(res.Body)
-		res.Body.Close()
-
-		if matched.Response.Body != "" {
-			body = []byte(matched.Response.Body)
+		result := recorder.Result()
+		body, _ := io.ReadAll(result.Body)
+		result.Body.Close()
+		if transformed, err := rule.ResponseTransform(body); err == nil {
+			body = transformed
 		}
-		for k, v := range res.Header {
+		for k, v := range result.Header {
 			resp.Header()[k] = v
 		}
-		for k, v := range matched.Response.Headers {
-			resp.Header().Set(k, v)
-		}
-		resp.WriteHeader(res.StatusCode)
+		resp.WriteHeader(result.StatusCode)
+
 		resp.Write(body)
 		return
 	}
