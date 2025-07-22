@@ -17,12 +17,30 @@ spec:
       containers:
         - name: analytics-service
           image: yosai-intel-dashboard:latest
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
           command: ["python", "-m", "uvicorn", "services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
+          ports:
+            - containerPort: 8001
           envFrom:
             - configMapRef:
                 name: yosai-config
             - secretRef:
                 name: yosai-secrets
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 10
+            periodSeconds: 10
           resources:
             requests:
               cpu: "100m"
