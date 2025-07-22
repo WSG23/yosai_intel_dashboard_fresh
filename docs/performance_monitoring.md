@@ -38,6 +38,14 @@ counts as JSON and the same metrics are also available via `/metrics` for
 Prometheus scraping. Configuration for the breakers lives in
 `config/circuit-breakers.yaml` and is loaded by both services.
 
+### Replication Lag Metric
+
+`scripts/replicate_to_timescale.py` exposes a gauge named
+`replication_lag_seconds` via Prometheus. The metric records the difference in
+seconds between `NOW()` and the timestamp of the most recently replicated access
+event. Set the `REPLICATION_METRICS_PORT` environment variable to change the
+HTTP port (defaults to `8004`).
+
 ### Logstash
 
 `logging/logstash.conf` reads the application, Postgres and Redis logs and can
