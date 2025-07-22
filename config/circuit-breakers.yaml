@@ -1,8 +1,15 @@
-# Example circuit breaker settings for Go services
+# Circuit breaker settings shared by the Python and Go services
 
+defaults:
+  # Minimum consecutive failures before the breaker opens
+  failure_threshold: 5
+  # Time in seconds before a half‑open trial is allowed
+  recovery_timeout: 30
+
+# Service specific overrides
 database:
   failure_threshold: 5
-  recovery_timeout: 30  # seconds
+  recovery_timeout: 30
 
 external_api:
   failure_threshold: 3

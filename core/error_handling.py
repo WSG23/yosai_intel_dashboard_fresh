@@ -11,6 +11,26 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
+from prometheus_client import Counter, REGISTRY
+from prometheus_client.core import CollectorRegistry
+
+# Counter tracking circuit breaker state transitions. When the metric already
+# exists in the default registry (e.g. during test re-imports) we create the
+# counter in an isolated registry to avoid duplicate registration errors.
+if "circuit_breaker_state_transitions_total" not in REGISTRY._names_to_collectors:
+    circuit_breaker_state = Counter(
+        "circuit_breaker_state_transitions_total",
+        "Count of circuit breaker state transitions",
+        ["name", "state"],
+    )
+else:
+    circuit_breaker_state = Counter(
+        "circuit_breaker_state_transitions_total",
+        "Count of circuit breaker state transitions",
+        ["name", "state"],
+        registry=CollectorRegistry(),
+    )
+
 
 class ErrorSeverity(Enum):
     """Error severity levels"""
@@ -252,14 +272,15 @@ def with_async_error_handling(
 
 
 class CircuitBreaker:
-    """Circuit breaker pattern for external service calls"""
+    """Circuit breaker pattern for external service calls with metrics"""
 
-    def __init__(self, failure_threshold: int = 5, timeout: int = 60):
+    def __init__(self, failure_threshold: int = 5, timeout: int = 60, name: str = "circuit"):
         self.failure_threshold = failure_threshold
         self.timeout = timeout
         self.failure_count = 0
         self.last_failure_time = None
         self.state = "closed"  # closed, open, half-open
+        self.name = name
 
     def call(self, func: Callable, *args, **kwargs) -> Any:
         """Call function with circuit breaker protection"""
@@ -267,7 +288,9 @@ class CircuitBreaker:
         if self.state == "open":
             if self._should_attempt_reset():
                 self.state = "half-open"
+                circuit_breaker_state.labels(self.name, "half_open").inc()
             else:
+                circuit_breaker_state.labels(self.name, "open").inc()
                 raise CircuitBreakerError("Circuit breaker is open")
 
         try:
@@ -288,6 +311,8 @@ class CircuitBreaker:
     def _on_success(self):
         """Handle successful call"""
         self.failure_count = 0
+        if self.state != "closed":
+            circuit_breaker_state.labels(self.name, "closed").inc()
         self.state = "closed"
 
     def _on_failure(self):
@@ -296,6 +321,8 @@ class CircuitBreaker:
         self.last_failure_time = time.time()
 
         if self.failure_count >= self.failure_threshold:
+            if self.state != "open":
+                circuit_breaker_state.labels(self.name, "open").inc()
             self.state = "open"
 
 
