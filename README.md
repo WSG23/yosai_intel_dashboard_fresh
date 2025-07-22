@@ -675,6 +675,10 @@ defaults:
 - `RATE_LIMIT_WINDOW` – rate limit window in minutes
 - `MAX_UPLOAD_MB` – maximum allowed upload size
 - `DB_POOL_SIZE` – database connection pool size
+- `DB_INITIAL_POOL_SIZE` – starting number of pooled connections
+- `DB_MAX_POOL_SIZE` – upper limit for the pool
+- `DB_TIMEOUT` – database connection timeout in seconds
+- `QUERY_TIMEOUT_SECONDS` – analytics query timeout
 
 ### Plugins
 
