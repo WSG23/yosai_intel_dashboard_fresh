@@ -62,4 +62,4 @@ flask-cors==6.0.1
 fastapi==0.116.1
 opentelemetry-api==1.35.0
 opentelemetry-sdk==1.35.0
-opentelemetry-exporter-jaeger==1.35.0
+opentelemetry-exporter-jaeger==1.21.0
