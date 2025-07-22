@@ -29,6 +29,10 @@ spec:
                 name: yosai-config
             - secretRef:
                 name: yosai-secrets
+            - configMapRef:
+                name: vault-config
+            - secretRef:
+                name: vault-secret
           readinessProbe:
             httpGet:
               path: /health

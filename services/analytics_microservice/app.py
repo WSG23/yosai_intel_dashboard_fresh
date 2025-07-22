@@ -1,4 +1,3 @@
-import os
 import time
 
 from fastapi import FastAPI, Depends, Header, HTTPException, status
@@ -10,12 +9,16 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from tracing import init_tracing
 
 from services.analytics_service import create_analytics_service
+from services.common.secrets import get_secret
 
 init_tracing("analytics-microservice")
 
 app = FastAPI(title="Analytics Microservice")
 
 service = create_analytics_service()
+
+# Fail fast if the JWT secret is missing
+JWT_SECRET = get_secret("JWT_SECRET")
 
 
 def verify_token(authorization: str = Header("")) -> None:
@@ -25,9 +28,8 @@ def verify_token(authorization: str = Header("")) -> None:
             status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized"
         )
     token = authorization.split(" ", 1)[1]
-    secret = os.getenv("JWT_SECRET", "")
     try:
-        claims = jwt.decode(token, secret, algorithms=["HS256"])
+        claims = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized"
