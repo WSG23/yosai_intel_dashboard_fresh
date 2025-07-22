@@ -22,13 +22,7 @@ func NewProxy() (*httputil.ReverseProxy, error) {
 		return nil, err
 	}
 	p := httputil.NewSingleHostReverseProxy(target)
-	orig := p.Director
-	p.Director = func(req *http.Request) {
-		auth := req.Header.Get("Authorization")
-		orig(req)
-		if auth != "" {
-			req.Header.Set("Authorization", auth)
-		}
-	}
+	p.Transport = newTracingTransport(p.Transport)
+
 	return p, nil
 }
