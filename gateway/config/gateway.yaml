@@ -1,0 +1,28 @@
+gateway:
+  plugins:
+    - name: advanced-ratelimit
+      enabled: true
+      config:
+        per_user_limit: 100
+        global_limit: 1000
+        burst: 20
+        delay: false
+    - name: cache
+      enabled: true
+      config:
+        rules:
+          - path: /api/v1/analytics
+            ttl: 300s
+    - name: request-transform
+      enabled: true
+      config:
+        rules:
+          - path: /api/v1/update
+            headers:
+              X-Added: transformed
+            query:
+              injected: "1"
+            body: '{"patched":true}'
+  queue:
+    type: rabbitmq
+    url: amqp://rabbitmq:5672

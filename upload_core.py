@@ -15,6 +15,7 @@ from services.task_queue import (
     TaskQueue,
     TaskQueueProtocol,
 )
+from services.rabbitmq_client import RabbitMQClient
 from services.upload import (
     AISuggestionService,
     ChunkedUploadManager,
@@ -42,6 +43,7 @@ class UploadCore:
         learning_service: DeviceLearningServiceProtocol,
         store: UploadStorageProtocol,
         task_queue: TaskQueueProtocol | None = None,
+        task_queue_url: str | None = None,
     ) -> None:
         self.store = store
         self.processing = processing
@@ -54,6 +56,12 @@ class UploadCore:
         self.chunked = ChunkedUploadManager()
         self.queue = UploadQueueManager()
         self.task_queue = task_queue or TaskQueue()
+        self.rabbitmq: RabbitMQClient | None = None
+        if task_queue_url:
+            try:
+                self.rabbitmq = RabbitMQClient(task_queue_url)
+            except Exception as exc:  # pragma: no cover - optional queue
+                logger.error("RabbitMQ connection failed: %s", exc)
 
     def highlight_upload_area(self, n_clicks):
         if n_clicks:
@@ -121,6 +129,11 @@ class UploadCore:
         if not isinstance(filenames_list, list):
             filenames_list = [filenames_list]
         async_coro = self.processing.process_files(contents_list, filenames_list)
+        if self.rabbitmq:
+            payload = {"contents": contents_list, "filenames": filenames_list}
+            return self.rabbitmq.publish(
+                "tasks", "upload_process", payload, priority=0, delay_ms=0
+            )
         task_id = self.task_queue.create_task(async_coro)
         return task_id
 
@@ -132,8 +145,11 @@ class UploadCore:
         return 0, "0%", False
 
     def update_progress_bar(self, _n: int, task_id: str) -> Tuple[int, str, Any]:
-        status = self.task_queue.get_status(task_id)
-        progress = int(status.get("progress", 0))
+        if self.rabbitmq:
+            progress = 0
+        else:
+            status = self.task_queue.get_status(task_id)
+            progress = int(status.get("progress", 0))
         file_items = [
             html.Li(
                 dbc.Progress(
@@ -151,6 +167,17 @@ class UploadCore:
     def finalize_upload_results(
         self, _n: int, task_id: str
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, bool]:
+        if self.rabbitmq:
+            return (
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+            )
         status = self.task_queue.get_status(task_id)
         result = status.get("result")
 
