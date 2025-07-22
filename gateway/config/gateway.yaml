@@ -13,6 +13,10 @@ gateway:
         rules:
           - path: /api/v1/analytics
             ttl: 300s
+            vary_headers: [Authorization]
+            vary_params: [user]
+            invalidate_paths:
+              - /api/v1/analytics/update
   queue:
     type: rabbitmq
     url: amqp://rabbitmq:5672
