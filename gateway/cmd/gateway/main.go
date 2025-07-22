@@ -19,6 +19,7 @@ import (
 	cfg "github.com/WSG23/yosai-gateway/internal/config"
 	"github.com/WSG23/yosai-gateway/internal/engine"
 	"github.com/WSG23/yosai-gateway/internal/gateway"
+	"github.com/WSG23/yosai-gateway/internal/rbac"
 	reg "github.com/WSG23/yosai-gateway/internal/registry"
 	"github.com/WSG23/yosai-gateway/internal/tracing"
 	"github.com/WSG23/yosai-gateway/plugins"
@@ -38,6 +39,7 @@ func main() {
 
 	}
 	cacheSvc := cache.NewRedisCache()
+	rbacSvc := rbac.New(time.Minute)
 
 	cbConf, err := cfg.Load(os.Getenv("CIRCUIT_BREAKER_CONFIG"))
 	if err != nil {
@@ -110,8 +112,12 @@ func main() {
 	if err != nil {
 		tracing.Logger.WithError(err).Warn("failed to load gateway plugins")
 	}
-	for _, p := range loaded {
-		g.RegisterPlugin(p)
+	if os.Getenv("ENABLE_RBAC") == "1" {
+		g.UseRBAC(rbacSvc, "gateway.access")
+	}
+	if os.Getenv("ENABLE_RATELIMIT") == "1" {
+		g.UseRateLimit()
+
 	}
 
 	addr := ":8080"

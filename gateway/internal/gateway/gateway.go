@@ -8,7 +8,8 @@ import (
 
 	"github.com/WSG23/yosai-gateway/internal/handlers"
 	"github.com/WSG23/yosai-gateway/internal/proxy"
-	"github.com/WSG23/yosai-gateway/plugins"
+	"github.com/WSG23/yosai-gateway/internal/rbac"
+
 )
 
 // Gateway represents the HTTP gateway service.
@@ -33,6 +34,21 @@ func New() (*Gateway, error) {
 	g := &Gateway{router: r, plugins: plugins.PluginRegistry{}}
 
 	return g, nil
+}
+
+// UseAuth enables auth middleware.
+func (g *Gateway) UseAuth() {
+	g.router.Use(middleware.Auth)
+}
+
+// UseRateLimit enables rate limiting middleware.
+func (g *Gateway) UseRateLimit() {
+	g.router.Use(middleware.RateLimit)
+}
+
+// UseRBAC enables RBAC permission checks for all requests using the provided service and permission string.
+func (g *Gateway) UseRBAC(s *rbac.RBACService, perm string) {
+	g.router.Use(middleware.RequirePermission(s, perm))
 }
 
 // Handler returns the root HTTP handler.
