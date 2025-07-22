@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Activity, Users, DoorOpen, AlertCircle } from 'lucide-react';
-import { useEventSocket } from '../hooks/useEventSocket';
+import { useWebSocket } from '../hooks/useWebSocket';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
 interface AccessEvent {
   eventId: string;
@@ -70,7 +79,7 @@ export const RealTimeMonitoring: React.FC = () => {
     anomaliesDetected: 0,
   });
 
-  const { data } = useEventSocket('ws://localhost:5001/ws/events');
+  const { data, isConnected } = useWebSocket('/ws/events');
 
   useEffect(() => {
     if (data) {
