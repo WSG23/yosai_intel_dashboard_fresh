@@ -56,6 +56,12 @@ jobs:
       - name: Compile replication script
         if: matrix.job == 'migration'
         run: python -m py_compile scripts/replicate_to_timescale.py
+      - name: Test Timescale migration
+        if: matrix.job == 'migration'
+        run: python scripts/migrate_to_timescale.py --test-mode
+      - name: Verify Timescale migration
+        if: matrix.job == 'migration'
+        run: python scripts/verify_timescale_migration.py
   container-build:
     runs-on: ubuntu-latest
     needs: tests

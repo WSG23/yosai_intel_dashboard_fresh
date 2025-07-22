@@ -1107,6 +1107,13 @@ TIMESCALE_DB_USER, TIMESCALE_DB_PASSWORD
 
 The default `docker-compose.dev.yml` exposes TimescaleDB on port `5433`.
 
+### CI/CD Verification
+
+The GitHub Actions workflow runs a dry-run migration using
+`scripts/migrate_to_timescale.py --test-mode` and then executes
+`scripts/verify_timescale_migration.py`. The job fails if verification
+returns a non-zero status.
+
 ### Schema Migrations and Replication
 
 Database schema changes are managed with **Alembic** under `database/migrations/`.
