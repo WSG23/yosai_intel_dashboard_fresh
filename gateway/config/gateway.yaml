@@ -13,6 +13,13 @@ gateway:
         rules:
           - path: /api/v1/analytics
             ttl: 300s
+    - name: transform
+      enabled: true
+      config:
+        rules:
+          - path: /api/v1/*
+            add_headers:
+              X-Gateway-Version: "2.0"
   queue:
     type: rabbitmq
     url: amqp://rabbitmq:5672

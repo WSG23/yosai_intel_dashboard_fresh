@@ -21,6 +21,7 @@ import (
 	"github.com/WSG23/yosai-gateway/internal/gateway"
 	reg "github.com/WSG23/yosai-gateway/internal/registry"
 	"github.com/WSG23/yosai-gateway/internal/tracing"
+	"github.com/WSG23/yosai-gateway/plugins/transform"
 	"github.com/sony/gobreaker"
 )
 
@@ -103,6 +104,9 @@ func main() {
 	if err != nil {
 		tracing.Logger.Fatalf("failed to create gateway: %v", err)
 	}
+
+	// register example transform plugin
+	g.RegisterPlugin(&transform.TransformPlugin{})
 
 	// enable middleware based on env vars
 	if os.Getenv("ENABLE_AUTH") == "1" {
