@@ -12,6 +12,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List
 
 import requests
+from tracing import propagate_context
 
 import sqlparse
 from sqlparse.sql import Identifier, IdentifierList, Token
@@ -331,9 +332,12 @@ class SecurityValidator(SecurityServiceProtocol):
         service_url = os.environ.get("PERMISSION_SERVICE_URL", "http://localhost:8081")
         url = f"{service_url.rstrip('/')}/permissions/check"
         try:
+            headers: Dict[str, str] = {}
+            propagate_context(headers)
             resp = requests.get(
                 url,
                 params={"user_id": user_id, "resource": resource, "action": action},
+                headers=headers,
                 timeout=5,
             )
             resp.raise_for_status()

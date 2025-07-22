@@ -3,7 +3,7 @@ package proxy
 import (
 	"net/http"
 
-	"go.opentelemetry.io/otel"
+	"github.com/WSG23/yosai-gateway/tracing"
 	"go.opentelemetry.io/otel/propagation"
 )
 
@@ -14,8 +14,7 @@ type tracingTransport struct {
 }
 
 func (t *tracingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	propagator := otel.GetTextMapPropagator()
-	propagator.Inject(req.Context(), propagation.HeaderCarrier(req.Header))
+	tracing.PropagateContext(req.Context(), propagation.HeaderCarrier(req.Header))
 	return t.base.RoundTrip(req)
 }
 

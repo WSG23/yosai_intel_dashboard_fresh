@@ -4,6 +4,7 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from services.streaming import StreamingService
+from tracing import trace_async_operation
 
 app = FastAPI(title="Event Ingestion Service")
 service = StreamingService()
@@ -17,7 +18,7 @@ async def _consume_loop() -> None:
 @app.on_event("startup")
 async def startup() -> None:
     service.initialize()
-    asyncio.create_task(_consume_loop())
+    asyncio.create_task(trace_async_operation("consume_loop", "ingest", _consume_loop()))
 
 @app.on_event("shutdown")
 async def shutdown() -> None:
