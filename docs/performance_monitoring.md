@@ -38,6 +38,14 @@ counts as JSON and the same metrics are also available via `/metrics` for
 Prometheus scraping. Configuration for the breakers lives in
 `config/circuit-breakers.yaml` and is loaded by both services.
 
+### Replication Lag Metric
+
+`scripts/replicate_to_timescale.py` exposes a gauge named
+`replication_lag_seconds` via Prometheus. The metric records the difference in
+seconds between `NOW()` and the timestamp of the most recently replicated access
+event. Set the `REPLICATION_METRICS_PORT` environment variable to change the
+HTTP port (defaults to `8004`).
+
 ### Logstash
 
 `logging/logstash.conf` reads the application, Postgres and Redis logs and can
@@ -51,6 +59,12 @@ docker run -p 5044:5044 \
 
 Adjust the `elasticsearch` output section if you have a different destination.
 
+### Distributed Tracing
+
+All services export OpenTelemetry traces to Jaeger. Set the `JAEGER_ENDPOINT`
+environment variable to the collector URL (`http://localhost:14268/api/traces`
+by default). Invoke `init_tracing("analytics-microservice")` during startup of
+the analytics microservice so spans are reported correctly.
 
 ## Real-time Performance Tracking
 
@@ -110,6 +124,14 @@ The caching subsystem is organised into three tiers managed by
 
 `IntelligentCacheWarmer` can prefill these layers on start‑up so the most common
 queries are readily available.
+
+### Interpreting Cache Metrics
+
+Cache hit and miss counts are exported for Prometheus scraping via the metrics
+`dashboard_cache_hits_total` and `dashboard_cache_misses_total`. A healthy
+installation should see a hit ratio above **80%** for frequently requested
+analytics. A consistently low ratio indicates that the TTL may be too short or
+that the workload is too varied for caching to be effective.
 
 ## Upcoming Optimization Tools
 

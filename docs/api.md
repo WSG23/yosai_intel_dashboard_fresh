@@ -29,10 +29,21 @@ under `analytics/clients/event_client`.
 
 ### Regenerating after changes
 
-`docs/openapi.json` is not committed to the repository. Whenever you modify any
-API routes or schemas, run `python tools/generate_openapi.py` and verify the
-file in `docs/` updates. This keeps the interactive documentation in sync with
-the code.
+Run the generator whenever API routes or schemas change:
+
+```bash
+go run ./api/openapi
+```
+
+Commit the updated `docs/openapi.json` so the specification stays in sync with
+the codebase.
+
+## API Versioning
+
+All endpoints are prefixed with a version such as `/v1` or `/api/v1`.
+When backwards-incompatible changes are introduced, a new version path will be
+added while the old one is maintained for a period of time. Clients should
+specify the exact version in requests to avoid unexpected behavior.
 
 ## Database Manager
 

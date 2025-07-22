@@ -1,5 +1,5 @@
 # Packages required exclusively for running the tests
-pytest==7.4.0
+pytest==8.4.1
 pytest-cov>=2.12.0
 PyYAML>=6.0
 psutil>=5.9.0
@@ -13,3 +13,5 @@ plotly==5.15.0
 dask[distributed]==2024.4.1
 tqdm>=4.0
 aiohttp>=3.8
+testcontainers[postgresql,redis]==3.7.1
+prometheus_client==0.22.1

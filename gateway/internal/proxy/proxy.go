@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
@@ -22,5 +23,6 @@ func NewProxy() (*httputil.ReverseProxy, error) {
 	}
 	p := httputil.NewSingleHostReverseProxy(target)
 	p.Transport = newTracingTransport(p.Transport)
+
 	return p, nil
 }

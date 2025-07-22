@@ -97,15 +97,10 @@ def test_create_app(monkeypatch):
             captured["manager"] = app
 
     monkeypatch.setattr("core.master_callback_system.MasterCallbackSystem", DummyMCS)
-    monkeypatch.setattr(
-        "pages.register_all_pages",
-        lambda app, manager: captured.setdefault("pages", True),
-    )
     monkeypatch.setattr(app, "debug_dash_asset_serving", lambda a: True)
 
     app_obj = app._create_app()
     assert isinstance(app_obj, DummyApp)
-    assert "pages" in captured
 
 
 def test_run_server(monkeypatch):

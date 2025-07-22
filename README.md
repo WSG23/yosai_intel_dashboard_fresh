@@ -60,8 +60,6 @@ yosai_intel_dashboard/
 │   ├── analytics/            # Analytics-specific components
 │   ├── ui/                   # Shared UI components
 │   └── map_panel.py          # Map visualization
-├── pages/                    # Multi-page application pages
-│   └── deep_analytics.py     # Analytics page
 ├── utils/                    # Utility functions
 └── assets/                   # Static assets and CSS
     └── css/                  # Modular CSS architecture
@@ -554,6 +552,13 @@ CACHE_TTL_SECONDS=300 # Default TTL for cached analytics
 Each cached entry is stored with the specified TTL. When running multiple
 application instances the Redis backend keeps the caches in sync across all
 workers.
+
+You can override TTLs for specific cached endpoints by defining environment
+variables of the form `CACHE_TTL_<ENDPOINT_NAME>`. For example:
+
+```bash
+CACHE_TTL_ACCESS_EVENTS=60  # 60 second TTL for the access events analytics
+```
 
 ### Circuit Breaker Settings
 
