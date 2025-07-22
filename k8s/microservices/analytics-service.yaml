@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-service
+  labels:
+    app: analytics-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analytics-service
+  template:
+    metadata:
+      labels:
+        app: analytics-service
+    spec:
+      containers:
+        - name: analytics-service
+          image: yosai-intel-dashboard:latest
+          command: ["python", "-m", "uvicorn", "services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
+          envFrom:
+            - configMapRef:
+                name: yosai-config
+            - secretRef:
+                name: yosai-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"

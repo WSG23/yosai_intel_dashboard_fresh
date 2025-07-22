@@ -16,6 +16,7 @@ import (
         ikafka "github.com/WSG23/yosai-gateway/internal/kafka"
 )
 
+
 var accessEventsTopic = "access-events"
 
 var (
@@ -23,6 +24,7 @@ var (
                 Name: "gateway_events_processed_total",
                 Help: "Number of access events processed",
         })
+
 )
 
 func init() {
@@ -89,7 +91,7 @@ func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEv
 			Decision: event.AccessResult,
 		}); err != nil {
 			// log failure but continue so access events are not lost
-			log.Printf("failed to cache decision: %v", err)
+			tracing.Logger.WithError(err).Warn("failed to cache decision")
 		}
 
 	}
@@ -99,7 +101,7 @@ func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEv
 	if ep.registry != nil {
 		record, err := ep.registry.Serialize("access-events-value", event)
 		if err != nil {
-			log.Printf("schema serialization failed: %v", err)
+			tracing.Logger.WithError(err).Warn("schema serialization failed")
 			data, _ = json.Marshal(event)
 		} else {
 			data = record
@@ -143,7 +145,7 @@ func (ep *EventProcessor) Run(ctx context.Context) error {
 					continue
 				}
 			}
-			log.Printf("consumer error: %v", err)
+			tracing.Logger.WithError(err).Error("consumer error")
 			continue
 		}
 
@@ -169,6 +171,7 @@ func (ep *EventProcessor) Run(ctx context.Context) error {
                         _, _ = ep.consumer.CommitMessage(m)
                         span.End()
                 }
+
 		batch = batch[:0]
 	}
 }

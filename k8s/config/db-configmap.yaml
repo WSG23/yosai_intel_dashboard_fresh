@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-db-config
+  namespace: yosai-dev
+data:
+  DB_HOST: "db"
+  DB_PORT: "5432"
+  DB_NAME: "yosai_intel"
+  DB_USER: "yosai_dashboard"
