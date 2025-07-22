@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
@@ -20,5 +21,14 @@ func NewProxy() (*httputil.ReverseProxy, error) {
 	if err != nil {
 		return nil, err
 	}
-	return httputil.NewSingleHostReverseProxy(target), nil
+	p := httputil.NewSingleHostReverseProxy(target)
+	orig := p.Director
+	p.Director = func(req *http.Request) {
+		auth := req.Header.Get("Authorization")
+		orig(req)
+		if auth != "" {
+			req.Header.Set("Authorization", auth)
+		}
+	}
+	return p, nil
 }

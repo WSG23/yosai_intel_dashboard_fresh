@@ -1,0 +1,270 @@
+{
+  "components": {
+    "schemas": {
+      "AccessEvent": {
+        "properties": {
+          "access_result": {
+            "type": "string"
+          },
+          "door_id": {
+            "type": "string"
+          },
+          "event_id": {
+            "type": "string"
+          },
+          "person_id": {
+            "type": "string"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "timestamp",
+          "person_id",
+          "door_id",
+          "access_result"
+        ],
+        "type": "object"
+      },
+      "ErrorDetails": {
+        "type": "string"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "code": {
+            "enum": [
+              [
+                "bad_request",
+                "invalid_payload",
+                "invalid_plugin",
+                "invalid_type",
+                "missing_file_id",
+                "no_data",
+                "no_file",
+                "no_file_id",
+                "no_file_selected",
+                "no_files",
+                "not_found",
+                "read_error",
+                "server_error",
+                "unsupported_type"
+              ]
+            ],
+            "type": "string"
+          },
+          "details": {
+            "$ref": "#/components/schemas/ErrorDetails"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Yōsai Intel API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.0.2",
+  "paths": {
+    "/api/v1/analytics/all": {
+      "get": {
+        "responses": null,
+        "summary": "/api/v1/analytics/all"
+      }
+    },
+    "/api/v1/analytics/health": {
+      "get": {
+        "responses": null,
+        "summary": "/api/v1/analytics/health"
+      }
+    },
+    "/api/v1/analytics/patterns": {
+      "get": {
+        "responses": null,
+        "summary": "/api/v1/analytics/patterns"
+      }
+    },
+    "/api/v1/analytics/sources": {
+      "get": {
+        "responses": null,
+        "summary": "/api/v1/analytics/sources"
+      }
+    },
+    "/api/v1/analytics/{source_type}": {
+      "get": {
+        "responses": null,
+        "summary": "/api/v1/analytics/{source_type}"
+      }
+    },
+    "/api/v1/export/analytics/json": {
+      "get": {
+        "responses": null,
+        "summary": "/api/v1/export/analytics/json"
+      }
+    },
+    "/api/v1/export/formats": {
+      "get": {
+        "responses": null,
+        "summary": "/api/v1/export/formats"
+      }
+    },
+    "/api/v1/graphs/available-charts": {
+      "get": {
+        "responses": null,
+        "summary": "/api/v1/graphs/available-charts"
+      }
+    },
+    "/api/v1/graphs/chart/{chart_type}": {
+      "get": {
+        "responses": null,
+        "summary": "/api/v1/graphs/chart/{chart_type}"
+      }
+    },
+    "/api/v1/risk/score": {
+      "post": {
+        "responses": null,
+        "summary": "/api/v1/risk/score"
+      }
+    },
+    "/api/v1/settings": {
+      "get": {
+        "responses": null,
+        "summary": "/api/v1/settings"
+      },
+      "post": {
+        "responses": null,
+        "summary": "/api/v1/settings"
+      },
+      "put": {
+        "responses": null,
+        "summary": "/api/v1/settings"
+      }
+    },
+    "/events/access": {
+      "post": {
+        "description": "Submit an access control event for processing",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessEvent"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        },
+        "summary": "Record an access event"
+      }
+    },
+    "/health": {
+      "get": {
+        "responses": null,
+        "summary": "/health"
+      }
+    },
+    "/metrics": {
+      "get": {
+        "responses": null,
+        "summary": "/metrics"
+      }
+    },
+    "/v1/ai/suggest-devices": {
+      "post": {
+        "responses": null,
+        "summary": "/v1/ai/suggest-devices"
+      }
+    },
+    "/v1/csrf-token": {
+      "get": {
+        "responses": null,
+        "summary": "/v1/csrf-token"
+      }
+    },
+    "/v1/mappings/columns": {
+      "post": {
+        "responses": null,
+        "summary": "/v1/mappings/columns"
+      }
+    },
+    "/v1/mappings/devices": {
+      "post": {
+        "responses": null,
+        "summary": "/v1/mappings/devices"
+      }
+    },
+    "/v1/mappings/save": {
+      "post": {
+        "responses": null,
+        "summary": "/v1/mappings/save"
+      }
+    },
+    "/v1/plugins/performance": {
+      "get": {
+        "responses": null,
+        "summary": "/v1/plugins/performance"
+      }
+    },
+    "/v1/plugins/performance/alerts": {
+      "get": {
+        "responses": null,
+        "summary": "/v1/plugins/performance/alerts"
+      },
+      "post": {
+        "responses": null,
+        "summary": "/v1/plugins/performance/alerts"
+      }
+    },
+    "/v1/plugins/performance/benchmark": {
+      "post": {
+        "responses": null,
+        "summary": "/v1/plugins/performance/benchmark"
+      }
+    },
+    "/v1/plugins/performance/config": {
+      "get": {
+        "responses": null,
+        "summary": "/v1/plugins/performance/config"
+      },
+      "put": {
+        "responses": null,
+        "summary": "/v1/plugins/performance/config"
+      }
+    },
+    "/v1/process-enhanced": {
+      "post": {
+        "responses": null,
+        "summary": "/v1/process-enhanced"
+      }
+    },
+    "/v1/upload": {
+      "post": {
+        "responses": null,
+        "summary": "/v1/upload"
+      }
+    },
+    "/v1/upload/status/{job_id}": {
+      "get": {
+        "responses": null,
+        "summary": "/v1/upload/status/{job_id}"
+      }
+    }
+  }
+}

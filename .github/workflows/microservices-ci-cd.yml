@@ -93,12 +93,27 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.lock
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
       - name: Configure kubeconfig
         run: |
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > "$HOME/.kube/config"
-      - name: Deploy to cluster
+      - name: Deploy canary
+        run: |
+          kubectl apply -f k8s/canary
+      - name: Wait for canary rollout
+        run: |
+          kubectl rollout status deployment/yosai-dashboard-canary --timeout=120s
+      - name: Health check canary
+        run: |
+          kubectl wait --for=condition=ready pod -l app=yosai-dashboard,track=canary --timeout=60s
+      - name: Promote canary to production
+
         run: |
           kubectl apply -f k8s/base
           kubectl apply -f k8s/production
+          kubectl delete -f k8s/canary

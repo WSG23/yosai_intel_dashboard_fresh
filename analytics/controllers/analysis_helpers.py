@@ -461,13 +461,9 @@ def get_data_sources() -> list:
     return get_data_source_options_safe()
 
 
-def get_initial_message_safe():
-    """Load and return the initial message for the analytics page."""
-    from pages.deep_analytics_complex.layout import (
-        get_initial_message_safe as _get_initial_message,
-    )
-
-    return _get_initial_message()
+def get_initial_message_safe() -> html.Div:
+    """Return the default analytics placeholder message."""
+    return html.Div("Welcome to Deep Analytics")
 
 
 __all__ = [

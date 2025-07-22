@@ -9,14 +9,13 @@ from dash import Dash
 
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from services.upload.callbacks import UploadCallbacks
-from services.analytics.callbacks import AnalyticsCallbacks
 
 
 def load_callbacks() -> TrulyUnifiedCallbacks:
     """Create app, register callbacks and return coordinator."""
     app = Dash(__name__)
     coord = TrulyUnifiedCallbacks(app)
-    coord.register_all_callbacks(UploadCallbacks, AnalyticsCallbacks)
+    coord.register_all_callbacks(UploadCallbacks)
     return coord
 
 

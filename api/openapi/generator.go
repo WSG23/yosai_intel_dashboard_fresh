@@ -118,6 +118,31 @@ func main() {
 	router.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet)
 	router.HandleFunc("/events/access", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodPost)
 
+	// API endpoints registered in the Python server
+	router.HandleFunc("/v1/csrf-token", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet)
+	router.HandleFunc("/v1/upload", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodPost)
+	router.HandleFunc("/v1/upload/status/{job_id}", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet)
+	router.HandleFunc("/v1/ai/suggest-devices", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodPost)
+	router.HandleFunc("/v1/mappings/columns", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodPost)
+	router.HandleFunc("/v1/mappings/devices", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodPost)
+	router.HandleFunc("/v1/mappings/save", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodPost)
+	router.HandleFunc("/v1/process-enhanced", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet, http.MethodPost, http.MethodPut)
+	router.HandleFunc("/v1/plugins/performance", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet)
+	router.HandleFunc("/v1/plugins/performance/alerts", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet, http.MethodPost)
+	router.HandleFunc("/v1/plugins/performance/benchmark", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodPost)
+	router.HandleFunc("/v1/plugins/performance/config", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet, http.MethodPut)
+	router.HandleFunc("/api/v1/risk/score", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/analytics/patterns", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/analytics/sources", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/analytics/health", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/analytics/all", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/analytics/{source_type}", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/graphs/chart/{chart_type}", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/export/analytics/json", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/graphs/available-charts", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/export/formats", func(w http.ResponseWriter, r *http.Request) {}).Methods(http.MethodGet)
+
 	spec := &openapi3.T{
 		OpenAPI: "3.0.2",
 		Info: &openapi3.Info{
