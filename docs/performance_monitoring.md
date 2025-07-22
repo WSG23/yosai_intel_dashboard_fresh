@@ -169,3 +169,19 @@ python -m services.index_optimizer_cli create my_table column_a column_b
 
 The CLI relies on `analyze_index_usage()` and `recommend_new_indexes()` to build
 SQL statements and execute them against the configured database.
+
+### Load Testing
+
+The repository provides a small Kafka load generator in `tools/load_test.py`.
+It publishes synthetic access events at a configurable rate and then queries
+Prometheus to determine how many were processed by the gateway event processor.
+Run the test locally using the `load-test` target:
+
+```bash
+make load-test RATE=100 DURATION=30
+```
+
+With the default settings the system should handle more than 2,500 events per
+minute while keeping the average processing latency under a second.  Metrics
+are scraped from the gateway at `http://localhost:9090` and can be visualised
+using the example Grafana dashboard in `dashboards/performance/load_test.json`.
