@@ -1,0 +1,12 @@
+{
+  "namespace": "com.yosai.anomaly",
+  "type": "record",
+  "name": "AnomalyEvent",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "timestamp", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "device_id", "type": ["null", "string"], "default": null},
+    {"name": "severity", "type": "string"},
+    {"name": "description", "type": ["null", "string"], "default": null}
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "namespace": "com.yosai.access",
+  "type": "record",
+  "name": "AccessEvent",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "timestamp", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "person_id", "type": ["null", "string"], "default": null},
+    {"name": "door_id", "type": ["null", "string"], "default": null},
+    {"name": "badge_id", "type": ["null", "string"], "default": null},
+    {"name": "access_result", "type": "string"},
+    {"name": "badge_status", "type": ["null", "string"], "default": null},
+    {"name": "door_held_open_time", "type": ["null", "double"], "default": 0.0},
+    {"name": "entry_without_badge", "type": ["null", "boolean"], "default": false},
+    {"name": "device_status", "type": ["null", "string"], "default": "normal"}
+  ]
+}
