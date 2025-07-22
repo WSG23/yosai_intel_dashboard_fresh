@@ -34,7 +34,15 @@ This roadmap outlines the major milestones planned for the Yōsai Intel Dashboar
   - Public registry for community plugins
   - CLI tools for scaffolding new plugins
   - Comprehensive documentation with code samples
-  - Zero-downtime deployment procedures for upgrades
+- Zero-downtime deployment procedures for upgrades
+
+### Q5: Repository Restructure
+
+- Split this repository into dedicated projects
+  - Extract `gateway`, `ui` and `yosai-upload` into separate repos
+  - Publish individual services under the `services/` directory as standalone microservices
+  - Move `helm/` and `k8s/` manifests to an infrastructure repo
+  - Update docs and CI pipelines for the new layout
 
 The timeline may adjust as priorities evolve, but these phases capture the
 current goals for the upcoming releases.
