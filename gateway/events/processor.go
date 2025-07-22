@@ -1,21 +1,24 @@
 package events
 
 import (
-        "context"
-        "encoding/json"
-        "errors"
-        "log"
-        "time"
+	"context"
+	"encoding/json"
+	"errors"
+	"log"
+	"time"
 
-        ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
-        "github.com/prometheus/client_golang/prometheus"
-        "go.opentelemetry.io/otel"
+	"github.com/WSG23/yosai-gateway/internal/tracing"
+	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sony/gobreaker"
 
-        "github.com/WSG23/yosai-gateway/internal/cache"
-        "github.com/WSG23/yosai-gateway/internal/engine"
-        ikafka "github.com/WSG23/yosai-gateway/internal/kafka"
+	"go.opentelemetry.io/otel"
+
+	"github.com/WSG23/yosai-gateway/internal/cache"
+	"github.com/WSG23/yosai-gateway/internal/engine"
+	ikafka "github.com/WSG23/yosai-gateway/internal/kafka"
+
 )
-
 
 var accessEventsTopic = "access-events"
 
@@ -28,7 +31,7 @@ var (
 )
 
 func init() {
-        prometheus.MustRegister(eventsProcessed)
+	prometheus.MustRegister(eventsProcessed)
 }
 
 type EventProcessor struct {
@@ -37,9 +40,10 @@ type EventProcessor struct {
 	cache    cache.CacheService
 	engine   *engine.CachedRuleEngine
 	registry *ikafka.SchemaRegistry
+	breaker  *gobreaker.CircuitBreaker
 }
 
-func NewEventProcessor(brokers string, c cache.CacheService, e *engine.CachedRuleEngine) (*EventProcessor, error) {
+func NewEventProcessor(brokers string, c cache.CacheService, e *engine.CachedRuleEngine, settings gobreaker.Settings) (*EventProcessor, error) {
 	producer, err := ckafka.NewProducer(&ckafka.ConfigMap{"bootstrap.servers": brokers})
 	if err != nil {
 		return nil, err
@@ -53,8 +57,9 @@ func NewEventProcessor(brokers string, c cache.CacheService, e *engine.CachedRul
 		producer.Close()
 		return nil, err
 	}
-	reg := ikafka.NewSchemaRegistry("")
-	return &EventProcessor{producer: producer, consumer: consumer, cache: c, engine: e, registry: reg}, nil
+	reg := ikafka.NewSchemaRegistry("", settings)
+	cb := gobreaker.NewCircuitBreaker(settings)
+	return &EventProcessor{producer: producer, consumer: consumer, cache: c, engine: e, registry: reg, breaker: cb}, nil
 }
 
 func (ep *EventProcessor) Close() {
@@ -68,12 +73,12 @@ func (ep *EventProcessor) Close() {
 }
 
 func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEvent) error {
-        ctx, span := otel.Tracer("event-processor").Start(ctx, "ProcessAccessEvent")
-        defer span.End()
+	ctx, span := otel.Tracer("event-processor").Start(ctx, "ProcessAccessEvent")
+	defer span.End()
 
-        if ep.engine == nil {
-                return errors.New("rule engine not configured")
-        }
+	if ep.engine == nil {
+		return errors.New("rule engine not configured")
+	}
 
 	dec, err := ep.engine.EvaluateAccess(ctx, event.PersonID, event.DoorID)
 	if err != nil {
@@ -106,24 +111,28 @@ func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEv
 		} else {
 			data = record
 		}
-        } else {
-                data, _ = json.Marshal(event)
-        }
-        eventsProcessed.Inc()
-        return ep.producer.Produce(&ckafka.Message{
-                TopicPartition: ckafka.TopicPartition{Topic: &accessEventsTopic, Partition: ckafka.PartitionAny},
-                Value:          data,
-        }, nil)
+	} else {
+		data, _ = json.Marshal(event)
+	}
+	eventsProcessed.Inc()
+	_, err = ep.breaker.Execute(func() (interface{}, error) {
+		return nil, ep.producer.Produce(&ckafka.Message{
+			TopicPartition: ckafka.TopicPartition{Topic: &accessEventsTopic, Partition: ckafka.PartitionAny},
+			Value:          data,
+		}, nil)
+	})
+	return err
+
 }
 
 // Run consumes AccessEvent messages from Kafka until ctx is cancelled. Messages
 // are processed in batches and evaluated using a CachedRuleEngine.
 func (ep *EventProcessor) Run(ctx context.Context) error {
-        ctx, span := otel.Tracer("event-processor").Start(ctx, "Run")
-        defer span.End()
-        if err := ep.consumer.SubscribeTopics([]string{accessEventsTopic}, nil); err != nil {
-                return err
-        }
+	ctx, span := otel.Tracer("event-processor").Start(ctx, "Run")
+	defer span.End()
+	if err := ep.consumer.SubscribeTopics([]string{accessEventsTopic}, nil); err != nil {
+		return err
+	}
 
 	engine := NewCachedRuleEngine(ep.cache)
 	const batchSize = 50
@@ -154,23 +163,23 @@ func (ep *EventProcessor) Run(ctx context.Context) error {
 			continue
 		}
 
-                for _, m := range batch {
-                        spanCtx, span := otel.Tracer("event-processor").Start(ctx, "process_event")
-                        var ev AccessEvent
-                        if err := json.Unmarshal(m.Value, &ev); err != nil {
-                                log.Printf("malformed access event: %v", err)
-                                span.End()
-                                continue
-                        }
-                        if err := engine.Evaluate(spanCtx, &ev); err != nil {
-                                log.Printf("rule evaluation error: %v", err)
-                                span.End()
-                                continue
-                        }
-                        eventsProcessed.Inc()
-                        _, _ = ep.consumer.CommitMessage(m)
-                        span.End()
-                }
+		for _, m := range batch {
+			spanCtx, span := otel.Tracer("event-processor").Start(ctx, "process_event")
+			var ev AccessEvent
+			if err := json.Unmarshal(m.Value, &ev); err != nil {
+				log.Printf("malformed access event: %v", err)
+				span.End()
+				continue
+			}
+			if err := engine.Evaluate(spanCtx, &ev); err != nil {
+				log.Printf("rule evaluation error: %v", err)
+				span.End()
+				continue
+			}
+			eventsProcessed.Inc()
+			_, _ = ep.consumer.CommitMessage(m)
+			span.End()
+		}
 
 		batch = batch[:0]
 	}

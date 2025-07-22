@@ -1,0 +1,5 @@
+apiVersion: v2
+name: yosai-intel
+description: Helm chart for the Yōsai Intel Dashboard
+version: 0.1.0
+appVersion: "1.0"

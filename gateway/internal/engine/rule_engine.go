@@ -30,6 +30,16 @@ type RuleEngine struct {
 
 // NewRuleEngine constructs a RuleEngine from an existing DB handle.
 func NewRuleEngine(db *sql.DB) (*RuleEngine, error) {
+	settings := gobreaker.Settings{
+		Name:        "rule-engine",
+		Timeout:     5 * time.Second,
+		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures > 5 },
+	}
+	return NewRuleEngineWithSettings(db, settings)
+}
+
+// NewRuleEngineWithSettings constructs a RuleEngine using custom circuit breaker settings.
+func NewRuleEngineWithSettings(db *sql.DB, settings gobreaker.Settings) (*RuleEngine, error) {
 	single, err := db.PrepareContext(context.Background(),
 		`SELECT person_id, door_id, decision FROM evaluate_access($1,$2)`)
 	if err != nil {
@@ -41,11 +51,7 @@ func NewRuleEngine(db *sql.DB) (*RuleEngine, error) {
 		single.Close()
 		return nil, err
 	}
-	cb := gobreaker.NewCircuitBreaker(gobreaker.Settings{
-		Name:        "rule-engine",
-		Timeout:     5 * time.Second,
-		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures > 5 },
-	})
+	cb := gobreaker.NewCircuitBreaker(settings)
 	return &RuleEngine{db: db, stmtSingle: single, stmtWarm: warm, breaker: cb}, nil
 }
 
