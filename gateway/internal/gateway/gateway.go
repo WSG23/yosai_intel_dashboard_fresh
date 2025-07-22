@@ -7,9 +7,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/WSG23/yosai-gateway/internal/handlers"
-	"github.com/WSG23/yosai-gateway/internal/middleware"
 	"github.com/WSG23/yosai-gateway/internal/proxy"
-	"github.com/WSG23/yosai-gateway/plugins"
+	"github.com/WSG23/yosai-gateway/internal/rbac"
+
 )
 
 // Gateway represents the HTTP gateway service.
@@ -44,6 +44,11 @@ func (g *Gateway) UseAuth() {
 // UseRateLimit enables rate limiting middleware.
 func (g *Gateway) UseRateLimit() {
 	g.router.Use(middleware.RateLimit)
+}
+
+// UseRBAC enables RBAC permission checks for all requests using the provided service and permission string.
+func (g *Gateway) UseRBAC(s *rbac.RBACService, perm string) {
+	g.router.Use(middleware.RequirePermission(s, perm))
 }
 
 // Handler returns the root HTTP handler.

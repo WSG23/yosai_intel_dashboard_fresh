@@ -2,10 +2,7 @@ module github.com/WSG23/yosai-openapi
 
 go 1.21
 
-require (
-	github.com/getkin/kin-openapi v0.121.0
-	github.com/gorilla/mux v1.8.1
-)
+require github.com/getkin/kin-openapi v0.121.0
 
 require (
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect

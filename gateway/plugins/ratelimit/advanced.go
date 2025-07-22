@@ -24,9 +24,38 @@ type RateLimitPlugin struct {
 	rules    []RateLimitRule
 }
 
-func (r *RateLimitPlugin) Name() string                             { return "advanced-rate-limit" }
-func (r *RateLimitPlugin) Priority() int                            { return 10 }
-func (r *RateLimitPlugin) Init(config map[string]interface{}) error { return nil }
+func (r *RateLimitPlugin) Name() string  { return "advanced-rate-limit" }
+func (r *RateLimitPlugin) Priority() int { return 10 }
+func (r *RateLimitPlugin) Init(cfg map[string]interface{}) error {
+	r.redis = redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	if rules, ok := cfg["rules"].([]interface{}); ok {
+		for _, val := range rules {
+			m, ok := val.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			rule := RateLimitRule{}
+			if v, ok := m["path"].(string); ok {
+				rule.Path = v
+			}
+			if v, ok := m["method"].(string); ok {
+				rule.Method = v
+			}
+			if v, ok := m["limit_per_min"].(int); ok {
+				rule.LimitPerMin = v
+			} else if v, ok := m["limit_per_min"].(float64); ok {
+				rule.LimitPerMin = int(v)
+			}
+			if v, ok := m["burst_size"].(int); ok {
+				rule.Burst = v
+			} else if v, ok := m["burst_size"].(float64); ok {
+				rule.Burst = int(v)
+			}
+			r.rules = append(r.rules, rule)
+		}
+	}
+	return nil
+}
 
 func (r *RateLimitPlugin) limiter(key string, rule RateLimitRule) *rate.Limiter {
 	val, ok := r.limiters.Load(key)

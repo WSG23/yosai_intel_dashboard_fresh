@@ -16,6 +16,7 @@ import pandas as pd
 
 from config.dynamic_config import dynamic_config
 from services.task_queue import create_task, get_status
+from services.rabbitmq_client import RabbitMQClient
 from services.upload.protocols import FileProcessorProtocol
 from utils.memory_utils import check_memory_limit
 
@@ -25,10 +26,19 @@ from .file_processor import UnicodeFileProcessor
 class AsyncFileProcessor(FileProcessorProtocol):
     """Read CSV files asynchronously in chunks with progress reporting."""
 
-    def __init__(self, chunk_size: int | None = None) -> None:
+    def __init__(
+        self, chunk_size: int | None = None, *, task_queue_url: str | None = None
+    ) -> None:
         self.chunk_size = chunk_size or dynamic_config.analytics.chunk_size
         self.max_memory_mb = dynamic_config.analytics.max_memory_mb
         self.logger = logging.getLogger(__name__)
+        self._queue: RabbitMQClient | None = None
+        if task_queue_url:
+            try:
+                self._queue = RabbitMQClient(task_queue_url)
+            except Exception as exc:  # pragma: no cover - connection optional
+                self.logger.error("RabbitMQ connection failed: %s", exc)
+                self._queue = None
 
     async def read_csv_chunks(
         self,
@@ -137,7 +147,13 @@ class AsyncFileProcessor(FileProcessorProtocol):
         return df, ""
 
     def process_file_async(self, contents: str, filename: str) -> str:
-        """Schedule ``process_file`` in a background task and return job ID."""
+        """Schedule ``process_file`` using RabbitMQ when available."""
+
+        if self._queue:
+            payload = {"contents": contents, "filename": filename}
+            return self._queue.publish(
+                "tasks", "process_file", payload, priority=0, delay_ms=0
+            )
 
         async def _job(progress: Callable[[int], None]):
             df = await self.process_file(
@@ -148,7 +164,10 @@ class AsyncFileProcessor(FileProcessorProtocol):
         return create_task(_job)
 
     def get_job_status(self, job_id: str) -> Dict[str, Any]:
-        """Return current status for ``job_id`` from the task queue."""
+        """Return current status for ``job_id``."""
+        if self._queue:
+            # No status tracking yet for RabbitMQ tasks
+            return {"progress": 0, "result": None, "done": False}
         return get_status(job_id)
 
     @staticmethod

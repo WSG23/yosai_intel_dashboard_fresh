@@ -31,6 +31,7 @@ func (t *TransformPlugin) findRule(req *http.Request) *TransformRule {
 	for i := range t.rules {
 		if t.rules[i].Path == req.URL.Path {
 			return &t.rules[i]
+
 		}
 	}
 	return nil
@@ -39,6 +40,7 @@ func (t *TransformPlugin) findRule(req *http.Request) *TransformRule {
 func (t *TransformPlugin) Process(ctx context.Context, req *http.Request, resp http.ResponseWriter, next http.Handler) {
 	rule := t.findRule(req)
 	if rule == nil {
+
 		next.ServeHTTP(resp, req)
 		return
 	}
@@ -90,6 +92,7 @@ func (t *TransformPlugin) Process(ctx context.Context, req *http.Request, resp h
 			resp.Header()[k] = v
 		}
 		resp.WriteHeader(result.StatusCode)
+
 		resp.Write(body)
 		return
 	}

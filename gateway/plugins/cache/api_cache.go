@@ -29,9 +29,30 @@ type CachePlugin struct {
 	rules []CacheRule
 }
 
-func (c *CachePlugin) Name() string                             { return "api-cache" }
-func (c *CachePlugin) Priority() int                            { return 50 }
-func (c *CachePlugin) Init(config map[string]interface{}) error { return nil }
+func (c *CachePlugin) Name() string  { return "api-cache" }
+func (c *CachePlugin) Priority() int { return 50 }
+func (c *CachePlugin) Init(cfg map[string]interface{}) error {
+	c.redis = redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	if rules, ok := cfg["rules"].([]interface{}); ok {
+		for _, val := range rules {
+			m, ok := val.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			rule := CacheRule{}
+			if v, ok := m["path"].(string); ok {
+				rule.Path = v
+			}
+			if v, ok := m["ttl"].(string); ok {
+				if d, err := time.ParseDuration(v); err == nil {
+					rule.TTL = d
+				}
+			}
+			c.rules = append(c.rules, rule)
+		}
+	}
+	return nil
+}
 
 func (c *CachePlugin) Process(ctx context.Context, req *http.Request, resp http.ResponseWriter, next http.Handler) {
 	var matched *CacheRule
