@@ -17,9 +17,16 @@ import (
 	"github.com/WSG23/yosai-gateway/internal/cache"
 	"github.com/WSG23/yosai-gateway/internal/engine"
 	"github.com/WSG23/yosai-gateway/internal/gateway"
+	"github.com/WSG23/yosai-gateway/internal/tracing"
 )
 
 func main() {
+	shutdown, err := tracing.InitTracing("gateway")
+	if err != nil {
+		log.Fatalf("failed to init tracing: %v", err)
+	}
+	defer shutdown(context.Background())
+
 	brokers := os.Getenv("KAFKA_BROKERS")
 	if brokers == "" {
 		brokers = "localhost:9092"
