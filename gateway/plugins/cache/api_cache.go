@@ -37,6 +37,11 @@ type CachePlugin struct {
 	rules []CacheRule
 }
 
+// NewCachePlugin creates a CachePlugin using the provided Redis client and rules.
+func NewCachePlugin(client *redis.Client, rules []CacheRule) *CachePlugin {
+	return &CachePlugin{redis: client, rules: rules}
+}
+
 var (
 	apiCacheHits = prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "gateway_api_cache_hits_total",
