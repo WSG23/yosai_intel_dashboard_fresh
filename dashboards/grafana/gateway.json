@@ -18,6 +18,25 @@
       "targets": [
         {"expr": "gateway_events_processed_total", "legendFormat": "processed"}
       ]
+    },
+    {
+      "type": "graph",
+      "title": "Cache Miss Rate",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(gateway_cache_misses_total[5m]) / (rate(gateway_cache_hits_total[5m]) + rate(gateway_cache_misses_total[5m]))",
+          "legendFormat": "miss_rate"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "HTTP Requests",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "sum(rate(http_requests_total[5m]))", "legendFormat": "req/s"}
+      ]
     }
   ]
 }
