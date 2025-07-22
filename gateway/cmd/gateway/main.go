@@ -26,8 +26,12 @@ func main() {
 	}
 	cacheSvc := cache.NewRedisCache()
 
-	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"), os.Getenv("DB_PASSWORD"))
+       dbName := os.Getenv("DB_GATEWAY_NAME")
+       if dbName == "" {
+               dbName = os.Getenv("DB_NAME")
+       }
+       dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
+               os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), dbName, os.Getenv("DB_PASSWORD"))
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		log.Fatalf("failed to connect db: %v", err)
