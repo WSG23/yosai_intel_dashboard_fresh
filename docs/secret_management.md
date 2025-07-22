@@ -30,6 +30,21 @@ to start if `DB_PASSWORD` is missing.
 Routine rotation should be scheduled at least every 90 days or according
 to your organization policy.
 
+### Rotation Script
+
+The helper `scripts/rotate_secrets.py` automates these steps. Run it from
+the repository root:
+
+```bash
+python scripts/rotate_secrets.py
+```
+
+The script generates new values for `SECRET_KEY` and any database
+passwords in `k8s/config/api-secrets.yaml`. If `kubectl` can reach your
+cluster, the updated manifest is applied automatically. After the pods
+restart, remove the previous credentials from your secret store or
+database to prevent reuse.
+
 ## Docker and Cloud Secret Usage
 
 Secrets can be supplied as Docker secrets when running with Docker
