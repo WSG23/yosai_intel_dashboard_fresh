@@ -14,7 +14,6 @@ from .analytics_generator import AnalyticsGenerator
 from .analytics_processor import AnalyticsProcessor
 from .async_file_processor import AsyncFileProcessor
 from .chunked_analysis import analyze_with_chunking
-from .data_loader import DataLoader
 from .data_processing.processor import Processor
 from .data_processing.unified_file_validator import UnifiedFileValidator
 from .db_analytics_helper import DatabaseAnalyticsHelper
@@ -81,7 +80,6 @@ __all__ = [
     "AsyncFileProcessor",
     "DatabaseAnalyticsHelper",
     "SummaryReporter",
-    "DataLoader",
     "DataHandler",
     "DatabaseAnalyticsRetriever",
     "SummaryReportGenerator",

@@ -24,7 +24,6 @@ from core.protocols import (
 from core.security_validator import SecurityValidator
 from services.analytics.protocols import DataProcessorProtocol
 from services.analytics_summary import generate_sample_analytics
-from services.data_loader import DataLoader
 from services.data_processing.processor import Processor
 from services.interfaces import get_upload_data_service
 from services.upload_data_service import UploadDataService
@@ -123,12 +122,6 @@ class AnalyticsService(AnalyticsServiceProtocol):
             self.db_helper,
             self.summary_reporter,
         ) = initialize_database(self.database)
-        self.data_loader = DataLoader(
-            self.upload_processor,
-            self.processor,
-            ROW_LIMIT_WARNING,
-            LARGE_DATA_THRESHOLD,
-        )
         self.data_handler = DataHandler(self.upload_controller)
         self.database_retriever = DatabaseAnalyticsRetriever(self.db_helper)
         self.report_generator = SummaryReportGenerator()
@@ -235,10 +228,53 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self, data_source: str | None
     ) -> tuple[pd.DataFrame, int]:
         """Return dataframe and original row count for pattern analysis."""
-        df, original_rows = self.data_loader.load_patterns_data(data_source)
-        if not df.empty:
-            self.data_loader.verify_combined_data(df, original_rows)
-        return df, original_rows
+        if data_source == "database":
+            df, _meta = self.processor.get_processed_database()
+            uploaded_data = {"database": df} if not df.empty else {}
+        else:
+            uploaded_data = self.upload_processor.load_uploaded_data()
+
+        if not uploaded_data:
+            return pd.DataFrame(), 0
+
+        all_dfs: list[pd.DataFrame] = []
+        total_original_rows = 0
+
+        logger.info("\U0001F4C1 Found %s uploaded files", len(uploaded_data))
+        for filename, df in uploaded_data.items():
+            original_rows = len(df)
+            total_original_rows += original_rows
+            logger.info("   %s: %s rows", filename, f"{original_rows:,}")
+
+            cleaned_df = self.upload_processor.clean_uploaded_dataframe(df)
+            all_dfs.append(cleaned_df)
+            logger.info("   After cleaning: %s rows", f"{len(cleaned_df):,}")
+
+        combined_df = (
+            all_dfs[0] if len(all_dfs) == 1 else pd.concat(all_dfs, ignore_index=True)
+        )
+
+        final_rows = len(combined_df)
+        logger.info("\U0001F4CA COMBINED DATASET: %s total rows", f"{final_rows:,}")
+
+        if final_rows != total_original_rows:
+            logger.warning(
+                "\u26A0\uFE0F  Data loss detected: %s \u2192 %s",
+                f"{total_original_rows:,}",
+                f"{final_rows:,}",
+            )
+
+        if final_rows == ROW_LIMIT_WARNING and total_original_rows > ROW_LIMIT_WARNING:
+            logger.error(
+                "\U0001F6A8 FOUND %s ROW LIMIT in unique patterns analysis!",
+                ROW_LIMIT_WARNING,
+            )
+            logger.error("   Original rows: %s", f"{total_original_rows:,}")
+            logger.error("   Final rows: %s", f"{final_rows:,}")
+        elif final_rows > LARGE_DATA_THRESHOLD:
+            logger.info("\u2705 Processing large dataset: %s rows", f"{final_rows:,}")
+
+        return combined_df, total_original_rows
 
     # ------------------------------------------------------------------
     # Pattern analysis helpers

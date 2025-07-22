@@ -375,7 +375,7 @@ def analyze_data_with_service(data_source: str, analysis_type: str) -> Dict[str,
             if df is None:
                 return {"error": f"File {filename} not found"}
         else:
-            df, _ = service.data_loader.get_processed_database()
+            df, _ = service.processor.get_processed_database()
             if df.empty:
                 return {"error": "No data available"}
         analysis_types = [analysis_type]
