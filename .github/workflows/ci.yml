@@ -20,7 +20,8 @@ jobs:
           set -xe
           pip install -r requirements.lock
       - name: Generate OpenAPI spec
-        run: python tools/generate_openapi.py
+        working-directory: ./api/openapi
+        run: go run .
       - name: Upload OpenAPI
         uses: actions/upload-artifact@v4
         with:
