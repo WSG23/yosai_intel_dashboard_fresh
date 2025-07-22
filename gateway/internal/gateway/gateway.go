@@ -7,7 +7,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/WSG23/yosai-gateway/internal/handlers"
-	"github.com/WSG23/yosai-gateway/internal/middleware"
 	"github.com/WSG23/yosai-gateway/internal/proxy"
 	"github.com/WSG23/yosai-gateway/plugins"
 )
@@ -34,16 +33,6 @@ func New() (*Gateway, error) {
 	g := &Gateway{router: r, plugins: plugins.PluginRegistry{}}
 
 	return g, nil
-}
-
-// UseAuth enables auth middleware.
-func (g *Gateway) UseAuth() {
-	g.router.Use(middleware.Auth)
-}
-
-// UseRateLimit enables rate limiting middleware.
-func (g *Gateway) UseRateLimit() {
-	g.router.Use(middleware.RateLimit)
 }
 
 // Handler returns the root HTTP handler.
