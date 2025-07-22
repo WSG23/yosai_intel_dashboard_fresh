@@ -12,6 +12,10 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SERVICE_DISCOVERY_URL: http://api-gateway
+    labels:
+      - "prometheus.scrape=true"
+      - "prometheus.port=8050"
+      - "prometheus.path=/metrics"
     depends_on:
       postgres:
         condition: service_healthy
@@ -89,6 +93,10 @@ services:
       dockerfile: Dockerfile.gateway
     ports:
       - "8081:8080"
+    labels:
+      - "prometheus.scrape=true"
+      - "prometheus.port=8080"
+      - "prometheus.path=/metrics"
     environment:
     depends_on:
       - python-monolith

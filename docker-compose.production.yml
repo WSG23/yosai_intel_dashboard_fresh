@@ -28,6 +28,10 @@ services:
     deploy:
       replicas: 3
     restart: unless-stopped
+    labels:
+      - "prometheus.scrape=true"
+      - "prometheus.port=8050"
+      - "prometheus.path=/metrics"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8050/"]
       interval: 30s

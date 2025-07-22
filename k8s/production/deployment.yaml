@@ -18,6 +18,10 @@ spec:
     metadata:
       labels:
         app: yosai-dashboard
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8050"
     spec:
       containers:
         - name: yosai-dashboard
