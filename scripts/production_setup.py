@@ -2,11 +2,13 @@ import os
 from pathlib import Path
 
 from config import ConfigManager
+from core.secrets_validator import validate_all_secrets
 from database.connection import create_database_connection
 
 
 def validate_environment() -> ConfigManager:
     """Validate required environment variables and secrets."""
+    validate_all_secrets()
     config = ConfigManager()
     return config
 
@@ -55,7 +57,9 @@ def create_performance_settings_table() -> None:
     )
 
 
-def provision_admin_account(person_id: str = "admin", password_env: str = "ADMIN_PASSWORD") -> None:
+def provision_admin_account(
+    person_id: str = "admin", password_env: str = "ADMIN_PASSWORD"
+) -> None:
     """Insert an initial admin account into the people table."""
     password = os.getenv(password_env)
     if not password:
@@ -78,4 +82,3 @@ __all__ = [
     "create_performance_settings_table",
     "provision_admin_account",
 ]
-

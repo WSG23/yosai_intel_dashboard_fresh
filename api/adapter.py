@@ -1,14 +1,14 @@
-import os
 import logging
+import os
 
-from flask import Flask, jsonify, Response, request
-
+from flask import Flask, Response, jsonify, request
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect, generate_csrf
-from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
-from tracing import init_tracing
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
 
+from core.secrets_validator import validate_all_secrets
 from services.security import require_token
+from tracing import init_tracing
 
 csrf = CSRFProtect()
 
@@ -33,13 +33,11 @@ from upload_endpoint import upload_bp
 
 def create_api_app() -> Flask:
     """Create Flask API app with all blueprints registered."""
+    validate_all_secrets()
     init_tracing("api")
     app = Flask(__name__)
 
-    try:
-        app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
-    except KeyError as exc:
-        raise RuntimeError("SECRET_KEY environment variable is required") from exc
+    app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
 
     csrf.init_app(app)
     CORS(app)
@@ -56,7 +54,6 @@ def create_api_app() -> Flask:
     @app.route("/metrics")
     def metrics():
         return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
-
 
     # Third-party analytics demo endpoints
     register_analytics_blueprints(app)
