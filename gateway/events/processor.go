@@ -52,12 +52,12 @@ func (ep *EventProcessor) Close() {
 	}
 }
 
-func (ep *EventProcessor) ProcessAccessEvent(event AccessEvent) error {
+func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEvent) error {
 	if ep.engine == nil {
 		return errors.New("rule engine not configured")
 	}
 
-	dec, err := ep.engine.EvaluateAccess(context.Background(), event.PersonID, event.DoorID)
+	dec, err := ep.engine.EvaluateAccess(ctx, event.PersonID, event.DoorID)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (ep *EventProcessor) ProcessAccessEvent(event AccessEvent) error {
 
 	// store decision in cache if available
 	if ep.cache != nil {
-		if err := ep.cache.SetDecision(context.Background(), cache.Decision{
+		if err := ep.cache.SetDecision(ctx, cache.Decision{
 			PersonID: event.PersonID,
 			DoorID:   event.DoorID,
 			Decision: event.AccessResult,
