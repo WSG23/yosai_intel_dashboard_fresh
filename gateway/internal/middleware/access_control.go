@@ -6,7 +6,7 @@ import (
 )
 
 // RequirePermission checks the X-Permissions header for a permission value.
-func RequirePermission(perm string) func(http.Handler) http.Handler {
+func RequirePermissionHeader(perm string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			perms := strings.Split(r.Header.Get("X-Permissions"), ",")
@@ -22,7 +22,7 @@ func RequirePermission(perm string) func(http.Handler) http.Handler {
 }
 
 // RequireRole checks the X-Roles header for a role value.
-func RequireRole(role string) func(http.Handler) http.Handler {
+func RequireRoleHeader(role string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			roles := strings.Split(r.Header.Get("X-Roles"), ",")
