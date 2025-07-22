@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,12 +18,21 @@ import (
 	"github.com/WSG23/yosai-gateway/internal/cache"
 	"github.com/WSG23/yosai-gateway/internal/engine"
 	"github.com/WSG23/yosai-gateway/internal/gateway"
+	"github.com/WSG23/yosai-gateway/internal/registry"
 )
 
 func main() {
-	brokers := os.Getenv("KAFKA_BROKERS")
-	if brokers == "" {
-		brokers = "localhost:9092"
+	reg, err := registry.NewConsulRegistry(os.Getenv("CONSUL_ADDR"))
+	if err != nil {
+		log.Fatalf("failed to create registry: %v", err)
+	}
+
+	brokers, err := reg.ResolveService(context.Background(), "event-processor")
+	if err != nil || brokers == "" {
+		brokers = os.Getenv("KAFKA_BROKERS")
+		if brokers == "" {
+			brokers = "localhost:9092"
+		}
 	}
 	cacheSvc := cache.NewRedisCache()
 
@@ -43,6 +53,14 @@ func main() {
 		log.Fatalf("failed to init event processor: %v", err)
 	}
 	defer processor.Close()
+
+	analyticsAddr, err := reg.ResolveService(context.Background(), "analytics")
+	if err == nil && analyticsAddr != "" {
+		if host, port, err2 := net.SplitHostPort(analyticsAddr); err2 == nil {
+			os.Setenv("APP_HOST", host)
+			os.Setenv("APP_PORT", port)
+		}
+	}
 
 	g, err := gateway.New()
 	if err != nil {
