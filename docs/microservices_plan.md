@@ -33,3 +33,18 @@ generated roadmap outlines a four phase approach:
 4. **Deployment** – roll out services incrementally while monitoring
    integration points.
 
+## Database Migration for Services
+
+As services split out of the monolith each one now connects to its own
+database. The production configuration exposes new environment variables for
+these names:
+
+```bash
+DB_GATEWAY_NAME=yosai_gateway_db
+DB_EVENTS_NAME=yosai_events_db
+```
+
+During migration set these variables for each service and run the schema
+migrations against the corresponding database. Existing deployments using
+`DB_NAME` continue to work, allowing an incremental rollout.
+

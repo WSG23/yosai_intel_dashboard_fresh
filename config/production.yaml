@@ -10,6 +10,9 @@ database:
   type: postgresql
   host: ${DB_HOST}
   port: ${DB_PORT:5432}
+  # Individual DB names for microservices
+  gateway_name: ${DB_GATEWAY_NAME:yosai_gateway_db}
+  events_name: ${DB_EVENTS_NAME:yosai_events_db}
   name: ${DB_NAME}
   user: ${DB_USER}
   password: vault:secret/data/db#password

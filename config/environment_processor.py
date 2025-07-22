@@ -64,6 +64,10 @@ class EnvironmentProcessor:
                 db.url = url
             if name := self.env.get("DB_NAME"):
                 db.name = name
+            elif name := self.env.get("DB_GATEWAY_NAME"):
+                db.name = name
+            elif name := self.env.get("DB_EVENTS_NAME"):
+                db.name = name
             if host := self.env.get("DB_HOST"):
                 db.host = host
             if (port := self._to_int("DB_PORT")) is not None:
