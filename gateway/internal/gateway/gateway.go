@@ -7,9 +7,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/WSG23/yosai-gateway/internal/handlers"
-	"github.com/WSG23/yosai-gateway/internal/middleware"
 	"github.com/WSG23/yosai-gateway/internal/proxy"
-	"github.com/WSG23/yosai-gateway/plugins"
+	"github.com/WSG23/yosai-gateway/internal/rbac"
+
 )
 
 // Gateway represents the HTTP gateway service.
@@ -29,6 +29,24 @@ func New() (*Gateway, error) {
 	r.HandleFunc("/health", handlers.HealthCheck).Methods(http.MethodGet)
 	r.Handle("/metrics", promhttp.Handler()).Methods(http.MethodGet)
 	r.HandleFunc("/breaker", handlers.BreakerMetrics).Methods(http.MethodGet)
+
+	// Sensitive endpoint subrouters with access control
+	doors := r.PathPrefix("/api/v1/doors").Subrouter()
+	doors.Use(middleware.RequirePermission("doors.control"))
+	doors.PathPrefix("/").Handler(p)
+
+	analytics := r.PathPrefix("/api/v1/analytics").Subrouter()
+	analytics.Use(middleware.RequirePermission("analytics.read"))
+	analytics.PathPrefix("/").Handler(p)
+
+	events := r.PathPrefix("/api/v1/events").Subrouter()
+	events.Use(middleware.RequirePermission("events.write"))
+	events.PathPrefix("/").Handler(p)
+
+	admin := r.PathPrefix("/admin").Subrouter()
+	admin.Use(middleware.RequireRole("admin"))
+	admin.PathPrefix("/").Handler(p)
+
 	r.PathPrefix("/").Handler(p)
 
 	g := &Gateway{router: r, plugins: plugins.PluginRegistry{}}
@@ -44,6 +62,11 @@ func (g *Gateway) UseAuth() {
 // UseRateLimit enables rate limiting middleware.
 func (g *Gateway) UseRateLimit() {
 	g.router.Use(middleware.RateLimit)
+}
+
+// UseRBAC enables RBAC permission checks for all requests using the provided service and permission string.
+func (g *Gateway) UseRBAC(s *rbac.RBACService, perm string) {
+	g.router.Use(middleware.RequirePermission(s, perm))
 }
 
 // Handler returns the root HTTP handler.

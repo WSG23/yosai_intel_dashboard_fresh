@@ -6,10 +6,12 @@ Compliance Toggle Manager - Granular control over when compliance applies
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Set
-from enum import Enum
 from dataclasses import dataclass
+from datetime import datetime, timezone
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set
+
+from core.rbac import require_role
 from services.data_processing.file_processor import FileProcessor
 
 logger = logging.getLogger(__name__)
@@ -758,7 +760,7 @@ def create_toggle_management_api():
 
     @app.route("/api/v1/compliance/toggles", methods=["GET"])
     @login_required
-    @role_required("admin")
+    @require_role("admin")
     def list_compliance_toggles():
         """List all compliance toggles"""
 
@@ -789,7 +791,7 @@ def create_toggle_management_api():
 
     @app.route("/api/v1/compliance/toggles", methods=["POST"])
     @login_required
-    @role_required("admin")
+    @require_role("admin")
     def create_compliance_toggle():
         """Create a new compliance toggle"""
 
@@ -845,7 +847,7 @@ def create_toggle_management_api():
 
     @app.route("/api/v1/compliance/toggles/<toggle_id>", methods=["PUT"])
     @login_required
-    @role_required("admin")
+    @require_role("admin")
     def update_compliance_toggle(toggle_id: str):
         """Update a compliance toggle"""
 
@@ -885,7 +887,7 @@ def create_toggle_management_api():
 
     @app.route("/api/v1/compliance/toggles/<toggle_id>", methods=["DELETE"])
     @login_required
-    @role_required("admin")
+    @require_role("admin")
     def delete_compliance_toggle(toggle_id: str):
         """Delete a compliance toggle"""
 

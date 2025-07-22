@@ -61,6 +61,7 @@ func (c *CachePlugin) Name() string                        { return "api-cache" 
 func (c *CachePlugin) Priority() int                       { return 50 }
 func (c *CachePlugin) Init(_ map[string]interface{}) error { return nil }
 
+
 // invalidate removes cached entries for the given rule.
 func (c *CachePlugin) invalidate(ctx context.Context, rule CacheRule) {
 	pattern := "cache:" + rule.Path + ":*"

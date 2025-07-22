@@ -1,15 +1,16 @@
 # API Documentation
 
-The Flask routes expose a minimal API used by the dashboard. A Swagger UI is
-available at `/api/docs` when the application is running. To regenerate the
-OpenAPI specification run:
+The Flask routes expose an API used by the dashboard. A Swagger UI is
+available at `/api/docs` when the application is running. The complete
+OpenAPI description lives in `api/openapi/yosai-api-v2.yaml` and can be
+converted to JSON with:
 
 ```bash
 go run ./api/openapi
 ```
 
-The script writes `docs/openapi.json`. Once generated, this file can be served
-by Swagger UI to display the complete API reference.
+This writes `docs/openapi.json`. Once generated, this file can be served
+by Swagger UI to display the API reference or used to generate client SDKs.
 
 The CI workflow runs this command and uploads the generated `openapi.json` as an
 artifact so the specification is available from workflow runs.
@@ -17,14 +18,13 @@ artifact so the specification is available from workflow runs.
 ### Generating API clients
 
 Use [OpenAPI Generator](https://openapi-generator.tech/) to create typed clients
-for the access event service:
+for the dashboard API. A helper script automates generation:
 
 ```bash
-npx openapi-generator-cli generate -i api/contracts/access-event.yaml -g go -o pkg/eventclient
-npx openapi-generator-cli generate -i api/contracts/access-event.yaml -g python -o analytics/clients/event_client
+./scripts/generate_clients.sh
 ```
 
-The commands write the Go client under `pkg/eventclient` and the Python client
+The script writes the Go client under `pkg/eventclient` and the Python client
 under `analytics/clients/event_client`.
 
 ### Regenerating after changes
@@ -41,9 +41,11 @@ the codebase.
 ## API Versioning
 
 All endpoints are prefixed with a version such as `/v1` or `/api/v1`.
-When backwards-incompatible changes are introduced, a new version path will be
-added while the old one is maintained for a period of time. Clients should
-specify the exact version in requests to avoid unexpected behavior.
+The Go `versioning` module provides `VersionManager` middleware that extracts
+the version from the request path and attaches metadata to the context. The
+manager can mark versions as `active`, `deprecated`, or `sunset` to control
+behavior. Deprecated versions return a `Warning` header while sunset versions
+return a `410 Gone` response.
 
 ## Database Manager
 
@@ -99,3 +101,14 @@ container.register_factory("db", DatabaseManager)
 if container.has("db"):
     db = container.get("db")
 ```
+
+## Route Permissions
+
+The following table lists the required role or permission for key API route groups.
+
+| Route Prefix | Required Role | Required Permission |
+|--------------|---------------|--------------------|
+| `/admin` | `admin` | - |
+| `/api/v1/analytics` | - | `analytics.read` |
+| `/api/v1/events` | - | `events.write` |
+| `/api/v1/doors` | - | `doors.control` |

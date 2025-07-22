@@ -4,6 +4,9 @@ import threading
 import uuid
 from typing import Any, Awaitable, Callable, Dict, Optional
 
+from opentelemetry import context as ot_context
+from tracing import propagate_context, trace_async_operation
+
 from .task_queue_protocol import TaskQueueProtocol
 
 
@@ -22,6 +25,7 @@ class TaskQueue(TaskQueueProtocol):
         func: Callable[[Callable[[int], None]], Awaitable[Any]] | Awaitable[Any],
     ) -> str:
         task_id = str(uuid.uuid4())
+        ctx = ot_context.get_current()
         with self._lock:
             self._tasks[task_id] = {"progress": 0, "result": None, "done": False}
 
@@ -31,12 +35,13 @@ class TaskQueue(TaskQueueProtocol):
                 self._tasks[task_id]["progress"] = pct
 
         async def _runner() -> None:
+            token = ot_context.attach(ctx)
             try:
                 if inspect.iscoroutine(func):
                     coro = func
                 else:
                     coro = func(_update)
-                result = await coro
+                result = await trace_async_operation("task", task_id, coro)
                 with self._lock:
                     self._tasks[task_id]["result"] = result
             except Exception as exc:  # pragma: no cover
@@ -46,6 +51,7 @@ class TaskQueue(TaskQueueProtocol):
                 with self._lock:
                     self._tasks[task_id]["progress"] = 100
                     self._tasks[task_id]["done"] = True
+                ot_context.detach(token)
 
         self._loop.call_soon_threadsafe(self._loop.create_task, _runner())
         return task_id
