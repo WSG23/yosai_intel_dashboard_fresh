@@ -1,12 +1,12 @@
 gateway:
   plugins:
-    - name: rate-limit
+    - name: advanced-ratelimit
       enabled: true
       config:
-        rules:
-          - path: /api/v1/events
-            limit_per_min: 100
-            burst_size: 20
+        per_user_limit: 100
+        global_limit: 1000
+        burst: 20
+        delay: false
     - name: cache
       enabled: true
       config:
