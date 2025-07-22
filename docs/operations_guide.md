@@ -79,3 +79,4 @@ color and delete the failed deployment:
 kubectl patch service yosai-dashboard -p '{"spec":{"selector":{"app":"yosai-dashboard","color":"blue"}}}'
 kubectl delete -f k8s/bluegreen/dashboard-green.yaml
 ```
+
