@@ -1,0 +1,28 @@
+groups:
+- name: gateway
+  rules:
+  - alert: HighCacheMissRate
+    expr: rate(gateway_cache_misses_total[5m]) > 100
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High cache miss rate on gateway
+- name: event_processor
+  rules:
+  - alert: EventProcessorStalled
+    expr: rate(gateway_events_processed_total[5m]) == 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: No events processed by gateway in 5 minutes
+- name: database
+  rules:
+  - alert: DatabaseErrorRate
+    expr: rate(database_query_errors_total[5m]) > 5
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      summary: High database query error rate

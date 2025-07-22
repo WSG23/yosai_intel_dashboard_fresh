@@ -1,0 +1,22 @@
+{
+  "uid": "database",
+  "title": "Database Metrics",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Queries Executed",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "database_queries_total", "legendFormat": "queries"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Query Errors",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "database_query_errors_total", "legendFormat": "errors"}
+      ]
+    }
+  ]
+}

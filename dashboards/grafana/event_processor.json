@@ -1,0 +1,14 @@
+{
+  "uid": "event-processor",
+  "title": "Event Processor",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Events Processed",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "gateway_events_processed_total", "legendFormat": "processed"}
+      ]
+    }
+  ]
+}

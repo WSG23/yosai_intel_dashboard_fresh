@@ -1,20 +1,35 @@
 package events
 
 import (
-	"context"
-	"encoding/json"
-	"errors"
-	"log"
-	"time"
+        "context"
+        "encoding/json"
+        "errors"
+        "log"
+        "time"
 
-	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
+        ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
+        "github.com/prometheus/client_golang/prometheus"
+        "go.opentelemetry.io/otel"
 
-	"github.com/WSG23/yosai-gateway/internal/cache"
-	"github.com/WSG23/yosai-gateway/internal/engine"
-	ikafka "github.com/WSG23/yosai-gateway/internal/kafka"
+        "github.com/WSG23/yosai-gateway/internal/cache"
+        "github.com/WSG23/yosai-gateway/internal/engine"
+        ikafka "github.com/WSG23/yosai-gateway/internal/kafka"
 )
 
+
 var accessEventsTopic = "access-events"
+
+var (
+        eventsProcessed = prometheus.NewCounter(prometheus.CounterOpts{
+                Name: "gateway_events_processed_total",
+                Help: "Number of access events processed",
+        })
+
+)
+
+func init() {
+        prometheus.MustRegister(eventsProcessed)
+}
 
 type EventProcessor struct {
 	producer *ckafka.Producer
@@ -53,9 +68,12 @@ func (ep *EventProcessor) Close() {
 }
 
 func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEvent) error {
-	if ep.engine == nil {
-		return errors.New("rule engine not configured")
-	}
+        ctx, span := otel.Tracer("event-processor").Start(ctx, "ProcessAccessEvent")
+        defer span.End()
+
+        if ep.engine == nil {
+                return errors.New("rule engine not configured")
+        }
 
 	dec, err := ep.engine.EvaluateAccess(ctx, event.PersonID, event.DoorID)
 	if err != nil {
@@ -73,7 +91,7 @@ func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEv
 			Decision: event.AccessResult,
 		}); err != nil {
 			// log failure but continue so access events are not lost
-			log.Printf("failed to cache decision: %v", err)
+			tracing.Logger.WithError(err).Warn("failed to cache decision")
 		}
 
 	}
@@ -83,26 +101,29 @@ func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEv
 	if ep.registry != nil {
 		record, err := ep.registry.Serialize("access-events-value", event)
 		if err != nil {
-			log.Printf("schema serialization failed: %v", err)
+			tracing.Logger.WithError(err).Warn("schema serialization failed")
 			data, _ = json.Marshal(event)
 		} else {
 			data = record
 		}
-	} else {
-		data, _ = json.Marshal(event)
-	}
-	return ep.producer.Produce(&ckafka.Message{
-		TopicPartition: ckafka.TopicPartition{Topic: &accessEventsTopic, Partition: ckafka.PartitionAny},
-		Value:          data,
-	}, nil)
+        } else {
+                data, _ = json.Marshal(event)
+        }
+        eventsProcessed.Inc()
+        return ep.producer.Produce(&ckafka.Message{
+                TopicPartition: ckafka.TopicPartition{Topic: &accessEventsTopic, Partition: ckafka.PartitionAny},
+                Value:          data,
+        }, nil)
 }
 
 // Run consumes AccessEvent messages from Kafka until ctx is cancelled. Messages
 // are processed in batches and evaluated using a CachedRuleEngine.
 func (ep *EventProcessor) Run(ctx context.Context) error {
-	if err := ep.consumer.SubscribeTopics([]string{accessEventsTopic}, nil); err != nil {
-		return err
-	}
+        ctx, span := otel.Tracer("event-processor").Start(ctx, "Run")
+        defer span.End()
+        if err := ep.consumer.SubscribeTopics([]string{accessEventsTopic}, nil); err != nil {
+                return err
+        }
 
 	engine := NewCachedRuleEngine(ep.cache)
 	const batchSize = 50
@@ -124,7 +145,7 @@ func (ep *EventProcessor) Run(ctx context.Context) error {
 					continue
 				}
 			}
-			log.Printf("consumer error: %v", err)
+			tracing.Logger.WithError(err).Error("consumer error")
 			continue
 		}
 
@@ -133,18 +154,24 @@ func (ep *EventProcessor) Run(ctx context.Context) error {
 			continue
 		}
 
-		for _, m := range batch {
-			var ev AccessEvent
-			if err := json.Unmarshal(m.Value, &ev); err != nil {
-				log.Printf("malformed access event: %v", err)
-				continue
-			}
-			if err := engine.Evaluate(ctx, &ev); err != nil {
-				log.Printf("rule evaluation error: %v", err)
-				continue
-			}
-			_, _ = ep.consumer.CommitMessage(m)
-		}
+                for _, m := range batch {
+                        spanCtx, span := otel.Tracer("event-processor").Start(ctx, "process_event")
+                        var ev AccessEvent
+                        if err := json.Unmarshal(m.Value, &ev); err != nil {
+                                log.Printf("malformed access event: %v", err)
+                                span.End()
+                                continue
+                        }
+                        if err := engine.Evaluate(spanCtx, &ev); err != nil {
+                                log.Printf("rule evaluation error: %v", err)
+                                span.End()
+                                continue
+                        }
+                        eventsProcessed.Inc()
+                        _, _ = ep.consumer.CommitMessage(m)
+                        span.End()
+                }
+
 		batch = batch[:0]
 	}
 }
