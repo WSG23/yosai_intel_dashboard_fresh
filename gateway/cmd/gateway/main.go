@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+
 	"net/http"
 	"os"
 	"os/signal"
@@ -23,7 +24,7 @@ import (
 func main() {
 	shutdown, err := tracing.InitTracing("gateway")
 	if err != nil {
-		log.Fatalf("failed to init tracing: %v", err)
+		tracing.Logger.Fatalf("failed to init tracing: %v", err)
 	}
 	defer shutdown(context.Background())
 
@@ -42,17 +43,17 @@ func main() {
 		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), dbName, os.Getenv("DB_PASSWORD"))
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		log.Fatalf("failed to connect db: %v", err)
+		tracing.Logger.Fatalf("failed to connect db: %v", err)
 	}
 	engCore, err := engine.NewRuleEngine(db)
 	if err != nil {
-		log.Fatalf("failed to init rule engine: %v", err)
+		tracing.Logger.Fatalf("failed to init rule engine: %v", err)
 	}
 	ruleEngine := &engine.CachedRuleEngine{Engine: engCore, Cache: cacheSvc}
 
 	processor, err := events.NewEventProcessor(brokers, cacheSvc, ruleEngine)
 	if err != nil {
-		log.Fatalf("failed to init event processor: %v", err)
+		tracing.Logger.Fatalf("failed to init event processor: %v", err)
 	}
 	defer processor.Close()
 
@@ -70,9 +71,10 @@ func main() {
 	   }
 	*/
 
+
 	g, err := gateway.New()
 	if err != nil {
-		log.Fatalf("failed to create gateway: %v", err)
+		tracing.Logger.Fatalf("failed to create gateway: %v", err)
 	}
 
 	// enable middleware based on env vars
@@ -91,9 +93,9 @@ func main() {
 	srv := &http.Server{Addr: addr, Handler: g.Handler()}
 
 	go func() {
-		log.Printf("starting gateway on %s", addr)
+		tracing.Logger.Infof("starting gateway on %s", addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("server error: %v", err)
+			tracing.Logger.Fatalf("server error: %v", err)
 		}
 	}()
 
@@ -104,6 +106,6 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Printf("shutdown error: %v", err)
+		tracing.Logger.Errorf("shutdown error: %v", err)
 	}
 }

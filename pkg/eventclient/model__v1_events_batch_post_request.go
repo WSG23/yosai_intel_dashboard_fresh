@@ -14,33 +14,33 @@ import (
 	"encoding/json"
 )
 
-// checks if the ApiV1EventsBatchPostRequest type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &ApiV1EventsBatchPostRequest{}
+// checks if the V1EventsBatchPostRequest type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &V1EventsBatchPostRequest{}
 
-// ApiV1EventsBatchPostRequest struct for ApiV1EventsBatchPostRequest
-type ApiV1EventsBatchPostRequest struct {
+// V1EventsBatchPostRequest struct for V1EventsBatchPostRequest
+type V1EventsBatchPostRequest struct {
 	Events []AccessEvent `json:"events,omitempty"`
 }
 
-// NewApiV1EventsBatchPostRequest instantiates a new ApiV1EventsBatchPostRequest object
+// NewV1EventsBatchPostRequest instantiates a new V1EventsBatchPostRequest object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewApiV1EventsBatchPostRequest() *ApiV1EventsBatchPostRequest {
-	this := ApiV1EventsBatchPostRequest{}
+func NewV1EventsBatchPostRequest() *V1EventsBatchPostRequest {
+	this := V1EventsBatchPostRequest{}
 	return &this
 }
 
-// NewApiV1EventsBatchPostRequestWithDefaults instantiates a new ApiV1EventsBatchPostRequest object
+// NewV1EventsBatchPostRequestWithDefaults instantiates a new V1EventsBatchPostRequest object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewApiV1EventsBatchPostRequestWithDefaults() *ApiV1EventsBatchPostRequest {
-	this := ApiV1EventsBatchPostRequest{}
+func NewV1EventsBatchPostRequestWithDefaults() *V1EventsBatchPostRequest {
+	this := V1EventsBatchPostRequest{}
 	return &this
 }
 
 // GetEvents returns the Events field value if set, zero value otherwise.
-func (o *ApiV1EventsBatchPostRequest) GetEvents() []AccessEvent {
+func (o *V1EventsBatchPostRequest) GetEvents() []AccessEvent {
 	if o == nil || IsNil(o.Events) {
 		var ret []AccessEvent
 		return ret
@@ -50,7 +50,7 @@ func (o *ApiV1EventsBatchPostRequest) GetEvents() []AccessEvent {
 
 // GetEventsOk returns a tuple with the Events field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ApiV1EventsBatchPostRequest) GetEventsOk() ([]AccessEvent, bool) {
+func (o *V1EventsBatchPostRequest) GetEventsOk() ([]AccessEvent, bool) {
 	if o == nil || IsNil(o.Events) {
 		return nil, false
 	}
@@ -58,7 +58,7 @@ func (o *ApiV1EventsBatchPostRequest) GetEventsOk() ([]AccessEvent, bool) {
 }
 
 // HasEvents returns a boolean if a field has been set.
-func (o *ApiV1EventsBatchPostRequest) HasEvents() bool {
+func (o *V1EventsBatchPostRequest) HasEvents() bool {
 	if o != nil && !IsNil(o.Events) {
 		return true
 	}
@@ -67,11 +67,11 @@ func (o *ApiV1EventsBatchPostRequest) HasEvents() bool {
 }
 
 // SetEvents gets a reference to the given []AccessEvent and assigns it to the Events field.
-func (o *ApiV1EventsBatchPostRequest) SetEvents(v []AccessEvent) {
+func (o *V1EventsBatchPostRequest) SetEvents(v []AccessEvent) {
 	o.Events = v
 }
 
-func (o ApiV1EventsBatchPostRequest) MarshalJSON() ([]byte, error) {
+func (o V1EventsBatchPostRequest) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -79,7 +79,7 @@ func (o ApiV1EventsBatchPostRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-func (o ApiV1EventsBatchPostRequest) ToMap() (map[string]interface{}, error) {
+func (o V1EventsBatchPostRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.Events) {
 		toSerialize["events"] = o.Events
@@ -87,38 +87,38 @@ func (o ApiV1EventsBatchPostRequest) ToMap() (map[string]interface{}, error) {
 	return toSerialize, nil
 }
 
-type NullableApiV1EventsBatchPostRequest struct {
-	value *ApiV1EventsBatchPostRequest
+type NullableV1EventsBatchPostRequest struct {
+	value *V1EventsBatchPostRequest
 	isSet bool
 }
 
-func (v NullableApiV1EventsBatchPostRequest) Get() *ApiV1EventsBatchPostRequest {
+func (v NullableV1EventsBatchPostRequest) Get() *V1EventsBatchPostRequest {
 	return v.value
 }
 
-func (v *NullableApiV1EventsBatchPostRequest) Set(val *ApiV1EventsBatchPostRequest) {
+func (v *NullableV1EventsBatchPostRequest) Set(val *V1EventsBatchPostRequest) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableApiV1EventsBatchPostRequest) IsSet() bool {
+func (v NullableV1EventsBatchPostRequest) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableApiV1EventsBatchPostRequest) Unset() {
+func (v *NullableV1EventsBatchPostRequest) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableApiV1EventsBatchPostRequest(val *ApiV1EventsBatchPostRequest) *NullableApiV1EventsBatchPostRequest {
-	return &NullableApiV1EventsBatchPostRequest{value: val, isSet: true}
+func NewNullableV1EventsBatchPostRequest(val *V1EventsBatchPostRequest) *NullableV1EventsBatchPostRequest {
+	return &NullableV1EventsBatchPostRequest{value: val, isSet: true}
 }
 
-func (v NullableApiV1EventsBatchPostRequest) MarshalJSON() ([]byte, error) {
+func (v NullableV1EventsBatchPostRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableApiV1EventsBatchPostRequest) UnmarshalJSON(src []byte) error {
+func (v *NullableV1EventsBatchPostRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

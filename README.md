@@ -759,7 +759,7 @@ manager = EnhancedThreadSafePluginManager(container, config)
 data = manager.get_plugin_performance_metrics()
 ```
 
-The `/api/v1/plugins/performance` endpoint exposes metrics for dashboards.
+The `/v1/plugins/performance` endpoint exposes metrics for dashboards.
 
 ## <span aria-hidden="true">📊</span> Modular Components
 
@@ -922,7 +922,7 @@ Update the spec by running `python tools/generate_openapi.py` which writes `docs
 Fetch plugin performance metrics:
 
 ```bash
-curl http://<host>:<port>/api/v1/plugins/performance
+curl http://<host>:<port>/v1/plugins/performance
 ```
 
 Expected response:
@@ -940,7 +940,7 @@ Expected response:
 Calculate risk score from analytics data:
 
 ```bash
-curl -X POST http://<host>:<port>/api/v1/risk/score \
+curl -X POST http://<host>:<port>/v1/risk/score \
     -H 'Content-Type: application/json' \
     -d '{"anomaly_score": 0.25, "pattern_score": 0.1, "behavior_deviation": 0.2}'
 ```
@@ -1086,6 +1086,23 @@ TIMESCALE_DB_USER, TIMESCALE_DB_PASSWORD
 ```
 
 The default `docker-compose.dev.yml` exposes TimescaleDB on port `5433`.
+
+### Schema Migrations and Replication
+
+Database schema changes are managed with **Alembic** under `database/migrations/`.
+Run migrations with:
+
+```bash
+alembic -c database/migrations/alembic.ini upgrade head
+```
+
+New access events are replicated from PostgreSQL to TimescaleDB by
+`scripts/replicate_to_timescale.py`. Set `SOURCE_DSN` and `TARGET_DSN` to run the
+job periodically (for example via `cron` or a Kubernetes CronJob):
+
+```bash
+python scripts/replicate_to_timescale.py
+```
 
 
 

@@ -4,12 +4,12 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**api_v1_events_batch_post**](DefaultApi.md#api_v1_events_batch_post) | **POST** /api/v1/events/batch | Submit a batch of access events
-[**api_v1_events_post**](DefaultApi.md#api_v1_events_post) | **POST** /api/v1/events | Submit an access event
+[**v1_events_batch_post**](DefaultApi.md#v1_events_batch_post) | **POST** /v1/events/batch | Submit a batch of access events
+[**v1_events_post**](DefaultApi.md#v1_events_post) | **POST** /v1/events | Submit an access event
 
 
-# **api_v1_events_batch_post**
-> ApiV1EventsBatchPost200Response api_v1_events_batch_post(api_v1_events_batch_post_request)
+# **v1_events_batch_post**
+> V1EventsBatchPost200Response v1_events_batch_post(v1_events_batch_post_request)
 
 Submit a batch of access events
 
@@ -18,8 +18,8 @@ Submit a batch of access events
 
 ```python
 import openapi_client
-from openapi_client.models.api_v1_events_batch_post200_response import ApiV1EventsBatchPost200Response
-from openapi_client.models.api_v1_events_batch_post_request import ApiV1EventsBatchPostRequest
+from openapi_client.models.v1_events_batch_post200_response import V1EventsBatchPost200Response
+from openapi_client.models.v1_events_batch_post_request import V1EventsBatchPostRequest
 from openapi_client.rest import ApiException
 from pprint import pprint
 
@@ -34,15 +34,15 @@ configuration = openapi_client.Configuration(
 with openapi_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = openapi_client.DefaultApi(api_client)
-    api_v1_events_batch_post_request = openapi_client.ApiV1EventsBatchPostRequest() # ApiV1EventsBatchPostRequest | 
+    v1_events_batch_post_request = openapi_client.V1EventsBatchPostRequest() # V1EventsBatchPostRequest | 
 
     try:
         # Submit a batch of access events
-        api_response = api_instance.api_v1_events_batch_post(api_v1_events_batch_post_request)
-        print("The response of DefaultApi->api_v1_events_batch_post:\n")
+        api_response = api_instance.v1_events_batch_post(v1_events_batch_post_request)
+        print("The response of DefaultApi->v1_events_batch_post:\n")
         pprint(api_response)
     except Exception as e:
-        print("Exception when calling DefaultApi->api_v1_events_batch_post: %s\n" % e)
+        print("Exception when calling DefaultApi->v1_events_batch_post: %s\n" % e)
 ```
 
 
@@ -52,11 +52,11 @@ with openapi_client.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **api_v1_events_batch_post_request** | [**ApiV1EventsBatchPostRequest**](ApiV1EventsBatchPostRequest.md)|  | 
+ **v1_events_batch_post_request** | [**V1EventsBatchPostRequest**](V1EventsBatchPostRequest.md)|  | 
 
 ### Return type
 
-[**ApiV1EventsBatchPost200Response**](ApiV1EventsBatchPost200Response.md)
+[**V1EventsBatchPost200Response**](V1EventsBatchPost200Response.md)
 
 ### Authorization
 
@@ -75,8 +75,8 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **api_v1_events_post**
-> EventResponse api_v1_events_post(access_event)
+# **v1_events_post**
+> EventResponse v1_events_post(access_event)
 
 Submit an access event
 
@@ -105,11 +105,11 @@ with openapi_client.ApiClient(configuration) as api_client:
 
     try:
         # Submit an access event
-        api_response = api_instance.api_v1_events_post(access_event)
-        print("The response of DefaultApi->api_v1_events_post:\n")
+        api_response = api_instance.v1_events_post(access_event)
+        print("The response of DefaultApi->v1_events_post:\n")
         pprint(api_response)
     except Exception as e:
-        print("Exception when calling DefaultApi->api_v1_events_post: %s\n" % e)
+        print("Exception when calling DefaultApi->v1_events_post: %s\n" % e)
 ```
 
 

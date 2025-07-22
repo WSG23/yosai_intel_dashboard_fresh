@@ -19,3 +19,11 @@ if command -v npm >/dev/null 2>&1; then
 else
     echo "npm is not installed; skipping Node dependency installation" >&2
 fi
+
+# Apply database migrations
+alembic -c "$ROOT_DIR/database/migrations/alembic.ini" upgrade head
+
+# Optionally run a single replication cycle
+if [ "$RUN_REPLICATION" = "1" ]; then
+    python "$ROOT_DIR/scripts/replicate_to_timescale.py" &
+fi

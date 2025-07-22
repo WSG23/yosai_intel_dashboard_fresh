@@ -86,7 +86,7 @@ class EventServiceAdapter(ServiceAdapter):
             async with self.circuit_breaker:
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
-                        f"{self.base_url}/api/v1/events",
+                        f"{self.base_url}/v1/events",
                         json=event,
                         timeout=aiohttp.ClientTimeout(total=0.1),
                     ) as response:
@@ -102,7 +102,7 @@ class EventServiceAdapter(ServiceAdapter):
             async with self.circuit_breaker:
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
-                        f"{self.base_url}/api/v1/events/batch",
+                        f"{self.base_url}/v1/events/batch",
                         json={"events": events},
                         timeout=aiohttp.ClientTimeout(total=1.0),
                     ) as response:
@@ -127,25 +127,25 @@ class AnalyticsServiceAdapter(ServiceAdapter, AnalyticsServiceProtocol):
         self.circuit_breaker = CircuitBreaker(5, 60, name="analytics_service")
 
     async def call(self, method: str, **kwargs: Any) -> Any:
-        if self.use_microservice:
-            try:
-                return await self._call_microservice(method, kwargs)
-            except CircuitBreakerOpen:
-                print("Analytics microservice circuit open, using Python fallback")
-            except Exception as exc:  # pragma: no cover - network failures
-                print(f"Microservice call failed, falling back to Python: {exc}")
+        if not self.use_microservice:
+            python_method = getattr(self.python_service, method)
+            result = python_method(**kwargs)
+            if asyncio.iscoroutine(result):
+                return await result
+            return result
 
-        python_method = getattr(self.python_service, method)
-        result = python_method(**kwargs)
-        if asyncio.iscoroutine(result):
-            return await result
-        return result
+        try:
+            return await self._call_microservice(method, kwargs)
+        except Exception as exc:
+            raise RuntimeError(
+                f"Analytics microservice call failed: {exc}"
+            ) from exc
 
     async def _call_microservice(self, method: str, params: Dict[str, Any]) -> Any:
         async with self.circuit_breaker:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    f"{self.microservice_url}/api/v1/analytics/{method}",
+                    f"{self.microservice_url}/v1/analytics/{method}",
                     json=params,
                     timeout=aiohttp.ClientTimeout(total=30.0),
                 ) as response:

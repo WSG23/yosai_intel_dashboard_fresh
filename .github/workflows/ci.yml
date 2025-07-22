@@ -78,6 +78,8 @@ jobs:
           node-version: '18'
       - name: Install Node deps
         run: npm ci
+      - name: Lint
+        run: npm run lint
       - name: Jest Tests
         run: npm test -- --watchAll=false
       - name: Cypress Tests

@@ -100,7 +100,7 @@ def test_save_mappings(monkeypatch):
     client = app.test_client()
 
     resp = client.post(
-        "/api/v1/mappings/save",
+        "/v1/mappings/save",
         json={
             "filename": "file.csv",
             "mapping_type": "column",
@@ -111,7 +111,7 @@ def test_save_mappings(monkeypatch):
     assert column_service.saved["file.csv"] == {"orig": "device_name"}
 
     resp = client.post(
-        "/api/v1/mappings/save",
+        "/v1/mappings/save",
         json={
             "filename": "file.csv",
             "mapping_type": "device",
@@ -132,7 +132,7 @@ def test_process_enhanced(monkeypatch):
     store.add_file("file.csv", df)
 
     resp = client.post(
-        "/api/v1/process-enhanced",
+        "/v1/process-enhanced",
         json={
             "filename": "file.csv",
             "column_mappings": {"val": "value"},

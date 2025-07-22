@@ -12,6 +12,10 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SERVICE_DISCOVERY_URL: http://api-gateway
+    labels:
+      - "prometheus.scrape=true"
+      - "prometheus.port=8050"
+      - "prometheus.path=/metrics"
     depends_on:
       postgres:
         condition: service_healthy
@@ -89,9 +93,14 @@ services:
       dockerfile: Dockerfile.gateway
     ports:
       - "8081:8080"
+    labels:
+      - "prometheus.scrape=true"
+      - "prometheus.port=8080"
+      - "prometheus.path=/metrics"
     environment:
     depends_on:
       - python-monolith
+      - analytics-service
     restart: unless-stopped
 
   event-ingestion:
@@ -116,6 +125,17 @@ services:
       timeout: 10s
       retries: 5
       start_period: 20s
+    restart: unless-stopped
+
+  analytics-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-m", "uvicorn", "services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
+    environment:
+      YOSAI_ENV: development
+    depends_on:
+      - python-monolith
     restart: unless-stopped
 
   jaeger:
