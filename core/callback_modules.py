@@ -33,7 +33,7 @@ class CallbackModuleRegistry:
 
     def __init__(self) -> None:
         self._modules: Dict[str, CallbackModule] = {}
-        self._callback_map: Dict[str, str] = {}
+        self._registered_ids: set[str] = set()
 
     # ------------------------------------------------------------------
     def register_module(self, module: CallbackModule) -> bool:
@@ -45,7 +45,7 @@ class CallbackModuleRegistry:
             return False
 
         callback_ids = module.get_callback_ids()
-        conflicts = [cid for cid in callback_ids if cid in self._callback_map]
+        conflicts = [cid for cid in callback_ids if cid in self._registered_ids]
         if conflicts:
             logger.error(
                 "Module %s has conflicting callbacks: %s", module_id, conflicts
@@ -53,8 +53,7 @@ class CallbackModuleRegistry:
             return False
 
         self._modules[module_id] = module
-        for cid in callback_ids:
-            self._callback_map[cid] = module_id
+        self._registered_ids.update(callback_ids)
 
         return True
 

@@ -7,14 +7,15 @@ from .advanced_cache import (
     cache_with_lock,
     create_advanced_cache_manager,
 )
+from .advanced_query_optimizer import AdvancedQueryOptimizer
+from .cache_warmer import IntelligentCacheWarmer
+from .callback_modules import CallbackModule, CallbackModuleRegistry
+from .cpu_optimizer import CPUOptimizer
+from .hierarchical_cache_manager import HierarchicalCacheManager
 from .intelligent_multilevel_cache import (
     IntelligentMultiLevelCache,
     create_intelligent_cache_manager,
 )
-from .advanced_query_optimizer import AdvancedQueryOptimizer
-from .cpu_optimizer import CPUOptimizer
-from .hierarchical_cache_manager import HierarchicalCacheManager
-from .cache_warmer import IntelligentCacheWarmer
 from .memory_manager import MemoryManager
 from .truly_unified_callbacks import TrulyUnifiedCallbacks
 
@@ -38,4 +39,6 @@ __all__ = [
     "CPUOptimizer",
     "IntelligentMultiLevelCache",
     "create_intelligent_cache_manager",
+    "CallbackModule",
+    "CallbackModuleRegistry",
 ]
