@@ -86,7 +86,7 @@ class EventServiceAdapter(ServiceAdapter):
             async with self.circuit_breaker:
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
-                        f"{self.base_url}/api/v1/events",
+                        f"{self.base_url}/v1/events",
                         json=event,
                         timeout=aiohttp.ClientTimeout(total=0.1),
                     ) as response:
@@ -102,7 +102,7 @@ class EventServiceAdapter(ServiceAdapter):
             async with self.circuit_breaker:
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
-                        f"{self.base_url}/api/v1/events/batch",
+                        f"{self.base_url}/v1/events/batch",
                         json={"events": events},
                         timeout=aiohttp.ClientTimeout(total=1.0),
                     ) as response:
@@ -145,7 +145,7 @@ class AnalyticsServiceAdapter(ServiceAdapter, AnalyticsServiceProtocol):
         async with self.circuit_breaker:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    f"{self.microservice_url}/api/v1/analytics/{method}",
+                    f"{self.microservice_url}/v1/analytics/{method}",
                     json=params,
                     timeout=aiohttp.ClientTimeout(total=30.0),
                 ) as response:

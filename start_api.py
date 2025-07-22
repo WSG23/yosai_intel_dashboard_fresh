@@ -16,7 +16,7 @@ def main() -> None:
 
     print("\n🚀 Starting Yosai Intel Dashboard API...")
     print(f"   Available at: http://localhost:{API_PORT}")
-    print(f"   Health check: http://localhost:{API_PORT}/api/v1/health")
+    print(f"   Health check: http://localhost:{API_PORT}/v1/health")
 
     app.run(host="0.0.0.0", port=API_PORT, debug=True)
 

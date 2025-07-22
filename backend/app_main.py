@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import os
 from flask import Flask, jsonify, request, send_from_directory
+
+from utils.api_error import error_response
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import pandas as pd
@@ -43,24 +45,24 @@ def safe_json_dumps(obj):
     
     return json.dumps(clean_dict(obj))
 
-@app.route('/api/v1/health', methods=['GET'])
+@app.route('/v1/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
     return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
 
-@app.route('/api/v1/upload', methods=['POST'])
+@app.route('/v1/upload', methods=['POST'])
 def upload_file():
     """Handle file upload and return column preview"""
     try:
         if 'file' not in request.files:
-            return jsonify({'error': 'No file provided'}), 400
+            return error_response('no_file', 'No file provided'), 400
         
         file = request.files['file']
         if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
+            return error_response('no_file_selected', 'No file selected'), 400
         
         if not allowed_file(file.filename):
-            return jsonify({'error': 'Invalid file type'}), 400
+            return error_response('invalid_type', 'Invalid file type'), 400
         
         # Save file
         filename = secure_filename(file.filename)
@@ -93,12 +95,12 @@ def upload_file():
             
         except Exception as e:
             os.remove(filepath)  # Clean up on error
-            return jsonify({'error': f'Failed to read file: {str(e)}'}), 400
+            return error_response('read_error', f'Failed to read file: {str(e)}'), 400
             
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return error_response('server_error', str(e)), 500
 
-@app.route('/api/v1/process', methods=['POST'])
+@app.route('/v1/process', methods=['POST'])
 def process_file():
     """Process uploaded file with column mappings"""
     try:
@@ -108,11 +110,11 @@ def process_file():
         device_mappings = data.get('deviceMappings', {})
         
         if not file_id:
-            return jsonify({'error': 'No fileId provided'}), 400
+            return error_response('no_file_id', 'No fileId provided'), 400
         
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], file_id)
         if not os.path.exists(filepath):
-            return jsonify({'error': 'File not found'}), 404
+            return error_response('not_found', 'File not found'), 404
         
         # Read full file
         if file_id.endswith('.csv'):
@@ -137,9 +139,9 @@ def process_file():
         }), 200
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return error_response('server_error', str(e)), 500
 
-@app.route('/api/v1/devices', methods=['GET'])
+@app.route('/v1/devices', methods=['GET'])
 def get_devices():
     """Get list of available devices"""
     # Mock device data - replace with actual database query

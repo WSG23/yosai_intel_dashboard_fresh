@@ -5,7 +5,7 @@ info:
 servers:
 - url: /
 paths:
-  /api/v1/events:
+  /v1/events:
     post:
       requestBody:
         content:
@@ -21,20 +21,20 @@ paths:
                 $ref: "#/components/schemas/EventResponse"
           description: Acknowledgement
       summary: Submit an access event
-  /api/v1/events/batch:
+  /v1/events/batch:
     post:
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/_api_v1_events_batch_post_request"
+              $ref: "#/components/schemas/_v1_events_batch_post_request"
         required: true
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/_api_v1_events_batch_post_200_response"
+                $ref: "#/components/schemas/_v1_events_batch_post_200_response"
           description: Batch status
       summary: Submit a batch of access events
 components:
@@ -99,14 +99,14 @@ components:
       - event_id
       - status
       type: object
-    _api_v1_events_batch_post_request:
+    _v1_events_batch_post_request:
       properties:
         events:
           items:
             $ref: "#/components/schemas/AccessEvent"
           type: array
       type: object
-    _api_v1_events_batch_post_200_response:
+    _v1_events_batch_post_200_response:
       example:
         results:
         - event_id: event_id
@@ -119,3 +119,15 @@ components:
             $ref: "#/components/schemas/EventResponse"
           type: array
       type: object
+    ErrorResponse:
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          nullable: true
+          type: string
+      required:
+      - code
+      - message

@@ -15,6 +15,7 @@
 
 # import models into model package
 from openapi_client.models.access_event import AccessEvent
-from openapi_client.models.api_v1_events_batch_post200_response import ApiV1EventsBatchPost200Response
-from openapi_client.models.api_v1_events_batch_post_request import ApiV1EventsBatchPostRequest
+from openapi_client.models.error_response import ErrorResponse
 from openapi_client.models.event_response import EventResponse
+from openapi_client.models.v1_events_batch_post200_response import V1EventsBatchPost200Response
+from openapi_client.models.v1_events_batch_post_request import V1EventsBatchPostRequest

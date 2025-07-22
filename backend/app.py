@@ -1,4 +1,6 @@
 from flask import Flask, request, jsonify
+
+from utils.api_error import error_response
 from flask_cors import CORS
 import os
 import json
@@ -23,7 +25,7 @@ def get_file_fingerprint(content):
     """Generate a unique fingerprint for file content"""
     return hashlib.md5(content).hexdigest()
 
-@app.route('/api/v1/upload', methods=['POST'])
+@app.route('/v1/upload', methods=['POST'])
 def upload_files():
     """Handle file upload with the structure expected by the React frontend"""
     try:
@@ -96,9 +98,9 @@ def upload_files():
         })
         
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        return error_response('server_error', str(e)), 500
 
-@app.route('/api/v1/upload/process', methods=['POST'])
+@app.route('/v1/upload/process', methods=['POST'])
 def process_upload():
     """Process uploaded file with mappings"""
     try:
@@ -123,9 +125,9 @@ def process_upload():
         return jsonify(result)
     
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return error_response('server_error', str(e)), 500
 
-@app.route('/api/v1/mappings/save', methods=['POST'])
+@app.route('/v1/mappings/save', methods=['POST'])
 def save_mappings():
     """Save learned mappings for future use"""
     try:
@@ -145,9 +147,9 @@ def save_mappings():
         })
     
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return error_response('server_error', str(e)), 500
 
-@app.route('/api/v1/devices', methods=['GET'])
+@app.route('/v1/devices', methods=['GET'])
 def get_devices():
     """Get list of known devices"""
     # For demo, return some sample devices

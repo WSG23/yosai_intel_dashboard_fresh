@@ -1,6 +1,8 @@
 import base64
 
 from flask import Blueprint, jsonify, request
+
+from utils.api_error import error_response
 from flask_wtf.csrf import validate_csrf
 
 from config.service_registration import register_upload_services
@@ -14,7 +16,7 @@ if not container.has("upload_processor"):
 upload_bp = Blueprint("upload", __name__)
 
 
-@upload_bp.route("/api/v1/upload", methods=["POST"])
+@upload_bp.route("/v1/upload", methods=["POST"])
 def upload_files():
     """Handle file upload and return expected structure for React frontend"""
     try:
@@ -26,7 +28,7 @@ def upload_files():
         try:
             validate_csrf(token)
         except Exception:
-            return jsonify({"error": "Invalid CSRF token"}), 400
+            return error_response("invalid_csrf", "Invalid CSRF token"), 400
 
         contents = []
         filenames = []
@@ -48,18 +50,17 @@ def upload_files():
 
         file_processor = container.get("file_processor")
         if not contents or not filenames:
-            return jsonify({"error": "No file provided"}), 400
+            return error_response("no_file", "No file provided"), 400
 
         job_id = file_processor.process_file_async(contents[0], filenames[0])
 
         return jsonify({"job_id": job_id}), 202
 
     except Exception as e:
+        return error_response("server_error", str(e)), 500
 
-        return jsonify({"error": str(e)}), 500
 
-
-@upload_bp.route("/api/v1/upload/status/<job_id>", methods=["GET"])
+@upload_bp.route("/v1/upload/status/<job_id>", methods=["GET"])
 def upload_status(job_id: str):
     """Return background processing status for ``job_id``."""
     file_processor = container.get("file_processor")

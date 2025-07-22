@@ -29,9 +29,10 @@ __all__ = [
     "ApiAttributeError",
     "ApiException",
     "AccessEvent",
-    "ApiV1EventsBatchPost200Response",
-    "ApiV1EventsBatchPostRequest",
+    "ErrorResponse",
     "EventResponse",
+    "V1EventsBatchPost200Response",
+    "V1EventsBatchPostRequest",
 ]
 
 # import apis into sdk package
@@ -50,6 +51,7 @@ from openapi_client.exceptions import ApiException as ApiException
 
 # import models into sdk package
 from openapi_client.models.access_event import AccessEvent as AccessEvent
-from openapi_client.models.api_v1_events_batch_post200_response import ApiV1EventsBatchPost200Response as ApiV1EventsBatchPost200Response
-from openapi_client.models.api_v1_events_batch_post_request import ApiV1EventsBatchPostRequest as ApiV1EventsBatchPostRequest
+from openapi_client.models.error_response import ErrorResponse as ErrorResponse
 from openapi_client.models.event_response import EventResponse as EventResponse
+from openapi_client.models.v1_events_batch_post200_response import V1EventsBatchPost200Response as V1EventsBatchPost200Response
+from openapi_client.models.v1_events_batch_post_request import V1EventsBatchPostRequest as V1EventsBatchPostRequest

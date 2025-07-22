@@ -62,7 +62,7 @@ def test_upload_files_uses_asyncio_run(monkeypatch):
     content = UploadFileBuilder().with_dataframe(df).as_base64()
     client = app.test_client()
     resp = client.post(
-        "/api/v1/upload",
+        "/v1/upload",
         json={"contents": [content], "filenames": ["test.csv"]},
     )
     assert resp.status_code == 200
@@ -99,8 +99,8 @@ def test_upload_returns_error_on_exception(monkeypatch):
 
     client = app.test_client()
     resp = client.post(
-        "/api/v1/upload",
+        "/v1/upload",
         json={"contents": ["data:text/csv;base64,YSx6"], "filenames": ["t.csv"]},
     )
     assert resp.status_code == 500
-    assert resp.get_json()["error"] == "boom"
+    assert resp.get_json()["message"] == "boom"

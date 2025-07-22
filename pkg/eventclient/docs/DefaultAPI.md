@@ -4,14 +4,14 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**ApiV1EventsBatchPost**](DefaultAPI.md#ApiV1EventsBatchPost) | **Post** /api/v1/events/batch | Submit a batch of access events
-[**ApiV1EventsPost**](DefaultAPI.md#ApiV1EventsPost) | **Post** /api/v1/events | Submit an access event
+[**V1EventsBatchPost**](DefaultAPI.md#V1EventsBatchPost) | **Post** /v1/events/batch | Submit a batch of access events
+[**V1EventsPost**](DefaultAPI.md#V1EventsPost) | **Post** /v1/events | Submit an access event
 
 
 
-## ApiV1EventsBatchPost
+## V1EventsBatchPost
 
-> ApiV1EventsBatchPost200Response ApiV1EventsBatchPost(ctx).ApiV1EventsBatchPostRequest(apiV1EventsBatchPostRequest).Execute()
+> V1EventsBatchPost200Response V1EventsBatchPost(ctx).V1EventsBatchPostRequest(v1EventsBatchPostRequest).Execute()
 
 Submit a batch of access events
 
@@ -28,17 +28,17 @@ import (
 )
 
 func main() {
-	apiV1EventsBatchPostRequest := *openapiclient.NewApiV1EventsBatchPostRequest() // ApiV1EventsBatchPostRequest | 
+	v1EventsBatchPostRequest := *openapiclient.NewV1EventsBatchPostRequest() // V1EventsBatchPostRequest | 
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.DefaultAPI.ApiV1EventsBatchPost(context.Background()).ApiV1EventsBatchPostRequest(apiV1EventsBatchPostRequest).Execute()
+	resp, r, err := apiClient.DefaultAPI.V1EventsBatchPost(context.Background()).V1EventsBatchPostRequest(v1EventsBatchPostRequest).Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `DefaultAPI.ApiV1EventsBatchPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error when calling `DefaultAPI.V1EventsBatchPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `ApiV1EventsBatchPost`: ApiV1EventsBatchPost200Response
-	fmt.Fprintf(os.Stdout, "Response from `DefaultAPI.ApiV1EventsBatchPost`: %v\n", resp)
+	// response from `V1EventsBatchPost`: V1EventsBatchPost200Response
+	fmt.Fprintf(os.Stdout, "Response from `DefaultAPI.V1EventsBatchPost`: %v\n", resp)
 }
 ```
 
@@ -48,16 +48,16 @@ func main() {
 
 ### Other Parameters
 
-Other parameters are passed through a pointer to a apiApiV1EventsBatchPostRequest struct via the builder pattern
+Other parameters are passed through a pointer to a apiV1EventsBatchPostRequest struct via the builder pattern
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **apiV1EventsBatchPostRequest** | [**ApiV1EventsBatchPostRequest**](ApiV1EventsBatchPostRequest.md) |  | 
+ **v1EventsBatchPostRequest** | [**V1EventsBatchPostRequest**](V1EventsBatchPostRequest.md) |  | 
 
 ### Return type
 
-[**ApiV1EventsBatchPost200Response**](ApiV1EventsBatchPost200Response.md)
+[**V1EventsBatchPost200Response**](V1EventsBatchPost200Response.md)
 
 ### Authorization
 
@@ -73,9 +73,9 @@ No authorization required
 [[Back to README]](../README.md)
 
 
-## ApiV1EventsPost
+## V1EventsPost
 
-> EventResponse ApiV1EventsPost(ctx).AccessEvent(accessEvent).Execute()
+> EventResponse V1EventsPost(ctx).AccessEvent(accessEvent).Execute()
 
 Submit an access event
 
@@ -97,13 +97,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.DefaultAPI.ApiV1EventsPost(context.Background()).AccessEvent(accessEvent).Execute()
+	resp, r, err := apiClient.DefaultAPI.V1EventsPost(context.Background()).AccessEvent(accessEvent).Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `DefaultAPI.ApiV1EventsPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error when calling `DefaultAPI.V1EventsPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `ApiV1EventsPost`: EventResponse
-	fmt.Fprintf(os.Stdout, "Response from `DefaultAPI.ApiV1EventsPost`: %v\n", resp)
+	// response from `V1EventsPost`: EventResponse
+	fmt.Fprintf(os.Stdout, "Response from `DefaultAPI.V1EventsPost`: %v\n", resp)
 }
 ```
 
@@ -113,7 +113,7 @@ func main() {
 
 ### Other Parameters
 
-Other parameters are passed through a pointer to a apiApiV1EventsPostRequest struct via the builder pattern
+Other parameters are passed through a pointer to a apiV1EventsPostRequest struct via the builder pattern
 
 
 Name | Type | Description  | Notes
