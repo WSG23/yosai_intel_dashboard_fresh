@@ -214,6 +214,12 @@ The service listens on port `8080` inside the container. You can reach it at
 `http://localhost:8081` when running via Docker Compose.
 Stop all containers with `docker-compose down` when finished.
 
+### Kafka Event Processor
+
+The gateway starts a Kafka-based `EventProcessor` for publishing `AccessEvent`
+messages. Configure brokers via `KAFKA_BROKERS` (defaults to `localhost:9092`).
+The processor shuts down gracefully together with the gateway service.
+
 ## Developer Onboarding
 
 For a more detailed walkthrough of the environment setup and testing workflow,
