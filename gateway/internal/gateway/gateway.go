@@ -26,6 +26,7 @@ func New() (*Gateway, error) {
 	r := mux.NewRouter()
 	r.HandleFunc("/health", handlers.HealthCheck).Methods(http.MethodGet)
 	r.Handle("/metrics", promhttp.Handler()).Methods(http.MethodGet)
+	r.HandleFunc("/breaker", handlers.BreakerMetrics).Methods(http.MethodGet)
 	r.PathPrefix("/").Handler(p)
 
 	g := &Gateway{router: r}

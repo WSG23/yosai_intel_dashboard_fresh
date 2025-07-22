@@ -28,6 +28,16 @@ docker run -p 9090:9090 \
   prom/prometheus
 ```
 
+### Circuit Breaker Metrics
+
+Both the Python and Go services expose circuit breaker transitions using the
+`circuit_breaker_state_transitions_total` counter. Each transition increments the
+counter with labels for the breaker name and new state (`open`, `half_open` or
+`closed`). The gateway provides a `/breaker` endpoint that returns the current
+counts as JSON and the same metrics are also available via `/metrics` for
+Prometheus scraping. Configuration for the breakers lives in
+`config/circuit-breakers.yaml` and is loaded by both services.
+
 ### Logstash
 
 `logging/logstash.conf` reads the application, Postgres and Redis logs and can

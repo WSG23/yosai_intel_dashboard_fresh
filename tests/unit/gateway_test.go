@@ -32,6 +32,15 @@ func (s *GatewaySuite) TestHealthRoute() {
 	s.Equal("ok", strings.TrimSpace(resp.Body.String()))
 }
 
+func (s *GatewaySuite) TestBreakerRoute() {
+	req := httptest.NewRequest(http.MethodGet, "/breaker", nil)
+	resp := httptest.NewRecorder()
+
+	s.g.Handler().ServeHTTP(resp, req)
+
+	s.Equal(http.StatusOK, resp.Code)
+}
+
 func TestGatewaySuite(t *testing.T) {
 	suite.Run(t, new(GatewaySuite))
 }
