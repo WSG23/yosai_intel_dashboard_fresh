@@ -486,6 +486,7 @@ Set the following variables to configure tracing and metrics endpoints:
 
 - `JAEGER_ENDPOINT` – URL of the Jaeger collector (defaults to `http://localhost:14268/api/traces`).
 - `REPLICATION_METRICS_PORT` – Port used by `scripts/replicate_to_timescale.py` to expose Prometheus metrics (defaults to `8004`).
+- All services expose Prometheus metrics at the `/metrics` endpoint. No additional configuration is required.
 
 ## Kafka Setup
 

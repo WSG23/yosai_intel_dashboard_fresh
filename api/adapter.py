@@ -6,6 +6,7 @@ from flask import Flask, jsonify, Response, request
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
+from tracing import init_tracing
 
 from services.security import require_token
 
@@ -32,6 +33,7 @@ from upload_endpoint import upload_bp
 
 def create_api_app() -> Flask:
     """Create Flask API app with all blueprints registered."""
+    init_tracing("api")
     app = Flask(__name__)
 
     try:
