@@ -1,805 +1,1208 @@
 #!/usr/bin/env python3
 """
-Improved Code Analyzer for Yosai Intel Dashboard
-Handles mixed JS/TS/Python projects with proper exclusions
+Multi-Language Code Analyzer for Yosai Intel Dashboard
+Analyzes Python, Go, JavaScript, TypeScript, and other languages
 """
 
 import ast
 import os
 import re
-from pathlib import Path
-from typing import Dict, List, Set, Tuple, Optional
-from collections import defaultdict, Counter
+import subprocess
 import json
+from pathlib import Path
+from typing import Dict, List, Set, Tuple, Optional, Any
+from collections import defaultdict, Counter
 import time
+from datetime import datetime
 
 
-class ImprovedCodeAnalyzer:
-    """Analyzes Python code in mixed-language projects"""
+class MultiLanguageAnalyzer:
+    """Comprehensive analyzer for multi-language projects"""
     
     def __init__(self, project_path: str):
         self.project_path = Path(project_path)
         self.issues = defaultdict(list)
-        self.metrics = {}
-        # Directories to exclude from analysis
         self.exclude_dirs = {
             '.git', 'node_modules', '__pycache__', '.pytest_cache', 
             'venv', 'env', '.venv', 'dist', 'build', '.next',
-            '.idea', '.vscode', 'coverage', 'htmlcov'
+            '.idea', '.vscode', 'coverage', 'htmlcov', 'vendor'
         }
-        self.python_files = []
-        self.project_stats = {}
+        self.results = {}
         
-    def _get_python_files(self) -> List[Path]:
-        """Get all Python files, excluding certain directories"""
-        if self.python_files:  # Cache the result
-            return self.python_files
+    def analyze_project(self) -> Dict:
+        """Run comprehensive multi-language analysis"""
+        start_time = time.time()
+        
+        print(f"\n🔍 Analyzing multi-language project: {self.project_path}")
+        print(f"   Excluding: {', '.join(sorted(self.exclude_dirs))}\n")
+        
+        # Detect project structure and languages
+        project_info = self._analyze_project_structure()
+        
+        results = {
+            'project_info': {
+                'path': str(self.project_path),
+                'languages': project_info['languages'],
+                'primary_language': project_info['primary_language'],
+                'is_monorepo': project_info['is_monorepo'],
+                'analysis_time': 0
+            },
+            'summary': {},
+            'python_analysis': {},
+            'go_analysis': {},
+            'javascript_analysis': {},
+            'typescript_analysis': {},
+            'security_scan': {},
+            'dependency_analysis': {},
+            'architecture_analysis': {},
+            'migration_readiness': {}
+        }
+        
+        # Run language-specific analyzers
+        if project_info['languages'].get('Python', 0) > 0:
+            print("🐍 Analyzing Python code...")
+            results['python_analysis'] = self._analyze_python()
             
-        python_files = []
-        excluded_count = 0
+        if project_info['languages'].get('Go', 0) > 0:
+            print("🐹 Analyzing Go code...")
+            results['go_analysis'] = self._analyze_go()
+            
+        if project_info['languages'].get('JavaScript', 0) > 0:
+            print("📜 Analyzing JavaScript code...")
+            results['javascript_analysis'] = self._analyze_javascript()
+            
+        if project_info['languages'].get('TypeScript', 0) > 0:
+            print("📘 Analyzing TypeScript code...")
+            results['typescript_analysis'] = self._analyze_typescript()
         
-        for py_file in self.project_path.rglob('*.py'):
-            # Skip files in excluded directories
-            if any(excluded in py_file.parts for excluded in self.exclude_dirs):
-                excluded_count += 1
-                continue
-            python_files.append(py_file)
+        # Cross-language analysis
+        print("🔒 Running security scan across all languages...")
+        results['security_scan'] = self._cross_language_security_scan()
         
-        self.python_files = python_files
-        self.project_stats['excluded_python_files'] = excluded_count
-        return python_files
+        print("📦 Analyzing dependencies...")
+        results['dependency_analysis'] = self._analyze_dependencies()
+        
+        print("🏗️ Analyzing architecture...")
+        results['architecture_analysis'] = self._analyze_architecture()
+        
+        print("🚀 Assessing migration readiness...")
+        results['migration_readiness'] = self._assess_migration_readiness()
+        
+        # Generate summary
+        results['summary'] = self._generate_summary(results)
+        
+        # Add timing
+        results['project_info']['analysis_time'] = round(time.time() - start_time, 2)
+        
+        return results
     
-    def analyze_project_structure(self) -> Dict:
-        """Analyze overall project structure"""
-        print("📊 Analyzing project structure...")
+    def _analyze_project_structure(self) -> Dict:
+        """Detect languages and project structure"""
+        file_counts = Counter()
+        language_files = defaultdict(list)
+        service_directories = []
         
-        file_types = Counter()
-        python_locations = defaultdict(int)
+        # Language mappings
+        ext_to_language = {
+            '.py': 'Python',
+            '.go': 'Go',
+            '.js': 'JavaScript',
+            '.jsx': 'JavaScript',
+            '.ts': 'TypeScript',
+            '.tsx': 'TypeScript',
+            '.java': 'Java',
+            '.rs': 'Rust',
+            '.cpp': 'C++',
+            '.c': 'C',
+            '.cs': 'C#',
+            '.rb': 'Ruby',
+            '.php': 'PHP',
+            '.swift': 'Swift',
+            '.kt': 'Kotlin',
+            '.scala': 'Scala',
+            '.r': 'R',
+            '.m': 'Objective-C',
+            '.dart': 'Dart',
+            '.lua': 'Lua',
+            '.pl': 'Perl',
+            '.sh': 'Shell',
+            '.yaml': 'YAML',
+            '.yml': 'YAML',
+            '.json': 'JSON',
+            '.xml': 'XML',
+            '.sql': 'SQL',
+            '.proto': 'Protocol Buffers'
+        }
         
         for file_path in self.project_path.rglob('*'):
             if file_path.is_file():
                 if any(excluded in file_path.parts for excluded in self.exclude_dirs):
                     continue
-                    
-                ext = file_path.suffix.lower()
-                file_types[ext] += 1
                 
-                if ext == '.py':
-                    # Track where Python files are located
-                    if file_path.parent == self.project_path:
-                        python_locations['root'] += 1
-                    else:
-                        top_dir = file_path.relative_to(self.project_path).parts[0]
-                        python_locations[top_dir] += 1
+                ext = file_path.suffix.lower()
+                if ext in ext_to_language:
+                    lang = ext_to_language[ext]
+                    file_counts[lang] += 1
+                    if lang in ['Python', 'Go', 'JavaScript', 'TypeScript']:
+                        rel_path = file_path.relative_to(self.project_path)
+                        language_files[lang].append(rel_path)
+                
+                # Detect service directories
+                if file_path.name in ['go.mod', 'package.json', 'requirements.txt', 'pom.xml']:
+                    service_dir = file_path.parent.relative_to(self.project_path)
+                    if service_dir not in service_directories:
+                        service_directories.append(str(service_dir))
+        
+        # Determine primary language
+        primary_language = max(file_counts.items(), key=lambda x: x[1])[0] if file_counts else 'Unknown'
+        
+        # Check if it's a monorepo
+        is_monorepo = (
+            len([d for d in service_directories if '/' in d]) > 3 or
+            (file_counts.get('Go', 0) > 10 and file_counts.get('Python', 0) > 10) or
+            (file_counts.get('JavaScript', 0) + file_counts.get('TypeScript', 0) > 100 and 
+             (file_counts.get('Python', 0) > 10 or file_counts.get('Go', 0) > 10))
+        )
         
         return {
-            'file_types': dict(file_types.most_common(10)),
-            'python_distribution': dict(python_locations),
-            'is_mixed_language': file_types['.js'] > 0 or file_types['.ts'] > 0,
-            'primary_language': 'JavaScript/TypeScript' if file_types['.js'] + file_types['.ts'] > file_types['.py'] else 'Python'
+            'languages': dict(file_counts),
+            'primary_language': primary_language,
+            'language_files': dict(language_files),
+            'service_directories': service_directories,
+            'is_monorepo': is_monorepo,
+            'total_source_files': sum(file_counts.values())
         }
     
-    def analyze_project(self) -> Dict:
-        """Run complete analysis on the project"""
-        start_time = time.time()
-        
-        print(f"\n🔍 Analyzing Python code in: {self.project_path}")
-        print(f"   Excluding: {', '.join(sorted(self.exclude_dirs))}")
-        
-        # Get Python files first
-        python_files = self._get_python_files()
-        print(f"   Found {len(python_files)} Python files to analyze")
-        
-        if not python_files:
-            return {'error': 'No Python files found to analyze'}
+    def _analyze_python(self) -> Dict:
+        """Python-specific analysis"""
+        python_files = list(self.project_path.rglob('*.py'))
+        python_files = [f for f in python_files 
+                        if not any(excluded in f.parts for excluded in self.exclude_dirs)]
         
         results = {
-            'project_info': {
-                'path': str(self.project_path),
-                'python_files_analyzed': len(python_files),
-                'excluded_files': self.project_stats.get('excluded_python_files', 0),
-                'analysis_time': 0  # Will be updated at end
-            },
-            'project_structure': self.analyze_project_structure(),
-            'redundancy': self.find_redundant_code(),
-            'callbacks': self.analyze_callbacks(),
-            'unicode_issues': self.check_unicode_handling(),
-            'python3_compliance': self.check_python3_compliance(),
-            'modularity': self.assess_modularity(),
-            'api_analysis': self.analyze_apis(),
-            'security_issues': self.security_scan(),
-            'performance_issues': self.performance_analysis(),
-            'code_quality': self.analyze_code_quality()
+            'total_files': len(python_files),
+            'code_quality': self._analyze_python_quality(python_files),
+            'dependencies': self._analyze_python_dependencies(),
+            'frameworks': self._detect_python_frameworks(python_files),
+            'async_usage': self._analyze_python_async(python_files),
+            'type_hints': self._analyze_python_type_hints(python_files)
         }
-        
-        # Add analysis time
-        results['project_info']['analysis_time'] = round(time.time() - start_time, 2)
         
         return results
     
-    def find_redundant_code(self) -> Dict:
-        """Identify duplicate and redundant code blocks"""
-        print("🔄 Finding redundant code...")
+    def _analyze_go(self) -> Dict:
+        """Go-specific analysis"""
+        go_files = list(self.project_path.rglob('*.go'))
+        go_files = [f for f in go_files 
+                    if not any(excluded in f.parts for excluded in self.exclude_dirs)]
         
-        duplicates = defaultdict(list)
-        function_signatures = defaultdict(list)
-        import_patterns = defaultdict(int)
+        results = {
+            'total_files': len(go_files),
+            'modules': self._analyze_go_modules(),
+            'code_quality': self._analyze_go_quality(go_files),
+            'concurrency': self._analyze_go_concurrency(go_files),
+            'error_handling': self._analyze_go_error_handling(go_files),
+            'test_coverage': self._estimate_go_test_coverage(go_files)
+        }
         
-        for py_file in self._get_python_files():
+        return results
+    
+    def _analyze_javascript(self) -> Dict:
+        """JavaScript-specific analysis"""
+        js_files = []
+        for ext in ['*.js', '*.jsx']:
+            js_files.extend(self.project_path.rglob(ext))
+        js_files = [f for f in js_files 
+                    if not any(excluded in f.parts for excluded in self.exclude_dirs)]
+        
+        results = {
+            'total_files': len(js_files),
+            'frameworks': self._detect_js_frameworks(),
+            'code_quality': self._analyze_js_quality(js_files),
+            'modern_syntax': self._analyze_js_modern_syntax(js_files),
+            'react_patterns': self._analyze_react_patterns(js_files) if self._has_react() else {}
+        }
+        
+        return results
+    
+    def _analyze_typescript(self) -> Dict:
+        """TypeScript-specific analysis"""
+        ts_files = []
+        for ext in ['*.ts', '*.tsx']:
+            ts_files.extend(self.project_path.rglob(ext))
+        ts_files = [f for f in ts_files 
+                    if not any(excluded in f.parts for excluded in self.exclude_dirs)]
+        
+        results = {
+            'total_files': len(ts_files),
+            'strict_mode': self._check_ts_strict_mode(),
+            'type_safety': self._analyze_ts_type_safety(ts_files),
+            'interfaces': self._analyze_ts_interfaces(ts_files),
+            'react_patterns': self._analyze_react_patterns(ts_files) if self._has_react() else {}
+        }
+        
+        return results
+    
+    def _analyze_python_quality(self, files: List[Path]) -> Dict:
+        """Analyze Python code quality"""
+        issues = defaultdict(list)
+        metrics = {
+            'total_lines': 0,
+            'function_count': 0,
+            'class_count': 0,
+            'avg_function_length': 0
+        }
+        
+        function_lengths = []
+        
+        for file_path in files:
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
+                    lines = content.splitlines()
+                    metrics['total_lines'] += len(lines)
+                    
                     tree = ast.parse(content)
                     
-                # Analyze imports
-                for node in ast.walk(tree):
-                    if isinstance(node, ast.Import):
-                        for alias in node.names:
-                            import_patterns[alias.name] += 1
-                    elif isinstance(node, ast.ImportFrom):
-                        if node.module:
-                            import_patterns[node.module] += 1
-                    
-                # Analyze functions
-                for node in ast.walk(tree):
-                    if isinstance(node, ast.FunctionDef):
-                        sig = self._get_function_signature(node)
-                        rel_path = py_file.relative_to(self.project_path)
-                        function_signatures[sig].append({
-                            'file': str(rel_path),
-                            'line': node.lineno,
-                            'name': node.name,
-                            'size': node.end_lineno - node.lineno if node.end_lineno else 0
-                        })
+                    for node in ast.walk(tree):
+                        if isinstance(node, ast.FunctionDef):
+                            metrics['function_count'] += 1
+                            if hasattr(node, 'end_lineno'):
+                                length = node.end_lineno - node.lineno
+                                function_lengths.append(length)
+                                if length > 50:
+                                    issues['long_functions'].append({
+                                        'file': str(file_path.relative_to(self.project_path)),
+                                        'function': node.name,
+                                        'length': length
+                                    })
+                        elif isinstance(node, ast.ClassDef):
+                            metrics['class_count'] += 1
+                            
             except Exception as e:
-                self.issues['parse_errors'].append(f"{py_file}: {e}")
+                self.issues['python_parse_errors'].append(f"{file_path}: {e}")
         
-        # Find duplicates
-        for sig, locations in function_signatures.items():
-            if len(locations) > 1:
-                duplicates[sig] = locations
-        
-        # Find most common imports
-        common_imports = sorted(import_patterns.items(), key=lambda x: x[1], reverse=True)[:20]
+        if function_lengths:
+            metrics['avg_function_length'] = sum(function_lengths) / len(function_lengths)
         
         return {
-            'duplicates': dict(duplicates),
-            'total_functions': sum(len(v) for v in function_signatures.values()),
-            'duplicate_functions': len(duplicates),
-            'common_imports': common_imports,
-            'potential_savings': sum(loc['size'] for locs in duplicates.values() for loc in locs[1:])
+            'metrics': metrics,
+            'issues': dict(issues)
         }
     
-    def analyze_callbacks(self) -> Dict:
-        """Find and analyze callback patterns"""
-        print("📞 Analyzing callbacks...")
+    def _analyze_go_modules(self) -> Dict:
+        """Analyze Go modules"""
+        go_mods = list(self.project_path.rglob('go.mod'))
+        modules = []
         
-        callbacks = defaultdict(list)
-        callback_patterns = [
-            (r'callback\s*=', 'callback assignment'),
-            (r'on[A-Z]\w+\s*=', 'event handler'),
-            (r'\.subscribe\(', 'subscription'),
-            (r'\.then\(', 'promise then'),
-            (r'addEventListener\(', 'event listener'),
-            (r'@\w+\.callback', 'decorator callback'),
-            (r'register_callback\(', 'callback registration')
-        ]
-        
-        for py_file in self._get_python_files():
+        for mod_file in go_mods:
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(mod_file, 'r') as f:
                     content = f.read()
+                    module_match = re.search(r'module\s+(\S+)', content)
+                    go_version_match = re.search(r'go\s+(\d+\.\d+)', content)
                     
-                for pattern, pattern_type in callback_patterns:
-                    matches = re.finditer(pattern, content)
-                    for match in matches:
-                        line_no = content[:match.start()].count('\n') + 1
-                        rel_path = py_file.relative_to(self.project_path)
-                        callbacks[str(rel_path)].append({
-                            'pattern': pattern,
-                            'type': pattern_type,
-                            'line': line_no,
-                            'context': content[max(0, match.start()-30):match.end()+30].strip()
+                    if module_match:
+                        rel_path = mod_file.parent.relative_to(self.project_path)
+                        modules.append({
+                            'path': str(rel_path),
+                            'module': module_match.group(1),
+                            'go_version': go_version_match.group(1) if go_version_match else 'unknown'
                         })
             except Exception as e:
-                self.issues['callback_errors'].append(f"{py_file}: {e}")
+                self.issues['go_mod_errors'].append(f"{mod_file}: {e}")
         
         return {
-            'callbacks_found': dict(callbacks),
-            'total_callbacks': sum(len(v) for v in callbacks.values()),
-            'consolidation_opportunities': self._find_callback_consolidation(callbacks),
-            'callback_types': self._categorize_callbacks(callbacks)
+            'modules': modules,
+            'total_modules': len(modules),
+            'is_multi_module': len(modules) > 1
         }
     
-    def check_unicode_handling(self) -> Dict:
-        """Check for proper Unicode and UTF-8 handling"""
-        print("🌐 Checking Unicode handling...")
-        
-        unicode_issues = []
-        proper_handling = []
-        encoding_declarations = 0
+    def _analyze_go_quality(self, files: List[Path]) -> Dict:
+        """Analyze Go code quality"""
+        issues = defaultdict(list)
+        metrics = {
+            'total_lines': 0,
+            'function_count': 0,
+            'interface_count': 0,
+            'struct_count': 0
+        }
         
         patterns = {
-            'good': [
-                r'encoding\s*=\s*[\'"]utf-?8[\'"]',
-                r'\.encode\([\'"]utf-?8[\'"]',
-                r'\.decode\([\'"]utf-?8[\'"]',
-                r'# -\*- coding: utf-?8 -\*-',
-                r'errors\s*=\s*[\'"](?:ignore|replace|surrogateescape)[\'"]'
+            'function': r'func\s+(?:\([^)]+\)\s+)?(\w+)',
+            'interface': r'type\s+(\w+)\s+interface\s*{',
+            'struct': r'type\s+(\w+)\s+struct\s*{',
+            'error_check': r'if\s+err\s*!=\s*nil',
+            'goroutine': r'go\s+\w+',
+            'channel': r'chan\s+\w+|<-chan|chan<-'
+        }
+        
+        for file_path in files:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    lines = content.splitlines()
+                    metrics['total_lines'] += len(lines)
+                    
+                    # Count patterns
+                    for name, pattern in patterns.items():
+                        matches = re.findall(pattern, content)
+                        if name == 'function':
+                            metrics['function_count'] += len(matches)
+                        elif name == 'interface':
+                            metrics['interface_count'] += len(matches)
+                        elif name == 'struct':
+                            metrics['struct_count'] += len(matches)
+                    
+                    # Check for common issues
+                    if not re.search(r'if\s+err\s*!=\s*nil', content) and 'error' in content:
+                        issues['missing_error_handling'].append(
+                            str(file_path.relative_to(self.project_path))
+                        )
+                        
+            except Exception as e:
+                self.issues['go_parse_errors'].append(f"{file_path}: {e}")
+        
+        return {
+            'metrics': metrics,
+            'issues': dict(issues)
+        }
+    
+    def _analyze_js_quality(self, files: List[Path]) -> Dict:
+        """Analyze JavaScript code quality"""
+        issues = defaultdict(list)
+        metrics = {
+            'total_lines': 0,
+            'function_count': 0,
+            'class_count': 0,
+            'arrow_functions': 0,
+            'async_functions': 0
+        }
+        
+        patterns = {
+            'function': r'function\s+\w+',
+            'arrow_function': r'=>',
+            'class': r'class\s+\w+',
+            'async_function': r'async\s+(?:function|\()',
+            'console_log': r'console\.\w+',
+            'var_usage': r'\bvar\s+\w+'
+        }
+        
+        for file_path in files[:100]:  # Sample first 100 files for performance
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    lines = content.splitlines()
+                    metrics['total_lines'] += len(lines)
+                    
+                    # Count patterns
+                    metrics['function_count'] += len(re.findall(patterns['function'], content))
+                    metrics['arrow_functions'] += len(re.findall(patterns['arrow_function'], content))
+                    metrics['class_count'] += len(re.findall(patterns['class'], content))
+                    metrics['async_functions'] += len(re.findall(patterns['async_function'], content))
+                    
+                    # Check for issues
+                    console_matches = re.findall(patterns['console_log'], content)
+                    if console_matches:
+                        issues['console_statements'].append({
+                            'file': str(file_path.relative_to(self.project_path)),
+                            'count': len(console_matches)
+                        })
+                    
+                    var_matches = re.findall(patterns['var_usage'], content)
+                    if var_matches:
+                        issues['var_usage'].append({
+                            'file': str(file_path.relative_to(self.project_path)),
+                            'count': len(var_matches)
+                        })
+                        
+            except Exception as e:
+                self.issues['js_parse_errors'].append(f"{file_path}: {e}")
+        
+        return {
+            'metrics': metrics,
+            'issues': dict(issues),
+            'sampled_files': min(100, len(files))
+        }
+    
+    def _cross_language_security_scan(self) -> Dict:
+        """Security scan across all languages"""
+        vulnerabilities = defaultdict(list)
+        
+        # Common security patterns
+        security_patterns = {
+            'hardcoded_secret': [
+                r'(?:password|passwd|pwd|secret|api_key|apikey|token)\s*[:=]\s*["\'][^"\']{8,}["\']',
+                r'(?:AWS|aws)_?(?:SECRET|secret)_?(?:ACCESS|access)_?(?:KEY|key)',
+                r'(?:PRIVATE|private)_?(?:KEY|key)',
             ],
-            'bad': [
-                r'\.encode\(\s*\)',
-                r'\.decode\(\s*\)',
-                r'str\([^,)]+\)',  # str() without encoding
-                r'unicode\(',      # Python 2 style
+            'sql_injection': [
+                r'(?:SELECT|INSERT|UPDATE|DELETE|DROP).+\+\s*[\'"]',
+                r'(?:execute|query)\([\'"].*%s',
+                r'string\.Format.*(?:SELECT|INSERT|UPDATE|DELETE)',
             ],
-            'risky': [
-                r'open\([^,)]+\)',  # open() without encoding
-                r'codecs\.open\([^,)]+,[^,)]+\)',  # codecs without encoding
+            'command_injection': [
+                r'exec\(|eval\(|system\(',
+                r'subprocess\.(?:call|run|Popen).*shell\s*=\s*True',
+                r'os\.system\(',
+            ],
+            'weak_crypto': [
+                r'md5|MD5|sha1|SHA1',
+                r'DES|3DES|RC4',
+            ],
+            'insecure_random': [
+                r'math\.random\(\)|random\.random\(\)',
+                r'rand\(\)|rand\.Int\(\)',
+            ],
+            'cors_wildcard': [
+                r'Access-Control-Allow-Origin.*\*',
+                r'AllowOrigins:\s*\[\s*["\']?\*',
             ]
         }
         
-        for py_file in self._get_python_files():
-            try:
-                with open(py_file, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    lines = content.splitlines()
-                    
-                # Check for encoding declaration
-                if lines and ('coding' in lines[0] or 'coding' in (lines[1] if len(lines) > 1 else '')):
-                    encoding_declarations += 1
-                    
-                rel_path = py_file.relative_to(self.project_path)
+        # Scan all source files
+        for ext in ['.py', '.go', '.js', '.jsx', '.ts', '.tsx', '.java', '.cs']:
+            for file_path in self.project_path.rglob(f'*{ext}'):
+                if any(excluded in file_path.parts for excluded in self.exclude_dirs):
+                    continue
                 
-                for pattern in patterns['bad']:
-                    matches = re.finditer(pattern, content)
-                    for match in matches:
-                        line_no = content[:match.start()].count('\n') + 1
-                        unicode_issues.append({
-                            'file': str(rel_path),
-                            'line': line_no,
-                            'issue': f"Potential encoding issue: {match.group()[:30]}",
-                            'severity': 'high'
-                        })
-                
-                for pattern in patterns['risky']:
-                    matches = re.finditer(pattern, content)
-                    for match in matches:
-                        line_no = content[:match.start()].count('\n') + 1
-                        unicode_issues.append({
-                            'file': str(rel_path),
-                            'line': line_no,
-                            'issue': f"Missing encoding parameter: {match.group()[:30]}",
-                            'severity': 'medium'
-                        })
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
                         
-                has_good_practices = False
-                for pattern in patterns['good']:
-                    if re.search(pattern, content):
-                        has_good_practices = True
-                        break
-                        
-                if has_good_practices:
-                    proper_handling.append(str(rel_path))
-                        
-            except Exception as e:
-                self.issues['unicode_errors'].append(f"{py_file}: {e}")
+                    for vuln_type, patterns in security_patterns.items():
+                        for pattern in patterns:
+                            matches = re.finditer(pattern, content, re.IGNORECASE)
+                            for match in matches:
+                                line_no = content[:match.start()].count('\n') + 1
+                                vulnerabilities[vuln_type].append({
+                                    'file': str(file_path.relative_to(self.project_path)),
+                                    'line': line_no,
+                                    'language': self._get_language_from_ext(ext),
+                                    'match': match.group()[:50] + '...' if len(match.group()) > 50 else match.group()
+                                })
+                except Exception as e:
+                    self.issues['security_scan_errors'].append(f"{file_path}: {e}")
+        
+        # Summary
+        total_issues = sum(len(v) for v in vulnerabilities.values())
         
         return {
-            'issues': unicode_issues,
-            'files_with_proper_handling': list(set(proper_handling)),
-            'encoding_declarations': encoding_declarations,
-            'recommendation': "Ensure all string encoding/decoding uses explicit UTF-8",
-            'high_severity_count': len([i for i in unicode_issues if i.get('severity') == 'high']),
-            'medium_severity_count': len([i for i in unicode_issues if i.get('severity') == 'medium'])
-        }
-    
-    def check_python3_compliance(self) -> Dict:
-        """Verify Python 3 compliance"""
-        print("🐍 Checking Python 3 compliance...")
-        
-        py2_patterns = {
-            'print_statement': r'print\s+[^(]',
-            'xrange': r'\bxrange\s*\(',
-            'unicode_literal': r'\bunicode\s*\(',
-            'iteritems': r'\.iteritems\s*\(',
-            'iterkeys': r'\.iterkeys\s*\(',
-            'itervalues': r'\.itervalues\s*\(',
-            'raw_input': r'\braw_input\s*\(',
-            'execfile': r'\bexecfile\s*\(',
-            'has_key': r'\.has_key\s*\(',
-            'apply': r'\bapply\s*\(',
-            'buffer': r'\bbuffer\s*\(',
-            'cmp': r'\bcmp\s*\(',
-            'coerce': r'\bcoerce\s*\(',
-            'file_builtin': r'\bfile\s*\(',
-            'long_literal': r'\b\d+[lL]\b',
-            'backticks': r'`[^`]+`',
-            'ne_operator': r'<>',
-            'dict_methods': r'\.(?:viewkeys|viewvalues|viewitems)\s*\('
-        }
-        
-        compliance_issues = defaultdict(list)
-        
-        for py_file in self._get_python_files():
-            try:
-                with open(py_file, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    
-                rel_path = py_file.relative_to(self.project_path)
-                    
-                for name, pattern in py2_patterns.items():
-                    matches = re.finditer(pattern, content)
-                    for match in matches:
-                        line_no = content[:match.start()].count('\n') + 1
-                        compliance_issues[str(rel_path)].append({
-                            'type': name,
-                            'line': line_no,
-                            'code': match.group()[:50]
-                        })
-                        
-            except Exception as e:
-                self.issues['py3_errors'].append(f"{py_file}: {e}")
-        
-        return {
-            'python2_code_found': dict(compliance_issues),
-            'is_compliant': len(compliance_issues) == 0,
-            'total_issues': sum(len(issues) for issues in compliance_issues.values()),
-            'issue_types': Counter(issue['type'] for issues in compliance_issues.values() for issue in issues)
-        }
-    
-    def assess_modularity(self) -> Dict:
-        """Assess code modularity"""
-        print("📦 Assessing modularity...")
-        
-        module_metrics = {}
-        
-        for py_file in self._get_python_files():
-            try:
-                with open(py_file, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    tree = ast.parse(content)
-                    
-                functions = [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
-                classes = [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
-                
-                # Calculate metrics
-                function_lengths = []
-                for func in functions:
-                    if func.end_lineno:
-                        length = func.end_lineno - func.lineno
-                        function_lengths.append(length)
-                
-                avg_function_length = sum(function_lengths) / len(function_lengths) if function_lengths else 0
-                max_function_length = max(function_lengths) if function_lengths else 0
-                
-                # Count imports
-                imports = len([n for n in ast.walk(tree) if isinstance(n, (ast.Import, ast.ImportFrom))])
-                
-                # Measure complexity (simplified)
-                complexity = len(functions) + len(classes) * 2 + imports
-                
-                rel_path = py_file.relative_to(self.project_path)
-                module_metrics[str(rel_path)] = {
-                    'functions': len(functions),
-                    'classes': len(classes),
-                    'avg_function_length': round(avg_function_length, 1),
-                    'max_function_length': max_function_length,
-                    'imports': imports,
-                    'complexity_score': complexity,
-                    'is_modular': avg_function_length < 50 and max_function_length < 100,
-                    'lines_of_code': len(content.splitlines())
-                }
-                
-            except Exception as e:
-                self.issues['modularity_errors'].append(f"{py_file}: {e}")
-        
-        # Calculate aggregates
-        all_metrics = list(module_metrics.values())
-        return {
-            'file_metrics': module_metrics,
-            'summary': {
-                'total_functions': sum(m['functions'] for m in all_metrics),
-                'total_classes': sum(m['classes'] for m in all_metrics),
-                'avg_file_complexity': sum(m['complexity_score'] for m in all_metrics) / len(all_metrics) if all_metrics else 0,
-                'modular_files': sum(1 for m in all_metrics if m['is_modular']),
-                'total_lines_of_code': sum(m['lines_of_code'] for m in all_metrics)
+            'vulnerabilities': dict(vulnerabilities),
+            'total_issues': total_issues,
+            'severity_levels': {
+                'critical': len(vulnerabilities.get('sql_injection', [])) + 
+                           len(vulnerabilities.get('command_injection', [])),
+                'high': len(vulnerabilities.get('hardcoded_secret', [])) + 
+                        len(vulnerabilities.get('weak_crypto', [])),
+                'medium': len(vulnerabilities.get('insecure_random', [])) + 
+                          len(vulnerabilities.get('cors_wildcard', []))
             }
         }
     
-    def analyze_apis(self) -> Dict:
-        """Analyze API endpoints and structure"""
-        print("🌐 Analyzing APIs...")
+    def _analyze_dependencies(self) -> Dict:
+        """Analyze project dependencies across languages"""
+        dependencies = {}
         
-        api_patterns = [
-            # Flask patterns
-            (r'@app\.route\([\'"]([^\'"])+[\'"]\)', 'flask'),
-            (r'@blueprint\.route\([\'"]([^\'"])+[\'"]\)', 'flask_blueprint'),
-            # FastAPI patterns
-            (r'@app\.(get|post|put|delete|patch)\([\'"]([^\'"])+[\'"]\)', 'fastapi'),
-            (r'@router\.(get|post|put|delete|patch)\([\'"]([^\'"])+[\'"]\)', 'fastapi_router'),
-            # Django patterns
-            (r'path\([\'"]([^\'"])+[\'"]', 'django'),
-            (r'url\(r[\'"]\^([^\'"])+\$?[\'"]', 'django_legacy'),
-            # Generic REST patterns
-            (r'@api\.(get|post|put|delete|patch)', 'generic_api'),
-            (r'\.add_route\([\'"]([^\'"])+[\'"]', 'generic_route')
-        ]
+        # Python dependencies
+        req_files = ['requirements.txt', 'Pipfile', 'pyproject.toml', 'setup.py']
+        for req_file in req_files:
+            req_path = self.project_path / req_file
+            if req_path.exists():
+                try:
+                    with open(req_path, 'r') as f:
+                        content = f.read()
+                    dependencies['python'] = {
+                        'file': req_file,
+                        'count': len([l for l in content.splitlines() if l.strip() and not l.startswith('#')])
+                    }
+                    break
+                except:
+                    pass
         
-        endpoints = defaultdict(list)
-        api_frameworks = set()
-        
-        for py_file in self._get_python_files():
+        # JavaScript/TypeScript dependencies
+        package_json = self.project_path / 'package.json'
+        if package_json.exists():
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(package_json, 'r') as f:
+                    pkg = json.load(f)
+                dependencies['javascript'] = {
+                    'dependencies': len(pkg.get('dependencies', {})),
+                    'devDependencies': len(pkg.get('devDependencies', {})),
+                    'total': len(pkg.get('dependencies', {})) + len(pkg.get('devDependencies', {}))
+                }
+            except:
+                pass
+        
+        # Go dependencies
+        go_mod = self.project_path / 'go.mod'
+        if go_mod.exists():
+            try:
+                with open(go_mod, 'r') as f:
                     content = f.read()
-                    
-                rel_path = py_file.relative_to(self.project_path)
-                    
-                for pattern, framework in api_patterns:
-                    matches = re.finditer(pattern, content)
-                    for match in matches:
-                        api_frameworks.add(framework)
-                        line_no = content[:match.start()].count('\n') + 1
-                        
-                        # Try to extract the endpoint path
-                        endpoint_match = re.search(r'[\'"]([^\'"]+)[\'"]', match.group())
-                        endpoint_path = endpoint_match.group(1) if endpoint_match else 'unknown'
-                        
-                        endpoints[str(rel_path)].append({
-                            'line': line_no,
-                            'endpoint': endpoint_path,
-                            'framework': framework,
-                            'full_match': match.group()[:100]
-                        })
-                        
-            except Exception as e:
-                self.issues['api_errors'].append(f"{py_file}: {e}")
+                require_matches = re.findall(r'require\s*\(([^)]+)\)', content, re.DOTALL)
+                if require_matches:
+                    deps = [l.strip() for l in require_matches[0].splitlines() if l.strip()]
+                    dependencies['go'] = {
+                        'count': len(deps)
+                    }
+            except:
+                pass
         
-        # Group endpoints by path
-        all_endpoints = []
-        for file_endpoints in endpoints.values():
-            all_endpoints.extend([e['endpoint'] for e in file_endpoints])
+        return dependencies
+    
+    def _analyze_architecture(self) -> Dict:
+        """Analyze project architecture"""
+        architecture = {
+            'patterns': [],
+            'services': [],
+            'api_style': None,
+            'frontend_framework': None,
+            'backend_framework': None,
+            'database_detected': []
+        }
         
-        endpoint_counts = Counter(all_endpoints)
+        # Detect microservices
+        service_indicators = ['service', 'api', 'gateway', 'worker', 'handler']
+        for path in self.project_path.iterdir():
+            if path.is_dir() and any(ind in path.name.lower() for ind in service_indicators):
+                architecture['services'].append(path.name)
+        
+        # Detect API style
+        if any(self.project_path.rglob('**/graphql/**')):
+            architecture['api_style'] = 'GraphQL'
+        elif any(self.project_path.rglob('**/*_pb2.py')) or any(self.project_path.rglob('*.proto')):
+            architecture['api_style'] = 'gRPC'
+        else:
+            architecture['api_style'] = 'REST'
+        
+        # Detect frameworks
+        if (self.project_path / 'package.json').exists():
+            try:
+                with open(self.project_path / 'package.json', 'r') as f:
+                    pkg = json.load(f)
+                    deps = pkg.get('dependencies', {})
+                    if 'react' in deps:
+                        architecture['frontend_framework'] = 'React'
+                    elif 'vue' in deps:
+                        architecture['frontend_framework'] = 'Vue'
+                    elif '@angular/core' in deps:
+                        architecture['frontend_framework'] = 'Angular'
+            except:
+                pass
+        
+        # Backend framework detection
+        if any(self.project_path.rglob('**/flask/**')) or any(self.project_path.rglob('**/app.py')):
+            architecture['backend_framework'] = 'Flask'
+        elif any(self.project_path.rglob('**/django/**')) or (self.project_path / 'manage.py').exists():
+            architecture['backend_framework'] = 'Django'
+        elif any(self.project_path.rglob('**/fastapi/**')):
+            architecture['backend_framework'] = 'FastAPI'
+        elif any(self.project_path.rglob('**/gin/**')):
+            architecture['backend_framework'] = 'Gin (Go)'
+        
+        # Database detection
+        db_patterns = {
+            'PostgreSQL': ['psycopg', 'postgresql', 'postgres'],
+            'MySQL': ['mysqlclient', 'pymysql', 'mysql'],
+            'MongoDB': ['pymongo', 'mongodb'],
+            'Redis': ['redis', 'redis-py'],
+            'SQLite': ['sqlite3', 'sqlite'],
+            'Elasticsearch': ['elasticsearch', 'elastic']
+        }
+        
+        all_files_sample = list(self.project_path.rglob('*'))[:1000]
+        for file_path in all_files_sample:
+            if file_path.is_file():
+                try:
+                    content = file_path.read_text()
+                    for db, patterns in db_patterns.items():
+                        if any(pattern in content.lower() for pattern in patterns):
+                            if db not in architecture['database_detected']:
+                                architecture['database_detected'].append(db)
+                except:
+                    continue
+        
+        return architecture
+    
+    def _assess_migration_readiness(self) -> Dict:
+        """Assess readiness for microservices migration"""
+        readiness = {
+            'score': 0,
+            'strengths': [],
+            'weaknesses': [],
+            'recommendations': []
+        }
+        
+        # Check for existing microservices patterns
+        if len(self._find_services()) > 3:
+            readiness['strengths'].append("Already has service-oriented structure")
+            readiness['score'] += 20
+        else:
+            readiness['weaknesses'].append("Monolithic structure needs decomposition")
+            readiness['recommendations'].append("Identify bounded contexts for service extraction")
+        
+        # Check for API gateway
+        if any(self.project_path.rglob('**/gateway/**')):
+            readiness['strengths'].append("API Gateway pattern implemented")
+            readiness['score'] += 15
+        else:
+            readiness['recommendations'].append("Implement API Gateway for service routing")
+        
+        # Check for containerization
+        if (self.project_path / 'Dockerfile').exists() or any(self.project_path.rglob('**/Dockerfile')):
+            readiness['strengths'].append("Containerization in place")
+            readiness['score'] += 15
+        else:
+            readiness['weaknesses'].append("No containerization found")
+            readiness['recommendations'].append("Add Dockerfiles for each service")
+        
+        # Check for orchestration
+        if any(self.project_path.rglob('**/*.yaml')) and (
+            any(self.project_path.rglob('**/k8s/**')) or 
+            any(self.project_path.rglob('**/kubernetes/**'))
+        ):
+            readiness['strengths'].append("Kubernetes configurations found")
+            readiness['score'] += 20
+        else:
+            readiness['recommendations'].append("Add Kubernetes manifests for orchestration")
+        
+        # Check for service mesh
+        if any(self.project_path.rglob('**/istio/**')) or any(self.project_path.rglob('**/linkerd/**')):
+            readiness['strengths'].append("Service mesh configuration detected")
+            readiness['score'] += 10
+        
+        # Check for monitoring
+        if any(self.project_path.rglob('**/prometheus/**')) or any(self.project_path.rglob('**/grafana/**')):
+            readiness['strengths'].append("Monitoring infrastructure present")
+            readiness['score'] += 10
+        else:
+            readiness['recommendations'].append("Implement distributed monitoring and tracing")
+        
+        # Check for CI/CD
+        if (self.project_path / '.github' / 'workflows').exists() or \
+           (self.project_path / '.gitlab-ci.yml').exists() or \
+           (self.project_path / 'Jenkinsfile').exists():
+            readiness['strengths'].append("CI/CD pipeline configured")
+            readiness['score'] += 10
+        else:
+            readiness['recommendations'].append("Set up CI/CD pipelines for automated deployment")
+        
+        # Final assessment
+        if readiness['score'] >= 70:
+            readiness['assessment'] = "Ready for microservices migration"
+        elif readiness['score'] >= 40:
+            readiness['assessment'] = "Partially ready, needs some preparation"
+        else:
+            readiness['assessment'] = "Significant preparation needed"
+        
+        return readiness
+    
+    def _find_services(self) -> List[str]:
+        """Find potential service directories"""
+        services = []
+        service_indicators = ['service', 'api', 'gateway', 'worker', 'microservice']
+        
+        for path in self.project_path.iterdir():
+            if path.is_dir():
+                if any(ind in path.name.lower() for ind in service_indicators):
+                    services.append(path.name)
+                elif (path / 'go.mod').exists() or (path / 'package.json').exists():
+                    services.append(path.name)
+        
+        return services
+    
+    def _generate_summary(self, results: Dict) -> Dict:
+        """Generate executive summary"""
+        summary = {
+            'total_files': results['project_info'].get('total_source_files', 0),
+            'languages': results['project_info']['languages'],
+            'primary_language': results['project_info']['primary_language'],
+            'critical_issues': 0,
+            'migration_score': results.get('migration_readiness', {}).get('score', 0),
+            'key_findings': [],
+            'immediate_actions': []
+        }
+        
+        # Count critical issues
+        if 'security_scan' in results:
+            summary['critical_issues'] += results['security_scan'].get('severity_levels', {}).get('critical', 0)
+        
+        # Key findings
+        if results['project_info']['is_monorepo']:
+            summary['key_findings'].append("Monorepo structure detected - good for microservices migration")
+        
+        if results.get('python_analysis', {}).get('total_files', 0) > 100:
+            summary['key_findings'].append(f"Large Python codebase with {results['python_analysis']['total_files']} files")
+        
+        if results.get('go_analysis', {}).get('modules', {}).get('is_multi_module'):
+            summary['key_findings'].append("Multiple Go modules detected - modular architecture")
+        
+        # Immediate actions
+        if summary['critical_issues'] > 0:
+            summary['immediate_actions'].append(f"Fix {summary['critical_issues']} critical security vulnerabilities")
+        
+        if results.get('migration_readiness', {}).get('score', 0) < 40:
+            summary['immediate_actions'].append("Prepare infrastructure for microservices migration")
+        
+        return summary
+    
+    # Helper methods
+    def _get_language_from_ext(self, ext: str) -> str:
+        """Get language name from file extension"""
+        ext_map = {
+            '.py': 'Python',
+            '.go': 'Go',
+            '.js': 'JavaScript',
+            '.jsx': 'JavaScript',
+            '.ts': 'TypeScript',
+            '.tsx': 'TypeScript',
+            '.java': 'Java',
+            '.cs': 'C#'
+        }
+        return ext_map.get(ext, 'Unknown')
+    
+    def _detect_python_frameworks(self, files: List[Path]) -> List[str]:
+        """Detect Python frameworks in use"""
+        frameworks = []
+        
+        # Check imports in sample of files
+        for file_path in files[:50]:
+            try:
+                with open(file_path, 'r') as f:
+                    content = f.read()
+                    if 'from flask' in content or 'import flask' in content:
+                        frameworks.append('Flask')
+                    if 'from django' in content or 'import django' in content:
+                        frameworks.append('Django')
+                    if 'from fastapi' in content or 'import fastapi' in content:
+                        frameworks.append('FastAPI')
+                    if 'import asyncio' in content:
+                        frameworks.append('AsyncIO')
+            except:
+                continue
+        
+        return list(set(frameworks))
+    
+    def _analyze_python_dependencies(self) -> Dict:
+        """Analyze Python dependencies"""
+        deps = {'count': 0, 'file': None}
+        
+        for dep_file in ['requirements.txt', 'Pipfile', 'pyproject.toml']:
+            path = self.project_path / dep_file
+            if path.exists():
+                deps['file'] = dep_file
+                try:
+                    content = path.read_text()
+                    if dep_file == 'requirements.txt':
+                        deps['count'] = len([l for l in content.splitlines() 
+                                           if l.strip() and not l.startswith('#')])
+                    break
+                except:
+                    pass
+        
+        return deps
+    
+    def _analyze_python_async(self, files: List[Path]) -> Dict:
+        """Analyze async/await usage in Python"""
+        async_stats = {
+            'files_with_async': 0,
+            'async_functions': 0,
+            'await_statements': 0
+        }
+        
+        for file_path in files[:100]:  # Sample
+            try:
+                with open(file_path, 'r') as f:
+                    content = f.read()
+                    if 'async def' in content or 'async with' in content:
+                        async_stats['files_with_async'] += 1
+                        async_stats['async_functions'] += len(re.findall(r'async\s+def', content))
+                        async_stats['await_statements'] += len(re.findall(r'await\s+', content))
+            except:
+                continue
+        
+        return async_stats
+    
+    def _analyze_python_type_hints(self, files: List[Path]) -> Dict:
+        """Analyze type hint usage in Python"""
+        type_stats = {
+            'files_with_hints': 0,
+            'functions_with_hints': 0,
+            'total_functions': 0
+        }
+        
+        for file_path in files[:100]:  # Sample
+            try:
+                with open(file_path, 'r') as f:
+                    content = f.read()
+                    if '->' in content or ': ' in content:
+                        type_stats['files_with_hints'] += 1
+                    
+                    # Count functions with return type hints
+                    type_stats['functions_with_hints'] += len(re.findall(r'def\s+\w+\([^)]*\)\s*->', content))
+                    type_stats['total_functions'] += len(re.findall(r'def\s+\w+\(', content))
+            except:
+                continue
+        
+        if type_stats['total_functions'] > 0:
+            type_stats['percentage'] = round(
+                type_stats['functions_with_hints'] / type_stats['total_functions'] * 100, 1
+            )
+        
+        return type_stats
+    
+    def _analyze_go_concurrency(self, files: List[Path]) -> Dict:
+        """Analyze Go concurrency patterns"""
+        concurrency = {
+            'goroutines': 0,
+            'channels': 0,
+            'mutexes': 0,
+            'waitgroups': 0
+        }
+        
+        for file_path in files[:100]:  # Sample
+            try:
+                with open(file_path, 'r') as f:
+                    content = f.read()
+                    concurrency['goroutines'] += len(re.findall(r'go\s+\w+', content))
+                    concurrency['channels'] += len(re.findall(r'chan\s+', content))
+                    concurrency['mutexes'] += len(re.findall(r'sync\.Mutex', content))
+                    concurrency['waitgroups'] += len(re.findall(r'sync\.WaitGroup', content))
+            except:
+                continue
+        
+        return concurrency
+    
+    def _analyze_go_error_handling(self, files: List[Path]) -> Dict:
+        """Analyze Go error handling patterns"""
+        error_handling = {
+            'error_checks': 0,
+            'panic_usage': 0,
+            'recover_usage': 0
+        }
+        
+        for file_path in files[:100]:  # Sample
+            try:
+                with open(file_path, 'r') as f:
+                    content = f.read()
+                    error_handling['error_checks'] += len(re.findall(r'if\s+err\s*!=\s*nil', content))
+                    error_handling['panic_usage'] += len(re.findall(r'panic\(', content))
+                    error_handling['recover_usage'] += len(re.findall(r'recover\(\)', content))
+            except:
+                continue
+        
+        return error_handling
+    
+    def _estimate_go_test_coverage(self, files: List[Path]) -> Dict:
+        """Estimate Go test coverage"""
+        test_files = [f for f in files if '_test.go' in f.name]
+        source_files = [f for f in files if '_test.go' not in f.name]
         
         return {
-            'endpoints': dict(endpoints),
-            'total_endpoints': sum(len(v) for v in endpoints.values()),
-            'frameworks_detected': list(api_frameworks),
-            'duplicate_endpoints': {k: v for k, v in endpoint_counts.items() if v > 1},
-            'api_files': len(endpoints)
+            'test_files': len(test_files),
+            'source_files': len(source_files),
+            'test_ratio': round(len(test_files) / len(source_files) * 100, 1) if source_files else 0
         }
     
-    def security_scan(self) -> Dict:
-        """Basic security vulnerability scan"""
-        print("🔒 Running security scan...")
+    def _detect_js_frameworks(self) -> List[str]:
+        """Detect JavaScript frameworks"""
+        frameworks = []
         
-        security_patterns = {
-            'hardcoded_password': (r'(?:password|passwd|pwd)\s*=\s*[\'"][^\'"]{4,}[\'"]', 'high'),
-            'hardcoded_secret': (r'(?:secret|key|token|api_key)\s*=\s*[\'"][^\'"]{8,}[\'"]', 'high'),
-            'sql_injection': (r'(?:SELECT|INSERT|UPDATE|DELETE|DROP|UNION).+[\'"]?\s*\+\s*\w+|%s|format\(|f[\'"].*{', 'high'),
-            'eval_usage': (r'\beval\s*\(', 'high'),
-            'exec_usage': (r'\bexec\s*\(', 'high'),
-            'pickle_load': (r'pickle\.(?:load|loads)\s*\(', 'medium'),
-            'yaml_load': (r'yaml\.(?:load|load_all)\s*\((?!.*Loader)', 'medium'),
-            'shell_injection': (r'(?:subprocess|os)\.\w+\(.*shell\s*=\s*True', 'high'),
-            'weak_random': (r'random\.(?:random|randint|choice)\s*\(', 'low'),
-            'md5_usage': (r'hashlib\.md5\s*\(', 'medium'),
-            'debug_enabled': (r'DEBUG\s*=\s*True', 'medium'),
-            'cors_wildcard': (r'Access-Control-Allow-Origin.*\*', 'medium'),
-            'unvalidated_redirect': (r'redirect\([^)]*request\.[^)]+\)', 'medium')
-        }
-        
-        vulnerabilities = defaultdict(list)
-        
-        for py_file in self._get_python_files():
+        package_json = self.project_path / 'package.json'
+        if package_json.exists():
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
-                    content = f.read()
+                with open(package_json, 'r') as f:
+                    pkg = json.load(f)
+                    deps = {**pkg.get('dependencies', {}), **pkg.get('devDependencies', {})}
                     
-                rel_path = py_file.relative_to(self.project_path)
-                    
-                for vuln_type, (pattern, severity) in security_patterns.items():
-                    matches = re.finditer(pattern, content, re.IGNORECASE)
-                    for match in matches:
-                        line_no = content[:match.start()].count('\n') + 1
-                        
-                        # Don't flag test files for some patterns
-                        if 'test' in str(rel_path).lower() and vuln_type in ['hardcoded_password', 'debug_enabled']:
-                            continue
-                            
-                        vulnerabilities[vuln_type].append({
-                            'file': str(rel_path),
-                            'line': line_no,
-                            'severity': severity,
-                            'code': match.group()[:50] + '...' if len(match.group()) > 50 else match.group()
-                        })
-                        
-            except Exception as e:
-                self.issues['security_errors'].append(f"{py_file}: {e}")
+                    if 'react' in deps:
+                        frameworks.append('React')
+                    if 'vue' in deps:
+                        frameworks.append('Vue')
+                    if '@angular/core' in deps:
+                        frameworks.append('Angular')
+                    if 'express' in deps:
+                        frameworks.append('Express')
+                    if 'next' in deps:
+                        frameworks.append('Next.js')
+                    if 'gatsby' in deps:
+                        frameworks.append('Gatsby')
+            except:
+                pass
         
-        # Calculate severity summary
-        severity_summary = defaultdict(int)
-        for vuln_list in vulnerabilities.values():
-            for vuln in vuln_list:
-                severity_summary[vuln['severity']] += 1
-        
-        return {
-            **dict(vulnerabilities),
-            'severity_summary': dict(severity_summary),
-            'total_issues': sum(len(v) for v in vulnerabilities.values())
-        }
+        return frameworks
     
-    def performance_analysis(self) -> Dict:
-        """Analyze potential performance issues"""
-        print("⚡ Analyzing performance...")
-        
-        perf_issues = defaultdict(list)
-        
-        patterns = {
-            'nested_loops': (r'for\s+.+:\s*\n\s+for\s+.+:', 'Nested loops detected'),
-            'large_list_comp': (r'\[.{50,}for.+for.+\]', 'Complex list comprehension'),
-            'no_generator': (r'return\s+\[.+for.+in.+\]', 'Could use generator'),
-            'string_concatenation': (r'[\+\s]*=\s*[\'"][^\'"]*[\'"](?:\s*\+|$)', 'String concatenation in loop'),
-            'repeated_regex': (r're\.(compile|search|match|findall)\([\'"][^\'"]+[\'"]', 'Regex not compiled'),
-            'global_lookup': (r'global\s+\w+', 'Global variable usage'),
-            'inefficient_contains': (r'if\s+.+\s+in\s+.+\.keys\(\)', 'Inefficient "in dict.keys()"'),
-            'repeated_append': (r'\.append\(.+\).*\.append\(.+\)', 'Multiple appends')
+    def _analyze_js_modern_syntax(self, files: List[Path]) -> Dict:
+        """Analyze modern JavaScript syntax usage"""
+        modern_syntax = {
+            'es6_modules': 0,
+            'arrow_functions': 0,
+            'template_literals': 0,
+            'destructuring': 0,
+            'spread_operator': 0
         }
         
-        for py_file in self._get_python_files():
+        for file_path in files[:100]:  # Sample
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(file_path, 'r') as f:
                     content = f.read()
-                    
-                rel_path = py_file.relative_to(self.project_path)
-                    
-                for issue_type, (pattern, description) in patterns.items():
-                    matches = re.finditer(pattern, content, re.MULTILINE | re.DOTALL)
-                    for match in matches:
-                        line_no = content[:match.start()].count('\n') + 1
-                        perf_issues[issue_type].append({
-                            'file': str(rel_path),
-                            'line': line_no,
-                            'description': description
-                        })
-                        
-            except Exception as e:
-                self.issues['performance_errors'].append(f"{py_file}: {e}")
+                    modern_syntax['es6_modules'] += len(re.findall(r'import\s+.*from|export\s+', content))
+                    modern_syntax['arrow_functions'] += len(re.findall(r'=>', content))
+                    modern_syntax['template_literals'] += len(re.findall(r'`[^`]*\$\{[^}]+\}[^`]*`', content))
+                    modern_syntax['destructuring'] += len(re.findall(r'const\s*{[^}]+}', content))
+                    modern_syntax['spread_operator'] += len(re.findall(r'\.\.\.', content))
+            except:
+                continue
         
-        return dict(perf_issues)
+        return modern_syntax
     
-    def analyze_code_quality(self) -> Dict:
-        """Additional code quality metrics"""
-        print("📏 Analyzing code quality...")
-        
-        quality_metrics = {
-            'files_with_docstrings': 0,
-            'files_with_type_hints': 0,
-            'files_with_tests': 0,
-            'average_file_size': 0,
-            'largest_files': []
+    def _analyze_react_patterns(self, files: List[Path]) -> Dict:
+        """Analyze React patterns"""
+        react_patterns = {
+            'functional_components': 0,
+            'class_components': 0,
+            'hooks_usage': 0,
+            'jsx_files': 0
         }
         
-        file_sizes = []
-        
-        for py_file in self._get_python_files():
+        for file_path in files[:100]:  # Sample
+            if file_path.suffix in ['.jsx', '.tsx']:
+                react_patterns['jsx_files'] += 1
+            
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(file_path, 'r') as f:
                     content = f.read()
-                    lines = len(content.splitlines())
-                    
-                file_sizes.append((str(py_file.relative_to(self.project_path)), lines))
-                
-                # Check for docstrings
-                if '"""' in content or "'''" in content:
-                    quality_metrics['files_with_docstrings'] += 1
-                
-                # Check for type hints
-                if '->' in content or ': ' in content and 'def ' in content:
-                    quality_metrics['files_with_type_hints'] += 1
-                
-                # Check if it's a test file
-                if 'test_' in py_file.name or '_test.py' in str(py_file):
-                    quality_metrics['files_with_tests'] += 1
-                    
-            except Exception as e:
-                self.issues['quality_errors'].append(f"{py_file}: {e}")
+                    react_patterns['functional_components'] += len(re.findall(r'(?:function|const)\s+\w+\s*\([^)]*\)\s*{[^}]*return\s*\(', content))
+                    react_patterns['class_components'] += len(re.findall(r'class\s+\w+\s+extends\s+(?:React\.)?Component', content))
+                    react_patterns['hooks_usage'] += len(re.findall(r'use(?:State|Effect|Context|Reducer|Callback|Memo)', content))
+            except:
+                continue
         
-        # Calculate metrics
-        if file_sizes:
-            quality_metrics['average_file_size'] = sum(size for _, size in file_sizes) / len(file_sizes)
-            quality_metrics['largest_files'] = sorted(file_sizes, key=lambda x: x[1], reverse=True)[:10]
-        
-        return quality_metrics
+        return react_patterns
     
-    def _get_function_signature(self, node: ast.FunctionDef) -> str:
-        """Extract function signature for comparison"""
-        args = [arg.arg for arg in node.args.args]
-        return f"{node.name}({','.join(args)})"
+    def _has_react(self) -> bool:
+        """Check if project uses React"""
+        package_json = self.project_path / 'package.json'
+        if package_json.exists():
+            try:
+                with open(package_json, 'r') as f:
+                    pkg = json.load(f)
+                    deps = {**pkg.get('dependencies', {}), **pkg.get('devDependencies', {})}
+                    return 'react' in deps
+            except:
+                pass
+        return False
     
-    def _find_callback_consolidation(self, callbacks: Dict) -> List[str]:
-        """Identify opportunities for callback consolidation"""
-        opportunities = []
-        
-        # Group by similar patterns
-        pattern_groups = defaultdict(list)
-        for file, cbs in callbacks.items():
-            for cb in cbs:
-                pattern_groups[cb['type']].append(file)
-        
-        for pattern_type, files in pattern_groups.items():
-            unique_files = len(set(files))
-            if unique_files > 2:
-                opportunities.append(
-                    f"{pattern_type} appears in {unique_files} files - consider consolidation"
-                )
-        
-        return opportunities
+    def _check_ts_strict_mode(self) -> bool:
+        """Check if TypeScript strict mode is enabled"""
+        tsconfig = self.project_path / 'tsconfig.json'
+        if tsconfig.exists():
+            try:
+                with open(tsconfig, 'r') as f:
+                    config = json.load(f)
+                    compiler_options = config.get('compilerOptions', {})
+                    return compiler_options.get('strict', False)
+            except:
+                pass
+        return False
     
-    def _categorize_callbacks(self, callbacks: Dict) -> Dict[str, int]:
-        """Categorize callbacks by type"""
-        categories = defaultdict(int)
+    def _analyze_ts_type_safety(self, files: List[Path]) -> Dict:
+        """Analyze TypeScript type safety"""
+        type_safety = {
+            'any_usage': 0,
+            'unknown_usage': 0,
+            'type_assertions': 0,
+            'non_null_assertions': 0
+        }
         
-        for file_callbacks in callbacks.values():
-            for cb in file_callbacks:
-                categories[cb['type']] += 1
+        for file_path in files[:100]:  # Sample
+            try:
+                with open(file_path, 'r') as f:
+                    content = f.read()
+                    type_safety['any_usage'] += len(re.findall(r':\s*any\b', content))
+                    type_safety['unknown_usage'] += len(re.findall(r':\s*unknown\b', content))
+                    type_safety['type_assertions'] += len(re.findall(r'as\s+\w+', content))
+                    type_safety['non_null_assertions'] += len(re.findall(r'\w+!', content))
+            except:
+                continue
         
-        return dict(categories)
+        return type_safety
+    
+    def _analyze_ts_interfaces(self, files: List[Path]) -> Dict:
+        """Analyze TypeScript interfaces and types"""
+        ts_types = {
+            'interfaces': 0,
+            'type_aliases': 0,
+            'enums': 0,
+            'generics': 0
+        }
+        
+        for file_path in files[:100]:  # Sample
+            try:
+                with open(file_path, 'r') as f:
+                    content = f.read()
+                    ts_types['interfaces'] += len(re.findall(r'interface\s+\w+', content))
+                    ts_types['type_aliases'] += len(re.findall(r'type\s+\w+\s*=', content))
+                    ts_types['enums'] += len(re.findall(r'enum\s+\w+', content))
+                    ts_types['generics'] += len(re.findall(r'<[A-Z]\w*>', content))
+            except:
+                continue
+        
+        return ts_types
     
     def generate_report(self, results: Dict) -> str:
-        """Generate a comprehensive report"""
+        """Generate comprehensive multi-language report"""
         report = []
-        report.append("# Comprehensive Python Code Review Report\n")
+        report.append("# Multi-Language Code Analysis Report\n")
         report.append(f"Project: {results['project_info']['path']}")
-        report.append(f"Analysis completed in: {results['project_info']['analysis_time']}s")
+        report.append(f"Analysis completed in: {results['project_info']['analysis_time']}s\n")
         
-        # Project overview
-        proj_struct = results['project_structure']
-        report.append(f"\n## Project Overview")
-        report.append(f"- Primary Language: {proj_struct['primary_language']}")
-        report.append(f"- Python files analyzed: {results['project_info']['python_files_analyzed']}")
-        report.append(f"- Excluded files: {results['project_info']['excluded_files']}")
-        if proj_struct['is_mixed_language']:
-            report.append("- Mixed-language project detected (JS/TS + Python)")
+        # Executive Summary
+        summary = results.get('summary', {})
+        report.append("## Executive Summary")
+        report.append(f"- **Primary Language**: {summary.get('primary_language', 'Unknown')}")
+        report.append(f"- **Total Source Files**: {summary.get('total_files', 0):,}")
+        report.append(f"- **Critical Security Issues**: {summary.get('critical_issues', 0)}")
+        report.append(f"- **Migration Readiness Score**: {summary.get('migration_score', 0)}/100")
         
-        # Python distribution
-        report.append("\n### Python Code Distribution:")
-        for location, count in sorted(proj_struct['python_distribution'].items(), key=lambda x: x[1], reverse=True)[:10]:
-            report.append(f"  - {location}: {count} files")
+        if summary.get('key_findings'):
+            report.append("\n### Key Findings:")
+            for finding in summary['key_findings']:
+                report.append(f"- {finding}")
         
-        # Code redundancy
-        report.append(f"\n## Code Redundancy Analysis")
-        redundancy = results['redundancy']
-        report.append(f"Total functions analyzed: {redundancy['total_functions']}")
-        report.append(f"Duplicate functions found: {redundancy['duplicate_functions']}")
-        if redundancy.get('potential_savings', 0) > 0:
-            report.append(f"Potential lines saved by removing duplicates: {redundancy['potential_savings']}")
+        if summary.get('immediate_actions'):
+            report.append("\n### Immediate Actions Required:")
+            for action in summary['immediate_actions']:
+                report.append(f"- 🚨 {action}")
         
-        # Top duplicates
-        if redundancy['duplicates']:
-            report.append("\nMost duplicated functions:")
-            sorted_dupes = sorted(redundancy['duplicates'].items(), 
-                                key=lambda x: len(x[1]), reverse=True)[:5]
-            for sig, locations in sorted_dupes:
-                report.append(f"  - {sig}: {len(locations)} occurrences")
-                for loc in locations[:2]:
-                    report.append(f"    • {loc['file']}:{loc['line']}")
+        # Language Distribution
+        report.append("\n## Language Distribution")
+        languages = results['project_info'].get('languages', {})
+        for lang, count in sorted(languages.items(), key=lambda x: x[1], reverse=True)[:10]:
+            percentage = (count / summary.get('total_files', 1)) * 100
+            report.append(f"- **{lang}**: {count:,} files ({percentage:.1f}%)")
         
-        # Modularity
-        modularity = results['modularity']
-        summary = modularity['summary']
-        report.append(f"\n## Code Modularity")
-        report.append(f"- Total functions: {summary['total_functions']}")
-        report.append(f"- Total classes: {summary['total_classes']}")
-        report.append(f"- Total lines of code: {summary['total_lines_of_code']:,}")
-        report.append(f"- Modular files: {summary['modular_files']}/{len(modularity['file_metrics'])}")
+        # Python Analysis
+        if results.get('python_analysis') and results['python_analysis'].get('total_files', 0) > 0:
+            py = results['python_analysis']
+            report.append("\n## Python Analysis")
+            report.append(f"- **Total Files**: {py['total_files']}")
+            report.append(f"- **Total Lines**: {py['code_quality']['metrics']['total_lines']:,}")
+            report.append(f"- **Functions**: {py['code_quality']['metrics']['function_count']}")
+            report.append(f"- **Classes**: {py['code_quality']['metrics']['class_count']}")
+            report.append(f"- **Avg Function Length**: {py['code_quality']['metrics']['avg_function_length']:.1f} lines")
+            
+            if py.get('frameworks'):
+                report.append(f"- **Frameworks**: {', '.join(py['frameworks'])}")
+            
+            if py.get('type_hints', {}).get('percentage'):
+                report.append(f"- **Type Hint Coverage**: {py['type_hints']['percentage']}%")
         
-        # Callbacks
-        callbacks = results['callbacks']
-        report.append(f"\n## Callback Analysis")
-        report.append(f"Total callbacks found: {callbacks['total_callbacks']}")
-        if callbacks['callback_types']:
-            report.append("Callback types:")
-            for cb_type, count in sorted(callbacks['callback_types'].items(), 
-                                       key=lambda x: x[1], reverse=True):
-                report.append(f"  - {cb_type}: {count}")
+        # Go Analysis
+        if results.get('go_analysis') and results['go_analysis'].get('total_files', 0) > 0:
+            go = results['go_analysis']
+            report.append("\n## Go Analysis")
+            report.append(f"- **Total Files**: {go['total_files']}")
+            report.append(f"- **Modules**: {go['modules']['total_modules']}")
+            report.append(f"- **Functions**: {go['code_quality']['metrics']['function_count']}")
+            report.append(f"- **Interfaces**: {go['code_quality']['metrics']['interface_count']}")
+            report.append(f"- **Structs**: {go['code_quality']['metrics']['struct_count']}")
+            
+            if go['modules']['modules']:
+                report.append("\n### Go Modules:")
+                for mod in go['modules']['modules'][:5]:
+                    report.append(f"  - {mod['module']} (Go {mod['go_version']})")
         
-        # Unicode handling
-        unicode_data = results['unicode_issues']
-        report.append(f"\n## Unicode Handling")
-        report.append(f"High severity issues: {unicode_data['high_severity_count']}")
-        report.append(f"Medium severity issues: {unicode_data['medium_severity_count']}")
-        report.append(f"Files with proper UTF-8 handling: {len(unicode_data['files_with_proper_handling'])}")
+        # JavaScript Analysis
+        if results.get('javascript_analysis') and results['javascript_analysis'].get('total_files', 0) > 0:
+            js = results['javascript_analysis']
+            report.append("\n## JavaScript Analysis")
+            report.append(f"- **Total Files**: {js['total_files']}")
+            if js.get('frameworks'):
+                report.append(f"- **Frameworks**: {', '.join(js['frameworks'])}")
+            report.append(f"- **Modern Syntax Usage**: High" if js.get('modern_syntax', {}).get('arrow_functions', 0) > 100 else "- **Modern Syntax Usage**: Low")
         
-        # Python 3 compliance
-        py3 = results['python3_compliance']
-        report.append(f"\n## Python 3 Compliance")
-        if py3['is_compliant']:
-            report.append("✅ Code is Python 3 compliant")
-        else:
-            report.append(f"❌ Found {py3['total_issues']} Python 2 compatibility issues")
-            if py3['issue_types']:
-                report.append("Issue breakdown:")
-                for issue_type, count in py3['issue_types'].most_common(5):
-                    report.append(f"  - {issue_type}: {count}")
+        # TypeScript Analysis
+        if results.get('typescript_analysis') and results['typescript_analysis'].get('total_files', 0) > 0:
+            ts = results['typescript_analysis']
+            report.append("\n## TypeScript Analysis")
+            report.append(f"- **Total Files**: {ts['total_files']}")
+            report.append(f"- **Strict Mode**: {'Enabled' if ts.get('strict_mode') else 'Disabled'}")
+            report.append(f"- **Interfaces Defined**: {ts.get('interfaces', {}).get('interfaces', 0)}")
         
-        # API Analysis
-        apis = results['api_analysis']
-        report.append(f"\n## API Analysis")
-        report.append(f"Total endpoints: {apis['total_endpoints']}")
-        report.append(f"API files: {apis['api_files']}")
-        if apis['frameworks_detected']:
-            report.append(f"Frameworks: {', '.join(apis['frameworks_detected'])}")
-        if apis['duplicate_endpoints']:
-            report.append(f"Duplicate endpoints found: {len(apis['duplicate_endpoints'])}")
-        
-        # Security
-        security = results['security_issues']
-        report.append(f"\n## Security Scan")
-        report.append(f"Total security issues: {security.get('total_issues', 0)}")
-        if security.get('severity_summary'):
-            for severity, count in sorted(security['severity_summary'].items()):
-                report.append(f"  - {severity.upper()} severity: {count}")
-        
-        # Performance
-        perf = results['performance_issues']
-        total_perf_issues = sum(len(issues) for issues in perf.values() if isinstance(issues, list))
-        report.append(f"\n## Performance Analysis")
-        report.append(f"Total performance issues: {total_perf_issues}")
-        
-        # Code quality
-        quality = results['code_quality']
-        report.append(f"\n## Code Quality Metrics")
-        report.append(f"- Files with docstrings: {quality['files_with_docstrings']}")
-        report.append(f"- Files with type hints: {quality['files_with_type_hints']}")
-        report.append(f"- Test files found: {quality['files_with_tests']}")
-        report.append(f"- Average file size: {quality['average_file_size']:.1f} lines")
-        
-        # Summary and recommendations
-        report.append(f"\n## Summary & Recommendations")
-        
-        # Critical issues
-        critical_issues = []
+        # Security Analysis
+        security = results.get('security_scan', {})
         if security.get('total_issues', 0) > 0:
-            critical_issues.append(f"Fix {security['total_issues']} security vulnerabilities")
-        if not py3['is_compliant']:
-            critical_issues.append(f"Migrate {py3['total_issues']} Python 2 code instances")
-        if redundancy['duplicate_functions'] > 50:
-            critical_issues.append(f"Eliminate {redundancy['duplicate_functions']} duplicate functions")
+            report.append("\n## 🔒 Security Analysis")
+            report.append(f"**Total Issues Found**: {security['total_issues']}")
+            
+            severity = security.get('severity_levels', {})
+            report.append(f"- Critical: {severity.get('critical', 0)}")
+            report.append(f"- High: {severity.get('high', 0)}")
+            report.append(f"- Medium: {severity.get('medium', 0)}")
+            
+            if security.get('vulnerabilities'):
+                report.append("\n### Top Security Concerns:")
+                for vuln_type, issues in list(security['vulnerabilities'].items())[:5]:
+                    report.append(f"- **{vuln_type.replace('_', ' ').title()}**: {len(issues)} occurrences")
         
-        if critical_issues:
-            report.append("\n### 🚨 Critical Issues:")
-            for issue in critical_issues:
-                report.append(f"- {issue}")
+        # Architecture Analysis
+        arch = results.get('architecture_analysis', {})
+        if arch:
+            report.append("\n## Architecture Analysis")
+            report.append(f"- **API Style**: {arch.get('api_style', 'Unknown')}")
+            report.append(f"- **Frontend**: {arch.get('frontend_framework', 'Not detected')}")
+            report.append(f"- **Backend**: {arch.get('backend_framework', 'Not detected')}")
+            if arch.get('database_detected'):
+                report.append(f"- **Databases**: {', '.join(arch['database_detected'])}")
+            if arch.get('services'):
+                report.append(f"- **Services Detected**: {len(arch['services'])}")
         
-        # Improvements
-        improvements = []
-        if unicode_data['high_severity_count'] > 0:
-            improvements.append("Fix Unicode handling issues")
-        if quality['files_with_docstrings'] < len(self._get_python_files()) * 0.5:
-            improvements.append("Add docstrings to more files")
-        if quality['files_with_type_hints'] < len(self._get_python_files()) * 0.3:
-            improvements.append("Add type hints for better code clarity")
+        # Migration Readiness
+        migration = results.get('migration_readiness', {})
+        if migration:
+            report.append("\n## Microservices Migration Readiness")
+            report.append(f"**Overall Score**: {migration.get('score', 0)}/100")
+            report.append(f"**Assessment**: {migration.get('assessment', 'Unknown')}")
+            
+            if migration.get('strengths'):
+                report.append("\n### Strengths:")
+                for strength in migration['strengths']:
+                    report.append(f"- ✅ {strength}")
+            
+            if migration.get('weaknesses'):
+                report.append("\n### Weaknesses:")
+                for weakness in migration['weaknesses']:
+                    report.append(f"- ❌ {weakness}")
+            
+            if migration.get('recommendations'):
+                report.append("\n### Recommendations:")
+                for rec in migration['recommendations']:
+                    report.append(f"- 💡 {rec}")
         
-        if improvements:
-            report.append("\n### 📈 Recommended Improvements:")
-            for improvement in improvements:
-                report.append(f"- {improvement}")
+        # Next Steps
+        report.append("\n## Next Steps")
+        report.append("1. Address critical security vulnerabilities immediately")
+        report.append("2. Review and implement migration recommendations")
+        report.append("3. Establish code quality standards across all languages")
+        report.append("4. Set up comprehensive testing for all services")
+        report.append("5. Implement monitoring and observability")
         
         return '\n'.join(report)
 
 
 def main():
-    """Run the improved code analyzer"""
+    """Run the multi-language analyzer"""
     import sys
     import argparse
     
-    parser = argparse.ArgumentParser(description='Analyze Python code in mixed-language projects')
+    parser = argparse.ArgumentParser(description='Analyze multi-language projects')
     parser.add_argument('project_path', help='Path to the project directory')
-    parser.add_argument('--output', '-o', default='improved_analysis', 
-                       help='Output filename prefix (default: improved_analysis)')
+    parser.add_argument('--output', '-o', default='multi_language_analysis', 
+                       help='Output filename prefix (default: multi_language_analysis)')
+    parser.add_argument('--languages', '-l', nargs='+', 
+                       help='Specific languages to analyze (default: all)')
     
     args = parser.parse_args()
     
@@ -815,10 +1218,10 @@ def main():
         sys.exit(1)
     
     # Run analysis
-    analyzer = ImprovedCodeAnalyzer(project_path)
+    analyzer = MultiLanguageAnalyzer(project_path)
     results = analyzer.analyze_project()
     
-    # Save detailed results
+    # Save results
     json_file = f'{args.output}_results.json'
     with open(json_file, 'w') as f:
         json.dump(results, f, indent=2, default=str)
@@ -837,14 +1240,16 @@ def main():
         f.write(report)
     
     print(f"\n✅ Analysis complete!")
-    print(f"📊 Detailed results saved to: {json_file}")
-    print(f"📄 Report saved to: {report_file}")
+    print(f"📊 Detailed results: {json_file}")
+    print(f"📄 Report: {report_file}")
     
-    # Print any issues encountered
-    if analyzer.issues:
-        print("\n⚠️  Issues encountered during analysis:")
-        for issue_type, issues in analyzer.issues.items():
-            print(f"  - {issue_type}: {len(issues)} issues")
+    # Summary statistics
+    summary = results.get('summary', {})
+    print(f"\n📈 Quick Stats:")
+    print(f"   Languages found: {len(results['project_info']['languages'])}")
+    print(f"   Total files analyzed: {summary.get('total_files', 0):,}")
+    print(f"   Critical issues: {summary.get('critical_issues', 0)}")
+    print(f"   Migration readiness: {summary.get('migration_score', 0)}/100")
 
 
 if __name__ == "__main__":
