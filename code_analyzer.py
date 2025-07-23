@@ -335,19 +335,49 @@ class CodeAnalyzer:
         """Generate a comprehensive report"""
         report = []
         report.append("# Automated Code Review Report\n")
-        report.append(f"Project: {self.project_path}\n")
+        report.append(f"Project: {self.project_path}")
+        
+        # Count total files analyzed
+        py_files = list(self.project_path.rglob('*.py'))
+        report.append(f"Files analyzed: {len(py_files)}\n")
         
         # Redundancy Section
         report.append("\n## Code Redundancy Analysis")
         duplicates = results['redundancy']['duplicates']
+        total_functions = results['redundancy'].get('total_functions', 0)
+        report.append(f"Total functions analyzed: {total_functions}")
         if duplicates:
             report.append(f"Found {len(duplicates)} duplicate function signatures:")
             for sig, locations in list(duplicates.items())[:5]:
                 report.append(f"  - {sig}: {len(locations)} occurrences")
+                for loc in locations[:2]:
+                    report.append(f"    • {loc['file']}:{loc['line']}")
+        else:
+            report.append("✓ No duplicate functions found")
+        
+        # Modularity Section
+        report.append("\n## Modularity Assessment")
+        mod_data = results.get('modularity', {})
+        if mod_data:
+            modular_files = sum(1 for f in mod_data.values() if f.get('is_modular', False))
+            report.append(f"Modular files: {modular_files}/{len(mod_data)}")
+            
+            # Find files with long functions
+            long_functions = [(f, d['avg_function_length']) 
+                            for f, d in mod_data.items() 
+                            if d['avg_function_length'] > 50]
+            if long_functions:
+                report.append("Files with long functions (>50 lines):")
+                for file, avg_len in sorted(long_functions, key=lambda x: x[1], reverse=True)[:5]:
+                    report.append(f"  - {file}: avg {avg_len:.1f} lines/function")
         
         # Callbacks Section
         report.append("\n## Callback Analysis")
         report.append(f"Total callbacks found: {results['callbacks']['total_callbacks']}")
+        if results['callbacks']['callbacks_found']:
+            report.append("Callback distribution:")
+            for file, cbs in list(results['callbacks']['callbacks_found'].items())[:5]:
+                report.append(f"  - {file}: {len(cbs)} callbacks")
         for opp in results['callbacks']['consolidation_opportunities'][:3]:
             report.append(f"  - {opp}")
         
@@ -355,19 +385,68 @@ class CodeAnalyzer:
         report.append("\n## Unicode Handling")
         unicode_issues = results['unicode_issues']['issues']
         report.append(f"Found {len(unicode_issues)} potential encoding issues")
+        if unicode_issues:
+            for issue in unicode_issues[:5]:
+                report.append(f"  - {issue['file']}:{issue['line']} - {issue['issue']}")
+        good_files = results['unicode_issues'].get('files_with_proper_handling', [])
+        if good_files:
+            report.append(f"✓ {len(good_files)} files use proper UTF-8 encoding")
         
         # Python 3 Compliance
         report.append("\n## Python 3 Compliance")
         if results['python3_compliance']['is_compliant']:
             report.append("✓ Code is Python 3 compliant")
         else:
-            report.append("✗ Found Python 2 code that needs updating")
+            report.append("✗ Found Python 2 code that needs updating:")
+            py2_issues = results['python3_compliance']['python2_code_found']
+            for file, issues in list(py2_issues.items())[:5]:
+                report.append(f"  - {file}:")
+                for issue in issues[:3]:
+                    report.append(f"    • Line {issue['line']}: {issue['type']} - {issue['code']}")
+        
+        # API Analysis
+        report.append("\n## API Analysis")
+        total_endpoints = results['api_analysis']['total_endpoints']
+        report.append(f"Total API endpoints found: {total_endpoints}")
+        if results['api_analysis']['endpoints']:
+            report.append("API files:")
+            for file, endpoints in list(results['api_analysis']['endpoints'].items())[:5]:
+                report.append(f"  - {file}: {len(endpoints)} endpoints")
         
         # Security Issues
         report.append("\n## Security Scan Results")
-        for vuln_type, issues in results['security_issues'].items():
-            if issues:
-                report.append(f"  - {vuln_type}: {len(issues)} instances")
+        security_issues = results.get('security_issues', {})
+        total_security_issues = sum(len(issues) for issues in security_issues.values())
+        if total_security_issues > 0:
+            report.append(f"⚠️  Found {total_security_issues} potential security issues:")
+            for vuln_type, issues in security_issues.items():
+                if issues:
+                    report.append(f"  - {vuln_type}: {len(issues)} instances")
+                    for issue in issues[:2]:
+                        report.append(f"    • {issue['file']}:{issue['line']}")
+        else:
+            report.append("✓ No obvious security issues detected")
+        
+        # Performance Issues
+        report.append("\n## Performance Analysis")
+        perf_issues = results.get('performance_issues', {})
+        total_perf_issues = sum(len(issues) for issues in perf_issues.values())
+        if total_perf_issues > 0:
+            report.append(f"Found {total_perf_issues} potential performance issues:")
+            for issue_type, issues in perf_issues.items():
+                if issues:
+                    report.append(f"  - {issue_type}: {len(issues)} instances")
+        else:
+            report.append("✓ No obvious performance issues detected")
+        
+        # Summary
+        report.append("\n## Summary")
+        report.append(f"- Files analyzed: {len(py_files)}")
+        report.append(f"- Total functions: {total_functions}")
+        report.append(f"- Duplicate functions: {len(duplicates)}")
+        report.append(f"- Security issues: {total_security_issues}")
+        report.append(f"- Performance issues: {total_perf_issues}")
+        report.append(f"- Python 3 compliant: {'Yes' if results['python3_compliance']['is_compliant'] else 'No'}")
         
         return '\n'.join(report)
 
@@ -377,13 +456,33 @@ def main():
     import sys
     
     if len(sys.argv) != 2:
-        print("Usage: python code_analyzer.py <project_path>")
+        print("Usage: python3 code_analyzer.py <project_path>")
+        print("Example: python3 code_analyzer.py .")
+        print("         python3 code_analyzer.py /Users/username/projects/yosai_intel_dashboard_fresh")
         sys.exit(1)
     
-    project_path = sys.argv[1]
-    analyzer = CodeAnalyzer(project_path)
+    project_path = Path(sys.argv[1])
     
+    # Validate path exists
+    if not project_path.exists():
+        print(f"Error: Path '{project_path}' does not exist!")
+        sys.exit(1)
+    
+    if not project_path.is_dir():
+        print(f"Error: '{project_path}' is not a directory!")
+        sys.exit(1)
+    
+    # Check for Python files
+    py_files = list(project_path.rglob('*.py'))
+    if not py_files:
+        print(f"Error: No Python files found in '{project_path}'")
+        print("Make sure you're pointing to the correct directory containing .py files")
+        sys.exit(1)
+    
+    print(f"Found {len(py_files)} Python files in {project_path}")
     print("Starting code analysis...")
+    
+    analyzer = CodeAnalyzer(project_path)
     results = analyzer.analyze_project()
     
     # Save detailed results
@@ -399,6 +498,12 @@ def main():
     
     print("\nDetailed results saved to: code_review_results.json")
     print("Report saved to: code_review_report.md")
+    
+    # Print summary of issues found
+    if analyzer.issues:
+        print("\n⚠️  Issues encountered during analysis:")
+        for issue_type, issues in analyzer.issues.items():
+            print(f"  - {issue_type}: {len(issues)} issues")
 
 
 if __name__ == "__main__":
