@@ -1,0 +1,5 @@
+per_ip: 60
+per_user: 120
+per_key: 100
+global: 1000
+burst: 10

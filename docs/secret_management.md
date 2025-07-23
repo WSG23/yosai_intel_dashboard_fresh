@@ -96,6 +96,23 @@ from config import SecureConfigManager
 cfg = SecureConfigManager()
 ```
 
+### Local Development with Vault
+
+For local development a Vault dev server can be used. Start Vault with:
+
+```bash
+vault server -dev
+```
+
+The services default to `http://127.0.0.1:8200` and token `root` when
+`YOSAI_ENV` is set to `development`. In production deployments
+`VAULT_ADDR` and `VAULT_TOKEN` must be provided via environment variables
+or the accompanying Kubernetes `ConfigMap` and `Secret` manifests.
+
+Secrets are fetched through `services.common.secrets.get_secret()` which
+uses an in-memory cache. Call `invalidate_secret()` after rotating a
+value to force a reload.
+
 ## Incident Handling
 
 If you suspect a secret has been exposed:

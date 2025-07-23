@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -20,9 +21,9 @@ import (
 	gwconfig "github.com/WSG23/yosai-gateway/internal/config"
 	"github.com/WSG23/yosai-gateway/internal/engine"
 	"github.com/WSG23/yosai-gateway/internal/gateway"
-	"github.com/WSG23/yosai-gateway/internal/rbac"
 	reg "github.com/WSG23/yosai-gateway/internal/registry"
 	"github.com/WSG23/yosai-gateway/internal/tracing"
+	mw "github.com/WSG23/yosai-gateway/middleware"
 	apicache "github.com/WSG23/yosai-gateway/plugins/cache"
 	"github.com/redis/go-redis/v9"
 
@@ -42,7 +43,6 @@ func main() {
 
 	}
 	cacheSvc := cache.NewRedisCache()
-	rbacSvc := rbac.New(time.Minute)
 
 	cbConf, err := cbcfg.Load(os.Getenv("CIRCUIT_BREAKER_CONFIG"))
 	if err != nil {
@@ -144,16 +144,40 @@ func main() {
 		}
 	}
 
-
 	// enable middleware based on env vars
 	if os.Getenv("ENABLE_AUTH") == "1" {
 		g.UseAuth()
 
 	}
-	if os.Getenv("ENABLE_RATELIMIT") == "1" {
-		g.UseRateLimit()
 
+	rlConf, err := gwconfig.LoadRateLimit(os.Getenv("RATE_LIMIT_CONFIG"))
+	if err != nil {
+		tracing.Logger.WithError(err).Warn("failed to load rate limit config, using defaults")
+		rlConf = &gwconfig.RateLimitSettings{}
 	}
+	if v := os.Getenv("RATE_LIMIT_BUCKET"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			rlConf.Burst = n
+		}
+	}
+	window := time.Minute
+	if v := os.Getenv("RATE_LIMIT_INTERVAL_MS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			window = time.Duration(n) * time.Millisecond
+		}
+	}
+	host := os.Getenv("REDIS_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+	port := os.Getenv("REDIS_PORT")
+	if port == "" {
+		port = "6379"
+	}
+	rlClient := redis.NewClient(&redis.Options{Addr: host + ":" + port})
+	limiter := mw.NewRateLimiter(rlClient, *rlConf)
+	limiter.SetWindow(window)
+	g.UseRateLimit(limiter)
 
 	addr := ":8080"
 	if port := os.Getenv("PORT"); port != "" {

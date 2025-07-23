@@ -5,10 +5,10 @@ import sqlite3
 from typing import Any, Dict, Optional
 
 import pandas as pd
-import psycopg2
-from psycopg2.extras import RealDictCursor
+
 from config.constants import DEFAULT_DB_HOST, DEFAULT_DB_PORT
 
+from .async_database_manager import AsyncPostgreSQLManager
 from .interfaces import ConnectionResult, IDatabaseManager
 
 logger = logging.getLogger(__name__)
@@ -45,88 +45,30 @@ class MockDatabaseManager(IDatabaseManager):
 
 
 class PostgreSQLDatabaseManager(IDatabaseManager):
-    """PostgreSQL database manager"""
+    """Deprecated synchronous PostgreSQL manager."""
 
-    def __init__(self, database_config):
+    def __init__(self, database_config) -> None:
         self.config = database_config
-        self.connection = None
 
-    def get_connection(self) -> ConnectionResult:
-        """Get PostgreSQL connection"""
-        if self.connection is not None:
-            return ConnectionResult(
-                success=True, connection=self.connection, connection_type="postgresql"
-            )
-        try:
-            logger.info("Creating PostgreSQL connection")
-            self.connection = psycopg2.connect(
-                host=getattr(self.config, "host", DEFAULT_DB_HOST),
-                port=getattr(self.config, "port", DEFAULT_DB_PORT),
-                dbname=getattr(
-                    self.config, "name", getattr(self.config, "database", "postgres")
-                ),
-                user=getattr(
-                    self.config, "user", getattr(self.config, "username", "postgres")
-                ),
-                password=getattr(self.config, "password", ""),
-                cursor_factory=RealDictCursor,
-            )
-            return ConnectionResult(
-                success=True, connection=self.connection, connection_type="postgresql"
-            )
-        except Exception as e:
-            logger.error("PostgreSQL connection failed: %s", e)
-            return ConnectionResult(
-                success=False,
-                connection=None,
-                error_message=str(e),
-                connection_type="postgresql",
-            )
+    def get_connection(self) -> ConnectionResult:  # pragma: no cover - legacy
+        raise NotImplementedError(
+            "PostgreSQLDatabaseManager is deprecated. "
+            "Use AsyncPostgreSQLManager instead."
+        )
 
-    def test_connection(self) -> bool:
-        """Test PostgreSQL connection"""
-        result = self.get_connection()
-        if not result.success or not result.connection:
-            return False
-        try:
-            with result.connection.cursor() as cur:
-                cur.execute("SELECT 1")
-            return True
-        except Exception as e:
-            logger.error("PostgreSQL test query failed: %s", e)
-            return False
+    def test_connection(self) -> bool:  # pragma: no cover - legacy
+        return False
 
-    def close_connection(self) -> None:
-        """Close PostgreSQL connection"""
-        if self.connection is not None:
-            try:
-                self.connection.close()
-            except Exception:
-                pass
-        self.connection = None
-        logger.info("PostgreSQL connection closed")
+    def close_connection(self) -> None:  # pragma: no cover - legacy
+        pass
 
-    def execute_query(self, query: str, params: Optional[Dict] = None) -> Any:
-        """Execute PostgreSQL query and return pandas DataFrame or affected rows"""
-        result = self.get_connection()
-        if not result.success or not result.connection:
-            raise ConnectionError(
-                result.error_message or "PostgreSQL connection not available"
-            )
-        conn = result.connection
-        try:
-            with conn.cursor() as cur:
-                cur.execute(query, params)
-                if cur.description:
-                    rows = cur.fetchall()
-                    df = pd.DataFrame(rows)
-                    return df
-                conn.commit()
-                return cur.rowcount
-        except Exception as e:
-            logger.error("PostgreSQL query failed: %s", e)
-            conn.rollback()
-            raise
+    def execute_query(
+        self, query: str, params: Optional[Dict] = None
+    ) -> Any:  # pragma: no cover - legacy
+        raise NotImplementedError(
+            "PostgreSQLDatabaseManager is deprecated. "
+            "Use AsyncPostgreSQLManager instead."
+        )
 
 
 class SQLiteDatabaseManager(IDatabaseManager):
@@ -207,4 +149,9 @@ class SQLiteDatabaseManager(IDatabaseManager):
             raise
 
 
-__all__ = ["MockDatabaseManager", "PostgreSQLDatabaseManager", "SQLiteDatabaseManager"]
+__all__ = [
+    "MockDatabaseManager",
+    "PostgreSQLDatabaseManager",
+    "SQLiteDatabaseManager",
+    "AsyncPostgreSQLManager",
+]

@@ -8,9 +8,9 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from core.exceptions import ConfigurationError
-from .cache_config import CacheConfig
 
 from .app_config import UploadConfig
+from .cache_config import CacheConfig
 from .constants import (
     DEFAULT_APP_HOST,
     DEFAULT_APP_PORT,
@@ -57,6 +57,9 @@ class DatabaseConfig:
     connection_timeout: int = dynamic_config.get_db_connection_timeout()
     initial_pool_size: int = dynamic_config.get_db_pool_size()
     max_pool_size: int = dynamic_config.get_db_pool_size() * 2
+    async_pool_min_size: int = dynamic_config.get_db_pool_size()
+    async_pool_max_size: int = dynamic_config.get_db_pool_size() * 2
+    async_connection_timeout: int = dynamic_config.get_db_connection_timeout()
     shrink_timeout: int = 60
     # Use the IntelligentConnectionPool instead of the default pool
     use_intelligent_pool: bool = False
@@ -178,8 +181,6 @@ class DataQualityThresholds:
 
 
 @dataclass
-
-
 @dataclass
 class SecretValidationConfig:
     """Severity configuration for secret validator."""

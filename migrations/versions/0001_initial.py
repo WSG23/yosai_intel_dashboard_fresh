@@ -11,7 +11,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    sql_path = Path(__file__).resolve().parents[2] / "001_init.sql"
+    sql_path = Path(__file__).resolve().parents[1] / "001_init.sql"
     op.execute(sql_path.read_text())
 
 

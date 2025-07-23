@@ -1,5 +1,6 @@
 import importlib
 import pathlib
+import os
 import sys
 import types
 
@@ -11,6 +12,42 @@ services_stub = types.ModuleType("services")
 services_stub.__path__ = [str(SERVICES_PATH)]
 sys.modules.setdefault("services", services_stub)
 
+# Ensure JWT_SECRET for microservice
+os.environ.setdefault("JWT_SECRET", "test")
+
+# Stub metrics and tracing instrumentation
+prom_stub = types.ModuleType("prometheus_fastapi_instrumentator")
+class DummyInstr:
+    def instrument(self, app):
+        return self
+    def expose(self, app):
+        @app.get("/metrics")
+        def _metrics():
+            return "python_info 1"
+        return self
+prom_stub.Instrumentator = lambda: DummyInstr()
+sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
+
+otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
+otel_stub.FastAPIInstrumentor = types.SimpleNamespace(instrument_app=lambda *a, **k: None)
+sys.modules.setdefault("opentelemetry.instrumentation.fastapi", otel_stub)
+
+# Stub async database module
+async_db_stub = types.ModuleType("services.common.async_db")
+async_db_stub.create_pool = lambda *a, **k: None
+
+class DummyPool:
+    async def fetch(self, *a, **k):
+        return []
+
+
+async def _get_pool() -> DummyPool:
+    return DummyPool()
+
+async_db_stub.get_pool = _get_pool
+async_db_stub.close_pool = lambda: None
+sys.modules["services.common.async_db"] = async_db_stub
+
 class DummyAnalytics:
     def get_dashboard_summary(self) -> dict:
         return {"status": "ok"}
@@ -21,6 +58,18 @@ class DummyAnalytics:
 analytics_stub = types.ModuleType("services.analytics_service")
 analytics_stub.create_analytics_service = lambda: DummyAnalytics()
 sys.modules["services.analytics_service"] = analytics_stub
+
+async_queries_stub = types.ModuleType("services.analytics_microservice.async_queries")
+
+async def _fetch_summary(pool):
+    return {"status": "ok"}
+
+async def _fetch_patterns(pool, days):
+    return {"days": days}
+
+async_queries_stub.fetch_dashboard_summary = _fetch_summary
+async_queries_stub.fetch_access_patterns = _fetch_patterns
+sys.modules["services.analytics_microservice.async_queries"] = async_queries_stub
 
 dummy_tracing = types.ModuleType("tracing")
 called = {}

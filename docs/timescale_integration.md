@@ -1,0 +1,72 @@
+# TimescaleDB Integration
+
+The dashboard can store access events in TimescaleDB for efficient time-series
+analytics. Hypertables are created automatically when the `TimescaleDBManager`
+initialises. Events are compressed after seven days and removed after ninety
+days using retention policies.
+
+## Data Retention
+
+```sql
+SELECT add_compression_policy('access_events', INTERVAL '7 days');
+SELECT add_retention_policy('access_events', INTERVAL '90 days');
+```
+
+Continuous aggregates refresh every five minutes to keep summary data up to
+date. Use the following query to inspect the hypertable size:
+
+```sql
+SELECT hypertable_schema, hypertable_name, total_bytes
+FROM timescaledb_information.hypertables_size
+ORDER BY total_bytes DESC;
+```
+
+## Monitoring Queries
+
+Replication lag from PostgreSQL can be checked with:
+
+```sql
+SELECT NOW() - max(time) AS lag
+FROM access_events;
+```
+
+Expose the lag via Prometheus by exporting a gauge named
+`replication_lag_seconds` in the replication job. The hypertable size can be
+exported with a gauge `hypertable_bytes_total`.
+
+## Replication CronJob
+
+Add the `timescale-replication` CronJob to periodically copy new events from the primary database. The job simply executes `scripts/replicate_to_timescale.py` inside the standard dashboard image. Connection strings are supplied via the `timescale-dsns` secret using the `SOURCE_DSN` and `TARGET_DSN` variables.
+
+Example schedule running every five minutes:
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: timescale-replication
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: replicate-to-timescale
+              image: yosai-intel-dashboard:latest
+              command: ["python", "scripts/replicate_to_timescale.py"]
+              env:
+                - name: SOURCE_DSN
+                  valueFrom:
+                    secretKeyRef:
+                      name: timescale-dsns
+                      key: SOURCE_DSN
+                - name: TARGET_DSN
+                  valueFrom:
+                    secretKeyRef:
+                      name: timescale-dsns
+                      key: TARGET_DSN
+```
+
+The job also inherits the standard configuration from `yosai-config` and `yosai-secrets` via `envFrom` like the other microservices.

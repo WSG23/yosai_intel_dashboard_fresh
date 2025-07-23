@@ -1,7 +1,7 @@
 """Application-wide constants for Yōsai Intel Dashboard."""
 
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 
 # Default chunk size used across services when reading or uploading large files
 DEFAULT_CHUNK_SIZE: int = 50_000
@@ -99,6 +99,9 @@ class DatabaseConstants:
     """Database related defaults."""
 
     connection_timeout_seconds: int = 30
+    async_pool_min_size: int = 1
+    async_pool_max_size: int = 10
+    async_connection_timeout_seconds: int = 30
 
 
 @dataclass
