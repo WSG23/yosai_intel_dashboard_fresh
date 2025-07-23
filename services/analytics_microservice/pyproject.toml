@@ -1,8 +1,17 @@
 [project]
 name = "analytics-service"
-version = "0.1.0"
+version = "0.1.1"
 requires-python = ">=3.11"
-dependencies = ["fastapi", "uvicorn"]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "asyncpg",
+    "redis",
+    "prometheus-fastapi-instrumentator",
+    "python-jose",
+    "opentelemetry-instrumentation-fastapi",
+    "pydantic",
+]
 
 [build-system]
 requires = ["setuptools>=61"]
