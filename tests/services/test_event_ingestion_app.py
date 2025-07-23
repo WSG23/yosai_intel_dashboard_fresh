@@ -1,4 +1,4 @@
-import importlib.util
+import importlib
 import pathlib
 import sys
 import types
@@ -23,13 +23,9 @@ def load_module():
             return self
     prom_stub.Instrumentator = lambda: DummyInstr()
     sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
-    spec = importlib.util.spec_from_file_location(
-        "services.event_ingestion.app",
-        SERVICES_PATH / "event-ingestion" / "app.py",
-    )
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)  # type: ignore[arg-type]
-    return module
+    sys.path.insert(0, str(SERVICES_PATH / "event-ingestion"))
+    sys.modules.get("services").__path__ = [str(SERVICES_PATH)]
+    return importlib.import_module("app")
 
 
 @pytest.mark.asyncio
