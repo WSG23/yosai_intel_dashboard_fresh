@@ -7,7 +7,21 @@
       "title": "Events Processed",
       "datasource": "Prometheus",
       "targets": [
-        {"expr": "event_processor_events_processed_total", "legendFormat": "processed"}
+        {
+          "expr": "event_processor_events_processed_total",
+          "legendFormat": "processed"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Consumer Lag",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(kafka_consumer_group_lag{group=\"event-processor\"}) by (topic)",
+          "legendFormat": "{{topic}}"
+        }
       ]
     }
   ]
