@@ -257,6 +257,28 @@ The service listens on port `8080` inside the container. You can reach it at
 `http://localhost:8081` when running via Docker Compose.
 Stop all containers with `docker-compose down` when finished.
 
+### Unified Operations CLI
+
+Common project tasks can be executed via the unified operations CLI or the
+provided Makefile wrappers:
+
+```bash
+# validate configuration and secrets
+make validate
+
+# build Docker images and start the stack
+make build
+make deploy
+
+# run tests and checks
+make test
+make lint
+make format
+
+# tear everything down and clean caches
+make clean
+```
+
 ### Kafka Event Processor
 
 The gateway starts a Kafka-based `EventProcessor` for publishing `AccessEvent`
