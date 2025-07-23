@@ -25,6 +25,8 @@ jobs:
         run: go run .
       - name: Generate client SDKs
         run: ./scripts/generate_clients.sh
+      - name: Check generated clients up to date
+        run: git diff --exit-code docs/openapi.json analytics/clients/event_client pkg/eventclient
       - name: Upload OpenAPI
         uses: actions/upload-artifact@v4
         with:
