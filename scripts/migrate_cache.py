@@ -1,6 +1,6 @@
 import json
 import os
-import pickle
+import dill
 
 import redis
 
@@ -21,7 +21,7 @@ def migrate():
         except Exception:
             pass
         try:
-            obj = pickle.loads(data)
+            obj = dill.loads(data)
         except Exception:
             client.delete(key)
             continue
