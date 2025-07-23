@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 
@@ -16,9 +17,10 @@ init_tracing("analytics-microservice")
 
 app = FastAPI(title="Analytics Microservice")
 
-JWT_SECRET = os.getenv("JWT_SECRET")
-if not JWT_SECRET:
-    raise RuntimeError("JWT_SECRET environment variable not set")
+PLACEHOLDER_JWT_SECRET = "change-me"
+JWT_SECRET = os.getenv("JWT_SECRET", PLACEHOLDER_JWT_SECRET)
+if JWT_SECRET == PLACEHOLDER_JWT_SECRET:
+    logging.warning("JWT_SECRET environment variable not set; using placeholder")
 
 
 def verify_token(authorization: str = Header("")) -> None:
@@ -47,6 +49,8 @@ class PatternsRequest(BaseModel):
 
 @app.on_event("startup")
 async def _startup() -> None:
+    if JWT_SECRET == PLACEHOLDER_JWT_SECRET:
+        raise RuntimeError("JWT_SECRET environment variable not set")
     cfg = get_database_config()
     await create_pool(
         cfg.get_connection_string(),
