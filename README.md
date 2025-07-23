@@ -15,6 +15,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Deployment Diagram](docs/deployment_diagram.md)
 - [Analytics Upload Sequence](docs/analytics_sequence.md)
 - [Roadmap](docs/roadmap.md)
+- [Unified Platform](docs/unified_platform.md)
 - [Sequence Diagrams](docs/sequence_diagrams.md)
 - [UI Flows](docs/ui_flows.md)
 - [Upload Interface Guide](docs/upload_interface.md)
