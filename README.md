@@ -32,6 +32,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Distributed State Management](docs/distributed_state.md)
 - [Testing Architecture](docs/test_architecture.md)
 - [Comprehensive Testing Strategy](docs/comprehensive_testing_strategy.md)
+- [Service Mesh Evaluation](docs/service_mesh_evaluation.md)
 
 <p align="center">
   <img src="docs/architecture.svg" alt="High-level architecture diagram" width="600" />
