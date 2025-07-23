@@ -18,6 +18,7 @@ export_bp = Blueprint("export", __name__, url_prefix="/api/v1/export")
 # Cached analytics helper
 _cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=300))
 asyncio.run(_cache_manager.start())
+
 _cached_service = CachedAnalyticsService(_cache_manager)
 
 MOCK_DATA = {
@@ -104,6 +105,7 @@ def register_analytics_blueprints(app):
     app.register_blueprint(analytics_bp)
     app.register_blueprint(graphs_bp)
     app.register_blueprint(export_bp)
+    asyncio.run(init_cache_manager())
     logger.info("Analytics blueprints registered")
 
 

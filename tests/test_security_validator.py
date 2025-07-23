@@ -1,4 +1,5 @@
 import types
+import html
 import pytest
 
 from core.security_validator import (
@@ -28,14 +29,15 @@ def test_main_validation_orchestration():
     )
 
     validator = SecurityValidator()
-    result = validator.validate_input("<script>alert('xss')</script>", "comment")
+    value = "<script>alert('xss')</script>"
+    result = validator.validate_input(value, "comment")
     assert not result["valid"]
     assert result["issues"]
-    assert "sanitized" in result
+    assert result["sanitized"] == html.escape(value, quote=True)
 
 
 def test_check_permissions_allows(monkeypatch):
-    def fake_get(url, params=None, timeout=None):
+    def fake_get(url, params=None, headers=None, timeout=None):
         class Resp:
             def raise_for_status(self):
                 pass
@@ -51,7 +53,7 @@ def test_check_permissions_allows(monkeypatch):
 
 
 def test_check_permissions_denied(monkeypatch):
-    def fake_get(url, params=None, timeout=None):
+    def fake_get(url, params=None, headers=None, timeout=None):
         class Resp:
             def raise_for_status(self):
                 pass
