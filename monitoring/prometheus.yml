@@ -20,6 +20,14 @@ scrape_configs:
   static_configs:
   - targets: ['analytics-service:8001']
 
+- job_name: 'event-ingestion'
+  static_configs:
+  - targets: ['event-ingestion:2112']
+
+- job_name: 'event-processing'
+  static_configs:
+  - targets: ['event-processing:2112']
+
 - job_name: 'grafana'
   kubernetes_sd_configs:
   - role: pod
