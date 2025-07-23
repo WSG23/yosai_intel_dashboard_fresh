@@ -18,7 +18,7 @@ app = Flask(__name__)
 CORS(app)
 
 REQUEST_COUNT = Counter(
-    "http_requests_total", "Total HTTP requests", ["method", "endpoint", "status"]
+    "yosai_request_total", "Total HTTP requests", ["method", "endpoint", "status"]
 )
 
 

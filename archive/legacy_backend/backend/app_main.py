@@ -19,7 +19,7 @@ app = Flask(__name__, static_folder="../build", static_url_path="")
 CORS(app, origins=["http://localhost:3000", "http://localhost:3001"])
 
 REQUEST_COUNT = Counter(
-    "http_requests_total", "Total HTTP requests", ["method", "endpoint", "status"]
+    "yosai_request_total", "Total HTTP requests", ["method", "endpoint", "status"]
 )
 
 

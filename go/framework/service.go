@@ -97,11 +97,11 @@ func (s *BaseService) setupMetrics() {
 	}
 	s.registry = prometheus.NewRegistry()
 	s.reqCount = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "http_requests_total",
+		Name: "yosai_request_total",
 		Help: "Total HTTP requests",
 	}, []string{"method", "endpoint", "status"})
 	s.reqDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "http_request_duration_seconds",
+		Name:    "yosai_request_duration_seconds",
 		Help:    "HTTP request duration in seconds",
 		Buckets: prometheus.DefBuckets,
 	}, []string{"method", "endpoint", "status"})

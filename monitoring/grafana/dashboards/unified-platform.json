@@ -7,7 +7,7 @@
       "title": "Total HTTP Requests",
       "datasource": "Prometheus",
       "targets": [
-        {"expr": "sum(rate(http_requests_total[1m]))", "legendFormat": "req/s"}
+        {"expr": "sum(rate(yosai_request_total[1m]))", "legendFormat": "req/s"}
       ]
     },
     {
@@ -16,7 +16,7 @@
       "datasource": "Prometheus",
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total{status=~\"5..\"}[1m]))",
+          "expr": "sum(rate(yosai_request_total{status=~\"5..\"}[1m]))",
           "legendFormat": "errors/s"
         }
       ]
@@ -27,7 +27,7 @@
       "datasource": "Prometheus",
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[1m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(yosai_request_duration_seconds_bucket[1m])) by (le))",
           "legendFormat": "p95"
         }
       ]
