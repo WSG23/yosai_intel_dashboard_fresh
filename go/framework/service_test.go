@@ -70,3 +70,86 @@ func TestMetricsInitialization(t *testing.T) {
 		t.Fatalf("histogram not exposed: %s", string(body))
 	}
 }
+
+func TestHealthEndpoints(t *testing.T) {
+	svc := &BaseService{Name: "test", Config: Config{MetricsAddr: "127.0.0.1:0"}}
+	svc.ctx, svc.cancel = context.WithCancel(context.Background())
+	svc.logger = zap.NewNop()
+	svc.live = true
+	svc.ready = true
+	svc.startupComplete = true
+	svc.setupMetrics()
+	defer svc.Stop()
+
+	addr := svc.metricsLn.Addr().String()
+	tests := map[string]string{
+		"/health":         `{"status":"ok"}`,
+		"/health/live":    `{"status":"ok"}`,
+		"/health/ready":   `{"status":"ready"}`,
+		"/health/startup": `{"status":"complete"}`,
+	}
+	for path, exp := range tests {
+		resp, err := http.Get("http://" + addr + path)
+		if err != nil {
+			t.Fatalf("request %s failed: %v", path, err)
+		}
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("%s returned %d", path, resp.StatusCode)
+		}
+		if strings.TrimSpace(string(body)) != exp {
+			t.Fatalf("%s unexpected body %s", path, string(body))
+		}
+	}
+}
+
+func TestHealthNotReady(t *testing.T) {
+	svc := &BaseService{Name: "test", Config: Config{MetricsAddr: "127.0.0.1:0"}}
+	svc.ctx, svc.cancel = context.WithCancel(context.Background())
+	svc.logger = zap.NewNop()
+	svc.live = true
+	svc.ready = false
+	svc.startupComplete = true
+	svc.setupMetrics()
+	defer svc.Stop()
+
+	addr := svc.metricsLn.Addr().String()
+	resp, err := http.Get("http://" + addr + "/health/ready")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("expected 503, got %d", resp.StatusCode)
+	}
+	if strings.TrimSpace(string(body)) != `{"status":"not ready"}` {
+		t.Fatalf("unexpected body %s", string(body))
+	}
+}
+
+func TestHealthStartupIncomplete(t *testing.T) {
+	svc := &BaseService{Name: "test", Config: Config{MetricsAddr: "127.0.0.1:0"}}
+	svc.ctx, svc.cancel = context.WithCancel(context.Background())
+	svc.logger = zap.NewNop()
+	svc.live = true
+	svc.ready = true
+	svc.startupComplete = false
+	svc.setupMetrics()
+	defer svc.Stop()
+
+	addr := svc.metricsLn.Addr().String()
+	resp, err := http.Get("http://" + addr + "/health/startup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("expected 503, got %d", resp.StatusCode)
+	}
+	if strings.TrimSpace(string(body)) != `{"status":"starting"}` {
+		t.Fatalf("unexpected body %s", string(body))
+	}
+}

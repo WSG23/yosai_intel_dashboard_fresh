@@ -24,17 +24,20 @@ import (
 
 // BaseService provides logging, metrics, tracing and signal handling.
 type BaseService struct {
-	Name          string
-	Config        Config
-	ctx           context.Context
-	cancel        context.CancelFunc
-	logger        *zap.Logger
-	registry      *prometheus.Registry
-	metricsSrv    *http.Server
-	metricsLn     net.Listener
-	reqCount      *prometheus.CounterVec
-	reqDuration   *prometheus.HistogramVec
-	traceShutdown func(context.Context) error
+	Name            string
+	Config          Config
+	ctx             context.Context
+	cancel          context.CancelFunc
+	logger          *zap.Logger
+	registry        *prometheus.Registry
+	metricsSrv      *http.Server
+	metricsLn       net.Listener
+	reqCount        *prometheus.CounterVec
+	reqDuration     *prometheus.HistogramVec
+	traceShutdown   func(context.Context) error
+	ready           bool
+	live            bool
+	startupComplete bool
 }
 
 func NewBaseService(name, cfgPath string) (*BaseService, error) {
@@ -43,7 +46,13 @@ func NewBaseService(name, cfgPath string) (*BaseService, error) {
 		return nil, err
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	return &BaseService{Name: name, Config: cfg, ctx: ctx, cancel: cancel}, nil
+	return &BaseService{
+		Name:   name,
+		Config: cfg,
+		ctx:    ctx,
+		cancel: cancel,
+		live:   true,
+	}, nil
 }
 
 func (s *BaseService) Start() {
@@ -51,6 +60,9 @@ func (s *BaseService) Start() {
 	s.setupMetrics()
 	s.setupTracing()
 	s.handleSignals()
+	s.startupComplete = true
+	s.ready = true
+	s.live = true
 	if s.logger != nil {
 		s.logger.Info("service started")
 	}
@@ -69,6 +81,8 @@ func (s *BaseService) Stop() {
 	if s.traceShutdown != nil {
 		_ = s.traceShutdown(context.Background())
 	}
+	s.ready = false
+	s.live = false
 	s.cancel()
 }
 
@@ -109,6 +123,10 @@ func (s *BaseService) setupMetrics() {
 
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{}))
+	mux.HandleFunc("/health", s.handleHealth)
+	mux.HandleFunc("/health/live", s.handleHealthLive)
+	mux.HandleFunc("/health/ready", s.handleHealthReady)
+	mux.HandleFunc("/health/startup", s.handleHealthStartup)
 	s.metricsSrv = &http.Server{Handler: mux}
 	ln, err := net.Listen("tcp", s.Config.MetricsAddr)
 	if err != nil {
@@ -161,4 +179,38 @@ func (s *BaseService) handleSignals() {
 		}
 		s.Stop()
 	}()
+}
+
+func (s *BaseService) handleHealth(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
+}
+
+func (s *BaseService) handleHealthLive(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	status := "shutdown"
+	if s.live {
+		status = "ok"
+	}
+	_, _ = w.Write([]byte(`{"status":"` + status + `"}`))
+}
+
+func (s *BaseService) handleHealthReady(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if s.ready {
+		_, _ = w.Write([]byte(`{"status":"ready"}`))
+		return
+	}
+	w.WriteHeader(http.StatusServiceUnavailable)
+	_, _ = w.Write([]byte(`{"status":"not ready"}`))
+}
+
+func (s *BaseService) handleHealthStartup(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if s.startupComplete {
+		_, _ = w.Write([]byte(`{"status":"complete"}`))
+		return
+	}
+	w.WriteHeader(http.StatusServiceUnavailable)
+	_, _ = w.Write([]byte(`{"status":"starting"}`))
 }
