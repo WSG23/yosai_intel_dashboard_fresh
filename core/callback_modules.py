@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import logging
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Dict, List, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, runtime_checkable
+
+from .base_model import BaseModel
 
 if TYPE_CHECKING:  # pragma: no cover
     from .truly_unified_callbacks import TrulyUnifiedCallbacks
@@ -28,10 +30,16 @@ class CallbackModule(Protocol):
         """Return list of callback IDs this module registers."""
 
 
-class CallbackModuleRegistry:
+class CallbackModuleRegistry(BaseModel):
     """Central registry for callback modules."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self._modules: Dict[str, CallbackModule] = {}
         self._registered_ids: set[str] = set()
 

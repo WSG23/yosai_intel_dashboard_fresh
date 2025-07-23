@@ -3,16 +3,24 @@ from __future__ import annotations
 """Utilities for predictive cache warming."""
 
 import asyncio
+import logging
 from collections import Counter
-from typing import Callable, Iterable, Any, List
+from typing import Any, Callable, List, Optional
 
+from .base_model import BaseModel
 from .hierarchical_cache_manager import HierarchicalCacheManager
 
 
-class UsagePatternAnalyzer:
+class UsagePatternAnalyzer(BaseModel):
     """Analyze access patterns to predict frequently used keys."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self._counter: Counter[str] = Counter()
 
     def record(self, key: str) -> None:

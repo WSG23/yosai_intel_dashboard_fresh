@@ -5,17 +5,24 @@ import logging
 import threading
 import time
 from collections import defaultdict
-from typing import Any, Awaitable, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from .base_model import BaseModel
 from .callback_events import CallbackEvent
 
 logger = logging.getLogger(__name__)
 
 
-class CallbackManager:
+class CallbackManager(BaseModel):
     """Thread-safe event callback manager."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self._callbacks: Dict[CallbackEvent, List[Tuple[int, Callable[..., Any]]]] = (
             defaultdict(list)
         )

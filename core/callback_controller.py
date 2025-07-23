@@ -7,13 +7,13 @@ import threading
 import weakref
 from dataclasses import dataclass, field
 from datetime import datetime
-from .callback_events import CallbackEvent
 from typing import Any, Callable, Dict, List, Optional, Protocol
 
+from .base_model import BaseModel
+from .callback_events import CallbackEvent
 from .error_handling import ErrorCategory, ErrorSeverity, error_handler
 
 logger = logging.getLogger(__name__)
-
 
 
 @dataclass(frozen=True)
@@ -38,10 +38,16 @@ class CallbackProtocol(Protocol):
         ...
 
 
-class CallbackRegistry:
+class CallbackRegistry(BaseModel):
     """Thread-safe registry for managing callbacks."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self._callbacks: Dict[CallbackEvent, List[CallbackProtocol]] = {}
         self._lock = threading.RLock()
         self._weak_refs: Dict[CallbackEvent, List[weakref.ref]] = {}
@@ -99,7 +105,7 @@ class CallbackRegistry:
                 self._weak_refs.clear()
 
 
-class CallbackController:
+class CallbackController(BaseModel):
     """Main controller for managing all system callbacks."""
 
     _instance: Optional["CallbackController"] = None
@@ -111,7 +117,13 @@ class CallbackController:
                 cls._instance = super().__new__(cls)
             return cls._instance
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         if hasattr(self, "_initialized"):
             return
 

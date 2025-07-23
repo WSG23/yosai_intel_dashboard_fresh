@@ -2,18 +2,26 @@ from __future__ import annotations
 
 """Utilities for analyzing performance trends over time."""
 
+import logging
 from collections import defaultdict
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from core.performance import PerformanceMetric, get_performance_monitor
+from core.base_model import BaseModel
+from core.performance import get_performance_monitor
 
 
-class PerformanceAnalytics:
+class PerformanceAnalytics(BaseModel):
     """Simple analytics helpers using recorded metrics."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self.monitor = get_performance_monitor()
 
     # ------------------------------------------------------------------

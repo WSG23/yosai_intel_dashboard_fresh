@@ -1,14 +1,23 @@
 from __future__ import annotations
 
 import functools
+import logging
 import time
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
+
+from core.base_model import BaseModel
 
 
-class CallbackProfiler:
+class CallbackProfiler(BaseModel):
     """Simple profiler for callback execution time."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self.records: List[Dict[str, Any]] = []
 
     # ------------------------------------------------------------------

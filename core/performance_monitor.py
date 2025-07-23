@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-import time
+import logging
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, Dict, Optional
+
+from .base_model import BaseModel
 
 
 @dataclass
@@ -17,10 +19,16 @@ class ServiceMetrics:
     last_resolution_time: float = 0.0
 
 
-class DIPerformanceMonitor:
+class DIPerformanceMonitor(BaseModel):
     """Monitor performance of service resolution."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self.service_metrics: Dict[str, ServiceMetrics] = defaultdict(ServiceMetrics)
 
     def record_service_resolution(

@@ -13,6 +13,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from config.dynamic_config import dynamic_config
+from core.base_model import BaseModel
 
 # Import the high-level ``SecurityValidator`` used across the application.
 # This module keeps no internal validation logic and instead delegates to
@@ -119,13 +120,18 @@ class RateLimiter:
         }
 
 
-class SecurityAuditor:
+class SecurityAuditor(BaseModel):
     """Security event logging and monitoring"""
 
-    def __init__(self):
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self.events: List[SecurityEvent] = []
         self.max_events = 10000
-        self.logger = logging.getLogger(__name__)
 
     def log_security_event(
         self,

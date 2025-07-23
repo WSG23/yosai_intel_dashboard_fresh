@@ -14,6 +14,8 @@ import pandas as pd
 from core.serialization import SafeJSONSerializer
 from services.data_processing.core.protocols import PluginMetadata
 
+from .base_model import BaseModel
+
 # Optional Babel support is handled at runtime
 
 logger = logging.getLogger(__name__)
@@ -120,6 +122,7 @@ class YosaiJSONEncoder(json.JSONEncoder):
         """Check if object is a LazyString"""
         try:
             from flask_babel import LazyString as BabelLazyString  # type: ignore
+
             if isinstance(obj, BabelLazyString):
                 return True
         except Exception:
@@ -181,14 +184,19 @@ class JsonCallbackService:
         return wrapper
 
 
-class JsonSerializationPlugin:
+class JsonSerializationPlugin(BaseModel):
     """Self-contained JSON Serialization Plugin"""
 
-    def __init__(self):
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self.config: Optional[JsonSerializationConfig] = None
         self.serialization_service: Optional[JsonSerializationService] = None
         self.callback_service: Optional[JsonCallbackService] = None
-        self.logger = logging.getLogger(__name__)
         self._started = False
         self._original_dumps = None
         self._babel_available = False
@@ -428,10 +436,16 @@ class JsonSerializationPlugin:
 
 
 # Simple container for when none is provided
-class SimpleContainer:
+class SimpleContainer(BaseModel):
     """Minimal container implementation"""
 
-    def __init__(self):
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self._services = {}
 
     def register(self, name: str, service: Any):

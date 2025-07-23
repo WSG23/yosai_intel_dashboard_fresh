@@ -2,18 +2,28 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
 from collections import defaultdict
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
+from core.base_model import BaseModel
 from services.data_processing.core.protocols import PluginProtocol
 
+from .manager import ThreadSafePluginManager
 
-class PluginPerformanceManager:
+
+class PluginPerformanceManager(BaseModel):
     """Collect and analyze plugin performance metrics."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self.metrics: Dict[str, List[Dict[str, float]]] = defaultdict(list)
         self.performance_thresholds: Dict[str, float] = {}
         self.alert_history: List[Dict[str, Any]] = []
@@ -74,8 +84,6 @@ class PluginPerformanceManager:
 # ---------------------------------------------------------------------------
 # Enhanced manager
 # ---------------------------------------------------------------------------
-
-from .manager import ThreadSafePluginManager
 
 
 class EnhancedThreadSafePluginManager(ThreadSafePluginManager):
