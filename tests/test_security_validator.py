@@ -1,13 +1,12 @@
 import types
-import html
-import pytest
 
+
+import security_callback_controller
 from core.security_validator import (
     AdvancedSQLValidator,
     SecurityLevel,
     SecurityValidator,
 )
-import security_callback_controller
 
 
 def test_sql_injection_validation():
@@ -36,33 +35,39 @@ def test_main_validation_orchestration():
     assert result["sanitized"] == html.escape(value, quote=True)
 
 
-def test_check_permissions_allows(monkeypatch):
-    def fake_get(url, params=None, headers=None, timeout=None):
-        class Resp:
-            def raise_for_status(self):
-                pass
+def test_check_permissions_allows():
+    class FakeSession:
+        def get(self, url, params=None, headers=None, timeout=None):
+            class Resp:
+                def raise_for_status(self):
+                    pass
 
-            def json(self):
-                return {"allowed": True}
 
-        return Resp()
+                def json(self):
+                    return {"allowed": True}
 
-    monkeypatch.setattr("requests.get", fake_get)
+            return Resp()
+
+    session = FakeSession()
     validator = SecurityValidator()
-    assert validator.check_permissions("alice", "door1", "open") is True
+    assert validator.check_permissions("alice", "door1", "open", client=session) is True
 
 
-def test_check_permissions_denied(monkeypatch):
-    def fake_get(url, params=None, headers=None, timeout=None):
-        class Resp:
-            def raise_for_status(self):
-                pass
+def test_check_permissions_denied():
+    class FakeSession:
+        def get(self, url, params=None, headers=None, timeout=None):
+            class Resp:
+                def raise_for_status(self):
+                    pass
 
-            def json(self):
-                return {"allowed": False}
 
-        return Resp()
+                def json(self):
+                    return {"allowed": False}
 
-    monkeypatch.setattr("requests.get", fake_get)
+            return Resp()
+
+    session = FakeSession()
     validator = SecurityValidator()
-    assert validator.check_permissions("alice", "door1", "open") is False
+    assert (
+        validator.check_permissions("alice", "door1", "open", client=session) is False
+    )

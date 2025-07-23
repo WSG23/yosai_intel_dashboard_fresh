@@ -313,16 +313,36 @@ class SecurityValidator(BaseModel, SecurityServiceProtocol):
         return sanitize_unicode_input(content)
 
     # ------------------------------------------------------------------
-    def check_permissions(self, user_id: str, resource: str, action: str) -> bool:
+    def check_permissions(
+        self,
+        user_id: str,
+        resource: str,
+        action: str,
+        client: Optional[requests.Session] = None,
+    ) -> bool:
         """Check whether ``user_id`` can perform ``action`` on ``resource`` using
-        the centralized permission service."""
+        the centralized permission service.
+
+        Parameters
+        ----------
+        user_id: str
+            The ID of the user making the request.
+        resource: str
+            The resource the user is trying to access.
+        action: str
+            The action the user wants to perform.
+        client: Optional[requests.Session]
+            Optional HTTP client or :class:`requests.Session`. Defaults to the
+            top-level :mod:`requests` API.
+        """
 
         service_url = os.environ.get("PERMISSION_SERVICE_URL", "http://localhost:8081")
         url = f"{service_url.rstrip('/')}/permissions/check"
+        http_client = client or requests
         try:
             headers: Dict[str, str] = {}
             propagate_context(headers)
-            resp = requests.get(
+            resp = http_client.get(
                 url,
                 params={"user_id": user_id, "resource": resource, "action": action},
                 headers=headers,
