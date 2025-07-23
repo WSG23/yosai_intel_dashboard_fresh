@@ -5,7 +5,8 @@ DURATION ?= 60
 
 CLI ?= python -m tools.ops_cli
 
-.PHONY: load-test validate build test deploy format lint clean
+.PHONY: load-test validate build test deploy format lint clean \
+build-all test-all deploy-all logs
 
 load-test:
 	python tools/load_test.py --brokers $(BROKERS) --prom-url $(PROM_URL) --rate $(RATE) --duration $(DURATION)
@@ -21,6 +22,18 @@ test:
 
 deploy:
 	$(CLI) deploy
+
+build-all:
+	$(CLI) build-all
+
+test-all:
+	$(CLI) test-all
+
+deploy-all:
+	$(CLI) deploy-all
+
+logs:
+	$(CLI) logs $(service)
 
 format:
 	$(CLI) format

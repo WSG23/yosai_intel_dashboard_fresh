@@ -12,6 +12,7 @@ COMPOSE_DEV_FILES = [
     "docker-compose.dev.yml",
 ]
 COMPOSE_PROD_FILE = "docker-compose.prod.yml"
+COMPOSE_ALL_FILE = "docker-compose.unified.yml"
 
 
 def run(cmd):
@@ -51,6 +52,39 @@ def build():
 def deploy():
     """Start services using Docker Compose."""
     run(["docker", "compose", *compose_args(COMPOSE_DEV_FILES), "up", "-d"])
+
+
+@cli.command("build-all")
+def build_all():
+    """Build all service images for the unified stack."""
+    run(["docker", "compose", "-f", str(ROOT / COMPOSE_ALL_FILE), "build"])
+
+
+@cli.command("deploy-all")
+def deploy_all():
+    """Start the entire unified stack."""
+    run(["docker", "compose", "-f", str(ROOT / COMPOSE_ALL_FILE), "up", "-d"])
+
+
+@cli.command("test-all")
+def test_all():
+    """Run full test suite."""
+    run(["pytest"])
+
+
+@cli.command()
+@click.argument("service")
+def logs(service):
+    """Tail logs for a specific service."""
+    run([
+        "docker",
+        "compose",
+        "-f",
+        str(ROOT / COMPOSE_ALL_FILE),
+        "logs",
+        "-f",
+        service,
+    ])
 
 
 @cli.command()
