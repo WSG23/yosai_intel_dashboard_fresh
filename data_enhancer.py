@@ -87,25 +87,11 @@ except ImportError:
             return DEFAULT_CHUNK_SIZE
 
 
+from core.unicode_handler import clean_unicode_surrogates
+
+
 class AdvancedUnicodeHandler:
     """Enhanced Unicode handling with building-specific character support"""
-
-    @staticmethod
-    def clean_unicode_surrogates(text: str) -> str:
-        """Remove Unicode surrogate characters that can't be encoded in UTF-8"""
-        if not isinstance(text, str):
-            return str(text)
-
-        # Remove surrogate pairs
-        cleaned = re.sub(r"[\uD800-\uDFFF]", "", text)
-
-        # Replace other problematic Unicode characters
-        cleaned = cleaned.encode("utf-8", errors="ignore").decode("utf-8")
-
-        # Clean building-specific characters that might cause issues
-        cleaned = re.sub(r"[^\w\s\-._/\\]", "", cleaned)
-
-        return cleaned
 
     @staticmethod
     def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
@@ -114,17 +100,14 @@ class AdvancedUnicodeHandler:
 
         # Clean column names
         cleaned_df.columns = [
-            AdvancedUnicodeHandler.clean_unicode_surrogates(str(col))
-            for col in cleaned_df.columns
+            clean_unicode_surrogates(str(col)) for col in cleaned_df.columns
         ]
 
         # Clean string columns
         for col in cleaned_df.columns:
             if cleaned_df[col].dtype == "object":
                 cleaned_df[col] = (
-                    cleaned_df[col]
-                    .astype(str)
-                    .apply(AdvancedUnicodeHandler.clean_unicode_surrogates)
+                    cleaned_df[col].astype(str).apply(clean_unicode_surrogates)
                 )
 
         return cleaned_df
