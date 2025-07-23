@@ -1,11 +1,13 @@
 """Configuration transformation utilities."""
 
 import logging
+import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .base import Config
 
+from core.exceptions import ConfigurationError
 from .protocols import ConfigTransformerProtocol
 from .env_overrides import apply_env_overrides
 
@@ -28,12 +30,13 @@ class ConfigTransformer(ConfigTransformerProtocol):
 
     def _apply_security_defaults(self, config: "Config") -> None:
         """Apply security-related defaults."""
-        # Ensure secret key is set
+        # Ensure secret key is set from environment
         if not config.app.secret_key or config.app.secret_key == "change-me":
-            if config.environment == "production":
-                logger.error("SECRET_KEY must be set in production")
-            else:
-                config.app.secret_key = "dev-key-change-in-production"
+            env_secret = os.getenv("SECRET_KEY", "")
+            if env_secret:
+                config.app.secret_key = env_secret
+            elif config.environment != "test":
+                raise ConfigurationError("SECRET_KEY environment variable is required")
 
         # Set reasonable upload limits
         if config.security.max_upload_mb <= 0:
