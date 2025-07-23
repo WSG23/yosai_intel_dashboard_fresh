@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+asyncpg
+redis
+prometheus-fastapi-instrumentator
+prometheus-client
+python-jose
+opentelemetry-instrumentation-fastapi
+dependency-injector
+confluent-kafka
+pydantic

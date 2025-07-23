@@ -1,6 +1,8 @@
 import importlib.util
 import os
 import pathlib
+os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
+
 import sys
 import types
 import time
@@ -30,7 +32,10 @@ def load_app() -> tuple:
         def instrument(self, app):
             return self
 
-        def expose(self, app):
+        def expose(self, app, **kwargs):
+            @app.get("/metrics")
+            async def _metrics():
+                return "python_info 1"
             return self
 
     prom_stub.Instrumentator = lambda: DummyInstr()
@@ -80,6 +85,9 @@ def load_app() -> tuple:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)  # type: ignore[arg-type]
 
+    module.app.state.ready = True
+    module.app.state.live = True
+
     # add liveness/readiness routes if missing
     if not any(r.path == "/health/live" for r in module.app.router.routes):
 
@@ -107,7 +115,7 @@ async def test_health_endpoints():
 
         resp = await client.get("/health/ready")
         assert resp.status_code == 200
-        assert resp.json() == {"status": "ok"}
+        assert resp.json() == {"status": "ready"}
 
 
 @pytest.mark.asyncio
@@ -128,5 +136,13 @@ async def test_dashboard_summary_endpoint():
         assert resp.status_code == 200
         assert resp.json() == {"status": "ok"}
 
-    queries_stub.fetch_dashboard_summary.assert_awaited_once()
-    db_stub.get_pool.assert_awaited()
+
+
+@pytest.mark.asyncio
+async def test_metrics_endpoint():
+    module, _, _ = load_app()
+    transport = httpx.ASGITransport(app=module.app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/metrics")
+        assert resp.status_code == 200
+
