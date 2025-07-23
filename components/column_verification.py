@@ -16,7 +16,7 @@ from components.plugin_adapter import ComponentPluginAdapter
 from services.data_enhancer import (
     get_ai_column_suggestions as simple_column_suggestions,
 )
-from services.consolidated_learning_service import get_learning_service
+from services.learning.src.api.consolidated_service import get_learning_service
 from services.upload_data_service import load_dataframe
 
 try:

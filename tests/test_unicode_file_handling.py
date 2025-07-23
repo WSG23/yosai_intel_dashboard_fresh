@@ -5,7 +5,7 @@ import pandas as pd
 
 import services.upload.helpers as upload_helpers
 from analytics.db_interface import AnalyticsDataAccessor
-from services.consolidated_learning_service import ConsolidatedLearningService
+from services.learning.src.api.consolidated_service import ConsolidatedLearningService
 from services.upload import save_ai_training_data
 
 

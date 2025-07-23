@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from services.consolidated_learning_service import ConsolidatedLearningService
+from services.learning.src.api.consolidated_service import ConsolidatedLearningService
 
 
 class TestConsolidatedLearningService:
