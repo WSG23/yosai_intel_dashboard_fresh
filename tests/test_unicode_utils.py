@@ -1,6 +1,6 @@
 import pytest
 
-from core.unicode_utils import (
+from core.unicode import (
     normalize_unicode_safely,
     detect_surrogate_pairs,
     sanitize_for_utf8,

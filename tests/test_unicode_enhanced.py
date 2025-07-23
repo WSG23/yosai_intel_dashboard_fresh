@@ -1,6 +1,6 @@
 import pytest
 
-from core.unicode_enhanced import (
+from core.unicode import (
     EnhancedUnicodeProcessor,
     SurrogateHandlingConfig,
     SurrogateHandlingStrategy,

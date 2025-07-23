@@ -16,11 +16,11 @@ from config.config import get_analytics_config
 from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
-from core.unicode_decode import safe_unicode_decode
+from core.unicode import safe_unicode_decode
 from config.constants import DEFAULT_CHUNK_SIZE
 
 # Core processing imports only - NO UI COMPONENTS
-from core.unicode_utils import sanitize_for_utf8
+from core.unicode import sanitize_for_utf8
 
 
 def _get_max_display_rows(config: ConfigurationProtocol = dynamic_config) -> int:

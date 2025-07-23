@@ -3,7 +3,7 @@ from __future__ import annotations
 """Helper utilities for working with files."""
 
 from security.unicode_security_validator import UnicodeSecurityValidator
-from core.unicode_decode import safe_unicode_decode
+from core.unicode import safe_unicode_decode
 
 _validator = UnicodeSecurityValidator()
 

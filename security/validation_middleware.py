@@ -72,8 +72,7 @@ class ValidationMiddleware:
             ):
                 return None
             try:
-                from core.unicode_decode import safe_unicode_decode
-                from core.unicode_utils import sanitize_for_utf8
+                from core.unicode import safe_unicode_decode, sanitize_for_utf8
 
                 raw_text = safe_unicode_decode(request.data, "utf-8")
                 sanitized = sanitize_for_utf8(raw_text)

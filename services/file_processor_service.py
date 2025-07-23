@@ -219,7 +219,7 @@ class FileProcessorService(BaseService):
                     return text
             except Exception:
                 continue
-        from core.unicode_decode import safe_unicode_decode
+        from core.unicode import safe_unicode_decode
 
         logger.warning("All encodings failed, using replacement characters")
         return safe_unicode_decode(content, "utf-8")
