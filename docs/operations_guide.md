@@ -17,6 +17,13 @@ alerts:
 The application sends messages to this address using the SMTP settings defined in
 `config`. You can override these values via environment variables in production.
 
+### Timescale Replication
+
+`scripts/replicate_to_timescale.py` exports the metric `replication_lag_seconds`
+to track how far the TimescaleDB copy lags behind the primary database. The
+alert rule defined in `monitoring/alerts.yml` fires when this value exceeds
+60&nbsp;seconds for five minutes.
+
 ## Performance Dashboards
 
 Prometheus scrapes metrics from `/metrics` using the sample
