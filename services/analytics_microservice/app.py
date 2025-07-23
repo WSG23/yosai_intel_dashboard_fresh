@@ -23,7 +23,6 @@ if JWT_SECRET == PLACEHOLDER_JWT_SECRET:
     logging.warning("JWT_SECRET environment variable not set; using placeholder")
 
 
-
 def verify_token(authorization: str = Header("")) -> None:
     """Validate Authorization header using JWT_SECRET."""
     if not authorization.startswith("Bearer "):
@@ -39,6 +38,10 @@ def verify_token(authorization: str = Header("")) -> None:
         ) from exc
     exp = claims.get("exp")
     if exp is not None and exp < time.time():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized"
+        )
+    if not claims.get("iss"):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized"
         )

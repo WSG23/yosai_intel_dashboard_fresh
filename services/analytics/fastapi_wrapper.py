@@ -9,15 +9,12 @@ from pydantic import BaseModel
 from config import get_database_config
 from services.analytics_microservice import async_queries
 from services.common.async_db import create_pool, get_pool
-from services.security import AuthenticationService, ServiceTokenManager
+from services.security import verify_service_jwt
 from tracing import init_tracing
 
 init_tracing("analytics-service")
 
 app = FastAPI(title="Analytics Service")
-
-token_manager = ServiceTokenManager()
-auth_service = AuthenticationService(token_manager)
 
 
 @app.middleware("http")
@@ -28,7 +25,7 @@ async def auth_middleware(request: Request, call_next):
             {"detail": "unauthorized"}, status_code=status.HTTP_401_UNAUTHORIZED
         )
     token = auth.split(" ", 1)[1]
-    if not auth_service.authenticate(token):
+    if not verify_service_jwt(token):
         return JSONResponse(
             {"detail": "unauthorized"}, status_code=status.HTTP_401_UNAUTHORIZED
         )
