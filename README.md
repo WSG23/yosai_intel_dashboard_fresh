@@ -27,6 +27,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Data Processing](docs/data_processing.md)
 - [Column Verification](docs/column_verification.md)
 - [Service Container](docs/service_container.md)
+- [Distributed State Management](docs/distributed_state.md)
 - [Testing Architecture](docs/test_architecture.md)
 - [Comprehensive Testing Strategy](docs/comprehensive_testing_strategy.md)
 
