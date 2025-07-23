@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from config import get_database_config
 from services.analytics_microservice import async_queries
-from services.common.async_db import create_pool, get_pool, close_pool
+from services.common.async_db import close_pool, create_pool, get_pool
 from tracing import init_tracing
 
 init_tracing("analytics-microservice")
@@ -21,6 +21,7 @@ PLACEHOLDER_JWT_SECRET = "change-me"
 JWT_SECRET = os.getenv("JWT_SECRET", PLACEHOLDER_JWT_SECRET)
 if JWT_SECRET == PLACEHOLDER_JWT_SECRET:
     logging.warning("JWT_SECRET environment variable not set; using placeholder")
+
 
 
 def verify_token(authorization: str = Header("")) -> None:
@@ -51,6 +52,7 @@ class PatternsRequest(BaseModel):
 async def _startup() -> None:
     if JWT_SECRET == PLACEHOLDER_JWT_SECRET:
         raise RuntimeError("JWT_SECRET environment variable not set")
+
     cfg = get_database_config()
     await create_pool(
         cfg.get_connection_string(),
@@ -59,6 +61,10 @@ async def _startup() -> None:
         timeout=cfg.connection_timeout,
     )
 
+    # Redis or other dependencies would be initialized here
+    app.state.ready = True
+    app.state.startup_complete = True
+
 
 @app.get("/health")
 async def health() -> dict[str, str]:
@@ -66,9 +72,33 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/health/live")
+async def health_live() -> dict[str, str]:
+    """Liveness probe."""
+    return {"status": "ok" if app.state.live else "shutdown"}
+
+
+@app.get("/health/startup")
+async def health_startup() -> dict[str, str]:
+    """Startup probe."""
+    if app.state.startup_complete:
+        return {"status": "complete"}
+    raise HTTPException(status_code=503, detail="starting")
+
+
+@app.get("/health/ready")
+async def health_ready() -> dict[str, str]:
+    """Readiness probe."""
+    if app.state.ready:
+        return {"status": "ready"}
+    raise HTTPException(status_code=503, detail="not ready")
+
+
 @app.on_event("shutdown")
 async def _shutdown() -> None:
     await close_pool()
+    app.state.ready = False
+    app.state.live = False
 
 
 @app.post("/api/v1/analytics/get_dashboard_summary")
