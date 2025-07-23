@@ -4,19 +4,8 @@ from typing import Any
 
 import pandas as pd
 
-from config.config import get_analytics_config
-from config.dynamic_config import dynamic_config
 from services.upload.utils.file_parser import UnicodeFileProcessor
-
-
-def _get_max_display_rows() -> int:
-    try:
-        return (
-            get_analytics_config().max_display_rows
-            or dynamic_config.analytics.max_display_rows
-        )
-    except Exception:
-        return dynamic_config.analytics.max_display_rows
+from core.config import get_max_display_rows
 
 
 class AsyncUploadProcessor:
@@ -46,7 +35,7 @@ class AsyncUploadProcessor:
     ) -> pd.DataFrame:
         """Return the first ``rows`` of a parquet file asynchronously."""
         df = await self.read_parquet(path)
-        limit = rows or _get_max_display_rows()
+        limit = rows or get_max_display_rows()
         return df.head(limit)
 
 

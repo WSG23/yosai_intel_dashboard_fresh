@@ -59,9 +59,11 @@ try:
     from services.configuration_service import ConfigurationServiceProtocol
     from services.door_mapping_service import DoorMappingService
 
+    from core.config import get_ai_confidence_threshold
+
     class _MockCfg(ConfigurationServiceProtocol):
-        def get_ai_confidence_threshold(self) -> int:  # type: ignore[override]
-            return 70
+        def get_ai_confidence_threshold(self) -> float:  # type: ignore[override]
+            return get_ai_confidence_threshold()
 
     DEVICE_SERVICE = DoorMappingService(_MockCfg())
 except Exception:

@@ -12,24 +12,16 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import chardet
 import pandas as pd
 
-from config.config import get_analytics_config
 from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
 from core.unicode import safe_unicode_decode
 from config.constants import DEFAULT_CHUNK_SIZE
+from core.config import get_max_display_rows
 
 # Core processing imports only - NO UI COMPONENTS
 from core.unicode import sanitize_for_utf8
 
-
-def _get_max_display_rows(config: ConfigurationProtocol = dynamic_config) -> int:
-    try:
-        return (
-            get_analytics_config().max_display_rows or config.analytics.max_display_rows
-        )
-    except Exception:
-        return config.analytics.max_display_rows
 
 
 from core.unicode import safe_format_number
@@ -148,7 +140,7 @@ def create_file_preview(
 ) -> Dict[str, Any]:
     """Create safe preview data without UI components"""
     try:
-        limit = _get_max_display_rows()
+        limit = get_max_display_rows()
         rows = min(max_rows if max_rows is not None else limit, limit)
         preview_df = df.head(rows)
 

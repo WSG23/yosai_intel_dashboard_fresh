@@ -101,6 +101,13 @@ def safe_import_device_mapping():
         from services.configuration_service import ConfigurationServiceProtocol
         from services.door_mapping_service import DoorMappingService
 
+        from core.config import (
+            get_upload_chunk_size,
+            get_max_parallel_uploads,
+            get_validator_rules,
+            get_ai_confidence_threshold,
+        )
+
         class MockConfig:
             def get_max_upload_size_mb(self) -> int:
                 return 50
@@ -112,16 +119,16 @@ def safe_import_device_mapping():
                 return True
 
             def get_upload_chunk_size(self) -> int:
-                return 1024
+                return get_upload_chunk_size()
 
             def get_max_parallel_uploads(self) -> int:
-                return 1
+                return get_max_parallel_uploads()
 
             def get_validator_rules(self) -> Dict[str, Any]:
-                return {}
+                return get_validator_rules()
 
-            def get_ai_confidence_threshold(self) -> int:
-                return 70
+            def get_ai_confidence_threshold(self) -> float:
+                return get_ai_confidence_threshold()
 
             def get_db_pool_size(self) -> int:
                 return 5
