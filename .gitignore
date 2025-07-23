@@ -61,6 +61,8 @@ data/learned_mappings.json
 !package-lock.json
 !dashboards/grafana/*.json
 !dashboards/performance/*.json
+!config/schema.json
+!gateway/internal/config/circuitbreakers_schema.json
 logs/
 # Temporary uploaded files
 temp/
