@@ -42,10 +42,11 @@ def test_json_env_rules_parsed(monkeypatch):
 
 
 def test_env_overrides_applied(monkeypatch):
-    monkeypatch.setenv("DB_HOST", "db.example.com")
-    monkeypatch.setenv("DB_PORT", "1234")
+    monkeypatch.setenv("YOSAI_DATABASE_HOST", "db.example.com")
+    monkeypatch.setenv("YOSAI_DATABASE_PORT", "1234")
     monkeypatch.setenv("SECRET_KEY", "s")
-    monkeypatch.setenv("DB_PASSWORD", "pwd")
+    monkeypatch.setenv("YOSAI_SECURITY_SECRET_KEY", "s")
+    monkeypatch.setenv("YOSAI_DATABASE_PASSWORD", "pwd")
     monkeypatch.setenv("AUTH0_CLIENT_ID", "cid")
     monkeypatch.setenv("AUTH0_CLIENT_SECRET", "secret")
     monkeypatch.setenv("AUTH0_DOMAIN", "dom")
@@ -69,7 +70,8 @@ security: {}
 
     monkeypatch.setenv("YOSAI_CONFIG_FILE", str(path))
     monkeypatch.setenv("SECRET_KEY", "secret")
-    monkeypatch.setenv("DB_PASSWORD", "envpass")
+    monkeypatch.setenv("YOSAI_SECURITY_SECRET_KEY", "secret")
+    monkeypatch.setenv("YOSAI_DATABASE_PASSWORD", "envpass")
     monkeypatch.setenv("AUTH0_CLIENT_ID", "cid")
     monkeypatch.setenv("AUTH0_CLIENT_SECRET", "csecret")
     monkeypatch.setenv("AUTH0_DOMAIN", "domain")

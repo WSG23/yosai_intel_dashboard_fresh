@@ -1,9 +1,14 @@
 package config
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
+	"strings"
 	"time"
 
+	_ "embed"
+	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
 )
 
@@ -20,6 +25,9 @@ type Config struct {
 	EventProcessor CircuitBreakerSettings `yaml:"event_processor"`
 }
 
+//go:embed circuitbreakers_schema.json
+var cbSchema []byte
+
 // Load reads YAML configuration from path. If path is empty, the default
 // "config/circuit-breakers.yaml" is used.
 func Load(path string) (*Config, error) {
@@ -30,6 +38,29 @@ func Load(path string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	var raw interface{}
+	if err := yaml.Unmarshal(data, &raw); err != nil {
+		return nil, err
+	}
+	jsonData, err := json.Marshal(raw)
+	if err != nil {
+		return nil, err
+	}
+	schemaLoader := gojsonschema.NewBytesLoader(cbSchema)
+	docLoader := gojsonschema.NewBytesLoader(jsonData)
+	result, err := gojsonschema.Validate(schemaLoader, docLoader)
+	if err != nil {
+		return nil, err
+	}
+	if !result.Valid() {
+		msgs := make([]string, len(result.Errors()))
+		for i, e := range result.Errors() {
+			msgs[i] = e.String()
+		}
+		return nil, fmt.Errorf("invalid configuration: %s", strings.Join(msgs, "; "))
+	}
+
 	var cfg Config
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, err

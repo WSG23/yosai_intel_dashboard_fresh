@@ -43,11 +43,24 @@ database: []
 security:
   secret_key: abc
 """
-    path = _write(tmp_path, yaml)
-    monkeypatch.setenv("YOSAI_CONFIG_FILE", path)
-    monkeypatch.setenv("MAX_UPLOAD_MB", "50")
+    data = importlib.import_module("yaml").safe_load(yaml)
     with pytest.raises(ConfigurationError):
-        create_config_manager()
+        ConfigValidator.validate(data)
+
+
+def test_schema_validation(monkeypatch, tmp_path):
+    yaml = """
+app:
+  title: Test
+  port: "oops"
+database:
+  name: test.db
+security:
+  secret_key: xyz
+"""
+    data = importlib.import_module("yaml").safe_load(yaml)
+    with pytest.raises(ConfigurationError):
+        ConfigValidator.validate(data)
 
 
 def test_non_mapping_input():

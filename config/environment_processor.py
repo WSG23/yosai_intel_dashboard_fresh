@@ -143,5 +143,46 @@ class EnvironmentProcessor:
             if rules := self._load_json("VALIDATOR_RULES"):
                 uploads.VALIDATOR_RULES.update(rules)
 
+        # Generic YOSAI_* overrides
+        self._apply_prefixed_overrides(config)
+
+
+    def _apply_prefixed_overrides(self, config: Any) -> None:
+        """Apply overrides for variables starting with ``YOSAI_``."""
+        prefix = "YOSAI_"
+        for name, value in self.env.items():
+            if not name.startswith(prefix):
+                continue
+            key = name[len(prefix) :]
+            parts = key.split("_", 1)
+            if len(parts) != 2:
+                continue
+            section, attr = parts[0].lower(), parts[1].lower()
+            if not hasattr(config, section):
+                continue
+            section_obj = getattr(config, section)
+            if not hasattr(section_obj, attr):
+                continue
+            converted = self._convert_value(value)
+            setattr(section_obj, attr, converted)
+
+    def _convert_value(self, value: str) -> Any:
+        """Best-effort type conversion for env values."""
+        val = value
+        if val.lower() in {"true", "false", "yes", "no", "1", "0"}:
+            return val.lower() in {"true", "yes", "1"}
+        try:
+            return int(val)
+        except ValueError:
+            pass
+        try:
+            return float(val)
+        except ValueError:
+            pass
+        try:
+            return json.loads(val)
+        except Exception:
+            return val
+
 
 __all__ = ["EnvironmentProcessor"]
