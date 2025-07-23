@@ -886,6 +886,7 @@ manager.execute_query_with_retry("SELECT 1")
 - **Guide**: [docs/models_guide.md](docs/models_guide.md) explains each model file
 
 -### Services Layer (`services/`)
+- All services rely on `yosai_framework.BaseService` for metrics, tracing and health endpoints.
 - **analytics_service.py**: Business logic for analytics ([docs](docs/analytics_service.md))
   
   Register an instance with the container to access analytics operations:
@@ -903,10 +904,10 @@ manager.execute_query_with_retry("SELECT 1")
   The `AnalyticsService` conforms to `AnalyticsServiceProtocol`, so you can
   substitute your own implementation during tests.
 
-  A FastAPI wrapper is available for quick testing:
+  Run the analytics microservice via the unified BaseService:
 
   ```bash
-  uvicorn services.analytics.fastapi_wrapper:app
+  python -m uvicorn services.analytics_microservice.app:app --host 0.0.0.0 --port 8001
   ```
 
 - **device_learning_service.py**: Persists learned device mappings ([docs](docs/device_learning_service.md))
