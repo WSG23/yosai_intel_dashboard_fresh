@@ -130,3 +130,13 @@ async def test_dashboard_summary_endpoint():
 
     queries_stub.fetch_dashboard_summary.assert_awaited_once()
     db_stub.get_pool.assert_awaited()
+
+
+@pytest.mark.asyncio
+async def test_unauthorized_request():
+    module, _, _ = load_app()
+    transport = httpx.ASGITransport(app=module.app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/api/v1/analytics/get_dashboard_summary")
+        assert resp.status_code == 401
+        assert resp.json() == {"code": "unauthorized", "message": "unauthorized"}

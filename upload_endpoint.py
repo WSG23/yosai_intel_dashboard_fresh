@@ -3,6 +3,7 @@ import base64
 from flask import Blueprint, jsonify, request
 
 from utils.api_error import error_response
+from shared.errors.types import ErrorCode
 from flask_wtf.csrf import validate_csrf
 
 from config.service_registration import register_upload_services
@@ -28,7 +29,7 @@ def upload_files():
         try:
             validate_csrf(token)
         except Exception:
-            return error_response("invalid_csrf", "Invalid CSRF token"), 400
+            return error_response(ErrorCode.UNAUTHORIZED, "Invalid CSRF token"), 400
 
         contents = []
         filenames = []
@@ -50,14 +51,14 @@ def upload_files():
 
         file_processor = container.get("file_processor")
         if not contents or not filenames:
-            return error_response("no_file", "No file provided"), 400
+            return error_response(ErrorCode.INVALID_INPUT, "No file provided"), 400
 
         job_id = file_processor.process_file_async(contents[0], filenames[0])
 
         return jsonify({"job_id": job_id}), 202
 
     except Exception as e:
-        return error_response("server_error", str(e)), 500
+        return error_response(ErrorCode.INTERNAL, str(e)), 500
 
 
 @upload_bp.route("/v1/upload/status/<job_id>", methods=["GET"])

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/WSG23/yosai-gateway/tracing"
+	sharederrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
 )
 
 // Simple rate limiter using a token bucket.
@@ -45,7 +46,7 @@ func RateLimit(next http.Handler) http.Handler {
 		case <-tokens:
 			next.ServeHTTP(w, r)
 		default:
-			http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
+			sharederrors.WriteJSON(w, http.StatusTooManyRequests, sharederrors.Unavailable, "rate limit exceeded", nil)
 		}
 	})
 }

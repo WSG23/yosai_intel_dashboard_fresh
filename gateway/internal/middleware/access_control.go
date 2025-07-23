@@ -3,6 +3,8 @@ package middleware
 import (
 	"net/http"
 	"strings"
+
+	sharederrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
 )
 
 // RequirePermission checks the X-Permissions header for a permission value.
@@ -16,7 +18,7 @@ func RequirePermissionHeader(perm string) func(http.Handler) http.Handler {
 					return
 				}
 			}
-			http.Error(w, "forbidden", http.StatusForbidden)
+			sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
 		})
 	}
 }
@@ -32,7 +34,7 @@ func RequireRoleHeader(role string) func(http.Handler) http.Handler {
 					return
 				}
 			}
-			http.Error(w, "forbidden", http.StatusForbidden)
+			sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
 		})
 	}
 }
