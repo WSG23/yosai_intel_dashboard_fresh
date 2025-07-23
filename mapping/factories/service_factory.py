@@ -9,13 +9,13 @@ from mapping.processors.device_processor import DeviceProcessor
 from mapping.service import MappingService
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
-    from services.learning.coordinator import LearningCoordinator
+from services.learning.src.api.coordinator import LearningCoordinator
 
 
 def create_learning_service(
     path: str | None = None, in_memory: bool = False
 ) -> "LearningCoordinator":
-    from services.learning.coordinator import LearningCoordinator
+    from services.learning.src.api.coordinator import LearningCoordinator
 
     storage = (
         MemoryStorage()

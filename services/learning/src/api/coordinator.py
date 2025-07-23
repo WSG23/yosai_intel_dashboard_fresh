@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 import pandas as pd
 
 from mapping.core.interfaces import LearningInterface, StorageInterface
-from services.learning.fingerprint_service import FingerprintService
+from services.learning.src.ml.fingerprint_service import FingerprintService
 
 
 logger = logging.getLogger(__name__)

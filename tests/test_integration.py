@@ -3,7 +3,7 @@
 import pandas as pd
 
 from services.ai_device_generator import AIDeviceGenerator
-from services.consolidated_learning_service import get_learning_service
+from services.learning.src.api.consolidated_service import get_learning_service
 
 
 def test_end_to_end_device_mapping():

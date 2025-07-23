@@ -16,7 +16,7 @@ from services.configuration_service import (
     ConfigurationServiceProtocol,
     DynamicConfigurationService,
 )
-from services.consolidated_learning_service import get_learning_service
+from services.learning.src.api.consolidated_service import get_learning_service
 
 logger = logging.getLogger(__name__)
 

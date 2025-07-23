@@ -2,7 +2,7 @@
 
 This script converts a ``learned_mappings.pkl`` file into a JSON file
 compatible with
-:class:`services.consolidated_learning_service.ConsolidatedLearningService`.
+:class:`services.learning.src.api.consolidated_service.ConsolidatedLearningService`.
 
 **Important**: Pickle files are inherently insecure and support for them has
 been removed from the dashboard. Convert any existing pickle mapping files to

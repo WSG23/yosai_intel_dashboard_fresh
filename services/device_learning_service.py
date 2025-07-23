@@ -12,7 +12,7 @@ from dash import html
 from dash._callback_context import callback_context
 from dash.dependencies import Input, Output
 
-from services.consolidated_learning_service import get_learning_service
+from services.learning.src.api.consolidated_service import get_learning_service
 from services.protocols.device_learning import DeviceLearningServiceProtocol
 
 
