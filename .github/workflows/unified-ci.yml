@@ -171,3 +171,4 @@ jobs:
           kubectl apply -f k8s/base
           kubectl apply -f k8s/production
           kubectl delete -f k8s/canary
+

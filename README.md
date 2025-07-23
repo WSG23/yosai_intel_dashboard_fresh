@@ -15,6 +15,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Deployment Diagram](docs/deployment_diagram.md)
 - [Analytics Upload Sequence](docs/analytics_sequence.md)
 - [Roadmap](docs/roadmap.md)
+- [Unified Platform](docs/unified_platform.md)
 - [Sequence Diagrams](docs/sequence_diagrams.md)
 - [UI Flows](docs/ui_flows.md)
 - [Upload Interface Guide](docs/upload_interface.md)
@@ -256,6 +257,28 @@ go run ./cmd/gateway
 The service listens on port `8080` inside the container. You can reach it at
 `http://localhost:8081` when running via Docker Compose.
 Stop all containers with `docker-compose down` when finished.
+
+### Unified Operations CLI
+
+Common project tasks can be executed via the unified operations CLI or the
+provided Makefile wrappers:
+
+```bash
+# validate configuration and secrets
+make validate
+
+# build Docker images and start the stack
+make build
+make deploy
+
+# run tests and checks
+make test
+make lint
+make format
+
+# tear everything down and clean caches
+make clean
+```
 
 ### Kafka Event Processor
 
