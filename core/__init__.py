@@ -8,6 +8,7 @@ from .advanced_cache import (
     create_advanced_cache_manager,
 )
 from .advanced_query_optimizer import AdvancedQueryOptimizer
+from .base_model import BaseModel
 from .cache_warmer import IntelligentCacheWarmer
 from .callback_modules import CallbackModule, CallbackModuleRegistry
 from .cpu_optimizer import CPUOptimizer
@@ -41,4 +42,5 @@ __all__ = [
     "create_intelligent_cache_manager",
     "CallbackModule",
     "CallbackModuleRegistry",
+    "BaseModel",
 ]

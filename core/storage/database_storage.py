@@ -2,15 +2,24 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+import logging
+from typing import Any, Dict, Optional
+
+from core.base_model import BaseModel
 
 from .protocols import DatabaseStorageProtocol
 
 
-class DatabaseStorageService(DatabaseStorageProtocol):
+class DatabaseStorageService(BaseModel, DatabaseStorageProtocol):
     """Simple dictionary based record storage."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self._tables: Dict[str, Dict[str, Dict[str, Any]]] = {}
         self._counter = 0
 

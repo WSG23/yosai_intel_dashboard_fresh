@@ -2,15 +2,23 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List
+import logging
+from typing import Any, Callable, Dict, List, Optional
 
+from .base_model import BaseModel
 from .protocols import EventBusProtocol
 
 
-class EventBus(EventBusProtocol):
+class EventBus(BaseModel, EventBusProtocol):
     """In-memory pub/sub event bus."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self._subscribers: Dict[str, List[tuple[str, Callable]]] = {}
         self._history: List[Dict[str, Any]] = []
         self._counter = 0

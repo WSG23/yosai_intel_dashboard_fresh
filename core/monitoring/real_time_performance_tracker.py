@@ -2,12 +2,14 @@ from __future__ import annotations
 
 """Real time performance tracker for web vitals and callbacks."""
 
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict
+from typing import Any, Dict, Optional
 
 import psutil
 
+from core.base_model import BaseModel
 from core.performance import MetricType, get_performance_monitor
 
 
@@ -20,10 +22,16 @@ class WebVital:
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
 
-class RealTimePerformanceTracker:
+class RealTimePerformanceTracker(BaseModel):
     """Capture metrics related to the live user experience."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self.web_vitals: Dict[str, WebVital] = {}
 
     # ------------------------------------------------------------------

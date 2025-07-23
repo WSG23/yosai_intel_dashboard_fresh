@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import logging
 from dataclasses import dataclass
 from enum import Enum
 from typing import (
@@ -16,6 +17,8 @@ from typing import (
     Union,
     get_type_hints,
 )
+
+from .base_model import BaseModel
 
 T = TypeVar("T")
 
@@ -46,10 +49,16 @@ class CircularDependencyError(DependencyInjectionError):
     """Raised when circular dependencies are detected."""
 
 
-class ServiceContainer:
+class ServiceContainer(BaseModel):
     """Protocol based dependency injection container."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self._services: Dict[str, ServiceRegistration] = {}
         self._instances: Dict[str, Any] = {}
         self._scoped_instances: Dict[str, Dict[str, Any]] = {}

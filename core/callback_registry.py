@@ -7,12 +7,14 @@ import functools
 import logging
 import time
 from functools import wraps
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional
 
 from dash import no_update
 
 if TYPE_CHECKING:  # pragma: no cover - avoid circular import at runtime
     from .truly_unified_callbacks import TrulyUnifiedCallbacks
+
+from .base_model import BaseModel
 
 
 def debounce(wait_ms: int = 300):
@@ -38,10 +40,16 @@ def debounce(wait_ms: int = 300):
 logger = logging.getLogger(__name__)
 
 
-class GlobalCallbackRegistry:
+class GlobalCallbackRegistry(BaseModel):
     """Track globally registered callback IDs to prevent duplicates."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self.registered_callbacks: set[str] = set()
         self.registration_sources: Dict[str, str] = {}
         self.callback_sources = self.registration_sources  # backward compatibility
@@ -58,7 +66,8 @@ class GlobalCallbackRegistry:
         if callback_id in self.registered_callbacks:
             existing = self.callback_sources.get(callback_id, "unknown")
             logger.warning(
-                "Callback ID '%s' already registered by %s, skipping registration from %s",
+                "Callback ID '%s' already registered by %s, "
+                "skipping registration from %s",
                 callback_id,
                 existing,
                 module_name,

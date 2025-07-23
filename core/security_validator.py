@@ -9,27 +9,23 @@ import re
 import secrets
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import requests
-from tracing import propagate_context
-
 import sqlparse
-from sqlparse.sql import Identifier, IdentifierList, Token
-from sqlparse.tokens import Keyword, DML, DDL
-
-from core.protocols import SecurityServiceProtocol
+from sqlparse.tokens import DDL, DML, Keyword
 
 from config.constants import FileProcessingLimits
+from core.base_model import BaseModel
 from core.exceptions import ValidationError
+from core.protocols import SecurityServiceProtocol
 from security.attack_detection import AttackDetection
-from security.unicode_security_processor import sanitize_unicode_input
 from security.events import SecurityEvent, emit_security_event
+from security.unicode_security_processor import sanitize_unicode_input
+from tracing import propagate_context
 
-from .security_patterns import (
-    PATH_TRAVERSAL_PATTERNS as RAW_PATH_PATTERNS,
-    XSS_PATTERNS as RAW_XSS_PATTERNS,
-)
+from .security_patterns import PATH_TRAVERSAL_PATTERNS as RAW_PATH_PATTERNS
+from .security_patterns import XSS_PATTERNS as RAW_XSS_PATTERNS
 
 
 class SecurityLevel(Enum):
@@ -84,7 +80,7 @@ class AdvancedSQLValidator:
         return False
 
 
-class SecurityValidator(SecurityServiceProtocol):
+class SecurityValidator(BaseModel, SecurityServiceProtocol):
     """Comprehensive security validator implementing ``SecurityServiceProtocol``."""
 
     VALIDATION_CONFIG = {
@@ -93,8 +89,13 @@ class SecurityValidator(SecurityServiceProtocol):
         "path_traversal": True,
     }
 
-    def __init__(self) -> None:
-        self.logger = logging.getLogger(__name__)
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self.attack_detection = AttackDetection()
         self.sql_validator = AdvancedSQLValidator()
 
@@ -242,9 +243,7 @@ class SecurityValidator(SecurityServiceProtocol):
                 )
             ]
         except Exception:
-            self.logger.exception(
-                "Unexpected error in %s", validator_func.__name__
-            )
+            self.logger.exception("Unexpected error in %s", validator_func.__name__)
             raise
 
     def _compile_validation_results(

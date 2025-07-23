@@ -3,7 +3,6 @@
 Performance optimization and monitoring system
 Inspired by Apple's Instruments and performance measurement tools
 """
-import asyncio
 import functools
 import logging
 import threading
@@ -19,6 +18,7 @@ import psutil
 
 from config.dynamic_config import dynamic_config
 
+from .base_model import BaseModel
 from .cpu_optimizer import CPUOptimizer
 from .memory_manager import MemoryManager
 
@@ -333,7 +333,8 @@ def measure_performance(
                 # Log slow operations
                 if threshold and duration > threshold:
                     get_performance_monitor().logger.warning(
-                        f"Slow operation: {metric_name} took {duration:.3f}s (threshold: {threshold}s)"
+                        f"Slow operation: {metric_name} took {duration:.3f}s "
+                        f"(threshold: {threshold}s)"
                     )
 
             return result
@@ -400,13 +401,19 @@ def measure_async_performance(
     return decorator
 
 
-class PerformanceProfiler:
+class PerformanceProfiler(BaseModel):
     """
     Code profiler for detailed performance analysis
     Similar to Apple's Time Profiler instrument
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self.profile_data: Dict[str, List[Tuple[str, float]]] = defaultdict(list)
         self.active_profiles: Dict[str, float] = {}
 
@@ -463,10 +470,16 @@ class PerformanceProfiler:
         return report
 
 
-class CacheMonitor:
+class CacheMonitor(BaseModel):
     """Monitor cache performance and hit rates"""
 
-    def __init__(self):
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self.cache_stats: Dict[str, Dict[str, int]] = defaultdict(
             lambda: {"hits": 0, "misses": 0}
         )
@@ -513,10 +526,16 @@ class CacheMonitor:
         return result
 
 
-class DatabaseQueryMonitor:
+class DatabaseQueryMonitor(BaseModel):
     """Monitor database query performance"""
 
-    def __init__(self):
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self.slow_queries: List[Dict[str, Any]] = []
         self.query_stats: Dict[str, List[float]] = defaultdict(list)
 

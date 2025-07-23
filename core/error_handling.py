@@ -2,7 +2,6 @@
 """
 Comprehensive error handling system with Apple-style resilience patterns
 """
-import asyncio
 import functools
 import logging
 import time
@@ -11,8 +10,10 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
-from prometheus_client import Counter, REGISTRY
+from prometheus_client import REGISTRY, Counter
 from prometheus_client.core import CollectorRegistry
+
+from .base_model import BaseModel
 
 # Counter tracking circuit breaker state transitions. When the metric already
 # exists in the default registry (e.g. during test re-imports) we create the
@@ -111,11 +112,16 @@ class CircuitBreakerError(YosaiError):
         )
 
 
-class ErrorHandler:
+class ErrorHandler(BaseModel):
     """Centralized error handling with Apple-style patterns"""
 
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self.error_history: List[ErrorContext] = []
         self.max_history = 1000
 
@@ -274,7 +280,9 @@ def with_async_error_handling(
 class CircuitBreaker:
     """Circuit breaker pattern for external service calls with metrics"""
 
-    def __init__(self, failure_threshold: int = 5, timeout: int = 60, name: str = "circuit"):
+    def __init__(
+        self, failure_threshold: int = 5, timeout: int = 60, name: str = "circuit"
+    ):
         self.failure_threshold = failure_threshold
         self.timeout = timeout
         self.failure_count = 0

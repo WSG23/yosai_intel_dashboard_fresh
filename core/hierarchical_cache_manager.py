@@ -2,13 +2,22 @@ from __future__ import annotations
 
 """Simple hierarchical cache with two levels."""
 
+import logging
 from typing import Any, Dict, Optional
 
+from .base_model import BaseModel
 
-class HierarchicalCacheManager:
+
+class HierarchicalCacheManager(BaseModel):
     """Manage a two-level in-memory cache."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: Optional[Any] = None,
+        db: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        super().__init__(config, db, logger)
         self._level1: Dict[str, Any] = {}
         self._level2: Dict[str, Any] = {}
 
