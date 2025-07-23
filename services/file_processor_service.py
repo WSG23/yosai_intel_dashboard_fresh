@@ -22,6 +22,7 @@ from utils.protocols import SafeDecoderProtocol
 from utils.memory_utils import memory_safe
 
 from .base import BaseService
+from yosai_framework.service import BaseService as FrameworkService
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,8 @@ class FileProcessorService(BaseService):
         decoder: SafeDecoderProtocol = safe_decode_with_unicode_handling,
     ) -> None:
         super().__init__("file_processor")
+        self.framework = FrameworkService("file-processor", "")
+        self.framework.start()
         self.config = config
         self.max_file_size_mb = config.get_max_upload_size_mb()
         self._decoder = decoder

@@ -21,3 +21,13 @@ python -m tools.ops_cli test-all
 python -m tools.ops_cli deploy-all
 python -m tools.ops_cli logs gateway
 ```
+
+The repository also includes a small Go wrapper named `yosai` which
+forwards commands to `tools.ops_cli` for a chosen service:
+
+```bash
+yosai build gateway
+yosai test gateway
+yosai deploy gateway
+yosai logs gateway
+```
