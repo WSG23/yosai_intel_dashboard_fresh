@@ -5,7 +5,7 @@ import logging
 from functools import wraps
 from typing import Any, Callable, Optional
 
-from core.unicode_utils import sanitize_for_utf8
+from core.unicode import sanitize_for_utf8
 
 logger = logging.getLogger(__name__)
 

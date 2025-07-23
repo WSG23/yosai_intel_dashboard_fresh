@@ -12,6 +12,8 @@ import logging
 import math
 import re
 import unicodedata
+from dataclasses import dataclass
+from enum import Enum
 from functools import wraps
 from typing import Any, Callable, Iterable, Optional, Union
 
@@ -586,6 +588,135 @@ def unicode_safe_callback(func: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
+# ---------------------------------------------------------------------------
+# Additional helpers unified from legacy modules
+
+
+class SurrogateHandlingStrategy(Enum):
+    """Strategies for handling surrogate characters."""
+
+    REPLACE = "replace"
+    REJECT = "reject"
+    STRIP = "strip"
+
+
+@dataclass
+class SurrogateHandlingConfig:
+    """Configuration for :class:`EnhancedUnicodeProcessor`."""
+
+    strategy: SurrogateHandlingStrategy = SurrogateHandlingStrategy.REPLACE
+    replacement_char: str = "\ufffd"
+    normalize_form: str = "NFC"
+    log_errors: bool = True
+
+
+class EnhancedUnicodeProcessor:
+    """Process text with configurable surrogate handling."""
+
+    def __init__(self, config: Optional[SurrogateHandlingConfig] = None) -> None:
+        self.config = config or SurrogateHandlingConfig()
+
+    def process_text(self, text: str) -> str:
+        if not text:
+            return ""
+
+        if contains_surrogates(text):
+            if self.config.strategy is SurrogateHandlingStrategy.REJECT:
+                raise UnicodeError("Surrogate characters not allowed")
+            elif self.config.strategy is SurrogateHandlingStrategy.STRIP:
+                text = _SURROGATE_RE.sub("", text)
+            else:  # REPLACE
+                text = _SURROGATE_RE.sub(self.config.replacement_char, text)
+
+        try:
+            text = unicodedata.normalize(self.config.normalize_form, text)
+        except Exception as exc:  # pragma: no cover - defensive
+            if self.config.log_errors:
+                logger.warning("Unicode normalization failed: %s", exc)
+
+        return text
+
+
+def _remove_invalid_surrogates(text: str) -> str:
+    """Return ``text`` without lone surrogate code points."""
+
+    out: list[str] = []
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        code = ord(ch)
+        if 0xD800 <= code <= 0xDBFF:
+            if i + 1 < len(text) and 0xDC00 <= ord(text[i + 1]) <= 0xDFFF:
+                out.append(ch)
+                out.append(text[i + 1])
+                i += 2
+                continue
+            i += 1
+            continue
+        if 0xDC00 <= code <= 0xDFFF:
+            i += 1
+            continue
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
+
+def safe_unicode_decode(data: Any, encoding: str = "utf-8") -> str:
+    """Decode ``data`` safely removing invalid surrogates."""
+
+    if isinstance(data, str):
+        return _remove_invalid_surrogates(data)
+
+    try:
+        text = data.decode(encoding, errors="surrogatepass")
+    except UnicodeError as exc:
+        logger.warning("Primary decode failed: %s", exc)
+        try:
+            text = data.decode(encoding, errors="replace")
+        except Exception:
+            text = data.decode("utf-8", errors="ignore")
+    return _remove_invalid_surrogates(text)
+
+
+class UnicodeNormalizationError(Exception):
+    """Raised when Unicode normalization fails."""
+
+
+def normalize_unicode_safely(text: Any, form: str = "NFKC") -> str:
+    """Return ``text`` normalised using ``form`` with robust error handling."""
+
+    if not isinstance(text, str):
+        try:
+            text = str(text)
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error("Failed to convert %r to str: %s", text, exc)
+            raise UnicodeNormalizationError(str(exc)) from exc
+
+    try:
+        return unicodedata.normalize(form, text)
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("Unicode normalization failed: %s", exc)
+        raise UnicodeNormalizationError(str(exc)) from exc
+
+
+def detect_surrogate_pairs(text: Any) -> bool:
+    """Return ``True`` if ``text`` contains any UTF-16 surrogate pair."""
+
+    return _unicode_validator._contains_surrogates(str(text))
+
+
+def sanitize_for_utf8(value: Any) -> str:
+    """Return ``value`` cleaned and safe for UTF-8."""
+
+    try:
+        return _unicode_validator.validate_and_sanitize(value)
+    except SecurityError:
+        raise
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("Unicode sanitization failed: %s", exc)
+        return _unicode_validator.validate_and_sanitize(str(value))
+
+
 __all__ = [
     "clean_unicode_text",
     "safe_decode_bytes",
@@ -614,4 +745,12 @@ __all__ = [
     "unicode_safe_callback",
     "utf8_safe_encode",
     "utf8_safe_decode",
+    "safe_unicode_decode",
+    "normalize_unicode_safely",
+    "detect_surrogate_pairs",
+    "sanitize_for_utf8",
+    "UnicodeNormalizationError",
+    "EnhancedUnicodeProcessor",
+    "SurrogateHandlingConfig",
+    "SurrogateHandlingStrategy",
 ]
