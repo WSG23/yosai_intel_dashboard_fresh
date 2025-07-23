@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -33,6 +34,18 @@ import (
 	"github.com/sony/gobreaker"
 )
 
+func validateRequiredEnv(vars []string) {
+	missing := []string{}
+	for _, v := range vars {
+		if os.Getenv(v) == "" {
+			missing = append(missing, v)
+		}
+	}
+	if len(missing) > 0 {
+		log.Fatalf("missing required environment variables: %s", strings.Join(missing, ", "))
+	}
+}
+
 func main() {
 	svc, err := framework.NewBaseService("gateway", "")
 	if err != nil {
@@ -40,6 +53,9 @@ func main() {
 	}
 	go svc.Start()
 	defer svc.Stop()
+
+	validateRequiredEnv([]string{"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_GATEWAY_NAME"})
+
 
 	shutdown, err := tracing.InitTracing("gateway")
 	if err != nil {

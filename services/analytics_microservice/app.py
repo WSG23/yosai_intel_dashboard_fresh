@@ -12,6 +12,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 
 from config import get_database_config
+from config.validate import validate_required_env
 from services.analytics_microservice import async_queries
 from services.common.async_db import close_pool, create_pool, get_pool
 
@@ -57,6 +58,10 @@ class PatternsRequest(BaseModel):
 
 @app.on_event("startup")
 async def _startup() -> None:
+    validate_required_env(["JWT_SECRET"])
+    if JWT_SECRET == PLACEHOLDER_JWT_SECRET:
+        raise RuntimeError("JWT_SECRET environment variable not set")
+
 
     cfg = get_database_config()
     await create_pool(

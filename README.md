@@ -372,6 +372,12 @@ file-based Docker secrets, set `DB_PASSWORD` and `SECRET_KEY` in the
 environment, or let the `ConfigManager` load them from your secret
 backend. **Do not commit these files to version control.**
 
+The gateway and analytics microservice validate several variables on
+startup:
+
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` and `DB_GATEWAY_NAME` for the gateway
+- `JWT_SECRET` for the analytics microservice
+
 ### Production Build
 
 Build optimized CSS assets before deployment:
