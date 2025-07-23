@@ -13,3 +13,5 @@ jobs:
           python-version: '3.11'
       - run: pip install -r requirements.lock
       - run: python scripts/migrate.py --dry-run
+      - name: Timescale migrations
+        run: python scripts/migrate.py --config migrations/timescale/alembic.ini --dry-run
