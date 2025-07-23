@@ -18,6 +18,7 @@ from .dynamic_config import DynamicConfigManager, dynamic_config
 from .config_manager import ConfigManager, get_config, reload_config
 from .secure_config_manager import SecureConfigManager
 from .environment_processor import EnvironmentProcessor
+from .secure_db import execute_secure_query
 from .protocols import (
     ConfigLoaderProtocol,
     ConfigTransformerProtocol,
@@ -120,6 +121,7 @@ __all__ = [
     "SecurityConstants",
     "PerformanceConstants",
     "CSSConstants",
+    "execute_secure_query",
 ]
 
 def get_monitoring_config() -> Dict[str, Any]:
