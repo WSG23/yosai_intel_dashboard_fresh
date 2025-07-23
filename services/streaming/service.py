@@ -2,7 +2,7 @@ import logging
 from typing import Any, Dict, Generator, Optional
 
 from config.dynamic_config import dynamic_config
-from services.base import BaseService
+from yosai_framework.service import BaseService
 
 logger = logging.getLogger(__name__)
 
@@ -11,11 +11,21 @@ class StreamingService(BaseService):
     """Manage Kafka or Pulsar streaming connections."""
 
     def __init__(self, config: Optional[Any] = None) -> None:
-        super().__init__("streaming")
+        super().__init__("streaming", "")
         self.config = config or getattr(dynamic_config, "streaming", None)
         self.producer = None
         self.consumer = None
         self._client = None
+
+    def initialize(self) -> bool:
+        try:
+            self.start()
+            self._do_initialize()
+            self.log.info("Service %s initialized", self.name)
+            return True
+        except Exception as exc:  # pragma: no cover - init error
+            self.log.error("Failed to initialize service %s: %s", self.name, exc)
+            return False
 
     def _do_initialize(self) -> None:
         if not self.config:
