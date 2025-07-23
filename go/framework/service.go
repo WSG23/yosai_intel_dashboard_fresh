@@ -34,6 +34,7 @@ type BaseService struct {
 	metricsLn       net.Listener
 	reqCount        *prometheus.CounterVec
 	reqDuration     *prometheus.HistogramVec
+	reqErrors       *prometheus.CounterVec
 	traceShutdown   func(context.Context) error
 	ready           bool
 	live            bool
@@ -119,7 +120,11 @@ func (s *BaseService) setupMetrics() {
 		Help:    "HTTP request duration in seconds",
 		Buckets: prometheus.DefBuckets,
 	}, []string{"method", "endpoint", "status"})
-	s.registry.MustRegister(s.reqCount, s.reqDuration)
+	s.reqErrors = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "yosai_error_total",
+		Help: "Total errors encountered",
+	}, []string{"endpoint"})
+	s.registry.MustRegister(s.reqCount, s.reqDuration, s.reqErrors)
 
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{}))

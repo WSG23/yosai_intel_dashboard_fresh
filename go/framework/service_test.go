@@ -55,6 +55,7 @@ func TestMetricsInitialization(t *testing.T) {
 	svc.setupMetrics()
 	svc.reqCount.WithLabelValues("GET", "/", "200").Inc()
 	svc.reqDuration.WithLabelValues("GET", "/", "200").Observe(0.1)
+	svc.reqErrors.WithLabelValues("/").Inc()
 	defer svc.Stop()
 	addr := svc.metricsLn.Addr().String()
 	resp, err := http.Get("http://" + addr + "/metrics")
@@ -68,6 +69,9 @@ func TestMetricsInitialization(t *testing.T) {
 	}
 	if !strings.Contains(string(body), "yosai_request_duration_seconds") {
 		t.Fatalf("histogram not exposed: %s", string(body))
+	}
+	if !strings.Contains(string(body), "yosai_error_total") {
+		t.Fatalf("error counter not exposed: %s", string(body))
 	}
 }
 
