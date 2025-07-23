@@ -56,6 +56,7 @@ func main() {
 
 	validateRequiredEnv([]string{"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_GATEWAY_NAME"})
 
+
 	shutdown, err := tracing.InitTracing("gateway")
 	if err != nil {
 		tracing.Logger.Fatalf("failed to init tracing: %v", err)
@@ -79,8 +80,12 @@ func main() {
 	if dbName == "" {
 		dbName = os.Getenv("DB_NAME")
 	}
-	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), dbName, os.Getenv("DB_PASSWORD"))
+	sslMode := os.Getenv("DB_SSLMODE")
+	if sslMode == "" {
+		sslMode = "require"
+	}
+	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
+		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), dbName, os.Getenv("DB_PASSWORD"), sslMode)
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		tracing.Logger.Fatalf("failed to connect db: %v", err)

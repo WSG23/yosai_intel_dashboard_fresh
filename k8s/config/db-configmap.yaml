@@ -8,3 +8,4 @@ data:
   DB_PORT: "5432"
   DB_NAME: "yosai_intel"
   DB_USER: "yosai_dashboard"
+  DB_SSLMODE: "require"
