@@ -910,6 +910,7 @@ manager.execute_query_with_retry("SELECT 1")
   python -m uvicorn services.analytics_microservice.app:app --host 0.0.0.0 --port 8001
   ```
 
+
 - **device_learning_service.py**: Persists learned device mappings ([docs](docs/device_learning_service.md))
 - Caching and performance optimization
 - Modular and testable
