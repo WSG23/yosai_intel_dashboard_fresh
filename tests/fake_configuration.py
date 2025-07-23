@@ -1,6 +1,12 @@
 from types import SimpleNamespace
 from core.protocols import ConfigurationProtocol
-from services.configuration_service import ConfigurationServiceProtocol
+try:
+    from services.configuration_service import ConfigurationServiceProtocol
+except Exception:  # pragma: no cover - optional deps
+    from typing import Protocol
+
+    class ConfigurationServiceProtocol(Protocol):
+        def get_max_upload_size_mb(self) -> int: ...
 
 
 class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol):

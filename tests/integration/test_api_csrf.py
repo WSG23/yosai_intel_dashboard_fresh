@@ -3,6 +3,7 @@ import sys
 import types
 
 import pytest
+from fastapi.testclient import TestClient
 
 
 class DummyFileProcessor:
@@ -14,8 +15,6 @@ class DummyFileProcessor:
 
 
 def _create_app(monkeypatch):
-    tracing_stub = types.SimpleNamespace(init_tracing=lambda *a, **k: None)
-    monkeypatch.setitem(sys.modules, "tracing", tracing_stub)
 
     analytics_stub = types.SimpleNamespace(
         register_analytics_blueprints=lambda app: None
@@ -41,23 +40,22 @@ def _create_app(monkeypatch):
 def test_csrf_token_and_protected_endpoint(monkeypatch):
     monkeypatch.setenv("SECRET_KEY", "test-key")
     app = _create_app(monkeypatch)
-    client = app.test_client()
+    client = TestClient(app)
 
-    with client:
-        token_resp = client.get("/v1/csrf-token")
-        assert token_resp.status_code == 200
-        token = token_resp.get_json()["csrf_token"]
-        assert "HttpOnly" in token_resp.headers.get("Set-Cookie", "")
+    token_resp = client.get("/v1/csrf-token")
+    assert token_resp.status_code == 200
+    token = token_resp.json()["csrf_token"]
+    assert "HttpOnly" in token_resp.headers.get("set-cookie", "")
 
-        resp = client.post(
-            "/v1/upload",
-            json={"contents": ["data:text/plain;base64,Zm8="], "filenames": ["t.txt"]},
-        )
-        assert resp.status_code == 400
+    resp = client.post(
+        "/v1/upload",
+        json={"contents": ["data:text/plain;base64,Zm8="], "filenames": ["t.txt"]},
+    )
+    assert resp.status_code == 400
 
-        resp = client.post(
-            "/v1/upload",
-            json={"contents": ["data:text/plain;base64,Zm8="], "filenames": ["t.txt"]},
-            headers={"X-CSRFToken": token},
-        )
-        assert resp.status_code == 202
+    resp = client.post(
+        "/v1/upload",
+        json={"contents": ["data:text/plain;base64,Zm8="], "filenames": ["t.txt"]},
+        headers={"X-CSRFToken": token},
+    )
+    assert resp.status_code == 202

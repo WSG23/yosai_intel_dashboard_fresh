@@ -1,5 +1,17 @@
 from tests.fake_configuration import FakeConfiguration
-from services.file_processor_service import FileProcessorService
+import importlib.util
+import sys
+import types
+
+config_stub = types.SimpleNamespace(ConfigurationServiceProtocol=object)
+sys.modules.setdefault("services.configuration_service", config_stub)
+
+spec = importlib.util.spec_from_file_location(
+    "services.file_processor_service", "services/file_processor_service.py"
+)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+FileProcessorService = module.FileProcessorService
 from core.unicode import sanitize_unicode_input
 
 

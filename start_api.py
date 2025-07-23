@@ -10,15 +10,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from api.adapter import create_api_app
 from config.constants import API_PORT
 
-logger = logging.getLogger("start")
-handler = logging.StreamHandler()
-handler.setFormatter(
-    logging.Formatter(
-        '{"time":"%(asctime)s","level":"%(levelname)s","msg":"%(message)s"}'
-    )
-)
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
 
 
 def main() -> None:
@@ -27,10 +18,11 @@ def main() -> None:
 
     print("\n🚀 Starting Yosai Intel Dashboard API...")
     print(f"   Available at: http://localhost:{API_PORT}")
-    print(f"   Health check: http://localhost:{API_PORT}/v1/health")
+    print(f"   Health check: http://localhost:{API_PORT}/health")
 
+    import uvicorn
 
-    app.run(host="0.0.0.0", port=API_PORT, debug=True)
+    uvicorn.run(app, host="0.0.0.0", port=API_PORT)
 
 
 if __name__ == "__main__":

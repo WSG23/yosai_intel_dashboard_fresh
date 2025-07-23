@@ -10,18 +10,16 @@ from typing import Any, Optional
 from kafka import KafkaConsumer, KafkaProducer
 
 from config.kafka_config import KafkaConfig, from_environment
-from services.base import BaseService
-from yosai_framework.service import BaseService as FrameworkService
+from yosai_framework.service import BaseService
 
 logger = logging.getLogger(__name__)
 
 
-class EventStreamingService(BaseService):
+class EventStreamingService:
     """Service managing Kafka producer/consumer threads."""
 
     def __init__(self, config: Optional[KafkaConfig] = None) -> None:
-        super().__init__("event_streaming")
-        self.framework = FrameworkService("event-streaming", "")
+        self.service = BaseService("event-streaming", "")
         self.config = config or from_environment()
         self.producer: KafkaProducer | None = None
         self.consumer: KafkaConsumer | None = None
@@ -29,8 +27,8 @@ class EventStreamingService(BaseService):
         self._stop = threading.Event()
         self.topic = "access-events"
 
-    def _do_initialize(self) -> None:
-        self.framework.start()
+    def initialize(self) -> None:
+        self.service.start()
         self.producer = KafkaProducer(
             bootstrap_servers=self.config.brokers,
             value_serializer=lambda v: json.dumps(v).encode("utf-8"),
@@ -80,7 +78,7 @@ class EventStreamingService(BaseService):
                 pass
         if self._worker is not None:
             self._worker.join(timeout=1)
-        self.framework.stop()
+        self.service.stop()
 
 
 __all__ = ["EventStreamingService"]
