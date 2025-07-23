@@ -23,6 +23,7 @@ This project follows a fully modular design built around a dependency injection 
 - [UI Design Assets](docs/ui_design/README.md)
 - [React Component Architecture](docs/react_component_architecture.md)
 - [Validation Overview](docs/validation_overview.md)
+- [Error Response Contract](docs/error_contract.md)
 - [Model Cards](docs/model_cards.md)
 - [Data Versioning](docs/data_versioning.md)
 - [Data Processing](docs/data_processing.md)
