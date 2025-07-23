@@ -1,16 +1,17 @@
 package main
 
 import (
-       "log"
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -25,27 +26,41 @@ import (
 	reg "github.com/WSG23/yosai-gateway/internal/registry"
 	"github.com/WSG23/yosai-gateway/internal/tracing"
 	mw "github.com/WSG23/yosai-gateway/middleware"
-       apicache "github.com/WSG23/yosai-gateway/plugins/cache"
-       "github.com/redis/go-redis/v9"
+	apicache "github.com/WSG23/yosai-gateway/plugins/cache"
+	"github.com/redis/go-redis/v9"
 
-       framework "github.com/WSG23/yosai-framework"
+	framework "github.com/WSG23/yosai-framework"
 
 	"github.com/sony/gobreaker"
 )
 
-func main() {
-       svc, err := framework.NewBaseService("gateway", "")
-        if err != nil {
-                log.Fatalf("failed to init base service: %v", err)
-        }
-        go svc.Start()
-        defer svc.Stop()
+func validateRequiredEnv(vars []string) {
+	missing := []string{}
+	for _, v := range vars {
+		if os.Getenv(v) == "" {
+			missing = append(missing, v)
+		}
+	}
+	if len(missing) > 0 {
+		log.Fatalf("missing required environment variables: %s", strings.Join(missing, ", "))
+	}
+}
 
-       shutdown, err := tracing.InitTracing("gateway")
-        if err != nil {
-                tracing.Logger.Fatalf("failed to init tracing: %v", err)
-        }
-        defer shutdown(context.Background())
+func main() {
+	svc, err := framework.NewBaseService("gateway", "")
+	if err != nil {
+		log.Fatalf("failed to init base service: %v", err)
+	}
+	go svc.Start()
+	defer svc.Stop()
+
+	validateRequiredEnv([]string{"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_GATEWAY_NAME"})
+
+	shutdown, err := tracing.InitTracing("gateway")
+	if err != nil {
+		tracing.Logger.Fatalf("failed to init tracing: %v", err)
+	}
+	defer shutdown(context.Background())
 
 	brokers := os.Getenv("KAFKA_BROKERS")
 	if brokers == "" {
