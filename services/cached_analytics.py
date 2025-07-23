@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-"""Analytics service with caching using AdvancedCacheManager."""
+"""Analytics service with caching using :class:`CacheManager`."""
 
 from typing import Any, Dict
 
-from core.advanced_cache import AdvancedCacheManager
+from core.cache_manager import CacheManager
 from services.analytics_summary import generate_sample_analytics
 
 
 class CachedAnalyticsService:
     """Provide cached analytics summaries."""
 
-    def __init__(self, cache_manager: AdvancedCacheManager, ttl_seconds: int = 300) -> None:
+    def __init__(self, cache_manager: CacheManager, ttl_seconds: int = 300) -> None:
         self.cache_manager = cache_manager
         self.ttl_seconds = ttl_seconds
 

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from advanced_cache import cache_with_lock
+from core.cache_manager import cache_with_lock, InMemoryCacheManager, CacheConfig
+
+_cache_manager = InMemoryCacheManager(CacheConfig())
 
 from .db_analytics_helper import DatabaseAnalyticsHelper
 
@@ -13,7 +15,7 @@ class DatabaseAnalyticsRetriever:
     def __init__(self, helper: DatabaseAnalyticsHelper) -> None:
         self.helper = helper
 
-    @cache_with_lock(ttl_seconds=600)
+    @cache_with_lock(_cache_manager, ttl=600)
     def get_analytics(self) -> Dict[str, Any]:
         """Return analytics data from the helper."""
         return self.helper.get_analytics()
