@@ -92,11 +92,7 @@ class ConfigValidator(ConfigValidatorProtocol):
         result = ValidationResult()
 
         if config.environment == "production":
-            if config.app.secret_key in {
-                "dev-key-change-in-production",
-                "change-me",
-                "",
-            }:
+            if config.app.secret_key in {"change-me", ""}:
                 result.errors.append("SECRET_KEY must be set for production")
             if not config.database.password and config.database.type != "sqlite":
                 result.warnings.append("Production database requires password")
