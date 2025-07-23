@@ -4,6 +4,7 @@ import time
 
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from shared.errors.types import ErrorCode
+from yosai_framework.errors import ServiceError
 from jose import jwt
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -31,7 +32,7 @@ def verify_token(authorization: str = Header("")) -> None:
     if not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"code": ErrorCode.UNAUTHORIZED.value, "message": "unauthorized"},
+            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
         )
     token = authorization.split(" ", 1)[1]
     try:
@@ -39,18 +40,18 @@ def verify_token(authorization: str = Header("")) -> None:
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"code": ErrorCode.UNAUTHORIZED.value, "message": "unauthorized"},
+            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
         ) from exc
     exp = claims.get("exp")
     if exp is not None and exp < time.time():
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"code": ErrorCode.UNAUTHORIZED.value, "message": "unauthorized"},
+            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
         )
     if not claims.get("iss"):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"code": ErrorCode.UNAUTHORIZED.value, "message": "unauthorized"},
+            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
         )
 
 
@@ -95,7 +96,7 @@ async def health_startup() -> dict[str, str]:
         return {"status": "complete"}
     raise HTTPException(
         status_code=503,
-        detail={"code": ErrorCode.UNAVAILABLE.value, "message": "starting"},
+        detail=ServiceError(ErrorCode.UNAVAILABLE, "starting").to_dict(),
     )
 
 
@@ -106,7 +107,7 @@ async def health_ready() -> dict[str, str]:
         return {"status": "ready"}
     raise HTTPException(
         status_code=503,
-        detail={"code": ErrorCode.UNAVAILABLE.value, "message": "not ready"},
+        detail=ServiceError(ErrorCode.UNAVAILABLE, "not ready").to_dict(),
     )
 
 

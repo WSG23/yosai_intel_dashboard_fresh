@@ -1,5 +1,7 @@
 import asyncio
 from fastapi import FastAPI, Header, HTTPException, status, Depends
+from shared.errors.types import ErrorCode
+from yosai_framework.errors import ServiceError
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -18,12 +20,14 @@ service = StreamingService()
 def verify_token(authorization: str = Header("")) -> None:
     if not authorization.startswith("Bearer "):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
         )
     token = authorization.split(" ", 1)[1]
     if not verify_service_jwt(token):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
         )
 
 
