@@ -258,6 +258,19 @@ The service listens on port `8080` inside the container. You can reach it at
 `http://localhost:8081` when running via Docker Compose.
 Stop all containers with `docker-compose down` when finished.
 
+### Unified Local Stack
+
+To launch all Python and Go services along with Jaeger, Prometheus, Grafana and Loki run:
+
+```bash
+docker compose -f docker-compose.unified.yml up --build
+```
+
+Prometheus will listen on [localhost:9090](http://localhost:9090) and Grafana on [localhost:3000].
+The file mounts `monitoring/prometheus.yml` and the `unified-platform.json` dashboard
+under `monitoring/grafana/dashboards/` so metrics are available immediately.
+Stop the stack with `docker compose down` when done.
+
 ### Unified Operations CLI
 
 Common project tasks can be executed via the unified operations CLI or the
