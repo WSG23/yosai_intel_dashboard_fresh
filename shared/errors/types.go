@@ -1,18 +1,31 @@
 package errors
 
-type Error interface {
-	error
-	Code() string
-}
-
-type BaseError struct {
-	Msg     string
-	CodeStr string
-}
-
-func (e BaseError) Error() string { return e.Msg }
-func (e BaseError) Code() string  { return e.CodeStr }
-
-var (
-	ErrConfig = BaseError{Msg: "configuration error", CodeStr: "CONFIG_ERROR"}
+import (
+	"encoding/json"
+	"net/http"
 )
+
+// Code represents a standardized error code shared across services.
+type Code string
+
+const (
+	InvalidInput Code = "invalid_input"
+	Unauthorized Code = "unauthorized"
+	NotFound     Code = "not_found"
+	Internal     Code = "internal"
+	Unavailable  Code = "unavailable"
+)
+
+type Error struct {
+	Code    Code        `json:"code"`
+	Message string      `json:"message"`
+	Details interface{} `json:"details,omitempty"`
+}
+
+// WriteJSON writes the error as JSON to the http.ResponseWriter.
+func WriteJSON(w http.ResponseWriter, status int, code Code, message string, details interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(Error{Code: code, Message: message, Details: details})
+}
+

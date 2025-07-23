@@ -5,6 +5,7 @@ import (
 
 	"github.com/WSG23/yosai-gateway/internal/auth"
 	"github.com/WSG23/yosai-gateway/internal/rbac"
+	sharederrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
 )
 
 // RequirePermission checks that the request's subject has the given permission.
@@ -13,16 +14,16 @@ func RequirePermission(s *rbac.RBACService, perm string) func(http.Handler) http
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			claims, ok := auth.FromContext(r.Context())
 			if !ok {
-				http.Error(w, "forbidden", http.StatusForbidden)
+				sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
 				return
 			}
 			if claims.Subject == "" {
-				http.Error(w, "forbidden", http.StatusForbidden)
+				sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
 				return
 			}
 			allowed, err := s.HasPermission(r.Context(), claims.Subject, perm)
 			if err != nil || !allowed {
-				http.Error(w, "forbidden", http.StatusForbidden)
+				sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
 				return
 			}
 			next.ServeHTTP(w, r)

@@ -21,7 +21,11 @@ class DummyUploadService:
 
     async def process_uploaded_files(self, contents, filenames):
         self.called_args = (contents, filenames)
-        return {"upload_results": [], "file_preview_components": [], "file_info_dict": {}}
+        return {
+            "upload_results": [],
+            "file_preview_components": [],
+            "file_info_dict": {},
+        }
 
 
 def _create_app(monkeypatch):
@@ -69,6 +73,7 @@ def test_upload_files_uses_asyncio_run(monkeypatch):
     assert used.get("called") is True
     assert service.called_args == ([content], ["test.csv"])
 
+
 class FailingUploadService:
     def __init__(self):
         self.store = DummyStore()
@@ -91,6 +96,7 @@ def test_upload_returns_error_on_exception(monkeypatch):
     monkeypatch.setitem(sys.modules, "core.container", container_mod)
 
     import importlib
+
     upload_ep = importlib.import_module("upload_endpoint")
 
     app = Flask(__name__)
@@ -103,4 +109,5 @@ def test_upload_returns_error_on_exception(monkeypatch):
         json={"contents": ["data:text/csv;base64,YSx6"], "filenames": ["t.csv"]},
     )
     assert resp.status_code == 500
-    assert resp.get_json()["message"] == "boom"
+    body = resp.get_json()
+    assert body == {"code": "internal", "message": "boom"}

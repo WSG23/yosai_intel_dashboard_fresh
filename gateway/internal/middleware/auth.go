@@ -10,6 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/WSG23/yosai-gateway/internal/auth"
+	sharederrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
 )
 
 // Auth middleware validates a JWT Authorization header.
@@ -18,13 +19,13 @@ func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHdr := r.Header.Get("Authorization")
 		if authHdr == "" {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", nil)
 			return
 		}
 
 		parts := strings.Fields(authHdr)
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", nil)
 			return
 		}
 
@@ -37,17 +38,17 @@ func Auth(next http.Handler) http.Handler {
 			return secret, nil
 		})
 		if err != nil || !token.Valid {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", nil)
 			return
 		}
 
 		if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", nil)
 			return
 		}
 
 		if claims.Issuer == "" {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", nil)
 			return
 		}
 

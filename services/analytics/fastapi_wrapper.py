@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException, Request, status
+from shared.errors.types import ErrorCode
 from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -22,12 +23,14 @@ async def auth_middleware(request: Request, call_next):
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
         return JSONResponse(
-            {"detail": "unauthorized"}, status_code=status.HTTP_401_UNAUTHORIZED
+            {"code": ErrorCode.UNAUTHORIZED.value, "message": "unauthorized"},
+            status_code=status.HTTP_401_UNAUTHORIZED,
         )
     token = auth.split(" ", 1)[1]
     if not verify_service_jwt(token):
         return JSONResponse(
-            {"detail": "unauthorized"}, status_code=status.HTTP_401_UNAUTHORIZED
+            {"code": ErrorCode.UNAUTHORIZED.value, "message": "unauthorized"},
+            status_code=status.HTTP_401_UNAUTHORIZED,
         )
     return await call_next(request)
 
@@ -59,9 +62,18 @@ async def analyze(request: AnalyticsRequest):
         if request.query_type == "patterns":
             days = int(request.parameters.get("days", 7))
             return await async_queries.fetch_access_patterns(pool, days)
-        raise HTTPException(status_code=400, detail="invalid query_type")
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": ErrorCode.INVALID_INPUT.value,
+                "message": "invalid query_type",
+            },
+        )
     except Exception as e:  # pragma: no cover - best effort
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        raise HTTPException(
+            status_code=500,
+            detail={"code": ErrorCode.INTERNAL.value, "message": str(e)},
+        ) from e
 
 
 FastAPIInstrumentor.instrument_app(app)
