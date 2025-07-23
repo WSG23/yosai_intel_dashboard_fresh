@@ -1,3 +1,4 @@
+import os
 import time
 
 from fastapi import Depends, FastAPI, Header, HTTPException, status
@@ -8,12 +9,16 @@ from pydantic import BaseModel
 
 from config import get_database_config
 from services.analytics_microservice import async_queries
-from services.common.async_db import create_pool, get_pool
+from services.common.async_db import create_pool, get_pool, close_pool
 from tracing import init_tracing
 
 init_tracing("analytics-microservice")
 
 app = FastAPI(title="Analytics Microservice")
+
+JWT_SECRET = os.getenv("JWT_SECRET")
+if not JWT_SECRET:
+    raise RuntimeError("JWT_SECRET environment variable not set")
 
 
 def verify_token(authorization: str = Header("")) -> None:
@@ -49,6 +54,17 @@ async def _startup() -> None:
         max_size=cfg.max_pool_size,
         timeout=cfg.connection_timeout,
     )
+
+
+@app.get("/health")
+async def health() -> dict[str, str]:
+    """Health check endpoint."""
+    return {"status": "ok"}
+
+
+@app.on_event("shutdown")
+async def _shutdown() -> None:
+    await close_pool()
 
 
 @app.post("/api/v1/analytics/get_dashboard_summary")
