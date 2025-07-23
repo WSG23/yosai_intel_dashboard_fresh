@@ -33,6 +33,15 @@ def execute_query(conn: Any, sql: str, params: Optional[Iterable[Any]] = None):
     raise AttributeError("Object has no execute or execute_query method")
 
 
+def execute_secure_query(
+    conn: Any, sql: str, params: Iterable[Any]
+) -> Any:
+    """Execute a parameterized SELECT query enforcing provided params."""
+    if params is None:
+        raise ValueError("params must be provided for execute_secure_query")
+    return execute_query(conn, sql, params)
+
+
 def execute_command(conn: Any, sql: str, params: Optional[Iterable[Any]] = None):
     """Validate and execute a modification command on the given connection."""
     if not isinstance(sql, str):
@@ -48,4 +57,4 @@ def execute_command(conn: Any, sql: str, params: Optional[Iterable[Any]] = None)
     raise AttributeError("Object has no execute or execute_command method")
 
 
-__all__ = ["execute_query", "execute_command"]
+__all__ = ["execute_query", "execute_command", "execute_secure_query"]

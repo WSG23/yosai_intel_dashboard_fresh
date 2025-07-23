@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Dict, Iterable, List, Sequence
 
 from database.types import DatabaseConnection
-from database.secure_exec import execute_query
+from database.secure_exec import execute_query, execute_secure_query
 
 
 class OptimizedQueryService:
@@ -25,7 +25,8 @@ class OptimizedQueryService:
             WHERE d.facility_id = %s
             ORDER BY ae.timestamp DESC
         """
-        rows = execute_query(self.db, query, (facility_id,))
+        params = (facility_id,)
+        rows = execute_secure_query(self.db, query, params)
         return [dict(r) for r in rows]
 
     # ------------------------------------------------------------------
@@ -35,12 +36,14 @@ class OptimizedQueryService:
             return []
 
         query = "SELECT * FROM people WHERE person_id = ANY(%s)"
+        params = (list(user_ids),)
         try:
-            rows = execute_query(self.db, query, (list(user_ids),))
+            rows = execute_secure_query(self.db, query, params)
         except Exception:  # Fallback for databases without ANY()
             placeholders = ",".join(["%s"] * len(user_ids))
             query = f"SELECT * FROM people WHERE person_id IN ({placeholders})"
-            rows = execute_query(self.db, query, tuple(user_ids))
+            params = tuple(user_ids)
+            rows = execute_secure_query(self.db, query, params)
 
         return [dict(r) for r in rows]
 
