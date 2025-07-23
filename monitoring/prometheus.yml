@@ -28,6 +28,7 @@ scrape_configs:
   static_configs:
   - targets: ['event-ingestion:8000']
 
+
 - job_name: 'event-processing'
   static_configs:
   - targets: ['event-processing:2112']
