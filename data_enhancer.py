@@ -76,15 +76,20 @@ except ImportError:
     logger.warning("⚠️ Configuration Service not available")
 
     # Create a minimal config fallback
+    from core.config import (
+        get_ai_confidence_threshold,
+        get_upload_chunk_size,
+    )
+
     class FallbackConfigService:
-        def get_ai_confidence_threshold(self) -> int:
-            return 75
+        def get_ai_confidence_threshold(self) -> float:
+            return get_ai_confidence_threshold()
 
         def get_max_upload_size_mb(self) -> int:
             return 50
 
         def get_upload_chunk_size(self) -> int:
-            return DEFAULT_CHUNK_SIZE
+            return get_upload_chunk_size()
 
 
 from core.unicode_handler import clean_unicode_surrogates

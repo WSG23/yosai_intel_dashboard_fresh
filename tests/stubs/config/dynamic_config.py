@@ -8,6 +8,14 @@ class Analytics:
     max_memory_mb = 1024
 
 
+from core.config import (
+    get_upload_chunk_size,
+    get_max_parallel_uploads,
+    get_validator_rules,
+    get_ai_confidence_threshold,
+)
+
+
 class DynamicConfigManager:
     def get_max_upload_size_mb(self):
         return Security.max_upload_mb
@@ -19,16 +27,16 @@ class DynamicConfigManager:
         return True
 
     def get_upload_chunk_size(self):
-        return Analytics.chunk_size
+        return get_upload_chunk_size()
 
     def get_max_parallel_uploads(self):
-        return 1
+        return get_max_parallel_uploads()
 
     def get_validator_rules(self):
-        return {}
+        return get_validator_rules()
 
     def get_ai_confidence_threshold(self):
-        return 80
+        return get_ai_confidence_threshold()
 
     def get_db_pool_size(self):
         return 10
