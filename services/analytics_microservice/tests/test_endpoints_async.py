@@ -12,11 +12,13 @@ from jose import jwt
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2]
 
+# stub out the heavy 'services' package before pytest imports it
+services_stub = types.ModuleType("services")
+services_stub.__path__ = [str(SERVICES_PATH)]
+sys.modules.setdefault("services", services_stub)
+
 
 def load_app() -> tuple:
-    services_stub = types.ModuleType("services")
-    services_stub.__path__ = [str(SERVICES_PATH)]
-    sys.modules.setdefault("services", services_stub)
 
     otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
     otel_stub.FastAPIInstrumentor = types.SimpleNamespace(
@@ -36,9 +38,6 @@ def load_app() -> tuple:
     prom_stub.Instrumentator = lambda: DummyInstr()
     sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
 
-    tracing_stub = types.ModuleType("tracing")
-    tracing_stub.init_tracing = lambda name: None
-    sys.modules["tracing"] = tracing_stub
 
     db_stub = types.ModuleType("services.common.async_db")
     db_stub.create_pool = AsyncMock()
@@ -80,18 +79,7 @@ def load_app() -> tuple:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)  # type: ignore[arg-type]
 
-    # add liveness/readiness routes if missing
-    if not any(r.path == "/health/live" for r in module.app.router.routes):
-
-        @module.app.get("/health/live")
-        async def _live():
-            return {"status": "ok"}
-
-    if not any(r.path == "/health/ready" for r in module.app.router.routes):
-
-        @module.app.get("/health/ready")
-        async def _ready():
-            return {"status": "ok"}
+    # base service already registers health routes
 
     return module, queries_stub, db_stub
 

@@ -16,6 +16,12 @@ if _missing_packages:
         "Install them with `pip install -r requirements-test.txt`."
     )
 
+# Provide a lightweight 'services' package to avoid importing heavy dependencies
+if "services" not in sys.modules:
+    services_stub = types.ModuleType("services")
+    services_stub.__path__ = []
+    sys.modules["services"] = services_stub
+
 # Optional heavy dependencies used by a subset of tests
 _optional_packages = {"hvac", "cryptography"}
 _missing_optional = [

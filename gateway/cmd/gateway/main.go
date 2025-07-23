@@ -1,6 +1,7 @@
 package main
 
 import (
+       "log"
 	"context"
 	"database/sql"
 	"fmt"
@@ -24,18 +25,27 @@ import (
 	reg "github.com/WSG23/yosai-gateway/internal/registry"
 	"github.com/WSG23/yosai-gateway/internal/tracing"
 	mw "github.com/WSG23/yosai-gateway/middleware"
-	apicache "github.com/WSG23/yosai-gateway/plugins/cache"
-	"github.com/redis/go-redis/v9"
+       apicache "github.com/WSG23/yosai-gateway/plugins/cache"
+       "github.com/redis/go-redis/v9"
+
+       framework "github.com/WSG23/yosai-framework"
 
 	"github.com/sony/gobreaker"
 )
 
 func main() {
+       svc, err := framework.NewBaseService("gateway", "")
+        if err != nil {
+                log.Fatalf("failed to init base service: %v", err)
+        }
+        go svc.Start()
+        defer svc.Stop()
+
        shutdown, err := tracing.InitTracing("gateway")
-	if err != nil {
-		tracing.Logger.Fatalf("failed to init tracing: %v", err)
-	}
-	defer shutdown(context.Background())
+        if err != nil {
+                tracing.Logger.Fatalf("failed to init tracing: %v", err)
+        }
+        defer shutdown(context.Background())
 
 	brokers := os.Getenv("KAFKA_BROKERS")
 	if brokers == "" {
