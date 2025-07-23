@@ -25,6 +25,13 @@ func NewRateLimiter(rdb *redis.Client, cfg gwconfig.RateLimitSettings) *RateLimi
 	return &RateLimiter{redis: rdb, cfg: cfg, window: time.Minute}
 }
 
+// SetWindow overrides the default refill window.
+func (rl *RateLimiter) SetWindow(d time.Duration) {
+	if d > 0 {
+		rl.window = d
+	}
+}
+
 func (rl *RateLimiter) take(key string, limit int) (bool, int, time.Duration) {
 	if limit <= 0 {
 		return true, -1, 0

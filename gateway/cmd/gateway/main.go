@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -154,6 +155,17 @@ func main() {
 		tracing.Logger.WithError(err).Warn("failed to load rate limit config, using defaults")
 		rlConf = &gwconfig.RateLimitSettings{}
 	}
+	if v := os.Getenv("RATE_LIMIT_BUCKET"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			rlConf.Burst = n
+		}
+	}
+	window := time.Minute
+	if v := os.Getenv("RATE_LIMIT_INTERVAL_MS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			window = time.Duration(n) * time.Millisecond
+		}
+	}
 	host := os.Getenv("REDIS_HOST")
 	if host == "" {
 		host = "localhost"
@@ -164,6 +176,7 @@ func main() {
 	}
 	rlClient := redis.NewClient(&redis.Options{Addr: host + ":" + port})
 	limiter := mw.NewRateLimiter(rlClient, *rlConf)
+	limiter.SetWindow(window)
 	g.UseRateLimit(limiter)
 
 	addr := ":8080"

@@ -242,6 +242,8 @@ middleware can be toggled with:
 
 * `ENABLE_AUTH=1` – require an `Authorization` header
 * `ENABLE_RATELIMIT=1` – enable a simple token bucket rate limiter
+* `RATE_LIMIT_BUCKET` – maximum number of tokens in the bucket (default 10)
+* `RATE_LIMIT_INTERVAL_MS` – token refill interval in milliseconds (default 100)
 
 Run it locally with:
 
