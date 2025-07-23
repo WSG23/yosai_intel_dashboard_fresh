@@ -12,6 +12,8 @@ The unified platform bundles all services together using `docker-compose.unified
 - `make test-all` – Run the full test suite.
 - `make deploy-all` – Start the entire stack in the background.
 - `make logs service=<name>` – Tail logs for a specific service.
+- `tools.ops_cli frontend-build` – Build the React upload UI assets.
+- `tools.ops_cli frontend-test` – Run unit tests for the upload UI.
 
 The same functionality can be invoked directly via the CLI:
 
