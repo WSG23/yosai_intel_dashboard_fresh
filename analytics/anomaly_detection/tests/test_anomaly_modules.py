@@ -1,7 +1,13 @@
 import sys
 import types
+from pathlib import Path
 import pandas as pd
 from sklearn.ensemble import IsolationForest
+
+# Ensure project root is on sys.path when running tests directly
+ROOT_DIR = Path(__file__).resolve().parents[3]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 dash_stub = types.ModuleType("dash")
 setattr(dash_stub, "Dash", object)
@@ -14,12 +20,43 @@ sys.modules.setdefault("dash", dash_stub)
 sys.modules.setdefault("dash.dependencies", deps_stub)
 sys.modules.setdefault("redis", types.ModuleType("redis"))
 sys.modules.setdefault("redis.asyncio", types.ModuleType("redis.asyncio"))
-sys.modules.setdefault("hvac", types.ModuleType("hvac"))
+hvac_stub = types.ModuleType("hvac")
+hvac_stub.Client = object
+sys.modules.setdefault("hvac", hvac_stub)
+flask_stub = types.ModuleType("flask")
+flask_stub.request = object()
+flask_stub.url_for = lambda *a, **k: ""
+sys.modules.setdefault("flask", flask_stub)
+crypto_stub = types.ModuleType("cryptography")
+fernet_stub = types.ModuleType("cryptography.fernet")
+class DummyFernet:
+    def __init__(self, *args, **kwargs): ...
+    def encrypt(self, data: bytes) -> bytes: return data
+    def decrypt(self, data: bytes) -> bytes: return data
+    @staticmethod
+    def generate_key() -> bytes: return b""
+fernet_stub.Fernet = DummyFernet
+crypto_stub.fernet = fernet_stub
+sys.modules.setdefault("cryptography", crypto_stub)
+sys.modules.setdefault("cryptography.fernet", fernet_stub)
 
-from analytics.anomaly_detection.data_prep import prepare_anomaly_data
-from analytics.anomaly_detection.ml_inference import detect_ml_anomalies
 import importlib.util
 from pathlib import Path
+
+ANOMALY_DIR = Path(__file__).resolve().parents[1]
+spec_prep = importlib.util.spec_from_file_location(
+    "analytics.anomaly_detection.data_prep", ANOMALY_DIR / "data_prep.py"
+)
+data_prep = importlib.util.module_from_spec(spec_prep)
+spec_prep.loader.exec_module(data_prep)
+prepare_anomaly_data = data_prep.prepare_anomaly_data
+
+spec_inf = importlib.util.spec_from_file_location(
+    "analytics.anomaly_detection.ml_inference", ANOMALY_DIR / "ml_inference.py"
+)
+ml_inf = importlib.util.module_from_spec(spec_inf)
+spec_inf.loader.exec_module(ml_inf)
+detect_ml_anomalies = ml_inf.detect_ml_anomalies
 
 MODULE_DIR = Path(__file__).resolve().parents[3] / "models"
 spec = importlib.util.spec_from_file_location(
