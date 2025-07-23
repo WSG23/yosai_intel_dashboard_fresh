@@ -67,7 +67,15 @@ configuration = openapi_client.Configuration(
 with openapi_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = openapi_client.DefaultApi(api_client)
-    v1_events_batch_post_request = openapi_client.V1EventsBatchPostRequest() # V1EventsBatchPostRequest | 
+    v1_events_batch_post_request = openapi_client.V1EventsBatchPostRequest(
+        events=[
+            openapi_client.AccessEvent(
+                event_id="12345",
+                timestamp="2024-05-01T12:34:56Z",
+                access_result="GRANTED"
+            )
+        ]
+    )
 
     try:
         # Submit a batch of access events

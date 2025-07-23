@@ -13,8 +13,8 @@ Name | Type | Description | Notes
 ```python
 from openapi_client.models.event_response import EventResponse
 
-# TODO update the JSON string below
-json = "{}"
+# Example response returned after submitting an event
+json = "{\n  \"event_id\": \"12345\",\n  \"status\": \"accepted\"\n}"
 # create an instance of EventResponse from a JSON string
 event_response_instance = EventResponse.from_json(json)
 # print the JSON string representation of the object

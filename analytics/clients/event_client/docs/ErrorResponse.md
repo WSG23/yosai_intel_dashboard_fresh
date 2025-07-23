@@ -14,8 +14,8 @@ Name | Type | Description | Notes
 ```python
 from openapi_client.models.error_response import ErrorResponse
 
-# TODO update the JSON string below
-json = "{}"
+# Example JSON error returned by the API
+json = "{\n  \"code\": \"INVALID_REQUEST\",\n  \"message\": \"Provided event is invalid\",\n  \"details\": \"Person ID missing\"\n}"
 # create an instance of ErrorResponse from a JSON string
 error_response_instance = ErrorResponse.from_json(json)
 # print the JSON string representation of the object
