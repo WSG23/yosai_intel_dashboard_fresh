@@ -39,7 +39,10 @@ def main(argv: List[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     _check_git_clean()
-    mgr = MigrationManager(args.config)
+    config_path = Path(args.config)
+    if not config_path.is_file():
+        raise SystemExit(f"Config file not found: {config_path}")
+    mgr = MigrationManager(str(config_path))
     try:
         mgr.upgrade(args.revision, dry_run=args.dry_run)
     except Exception as exc:
