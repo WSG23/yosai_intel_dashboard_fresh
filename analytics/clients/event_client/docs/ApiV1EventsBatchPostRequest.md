@@ -12,8 +12,8 @@ Name | Type | Description | Notes
 ```python
 from openapi_client.models.api_v1_events_batch_post_request import ApiV1EventsBatchPostRequest
 
-# TODO update the JSON string below
-json = "{}"
+# Example request payload for the batch endpoint
+json = "{\n  \"events\": [\n    {\n      \"event_id\": \"12345\",\n      \"timestamp\": \"2024-05-01T12:34:56Z\",\n      \"access_result\": \"GRANTED\"\n    }\n  ]\n}"
 # create an instance of ApiV1EventsBatchPostRequest from a JSON string
 api_v1_events_batch_post_request_instance = ApiV1EventsBatchPostRequest.from_json(json)
 # print the JSON string representation of the object

@@ -21,8 +21,8 @@ Name | Type | Description | Notes
 ```python
 from openapi_client.models.access_event import AccessEvent
 
-# TODO update the JSON string below
-json = "{}"
+# Example JSON describing an access event
+json = "{\n  \"event_id\": \"12345\",\n  \"timestamp\": \"2024-05-01T12:34:56Z\",\n  \"person_id\": \"user-42\",\n  \"door_id\": \"door-1\",\n  \"badge_id\": \"badge-100\",\n  \"access_result\": \"GRANTED\",\n  \"badge_status\": \"ACTIVE\",\n  \"door_held_open_time\": 0.0,\n  \"entry_without_badge\": false,\n  \"device_status\": \"ONLINE\"\n}"
 # create an instance of AccessEvent from a JSON string
 access_event_instance = AccessEvent.from_json(json)
 # print the JSON string representation of the object
