@@ -5,7 +5,7 @@ import logging
 from flask import Blueprint, Response, jsonify, request
 
 from config.base import CacheConfig
-from core.advanced_cache import AdvancedCacheManager
+from core.cache_manager import InMemoryCacheManager, CacheConfig
 from services.cached_analytics import CachedAnalyticsService
 from services.security import require_permission
 
@@ -16,7 +16,7 @@ graphs_bp = Blueprint("graphs", __name__, url_prefix="/api/v1/graphs")
 export_bp = Blueprint("export", __name__, url_prefix="/api/v1/export")
 
 # Cached analytics helper
-_cache_manager = AdvancedCacheManager(CacheConfig(timeout_seconds=300))
+_cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=300))
 asyncio.run(_cache_manager.start())
 _cached_service = CachedAnalyticsService(_cache_manager)
 

@@ -8,7 +8,9 @@ from database.secure_exec import execute_query
 
 import pandas as pd
 
-from advanced_cache import cache_with_lock
+from core.cache_manager import cache_with_lock, InMemoryCacheManager, CacheConfig
+
+_cache_manager = InMemoryCacheManager(CacheConfig())
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +21,7 @@ class DatabaseAnalyticsService:
     def __init__(self, database_manager: Any):
         self.database_manager = database_manager
 
-    @cache_with_lock(ttl_seconds=600)
+    @cache_with_lock(_cache_manager, ttl=600)
     def get_analytics(self) -> Dict[str, Any]:
         if not self.database_manager:
             return {"status": "error", "message": "Database not available"}

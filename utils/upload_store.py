@@ -2,6 +2,7 @@
 
 import json
 import logging
+import asyncio
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
@@ -14,7 +15,9 @@ from file_conversion.file_converter import FileConverter
 from services.upload.protocols import UploadStorageProtocol
 from typing import Protocol
 from config.app_config import UploadConfig
-from advanced_cache import clear_cache
+from core.cache_manager import InMemoryCacheManager, CacheConfig
+
+_cache_manager = InMemoryCacheManager(CacheConfig())
 
 
 class UploadStoreProtocol(Protocol):
@@ -164,7 +167,10 @@ class UploadedDataStore(UploadStorageProtocol):
         self._save_to_disk(filename, df)
         try:
 
-            clear_cache()
+            try:
+                asyncio.run(_cache_manager.clear())
+            except Exception:
+                pass
 
         except Exception as e:
 
@@ -244,7 +250,10 @@ class UploadedDataStore(UploadStorageProtocol):
                 logger.error(f"Error clearing uploaded data: {e}")
         try:
 
-            clear_cache()
+            try:
+                asyncio.run(_cache_manager.clear())
+            except Exception:
+                pass
 
         except Exception as e:
 

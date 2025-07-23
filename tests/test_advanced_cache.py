@@ -1,12 +1,11 @@
 import pytest
 
-from core.advanced_cache import AdvancedCacheManager, cache_with_lock
-from config.base import CacheConfig
+from core.cache_manager import InMemoryCacheManager, cache_with_lock, CacheConfig
 
 
 @pytest.mark.asyncio
 async def test_cache_with_lock_basic():
-    manager = AdvancedCacheManager(CacheConfig(timeout_seconds=1))
+    manager = InMemoryCacheManager(CacheConfig(timeout_seconds=1))
     await manager.start()
 
     calls = {"n": 0}

@@ -12,7 +12,9 @@ from typing import Any, Dict, List, Optional, Protocol
 
 import pandas as pd
 
-from advanced_cache import cache_with_lock
+from core.cache_manager import cache_with_lock, InMemoryCacheManager, CacheConfig
+
+_cache_manager = InMemoryCacheManager(CacheConfig())
 from config.dynamic_config import dynamic_config
 from core.protocols import (
     AnalyticsServiceProtocol,
@@ -201,12 +203,12 @@ class AnalyticsService(AnalyticsServiceProtocol):
         """Get analytics using the sample file processor."""
         return self.data_handler.get_analytics_with_fixed_processor()
 
-    @cache_with_lock(ttl_seconds=600)
+    @cache_with_lock(_cache_manager, ttl=600)
     def _get_database_analytics(self) -> Dict[str, Any]:
         """Get analytics from database."""
         return self.database_retriever.get_analytics()
 
-    @cache_with_lock(ttl_seconds=300)
+    @cache_with_lock(_cache_manager, ttl=300)
     def get_dashboard_summary(self) -> Dict[str, Any]:
         """Get a basic dashboard summary"""
         try:
@@ -307,7 +309,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self._log_analysis_summary(result_total, original_rows)
         return result
 
-    @cache_with_lock(ttl_seconds=600)
+    @cache_with_lock(_cache_manager, ttl=600)
     def get_unique_patterns_analysis(self, data_source: str | None = None):
         """Get unique patterns analysis for the requested source."""
         logger = logging.getLogger(__name__)

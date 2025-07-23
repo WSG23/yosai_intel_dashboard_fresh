@@ -2,10 +2,11 @@
 
 from typing import TYPE_CHECKING, Any
 
-from .advanced_cache import (
-    AdvancedCacheManager,
+from .cache_manager import (
+    CacheConfig,
+    InMemoryCacheManager,
+    RedisCacheManager,
     cache_with_lock,
-    create_advanced_cache_manager,
 )
 from .advanced_query_optimizer import AdvancedQueryOptimizer
 from .base_model import BaseModel
@@ -30,9 +31,10 @@ else:  # pragma: no cover - fallback at runtime
 __all__ = [
     "TrulyUnifiedCallbacks",
     "TrulyUnifiedCallbacksType",
-    "AdvancedCacheManager",
+    "CacheConfig",
+    "InMemoryCacheManager",
+    "RedisCacheManager",
     "cache_with_lock",
-    "create_advanced_cache_manager",
     "AdvancedQueryOptimizer",
     "HierarchicalCacheManager",
     "IntelligentCacheWarmer",
