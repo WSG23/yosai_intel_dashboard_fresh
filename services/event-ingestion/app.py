@@ -2,18 +2,51 @@ import asyncio
 from fastapi import FastAPI, Header, HTTPException, status, Depends
 from shared.errors.types import ErrorCode
 from yosai_framework.errors import ServiceError
+from yosai_framework.service import BaseService
 
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from services.streaming import StreamingService
-from services.security import verify_service_jwt
+import importlib.util
+import pathlib
+import sys
+import os
+
+try:
+    from services.streaming import StreamingService
+except ModuleNotFoundError:
+    spec = importlib.util.spec_from_file_location(
+        "services.streaming",
+        pathlib.Path(__file__).resolve().parents[1] / "streaming" / "service.py",
+    )
+    streaming_mod = importlib.util.module_from_spec(spec)
+    sys.modules["services.streaming"] = streaming_mod
+    if spec.loader:
+        spec.loader.exec_module(streaming_mod)
+    StreamingService = streaming_mod.StreamingService
+try:
+    from services.security import verify_service_jwt
+except ModuleNotFoundError:
+    spec = importlib.util.spec_from_file_location(
+        "services.security",
+        pathlib.Path(__file__).resolve().parents[1] / "security" / "__init__.py",
+    )
+    security_mod = importlib.util.module_from_spec(spec)
+    sys.modules["services.security"] = security_mod
+    if spec.loader:
+        spec.loader.exec_module(security_mod)
+    verify_service_jwt = security_mod.verify_service_jwt
 from tracing import trace_async_operation
 
 SERVICE_NAME = "event-ingestion-service"
-service_base = BaseService(SERVICE_NAME, "")
+os.environ.setdefault("YOSAI_SERVICE_NAME", SERVICE_NAME)
+CONFIG_PATH = pathlib.Path(__file__).with_name("service_config.yaml")
+service_base = BaseService(SERVICE_NAME, str(CONFIG_PATH))
 app = service_base.app
-service = StreamingService()
+try:
+    service = StreamingService()
+except Exception:
+    service = None
 
 
 def verify_token(authorization: str = Header("")) -> None:
