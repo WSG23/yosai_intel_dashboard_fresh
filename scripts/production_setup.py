@@ -4,6 +4,7 @@ from pathlib import Path
 from config import ConfigManager
 from core.secrets_validator import validate_all_secrets
 from database.connection import create_database_connection
+from database.secure_exec import execute_command
 
 
 def validate_environment() -> ConfigManager:
@@ -41,19 +42,20 @@ def setup_schema(sql_path: str = "deployment/database_setup.sql") -> None:
     for statement in sql.split(";"):
         stmt = statement.strip()
         if stmt:
-            conn.execute_command(stmt + ";")
+            execute_command(conn, stmt + ";")
 
 
 def create_performance_settings_table() -> None:
     """Create the performance_settings table if missing."""
     conn = create_database_connection()
-    conn.execute_command(
+    execute_command(
+        conn,
         """
         CREATE TABLE IF NOT EXISTS performance_settings (
             setting_name VARCHAR(50) PRIMARY KEY,
             value VARCHAR(200) NOT NULL
         )
-        """
+        """,
     )
 
 
@@ -65,7 +67,8 @@ def provision_admin_account(
     if not password:
         raise ValueError(f"{password_env} environment variable required")
     conn = create_database_connection()
-    conn.execute_command(
+    execute_command(
+        conn,
         """
         INSERT INTO people (person_id, name, department, clearance_level, access_groups, is_visitor)
         VALUES (%s, 'Administrator', 'IT', 10, 'admin', false)

@@ -11,6 +11,7 @@ from sqlalchemy.orm import declarative_base
 
 from core.plugins.config.cache_manager import MemoryCacheManager
 from core.plugins.config.interfaces import ICacheManager, IDatabaseManager
+from database.secure_exec import execute_query
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +73,7 @@ class PerformanceSettingsManager:
     def _ensure_schema(self) -> None:
         """Create table if it does not exist."""
         try:
-            self.db.execute_query(CREATE_TABLE_SQL)
+            execute_query(self.db, CREATE_TABLE_SQL)
         except Exception as exc:  # pragma: no cover - best effort
             logger.error("Failed to ensure performance_settings schema: %s", exc)
 
@@ -84,7 +85,8 @@ class PerformanceSettingsManager:
             if cached is not None:
                 return cached
 
-        rows = self.db.execute_query(
+        rows = execute_query(
+            self.db,
             "SELECT id, setting_name, value, type, description, updated_at FROM performance_settings"
         )
         settings = [self._row_to_model(row) for row in rows]
@@ -115,7 +117,8 @@ class PerformanceSettingsManager:
         now = datetime.utcnow()
 
         if current is None:
-            self.db.execute_query(
+            execute_query(
+                self.db,
                 """
                 INSERT INTO performance_settings (setting_name, value, type, description, updated_at)
                 VALUES (?, ?, ?, ?, ?)
@@ -123,7 +126,8 @@ class PerformanceSettingsManager:
                 (name, str(value), type or self._infer_type(value), description, now),
             )
         else:
-            self.db.execute_query(
+            execute_query(
+                self.db,
                 """
                 UPDATE performance_settings
                 SET value = ?, type = ?, description = ?, updated_at = ?

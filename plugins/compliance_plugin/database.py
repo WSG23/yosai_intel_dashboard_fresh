@@ -10,6 +10,8 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from database.secure_exec import execute_query, execute_command
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,7 +45,7 @@ class ComplianceDatabase:
             if schema_sql:
                 # Execute the schema creation SQL
                 if hasattr(self.db, 'execute_command'):
-                    self.db.execute_command(schema_sql)
+                    execute_command(self.db, schema_sql)
                 else:
                     self.db.execute(schema_sql)
                     self.db.commit()
@@ -109,9 +111,9 @@ class ComplianceDatabase:
                 sql = f"SELECT 1 FROM {table} LIMIT 1"
                 
                 if hasattr(self.db, 'execute_query'):
-                    self.db.execute_query(sql)
+                    execute_query(self.db, sql)
                 else:
-                    cursor = self.db.execute(sql)
+                    cursor = execute_command(self.db, sql)
                     cursor.fetchone()
                 
                 results['table_status'][table] = 'exists'

@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Set
 
 from core.rbac import require_role
 from services.data_processing.file_processor import FileProcessor
+from database.secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)
 
@@ -298,7 +299,7 @@ class ComplianceToggleManager:
 
         # Remove from database
         delete_sql = "DELETE FROM compliance_toggles WHERE toggle_id = %s"
-        self.db.execute_command(delete_sql, (toggle_id,))
+        execute_command(self.db, delete_sql, (toggle_id,))
 
         # Remove from cache
         del self.toggles[toggle_id]
@@ -495,7 +496,7 @@ class ComplianceToggleManager:
                 ORDER BY created_at DESC
             """
 
-            df = self.db.execute_query(query_sql)
+            df = execute_query(self.db, query_sql)
 
             for _, row in df.iterrows():
                 toggle = ComplianceToggle(
@@ -543,7 +544,8 @@ class ComplianceToggleManager:
                 updated_at = NOW()
         """
 
-        self.db.execute_command(
+        execute_command(
+            self.db,
             upsert_sql,
             (
                 toggle.id,

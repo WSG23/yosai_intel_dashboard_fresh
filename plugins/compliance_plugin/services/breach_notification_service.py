@@ -12,6 +12,7 @@ from uuid import uuid4
 from core.protocols import DatabaseProtocol
 from core.audit_logger import ComplianceAuditLogger
 from core.unicode import safe_unicode_encode
+from database.secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)
 
@@ -393,7 +394,7 @@ class BreachNotificationService:
                 ORDER BY detection_timestamp DESC
             """
 
-            df = self.db.execute_query(recent_breaches_sql)
+            df = execute_query(self.db, recent_breaches_sql)
             recent_breaches = df.to_dict("records") if not df.empty else []
 
             # Calculate summary metrics
@@ -629,7 +630,8 @@ class BreachNotificationService:
 
             import json
 
-            self.db.execute_command(
+            execute_command(
+                self.db,
                 insert_sql,
                 (
                     breach_record["breach_id"],

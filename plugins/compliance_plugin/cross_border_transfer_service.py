@@ -11,6 +11,7 @@ from uuid import uuid4
 
 from core.protocols import DatabaseProtocol
 from core.audit_logger import ComplianceAuditLogger
+from database.secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)
 
@@ -301,7 +302,7 @@ class CrossBorderTransferService:
                 ORDER BY (compliance_monitoring->>'next_review_date')::timestamp ASC
             """
 
-            df = self.db.execute_query(review_required_sql)
+            df = execute_query(self.db, review_required_sql)
             transfers_requiring_review = df.to_dict("records") if not df.empty else []
 
             # Check for transfers to countries with changed adequacy status
@@ -360,7 +361,7 @@ class CrossBorderTransferService:
                 ORDER BY transfer_count DESC
             """
 
-            df = self.db.execute_query(stats_sql)
+            df = execute_query(self.db, stats_sql)
             transfer_stats = df.to_dict("records") if not df.empty else []
 
             # Get pending assessments
@@ -370,7 +371,7 @@ class CrossBorderTransferService:
                 WHERE assessment_data->>'authorization_status' IN ('pending_review', 'requires_documentation')
             """
 
-            pending_df = self.db.execute_query(pending_sql)
+            pending_df = execute_query(self.db, pending_sql)
             pending_count = (
                 pending_df.iloc[0]["pending_count"] if not pending_df.empty else 0
             )
@@ -584,7 +585,8 @@ class CrossBorderTransferService:
 
             import json
 
-            self.db.execute_command(
+            execute_command(
+                self.db,
                 insert_sql,
                 (
                     assessment["assessment_id"],

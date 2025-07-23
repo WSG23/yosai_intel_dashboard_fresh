@@ -13,6 +13,7 @@ from flask_login import current_user
 
 from core.protocols import DatabaseProtocol
 from core.unicode import safe_unicode_encode
+from database.secure_exec import execute_command
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +110,8 @@ class ComplianceAuditLogger:
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
 
-            self.db.execute_command(
+            execute_command(
+                self.db,
                 insert_sql,
                 (
                     str(log_id),
@@ -270,7 +272,7 @@ class ComplianceAuditLogger:
             """
 
             params.append(limit)
-            df = self.db.execute_query(query_sql, tuple(params))
+            df = execute_query(self.db, query_sql, tuple(params))
 
             return df.to_dict("records") if not df.empty else []
 
@@ -294,7 +296,7 @@ class ComplianceAuditLogger:
                 ORDER BY timestamp DESC
             """
 
-            df = self.db.execute_query(query_sql, (user_id, user_id, cutoff_date))
+            df = execute_query(self.db, query_sql, (user_id, user_id, cutoff_date))
             return df.to_dict("records") if not df.empty else []
 
         except Exception as e:
@@ -315,7 +317,7 @@ class ComplianceAuditLogger:
                 ORDER BY count DESC
             """
 
-            summary_df = self.db.execute_query(summary_sql, (start_date, end_date))
+            summary_df = execute_query(self.db, summary_sql, (start_date, end_date))
             activity_summary = (
                 summary_df.to_dict("records") if not summary_df.empty else []
             )
@@ -329,7 +331,7 @@ class ComplianceAuditLogger:
                 GROUP BY legal_basis
             """
 
-            legal_df = self.db.execute_query(legal_basis_sql, (start_date, end_date))
+            legal_df = execute_query(self.db, legal_basis_sql, (start_date, end_date))
             legal_basis_summary = (
                 legal_df.to_dict("records") if not legal_df.empty else []
             )
@@ -344,7 +346,7 @@ class ComplianceAuditLogger:
                 LIMIT 20
             """
 
-            data_df = self.db.execute_query(data_cat_sql, (start_date, end_date))
+            data_df = execute_query(self.db, data_cat_sql, (start_date, end_date))
             data_categories = data_df.to_dict("records") if not data_df.empty else []
 
             return {

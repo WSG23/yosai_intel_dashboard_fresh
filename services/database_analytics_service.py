@@ -4,6 +4,8 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict
 
+from database.secure_exec import execute_query
+
 import pandas as pd
 
 from advanced_cache import cache_with_lock
@@ -33,7 +35,7 @@ class DatabaseAnalyticsService:
                 GROUP BY event_type, status
             """
             df_summary = pd.DataFrame(
-                connection.execute_query(summary_query, (start_date, end_date))
+                execute_query(connection, summary_query, (start_date, end_date))
             )
             if df_summary.empty:
                 total_events = 0
@@ -59,7 +61,7 @@ class DatabaseAnalyticsService:
                 ORDER BY hour
             """
             df_hourly = pd.DataFrame(
-                connection.execute_query(hourly_query, (start_date, end_date))
+                execute_query(connection, hourly_query, (start_date, end_date))
             )
             hourly_data = df_hourly.to_dict("records") if not df_hourly.empty else []
             peak_hour = (
@@ -77,7 +79,7 @@ class DatabaseAnalyticsService:
                 ORDER BY total_events DESC
             """
             df_loc = pd.DataFrame(
-                connection.execute_query(location_query, (start_date, end_date))
+                execute_query(connection, location_query, (start_date, end_date))
             )
             if df_loc.empty:
                 locations = []

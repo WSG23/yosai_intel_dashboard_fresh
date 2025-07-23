@@ -6,6 +6,8 @@ Database Manager - Fixed imports for streamlined architecture
 """
 import logging
 import sqlite3
+
+from database.secure_exec import execute_command, execute_query
 import threading
 import time
 from pathlib import Path
@@ -87,9 +89,9 @@ class SQLiteConnection:
         try:
             cursor = self._connection.cursor()
             if params:
-                cursor.execute(query, params)
+                execute_query(cursor, query, params)
             else:
-                cursor.execute(query)
+                execute_query(cursor, query)
 
             rows = cursor.fetchall()
             return [dict(row) for row in rows]
@@ -105,9 +107,9 @@ class SQLiteConnection:
         try:
             cursor = self._connection.cursor()
             if params:
-                cursor.execute(command, params)
+                execute_command(cursor, command, params)
             else:
-                cursor.execute(command)
+                execute_command(cursor, command)
 
             self._connection.commit()
         except sqlite3.Error as e:
@@ -121,7 +123,7 @@ class SQLiteConnection:
                 return False
 
             cursor = self._connection.cursor()
-            cursor.execute("SELECT 1")
+            execute_query(cursor, "SELECT 1")
             return True
         except sqlite3.Error:
             return False
@@ -166,7 +168,7 @@ class PostgreSQLConnection:
                 f"PostgreSQL connection created: {self.config.host}:{self.config.port}"
             )
             with self._connection.cursor() as cursor:
-                cursor.execute("CREATE EXTENSION IF NOT EXISTS timescaledb;")
+                execute_command(cursor, "CREATE EXTENSION IF NOT EXISTS timescaledb;")
                 self._connection.commit()
         except psycopg2.Error as e:
             logger.error(f"Failed to connect to PostgreSQL: {e}")
@@ -180,9 +182,9 @@ class PostgreSQLConnection:
         try:
             with self._connection.cursor() as cursor:
                 if params:
-                    cursor.execute(query, params)
+                    execute_query(cursor, query, params)
                 else:
-                    cursor.execute(query)
+                    execute_query(cursor, query)
 
                 rows = cursor.fetchall()
                 return [dict(row) for row in rows]
@@ -198,9 +200,9 @@ class PostgreSQLConnection:
         try:
             with self._connection.cursor() as cursor:
                 if params:
-                    cursor.execute(command, params)
+                    execute_command(cursor, command, params)
                 else:
-                    cursor.execute(command)
+                    execute_command(cursor, command)
 
             self._connection.commit()
         except psycopg2.Error as e:
@@ -215,7 +217,7 @@ class PostgreSQLConnection:
                 return False
 
             with self._connection.cursor() as cursor:
-                cursor.execute("SELECT 1")
+                execute_query(cursor, "SELECT 1")
                 return True
         except psycopg2.Error:
             return False
@@ -378,7 +380,7 @@ class EnhancedPostgreSQLManager(DatabaseManager):
             conn = self.pool.get_connection()
             try:
                 start = time.perf_counter()
-                result = conn.execute_query(encoded_query, encoded_params)
+                result = execute_query(conn, encoded_query, encoded_params)
                 elapsed = time.perf_counter() - start
                 self.performance_analyzer.analyze_query_performance(
                     encoded_query, elapsed

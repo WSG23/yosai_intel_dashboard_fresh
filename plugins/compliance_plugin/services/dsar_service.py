@@ -13,6 +13,7 @@ from core.protocols import DatabaseProtocol
 from core.audit_logger import ComplianceAuditLogger
 from models.compliance import DSARRequest, DSARRequestType, DSARStatus
 from core.unicode import safe_unicode_encode
+from database.secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +83,8 @@ class DSARService:
             request_uuid = uuid4()
             now = datetime.now(timezone.utc)
 
-            self.db.execute_command(
+            execute_command(
+                self.db,
                 insert_sql,
                 (
                     str(request_uuid),
@@ -211,7 +213,7 @@ class DSARService:
                 ORDER BY ae.timestamp DESC
                 LIMIT 1000
             """
-            events_df = self.db.execute_query(events_query, (user_id,))
+            events_df = execute_query(self.db, events_query, (user_id,))
             user_data["access_events"] = (
                 events_df.to_dict("records") if not events_df.empty else []
             )
@@ -224,7 +226,7 @@ class DSARService:
                 WHERE user_id = %s
                 ORDER BY granted_timestamp DESC
             """
-            consent_df = self.db.execute_query(consent_sql, (user_id,))
+            consent_df = execute_query(self.db, consent_sql, (user_id,))
             user_data["consent_history"] = (
                 consent_df.to_dict("records") if not consent_df.empty else []
             )
@@ -238,7 +240,7 @@ class DSARService:
                 WHERE ae.person_id = %s
                 ORDER BY ad.detected_at DESC
             """
-            anomaly_df = self.db.execute_query(anomaly_sql, (user_id,))
+            anomaly_df = execute_query(self.db, anomaly_sql, (user_id,))
             user_data["anomaly_detections"] = (
                 anomaly_df.to_dict("records") if not anomaly_df.empty else []
             )
@@ -295,14 +297,14 @@ class DSARService:
                 SET person_id = %s, badge_id = CONCAT('DELETED_', badge_id)
                 WHERE person_id = %s
             """
-            self.db.execute_command(update_events_sql, (pseudonym_id, user_id))
+            execute_command(self.db, update_events_sql, (pseudonym_id, user_id))
 
             # 2. Delete biometric templates and sensitive data
             delete_biometric_sql = """
                 DELETE FROM biometric_templates 
                 WHERE person_id = %s
             """
-            self.db.execute_command(delete_biometric_sql, (user_id,))
+            execute_command(self.db, delete_biometric_sql, (user_id,))
 
             # 3. Anonymize user profile
             update_profile_sql = """
@@ -313,7 +315,7 @@ class DSARService:
                     data_sensitivity_level = 'anonymized'
                 WHERE person_id = %s
             """
-            self.db.execute_command(update_profile_sql, (pseudonym_id, user_id))
+            execute_command(self.db, update_profile_sql, (pseudonym_id, user_id))
 
             # 4. Withdraw all active consents
             update_consent_sql = """
@@ -321,8 +323,8 @@ class DSARService:
                 SET is_active = FALSE, withdrawn_timestamp = %s
                 WHERE user_id = %s AND is_active = TRUE
             """
-            self.db.execute_command(
-                update_consent_sql, (datetime.now(timezone.utc), user_id)
+            execute_command(
+                self.db, update_consent_sql, (datetime.now(timezone.utc), user_id)
             )
 
             logger.info(f"Erasure completed for user {user_id}")
@@ -366,7 +368,7 @@ class DSARService:
             """
             params.extend([datetime.now(timezone.utc), user_id])
 
-            rows_affected = self.db.execute_command(update_sql, tuple(params))
+            rows_affected = execute_command(self.db, update_sql, tuple(params))
 
             if rows_affected > 0:
                 logger.info(f"Rectification completed for user {user_id}")
@@ -392,7 +394,7 @@ class DSARService:
                 WHERE person_id = %s
             """
 
-            rows_affected = self.db.execute_command(update_sql, (user_id,))
+            rows_affected = execute_command(self.db, update_sql, (user_id,))
 
             if rows_affected > 0:
                 logger.info(f"Processing restriction applied for user {user_id}")
@@ -418,7 +420,7 @@ class DSARService:
                 ORDER BY due_date ASC
             """
 
-            df = self.db.execute_query(query_sql, (due_date,))
+            df = execute_query(self.db, query_sql, (due_date,))
             return df.to_dict("records") if not df.empty else []
 
         except Exception as e:
@@ -435,7 +437,7 @@ class DSARService:
                 WHERE request_id = %s
             """
 
-            df = self.db.execute_query(query_sql, (request_id,))
+            df = execute_query(self.db, query_sql, (request_id,))
             return df.iloc[0].to_dict() if not df.empty else None
 
         except Exception as e:
@@ -452,7 +454,8 @@ class DSARService:
             WHERE request_id = %s
         """
 
-        self.db.execute_command(
+        execute_command(
+            self.db,
             update_sql,
             (status.value, processed_by, datetime.now(timezone.utc), request_id),
         )
@@ -484,7 +487,8 @@ class DSARService:
                 logger.error(f"Failed to encode response data: {e}")
                 response_json = '{"error": "Failed to encode response data"}'
 
-        self.db.execute_command(
+        execute_command(
+            self.db,
             update_sql,
             (
                 status.value,

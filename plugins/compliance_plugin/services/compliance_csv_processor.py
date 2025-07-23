@@ -14,6 +14,7 @@ from core.audit_logger import ComplianceAuditLogger
 from services.compliance.consent_service import ConsentService
 from services.compliance.data_retention_service import DataRetentionService
 from models.compliance import ConsentType, DataSensitivityLevel
+from database.secure_exec import execute_query
 from services.data_processing.file_processor import FileProcessor
 
 logger = logging.getLogger(__name__)
@@ -500,7 +501,7 @@ class ComplianceCSVProcessor:
                 ORDER BY upload_timestamp DESC
             """
 
-            df = self.db.execute_query(query_sql)
+            df = execute_query(self.db, query_sql)
             user_csv_data = []
 
             for _, row in df.iterrows():

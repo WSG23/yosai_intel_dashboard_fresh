@@ -18,6 +18,7 @@ from models.compliance import ConsentType, DSARRequestType
 from services.compliance.consent_service import ConsentService
 from services.compliance.dsar_service import DSARService
 from services.security import require_role
+from database.secure_exec import execute_query
 
 
 logger = logging.getLogger(__name__)
@@ -367,7 +368,7 @@ def get_user_dsar_requests():
             ORDER BY received_date DESC
         """
 
-        df = db.execute_query(query_sql, (current_user.id,))
+        df = execute_query(db, query_sql, (current_user.id,))
         requests = df.to_dict("records") if not df.empty else []
 
         return (
@@ -626,7 +627,7 @@ def compliance_health_check():
 
         # Simple query to test database
         test_query = "SELECT 1 as health_check"
-        result = db.execute_query(test_query)
+        result = execute_query(db, test_query)
 
         if result.empty:
             return (
