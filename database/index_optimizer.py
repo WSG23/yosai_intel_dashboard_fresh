@@ -43,7 +43,7 @@ class IndexOptimizer:
             index_name = f"idx_{table}_{'_'.join(columns)}"
             existing: List[str] = []
             if conn_name == "SQLiteConnection":
-                rows = conn.execute_query(f"PRAGMA index_list('{table}')")
+                rows = conn.execute_query("PRAGMA index_list(?)", (table,))
                 existing = [row.get("name") for row in rows]
             elif conn_name == "PostgreSQLConnection":
                 rows = conn.execute_query(

@@ -29,6 +29,7 @@ from .security_patterns import (
     SQL_INJECTION_PATTERNS,
     XSS_PATTERNS,
 )
+from .unicode_handler import clean_unicode_surrogates
 
 logger = logging.getLogger(__name__)
 
@@ -431,12 +432,6 @@ def safe_unicode_encode(value: Any) -> str:
     """Deprecated wrapper around :func:`safe_encode`."""
 
     return safe_encode(value)
-
-
-def clean_unicode_surrogates(text: Any) -> str:
-    """Remove surrogate characters from ``text``."""
-
-    return UnicodeProcessor.clean_text(text)
 
 
 def clean_surrogate_chars(text: str, replacement: str = "") -> str:
