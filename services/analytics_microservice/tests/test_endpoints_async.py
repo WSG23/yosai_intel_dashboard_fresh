@@ -19,15 +19,20 @@ def load_app() -> tuple:
     sys.modules.setdefault("services", services_stub)
 
     otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
-    otel_stub.FastAPIInstrumentor = types.SimpleNamespace(instrument_app=lambda *a, **k: None)
+    otel_stub.FastAPIInstrumentor = types.SimpleNamespace(
+        instrument_app=lambda *a, **k: None
+    )
     sys.modules.setdefault("opentelemetry.instrumentation.fastapi", otel_stub)
 
     prom_stub = types.ModuleType("prometheus_fastapi_instrumentator")
+
     class DummyInstr:
         def instrument(self, app):
             return self
+
         def expose(self, app):
             return self
+
     prom_stub.Instrumentator = lambda: DummyInstr()
     sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
 
@@ -42,9 +47,11 @@ def load_app() -> tuple:
     sys.modules["services.common.async_db"] = db_stub
 
     config_stub = types.ModuleType("config")
+
     class _Cfg:
         def get_connection_string(self):
             return "postgresql://"
+
         initial_pool_size = 1
         max_pool_size = 1
         connection_timeout = 1
@@ -75,11 +82,13 @@ def load_app() -> tuple:
 
     # add liveness/readiness routes if missing
     if not any(r.path == "/health/live" for r in module.app.router.routes):
+
         @module.app.get("/health/live")
         async def _live():
             return {"status": "ok"}
 
     if not any(r.path == "/health/ready" for r in module.app.router.routes):
+
         @module.app.get("/health/ready")
         async def _ready():
             return {"status": "ok"}
@@ -104,12 +113,18 @@ async def test_health_endpoints():
 @pytest.mark.asyncio
 async def test_dashboard_summary_endpoint():
     module, queries_stub, db_stub = load_app()
-    token = jwt.encode({"sub": "svc", "exp": int(time.time()) + 60}, "secret", algorithm="HS256")
+    token = jwt.encode(
+        {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
+        "secret",
+        algorithm="HS256",
+    )
     headers = {"Authorization": f"Bearer {token}"}
 
     transport = httpx.ASGITransport(app=module.app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        resp = await client.post("/api/v1/analytics/get_dashboard_summary", headers=headers)
+        resp = await client.post(
+            "/api/v1/analytics/get_dashboard_summary", headers=headers
+        )
         assert resp.status_code == 200
         assert resp.json() == {"status": "ok"}
 

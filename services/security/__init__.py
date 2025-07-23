@@ -5,6 +5,8 @@ import time
 from functools import wraps
 from typing import Callable
 
+from .jwt_service import generate_service_jwt, verify_service_jwt
+
 from flask import jsonify, request
 
 from security.unicode_security_validator import (
@@ -126,6 +128,8 @@ __all__ = [
     "AuthenticationService",
     "generate_service_token",
     "rotate_service_token",
+    "generate_service_jwt",
+    "verify_service_jwt",
     "require_token",
     "require_permission",
     "require_role",
