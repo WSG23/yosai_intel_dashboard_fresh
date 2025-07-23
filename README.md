@@ -1151,7 +1151,18 @@ python scripts/callback_graph.py
 ```
 
 The command writes `docs/callback_graph.dot` and `docs/callback_graph.png`
-showing edges from each callback output to its inputs.
+
+## Duplicate Function Finder
+
+Scan the repository for duplicated function implementations:
+
+```bash
+python scripts/find_duplicate_functions.py
+```
+
+The command prints a ranked report of identical definitions. Add `--autofix` to
+replace simple duplicates that only return a constant with an import from the
+canonical module.
 
 ## TimescaleDB Migration
 
