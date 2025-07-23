@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: timescale-replication
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: replicate-to-timescale
+              image: yosai-intel-dashboard:latest
+              command: ["python", "scripts/replicate_to_timescale.py"]
+              envFrom:
+                - configMapRef:
+                    name: yosai-config
+                - secretRef:
+                    name: yosai-secrets
+              env:
+                - name: SOURCE_DSN
+                  valueFrom:
+                    secretKeyRef:
+                      name: timescale-dsns
+                      key: SOURCE_DSN
+                - name: TARGET_DSN
+                  valueFrom:
+                    secretKeyRef:
+                      name: timescale-dsns
+                      key: TARGET_DSN
+

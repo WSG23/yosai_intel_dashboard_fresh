@@ -33,3 +33,40 @@ FROM access_events;
 Expose the lag via Prometheus by exporting a gauge named
 `replication_lag_seconds` in the replication job. The hypertable size can be
 exported with a gauge `hypertable_bytes_total`.
+
+## Replication CronJob
+
+Add the `timescale-replication` CronJob to periodically copy new events from the primary database. The job simply executes `scripts/replicate_to_timescale.py` inside the standard dashboard image. Connection strings are supplied via the `timescale-dsns` secret using the `SOURCE_DSN` and `TARGET_DSN` variables.
+
+Example schedule running every five minutes:
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: timescale-replication
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: replicate-to-timescale
+              image: yosai-intel-dashboard:latest
+              command: ["python", "scripts/replicate_to_timescale.py"]
+              env:
+                - name: SOURCE_DSN
+                  valueFrom:
+                    secretKeyRef:
+                      name: timescale-dsns
+                      key: SOURCE_DSN
+                - name: TARGET_DSN
+                  valueFrom:
+                    secretKeyRef:
+                      name: timescale-dsns
+                      key: TARGET_DSN
+```
+
+The job also inherits the standard configuration from `yosai-config` and `yosai-secrets` via `envFrom` like the other microservices.
