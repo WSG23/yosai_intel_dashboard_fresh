@@ -28,15 +28,17 @@ The script writes the Go client under `pkg/eventclient` and the Python client
 under `analytics/clients/event_client`.
 
 ### Regenerating after changes
-
 Run the generator whenever API routes or schemas change:
 
 ```bash
 go run ./api/openapi
+./scripts/generate_clients.sh docs/openapi.json
 ```
 
-Commit the updated `docs/openapi.json` so the specification stays in sync with
-the codebase.
+Commit the updated `docs/openapi.json`, `analytics/clients/event_client`, and
+`pkg/eventclient` directories so the specification and generated clients stay in
+sync with the codebase. CI will fail if these files differ from the checked in
+versions.
 
 ## API Versioning
 
