@@ -5,6 +5,7 @@ PyYAML>=6.0
 psutil>=5.9.0
 selenium>=4.20.0
 requests>=2.32.0
+pydantic>=2.7.1
 pandas>=2.0.0
 openpyxl>=3.0.0
 scipy==1.11.3
@@ -17,3 +18,4 @@ testcontainers[postgresql,redis]==3.7.1
 prometheus_client==0.22.1
 numpy==1.26.4
 scikit-learn==1.7.1
+jsonschema>=4.21.1
