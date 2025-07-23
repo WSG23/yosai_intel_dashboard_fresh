@@ -1,10 +1,10 @@
 package main
 
 import (
-       "log"
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 
 	"net"
 	"net/http"
@@ -25,27 +25,27 @@ import (
 	reg "github.com/WSG23/yosai-gateway/internal/registry"
 	"github.com/WSG23/yosai-gateway/internal/tracing"
 	mw "github.com/WSG23/yosai-gateway/middleware"
-       apicache "github.com/WSG23/yosai-gateway/plugins/cache"
-       "github.com/redis/go-redis/v9"
+	apicache "github.com/WSG23/yosai-gateway/plugins/cache"
+	"github.com/redis/go-redis/v9"
 
-       framework "github.com/WSG23/yosai-framework"
+	framework "github.com/WSG23/yosai-framework"
 
 	"github.com/sony/gobreaker"
 )
 
 func main() {
-       svc, err := framework.NewBaseService("gateway", "")
-        if err != nil {
-                log.Fatalf("failed to init base service: %v", err)
-        }
-        go svc.Start()
-        defer svc.Stop()
+	svc, err := framework.NewBaseService("gateway", "")
+	if err != nil {
+		log.Fatalf("failed to init base service: %v", err)
+	}
+	go svc.Start()
+	defer svc.Stop()
 
-       shutdown, err := tracing.InitTracing("gateway")
-        if err != nil {
-                tracing.Logger.Fatalf("failed to init tracing: %v", err)
-        }
-        defer shutdown(context.Background())
+	shutdown, err := tracing.InitTracing("gateway")
+	if err != nil {
+		tracing.Logger.Fatalf("failed to init tracing: %v", err)
+	}
+	defer shutdown(context.Background())
 
 	brokers := os.Getenv("KAFKA_BROKERS")
 	if brokers == "" {
@@ -64,8 +64,12 @@ func main() {
 	if dbName == "" {
 		dbName = os.Getenv("DB_NAME")
 	}
-	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), dbName, os.Getenv("DB_PASSWORD"))
+	sslMode := os.Getenv("DB_SSLMODE")
+	if sslMode == "" {
+		sslMode = "require"
+	}
+	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
+		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), dbName, os.Getenv("DB_PASSWORD"), sslMode)
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		tracing.Logger.Fatalf("failed to connect db: %v", err)
