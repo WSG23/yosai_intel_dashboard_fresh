@@ -1,0 +1,13 @@
+type: object
+properties:
+  service_name:
+    type: string
+  log_level:
+    type: string
+    default: INFO
+  metrics_addr:
+    type: string
+  tracing_endpoint:
+    type: string
+required:
+  - service_name
