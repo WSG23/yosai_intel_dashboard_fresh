@@ -7,35 +7,11 @@ from yosai_framework.service import BaseService
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 
-import importlib.util
-import pathlib
-import sys
 import os
+import pathlib
 
-try:
-    from services.streaming import StreamingService
-except ModuleNotFoundError:
-    spec = importlib.util.spec_from_file_location(
-        "services.streaming",
-        pathlib.Path(__file__).resolve().parents[1] / "streaming" / "service.py",
-    )
-    streaming_mod = importlib.util.module_from_spec(spec)
-    sys.modules["services.streaming"] = streaming_mod
-    if spec.loader:
-        spec.loader.exec_module(streaming_mod)
-    StreamingService = streaming_mod.StreamingService
-try:
-    from services.security import verify_service_jwt
-except ModuleNotFoundError:
-    spec = importlib.util.spec_from_file_location(
-        "services.security",
-        pathlib.Path(__file__).resolve().parents[1] / "security" / "__init__.py",
-    )
-    security_mod = importlib.util.module_from_spec(spec)
-    sys.modules["services.security"] = security_mod
-    if spec.loader:
-        spec.loader.exec_module(security_mod)
-    verify_service_jwt = security_mod.verify_service_jwt
+from services.streaming.service import StreamingService
+from services.security import verify_service_jwt
 from tracing import trace_async_operation
 
 SERVICE_NAME = "event-ingestion-service"
