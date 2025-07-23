@@ -28,3 +28,4 @@ func WriteJSON(w http.ResponseWriter, status int, code Code, message string, det
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(Error{Code: code, Message: message, Details: details})
 }
+

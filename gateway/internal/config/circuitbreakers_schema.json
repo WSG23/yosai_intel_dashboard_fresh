@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "defaults": { "$ref": "#/definitions/settings" },
+    "database": { "$ref": "#/definitions/settings" },
+    "external_api": { "$ref": "#/definitions/settings" },
+    "event_processor": { "$ref": "#/definitions/settings" }
+  },
+  "definitions": {
+    "settings": {
+      "type": "object",
+      "properties": {
+        "failure_threshold": {"type": "integer"},
+        "recovery_timeout": {"type": "integer"}
+      },
+      "required": ["failure_threshold", "recovery_timeout"]
+    }
+  }
+}

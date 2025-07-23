@@ -1,10 +1,21 @@
+import json
 import logging
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List
+
+import jsonschema
 
 from core.exceptions import ConfigurationError
 
 from .protocols import ConfigValidatorProtocol
+
+
+SCHEMA_PATH = Path(__file__).with_name("schema.json")
+try:
+    SCHEMA = json.loads(SCHEMA_PATH.read_text())
+except Exception:  # pragma: no cover - defensive
+    SCHEMA = {}
 
 if TYPE_CHECKING:  # pragma: no cover - used for type hints only
     from .base import Config
@@ -43,6 +54,11 @@ class ConfigValidator(ConfigValidatorProtocol):
             raise ConfigurationError(
                 "Missing configuration sections: " + ", ".join(sorted(missing))
             )
+
+        try:
+            jsonschema.validate(instance=data, schema=SCHEMA)
+        except jsonschema.ValidationError as exc:
+            raise ConfigurationError(f"Invalid configuration: {exc.message}") from exc
 
         from .base import Config
 
