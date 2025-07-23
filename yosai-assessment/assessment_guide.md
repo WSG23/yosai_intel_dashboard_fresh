@@ -321,4 +321,7 @@ The Yōsai Intel Dashboard migration assessment shows:
 - **Recommendation**: NO_GO (4 blockers must be resolved)
 - **Estimated Timeline**: 15-20 days with 2-3 developers
 
-Focus on resolving blockers before proceeding to production deployment.
+Focus on resolving blockers before proceeding to production deployment.# Create requirements.txt
+cat > requirements.txt << EOF
+pyyaml>=6.0
+EOF
