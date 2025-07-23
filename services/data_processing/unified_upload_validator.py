@@ -17,8 +17,7 @@ from config.dynamic_config import dynamic_config
 from core.exceptions import ValidationError
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
-from core.unicode import UnicodeProcessor, sanitize_dataframe
-from core.unicode_utils import sanitize_for_utf8
+from core.unicode import UnicodeProcessor, sanitize_dataframe, sanitize_for_utf8
 from upload_types import ValidationResult
 from .dataframe_utils import process_dataframe
 from utils.file_utils import safe_decode_with_unicode_handling

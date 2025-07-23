@@ -17,8 +17,7 @@ from config.dynamic_config import dynamic_config
 from core.exceptions import ValidationError
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
-from core.unicode import UnicodeProcessor, sanitize_dataframe
-from core.unicode_utils import sanitize_for_utf8
+from core.unicode import UnicodeProcessor, sanitize_dataframe, sanitize_for_utf8, safe_unicode_decode
 from upload_types import ValidationResult
 from .unified_upload_validator import UnifiedUploadValidator
 from .common import process_dataframe
@@ -40,7 +39,6 @@ logger = logging.getLogger(__name__)
 
 def safe_decode_with_unicode_handling(data: bytes, encoding: str) -> str:
     """Decode bytes using ``encoding`` and sanitize output."""
-    from core.unicode_decode import safe_unicode_decode
 
     text = safe_unicode_decode(data, encoding)
 

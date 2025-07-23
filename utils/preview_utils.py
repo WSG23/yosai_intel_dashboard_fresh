@@ -7,7 +7,7 @@ import pandas as pd
 from config.config import get_analytics_config
 from config.dynamic_config import dynamic_config
 from core.protocols import ConfigurationProtocol
-from core.unicode_utils import sanitize_for_utf8
+from core.unicode import sanitize_for_utf8
 
 
 def _get_max_display_rows(config: ConfigurationProtocol = dynamic_config) -> int:

@@ -5,8 +5,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import html
 
-from core.unicode import safe_format_number
-from core.unicode_utils import sanitize_for_utf8
+from core.unicode import safe_format_number, sanitize_for_utf8
 from services import get_analytics_service
 
 try:

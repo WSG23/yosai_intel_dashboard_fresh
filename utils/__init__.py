@@ -19,7 +19,7 @@ from core.unicode import (
     utf8_safe_encode,
     utf8_safe_decode,
 )
-from core.unicode_enhanced import (
+from core.unicode import (
     EnhancedUnicodeProcessor,
     SurrogateHandlingConfig,
     SurrogateHandlingStrategy,

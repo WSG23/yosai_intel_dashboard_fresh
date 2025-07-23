@@ -1,6 +1,6 @@
 import pytest
 
-from core.unicode_decode import safe_unicode_decode
+from core.unicode import safe_unicode_decode
 
 
 def test_removes_invalid_surrogates():
