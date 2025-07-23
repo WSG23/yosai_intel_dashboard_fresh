@@ -68,7 +68,7 @@ jobs:
       - name: PyTest
         run: |
           set -xe
-          pytest --maxfail=1 --disable-warnings -q --cov=.
+          LIGHTWEIGHT_SERVICES=1 pytest --maxfail=1 --disable-warnings -q --cov=.
       - name: Go Coverage
         run: |
           set -xe
