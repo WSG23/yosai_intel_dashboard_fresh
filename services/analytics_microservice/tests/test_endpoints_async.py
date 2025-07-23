@@ -58,6 +58,18 @@ def load_app() -> tuple:
     config_stub.get_database_config = lambda: _Cfg()
     sys.modules["config"] = config_stub
 
+    yf_config_stub = types.ModuleType("python.yosai_framework.config")
+
+    class DummyCfg:
+        service_name = "analytics-test"
+        log_level = "INFO"
+        metrics_addr = ""
+        tracing_endpoint = ""
+
+    yf_config_stub.ServiceConfig = DummyCfg
+    yf_config_stub.load_config = lambda path: DummyCfg()
+    sys.modules["python.yosai_framework.config"] = yf_config_stub
+
     redis_stub = types.ModuleType("redis")
     redis_async = types.ModuleType("redis.asyncio")
     redis_async.Redis = AsyncMock
@@ -70,7 +82,7 @@ def load_app() -> tuple:
     queries_stub.fetch_access_patterns = AsyncMock(return_value={"days": 7})
     sys.modules["services.analytics_microservice.async_queries"] = queries_stub
 
-    os.environ.setdefault("JWT_SECRET", "secret")
+    os.environ["JWT_SECRET"] = "secret"
 
     spec = importlib.util.spec_from_file_location(
         "services.analytics_microservice.app",
@@ -78,6 +90,10 @@ def load_app() -> tuple:
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)  # type: ignore[arg-type]
+
+    # Mark application as ready without running full startup
+    module.app.state.ready = True
+    module.app.state.startup_complete = True
 
     # base service already registers health routes
 
