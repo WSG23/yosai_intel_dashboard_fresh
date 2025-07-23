@@ -138,4 +138,4 @@ def process_enhanced_data():
         }), 200
         
     except Exception as e:
-        return error_response('server_error', str(e)), 500
+        return error_response('server_error', clean_unicode_surrogates(e)), 500
