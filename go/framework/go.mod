@@ -5,6 +5,7 @@ go 1.23.0
 toolchain go1.23.8
 
 require (
+	github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0
 	github.com/prometheus/client_golang v1.22.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.opentelemetry.io/otel v1.37.0
@@ -14,7 +15,10 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
+replace github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors => ../../shared/errors
+
 require (
+	github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
@@ -33,3 +37,5 @@ require (
 	golang.org/x/sys v0.33.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 )
+
+replace github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors => ../../shared/errors

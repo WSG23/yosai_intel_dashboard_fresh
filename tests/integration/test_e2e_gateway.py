@@ -10,7 +10,7 @@ from testcontainers.core.container import DockerContainer
 def get_total_requests(metrics: str) -> float:
     total = 0.0
     for line in metrics.splitlines():
-        if line.startswith("http_requests_total"):
+        if line.startswith("yosai_request_total"):
             parts = line.split()
             if len(parts) == 2:
                 try:

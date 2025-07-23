@@ -15,7 +15,7 @@
       "title": "HTTP Requests/s",
       "datasource": "Prometheus",
       "targets": [
-        {"expr": "sum(rate(http_requests_total[1m]))", "legendFormat": "req"}
+        {"expr": "sum(rate(yosai_request_total[1m]))", "legendFormat": "req"}
       ]
     }
   ]

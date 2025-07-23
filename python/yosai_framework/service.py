@@ -2,6 +2,8 @@ import logging
 import signal
 from typing import Any
 
+from fastapi import FastAPI, HTTPException
+
 import structlog
 from opentelemetry import trace
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
