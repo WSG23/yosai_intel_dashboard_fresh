@@ -18,7 +18,7 @@ services_stub.__path__ = [str(SERVICES_PATH)]
 sys.modules.setdefault("services", services_stub)
 
 
-def load_app() -> tuple:
+def load_app(jwt_secret: str = "secret") -> tuple:
 
     otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
     otel_stub.FastAPIInstrumentor = types.SimpleNamespace(
@@ -58,6 +58,10 @@ def load_app() -> tuple:
     config_stub.get_database_config = lambda: _Cfg()
     sys.modules["config"] = config_stub
 
+    validate_stub = types.ModuleType("config.validate")
+    validate_stub.validate_required_env = lambda vars: None
+    sys.modules["config.validate"] = validate_stub
+
     yf_config_stub = types.ModuleType("python.yosai_framework.config")
 
     class DummyCfg:
@@ -82,7 +86,7 @@ def load_app() -> tuple:
     queries_stub.fetch_access_patterns = AsyncMock(return_value={"days": 7})
     sys.modules["services.analytics_microservice.async_queries"] = queries_stub
 
-    os.environ["JWT_SECRET"] = "secret"
+    os.environ["JWT_SECRET"] = jwt_secret
 
     spec = importlib.util.spec_from_file_location(
         "services.analytics_microservice.app",
