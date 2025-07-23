@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 
 from utils.api_error import error_response
+from core.unicode_handler import clean_unicode_surrogates
 
 # Shared container ensures services are available across blueprints
 from core.container import container
@@ -27,9 +28,9 @@ def save_column_mappings_route():
 
         return jsonify({'status': 'success'}), 200
     except KeyError as exc:
-        return error_response('bad_request', str(exc)), 400
+        return error_response('server_error', clean_unicode_surrogates(exc)), 500
     except Exception as exc:
-        return error_response('server_error', str(exc)), 500
+        return error_response('server_error', clean_unicode_surrogates(exc)), 500
 
 @mappings_bp.route('/v1/mappings/devices', methods=['POST'])
 def save_device_mappings_route():
@@ -47,9 +48,9 @@ def save_device_mappings_route():
 
         return jsonify({'status': 'success'}), 200
     except KeyError as exc:
-        return error_response('bad_request', str(exc)), 400
+        return error_response('server_error', clean_unicode_surrogates(exc)), 500
     except Exception as exc:
-        return error_response('server_error', str(exc)), 500
+        return error_response('server_error', clean_unicode_surrogates(exc)), 500
 
 @mappings_bp.route('/v1/mappings/save', methods=['POST'])
 def save_mappings():
@@ -89,7 +90,7 @@ def save_mappings():
         return jsonify({'status': 'success'}), 200
 
     except Exception as e:
-        return error_response('server_error', str(e)), 500
+        return error_response('server_error', clean_unicode_surrogates(e)), 500
 
 @mappings_bp.route('/v1/process-enhanced', methods=['POST'])
 def process_enhanced_data():
