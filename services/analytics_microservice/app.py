@@ -21,6 +21,9 @@ SERVICE_NAME = "analytics-microservice"
 service = BaseService(SERVICE_NAME, "")
 app = service.app
 
+# Default secret used in development environments
+PLACEHOLDER_JWT_SECRET = "change-me"
+
 JWT_SECRET = os.environ["JWT_SECRET"]
 
 
