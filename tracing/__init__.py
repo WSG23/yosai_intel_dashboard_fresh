@@ -8,6 +8,9 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from .config import JAEGER_ENDPOINT_ENV, DEFAULT_JAEGER_ENDPOINT
+import logging
+import structlog
+from opentelemetry.trace import get_current_span
 
 
 def init_tracing(service_name: str) -> None:
@@ -16,6 +19,41 @@ def init_tracing(service_name: str) -> None:
     provider = TracerProvider(resource=Resource.create({"service.name": service_name}))
     provider.add_span_processor(BatchSpanProcessor(exporter))
     trace.set_tracer_provider(provider)
+
+
+def _add_trace_ids(_: structlog.BoundLogger, __: str, event_dict: dict) -> dict:
+    span = get_current_span()
+    ctx = span.get_span_context()
+    if ctx.is_valid:
+        event_dict["trace_id"] = f"{ctx.trace_id:032x}"
+        event_dict["span_id"] = f"{ctx.span_id:016x}"
+    return event_dict
+
+
+def configure_logging(
+    service_name: str,
+    version: str | None = None,
+    environment: str | None = None,
+) -> None:
+    """Setup structured logging with service metadata."""
+    version = version or os.getenv("SERVICE_VERSION", "0.0.0")
+    environment = environment or os.getenv("APP_ENV", "development")
+
+    structlog.configure(
+        processors=[
+            structlog.contextvars.merge_contextvars,
+            structlog.processors.add_log_level,
+            structlog.processors.TimeStamper(fmt="iso"),
+            _add_trace_ids,
+            structlog.processors.JSONRenderer(),
+        ],
+        wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
+    )
+
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    structlog.get_logger().bind(
+        service=service_name, service_version=version, environment=environment
+    )
 
 
 async def trace_async_operation(name: str, task_id: str, coro: Awaitable[Any]) -> Any:
@@ -35,3 +73,4 @@ async def trace_async_operation(name: str, task_id: str, coro: Awaitable[Any]) -
 def propagate_context(headers: MutableMapping[str, str]) -> None:
     """Inject the current trace context into HTTP *headers*."""
     propagate.inject(headers)
+

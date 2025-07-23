@@ -5,7 +5,11 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from services.streaming import StreamingService
 from services.security import verify_service_jwt
-from tracing import trace_async_operation
+from tracing import trace_async_operation, init_tracing, configure_logging
+
+SERVICE_NAME = "event-ingestion-service"
+init_tracing(SERVICE_NAME)
+configure_logging(SERVICE_NAME)
 
 app = FastAPI(title="Event Ingestion Service")
 service = StreamingService()

@@ -69,6 +69,8 @@ environment variable to the collector URL (`http://localhost:14268/api/traces`
 by default). Invoke `init_tracing("analytics-microservice")` during startup of
 the analytics microservice so spans are reported correctly.
 
+See [Observability Guide](observability.md) for instructions on viewing logs and traces.
+
 ## Real-time Performance Tracking
 
 The `core.monitoring.real_time_performance_tracker` module captures Core Web Vitals

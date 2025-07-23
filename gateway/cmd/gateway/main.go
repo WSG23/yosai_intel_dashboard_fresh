@@ -31,7 +31,7 @@ import (
 )
 
 func main() {
-	shutdown, err := tracing.InitTracing("gateway")
+       shutdown, err := tracing.InitTracing("gateway")
 	if err != nil {
 		tracing.Logger.Fatalf("failed to init tracing: %v", err)
 	}
