@@ -15,6 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from models.compliance import ConsentLog, ConsentType, DataSensitivityLevel
 from core.protocols import DatabaseProtocol
 from core.audit_logger import ComplianceAuditLogger
+from database.secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +93,8 @@ class ConsentService:
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
 
-            self.db.execute_command(
+            execute_command(
+                self.db,
                 insert_sql,
                 (
                     str(consent.id),
@@ -161,8 +163,8 @@ class ConsentService:
             """
 
             withdrawn_at = datetime.now(timezone.utc)
-            rows_affected = self.db.execute_command(
-                update_sql, (withdrawn_at, consent["id"])
+            rows_affected = execute_command(
+                self.db, update_sql, (withdrawn_at, consent["id"])
             )
 
             if rows_affected > 0:
@@ -219,7 +221,7 @@ class ConsentService:
                 ORDER BY granted_timestamp DESC
             """
 
-            df = self.db.execute_query(query_sql, (user_id,))
+            df = execute_query(self.db, query_sql, (user_id,))
             return df.to_dict("records") if not df.empty else []
 
         except Exception as e:
@@ -245,7 +247,7 @@ class ConsentService:
             """
 
             params = user_ids + [consent_type.value, jurisdiction]
-            df = self.db.execute_query(query_sql, tuple(params))
+            df = execute_query(self.db, query_sql, tuple(params))
 
             consented_users = set(df["user_id"].tolist()) if not df.empty else set()
 
@@ -270,8 +272,8 @@ class ConsentService:
                 LIMIT 1
             """
 
-            df = self.db.execute_query(
-                query_sql, (user_id, consent_type.value, jurisdiction)
+            df = execute_query(
+                self.db, query_sql, (user_id, consent_type.value, jurisdiction)
             )
             return df.iloc[0].to_dict() if not df.empty else None
 
@@ -305,7 +307,7 @@ class ConsentService:
             """
 
             deletion_date = datetime.now(timezone.utc) + timedelta(days=30)
-            self.db.execute_command(update_sql, (deletion_date, user_id))
+            execute_command(self.db, update_sql, (deletion_date, user_id))
 
             logger.info(
                 f"Scheduled biometric deletion for {user_id} on {deletion_date}"

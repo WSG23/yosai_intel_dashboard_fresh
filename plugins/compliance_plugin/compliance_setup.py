@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 from core.container import Container
 from core.protocols import DatabaseProtocol
+from database.secure_exec import execute_query, execute_command
 from services.compliance.consent_service import create_consent_service
 from services.compliance.dsar_service import create_dsar_service
 from core.audit_logger import create_audit_logger
@@ -50,7 +51,7 @@ def ensure_compliance_schema(db: DatabaseProtocol) -> bool:
     """
     try:
         # Execute the compliance table creation SQL
-        db.execute_command(CREATE_COMPLIANCE_TABLES_SQL)
+        execute_command(db, CREATE_COMPLIANCE_TABLES_SQL)
         logger.info("Compliance database schema ensured")
         return True
 
@@ -290,7 +291,7 @@ def setup_data_retention_scheduler():
             """
 
             now = datetime.now(timezone.utc)
-            df = db.execute_query(cleanup_sql, (now,))
+            df = execute_query(db, cleanup_sql, (now,))
 
             for _, row in df.iterrows():
                 person_id = row["person_id"]
@@ -299,13 +300,13 @@ def setup_data_retention_scheduler():
                 delete_biometric_sql = (
                     "DELETE FROM biometric_templates WHERE person_id = %s"
                 )
-                db.execute_command(delete_biometric_sql, (person_id,))
+                execute_command(db, delete_biometric_sql, (person_id,))
 
                 # Clear retention date
                 update_sql = (
                     "UPDATE people SET data_retention_date = NULL WHERE person_id = %s"
                 )
-                db.execute_command(update_sql, (person_id,))
+                execute_command(db, update_sql, (person_id,))
 
                 # Audit the deletion
                 audit_logger.log_data_deletion(

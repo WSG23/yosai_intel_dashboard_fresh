@@ -14,6 +14,7 @@ from services.compliance.consent_service import ConsentService
 from services.compliance.dsar_service import DSARService
 from services.compliance.data_retention_service import DataRetentionService
 from services.compliance.dpia_service import DPIAService
+from database.secure_exec import execute_query
 
 logger = logging.getLogger(__name__)
 
@@ -287,7 +288,7 @@ class ComplianceDashboard:
                 FROM consent_log 
                 WHERE is_active = TRUE
             """
-            df = self.db.execute_query(active_consents_sql)
+            df = execute_query(self.db, active_consents_sql)
             active_count = df.iloc[0]["count"] if not df.empty else 0
 
             metrics.append(
@@ -306,7 +307,7 @@ class ComplianceDashboard:
                 WHERE withdrawn_timestamp IS NOT NULL
                   AND withdrawn_timestamp >= NOW() - INTERVAL '30 days'
             """
-            df = self.db.execute_query(withdrawal_time_sql)
+            df = execute_query(self.db, withdrawal_time_sql)
             avg_hours = (
                 df.iloc[0]["avg_hours"]
                 if not df.empty and df.iloc[0]["avg_hours"]
@@ -330,7 +331,7 @@ class ComplianceDashboard:
                 WHERE is_active = TRUE
                 GROUP BY jurisdiction
             """
-            df = self.db.execute_query(jurisdiction_sql)
+            df = execute_query(self.db, jurisdiction_sql)
             jurisdiction_breakdown = df.to_dict("records") if not df.empty else []
 
             metrics.append(
@@ -362,7 +363,7 @@ class ComplianceDashboard:
                 WHERE received_date >= NOW() - INTERVAL '90 days'
             """
 
-            df = self.db.execute_query(response_time_sql)
+            df = execute_query(self.db, response_time_sql)
             if not df.empty:
                 row = df.iloc[0]
                 total_requests = row["total_requests"]
@@ -403,7 +404,7 @@ class ComplianceDashboard:
                   AND due_date <= NOW() + INTERVAL '7 days'
             """
 
-            df = self.db.execute_query(pending_sql)
+            df = execute_query(self.db, pending_sql)
             pending_count = df.iloc[0]["pending_count"] if not df.empty else 0
 
             metrics.append(
@@ -437,7 +438,7 @@ class ComplianceDashboard:
                   AND data_retention_date <= NOW() + INTERVAL '30 days'
             """
 
-            df = self.db.execute_query(scheduled_deletion_sql)
+            df = execute_query(self.db, scheduled_deletion_sql)
             scheduled_count = df.iloc[0]["scheduled_count"] if not df.empty else 0
 
             metrics.append(
@@ -457,7 +458,7 @@ class ComplianceDashboard:
                   AND data_retention_date < NOW()
             """
 
-            df = self.db.execute_query(overdue_deletion_sql)
+            df = execute_query(self.db, overdue_deletion_sql)
             overdue_count = df.iloc[0]["overdue_count"] if not df.empty else 0
 
             metrics.append(
@@ -535,7 +536,7 @@ class ComplianceDashboard:
                 ) hourly_counts
             """
 
-            df = self.db.execute_query(audit_availability_sql)
+            df = execute_query(self.db, audit_availability_sql)
             if not df.empty:
                 row = df.iloc[0]
                 availability = (row["active_hours"] / max(row["total_hours"], 1)) * 100
@@ -577,7 +578,7 @@ class ComplianceDashboard:
                 WHERE timestamp >= NOW() - INTERVAL '24 hours'
             """
 
-            df = self.db.execute_query(recent_activity_sql)
+            df = execute_query(self.db, recent_activity_sql)
             recent_count = df.iloc[0]["recent_entries"] if not df.empty else 0
 
             metrics.append(
@@ -618,7 +619,7 @@ class ComplianceDashboard:
                 ORDER BY due_date ASC
             """
 
-            df = self.db.execute_query(overdue_sql)
+            df = execute_query(self.db, overdue_sql)
 
             for _, row in df.iterrows():
                 days_overdue = int(row["days_overdue"])

@@ -11,6 +11,7 @@ from uuid import uuid4
 
 from core.protocols import DatabaseProtocol
 from core.audit_logger import ComplianceAuditLogger
+from database.secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)
 
@@ -341,7 +342,7 @@ class DPIAService:
                 LIMIT 20
             """
 
-            assessments_df = self.db.execute_query(recent_assessments_sql)
+            assessments_df = execute_query(self.db, recent_assessments_sql)
 
             # Parse assessment data and calculate metrics
             total_assessments = len(assessments_df)
@@ -375,7 +376,7 @@ class DPIAService:
                   )
             """
 
-            pending_df = self.db.execute_query(pending_dpias_sql)
+            pending_df = execute_query(self.db, pending_dpias_sql)
             pending_count = (
                 pending_df.iloc[0]["pending_count"] if not pending_df.empty else 0
             )
@@ -593,7 +594,8 @@ class DPIAService:
 
             import json
 
-            self.db.execute_command(
+            execute_command(
+                self.db,
                 insert_sql,
                 (
                     assessment["assessment_id"],
@@ -615,7 +617,7 @@ class DPIAService:
                 WHERE assessment_id = %s
             """
 
-            df = self.db.execute_query(query_sql, (assessment_id,))
+            df = execute_query(self.db, query_sql, (assessment_id,))
             if df.empty:
                 return None
 

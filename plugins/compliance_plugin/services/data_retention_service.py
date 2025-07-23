@@ -11,6 +11,7 @@ from uuid import uuid4
 from core.protocols import DatabaseProtocol
 from core.audit_logger import ComplianceAuditLogger
 from models.compliance import DataSensitivityLevel
+from database.secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)
 
@@ -157,8 +158,8 @@ class DataRetentionService:
                 "scheduled_at": datetime.now(timezone.utc).isoformat(),
             }
 
-            rows_affected = self.db.execute_command(
-                update_sql, (deletion_date, json.dumps(schedule_info), user_id)
+            rows_affected = execute_command(
+                self.db, update_sql, (deletion_date, json.dumps(schedule_info), user_id)
             )
 
             if rows_affected > 0:
@@ -195,7 +196,7 @@ class DataRetentionService:
             """
 
             now = datetime.now(timezone.utc)
-            df = self.db.execute_query(query_sql, (now,))
+            df = execute_query(self.db, query_sql, (now,))
 
             processed_count = 0
 
@@ -300,7 +301,7 @@ class DataRetentionService:
                 ORDER BY data_retention_date ASC
             """
 
-            df = self.db.execute_query(query_sql, (cutoff_date,))
+            df = execute_query(self.db, query_sql, (cutoff_date,))
 
             upcoming_deletions = []
             for _, row in df.iterrows():
@@ -397,8 +398,8 @@ class DataRetentionService:
                 WHERE person_id = %s
             """
 
-            rows_affected = self.db.execute_command(
-                update_sql, (anonymization_id, user_id)
+            rows_affected = execute_command(
+                self.db, update_sql, (anonymization_id, user_id)
             )
             return rows_affected > 0
         except Exception as e:
@@ -415,8 +416,8 @@ class DataRetentionService:
                 WHERE person_id = %s
             """
 
-            rows_affected = self.db.execute_command(
-                update_sql, (anonymization_id, user_id)
+            rows_affected = execute_command(
+                self.db, update_sql, (anonymization_id, user_id)
             )
             return True  # Success even if no rows (user might not have events)
         except Exception as e:
@@ -428,7 +429,7 @@ class DataRetentionService:
         try:
             # Delete from biometric templates table (if it exists)
             delete_sql = "DELETE FROM biometric_templates WHERE person_id = %s"
-            self.db.execute_command(delete_sql, (user_id,))
+            execute_command(self.db, delete_sql, (user_id,))
 
             # Also remove any biometric flags from access events
             update_events_sql = """
@@ -441,7 +442,7 @@ class DataRetentionService:
                     )
                 WHERE person_id = %s AND contains_biometric_data = TRUE
             """
-            self.db.execute_command(update_events_sql, (user_id,))
+            execute_command(self.db, update_events_sql, (user_id,))
 
             return True
         except Exception as e:
@@ -458,7 +459,7 @@ class DataRetentionService:
                 WHERE user_id = %s AND is_active = TRUE
             """
 
-            self.db.execute_command(update_sql, (datetime.now(timezone.utc), user_id))
+            execute_command(self.db, update_sql, (datetime.now(timezone.utc), user_id))
             return True
         except Exception as e:
             logger.error(f"Failed to withdraw consents: {e}")
@@ -474,7 +475,7 @@ class DataRetentionService:
                 WHERE target_user_id = %s
             """
 
-            self.db.execute_command(update_sql, (anonymization_id, user_id))
+            execute_command(self.db, update_sql, (anonymization_id, user_id))
             return True
         except Exception as e:
             logger.error(f"Failed to anonymize audit logs: {e}")
@@ -494,8 +495,8 @@ class DataRetentionService:
             """
 
             processed_timestamp = datetime.now(timezone.utc).isoformat()
-            self.db.execute_command(
-                update_sql, (data_type, processed_timestamp, user_id)
+            execute_command(
+                self.db, update_sql, (data_type, processed_timestamp, user_id)
             )
             return True
         except Exception as e:
@@ -512,7 +513,7 @@ class DataRetentionService:
                 WHERE person_id = %s
             """
 
-            self.db.execute_command(update_sql, (user_id,))
+            execute_command(self.db, update_sql, (user_id,))
             return True
         except Exception as e:
             logger.error(f"Failed to clear retention schedule: {e}")

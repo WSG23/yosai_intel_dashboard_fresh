@@ -13,6 +13,7 @@ import pandas as pd
 from config.constants import DataProcessingLimits
 from core.query_optimizer import monitor_query_performance
 from core.security_validator import SecurityValidator
+from database.secure_exec import execute_command, execute_query
 
 from .base import BaseModel
 from .enums import AccessResult, BadgeStatus
@@ -75,7 +76,7 @@ class AccessEventModel(BaseModel):
         )
 
         try:
-            df = self.db.execute_query(base_query, tuple(params) if params else None)
+            df = execute_query(self.db, base_query, tuple(params) if params else None)
             return self._process_dataframe(df) if df is not None else pd.DataFrame()
         except Exception as e:
             logging.error(f"Error fetching access events: {e}")
@@ -120,7 +121,7 @@ class AccessEventModel(BaseModel):
         """
 
         try:
-            result = self.db.execute_query(query)
+            result = execute_query(self.db, query)
             if result is not None and not result.empty:
                 stats = result.iloc[0].to_dict()
 
@@ -165,7 +166,7 @@ class AccessEventModel(BaseModel):
         params = (f"-{days} days",)
 
         try:
-            result = self.db.execute_query(query, params)
+            result = execute_query(self.db, query, params)
             return result if result is not None else pd.DataFrame()
         except Exception as e:
             logging.error(f"Error getting hourly distribution: {e}")
@@ -188,7 +189,7 @@ class AccessEventModel(BaseModel):
         """
 
         try:
-            result = self.db.execute_query(query, (limit,))
+            result = execute_query(self.db, query, (limit,))
             return result if result is not None else pd.DataFrame()
         except Exception as e:
             logging.error(f"Error getting user activity: {e}")
@@ -211,7 +212,7 @@ class AccessEventModel(BaseModel):
         """
 
         try:
-            result = self.db.execute_query(query, (limit,))
+            result = execute_query(self.db, query, (limit,))
             return result if result is not None else pd.DataFrame()
         except Exception as e:
             logging.error(f"Error getting door activity: {e}")
@@ -236,7 +237,7 @@ class AccessEventModel(BaseModel):
         params = (f"-{days} days",)
 
         try:
-            result = self.db.execute_query(query, params)
+            result = execute_query(self.db, query, params)
             if result is not None and not result.empty:
                 # Add calculated columns
                 result["denied_events"] = (
@@ -326,7 +327,7 @@ class AccessEventModel(BaseModel):
         )
 
         try:
-            self.db.execute_command(query, params)
+            execute_command(self.db, query, params)
             logging.info(f"Created access event: {event_data['event_id']}")
             return True
         except Exception as e:
