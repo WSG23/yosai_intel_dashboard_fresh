@@ -2,7 +2,7 @@
 
 import logging
 import json
-import pickle
+import dill
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
@@ -115,7 +115,7 @@ class RedisCacheManager(ICacheManager):
                 return json.loads(data.decode("utf-8"))
             except Exception:  # handle legacy pickle values
                 try:
-                    obj = pickle.loads(data)
+                    obj = dill.loads(data)
                 except Exception as e:
                     logger.warning(f"Redis GET failed: {e}")
                     self.delete(key)

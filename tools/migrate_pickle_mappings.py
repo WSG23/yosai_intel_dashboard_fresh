@@ -20,13 +20,16 @@ Usage::
 The JSON output will be written next to the pickle file using the
 ``.json`` extension. When ``--remove-pickle`` is supplied the original pickle
 file is deleted after a successful conversion.
+
+``dill`` is used to read the legacy pickle file to avoid relying on the
+standard ``pickle`` module.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import pickle
+import dill
 import sys
 from pathlib import Path
 
@@ -38,7 +41,7 @@ def migrate(pkl_file: Path) -> Path:
         raise FileNotFoundError(pkl_file)
 
     with open(pkl_file, "rb") as fh:
-        data = pickle.load(fh)
+        data = dill.load(fh)
 
     json_file = pkl_file.with_suffix(".json")
     with open(json_file, "w", encoding="utf-8") as fh:
