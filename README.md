@@ -377,7 +377,7 @@ The gateway and analytics microservice validate several variables on
 startup:
 
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` and `DB_GATEWAY_NAME` for the gateway
-- `JWT_SECRET` for the analytics microservice
+- `JWT_SECRET` for service authentication and the analytics microservice
 
 ### Production Build
 
