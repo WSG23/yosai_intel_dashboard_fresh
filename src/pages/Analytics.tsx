@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAnalyticsStore } from '../state/store';
 import { BarChart3, Filter, Download, AlertCircle } from 'lucide-react';
+import { api } from '../api/client';
 import './Analytics.css';
 
 interface AnalyticsData {
@@ -42,16 +43,7 @@ const Analytics: React.FC = () => {
     setError(null);
 
     try {
-      const port = process.env.REACT_APP_API_PORT || '5001';
-      const response = await fetch(
-        `http://localhost:${port}/api/v1/analytics/${sourceType}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await api.get<AnalyticsData>(`/analytics/${sourceType}`);
       setAnalytics(sourceType, data);
     } catch (err) {
       console.error('Analytics fetch error:', err);

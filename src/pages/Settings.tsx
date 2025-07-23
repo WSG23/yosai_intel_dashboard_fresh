@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { api } from '../api/client';
 
 interface UserSettings {
   theme: string;
@@ -14,8 +15,8 @@ const Settings: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/v1/settings')
-      .then((res) => res.json())
+    api
+      .get<UserSettings>('/settings')
       .then((data) => setSettings((prev) => ({ ...prev, ...data })))
       .catch(() => {
         /* ignore load errors */
@@ -30,17 +31,8 @@ const Settings: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('saving');
-    fetch('/api/v1/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Failed to save settings');
-        }
-        return res.json();
-      })
+    api
+      .put('/settings', settings)
       .then(() => {
         setStatus('success');
         setError(null);
