@@ -12,9 +12,11 @@ from pydantic import BaseModel
 from config import get_database_config
 from services.analytics_microservice import async_queries
 from services.common.async_db import close_pool, create_pool, get_pool
-from tracing import init_tracing
+from tracing import init_tracing, configure_logging
 
-init_tracing("analytics-microservice")
+SERVICE_NAME = "analytics-microservice"
+init_tracing(SERVICE_NAME)
+configure_logging(SERVICE_NAME)
 
 app = FastAPI(title="Analytics Microservice")
 

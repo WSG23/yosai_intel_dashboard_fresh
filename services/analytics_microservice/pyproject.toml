@@ -10,6 +10,7 @@ dependencies = [
     "prometheus-fastapi-instrumentator",
     "python-jose",
     "opentelemetry-instrumentation-fastapi",
+    "structlog",
     "pydantic",
 ]
 

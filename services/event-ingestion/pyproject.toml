@@ -8,6 +8,7 @@ dependencies = [
     "kafka-python",
     "prometheus-fastapi-instrumentator",
     "opentelemetry-instrumentation-fastapi",
+    "structlog",
 ]
 
 [build-system]
