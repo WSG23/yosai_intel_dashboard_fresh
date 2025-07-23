@@ -3,22 +3,31 @@ PROM_URL ?= http://localhost:9090
 RATE ?= 50
 DURATION ?= 60
 
-.PHONY: load-test
+CLI ?= python -m tools.ops_cli
+
+.PHONY: load-test validate build test deploy format lint clean
+
 load-test:
 	python tools/load_test.py --brokers $(BROKERS) --prom-url $(PROM_URL) --rate $(RATE) --duration $(DURATION)
 
-.PHONY: build test deploy logs
+validate:
+	$(CLI) validate-config
 
 build:
-	go build ./...
-	pip install -r requirements.txt
+	$(CLI) build
 
 test:
-	go test ./...
-	pytest -k "" -m "unit" || true
+	$(CLI) test
 
 deploy:
-	docker-compose -f docker-compose.unified.yml up -d
+	$(CLI) deploy
 
-logs:
-	docker-compose -f docker-compose.unified.yml logs -f
+format:
+	$(CLI) format
+
+lint:
+	$(CLI) lint
+
+clean:
+	$(CLI) clean
+
