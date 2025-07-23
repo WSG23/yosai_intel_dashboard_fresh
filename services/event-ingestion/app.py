@@ -1,17 +1,16 @@
 import asyncio
-from fastapi import FastAPI, Header, HTTPException, status, Depends
+from fastapi import Header, HTTPException, status, Depends
+from yosai_framework.service import BaseService
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from services.streaming import StreamingService
 from services.security import verify_service_jwt
-from tracing import trace_async_operation, init_tracing, configure_logging
+from tracing import trace_async_operation
 
 SERVICE_NAME = "event-ingestion-service"
-init_tracing(SERVICE_NAME)
-configure_logging(SERVICE_NAME)
-
-app = FastAPI(title="Event Ingestion Service")
+service_base = BaseService(SERVICE_NAME, "")
+app = service_base.app
 service = StreamingService()
 
 
@@ -40,16 +39,13 @@ async def startup() -> None:
     asyncio.create_task(
         trace_async_operation("consume_loop", "ingest", _consume_loop())
     )
+    service_base.start()
 
 
 @app.on_event("shutdown")
 async def shutdown() -> None:
     service.close()
-
-
-@app.get("/health")
-async def health(_: None = Depends(verify_token)) -> dict:
-    return service.health_check()
+    service_base.stop()
 
 
 FastAPIInstrumentor.instrument_app(app)

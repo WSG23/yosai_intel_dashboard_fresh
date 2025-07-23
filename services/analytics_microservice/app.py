@@ -2,7 +2,8 @@ import logging
 import os
 import time
 
-from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
+from yosai_framework.service import BaseService
 from shared.errors.types import ErrorCode
 from jose import jwt
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -12,13 +13,11 @@ from pydantic import BaseModel
 from config import get_database_config
 from services.analytics_microservice import async_queries
 from services.common.async_db import close_pool, create_pool, get_pool
-from tracing import init_tracing, configure_logging
+
 
 SERVICE_NAME = "analytics-microservice"
-init_tracing(SERVICE_NAME)
-configure_logging(SERVICE_NAME)
-
-app = FastAPI(title="Analytics Microservice")
+service = BaseService(SERVICE_NAME, "")
+app = service.app
 
 PLACEHOLDER_JWT_SECRET = "change-me"
 JWT_SECRET = os.getenv("JWT_SECRET", PLACEHOLDER_JWT_SECRET)
@@ -72,49 +71,12 @@ async def _startup() -> None:
     )
 
     # Redis or other dependencies would be initialized here
-    app.state.ready = True
-    app.state.startup_complete = True
-
-
-@app.get("/health")
-async def health() -> dict[str, str]:
-    """Health check endpoint."""
-    return {"status": "ok"}
-
-
-@app.get("/health/live")
-async def health_live() -> dict[str, str]:
-    """Liveness probe."""
-    return {"status": "ok" if app.state.live else "shutdown"}
-
-
-@app.get("/health/startup")
-async def health_startup() -> dict[str, str]:
-    """Startup probe."""
-    if app.state.startup_complete:
-        return {"status": "complete"}
-    raise HTTPException(
-        status_code=503,
-        detail={"code": ErrorCode.UNAVAILABLE.value, "message": "starting"},
-    )
-
-
-@app.get("/health/ready")
-async def health_ready() -> dict[str, str]:
-    """Readiness probe."""
-    if app.state.ready:
-        return {"status": "ready"}
-    raise HTTPException(
-        status_code=503,
-        detail={"code": ErrorCode.UNAVAILABLE.value, "message": "not ready"},
-    )
-
+    service.start()
 
 @app.on_event("shutdown")
 async def _shutdown() -> None:
     await close_pool()
-    app.state.ready = False
-    app.state.live = False
+    service.stop()
 
 
 @app.post("/api/v1/analytics/get_dashboard_summary")
