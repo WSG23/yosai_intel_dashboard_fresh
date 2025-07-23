@@ -1,5 +1,6 @@
 import types
 
+
 import security_callback_controller
 from core.security_validator import (
     AdvancedSQLValidator,
@@ -27,10 +28,11 @@ def test_main_validation_orchestration():
     )
 
     validator = SecurityValidator()
-    result = validator.validate_input("<script>alert('xss')</script>", "comment")
+    value = "<script>alert('xss')</script>"
+    result = validator.validate_input(value, "comment")
     assert not result["valid"]
     assert result["issues"]
-    assert "sanitized" in result
+    assert result["sanitized"] == html.escape(value, quote=True)
 
 
 def test_check_permissions_allows():
@@ -39,6 +41,7 @@ def test_check_permissions_allows():
             class Resp:
                 def raise_for_status(self):
                     pass
+
 
                 def json(self):
                     return {"allowed": True}
@@ -56,6 +59,7 @@ def test_check_permissions_denied():
             class Resp:
                 def raise_for_status(self):
                     pass
+
 
                 def json(self):
                     return {"allowed": False}

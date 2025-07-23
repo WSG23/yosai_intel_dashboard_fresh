@@ -10,6 +10,7 @@ import secrets
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
+import html
 
 import requests
 import sqlparse
@@ -135,20 +136,8 @@ class SecurityValidator(BaseModel, SecurityServiceProtocol):
         validator = UnicodeSurrogateValidator()
         value = validator.sanitize(value)
         value = sanitize_unicode_input(value)
-        # HTML entity encoding
-        replacements = {
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#x27;",
-            "/": "&#x2F;",
-        }
 
-        sanitized = value
-        for char, entity in replacements.items():
-            sanitized = sanitized.replace(char, entity)
-
+        sanitized = html.escape(value, quote=True)
         return sanitized
 
     def _validate_sql_injection(

@@ -11,8 +11,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
+import asyncio
 
-from advanced_cache import clear_cache
+from core.cache_manager import InMemoryCacheManager, CacheConfig
+
+_cache_manager = InMemoryCacheManager(CacheConfig())
 
 class ConsolidatedLearningService:
     """Unified learning service for all mapping types."""
@@ -50,7 +53,10 @@ class ConsolidatedLearningService:
 
         self.learned_data[fingerprint] = mapping_data
         self._persist_learned_data()
-        clear_cache()
+        try:
+            asyncio.run(_cache_manager.clear())
+        except Exception:
+            pass
         self.logger.info(f"Saved mapping {fingerprint[:8]} for {filename}")
         return fingerprint
 
