@@ -40,6 +40,7 @@ func TestHealthAuthorized(t *testing.T) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": "svc",
+		"iss": "gateway",
 		"exp": time.Now().Add(time.Minute).Unix(),
 	})
 	signed, err := token.SignedString(secret)

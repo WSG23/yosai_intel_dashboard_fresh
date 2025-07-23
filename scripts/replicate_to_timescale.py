@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Incrementally replicate new access events to TimescaleDB."""
 from __future__ import annotations
+
 import logging
 import os
 import time
@@ -8,8 +9,8 @@ from datetime import datetime, timezone
 from typing import Any
 
 import psycopg2
-from psycopg2.extras import DictCursor, execute_values
 from prometheus_client import Gauge, start_http_server
+from psycopg2.extras import DictCursor, execute_values
 
 LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -48,21 +49,26 @@ def ensure_checkpoint(cur: DictCursor) -> None:
         """
     )
     cur.execute(
-        f"INSERT INTO {CHECKPOINT_TABLE} (last_ts) VALUES ('1970-01-01') ON CONFLICT DO NOTHING"
+        (
+            f"INSERT INTO {CHECKPOINT_TABLE} (last_ts) VALUES ('1970-01-01') "
+            "ON CONFLICT DO NOTHING"
+        )
     )
 
 
-def get_last_timestamp(cur: DictCursor) -> str:
+def get_last_timestamp(cur: DictCursor) -> datetime:
     cur.execute(f"SELECT last_ts FROM {CHECKPOINT_TABLE}")
     row = cur.fetchone()
-    return row[0] if row else "1970-01-01"
+    if row:
+        return row[0]
+    return datetime.fromtimestamp(0, timezone.utc)
 
 
-def update_timestamp(cur: DictCursor, ts: str) -> None:
+def update_timestamp(cur: DictCursor, ts: datetime) -> None:
     cur.execute(f"UPDATE {CHECKPOINT_TABLE} SET last_ts = %s", (ts,))
 
 
-def fetch_new_rows(cur: DictCursor, last_ts: str) -> list[dict[str, Any]]:
+def fetch_new_rows(cur: DictCursor, last_ts: datetime) -> list[dict[str, Any]]:
     cur.execute(
         "SELECT * FROM access_events WHERE time > %s ORDER BY time ASC LIMIT 1000",
         (last_ts,),
@@ -87,18 +93,23 @@ def replicate_once(src, tgt) -> None:
     with tgt.cursor(cursor_factory=DictCursor) as tcur:
         ensure_checkpoint(tcur)
         last_ts = get_last_timestamp(tcur)
-    with src.cursor(cursor_factory=DictCursor) as scur, tgt.cursor(cursor_factory=DictCursor) as tcur:
+
+    with src.cursor(cursor_factory=DictCursor) as scur, tgt.cursor(
+        cursor_factory=DictCursor
+    ) as tcur:
         rows = fetch_new_rows(scur, last_ts)
-        if not rows:
+        if rows:
+            insert_rows(tcur, rows)
+            last_ts = rows[-1]["time"]
+            update_timestamp(tcur, last_ts)
+            LOG.info("Replicated %s rows", len(rows))
+        else:
             LOG.info("No new rows")
-            return
-        insert_rows(tcur, rows)
-        new_ts = rows[-1]["time"]
-        update_timestamp(tcur, new_ts)
-        lag = (datetime.now(timezone.utc) - new_ts).total_seconds()
+
+        lag = (datetime.now(timezone.utc) - last_ts).total_seconds()
         replication_lag_seconds.set(lag)
         tgt.commit()
-        LOG.info("Replicated %s rows (lag %.1fs)", len(rows), lag)
+        LOG.info("Replication lag %.1fs", lag)
 
 
 def main() -> None:

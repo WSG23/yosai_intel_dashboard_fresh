@@ -29,6 +29,7 @@ func TestAuthMiddlewareSuccessAndFailure(t *testing.T) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &auth.EnhancedClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "svc",
+			Issuer:    "gateway",
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
 		},
 	})
@@ -53,6 +54,7 @@ func TestAuthMiddlewareExpired(t *testing.T) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &auth.EnhancedClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "svc",
+			Issuer:    "gateway",
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-time.Minute)),
 		},
 	})

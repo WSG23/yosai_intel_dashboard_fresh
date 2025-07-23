@@ -17,15 +17,20 @@ def load_app():
     sys.modules.setdefault("services", services_stub)
 
     otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
-    otel_stub.FastAPIInstrumentor = types.SimpleNamespace(instrument_app=lambda *a, **k: None)
+    otel_stub.FastAPIInstrumentor = types.SimpleNamespace(
+        instrument_app=lambda *a, **k: None
+    )
     sys.modules.setdefault("opentelemetry.instrumentation.fastapi", otel_stub)
 
     prom_stub = types.ModuleType("prometheus_fastapi_instrumentator")
+
     class DummyInstr:
         def instrument(self, app):
             return self
+
         def expose(self, app):
             return self
+
     prom_stub.Instrumentator = lambda: DummyInstr()
     sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
 
@@ -83,7 +88,11 @@ def app_fixture(monkeypatch):
 
 
 def _token(secret: str) -> str:
-    return jwt.encode({"sub": "svc", "exp": int(time.time()) + 60}, secret, algorithm="HS256")
+    return jwt.encode(
+        {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
+        secret,
+        algorithm="HS256",
+    )
 
 
 def test_dashboard_summary_endpoint(app_fixture):

@@ -46,6 +46,11 @@ func Auth(next http.Handler) http.Handler {
 			return
 		}
 
+		if claims.Issuer == "" {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
 		ctx := auth.NewContext(r.Context(), claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

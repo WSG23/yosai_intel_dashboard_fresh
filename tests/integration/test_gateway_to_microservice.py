@@ -19,20 +19,29 @@ sys.modules.setdefault("services", services_stub)
 os.environ.setdefault("JWT_SECRET", "test")
 
 otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
-otel_stub.FastAPIInstrumentor = types.SimpleNamespace(instrument_app=lambda *a, **k: None)
+otel_stub.FastAPIInstrumentor = types.SimpleNamespace(
+    instrument_app=lambda *a, **k: None
+)
 sys.modules.setdefault("opentelemetry.instrumentation.fastapi", otel_stub)
 
 prom_stub = types.ModuleType("prometheus_fastapi_instrumentator")
+
+
 class DummyInstr:
     def instrument(self, app):
         return self
+
     def expose(self, app):
         @app.get("/metrics")
         def _metrics():
             return "python_info 1"
+
         return self
+
+
 prom_stub.Instrumentator = lambda: DummyInstr()
 sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
+
 
 class DummyVault:
     def get_secret(self, path, field=None):
@@ -40,6 +49,7 @@ class DummyVault:
 
     def invalidate(self, key=None):
         pass
+
 
 common_stub = types.ModuleType("services.common")
 common_stub.__path__ = [str(SERVICES_PATH / "common")]
@@ -56,6 +66,7 @@ sys.modules["services.common.secrets"] = secrets_stub
 async_db_stub = types.ModuleType("services.common.async_db")
 async_db_stub.create_pool = lambda *a, **k: None
 
+
 class DummyPool:
     async def fetch(self, *a, **k):
         return []
@@ -63,6 +74,7 @@ class DummyPool:
 
 async def _get_pool() -> DummyPool:
     return DummyPool()
+
 
 async_db_stub.get_pool = _get_pool
 async_db_stub.close_pool = lambda: None
@@ -88,11 +100,14 @@ sys.modules["services.analytics_service"] = analytics_stub
 # Stub async query functions used by the microservice
 async_queries_stub = types.ModuleType("services.analytics_microservice.async_queries")
 
+
 async def _fetch_summary(pool):
     return {"status": "ok"}
 
+
 async def _fetch_patterns(pool, days):
     return {"days": days}
+
 
 async_queries_stub.fetch_dashboard_summary = _fetch_summary
 async_queries_stub.fetch_access_patterns = _fetch_patterns
@@ -116,7 +131,9 @@ def test_requests_without_valid_token_return_401():
 
     # Expired token
     bad_token = jwt.encode(
-        {"sub": "svc", "exp": int(time.time()) - 1}, "test", algorithm="HS256"
+        {"sub": "svc", "iss": "gateway", "exp": int(time.time()) - 1},
+        "test",
+        algorithm="HS256",
     )
     resp = client.post(
         "/api/v1/analytics/get_dashboard_summary",
@@ -126,7 +143,9 @@ def test_requests_without_valid_token_return_401():
 
     # Valid token succeeds
     good_token = jwt.encode(
-        {"sub": "svc", "exp": int(time.time()) + 60}, "test", algorithm="HS256"
+        {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
+        "test",
+        algorithm="HS256",
     )
     resp = client.post(
         "/api/v1/analytics/get_dashboard_summary",
