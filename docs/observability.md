@@ -3,6 +3,29 @@
 The dashboard ships with a lightweight observability stack for local development.
 Structured logs are forwarded by Logstash and traces are exported to Jaeger.
 
+## Service Metadata
+
+The Go tracing helpers under `gateway/internal/tracing` attach service metadata
+to every span and log entry. Two environment variables are read at startup:
+
+- `SERVICE_VERSION` – version string for the running service (`0.0.0` by
+  default)
+- `APP_ENV` – environment name such as `development` or `production`
+  (`development` by default)
+
+Example environment file:
+
+```bash
+SERVICE_VERSION=1.2.3
+APP_ENV=staging
+```
+
+With these variables set, a log line looks similar to the following:
+
+```json
+{"level":"info","service":"gateway","service_version":"1.2.3","environment":"staging","msg":"starting server","time":"2024-01-01T12:00:00Z","trace_id":"...","span_id":"..."}
+```
+
 ## Viewing Logs
 
 1. Start the Logstash container:
