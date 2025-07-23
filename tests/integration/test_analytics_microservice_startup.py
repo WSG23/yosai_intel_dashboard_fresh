@@ -67,19 +67,13 @@ sys.modules["config"] = config_stub
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_startup_requires_jwt_secret(monkeypatch, caplog):
+async def test_startup_requires_jwt_secret(monkeypatch):
     monkeypatch.delenv("JWT_SECRET", raising=False)
-    caplog.set_level(logging.WARNING)
 
     app_spec = importlib.util.spec_from_file_location(
         "services.analytics_microservice.app",
         SERVICES_PATH / "analytics_microservice" / "app.py",
     )
     app_module = importlib.util.module_from_spec(app_spec)
-    app_spec.loader.exec_module(app_module)
-
-    assert app_module.JWT_SECRET == app_module.PLACEHOLDER_JWT_SECRET
-    assert "JWT_SECRET environment variable not set" in caplog.text
-
-    with pytest.raises(RuntimeError):
-        await app_module._startup()
+    with pytest.raises(KeyError):
+        app_spec.loader.exec_module(app_module)
