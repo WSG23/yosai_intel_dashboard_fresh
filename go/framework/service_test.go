@@ -63,10 +63,10 @@ func TestMetricsInitialization(t *testing.T) {
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
-	if !strings.Contains(string(body), "http_requests_total") {
+	if !strings.Contains(string(body), "yosai_request_total") {
 		t.Fatalf("counter not exposed: %s", string(body))
 	}
-	if !strings.Contains(string(body), "http_request_duration_seconds") {
+	if !strings.Contains(string(body), "yosai_request_duration_seconds") {
 		t.Fatalf("histogram not exposed: %s", string(body))
 	}
 }
