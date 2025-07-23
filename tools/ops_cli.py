@@ -59,6 +59,18 @@ def test():
     run(["pytest"])
 
 
+@cli.command("frontend-build")
+def frontend_build():
+    """Build frontend assets using npm."""
+    run(["npm", "run", "build"])
+
+
+@cli.command("frontend-test")
+def frontend_test():
+    """Run frontend unit tests."""
+    run(["npm", "test", "--", "--watchAll=false"])
+
+
 @cli.command()
 def format():
     """Format code with black and isort."""

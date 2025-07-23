@@ -7,6 +7,12 @@ interface ApiError {
   issues?: string[];
 }
 
+interface ServiceError {
+  code: string;
+  message: string;
+  details?: any;
+}
+
 interface ApiResponse<T = any> {
   status: 'success' | 'error';
   data?: T;
@@ -72,7 +78,7 @@ apiClient.interceptors.response.use(
     }
     return response;
   },
-  async (error: AxiosError<ApiError>) => {
+  async (error: AxiosError<ApiError | ServiceError>) => {
     const { config, response } = error;
 
     if (!response) {
@@ -82,32 +88,55 @@ apiClient.interceptors.response.use(
         return Promise.reject(error);
       }
       toast.error('Network error. Please check your connection.');
+      console.error(
+        JSON.stringify({
+          level: 'error',
+          message: 'Network error',
+          url: config?.url,
+        })
+      );
       return Promise.reject(error);
     }
 
-    switch (response.status) {
-      case 401:
-        window.location.href = '/login';
+    const data = response.data as ServiceError & ApiError;
+    const code = (data as any).code;
+    const msg = data.message || 'An unexpected error occurred.';
+
+    let toastMsg: string | undefined;
+    switch (code) {
+      case 'invalid_input':
+        toastMsg = 'Request validation failed';
         break;
-      case 403:
-        toast.error('You do not have permission to perform this action.');
+      case 'unauthorized':
+        toastMsg = 'You are not authorized to perform this action.';
+        if (response.status === 401) {
+          window.location.href = '/login';
+        }
         break;
-      case 404:
-        toast.error('The requested resource was not found.');
+      case 'not_found':
+        toastMsg = 'The requested resource was not found.';
         break;
-      case 422:
-        const issues = response.data?.issues || ['Validation failed'];
-        issues.forEach((i) => toast.error(i));
+      case 'internal':
+        toastMsg = 'Server error. Please try again later.';
         break;
-      case 429:
-        toast.error('Too many requests. Please slow down.');
-        break;
-      case 500:
-        toast.error('Server error. Please try again later.');
+      case 'unavailable':
+        toastMsg = 'Service temporarily unavailable. Please try again later.';
         break;
       default:
-        toast.error(response.data?.message || 'An unexpected error occurred.');
+        toastMsg = msg;
     }
+
+    toast.error(toastMsg);
+
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        code: code || 'unknown',
+        message: msg,
+        status: response.status,
+        url: config?.url,
+      })
+    );
 
     return Promise.reject(error);
   }
