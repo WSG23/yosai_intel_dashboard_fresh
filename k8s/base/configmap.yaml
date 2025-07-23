@@ -17,6 +17,7 @@ data:
   DB_PORT: "5432"
   DB_NAME: "yosai_db"
   DB_USER: "yosai_user"
+  DB_SSLMODE: "require"
   REDIS_HOST: "redis"
   REDIS_PORT: "6379"
   AUTH0_DOMAIN: "dev-domain.auth0.com"
