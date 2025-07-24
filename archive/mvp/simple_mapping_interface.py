@@ -98,15 +98,14 @@ def safe_import_column_suggestions():
 def safe_import_device_mapping():
     """Safely import device mapping service with fallback"""
     try:
+        from core.config import (
+            get_ai_confidence_threshold,
+            get_max_parallel_uploads,
+            get_upload_chunk_size,
+            get_validator_rules,
+        )
         from services.configuration_service import ConfigurationServiceProtocol
         from services.door_mapping_service import DoorMappingService
-
-        from core.config import (
-            get_upload_chunk_size,
-            get_max_parallel_uploads,
-            get_validator_rules,
-            get_ai_confidence_threshold,
-        )
 
         class MockConfig:
             def get_max_upload_size_mb(self) -> int:
@@ -987,15 +986,15 @@ def update_device_mapping(
 
 
 if __name__ == "__main__":
-    print("🚀 Starting Simple Data Mapping Interface...")
-    print("📊 Features:")
-    print("  • CSV/JSON file upload with Unicode safety")
-    print("  • Raw data preview (first 5 rows)")
-    print("  • AI + Manual column mapping")
-    print("  • AI + Manual device mapping")
-    print("  • Enhanced data visualization")
-    print("  • Modular, testable code structure")
-    print("\n🌐 Open: http://localhost:5002")
-    print("🔄 Ready for file upload and mapping...")
+    logger.info("🚀 Starting Simple Data Mapping Interface...")
+    logger.info("📊 Features:")
+    logger.info("  • CSV/JSON file upload with Unicode safety")
+    logger.info("  • Raw data preview (first 5 rows)")
+    logger.info("  • AI + Manual column mapping")
+    logger.info("  • AI + Manual device mapping")
+    logger.info("  • Enhanced data visualization")
+    logger.info("  • Modular, testable code structure")
+    logger.info("\n🌐 Open: http://localhost:5002")
+    logger.info("🔄 Ready for file upload and mapping...")
 
     app.run_server(debug=True, host="0.0.0.0", port=5002)

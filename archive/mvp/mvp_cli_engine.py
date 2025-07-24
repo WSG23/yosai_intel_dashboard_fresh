@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 from mvp.data_verification_component import DataVerificationComponent
 from mvp.unicode_fix_module import (
@@ -73,12 +76,12 @@ def process_file(
     filepath: Path, output: Path, validate_only: bool, debug: bool
 ) -> None:
     if debug:
-        print(f"Processing {filepath} -> {output}")
+        logger.info("Processing %s -> %s", filepath, output)
     df = load_dataframe(filepath, debug=debug)
     verifier = DataVerificationComponent()
     df, mapping = verifier.verify_dataframe(df)
     if validate_only:
-        print("Validation complete. Exiting due to --validate-only flag.")
+        logger.info("Validation complete. Exiting due to --validate-only flag.")
         return
     if Processor:
         try:
@@ -90,7 +93,7 @@ def process_file(
     out_file = output / f"{filepath.stem}_analytics.json"
     safe_file_write(out_file, json.dumps(analytics, indent=2))
     verifier.save_verification(mapping, output / f"{filepath.stem}_verification.json")
-    print(f"✅ Results saved to {output}")
+    logger.info("✅ Results saved to %s", output)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -112,7 +115,7 @@ def main(argv: list[str] | None = None) -> None:
             import traceback
 
             traceback.print_exc()
-        print(f"❌ Processing failed: {clean_text(str(exc))}")
+        logger.error("❌ Processing failed: %s", clean_text(str(exc)))
 
 
 if __name__ == "__main__":
