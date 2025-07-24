@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from .unicode_handler import UnicodeQueryHandler
+from unicode_toolkit import UnicodeQueryHandler
 from database.secure_exec import execute_query as _execute_query
 
 
