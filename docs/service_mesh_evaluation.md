@@ -37,6 +37,17 @@ Running Linkerd introduces additional components and sidecars that consume CPU a
 
 To remove Linkerd delete the manifests in `k8s/linkerd/` and uninstall the Linkerd control plane.
 
+## Migration to Istio
+
+The project now uses [Istio](https://istio.io) for service mesh features. The manifests under `k8s/istio/` enable:
+
+- Automatic mTLS for all services
+- Circuit breaking and retry policies via destination rules
+- Canary deployments using `VirtualService` weight-based routing
+- Integration with Jaeger and Grafana for tracing and metrics
+
+Istio is first rolled out in non-production namespaces and then promoted to production once validated.
+
 ## Automatic mTLS
 
 All pods injected with the Linkerd proxy automatically establish mutual TLS

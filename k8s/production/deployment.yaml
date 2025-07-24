@@ -4,6 +4,7 @@ metadata:
   name: yosai-dashboard
   labels:
     app: yosai-dashboard
+    track: stable
 spec:
   replicas: 2
   strategy:
@@ -14,10 +15,12 @@ spec:
   selector:
     matchLabels:
       app: yosai-dashboard
+      track: stable
   template:
     metadata:
       labels:
         app: yosai-dashboard
+        track: stable
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"

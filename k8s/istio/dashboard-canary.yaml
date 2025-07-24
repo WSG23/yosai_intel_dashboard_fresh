@@ -1,0 +1,40 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: yosai-dashboard
+  namespace: yosai-dev
+spec:
+  host: yosai-dashboard.yosai-dev.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+  subsets:
+    - name: stable
+      labels:
+        track: stable
+    - name: canary
+      labels:
+        track: canary
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: yosai-dashboard
+  namespace: yosai-dev
+spec:
+  hosts:
+    - yosai-dashboard
+  http:
+    - route:
+        - destination:
+            host: yosai-dashboard
+            subset: stable
+          weight: 90
+        - destination:
+            host: yosai-dashboard
+            subset: canary
+          weight: 10
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream
