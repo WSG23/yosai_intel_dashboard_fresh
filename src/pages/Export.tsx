@@ -1,5 +1,6 @@
 import React from 'react';
 import { Download } from 'lucide-react';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 const Export: React.FC = () => {
   return (
@@ -10,4 +11,10 @@ const Export: React.FC = () => {
   );
 };
 
-export default Export;
+const ExportPage: React.FC = () => (
+  <ErrorBoundary>
+    <Export />
+  </ErrorBoundary>
+);
+
+export default ExportPage;
