@@ -3,6 +3,7 @@ from __future__ import annotations
 """Analytics service with caching using :class:`CacheManager`."""
 
 from typing import Any, Dict
+import asyncio
 
 from core.cache_manager import CacheManager
 from services.analytics_summary import generate_sample_analytics
@@ -31,6 +32,10 @@ class CachedAnalyticsService:
         metrics = await self._compute_metrics(facility_id, date_range)
         await self.cache_manager.set(key, metrics, self.ttl_seconds)
         return metrics
+
+    def get_analytics_summary_sync(self, facility_id: str, date_range: str) -> Dict[str, Any]:
+        """Synchronous wrapper for :meth:`get_analytics_summary`."""
+        return asyncio.run(self.get_analytics_summary(facility_id, date_range))
 
 
 __all__ = ["CachedAnalyticsService"]

@@ -14,7 +14,7 @@ from services.security import require_token
 
 csrf = CSRFProtect()
 
-from api.analytics_endpoints import register_analytics_blueprints
+from api.analytics_endpoints import register_analytics_blueprints, init_cache_manager
 from settings_endpoint import settings_bp
 
 from config.constants import API_PORT
@@ -50,6 +50,7 @@ def create_api_app() -> "FastAPI":
 
     # Third-party analytics demo endpoints
     register_analytics_blueprints(app)
+    service.app.add_event_handler("startup", init_cache_manager)
 
     # Core upload and mapping endpoints
     app.register_blueprint(upload_bp)
