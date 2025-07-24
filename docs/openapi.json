@@ -1,108 +1,172 @@
 {
-    "components": {
-        "responses": {
-            "BadRequest": {
-                "content": {
-                    "application/json": {
-                        "schema": {"$ref": "#/components/schemas/Error"}
-                    }
-                },
-                "description": "Bad request",
-            },
-            "NotFound": {
-                "content": {
-                    "application/json": {
-                        "schema": {"$ref": "#/components/schemas/Error"}
-                    }
-                },
-                "description": "Resource not found",
-            },
-        },
-        "schemas": {
-            "AccessEvent": {
-                "properties": {
-                    "door_id": {"type": "string"},
-                    "event_id": {"type": "string"},
-                    "person_id": {"type": "string"},
-                    "result": {
-                        "enum": ["granted", "denied", "tailgating", "forced"],
-                        "type": "string",
-                    },
-                    "timestamp": {"format": "date-time", "type": "string"},
-                },
-                "required": ["person_id", "door_id", "timestamp"],
-                "type": "object",
-            },
-            "Error": {
-                "properties": {
-                    "code": {"type": "string"},
-                    "details": {"additionalProperties": true, "type": "object"},
-                    "message": {"type": "string"},
-                },
-                "required": ["code", "message"],
-                "type": "object",
-            },
-            "EventListResponse": {
-                "properties": {
-                    "events": {
-                        "items": {"$ref": "#/components/schemas/AccessEvent"},
-                        "type": "array",
-                    }
-                },
-                "type": "object",
-            },
-        },
-        "securitySchemes": {
-            "apiKey": {"in": "header", "name": "X-API-Key", "type": "apiKey"},
-            "bearerAuth": {"bearerFormat": "JWT", "scheme": "bearer", "type": "http"},
-        },
-    },
-    "info": {
-        "contact": {"email": "api-support@yosai.com"},
-        "description": "Physical security intelligence and access control API.\n\n# Authentication\nUse Bearer token (JWT) or API key authentication.\n\n# Versioning\nAPI version is included in the URL path (e.g., /v2/events).\n",
-        "license": {
-            "name": "Apache 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
-        },
-        "termsOfService": "https://yosai.com/terms",
-        "title": "Yōsai Intel Dashboard API",
-        "version": "2.0.0",
-    },
-    "openapi": "3.0.3",
-    "paths": {
-        "/events": {
-            "get": {
-                "operationId": "listAccessEvents",
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/EventListResponse"
-                                }
-                            }
-                        },
-                        "description": "Successful response",
-                    },
-                    "400": {"$ref": "#/components/responses/BadRequest"},
-                    "404": {"$ref": "#/components/responses/NotFound"},
-                },
-                "summary": "List access events",
-                "tags": ["Events"],
+  "components": {
+    "responses": {
+      "BadRequest": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
             }
-        }
+          }
+        },
+        "description": "Bad request"
+      },
+      "NotFound": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "Resource not found"
+      }
     },
-        ,"/models/register": {"post": {"operationId": "registerModel", "summary": "Register a model", "tags": ["Models"], "responses": {"200": {"description": "Registered"}}}}
-        ,"/models/{name}": {"get": {"operationId": "listModelVersions", "summary": "List model versions", "tags": ["Models"], "responses": {"200": {"description": "Versions"}}}}
-        ,"/models/{name}/rollback": {"post": {"operationId": "rollbackModel", "summary": "Rollback active model version", "tags": ["Models"], "responses": {"200": {"description": "Rolled back"}}}}
-    "servers": [
-        {"description": "Production", "url": "https://api.yosai.com/v2"},
-        {"description": "Staging", "url": "https://staging-api.yosai.com/v2"},
-        {"description": "Development", "url": "http://localhost:8080/v2"},
-    ],
-    "tags": [
-        {"description": "Access control events", "name": "Events"},
-        {"description": "Analytics and reporting", "name": "Analytics"},
-        {"description": "Model registry", "name": "Models"},
-    ],
+    "schemas": {
+      "AccessEvent": {
+        "properties": {
+          "door_id": {
+            "type": "string"
+          },
+          "event_id": {
+            "type": "string"
+          },
+          "person_id": {
+            "type": "string"
+          },
+          "result": {
+            "enum": [
+              "granted",
+              "denied",
+              "tailgating",
+              "forced"
+            ],
+            "type": "string"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "person_id",
+          "door_id",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "Error": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
+      "EventListResponse": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/AccessEvent"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "apiKey": {
+        "in": "header",
+        "name": "X-API-Key",
+        "type": "apiKey"
+      },
+      "bearerAuth": {
+        "bearerFormat": "JWT",
+
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "email": "api-support@yosai.com"
+    },
+    "description": "Physical security intelligence and access control API.\n\n# Authentication\nUse Bearer token (JWT) or API key authentication.\n\n# Versioning\nAPI version is included in the URL path (e.g., /v2/events).\n",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+
+    "termsOfService": "https://yosai.com/terms",
+    "title": "Yōsai Intel Dashboard API",
+    "version": "2.0.0"
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/events": {
+      "get": {
+        "operationId": "listAccessEvents",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventListResponse"
+                }
+              }
+            },
+            "description": "Successful response"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "summary": "List access events",
+        "tags": [
+          "Events"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "Production",
+      "url": "https://api.yosai.com/v2"
+    },
+    {
+
+      "description": "Staging",
+      "url": "https://staging-api.yosai.com/v2"
+    },
+    {
+      "description": "Development",
+      "url": "http://localhost:8080/v2"
+    }
+  ],
+  "tags": [
+    {
+      "description": "Access control events",
+      "name": "Events"
+    },
+    {
+      "description": "Analytics and reporting",
+      "name": "Analytics"
+    }
+  ]
 }

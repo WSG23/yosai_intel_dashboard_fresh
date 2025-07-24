@@ -23,7 +23,7 @@ if "services" not in sys.modules:
     sys.modules["services"] = services_stub
 
 # Optional heavy dependencies used by a subset of tests
-_optional_packages = {"hvac", "cryptography"}
+_optional_packages = {"hvac", "cryptography", "boto3", "confluent_kafka"}
 _missing_optional = [
     pkg for pkg in _optional_packages if importlib.util.find_spec(pkg) is None
 ]
@@ -54,6 +54,12 @@ if "cryptography" not in sys.modules and "cryptography" in _missing_optional:
     crypto_stub.fernet = fernet_stub
     sys.modules["cryptography"] = crypto_stub
     sys.modules["cryptography.fernet"] = fernet_stub
+
+if "boto3" not in sys.modules and "boto3" in _missing_optional:
+    sys.modules["boto3"] = types.ModuleType("boto3")
+
+if "confluent_kafka" not in sys.modules and "confluent_kafka" in _missing_optional:
+    sys.modules["confluent_kafka"] = types.ModuleType("confluent_kafka")
 
 
 def pytest_ignore_collect(path, config):

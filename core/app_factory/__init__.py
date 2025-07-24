@@ -25,7 +25,7 @@ def create_app(mode=None, **kwargs):
             dcc.Location(id="url", refresh=False),
             create_navbar_layout(),
             html.Div(id="page-content", className="main-content p-4"),
-            dcc.Store(id="global-store", data={}),
+            html.Div(id="global-store"),
         ]
     )
 

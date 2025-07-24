@@ -1,6 +1,16 @@
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+jest.mock('react-router-dom', () => ({
+  Link: ({ children, ...props }: any) => <a {...props}>{children}</a>,
+  useLocation: () => ({ pathname: '/' }),
+  useNavigate: () => jest.fn(),
+  MemoryRouter: ({ children }: any) => <div>{children}</div>,
+}), { virtual: true });
 import Navbar from './Navbar';
+
+const MemoryRouter: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div>{children}</div>
+);
 
 test('shows brand text and toggles menu', () => {
   render(

@@ -9,6 +9,7 @@ import {
   Settings
 } from './pages';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
 import "./index.css";
 const rootEl = document.getElementById('root');
 if (rootEl) {
@@ -25,6 +26,7 @@ if (rootEl) {
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </BrowserRouter>
+
     </React.StrictMode>
   );
 }
@@ -34,7 +36,9 @@ if (rtEl) {
   const rtRoot = ReactDOM.createRoot(rtEl as HTMLElement);
   rtRoot.render(
     <React.StrictMode>
-      <RealTimeAnalyticsPage />
+      <ZustandProvider>
+        <RealTimeAnalyticsPage />
+      </ZustandProvider>
     </React.StrictMode>
   );
 }

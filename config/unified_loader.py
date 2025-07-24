@@ -9,6 +9,7 @@ from typing import Optional, Dict, Any
 from google.protobuf import json_format
 
 from .base_loader import BaseConfigLoader
+from .environment_processor import EnvironmentProcessor
 from .generated.protobuf.config.schema import config_pb2
 
 
@@ -34,6 +35,8 @@ class UnifiedLoader(BaseConfigLoader):
         cfg_dict = self._read_source(path)
         message = config_pb2.YosaiConfig()
         json_format.ParseDict(cfg_dict, message, ignore_unknown_fields=True)
+        processor = EnvironmentProcessor()
+        processor.apply(message)
         return message
 
 

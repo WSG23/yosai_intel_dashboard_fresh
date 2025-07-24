@@ -12,6 +12,7 @@ import { Input } from '../shared/Input';
 import { Select } from '../shared/Select';
 import { Checkbox } from '../shared/Checkbox';
 import { Badge } from '../shared/Badge';
+import Spinner from '../shared/Spinner';
 
 interface DeviceMapping {
   deviceId: string;
@@ -148,7 +149,7 @@ export const DeviceMappingModal: React.FC<Props> = ({
 
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <Spinner sizeClass="h-12 w-12" className="text-blue-600" />
               </div>
             ) : (
               <div className="overflow-x-auto">
