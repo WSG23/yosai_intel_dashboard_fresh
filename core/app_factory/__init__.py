@@ -2,11 +2,12 @@
 """Fresh, minimal app factory."""
 
 import dash
-from dash import html, dcc
 import dash_bootstrap_components as dbc
+from dash import dcc, html
 
 # Import Path for building robust file paths
 from components.ui.navbar import create_navbar_layout
+from core.error_handlers import register_error_handlers
 
 
 def create_app(mode=None, **kwargs):
@@ -17,6 +18,7 @@ def create_app(mode=None, **kwargs):
         external_stylesheets=[dbc.themes.BOOTSTRAP],
     )
 
+    register_error_handlers(app.server)
     # Simple working layout
     app.layout = html.Div(
         [

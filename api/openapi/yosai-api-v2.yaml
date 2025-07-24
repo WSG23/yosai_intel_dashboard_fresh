@@ -46,6 +46,8 @@ paths:
                 $ref: '#/components/schemas/EventListResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
 components:
   securitySchemes:
@@ -96,6 +98,12 @@ components:
   responses:
     BadRequest:
       description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
       content:
         application/json:
           schema:

@@ -1,9 +1,9 @@
 import json
 import logging
 
-from flask import Blueprint, Response, jsonify, request
+from flask import Blueprint, Response, abort, jsonify, request
 
-from core.cache_manager import InMemoryCacheManager, CacheConfig
+from core.cache_manager import CacheConfig, InMemoryCacheManager
 from services.cached_analytics import CachedAnalyticsService
 from services.security import require_permission
 
@@ -22,6 +22,7 @@ _cached_service = CachedAnalyticsService(_cache_manager)
 async def init_cache_manager() -> None:
     """Start the cache manager on application startup."""
     await _cache_manager.start()
+
 
 MOCK_DATA = {
     "status": "success",
@@ -87,7 +88,7 @@ def get_chart_data(chart_type):
         return jsonify(
             {"type": "timeline", "data": data.get("hourly_distribution", {})}
         )
-    return jsonify({"error": "Unknown chart type"}), 400
+    abort(400, description="Unknown chart type")
 
 
 @export_bp.route("/analytics/json", methods=["GET"])
@@ -162,5 +163,5 @@ def get_analytics_by_source(source_type="all"):
         data = _cached_service.get_analytics_summary_sync(facility, date_range)
         return jsonify(data)
     except Exception as e:
-        logger.error(f"Analytics error: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logger.error("Analytics error: %s", e)
+        abort(500, description=str(e))
