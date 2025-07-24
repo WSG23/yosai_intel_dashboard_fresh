@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from core.container import container as _global_container
 from core.protocols import ServiceContainer, UnicodeProcessorProtocol, get_unicode_processor
-from security.unicode_security_processor import sanitize_unicode_input
+from core.unicode import sanitize_unicode_input
 
 
 class UIComponent:
