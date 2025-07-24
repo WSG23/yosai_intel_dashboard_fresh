@@ -38,6 +38,7 @@ class VaultClient:
         key = f"{path}#{field}" if field else path
         if key in self._cache:
             return self._cache[key]
+        self.log.info("read secret %s", key)
         data = self._read_secret(path)
         value = data.get(field) if field else data
         self._cache[key] = value
