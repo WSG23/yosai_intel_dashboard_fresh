@@ -1,6 +1,6 @@
 import importlib
-import pathlib
 import os
+import pathlib
 import sys
 import types
 

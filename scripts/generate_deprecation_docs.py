@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+
 import yaml
 
 YAML_FILE = Path('deprecation.yml')

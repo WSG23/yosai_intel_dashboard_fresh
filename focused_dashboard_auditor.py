@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 from tailored_callback_auditor import YourSystemCallbackAuditor
 

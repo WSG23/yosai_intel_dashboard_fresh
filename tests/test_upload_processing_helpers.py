@@ -1,12 +1,14 @@
 import pandas as pd
-from tests.utils.builders import DataFrameBuilder
+
+from core.security_validator import SecurityValidator
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.data_processing.processor import Processor
-from core.security_validator import SecurityValidator
+from tests.utils.builders import DataFrameBuilder
 
 
 def _make_processor():
     from flask import Flask
+
     from core.cache import cache
 
     cache.init_app(Flask(__name__))

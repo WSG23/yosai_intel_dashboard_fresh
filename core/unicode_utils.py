@@ -7,8 +7,8 @@ from typing import Any
 
 from .unicode import (
     UnicodeNormalizationError,
-    normalize_unicode_safely,
     detect_surrogate_pairs,
+    normalize_unicode_safely,
     sanitize_for_utf8,
 )
 

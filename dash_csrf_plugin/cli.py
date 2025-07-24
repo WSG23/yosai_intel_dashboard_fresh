@@ -7,6 +7,7 @@ import sys
 from typing import Any, Dict
 
 import click
+
 from config.constants import DEFAULT_APP_PORT
 
 from .config import CSRFConfig, CSRFMode

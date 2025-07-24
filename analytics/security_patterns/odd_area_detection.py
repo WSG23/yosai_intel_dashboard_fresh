@@ -6,10 +6,9 @@ from typing import List, Optional
 
 import pandas as pd
 
-from .types import ThreatIndicator
 from .pattern_detection import _attack_info
+from .types import ThreatIndicator
 from .utils import _door_to_area
-
 
 __all__ = ["detect_odd_area"]
 

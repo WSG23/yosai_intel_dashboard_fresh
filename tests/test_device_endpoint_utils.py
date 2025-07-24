@@ -1,5 +1,6 @@
 import sys
 import types
+
 import pandas as pd
 
 # Provide lightweight stubs required for importing device_endpoint
@@ -18,12 +19,13 @@ services_mod = sys.modules.setdefault("services", types.ModuleType("services"))
 services_mod.__path__ = [str((__file__)).rsplit("/tests/", 1)[0] + "/services"]
 
 from device_endpoint import (
-    load_stored_data,
-    determine_device_column,
+    build_ai_device_mappings,
     build_device_mappings,
     build_user_device_mappings,
-    build_ai_device_mappings,
+    determine_device_column,
+    load_stored_data,
 )
+
 
 class DummyUploadService:
     def __init__(self, df_map):

@@ -2,8 +2,8 @@ import importlib.util
 import os
 import pathlib
 import sys
-import types
 import time
+import types
 from unittest.mock import AsyncMock
 
 import httpx

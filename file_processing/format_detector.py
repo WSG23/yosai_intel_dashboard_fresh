@@ -1,15 +1,15 @@
 from __future__ import annotations
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 from datetime import datetime
-from typing import Iterable, List, Optional, Tuple, Dict
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import pandas as pd
 
-from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
 from core.container import get_unicode_processor
 from core.protocols import UnicodeProcessorProtocol
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 
 class UnsupportedFormatError(Exception):

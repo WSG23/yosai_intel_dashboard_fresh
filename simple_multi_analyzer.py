@@ -4,12 +4,12 @@ Simplified Multi-Language Analyzer - Robust Version
 Focuses on essential analysis without complex dependencies
 """
 
+import json
 import os
 import re
-import json
-from pathlib import Path
-from collections import defaultdict, Counter
+from collections import Counter, defaultdict
 from datetime import datetime
+from pathlib import Path
 
 
 class SimpleMultiLanguageAnalyzer:
@@ -578,7 +578,7 @@ class SimpleMultiLanguageAnalyzer:
 
 def main():
     import sys
-    
+
     # Get project path
     project_path = sys.argv[1] if len(sys.argv) > 1 else '.'
     

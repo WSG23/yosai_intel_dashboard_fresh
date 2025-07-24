@@ -4,6 +4,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def check_and_restore_venv():
     """Check venv status and restore if needed."""
     project_root = Path.cwd()

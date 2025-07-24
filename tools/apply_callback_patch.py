@@ -12,7 +12,7 @@ sys.path.insert(0, str(project_root))
 # Apply the fix globally when this module is imported
 try:
     from analytics_core.callbacks.unified_callback_manager import CallbackManager
-    
+
     # Add register_handler as an alias to handle_register if it doesn't exist
     if hasattr(CallbackManager, 'handle_register') and not hasattr(CallbackManager, 'register_handler'):
         CallbackManager.register_handler = CallbackManager.handle_register

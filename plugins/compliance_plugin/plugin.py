@@ -6,13 +6,14 @@ Main Compliance Plugin Class - Extracted from __init__.py
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from core.plugins.base import BasePlugin
+
+from .api import ComplianceAPI
 from .config import ComplianceConfig
 from .database import ComplianceDatabase
-from .api import ComplianceAPI
 from .middleware import ComplianceMiddleware
 from .services import ComplianceServices
 

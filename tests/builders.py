@@ -1,27 +1,26 @@
 from __future__ import annotations
 
 import os
-
 from typing import Any, Dict
 
 import pandas as pd
 
 from config.complete_service_registration import register_all_services
-from core.service_container import ServiceContainer
 from core.protocols import (
-    UnicodeProcessorProtocol,
     ConfigurationProtocol,
+    UnicodeProcessorProtocol,
 )
+from core.service_container import ServiceContainer
 from services.upload.protocols import (
-    UploadStorageProtocol,
     FileProcessorProtocol,
+    UploadStorageProtocol,
 )
-from tests.test_doubles import InMemoryUploadStore
 from tests.fakes import (
     FakeConfigurationService,
     FakeFileProcessor,
     FakeUnicodeProcessor,
 )
+from tests.test_doubles import InMemoryUploadStore
 
 
 class TestContainerBuilder:

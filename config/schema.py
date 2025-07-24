@@ -8,6 +8,8 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, model_validator
 
 from .app_config import UploadConfig
+from .base import Config as DataclassConfig
+from .base import require_env_var
 from .cache_config import CacheConfig
 from .constants import (
     DEFAULT_APP_HOST,
@@ -18,7 +20,6 @@ from .constants import (
     DEFAULT_DB_PORT,
 )
 from .dynamic_config import dynamic_config
-from .base import require_env_var, Config as DataclassConfig
 
 
 class AppSettings(BaseModel):

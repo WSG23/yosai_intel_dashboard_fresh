@@ -27,8 +27,9 @@ from typing import Any, Iterable, List, Mapping, Sequence, cast
 import psycopg2
 from psycopg2.extensions import connection, cursor
 from psycopg2.extras import DictCursor, execute_batch
-from database.secure_exec import execute_query, execute_command
 from tqdm import tqdm
+
+from database.secure_exec import execute_command, execute_query
 
 CHUNK_SIZE = 10_000
 CHECKPOINT_TABLE = "migration_checkpoint"

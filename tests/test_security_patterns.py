@@ -2,7 +2,6 @@ import pandas as pd
 
 from analytics.security_patterns import SecurityPatternsAnalyzer, prepare_security_data
 from analytics.security_patterns.pattern_detection import detect_critical_door_risks
-
 from database.connection import create_database_connection
 
 

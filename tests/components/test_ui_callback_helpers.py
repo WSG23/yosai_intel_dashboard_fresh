@@ -1,8 +1,8 @@
 from typing import Any, Callable, Dict, List, Tuple, cast
-
 from unittest import mock
-import pytest
+
 import dash
+import pytest
 
 from components.column_verification import (
     register_callbacks as register_column_callbacks,
@@ -10,7 +10,9 @@ from components.column_verification import (
 from components.column_verification import (
     toggle_custom_field as toggle_custom_field_untyped,
 )
-from components.device_verification import mark_device_as_edited as mark_device_as_edited_untyped
+from components.device_verification import (
+    mark_device_as_edited as mark_device_as_edited_untyped,
+)
 from components.simple_device_mapping import (
     apply_ai_device_suggestions as apply_ai_device_suggestions_untyped,
 )

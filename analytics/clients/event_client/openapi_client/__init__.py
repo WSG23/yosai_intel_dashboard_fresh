@@ -37,21 +37,25 @@ __all__ = [
 
 # import apis into sdk package
 from openapi_client.api.default_api import DefaultApi as DefaultApi
+from openapi_client.api_client import ApiClient as ApiClient
 
 # import ApiClient
 from openapi_client.api_response import ApiResponse as ApiResponse
-from openapi_client.api_client import ApiClient as ApiClient
 from openapi_client.configuration import Configuration as Configuration
-from openapi_client.exceptions import OpenApiException as OpenApiException
-from openapi_client.exceptions import ApiTypeError as ApiTypeError
-from openapi_client.exceptions import ApiValueError as ApiValueError
-from openapi_client.exceptions import ApiKeyError as ApiKeyError
 from openapi_client.exceptions import ApiAttributeError as ApiAttributeError
 from openapi_client.exceptions import ApiException as ApiException
+from openapi_client.exceptions import ApiKeyError as ApiKeyError
+from openapi_client.exceptions import ApiTypeError as ApiTypeError
+from openapi_client.exceptions import ApiValueError as ApiValueError
+from openapi_client.exceptions import OpenApiException as OpenApiException
 
 # import models into sdk package
 from openapi_client.models.access_event import AccessEvent as AccessEvent
 from openapi_client.models.error_response import ErrorResponse as ErrorResponse
 from openapi_client.models.event_response import EventResponse as EventResponse
-from openapi_client.models.v1_events_batch_post200_response import V1EventsBatchPost200Response as V1EventsBatchPost200Response
-from openapi_client.models.v1_events_batch_post_request import V1EventsBatchPostRequest as V1EventsBatchPostRequest
+from openapi_client.models.v1_events_batch_post200_response import (
+    V1EventsBatchPost200Response as V1EventsBatchPost200Response,
+)
+from openapi_client.models.v1_events_batch_post_request import (
+    V1EventsBatchPostRequest as V1EventsBatchPostRequest,
+)

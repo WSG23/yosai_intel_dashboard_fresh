@@ -7,9 +7,9 @@ from collections import Counter
 from datetime import datetime
 from typing import Any, Dict, Iterable, Tuple
 
-from config.constants import DEFAULT_CHUNK_SIZE
-
 import pandas as pd
+
+from config.constants import DEFAULT_CHUNK_SIZE
 
 logger = logging.getLogger(__name__)
 

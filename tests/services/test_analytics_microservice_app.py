@@ -1,8 +1,8 @@
 import importlib.util
 import pathlib
 import sys
-import types
 import time
+import types
 
 import pytest
 from fastapi.testclient import TestClient

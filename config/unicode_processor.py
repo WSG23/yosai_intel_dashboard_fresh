@@ -2,14 +2,14 @@ from __future__ import annotations
 
 """Unicode handling helpers built on :class:`analytics_core.utils.unicode_processor.UnicodeHelper`."""
 
-from pathlib import Path
-from typing import Any, Callable, Iterable
 import logging
 import unicodedata
+from pathlib import Path
+from typing import Any, Callable, Iterable
 
+from analytics_core.utils.unicode_processor import UnicodeHelper
 from core.container import get_unicode_processor
 from core.protocols import UnicodeProcessorProtocol
-from analytics_core.utils.unicode_processor import UnicodeHelper
 from core.unicode import contains_surrogates
 from security_callback_controller import SecurityEvent, emit_security_event
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 """Unified callback manager used throughout analytics core."""
 
 from typing import Any, List
+
 from core.callback_manager import CallbackManager as _BaseCallbackManager
 
 

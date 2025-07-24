@@ -2,6 +2,7 @@ import importlib.util
 import pathlib
 import sys
 import types
+
 import pytest
 
 services_path = pathlib.Path(__file__).resolve().parents[2] / "services"

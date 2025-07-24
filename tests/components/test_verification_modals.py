@@ -1,14 +1,18 @@
-import pytest
 import dash_bootstrap_components as dbc
+import pytest
 from dash import dcc, html
 
 pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 
 from typing import Any, Callable, List, cast
 
-from components.column_verification import create_column_verification_modal as create_column_verification_modal_untyped
+from components.column_verification import (
+    create_column_verification_modal as create_column_verification_modal_untyped,
+)
 from components.device_verification import (
     create_device_verification_modal as create_device_verification_modal_untyped,
+)
+from components.device_verification import (
     toggle_device_verification_modal as toggle_device_verification_modal_untyped,
 )
 

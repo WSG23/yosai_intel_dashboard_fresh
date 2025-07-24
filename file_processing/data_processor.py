@@ -1,5 +1,4 @@
 from __future__ import annotations
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -7,8 +6,10 @@ from typing import Dict, Optional
 
 import pandas as pd
 
-from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+
 from .format_detector import FormatDetector, UnsupportedFormatError
 from .readers import ArchiveReader, CSVReader, ExcelReader, FWFReader, JSONReader
 

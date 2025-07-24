@@ -1,15 +1,15 @@
 import inspect
 
+from services.data_processing.async_file_processor import AsyncFileProcessor
 from services.upload.core.processor import UploadProcessingService
 from services.upload.core.validator import ClientSideValidator
-from services.data_processing.async_file_processor import AsyncFileProcessor
-from utils.upload_store import UploadedDataStore
 from services.upload.protocols import (
-    UploadProcessingServiceProtocol,
-    UploadValidatorProtocol,
     FileProcessorProtocol,
+    UploadProcessingServiceProtocol,
     UploadStorageProtocol,
+    UploadValidatorProtocol,
 )
+from utils.upload_store import UploadedDataStore
 
 
 def test_processing_service_implements_protocol() -> None:

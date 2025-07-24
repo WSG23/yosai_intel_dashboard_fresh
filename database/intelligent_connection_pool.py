@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import Callable, Dict, List, Tuple, Any
+from typing import Any, Callable, Dict, List, Tuple
 
 from database.types import DatabaseConnection
 

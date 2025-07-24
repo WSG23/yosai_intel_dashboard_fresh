@@ -2,12 +2,12 @@
 """Measure execution time of get_unique_patterns_analysis."""
 
 import logging
-import sys
 import random
+import sys
 import uuid
+from datetime import datetime, timedelta
 from pathlib import Path
 from time import perf_counter
-from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd

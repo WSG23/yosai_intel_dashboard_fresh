@@ -4,17 +4,17 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Protocol
-from dataclasses import dataclass
 
-from core.protocols import DatabaseProtocol
 from core.audit_logger import ComplianceAuditLogger
+from core.protocols import DatabaseProtocol
+from database.secure_exec import execute_query
 from services.compliance.consent_service import ConsentService
-from services.compliance.dsar_service import DSARService
 from services.compliance.data_retention_service import DataRetentionService
 from services.compliance.dpia_service import DPIAService
-from database.secure_exec import execute_query
+from services.compliance.dsar_service import DSARService
 
 logger = logging.getLogger(__name__)
 

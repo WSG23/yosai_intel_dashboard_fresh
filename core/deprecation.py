@@ -2,8 +2,9 @@ import functools
 import warnings
 from typing import Callable
 
-from .performance import MetricType, get_performance_monitor
 from monitoring.prometheus.deprecation import record_deprecated_call
+
+from .performance import MetricType, get_performance_monitor
 
 
 def deprecated(reason: str | None = None) -> Callable[[Callable], Callable]:

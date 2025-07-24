@@ -3,10 +3,9 @@
 from typing import Optional, Protocol
 
 import pandas as pd
-
-from config.database_manager import DatabaseManager, MockConnection
 from opentelemetry import trace
 
+from config.database_manager import DatabaseManager, MockConnection
 from database.metrics import queries_total, query_errors_total
 
 

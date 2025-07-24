@@ -1,12 +1,13 @@
-from typing import Any, List, Tuple
-import pandas as pd
-import dash_bootstrap_components as dbc
-from dash import dash_table, html, Input, Output, State
-from dash.exceptions import PreventUpdate
 import base64
 import io
 import json
 import logging
+from typing import Any, List, Tuple
+
+import dash_bootstrap_components as dbc
+import pandas as pd
+from dash import Input, Output, State, dash_table, html
+from dash.exceptions import PreventUpdate
 
 logger = logging.getLogger(__name__)
 

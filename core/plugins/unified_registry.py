@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Any, List, Optional
 
 from dash import Dash
 
-from config import ConfigManager
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
-from core.service_container import ServiceContainer
+from config import ConfigManager
 from core.plugins.manager import ThreadSafePluginManager
+from core.service_container import ServiceContainer
 from services.data_processing.core.protocols import PluginProtocol
 from services.registry import registry as service_registry
 

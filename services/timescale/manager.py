@@ -1,5 +1,6 @@
-import os
 import logging
+import os
+
 import asyncpg
 
 logger = logging.getLogger(__name__)

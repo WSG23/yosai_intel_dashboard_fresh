@@ -1,11 +1,11 @@
 """Anomaly detection subpackage."""
 
 from .analyzer import (
-    AnomalyDetector,
     AnomalyConfig,
+    AnomalyDetector,
     AnomalyResult,
-    SecurityCallbackController,
     MemoryManager,
+    SecurityCallbackController,
     create_anomaly_detector,
 )
 from .data_prep import prepare_anomaly_data

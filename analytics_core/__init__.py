@@ -21,10 +21,10 @@ def create_manager():
     # Local imports to prevent circular dependencies
     from .centralized_analytics_manager import CentralizedAnalyticsManager
     from .services import (
-        CoreAnalyticsService,
         AIAnalyticsService,
-        PerformanceAnalyticsService,
+        CoreAnalyticsService,
         DataProcessingService,
+        PerformanceAnalyticsService,
     )
 
     return CentralizedAnalyticsManager(

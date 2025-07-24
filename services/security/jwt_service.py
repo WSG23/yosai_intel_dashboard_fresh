@@ -1,5 +1,6 @@
 import os
 import time
+
 from jose import jwt
 
 SERVICE_JWT_SECRET = os.getenv("JWT_SECRET")

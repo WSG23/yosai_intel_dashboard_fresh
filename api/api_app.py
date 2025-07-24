@@ -1,4 +1,5 @@
 from api.adapter import create_api_app
+
 from config.constants import API_PORT
 
 app = create_api_app()

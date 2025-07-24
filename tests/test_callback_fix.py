@@ -1,7 +1,8 @@
 import pytest
+
 from core.app_factory import create_app
 from core.callback_registry import _callback_registry
-from core.unicode import safe_encode_text, safe_decode_bytes
+from core.unicode import safe_decode_bytes, safe_encode_text
 
 
 def test_create_app_registers_callbacks(monkeypatch):

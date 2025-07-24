@@ -3,8 +3,8 @@ import time
 from pathlib import Path
 from typing import Callable, Optional, Sequence
 
-from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
 from core.unicode import UnicodeProcessor
 from file_conversion.storage_manager import StorageManager
 from services.data_processing.unified_file_validator import UnifiedFileValidator

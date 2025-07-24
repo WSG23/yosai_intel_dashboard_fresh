@@ -1,6 +1,6 @@
+import pathlib
 import sys
 import types
-import pathlib
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2]
 

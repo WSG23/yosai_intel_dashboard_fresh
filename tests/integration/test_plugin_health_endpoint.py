@@ -1,7 +1,8 @@
+import enum
+import importlib.util
 import sys
 import types
-import importlib.util
-import enum
+
 from flask.json.provider import DefaultJSONProvider
 
 # Minimal services stubs
@@ -31,9 +32,10 @@ sys.modules["services.data_processing.core.protocols"] = protocols_mod
 
 import pytest
 from flask import Flask
-from core.service_container import ServiceContainer
-from core.plugins.manager import PluginManager
+
 from config import create_config_manager
+from core.plugins.manager import PluginManager
+from core.service_container import ServiceContainer
 from services.data_processing.core.protocols import PluginMetadata
 
 

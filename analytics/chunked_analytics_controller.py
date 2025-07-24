@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterator, List
 import numpy as np
 import pandas as pd
 
-from config.constants import AnalysisThresholds, AnalyticsConstants, DEFAULT_CHUNK_SIZE
+from config.constants import DEFAULT_CHUNK_SIZE, AnalysisThresholds, AnalyticsConstants
 
 logger = logging.getLogger(__name__)
 

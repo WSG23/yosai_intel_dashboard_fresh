@@ -5,13 +5,13 @@ Handles mixed JS/TS/Python projects with proper exclusions
 """
 
 import ast
+import json
 import os
 import re
-from pathlib import Path
-from typing import Dict, List, Set, Tuple, Optional
-from collections import defaultdict, Counter
-import json
 import time
+from collections import Counter, defaultdict
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple
 
 
 class ImprovedCodeAnalyzer:
@@ -793,8 +793,8 @@ class ImprovedCodeAnalyzer:
 
 def main():
     """Run the improved code analyzer"""
-    import sys
     import argparse
+    import sys
     
     parser = argparse.ArgumentParser(description='Analyze Python code in mixed-language projects')
     parser.add_argument('project_path', help='Path to the project directory')

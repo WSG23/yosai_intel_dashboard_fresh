@@ -53,7 +53,7 @@ def add_missing_analytics_methods():
             def clean_uploaded_dataframe(self, df):
                 """Clean and process uploaded dataframe"""
                 import pandas as pd
-                
+
                 # Basic cleaning - remove null rows, standardize column names
                 cleaned_df = df.dropna(how='all').copy()
                 

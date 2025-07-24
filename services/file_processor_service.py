@@ -11,17 +11,17 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from services.configuration_service import ConfigurationServiceProtocol
-from .stream_processor import StreamProcessor
-from core.unicode import process_large_csv_content
 from analytics_core.utils.unicode_processor import UnicodeHelper
+from core.unicode import process_large_csv_content
+from services.configuration_service import ConfigurationServiceProtocol
 from services.data_processing.unified_file_validator import (
     safe_decode_with_unicode_handling,
 )
-from utils.protocols import SafeDecoderProtocol
 from utils.memory_utils import memory_safe
-
+from utils.protocols import SafeDecoderProtocol
 from yosai_framework.service import BaseService
+
+from .stream_processor import StreamProcessor
 
 logger = logging.getLogger(__name__)
 

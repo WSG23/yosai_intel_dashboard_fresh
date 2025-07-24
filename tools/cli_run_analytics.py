@@ -3,10 +3,11 @@
 Run actual analytics on Enhanced Security Demo data
 """
 
+import asyncio
 import json
 import sys
-import asyncio
 from pathlib import Path
+
 from config.app_config import UploadConfig
 
 project_root = Path(__file__).parent.parent
@@ -16,9 +17,10 @@ async def run_real_analytics():
     try:
         print("=== RUNNING REAL ANALYTICS ON ACCESS CONTROL DATA ===")
         
-        from services.analytics_service import AnalyticsService
         import pandas as pd
-        
+
+        from services.analytics_service import AnalyticsService
+
         # Load the Enhanced Security Demo data
         parquet_path = Path(UploadConfig().folder) / "Enhanced_Security_Demo.csv.parquet"
         df = pd.read_parquet(parquet_path)

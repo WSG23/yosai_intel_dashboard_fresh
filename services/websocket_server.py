@@ -4,7 +4,7 @@ import logging
 import threading
 from typing import Optional, Set
 
-from websockets import serve, WebSocketServerProtocol
+from websockets import WebSocketServerProtocol, serve
 
 from core.events import EventBus
 

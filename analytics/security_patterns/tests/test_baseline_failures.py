@@ -1,8 +1,9 @@
 import pandas as pd
-from analytics.security_patterns.tests.test_additional_detectors import _prepare_df
+
 from analytics.security_patterns.odd_door_detection import detect_odd_door_usage
 from analytics.security_patterns.odd_time_detection import detect_odd_time
 from analytics.security_patterns.pattern_drift_detection import detect_pattern_drift
+from analytics.security_patterns.tests.test_additional_detectors import _prepare_df
 
 
 class FailingBaselineDB:

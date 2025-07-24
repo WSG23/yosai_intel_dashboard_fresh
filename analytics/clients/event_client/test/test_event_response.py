@@ -16,6 +16,7 @@ import unittest
 
 from openapi_client.models.event_response import EventResponse
 
+
 class TestEventResponse(unittest.TestCase):
     """EventResponse unit test stubs"""
 

@@ -1,13 +1,15 @@
 from __future__ import annotations
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 import json
+
 import pandas as pd
 
-from .base import BaseReader
-from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
 from core.protocols import UnicodeProcessorProtocol
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+
+from .base import BaseReader
 
 
 class JSONReader(BaseReader):
@@ -45,4 +47,3 @@ class JSONReader(BaseReader):
 
 
 from .csv_reader import CSVReader
-

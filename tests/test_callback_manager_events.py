@@ -1,5 +1,5 @@
-from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
 
 
 def test_priority_and_async_trigger():

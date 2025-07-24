@@ -1,18 +1,19 @@
 # tests/compliance/test_compliance_framework.py
 """Comprehensive test suite for GDPR/APPI compliance framework"""
 
-import pytest
 import json
 from datetime import datetime, timedelta, timezone
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 from uuid import uuid4
 
-from services.compliance.consent_service import ConsentService
-from services.compliance.dsar_service import DSARService, DSARRequestType, DSARStatus
-from services.compliance.data_retention_service import DataRetentionService
-from services.compliance.dpia_service import DPIAService, DPIATrigger, RiskLevel
+import pytest
+
 from core.audit_logger import ComplianceAuditLogger
 from models.compliance import ConsentType, DataSensitivityLevel
+from services.compliance.consent_service import ConsentService
+from services.compliance.data_retention_service import DataRetentionService
+from services.compliance.dpia_service import DPIAService, DPIATrigger, RiskLevel
+from services.compliance.dsar_service import DSARRequestType, DSARService, DSARStatus
 
 
 class TestConsentService:

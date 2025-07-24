@@ -1,12 +1,10 @@
-import pandas as pd
-from typing import Any, Dict, List, Tuple
-
+import sys
+import types
 from importlib import util as import_util
 from pathlib import Path
+from typing import Any, Dict, List, Protocol, Tuple, runtime_checkable
 
-from typing import Protocol, runtime_checkable
-import types
-import sys
+import pandas as pd
 
 
 @runtime_checkable

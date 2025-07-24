@@ -1,5 +1,6 @@
 import types
-from flask import Flask, Blueprint
+
+from flask import Blueprint, Flask
 
 from core.error_handlers import register_error_handlers
 from core.exceptions import ValidationError

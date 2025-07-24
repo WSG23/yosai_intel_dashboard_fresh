@@ -1,5 +1,6 @@
 import pytest
 from dash import html
+
 import components as comp
 
 pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")

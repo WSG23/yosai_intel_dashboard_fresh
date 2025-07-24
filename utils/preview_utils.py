@@ -5,9 +5,9 @@ from typing import Any, Dict, List
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
+from core.config import get_max_display_rows
 from core.protocols import ConfigurationProtocol
 from core.unicode import sanitize_for_utf8
-from core.config import get_max_display_rows
 
 logger = logging.getLogger(__name__)
 

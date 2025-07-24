@@ -5,11 +5,15 @@ from typing import Any, Optional, Tuple
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
 from config.constants import DEFAULT_CHUNK_SIZE
+from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
-from core.unicode import process_large_csv_content, sanitize_for_utf8, sanitize_dataframe
+from core.unicode import (
+    process_large_csv_content,
+    sanitize_dataframe,
+    sanitize_for_utf8,
+)
 from services.data_processing.core.exceptions import (
     FileProcessingError,
     FileValidationError,

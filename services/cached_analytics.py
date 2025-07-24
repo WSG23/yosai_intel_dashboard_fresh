@@ -2,8 +2,8 @@ from __future__ import annotations
 
 """Analytics service with caching using :class:`CacheManager`."""
 
-from typing import Any, Dict
 import asyncio
+from typing import Any, Dict
 
 from core.cache_manager import CacheManager
 from services.analytics_summary import generate_sample_analytics

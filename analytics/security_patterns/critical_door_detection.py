@@ -5,12 +5,12 @@ from datetime import datetime
 from typing import List, Optional
 
 import pandas as pd
+
 from utils.sklearn_compat import optional_import
 
-from .types import ThreatIndicator
-from .pattern_detection import _attack_info
 from .column_validation import ensure_columns
-
+from .pattern_detection import _attack_info
+from .types import ThreatIndicator
 
 IsolationForest = optional_import("sklearn.ensemble.IsolationForest")
 

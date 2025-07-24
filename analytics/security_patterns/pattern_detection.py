@@ -9,10 +9,10 @@ from typing import Dict, List, Optional
 import pandas as pd
 import yaml
 
-from .types import ThreatIndicator
 from utils.sklearn_compat import optional_import
-from .column_validation import ensure_columns
 
+from .column_validation import ensure_columns
+from .types import ThreatIndicator
 
 LogisticRegression = optional_import("sklearn.linear_model.LogisticRegression")
 

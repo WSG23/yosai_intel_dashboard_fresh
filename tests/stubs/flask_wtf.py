@@ -1,5 +1,6 @@
+from flask import abort, current_app, request, session
 from itsdangerous import URLSafeTimedSerializer
-from flask import current_app, session, request, abort
+
 
 class CSRFProtect:
     def __init__(self, app=None):

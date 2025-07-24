@@ -1,5 +1,6 @@
-from dataclasses import dataclass, field
 import os
+from dataclasses import dataclass, field
+
 
 @dataclass
 class UploadConfig:

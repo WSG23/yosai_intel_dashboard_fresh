@@ -13,10 +13,12 @@ if "flask_cors" not in sys.modules:
 if "services" not in sys.modules:
     sys.modules["services"] = importlib.import_module("tests.stubs.services")
 
-from tests.stubs.flask_wtf import CSRFProtect, generate_csrf
-from flask import Flask, jsonify
 import werkzeug
+from flask import Flask, jsonify
+
 from core.service_container import ServiceContainer
+from tests.stubs.flask_wtf import CSRFProtect, generate_csrf
+
 
 class DummyUploadService:
     async def process_uploaded_files(self, contents, filenames):

@@ -1,7 +1,8 @@
-from tests.fake_configuration import FakeConfiguration
 import importlib.util
 import sys
 import types
+
+from tests.fake_configuration import FakeConfiguration
 
 config_stub = types.SimpleNamespace(ConfigurationServiceProtocol=object)
 sys.modules.setdefault("services.configuration_service", config_stub)

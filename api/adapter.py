@@ -6,15 +6,14 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 
-from yosai_framework.service import BaseService
-
 from core.rbac import RBACService, create_rbac_service
 from core.secrets_validator import validate_all_secrets
 from services.security import require_token
+from yosai_framework.service import BaseService
 
 csrf = CSRFProtect()
 
-from api.analytics_endpoints import register_analytics_blueprints, init_cache_manager
+from api.analytics_endpoints import init_cache_manager, register_analytics_blueprints
 from settings_endpoint import settings_bp
 
 from config.constants import API_PORT

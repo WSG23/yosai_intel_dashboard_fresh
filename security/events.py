@@ -1,5 +1,6 @@
 """Security event utilities."""
 from typing import Any
+
 from core.callback_events import CallbackEvent
 
 SecurityEvent = CallbackEvent

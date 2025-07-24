@@ -8,15 +8,16 @@ from typing import List
 
 import pandas as pd
 
+from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
+from core.protocols import UnicodeProcessorProtocol
+
+from ..format_detector import FormatDetector
 from .base import BaseReader
 from .csv_reader import CSVReader
 from .excel_reader import ExcelReader
 from .fwf_reader import FWFReader
 from .json_reader import JSONReader
-from core.callback_events import CallbackEvent
-from analytics_core.callbacks.unified_callback_manager import CallbackManager
-from core.protocols import UnicodeProcessorProtocol
-from ..format_detector import FormatDetector
 
 
 class ArchiveReader(BaseReader):

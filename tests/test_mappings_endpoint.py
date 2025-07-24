@@ -1,12 +1,13 @@
+import importlib
+import sys
+import types
+from pathlib import Path
+
 import pandas as pd
 from flask import Flask
 
 import mappings_endpoint
 from core.service_container import ServiceContainer
-import importlib
-from pathlib import Path
-import sys
-import types
 
 # Ensure dash stubs are available for service imports
 if "dash" not in sys.modules:

@@ -5,14 +5,13 @@ import time
 from functools import wraps
 from typing import Callable
 
-from .jwt_service import generate_service_jwt, verify_service_jwt
-
 from flask import jsonify, request
 
 from security.unicode_security_validator import (
     UnicodeSecurityValidator as SecurityValidator,
 )
 
+from .jwt_service import generate_service_jwt, verify_service_jwt
 from .protocols import AuthenticationProtocol, SecurityServiceProtocol
 
 

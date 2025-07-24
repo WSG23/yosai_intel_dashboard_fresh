@@ -1,8 +1,7 @@
 import asyncio
 
-from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-
 from services.upload.async_processor import AsyncUploadProcessor
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 
 def test_async_upload_processor_csv_parquet(tmp_path, async_runner):

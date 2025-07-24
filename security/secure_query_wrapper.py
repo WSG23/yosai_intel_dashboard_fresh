@@ -6,8 +6,8 @@ import logging
 from typing import Any, Iterable, Optional
 
 from config.unicode_handler import UnicodeQueryHandler
-from database.secure_exec import execute_query, execute_command
 from core.unicode_handler import clean_unicode_surrogates
+from database.secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)
 

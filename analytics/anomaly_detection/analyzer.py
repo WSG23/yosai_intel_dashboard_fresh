@@ -8,13 +8,14 @@ from __future__ import annotations
 
 import logging
 import warnings
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Protocol, Union
-from dataclasses import dataclass
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np
 import pandas as pd
+
 from utils.sklearn_compat import optional_import
 
 # Safe imports with fallbacks

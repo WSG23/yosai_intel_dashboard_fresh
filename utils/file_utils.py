@@ -2,8 +2,8 @@ from __future__ import annotations
 
 """Helper utilities for working with files."""
 
-from security.unicode_security_validator import UnicodeSecurityValidator
 from core.unicode import safe_unicode_decode
+from security.unicode_security_validator import UnicodeSecurityValidator
 
 _validator = UnicodeSecurityValidator()
 

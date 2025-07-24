@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 from typing import Union
+
 from core.unicode import safe_decode
 
 try:  # Optional dependency

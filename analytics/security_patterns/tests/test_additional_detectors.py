@@ -23,12 +23,10 @@ from analytics.security_patterns.odd_door_detection import detect_odd_door_usage
 from analytics.security_patterns.odd_path_detection import detect_odd_path
 from analytics.security_patterns.odd_time_detection import detect_odd_time
 from analytics.security_patterns.pattern_drift_detection import detect_pattern_drift
-from analytics.security_patterns.clearance_violation_detection import detect_clearance_violations
-from analytics.security_patterns.unaccompanied_visitor_detection import detect_unaccompanied_visitors
-from analytics.security_patterns.composite_score import detect_composite_score
 from analytics.security_patterns.types import ThreatIndicator
-
-
+from analytics.security_patterns.unaccompanied_visitor_detection import (
+    detect_unaccompanied_visitors,
+)
 
 SAMPLE_ROWS = [
     {

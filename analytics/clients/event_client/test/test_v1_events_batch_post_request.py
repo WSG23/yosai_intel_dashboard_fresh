@@ -16,6 +16,7 @@ import unittest
 
 from openapi_client.models.v1_events_batch_post_request import V1EventsBatchPostRequest
 
+
 class TestV1EventsBatchPostRequest(unittest.TestCase):
     """V1EventsBatchPostRequest unit test stubs"""
 

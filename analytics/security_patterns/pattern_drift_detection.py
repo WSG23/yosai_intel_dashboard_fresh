@@ -6,12 +6,12 @@ from typing import List, Optional
 
 import numpy as np
 import pandas as pd
+
 from database.baseline_metrics import BaselineMetricsDB
 
-from .types import ThreatIndicator
-from .pattern_detection import _attack_info
 from .column_validation import ensure_columns
-
+from .pattern_detection import _attack_info
+from .types import ThreatIndicator
 
 __all__ = ["detect_pattern_drift"]
 

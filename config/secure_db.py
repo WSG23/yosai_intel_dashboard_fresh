@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from .unicode_handler import UnicodeQueryHandler
 from database.secure_exec import execute_query as _execute_query
+
+from .unicode_handler import UnicodeQueryHandler
 
 
 def execute_secure_query(conn: Any, query: str, params: Optional[tuple] = None):

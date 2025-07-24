@@ -24,6 +24,7 @@ from core.protocols import (
     StorageProtocol,
 )
 from core.security_validator import SecurityValidator
+from models.ml import ModelRegistry
 from services.analytics.calculator import Calculator
 from services.analytics.data_loader import DataLoader
 from services.analytics.protocols import DataProcessorProtocol
@@ -36,7 +37,6 @@ from services.helpers.database_initializer import initialize_database
 from services.interfaces import get_upload_data_service
 from services.summary_report_generator import SummaryReportGenerator
 from services.upload_data_service import UploadDataService
-from models.ml import ModelRegistry
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 

@@ -28,8 +28,8 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import Input, Output, State, callback_context, dash_table, dcc, html
 
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from config.constants import DEFAULT_CHUNK_SIZE
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 # Logger for this module. Configuration happens in __main__.
 logger = logging.getLogger(__name__)

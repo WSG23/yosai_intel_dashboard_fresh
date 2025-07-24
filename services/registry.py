@@ -1,12 +1,14 @@
 """Simple registry for optional services."""
 
 import logging
+import os
 from importlib import import_module
 from typing import Any, Dict, Optional
 
-import os
 import requests
+
 from tracing import propagate_context
+
 from .base_database_service import BaseDatabaseService
 
 logger = logging.getLogger(__name__)

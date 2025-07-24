@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
 from typing import Dict, List, Optional
+
+from pydantic import BaseModel, Field
 
 from .constants import (
     DEFAULT_APP_HOST,
     DEFAULT_APP_PORT,
-    DEFAULT_DB_HOST,
-    DEFAULT_DB_PORT,
     DEFAULT_CACHE_HOST,
     DEFAULT_CACHE_PORT,
+    DEFAULT_DB_HOST,
+    DEFAULT_DB_PORT,
 )
 
 

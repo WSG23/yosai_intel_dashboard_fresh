@@ -1,10 +1,11 @@
 import os
 import shutil
-import requests
+
 import pytest
-from testcontainers.redis import RedisContainer
-from testcontainers.postgres import PostgresContainer
+import requests
 from testcontainers.core.container import DockerContainer
+from testcontainers.postgres import PostgresContainer
+from testcontainers.redis import RedisContainer
 
 
 def get_total_requests(metrics: str) -> float:

@@ -2,11 +2,11 @@
 """Enhanced navbar component with logo and proper import safety."""
 
 import logging
-from typing import Any, Optional, Dict
+from typing import Any, Dict, Optional
 
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from core.callback_registry import handle_register_with_deduplication
 from components.streamlined_component import StreamlinedComponent
+from core.callback_registry import handle_register_with_deduplication
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 logger = logging.getLogger(__name__)
 

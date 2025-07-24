@@ -1,8 +1,8 @@
+import asyncio
 import importlib
 import pathlib
 import sys
 import types
-import asyncio
 
 import pytest
 from fastapi.testclient import TestClient

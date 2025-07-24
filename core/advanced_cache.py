@@ -3,8 +3,8 @@ from __future__ import annotations
 """Asynchronous cache manager with optional Redis backend."""
 
 import asyncio
-import logging
 import json
+import logging
 import time
 from functools import wraps
 from typing import Any, Awaitable, Callable, Dict, Optional

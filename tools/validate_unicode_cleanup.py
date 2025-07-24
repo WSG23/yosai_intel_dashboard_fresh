@@ -6,9 +6,9 @@ import importlib
 import importlib.util
 import pkgutil
 import sys
-from pathlib import Path
 import types
 import warnings
+from pathlib import Path
 
 # Ensure project root is importable
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -42,12 +42,10 @@ from core.unicode import (
     safe_encode_text,
     sanitize_dataframe,
 )
-from utils import (
-    clean_unicode_text as util_clean_unicode_text,
-    safe_decode_bytes as util_safe_decode_bytes,
-    safe_encode_text as util_safe_encode_text,
-    sanitize_dataframe as util_sanitize_dataframe,
-)
+from utils import clean_unicode_text as util_clean_unicode_text
+from utils import safe_decode_bytes as util_safe_decode_bytes
+from utils import safe_encode_text as util_safe_encode_text
+from utils import sanitize_dataframe as util_sanitize_dataframe
 
 
 def _import_all_modules() -> None:

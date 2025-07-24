@@ -16,6 +16,7 @@ from flask import (
     url_for,
 )
 
+
 # Localised helpers from deprecated archive modules
 def load_dataframe(path: Path) -> pd.DataFrame:
     """Load CSV/JSON/Excel into a DataFrame."""

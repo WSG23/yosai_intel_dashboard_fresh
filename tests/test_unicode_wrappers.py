@@ -19,8 +19,8 @@ from security.unicode_security_handler import (
     UnicodeSecurityHandler as UnicodeSecurityProcessor,
 )
 from security.unicode_security_validator import (
-    UnicodeSecurityValidator,
     UnicodeSecurityConfig,
+    UnicodeSecurityValidator,
 )
 from security.validation_exceptions import ValidationError
 

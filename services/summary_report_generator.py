@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Tuple
 import pandas as pd
 
 from .analytics_processor import AnalyticsProcessor
-from .summary_reporter import format_patterns_result
 from .base_database_service import BaseDatabaseService
+from .summary_reporter import format_patterns_result
 
 logger = logging.getLogger(__name__)
 

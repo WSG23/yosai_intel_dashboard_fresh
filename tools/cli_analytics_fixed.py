@@ -3,9 +3,9 @@
 Test Analytics with callback fix applied
 """
 
+import asyncio
 import json
 import sys
-import asyncio
 from pathlib import Path
 
 project_root = Path(__file__).parent.parent
@@ -24,9 +24,10 @@ async def test_analytics_with_fix():
     try:
         print("=== TESTING ANALYTICS WITH CALLBACK FIX ===")
         
-        from services.analytics_service import AnalyticsService
         import pandas as pd
-        
+
+        from services.analytics_service import AnalyticsService
+
         # Load the Enhanced Security Demo data
         parquet_path = Path("temp/uploaded_data/Enhanced_Security_Demo.csv.parquet")
         df = pd.read_parquet(parquet_path)

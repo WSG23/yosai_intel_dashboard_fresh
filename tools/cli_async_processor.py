@@ -5,12 +5,12 @@ Usage: python tools/cli_async_processor.py <file_path> [--verbose]
 """
 
 import argparse
+import asyncio
+import base64
 import json
 import logging
 import sys
 import traceback
-import base64
-import asyncio
 from pathlib import Path
 from typing import Any, Dict
 

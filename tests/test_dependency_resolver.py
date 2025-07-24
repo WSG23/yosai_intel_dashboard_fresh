@@ -1,10 +1,11 @@
-import pytest
 import sys
 
+import pytest
+
+from config import create_config_manager
 from core.plugins.dependency_resolver import PluginDependencyResolver
 from core.plugins.manager import PluginManager
 from core.service_container import ServiceContainer
-from config import create_config_manager
 from services.data_processing.core.protocols import PluginMetadata
 
 

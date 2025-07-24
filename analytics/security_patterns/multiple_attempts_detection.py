@@ -9,7 +9,6 @@ import pandas as pd
 from .pattern_detection import _attack_info
 from .types import ThreatIndicator
 
-
 __all__ = ["detect_multiple_attempts"]
 
 

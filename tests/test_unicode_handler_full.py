@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
 from core.unicode import (
     ChunkedUnicodeProcessor,
     UnicodeProcessor,

@@ -5,13 +5,15 @@ A simple Streamlit UI to test the complete pipeline visually
 """
 # mypy: ignore-errors
 
-import streamlit as st  # type: ignore
-import pandas as pd
-from services.data_processing.file_processor import FileProcessor
 import sys
 from pathlib import Path
-from config.app_config import UploadConfig
+
+import pandas as pd
 import plotly.express as px
+import streamlit as st  # type: ignore
+
+from config.app_config import UploadConfig
+from services.data_processing.file_processor import FileProcessor
 
 # Add project root to path
 project_root = Path(__file__).parent.parent

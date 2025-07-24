@@ -1,9 +1,12 @@
 import pandas as pd
 import pytest
 
-from analytics.security_patterns.tailgate_detection import detect_tailgate
-from analytics.security_patterns.multiple_attempts_detection import detect_multiple_attempts
+from analytics.security_patterns.multiple_attempts_detection import (
+    detect_multiple_attempts,
+)
 from analytics.security_patterns.pattern_detection import detect_rapid_attempts
+from analytics.security_patterns.tailgate_detection import detect_tailgate
+
 
 @pytest.mark.parametrize("func", [detect_tailgate, detect_multiple_attempts, detect_rapid_attempts])
 def test_missing_columns_return_empty(func, caplog):

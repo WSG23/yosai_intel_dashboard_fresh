@@ -5,11 +5,11 @@ Usage: python tools/cli_mapping_tester.py <file_path> [--verbose] [--suggest-onl
 """
 
 import argparse
+import asyncio
 import json
 import logging
 import sys
 import traceback
-import asyncio
 from pathlib import Path
 from typing import Any, Dict
 
@@ -69,7 +69,7 @@ async def test_mapping_service(file_path: str, verbose: bool = False, suggest_on
         logger.info("=== STEP 2: AI Column Suggestions ===")
         try:
             from services.data_enhancer import get_ai_column_suggestions
-            
+
             # Test AI suggestions for the columns
             suggestions = get_ai_column_suggestions(df)
             logger.info(f"AI suggestions generated: {len(suggestions) if suggestions else 0} suggestions")

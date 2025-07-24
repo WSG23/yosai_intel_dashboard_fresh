@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from config.constants import DEFAULT_CHUNK_SIZE, UploadLimits, FileProcessingLimits
 from config.config import get_analytics_config
+from config.constants import DEFAULT_CHUNK_SIZE, FileProcessingLimits, UploadLimits
 from config.dynamic_config import dynamic_config
 from core.protocols import ConfigurationProtocol
 

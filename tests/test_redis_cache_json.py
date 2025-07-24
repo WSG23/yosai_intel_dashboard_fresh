@@ -1,8 +1,8 @@
 import importlib
-import types
-import sys
 import json
 import pickle
+import sys
+import types
 
 
 def _setup_manager(monkeypatch, fake_redis):

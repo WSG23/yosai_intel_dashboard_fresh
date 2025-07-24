@@ -1,8 +1,9 @@
 import importlib.util
+import logging
 import pathlib
 import sys
 import types
-import logging
+
 import pytest
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"

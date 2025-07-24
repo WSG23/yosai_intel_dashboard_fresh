@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pandas import Series, DataFrame
+from pandas import DataFrame, Series
 
 # Unicode-safe string handling
 from security.unicode_security_handler import UnicodeSecurityHandler

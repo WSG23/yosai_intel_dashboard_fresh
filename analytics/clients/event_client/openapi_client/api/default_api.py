@@ -12,18 +12,19 @@
 """  # noqa: E501
 
 import warnings
-from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
 from typing import Any, Dict, List, Optional, Tuple, Union
-from typing_extensions import Annotated
-
-from openapi_client.models.access_event import AccessEvent
-from openapi_client.models.event_response import EventResponse
-from openapi_client.models.v1_events_batch_post200_response import V1EventsBatchPost200Response
-from openapi_client.models.v1_events_batch_post_request import V1EventsBatchPostRequest
 
 from openapi_client.api_client import ApiClient, RequestSerialized
 from openapi_client.api_response import ApiResponse
+from openapi_client.models.access_event import AccessEvent
+from openapi_client.models.event_response import EventResponse
+from openapi_client.models.v1_events_batch_post200_response import (
+    V1EventsBatchPost200Response,
+)
+from openapi_client.models.v1_events_batch_post_request import V1EventsBatchPostRequest
 from openapi_client.rest import RESTResponseType
+from pydantic import Field, StrictFloat, StrictInt, StrictStr, validate_call
+from typing_extensions import Annotated
 
 
 class DefaultApi:

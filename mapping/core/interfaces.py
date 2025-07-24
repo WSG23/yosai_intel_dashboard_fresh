@@ -4,6 +4,7 @@ from abc import abstractmethod
 from typing import Any, Dict, Protocol
 
 import pandas as pd
+
 from .models import ProcessingResult
 
 

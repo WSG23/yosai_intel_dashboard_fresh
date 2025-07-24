@@ -4,12 +4,12 @@ Code Quality Analysis Module for Yōsai Intel Dashboard
 Specific code pattern detection and quality metrics
 """
 
-import re
 import ast
-from typing import Dict, List, Tuple, Optional, Set
-from pathlib import Path
+import re
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple
 
 
 class CodeSmell(Enum):

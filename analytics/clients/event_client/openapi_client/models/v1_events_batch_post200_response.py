@@ -13,15 +13,16 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict
-from typing import Any, ClassVar, Dict, List, Optional
 from openapi_client.models.event_response import EventResponse
-from typing import Optional, Set
+from pydantic import BaseModel, ConfigDict
 from typing_extensions import Self
+
 
 class V1EventsBatchPost200Response(BaseModel):
     """

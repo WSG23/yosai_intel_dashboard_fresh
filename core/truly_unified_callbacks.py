@@ -15,17 +15,17 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Set,
     Tuple,
     Type,
-    Set,
 )
 
 from dash import Dash
 from dash.dependencies import Input, Output, State
 
 from .callback_events import CallbackEvent
-from .error_handling import ErrorSeverity, error_handler, with_retry
 from .callback_registry import CallbackRegistry, ComponentCallbackManager
+from .error_handling import ErrorSeverity, error_handler, with_retry
 
 logger = logging.getLogger(__name__)
 

@@ -19,11 +19,12 @@ from typing import Any, Callable, Iterable, Optional, Union
 
 import pandas as pd  # type: ignore[import]
 
-from .exceptions import SecurityError
 from security.unicode_security_validator import (
-    UnicodeSecurityValidator,
     UnicodeSecurityConfig,
+    UnicodeSecurityValidator,
 )
+
+from .exceptions import SecurityError
 from .security_patterns import (
     PATH_TRAVERSAL_PATTERNS,
     SQL_INJECTION_PATTERNS,

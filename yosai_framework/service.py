@@ -2,22 +2,20 @@ import logging
 import signal
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
-
 import structlog
+from fastapi import FastAPI, HTTPException
 from opentelemetry import trace
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from prometheus_client import (
+    REGISTRY,
+    CollectorRegistry,
     Counter,
     Histogram,
-    REGISTRY,
     start_http_server,
-    CollectorRegistry,
 )
-
 
 from .config import ServiceConfig, load_config
 

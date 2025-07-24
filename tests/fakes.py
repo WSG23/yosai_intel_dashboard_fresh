@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Callable
+from typing import Any, Callable, Dict, List
 
 import pandas as pd
 
 try:
-    from services.upload.protocols import UploadStorageProtocol, FileProcessorProtocol
+    from services.upload.protocols import FileProcessorProtocol, UploadStorageProtocol
 except Exception:  # pragma: no cover - fallback stubs for optional deps
     from typing import Protocol
 

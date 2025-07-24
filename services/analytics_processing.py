@@ -21,8 +21,8 @@ except Exception:  # pragma: no cover - optional AI suggestions
         return {}
 
 
-from services.upload_data_service import get_uploaded_data
 from services.interfaces import get_upload_data_service
+from services.upload_data_service import get_uploaded_data
 from utils.preview_utils import serialize_dataframe_preview
 
 logger = logging.getLogger(__name__)

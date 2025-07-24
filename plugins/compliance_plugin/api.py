@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict, Optional
-from flask import Blueprint, request, jsonify
+
+from flask import Blueprint, jsonify, request
 
 logger = logging.getLogger(__name__)
 

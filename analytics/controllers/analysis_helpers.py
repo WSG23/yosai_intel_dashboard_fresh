@@ -20,7 +20,6 @@ from services.data_processing.analytics_engine import (
     process_suggests_analysis_safe,
 )
 
-
 # ------------------------------------------------------------
 # Helper analysis functions
 # ------------------------------------------------------------

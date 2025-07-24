@@ -12,8 +12,8 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
 from core.rbac import require_role
-from services.data_processing.file_processor import FileProcessor
 from database.secure_exec import execute_command, execute_query
+from services.data_processing.file_processor import FileProcessor
 
 logger = logging.getLogger(__name__)
 

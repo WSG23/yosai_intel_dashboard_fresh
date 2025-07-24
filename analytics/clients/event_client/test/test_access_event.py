@@ -16,6 +16,7 @@ import unittest
 
 from openapi_client.models.access_event import AccessEvent
 
+
 class TestAccessEvent(unittest.TestCase):
     """AccessEvent unit test stubs"""
 

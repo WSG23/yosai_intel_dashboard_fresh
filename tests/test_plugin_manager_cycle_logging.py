@@ -1,7 +1,8 @@
 import sys
+import types
+
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
 from core.service_container import ServiceContainer
-import types
 
 
 class DummyConfigManager:

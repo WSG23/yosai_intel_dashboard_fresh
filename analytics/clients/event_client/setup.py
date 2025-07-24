@@ -12,7 +12,7 @@
 """  # noqa: E501
 
 
-from setuptools import setup, find_packages  # noqa: H301
+from setuptools import find_packages, setup  # noqa: H301
 
 # To install the library, run the following
 #

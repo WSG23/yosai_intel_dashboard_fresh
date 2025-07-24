@@ -3,6 +3,7 @@ Enhanced Security Validation for Yōsai Intel Dashboard
 Implements comprehensive input validation and security checks
 """
 
+import html
 import logging
 import os
 import re
@@ -10,7 +11,6 @@ import secrets
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
-import html
 
 import requests
 import sqlparse
@@ -20,9 +20,9 @@ from config.constants import FileProcessingLimits
 from core.base_model import BaseModel
 from core.exceptions import ValidationError
 from core.protocols import SecurityServiceProtocol
+from core.unicode import sanitize_unicode_input
 from security.attack_detection import AttackDetection
 from security.events import SecurityEvent, emit_security_event
-from core.unicode import sanitize_unicode_input
 from tracing import propagate_context
 
 from .security_patterns import PATH_TRAVERSAL_PATTERNS as RAW_PATH_PATTERNS

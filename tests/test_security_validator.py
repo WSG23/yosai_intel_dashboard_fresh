@@ -1,6 +1,5 @@
 import types
 
-
 import security_callback_controller
 from core.security_validator import (
     AdvancedSQLValidator,

@@ -1,9 +1,10 @@
 import shutil
 import subprocess
-import requests
+
 import pytest
-from testcontainers.redis import RedisContainer
+import requests
 from testcontainers.core.container import DockerContainer
+from testcontainers.redis import RedisContainer
 
 
 @pytest.mark.integration

@@ -22,33 +22,36 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, safe_str(PROJECT_ROOT))
 
-import dash
-from dash import dcc, html, callback_context
-from dash.dependencies import Input, Output, State
-import dash_table
+import logging
 
-import pandas as pd
+import dash
 import dash_bootstrap_components as dbc
+import dash_table
+import pandas as pd
+from dash import callback_context, dcc, html
+from dash.dependencies import Input, Output, State
+
+from analytics.db_interface import AnalyticsDataAccessor
 from components.column_verification import (
     create_complete_column_section,
+)
+from components.column_verification import (
     register_callbacks as register_column_callbacks,
 )
+from components.file_preview import create_file_preview_ui
 from components.simple_device_mapping import (
     register_callbacks as register_device_callbacks,
 )
-from core.master_callback_system import MasterCallbackSystem
-import logging
-from services.base_database_service import BaseDatabaseService
 
 # Import existing base code (no custom implementations)
 from config.service_registration import register_upload_services
+from core.master_callback_system import MasterCallbackSystem
 from core.service_container import ServiceContainer
-from services.upload import UploadProcessingService
-from components.file_preview import create_file_preview_ui
-from services.upload.utils.file_parser import create_file_preview
+from services.base_database_service import BaseDatabaseService
 from services.data_enhancer import get_ai_column_suggestions
 from services.device_learning_service import DeviceLearningService
-from analytics.db_interface import AnalyticsDataAccessor
+from services.upload import UploadProcessingService
+from services.upload.utils.file_parser import create_file_preview
 
 # Module logger configured in __main__
 logger = logging.getLogger(__name__)
@@ -407,8 +410,8 @@ class MVPTestApp(BaseDatabaseService):
             return dbc.Alert("No data to display", color="info")
 
         # Mirror base code build_file_preview_component exactly
-        from services.upload.utils.file_parser import create_file_preview
         from components.file_preview import create_file_preview_ui
+        from services.upload.utils.file_parser import create_file_preview
 
         try:
             preview_info = create_file_preview(df)

@@ -1,7 +1,7 @@
 """Upload UI Components Public API."""
-from .validators.client_validator import ClientSideValidator
 from .ui.upload_area import UploadArea
 from .unified_upload_component import UnifiedUploadComponent
+from .validators.client_validator import ClientSideValidator
 
 __all__ = [
     "UploadArea",

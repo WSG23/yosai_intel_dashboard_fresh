@@ -3,16 +3,15 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-
+from services.configuration_service import (
+    ConfigurationServiceProtocol,
+    DynamicConfigurationService,
+)
 from services.data_processing.unified_upload_validator import (
     UnifiedUploadValidator,
     _lazy_string_validator,
 )
 from upload_types import ValidationResult
-from services.configuration_service import (
-    ConfigurationServiceProtocol,
-    DynamicConfigurationService,
-)
 
 
 def create_config_methods(cls):

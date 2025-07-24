@@ -11,15 +11,15 @@ from typing import Any, Dict, Iterable, Tuple
 import chardet
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
-from config.constants import DEFAULT_CHUNK_SIZE
-from core.performance import get_performance_monitor
-from core.unicode import safe_format_number
-from core.performance_file_processor import PerformanceFileProcessor
-from core.unicode import safe_unicode_decode
 from analytics_core.utils.unicode_processor import UnicodeHelper
-from .file_handler import process_file_simple
+from config.constants import DEFAULT_CHUNK_SIZE
+from config.dynamic_config import dynamic_config
 from core.config import get_max_display_rows
+from core.performance import get_performance_monitor
+from core.performance_file_processor import PerformanceFileProcessor
+from core.unicode import safe_format_number, safe_unicode_decode
+
+from .file_handler import process_file_simple
 
 # Core processing imports only - NO UI COMPONENTS
 

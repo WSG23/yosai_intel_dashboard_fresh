@@ -5,14 +5,15 @@ All deprecated individual validators have been removed and consolidated.
 """
 
 from core.exceptions import ValidationError
+
 from .attack_detection import AttackDetection
 from .secrets_validator import SecretsValidator, register_health_endpoint
+from .secure_query_wrapper import (
+    execute_secure_command,
+    execute_secure_sql,
+)
 from .unicode_security_validator import UnicodeSecurityValidator
 from .validation_exceptions import SecurityViolation
-from .secure_query_wrapper import (
-    execute_secure_sql,
-    execute_secure_command,
-)
 
 
 def __getattr__(name: str):
@@ -23,10 +24,8 @@ def __getattr__(name: str):
 
         return _SV
     if name in {"UnicodeSurrogateValidator", "SurrogateHandlingConfig"}:
-        from .unicode_surrogate_validator import (
-            SurrogateHandlingConfig as _SHC,
-            UnicodeSurrogateValidator as _USV,
-        )
+        from .unicode_surrogate_validator import SurrogateHandlingConfig as _SHC
+        from .unicode_surrogate_validator import UnicodeSurrogateValidator as _USV
 
         return {
             "UnicodeSurrogateValidator": _USV,

@@ -1,16 +1,17 @@
+import logging
 import os
 from typing import Any, Awaitable, MutableMapping
 
-from opentelemetry import context as ot_context, propagate, trace
+import structlog
+from opentelemetry import context as ot_context
+from opentelemetry import propagate, trace
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-
-from .config import JAEGER_ENDPOINT_ENV, DEFAULT_JAEGER_ENDPOINT
-import logging
-import structlog
 from opentelemetry.trace import get_current_span
+
+from .config import DEFAULT_JAEGER_ENDPOINT, JAEGER_ENDPOINT_ENV
 
 
 def init_tracing(service_name: str) -> None:

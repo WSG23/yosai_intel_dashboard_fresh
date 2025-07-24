@@ -17,10 +17,16 @@ from config.dynamic_config import dynamic_config
 from core.exceptions import ValidationError
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
-from core.unicode import UnicodeProcessor, sanitize_dataframe, sanitize_for_utf8, safe_unicode_decode
+from core.unicode import (
+    UnicodeProcessor,
+    safe_unicode_decode,
+    sanitize_dataframe,
+    sanitize_for_utf8,
+)
 from upload_types import ValidationResult
-from .unified_upload_validator import UnifiedUploadValidator
+
 from .common import process_dataframe
+from .unified_upload_validator import UnifiedUploadValidator
 
 
 def create_config_methods(cls):

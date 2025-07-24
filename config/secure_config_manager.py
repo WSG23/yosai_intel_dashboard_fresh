@@ -13,8 +13,9 @@ from botocore.exceptions import ClientError
 from cryptography.fernet import Fernet
 from pydantic import BaseModel
 
-from .config_manager import ConfigManager
 from core.exceptions import ConfigurationError
+
+from .config_manager import ConfigManager
 
 
 class SecureConfigManager(ConfigManager):

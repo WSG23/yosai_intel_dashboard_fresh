@@ -4,14 +4,15 @@
 import logging
 from typing import Any, Dict
 
+from controllers.compliance_controller import register_compliance_routes
+
+from core.audit_logger import create_audit_logger
 from core.container import Container
 from core.protocols import DatabaseProtocol
-from database.secure_exec import execute_query, execute_command
+from database.secure_exec import execute_command, execute_query
+from models.compliance import CREATE_COMPLIANCE_TABLES_SQL
 from services.compliance.consent_service import create_consent_service
 from services.compliance.dsar_service import create_dsar_service
-from core.audit_logger import create_audit_logger
-from controllers.compliance_controller import register_compliance_routes
-from models.compliance import CREATE_COMPLIANCE_TABLES_SQL
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +66,9 @@ def register_compliance_middleware(app) -> None:
     Register compliance-related middleware and decorators
     """
     from functools import wraps
-    from flask import g, request
     from uuid import uuid4
+
+    from flask import g, request
 
     @app.before_request
     def set_request_id():
@@ -96,6 +98,7 @@ def audit_decorator(action_type: str, resource_type: str):
         @wraps(func)
         def wrapper(*args, **kwargs):
             from flask_login import current_user
+
             from core.container import Container
 
             try:
@@ -160,10 +163,11 @@ def consent_required(consent_type: str, jurisdiction: str = "EU"):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
+            from flask import jsonify
             from flask_login import current_user
+
             from core.container import Container
             from models.compliance import ConsentType
-            from flask import jsonify
 
             try:
                 container = Container()
@@ -219,6 +223,7 @@ def create_compliance_enabled_app(config_name: str = None):
     Replace your existing create_app() function with this pattern:
     """
     from flask import Flask
+
     from config import create_config_manager
     from core.container import Container
     from database.connection import create_database_connection
@@ -268,15 +273,17 @@ def setup_data_retention_scheduler():
     Setup automated data retention cleanup
     Call this to schedule regular data cleanup based on retention policies
     """
-    import schedule
     import time
     from threading import Thread
+
+    import schedule
 
     def cleanup_expired_data():
         """Clean up data that has exceeded retention periods"""
         try:
-            from core.container import Container
             from datetime import datetime, timezone
+
+            from core.container import Container
 
             container = Container()
             db = container.get("database")

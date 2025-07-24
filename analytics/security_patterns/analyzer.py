@@ -15,10 +15,10 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+from config.constants import DEFAULT_CHUNK_SIZE
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from database.baseline_metrics import BaselineMetricsDB
 from utils.sklearn_compat import optional_import
-from config.constants import DEFAULT_CHUNK_SIZE
 
 from .chunk_processor import ChunkedDataProcessor, MemoryConfig
 
@@ -75,7 +75,6 @@ from .odd_door_detection import detect_odd_door_usage
 from .odd_path_detection import detect_odd_path
 from .odd_time_detection import detect_odd_time
 from .pattern_detection import detect_pattern_threats
-
 from .pattern_drift_detection import detect_pattern_drift
 from .statistical_detection import detect_statistical_threats
 from .tailgate_detection import detect_tailgate

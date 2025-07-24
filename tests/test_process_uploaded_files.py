@@ -1,12 +1,11 @@
 import asyncio
 
-from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-
+from services.device_learning_service import DeviceLearningService
 from services.upload import UploadProcessingService
+from tests.fakes import FakeUploadDataService
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 from upload_core import UploadCore
 from utils.upload_store import UploadedDataStore
-from services.device_learning_service import DeviceLearningService
-from tests.fakes import FakeUploadDataService
 
 
 def test_multi_part_upload_row_count(async_runner):

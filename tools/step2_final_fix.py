@@ -14,7 +14,7 @@ def final_method_fix():
     
     try:
         from services.upload_processing import UploadAnalyticsProcessor
-        
+
         # Add summarize_dataframe method properly to the class
         if not hasattr(UploadAnalyticsProcessor, 'summarize_dataframe'):
             def summarize_dataframe(self, df):

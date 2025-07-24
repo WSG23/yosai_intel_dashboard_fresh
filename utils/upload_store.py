@@ -1,21 +1,20 @@
 """Persistent uploaded data store module."""
 
+import asyncio
 import json
 import logging
-import asyncio
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Protocol
 
 import pandas as pd
 
+from config.app_config import UploadConfig
+from core.cache_manager import CacheConfig, InMemoryCacheManager
 from file_conversion.file_converter import FileConverter
 from services.upload.protocols import UploadStorageProtocol
-from typing import Protocol
-from config.app_config import UploadConfig
-from core.cache_manager import InMemoryCacheManager, CacheConfig
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 

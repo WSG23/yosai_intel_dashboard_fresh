@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 import joblib
+
 from utils.sklearn_compat import optional_import
 
 TfidfVectorizer = optional_import("sklearn.feature_extraction.text.TfidfVectorizer")

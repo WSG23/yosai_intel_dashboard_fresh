@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from typing import List
 
-from dash import html
 import dash_bootstrap_components as dbc
+from dash import html
 
 from components.simple_device_mapping import (
-    create_simple_device_modal_with_ai as _create_modal_ai,
     create_device_mapping_section as _create_section,
+)
+from components.simple_device_mapping import (
+    create_simple_device_modal_with_ai as _create_modal_ai,
 )
 
 

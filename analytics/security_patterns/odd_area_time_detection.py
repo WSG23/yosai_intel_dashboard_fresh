@@ -6,11 +6,10 @@ from typing import List, Optional
 
 import pandas as pd
 
+from .column_validation import ensure_columns
+from .pattern_detection import _attack_info
 from .types import ThreatIndicator
 from .utils import _door_to_area
-from .pattern_detection import _attack_info
-from .column_validation import ensure_columns
-
 
 __all__ = ["detect_odd_area_time"]
 

@@ -4,16 +4,15 @@ Yōsai Intel Dashboard Migration - Production Readiness Review
 Comprehensive assessment based on actual codebase analysis
 """
 
-import json
 import datetime
-from dataclasses import dataclass, field, asdict
-from typing import Dict, List, Optional, Tuple, Any, Protocol
-from enum import Enum, auto
-from abc import ABC, abstractmethod
+import json
 import logging
-from pathlib import Path
+from abc import ABC, abstractmethod
 from collections import defaultdict
-
+from dataclasses import asdict, dataclass, field
+from enum import Enum, auto
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Protocol, Tuple
 
 # Logger configuration happens in __main__
 logger = logging.getLogger(__name__)

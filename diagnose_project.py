@@ -4,8 +4,9 @@ Quick diagnosis script to understand why files aren't being detected
 """
 
 import os
-from pathlib import Path
 from collections import Counter
+from pathlib import Path
+
 
 def diagnose_project(project_path="."):
     """Diagnose why files might not be detected"""

@@ -1,5 +1,5 @@
 """Prometheus metrics for deprecated function usage."""
-from prometheus_client import Counter, REGISTRY, start_http_server
+from prometheus_client import REGISTRY, Counter, start_http_server
 from prometheus_client.core import CollectorRegistry
 
 if "deprecated_function_calls_total" not in REGISTRY._names_to_collectors:

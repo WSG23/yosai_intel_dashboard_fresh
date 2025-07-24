@@ -1,9 +1,9 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from core.unicode import clean_unicode_text, safe_encode_text, UnicodeSecurityProcessor
+from core.unicode import UnicodeSecurityProcessor, clean_unicode_text, safe_encode_text
 
 
 def main() -> None:

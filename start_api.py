@@ -1,15 +1,15 @@
 #!/usr/bin/env python
-import sys
-import os
 import logging
+import os
+import sys
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import Flask app directly from adapter
 from api.adapter import create_api_app
-from config.constants import API_PORT
 
+from config.constants import API_PORT
 
 
 def main() -> None:

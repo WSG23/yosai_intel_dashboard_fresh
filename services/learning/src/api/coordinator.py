@@ -9,7 +9,6 @@ import pandas as pd
 from mapping.core.interfaces import LearningInterface, StorageInterface
 from services.learning.src.ml.fingerprint_service import FingerprintService
 
-
 logger = logging.getLogger(__name__)
 
 

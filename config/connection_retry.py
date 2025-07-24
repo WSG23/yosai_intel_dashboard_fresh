@@ -5,12 +5,11 @@ import time
 from dataclasses import dataclass
 from typing import Callable, Optional, Protocol, TypeVar
 
+from .database_exceptions import ConnectionRetryExhausted
 from .protocols import (
     ConnectionRetryManagerProtocol,
     RetryConfigProtocol,
 )
-
-from .database_exceptions import ConnectionRetryExhausted
 
 T = TypeVar("T")
 

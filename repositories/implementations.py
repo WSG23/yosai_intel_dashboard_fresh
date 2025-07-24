@@ -7,9 +7,9 @@ import json
 from datetime import datetime
 from typing import List, Optional
 
+from database.types import DatabaseConnection
 from models.entities import AccessEvent, Door, Person
 from models.enums import AccessResult, BadgeStatus, DoorType
-from database.types import DatabaseConnection
 
 from .interfaces import IAccessEventRepository, IDoorRepository, IPersonRepository
 

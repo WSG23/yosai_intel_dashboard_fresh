@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 from typing import Iterable
 
-from scripts.find_sql_concat import iter_py_files, scan_file, apply_fixes
+from scripts.find_sql_concat import apply_fixes, iter_py_files, scan_file
 
 
 def main(argv: Iterable[str] | None = None) -> int:

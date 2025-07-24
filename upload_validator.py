@@ -1,11 +1,10 @@
 """Compatibility wrapper around :class:`UnifiedUploadValidator`."""
 from __future__ import annotations
 
-from typing import Optional, Any
+from typing import Any, Optional
 
 from config.dynamic_config import dynamic_config
 from core.protocols import ConfigurationProtocol
-
 from services.data_processing.unified_upload_validator import UnifiedUploadValidator
 from upload_types import ValidationResult
 

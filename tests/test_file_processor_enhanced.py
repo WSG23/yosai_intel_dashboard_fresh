@@ -1,18 +1,18 @@
 import base64
+
 import pandas as pd
 
+from tests.fake_configuration import FakeConfiguration
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
-from tests.fake_configuration import FakeConfiguration
-
 fake_cfg = FakeConfiguration()
+from core.security_validator import SecurityValidator
 from services.data_enhancer import (
     apply_fuzzy_column_matching,
     get_mapping_suggestions,
 )
 from services.data_processing.file_processor import process_uploaded_file
 from services.data_processing.unified_upload_validator import UnifiedUploadValidator
-from core.security_validator import SecurityValidator
 
 
 def test_enhanced_processor(tmp_path):

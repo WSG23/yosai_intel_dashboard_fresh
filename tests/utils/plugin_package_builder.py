@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import sys
+import textwrap
 from contextlib import AbstractContextManager
 from pathlib import Path
-import textwrap
 
 
 class PluginPackageBuilder(AbstractContextManager):

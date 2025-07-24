@@ -11,7 +11,6 @@ from database.baseline_metrics import BaselineMetricsDB
 from .pattern_detection import _attack_info
 from .types import ThreatIndicator
 
-
 __all__ = ["detect_odd_time"]
 
 

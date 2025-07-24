@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import base64
 import logging
-from typing import Union, Tuple
+from typing import Tuple, Union
 
 from core.unicode import safe_encode_text
 

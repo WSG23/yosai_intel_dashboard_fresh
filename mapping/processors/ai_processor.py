@@ -2,15 +2,11 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from core.container import container as default_container
-from mapping.models import MappingModel, HeuristicMappingModel
-
-
 import pandas as pd
 
-
+from core.container import container as default_container
 from core.service_container import ServiceContainer
-from mapping.models import MappingModel
+from mapping.models import HeuristicMappingModel, MappingModel
 
 
 class AIColumnMapperAdapter:

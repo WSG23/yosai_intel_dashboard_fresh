@@ -7,8 +7,9 @@ from typing import List, Optional
 import pandas as pd
 
 from models.enums import AccessResult, AnomalyType
-from .types import ThreatIndicator
+
 from .pattern_detection import _attack_info
+from .types import ThreatIndicator
 
 __all__ = ["detect_no_access"]
 

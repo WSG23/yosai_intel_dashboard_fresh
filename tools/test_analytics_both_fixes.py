@@ -3,9 +3,9 @@
 Test Analytics with both Step 1 (callback fix) and Step 2 (missing methods) applied
 """
 
+import asyncio
 import json
 import sys
-import asyncio
 from pathlib import Path
 
 project_root = Path(__file__).parent.parent
@@ -27,7 +27,7 @@ def apply_both_fixes():
     # Step 2: Missing methods fix
     try:
         from services.upload_processing import UploadAnalyticsProcessor
-        
+
         # Add missing methods if they don't exist
         if not hasattr(UploadAnalyticsProcessor, 'get_analytics_from_uploaded_data'):
             def get_analytics_from_uploaded_data(self):
@@ -63,9 +63,10 @@ async def test_analytics_comprehensive():
         
         apply_both_fixes()
         
-        from services.analytics_service import AnalyticsService
         import pandas as pd
-        
+
+        from services.analytics_service import AnalyticsService
+
         # Load the Enhanced Security Demo data
         parquet_path = Path("temp/uploaded_data/Enhanced_Security_Demo.csv.parquet")
         df = pd.read_parquet(parquet_path)

@@ -8,8 +8,8 @@ from typing import Optional
 import pandas as pd
 
 from config.connection_retry import ConnectionRetryManager, RetryConfig
-from config.protocols import ConnectionRetryManagerProtocol, RetryConfigProtocol
 from config.constants import DEFAULT_CHUNK_SIZE
+from config.protocols import ConnectionRetryManagerProtocol, RetryConfigProtocol
 from utils.upload_store import UploadedDataStore
 
 logger = logging.getLogger(__name__)

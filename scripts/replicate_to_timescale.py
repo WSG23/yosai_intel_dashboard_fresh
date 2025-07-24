@@ -11,7 +11,8 @@ from typing import Any
 import psycopg2
 from prometheus_client import Gauge, start_http_server
 from psycopg2.extras import DictCursor, execute_values
-from database.secure_exec import execute_query, execute_command
+
+from database.secure_exec import execute_command, execute_query
 
 LOG = logging.getLogger(__name__)
 

@@ -5,8 +5,9 @@ Quick diagnostic tool to check project structure
 
 import os
 import sys
-from pathlib import Path
 from collections import Counter
+from pathlib import Path
+
 
 def check_project_structure(path="."):
     """Analyze project structure and file types"""

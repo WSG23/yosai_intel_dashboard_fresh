@@ -1,13 +1,12 @@
 import json
 import queue
 import time
+from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, Optional
 
 import pytest
-
-from enum import Enum
-from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
 
 
 class AccessResult(Enum):

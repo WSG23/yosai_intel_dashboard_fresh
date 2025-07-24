@@ -1,8 +1,8 @@
 import pytest
 
-from database.connection_pool import EnhancedConnectionPool, CircuitBreaker
-from config.database_manager import MockConnection
 from config.database_exceptions import ConnectionValidationFailed
+from config.database_manager import MockConnection
+from database.connection_pool import CircuitBreaker, EnhancedConnectionPool
 
 
 def factory():

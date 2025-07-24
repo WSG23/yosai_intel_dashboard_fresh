@@ -5,14 +5,14 @@ from typing import Any, Dict, Protocol
 from .app_config import UploadConfig
 from .base_loader import BaseConfigLoader
 from .constants import (
+    DEFAULT_CHUNK_SIZE,
     AnalyticsConstants,
     CSSConstants,
     DatabaseConstants,
-    StreamingConstants,
     PerformanceConstants,
     SecurityConstants,
+    StreamingConstants,
     UploadLimits,
-    DEFAULT_CHUNK_SIZE,
 )
 from .environment import select_config_file
 

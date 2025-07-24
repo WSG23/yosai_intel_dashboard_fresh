@@ -1,6 +1,7 @@
 import sys
 import types
 from pathlib import Path
+
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 

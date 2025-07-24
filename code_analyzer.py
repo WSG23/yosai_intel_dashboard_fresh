@@ -5,12 +5,12 @@ Performs static analysis to support manual code review
 """
 
 import ast
+import json
 import os
 import re
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
-from collections import defaultdict, Counter
-import json
 
 
 class CodeAnalyzer:

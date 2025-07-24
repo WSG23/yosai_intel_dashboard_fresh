@@ -1,5 +1,6 @@
 import re
-from dash import html, dcc, page_container
+
+from dash import dcc, html, page_container
 
 # Dynamically load the _create_main_layout function without importing the whole module
 with open('core/app_factory/__init__.py') as f:

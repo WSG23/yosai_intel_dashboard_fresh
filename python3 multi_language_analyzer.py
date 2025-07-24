@@ -5,15 +5,15 @@ Analyzes Python, Go, JavaScript, TypeScript, and other languages
 """
 
 import ast
+import json
 import os
 import re
 import subprocess
-import json
-from pathlib import Path
-from typing import Dict, List, Set, Tuple, Optional, Any
-from collections import defaultdict, Counter
 import time
+from collections import Counter, defaultdict
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 
 class MultiLanguageAnalyzer:
@@ -1194,8 +1194,8 @@ class MultiLanguageAnalyzer:
 
 def main():
     """Run the multi-language analyzer"""
-    import sys
     import argparse
+    import sys
     
     parser = argparse.ArgumentParser(description='Analyze multi-language projects')
     parser.add_argument('project_path', help='Path to the project directory')

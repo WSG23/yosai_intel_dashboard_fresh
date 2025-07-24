@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, Optional
-from flask import request, g
 from functools import wraps
+from typing import Any, Dict, Optional
+
+from flask import g, request
 
 logger = logging.getLogger(__name__)
 

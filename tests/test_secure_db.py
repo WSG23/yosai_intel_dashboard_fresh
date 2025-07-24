@@ -1,7 +1,7 @@
 import pytest
 
-from config.secure_db import execute_secure_query
 from config.database_exceptions import UnicodeEncodingError
+from config.secure_db import execute_secure_query
 
 
 class DummyConn:

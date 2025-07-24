@@ -8,9 +8,9 @@ import numpy as np
 import pandas as pd
 
 from core.cache_manager import (
-    cache_with_lock,
-    InMemoryCacheManager,
     CacheConfig,
+    InMemoryCacheManager,
+    cache_with_lock,
 )
 
 _cache_manager = InMemoryCacheManager(CacheConfig())

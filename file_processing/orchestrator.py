@@ -2,13 +2,12 @@ from __future__ import annotations
 
 """Prefect orchestration for access event processing pipeline."""
 
-from core.callback_controller import CallbackController
 from prefect import Flow, Parameter, task
 
+from core.callback_controller import CallbackController
 from file_processing.data_processor import DataProcessor
 from file_processing.exporter import ExportError, export_to_csv, export_to_json
 from file_processing.format_detector import FormatDetector, UnsupportedFormatError
-
 
 
 @task

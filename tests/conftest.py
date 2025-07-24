@@ -1,10 +1,9 @@
 """Test configuration and fixtures"""
 
+import importlib.util
 import sys
 import types
 from pathlib import Path
-import importlib.util
-
 
 _missing_packages = [
     pkg for pkg in ("yaml", "psutil") if importlib.util.find_spec(pkg) is None

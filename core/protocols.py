@@ -9,9 +9,9 @@ from abc import abstractmethod
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Protocol, runtime_checkable
 
-from .callback_events import CallbackEvent
-
 import pandas as pd
+
+from .callback_events import CallbackEvent
 
 
 @runtime_checkable

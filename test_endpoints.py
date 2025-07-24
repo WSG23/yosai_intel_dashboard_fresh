@@ -1,6 +1,7 @@
-import os
-import requests
 import json
+import os
+
+import requests
 
 # Test endpoints
 API_PORT = os.getenv("API_PORT", "5001")

@@ -8,7 +8,6 @@ from typing import List
 
 from database.migrations import MigrationManager
 
-
 LOG = logging.getLogger(__name__)
 
 

@@ -3,12 +3,12 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from models.entities import Person, Door, AccessEvent
+from models.entities import AccessEvent, Door, Person
 from models.enums import AccessResult, BadgeStatus, DoorType
 from repositories.implementations import (
-    PersonRepository,
-    DoorRepository,
     AccessEventRepository,
+    DoorRepository,
+    PersonRepository,
 )
 
 

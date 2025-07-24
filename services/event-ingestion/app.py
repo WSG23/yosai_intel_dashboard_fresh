@@ -1,18 +1,17 @@
 import asyncio
-from fastapi import FastAPI, Header, HTTPException, status, Depends
-from shared.errors.types import ErrorCode
-from yosai_framework.errors import ServiceError
-from yosai_framework.service import BaseService
-
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from prometheus_fastapi_instrumentator import Instrumentator
-
 import os
 import pathlib
 
-from services.streaming.service import StreamingService
+from fastapi import Depends, FastAPI, Header, HTTPException, status
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from prometheus_fastapi_instrumentator import Instrumentator
+
 from services.security import verify_service_jwt
+from services.streaming.service import StreamingService
+from shared.errors.types import ErrorCode
 from tracing import trace_async_operation
+from yosai_framework.errors import ServiceError
+from yosai_framework.service import BaseService
 
 SERVICE_NAME = "event-ingestion-service"
 os.environ.setdefault("YOSAI_SERVICE_NAME", SERVICE_NAME)

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import uuid
+
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 from flask import session
-import uuid
 
 from components.device_verification import register_modal_callback
 from components.upload import UploadArea

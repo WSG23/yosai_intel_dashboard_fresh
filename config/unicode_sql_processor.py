@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from .database_exceptions import UnicodeEncodingError
+
 # from analytics_core.utils.unicode_processor import UnicodeHelper  # Circular import - use local implementation
 
 class UnicodeHelper:

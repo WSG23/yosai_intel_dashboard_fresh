@@ -53,6 +53,7 @@ sys.modules.setdefault("opentelemetry.trace", otel_trace)
 
 # Dash stubs
 from tests.stubs import dash as dash_stub
+
 sys.modules.setdefault("dash", dash_stub)
 sys.modules.setdefault("dash.dependencies", dash_stub.dependencies)
 dash_stub.no_update = object()

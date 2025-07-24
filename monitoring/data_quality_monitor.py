@@ -5,11 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
-from config.base import DataQualityThresholds
-
-from core.performance import MetricType, get_performance_monitor
-from core.monitoring.user_experience_metrics import AlertConfig, AlertDispatcher
 from config import get_monitoring_config
+from config.base import DataQualityThresholds
+from core.monitoring.user_experience_metrics import AlertConfig, AlertDispatcher
+from core.performance import MetricType, get_performance_monitor
 
 
 @dataclass

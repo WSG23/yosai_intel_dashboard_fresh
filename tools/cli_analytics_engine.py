@@ -3,10 +3,11 @@
 Test Analytics Engine with rich learned mappings
 """
 
+import asyncio
 import json
 import sys
-import asyncio
 from pathlib import Path
+
 from config.app_config import UploadConfig
 
 project_root = Path(__file__).parent.parent
@@ -17,12 +18,12 @@ async def test_analytics_with_mappings(verbose: bool = False) -> dict:
         print("=== TESTING ANALYTICS WITH LEARNED MAPPINGS ===")
         
         # Get the Enhanced Security Demo data and mappings
-        from services.device_learning_service import DeviceLearningService
-        from services.analytics_service import AnalyticsService
-        from services.analytics.upload_analytics import UploadAnalyticsProcessor
-        
         # Process the parquet file using pandas directly
         import pandas as pd
+
+        from services.analytics.upload_analytics import UploadAnalyticsProcessor
+        from services.analytics_service import AnalyticsService
+        from services.device_learning_service import DeviceLearningService
         parquet_path = Path(UploadConfig().folder) / "Enhanced_Security_Demo.csv.parquet"
         
         if parquet_path.exists():
@@ -106,7 +107,9 @@ async def test_analytics_with_mappings(verbose: bool = False) -> dict:
                 # Test analytics functions from data_processing.analytics_engine
                 print("\n--- Testing analytics engine functions ---")
                 try:
-                    from services.data_processing.analytics_engine import get_analytics_service_safe
+                    from services.data_processing.analytics_engine import (
+                        get_analytics_service_safe,
+                    )
                     
                     analytics_func = get_analytics_service_safe()
                     result["analytics_engine_functions"] = {

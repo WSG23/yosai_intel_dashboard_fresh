@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from typing import Any
 
-
 _SURROGATE_RE = re.compile(r"[\uD800-\uDFFF]")
 
 

@@ -5,7 +5,11 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from core.container import container as _global_container
-from core.protocols import ServiceContainer, UnicodeProcessorProtocol, get_unicode_processor
+from core.protocols import (
+    ServiceContainer,
+    UnicodeProcessorProtocol,
+    get_unicode_processor,
+)
 from core.unicode import sanitize_unicode_input
 
 

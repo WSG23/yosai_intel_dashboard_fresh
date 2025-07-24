@@ -17,13 +17,13 @@ from .analyzer import (
 )
 from .config import SecurityPatternsConfig
 from .data_prep import prepare_security_data
+from .no_access_detection import detect_no_access
 from .pattern_detection import (
     detect_after_hours_anomalies,
     detect_critical_door_risks,
     detect_pattern_threats,
     detect_rapid_attempts,
 )
-from .no_access_detection import detect_no_access
 from .statistical_detection import (
     detect_failure_rate_anomalies,
     detect_frequency_anomalies,

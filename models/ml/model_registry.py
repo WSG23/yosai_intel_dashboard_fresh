@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import os
 import logging
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -9,11 +9,11 @@ import boto3
 import mlflow
 from packaging.version import Version
 from sqlalchemy import (
+    JSON,
     Boolean,
     Column,
     DateTime,
     Integer,
-    JSON,
     String,
     create_engine,
     select,

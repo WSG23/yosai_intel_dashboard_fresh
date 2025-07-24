@@ -1,10 +1,10 @@
 import pytest
 
 from core.unicode import (
-    normalize_unicode_safely,
-    detect_surrogate_pairs,
-    sanitize_for_utf8,
     UnicodeNormalizationError,
+    detect_surrogate_pairs,
+    normalize_unicode_safely,
+    sanitize_for_utf8,
 )
 
 

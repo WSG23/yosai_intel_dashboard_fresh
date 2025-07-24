@@ -1,5 +1,6 @@
-from flask import jsonify
 from typing import Any, Optional
+
+from flask import jsonify
 
 from core.exceptions import YosaiBaseException
 from shared.errors.types import ErrorCode
