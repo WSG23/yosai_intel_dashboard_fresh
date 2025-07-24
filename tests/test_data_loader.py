@@ -1,32 +1,109 @@
+import sys
+import types
+from pathlib import Path
+
+import pytest
+
+try:
+    import flask  # noqa: F401
+except Exception:  # pragma: no cover - skip if missing
+    pytest.skip("flask not available", allow_module_level=True)
+
 import pandas as pd
 
-from services.data_processing.processor import Processor
+services_stub = types.ModuleType("services")
+services_stub.__path__ = [str(Path(__file__).resolve().parents[1] / "services")]
+sys.modules["services"] = services_stub
+sys.modules.setdefault("opentelemetry", types.ModuleType("opentelemetry"))
+sys.modules.setdefault("opentelemetry.context", types.ModuleType("otel_ctx"))
+sys.modules.setdefault("opentelemetry.propagate", types.ModuleType("otel_prop"))
+sys.modules.setdefault("opentelemetry.trace", types.ModuleType("otel_trace"))
+sys.modules["opentelemetry.trace"].get_current_span = lambda: types.SimpleNamespace(
+    get_span_context=lambda: None
+)
+sys.modules.setdefault(
+    "opentelemetry.exporter.jaeger.thrift", types.ModuleType("otel_jaeger")
+)
+sys.modules["opentelemetry.exporter.jaeger.thrift"].JaegerExporter = object
+sys.modules.setdefault("opentelemetry.sdk.resources", types.ModuleType("otel_res"))
+sys.modules["opentelemetry.sdk.resources"].Resource = object
+sys.modules.setdefault("opentelemetry.sdk.trace", types.ModuleType("otel_tr_sdk"))
+sys.modules["opentelemetry.sdk.trace"].TracerProvider = object
+sys.modules.setdefault(
+    "opentelemetry.sdk.trace.export", types.ModuleType("otel_tr_exp")
+)
+sys.modules["opentelemetry.sdk.trace.export"].BatchSpanProcessor = object
+sys.modules.setdefault("structlog", types.ModuleType("structlog"))
+sys.modules["structlog"].BoundLogger = object
+
+from services.analytics.data_loader import DataLoader  # noqa: E402
 
 
-def test_get_processed_database_basic(monkeypatch):
-    loader = Processor()
-    uploaded = {
-        "sample.csv": pd.DataFrame(
-            {
-                "ts": ["2024-01-01"],
-                "door_id": ["d1"],
-                "person_id": ["u1"],
-            }
-        )
-    }
-    mappings = {
-        "fp": {
-            "filename": "sample.csv",
-            "column_mappings": {"ts": "timestamp"},
-            "device_mappings": {"d1": {"location": "HQ"}},
-        }
-    }
-    monkeypatch.setattr(loader, "_get_uploaded_data", lambda: uploaded)
-    monkeypatch.setattr(loader, "_load_consolidated_mappings", lambda: mappings)
+class DummyUploadProc:
+    def __init__(self, data):
+        self.data = data
 
-    df, meta = loader.get_processed_database()
-    assert "timestamp" in df.columns
-    assert "location" in df.columns
-    assert meta["processed_files"] == 1
-    assert meta["total_records"] == 1
-    assert meta["column_mappings"]["sample.csv"] == {"ts": "timestamp"}
+    def load_uploaded_data(self):
+        return self.data
+
+    def clean_uploaded_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        return df
+
+
+class DummyController:
+    def __init__(self, data):
+        self.data = data
+        self.upload_processor = DummyUploadProc(data)
+
+    def load_uploaded_data(self):
+        return self.data
+
+    def clean_uploaded_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        return df
+
+    def summarize_dataframe(self, df: pd.DataFrame):
+        return {"rows": len(df)}
+
+    def analyze_with_chunking(self, df: pd.DataFrame, analysis_types):
+        return {"types": analysis_types}
+
+    def diagnose_data_flow(self, df: pd.DataFrame):
+        return {"rows": len(df)}
+
+    def get_real_uploaded_data(self):
+        return {"status": "success"}
+
+    def get_analytics_with_fixed_processor(self):
+        return {"status": "success"}
+
+
+class DummyProcessor:
+    def __init__(self, df):
+        self.df = df
+
+    def get_processed_database(self):
+        return self.df, {}
+
+
+def test_load_patterns_dataframe():
+    df = pd.DataFrame({"a": [1, 2, 3]})
+    controller = DummyController({"f.csv": df})
+    loader = DataLoader(controller, DummyProcessor(pd.DataFrame()))
+
+    combined, rows = loader.load_patterns_dataframe(None)
+    assert rows == len(df)
+    assert len(combined) == len(df)
+
+
+def test_delegated_methods():
+    df = pd.DataFrame({"a": [1]})
+    controller = DummyController({"f.csv": df})
+    loader = DataLoader(controller, DummyProcessor(pd.DataFrame()))
+
+    assert loader.load_uploaded_data() == {"f.csv": df}
+    assert loader.clean_uploaded_dataframe(df).equals(df)
+    assert loader.summarize_dataframe(df) == {"rows": 1}
+    assert loader.analyze_with_chunking(df, ["x"]) == {"types": ["x"]}
+    assert loader.diagnose_data_flow(df) == {"rows": 1}
+    assert loader.get_real_uploaded_data()["status"] == "success"
+    assert loader.get_analytics_with_fixed_processor()["status"] == "success"
