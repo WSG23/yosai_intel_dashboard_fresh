@@ -8,6 +8,11 @@ _legacy_map = {
     "core": "yosai_intel_dashboard.src.core",
     "services": "yosai_intel_dashboard.src.services",
     "models": "yosai_intel_dashboard.src.core.domain",
+    "config": "yosai_intel_dashboard.src.infrastructure.config",
+    "security": "yosai_intel_dashboard.src.infrastructure.security",
+    "monitoring": "yosai_intel_dashboard.src.infrastructure.monitoring",
+    "api": "yosai_intel_dashboard.src.adapters.api",
+    "plugins": "yosai_intel_dashboard.src.plugins",
 }
 
 for old, new in _legacy_map.items():
