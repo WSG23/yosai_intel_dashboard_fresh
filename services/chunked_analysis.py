@@ -11,7 +11,7 @@ from dask.distributed import Client, LocalCluster
 
 from analytics.chunked_analytics_controller import ChunkedAnalyticsController
 from config.config import get_analytics_config
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 
 from .result_formatting import regular_analysis
 

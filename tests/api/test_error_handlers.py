@@ -2,7 +2,7 @@ import types
 from flask import Flask, Blueprint
 
 from core.error_handlers import register_error_handlers
-from core.exceptions import ValidationError
+from core.exceptions import ValidationError, ServiceUnavailableError
 
 
 def _create_app():
@@ -14,6 +14,14 @@ def _create_app():
     @bp.route('/fail')
     def fail_route():
         raise ValidationError('bad')
+
+    @bp.route('/unavail')
+    def unavail_route():
+        raise ServiceUnavailableError('maintenance')
+
+    @bp.route('/internal')
+    def internal_route():
+        raise RuntimeError('boom')
 
     app.register_blueprint(bp)
     return app
@@ -28,3 +36,23 @@ def test_yosai_base_exception_handled():
     body = resp.get_json()
     assert body["code"] == "invalid_input"
     assert body["message"] == "bad"
+
+
+def test_service_unavailable_error():
+    app = _create_app()
+    client = app.test_client()
+
+    resp = client.get('/unavail')
+    assert resp.status_code == 503
+    assert resp.get_json() == {"code": "unavailable", "message": "maintenance"}
+
+
+def test_generic_exception_handled():
+    app = _create_app()
+    client = app.test_client()
+
+    resp = client.get('/internal')
+    assert resp.status_code == 500
+    body = resp.get_json()
+    assert body["code"] == "internal"
+    assert body["message"] == "boom"

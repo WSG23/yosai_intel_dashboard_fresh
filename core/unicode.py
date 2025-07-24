@@ -29,7 +29,7 @@ from .security_patterns import (
     SQL_INJECTION_PATTERNS,
     XSS_PATTERNS,
 )
-from .unicode_handler import clean_unicode_surrogates
+from unicode_toolkit import clean_unicode_surrogates
 
 logger = logging.getLogger(__name__)
 

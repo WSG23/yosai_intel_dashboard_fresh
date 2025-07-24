@@ -20,6 +20,7 @@ See [React Component Architecture](react_component_architecture.md) for an overv
   the `security` package. Import `SecurityValidator` and
   `UnifiedFileValidator` from there instead of referencing the modules
   directly. The deprecated `SecureFileValidator` class has been removed.
+
 - **Separated Analytics Modules** – The previously monolithic
   `AnalyticsService` has been broken into smaller modules under
 `services/data_processing/` and `analytics/`.  `UnifiedFileValidator`,

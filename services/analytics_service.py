@@ -23,7 +23,7 @@ from core.protocols import (
     EventBusProtocol,
     StorageProtocol,
 )
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 from services.analytics.calculator import Calculator
 from services.analytics.data_loader import DataLoader
 from services.analytics.protocols import DataProcessorProtocol

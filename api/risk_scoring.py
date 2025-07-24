@@ -7,7 +7,7 @@ from app import app
 from flask import abort, jsonify, request
 
 from analytics.risk_scoring import calculate_risk_score
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 
 
 @app.route("/api/v1/risk/score", methods=["POST"])

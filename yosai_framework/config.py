@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict
 
+from config.validator import YosaiConfig, validate_config
+
 import jsonschema
 import yaml
 
@@ -27,4 +29,16 @@ def load_config(path: str) -> ServiceConfig:
     for key, value in os.environ.items():
         if key.startswith("YOSAI_"):
             data[key[6:].lower()] = value
-    return ServiceConfig(**data)
+
+    cfg = ServiceConfig(**data)
+    errors = validate_config(
+        YosaiConfig(
+            service_name=cfg.service_name,
+            log_level=cfg.log_level,
+            metrics_addr=cfg.metrics_addr,
+            tracing_endpoint=cfg.tracing_endpoint,
+        )
+    )
+    if errors:
+        raise ValueError("; ".join(errors))
+    return cfg

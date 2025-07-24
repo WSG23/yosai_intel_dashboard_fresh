@@ -13,9 +13,13 @@ import (
 )
 
 func main() {
-	svc, err := framework.NewBaseService("event-processing", "config/service.yaml")
+	b, err := framework.NewServiceBuilder("event-processing", "config/service.yaml")
 	if err != nil {
-		log.Fatalf("failed to init base service: %v", err)
+		log.Fatalf("failed to init service builder: %v", err)
+	}
+	svc, err := b.Build()
+	if err != nil {
+		log.Fatalf("failed to build service: %v", err)
 	}
 
 	cfg, err := config.Load("")

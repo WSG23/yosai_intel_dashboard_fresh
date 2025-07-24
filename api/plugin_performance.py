@@ -8,7 +8,7 @@ from flask import abort, jsonify, request
 
 from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
 from core.plugins.performance_manager import EnhancedThreadSafePluginManager
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 

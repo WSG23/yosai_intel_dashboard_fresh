@@ -47,15 +47,18 @@ func validateRequiredEnv(vars []string) {
 }
 
 func main() {
-	svc, err := framework.NewBaseService("gateway", "")
+	b, err := framework.NewServiceBuilder("gateway", "")
 	if err != nil {
-		log.Fatalf("failed to init base service: %v", err)
+		log.Fatalf("failed to init service builder: %v", err)
+	}
+	svc, err := b.Build()
+	if err != nil {
+		log.Fatalf("failed to build service: %v", err)
 	}
 	go svc.Start()
 	defer svc.Stop()
 
 	validateRequiredEnv([]string{"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_GATEWAY_NAME"})
-
 
 	shutdown, err := tracing.InitTracing("gateway")
 	if err != nil {

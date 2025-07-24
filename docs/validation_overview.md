@@ -9,6 +9,7 @@ Use the unified package for all validation needs:
 ```python
 from security import SecurityValidator, UnifiedFileValidator
 
+
 validator = SecurityValidator()
 file_validator = UnifiedFileValidator()
 
@@ -40,6 +41,7 @@ All legacy validators have been removed. Update your code to use
 
 ```python
 from security import SecurityValidator, UnifiedFileValidator
+
 
 validator = SecurityValidator()
 file_validator = UnifiedFileValidator()

@@ -11,7 +11,7 @@ import pandas as pd
 from config.dynamic_config import dynamic_config
 from config.constants import DEFAULT_CHUNK_SIZE
 from core.performance import get_performance_monitor
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 from monitoring.data_quality_monitor import (
     DataQualityMetrics,
     get_data_quality_monitor,
