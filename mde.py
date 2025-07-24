@@ -1,15 +1,26 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 MVP Data Enhancement Tool - Thin Shell Around Existing Base Code
 Tests the complete upload flow using existing project architecture
 """
+
+def safe_str(obj):
+    """Handle unicode and encoding issues."""
+    try:
+        if isinstance(obj, bytes):
+            return obj.decode('utf-8', errors='replace')
+        return str(obj).encode('utf-8', errors='ignore').decode('utf-8', errors='replace')
+    except:
+        return repr(obj)
+
 import asyncio
 import sys
 from pathlib import Path
 
-# Add project root to path  
+# Add project root to path
 PROJECT_ROOT = Path(__file__).parent
-sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, safe_str(PROJECT_ROOT))
 
 import dash
 from dash import dcc, html, callback_context
@@ -261,7 +272,7 @@ class MVPTestApp(BaseDatabaseService):
                 
             except Exception as e:
                 logger.error(f"💥 Upload processing failed: {e}")
-                error_display = dbc.Alert(f"Processing failed: {str(e)}", color="danger")
+                error_display = dbc.Alert(f"Processing failed: {safe_str(e)}", color="danger")
                 return error_display, "", "", "", session_data
         
         @self.app.callback(
@@ -388,7 +399,7 @@ class MVPTestApp(BaseDatabaseService):
             ])
                     
         except Exception as e:
-            return dbc.Alert(f"Device mapping error: {str(e)}", color="warning")
+            return dbc.Alert(f"Device mapping error: {safe_str(e)}", color="warning")
 
     def _create_data_display(self, df):
         """Create data configuration UI with preview and action buttons."""

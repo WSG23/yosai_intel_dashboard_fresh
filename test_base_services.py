@@ -1,9 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Test base code service loading"""
+
+def safe_str(obj):
+    """Handle unicode and encoding issues."""
+    try:
+        if isinstance(obj, bytes):
+            return obj.decode('utf-8', errors='replace')
+        return str(obj).encode('utf-8', errors='ignore').decode('utf-8', errors='replace')
+    except:
+        return repr(obj)
+
 import sys
 from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent
-sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, safe_str(PROJECT_ROOT))
 
 try:
     print("🔍 Testing base code imports...")
