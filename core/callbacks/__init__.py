@@ -4,7 +4,7 @@
 is simply an alias of :class:`TrulyUnifiedCallbacks`.
 """
 
-from ..truly_unified_callbacks import Operation, TrulyUnifiedCallbacks
+from core.truly_unified_callbacks import Operation, TrulyUnifiedCallbacks
 
 # Alias kept for backwards compatibility
 UnifiedCallbackManager = TrulyUnifiedCallbacks

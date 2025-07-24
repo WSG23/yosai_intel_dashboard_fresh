@@ -4,7 +4,10 @@ from typing import Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
+from analytics.clients.analytics_client.analytics_service_client.types import (
+    UNSET,
+    Unset,
+)
 
 T = TypeVar("T", bound="PostApiV1AnalyticsGetAccessPatternsAnalysisBody")
 
@@ -39,7 +42,9 @@ class PostApiV1AnalyticsGetAccessPatternsAnalysisBody:
             days=days,
         )
 
-        post_api_v1_analytics_get_access_patterns_analysis_body.additional_properties = d
+        post_api_v1_analytics_get_access_patterns_analysis_body.additional_properties = (
+            d
+        )
         return post_api_v1_analytics_get_access_patterns_analysis_body
 
     @property

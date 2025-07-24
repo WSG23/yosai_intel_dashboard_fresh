@@ -5,8 +5,8 @@ import re
 from collections import Counter
 from typing import Any, Dict, List, Optional
 
-from ..config import EntryClassificationConfig
-from ..database.csv_storage import CSVStorageRepository
+from plugins.ai_classification.config import EntryClassificationConfig
+from plugins.ai_classification.database.csv_storage import CSVStorageRepository
 
 logger = logging.getLogger(__name__)
 
