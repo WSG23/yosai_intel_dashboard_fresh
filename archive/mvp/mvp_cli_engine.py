@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 import argparse
 import json
 from pathlib import Path
@@ -73,12 +78,12 @@ def process_file(
     filepath: Path, output: Path, validate_only: bool, debug: bool
 ) -> None:
     if debug:
-        print(f"Processing {filepath} -> {output}")
+        logger.info(f"Processing {filepath} -> {output}")
     df = load_dataframe(filepath, debug=debug)
     verifier = DataVerificationComponent()
     df, mapping = verifier.verify_dataframe(df)
     if validate_only:
-        print("Validation complete. Exiting due to --validate-only flag.")
+        logger.info("Validation complete. Exiting due to --validate-only flag.")
         return
     if Processor:
         try:
@@ -90,7 +95,7 @@ def process_file(
     out_file = output / f"{filepath.stem}_analytics.json"
     safe_file_write(out_file, json.dumps(analytics, indent=2))
     verifier.save_verification(mapping, output / f"{filepath.stem}_verification.json")
-    print(f"✅ Results saved to {output}")
+    logger.info(f"✅ Results saved to {output}")
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -112,7 +117,7 @@ def main(argv: list[str] | None = None) -> None:
             import traceback
 
             traceback.print_exc()
-        print(f"❌ Processing failed: {clean_text(str(exc))}")
+        logger.error(f"❌ Processing failed: {clean_text(str(exc))}")
 
 
 if __name__ == "__main__":

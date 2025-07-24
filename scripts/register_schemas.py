@@ -1,5 +1,10 @@
 """Register Avro schemas with the Confluent Schema Registry."""
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 from __future__ import annotations
 
 import json
@@ -33,7 +38,9 @@ def register_schema(file_path: Path) -> bool:
     url = f"{SCHEMA_REGISTRY_URL}/subjects/{subject}/versions"
     response = requests.post(url, headers=HEADERS, data=payload, timeout=10)
     if response.status_code >= 300:
-        print(f"Failed to register {subject}: {response.status_code} {response.text}", file=sys.stderr)
+        logger.error(
+            f"Failed to register {subject}: {response.status_code} {response.text}"
+        )
         return False
 
     # Try to read version from response, otherwise fetch it
@@ -41,14 +48,13 @@ def register_schema(file_path: Path) -> bool:
     if version is None:
         vers_resp = requests.get(url.rsplit("/", 1)[0] + "/versions", timeout=10)
         if vers_resp.status_code >= 300:
-            print(
-                f"Failed retrieving version for {subject}: {vers_resp.status_code} {vers_resp.text}",
-                file=sys.stderr,
+            logger.error(
+                f"Failed retrieving version for {subject}: {vers_resp.status_code} {vers_resp.text}"
             )
             return False
         version = max(vers_resp.json())
 
-    print(f"Registered {subject} version {version}")
+    logger.info(f"Registered {subject} version {version}")
     return True
 
 
