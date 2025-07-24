@@ -1,15 +1,16 @@
-from pathlib import Path
+from __future__ import annotations
+
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from core.unicode import clean_unicode_text, safe_encode_text, UnicodeSecurityProcessor
+from unicode_toolkit import clean_unicode_text, safe_encode_text
 
 
 def main() -> None:
-    assert clean_unicode_text("A\uD800B") == "AB"
+    assert clean_unicode_text("A\ud800B") == "AB"
     assert safe_encode_text("test") == "test"
-    assert UnicodeSecurityProcessor.sanitize_input("<x>") == "&lt;x&gt;"
     print("All checks passed")
 
 

@@ -60,6 +60,8 @@ clean_df = sanitize_dataframe(df)
 ## Detailed Migration Steps
 
 ### Step 1: Identify Legacy Usage
+Run `python tools/audit_unicode_usage.py` to list files that still import
+`core.unicode`. These modules should be updated to use `unicode_toolkit`.
 ### Step 2: Update Import Statements
 ### Step 3: Update Function Calls
 ### Step 4: Test Migration
