@@ -51,3 +51,6 @@ REQUIREMENTS:
 - Performance comparison data
 - Security improvement documentation
 
+
+### Error Handling Migration
+Use `core.error_handling` for unified decorators and circuit breakers. Replace custom @app.errorhandler code with `register_error_handlers` and wrap functions with `with_error_handling`.
