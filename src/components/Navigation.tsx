@@ -63,7 +63,7 @@ const Navigation: React.FC<NavigationProps> = ({
 
   if (orientation === 'vertical') {
     return (
-      <nav className={cn("flex flex-col space-y-2", className)}>
+      <nav className={cn("flex flex-col space-y-2", className)} aria-label="Main navigation">
         {navigationItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -77,6 +77,7 @@ const Navigation: React.FC<NavigationProps> = ({
                   : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
               )}
               title={item.description}
+              aria-current={isActive(item.href) ? "page" : undefined}
             >
               <Icon className="h-5 w-5" />
               <span>{item.name}</span>
@@ -88,7 +89,7 @@ const Navigation: React.FC<NavigationProps> = ({
   }
 
   return (
-    <nav className={cn("flex items-center space-x-1", className)}>
+    <nav className={cn("flex items-center space-x-1", className)} aria-label="Main navigation">
       {navigationItems.map((item) => {
         const Icon = item.icon;
         return (
@@ -102,6 +103,7 @@ const Navigation: React.FC<NavigationProps> = ({
                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
             )}
             title={item.description}
+            aria-current={isActive(item.href) ? "page" : undefined}
           >
             <Icon className="h-4 w-4" />
             <span className="hidden sm:inline">{item.name}</span>

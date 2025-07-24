@@ -143,11 +143,12 @@ export const ColumnMappingModal: React.FC<Props> = ({
             {/* Mapping Table */}
             <div className="space-y-4">
               <table className="w-full">
+                <caption className="sr-only">Column mappings</caption>
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="text-left py-3 px-4">Original Column</th>
-                    <th className="text-left py-3 px-4">AI Confidence</th>
-                    <th className="text-left py-3 px-4">Map to Field</th>
+                    <th scope="col" className="text-left py-3 px-4">Original Column</th>
+                    <th scope="col" className="text-left py-3 px-4">AI Confidence</th>
+                    <th scope="col" className="text-left py-3 px-4">Map to Field</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -172,6 +173,7 @@ export const ColumnMappingModal: React.FC<Props> = ({
                           value={mapping.mappedTo}
                           onChange={(value) => handleMappingChange(index, value)}
                           options={STANDARD_FIELDS}
+                          aria-label={`Map column ${mapping.originalColumn}`}
                           className={mapping.confidence < 0.5 ? 'border-yellow-500' : ''}
                         />
                       </td>
