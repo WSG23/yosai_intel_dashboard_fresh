@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import configparser
 import logging
+import os
 from logging.config import fileConfig
 from typing import Iterable
 
@@ -14,6 +15,14 @@ logger = logging.getLogger(__name__)
 
 parser = configparser.ConfigParser()
 parser.read(config.config_file_name)
+
+for section in parser.sections():
+    if section.endswith("_db"):
+        env_var = f"{section[:-3].upper()}_DB_URL"
+        override = os.getenv(env_var)
+        if override:
+            parser.set(section, "sqlalchemy.url", override)
+            logger.info("Overriding %s URL from %s", section, env_var)
 
 
 def _db_sections() -> Iterable[str]:

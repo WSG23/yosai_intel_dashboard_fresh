@@ -1269,11 +1269,20 @@ returns a non-zero status.
 
 ### Schema Migrations and Replication
 
-Database schema changes are managed with **Alembic** under `database/migrations/`.
+Database schema changes are managed with **Alembic**. The configuration file at
+`migrations/alembic.ini` defines separate `[gateway_db]`, `[events_db]` and
+`[analytics_db]` sections so that all three databases can be migrated in one go.
+Each section provides a `sqlalchemy.url` pointing at the appropriate database.
+
+If the default URLs do not match your environment you can override them using
+environment variables named `GATEWAY_DB_URL`, `EVENTS_DB_URL` and
+`ANALYTICS_DB_URL`. These variables take precedence over the values in the
+configuration file.
+
 Run migrations with:
 
 ```bash
-alembic -c database/migrations/alembic.ini upgrade head
+alembic -c migrations/alembic.ini upgrade head
 ```
 
 New access events are replicated from PostgreSQL to TimescaleDB by
@@ -1282,6 +1291,14 @@ job periodically (for example via `cron` or a Kubernetes CronJob):
 
 ```bash
 python scripts/replicate_to_timescale.py
+```
+
+For convenience the repository provides a wrapper script which upgrades all
+databases defined in the configuration:
+
+```bash
+python scripts/db_migration_cli.py upgrade
+python scripts/db_migration_cli.py current
 ```
 
 
