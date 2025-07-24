@@ -4,6 +4,8 @@ from typing import Dict, Optional, Any
 
 import re
 
+from mapping.models import ColumnRules, load_rules
+
 import pandas as pd
 
 # Standard column mapping used across the project
@@ -46,10 +48,32 @@ def map_and_clean(
     return df
 
 
-def standardize_column_names(df: pd.DataFrame) -> pd.DataFrame:
-    """Return a new DataFrame with normalized snake_case column names."""
+def standardize_column_names(
+    df: pd.DataFrame, rules: ColumnRules | None = None
+) -> pd.DataFrame:
+    """Return a new DataFrame with normalized column names."""
 
+    rules = rules or load_rules()
     df_out = df.copy()
+
+    mappings: Dict[str, list[str]] = {**rules.english}
+    for key, vals in rules.japanese.items():
+        mappings.setdefault(key, []).extend(vals)
+
+    reverse: Dict[str, str] = {}
+    for canon, aliases in mappings.items():
+        reverse[canon.lower()] = canon
+        for alias in aliases:
+            reverse[str(alias).lower()] = canon
+
+    renamed: Dict[str, str] = {}
+    for col in df_out.columns:
+        target = reverse.get(str(col).lower())
+        if target:
+            renamed[col] = target
+    if renamed:
+        df_out = df_out.rename(columns=renamed)
+
     df_out.columns = [
         re.sub(r"\W+", "_", str(c)).strip("_").lower() for c in df_out.columns
     ]
