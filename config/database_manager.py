@@ -20,7 +20,7 @@ from database.query_optimizer import DatabaseQueryOptimizer
 if TYPE_CHECKING:  # pragma: no cover - for type hints
     from .connection_pool import DatabaseConnectionPool
 
-from .base import DatabaseConfig
+from .schema import DatabaseSettings
 from .database_exceptions import ConnectionValidationFailed, DatabaseError
 from .protocols import (
     ConnectionRetryManagerProtocol,
@@ -59,7 +59,7 @@ class MockConnection:
 class SQLiteConnection:
     """SQLite database connection"""
 
-    def __init__(self, config: DatabaseConfig):
+    def __init__(self, config: DatabaseSettings):
         self.config = config
         self.db_path = config.name
         self._connection: Optional[sqlite3.Connection] = None
@@ -139,7 +139,7 @@ class SQLiteConnection:
 class PostgreSQLConnection:
     """PostgreSQL database connection (requires psycopg2)"""
 
-    def __init__(self, config: DatabaseConfig):
+    def __init__(self, config: DatabaseSettings):
         self.config = config
         self._connection = None
         self._connect()
@@ -233,7 +233,7 @@ class PostgreSQLConnection:
 class DatabaseManager:
     """Database manager factory"""
 
-    def __init__(self, config: DatabaseConfig):
+    def __init__(self, config: DatabaseSettings):
         self.config = config
         self._connection: Optional[DatabaseConnection] = None
 
@@ -278,7 +278,7 @@ class DatabaseManager:
 class ThreadSafeDatabaseManager(DatabaseManager):
     """DatabaseManager with thread-safe lazy pool creation."""
 
-    def __init__(self, config: DatabaseConfig) -> None:
+    def __init__(self, config: DatabaseSettings) -> None:
         super().__init__(config)
         self._lock = threading.RLock()
         self._pool: Optional[Any] = None
@@ -314,14 +314,14 @@ class ThreadSafeDatabaseManager(DatabaseManager):
 
 
 # Factory function
-def create_database_manager(config: DatabaseConfig) -> DatabaseManager:
+def create_database_manager(config: DatabaseSettings) -> DatabaseManager:
     """Create database manager from config"""
     return DatabaseManager(config)
 
 
 # Export main classes
 __all__ = [
-    "DatabaseConfig",
+    "DatabaseSettings",
     "DatabaseConnection",
     "MockConnection",
     "SQLiteConnection",
@@ -339,10 +339,11 @@ class EnhancedPostgreSQLManager(DatabaseManager):
 
     def __init__(
         self,
-        config: DatabaseConfig,
+        config: DatabaseSettings,
         retry_config: RetryConfigProtocol | None = None,
     ) -> None:
         super().__init__(config)
+        self.optimizer = DatabaseQueryOptimizer()
         from database.connection_pool import EnhancedConnectionPool
         from database.performance_analyzer import DatabasePerformanceAnalyzer
 

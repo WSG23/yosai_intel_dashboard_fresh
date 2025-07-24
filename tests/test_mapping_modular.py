@@ -4,6 +4,8 @@ from mapping.storage.base import MemoryStorage
 from mapping.processors.column_processor import ColumnProcessor
 from mapping.processors.device_processor import DeviceProcessor
 from mapping.processors.ai_processor import AIColumnMapperAdapter
+from mapping.models import MappingModel
+from core.service_container import ServiceContainer
 
 
 class DummyAdapter:
@@ -12,6 +14,15 @@ class DummyAdapter:
 
     def save_verified_mappings(self, filename, mapping, metadata):
         return True
+
+
+class DummyModel:
+    def __init__(self):
+        self.called = False
+
+    def suggest(self, df, filename):
+        self.called = True
+        return {c: {"field": c.lower(), "confidence": 1.0} for c in df.columns}
 
 
 def test_memory_storage_roundtrip():
@@ -29,3 +40,17 @@ def test_column_and_device_processing():
     device_proc = DeviceProcessor()
     devices = device_proc.process(result.data)
     assert devices.metadata["devices"] == ["Door1"]
+
+
+def test_column_processor_uses_registered_model():
+    df = pd.DataFrame({"A": [1], "B": [2]})
+    container = ServiceContainer()
+    model = DummyModel()
+    container.register_singleton("mapping_model:dummy", model, protocol=MappingModel)
+    proc = ColumnProcessor(
+        ai_adapter=AIColumnMapperAdapter(DummyAdapter(), container=container),
+        container=container,
+    )
+    result = proc.process(df, "file.csv", model_key="dummy")
+    assert model.called
+    assert result.suggestions["A"]["field"] == "a"

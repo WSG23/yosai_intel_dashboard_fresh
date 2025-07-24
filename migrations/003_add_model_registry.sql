@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS ml_models (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    version VARCHAR(50),
+    framework VARCHAR(50),
+    path VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);

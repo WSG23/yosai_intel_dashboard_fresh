@@ -1,0 +1,51 @@
+timestamp:
+  - timestamp
+  - time
+  - date
+  - datetime
+  - event_time
+  - created_at
+person_id:
+  - person id
+  - person
+  - user
+  - user id
+  - employee
+  - badge
+  - card_id
+door_id:
+  - door
+  - door id
+  - device
+  - device name
+  - reader
+  - location
+  - access_point
+access_result:
+  - access result
+  - result
+  - status
+  - outcome
+  - decision
+direction:
+  - direction
+  - entry_exit
+  - in_out
+floor:
+  - floor
+  - level
+zone_id:
+  - zone
+  - zone id
+facility_id:
+  - facility
+  - facility id
+  - building
+token_id:
+  - token id
+  - badge id
+  - card id
+event_type:
+  - event type
+  - type
+  - category

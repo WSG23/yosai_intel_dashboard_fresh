@@ -29,6 +29,9 @@ jobs:
         run: |
           pip install -r requirements.lock
           pip install -r requirements-test.txt
+      - name: Validate directory structure
+        if: matrix.job == 'python'
+        run: python scripts/validate_structure.py
       - name: Run Python tests
         if: matrix.job == 'python'
         run: |

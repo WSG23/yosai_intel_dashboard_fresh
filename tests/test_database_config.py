@@ -1,6 +1,6 @@
 import pytest
 
-from config import DatabaseConfig
+from config import DatabaseSettings
 from tests.fake_configuration import FakeConfiguration
 from config.connection_pool import DatabaseConnectionPool
 from config.database_manager import MockConnection
@@ -11,7 +11,7 @@ def factory():
 
 
 def test_database_config_default_pool_sizes():
-    cfg = DatabaseConfig()
+    cfg = DatabaseSettings()
     fake_cfg = FakeConfiguration()
     assert cfg.initial_pool_size == fake_cfg.get_db_pool_size()
     assert cfg.max_pool_size == cfg.initial_pool_size * 2
