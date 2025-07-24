@@ -26,3 +26,9 @@ accessors like `get_app_config()` and `get_database_config()`.  Services obtain
 it from the dependency injection container and operate purely on the typed
 protobuf object.
 
+When loading configuration directly via `UnifiedLoader` the loader applies
+`EnvironmentProcessor` automatically. Any environment variables prefixed with
+`YOSAI_` will override the corresponding fields in the resulting protobuf
+message. This mirrors the behaviour of the traditional dataclass configuration
+pipeline.
+
