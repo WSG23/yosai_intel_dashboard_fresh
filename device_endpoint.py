@@ -29,6 +29,49 @@ def determine_device_column(column_mappings: dict, df: pd.DataFrame) -> str | No
     return None
 
 
+def build_user_device_mappings(user_mappings: dict) -> dict:
+    """Convert stored user mappings into the endpoint format."""
+
+    device_mappings: dict[str, dict] = {}
+    for device, mapping in user_mappings.items():
+        device_mappings[device] = {
+            "device_type": mapping.get("device_type", "unknown"),
+            "location": mapping.get("location"),
+            "properties": mapping.get("properties", {}),
+            "confidence": 1.0,
+            "source": "user_confirmed",
+        }
+    return device_mappings
+
+
+def build_ai_device_mappings(
+    df: pd.DataFrame, filename: str, upload_service
+) -> dict:
+    """Generate mappings for AI-suggested devices."""
+
+    from services.ai_mapping_store import ai_mapping_store
+
+    ai_mapping_store.clear()
+    learned_applied = upload_service.auto_apply_learned_mappings(df, filename)
+
+    if not learned_applied:
+        from components import simple_device_mapping as sdm
+
+        sdm.generate_ai_device_defaults(df, "auto")
+
+    store_mappings = ai_mapping_store.all()
+    device_mappings: dict[str, dict] = {}
+    for device, mapping in store_mappings.items():
+        device_mappings[device] = {
+            "device_type": mapping.get("device_type", "unknown"),
+            "location": mapping.get("location"),
+            "properties": mapping.get("properties", {}),
+            "confidence": mapping.get("confidence", 0.8),
+            "source": mapping.get("source", "ai_suggested"),
+        }
+    return device_mappings
+
+
 def build_device_mappings(
     filename: str,
     df: pd.DataFrame,
@@ -36,40 +79,11 @@ def build_device_mappings(
     upload_service,
 ) -> dict:
     """Construct the device mapping dictionary for *df* and *filename*."""
-    device_mappings: dict[str, dict] = {}
-
     user_mappings = device_service.get_user_device_mappings(filename)
     if user_mappings:
-        for device, mapping in user_mappings.items():
-            device_mappings[device] = {
-                "device_type": mapping.get("device_type", "unknown"),
-                "location": mapping.get("location"),
-                "properties": mapping.get("properties", {}),
-                "confidence": 1.0,
-                "source": "user_confirmed",
-            }
-    else:
-        from services.ai_mapping_store import ai_mapping_store
+        return build_user_device_mappings(user_mappings)
 
-        ai_mapping_store.clear()
-        learned_applied = upload_service.auto_apply_learned_mappings(df, filename)
-
-        if not learned_applied:
-            from components import simple_device_mapping as sdm
-
-            sdm.generate_ai_device_defaults(df, "auto")
-
-        store_mappings = ai_mapping_store.all()
-        for device, mapping in store_mappings.items():
-            device_mappings[device] = {
-                "device_type": mapping.get("device_type", "unknown"),
-                "location": mapping.get("location"),
-                "properties": mapping.get("properties", {}),
-                "confidence": mapping.get("confidence", 0.8),
-                "source": mapping.get("source", "ai_suggested"),
-            }
-
-    return device_mappings
+    return build_ai_device_mappings(df, filename, upload_service)
 
 
 @device_bp.route("/v1/ai/suggest-devices", methods=["POST"])

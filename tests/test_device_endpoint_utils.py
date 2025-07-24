@@ -21,6 +21,8 @@ from device_endpoint import (
     load_stored_data,
     determine_device_column,
     build_device_mappings,
+    build_user_device_mappings,
+    build_ai_device_mappings,
 )
 
 class DummyUploadService:
@@ -86,4 +88,30 @@ def test_build_device_mappings_ai(monkeypatch):
     sys.modules["components"] = components_pkg
     sys.modules["components.simple_device_mapping"] = sdm_stub
     mapping = build_device_mappings("f.csv", df, dsvc, usvc)
+    assert mapping["dev"]["source"] == "ai_suggested"
+
+
+def test_build_user_device_mappings_helper():
+    user_map = {"dev": {"device_type": "door", "properties": {"a": 1}}}
+    result = build_user_device_mappings(user_map)
+    assert result["dev"]["device_type"] == "door"
+    assert result["dev"]["confidence"] == 1.0
+    assert result["dev"]["source"] == "user_confirmed"
+
+
+def test_build_ai_device_mappings_helper(monkeypatch):
+    df = pd.DataFrame({})
+    ai_map = {"dev": {"device_type": "door", "confidence": 0.7}}
+    from services.ai_mapping_store import ai_mapping_store
+    monkeypatch.setattr(ai_mapping_store, "clear", lambda: None)
+    monkeypatch.setattr(ai_mapping_store, "all", lambda: ai_map)
+    usvc = DummyUploadService({})
+    monkeypatch.setattr(usvc, "auto_apply_learned_mappings", lambda df, fn: False)
+    sdm_stub = types.ModuleType("components.simple_device_mapping")
+    sdm_stub.generate_ai_device_defaults = lambda df, profile="auto": None
+    components_pkg = types.ModuleType("components")
+    components_pkg.simple_device_mapping = sdm_stub
+    sys.modules["components"] = components_pkg
+    sys.modules["components.simple_device_mapping"] = sdm_stub
+    mapping = build_ai_device_mappings(df, "f.csv", usvc)
     assert mapping["dev"]["source"] == "ai_suggested"
