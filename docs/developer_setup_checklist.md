@@ -16,7 +16,7 @@ This checklist summarizes the basic steps required to prepare a development envi
 3. Install the **Black** plugin (or add it as an external tool) and enable it as the formatter.
 
 ## Pre‑commit Hooks
-1. Install the dependencies and `pre-commit`:
+1. Install the dependencies (including test packages) and `pre-commit`:
    ```bash
    ./scripts/setup.sh
    pip install pre-commit

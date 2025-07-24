@@ -129,8 +129,9 @@ with this Python release and newer.
    ```bash
    ./scripts/setup.sh
    ```
-   The script installs both `requirements.txt` and `requirements-dev.txt` from
-   PyPI (or a local `packages/` directory if present) and runs `npm install` to
+   The script installs `requirements.txt`, `requirements-dev.txt`, and
+   `requirements-test.txt` from PyPI (or a local `packages/` directory if
+   present) and runs `npm install` to
    fetch Node dependencies. The Python requirements now include the Kafka
    clients `confluent-kafka` and `fastavro`. Ensure dependencies are installed
    **before** running Pyright or using the Pylance extension. Missing packages
@@ -345,6 +346,7 @@ following steps:
    ```bash
    pip install -r requirements.txt
    pip install -r requirements-dev.txt
+   pip install -r requirements-test.txt
    # or simply run ./scripts/setup.sh
    ```
 5. If Dash packages behave unexpectedly, reinstall them with pinned versions:
@@ -427,7 +429,7 @@ schema in `schemas/access-event.avsc` with your schema registry (set
 
 Install dependencies before running the tests:
 ```bash
-# Option 1: use the helper script
+# Option 1: use the helper script (installs test requirements as well)
 ./scripts/setup.sh
 # Option 2: install packages manually
 pip install -r requirements.txt -r requirements-test.txt
@@ -505,7 +507,8 @@ critical vulnerabilities are detected. Download the artifact from the
 
 **Note:** The file upload and column mapping functionality relies on `pandas`.
 If `pandas` is missing these pages will be disabled. Ensure you run
-`pip install -r requirements.txt` and `pip install -r requirements-dev.txt` to
+`pip install -r requirements.txt`, `pip install -r requirements-dev.txt` and
+`pip install -r requirements-test.txt` to
 install all dependencies (or execute `./scripts/setup.sh`).
 `PerformanceMonitor` requires `psutil` for CPU and memory metrics, and the
 file processing utilities depend on `chardet` to detect text encoding.
