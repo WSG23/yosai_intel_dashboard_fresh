@@ -26,6 +26,7 @@ This project follows a fully modular design built around a dependency injection 
 - [React Component Architecture](docs/react_component_architecture.md)
 - [Validation Overview](docs/validation_overview.md)
 - [Error Response Contract](docs/error_contract.md)
+- [Error Handling](docs/error_handling.md)
 - [Model Cards](docs/model_cards.md)
 - [Data Versioning](docs/data_versioning.md)
 - [Data Processing](docs/data_processing.md)
@@ -504,6 +505,7 @@ critical vulnerabilities are detected. Download the artifact from the
 - **Metrics & Monitoring**: `PerformanceMonitor` tracks system performance
   using `psutil`.
 - **Dependabot Updates**: Python dependencies automatically kept up-to-date.
+- **Unified Error Handling**: Use `core.error_handling` decorators and middleware for consistent logging
 
 **Note:** The file upload and column mapping functionality relies on `pandas`.
 If `pandas` is missing these pages will be disabled. Ensure you run

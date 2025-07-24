@@ -13,6 +13,7 @@ into your existing Yōsai Intel application
 from flask import Flask
 from flask_login import login_required
 from config import create_config_manager
+from core.error_handlers import register_error_handlers
 from core.container import Container
 from database.connection import create_database_connection
 
@@ -37,6 +38,7 @@ def create_app(config_name: str = None) -> Flask:
     Enhanced app factory with full compliance integration
     """
     app = Flask(__name__)
+    register_error_handlers(app)
     
     # Load configuration
     config_manager = create_config_manager()
