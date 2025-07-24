@@ -1,0 +1,15 @@
+project: yosai_intel_dashboard
+registry: data/feature_repo/registry.db
+provider: local
+online_store:
+  type: redis
+  connection_string: "redis://localhost:6379"
+offline_store:
+  type: postgres
+  host: localhost
+  port: 5432
+  database: feast
+  db_schema: public
+  user: feast
+  password: feast
+entity_key_serialization_version: 2

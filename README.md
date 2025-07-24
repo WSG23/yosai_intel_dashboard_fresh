@@ -38,6 +38,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Comprehensive Testing Strategy](docs/comprehensive_testing_strategy.md)
 - [Service Mesh Evaluation](docs/service_mesh_evaluation.md)
 - [Internal Service Interfaces](docs/internal_services.md)
+- [Feature Store](docs/feature_store.md)
 
 <p align="center">
   <img src="docs/architecture.svg" alt="High-level architecture diagram" width="600" />
