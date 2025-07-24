@@ -56,7 +56,7 @@ def create_config_manager(
     else:
         loader = validator = transformer = None
 
-    loader = loader or HierarchicalLoader()
+    loader = loader or UnifiedLoader()
     validator = validator or ConfigValidator()
     transformer = transformer or ConfigTransformer()
 
