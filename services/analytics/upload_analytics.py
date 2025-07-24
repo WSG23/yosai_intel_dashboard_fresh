@@ -6,11 +6,12 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
+from core.security_validator import SecurityValidator
 from services.analytics_summary import summarize_dataframe
 from services.chunked_analysis import analyze_with_chunking
-from core.security_validator import SecurityValidator
-
-from ..upload_processing import UploadAnalyticsProcessor as _UploadAnalyticsProcessor
+from services.upload_processing import (
+    UploadAnalyticsProcessor as _UploadAnalyticsProcessor,
+)
 
 
 def summarize_dataframes(dfs: List[pd.DataFrame]) -> Dict[str, Any]:
@@ -23,7 +24,9 @@ def summarize_dataframes(dfs: List[pd.DataFrame]) -> Dict[str, Any]:
     return summary
 
 
-def run_anomaly_detection(df: pd.DataFrame, validator: SecurityValidator) -> Dict[str, Any]:
+def run_anomaly_detection(
+    df: pd.DataFrame, validator: SecurityValidator
+) -> Dict[str, Any]:
     """Run anomaly detection using chunked analysis."""
     return analyze_with_chunking(df, validator, ["anomaly"])
 
@@ -37,4 +40,3 @@ __all__ = [
     "run_anomaly_detection",
     "UploadAnalyticsProcessor",
 ]
-

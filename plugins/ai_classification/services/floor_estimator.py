@@ -5,8 +5,8 @@ import re
 from collections import Counter
 from typing import Any, Dict, List, Set
 
-from ..config import FloorEstimationConfig
-from ..database.csv_storage import CSVStorageRepository
+from plugins.ai_classification.config import FloorEstimationConfig
+from plugins.ai_classification.database.csv_storage import CSVStorageRepository
 
 logger = logging.getLogger(__name__)
 
