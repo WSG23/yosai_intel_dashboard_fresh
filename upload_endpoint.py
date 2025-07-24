@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import base64
 
 from flask import Blueprint, abort, jsonify, request
@@ -37,7 +38,7 @@ def upload_files():
                 if not file.filename:
                     continue
                 file_bytes = file.read()
-                b64 = base64.b64encode(file_bytes).decode()
+                b64 = base64.b64encode(file_bytes).decode('utf-8', errors='replace')
                 mime = file.mimetype or "application/octet-stream"
                 contents.append(f"data:{mime};base64,{b64}")
                 filenames.append(file.filename)
