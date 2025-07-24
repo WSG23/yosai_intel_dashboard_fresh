@@ -152,3 +152,36 @@ async def test_unauthorized_request():
         assert resp.json() == {
             "detail": {"code": "unauthorized", "message": "unauthorized"}
         }
+
+
+@pytest.mark.asyncio
+async def test_model_registry_endpoints(tmp_path):
+    module, _, _ = load_app()
+    module.app.state.model_dir = tmp_path
+    module.app.state.model_registry = {}
+    token = jwt.encode(
+        {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
+        "secret",
+        algorithm="HS256",
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    transport = httpx.ASGITransport(app=module.app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        files = {"file": ("model.bin", b"data")}
+        data = {"name": "demo", "version": "1"}
+        resp = await client.post("/api/v1/models/register", headers=headers, data=data, files=files)
+        assert resp.status_code == 200
+        assert resp.json()["version"] == "1"
+
+        resp = await client.get("/api/v1/models/demo", headers=headers)
+        assert resp.status_code == 200
+        assert resp.json()["versions"] == ["1"]
+
+        resp = await client.post(
+            "/api/v1/models/demo/rollback",
+            headers=headers,
+            data={"version": "1"},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["active_version"] == "1"
