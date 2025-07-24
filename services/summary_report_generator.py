@@ -7,15 +7,19 @@ import pandas as pd
 
 from .analytics_processor import AnalyticsProcessor
 from .summary_reporter import format_patterns_result
+from .base_database_service import BaseDatabaseService
 
 logger = logging.getLogger(__name__)
 
 
-class SummaryReportGenerator:
+class SummaryReportGenerator(BaseDatabaseService):
     """Generate summary reports for pattern analysis."""
 
-    def __init__(self) -> None:
-        self.processor = AnalyticsProcessor()
+    @property
+    def processor(self) -> AnalyticsProcessor:
+        if not hasattr(self, "_processor"):
+            self._processor = AnalyticsProcessor()
+        return self._processor
 
     def calculate_stats(self, df: pd.DataFrame) -> Tuple[int, int, int, int]:
         """Return basic statistics for pattern analysis."""

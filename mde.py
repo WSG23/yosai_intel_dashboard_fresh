@@ -27,6 +27,7 @@ from components.simple_device_mapping import (
 )
 from core.master_callback_system import MasterCallbackSystem
 import logging
+from services.base_database_service import BaseDatabaseService
 
 # Import existing base code (no custom implementations)
 from config.service_registration import register_upload_services
@@ -41,10 +42,11 @@ from analytics.db_interface import AnalyticsDataAccessor
 # Module logger configured in __main__
 logger = logging.getLogger(__name__)
 
-class MVPTestApp:
+class MVPTestApp(BaseDatabaseService):
     """Minimal test wrapper around existing base code"""
     
-    def __init__(self):
+    def __init__(self) -> None:
+        super().__init__(None)
         self.container = ServiceContainer()
         self.upload_service: UploadProcessingService | None = None
         self.learning_service: DeviceLearningService | None = None
