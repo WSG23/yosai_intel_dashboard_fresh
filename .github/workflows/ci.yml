@@ -21,7 +21,7 @@ jobs:
           pip install -r requirements.lock
           pip install -r requirements-test.txt
       - name: Generate OpenAPI spec
-        working-directory: ./api/openapi
+        working-directory: ./openapi
         run: go run .
       - name: Generate client SDKs
         run: ./scripts/generate_clients.sh

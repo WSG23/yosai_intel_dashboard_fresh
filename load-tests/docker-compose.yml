@@ -49,7 +49,7 @@ services:
 
   event-ingestion:
     build:
-      context: ../services/event-ingestion
+      context: ../yosai_intel_dashboard/src/services/event-ingestion
       dockerfile: Dockerfile
     environment:
       KAFKA_BROKERS: kafka:9092

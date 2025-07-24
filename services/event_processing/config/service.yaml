@@ -1,4 +1,0 @@
-service_name: event-processing
-log_level: INFO
-metrics_addr: ":2112"
-tracing_endpoint: ""

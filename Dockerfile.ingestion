@@ -5,8 +5,8 @@ WORKDIR /app
 # Install only required dependency for EventStreamingService
 RUN pip install --no-cache-dir kafka-python
 
-COPY services services
-COPY config config
+COPY yosai_intel_dashboard/src/services services
+COPY yosai_intel_dashboard/src/infrastructure/config config
 COPY tools tools
 
 EXPOSE 8000

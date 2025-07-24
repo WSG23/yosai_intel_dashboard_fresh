@@ -1,7 +1,0 @@
-uploads:
-  chunk_size: 1024000  # 1MB chunks
-  max_parallel_uploads: 3
-  validator_rules:
-    max_file_size: 104857600  # 100MB
-    allowed_extensions: ['.csv', '.xlsx', '.json']
-    scan_for_malware: true

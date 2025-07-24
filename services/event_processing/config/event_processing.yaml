@@ -1,3 +1,0 @@
-brokers: "localhost:9092"
-group_id: "event-processing"
-topic: "events"
