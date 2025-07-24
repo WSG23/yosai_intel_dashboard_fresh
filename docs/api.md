@@ -114,3 +114,6 @@ The following table lists the required role or permission for key API route grou
 | `/api/v1/analytics` | - | `analytics.read` |
 | `/api/v1/events` | - | `events.write` |
 | `/api/v1/doors` | - | `doors.control` |
+
+For details on internal streaming, alert dispatching and WebSocket messages see
+[Internal Service Interfaces](internal_services.md).
