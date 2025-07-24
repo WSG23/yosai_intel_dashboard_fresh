@@ -20,6 +20,7 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 from pathlib import Path
+import json
 
 from config import get_database_config
 from config.validate import validate_required_env
@@ -195,3 +196,10 @@ app.include_router(models_router)
 
 FastAPIInstrumentor.instrument_app(app)
 Instrumentator().instrument(app).expose(app)
+
+
+@app.on_event("startup")
+async def _write_openapi() -> None:
+    """Persist OpenAPI schema for docs."""
+    docs_path = Path(__file__).resolve().parents[2] / "docs" / "analytics_microservice_openapi.json"
+    docs_path.write_text(json.dumps(app.openapi(), indent=2))
