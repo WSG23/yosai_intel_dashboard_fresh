@@ -1,0 +1,8 @@
+- component: legacy-auth
+  deprecated_since: 1.2.0
+  removal_version: 2.0.0
+  migration_path: docs/migration/legacy-auth.md
+- component: old-dashboard
+  deprecated_since: 1.5.0
+  removal_version: 2.1.0
+  migration_path: docs/migration/new-dashboard.md
