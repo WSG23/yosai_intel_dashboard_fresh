@@ -1,16 +1,15 @@
-from flask import Blueprint, request, jsonify
-
-from utils.api_error import error_response
 import pandas as pd
+from flask import Blueprint, abort, jsonify, request
+
+from config.service_registration import register_upload_services
 
 # Use the shared DI container for dependency resolution
 from core.container import container
-from config.service_registration import register_upload_services
 
 if not container.has("upload_processor"):
     register_upload_services(container)
 
-device_bp = Blueprint('device', __name__)
+device_bp = Blueprint("device", __name__)
 
 
 def load_stored_data(filename: str, upload_service) -> pd.DataFrame | None:
@@ -22,7 +21,10 @@ def load_stored_data(filename: str, upload_service) -> pd.DataFrame | None:
 def determine_device_column(column_mappings: dict, df: pd.DataFrame) -> str | None:
     """Find the source column mapped as the device name."""
     for source_col, mapped_col in column_mappings.items():
-        if mapped_col in ["device_name", "device", "hostname"] and source_col in df.columns:
+        if (
+            mapped_col in ["device_name", "device", "hostname"]
+            and source_col in df.columns
+        ):
             return source_col
     return None
 
@@ -69,34 +71,30 @@ def build_device_mappings(
 
     return device_mappings
 
-@device_bp.route('/v1/ai/suggest-devices', methods=['POST'])
+
+@device_bp.route("/v1/ai/suggest-devices", methods=["POST"])
 def suggest_devices():
     """Get device suggestions using DeviceLearningService"""
     try:
         data = request.json
-        filename = data.get('filename')
-        column_mappings = data.get('column_mappings', {})
-        
+        filename = data.get("filename")
+        column_mappings = data.get("column_mappings", {})
+
         device_service = container.get("device_learning_service")
         upload_service = container.get("upload_processor")
 
         df = load_stored_data(filename, upload_service)
         if df is None:
-            return error_response('not_found', 'File data not found'), 404
+            abort(404, description="File data not found")
 
         device_column = determine_device_column(column_mappings, df)
-        devices = (
-            df[device_column].dropna().unique().tolist() if device_column else []
-        )
+        devices = df[device_column].dropna().unique().tolist() if device_column else []
 
         device_mappings = build_device_mappings(
             filename, df, device_service, upload_service
         )
 
-        return jsonify({
-            'devices': devices,
-            'device_mappings': device_mappings
-        }), 200
-        
+        return jsonify({"devices": devices, "device_mappings": device_mappings}), 200
+
     except Exception as e:
-        return error_response('server_error', str(e)), 500
+        abort(500, description=str(e))

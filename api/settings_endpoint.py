@@ -1,7 +1,8 @@
 import json
 import os
+
 from filelock import FileLock
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, abort, jsonify, request
 
 settings_bp = Blueprint("settings", __name__)
 
@@ -48,11 +49,11 @@ def update_settings():
     """Update and persist user settings."""
     data = request.get_json(silent=True) or {}
     if not isinstance(data, dict):
-        return jsonify({"error": "Invalid payload"}), 400
+        abort(400, description="Invalid payload")
     settings = _load_settings()
     settings.update(data)
     try:
         _save_settings(settings)
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        abort(500, description=str(exc))
     return jsonify({"status": "success", "settings": settings}), 200
