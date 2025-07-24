@@ -185,6 +185,7 @@ control:
 
 ```bash
 python scripts/db_migration_cli.py upgrade  # create RBAC tables
+python scripts/db_migration_cli.py current  # verify current revision
 ```
 
 Set the permission service URL in your environment if it differs from
