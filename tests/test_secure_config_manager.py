@@ -45,9 +45,20 @@ security:
     assert mgr.get_security_config().secret_key == "super-secret"
 
 
-def test_missing_vault_credentials(monkeypatch):
+def test_missing_vault_credentials(monkeypatch, tmp_path):
     monkeypatch.delenv("VAULT_ADDR", raising=False)
     monkeypatch.delenv("VAULT_TOKEN", raising=False)
+
+    cfg_yaml = """
+app:
+  title: Test
+database:
+  password: vault:secret/data/db#password
+"""
+    path = tmp_path / "cfg.yaml"
+    path.write_text(cfg_yaml, encoding="utf-8")
+
+    monkeypatch.setenv("YOSAI_CONFIG_FILE", str(path))
 
     with pytest.raises(ConfigurationError):
         SecureConfigManager()
@@ -80,3 +91,40 @@ database:
 
     with pytest.raises(ConfigurationError):
         SecureConfigManager()
+
+
+def test_aws_secret_resolution(monkeypatch, tmp_path):
+    class DummyAWS:
+        def __init__(self, region_name=None):  # noqa: D401 - stub
+            pass
+
+        def get_secret_value(self, SecretId):
+            assert SecretId == "prod/db_password"
+            return {"SecretString": "aws-secret"}
+
+    monkeypatch.setattr(
+        "config.secure_config_manager.boto3.client", lambda *a, **k: DummyAWS()
+    )
+    monkeypatch.setattr(
+        "config.secure_config_manager.hvac.Client", lambda *a, **k: None
+    )
+
+    cfg_yaml = """
+app:
+  title: Test
+database:
+  password: aws-secrets:prod/db_password
+security:
+  secret_key: dummy
+"""
+    path = tmp_path / "cfg.yaml"
+    path.write_text(cfg_yaml, encoding="utf-8")
+
+    monkeypatch.setenv("YOSAI_CONFIG_FILE", str(path))
+    monkeypatch.setenv("AWS_REGION", "us-east-1")
+    monkeypatch.delenv("DB_PASSWORD", raising=False)
+
+    mgr = SecureConfigManager()
+
+    assert mgr.get_database_config().password == "aws-secret"
+
