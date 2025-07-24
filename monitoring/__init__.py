@@ -14,6 +14,11 @@ from .model_performance_monitor import (
     get_model_performance_monitor,
 )
 from .ui_monitor import RealTimeUIMonitor, get_ui_monitor
+from .prometheus.deprecation import (
+    deprecated_calls,
+    record_deprecated_call,
+    start_deprecation_metrics_server,
+)
 
 __all__ = [
     "PerformanceMonitor",
@@ -26,4 +31,7 @@ __all__ = [
     "RealTimeUIMonitor",
     "get_ui_monitor",
     "check_cluster_health",
+    "deprecated_calls",
+    "record_deprecated_call",
+    "start_deprecation_metrics_server",
 ]

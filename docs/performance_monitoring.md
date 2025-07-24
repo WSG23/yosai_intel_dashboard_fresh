@@ -49,6 +49,27 @@ HTTP port (defaults to `8004`).
 All services expose their runtime metrics at `/metrics` so Prometheus can scrape
 them without additional configuration.
 
+### Deprecated Function Usage
+
+Decorate legacy helpers with `@deprecated` from `core` to automatically record
+how often they are still invoked.  The decorator emits a Prometheus counter
+`deprecated_function_calls_total` with a `function` label and also stores
+entries in the global `PerformanceMonitor`.  Example:
+
+```python
+from core import deprecated
+
+@deprecated("use new_service.process() instead")
+def old_process(*args):
+    ...
+```
+
+Aggregated counts are returned via `get_performance_monitor().get_deprecation_counts()`.
+Prioritise migrations by addressing functions with the highest counts first.
+Example alerting rules live in `monitoring/prometheus/rules/deprecation_alerts.yml`
+and a companion Grafana dashboard in
+`monitoring/grafana/dashboards/deprecation-usage.json`.
+
 ### Logstash
 
 `logging/logstash.conf` reads the application, Postgres and Redis logs and can
