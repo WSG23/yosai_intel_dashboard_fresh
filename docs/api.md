@@ -40,6 +40,13 @@ Commit the updated `docs/openapi.json`, `analytics/clients/event_client`, and
 sync with the codebase. CI will fail if these files differ from the checked in
 versions.
 
+## Authentication
+
+API requests require a signed JWT in the `Authorization` header and a CSRF
+token for state-changing operations. See
+[Service Authentication](service_authentication.md) for details on how tokens
+are issued and verified.
+
 ## API Versioning
 
 All endpoints are prefixed with a version such as `/v1` or `/api/v1`.
