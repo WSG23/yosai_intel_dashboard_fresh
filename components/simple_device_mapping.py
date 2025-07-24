@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING
 
 import dash
-from dash import dcc, html
+from dash import html
 from dash._callback_context import callback_context
 
 if TYPE_CHECKING:
@@ -211,16 +211,14 @@ def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
                         ],
                         width=2,
                     ),
-                    dcc.Store(id={"type": "device-name", "index": i}, data=device),
+                    html.Div(id={"type": "device-name", "index": i}),
                 ],
                 className="mb-2",
             )
         )
 
-    device_store = dcc.Store(id="current-devices-list", data=devices)
-    suggestions_store = dcc.Store(
-        id="ai-suggestions-store", data=ai_mapping_store.all()
-    )
+    device_store = html.Div(id="current-devices-list")
+    suggestions_store = html.Div(id="ai-suggestions-store")
     status_div = html.Div(id="device-save-status")
 
     modal_children: List[Any] = [
@@ -372,7 +370,7 @@ def create_simple_device_modal(devices: List[str]) -> dbc.Modal:
                         ],
                         width=2,
                     ),
-                    dcc.Store(id={"type": "device-name", "index": i}, data=device),
+                    html.Div(id={"type": "device-name", "index": i}),
                 ],
                 className="mb-2",
             )
