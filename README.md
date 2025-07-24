@@ -853,7 +853,7 @@ The dashboard now centralizes Unicode handling in `core.unicode`.
 Detect legacy usage and validate the migration with the helper tools:
 
 ```bash
-python tools/legacy_unicode_audit.py --path .
+python tools/validate_unicode_cleanup.py
 python tools/validate_unicode_migration.py
 ```
 
