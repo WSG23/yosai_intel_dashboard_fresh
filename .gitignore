@@ -81,6 +81,7 @@ htmlcov/
 coverage.xml
 # Documentation
 docs/_build/
+docs/portal/
 # Mac
 .DS_Store
 # Windows

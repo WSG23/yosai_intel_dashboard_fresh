@@ -49,6 +49,9 @@ generate-config-proto:
 deprecation-docs:
 	python scripts/generate_deprecation_docs.py
 
+docs:
+	python scripts/generate_docs_portal.py
+
 clean:
 	$(CLI) clean
 
