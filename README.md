@@ -492,8 +492,10 @@ critical vulnerabilities are detected. Download the artifact from the
 - **CSRF Protection Plugin**: Optional production-ready CSRF middleware for Dash
 - **Machine-Learned Column Mapping**: Trainable model for smarter CSV header recognition
 - **Hardened SQL Injection Prevention**: Uses `sqlparse` and `bleach` to validate queries
-- **Centralized Unicode Processing**: Use `UnicodeProcessor` and related handlers
-  from `core.unicode` for safe text and SQL handling.
+- **Centralized Unicode Processing**: now provided by the external
+  `unicode_toolkit` package. Import the new helpers such as
+  `TextProcessor` and `SQLProcessor` to clean input and safely encode SQL
+  statements. See the migration section below for details.
 - **Event Driven Callbacks**: Plugins react to events via the unified
   `TrulyUnifiedCallbacks` manager.
   This single interface replaces previous callback controllers.
@@ -851,8 +853,10 @@ implementations can be swapped in for tests. Helper functions like
 
 ## <span aria-hidden="true">🔄</span> Migration Guide
 
-The dashboard now centralizes Unicode handling in `core.unicode`.
-Detect legacy usage and validate the migration with the helper tools:
+Unicode handling is now provided by the standalone `unicode_toolkit`
+package. Legacy helpers from `core.unicode` remain as thin wrappers
+around this library. Detect outdated usage and validate the migration
+with the helper tools:
 
 ```bash
 python tools/validate_unicode_cleanup.py
@@ -1085,12 +1089,30 @@ Expected response:
 
 ### Cleaning text
 ```python
-from core.unicode import get_text_processor
-from utils import sanitize_unicode_input
+from unicode_toolkit import TextProcessor, sanitize_input
+
 raw = "Bad\uD83DText"
-processor = get_text_processor()
-clean = processor.safe_encode_text(raw)
-safe = sanitize_unicode_input("A\ud800B")
+processor = TextProcessor()
+clean = processor.clean(raw)
+safe = sanitize_input("A\ud800B")
+```
+
+### Sanitizing DataFrames
+```python
+import pandas as pd
+from unicode_toolkit import sanitize_dataframe
+
+df = pd.DataFrame({"name": ["A\ud800", "B"], "age": [10, 20]})
+clean_df = sanitize_dataframe(df)
+```
+
+### Encoding SQL Queries
+```python
+from unicode_toolkit import SQLProcessor
+
+query = "SELECT * FROM users WHERE name = ?"
+params = SQLProcessor.encode_params(["A\uD83D"])
+safe_query = SQLProcessor.encode_query(query)
 ```
 
 ### Firing events
