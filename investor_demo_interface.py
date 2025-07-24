@@ -8,6 +8,7 @@ from tempfile import NamedTemporaryFile
 import pandas as pd
 from flask import (
     Flask,
+    Response,
     redirect,
     render_template_string,
     request,
@@ -151,11 +152,13 @@ def build_stages(current: int) -> list[dict[str, object]]:
 
 @app.route("/")
 def index() -> str:
+    """Return the initial file upload page."""
     return render_template_string(UPLOAD_HTML, stages=build_stages(0))
 
 
 @app.post("/upload")
-def upload() -> object:
+def upload() -> Response:
+    """Save the uploaded file and redirect to column mapping."""
     global current_df, column_mapping, device_mapping
     uploaded = request.files.get("file")
     if not uploaded:
@@ -169,7 +172,8 @@ def upload() -> object:
 
 
 @app.route("/columns", methods=["GET", "POST"])
-def map_columns() -> object:
+def map_columns() -> Response:
+    """Capture column mappings and show the mapping form."""
     global column_mapping
     if current_df is None:
         return redirect(url_for("index"))
@@ -196,7 +200,8 @@ def map_columns() -> object:
 
 
 @app.route("/devices", methods=["GET", "POST"])
-def map_devices() -> object:
+def map_devices() -> Response:
+    """Collect device metadata mappings or skip if none present."""
     global device_mapping
     if current_df is None:
         return redirect(url_for("index"))
@@ -226,7 +231,8 @@ def map_devices() -> object:
 
 
 @app.get("/results")
-def results() -> object:
+def results() -> Response:
+    """Generate analytics output and display the results page."""
     if current_df is None:
         return redirect(url_for("index"))
     enhanced_df, _ = enhance_data_with_mappings(
