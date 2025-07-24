@@ -7,7 +7,7 @@ from typing import Any, Dict
 
 import yaml
 
-from .unicode_sql_processor import UnicodeSQLProcessor
+from unicode_toolkit import UnicodeSQLProcessor
 
 
 class BaseConfigLoader:

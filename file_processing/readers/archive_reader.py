@@ -8,15 +8,16 @@ from typing import List
 
 import pandas as pd
 
+from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callback_events import CallbackEvent
+from core.protocols import UnicodeProcessorProtocol
+from file_processing.format_detector import FormatDetector
+
 from .base import BaseReader
 from .csv_reader import CSVReader
 from .excel_reader import ExcelReader
 from .fwf_reader import FWFReader
 from .json_reader import JSONReader
-from core.callback_events import CallbackEvent
-from analytics_core.callbacks.unified_callback_manager import CallbackManager
-from core.protocols import UnicodeProcessorProtocol
-from ..format_detector import FormatDetector
 
 
 class ArchiveReader(BaseReader):
@@ -24,7 +25,9 @@ class ArchiveReader(BaseReader):
 
     format_name = "archive"
 
-    def __init__(self, *, unicode_processor: UnicodeProcessorProtocol | None = None) -> None:
+    def __init__(
+        self, *, unicode_processor: UnicodeProcessorProtocol | None = None
+    ) -> None:
         super().__init__(unicode_processor=unicode_processor)
         self.callback_controller = CallbackManager()
 
@@ -32,7 +35,7 @@ class ArchiveReader(BaseReader):
         path = Path(file_path)
         if not path.is_file():
             raise ArchiveReader.CannotParse("not a file")
-        if path.suffix.lower() not in {'.zip', '.tar', '.gz', '.tgz'}:
+        if path.suffix.lower() not in {".zip", ".tar", ".gz", ".tgz"}:
             raise ArchiveReader.CannotParse("extension mismatch")
         try:
             if zipfile.is_zipfile(path):
@@ -74,4 +77,3 @@ class ArchiveReader(BaseReader):
             except Exception:
                 pass
         return df
-

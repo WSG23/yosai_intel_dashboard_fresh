@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 import logging
 
 from analytics.controllers.unified_controller import UnifiedAnalyticsController
+from core.error_handling import handle_errors
 
 logger = logging.getLogger(__name__)
 from typing import Any, Dict, List
@@ -83,36 +84,34 @@ def save_confirmed_device_mappings(
     return svc.save_confirmed_mappings(df, filename, devices_list)
 
 
+@handle_errors(service="simple_device_mapping", operation="generate_ai_device_defaults")
 def generate_ai_device_defaults(
     df: pd.DataFrame,
     client_profile: str = "auto",
     door_service: DoorMappingServiceProtocol | None = None,
 ) -> None:
     """Generate AI-based defaults, prioritizing learned mappings"""
-    try:
-        learning_service = get_device_learning_service()
+    learning_service = get_device_learning_service()
 
-        if learning_service.apply_learned_mappings_to_global_store(
-            df, "current_upload"
-        ):
-            logger.info("🎯 Applied learned mappings as defaults")
-            return
+    if learning_service.apply_learned_mappings_to_global_store(
+        df, "current_upload"
+    ):
+        logger.info("🎯 Applied learned mappings as defaults")
+        return
 
-        svc = door_service or get_door_mapping_service()
-        result = svc.process_uploaded_data(df, client_profile)
-        ai_mapping_store.clear()
-        for device in result["devices"]:
-            learned_mapping = learning_service.get_device_mapping_by_name(
-                device["door_id"]
-            )
-            if learned_mapping:
-                ai_mapping_store.set(device["door_id"], learned_mapping)
-                logger.info(f"🎓 Used learned mapping for {device['door_id']}")
-            else:
-                ai_mapping_store.set(device["door_id"], device)
-                logger.info(f"🤖 Generated AI mapping for {device['door_id']}")
-    except Exception as e:
-        logger.error(f"Error generating AI device defaults: {e}")
+    svc = door_service or get_door_mapping_service()
+    result = svc.process_uploaded_data(df, client_profile)
+    ai_mapping_store.clear()
+    for device in result["devices"]:
+        learned_mapping = learning_service.get_device_mapping_by_name(
+            device["door_id"]
+        )
+        if learned_mapping:
+            ai_mapping_store.set(device["door_id"], learned_mapping)
+            logger.info(f"🎓 Used learned mapping for {device['door_id']}")
+        else:
+            ai_mapping_store.set(device["door_id"], device)
+            logger.info(f"🤖 Generated AI mapping for {device['door_id']}")
 
 
 def create_simple_device_modal_with_ai(devices: List[str]) -> dbc.Modal:
@@ -518,25 +517,23 @@ def apply_ai_device_suggestions(suggestions, devices):
     return floor_values, access_values, special_values, security_values
 
 
+@handle_errors(service="simple_device_mapping", operation="populate_simple_device_modal")
 def populate_simple_device_modal(is_open):
     """Populate modal with actual devices from uploaded data and global store."""
     if not is_open:
         return dash.no_update
 
     # First try to get devices from global store (preferred)
-    try:
-        from services.ai_mapping_store import ai_mapping_store
+    from services.ai_mapping_store import ai_mapping_store
 
-        store_devices = ai_mapping_store.all()
+    store_devices = ai_mapping_store.all()
 
-        if store_devices:
-            device_list = sorted(list(store_devices.keys()))
-            logger.info(
-                f"📋 Found {len(device_list)} devices from global store for manual mapping"
-            )
-            return create_simple_device_modal_with_ai(device_list)
-    except Exception as e:
-        logger.warning(f"Failed to get devices from global store: {e}")
+    if store_devices:
+        device_list = sorted(list(store_devices.keys()))
+        logger.info(
+            f"📋 Found {len(device_list)} devices from global store for manual mapping"
+        )
+        return create_simple_device_modal_with_ai(device_list)
 
     # Fallback: Get devices from uploaded data
     from services.upload_data_service import get_uploaded_data

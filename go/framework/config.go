@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/xeipuuv/gojsonschema"
@@ -18,7 +19,7 @@ type Config struct {
 	TracingEndpoint string `yaml:"tracing_endpoint"`
 }
 
-var schemaPath = "../config/service.schema.yaml"
+var schemaPath = "../../config/service.schema.yaml"
 
 func LoadConfig(path string) (Config, error) {
 	var cfg Config
@@ -33,6 +34,9 @@ func LoadConfig(path string) (Config, error) {
 		return cfg, err
 	}
 	applyEnv(&cfg)
+	if errs := validateYosaiConfig(cfg); len(errs) > 0 {
+		return cfg, fmt.Errorf(strings.Join(errs, "; "))
+	}
 	return cfg, nil
 }
 
@@ -74,4 +78,36 @@ func validateConfig(yamlData []byte) error {
 		return fmt.Errorf("config validation failed: %v", result.Errors())
 	}
 	return nil
+}
+
+func validateYosaiConfig(cfg Config) []string {
+	var errs []string
+	if cfg.ServiceName == "" {
+		errs = append(errs, "service_name is required")
+	}
+	switch strings.ToUpper(cfg.LogLevel) {
+	case "DEBUG", "INFO", "WARN", "ERROR":
+	default:
+		errs = append(errs, "log_level must be one of DEBUG, INFO, WARN, ERROR")
+	}
+	if cfg.MetricsAddr != "" {
+		parts := strings.Split(cfg.MetricsAddr, ":")
+		if len(parts) != 2 {
+			errs = append(errs, "metrics_addr must be in host:port format")
+		} else {
+			port, err := strconv.Atoi(parts[1])
+			if err != nil || port <= 0 || port > 65535 {
+				errs = append(errs, "metrics_addr port must be 1-65535")
+			}
+		}
+	} else if strings.ToUpper(cfg.LogLevel) == "DEBUG" {
+		errs = append(errs, "metrics_addr required when log_level is DEBUG")
+	}
+	if cfg.TracingEndpoint != "" && !(strings.HasPrefix(cfg.TracingEndpoint, "http://") || strings.HasPrefix(cfg.TracingEndpoint, "https://")) {
+		errs = append(errs, "tracing_endpoint must start with http:// or https://")
+	}
+	if cfg.MetricsAddr != "" && cfg.MetricsAddr == cfg.TracingEndpoint {
+		errs = append(errs, "metrics_addr and tracing_endpoint must differ")
+	}
+	return errs
 }

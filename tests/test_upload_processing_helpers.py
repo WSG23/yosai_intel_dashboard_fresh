@@ -2,7 +2,7 @@ import pandas as pd
 from tests.utils.builders import DataFrameBuilder
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.data_processing.processor import Processor
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 
 
 def _make_processor():

@@ -139,7 +139,7 @@ def register_analytics_services(container: ServiceContainer) -> None:
 
 
 def register_security_services(container: ServiceContainer) -> None:
-    from core.security_validator import SecurityValidator
+    from validation.security_validator import SecurityValidator
 
     container.register_singleton(
         "security_validator",

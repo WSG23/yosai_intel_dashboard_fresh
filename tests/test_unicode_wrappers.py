@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from config.database_exceptions import UnicodeEncodingError
-from config.unicode_sql_processor import UnicodeSQLProcessor
+from unicode_toolkit import UnicodeSQLProcessor
 from core.unicode import UnicodeProcessor as UtilsProcessor  # Alias check
 from core.unicode import (
     clean_unicode_surrogates,

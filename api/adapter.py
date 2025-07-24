@@ -4,6 +4,7 @@ import os
 from fastapi.middleware.wsgi import WSGIMiddleware
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from config import get_security_config
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 
 from yosai_framework.service import BaseService
@@ -46,7 +47,8 @@ def create_api_app() -> "FastAPI":
         if request.method not in {"GET", "HEAD", "OPTIONS"}:
             csrf.protect()
 
-    CORS(app)
+    settings = get_security_config()
+    CORS(app, origins=settings.cors_origins)
 
     # Third-party analytics demo endpoints
     register_analytics_blueprints(app)

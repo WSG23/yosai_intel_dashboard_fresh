@@ -3,12 +3,15 @@ from typing import Any, Optional, Union
 
 import httpx
 
-from ... import errors
-from ...client import AuthenticatedClient, Client
-from ...models.post_api_v1_analytics_get_dashboard_summary_response_200 import (
+from analytics.clients.analytics_client.analytics_service_client import errors
+from analytics.clients.analytics_client.analytics_service_client.client import (
+    AuthenticatedClient,
+    Client,
+)
+from analytics.clients.analytics_client.analytics_service_client.models.post_api_v1_analytics_get_dashboard_summary_response_200 import (
     PostApiV1AnalyticsGetDashboardSummaryResponse200,
 )
-from ...types import Response
+from analytics.clients.analytics_client.analytics_service_client.types import Response
 
 
 def _get_kwargs() -> dict[str, Any]:
@@ -24,7 +27,9 @@ def _parse_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
 ) -> Optional[PostApiV1AnalyticsGetDashboardSummaryResponse200]:
     if response.status_code == 200:
-        response_200 = PostApiV1AnalyticsGetDashboardSummaryResponse200.from_dict(response.json())
+        response_200 = PostApiV1AnalyticsGetDashboardSummaryResponse200.from_dict(
+            response.json()
+        )
 
         return response_200
     if client.raise_on_unexpected_status:

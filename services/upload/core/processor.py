@@ -14,18 +14,17 @@ from services.interfaces import (
     UploadDataServiceProtocol,
     get_device_learning_service,
 )
-from services.upload.utils.file_parser import create_file_preview
-from services.upload_data_service import UploadDataService
-from utils.upload_store import UploadedDataStore
-
-from ..async_processor import AsyncUploadProcessor
-from ..protocols import (
+from services.upload.async_processor import AsyncUploadProcessor
+from services.upload.protocols import (
     DeviceLearningServiceProtocol,
     FileProcessorProtocol,
     UploadProcessingServiceProtocol,
     UploadStorageProtocol,
     UploadValidatorProtocol,
 )
+from services.upload.utils.file_parser import create_file_preview
+from services.upload_data_service import UploadDataService
+from utils.upload_store import UploadedDataStore
 
 logger = logging.getLogger(__name__)
 

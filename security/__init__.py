@@ -19,7 +19,7 @@ def __getattr__(name: str):
     """Lazily provide heavy validators to avoid circular imports."""
 
     if name == "SecurityValidator":
-        from core.security_validator import SecurityValidator as _SV
+        from validation.security_validator import SecurityValidator as _SV
 
         return _SV
     if name in {"UnicodeSurrogateValidator", "SurrogateHandlingConfig"}:
