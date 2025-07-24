@@ -4,7 +4,9 @@
 import logging
 from typing import Any, Optional, Dict
 
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.callback_registry import handle_register_with_deduplication
+from components.streamlined_component import StreamlinedComponent
 
 logger = logging.getLogger(__name__)
 
@@ -210,31 +212,50 @@ def create_fallback_navbar():
     )
 
 
+def toggle_navbar_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+
+class NavbarComponent(StreamlinedComponent):
+    """Component registering navbar callbacks."""
+
+    def register_callbacks(
+        self, manager: TrulyUnifiedCallbacks, service: Optional[Any] = None
+    ) -> None:
+        if not DBC_AVAILABLE:
+            logger.debug("Navbar callbacks registration skipped - Dash unavailable")
+            return
+
+        try:
+            register = (
+                getattr(manager, "register_callback", None)
+                or getattr(manager, "handle_register", None)
+            )
+            if register is None:
+                register = lambda *a, **k: handle_register_with_deduplication(manager, *a, **k)  # type: ignore[misc]
+
+            register(
+                dash.dependencies.Output("navbar-collapse", "is_open"),
+                dash.dependencies.Input("navbar-toggler", "n_clicks"),
+                dash.dependencies.State("navbar-collapse", "is_open"),
+                prevent_initial_call=True,
+                callback_id="navbar_toggle",
+                component_name="navbar",
+            )(toggle_navbar_collapse)
+        except Exception as e:  # pragma: no cover - defensive
+            logger.warning(f"Navbar callback registration failed: {e}")
+
+
 def register_navbar_callbacks(callback_manager, service: Optional[Any] = None) -> None:
-    """Register navbar toggle callback when Dash is available."""
-    if not DBC_AVAILABLE:
-        logger.debug("Navbar callbacks registration skipped - Dash unavailable")
-        return
-
-    try:
-
-        @handle_register_with_deduplication(
-            callback_manager,
-            dash.dependencies.Output("navbar-collapse", "is_open"),
-            dash.dependencies.Input("navbar-toggler", "n_clicks"),
-            dash.dependencies.State("navbar-collapse", "is_open"),
-            callback_id="navbar_toggle",
-            component_name="navbar",
-            prevent_initial_call=True,
-            source_module=__name__,
-        )
-        def toggle_navbar_collapse(n, is_open):
-            if n:
-                return not is_open
-            return is_open
-
-    except Exception as e:  # pragma: no cover - defensive
-        logger.warning(f"Navbar callback registration failed: {e}")
+    """Backward-compatible wrapper for registering navbar callbacks."""
+    NavbarComponent().register_callbacks(callback_manager, service)
 
 
-__all__ = ["create_navbar_layout", "register_navbar_callbacks", "get_simple_icon"]
+__all__ = [
+    "create_navbar_layout",
+    "register_navbar_callbacks",
+    "NavbarComponent",
+    "get_simple_icon",
+]
