@@ -24,3 +24,10 @@ repos:
     hooks:
       - id: bandit
         args: ["-r", "."]
+  - repo: local
+    hooks:
+      - id: import-style-check
+        name: import-style-check
+        entry: python tools/organize_imports.py --check
+        language: system
+        types: [python]
