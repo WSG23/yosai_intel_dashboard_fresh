@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci.yml/badge.svg)](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci.yml)
 [![CI/CD](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci-cd.yml)
+[![codecov](https://codecov.io/gh/WSG23/yosai_intel_dashboard_fresh/branch/main/graph/badge.svg)](https://codecov.io/gh/WSG23/yosai_intel_dashboard_fresh)
 
 An AI-powered modular security intelligence dashboard for physical access control monitoring.
 
