@@ -66,6 +66,8 @@ class ErrorContext:
     details: Dict[str, Any]
     user_id: Optional[str] = None
     request_id: Optional[str] = None
+    service: Optional[str] = None
+    operation: Optional[str] = None
     stack_trace: Optional[str] = None
 
 
@@ -133,6 +135,11 @@ class ErrorHandler(BaseModel):
         context: Dict[str, Any] = None,
     ) -> ErrorContext:
         """Handle an error with proper logging and tracking"""
+        ctx: Dict[str, Any] = dict(context or {})
+        service = ctx.pop("service", None)
+        operation = ctx.pop("operation", None)
+        user_id = ctx.pop("user_id", None)
+        request_id = ctx.pop("request_id", None)
 
         error_context = ErrorContext(
             error_id=f"ERR_{int(time.time())}_{id(error)}",
@@ -140,7 +147,11 @@ class ErrorHandler(BaseModel):
             category=category,
             severity=severity,
             message=str(error),
-            details=context or {},
+            details=ctx,
+            user_id=user_id,
+            request_id=request_id,
+            service=service,
+            operation=operation,
             stack_trace=None,  # Could add traceback if needed
         )
 
@@ -264,6 +275,55 @@ def with_async_error_handling(
                         "function": func.__name__,
                         "args": str(args)[:200],
                         "kwargs": str(kwargs)[:200],
+                    },
+                )
+
+                if reraise:
+                    raise
+
+                return None
+
+        return wrapper
+
+    return decorator
+
+
+def handle_errors(
+    service: str,
+    operation: str,
+    *,
+    category: ErrorCategory = ErrorCategory.ANALYTICS,
+    severity: ErrorSeverity = ErrorSeverity.MEDIUM,
+    reraise: bool = False,
+) -> Callable[[Callable], Callable]:
+    """Decorator to handle errors with rich context."""
+
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as exc:
+                user_id = None
+                request_id = None
+                try:
+                    from flask import g, has_request_context
+
+                    if has_request_context():
+                        user_id = getattr(g, "user_id", None) or getattr(g, "current_user_id", None)
+                        request_id = getattr(g, "request_id", None)
+                except Exception:
+                    pass
+
+                error_handler.handle_error(
+                    exc,
+                    category=category,
+                    severity=severity,
+                    context={
+                        "service": service,
+                        "operation": operation,
+                        "user_id": user_id,
+                        "request_id": request_id,
                     },
                 )
 
