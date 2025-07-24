@@ -3,8 +3,8 @@ import logging
 
 import pytest
 
-from python.yosai_framework import service as svc_mod
-from python.yosai_framework.config import ServiceConfig
+from yosai_framework import service as svc_mod
+from yosai_framework.config import ServiceConfig
 
 
 def _dummy_config(*_):

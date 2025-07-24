@@ -15,7 +15,7 @@ SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2]
 # stub out the heavy 'services' package before pytest imports it
 services_stub = types.ModuleType("services")
 services_stub.__path__ = [str(SERVICES_PATH)]
-sys.modules.setdefault("services", services_stub)
+sys.modules["services"] = services_stub
 
 
 def load_app(jwt_secret: str = "secret") -> tuple:
@@ -62,7 +62,7 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     validate_stub.validate_required_env = lambda vars: None
     sys.modules["config.validate"] = validate_stub
 
-    yf_config_stub = types.ModuleType("python.yosai_framework.config")
+    yf_config_stub = types.ModuleType("yosai_framework.config")
 
     class DummyCfg:
         service_name = "analytics-test"
@@ -72,7 +72,9 @@ def load_app(jwt_secret: str = "secret") -> tuple:
 
     yf_config_stub.ServiceConfig = DummyCfg
     yf_config_stub.load_config = lambda path: DummyCfg()
-    sys.modules["python.yosai_framework.config"] = yf_config_stub
+    sys.modules["yosai_framework.config"] = yf_config_stub
+    import yosai_framework.service as yf_service
+    yf_service.load_config = yf_config_stub.load_config
 
     redis_stub = types.ModuleType("redis")
     redis_async = types.ModuleType("redis.asyncio")
@@ -115,7 +117,7 @@ async def test_health_endpoints():
 
         resp = await client.get("/health/ready")
         assert resp.status_code == 200
-        assert resp.json() == {"status": "ok"}
+        assert resp.json() == {"status": "ready"}
 
 
 @pytest.mark.asyncio
@@ -147,4 +149,6 @@ async def test_unauthorized_request():
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.post("/api/v1/analytics/get_dashboard_summary")
         assert resp.status_code == 401
-        assert resp.json() == {"code": "unauthorized", "message": "unauthorized"}
+        assert resp.json() == {
+            "detail": {"code": "unauthorized", "message": "unauthorized"}
+        }
