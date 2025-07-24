@@ -40,3 +40,6 @@ done
 # Apply base manifests
 kubectl apply -f k8s/base
 
+# Apply Linkerd service mesh configuration
+kubectl apply -f k8s/linkerd
+
