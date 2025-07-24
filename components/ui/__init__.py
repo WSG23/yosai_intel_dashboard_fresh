@@ -1,5 +1,9 @@
 """Shared UI components."""
 
-from .navbar import create_navbar_layout, register_navbar_callbacks
+from .navbar import (
+    create_navbar_layout,
+    register_navbar_callbacks,
+    NavbarComponent,
+)
 
-__all__ = ["create_navbar_layout", "register_navbar_callbacks"]
+__all__ = ["create_navbar_layout", "register_navbar_callbacks", "NavbarComponent"]
