@@ -1,8 +1,8 @@
-from config.database_manager import DatabaseConfig, EnhancedPostgreSQLManager
+from config.database_manager import DatabaseSettings, EnhancedPostgreSQLManager
 
 
 def test_execute_query_with_retry(monkeypatch):
-    cfg = DatabaseConfig(type="mock")
+    cfg = DatabaseSettings(type="mock")
     manager = EnhancedPostgreSQLManager(cfg)
 
     result = manager.execute_query_with_retry("SELECT 1")
@@ -10,6 +10,6 @@ def test_execute_query_with_retry(monkeypatch):
 
 
 def test_health_check_with_retry(monkeypatch):
-    cfg = DatabaseConfig(type="mock")
+    cfg = DatabaseSettings(type="mock")
     manager = EnhancedPostgreSQLManager(cfg)
     assert manager.health_check_with_retry() is True

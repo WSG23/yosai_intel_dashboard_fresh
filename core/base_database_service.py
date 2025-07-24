@@ -5,14 +5,14 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from config import DatabaseConfig
+from config import DatabaseSettings
 
 
 class BaseDatabaseService:
     """Simplified database connector supporting multiple backends."""
 
-    def __init__(self, config: Optional[DatabaseConfig] = None) -> None:
-        self.config = config or DatabaseConfig()
+    def __init__(self, config: Optional[DatabaseSettings] = None) -> None:
+        self.config = config or DatabaseSettings()
         self.log = logging.getLogger(self.__class__.__name__)
         self.connection = self._create_connection()
 

@@ -11,15 +11,17 @@ import yaml
 from .config_transformer import ConfigTransformer
 
 from .base import (
-    AnalyticsConfig,
-    AppConfig,
     CacheConfig,
     Config,
-    DatabaseConfig,
-    MonitoringConfig,
-    SampleFilesConfig,
-    SecretValidationConfig,
-    SecurityConfig,
+)
+from .schema import (
+    AnalyticsSettings,
+    AppSettings,
+    DatabaseSettings,
+    MonitoringSettings,
+    SampleFilesSettings,
+    SecretValidationSettings,
+    SecuritySettings,
 )
 
 # Global configuration instance
@@ -47,32 +49,32 @@ def reload_config() -> "ConfigManager":
 
 
 # Convenience functions
-def get_app_config() -> AppConfig:
+def get_app_config() -> AppSettings:
     """Get app configuration"""
     return get_config().get_app_config()
 
 
-def get_database_config() -> DatabaseConfig:
+def get_database_config() -> DatabaseSettings:
     """Get database configuration"""
     return get_config().get_database_config()
 
 
-def get_security_config() -> SecurityConfig:
+def get_security_config() -> SecuritySettings:
     """Get security configuration"""
     return get_config().get_security_config()
 
 
-def get_sample_files_config() -> SampleFilesConfig:
+def get_sample_files_config() -> SampleFilesSettings:
     """Get sample file configuration"""
     return get_config().get_sample_files_config()
 
 
-def get_analytics_config() -> AnalyticsConfig:
+def get_analytics_config() -> AnalyticsSettings:
     """Get analytics configuration"""
     return get_config().get_analytics_config()
 
 
-def get_monitoring_config() -> MonitoringConfig:
+def get_monitoring_config() -> MonitoringSettings:
     """Get monitoring configuration"""
     return get_config().get_monitoring_config()
 
@@ -82,7 +84,7 @@ def get_cache_config() -> CacheConfig:
     return get_config().get_cache_config()
 
 
-def get_secret_validation_config() -> SecretValidationConfig:
+def get_secret_validation_config() -> SecretValidationSettings:
     """Get secret validation configuration"""
     return get_config().get_secret_validation_config()
 
@@ -96,14 +98,15 @@ def get_plugin_config(name: str) -> Dict[str, Any]:
 
 __all__ = [
     "Config",
-    "AppConfig",
-    "DatabaseConfig",
-    "SecurityConfig",
-    "SampleFilesConfig",
-    "AnalyticsConfig",
-    "MonitoringConfig",
+    "ConfigSchema",
+    "AppSettings",
+    "DatabaseSettings",
+    "SecuritySettings",
+    "SampleFilesSettings",
+    "AnalyticsSettings",
+    "MonitoringSettings",
     "CacheConfig",
-    "SecretValidationConfig",
+    "SecretValidationSettings",
     "ConfigManager",
     "create_config_manager",
     "get_config",
