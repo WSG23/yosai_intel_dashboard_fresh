@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Optional
+from dataclasses import asdict
+
+from pydantic import ValidationError
+from core.exceptions import ConfigurationError
 
 from core.protocols import ConfigurationProtocol
 
@@ -20,6 +24,7 @@ from .base import (
 from .config_loader import ConfigLoader
 from .config_transformer import ConfigTransformer
 from .config_validator import ConfigValidator, ValidationResult
+from .pydantic_models import ConfigModel
 from .environment import get_environment
 from .protocols import (
     ConfigLoaderProtocol,
@@ -55,6 +60,11 @@ class ConfigManager(ConfigurationProtocol):
             cfg = Config()
         cfg.environment = get_environment()
         self.transformer.transform(cfg)
+        try:
+            ConfigModel.model_validate(asdict(cfg))
+        except ValidationError as exc:
+            raise ConfigurationError(f"Invalid configuration: {exc}") from exc
+
         self.validation = self.validator.run_checks(cfg)
         self.config = cfg
 

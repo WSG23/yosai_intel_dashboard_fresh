@@ -734,6 +734,8 @@ secrets.
 Configuration validation runs automatically at startup and logs any missing
 critical settings. The new `ConfigValidator` checks that the `app`, `database`
 and `security` sections exist before the server starts.
+See [configuration_reference.md](docs/configuration_reference.md) for a table of
+all available settings and their environment variable overrides.
 
 ### Environment Overrides
 
