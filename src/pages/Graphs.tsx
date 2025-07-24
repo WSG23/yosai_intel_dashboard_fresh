@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { LineChart as LineChartIcon } from 'lucide-react';
 import {
   LineChart,
@@ -118,4 +119,10 @@ const Graphs: React.FC = () => {
   );
 };
 
-export default Graphs;
+const GraphsPage: React.FC = () => (
+  <ErrorBoundary>
+    <Graphs />
+  </ErrorBoundary>
+);
+
+export default GraphsPage;

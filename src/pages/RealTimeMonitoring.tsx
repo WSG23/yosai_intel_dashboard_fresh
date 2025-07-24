@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Activity, Users, DoorOpen, AlertCircle } from 'lucide-react';
 import { useWebSocket } from '../hooks/useWebSocket';
@@ -141,4 +142,10 @@ export const RealTimeMonitoring: React.FC = () => {
   );
 };
 
-export default RealTimeMonitoring;
+const RealTimeMonitoringPage: React.FC = () => (
+  <ErrorBoundary>
+    <RealTimeMonitoring />
+  </ErrorBoundary>
+);
+
+export default RealTimeMonitoringPage;
