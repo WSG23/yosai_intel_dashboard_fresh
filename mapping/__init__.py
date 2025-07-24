@@ -7,6 +7,8 @@ from .core.interfaces import (
 )
 from .core.models import ProcessingResult, MappingData
 from .service import MappingService
+from .models import MappingModel, HeuristicMappingModel, MLMappingModel, load_model_from_config
+
 
 
 def create_mapping_service(*args, **kwargs):
@@ -25,4 +27,9 @@ __all__ = [
     "MappingData",
     "MappingService",
     "create_mapping_service",
+    "MappingModel",
+    "HeuristicMappingModel",
+    "MLMappingModel",
+    "load_model_from_config",
+
 ]

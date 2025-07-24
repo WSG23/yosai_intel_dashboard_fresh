@@ -25,6 +25,7 @@ def deprecated(reason: str | None = None) -> Callable[[Callable], Callable]:
                 metadata={"function": f"{func.__module__}.{func.__name__}"},
             )
             record_deprecated_call(func.__name__)
+
             return func(*args, **kwargs)
 
         return wrapper
@@ -32,3 +33,4 @@ def deprecated(reason: str | None = None) -> Callable[[Callable], Callable]:
     return decorator
 
 __all__ = ["deprecated"]
+

@@ -92,6 +92,9 @@
             }
         }
     },
+        ,"/models/register": {"post": {"operationId": "registerModel", "summary": "Register a model", "tags": ["Models"], "responses": {"200": {"description": "Registered"}}}}
+        ,"/models/{name}": {"get": {"operationId": "listModelVersions", "summary": "List model versions", "tags": ["Models"], "responses": {"200": {"description": "Versions"}}}}
+        ,"/models/{name}/rollback": {"post": {"operationId": "rollbackModel", "summary": "Rollback active model version", "tags": ["Models"], "responses": {"200": {"description": "Rolled back"}}}}
     "servers": [
         {"description": "Production", "url": "https://api.yosai.com/v2"},
         {"description": "Staging", "url": "https://staging-api.yosai.com/v2"},
@@ -100,5 +103,6 @@
     "tags": [
         {"description": "Access control events", "name": "Events"},
         {"description": "Analytics and reporting", "name": "Analytics"},
+        {"description": "Model registry", "name": "Models"},
     ],
 }

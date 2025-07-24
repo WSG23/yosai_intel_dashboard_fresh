@@ -11,6 +11,50 @@ import pandas as pd
 stub_pkg = types.ModuleType("services")
 stub_interfaces = types.ModuleType("services.interfaces")
 
+# Load the feature flag module so adapter imports succeed
+flags_spec = importlib.util.spec_from_file_location(
+    "services.feature_flags",
+    pathlib.Path(__file__).resolve().parents[1] / "services" / "feature_flags.py",
+)
+flags_module = importlib.util.module_from_spec(flags_spec)
+flags_spec.loader.exec_module(flags_module)
+stub_pkg.feature_flags = flags_module
+sys.modules["services.feature_flags"] = flags_module
+
+# Minimal registry stub
+registry_stub = types.ModuleType("services.registry")
+
+
+class ServiceDiscovery:
+    def resolve(self, name: str) -> str | None:
+        return None
+
+
+registry_stub.ServiceDiscovery = ServiceDiscovery
+stub_pkg.registry = registry_stub
+sys.modules["services.registry"] = registry_stub
+
+# Minimal resilience.circuit_breaker stub
+resilience_pkg = types.ModuleType("services.resilience")
+cb_module = types.ModuleType("services.resilience.circuit_breaker")
+
+
+class CircuitBreaker:
+    def __init__(self, *args, **kwargs):
+        pass
+
+
+class CircuitBreakerOpen(Exception):
+    pass
+
+
+cb_module.CircuitBreaker = CircuitBreaker
+cb_module.CircuitBreakerOpen = CircuitBreakerOpen
+resilience_pkg.circuit_breaker = cb_module
+stub_pkg.resilience = resilience_pkg
+sys.modules["services.resilience"] = resilience_pkg
+sys.modules["services.resilience.circuit_breaker"] = cb_module
+
 
 class AnalyticsServiceProtocol:
     pass
@@ -68,7 +112,9 @@ def test_migration_container_registration():
 
 
 def test_analytics_service_adapter_fallback(monkeypatch):
-    os.environ["USE_ANALYTICS_MICROSERVICE"] = "true"
+    monkeypatch.setitem(
+        migration_adapter.feature_flags._flags, "use_analytics_microservice", False
+    )
     dummy = DummyAnalytics()
     adapter = AnalyticsServiceAdapter(dummy)
 

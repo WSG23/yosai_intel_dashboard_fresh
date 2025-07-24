@@ -41,6 +41,9 @@ jobs:
           flake8 . --max-line-length 88 -v
           mypy .
           bandit -r . --severity-level high
+      - name: Validate directory structure
+        if: matrix.lang == 'python'
+        run: python scripts/validate_structure.py
       - name: Set up Go
         if: matrix.lang == 'go'
         uses: actions/setup-go@v4
