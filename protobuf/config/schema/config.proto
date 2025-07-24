@@ -1,0 +1,49 @@
+syntax = "proto3";
+package config.schema;
+
+option go_package = "github.com/yosai-intel/dashboard/go/config/generated;generated";
+
+message AppConfig {
+  string title = 1;
+  bool debug = 2;
+  string host = 3;
+  int32 port = 4;
+  string secret_key = 5;
+  string environment = 6;
+}
+
+message DatabaseConfig {
+  string type = 1;
+  string host = 2;
+  int32 port = 3;
+  string name = 4;
+  string user = 5;
+  string password = 6;
+  string url = 7;
+  int32 connection_timeout = 8;
+  int32 initial_pool_size = 9;
+  int32 max_pool_size = 10;
+  int32 async_pool_min_size = 11;
+  int32 async_pool_max_size = 12;
+  int32 async_connection_timeout = 13;
+  int32 shrink_timeout = 14;
+  bool use_intelligent_pool = 15;
+}
+
+message SecurityConfig {
+  string secret_key = 1;
+  int32 session_timeout = 2;
+  map<string, int32> session_timeout_by_role = 3;
+  repeated string cors_origins = 4;
+  bool csrf_enabled = 5;
+  int32 max_failed_attempts = 6;
+  int32 max_upload_mb = 7;
+  repeated string allowed_file_types = 8;
+}
+
+message YosaiConfig {
+  AppConfig app = 1;
+  DatabaseConfig database = 2;
+  SecurityConfig security = 3;
+  string environment = 4;
+}
