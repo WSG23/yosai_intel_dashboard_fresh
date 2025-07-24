@@ -2,7 +2,18 @@
 from __future__ import annotations
 
 from .generated.protobuf.config.schema import config_pb2
-from .base import AppConfig, DatabaseConfig, SecurityConfig, Config
+from .base import (
+    AppConfig,
+    DatabaseConfig,
+    SecurityConfig,
+    SampleFilesConfig,
+    AnalyticsConfig,
+    MonitoringConfig,
+    CacheConfig,
+    UploadConfig,
+    SecretValidationConfig,
+    Config,
+)
 
 
 def to_dataclasses(cfg: config_pb2.YosaiConfig) -> Config:
@@ -42,7 +53,62 @@ def to_dataclasses(cfg: config_pb2.YosaiConfig) -> Config:
         max_upload_mb=cfg.security.max_upload_mb,
         allowed_file_types=list(cfg.security.allowed_file_types),
     )
-    return Config(app=app, database=db, security=sec, environment=cfg.environment)
+    samples = SampleFilesConfig(
+        csv_path=cfg.sample_files.csv_path,
+        json_path=cfg.sample_files.json_path,
+    )
+    analytics = AnalyticsConfig(
+        cache_timeout_seconds=cfg.analytics.cache_timeout_seconds,
+        max_records_per_query=cfg.analytics.max_records_per_query,
+        enable_real_time=cfg.analytics.enable_real_time,
+        batch_size=cfg.analytics.batch_size,
+        chunk_size=cfg.analytics.chunk_size,
+        enable_chunked_analysis=cfg.analytics.enable_chunked_analysis,
+        anomaly_detection_enabled=cfg.analytics.anomaly_detection_enabled,
+        ml_models_path=cfg.analytics.ml_models_path,
+        data_retention_days=cfg.analytics.data_retention_days,
+        query_timeout_seconds=cfg.analytics.query_timeout_seconds,
+        force_full_dataset_analysis=cfg.analytics.force_full_dataset_analysis,
+        max_memory_mb=cfg.analytics.max_memory_mb,
+        max_display_rows=cfg.analytics.max_display_rows,
+    )
+    monitoring = MonitoringConfig(
+        health_check_enabled=cfg.monitoring.health_check_enabled,
+        metrics_enabled=cfg.monitoring.metrics_enabled,
+        health_check_interval=cfg.monitoring.health_check_interval,
+        performance_monitoring=cfg.monitoring.performance_monitoring,
+        error_reporting_enabled=cfg.monitoring.error_reporting_enabled,
+        sentry_dsn=cfg.monitoring.sentry_dsn,
+        log_retention_days=cfg.monitoring.log_retention_days,
+    )
+    cache = CacheConfig(
+        enabled=cfg.cache.enabled,
+        ttl=cfg.cache.ttl,
+        max_size=cfg.cache.max_size,
+        redis_url=cfg.cache.redis_url,
+        use_memory_cache=cfg.cache.use_memory_cache,
+        use_redis=cfg.cache.use_redis,
+        prefix=cfg.cache.prefix,
+    )
+    uploads = UploadConfig(
+        folder=cfg.uploads.folder,
+        max_file_size_mb=cfg.uploads.max_file_size_mb,
+    )
+    secret_validation = SecretValidationConfig(
+        severity=cfg.secret_validation.severity,
+    )
+    return Config(
+        app=app,
+        database=db,
+        security=sec,
+        sample_files=samples,
+        analytics=analytics,
+        monitoring=monitoring,
+        cache=cache,
+        uploads=uploads,
+        secret_validation=secret_validation,
+        environment=cfg.environment,
+    )
 
 
 __all__ = ["to_dataclasses"]
