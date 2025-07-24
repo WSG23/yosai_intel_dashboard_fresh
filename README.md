@@ -685,7 +685,11 @@ applies environment variable overrides.
 The underlying loading logic lives in `config/base_loader.py` as `BaseConfigLoader`.
 It handles YAML `!include` expansion, JSON files and environment variable substitution. Earlier versions used separate modules
 such as `app_config.py` and `simple_config.py`; these have been replaced by this
-unified loader. Register the configuration with the DI container so it can be
+unified loader. The configuration schema is also defined using a protobuf file
+(`config/yosai_config.proto`). Loaders compile this schema to the Python module
+`yosai_config_pb2.py` and a convenience wrapper called `YosaiConfig`. All
+services read YAML/JSON and convert it to this protobuf representation before
+use. Register the configuration with the DI container so it can be
 resolved from anywhere:
 
 
