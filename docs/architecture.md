@@ -16,14 +16,19 @@ See [React Component Architecture](react_component_architecture.md) for an overv
 
 ## Latest Changes
 
-- **Unified Validator** – Input and file validation are now handled by the
-  `SecurityValidator` together with `UnifiedFileValidator`. The deprecated
-  `SecureFileValidator` class has been removed.
+- **Unified Validation Package** – Input and file validation are exported from
+  the `security` package. Import `SecurityValidator` and
+  `UnifiedFileValidator` from there instead of referencing the modules
+  directly. The deprecated `SecureFileValidator` class has been removed.
 - **Separated Analytics Modules** – The previously monolithic
   `AnalyticsService` has been broken into smaller modules under
 `services/data_processing/` and `analytics/`.  `UnifiedFileValidator`,
 `Processor` and `AnalyticsEngine` handle file loading, cleaning and metric
 generation while controllers manage UI callbacks.
+- **Service Builder Pattern** – Microservices now create a
+  `ServiceBuilder` instance which attaches logging, metrics and health checks
+  before the service starts. `BaseService` still exists for compatibility but
+  new services should prefer the builder API.
 
 The deprecated `DataLoader` and `DataLoadingService` modules have been
 **removed**. Migrate any remaining code to use
@@ -71,6 +76,29 @@ Additional interfaces such as `ExportServiceProtocol`, `UploadValidatorProtocol`
 and `DoorMappingServiceProtocol` are defined in `services/interfaces.py`. When a
 component does not receive a concrete instance it falls back to the global
 `ServiceContainer` exposed on the Dash app.
+
+## Service Builder Pattern
+
+New microservices are constructed using `ServiceBuilder` which configures
+logging, metrics and health routes before returning the final service
+instance:
+
+```python
+from yosai_framework.builder import ServiceBuilder
+
+service = (
+    ServiceBuilder("analytics")
+    .with_config("config/service.yaml")
+    .with_logging()
+    .with_metrics("0.0.0.0:9000")
+    .with_health()
+    .build()
+)
+service.start()
+```
+
+Existing code relying directly on `BaseService` can migrate by creating a
+`ServiceBuilder` and invoking the same `.start()` method on the built service.
 
 ## Service Container Registration
 
