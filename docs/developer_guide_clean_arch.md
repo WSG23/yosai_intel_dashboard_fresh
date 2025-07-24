@@ -22,8 +22,10 @@ with the same hierarchy.
 ## Migration
 
 Run `python scripts/migrate_to_clean_arch.py` to move existing modules into the
-new layout. Pass `--dry-run` to preview the changes. After moving files execute
-`python scripts/update_imports.py` to rewrite import statements.
+new layout. Pass `--dry-run` to preview the changes. The `--backup <dir>` option
+saves copies of each directory before moving them. Use `--rollback` together
+with `--backup` to restore the directories from those backups. After moving
+files execute `python scripts/update_imports.py` to rewrite import statements.
 
 The legacy package names still work during the transition. Thin wrapper modules
 re-export the new locations so existing imports keep functioning.
