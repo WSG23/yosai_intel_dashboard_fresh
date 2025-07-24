@@ -8,10 +8,9 @@ and provides specialized processors for different contexts.
 
 ### Text Processing Migration
 ```python
-from core.unicode import UnicodeTextProcessor, UnicodeSecurityProcessor
+from core.unicode import UnicodeProcessor, UnicodeSecurityProcessor
 
-processor = UnicodeTextProcessor()
-result = processor.clean_text(text)
+result = UnicodeProcessor.clean_text(text)
 
 # Security-sensitive contexts
 result = UnicodeSecurityProcessor.sanitize_input(text)
