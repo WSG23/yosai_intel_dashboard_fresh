@@ -3,28 +3,29 @@
 import logging
 import os
 import sys
-from types import ModuleType
 from pathlib import Path
+from types import ModuleType
 
 if os.getenv("LIGHTWEIGHT_SERVICES"):
     __all__ = []
 else:
 
     from .ai_mapping_store import ai_mapping_store
+    from .analytics.calculator import Calculator
+    from .analytics.data_loader import DataLoader
+    from .analytics.publisher import Publisher
     from .analytics.upload_analytics import UploadAnalyticsProcessor
-    from .controllers.upload_controller import UploadProcessingController
-    from .helpers.database_initializer import initialize_database
-    from .event_publisher import publish_event
     from .analytics_generator import AnalyticsGenerator
     from .analytics_processor import AnalyticsProcessor
     from .async_file_processor import AsyncFileProcessor
     from .chunked_analysis import analyze_with_chunking
+    from .controllers.upload_controller import UploadProcessingController
     from .data_processing.processor import Processor
     from .data_processing.unified_file_validator import UnifiedFileValidator
-    from .db_analytics_helper import DatabaseAnalyticsHelper
-    from .data_handler import DataHandler
     from .database_retriever import DatabaseAnalyticsRetriever
-    from .summary_report_generator import SummaryReportGenerator
+    from .db_analytics_helper import DatabaseAnalyticsHelper
+    from .event_publisher import publish_event
+    from .helpers.database_initializer import initialize_database
     from .microservices_architect import MicroservicesArchitect, ServiceBoundary
     from .registry import get_service
     from .result_formatting import (
@@ -33,6 +34,7 @@ else:
         prepare_regular_result,
         regular_analysis,
     )
+    from .summary_report_generator import SummaryReportGenerator
     from .summary_reporter import SummaryReporter
 
     logger = logging.getLogger(__name__)
@@ -84,9 +86,11 @@ else:
         "AsyncFileProcessor",
         "DatabaseAnalyticsHelper",
         "SummaryReporter",
-        "DataHandler",
         "DatabaseAnalyticsRetriever",
         "SummaryReportGenerator",
+        "DataLoader",
+        "Calculator",
+        "Publisher",
         "AnalyticsProcessor",
         "MicroservicesArchitect",
         "ServiceBoundary",
