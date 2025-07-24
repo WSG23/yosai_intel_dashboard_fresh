@@ -58,3 +58,11 @@ variables.  The registry endpoint is configured via `SERVICE_REGISTRY_URL`
 are available in the registry, the application automatically routes requests to
 them through the corresponding adapters.
 
+### Migration to Kubernetes DNS
+
+The Kubernetes deployment no longer uses a registry client.  Services are
+addressed directly via DNS using the pattern
+`<service>.<namespace>.svc.cluster.local`.  The `SERVICE_DISCOVERY_URL`
+environment variable has been removed from the default configuration and any
+references can be safely deleted.
+

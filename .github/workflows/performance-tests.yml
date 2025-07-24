@@ -34,3 +34,24 @@ jobs:
       - name: Check thresholds
         run: |
           load-tests/check_thresholds.sh api.json ingest.json analytics.json
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python deps
+        run: pip install requests kafka-python
+
+      - name: Run Python load test
+        run: |
+          python tools/load_test.py \
+            --brokers localhost:9092 \
+            --prom-url http://localhost:9090 \
+            --rate 50 --duration 60 | tee load_test_results.json
+
+      - name: Upload throughput results
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-test-results
+          path: load_test_results.json

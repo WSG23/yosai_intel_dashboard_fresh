@@ -10,10 +10,10 @@ sanitization helpers and SQL encoding functions.
 
 ### Text Processing Migration
 ```python
-from unicode_toolkit import TextProcessor, sanitize_input
+from core.unicode import UnicodeProcessor, UnicodeSecurityProcessor
 
-processor = TextProcessor()
-result = processor.clean(text)
+result = UnicodeProcessor.clean_text(text)
+
 
 # Security-sensitive contexts
 secure = sanitize_input(text)

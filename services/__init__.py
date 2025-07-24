@@ -16,6 +16,7 @@ else:
     from .analytics.publisher import Publisher
     from .analytics.upload_analytics import UploadAnalyticsProcessor
     from .analytics_generator import AnalyticsGenerator
+    from .ab_testing import ModelABTester
     from .analytics_processor import AnalyticsProcessor
     from .async_file_processor import AsyncFileProcessor
     from .chunked_analysis import analyze_with_chunking
@@ -94,4 +95,5 @@ else:
         "AnalyticsProcessor",
         "MicroservicesArchitect",
         "ServiceBoundary",
+        "ModelABTester",
     ]

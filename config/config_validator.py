@@ -91,9 +91,12 @@ class ConfigValidator(ConfigValidatorProtocol):
         """Run built-in and custom validation rules."""
         result = ValidationResult()
 
+        if not getattr(config.app, "secret_key", None) or not getattr(
+            config.security, "secret_key", None
+        ):
+            result.errors.append("SECRET_KEY must be set")
+
         if config.environment == "production":
-            if not config.app.secret_key:
-                result.errors.append("SECRET_KEY must be set for production")
             if not config.database.password and config.database.type != "sqlite":
                 result.warnings.append("Production database requires password")
             if config.app.host == "127.0.0.1":

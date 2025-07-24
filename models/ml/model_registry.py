@@ -95,38 +95,41 @@ class ModelRegistry:
         training_date: Optional[datetime] = None,
     ) -> ModelRecord:
         session = self._session()
-        active = self.get_model(name, active_only=True)
-        if version is None:
-            if active:
-                improved = self._metrics_improved(metrics, active.metrics or {})
-                version = self._bump_version(active.version, improved)
-            else:
-                version = "0.1.0"
+        try:
+            active = self.get_model(name, active_only=True)
+            if version is None:
+                if active:
+                    improved = self._metrics_improved(metrics, active.metrics or {})
+                    version = self._bump_version(active.version, improved)
+                else:
+                    version = "0.1.0"
 
-        key = f"{name}/{version}/{os.path.basename(model_path)}"
-        self.s3.upload_file(model_path, self.bucket, key)
-        storage_uri = f"s3://{self.bucket}/{key}"
+            key = f"{name}/{version}/{os.path.basename(model_path)}"
+            self.s3.upload_file(model_path, self.bucket, key)
+            storage_uri = f"s3://{self.bucket}/{key}"
 
-        with mlflow.start_run() as run:
-            for k, v in metrics.items():
-                mlflow.log_metric(k, v)
-            mlflow.log_artifact(model_path)
-            run_id = run.info.run_id
+            with mlflow.start_run() as run:
+                for k, v in metrics.items():
+                    mlflow.log_metric(k, v)
+                mlflow.log_artifact(model_path)
+                run_id = run.info.run_id
 
-        record = ModelRecord(
-            name=name,
-            version=version,
-            training_date=training_date or datetime.utcnow(),
-            metrics=metrics,
-            dataset_hash=dataset_hash,
-            storage_uri=storage_uri,
-            mlflow_run_id=run_id,
-            is_active=False,
-        )
-        session.add(record)
-        session.commit()
-        session.refresh(record)
-        return record
+                record = ModelRecord(
+                    name=name,
+                    version=version,
+                    training_date=training_date or datetime.utcnow(),
+                    metrics=metrics,
+                    dataset_hash=dataset_hash,
+                    storage_uri=storage_uri,
+                    mlflow_run_id=run_id,
+                    is_active=False,
+                )
+                session.add(record)
+                session.commit()
+                session.refresh(record)
+                return record
+        finally:
+            session.close()
 
     # --------------------------------------------------------------
     def get_model(
@@ -137,43 +140,55 @@ class ModelRegistry:
         active_only: bool = False,
     ) -> Optional[ModelRecord]:
         session = self._session()
-        stmt = select(ModelRecord).where(ModelRecord.name == name)
-        if active_only:
-            stmt = stmt.where(ModelRecord.is_active.is_(True))
-        if version:
-            stmt = stmt.where(ModelRecord.version == version)
-        stmt = stmt.order_by(ModelRecord.version.desc())
-        result = session.execute(stmt).scalars().first()
-        return result
+        try:
+            stmt = select(ModelRecord).where(ModelRecord.name == name)
+            if active_only:
+                stmt = stmt.where(ModelRecord.is_active.is_(True))
+            if version:
+                stmt = stmt.where(ModelRecord.version == version)
+            stmt = stmt.order_by(ModelRecord.version.desc())
+            result = session.execute(stmt).scalars().first()
+            return result
+        finally:
+            session.close()
 
     def list_models(self, name: Optional[str] = None) -> List[ModelRecord]:
         session = self._session()
-        stmt = select(ModelRecord)
-        if name:
-            stmt = stmt.where(ModelRecord.name == name)
-        stmt = stmt.order_by(ModelRecord.name, ModelRecord.version)
-        return list(session.execute(stmt).scalars().all())
+        try:
+            stmt = select(ModelRecord)
+            if name:
+                stmt = stmt.where(ModelRecord.name == name)
+            stmt = stmt.order_by(ModelRecord.name, ModelRecord.version)
+            return list(session.execute(stmt).scalars().all())
+        finally:
+            session.close()
 
     def delete_model(self, model_id: int) -> None:
         session = self._session()
-        record = session.get(ModelRecord, model_id)
-        if record:
-            session.delete(record)
-            session.commit()
+        try:
+            record = session.get(ModelRecord, model_id)
+            if record:
+                session.delete(record)
+                session.commit()
+        finally:
+            session.close()
 
     def set_active_version(self, name: str, version: str) -> None:
         session = self._session()
-        session.execute(
-            update(ModelRecord)
-            .where(ModelRecord.name == name)
-            .values(is_active=False)
-        )
-        session.execute(
-            update(ModelRecord)
-            .where(ModelRecord.name == name, ModelRecord.version == version)
-            .values(is_active=True)
-        )
-        session.commit()
+        try:
+            session.execute(
+                update(ModelRecord)
+                .where(ModelRecord.name == name)
+                .values(is_active=False)
+            )
+            session.execute(
+                update(ModelRecord)
+                .where(ModelRecord.name == name, ModelRecord.version == version)
+                .values(is_active=True)
+            )
+            session.commit()
+        finally:
+            session.close()
 
     # --------------------------------------------------------------
     def download_artifact(self, storage_uri: str, destination: str) -> None:
