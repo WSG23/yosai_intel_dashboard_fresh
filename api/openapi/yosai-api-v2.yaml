@@ -101,6 +101,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AccessEvent'
+      
+    WebhookAlertPayload:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    AnalyticsUpdate:
+      type: object
+      description: Generic analytics update broadcast over WebSocket.
+      additionalProperties: true
 
   responses:
     BadRequest:
