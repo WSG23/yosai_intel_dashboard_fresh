@@ -117,7 +117,7 @@ services:
 
   event-ingestion:
     build:
-      context: ./services/event-ingestion
+      context: ./services/event-ingestion/
       dockerfile: Dockerfile
     environment:
       <<: *shared-env
