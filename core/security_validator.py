@@ -22,7 +22,7 @@ from core.exceptions import ValidationError
 from core.protocols import SecurityServiceProtocol
 from security.attack_detection import AttackDetection
 from security.events import SecurityEvent, emit_security_event
-from security.unicode_security_processor import sanitize_unicode_input
+from core.unicode import sanitize_unicode_input
 from tracing import propagate_context
 
 from .security_patterns import PATH_TRAVERSAL_PATTERNS as RAW_PATH_PATTERNS

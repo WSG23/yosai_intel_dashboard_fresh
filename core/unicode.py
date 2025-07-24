@@ -441,9 +441,56 @@ def clean_surrogate_chars(text: str, replacement: str = "") -> str:
 
 
 def sanitize_unicode_input(text: Union[str, Any]) -> str:
-    """Return ``text`` stripped of surrogate pairs and BOM characters."""
+    """Return ``text`` normalized and stripped of surrogate codepoints."""
 
-    return _unicode_validator.validate_and_sanitize(text)
+    if not isinstance(text, str):
+        try:
+            text = str(text)
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.warning("Failed to convert %r to str: %s", text, exc)
+            return ""
+
+    def _strip_pairs(val: str) -> str:
+        out = []
+        i = 0
+        while i < len(val):
+            ch = val[i]
+            code = ord(ch)
+            if code > 0xFFFF:
+                i += 1
+                continue
+            if 0xD800 <= code <= 0xDBFF:
+                if i + 1 < len(val) and 0xDC00 <= ord(val[i + 1]) <= 0xDFFF:
+                    i += 2
+                    continue
+                i += 1
+                continue
+            if 0xDC00 <= code <= 0xDFFF:
+                i += 1
+                continue
+            out.append(ch)
+            i += 1
+        return "".join(out)
+
+    try:
+        cleaned = _strip_pairs(text)
+        sanitized = _unicode_validator.validate_and_sanitize(cleaned)
+        sanitized = unicodedata.normalize("NFKC", sanitized)
+        return _drop_dangerous_prefix(sanitized)
+    except UnicodeError as exc:  # pragma: no cover - best effort
+        logger.warning("Unicode sanitization failed: %s", exc)
+        cleaned = UnicodeProcessor.clean_surrogate_chars(text)
+        try:
+            cleaned = _unicode_validator.validate_and_sanitize(cleaned)
+            cleaned = unicodedata.normalize("NFKC", cleaned)
+            return _drop_dangerous_prefix(cleaned)
+        except Exception as inner:  # pragma: no cover - extreme defensive
+            logger.error("Normalization retry failed: %s", inner)
+            return cleaned
+    except Exception as exc:  # pragma: no cover - extreme defensive
+        logger.error("sanitize_unicode_input failed: %s", exc)
+        cleaned = "".join(ch for ch in str(text) if not (0xD800 <= ord(ch) <= 0xDFFF))
+        return _drop_dangerous_prefix(cleaned)
 
 
 def process_large_csv_content(
@@ -490,8 +537,19 @@ def has_malicious_patterns(text: str) -> bool:
 
 def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """Sanitize a :class:`~pandas.DataFrame` for unsafe Unicode."""
+    df_clean = df.copy()
 
-    return _unicode_validator.validate_dataframe(df)
+    df_clean.columns = [
+        sanitize_unicode_input(col) if isinstance(col, str) else col
+        for col in df_clean.columns
+    ]
+
+    for col in df_clean.select_dtypes(include=["object"]).columns:
+        df_clean[col] = df_clean[col].apply(
+            lambda x: sanitize_unicode_input(x) if pd.notna(x) else x
+        )
+
+    return df_clean
 
 
 def secure_unicode_sanitization(value: Any, *, check_malicious: bool = True) -> str:

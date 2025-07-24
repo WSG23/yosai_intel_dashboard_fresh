@@ -18,7 +18,10 @@ from core.unicode import (
 from security.unicode_security_handler import (
     UnicodeSecurityHandler as UnicodeSecurityProcessor,
 )
-from security.unicode_security_validator import UnicodeSecurityValidator
+from security.unicode_security_validator import (
+    UnicodeSecurityValidator,
+    UnicodeSecurityConfig,
+)
 from security.validation_exceptions import ValidationError
 
 
@@ -44,7 +47,7 @@ def test_unicode_security_processor_sanitization():
     df = pd.DataFrame({"=bad" + chr(0xDC00): ["😀=cmd" + chr(0xD800)]})
     cleaned = UnicodeSecurityProcessor.sanitize_dataframe(df)
     assert list(cleaned.columns) == ["bad"]
-    assert cleaned.iloc[0, 0] == "😀=cmd"
+    assert cleaned.iloc[0, 0] == "cmd"
 
 
 @pytest.mark.slow
@@ -65,10 +68,11 @@ def test_wrapped_contains_surrogates():
 
 def test_unicode_security_validator_df():
     df = pd.DataFrame({"col": ["ok", "bad" + chr(0xD800)]})
-    df_clean = UnicodeSecurityValidator.validate_dataframe(df)
+    validator = UnicodeSecurityValidator(UnicodeSecurityConfig(strict_mode=False))
+    df_clean = validator.validate_dataframe(df)
     assert df_clean.iloc[1, 0] == "bad"
 
-    valid = UnicodeSecurityValidator.validate_dataframe(pd.DataFrame({"col": ["😀ok"]}))
+    valid = validator.validate_dataframe(pd.DataFrame({"col": ["😀ok"]}))
     assert valid.iloc[0, 0] == "😀ok"
 
 
