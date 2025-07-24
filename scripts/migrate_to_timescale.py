@@ -27,6 +27,7 @@ from typing import Any, Iterable, List, Mapping, Sequence, cast
 import psycopg2
 from psycopg2.extensions import connection, cursor
 from psycopg2.extras import DictCursor, execute_batch
+from database.secure_exec import execute_query, execute_command
 from tqdm import tqdm
 
 CHUNK_SIZE = 10_000
@@ -58,26 +59,30 @@ def connect_with_retry(dsn: str, retries: int = 5, delay: float = 1.0) -> connec
 
 
 def ensure_checkpoint_table(cur: cursor) -> None:
-    cur.execute(
+    execute_command(
+        cur,
         f"""
         CREATE TABLE IF NOT EXISTS {CHECKPOINT_TABLE} (
             table_name TEXT PRIMARY KEY,
             last_id BIGINT
         )
-        """
+        """,
     )
 
 
 def get_checkpoint(cur: cursor, table: str) -> int:
-    cur.execute(
-        f"SELECT last_id FROM {CHECKPOINT_TABLE} WHERE table_name = %s", (table,)
+    execute_query(
+        cur,
+        f"SELECT last_id FROM {CHECKPOINT_TABLE} WHERE table_name = %s",
+        (table,),
     )
     row = cur.fetchone()
     return row[0] if row else 0
 
 
 def update_checkpoint(cur: cursor, table: str, last_id: int) -> None:
-    cur.execute(
+    execute_command(
+        cur,
         f"""
         INSERT INTO {CHECKPOINT_TABLE} (table_name, last_id)
         VALUES (%s, %s)
@@ -93,8 +98,9 @@ def rollback_table(conn: connection, table: str) -> None:
     with conn.cursor() as cur:
         ensure_checkpoint_table(cur)
         LOG.info("Rolling back table %s", table)
-        cur.execute(f"DELETE FROM {table}")
-        cur.execute(
+        execute_command(cur, f"DELETE FROM {table}")
+        execute_command(
+            cur,
             f"DELETE FROM {CHECKPOINT_TABLE} WHERE table_name = %s",
             (table,),
         )
@@ -251,7 +257,8 @@ def setup_timescale(conn: connection) -> None:
 
 
 def fetch_chunk(cur: cursor, table: str, start: int, size: int) -> List[dict[str, Any]]:
-    cur.execute(
+    execute_query(
+        cur,
         f"SELECT * FROM {table} WHERE id > %s ORDER BY id ASC LIMIT %s",
         (start, size),
     )
@@ -277,7 +284,8 @@ def validate_chunk(
     source_checksum: str,
     expected_count: int,
 ) -> None:
-    target_cur.execute(
+    execute_query(
+        target_cur,
         f"SELECT * FROM {table} WHERE id > %s AND id <= %s ORDER BY id ASC",
         (start_id, end_id),
     )
@@ -310,7 +318,7 @@ def migrate_table(
         last_id = get_checkpoint(tgt, table) if resume else 0
         LOG.info("Starting migration for %s at id %s", table, last_id)
         if table == "access_events":
-            src.execute(f"SELECT COUNT(*) FROM {table}")
+            execute_query(src, f"SELECT COUNT(*) FROM {table}")
             total = src.fetchone()[0]
             pbar = tqdm(total=total - last_id, desc=table)
         else:
@@ -366,16 +374,17 @@ def migrate_other_tables(
 
 def run_verification(target_conn: connection) -> None:
     with target_conn.cursor() as cur:
-        cur.execute("SELECT COUNT(*) FROM access_events")
+        execute_query(cur, "SELECT COUNT(*) FROM access_events")
         count = cur.fetchone()[0]
         LOG.info("access_events rows: %s", count)
-        cur.execute(
+        execute_query(
+            cur,
             "SELECT table_name FROM information_schema.tables "
-            "WHERE table_schema='public'"
+            "WHERE table_schema='public'",
         )
         tables = [r[0] for r in cur.fetchall()]
         LOG.info("Tables: %s", ", ".join(tables))
-        cur.execute("SELECT * FROM timescaledb_information.compressed_hypertables")
+        execute_query(cur, "SELECT * FROM timescaledb_information.compressed_hypertables")
         LOG.info("Compressed hypertables:")
         for row in cur.fetchall():
             LOG.info(str(row))

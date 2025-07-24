@@ -11,6 +11,7 @@ from typing import Any
 import psycopg2
 from prometheus_client import Gauge, start_http_server
 from psycopg2.extras import DictCursor, execute_values
+from database.secure_exec import execute_query, execute_command
 
 LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -41,23 +42,25 @@ FIELDS = [
 
 
 def ensure_checkpoint(cur: DictCursor) -> None:
-    cur.execute(
+    execute_command(
+        cur,
         f"""
         CREATE TABLE IF NOT EXISTS {CHECKPOINT_TABLE} (
             last_ts TIMESTAMPTZ PRIMARY KEY
         )
-        """
+        """,
     )
-    cur.execute(
+    execute_command(
+        cur,
         (
             f"INSERT INTO {CHECKPOINT_TABLE} (last_ts) VALUES ('1970-01-01') "
             "ON CONFLICT DO NOTHING"
-        )
+        ),
     )
 
 
 def get_last_timestamp(cur: DictCursor) -> datetime:
-    cur.execute(f"SELECT last_ts FROM {CHECKPOINT_TABLE}")
+    execute_query(cur, f"SELECT last_ts FROM {CHECKPOINT_TABLE}")
     row = cur.fetchone()
     if row:
         return row[0]
@@ -65,11 +68,12 @@ def get_last_timestamp(cur: DictCursor) -> datetime:
 
 
 def update_timestamp(cur: DictCursor, ts: datetime) -> None:
-    cur.execute(f"UPDATE {CHECKPOINT_TABLE} SET last_ts = %s", (ts,))
+    execute_command(cur, f"UPDATE {CHECKPOINT_TABLE} SET last_ts = %s", (ts,))
 
 
 def fetch_new_rows(cur: DictCursor, last_ts: datetime) -> list[dict[str, Any]]:
-    cur.execute(
+    execute_query(
+        cur,
         "SELECT * FROM access_events WHERE time > %s ORDER BY time ASC LIMIT 1000",
         (last_ts,),
     )

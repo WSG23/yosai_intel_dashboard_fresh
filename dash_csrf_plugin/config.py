@@ -87,7 +87,7 @@ class CSRFConfig:
             "enabled": False,
             "ssl_strict": False,
             "check_referer": False,
-            "secret_key": "change-me",
+            "secret_key": os.environ.get("SECRET_KEY", ""),
         }
         defaults.update(kwargs)
         return cls(**defaults)
