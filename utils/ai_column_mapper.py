@@ -7,69 +7,12 @@ from typing import Dict, List, Optional
 import pandas as pd
 
 from components.plugin_adapter import ComponentPluginAdapter
+from mapping.models import ColumnRules, load_rules
 
 # ---------------------------------------------------------------------------
 # Header variant dictionaries
 # ---------------------------------------------------------------------------
 
-ENGLISH_COLUMNS: Dict[str, List[str]] = {
-    "timestamp": [
-        "timestamp",
-        "time",
-        "date",
-        "datetime",
-        "event_time",
-        "created_at",
-    ],
-    "person_id": [
-        "person id",
-        "person",
-        "user",
-        "user id",
-        "employee",
-        "badge",
-        "card_id",
-    ],
-    "door_id": [
-        "door",
-        "door id",
-        "device",
-        "device name",
-        "reader",
-        "location",
-        "access_point",
-    ],
-    "access_result": [
-        "access result",
-        "result",
-        "status",
-        "outcome",
-        "decision",
-    ],
-    "direction": [
-        "direction",
-        "entry_exit",
-        "in_out",
-    ],
-    "floor": ["floor", "level"],
-    "zone_id": ["zone", "zone id"],
-    "facility_id": ["facility", "facility id", "building"],
-    "token_id": ["token id", "badge id", "card id"],
-    "event_type": ["event type", "type", "category"],
-}
-
-JAPANESE_COLUMNS: Dict[str, List[str]] = {
-    "timestamp": ["タイムスタンプ", "日時", "時間", "日付", "発生時刻"],
-    "person_id": ["利用者ID", "ユーザーID", "従業員ID", "人物ID"],
-    "door_id": ["ドアID", "デバイス名", "場所ID", "ドア名", "リーダーID"],
-    "access_result": ["アクセス結果", "結果", "ステータス", "認証結果"],
-    "direction": ["方向", "入出", "進行方向"],
-    "floor": ["階", "フロア", "階数"],
-    "zone_id": ["ゾーンID", "領域ID", "エリアID"],
-    "facility_id": ["施設ID", "建物ID", "ビルID"],
-    "token_id": ["トークンID", "カードID", "バッジID", "識別子"],
-    "event_type": ["イベントタイプ", "種類", "イベント種別"],
-}
 
 # ---------------------------------------------------------------------------
 # Standardization helpers
@@ -77,14 +20,16 @@ JAPANESE_COLUMNS: Dict[str, List[str]] = {
 
 def standardize_column_names(
     df: pd.DataFrame,
+    rules: ColumnRules | None = None,
     custom_mappings: Optional[Dict[str, List[str]]] = None,
     use_japanese: bool = False,
 ) -> pd.DataFrame:
     """Return ``df`` with columns renamed to canonical headers."""
 
-    mappings: Dict[str, List[str]] = {**ENGLISH_COLUMNS}
+    rules = rules or load_rules()
+    mappings: Dict[str, List[str]] = {**rules.english}
     if use_japanese:
-        for key, vals in JAPANESE_COLUMNS.items():
+        for key, vals in rules.japanese.items():
             mappings.setdefault(key, []).extend(vals)
     if custom_mappings:
         for key, vals in custom_mappings.items():
@@ -115,16 +60,21 @@ class AIColumnMapperAdapter:
         ai_adapter: ComponentPluginAdapter,
         custom_mappings: Optional[Dict[str, List[str]]] = None,
         use_japanese: bool = False,
+        rules: ColumnRules | None = None,
     ) -> None:
         self.ai_adapter = ai_adapter
         self.custom_mappings = custom_mappings
         self.use_japanese = use_japanese
+        self.rules = rules or load_rules()
 
     def map_and_standardize(self, df: pd.DataFrame) -> pd.DataFrame:
         suggestions = self.ai_adapter.suggest_columns(df)
         df = df.rename(columns=suggestions)
         return standardize_column_names(
-            df, custom_mappings=self.custom_mappings, use_japanese=self.use_japanese
+            df,
+            rules=self.rules,
+            custom_mappings=self.custom_mappings,
+            use_japanese=self.use_japanese,
         )
 
 
