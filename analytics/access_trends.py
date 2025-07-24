@@ -1,3 +1,4 @@
+import itertools
 import logging
 import warnings
 from dataclasses import dataclass
@@ -6,6 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+
 from utils.scipy_compat import get_stats_module
 
 stats = get_stats_module()
@@ -211,12 +213,11 @@ class AccessTrendsAnalyzer:
 
         # Calculate S statistic
         S = 0
-        for i in range(n - 1):
-            for j in range(i + 1, n):
-                if data[j] > data[i]:
-                    S += 1
-                elif data[j] < data[i]:
-                    S -= 1
+        for i, j in itertools.combinations(range(n), 2):
+            if data[j] > data[i]:
+                S += 1
+            elif data[j] < data[i]:
+                S -= 1
 
         # Calculate variance
         var_S = n * (n - 1) * (2 * n + 5) / 18

@@ -1,19 +1,19 @@
 import re
 
 print("Replacing custom UI with base code components...")
-with open('mde.py', 'r') as f:
+with open("mde.py", "r") as f:
     content = f.read()
 
 # Add imports for base code UI components
-new_imports = '''
+new_imports = """
 from components.column_verification import create_column_verification_modal
 from components.simple_device_mapping import create_simple_device_modal_with_ai
-'''
+"""
 
 content = re.sub(
-    r'(from analytics\.db_interface import AnalyticsDataAccessor)',
-    r'\1' + new_imports,
-    content
+    r"(from analytics\.db_interface import AnalyticsDataAccessor)",
+    r"\1" + new_imports,
+    content,
 )
 
 # Replace custom column display with base code modal
@@ -42,13 +42,13 @@ new_column_display = '''
         ])'''
 
 content = re.sub(
-    r'def _create_column_display\(self, ai_suggestions, df\):.*?return html\.Div\(\[.*?\]\)',
+    r"def _create_column_display\(self, ai_suggestions, df\):.*?return html\.Div\(\[.*?\]\)",
     new_column_display,
     content,
-    flags=re.DOTALL
+    flags=re.DOTALL,
 )
 
-# Replace custom device display with base code modal  
+# Replace custom device display with base code modal
 new_device_display = '''
     def _create_device_display(self, df, filename):
         """Use base code device mapping component"""
@@ -57,11 +57,16 @@ new_device_display = '''
         
         try:
             # Extract unique devices from data
-            device_columns = [col for col in df.columns if any(term in str(col).lower() for term in ['door', 'device', 'location'])]
-            devices = []
-            for col in device_columns:
-                unique_devices = df[col].dropna().unique().tolist()
-                devices.extend(unique_devices)
+            device_columns = [
+                col
+                for col in df.columns
+                if any(term in str(col).lower() for term in ["door", "device", "location"])
+            ]
+            devices = [
+                device
+                for col in device_columns
+                for device in df[col].dropna().unique().tolist()
+            ]
             
             if devices:
                 # Use base code device modal
@@ -84,10 +89,10 @@ content = re.sub(
     r'def _create_device_display\(self, df, filename\):.*?return dbc\.Alert\(f"Device analysis error: \{str\(e\)\}", color="warning"\)',
     new_device_display,
     content,
-    flags=re.DOTALL
+    flags=re.DOTALL,
 )
 
-with open('mde.py', 'w') as f:
+with open("mde.py", "w") as f:
     f.write(content)
 
 print("✅ Replaced custom UI with base code components")
