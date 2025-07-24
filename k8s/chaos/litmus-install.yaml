@@ -1,0 +1,15 @@
+# Install Litmus Chaos operator
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: litmus
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: litmus
+  namespace: litmus
+spec:
+  chart: litmuschaos/litmus
+  repo: https://litmuschaos.github.io/litmus-helm/
+  targetNamespace: litmus

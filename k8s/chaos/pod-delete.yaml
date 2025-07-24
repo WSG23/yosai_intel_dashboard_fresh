@@ -1,0 +1,20 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosExperiment
+metadata:
+  name: pod-delete
+  namespace: litmus
+spec:
+  definition:
+    scope: Namespaced
+    permissions:
+      - apiGroups: ['']
+        resources: ['pods']
+        verbs: ['create','delete','list','patch']
+    image: litmuschaos/go-runner:2.14.0
+    args:
+      - -c
+      - |
+        ./experiments -name pod-delete
+    env:
+      - name: TOTAL_CHAOS_DURATION
+        value: '30'
