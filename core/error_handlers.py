@@ -7,6 +7,7 @@ from werkzeug.exceptions import HTTPException
 
 from core.exceptions import YosaiBaseException
 from shared.errors.types import ErrorCode
+from .error_handling import ErrorCategory, ErrorSeverity, error_handler
 
 _CODE_TO_STATUS: dict[ErrorCode, int] = {
     ErrorCode.INVALID_INPUT: 400,
@@ -31,6 +32,12 @@ def register_error_handlers(app: Flask) -> None:
 
     @app.errorhandler(YosaiBaseException)
     def _handle_yosai_error(error: YosaiBaseException):  # type: ignore[missing-return-type]
+        error_handler.handle_error(
+            error,
+            category=ErrorCategory.USER_INPUT,
+            severity=ErrorSeverity.MEDIUM,
+            context={"code": error.error_code.value, "message": error.message},
+        )
         status = _CODE_TO_STATUS.get(error.error_code, 500)
         return _json_body(error.error_code, error.message, error.details), status
 
@@ -44,8 +51,15 @@ def register_error_handlers(app: Flask) -> None:
             503: ErrorCode.UNAVAILABLE,
         }
         err_code = mapping.get(code, ErrorCode.INTERNAL)
+        error_handler.handle_error(
+            error,
+            category=ErrorCategory.USER_INPUT,
+            severity=ErrorSeverity.MEDIUM,
+            context={"http_code": code, "path": getattr(error, 'name', '')},
+        )
         return _json_body(err_code, error.description), code
 
     @app.errorhandler(Exception)
     def _handle_generic(error: Exception):  # type: ignore[missing-return-type]
+        error_handler.handle_error(error, severity=ErrorSeverity.HIGH)
         return _json_body(ErrorCode.INTERNAL, str(error)), 500

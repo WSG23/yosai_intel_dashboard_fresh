@@ -14,6 +14,8 @@ from prometheus_client import REGISTRY, Counter
 from prometheus_client.core import CollectorRegistry
 
 from .base_model import BaseModel
+from .exceptions import YosaiBaseException
+from shared.errors.types import ErrorCode
 
 # Counter tracking circuit breaker state transitions. When the metric already
 # exists in the default registry (e.g. during test re-imports) we create the
@@ -69,8 +71,8 @@ class ErrorContext:
     stack_trace: Optional[str] = None
 
 
-class YosaiError(Exception):
-    """Base exception class for all Yōsai-specific errors"""
+class YosaiError(YosaiBaseException):
+    """Base exception class for all Yōsai-specific errors with extra context."""
 
     def __init__(
         self,
@@ -78,37 +80,23 @@ class YosaiError(Exception):
         category: ErrorCategory = ErrorCategory.ANALYTICS,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
         details: Dict[str, Any] = None,
-    ):
-        self.message = message
+        error_code: ErrorCode = ErrorCode.INTERNAL,
+    ) -> None:
+        super().__init__(message, details, error_code)
         self.category = category
         self.severity = severity
-        self.details = details or {}
         self.timestamp = datetime.now()
-        super().__init__(message)
-
-
-class DatabaseError(YosaiError):
-    """Database-specific errors"""
-
-    def __init__(self, message: str, details: Dict[str, Any] = None):
-        super().__init__(message, ErrorCategory.DATABASE, ErrorSeverity.HIGH, details)
-
-
-class ConfigurationError(YosaiError):
-    """Configuration errors"""
-
-    def __init__(self, message: str, details: Dict[str, Any] = None):
-        super().__init__(
-            message, ErrorCategory.CONFIGURATION, ErrorSeverity.CRITICAL, details
-        )
 
 
 class CircuitBreakerError(YosaiError):
-    """Circuit breaker errors"""
+    """Raised when a circuit breaker is open."""
 
-    def __init__(self, message: str, details: Dict[str, Any] = None):
+    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
         super().__init__(
-            message, ErrorCategory.EXTERNAL_API, ErrorSeverity.HIGH, details
+            message,
+            ErrorCategory.EXTERNAL_API,
+            ErrorSeverity.HIGH,
+            details,
         )
 
 
