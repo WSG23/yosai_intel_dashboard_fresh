@@ -1277,6 +1277,11 @@ Run migrations with:
 alembic -c database/migrations/alembic.ini upgrade head
 ```
 
+Each `[section]_db` in `alembic.ini` may be overridden via an environment
+variable named `<SECTION>_URL` (for example `GATEWAY_DB_URL`). When set, the
+value is used instead of the URL in the config file. This is helpful for
+pointing migrations at a different database in CI or development.
+
 New access events are replicated from PostgreSQL to TimescaleDB by
 `scripts/replicate_to_timescale.py`. Set `SOURCE_DSN` and `TARGET_DSN` to run the
 job periodically (for example via `cron` or a Kubernetes CronJob):
