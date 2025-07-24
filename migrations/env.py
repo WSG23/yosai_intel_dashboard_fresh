@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import configparser
 import logging
+import os
 from logging.config import fileConfig
 from typing import Iterable
 
@@ -22,6 +23,11 @@ def _db_sections() -> Iterable[str]:
             yield section
 
 
+def _get_url(section: str) -> str:
+    env_name = f"{section.upper()}_URL"
+    return os.environ.get(env_name, parser.get(section, "sqlalchemy.url"))
+
+
 def _ensure_timescale(connection) -> None:
     """Create TimescaleDB extension and hypertable if missing."""
     connection.execute(text("CREATE EXTENSION IF NOT EXISTS timescaledb"))
@@ -34,7 +40,7 @@ def _ensure_timescale(connection) -> None:
 
 def run_migrations_offline() -> None:
     for section in _db_sections():
-        url = parser.get(section, "sqlalchemy.url")
+        url = _get_url(section)
         context.configure(url=url, literal_binds=True)
         with context.begin_transaction():
             context.run_migrations()
@@ -43,7 +49,7 @@ def run_migrations_offline() -> None:
 def run_migrations_online() -> None:
     for section in _db_sections():
         opts = {
-            "sqlalchemy.url": parser.get(section, "sqlalchemy.url"),
+            "sqlalchemy.url": _get_url(section),
         }
         connectable = engine_from_config(
             opts,
