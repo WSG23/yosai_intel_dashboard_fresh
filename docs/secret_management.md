@@ -63,6 +63,22 @@ fetch the secret with a name matching the requested key. With the
 `VAULT_ADDR` and `VAULT_TOKEN` environment variables. Keys may include a
 field selector like `secret/data/db#password` to read specific values.
 
+### AWS Secrets Manager Configuration
+
+`SecureConfigManager` also understands strings starting with `"aws-secrets:"`.
+Install the `boto3` package and ensure the AWS SDK can locate credentials and
+region configuration. Secrets are retrieved using the configured name and the
+plain string value is injected into the loaded configuration. Missing secrets or
+authentication issues raise a `ConfigurationError` with details about the
+problem. Example usage:
+
+```yaml
+database:
+  password: aws-secrets:prod/db_password
+security:
+  secret_key: aws-secrets:prod/app_secret
+```
+
 ### Vault Configuration
 
 The optional `SecureConfigManager` resolves any string starting with
