@@ -15,9 +15,9 @@ services/
 
 ## Core Classes
 
-- **`UnifiedFileValidator`** – Reads CSV/JSON/Excel files and performs validation.
+- **`FileValidator`** – Applies composable rules to uploaded files.
 - **`DataEnhancer`** – Applies normalisation and adds computed columns.
-- **`Processor`** – High level wrapper that uses `UnifiedFileValidator` and `DataEnhancer` to produce a clean dataframe.
+- **`Processor`** – High level wrapper that uses `FileValidator` and `DataEnhancer` to produce a clean dataframe.
 - **`AnalyticsEngine`** – Generates statistics from the processed dataframe.
 - **``analytics_core.callbacks.unified_callback_manager.CallbackManager``** – Emits events throughout the pipeline so plugins can react.
 
@@ -25,7 +25,7 @@ services/
 
 ```mermaid
 classDiagram
-    UnifiedFileValidator <|-- Processor
+    FileValidator <|-- Processor
     DataEnhancer <|-- Processor
     Processor --> AnalyticsEngine
     AnalyticsEngine --> CallbackManager

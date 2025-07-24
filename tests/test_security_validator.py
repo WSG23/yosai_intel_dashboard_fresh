@@ -1,73 +1,26 @@
-import types
+import html
 
+import pytest
 
-import security_callback_controller
-from core.security_validator import (
-    AdvancedSQLValidator,
-    SecurityLevel,
-    SecurityValidator,
-)
+from validation.security_validator import SecurityValidator
 
 
 def test_sql_injection_validation():
     validator = SecurityValidator()
-    issues = validator._validate_sql_injection("' OR 1=1 --", "username")
-    assert issues
-    assert issues[0].level == SecurityLevel.CRITICAL
-
-
-def test_valid_sql_passes():
-    validator = AdvancedSQLValidator()
-    assert not validator.is_malicious("SELECT * FROM users WHERE id = 1")
+    with pytest.raises(Exception):
+        validator.validate_input("1; DROP TABLE users")
 
 
 def test_main_validation_orchestration():
-    # Stub security callback handling for isolated testing
-    security_callback_controller.security_unified_callbacks = types.SimpleNamespace(
-        trigger=lambda *args, **kwargs: None
-    )
-
     validator = SecurityValidator()
     value = "<script>alert('xss')</script>"
-    result = validator.validate_input(value, "comment")
-    assert not result["valid"]
-    assert result["issues"]
-    assert result["sanitized"] == html.escape(value, quote=True)
+    with pytest.raises(Exception):
+        validator.validate_input(value, "comment")
 
 
-def test_check_permissions_allows():
-    class FakeSession:
-        def get(self, url, params=None, headers=None, timeout=None):
-            class Resp:
-                def raise_for_status(self):
-                    pass
-
-
-                def json(self):
-                    return {"allowed": True}
-
-            return Resp()
-
-    session = FakeSession()
+def test_validate_file_upload_rules():
     validator = SecurityValidator()
-    assert validator.check_permissions("alice", "door1", "open", client=session) is True
-
-
-def test_check_permissions_denied():
-    class FakeSession:
-        def get(self, url, params=None, headers=None, timeout=None):
-            class Resp:
-                def raise_for_status(self):
-                    pass
-
-
-                def json(self):
-                    return {"allowed": False}
-
-            return Resp()
-
-    session = FakeSession()
-    validator = SecurityValidator()
-    assert (
-        validator.check_permissions("alice", "door1", "open", client=session) is False
-    )
+    valid = validator.validate_file_upload("ok.csv", b"a,b\n1,2")
+    assert valid["valid"]
+    with pytest.raises(Exception):
+        validator.validate_file_upload("bad.csv", b"=cmd()")

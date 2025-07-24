@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 from utils.mapping_helpers import map_and_clean
 
 

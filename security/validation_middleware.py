@@ -8,7 +8,7 @@ from config.dynamic_config import dynamic_config
 from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
 from core.exceptions import ValidationError
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 
 
 class Validator(Protocol):

@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 
 
 class UnifiedAnalyticsController:

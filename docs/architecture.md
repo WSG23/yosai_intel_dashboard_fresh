@@ -16,9 +16,10 @@ See [React Component Architecture](react_component_architecture.md) for an overv
 
 ## Latest Changes
 
-- **Unified Validator** – Input and file validation are now handled by the
-  `SecurityValidator` together with `UnifiedFileValidator`. The deprecated
-  `SecureFileValidator` class has been removed.
+- **Validation Package** – Input and file checks are provided by the
+  `validation` package. `SecurityValidator` and `FileValidator` can be
+  composed from small rules. Legacy classes now import these validators
+  for backward compatibility.
 - **Separated Analytics Modules** – The previously monolithic
   `AnalyticsService` has been broken into smaller modules under
 `services/data_processing/` and `analytics/`.  `UnifiedFileValidator`,

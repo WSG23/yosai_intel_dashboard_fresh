@@ -7,7 +7,7 @@ All validation in the Yōsai Intel Dashboard is handled by the unified `Security
 Use `SecurityValidator` for all validation needs:
 
 ```python
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 
 validator = SecurityValidator()
 
@@ -38,7 +38,7 @@ All legacy validators have been removed. Update your code to use
 `SecurityValidator` for both input and file checks:
 
 ```python
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 
 validator = SecurityValidator()
 csv_bytes = df.to_csv(index=False).encode("utf-8")

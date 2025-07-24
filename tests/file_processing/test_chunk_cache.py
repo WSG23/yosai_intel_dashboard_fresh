@@ -26,7 +26,7 @@ spec.loader.exec_module(chunk_mod)
 
 analyze_with_chunking = chunk_mod.analyze_with_chunking
 from analytics.chunked_analytics_controller import ChunkedAnalyticsController
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 
 
 class DummyCluster:
