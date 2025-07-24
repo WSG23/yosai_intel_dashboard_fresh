@@ -41,6 +41,7 @@ class MetricType(Enum):
     FILE_PROCESSING = "file_processing"
     API_CALL = "api_call"
     USER_INTERACTION = "user_interaction"
+    DEPRECATED_USAGE = "deprecated_usage"
 
 
 @dataclass
@@ -256,6 +257,15 @@ class PerformanceMonitor:
                 )
 
         return sorted(slow_ops, key=lambda x: x["duration"], reverse=True)
+
+    def get_deprecation_counts(self, hours: int = 24) -> Dict[str, int]:
+        """Return how often deprecated functions were called in the last ``hours``."""
+        cutoff = datetime.now() - timedelta(hours=hours)
+        counts: Dict[str, int] = defaultdict(int)
+        for metric in self.metrics:
+            if metric.timestamp >= cutoff and metric.metric_type == MetricType.DEPRECATED_USAGE:
+                counts[metric.name] += 1
+        return dict(counts)
 
     def _percentile(self, values: List[float], percentile: int) -> float:
         """Calculate percentile of values"""

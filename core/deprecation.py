@@ -1,53 +1,36 @@
-"""Utilities for deprecating functions and tracking usage."""
-
-from __future__ import annotations
-
 import functools
 import warnings
-from typing import Callable, Any
+from typing import Callable
 
-from .performance import get_performance_monitor
+from .performance import MetricType, get_performance_monitor
+from monitoring.prometheus.deprecation import record_deprecated_call
 
 
-def deprecated(
-    since: str,
-    removal: str | None = None,
-    migration: str | None = None,
-    track_usage: bool = False,
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    """Mark a function as deprecated.
+def deprecated(reason: str | None = None) -> Callable[[Callable], Callable]:
+    """Decorator to mark functions as deprecated and record usage metrics."""
 
-    Parameters
-    ----------
-    since:
-        Version when the function was deprecated.
-    removal:
-        Planned version for removal. If provided, included in the warning
-        message.
-    migration:
-        Optional hint for migrating off the deprecated functionality.
-    track_usage:
-        If ``True``, each call records a ``deprecated.<func>`` metric via the
-        :mod:`core.performance` monitor.
-    """
-
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        parts = [f"{func.__module__}.{func.__name__} is deprecated since {since}"]
-        if removal:
-            parts.append(f"and will be removed in {removal}")
-        if migration:
-            parts.append(migration)
-        message = " ".join(parts)
+    def decorator(func: Callable) -> Callable:
+        message = (
+            f"{func.__module__}.{func.__name__} is deprecated"
+            + (f": {reason}" if reason else "")
+        )
 
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args, **kwargs):
             warnings.warn(message, DeprecationWarning, stacklevel=2)
-            if track_usage:
-                get_performance_monitor().record_metric(
-                    f"deprecated.{func.__name__}", 1
-                )
+            get_performance_monitor().record_metric(
+                message,
+                1,
+                MetricType.DEPRECATED_USAGE,
+                metadata={"function": f"{func.__module__}.{func.__name__}"},
+            )
+            record_deprecated_call(func.__name__)
+
             return func(*args, **kwargs)
 
         return wrapper
 
     return decorator
+
+__all__ = ["deprecated"]
+

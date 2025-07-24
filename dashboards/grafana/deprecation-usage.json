@@ -1,0 +1,19 @@
+{
+  "uid": "deprecation-usage",
+  "title": "Deprecated Usage",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Deprecated Function Calls",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(deprecated_function_calls_total[1m])) by (function)",
+          "legendFormat": "{{function}}"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 36,
+  "version": 1
+}
