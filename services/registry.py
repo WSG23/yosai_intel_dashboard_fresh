@@ -7,14 +7,16 @@ from typing import Any, Dict, Optional
 import os
 import requests
 from tracing import propagate_context
+from .base_database_service import BaseDatabaseService
 
 logger = logging.getLogger(__name__)
 
 
-class ServiceRegistry:
+class ServiceRegistry(BaseDatabaseService):
     """Registry mapping service names to import paths."""
 
     def __init__(self) -> None:
+        super().__init__(None)
         self._services: Dict[str, str] = {}
 
     def register_service(self, name: str, import_path: str) -> None:
