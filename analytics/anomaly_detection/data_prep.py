@@ -5,6 +5,21 @@ from typing import Optional
 
 import pandas as pd
 
+try:  # Avoid heavy package imports during tests
+    from analytics.feature_extraction import extract_event_features
+except Exception:  # pragma: no cover - fallback for dynamic loading
+    import importlib.util
+    from pathlib import Path
+
+    _spec = importlib.util.spec_from_file_location(
+        "analytics.feature_extraction",
+        Path(__file__).resolve().parents[1] / "feature_extraction.py",
+    )
+    _module = importlib.util.module_from_spec(_spec)
+    assert _spec and _spec.loader
+    _spec.loader.exec_module(_module)
+    extract_event_features = _module.extract_event_features
+
 __all__ = ["prepare_anomaly_data"]
 
 
@@ -13,43 +28,4 @@ def prepare_anomaly_data(
 ) -> pd.DataFrame:
     """Prepare and clean data for anomaly detection."""
     logger = logger or logging.getLogger(__name__)
-    # Shallow copy is sufficient as new columns are assigned without
-    # modifying the original DataFrame's existing data
-
-    df_clean = df.copy(deep=False)
-
-    from security.unicode_security_handler import UnicodeSecurityHandler
-
-    string_columns = df_clean.select_dtypes(include=["object"]).columns
-    for col in string_columns:
-        df_clean[col] = (
-            df_clean[col]
-            .astype(str)
-            .apply(UnicodeSecurityHandler.sanitize_unicode_input)
-        )
-
-    required_cols = ["timestamp", "person_id", "door_id", "access_result"]
-    for col in required_cols:
-        if col not in df_clean.columns:
-            if col == "timestamp":
-                df_clean[col] = pd.Timestamp.now()
-            elif col in ["person_id", "door_id"]:
-                df_clean[col] = f"unknown_{col}"
-            elif col == "access_result":
-                df_clean[col] = "Unknown"
-
-    if not pd.api.types.is_datetime64_any_dtype(df_clean["timestamp"]):
-        try:
-            df_clean["timestamp"] = pd.to_datetime(df_clean["timestamp"])
-        except Exception:
-            df_clean["timestamp"] = pd.Timestamp.now()
-
-    df_clean["hour"] = df_clean["timestamp"].dt.hour
-    df_clean["day_of_week"] = df_clean["timestamp"].dt.dayofweek
-    df_clean["is_weekend"] = df_clean["day_of_week"].isin([5, 6])
-    df_clean["is_after_hours"] = df_clean["hour"].isin(
-        list(range(0, 6)) + list(range(22, 24))
-    )
-    df_clean["access_granted"] = (df_clean["access_result"] == "Granted").astype(int)
-
-    return df_clean
+    return extract_event_features(df, logger=logger)
