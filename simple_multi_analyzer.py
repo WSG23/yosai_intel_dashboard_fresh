@@ -218,8 +218,29 @@ class SimpleMultiLanguageAnalyzer:
         
         return quality_metrics
     
+    def _read_file_content(self, file_path: Path) -> str:
+        """Return the text content of ``file_path`` or an empty string."""
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                return f.read()
+        except Exception:
+            return ""
+
+    def _python2_detected(self, content: str) -> bool:
+        """Return ``True`` if Python 2 specific syntax is found."""
+        return bool(re.search(r'print\s+["\']|xrange\(|raw_input\(', content))
+
+    def _missing_docstring(self, content: str) -> bool:
+        """Return ``True`` when a function lacks a docstring."""
+        return 'def ' in content and '"""' not in content
+
+    def _has_long_functions(self, content: str) -> bool:
+        """Heuristically detect very long functions in ``content``."""
+        functions = re.findall(r'def\s+\w+\(.*?\):', content)
+        return len(functions) > 0 and len(content.splitlines()) / max(len(functions), 1) > 50
+
     def _analyze_python_quality(self, files):
-        """Analyze Python code quality"""
+        """Analyze Python code quality and return aggregated metrics."""
         metrics = {
             'files_analyzed': len(files),
             'issues_found': 0,
@@ -227,64 +248,71 @@ class SimpleMultiLanguageAnalyzer:
             'missing_docstrings': 0,
             'long_functions': 0
         }
-        
+
         for file_path in files:
-            try:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    content = f.read()
-                
-                # Check for Python 2 patterns
-                if re.search(r'print\s+["\']|xrange\(|raw_input\(', content):
-                    metrics['python2_code'] += 1
-                    metrics['issues_found'] += 1
-                
-                # Check for docstrings
-                if 'def ' in content and '"""' not in content:
-                    metrics['missing_docstrings'] += 1
-                    metrics['issues_found'] += 1
-                
-                # Check for long functions (simple heuristic)
-                functions = re.findall(r'def\s+\w+\(.*?\):', content)
-                if len(functions) > 0 and len(content.splitlines()) / max(len(functions), 1) > 50:
-                    metrics['long_functions'] += 1
-                    metrics['issues_found'] += 1
-                    
-            except:
-                pass
-        
+            content = self._read_file_content(file_path)
+            if not content:
+                continue
+
+            if self._python2_detected(content):
+                metrics['python2_code'] += 1
+                metrics['issues_found'] += 1
+
+            if self._missing_docstring(content):
+                metrics['missing_docstrings'] += 1
+                metrics['issues_found'] += 1
+
+            if self._has_long_functions(content):
+                metrics['long_functions'] += 1
+                metrics['issues_found'] += 1
+
         return metrics
     
+    def _go_missing_error_handling(self, content: str) -> bool:
+        """Return ``True`` when blank identifier error handling is detected."""
+        return '_' in content and 'err' in content and bool(re.search(r'_,\s*err\s*:=', content))
+
+    def _go_has_todo(self, content: str) -> bool:
+        """Return ``True`` if TODO or FIXME comments are present."""
+        return bool(re.search(r'//\s*TODO|//\s*FIXME', content, re.IGNORECASE))
+
     def _analyze_go_quality(self, files):
-        """Analyze Go code quality"""
+        """Analyze Go code quality and return aggregated metrics."""
         metrics = {
             'files_analyzed': len(files),
             'issues_found': 0,
             'missing_error_handling': 0,
             'todo_comments': 0
         }
-        
+
         for file_path in files:
-            try:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    content = f.read()
-                
-                # Check for unhandled errors
-                if '_' in content and 'err' in content:
-                    if re.search(r'_,\s*err\s*:=', content):
-                        metrics['missing_error_handling'] += 1
-                        metrics['issues_found'] += 1
-                
-                # Check for TODO comments
-                if re.search(r'//\s*TODO|//\s*FIXME', content, re.IGNORECASE):
-                    metrics['todo_comments'] += 1
-                    
-            except:
-                pass
-        
+            content = self._read_file_content(file_path)
+            if not content:
+                continue
+
+            if self._go_missing_error_handling(content):
+                metrics['missing_error_handling'] += 1
+                metrics['issues_found'] += 1
+
+            if self._go_has_todo(content):
+                metrics['todo_comments'] += 1
+
         return metrics
     
+    def _has_console_log(self, content: str) -> bool:
+        """Detect console logging statements."""
+        return 'console.' in content
+
+    def _uses_var(self, content: str) -> bool:
+        """Return ``True`` if ``var`` declarations are used."""
+        return bool(re.search(r'\bvar\s+\w+', content))
+
+    def _missing_strict_mode(self, content: str) -> bool:
+        """Check whether the ``'use strict'`` directive is absent."""
+        return '"use strict"' not in content and "'use strict'" not in content
+
     def _analyze_js_quality(self, files, language):
-        """Analyze JavaScript/TypeScript code quality"""
+        """Analyze JavaScript or TypeScript code quality and return metrics."""
         metrics = {
             'files_analyzed': len(files),
             'issues_found': 0,
@@ -292,29 +320,23 @@ class SimpleMultiLanguageAnalyzer:
             'var_usage': 0,
             'no_strict': 0
         }
-        
+
         for file_path in files:
-            try:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    content = f.read()
-                
-                # Check for console.log
-                if 'console.' in content:
-                    metrics['console_logs'] += 1
-                    metrics['issues_found'] += 1
-                
-                # Check for var usage (should use let/const)
-                if re.search(r'\bvar\s+\w+', content):
-                    metrics['var_usage'] += 1
-                    metrics['issues_found'] += 1
-                
-                # Check for strict mode
-                if language == 'JavaScript' and '"use strict"' not in content and "'use strict'" not in content:
-                    metrics['no_strict'] += 1
-                    
-            except:
-                pass
-        
+            content = self._read_file_content(file_path)
+            if not content:
+                continue
+
+            if self._has_console_log(content):
+                metrics['console_logs'] += 1
+                metrics['issues_found'] += 1
+
+            if self._uses_var(content):
+                metrics['var_usage'] += 1
+                metrics['issues_found'] += 1
+
+            if language == 'JavaScript' and self._missing_strict_mode(content):
+                metrics['no_strict'] += 1
+
         return metrics
     
     def _analyze_architecture(self):
