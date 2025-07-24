@@ -6,7 +6,7 @@ DURATION ?= 60
 CLI ?= python -m tools.ops_cli
 
 .PHONY: load-test validate build test deploy format lint clean \
-build-all test-all deploy-all logs deprecation-docs \
+build-all test-all deploy-all logs deprecation-docs docs \
 proto-python proto-go proto-all
 
 load-test:
@@ -49,8 +49,11 @@ generate-config-proto:
 deprecation-docs:
 	python scripts/generate_deprecation_docs.py
 
+docs:
+	python scripts/generate_docs_portal.py
+
 clean:
-        $(CLI) clean
+	$(CLI) clean
 
 PROTOS := $(wildcard proto/*.proto)
 
