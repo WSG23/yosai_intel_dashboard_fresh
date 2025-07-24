@@ -2,22 +2,45 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+from core.container import container as default_container
+from mapping.models import MappingModel, HeuristicMappingModel
+
 import pandas as pd
 
 
 class AIColumnMapperAdapter:
-    """Thin wrapper around the :class:`ComponentPluginAdapter` plugin system."""
+    """Wrapper using a mapping model resolved from the service container."""
 
-    def __init__(self, adapter: Any | None = None) -> None:
+    def __init__(
+        self,
+        adapter: Any | None = None,
+        *,
+        container: Any | None = None,
+        default_model: str = "default",
+    ) -> None:
         if adapter is None:
             from components.plugin_adapter import ComponentPluginAdapter
 
             adapter = ComponentPluginAdapter()
         self._adapter = adapter
+        self._container = container or default_container
+        self._default_model = default_model
 
-    def suggest(self, df: pd.DataFrame, filename: str) -> Dict[str, Dict[str, Any]]:
+    def _get_model(self, key: str) -> MappingModel:
+        svc_key = f"mapping_model:{key}"
+        if self._container and self._container.has(svc_key):
+            return self._container.get(svc_key)
+        return HeuristicMappingModel()
+
+    def suggest(
+        self, df: pd.DataFrame, filename: str, model_key: str | None = None
+    ) -> Dict[str, Dict[str, Any]]:
         """Return AI suggestions for *df* columns."""
-        return self._adapter.get_ai_column_suggestions(df, filename)
+        model = self._get_model(model_key or self._default_model)
+        try:
+            return model.suggest(df, filename)
+        except Exception:  # pragma: no cover - fall back
+            return self._adapter.get_ai_column_suggestions(df, filename)
 
     def confirm(
         self, filename: str, mapping: Dict[str, str], metadata: Dict[str, Any]

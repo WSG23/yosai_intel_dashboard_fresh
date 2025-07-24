@@ -1,9 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from mapping.storage.base import JsonStorage, MemoryStorage
 from mapping.processors.ai_processor import AIColumnMapperAdapter
+from mapping.models import (
+    HeuristicMappingModel,
+    MappingModel,
+    load_model_from_config,
+)
+from core.container import container as default_container
 from mapping.processors.column_processor import ColumnProcessor
 from mapping.processors.device_processor import DeviceProcessor
 from mapping.service import MappingService
@@ -29,10 +35,27 @@ def create_mapping_service(
     storage_type: str = "json",
     config_profile: str = "default",
     enable_ai: bool = True,
+    *,
+    model_key: str | None = None,
+    config_path: str | None = None,
+    container: Any | None = None,
 ) -> MappingService:
+    container = container or default_container
     in_memory = storage_type == "memory"
     learning = create_learning_service(in_memory=in_memory)
-    ai_adapter = AIColumnMapperAdapter() if enable_ai else None
-    column_proc = ColumnProcessor(ai_adapter)
+
+    if enable_ai:
+        key = model_key or "default"
+        svc_key = f"mapping_model:{key}"
+        if config_path and not container.has(svc_key):
+            model: MappingModel = load_model_from_config(config_path)
+            container.register_singleton(svc_key, model, protocol=MappingModel)
+        elif not container.has(svc_key):
+            container.register_singleton(svc_key, HeuristicMappingModel(), protocol=MappingModel)
+        ai_adapter = AIColumnMapperAdapter(container=container, default_model=key)
+    else:
+        ai_adapter = None
+
+    column_proc = ColumnProcessor(ai_adapter, container=container, default_model=model_key or "default")
     device_proc = DeviceProcessor()
     return MappingService(learning.storage, column_proc, device_proc)
