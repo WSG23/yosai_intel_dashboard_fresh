@@ -1,0 +1,105 @@
+syntax = "proto3";
+package config.schema;
+
+option go_package = "github.com/yosai-intel/dashboard/go/config/generated;generated";
+
+message AppConfig {
+  string title = 1;
+  bool debug = 2;
+  string host = 3;
+  int32 port = 4;
+  string secret_key = 5;
+  string environment = 6;
+}
+
+message DatabaseConfig {
+  string type = 1;
+  string host = 2;
+  int32 port = 3;
+  string name = 4;
+  string user = 5;
+  string password = 6;
+  string url = 7;
+  int32 connection_timeout = 8;
+  int32 initial_pool_size = 9;
+  int32 max_pool_size = 10;
+  int32 async_pool_min_size = 11;
+  int32 async_pool_max_size = 12;
+  int32 async_connection_timeout = 13;
+  int32 shrink_timeout = 14;
+  bool use_intelligent_pool = 15;
+}
+
+message SecurityConfig {
+  string secret_key = 1;
+  int32 session_timeout = 2;
+  map<string, int32> session_timeout_by_role = 3;
+  repeated string cors_origins = 4;
+  bool csrf_enabled = 5;
+  int32 max_failed_attempts = 6;
+  int32 max_upload_mb = 7;
+  repeated string allowed_file_types = 8;
+}
+
+message SampleFilesConfig {
+  string csv_path = 1;
+  string json_path = 2;
+}
+
+message AnalyticsConfig {
+  int32 cache_timeout_seconds = 1;
+  int32 max_records_per_query = 2;
+  bool enable_real_time = 3;
+  int32 batch_size = 4;
+  int32 chunk_size = 5;
+  bool enable_chunked_analysis = 6;
+  bool anomaly_detection_enabled = 7;
+  string ml_models_path = 8;
+  int32 data_retention_days = 9;
+  int32 query_timeout_seconds = 10;
+  bool force_full_dataset_analysis = 11;
+  int32 max_memory_mb = 12;
+  int32 max_display_rows = 13;
+}
+
+message MonitoringConfig {
+  bool health_check_enabled = 1;
+  bool metrics_enabled = 2;
+  int32 health_check_interval = 3;
+  bool performance_monitoring = 4;
+  bool error_reporting_enabled = 5;
+  string sentry_dsn = 6;
+  int32 log_retention_days = 7;
+}
+
+message CacheConfig {
+  bool enabled = 1;
+  int32 ttl = 2;
+  int32 max_size = 3;
+  string redis_url = 4;
+  bool use_memory_cache = 5;
+  bool use_redis = 6;
+  string prefix = 7;
+}
+
+message UploadConfig {
+  string folder = 1;
+  int32 max_file_size_mb = 2;
+}
+
+message SecretValidationConfig {
+  string severity = 1;
+}
+
+message YosaiConfig {
+  AppConfig app = 1;
+  DatabaseConfig database = 2;
+  SecurityConfig security = 3;
+  SampleFilesConfig sample_files = 4;
+  AnalyticsConfig analytics = 5;
+  MonitoringConfig monitoring = 6;
+  CacheConfig cache = 7;
+  UploadConfig uploads = 8;
+  SecretValidationConfig secret_validation = 9;
+  string environment = 10;
+}

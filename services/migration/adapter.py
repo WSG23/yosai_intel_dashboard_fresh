@@ -15,11 +15,18 @@ from kafka import KafkaProducer
 from core.service_container import ServiceContainer
 from services.feature_flags import feature_flags
 from services.interfaces import AnalyticsServiceProtocol
-from services.registry import ServiceDiscovery
 from services.resilience.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
 )
+
+# Namespace for Kubernetes DNS lookups
+K8S_NAMESPACE = os.getenv("K8S_NAMESPACE", "yosai-dev")
+
+
+def k8s_service_url(name: str) -> str:
+    """Return http base URL for *name* service via cluster DNS."""
+    return f"http://{name}.{K8S_NAMESPACE}.svc.cluster.local"
 
 
 class ServiceAdapter(ABC):
@@ -171,7 +178,6 @@ class MigrationContainer(ServiceContainer):
         super().__init__()
         self._adapters: Dict[str, ServiceAdapter] = {}
         self._migration_flags = self._load_migration_flags()
-        self.discovery = ServiceDiscovery()
 
     def _load_migration_flags(self) -> Dict[str, bool]:
         return {
@@ -203,28 +209,22 @@ class MigrationContainer(ServiceContainer):
 
 
 def register_migration_services(container: MigrationContainer) -> None:
-    """Register services with their migration adapters if enabled."""
+    """Register services with their migration adapters using cluster DNS."""
 
-    event_addr = container.discovery.resolve("events")
-    if event_addr:
-        event_adapter = EventServiceAdapter(base_url=f"http://{event_addr}")
-        container.register_with_adapter("event_processor", None, event_adapter)
+    event_adapter = EventServiceAdapter(base_url=k8s_service_url("events"))
+    container.register_with_adapter("event_processor", None, event_adapter)
 
     from services.analytics_service import create_analytics_service
 
     python_analytics = create_analytics_service()
-    analytics_addr = container.discovery.resolve("analytics")
-    if analytics_addr:
-        analytics_adapter = AnalyticsServiceAdapter(
-            python_analytics, microservice_url=f"http://{analytics_addr}"
-        )
-        container.register_with_adapter(
-            "analytics_service",
-            python_analytics,
-            analytics_adapter,
-        )
-    else:
-        container.register_singleton("analytics_service", python_analytics)
+    analytics_adapter = AnalyticsServiceAdapter(
+        python_analytics, microservice_url=k8s_service_url("analytics")
+    )
+    container.register_with_adapter(
+        "analytics_service",
+        python_analytics,
+        analytics_adapter,
+    )
 
     if container._migration_flags["use_timescaledb"]:
         try:

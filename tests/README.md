@@ -50,3 +50,24 @@ python tests/performance/test_event_processing.py
 ```
 
 The script targets the gateway at `http://localhost:8081`.
+
+## Kafka Load Test
+
+Another script, `tools/load_test.py`, publishes synthetic events to Kafka and
+calculates throughput from Prometheus metrics. The Makefile exposes a helper
+target so the stack can be exercised easily:
+
+```bash
+make load-test
+```
+
+Optional variables allow adjusting brokers, Prometheus URL, event rate and test
+duration:
+
+```bash
+make load-test RATE=100 DURATION=30
+```
+
+Ensure the Docker Compose stack is running so Kafka and Prometheus are
+available. The command prints a JSON summary which is also saved by the CI
+performance job as an artifact.

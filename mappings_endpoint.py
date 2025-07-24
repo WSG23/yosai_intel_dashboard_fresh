@@ -1,10 +1,12 @@
 from flask import Blueprint, abort, jsonify, request
+from marshmallow import Schema, fields
+from flask_apispec import doc, marshal_with, use_kwargs
 
 from config.service_registration import register_upload_services
 
 # Shared container ensures services are available across blueprints
 from core.container import container
-from core.unicode_handler import clean_unicode_surrogates
+from unicode_toolkit import clean_unicode_surrogates
 
 if not container.has("upload_processor"):
     register_upload_services(container)
@@ -12,8 +14,36 @@ if not container.has("upload_processor"):
 mappings_bp = Blueprint("mappings", __name__)
 
 
+class FileMappingSchema(Schema):
+    file_id = fields.String(required=True)
+    mappings = fields.Dict()
+
+
+class MappingSaveSchema(Schema):
+    filename = fields.String(required=True)
+    mapping_type = fields.String()
+    column_mappings = fields.Dict()
+    device_mappings = fields.Dict()
+
+
+class ProcessSchema(Schema):
+    filename = fields.String(required=True)
+    column_mappings = fields.Dict()
+    device_mappings = fields.Dict()
+
+
+class SuccessSchema(Schema):
+    status = fields.String()
+    enhanced_filename = fields.String(load_default=None)
+    rows = fields.Integer(load_default=None)
+    columns = fields.Integer(load_default=None)
+
+
 @mappings_bp.route("/v1/mappings/columns", methods=["POST"])
-def save_column_mappings_route():
+@doc(description="Save column mappings", tags=["mappings"])
+@use_kwargs(FileMappingSchema, location="json")
+@marshal_with(SuccessSchema)
+def save_column_mappings_route(**payload):
     """Persist column mappings for a processed file."""
     try:
         payload = request.get_json(force=True)
@@ -34,7 +64,10 @@ def save_column_mappings_route():
 
 
 @mappings_bp.route("/v1/mappings/devices", methods=["POST"])
-def save_device_mappings_route():
+@doc(description="Save device mappings", tags=["mappings"])
+@use_kwargs(FileMappingSchema, location="json")
+@marshal_with(SuccessSchema)
+def save_device_mappings_route(**payload):
     """Persist device mappings for a processed file."""
     try:
         payload = request.get_json(force=True)
@@ -55,7 +88,10 @@ def save_device_mappings_route():
 
 
 @mappings_bp.route("/v1/mappings/save", methods=["POST"])
-def save_mappings():
+@doc(description="Save mappings", tags=["mappings"])
+@use_kwargs(MappingSaveSchema, location="json")
+@marshal_with(SuccessSchema)
+def save_mappings(**data):
     """Save column or device mappings"""
     try:
         data = request.json
@@ -96,7 +132,10 @@ def save_mappings():
 
 
 @mappings_bp.route("/v1/process-enhanced", methods=["POST"])
-def process_enhanced_data():
+@doc(description="Process data with mappings", tags=["mappings"])
+@use_kwargs(ProcessSchema, location="json")
+@marshal_with(SuccessSchema)
+def process_enhanced_data(**data):
     """Process data with applied mappings"""
     try:
         data = request.json

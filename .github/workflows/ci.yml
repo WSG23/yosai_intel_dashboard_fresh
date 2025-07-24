@@ -68,6 +68,16 @@ jobs:
           pip-audit -r requirements.lock -r requirements-dev.txt \
             --format=json --output=audit-report.json
 
+      - name: Isort
+        run: |
+          set -xe
+          isort --check .
+
+      - name: Organize imports
+        run: |
+          set -xe
+          python tools/organize_imports.py --check
+
       - name: PyTest
         run: |
           set -xe

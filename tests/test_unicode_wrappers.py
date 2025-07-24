@@ -4,10 +4,9 @@ import pandas as pd
 import pytest
 
 from config.database_exceptions import UnicodeEncodingError
-from config.unicode_sql_processor import UnicodeSQLProcessor
+from unicode_toolkit import UnicodeSQLProcessor
 from core.unicode import UnicodeProcessor as UtilsProcessor  # Alias check
 from core.unicode import (
-    UnicodeTextProcessor,
     clean_unicode_surrogates,
     clean_unicode_text,
     contains_surrogates,
@@ -19,15 +18,15 @@ from security.unicode_security_handler import (
     UnicodeSecurityHandler as UnicodeSecurityProcessor,
 )
 from security.unicode_security_validator import (
-    UnicodeSecurityValidator,
     UnicodeSecurityConfig,
+    UnicodeSecurityValidator,
 )
 from security.validation_exceptions import ValidationError
 
 
 def test_unicode_text_processor_surrogate_removal():
     text = "A" + chr(0xD800) + "B"
-    assert UnicodeTextProcessor.clean_surrogate_chars(text) == "AB"
+    assert UtilsProcessor.clean_surrogate_chars(text) == "AB"
 
 
 def test_sql_query_encoding_removes_surrogates():

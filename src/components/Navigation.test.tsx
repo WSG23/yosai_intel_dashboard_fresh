@@ -1,6 +1,15 @@
+import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+jest.mock('react-router-dom', () => ({
+  Link: ({ children, ...props }: any) => <a {...props}>{children}</a>,
+  useLocation: () => ({ pathname: '/' }),
+  MemoryRouter: ({ children }: any) => <div>{children}</div>,
+}), { virtual: true });
 import Navigation, { Header, Sidebar } from './Navigation';
+
+const MemoryRouter: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div>{children}</div>
+);
 
 test('renders navigation links', () => {
   render(

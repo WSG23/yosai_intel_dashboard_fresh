@@ -15,10 +15,10 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+from config.constants import DEFAULT_CHUNK_SIZE
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from database.baseline_metrics import BaselineMetricsDB
 from utils.sklearn_compat import optional_import
-from config.constants import DEFAULT_CHUNK_SIZE
 
 from .chunk_processor import ChunkedDataProcessor, MemoryConfig
 
@@ -49,6 +49,8 @@ if StandardScaler is None:  # pragma: no cover
             return X
 
 
+from analytics.security_metrics import SecurityMetrics
+from analytics.security_score_calculator import SecurityScoreCalculator
 from analytics_core.callbacks.unified_callback_manager import (
     CallbackManager as SecurityCallbackController,
 )
@@ -58,8 +60,6 @@ from security_callback_controller import (
     security_callback_controller,
 )
 
-from ..security_metrics import SecurityMetrics
-from ..security_score_calculator import SecurityScoreCalculator
 from .access_no_exit_detection import detect_access_no_exit
 from .badge_clone_detection import detect_badge_clone
 from .clearance_violation_detection import detect_clearance_violations
@@ -75,7 +75,6 @@ from .odd_door_detection import detect_odd_door_usage
 from .odd_path_detection import detect_odd_path
 from .odd_time_detection import detect_odd_time
 from .pattern_detection import detect_pattern_threats
-
 from .pattern_drift_detection import detect_pattern_drift
 from .statistical_detection import detect_statistical_threats
 from .tailgate_detection import detect_tailgate

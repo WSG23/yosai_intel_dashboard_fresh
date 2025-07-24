@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Union
 import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
-from dash import dcc, html
+from dash import html
 from dash.dependencies import ALL, MATCH, Input, Output, State
 
 from analytics.controllers.unified_controller import UnifiedAnalyticsController
@@ -130,12 +130,8 @@ def create_device_verification_modal(
                     # Manually edited flag (hidden input)
                     html.Td(
                         [
-                            dcc.Store(
-                                id={"type": "device-name", "index": i}, data=device_name
-                            ),
-                            dcc.Store(
-                                id={"type": "device-edited", "index": i}, data=False
-                            ),
+                            html.Div(id={"type": "device-name", "index": i}),
+                            html.Div(id={"type": "device-edited", "index": i}),
                         ],
                         className="hidden",
                         style={"width": "0%"},

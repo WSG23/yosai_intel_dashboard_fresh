@@ -3,7 +3,7 @@
 import re
 from typing import Any
 
-from ..config import JapaneseConfig
+from plugins.ai_classification.config import JapaneseConfig
 
 
 class JapaneseTextHandler:

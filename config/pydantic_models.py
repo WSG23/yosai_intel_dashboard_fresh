@@ -41,7 +41,10 @@ class DatabaseModel(BaseModel):
 
 
 class SecurityModel(BaseModel):
-    secret_key: str = Field(default="", json_schema_extra={"env": "SECRET_KEY"})
+    secret_key: str = Field(
+        ...,
+        json_schema_extra={"env": "SECRET_KEY"},
+    )
     session_timeout: int = 3600
     session_timeout_by_role: Dict[str, int] = Field(default_factory=dict)
     cors_origins: List[str] = Field(default_factory=list)

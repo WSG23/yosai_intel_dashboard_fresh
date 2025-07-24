@@ -19,17 +19,18 @@ from typing import Any, Callable, Iterable, Optional, Union
 
 import pandas as pd  # type: ignore[import]
 
-from .exceptions import SecurityError
 from security.unicode_security_validator import (
-    UnicodeSecurityValidator,
     UnicodeSecurityConfig,
+    UnicodeSecurityValidator,
 )
+
+from .exceptions import SecurityError
 from .security_patterns import (
     PATH_TRAVERSAL_PATTERNS,
     SQL_INJECTION_PATTERNS,
     XSS_PATTERNS,
 )
-from .unicode_handler import clean_unicode_surrogates
+from unicode_toolkit import clean_unicode_surrogates
 
 logger = logging.getLogger(__name__)
 
@@ -277,30 +278,7 @@ class UnicodeTextProcessor:
 
     @staticmethod
     def clean_text(text: Any) -> str:
-        if not isinstance(text, str):
-            try:
-                text = str(text)
-            except Exception as exc:  # pragma: no cover - defensive
-                logger.error("Failed to convert text to str: %s", exc)
-                return ""
-
-        try:
-            text = unicodedata.normalize("NFKC", text)
-        except Exception as exc:  # pragma: no cover - best effort
-            logger.warning("Unicode normalization failed: %s", exc)
-
-        try:
-            text = _SURROGATE_RE.sub("", text)
-            text = _CONTROL_RE.sub("", text)
-        except Exception as exc:  # pragma: no cover - defensive
-            logger.error("Regex cleanup failed: %s", exc)
-            text = "".join(
-                ch
-                for ch in text
-                if not (0xD800 <= ord(ch) <= 0xDFFF or ord(ch) < 32 or ord(ch) == 0x7F)
-            )
-
-        return text
+        return UnicodeProcessor.clean_text(text)
 
     @staticmethod
     def clean_surrogate_chars(text: str, replacement: str = "") -> str:
@@ -314,7 +292,7 @@ class UnicodeSQLProcessor:
 
     @staticmethod
     def encode_query(query: Any) -> str:
-        cleaned = UnicodeTextProcessor.clean_text(query)
+        cleaned = UnicodeProcessor.clean_text(query)
         try:
             cleaned.encode("utf-8")
         except Exception as exc:  # pragma: no cover - best effort
@@ -337,7 +315,7 @@ class UnicodeSecurityProcessor:
 
     @staticmethod
     def sanitize_input(text: Any) -> str:
-        sanitized = UnicodeTextProcessor.clean_text(text)
+        sanitized = UnicodeProcessor.clean_text(text)
         for char, repl in UnicodeSecurityProcessor._HTML_REPLACEMENTS.items():
             sanitized = sanitized.replace(char, repl)
         return sanitized
@@ -381,33 +359,24 @@ def safe_decode_text(data: bytes, encoding: str = "utf-8") -> str:
     return UnicodeProcessor.safe_decode_text(data, encoding)
 
 
-def safe_encode_text(
-    text: str, encoding: str = "utf-8", errors: str = "surrogatepass"
-) -> bytes:
-    """Safely encode text handling surrogates with configurable strategy."""
+def safe_encode_text(text: Any) -> str:
+    """Return ``text`` encoded safely as Unicode text."""
 
-    if not isinstance(text, str):
-        return b""
-
-    try:
-        # First attempt with surrogatepass
-        return text.encode(encoding, errors="surrogatepass")
-    except UnicodeEncodeError:
-        # Remove surrogates and retry
-        cleaned = "".join(char for char in text if not (0xD800 <= ord(char) <= 0xDFFF))
-        return cleaned.encode(encoding, errors="replace")
+    return UnicodeProcessor.safe_encode_text(text)
 
 
 def safe_encode(value: Any) -> str:
-    """Alias for :func:`safe_encode_text`."""
+    """Alias for :func:`UnicodeProcessor.safe_encode`."""
 
-    return safe_encode_text(value)
+    return UnicodeProcessor.safe_encode(value)
 
 
 def utf8_safe_encode(value: Any) -> bytes:
     """Return UTF-8 encoded bytes handling surrogate pairs."""
 
-    return safe_encode_text(value).encode("utf-8", errors="surrogatepass")
+    return UnicodeProcessor.safe_encode_text(value).encode(
+        "utf-8", errors="surrogatepass"
+    )
 
 
 def utf8_safe_decode(data: bytes) -> str:
@@ -537,19 +506,8 @@ def has_malicious_patterns(text: str) -> bool:
 
 def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """Sanitize a :class:`~pandas.DataFrame` for unsafe Unicode."""
-    df_clean = df.copy()
 
-    df_clean.columns = [
-        sanitize_unicode_input(col) if isinstance(col, str) else col
-        for col in df_clean.columns
-    ]
-
-    for col in df_clean.select_dtypes(include=["object"]).columns:
-        df_clean[col] = df_clean[col].apply(
-            lambda x: sanitize_unicode_input(x) if pd.notna(x) else x
-        )
-
-    return df_clean
+    return UnicodeProcessor.sanitize_dataframe(df)
 
 
 def secure_unicode_sanitization(value: Any, *, check_malicious: bool = True) -> str:

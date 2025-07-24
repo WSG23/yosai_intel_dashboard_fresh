@@ -24,3 +24,4 @@ def __getattr__(name: str):
 
         return _u.UnicodeSQLProcessor
     raise AttributeError(name)
+

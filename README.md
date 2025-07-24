@@ -26,6 +26,7 @@ This project follows a fully modular design built around a dependency injection 
 - [React Component Architecture](docs/react_component_architecture.md)
 - [Validation Overview](docs/validation_overview.md)
 - [Error Response Contract](docs/error_contract.md)
+- [Error Handling](docs/error_handling.md)
 - [Model Cards](docs/model_cards.md)
 - [Data Versioning](docs/data_versioning.md)
 - [Data Processing](docs/data_processing.md)
@@ -36,6 +37,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Testing Architecture](docs/test_architecture.md)
 - [Comprehensive Testing Strategy](docs/comprehensive_testing_strategy.md)
 - [Service Mesh Evaluation](docs/service_mesh_evaluation.md)
+- [Internal Service Interfaces](docs/internal_services.md)
 
 <p align="center">
   <img src="docs/architecture.svg" alt="High-level architecture diagram" width="600" />
@@ -129,8 +131,9 @@ with this Python release and newer.
    ```bash
    ./scripts/setup.sh
    ```
-   The script installs both `requirements.txt` and `requirements-dev.txt` from
-   PyPI (or a local `packages/` directory if present) and runs `npm install` to
+   The script installs `requirements.txt`, `requirements-dev.txt`, and
+   `requirements-test.txt` from PyPI (or a local `packages/` directory if
+   present) and runs `npm install` to
    fetch Node dependencies. The Python requirements now include the Kafka
    clients `confluent-kafka` and `fastavro`. Ensure dependencies are installed
    **before** running Pyright or using the Pylance extension. Missing packages
@@ -182,6 +185,7 @@ control:
 
 ```bash
 python scripts/db_migration_cli.py upgrade  # create RBAC tables
+python scripts/db_migration_cli.py current  # verify current revision
 ```
 
 Set the permission service URL in your environment if it differs from
@@ -345,6 +349,7 @@ following steps:
    ```bash
    pip install -r requirements.txt
    pip install -r requirements-dev.txt
+   pip install -r requirements-test.txt
    # or simply run ./scripts/setup.sh
    ```
 5. If Dash packages behave unexpectedly, reinstall them with pinned versions:
@@ -427,7 +432,7 @@ schema in `schemas/access-event.avsc` with your schema registry (set
 
 Install dependencies before running the tests:
 ```bash
-# Option 1: use the helper script
+# Option 1: use the helper script (installs test requirements as well)
 ./scripts/setup.sh
 # Option 2: install packages manually
 pip install -r requirements.txt -r requirements-test.txt
@@ -492,18 +497,22 @@ critical vulnerabilities are detected. Download the artifact from the
 - **CSRF Protection Plugin**: Optional production-ready CSRF middleware for Dash
 - **Machine-Learned Column Mapping**: Trainable model for smarter CSV header recognition
 - **Hardened SQL Injection Prevention**: Uses `sqlparse` and `bleach` to validate queries
-- **Centralized Unicode Processing**: Use `UnicodeProcessor` and related handlers
-  from `core.unicode` for safe text and SQL handling.
+- **Centralized Unicode Processing**: now provided by the external
+  `unicode_toolkit` package. Import the new helpers such as
+  `TextProcessor` and `SQLProcessor` to clean input and safely encode SQL
+  statements. See the migration section below for details.
 - **Event Driven Callbacks**: Plugins react to events via the unified
   `TrulyUnifiedCallbacks` manager.
   This single interface replaces previous callback controllers.
 - **Metrics & Monitoring**: `PerformanceMonitor` tracks system performance
   using `psutil`.
 - **Dependabot Updates**: Python dependencies automatically kept up-to-date.
+- **Unified Error Handling**: Use `core.error_handling` decorators and middleware for consistent logging
 
 **Note:** The file upload and column mapping functionality relies on `pandas`.
 If `pandas` is missing these pages will be disabled. Ensure you run
-`pip install -r requirements.txt` and `pip install -r requirements-dev.txt` to
+`pip install -r requirements.txt`, `pip install -r requirements-dev.txt` and
+`pip install -r requirements-test.txt` to
 install all dependencies (or execute `./scripts/setup.sh`).
 `PerformanceMonitor` requires `psutil` for CPU and memory metrics, and the
 file processing utilities depend on `chardet` to detect text encoding.
@@ -678,7 +687,11 @@ applies environment variable overrides.
 The underlying loading logic lives in `config/base_loader.py` as `BaseConfigLoader`.
 It handles YAML `!include` expansion, JSON files and environment variable substitution. Earlier versions used separate modules
 such as `app_config.py` and `simple_config.py`; these have been replaced by this
-unified loader. Register the configuration with the DI container so it can be
+unified loader. The configuration schema is also defined using a protobuf file
+(`config/yosai_config.proto`). Loaders compile this schema to the Python module
+`yosai_config_pb2.py` and a convenience wrapper called `YosaiConfig`. All
+services read YAML/JSON and convert it to this protobuf representation before
+use. Register the configuration with the DI container so it can be
 resolved from anywhere:
 
 
@@ -851,8 +864,10 @@ implementations can be swapped in for tests. Helper functions like
 
 ## <span aria-hidden="true">🔄</span> Migration Guide
 
-The dashboard now centralizes Unicode handling in `core.unicode`.
-Detect legacy usage and validate the migration with the helper tools:
+Unicode handling is now provided by the standalone `unicode_toolkit`
+package. Legacy helpers from `core.unicode` remain as thin wrappers
+around this library. Detect outdated usage and validate the migration
+with the helper tools:
 
 ```bash
 python tools/validate_unicode_cleanup.py
@@ -945,7 +960,7 @@ manager.execute_query_with_retry("SELECT 1")
 Use `SecurityValidator` to sanitize query parameters in both Flask and Dash routes. Example:
 
 ```python
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 
 validator = SecurityValidator()
 
@@ -1085,12 +1100,30 @@ Expected response:
 
 ### Cleaning text
 ```python
-from core.unicode import get_text_processor
-from utils import sanitize_unicode_input
+from unicode_toolkit import TextProcessor, sanitize_input
+
 raw = "Bad\uD83DText"
-processor = get_text_processor()
-clean = processor.safe_encode_text(raw)
-safe = sanitize_unicode_input("A\ud800B")
+processor = TextProcessor()
+clean = processor.clean(raw)
+safe = sanitize_input("A\ud800B")
+```
+
+### Sanitizing DataFrames
+```python
+import pandas as pd
+from unicode_toolkit import sanitize_dataframe
+
+df = pd.DataFrame({"name": ["A\ud800", "B"], "age": [10, 20]})
+clean_df = sanitize_dataframe(df)
+```
+
+### Encoding SQL Queries
+```python
+from unicode_toolkit import SQLProcessor
+
+query = "SELECT * FROM users WHERE name = ?"
+params = SQLProcessor.encode_params(["A\uD83D"])
+safe_query = SQLProcessor.encode_query(query)
 ```
 
 ### Firing events
@@ -1238,12 +1271,26 @@ returns a non-zero status.
 
 ### Schema Migrations and Replication
 
-Database schema changes are managed with **Alembic** under `database/migrations/`.
+Database schema changes are managed with **Alembic**. The configuration file at
+`migrations/alembic.ini` defines separate `[gateway_db]`, `[events_db]` and
+`[analytics_db]` sections so that all three databases can be migrated in one go.
+Each section provides a `sqlalchemy.url` pointing at the appropriate database.
+
+If the default URLs do not match your environment you can override them using
+environment variables named `GATEWAY_DB_URL`, `EVENTS_DB_URL` and
+`ANALYTICS_DB_URL`. These variables take precedence over the values in the
+configuration file.
+
 Run migrations with:
 
 ```bash
-alembic -c database/migrations/alembic.ini upgrade head
+alembic -c migrations/alembic.ini upgrade head
 ```
+
+Each `[section]_db` in `alembic.ini` may be overridden via an environment
+variable named `<SECTION>_URL` (for example `GATEWAY_DB_URL`). When set, the
+value is used instead of the URL in the config file. This is helpful for
+pointing migrations at a different database in CI or development.
 
 New access events are replicated from PostgreSQL to TimescaleDB by
 `scripts/replicate_to_timescale.py`. Set `SOURCE_DSN` and `TARGET_DSN` to run the
@@ -1252,6 +1299,25 @@ job periodically (for example via `cron` or a Kubernetes CronJob):
 ```bash
 python scripts/replicate_to_timescale.py
 ```
+
+For convenience the repository provides a wrapper script which upgrades all
+databases defined in the configuration:
+
+```bash
+python scripts/db_migration_cli.py upgrade
+python scripts/db_migration_cli.py current
+```
+
+
+## Training Workflow
+
+Run the helper script to train anomaly detection models and register them in the model registry:
+
+```bash
+python scripts/train_anomaly_models.py data/sample_access_events.csv
+```
+
+Set `MODEL_REGISTRY_DB` and `MODEL_REGISTRY_BUCKET` to configure where the artifacts and metadata are stored. Pass `--include-iso` to also train an IsolationForest model.
 
 
 

@@ -13,6 +13,8 @@ scripts/setup_k8s_dev.sh
 
 The script installs k3s if it is not already present, then deploys Linkerd, the Strimzi operator, and Prometheus/Grafana via Helm.
 
+It also applies the manifests in `k8s/linkerd` so the service mesh is deployed automatically.
+
 ## Deploying the Dashboard
 
 After the cluster is ready apply the base manifests and the production manifests:

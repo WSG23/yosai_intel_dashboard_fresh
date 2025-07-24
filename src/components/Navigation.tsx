@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { 
   Upload,
@@ -56,6 +56,7 @@ const Navigation: React.FC<NavigationProps> = ({
   orientation = 'horizontal' 
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   
   const isActive = (href: string) => {
     return location.pathname === href;
@@ -70,6 +71,7 @@ const Navigation: React.FC<NavigationProps> = ({
             <Link
               key={item.name}
               to={item.href}
+              onClick={() => navigate(item.href)}
               className={cn(
                 "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                 isActive(item.href)
@@ -96,6 +98,7 @@ const Navigation: React.FC<NavigationProps> = ({
           <Link
             key={item.name}
             to={item.href}
+            onClick={() => navigate(item.href)}
             className={cn(
               "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
               isActive(item.href)

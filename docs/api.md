@@ -40,6 +40,21 @@ Commit the updated `docs/openapi.json`, `analytics/clients/event_client`, and
 sync with the codebase. CI will fail if these files differ from the checked in
 versions.
 
+### FastAPI microservices
+
+The analytics and event ingestion services are built with FastAPI. Each
+service dumps its own OpenAPI description at startup under the `docs`
+directory. Regenerate these files along with the main spec by running:
+
+```bash
+make docs
+```
+
+This command runs the Go generator and then imports both FastAPI services to
+write `docs/analytics_microservice_openapi.json` and
+`docs/event_ingestion_openapi.json`.
+
+
 ## API Versioning
 
 All endpoints are prefixed with a version such as `/v1` or `/api/v1`.
@@ -71,7 +86,7 @@ Centralized analytics service for dashboard operations.
 
 - `get_dashboard_summary() -> Dict[str, Any]`: Get dashboard overview
 - `get_access_patterns_analysis(days) -> Dict[str, Any]`: Analyze access patterns
-- `process_uploaded_file(contents, filename) -> Dict[str, Any]`: Validate and parse an uploaded file using `UnifiedFileValidator.validate_file`
+- `process_uploaded_file(contents, filename) -> Dict[str, Any]`: Validate and parse an uploaded file using `FileValidator.validate_file_upload`
 
 ## Models
 
@@ -114,3 +129,6 @@ The following table lists the required role or permission for key API route grou
 | `/api/v1/analytics` | - | `analytics.read` |
 | `/api/v1/events` | - | `events.write` |
 | `/api/v1/doors` | - | `doors.control` |
+
+For details on internal streaming, alert dispatching and WebSocket messages see
+[Internal Service Interfaces](internal_services.md).

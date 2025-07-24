@@ -2,14 +2,14 @@ import pandas as pd
 import pytest
 
 from core.exceptions import ValidationError
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 from security.xss_validator import XSSPrevention
 
 
 def test_unicode_normalization():
     validator = SecurityValidator()
     with pytest.raises(ValidationError):
-        validator.validate_input("<bad>")
+        validator.validate_input("<script>")
 
 
 def test_html_js_injection_attempts():
@@ -42,8 +42,8 @@ def test_xss_sanitization():
 
 def test_file_size_limit(monkeypatch):
     df = pd.DataFrame({"a": range(100)})
-    validator = SecurityValidator()
     monkeypatch.setattr("config.dynamic_config.security.max_upload_mb", 0)
+    validator = SecurityValidator()
     csv_bytes = df.to_csv(index=False).encode("utf-8")
     with pytest.raises(ValidationError):
         validator.validate_file_upload("data.csv", csv_bytes)

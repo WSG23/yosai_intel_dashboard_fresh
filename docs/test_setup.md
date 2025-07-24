@@ -17,8 +17,9 @@ pip install -r requirements.txt
 pip install -r requirements-test.txt
 ```
 Alternatively you can run `./scripts/setup.sh` to install the standard
-dependencies. `requirements-test.txt` includes additional packages such as
-**PyYAML** that are required by the tests but not needed in production.
+dependencies **and** all test requirements. `requirements-test.txt` includes
+additional packages such as **PyYAML** that are required by the tests but not
+needed in production.
 
 ### Required Python Packages
 

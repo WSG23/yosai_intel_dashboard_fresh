@@ -198,7 +198,7 @@ class TestProtocolCompliance:
         assert_type(service, AnalyticsServiceProtocol)
 
     def test_security_service_compliance(self):
-        from core.security_validator import SecurityValidator
+        from validation.security_validator import SecurityValidator
 
         service = SecurityValidator()
         assert isinstance(service, SecurityServiceProtocol)

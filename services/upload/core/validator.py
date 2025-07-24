@@ -2,7 +2,7 @@ import base64
 import json
 from typing import Any, Callable, Iterable, List, Mapping
 
-from ..protocols import UploadValidatorProtocol
+from services.upload.protocols import UploadValidatorProtocol
 
 
 class ClientSideValidator(UploadValidatorProtocol):

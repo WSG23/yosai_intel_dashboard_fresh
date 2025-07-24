@@ -9,6 +9,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 import os
 import pathlib
+import json
 
 from services.streaming.service import StreamingService
 from services.security import verify_service_jwt
@@ -63,3 +64,10 @@ async def shutdown() -> None:
 
 FastAPIInstrumentor.instrument_app(app)
 Instrumentator().instrument(app).expose(app)
+
+
+@app.on_event("startup")
+async def _write_openapi() -> None:
+    """Persist OpenAPI schema for docs."""
+    docs_path = pathlib.Path(__file__).resolve().parents[2] / "docs" / "event_ingestion_openapi.json"
+    docs_path.write_text(json.dumps(app.openapi(), indent=2))

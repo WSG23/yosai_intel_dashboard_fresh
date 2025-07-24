@@ -10,14 +10,78 @@ if "dash" not in sys.modules:
     sys.modules["dash.dependencies"] = dash_stub.dependencies  # type: ignore
     sys.modules["dash._callback"] = dash_stub._callback  # type: ignore
 
-from analytics.anomaly_detection.types import AnomalyAnalysis
-from analytics.risk_scoring import (
-    RiskScoreResult,
-    calculate_risk_score,
-    combine_risk_factors,
-)
-from analytics.security_patterns.analyzer import SecurityAssessment
-from analytics.user_behavior import BehaviorAnalysis
+import importlib.util
+from pathlib import Path
+import types
+from dataclasses import dataclass
+import pandas as pd
+
+# Load feature_extraction module directly to avoid heavy package import
+FEATURE_PATH = Path(__file__).resolve().parents[1] / "analytics" / "feature_extraction.py"
+spec_feat = importlib.util.spec_from_file_location("feature_extraction", FEATURE_PATH)
+feature_mod = importlib.util.module_from_spec(spec_feat)
+spec_feat.loader.exec_module(feature_mod)
+
+analytics_stub = types.ModuleType("analytics")
+analytics_stub.feature_extraction = feature_mod
+analytics_stub.__path__ = [str(Path(__file__).resolve().parents[1] / "analytics")]
+sys.modules.setdefault("analytics", analytics_stub)
+sys.modules.setdefault("analytics.feature_extraction", feature_mod)
+
+# Stub dependent modules to avoid heavy imports
+anom_types = types.ModuleType("analytics.anomaly_detection.types")
+
+@dataclass
+class AnomalyAnalysis:
+    total_anomalies: int
+    severity_distribution: dict
+    detection_summary: dict
+    risk_assessment: dict
+    recommendations: list
+
+anom_types.AnomalyAnalysis = AnomalyAnalysis
+sys.modules["analytics.anomaly_detection.types"] = anom_types
+
+sec_analyzer = types.ModuleType("analytics.security_patterns.analyzer")
+
+@dataclass
+class SecurityAssessment:
+    overall_score: float
+    risk_level: str
+    confidence_interval: tuple
+    threat_indicators: list
+    pattern_analysis: dict
+    recommendations: list
+
+sec_analyzer.SecurityAssessment = SecurityAssessment
+sys.modules["analytics.security_patterns.analyzer"] = sec_analyzer
+
+behav_mod = types.ModuleType("analytics.user_behavior")
+
+@dataclass
+class BehaviorAnalysis:
+    total_users_analyzed: int
+    high_risk_users: int
+    global_patterns: dict
+    insights: list
+    recommendations: list
+
+behav_mod.BehaviorAnalysis = BehaviorAnalysis
+sys.modules["analytics.user_behavior"] = behav_mod
+
+RISK_PATH = Path(__file__).resolve().parents[1] / "analytics" / "risk_scoring.py"
+spec_risk = importlib.util.spec_from_file_location("analytics.risk_scoring", RISK_PATH)
+risk_mod = importlib.util.module_from_spec(spec_risk)
+sys.modules["analytics.risk_scoring"] = risk_mod
+spec_risk.loader.exec_module(risk_mod)
+
+AnomalyAnalysis = risk_mod.AnomalyAnalysis if hasattr(risk_mod, "AnomalyAnalysis") else None
+RiskScoreResult = risk_mod.RiskScoreResult
+calculate_risk_score = risk_mod.calculate_risk_score
+combine_risk_factors = risk_mod.combine_risk_factors
+score_events = risk_mod.score_events
+SecurityAssessment = risk_mod.SecurityAssessment
+BehaviorAnalysis = risk_mod.BehaviorAnalysis
 
 # Provide minimal dash stub if dash is unavailable
 if "dash" not in sys.modules:
@@ -62,3 +126,16 @@ def test_combine_risk_factors():
     )
     result = combine_risk_factors(anomaly, patterns, behavior)
     assert result.level in {"low", "medium", "high", "critical"}
+
+
+def test_score_events_from_dataframe():
+    df = pd.DataFrame(
+        {
+            "timestamp": ["2024-01-01 23:00:00", "2024-01-02 09:00:00"],
+            "person_id": ["u1", "u1"],
+            "door_id": ["d1", "d2"],
+            "access_result": ["Denied", "Granted"],
+        }
+    )
+    result = score_events(df)
+    assert isinstance(result, RiskScoreResult)

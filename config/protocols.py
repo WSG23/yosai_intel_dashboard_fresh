@@ -20,7 +20,7 @@ class ConnectionRetryManagerProtocol(Protocol):
 class ConfigLoaderProtocol(Protocol):
     """Load configuration data from a path."""
 
-    def load(self, config_path: Optional[str] = None) -> Dict[str, Any]:
+    def load(self, config_path: Optional[str] = None) -> Any:
         """Return configuration data from ``config_path``."""
         ...
 

@@ -13,6 +13,9 @@ dash_table = types.ModuleType("dash_table")
 
 
 class Dash:
+    def __init__(self, *args, **kwargs):
+        pass
+
     def callback(self, *args, **kwargs):
         def decorator(func):
             return func

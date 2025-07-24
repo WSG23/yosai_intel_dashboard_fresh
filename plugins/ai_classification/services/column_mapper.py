@@ -4,9 +4,9 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..config import ColumnMappingConfig
-from ..database.ai_models import ColumnClassifier
-from ..database.csv_storage import CSVStorageRepository
+from plugins.ai_classification.config import ColumnMappingConfig
+from plugins.ai_classification.database.ai_models import ColumnClassifier
+from plugins.ai_classification.database.csv_storage import CSVStorageRepository
 
 logger = logging.getLogger(__name__)
 
