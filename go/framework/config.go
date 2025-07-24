@@ -18,7 +18,7 @@ type Config struct {
 	TracingEndpoint string `yaml:"tracing_endpoint"`
 }
 
-var schemaPath = "../config/service.schema.yaml"
+var schemaPath = "../../config/service.schema.yaml"
 
 func LoadConfig(path string) (Config, error) {
 	var cfg Config
