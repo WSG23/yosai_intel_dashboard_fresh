@@ -5,9 +5,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Iterable, Optional
 
-from config.unicode_handler import UnicodeQueryHandler
+from unicode_toolkit import UnicodeQueryHandler, clean_unicode_surrogates
 from database.secure_exec import execute_query, execute_command
-from core.unicode_handler import clean_unicode_surrogates
 
 logger = logging.getLogger(__name__)
 

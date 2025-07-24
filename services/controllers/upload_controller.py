@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import Any, Dict, List
 
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.interfaces import get_upload_data_service
 from services.upload_data_service import UploadDataService

@@ -38,8 +38,8 @@ def common_init(self, config=None):
 
 
 def _lazy_string_validator() -> Any:
-    """Import :class:`SecurityValidator` lazily."""
-    from core.security_validator import SecurityValidator as StringValidator
+    """Import :class:`SecurityValidator` lazily from the new package."""
+    from validation.security_validator import SecurityValidator as StringValidator
 
     return StringValidator()
 

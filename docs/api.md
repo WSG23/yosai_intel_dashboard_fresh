@@ -71,7 +71,7 @@ Centralized analytics service for dashboard operations.
 
 - `get_dashboard_summary() -> Dict[str, Any]`: Get dashboard overview
 - `get_access_patterns_analysis(days) -> Dict[str, Any]`: Analyze access patterns
-- `process_uploaded_file(contents, filename) -> Dict[str, Any]`: Validate and parse an uploaded file using `UnifiedFileValidator.validate_file`
+- `process_uploaded_file(contents, filename) -> Dict[str, Any]`: Validate and parse an uploaded file using `FileValidator.validate_file_upload`
 
 ## Models
 
