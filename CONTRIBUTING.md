@@ -56,3 +56,16 @@ See [docs/test_architecture.md](docs/test_architecture.md) and
 the testing protocols, container builder and available test doubles.
 
 Please ensure tests and linters pass before opening a pull request.
+
+## Generating Protobuf Code
+
+Protobuf service definitions live under `proto/`. When the `.proto` files
+change, regenerate the language specific sources using the Makefile helpers:
+
+```bash
+make proto-python   # build Python stubs
+make proto-go       # build Go stubs
+make proto-all      # run both
+```
+
+Commit the resulting generated files so CI can verify they are up to date.
