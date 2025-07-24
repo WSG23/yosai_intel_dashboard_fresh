@@ -21,7 +21,7 @@ from .schema import (
     SecretValidationSettings,
     SecuritySettings,
 )
-from .config_loader import ConfigLoader
+from .hierarchical_loader import HierarchicalLoader
 from .config_transformer import ConfigTransformer
 from .config_validator import ConfigValidator, ValidationResult
 from .pydantic_models import ConfigModel
@@ -44,7 +44,7 @@ class ConfigManager(ConfigurationProtocol):
         transformer: ConfigTransformerProtocol | None = None,
     ) -> None:
         self.config_path = config_path
-        self.loader: ConfigLoaderProtocol = loader or ConfigLoader()
+        self.loader: ConfigLoaderProtocol = loader or HierarchicalLoader()
         self.validator: ConfigValidatorProtocol = validator or ConfigValidator()
         self.transformer: ConfigTransformerProtocol = transformer or ConfigTransformer()
         self.config: ConfigSchema = ConfigSchema()

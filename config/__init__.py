@@ -11,7 +11,7 @@ from .schema import (
     SecuritySettings,
 )
 from .app_config import UploadConfig
-from .config_loader import ConfigLoader
+from .hierarchical_loader import HierarchicalLoader
 from .config_transformer import ConfigTransformer
 from .config_validator import ConfigValidator, ValidationResult
 from .constants import CSSConstants, PerformanceConstants, SecurityConstants
@@ -54,7 +54,7 @@ def create_config_manager(
     else:
         loader = validator = transformer = None
 
-    loader = loader or ConfigLoader(config_path)
+    loader = loader or HierarchicalLoader()
     validator = validator or ConfigValidator()
     transformer = transformer or ConfigTransformer()
 
@@ -102,7 +102,7 @@ __all__ = [
     "EnvironmentProcessor",
     "ConfigValidator",
     "ValidationResult",
-    "ConfigLoader",
+    "HierarchicalLoader",
     "ConfigTransformer",
     "ConfigLoaderProtocol",
     "ConfigValidatorProtocol",
