@@ -7,6 +7,7 @@ from .core.interfaces import (
 )
 from .core.models import ProcessingResult, MappingData
 from .service import MappingService
+from .metrics import get_mapping_accuracy_summary
 
 
 def create_mapping_service(*args, **kwargs):
@@ -25,4 +26,5 @@ __all__ = [
     "MappingData",
     "MappingService",
     "create_mapping_service",
+    "get_mapping_accuracy_summary",
 ]
