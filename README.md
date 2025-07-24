@@ -1285,6 +1285,17 @@ python scripts/replicate_to_timescale.py
 ```
 
 
+## Training Workflow
+
+Run the helper script to train anomaly detection models and register them in the model registry:
+
+```bash
+python scripts/train_anomaly_models.py data/sample_access_events.csv
+```
+
+Set `MODEL_REGISTRY_DB` and `MODEL_REGISTRY_BUCKET` to configure where the artifacts and metadata are stored. Pass `--include-iso` to also train an IsolationForest model.
+
+
 
 ## 🤝 Contributing
 
