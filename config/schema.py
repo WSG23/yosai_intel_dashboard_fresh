@@ -149,6 +149,7 @@ class MonitoringSettings(BaseModel):
     error_reporting_enabled: bool = True
     sentry_dsn: Optional[str] = None
     log_retention_days: int = 30
+    model_evaluation_interval: int = 60
 
 
 class DataQualityThresholds(BaseModel):
