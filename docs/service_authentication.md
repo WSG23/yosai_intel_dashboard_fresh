@@ -13,3 +13,26 @@ rejected with HTTP 401.
 
 Use the helper functions in `services.security.jwt_service` to generate and
 verify these tokens when communicating between services.
+
+## Login Sequence
+
+![Login flow](auth_flow.png)
+
+1. The user submits credentials to the gateway.
+2. A signed JWT is created when authentication succeeds.
+3. The response returns the token and a CSRF cookie.
+
+## Token Issuance
+
+![Token issuance](auth_flow.png)
+
+1. Services request new tokens from the gateway using their own credentials.
+2. Tokens include an issuer claim so downstream services can identify callers.
+
+## Service-to-Service Authentication
+
+![Service authentication](auth_flow.png)
+
+1. Service A calls Service B with the JWT in the `Authorization` header.
+2. Service B verifies the signature and expiration time.
+3. Requests lacking the JWT or CSRF header are rejected with `401`.

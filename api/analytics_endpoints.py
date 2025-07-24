@@ -2,6 +2,8 @@ import json
 import logging
 
 from flask import Blueprint, Response, abort, jsonify, request
+from marshmallow import Schema, fields
+from flask_apispec import doc, marshal_with, use_kwargs
 
 from core.cache_manager import CacheConfig, InMemoryCacheManager
 from services.cached_analytics import CachedAnalyticsService
@@ -12,6 +14,16 @@ logger = logging.getLogger(__name__)
 analytics_bp = Blueprint("analytics", __name__, url_prefix="/api/v1/analytics")
 graphs_bp = Blueprint("graphs", __name__, url_prefix="/api/v1/graphs")
 export_bp = Blueprint("export", __name__, url_prefix="/api/v1/export")
+
+
+class AnalyticsQuerySchema(Schema):
+    facility_id = fields.String(load_default="default")
+    range = fields.String(load_default="30d")
+
+
+class AnalyticsResponseSchema(Schema):
+    status = fields.String()
+    data = fields.Dict()
 
 # Cached analytics helper
 _cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=300))
@@ -57,7 +69,10 @@ MOCK_DATA = {
 
 @analytics_bp.route("/patterns", methods=["GET"])
 @require_permission("analytics.read")
-def get_patterns_analysis():
+@doc(description="Get pattern analytics", tags=["analytics"])
+@use_kwargs(AnalyticsQuerySchema, location="query")
+@marshal_with(AnalyticsResponseSchema)
+def get_patterns_analysis(**args):
     facility = request.args.get("facility_id", "default")
     date_range = request.args.get("range", "30d")
     data = _cached_service.get_analytics_summary_sync(facility, date_range)
@@ -66,19 +81,26 @@ def get_patterns_analysis():
 
 @analytics_bp.route("/sources", methods=["GET"])
 @require_permission("analytics.read")
+@doc(description="List data sources", tags=["analytics"])
+@marshal_with(AnalyticsResponseSchema)
 def get_data_sources():
     return jsonify({"sources": [{"value": "test", "label": "Test Data Source"}]})
 
 
 @analytics_bp.route("/health", methods=["GET"])
 @require_permission("analytics.read")
+@doc(description="Analytics service health", tags=["analytics"])
+@marshal_with(AnalyticsResponseSchema)
 def analytics_health():
     return jsonify({"status": "healthy", "service": "minimal"})
 
 
 @graphs_bp.route("/chart/<chart_type>", methods=["GET"])
 @require_permission("analytics.read")
-def get_chart_data(chart_type):
+@doc(description="Get chart data", params={"chart_type": "Chart type"}, tags=["graphs"])
+@use_kwargs(AnalyticsQuerySchema, location="query")
+@marshal_with(AnalyticsResponseSchema)
+def get_chart_data(chart_type, **args):
     facility = request.args.get("facility_id", "default")
     date_range = request.args.get("range", "30d")
     data = _cached_service.get_analytics_summary_sync(facility, date_range)
@@ -93,7 +115,9 @@ def get_chart_data(chart_type):
 
 @export_bp.route("/analytics/json", methods=["GET"])
 @require_permission("analytics.read")
-def export_analytics_json():
+@doc(description="Export analytics as JSON", tags=["export"])
+@use_kwargs(AnalyticsQuerySchema, location="query")
+def export_analytics_json(**args):
     facility = request.args.get("facility_id", "default")
     date_range = request.args.get("range", "30d")
     data = _cached_service.get_analytics_summary_sync(facility, date_range)
@@ -113,6 +137,8 @@ def register_analytics_blueprints(app):
 
 @graphs_bp.route("/available-charts", methods=["GET"])
 @require_permission("analytics.read")
+@doc(description="List available charts", tags=["graphs"])
+@marshal_with(AnalyticsResponseSchema)
 def get_available_charts():
     """Get list of available chart types."""
     charts = [
@@ -142,6 +168,8 @@ def get_available_charts():
 
 @export_bp.route("/formats", methods=["GET"])
 @require_permission("analytics.read")
+@doc(description="List export formats", tags=["export"])
+@marshal_with(AnalyticsResponseSchema)
 def get_export_formats():
     """Get available export formats."""
     formats = [
@@ -155,7 +183,10 @@ def get_export_formats():
 @analytics_bp.route("/all", methods=["GET"])
 @analytics_bp.route("/<source_type>", methods=["GET"])
 @require_permission("analytics.read")
-def get_analytics_by_source(source_type="all"):
+@doc(description="Get analytics by source", params={"source_type": "Source type"}, tags=["analytics"])
+@use_kwargs(AnalyticsQuerySchema, location="query")
+@marshal_with(AnalyticsResponseSchema)
+def get_analytics_by_source(source_type="all", **args):
     """Get analytics data by source type"""
     try:
         facility = request.args.get("facility_id", "default")

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
 import {
@@ -742,16 +743,18 @@ export const Upload: React.FC = () => {
 };
 
 const UploadPage: React.FC = () => (
-  <UploadProvider>
-    <Card>
-      <CardHeader>
-        <h5>Upload Data Files</h5>
-      </CardHeader>
-      <CardBody>
-        <UploadInner />
-      </CardBody>
-    </Card>
-  </UploadProvider>
+  <ErrorBoundary>
+    <UploadProvider>
+      <Card>
+        <CardHeader>
+          <h5>Upload Data Files</h5>
+        </CardHeader>
+        <CardBody>
+          <UploadInner />
+        </CardBody>
+      </Card>
+    </UploadProvider>
+  </ErrorBoundary>
 );
 
 export default UploadPage;

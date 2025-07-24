@@ -4,10 +4,11 @@ info:
   version: 2.0.0
   description: |
     Physical security intelligence and access control API.
-    
+
     # Authentication
-    Use Bearer token (JWT) or API key authentication.
-    
+    Use Bearer token (JWT) for inter-service communication and require an
+    `X-CSRF-Token` header on state-changing requests.
+
     # Versioning
     API version is included in the URL path (e.g., /v2/events).
   termsOfService: https://yosai.com/terms
@@ -24,6 +25,10 @@ servers:
     description: Staging
   - url: http://localhost:8080/v2
     description: Development
+
+security:
+  - jwtAuth: []
+  - csrfToken: []
 
 tags:
   - name: Events
@@ -51,14 +56,16 @@ paths:
 
 components:
   securitySchemes:
-    bearerAuth:
+    jwtAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-    apiKey:
+      description: Signed JWT present in the Authorization header
+    csrfToken:
       type: apiKey
       in: header
-      name: X-API-Key
+      name: X-CSRF-Token
+      description: Anti-CSRF token required for mutating operations
   schemas:
     Error:
       type: object
@@ -94,6 +101,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AccessEvent'
+      
+    WebhookAlertPayload:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    AnalyticsUpdate:
+      type: object
+      description: Generic analytics update broadcast over WebSocket.
+      additionalProperties: true
 
   responses:
     BadRequest:

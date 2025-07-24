@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api/client';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 interface UserSettings {
   theme: string;
@@ -89,5 +90,11 @@ const Settings: React.FC = () => {
   );
 };
 
-export default Settings;
+const SettingsPage: React.FC = () => (
+  <ErrorBoundary>
+    <Settings />
+  </ErrorBoundary>
+);
+
+export default SettingsPage;
 

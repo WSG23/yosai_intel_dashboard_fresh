@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Optional
-from dataclasses import asdict
+from dataclasses import asdict, is_dataclass
 
 from pydantic import ValidationError
 from core.exceptions import ConfigurationError
@@ -22,6 +22,9 @@ from .schema import (
     SecuritySettings,
 )
 from .hierarchical_loader import HierarchicalLoader
+from .unified_loader import UnifiedLoader
+from .proto_adapter import to_dataclasses
+from .generated.protobuf.config.schema import config_pb2
 from .config_transformer import ConfigTransformer
 from .config_validator import ConfigValidator, ValidationResult
 from .pydantic_models import ConfigModel
@@ -44,7 +47,7 @@ class ConfigManager(ConfigurationProtocol):
         transformer: ConfigTransformerProtocol | None = None,
     ) -> None:
         self.config_path = config_path
-        self.loader: ConfigLoaderProtocol = loader or HierarchicalLoader()
+        self.loader: ConfigLoaderProtocol = loader or UnifiedLoader()
         self.validator: ConfigValidatorProtocol = validator or ConfigValidator()
         self.transformer: ConfigTransformerProtocol = transformer or ConfigTransformer()
         self.config: ConfigSchema = ConfigSchema()
@@ -54,8 +57,12 @@ class ConfigManager(ConfigurationProtocol):
     def reload_config(self) -> None:
         """Reload configuration from source."""
         data = self.loader.load(self.config_path)
-        if data:
+        if isinstance(data, config_pb2.YosaiConfig):
+            cfg = to_dataclasses(data)
+        elif isinstance(data, dict):
             cfg = self.validator.validate(data)
+        elif is_dataclass(data):
+            cfg = data
         else:
             cfg = Config()
         cfg.environment = get_environment()
@@ -140,7 +147,7 @@ def reload_config() -> ConfigManager:
 
 def create_config_manager(config_path: Optional[str] = None) -> ConfigManager:
     """Factory for creating :class:`ConfigManager` instances."""
-    return ConfigManager(config_path=config_path)
+    return ConfigManager(config_path=config_path, loader=UnifiedLoader())
 
 
 __all__ = [

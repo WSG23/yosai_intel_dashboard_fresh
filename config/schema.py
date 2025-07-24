@@ -88,7 +88,9 @@ class DatabaseSettings(BaseModel):
 class SecuritySettings(BaseModel):
     """Security related settings."""
 
-    secret_key: str = Field(default_factory=lambda: os.getenv("SECRET_KEY", ""))
+    secret_key: str = Field(
+        default_factory=lambda: require_env_var("SECRET_KEY")
+    )
     session_timeout: int = 3600
     session_timeout_by_role: Dict[str, int] = Field(default_factory=dict)
     cors_origins: List[str] = Field(default_factory=list)
@@ -149,6 +151,7 @@ class MonitoringSettings(BaseModel):
     error_reporting_enabled: bool = True
     sentry_dsn: Optional[str] = None
     log_retention_days: int = 30
+    model_evaluation_interval: int = 60
 
 
 class DataQualityThresholds(BaseModel):

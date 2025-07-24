@@ -32,6 +32,7 @@ def main(argv: List[str] | None = None) -> int:
     sub.add_parser("rollback", help="Rollback the last applied migration")
     sub.add_parser("current", help="Show the current revision")
 
+
     args = parser.parse_args(argv)
     mgr = MigrationManager(args.config)
 

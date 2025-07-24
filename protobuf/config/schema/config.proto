@@ -41,9 +41,65 @@ message SecurityConfig {
   repeated string allowed_file_types = 8;
 }
 
+message SampleFilesConfig {
+  string csv_path = 1;
+  string json_path = 2;
+}
+
+message AnalyticsConfig {
+  int32 cache_timeout_seconds = 1;
+  int32 max_records_per_query = 2;
+  bool enable_real_time = 3;
+  int32 batch_size = 4;
+  int32 chunk_size = 5;
+  bool enable_chunked_analysis = 6;
+  bool anomaly_detection_enabled = 7;
+  string ml_models_path = 8;
+  int32 data_retention_days = 9;
+  int32 query_timeout_seconds = 10;
+  bool force_full_dataset_analysis = 11;
+  int32 max_memory_mb = 12;
+  int32 max_display_rows = 13;
+}
+
+message MonitoringConfig {
+  bool health_check_enabled = 1;
+  bool metrics_enabled = 2;
+  int32 health_check_interval = 3;
+  bool performance_monitoring = 4;
+  bool error_reporting_enabled = 5;
+  string sentry_dsn = 6;
+  int32 log_retention_days = 7;
+}
+
+message CacheConfig {
+  bool enabled = 1;
+  int32 ttl = 2;
+  int32 max_size = 3;
+  string redis_url = 4;
+  bool use_memory_cache = 5;
+  bool use_redis = 6;
+  string prefix = 7;
+}
+
+message UploadConfig {
+  string folder = 1;
+  int32 max_file_size_mb = 2;
+}
+
+message SecretValidationConfig {
+  string severity = 1;
+}
+
 message YosaiConfig {
   AppConfig app = 1;
   DatabaseConfig database = 2;
   SecurityConfig security = 3;
-  string environment = 4;
+  SampleFilesConfig sample_files = 4;
+  AnalyticsConfig analytics = 5;
+  MonitoringConfig monitoring = 6;
+  CacheConfig cache = 7;
+  UploadConfig uploads = 8;
+  SecretValidationConfig secret_validation = 9;
+  string environment = 10;
 }

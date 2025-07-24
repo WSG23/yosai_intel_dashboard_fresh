@@ -37,6 +37,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Testing Architecture](docs/test_architecture.md)
 - [Comprehensive Testing Strategy](docs/comprehensive_testing_strategy.md)
 - [Service Mesh Evaluation](docs/service_mesh_evaluation.md)
+- [Internal Service Interfaces](docs/internal_services.md)
 
 <p align="center">
   <img src="docs/architecture.svg" alt="High-level architecture diagram" width="600" />
@@ -184,6 +185,7 @@ control:
 
 ```bash
 python scripts/db_migration_cli.py upgrade  # create RBAC tables
+python scripts/db_migration_cli.py current  # verify current revision
 ```
 
 Set the permission service URL in your environment if it differs from
@@ -1285,6 +1287,11 @@ Run migrations with:
 alembic -c migrations/alembic.ini upgrade head
 ```
 
+Each `[section]_db` in `alembic.ini` may be overridden via an environment
+variable named `<SECTION>_URL` (for example `GATEWAY_DB_URL`). When set, the
+value is used instead of the URL in the config file. This is helpful for
+pointing migrations at a different database in CI or development.
+
 New access events are replicated from PostgreSQL to TimescaleDB by
 `scripts/replicate_to_timescale.py`. Set `SOURCE_DSN` and `TARGET_DSN` to run the
 job periodically (for example via `cron` or a Kubernetes CronJob):
@@ -1300,6 +1307,17 @@ databases defined in the configuration:
 python scripts/db_migration_cli.py upgrade
 python scripts/db_migration_cli.py current
 ```
+
+
+## Training Workflow
+
+Run the helper script to train anomaly detection models and register them in the model registry:
+
+```bash
+python scripts/train_anomaly_models.py data/sample_access_events.csv
+```
+
+Set `MODEL_REGISTRY_DB` and `MODEL_REGISTRY_BUCKET` to configure where the artifacts and metadata are stored. Pass `--include-iso` to also train an IsolationForest model.
 
 
 

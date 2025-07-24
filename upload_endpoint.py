@@ -3,6 +3,8 @@ import base64
 
 from flask import Blueprint, abort, jsonify, request
 from flask_wtf.csrf import validate_csrf
+from marshmallow import Schema, fields
+from flask_apispec import doc, marshal_with, use_kwargs
 
 from config.service_registration import register_upload_services
 
@@ -15,7 +17,17 @@ if not container.has("upload_processor"):
 upload_bp = Blueprint("upload", __name__)
 
 
+class UploadResponseSchema(Schema):
+    job_id = fields.String()
+
+
+class StatusSchema(Schema):
+    status = fields.Dict()
+
+
 @upload_bp.route("/v1/upload", methods=["POST"])
+@doc(description="Upload a file", tags=["upload"])
+@marshal_with(UploadResponseSchema, code=202)
 def upload_files():
     """Handle file upload and return expected structure for React frontend"""
     try:
@@ -60,6 +72,8 @@ def upload_files():
 
 
 @upload_bp.route("/v1/upload/status/<job_id>", methods=["GET"])
+@doc(params={"job_id": "Upload job id"}, tags=["upload"])
+@marshal_with(StatusSchema)
 def upload_status(job_id: str):
     """Return background processing status for ``job_id``."""
     file_processor = container.get("file_processor")
