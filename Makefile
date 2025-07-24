@@ -41,6 +41,10 @@ format:
 lint:
 	$(CLI) lint
 
+generate-config-proto:
+	protoc --python_out=config/generated --pyi_out=config/generated protobuf/config/schema/config.proto
+	protoc --go_out=go/config/generated protobuf/config/schema/config.proto
+
 deprecation-docs:
 	python scripts/generate_deprecation_docs.py
 
