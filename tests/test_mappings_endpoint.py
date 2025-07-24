@@ -1,14 +1,20 @@
 import pandas as pd
 from flask import Flask
 
-import mappings_endpoint
-from core.service_container import ServiceContainer
+import os
+import types
+import sys
 import importlib
 from pathlib import Path
-import sys
-import types
 
-# Ensure dash stubs are available for service imports
+os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
+core_container_stub = types.ModuleType("core.container")
+core_container_stub.container = types.SimpleNamespace(has=lambda n: False, get=lambda n: None)
+sys.modules.setdefault("core.container", core_container_stub)
+services_mod = sys.modules.setdefault("services", types.ModuleType("services"))
+services_mod.__path__ = [str(Path(__file__).resolve().parents[1] / "services")]
+
+# Provide stubs before importing the endpoint
 if "dash" not in sys.modules:
     dash_stub = importlib.import_module("tests.stubs.dash")
     sys.modules["dash"] = dash_stub
@@ -21,6 +27,9 @@ if "dash" not in sys.modules:
 if "dash_bootstrap_components" not in sys.modules:
     dbc_stub = importlib.import_module("tests.stubs.dash_bootstrap_components")
     sys.modules["dash_bootstrap_components"] = dbc_stub
+
+import mappings_endpoint
+from core.service_container import ServiceContainer
 
 # Provide stub for optional heavy dependencies
 if "dask" not in sys.modules:
@@ -91,6 +100,11 @@ def _create_app(monkeypatch):
 
     import core.service_container as sc
     monkeypatch.setattr(sc, "ServiceContainer", lambda: container)
+    import core.container as cc
+    monkeypatch.setattr(cc, "container", container)
+    import services.mappings as sm
+    monkeypatch.setattr(sm, "container", container)
+    monkeypatch.setattr(mappings_endpoint, "container", container)
 
     return app, store, device_service, column_service
 

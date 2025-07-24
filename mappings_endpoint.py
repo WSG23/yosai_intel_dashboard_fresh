@@ -5,10 +5,9 @@ from core.unicode_handler import clean_unicode_surrogates
 
 # Shared container ensures services are available across blueprints
 from core.container import container
-from config.service_registration import register_upload_services
-
-if not container.has("upload_processor"):
-    register_upload_services(container)
+import os
+os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
+from services.mappings import save_column_mappings, save_device_mappings
 
 mappings_bp = Blueprint('mappings', __name__)
 
@@ -23,8 +22,7 @@ def save_column_mappings_route():
         if not file_id:
             return error_response('missing_file_id', 'file_id is required'), 400
 
-        service = container.get('consolidated_learning_service')
-        service.save_column_mappings(file_id, mappings)
+        save_column_mappings(file_id, mappings)
 
         return jsonify({'status': 'success'}), 200
     except KeyError as exc:
@@ -43,8 +41,7 @@ def save_device_mappings_route():
         if not file_id:
             return error_response('missing_file_id', 'file_id is required'), 400
 
-        service = container.get('device_learning_service')
-        service.save_device_mappings(file_id, mappings)
+        save_device_mappings(file_id, mappings)
 
         return jsonify({'status': 'success'}), 200
     except KeyError as exc:
@@ -60,32 +57,13 @@ def save_mappings():
         filename = data.get('filename')
         mapping_type = data.get('mapping_type')
         
-        # Get services
-
         if mapping_type == 'column':
-            # Save column mappings
             column_mappings = data.get('column_mappings', {})
-            
-            # Use consolidated learning service if available
-            learning_service = container.get("consolidated_learning_service")
-            if learning_service:
-                learning_service.save_column_mappings(filename, column_mappings)
-            
+            save_column_mappings(filename, column_mappings)
+
         elif mapping_type == 'device':
-            # Save device mappings
             device_mappings = data.get('device_mappings', {})
-            
-            device_service = container.get("device_learning_service")
-            if device_service:
-                # Save each device mapping
-                for device_name, mapping in device_mappings.items():
-                    device_service.save_user_device_mapping(
-                        filename=filename,
-                        device_name=device_name,
-                        device_type=mapping.get('device_type', 'unknown'),
-                        location=mapping.get('location'),
-                        properties=mapping.get('properties', {})
-                    )
+            save_device_mappings(filename, device_mappings)
         
         return jsonify({'status': 'success'}), 200
 

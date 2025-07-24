@@ -10,6 +10,7 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from tracing import init_tracing
+from services.mappings import save_column_mappings, save_device_mappings
 
 # Initialize tracing before the app is created
 init_tracing("backend")
@@ -154,11 +155,14 @@ def save_mappings():
         data = request.json
         learned_mapping = data.get('learned_mapping', {})
         fingerprint = learned_mapping.get('fingerprint', 'unknown')
-        
-        # Save mapping to file
-        mapping_file = os.path.join('mappings', f'{fingerprint}.json')
-        with open(mapping_file, 'w') as f:
-            json.dump(learned_mapping, f, indent=2)
+
+        column_mappings = learned_mapping.get('column_mappings', learned_mapping.get('mappings', {}))
+        device_mappings = learned_mapping.get('device_mappings', {})
+
+        if column_mappings:
+            save_column_mappings(fingerprint, column_mappings)
+        if device_mappings:
+            save_device_mappings(fingerprint, device_mappings)
         
         return jsonify({
             'success': True,
