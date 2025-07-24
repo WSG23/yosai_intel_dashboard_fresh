@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+"""Python error boundary helper.
+
+Deprecated: use the React component in ``src/components/shared/ErrorBoundary.tsx``.
+"""
+
 import logging
 from typing import Any, Callable
 

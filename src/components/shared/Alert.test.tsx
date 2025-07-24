@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { Alert, AlertDescription } from './alert';
+import { Alert, AlertDescription } from './Alert';
 
 test('renders alert description', () => {
   render(

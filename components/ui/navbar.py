@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Enhanced navbar component with logo and proper import safety."""
+"""Enhanced navbar component with logo and proper import safety.
+
+Deprecated: a React equivalent lives in ``src/components/shared/Navbar.tsx``.
+"""
 
 import logging
 from typing import Any, Optional, Dict

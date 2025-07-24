@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '../components/shared/Card';
 import { Activity, Users, DoorOpen, AlertCircle } from 'lucide-react';
 import { useWebSocket } from '../hooks/useWebSocket';
 import {

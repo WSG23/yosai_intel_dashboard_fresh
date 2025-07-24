@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 
 test('renders tabs structure', () => {
   render(
