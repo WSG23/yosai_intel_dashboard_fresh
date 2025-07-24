@@ -1,16 +1,22 @@
 from __future__ import annotations
 
-"""Shared Unicode handling utilities."""
+"""Deprecated Unicode helpers maintained for backward compatibility."""
 
-import re
 from typing import Any
+import warnings
 
-
-_SURROGATE_RE = re.compile(r"[\uD800-\uDFFF]")
+from .unicode import clean_surrogate_chars
 
 
 def clean_unicode_surrogates(text: Any) -> str:
-    """Return ``text`` with Unicode surrogate characters removed."""
+    """Return ``text`` with surrogate characters removed."""
+
+    warnings.warn(
+        "core.unicode_handler.clean_unicode_surrogates is deprecated; "
+        "use core.unicode.clean_surrogate_chars",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     if not isinstance(text, str):
         try:
@@ -18,7 +24,7 @@ def clean_unicode_surrogates(text: Any) -> str:
         except Exception:
             return ""
 
-    return _SURROGATE_RE.sub("", text)
+    return clean_surrogate_chars(text)
 
 
 __all__ = ["clean_unicode_surrogates"]

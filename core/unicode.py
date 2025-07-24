@@ -15,6 +15,7 @@ import unicodedata
 from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
+import warnings
 from typing import Any, Callable, Iterable, Optional, Union
 
 import pandas as pd  # type: ignore[import]
@@ -29,8 +30,6 @@ from .security_patterns import (
     SQL_INJECTION_PATTERNS,
     XSS_PATTERNS,
 )
-from .unicode_handler import clean_unicode_surrogates
-
 logger = logging.getLogger(__name__)
 
 # Global Unicode security validator used across this module
@@ -438,6 +437,25 @@ def clean_surrogate_chars(text: str, replacement: str = "") -> str:
     """Return ``text`` with surrogate code points removed or replaced."""
 
     return UnicodeProcessor.clean_surrogate_chars(text, replacement)
+
+
+def clean_unicode_surrogates(text: Any) -> str:
+    """Deprecated alias for :func:`clean_surrogate_chars`."""
+
+    warnings.warn(
+        "core.unicode.clean_unicode_surrogates is deprecated; use "
+        "clean_surrogate_chars",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+    if not isinstance(text, str):
+        try:
+            text = str(text)
+        except Exception:
+            return ""
+
+    return clean_surrogate_chars(text)
 
 
 def sanitize_unicode_input(text: Union[str, Any]) -> str:

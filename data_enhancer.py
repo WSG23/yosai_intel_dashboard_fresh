@@ -91,7 +91,7 @@ except ImportError:
             return get_upload_chunk_size()
 
 
-from core.unicode_handler import clean_unicode_surrogates
+from core.unicode import clean_surrogate_chars
 
 
 class AdvancedUnicodeHandler:
@@ -104,14 +104,14 @@ class AdvancedUnicodeHandler:
 
         # Clean column names
         cleaned_df.columns = [
-            clean_unicode_surrogates(str(col)) for col in cleaned_df.columns
+            clean_surrogate_chars(str(col)) for col in cleaned_df.columns
         ]
 
         # Clean string columns
         for col in cleaned_df.columns:
             if cleaned_df[col].dtype == "object":
                 cleaned_df[col] = (
-                    cleaned_df[col].astype(str).apply(clean_unicode_surrogates)
+                    cleaned_df[col].astype(str).apply(clean_surrogate_chars)
                 )
 
         return cleaned_df

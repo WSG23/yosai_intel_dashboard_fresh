@@ -7,7 +7,7 @@ from typing import Any, Iterable, Optional
 
 from config.unicode_handler import UnicodeQueryHandler
 from database.secure_exec import execute_query, execute_command
-from core.unicode_handler import clean_unicode_surrogates
+from core.unicode import clean_surrogate_chars
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ def execute_secure_sql(
     try:
         return execute_query(conn, sanitized_query, sanitized_params)
     except Exception as exc:  # pragma: no cover - best effort
-        logger.error("Query failed: %s", clean_unicode_surrogates(exc))
+        logger.error("Query failed: %s", clean_surrogate_chars(str(exc)))
         raise
 
 
@@ -40,7 +40,7 @@ def execute_secure_command(
     try:
         return execute_command(conn, sanitized_cmd, sanitized_params)
     except Exception as exc:  # pragma: no cover - best effort
-        logger.error("Command failed: %s", clean_unicode_surrogates(exc))
+        logger.error("Command failed: %s", clean_surrogate_chars(str(exc)))
         raise
 
 

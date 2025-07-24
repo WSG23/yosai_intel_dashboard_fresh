@@ -4,7 +4,7 @@ from config.service_registration import register_upload_services
 
 # Shared container ensures services are available across blueprints
 from core.container import container
-from core.unicode_handler import clean_unicode_surrogates
+from core.unicode import clean_surrogate_chars
 
 if not container.has("upload_processor"):
     register_upload_services(container)
@@ -28,9 +28,9 @@ def save_column_mappings_route():
 
         return jsonify({"status": "success"}), 200
     except KeyError as exc:
-        abort(500, description=clean_unicode_surrogates(exc))
+        abort(500, description=clean_surrogate_chars(str(exc)))
     except Exception as exc:
-        abort(500, description=clean_unicode_surrogates(exc))
+        abort(500, description=clean_surrogate_chars(str(exc)))
 
 
 @mappings_bp.route("/v1/mappings/devices", methods=["POST"])
@@ -49,9 +49,9 @@ def save_device_mappings_route():
 
         return jsonify({"status": "success"}), 200
     except KeyError as exc:
-        abort(500, description=clean_unicode_surrogates(exc))
+        abort(500, description=clean_surrogate_chars(str(exc)))
     except Exception as exc:
-        abort(500, description=clean_unicode_surrogates(exc))
+        abort(500, description=clean_surrogate_chars(str(exc)))
 
 
 @mappings_bp.route("/v1/mappings/save", methods=["POST"])
@@ -92,7 +92,7 @@ def save_mappings():
         return jsonify({"status": "success"}), 200
 
     except Exception as e:
-        abort(500, description=clean_unicode_surrogates(e))
+        abort(500, description=clean_surrogate_chars(str(e)))
 
 
 @mappings_bp.route("/v1/process-enhanced", methods=["POST"])
@@ -146,4 +146,4 @@ def process_enhanced_data():
         )
 
     except Exception as e:
-        abort(500, description=clean_unicode_surrogates(e))
+        abort(500, description=clean_surrogate_chars(str(e)))

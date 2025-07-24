@@ -5,6 +5,8 @@ import base64
 import logging
 from typing import Union, Tuple
 
+import warnings
+
 from core.unicode import safe_encode_text
 
 logger = logging.getLogger(__name__)
@@ -12,6 +14,13 @@ logger = logging.getLogger(__name__)
 
 def safe_unicode_encode(text: Union[str, bytes, None]) -> str:
     """Deprecated alias for :func:`safe_encode_text`."""
+
+    warnings.warn(
+        "services.upload.utils.unicode_handler.safe_unicode_encode is deprecated; "
+        "use core.unicode.safe_encode_text",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     return safe_encode_text(text)
 
