@@ -165,6 +165,7 @@ startup. Ensure the following variables are set:
 - `AUTH0_CLIENT_SECRET`
 - `AUTH0_DOMAIN`
 - `AUTH0_AUDIENCE`
+- `JWT_SECRET` – microservice authentication secret
 
 `DB_HOST`, `DB_USER` and `DB_NAME` can also be overridden if they differ
 from the defaults. For production deployments store these secrets in
@@ -378,6 +379,7 @@ startup:
 
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` and `DB_GATEWAY_NAME` for the gateway
 - `JWT_SECRET` for service authentication and the analytics microservice
+- `SECRET_KEY` for Flask sessions and CSRF protection
 
 ### Production Build
 

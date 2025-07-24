@@ -54,7 +54,7 @@ class CSRFConfig:
     @classmethod
     def for_development(cls, **kwargs):
         """Create development configuration"""
-        defaults = {"enabled": False, "ssl_strict": False, "secret_key": "change-me"}
+        defaults = {"enabled": False, "ssl_strict": False, "secret_key": os.environ.get("SECRET_KEY", "")}
         defaults.update(kwargs)
         return cls(**defaults)
 
@@ -146,7 +146,7 @@ class EnhancedCSRFManager:
 
         # Set secret key if not present
         if not server.config.get("SECRET_KEY"):
-            server.config["SECRET_KEY"] = self.config.secret_key or "change-me"
+            server.config["SECRET_KEY"] = self.config.secret_key or os.environ.get("SECRET_KEY", "")
 
         # Configure CSRF based on mode
         if self.mode in [CSRFMode.ENABLED, CSRFMode.PRODUCTION]:

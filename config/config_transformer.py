@@ -31,8 +31,8 @@ class ConfigTransformer(ConfigTransformerProtocol):
     def _apply_security_defaults(self, config: "Config") -> None:
         """Apply security-related defaults."""
         # Ensure secret key is set from environment
-        if not config.app.secret_key or config.app.secret_key == "change-me":
-            env_secret = os.getenv("SECRET_KEY", "")
+        if not config.app.secret_key:
+            env_secret = os.environ.get("SECRET_KEY", "")
             if env_secret:
                 config.app.secret_key = env_secret
             elif config.environment != "test":

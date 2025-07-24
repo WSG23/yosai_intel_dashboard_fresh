@@ -21,10 +21,7 @@ SERVICE_NAME = "analytics-microservice"
 service = BaseService(SERVICE_NAME, "")
 app = service.app
 
-# Default secret used in development environments
-PLACEHOLDER_JWT_SECRET = "change-me"
-
-JWT_SECRET = os.environ["JWT_SECRET"]
+JWT_SECRET = os.environ.get("JWT_SECRET", "")
 
 
 def verify_token(authorization: str = Header("")) -> None:
@@ -62,7 +59,7 @@ class PatternsRequest(BaseModel):
 @app.on_event("startup")
 async def _startup() -> None:
     validate_required_env(["JWT_SECRET"])
-    if JWT_SECRET == PLACEHOLDER_JWT_SECRET:
+    if not JWT_SECRET:
         raise RuntimeError("JWT_SECRET environment variable not set")
 
 
