@@ -295,9 +295,15 @@ make test
 make lint
 make format
 
+# regenerate deprecation documentation
+make deprecation-docs
+
 # tear everything down and clean caches
 make clean
 ```
+
+Updates to component lifecycle should be recorded in `deprecation.yml`. Run
+`make deprecation-docs` whenever this file changes.
 
 ### Kafka Event Processor
 
