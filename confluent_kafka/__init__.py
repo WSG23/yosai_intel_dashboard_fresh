@@ -1,13 +1,8 @@
 class Consumer:
-    def __init__(self, *a, **k):
-        pass
-
-    def get_watermark_offsets(self, *a, **k):
-        return (0, 0)
-
-    def close(self):
+    def __init__(self, *args, **kwargs):
         pass
 
 class Producer:
-    def __init__(self, *a, **k):
+    def __init__(self, *args, **kwargs):
+
         pass
