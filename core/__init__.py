@@ -20,6 +20,7 @@ from .intelligent_multilevel_cache import (
 )
 from .memory_manager import MemoryManager
 from .truly_unified_callbacks import TrulyUnifiedCallbacks
+from .base_database_service import BaseDatabaseService
 
 if TYPE_CHECKING:  # pragma: no cover - type hints only
     from .truly_unified_callbacks import (
@@ -45,4 +46,5 @@ __all__ = [
     "CallbackModule",
     "CallbackModuleRegistry",
     "BaseModel",
+    "BaseDatabaseService",
 ]
