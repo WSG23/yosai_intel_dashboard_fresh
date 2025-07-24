@@ -1,5 +1,8 @@
 # Configuration Reference
 
+See [unified_config.md](unified_config.md) for details on regenerating the
+protobuf schema and the `YosaiConfig` loader.
+
 ## App
 
 | Field | Default | Env Var |
