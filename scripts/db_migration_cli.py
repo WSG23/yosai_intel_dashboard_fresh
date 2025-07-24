@@ -30,6 +30,7 @@ def main(argv: List[str] | None = None) -> int:
     down.add_argument("revision")
 
     sub.add_parser("rollback", help="Rollback the last applied migration")
+    sub.add_parser("current", help="Show current revision")
 
     args = parser.parse_args(argv)
     mgr = MigrationManager(args.config)
@@ -40,6 +41,8 @@ def main(argv: List[str] | None = None) -> int:
         mgr.downgrade(args.revision)
     elif args.command == "rollback":
         mgr.rollback()
+    elif args.command == "current":
+        mgr.current()
     else:
         parser.print_help()
         return 1

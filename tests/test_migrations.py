@@ -33,3 +33,16 @@ def test_migration_upgrade_and_rollback(monkeypatched_commands):
     mgr.rollback()
     # rollback triggers downgrade
     assert ("downgrade", "base") in monkeypatched_commands.called
+
+
+def test_cli_current(monkeypatched_commands):
+    from scripts import db_migration_cli
+
+    exit_code = db_migration_cli.main([
+        "--config",
+        "migrations/alembic.ini",
+        "current",
+    ])
+
+    assert exit_code == 0
+    assert ("current", None) in monkeypatched_commands.called
