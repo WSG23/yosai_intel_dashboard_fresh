@@ -32,6 +32,14 @@
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5",
     "zustand": "^5.0.6"
+    ,
+    "apollo-server-express": "^3.12.0",
+    "express": "^4.18.2",
+    "graphql": "^16.8.1",
+    "graphql-subscriptions": "^2.1.0",
+    "graphql-ws": "^5.10.0",
+    "dataloader": "^2.2.2",
+    "graphql-depth-limit": "^1.1.0"
   },
   "devDependencies": {
     "@fullhuman/postcss-purgecss": "^7.0.2",
@@ -62,7 +70,8 @@
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "lint:a11y": "pa11y http://localhost:8050",
     "cypress:open": "cypress open",
-    "cypress:run": "cypress run"
+    "cypress:run": "cypress run",
+    "graphql": "node graphql/index.js"
   },
   "eslintConfig": {
     "extends": [
