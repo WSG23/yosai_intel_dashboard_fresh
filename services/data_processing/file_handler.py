@@ -21,6 +21,20 @@ from services.data_processing.unified_upload_validator import (
 from upload_types import ValidationResult
 
 
+def create_config_methods(cls):
+    cls.get_ai_confidence_threshold = lambda self: self.ai_threshold
+    cls.get_max_upload_size_mb = lambda self: self.max_size_mb
+    cls.get_upload_chunk_size = lambda self: self.chunk_size
+    return cls
+
+
+def common_init(self, config=None):
+    self.config = config or {}
+    self.max_size_mb = self.config.get("max_upload_size_mb", 100)
+    self.ai_threshold = self.config.get("ai_confidence_threshold", 0.8)
+    self.chunk_size = self.config.get("upload_chunk_size", 1048576)
+
+
 def process_file_simple(
     content: bytes,
     filename: str,
@@ -65,6 +79,7 @@ def process_file_simple(
         return None, str(exc)
 
 
+@create_config_methods
 class FileHandler:
     """Combine security and basic validation for uploaded files."""
 
@@ -73,8 +88,10 @@ class FileHandler:
         max_size_mb: Optional[int] = None,
         config: ConfigurationProtocol = dynamic_config,
     ) -> None:
-        self.config = config
-        self.validator = UnifiedUploadValidator(max_size_mb, config=self.config)
+        common_init(self, config)
+        if max_size_mb is not None:
+            self.max_size_mb = max_size_mb
+        self.validator = UnifiedUploadValidator(self.max_size_mb, config=self.config)
 
     def sanitize_filename(self, filename: str) -> str:
         return self.validator.sanitize_filename(filename)
