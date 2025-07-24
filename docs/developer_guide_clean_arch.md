@@ -41,3 +41,11 @@ python scripts/validate_structure.py
 
 Add this command to your pre-commit hooks to avoid accidentally adding modules in
 the wrong location.
+
+## CI Check
+
+The GitHub Actions workflows include a job that verifies the repository can be
+migrated to the clean layout. It executes
+`scripts/migrate_to_clean_arch.py --dry-run` followed by
+`scripts/validate_structure.py`. If the validation step prints
+"Missing required directory" the job fails and the workflow stops.
