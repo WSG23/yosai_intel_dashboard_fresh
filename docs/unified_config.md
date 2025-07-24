@@ -21,8 +21,8 @@ services can use the new fields.
 
 ## Using `YosaiConfig`
 
-`create_config_manager()` returns an instance of `YosaiConfig` which exposes
-accessors like `get_app_config()` and `get_database_config()`.  Services obtain
-it from the dependency injection container and operate purely on the typed
-protobuf object.
+`create_config_manager()` now uses `UnifiedLoader` under the hood. The loader
+parses the YAML/JSON files into a `YosaiConfig` protobuf message which is then
+converted back into the existing dataclass structure. Services continue to work
+with the familiar dataclasses returned by the various `get_*_config()` helpers.
 
