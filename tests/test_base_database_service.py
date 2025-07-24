@@ -3,7 +3,7 @@ import sys
 
 import pytest
 
-from config import DatabaseConfig
+from config import DatabaseSettings
 from core.base_database_service import BaseDatabaseService
 
 
@@ -17,13 +17,13 @@ def _install_fake_module(monkeypatch, name, factory_attr):
 
 def test_postgresql_connection(monkeypatch):
     conn = _install_fake_module(monkeypatch, "psycopg2", "connect")
-    service = BaseDatabaseService(DatabaseConfig(type="postgresql"))
+    service = BaseDatabaseService(DatabaseSettings(type="postgresql"))
     assert service.connection is conn
 
 
 def test_mysql_connection(monkeypatch):
     conn = _install_fake_module(monkeypatch, "pymysql", "connect")
-    service = BaseDatabaseService(DatabaseConfig(type="mysql"))
+    service = BaseDatabaseService(DatabaseSettings(type="mysql"))
     assert service.connection is conn
 
 
@@ -32,7 +32,7 @@ def test_mongodb_connection(monkeypatch):
     conn = object()
     module.MongoClient = lambda *a, **k: conn
     monkeypatch.setitem(sys.modules, "pymongo", module)
-    service = BaseDatabaseService(DatabaseConfig(type="mongodb"))
+    service = BaseDatabaseService(DatabaseSettings(type="mongodb"))
     assert service.connection is conn
 
 
@@ -41,10 +41,10 @@ def test_redis_connection(monkeypatch):
     conn = object()
     module.Redis = lambda *a, **k: conn
     monkeypatch.setitem(sys.modules, "redis", module)
-    service = BaseDatabaseService(DatabaseConfig(type="redis"))
+    service = BaseDatabaseService(DatabaseSettings(type="redis"))
     assert service.connection is conn
 
 
 def test_unsupported_type():
     with pytest.raises(ValueError):
-        BaseDatabaseService(DatabaseConfig(type="invalid"))
+        BaseDatabaseService(DatabaseSettings(type="invalid"))

@@ -13,6 +13,8 @@ from core.container import container as default_container
 from mapping.processors.column_processor import ColumnProcessor
 from mapping.processors.device_processor import DeviceProcessor
 from mapping.service import MappingService
+from mapping.models import MappingModel, load_model, RuleBasedModel
+from core.service_container import ServiceContainer
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
 from services.learning.src.api.coordinator import LearningCoordinator
@@ -57,5 +59,6 @@ def create_mapping_service(
         ai_adapter = None
 
     column_proc = ColumnProcessor(ai_adapter, container=container, default_model=model_key or "default")
+
     device_proc = DeviceProcessor()
     return MappingService(learning.storage, column_proc, device_proc)

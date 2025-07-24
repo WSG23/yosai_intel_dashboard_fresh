@@ -8,19 +8,18 @@ import os
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
-from services.registry import ServiceDiscovery
-
-from services.resilience.circuit_breaker import (
-    CircuitBreaker,
-    CircuitBreakerOpen,
-)
-
 import aiohttp
 import pandas as pd
 from kafka import KafkaProducer
 
 from core.service_container import ServiceContainer
+from services.feature_flags import feature_flags
 from services.interfaces import AnalyticsServiceProtocol
+from services.registry import ServiceDiscovery
+from services.resilience.circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerOpen,
+)
 
 
 class ServiceAdapter(ABC):
@@ -122,9 +121,7 @@ class AnalyticsServiceAdapter(ServiceAdapter, AnalyticsServiceProtocol):
         self.microservice_url = microservice_url or os.getenv(
             "ANALYTICS_SERVICE_URL", "http://localhost:8001"
         )
-        self.use_microservice = (
-            os.getenv("USE_ANALYTICS_MICROSERVICE", "false").lower() == "true"
-        )
+        self.use_microservice = feature_flags.is_enabled("use_analytics_microservice")
         self.circuit_breaker = CircuitBreaker(5, 60, name="analytics_service")
 
     async def call(self, method: str, **kwargs: Any) -> Any:
@@ -178,9 +175,8 @@ class MigrationContainer(ServiceContainer):
 
     def _load_migration_flags(self) -> Dict[str, bool]:
         return {
-            "use_kafka_events": os.getenv("USE_KAFKA_EVENTS", "false").lower()
-            == "true",
-            "use_timescaledb": os.getenv("USE_TIMESCALEDB", "false").lower() == "true",
+            "use_kafka_events": feature_flags.is_enabled("use_kafka_events"),
+            "use_timescaledb": feature_flags.is_enabled("use_timescaledb"),
         }
 
     def register_with_adapter(
@@ -232,8 +228,8 @@ def register_migration_services(container: MigrationContainer) -> None:
 
     if container._migration_flags["use_timescaledb"]:
         try:
-            from services.timescale.manager import TimescaleDBManager
             from services.timescale import models as timescale_models  # noqa:F401
+            from services.timescale.manager import TimescaleDBManager
         except Exception:  # pragma: no cover - optional dependency
             pass
         else:

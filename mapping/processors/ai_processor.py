@@ -5,7 +5,12 @@ from typing import Any, Dict
 from core.container import container as default_container
 from mapping.models import MappingModel, HeuristicMappingModel
 
+
 import pandas as pd
+
+
+from core.service_container import ServiceContainer
+from mapping.models import MappingModel
 
 
 class AIColumnMapperAdapter:
@@ -18,10 +23,13 @@ class AIColumnMapperAdapter:
         container: Any | None = None,
         default_model: str = "default",
     ) -> None:
+
         if adapter is None:
             from components.plugin_adapter import ComponentPluginAdapter
 
             adapter = ComponentPluginAdapter()
+        if container is None:
+            container = ServiceContainer()
         self._adapter = adapter
         self._container = container or default_container
         self._default_model = default_model
@@ -41,6 +49,7 @@ class AIColumnMapperAdapter:
             return model.suggest(df, filename)
         except Exception:  # pragma: no cover - fall back
             return self._adapter.get_ai_column_suggestions(df, filename)
+
 
     def confirm(
         self, filename: str, mapping: Dict[str, str], metadata: Dict[str, Any]

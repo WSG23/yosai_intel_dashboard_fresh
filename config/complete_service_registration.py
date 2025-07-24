@@ -43,7 +43,7 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigValidator,
         create_config_manager,
     )
-    from config.database_manager import DatabaseConfig, DatabaseManager
+    from config.database_manager import DatabaseSettings, DatabaseManager
     from core.logging import LoggingService
     from services.configuration_service import (
         ConfigurationServiceProtocol,
@@ -73,7 +73,7 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         "database_manager",
         DatabaseManager,
         protocol=DatabaseProtocol,
-        factory=lambda c: DatabaseManager(DatabaseConfig()),
+        factory=lambda c: DatabaseManager(DatabaseSettings()),
     )
 
     from core.events import EventBus
