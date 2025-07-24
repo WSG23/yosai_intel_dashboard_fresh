@@ -34,3 +34,27 @@ Running Linkerd introduces additional components and sidecars that consume CPU a
 - Resource limits or operational simplicity are higher priorities than advanced routing features.
 
 To remove Linkerd delete the manifests in `k8s/linkerd/` and uninstall the Linkerd control plane.
+
+## Automatic mTLS
+
+All pods injected with the Linkerd proxy automatically establish mutual TLS
+(mTLS) when communicating with other meshed workloads. Certificates are issued by
+the Linkerd identity service and rotated without any application changes.
+
+### Verifying mTLS
+
+Run `linkerd check --proxy` inside a proxy container to confirm it can obtain a
+certificate and negotiate TLS. To inspect live traffic use `linkerd tap`; the
+`tls=true` column indicates requests are encrypted:
+
+```bash
+kubectl exec deploy/yosai-dashboard -c linkerd-proxy -- \
+  linkerd check --proxy
+linkerd tap deploy/yosai-dashboard -n yosai-prod
+```
+
+### Certificate Rotation
+
+Linkerd automatically rotates issuer certificates before expiry (24&nbsp;hours by
+default). Check the current expiry time with `linkerd identity` and monitor the
+`linkerd-identity` pod logs to ensure new certificates are issued regularly.
