@@ -51,7 +51,8 @@ def run_migrations_online() -> None:
             poolclass=pool.NullPool,
         )
         with connectable.connect() as connection:
-            _ensure_timescale(connection)
+            if connection.dialect.name.startswith("postgres"):
+                _ensure_timescale(connection)
             context.configure(connection=connection)
             with context.begin_transaction():
                 context.run_migrations()
