@@ -11,12 +11,6 @@ from pathlib import Path
 
 import pandas as pd
 
-# Setup comprehensive logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    stream=sys.stdout,
-)
 logger = logging.getLogger(__name__)
 
 
@@ -246,4 +240,9 @@ def test_complete_pipeline():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        stream=sys.stdout,
+    )
     test_complete_pipeline()

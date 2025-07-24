@@ -15,7 +15,6 @@ sys.path.insert(0, str(ROOT))
 
 from database.migrations import MigrationManager
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 LOG = logging.getLogger(__name__)
 
 
@@ -53,4 +52,5 @@ def main(argv: List[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     raise SystemExit(main())

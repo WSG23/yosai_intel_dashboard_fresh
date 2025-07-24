@@ -14,7 +14,6 @@ from psycopg2.extras import DictCursor, execute_values
 from database.secure_exec import execute_query, execute_command
 
 LOG = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 SRC_DSN = os.getenv("SOURCE_DSN", "dbname=yosai_intel")
 TGT_DSN = os.getenv("TARGET_DSN", "dbname=yosai_timescale")
@@ -130,4 +129,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+    )
     main()

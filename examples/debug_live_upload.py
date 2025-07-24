@@ -10,8 +10,6 @@ import sys
 
 sys.path.append(".")
 
-# Enhanced logging
-logging.basicConfig(level=logging.INFO, format="🔍 %(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -108,6 +106,7 @@ def add_debug_hooks():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="🔍 %(levelname)s: %(message)s")
     add_debug_hooks()
     logger.info(
         "🚀 Upload debugging hooks installed. Upload a file and check the logs!"
