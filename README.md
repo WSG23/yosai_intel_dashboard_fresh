@@ -1319,6 +1319,12 @@ python scripts/train_anomaly_models.py data/sample_access_events.csv
 
 Set `MODEL_REGISTRY_DB` and `MODEL_REGISTRY_BUCKET` to configure where the artifacts and metadata are stored. Pass `--include-iso` to also train an IsolationForest model.
 
+To train the full suite of security models run:
+
+```bash
+python scripts/train_security_models.py data/sample_access_events.csv
+```
+
 
 
 ## 🤝 Contributing
