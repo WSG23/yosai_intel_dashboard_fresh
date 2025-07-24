@@ -70,7 +70,8 @@ jobs:
       - name: Install Python deps
         if: matrix.lang == 'python'
         run: |
-          pip install -r requirements.lock -r requirements-test.txt
+          pip install -r requirements.lock
+          pip install -r requirements-test.txt
       - name: Run Python tests
         if: matrix.lang == 'python'
         run: pytest --cov=./ --cov-report=xml -q
