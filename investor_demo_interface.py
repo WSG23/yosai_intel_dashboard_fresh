@@ -15,9 +15,60 @@ from flask import (
     url_for,
 )
 
-from archive.mvp.mvp_cli_engine import generate_analytics, load_dataframe
-from archive.mvp.simple_mapping_interface import enhance_data_with_mappings
-from archive.mvp.unicode_fix_module import safe_file_write
+# Localised helpers from deprecated archive modules
+def load_dataframe(path: Path) -> pd.DataFrame:
+    """Load CSV/JSON/Excel into a DataFrame."""
+    if path.suffix.lower() == ".json":
+        return pd.read_json(path)
+    if path.suffix.lower() in {".xlsx", ".xls"}:
+        return pd.read_excel(path)
+    return pd.read_csv(path)
+
+
+def generate_analytics(df: pd.DataFrame) -> dict:
+    """Generate a trivial analytics summary."""
+    return {"rows": len(df)}
+
+
+def enhance_data_with_mappings(
+    df: pd.DataFrame, column_mapping: dict[str, str], device_mapping: list[dict]
+) -> tuple[pd.DataFrame, None]:
+    """Apply column/device mappings to the DataFrame."""
+    enhanced_df = df.copy()
+
+    if column_mapping:
+        rename_dict = {
+            original: mapped
+            for original, mapped in column_mapping.items()
+            if mapped
+        }
+        if rename_dict:
+            enhanced_df = enhanced_df.rename(columns=rename_dict)
+
+    if device_mapping and "door_id" in enhanced_df.columns:
+        lookup = {device["door_id"]: device for device in device_mapping}
+        enhanced_df["floor_number"] = enhanced_df["door_id"].map(
+            lambda x: lookup.get(str(x), {}).get("floor_number", 1)
+        )
+        enhanced_df["security_level"] = enhanced_df["door_id"].map(
+            lambda x: lookup.get(str(x), {}).get("security_level", 5)
+        )
+        enhanced_df["is_entry"] = enhanced_df["door_id"].map(
+            lambda x: lookup.get(str(x), {}).get("is_entry", False)
+        )
+        enhanced_df["is_exit"] = enhanced_df["door_id"].map(
+            lambda x: lookup.get(str(x), {}).get("is_exit", False)
+        )
+
+    return enhanced_df, None
+
+
+def safe_file_write(path: Path, text: str) -> None:
+    """Write UTF-8 encoded text to a file."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(text)
+
 from config.constants import API_PORT
 
 app = Flask(__name__)

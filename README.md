@@ -1266,10 +1266,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines. In short:
    `examples/diagnostic_script.py` (replacing the old
    `examples/debugcsv.py`) and can be run with
    `python examples/diagnostic_script.py`.
-10. Outdated prototype scripts, such as the legacy adapters, have been moved
-    to the `archive/` directory for reference.
-11. The original MVP demo modules now live under `archive/mvp/` and are not
-    part of the production application.
+10. Outdated prototype scripts, including the legacy adapters, have been
+    removed from the repository.
+11. The original MVP demo modules have also been deleted and are no longer
+    part of the codebase.
 
 ## <span aria-hidden="true">📦</span> Versioning
 
