@@ -12,6 +12,7 @@ import pandas as pd
 
 # ADD after existing imports
 from services.ai_device_generator import AIDeviceGenerator
+from services.common import ModelRegistry
 from services.configuration_service import (
     ConfigurationServiceProtocol,
     DynamicConfigurationService,
@@ -59,9 +60,17 @@ class DeviceAttributeData:
 class DoorMappingService:
     """Service for handling door mapping and device attribute assignment"""
 
-    def __init__(self, config: ConfigurationServiceProtocol) -> None:
+    def __init__(
+        self,
+        config: ConfigurationServiceProtocol,
+        *,
+        model_registry: ModelRegistry | None = None,
+        fallback_version: str = "v1",
+    ) -> None:
         common_init(self, config)
-        self.ai_model_version = "v2.3"
+        self._registry = model_registry or ModelRegistry()
+        self.fallback_version = fallback_version
+        self.ai_model_version = fallback_version
         self.confidence_threshold = config.get_ai_confidence_threshold()
 
     def process_uploaded_data(
@@ -78,6 +87,10 @@ class DoorMappingService:
             Dict containing processed device data and metadata
         """
         try:
+            version = self._registry.get_active_version(
+                "door-mapping", self.fallback_version
+            )
+            self.ai_model_version = version or self.fallback_version
             # Validate required columns
             required_columns = ["door_id"]
             missing_columns = [col for col in required_columns if col not in df.columns]
