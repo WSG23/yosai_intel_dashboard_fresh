@@ -27,6 +27,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Model Cards](docs/model_cards.md)
 - [Data Versioning](docs/data_versioning.md)
 - [Data Processing](docs/data_processing.md)
+- [Database Schema](docs/database_schema.md)
 - [Column Verification](docs/column_verification.md)
 - [Service Container](docs/service_container.md)
 - [Distributed State Management](docs/distributed_state.md)
