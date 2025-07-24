@@ -6,16 +6,16 @@ from typing import Any, Dict, Optional
 
 from core.protocols import ConfigurationProtocol
 
-from .base import (
-    AppConfig,
-    CacheConfig,
-    Config,
-    DatabaseConfig,
-    MonitoringConfig,
-    SampleFilesConfig,
-    SecretValidationConfig,
-    AnalyticsConfig,
-    SecurityConfig,
+from .base import CacheConfig, Config
+from .schema import (
+    AppSettings,
+    AnalyticsSettings,
+    ConfigSchema,
+    DatabaseSettings,
+    MonitoringSettings,
+    SampleFilesSettings,
+    SecretValidationSettings,
+    SecuritySettings,
 )
 from .config_loader import ConfigLoader
 from .config_transformer import ConfigTransformer
@@ -42,7 +42,7 @@ class ConfigManager(ConfigurationProtocol):
         self.loader: ConfigLoaderProtocol = loader or ConfigLoader()
         self.validator: ConfigValidatorProtocol = validator or ConfigValidator()
         self.transformer: ConfigTransformerProtocol = transformer or ConfigTransformer()
-        self.config = Config()
+        self.config: ConfigSchema = ConfigSchema()
         self.validation: ValidationResult | None = None
         self.reload_config()
 
@@ -56,29 +56,29 @@ class ConfigManager(ConfigurationProtocol):
         cfg.environment = get_environment()
         self.transformer.transform(cfg)
         self.validation = self.validator.run_checks(cfg)
-        self.config = cfg
+        self.config = ConfigSchema.from_dataclass(cfg)
 
-    def get_database_config(self) -> DatabaseConfig:
+    def get_database_config(self) -> DatabaseSettings:
         """Get database configuration."""
         return self.config.database
 
-    def get_app_config(self) -> AppConfig:
+    def get_app_config(self) -> AppSettings:
         """Get app configuration."""
         return self.config.app
 
-    def get_security_config(self) -> SecurityConfig:
+    def get_security_config(self) -> SecuritySettings:
         """Get security configuration."""
         return self.config.security
 
-    def get_sample_files_config(self) -> SampleFilesConfig:
+    def get_sample_files_config(self) -> SampleFilesSettings:
         """Get sample files configuration."""
         return self.config.sample_files
 
-    def get_analytics_config(self) -> AnalyticsConfig:
+    def get_analytics_config(self) -> AnalyticsSettings:
         """Get analytics configuration."""
         return self.config.analytics
 
-    def get_monitoring_config(self) -> MonitoringConfig:
+    def get_monitoring_config(self) -> MonitoringSettings:
         """Get monitoring configuration."""
         return self.config.monitoring
 
@@ -86,7 +86,7 @@ class ConfigManager(ConfigurationProtocol):
         """Get cache configuration."""
         return self.config.cache
 
-    def get_secret_validation_config(self) -> SecretValidationConfig:
+    def get_secret_validation_config(self) -> SecretValidationSettings:
         """Get secret validation configuration."""
         return self.config.secret_validation
 
