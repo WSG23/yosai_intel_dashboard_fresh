@@ -4,4 +4,5 @@ class Consumer:
 
 class Producer:
     def __init__(self, *args, **kwargs):
+
         pass
