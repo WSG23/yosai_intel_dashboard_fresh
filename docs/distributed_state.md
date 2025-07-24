@@ -30,12 +30,21 @@ the replicas eventually apply the same updates.
 ## Reverting to the Monolith
 
 Set the migration flags to `false` if you need to disable the
-microservices and route all requests to the built‑in implementations:
+microservices and route all requests to the built‑in implementations.
+Create a flag file such as `feature_flags.json` with:
+
+```json
+{
+  "use_analytics_microservice": false,
+  "use_kafka_events": false,
+  "use_timescaledb": false
+}
+```
+
+Then point the service at this file:
 
 ```bash
-export USE_ANALYTICS_MICROSERVICE=false
-export USE_KAFKA_EVENTS=false
-export USE_TIMESCALEDB=false
+export FEATURE_FLAG_SOURCE=/path/to/feature_flags.json
 ```
 
 Run `scripts/rollback.sh` to flip the Kubernetes service selector back to

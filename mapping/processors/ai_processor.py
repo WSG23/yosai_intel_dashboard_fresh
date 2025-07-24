@@ -9,14 +9,21 @@ from core.performance import MetricType, get_performance_monitor
 import pandas as pd
 
 
+from core.service_container import ServiceContainer
+from mapping.models import MappingModel
+
+
 class AIColumnMapperAdapter:
-    """Thin wrapper around the :class:`ComponentPluginAdapter` plugin system."""
+    """Resolve the active :class:`MappingModel` via the DI container."""
 
     def __init__(self, adapter: Any | None = None, monitor=None) -> None:
+
         if adapter is None:
             from components.plugin_adapter import ComponentPluginAdapter
 
             adapter = ComponentPluginAdapter()
+        if container is None:
+            container = ServiceContainer()
         self._adapter = adapter
         self._monitor = monitor or get_performance_monitor()
 
@@ -43,6 +50,7 @@ class AIColumnMapperAdapter:
                     tags={"column": col, "field": str(info.get("field", ""))},
                 )
         return suggestions
+
 
     def confirm(
         self, filename: str, mapping: Dict[str, str], metadata: Dict[str, Any]

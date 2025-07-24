@@ -15,6 +15,7 @@ known_first_party = [
     "components",
     "pages",
     "utils",
+    "yosai_intel_dashboard",
 ]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
 

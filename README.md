@@ -295,9 +295,15 @@ make test
 make lint
 make format
 
+# regenerate deprecation documentation
+make deprecation-docs
+
 # tear everything down and clean caches
 make clean
 ```
+
+Updates to component lifecycle should be recorded in `deprecation.yml`. Run
+`make deprecation-docs` whenever this file changes.
 
 ### Kafka Event Processor
 
@@ -734,6 +740,8 @@ secrets.
 Configuration validation runs automatically at startup and logs any missing
 critical settings. The new `ConfigValidator` checks that the `app`, `database`
 and `security` sections exist before the server starts.
+See [configuration_reference.md](docs/configuration_reference.md) for a table of
+all available settings and their environment variable overrides.
 
 ### Environment Overrides
 
@@ -847,7 +855,7 @@ The dashboard now centralizes Unicode handling in `core.unicode`.
 Detect legacy usage and validate the migration with the helper tools:
 
 ```bash
-python tools/legacy_unicode_audit.py --path .
+python tools/validate_unicode_cleanup.py
 python tools/validate_unicode_migration.py
 ```
 

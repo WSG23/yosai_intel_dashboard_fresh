@@ -3,14 +3,15 @@
 import logging
 from typing import Any, Dict, Optional
 
-from .base import (
-    AppConfig,
-    Config,
-    DatabaseConfig,
-    SecurityConfig,
+from .base import Config
+from .schema import (
+    AppSettings,
+    ConfigSchema,
+    DatabaseSettings,
+    SecuritySettings,
 )
 from .app_config import UploadConfig
-from .config_loader import ConfigLoader
+from .hierarchical_loader import HierarchicalLoader
 from .config_transformer import ConfigTransformer
 from .config_validator import ConfigValidator, ValidationResult
 from .constants import CSSConstants, PerformanceConstants, SecurityConstants
@@ -53,7 +54,7 @@ def create_config_manager(
     else:
         loader = validator = transformer = None
 
-    loader = loader or ConfigLoader(config_path)
+    loader = loader or HierarchicalLoader()
     validator = validator or ConfigValidator()
     transformer = transformer or ConfigTransformer()
 
@@ -66,17 +67,17 @@ def create_config_manager(
 
 
 # Convenience functions
-def get_app_config() -> AppConfig:
+def get_app_config() -> AppSettings:
     """Get app configuration"""
     return get_config().get_app_config()
 
 
-def get_database_config() -> DatabaseConfig:
+def get_database_config() -> DatabaseSettings:
     """Get database configuration"""
     return get_config().get_database_config()
 
 
-def get_security_config() -> SecurityConfig:
+def get_security_config() -> SecuritySettings:
     """Get security configuration"""
     return get_config().get_security_config()
 
@@ -91,16 +92,17 @@ logger = logging.getLogger(__name__)
 __all__ = [
     # Core configuration classes
     "Config",
-    "AppConfig",
-    "DatabaseConfig",
-    "SecurityConfig",
+    "ConfigSchema",
+    "AppSettings",
+    "DatabaseSettings",
+    "SecuritySettings",
     "UploadConfig",
     "ConfigManager",
     "SecureConfigManager",
     "EnvironmentProcessor",
     "ConfigValidator",
     "ValidationResult",
-    "ConfigLoader",
+    "HierarchicalLoader",
     "ConfigTransformer",
     "ConfigLoaderProtocol",
     "ConfigValidatorProtocol",

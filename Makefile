@@ -6,7 +6,7 @@ DURATION ?= 60
 CLI ?= python -m tools.ops_cli
 
 .PHONY: load-test validate build test deploy format lint clean \
-build-all test-all deploy-all logs
+build-all test-all deploy-all logs deprecation-docs
 
 load-test:
 	python tools/load_test.py --brokers $(BROKERS) --prom-url $(PROM_URL) --rate $(RATE) --duration $(DURATION)
@@ -40,6 +40,9 @@ format:
 
 lint:
 	$(CLI) lint
+
+deprecation-docs:
+	python scripts/generate_deprecation_docs.py
 
 clean:
 	$(CLI) clean
