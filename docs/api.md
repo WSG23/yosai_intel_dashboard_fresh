@@ -40,6 +40,20 @@ Commit the updated `docs/openapi.json`, `analytics/clients/event_client`, and
 sync with the codebase. CI will fail if these files differ from the checked in
 versions.
 
+### FastAPI microservices
+
+The analytics and event ingestion services are built with FastAPI. Each
+service dumps its own OpenAPI description at startup under the `docs`
+directory. Regenerate these files along with the main spec by running:
+
+```bash
+make docs
+```
+
+This command runs the Go generator and then imports both FastAPI services to
+write `docs/analytics_microservice_openapi.json` and
+`docs/event_ingestion_openapi.json`.
+
 ## API Versioning
 
 All endpoints are prefixed with a version such as `/v1` or `/api/v1`.
