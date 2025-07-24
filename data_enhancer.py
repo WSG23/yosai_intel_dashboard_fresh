@@ -31,8 +31,7 @@ from dash import Input, Output, State, callback_context, dash_table, dcc, html
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from config.constants import DEFAULT_CHUNK_SIZE
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Logger for this module. Configuration happens in __main__.
 logger = logging.getLogger(__name__)
 
 # Try to import existing services with fallbacks
@@ -1708,6 +1707,7 @@ DATA OVERVIEW:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     print("=" * 70)
     print("🚀 Starting MVP Data Enhancement Tool - Multi-Building Analysis")
     print("=" * 70)

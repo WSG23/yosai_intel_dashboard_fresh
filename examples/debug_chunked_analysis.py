@@ -10,10 +10,6 @@ import pandas as pd
 
 from services.analytics_service import AnalyticsService
 
-# Setup logging to see all debug info
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 logger = logging.getLogger(__name__)
 
 
@@ -73,5 +69,9 @@ def test_chunked_analysis():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
     success = test_chunked_analysis()
     exit(0 if success else 1)

@@ -33,10 +33,6 @@ from tqdm import tqdm
 CHUNK_SIZE = 10_000
 CHECKPOINT_TABLE = "migration_checkpoint"
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s",
-)
 LOG = logging.getLogger(__name__)
 
 
@@ -459,4 +455,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+    )
     main()

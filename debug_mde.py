@@ -14,7 +14,6 @@ from dash import Input, Output, State, dcc, html
 
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Test basic Dash upload first
@@ -57,4 +56,5 @@ def debug_upload(contents, filename):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     app.run_server(debug=True, port=5003)

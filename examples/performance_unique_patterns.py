@@ -77,7 +77,6 @@ def generate_sample_access_data(num_records: int = 1000):
     df = pd.DataFrame(data).sort_values("timestamp").reset_index(drop=True)
     return df
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -95,4 +94,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
     main()

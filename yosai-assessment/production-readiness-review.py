@@ -15,12 +15,7 @@ from pathlib import Path
 from collections import defaultdict
 
 
-# Configure logging with UTF-8 safe encoding
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
-)
+# Logger configuration happens in __main__
 logger = logging.getLogger(__name__)
 
 
@@ -921,4 +916,9 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[logging.StreamHandler()],
+    )
     main()

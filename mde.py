@@ -38,8 +38,7 @@ from services.data_enhancer import get_ai_column_suggestions
 from services.device_learning_service import DeviceLearningService
 from analytics.db_interface import AnalyticsDataAccessor
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Module logger configured in __main__
 logger = logging.getLogger(__name__)
 
 class MVPTestApp:
@@ -435,6 +434,7 @@ class MVPTestApp:
                 style_table={"overflowX": "auto"},
             )
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     # Create and run the minimal test app
     app = MVPTestApp()
 

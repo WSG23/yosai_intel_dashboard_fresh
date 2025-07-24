@@ -9,10 +9,6 @@ import sys
 
 import pandas as pd
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 logger = logging.getLogger(__name__)
 
 
@@ -237,4 +233,8 @@ def test_unique_patterns_specific():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
     test_unique_patterns_specific()
