@@ -8,7 +8,7 @@ import pandas as pd
 
 from services.analytics_summary import summarize_dataframe
 from services.chunked_analysis import analyze_with_chunking
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 
 from ..upload_processing import UploadAnalyticsProcessor as _UploadAnalyticsProcessor
 

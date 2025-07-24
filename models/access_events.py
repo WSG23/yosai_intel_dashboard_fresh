@@ -12,7 +12,7 @@ import pandas as pd
 
 from config.constants import DataProcessingLimits
 from core.query_optimizer import monitor_query_performance
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 from database.secure_exec import execute_command, execute_query
 
 from .base import BaseModel

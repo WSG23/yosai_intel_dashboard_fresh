@@ -945,7 +945,7 @@ manager.execute_query_with_retry("SELECT 1")
 Use `SecurityValidator` to sanitize query parameters in both Flask and Dash routes. Example:
 
 ```python
-from core.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator
 
 validator = SecurityValidator()
 

@@ -6,7 +6,7 @@ class TestSecurityVulnerabilities:
         import pytest
 
         from core.exceptions import ValidationError
-        from core.security_validator import SecurityValidator
+        from validation.security_validator import SecurityValidator
 
         malicious_inputs = [
             "'; DROP TABLE users; --",
