@@ -176,7 +176,8 @@ startup. Ensure the following variables are set:
 `DB_HOST`, `DB_USER` and `DB_NAME` can also be overridden if they differ
 from the defaults. For production deployments store these secrets in
 HashiCorp Vault or AWS Secrets Manager as described in
-[docs/secret_management.md](docs/secret_management.md).
+[docs/secret_management.md](docs/secret_management.md). Vault deployment
+details are provided in [docs/vault_integration.md](docs/vault_integration.md).
 
 ### RBAC Setup
 

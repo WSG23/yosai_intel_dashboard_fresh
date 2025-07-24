@@ -1,5 +1,4 @@
 import logging
-import os
 import time
 
 from fastapi import (
@@ -32,7 +31,9 @@ SERVICE_NAME = "analytics-microservice"
 service = BaseService(SERVICE_NAME, "")
 app = service.app
 
-JWT_SECRET = os.environ.get("JWT_SECRET", "")
+from services.common.secrets import get_secret
+
+JWT_SECRET = get_secret("secret/data/jwt#secret")
 
 
 def verify_token(authorization: str = Header("")) -> None:
@@ -69,9 +70,8 @@ class PatternsRequest(BaseModel):
 
 @app.on_event("startup")
 async def _startup() -> None:
-    validate_required_env(["JWT_SECRET"])
-    if not JWT_SECRET or JWT_SECRET == "change-me":
-        raise RuntimeError("JWT_SECRET environment variable not set")
+    if not JWT_SECRET:
+        raise RuntimeError("missing JWT secret")
 
 
     cfg = get_database_config()
