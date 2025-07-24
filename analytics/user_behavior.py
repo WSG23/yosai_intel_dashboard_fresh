@@ -6,6 +6,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+
+from monitoring.model_performance_monitor import (
+    ModelMetrics,
+    get_model_performance_monitor,
+)
 from utils.sklearn_compat import optional_import
 
 KMeans = optional_import("sklearn.cluster.KMeans")
@@ -125,6 +130,16 @@ class UserBehaviorAnalyzer:
             recommendations = self._generate_behavioral_recommendations(
                 high_risk_count, global_patterns
             )
+
+            metrics = ModelMetrics(
+                accuracy=1.0 - high_risk_count / len(user_features),
+                precision=0.0,
+                recall=0.0,
+            )
+            monitor = get_model_performance_monitor()
+            monitor.log_metrics(metrics)
+            if monitor.detect_drift(metrics):
+                self.logger.warning("Behavior model drift detected")
 
             return BehaviorAnalysis(
                 total_users_analyzed=len(user_features),

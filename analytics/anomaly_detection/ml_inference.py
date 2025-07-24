@@ -6,6 +6,11 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
+
+from monitoring.model_performance_monitor import (
+    ModelMetrics,
+    get_model_performance_monitor,
+)
 from utils.sklearn_compat import optional_import
 
 IsolationForest = optional_import("sklearn.ensemble.IsolationForest")
@@ -127,4 +132,15 @@ def detect_ml_anomalies(
             )
     except Exception as exc:  # pragma: no cover - log and continue
         logger.warning("ML anomaly detection failed: %s", exc)
+    finally:
+        if len(df) > 0:
+            metrics = ModelMetrics(
+                accuracy=1.0 - len(anomalies) / len(df),
+                precision=0.0,
+                recall=0.0,
+            )
+            monitor = get_model_performance_monitor()
+            monitor.log_metrics(metrics)
+            if monitor.detect_drift(metrics):
+                logger.warning("Model drift detected")
     return anomalies
