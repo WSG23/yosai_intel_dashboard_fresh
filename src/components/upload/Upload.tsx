@@ -166,15 +166,21 @@ const Upload: React.FC = () => {
 
         <div
           {...getRootProps()}
+          role="button"
+          aria-label="File upload drop zone"
+          aria-describedby="upload-desc"
           className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
             ${isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
         >
-          <input {...getInputProps()} />
-          <UploadIcon className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+          <input {...getInputProps({ 'aria-label': 'Upload files' })} />
+          <UploadIcon
+            className="w-12 h-12 mx-auto mb-4 text-muted-foreground"
+            aria-hidden="true"
+          />
           <p className="text-lg mb-2">
             {isDragActive ? "Drop files here..." : "Drag & drop files here"}
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p id="upload-desc" className="text-sm text-muted-foreground">
             or click to select files (CSV, XLS, XLSX)
           </p>
         </div>
@@ -188,13 +194,14 @@ const Upload: React.FC = () => {
                 disabled={
                   uploading || files.every((f) => f.status !== "pending")
                 }
+                aria-busy={uploading}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {uploading ? "Uploading..." : "Upload All"}
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3" aria-live="polite">
               {files.map((file) => (
                 <FilePreview
                   key={file.id}
