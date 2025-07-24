@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List
@@ -21,3 +20,4 @@ def load_rules(data_dir: Path = DATA_DIR) -> ColumnRules:
     with open(data_dir / "japanese_columns.yaml", "r", encoding="utf-8") as f:
         japanese = yaml.safe_load(f) or {}
     return ColumnRules(english=english, japanese=japanese)
+

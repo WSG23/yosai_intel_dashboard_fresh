@@ -23,9 +23,11 @@ class MappingService:
         self.column_proc = column_proc
         self.device_proc = device_proc
 
-    def process_upload(self, df: pd.DataFrame, filename: str) -> MappingData:
+    def process_upload(
+        self, df: pd.DataFrame, filename: str, *, model_key: str | None = None
+    ) -> MappingData:
         try:
-            column_result = self.column_proc.process(df, filename)
+            column_result = self.column_proc.process(df, filename, model_key=model_key)
             device_result = self.device_proc.process(column_result.data)
             return MappingData(columns=column_result, devices=device_result)
         except Exception as exc:  # pragma: no cover - logging only

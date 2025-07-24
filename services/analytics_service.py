@@ -7,7 +7,9 @@ processing to ensure they are present, non-empty and within the configured size
 limits.
 """
 import logging
+import os
 import threading
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol
 
 import pandas as pd
@@ -34,6 +36,7 @@ from services.helpers.database_initializer import initialize_database
 from services.interfaces import get_upload_data_service
 from services.summary_report_generator import SummaryReportGenerator
 from services.upload_data_service import UploadDataService
+from models.ml import ModelRegistry
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 
@@ -94,6 +97,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         event_bus: EventBusProtocol | None = None,
         storage: StorageProtocol | None = None,
         upload_data_service: UploadDataService | None = None,
+        model_registry: ModelRegistry | None = None,
     ):
         self.database = database
         self.data_processor = data_processor or Processor(validator=SecurityValidator())
@@ -101,6 +105,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self.event_bus = event_bus
         self.storage = storage
         self.upload_data_service = upload_data_service or get_upload_data_service()
+        self.model_registry = model_registry
         self.validation_service = SecurityValidator()
         if data_processor is None:
             self.processor = Processor(validator=self.validation_service)
@@ -368,6 +373,27 @@ class AnalyticsService(AnalyticsServiceProtocol):
         )
         return {"report_type": report_type, "params": params}
 
+    # ------------------------------------------------------------------
+    def load_model_from_registry(
+        self, name: str, *, destination_dir: Optional[str] = None
+    ) -> Optional[str]:
+        """Download the active model from the registry."""
+        if self.model_registry is None:
+            return None
+        record = self.model_registry.get_model(name, active_only=True)
+        if record is None:
+            return None
+        dest = Path(destination_dir or dynamic_config.analytics.ml_models_path)
+        dest = dest / name / record.version
+        dest.mkdir(parents=True, exist_ok=True)
+        local_path = dest / os.path.basename(record.storage_uri)
+        try:
+            self.model_registry.download_artifact(record.storage_uri, str(local_path))
+            return str(local_path)
+        except Exception:  # pragma: no cover - best effort
+            logger.exception("Failed to download model %s", name)
+            return None
+
 
 # Global service instance
 _analytics_service: Optional[AnalyticsService] = None
@@ -377,6 +403,7 @@ _analytics_service_lock = threading.Lock()
 def get_analytics_service(
     service: Optional[AnalyticsService] = None,
     config_provider: ConfigProviderProtocol | None = None,
+    model_registry: ModelRegistry | None = None,
 ) -> AnalyticsService:
     """Return a global analytics service instance.
 
@@ -391,15 +418,19 @@ def get_analytics_service(
     if _analytics_service is None:
         with _analytics_service_lock:
             if _analytics_service is None:
-                _analytics_service = AnalyticsService(config=config_provider)
+                _analytics_service = AnalyticsService(
+                    config=config_provider,
+                    model_registry=model_registry,
+                )
     return _analytics_service
 
 
 def create_analytics_service(
     config_provider: ConfigProviderProtocol | None = None,
+    model_registry: ModelRegistry | None = None,
 ) -> AnalyticsService:
     """Create new analytics service instance"""
-    return AnalyticsService(config=config_provider)
+    return AnalyticsService(config=config_provider, model_registry=model_registry)
 
 
 __all__ = ["AnalyticsService", "get_analytics_service", "create_analytics_service"]

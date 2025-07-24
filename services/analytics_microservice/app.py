@@ -2,7 +2,16 @@ import logging
 import os
 import time
 
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import (
+    Depends,
+    Header,
+    HTTPException,
+    status,
+    APIRouter,
+    UploadFile,
+    File,
+    Form,
+)
 from yosai_framework.service import BaseService
 from shared.errors.types import ErrorCode
 from yosai_framework.errors import ServiceError
@@ -10,6 +19,7 @@ from jose import jwt
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
+from pathlib import Path
 
 from config import get_database_config
 from config.validate import validate_required_env
@@ -59,7 +69,7 @@ class PatternsRequest(BaseModel):
 @app.on_event("startup")
 async def _startup() -> None:
     validate_required_env(["JWT_SECRET"])
-    if not JWT_SECRET:
+    if not JWT_SECRET or JWT_SECRET == "change-me":
         raise RuntimeError("JWT_SECRET environment variable not set")
 
 
@@ -72,6 +82,9 @@ async def _startup() -> None:
     )
 
     # Redis or other dependencies would be initialized here
+    app.state.model_dir = Path(os.environ.get("MODEL_DIR", "model_store"))
+    app.state.model_dir.mkdir(parents=True, exist_ok=True)
+    app.state.model_registry = {}
     app.state.ready = True
     app.state.startup_complete = True
 
@@ -127,6 +140,57 @@ async def dashboard_summary(_: None = Depends(verify_token)):
 async def access_patterns(req: PatternsRequest, _: None = Depends(verify_token)):
     pool = await get_pool()
     return await async_queries.fetch_access_patterns(pool, req.days)
+
+
+models_router = APIRouter(prefix="/api/v1/models", tags=["models"])
+
+
+@models_router.post("/register")
+async def register_model(
+    name: str = Form(...),
+    version: str = Form(...),
+    file: UploadFile = File(...),
+    _: None = Depends(verify_token),
+):
+    dest_dir = app.state.model_dir / name / version
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest_path = dest_dir / file.filename
+    contents = await file.read()
+    dest_path.write_bytes(contents)
+    meta = {"name": name, "version": version, "path": str(dest_path)}
+    meta["active"] = True
+    registry = app.state.model_registry.setdefault(name, [])
+    for entry in registry:
+        entry["active"] = False
+    registry.append(meta)
+    return meta
+
+
+@models_router.get("/{name}")
+async def list_versions(name: str, _: None = Depends(verify_token)):
+    registry = app.state.model_registry.get(name)
+    if not registry:
+        raise HTTPException(status_code=404, detail="model not found")
+    return {
+        "name": name,
+        "versions": [e["version"] for e in registry],
+        "active_version": next((e["version"] for e in registry if e.get("active")), None),
+    }
+
+
+@models_router.post("/{name}/rollback")
+async def rollback(name: str, version: str = Form(...), _: None = Depends(verify_token)):
+    registry = app.state.model_registry.get(name)
+    if not registry:
+        raise HTTPException(status_code=404, detail="model not found")
+    if version not in [e["version"] for e in registry]:
+        raise HTTPException(status_code=404, detail="version not found")
+    for entry in registry:
+        entry["active"] = entry["version"] == version
+    return {"name": name, "active_version": version}
+
+
+app.include_router(models_router)
 
 
 FastAPIInstrumentor.instrument_app(app)

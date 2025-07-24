@@ -1,8 +1,8 @@
-from config.database_manager import DatabaseConfig, EnhancedPostgreSQLManager
+from config.database_manager import DatabaseSettings, EnhancedPostgreSQLManager
 
 
 def test_query_metrics_collected_for_multiple_queries():
-    cfg = DatabaseConfig(type="mock")
+    cfg = DatabaseSettings(type="mock")
     manager = EnhancedPostgreSQLManager(cfg)
 
     manager.execute_query_with_retry("SELECT 1")
