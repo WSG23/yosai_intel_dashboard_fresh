@@ -11,7 +11,6 @@ data:
   FLASK_DEBUG: "1"
   DEBUG: "1"
   YOSAI_CONFIG_FILE: "config/config.yaml"
-  SERVICE_DISCOVERY_URL: "http://api-gateway"
   DB_TYPE: "postgresql"
   DB_HOST: "localhost"
   DB_PORT: "5432"
