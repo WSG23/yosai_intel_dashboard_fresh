@@ -5,6 +5,8 @@ from __future__ import annotations
 from api.adapter import api_adapter
 from app import app
 from flask import abort, jsonify, request
+from marshmallow import Schema, fields
+from flask_apispec import doc, marshal_with, use_kwargs
 
 from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
 from core.plugins.performance_manager import EnhancedThreadSafePluginManager
@@ -13,10 +15,22 @@ from validation.security_validator import SecurityValidator
 _cache_manager = InMemoryCacheManager(CacheConfig())
 
 
+class PerformanceQuerySchema(Schema):
+    plugin = fields.String(load_default="")
+
+
+class PerformanceResponseSchema(Schema):
+    status = fields.String()
+    data = fields.Dict()
+
+
 class PluginPerformanceAPI:
     """Expose plugin performance metrics via REST endpoints."""
 
     @app.route("/v1/plugins/performance", methods=["GET"])
+    @doc(description="Plugin performance metrics", tags=["plugins"])
+    @use_kwargs(PerformanceQuerySchema, location="query")
+    @marshal_with(PerformanceResponseSchema)
     @cache_with_lock(_cache_manager, ttl=10)
     def get_plugin_performance():
         manager: EnhancedThreadSafePluginManager = app._yosai_plugin_manager  # type: ignore[attr-defined]
@@ -29,6 +43,7 @@ class PluginPerformanceAPI:
         return jsonify(safe)
 
     @app.route("/v1/plugins/performance/alerts", methods=["GET", "POST"])
+    @doc(description="Manage performance alerts", tags=["plugins"])
     @cache_with_lock(_cache_manager, ttl=30)
     def manage_performance_alerts():
         manager: EnhancedThreadSafePluginManager = app._yosai_plugin_manager  # type: ignore[attr-defined]
@@ -45,12 +60,14 @@ class PluginPerformanceAPI:
         return jsonify(safe_history)
 
     @app.route("/v1/plugins/performance/benchmark", methods=["POST"])
+    @doc(description="Benchmark plugin performance", tags=["plugins"])
     def benchmark_plugin_performance():
         return jsonify(
             api_adapter.unicode_processor.process_dict({"status": "not_implemented"})
         )
 
     @app.route("/v1/plugins/performance/config", methods=["GET", "PUT"])
+    @doc(description="Manage performance config", tags=["plugins"])
     def manage_performance_config():
         manager: EnhancedThreadSafePluginManager = app._yosai_plugin_manager  # type: ignore[attr-defined]
         if request.method == "PUT":

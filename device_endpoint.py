@@ -1,5 +1,7 @@
 import pandas as pd
 from flask import Blueprint, abort, jsonify, request
+from marshmallow import Schema, fields
+from flask_apispec import doc, marshal_with, use_kwargs
 
 from config.service_registration import register_upload_services
 
@@ -10,6 +12,16 @@ if not container.has("upload_processor"):
     register_upload_services(container)
 
 device_bp = Blueprint("device", __name__)
+
+
+class DeviceSuggestSchema(Schema):
+    filename = fields.String(required=True)
+    column_mappings = fields.Dict(keys=fields.String(), values=fields.String())
+
+
+class DeviceResponseSchema(Schema):
+    devices = fields.List(fields.String())
+    device_mappings = fields.Dict()
 
 
 def load_stored_data(filename: str, upload_service) -> pd.DataFrame | None:
@@ -87,6 +99,9 @@ def build_device_mappings(
 
 
 @device_bp.route("/v1/ai/suggest-devices", methods=["POST"])
+@doc(description="Suggest device mappings", tags=["device"])
+@use_kwargs(DeviceSuggestSchema, location="json")
+@marshal_with(DeviceResponseSchema)
 def suggest_devices():
     """Get device suggestions using DeviceLearningService"""
     try:

@@ -54,6 +54,7 @@ This command runs the Go generator and then imports both FastAPI services to
 write `docs/analytics_microservice_openapi.json` and
 `docs/event_ingestion_openapi.json`.
 
+
 ## API Versioning
 
 All endpoints are prefixed with a version such as `/v1` or `/api/v1`.
@@ -128,3 +129,6 @@ The following table lists the required role or permission for key API route grou
 | `/api/v1/analytics` | - | `analytics.read` |
 | `/api/v1/events` | - | `events.write` |
 | `/api/v1/doors` | - | `doors.control` |
+
+For details on internal streaming, alert dispatching and WebSocket messages see
+[Internal Service Interfaces](internal_services.md).

@@ -6,6 +6,19 @@ on:
   pull_request:
 
 jobs:
+  clean-arch-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.lock
+      - name: Dry run migration
+        run: python scripts/migrate_to_clean_arch.py --dry-run
+      - name: Validate directory structure
+        run: python scripts/validate_structure.py
+
   tests:
     runs-on: ubuntu-latest
     strategy:
@@ -71,7 +84,7 @@ jobs:
         run: python scripts/verify_timescale_migration.py
   container-build:
     runs-on: ubuntu-latest
-    needs: tests
+    needs: [tests, clean-arch-check]
     permissions:
       contents: read
       packages: write

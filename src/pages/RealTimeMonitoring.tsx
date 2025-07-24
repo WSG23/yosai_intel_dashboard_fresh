@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Activity, Users, DoorOpen, AlertCircle } from 'lucide-react';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { useEventStream } from '../hooks/useEventStream';
 import {
   LineChart,
   Line,
@@ -79,15 +81,18 @@ export const RealTimeMonitoring: React.FC = () => {
     anomaliesDetected: 0,
   });
 
-  const { data, isConnected } = useWebSocket('/ws/events');
+  const { data: wsData, isConnected } = useWebSocket('/ws/events');
+  const { data: sseData } = useEventStream('/events/stream', undefined, !isConnected);
+
+  const activeData = isConnected ? wsData : sseData;
 
   useEffect(() => {
-    if (data) {
-      const event = JSON.parse(data) as AccessEvent;
+    if (activeData) {
+      const event = JSON.parse(activeData) as AccessEvent;
       setEvents((prev) => [event, ...prev].slice(0, 100));
       updateMetrics(event);
     }
-  }, [data]);
+  }, [activeData]);
 
   const updateMetrics = (event: AccessEvent) => {
     setMetrics((prev) => ({
@@ -141,4 +146,10 @@ export const RealTimeMonitoring: React.FC = () => {
   );
 };
 
-export default RealTimeMonitoring;
+const RealTimeMonitoringPage: React.FC = () => (
+  <ErrorBoundary>
+    <RealTimeMonitoring />
+  </ErrorBoundary>
+);
+
+export default RealTimeMonitoringPage;

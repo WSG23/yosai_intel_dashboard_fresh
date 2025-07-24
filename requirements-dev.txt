@@ -15,3 +15,4 @@ psutil>=5.9.0
 pip-audit
 mlflow
 boto3
+flask-apispec<0.12

@@ -3,8 +3,15 @@ import os
 
 from filelock import FileLock
 from flask import Blueprint, abort, jsonify, request
+from marshmallow import Schema, fields
+from flask_apispec import doc, marshal_with, use_kwargs
 
 settings_bp = Blueprint("settings", __name__)
+
+
+class SettingsSchema(Schema):
+    theme = fields.String()
+    itemsPerPage = fields.Integer(data_key="itemsPerPage")
 
 SETTINGS_FILE = os.getenv(
     "YOSAI_SETTINGS_FILE",
@@ -38,6 +45,8 @@ def _save_settings(settings: dict) -> None:
 
 
 @settings_bp.route("/api/v1/settings", methods=["GET"])
+@doc(description="Get user settings", tags=["settings"])
+@marshal_with(SettingsSchema)
 def get_settings():
     """Return saved user settings or defaults."""
     settings = _load_settings()
@@ -45,9 +54,12 @@ def get_settings():
 
 
 @settings_bp.route("/api/v1/settings", methods=["POST", "PUT"])
-def update_settings():
+@doc(description="Update user settings", tags=["settings"])
+@use_kwargs(SettingsSchema, location="json")
+@marshal_with(SettingsSchema)
+def update_settings(**data):
     """Update and persist user settings."""
-    data = request.get_json(silent=True) or {}
+    data = data or {}
     if not isinstance(data, dict):
         abort(400, description="Invalid payload")
     settings = _load_settings()

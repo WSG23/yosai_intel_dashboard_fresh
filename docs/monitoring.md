@@ -26,3 +26,20 @@ start_model_metrics_server(port=9104)
 
 `model_accuracy`, `model_precision` and `model_recall` gauges will then be
 available on `/metrics`.
+
+## Automated Model Monitoring
+
+`ModelMonitor` evaluates active models at a fixed interval and updates Prometheus metrics.
+The interval can be configured in `config/monitoring.yaml` under `model_monitor.evaluation_interval_minutes`.
+
+During each run metrics are checked for drift using `ModelPerformanceMonitor.detect_drift`.
+When drift is detected a warning is emitted and the baseline metrics are updated.
+
+```python
+from monitoring.model_monitor import ModelMonitor
+from models.ml.model_registry import ModelRegistry
+
+registry = ModelRegistry(database_url="sqlite:///models.db", bucket="models")
+monitor = ModelMonitor(registry)
+monitor.start()
+```

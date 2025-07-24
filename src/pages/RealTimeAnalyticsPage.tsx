@@ -1,4 +1,5 @@
 import React from 'react';
+import ErrorBoundary from '../components/ErrorBoundary';
 import {
   BarChart,
   Bar,
@@ -92,4 +93,10 @@ const RealTimeAnalyticsPage: React.FC = () => {
   );
 };
 
-export default RealTimeAnalyticsPage;
+const RealTimeAnalyticsWrapper: React.FC = () => (
+  <ErrorBoundary>
+    <RealTimeAnalyticsPage />
+  </ErrorBoundary>
+);
+
+export default RealTimeAnalyticsWrapper;

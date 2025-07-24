@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { useAnalyticsStore } from '../state/store';
 import { BarChart3, Filter, Download, AlertCircle } from 'lucide-react';
 import { api } from '../api/client';
@@ -174,4 +175,10 @@ const Analytics: React.FC = () => {
   );
 };
 
-export default Analytics;
+const AnalyticsPage: React.FC = () => (
+  <ErrorBoundary>
+    <Analytics />
+  </ErrorBoundary>
+);
+
+export default AnalyticsPage;
