@@ -7,7 +7,9 @@ This document summarizes the current Linkerd setup and when it may be worth keep
 Linkerd manifests live under `k8s/linkerd/`:
 
 - `traffic-split.yaml` splits traffic for the `yosai-dashboard` service, sending 90% to `yosai-dashboard-v1` and 10% to `yosai-dashboard-v2`.
-- `service-profile.yaml` marks `GET /api` requests as retryable and defines a retry budget with a 20% ratio, 10 minimum retries per second and a 10&nbsp;s TTL.
+- `service-profile.yaml` marks `GET /api` requests for the dashboard as retryable and defines a retry budget with a 20% ratio, 10 minimum retries per second and a 10&nbsp;s TTL.
+- `service-profile-api-gateway.yaml` applies the same retry logic to the `api-gateway` service.
+- `service-profile-analytics-service.yaml` applies the same retry logic to the `analytics-service` service.
 - `circuit-breaker.yaml` configures failure accrual to trip the circuit after 5 consecutive failures within a 1&nbsp;minute window.
 
 ## Benefits

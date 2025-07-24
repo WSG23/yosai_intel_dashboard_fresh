@@ -1,0 +1,16 @@
+apiVersion: linkerd.io/v1alpha2
+kind: ServiceProfile
+metadata:
+  name: analytics-service.yosai-dev.svc.cluster.local
+  namespace: yosai-dev
+spec:
+  routes:
+    - name: GET /api
+      condition:
+        method: GET
+        pathRegex: "/api/.*"
+      isRetryable: true
+  retryBudget:
+    retryRatio: 0.2
+    minRetriesPerSecond: 10
+    ttl: 10s
