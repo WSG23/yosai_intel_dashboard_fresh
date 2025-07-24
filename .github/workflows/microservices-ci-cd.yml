@@ -38,7 +38,8 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - run: pip install -r requirements.lock -r requirements-test.txt
+      - run: pip install -r requirements.lock
+      - run: pip install -r requirements-test.txt
       - run: pytest --cov=services.analytics_microservice --cov=services.event-ingestion --cov-report=xml -q
       - uses: actions/upload-artifact@v4
         with:
