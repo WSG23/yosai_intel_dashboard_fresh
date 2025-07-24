@@ -3,8 +3,6 @@ kind: ConfigMap
 metadata:
   name: yosai-config
   namespace: yosai-dev
-  annotations:
-    linkerd.io/inject: enabled
 data:
   YOSAI_ENV: "development"
   FLASK_ENV: "development"
