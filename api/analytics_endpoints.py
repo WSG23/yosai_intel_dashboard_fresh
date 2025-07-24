@@ -1,10 +1,8 @@
-import asyncio
 import json
 import logging
 
 from flask import Blueprint, Response, jsonify, request
 
-from config.base import CacheConfig
 from core.cache_manager import InMemoryCacheManager, CacheConfig
 from services.cached_analytics import CachedAnalyticsService
 from services.security import require_permission
@@ -17,9 +15,13 @@ export_bp = Blueprint("export", __name__, url_prefix="/api/v1/export")
 
 # Cached analytics helper
 _cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=300))
-asyncio.run(_cache_manager.start())
 
 _cached_service = CachedAnalyticsService(_cache_manager)
+
+
+async def init_cache_manager() -> None:
+    """Start the cache manager on application startup."""
+    await _cache_manager.start()
 
 MOCK_DATA = {
     "status": "success",
@@ -57,7 +59,7 @@ MOCK_DATA = {
 def get_patterns_analysis():
     facility = request.args.get("facility_id", "default")
     date_range = request.args.get("range", "30d")
-    data = asyncio.run(_cached_service.get_analytics_summary(facility, date_range))
+    data = _cached_service.get_analytics_summary_sync(facility, date_range)
     return jsonify(data)
 
 
@@ -78,7 +80,7 @@ def analytics_health():
 def get_chart_data(chart_type):
     facility = request.args.get("facility_id", "default")
     date_range = request.args.get("range", "30d")
-    data = asyncio.run(_cached_service.get_analytics_summary(facility, date_range))
+    data = _cached_service.get_analytics_summary_sync(facility, date_range)
     if chart_type == "patterns":
         return jsonify({"type": "patterns", "data": data})
     if chart_type == "timeline":
@@ -93,7 +95,7 @@ def get_chart_data(chart_type):
 def export_analytics_json():
     facility = request.args.get("facility_id", "default")
     date_range = request.args.get("range", "30d")
-    data = asyncio.run(_cached_service.get_analytics_summary(facility, date_range))
+    data = _cached_service.get_analytics_summary_sync(facility, date_range)
     response = Response(json.dumps(data, indent=2), mimetype="application/json")
     response.headers["Content-Disposition"] = (
         "attachment; filename=analytics_export.json"
@@ -105,7 +107,6 @@ def register_analytics_blueprints(app):
     app.register_blueprint(analytics_bp)
     app.register_blueprint(graphs_bp)
     app.register_blueprint(export_bp)
-    asyncio.run(init_cache_manager())
     logger.info("Analytics blueprints registered")
 
 
@@ -158,7 +159,7 @@ def get_analytics_by_source(source_type="all"):
     try:
         facility = request.args.get("facility_id", "default")
         date_range = request.args.get("range", "30d")
-        data = asyncio.run(_cached_service.get_analytics_summary(facility, date_range))
+        data = _cached_service.get_analytics_summary_sync(facility, date_range)
         return jsonify(data)
     except Exception as e:
         logger.error(f"Analytics error: {str(e)}")
