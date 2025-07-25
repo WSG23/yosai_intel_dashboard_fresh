@@ -12,6 +12,10 @@ __all__ = [
 ]
 
 from importlib import import_module
+from pathlib import Path
+
+# Allow importing modules from the legacy top-level ``config`` package.
+__path__.append(str(Path(__file__).resolve().parents[4] / "config"))
 
 
 def __getattr__(name: str):
