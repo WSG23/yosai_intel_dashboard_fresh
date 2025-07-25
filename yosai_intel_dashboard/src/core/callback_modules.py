@@ -1,4 +1,4 @@
-"""Compatibility wrapper for `config.database_exceptions`."""
+"""Compatibility wrapper for `core.callback_modules`."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ __all__: list[str] = []
 def _load() -> None:
     global _mod, __all__
     if _mod is None:
-        _mod = importlib.import_module("config.database_exceptions")
+        _mod = importlib.import_module("core.callback_modules")
         __all__ = getattr(
             _mod, "__all__", [n for n in dir(_mod) if not n.startswith("_")]
         )

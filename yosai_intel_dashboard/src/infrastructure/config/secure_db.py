@@ -1,17 +1,27 @@
-"""Helpers for executing sanitized database queries."""
+"""Compatibility wrapper for `config.secure_db`."""
+
 from __future__ import annotations
 
-from typing import Any, Optional
+import importlib
 
-from unicode_toolkit import UnicodeQueryHandler
-from database.secure_exec import execute_query as _execute_query
-
-
-def execute_secure_query(conn: Any, query: str, params: Optional[tuple] = None):
-    """Encode query and parameters then execute via :mod:`database.secure_exec`."""
-    sanitized_query = UnicodeQueryHandler.safe_encode_query(query)
-    sanitized_params = UnicodeQueryHandler.safe_encode_params(params)
-    return _execute_query(conn, sanitized_query, sanitized_params)
+_mod: object | None = None
+__all__: list[str] = []
 
 
-__all__ = ["execute_secure_query"]
+def _load() -> None:
+    global _mod, __all__
+    if _mod is None:
+        _mod = importlib.import_module("config.secure_db")
+        __all__ = getattr(
+            _mod, "__all__", [n for n in dir(_mod) if not n.startswith("_")]
+        )
+
+
+def __getattr__(name: str) -> object:
+    _load()
+    return getattr(_mod, name)
+
+
+def __dir__() -> list[str]:
+    _load()
+    return __all__

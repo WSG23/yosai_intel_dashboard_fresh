@@ -14,8 +14,13 @@ __all__ = [
 from importlib import import_module
 
 
-def __getattr__(name: str):
-    if name in {"DatabaseError", "ConnectionRetryExhausted", "ConnectionValidationFailed", "UnicodeEncodingError"}:
+def __getattr__(name: str) -> object:
+    if name in {
+        "DatabaseError",
+        "ConnectionRetryExhausted",
+        "ConnectionValidationFailed",
+        "UnicodeEncodingError",
+    }:
         module = import_module(f"{__name__}.database_exceptions")
         return getattr(module, name)
     if name == "execute_secure_query":
