@@ -5,12 +5,13 @@ from __future__ import annotations
 import io
 import logging
 import struct
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from confluent_kafka import Producer
 from fastavro import parse_schema, schemaless_writer
 
 from services.common.schema_registry import SchemaRegistryClient
+from .metrics import serialization_errors_total
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +28,15 @@ class AvroProducer:
     ) -> None:
         self._producer = Producer({"bootstrap.servers": brokers, **configs})
         self._registry = SchemaRegistryClient(schema_registry)
+        self._schema_cache: Dict[str, Tuple[Any, Any]] = {}
 
     def _encode(self, subject: str, value: Dict[str, Any]) -> bytes:
-        info = self._registry.get_schema(subject)
-        schema = parse_schema(info.schema)
+        if subject not in self._schema_cache:
+            info = self._registry.get_schema(subject)
+            schema = parse_schema(info.schema)
+            self._schema_cache[subject] = (info, schema)
+        else:
+            info, schema = self._schema_cache[subject]
         buf = io.BytesIO()
         schemaless_writer(buf, schema, value)
         return b"\x00" + struct.pack(">I", info.id) + buf.getvalue()
@@ -45,6 +51,7 @@ class AvroProducer:
         try:
             payload = self._encode(subject, value)
         except Exception as exc:  # validation errors
+            serialization_errors_total.inc()
             logger.error("Serialization failed: %s", exc)
             raise
 

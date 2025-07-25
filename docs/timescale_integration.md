@@ -2,8 +2,11 @@
 
 The dashboard can store access events in TimescaleDB for efficient time-series
 analytics. Hypertables are created automatically when the `TimescaleDBManager`
-initialises. Events are compressed after thirty days and removed after one year
-using retention policies.
+initialises. Events are compressed after thirty days and removed after one
+year using retention policies. The policy durations can be overridden with the
+environment variables `TIMESCALE_COMPRESSION_DAYS` and
+`TIMESCALE_RETENTION_DAYS`.
+
 
 ## Data Retention
 
