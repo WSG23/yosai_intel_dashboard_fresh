@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 """Analytics Service - Enhanced with Unique Patterns Analysis.
 
 Uploaded files are validated with
@@ -32,7 +34,7 @@ from core.protocols import (
     EventBusProtocol,
     StorageProtocol,
 )
-from validation.security_validator import SecurityValidator
+from models.ml import ModelRegistry
 from services.analytics.calculator import Calculator
 from services.analytics.data_loader import DataLoader
 from services.analytics.protocols import DataProcessorProtocol
@@ -45,7 +47,7 @@ from services.helpers.database_initializer import initialize_database
 from services.interfaces import get_upload_data_service
 from services.summary_report_generator import SummaryReportGenerator
 from services.upload_data_service import UploadDataService
-from models.ml import ModelRegistry
+from validation.security_validator import SecurityValidator
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 
@@ -145,7 +147,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self.calculator = Calculator(self.report_generator)
         self.publisher = Publisher(self.event_bus)
 
-    def _initialize_database(self):
+    def _initialize_database(self) -> None:
         """Initialize database connection via helper."""
         (
             self.database_manager,
@@ -279,7 +281,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
         return self.calculator.analyze_patterns(df, original_rows)
 
     @cache_with_lock(_cache_manager, ttl=600)
-    def get_unique_patterns_analysis(self, data_source: str | None = None):
+    def get_unique_patterns_analysis(
+        self, data_source: str | None = None
+    ) -> Dict[str, Any]:
         """Get unique patterns analysis for the requested source."""
         logger = logging.getLogger(__name__)
 
