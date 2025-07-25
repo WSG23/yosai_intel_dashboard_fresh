@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
+import time
 
 import asyncpg
 
+from database.metrics import queries_total, query_errors_total
 from services.common.secrets import get_secret
 
 logger = logging.getLogger(__name__)
@@ -16,6 +19,7 @@ class TimescaleDBManager:
     def __init__(self, dsn: str | None = None) -> None:
         self.dsn = dsn or self._build_dsn()
         self.pool: asyncpg.Pool | None = None
+        self._health_task: asyncio.Task | None = None
 
     # ------------------------------------------------------------------
     def _build_dsn(self) -> str:
@@ -31,24 +35,41 @@ class TimescaleDBManager:
         return f"postgresql://{user}:{pwd}@{host}:{port}/{db}"
 
     # ------------------------------------------------------------------
-    async def connect(self) -> None:
-        """Initialise the connection pool and ensure hypertables."""
-        if self.pool is None:
-            self.pool = await asyncpg.create_pool(
-                dsn=self.dsn,
-                min_size=int(
-                    os.getenv("TIMESCALE_POOL_MIN")
-                    or get_secret("secret/data/timescale#pool_min")
-                    or 1
-                ),
-                max_size=int(
-                    os.getenv("TIMESCALE_POOL_MAX")
-                    or get_secret("secret/data/timescale#pool_max")
-                    or 5
-                ),
-            )
-            async with self.pool.acquire() as conn:
-                await self._setup(conn)
+    async def connect(self, retries: int = 3, backoff: float = 0.5) -> None:
+        """Initialise the connection pool with retry/backoff."""
+        if self.pool is not None:
+            return
+
+        attempt = 0
+        delay = backoff
+        while True:
+            try:
+                self.pool = await asyncpg.create_pool(
+                    dsn=self.dsn,
+                    min_size=int(
+                        os.getenv("TIMESCALE_POOL_MIN")
+                        or get_secret("secret/data/timescale#pool_min")
+                        or 1
+                    ),
+                    max_size=int(
+                        os.getenv("TIMESCALE_POOL_MAX")
+                        or get_secret("secret/data/timescale#pool_max")
+                        or 5
+                    ),
+                )
+                async with self.pool.acquire() as conn:
+                    await self._setup(conn)
+                await self.start_health_monitor()
+                break
+            except Exception as exc:  # pragma: no cover - runtime failures
+                attempt += 1
+                logger.error(
+                    "Timescale connection failed (attempt %s): %s", attempt, exc
+                )
+                if attempt >= retries:
+                    raise
+                await asyncio.sleep(delay)
+                delay *= 2
 
     # ------------------------------------------------------------------
     async def _setup(self, conn: asyncpg.Connection) -> None:
@@ -108,14 +129,75 @@ class TimescaleDBManager:
         if self.pool is None:
             await self.connect()
         assert self.pool is not None
-        async with self.pool.acquire() as conn:
-            return await conn.fetch(query, *args)
+        start = time.perf_counter()
+        queries_total.inc()
+        try:
+            async with self.pool.acquire() as conn:
+                result = await conn.fetch(query, *args)
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            if elapsed_ms > 1000:
+                logger.warning("Slow query: %.2fms", elapsed_ms)
+            return result
+        except Exception:
+            query_errors_total.inc()
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            logger.error("Query failed after %.2fms", elapsed_ms)
+            raise
 
     # ------------------------------------------------------------------
     async def close(self) -> None:
         if self.pool is not None:
             await self.pool.close()
             self.pool = None
+
+    # ------------------------------------------------------------------
+    async def check_integrity(self) -> None:
+        """Verify hypertable and continuous aggregate integrity."""
+        if self.pool is None:
+            await self.connect()
+        assert self.pool is not None
+        async with self.pool.acquire() as conn:
+            ht_count = await conn.fetchval(
+                """
+                SELECT COUNT(*) FROM timescaledb_information.hypertables
+                WHERE hypertable_name = 'access_events'
+                """
+            )
+            if ht_count != 1:
+                logger.error("Hypertable access_events missing (%s)", ht_count)
+
+            agg_count = await conn.fetchval(
+                """
+                SELECT COUNT(*) FROM timescaledb_information.continuous_aggregates
+                WHERE view_name = 'access_events_5min'
+                """
+            )
+            if agg_count != 1:
+                logger.error(
+                    "Continuous aggregate access_events_5min missing (%s)", agg_count
+                )
+
+    # ------------------------------------------------------------------
+    async def _health_monitor_loop(self, interval: int) -> None:
+        while True:
+            try:
+                await self.check_integrity()
+            except Exception as exc:  # pragma: no cover - best effort
+                logger.error("Timescale health check failed: %s", exc)
+            await asyncio.sleep(interval)
+
+    async def start_health_monitor(self, interval: int = 300) -> None:
+        if self._health_task is None:
+            self._health_task = asyncio.create_task(self._health_monitor_loop(interval))
+
+    async def stop_health_monitor(self) -> None:
+        if self._health_task is not None:
+            self._health_task.cancel()
+            try:
+                await self._health_task
+            except asyncio.CancelledError:
+                pass
+            self._health_task = None
 
 
 __all__ = ["TimescaleDBManager"]
