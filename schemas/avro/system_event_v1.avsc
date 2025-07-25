@@ -1,0 +1,12 @@
+{
+  "namespace": "com.yosai.system",
+  "type": "record",
+  "name": "SystemEvent",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "timestamp", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "component", "type": ["null", "string"], "default": null},
+    {"name": "level", "type": "string"},
+    {"name": "message", "type": ["null", "string"], "default": null}
+  ]
+}
