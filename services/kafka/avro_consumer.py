@@ -11,7 +11,8 @@ from confluent_kafka import Consumer, Producer
 from fastavro import parse_schema, schemaless_reader
 
 from services.common.schema_registry import SchemaRegistryClient
-from .metrics import deserialization_errors_total
+from monitoring.data_quality_monitor import get_data_quality_monitor
+
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +61,8 @@ class AvroConsumer:
         try:
             msg.decoded = self._decode(msg.value())  # type: ignore[attr-defined]
         except Exception as exc:
-            deserialization_errors_total.inc()
+            get_data_quality_monitor().record_avro_failure()
+
             logger.error("Failed to decode message: %s", exc)
             try:
                 self._dlq.produce(self._dead_letter_topic, msg.value())
