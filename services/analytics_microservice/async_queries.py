@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import datetime as _dt
+import time
 from typing import Any, Dict
 
 import asyncpg
+
+from database.metrics import queries_total, query_errors_total
 
 
 async def fetch_dashboard_summary(pool: asyncpg.Pool, days: int = 7) -> Dict[str, Any]:
@@ -18,7 +21,20 @@ async def fetch_dashboard_summary(pool: asyncpg.Pool, days: int = 7) -> Dict[str
         GROUP BY event_type, status
     """
 
-    rows = await pool.fetch(summary_query, start_date, end_date)
+    start = time.perf_counter()
+    queries_total.inc()
+    try:
+        rows = await pool.fetch(summary_query, start_date, end_date)
+    except Exception:
+        query_errors_total.inc()
+        raise
+    finally:
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        if elapsed_ms > 1000:
+            # Use same log style as query optimizer
+            import logging
+
+            logging.getLogger(__name__).warning("Slow query: %.2fms", elapsed_ms)
     total_events = sum(r["count"] for r in rows) if rows else 0
     success_events = sum(r["count"] for r in rows if r["status"] == "success")
     success_rate = (
@@ -49,7 +65,19 @@ async def fetch_access_patterns(pool: asyncpg.Pool, days: int = 7) -> Dict[str, 
         GROUP BY hour
         ORDER BY hour
     """
-    rows = await pool.fetch(hourly_query, start_date, end_date)
+    start = time.perf_counter()
+    queries_total.inc()
+    try:
+        rows = await pool.fetch(hourly_query, start_date, end_date)
+    except Exception:
+        query_errors_total.inc()
+        raise
+    finally:
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        if elapsed_ms > 1000:
+            import logging
+
+            logging.getLogger(__name__).warning("Slow query: %.2fms", elapsed_ms)
     hourly_data = [dict(r) for r in rows]
     peak_hour = max((r["hour"] for r in rows), default=None)
 
