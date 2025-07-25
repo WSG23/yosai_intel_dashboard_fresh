@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	framework "github.com/WSG23/yosai-framework"
+	"github.com/sony/gobreaker"
 
 	"github.com/WSG23/yosai-event-processing/internal/config"
 	"github.com/WSG23/yosai-event-processing/internal/handlers"
@@ -33,7 +35,12 @@ func main() {
 	}
 	defer consumer.Close()
 
-	handler := handlers.NewEventHandler(repository.NewMemoryTokenStore())
+	settings := gobreaker.Settings{
+		Name:        "repo",
+		Timeout:     time.Duration(cfg.RecoveryTimeout) * time.Second,
+		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= uint32(cfg.FailureThreshold) },
+	}
+	handler := handlers.NewEventHandler(repository.NewMemoryTokenStore(), settings)
 	go func() {
 		if err := consumer.Consume(context.Background(), []string{cfg.Topic}, handler.HandleMessage); err != nil {
 			log.Printf("consumer stopped: %v", err)

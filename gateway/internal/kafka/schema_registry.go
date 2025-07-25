@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/WSG23/resilience"
 	"github.com/riferrei/srclient"
 	"github.com/sony/gobreaker"
 )
@@ -39,7 +40,7 @@ func NewSchemaRegistry(url string, settings gobreaker.Settings) *SchemaRegistry 
 	if settings.ReadyToTrip == nil {
 		settings.ReadyToTrip = func(c gobreaker.Counts) bool { return c.ConsecutiveFailures > 3 }
 	}
-	return &SchemaRegistry{client: c, breaker: gobreaker.NewCircuitBreaker(settings)}
+	return &SchemaRegistry{client: c, breaker: resilience.NewGoBreaker("schema-registry", settings)}
 }
 
 // LatestSchema retrieves the latest schema for the given subject.
