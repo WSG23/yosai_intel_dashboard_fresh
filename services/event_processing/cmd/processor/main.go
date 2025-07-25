@@ -10,6 +10,7 @@ import (
 	"github.com/WSG23/yosai-event-processing/internal/handlers"
 	"github.com/WSG23/yosai-event-processing/internal/kafka"
 	"github.com/WSG23/yosai-event-processing/internal/repository"
+	"github.com/sony/gobreaker"
 )
 
 func main() {
@@ -32,8 +33,18 @@ func main() {
 		log.Fatalf("kafka error: %v", err)
 	}
 	defer consumer.Close()
-
-	handler := handlers.NewEventHandler(repository.NewMemoryTokenStore())
+	settings := gobreaker.Settings{
+		Name:    "repo",
+		Timeout: cfg.Breaker.Timeout(),
+		ReadyToTrip: func(c gobreaker.Counts) bool {
+			t := cfg.Breaker.FailureThreshold
+			if t <= 0 {
+				t = 5
+			}
+			return c.ConsecutiveFailures >= uint32(t)
+		},
+	}
+	handler := handlers.NewEventHandler(repository.NewMemoryTokenStore(), settings)
 	go func() {
 		if err := consumer.Consume(context.Background(), []string{cfg.Topic}, handler.HandleMessage); err != nil {
 			log.Printf("consumer stopped: %v", err)
