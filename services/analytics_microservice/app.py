@@ -10,6 +10,7 @@ from fastapi import (
     UploadFile,
     File,
     Form,
+    FastAPI,
 )
 from yosai_framework.service import BaseService
 from shared.errors.types import ErrorCode
@@ -25,11 +26,23 @@ from config import get_database_config
 from config.validate import validate_required_env
 from services.analytics_microservice import async_queries
 from services.common.async_db import close_pool, create_pool, get_pool
+from services.common import async_db
+from infrastructure.discovery.health_check import (
+    register_health_check,
+    setup_health_checks,
+)
 
 
 SERVICE_NAME = "analytics-microservice"
 service = BaseService(SERVICE_NAME, "")
 app = service.app
+
+
+async def _db_check(_: FastAPI) -> bool:
+    return await async_db.health_check()
+
+
+register_health_check(app, "database", _db_check)
 
 from services.common.secrets import get_secret
 
@@ -201,6 +214,7 @@ app.include_router(models_router)
 
 FastAPIInstrumentor.instrument_app(app)
 Instrumentator().instrument(app).expose(app)
+setup_health_checks(app)
 
 
 @app.on_event("startup")
