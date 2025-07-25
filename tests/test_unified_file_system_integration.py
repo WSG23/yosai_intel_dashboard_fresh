@@ -4,7 +4,7 @@ import pandas as pd
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 import pytest
 
-from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
+from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
 
 
@@ -23,11 +23,11 @@ class TemporaryCallback:
 
 
 from file_conversion.storage_manager import StorageManager
-from yosai_intel_dashboard.src.services.unified_file_controller import (
+from services.unified_file_controller import (
     batch_migrate_legacy_files,
 )
-from yosai_intel_dashboard.src.services.unified_file_controller import callback_manager as _GLOBAL_MANAGER
-from yosai_intel_dashboard.src.services.unified_file_controller import (
+from services.unified_file_controller import callback_manager as _GLOBAL_MANAGER
+from services.unified_file_controller import (
     get_processing_metrics,
     process_file_upload,
 )

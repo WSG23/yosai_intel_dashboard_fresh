@@ -7,8 +7,8 @@ import pytest
 
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
-from yosai_intel_dashboard.src.services.upload.upload_queue_manager import UploadQueueManager
-from yosai_intel_dashboard.src.services.upload.chunked_upload_manager import ChunkedUploadManager
+from services.upload.upload_queue_manager import UploadQueueManager
+from services.upload.chunked_upload_manager import ChunkedUploadManager
 
 from config.connection_retry import ConnectionRetryManager, RetryConfig
 

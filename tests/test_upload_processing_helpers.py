@@ -1,13 +1,13 @@
 import pandas as pd
 from tests.utils.builders import DataFrameBuilder
-from yosai_intel_dashboard.src.services.analytics.upload_analytics import UploadAnalyticsProcessor
-from yosai_intel_dashboard.src.services.data_processing.processor import Processor
+from services.analytics.upload_analytics import UploadAnalyticsProcessor
+from services.data_processing.processor import Processor
 from validation.security_validator import SecurityValidator
 
 
 def _make_processor():
     from flask import Flask
-    from yosai_intel_dashboard.src.core.cache import cache
+    from core.cache import cache
 
     cache.init_app(Flask(__name__))
     vs = SecurityValidator()

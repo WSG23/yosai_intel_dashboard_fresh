@@ -3,7 +3,7 @@ import pandas as pd
 from analytics.business_service import AnalyticsBusinessService
 from analytics.data_repository import AnalyticsDataRepository
 from analytics.ui_controller import AnalyticsUIController
-from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
+from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
 
 

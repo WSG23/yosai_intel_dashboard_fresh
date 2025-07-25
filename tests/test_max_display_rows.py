@@ -5,7 +5,7 @@ from tests.fake_configuration import FakeConfiguration
 
 fake_cfg = FakeConfiguration()
 from config.constants import MAX_DISPLAY_ROWS
-from yosai_intel_dashboard.src.services.data_processing.file_processor import create_file_preview
+from services.data_processing.file_processor import create_file_preview
 
 
 def test_dynamic_config_default_display_rows():

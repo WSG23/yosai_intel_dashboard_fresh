@@ -21,7 +21,7 @@ if "chardet" not in sys.modules:
     sys.modules["chardet"] = types.ModuleType("chardet")
 import pandas as pd
 from unittest.mock import MagicMock
-from yosai_intel_dashboard.src.services.upload_data_service import UploadDataService
+from services.upload_data_service import UploadDataService
 from utils.upload_store import UploadedDataStore
 
 
