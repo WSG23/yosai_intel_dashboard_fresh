@@ -9,8 +9,13 @@ limits.
 import logging
 import os
 import threading
+import asyncio
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol
+try:
+    from typing import override
+except ImportError:  # pragma: no cover - for Python <3.12
+    from typing_extensions import override
 
 import pandas as pd
 
@@ -181,9 +186,21 @@ class AnalyticsService(AnalyticsServiceProtocol):
         """Process uploaded files using chunked streaming."""
         return self.upload_controller.process_uploaded_data_directly(uploaded_data)
 
+    async def aprocess_uploaded_data_directly(
+        self, uploaded_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Asynchronously process uploaded files."""
+        return await asyncio.to_thread(
+            self.upload_controller.process_uploaded_data_directly, uploaded_data
+        )
+
     def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
         """Load uploaded data from the file upload page."""
         return self.data_loader.load_uploaded_data()
+
+    async def aload_uploaded_data(self) -> Dict[str, pd.DataFrame]:
+        """Asynchronously load uploaded data."""
+        return await asyncio.to_thread(self.data_loader.load_uploaded_data)
 
     def clean_uploaded_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply standard column mappings and basic cleaning."""
@@ -193,30 +210,61 @@ class AnalyticsService(AnalyticsServiceProtocol):
         """Create a summary dictionary from a combined DataFrame."""
         return self.data_loader.summarize_dataframe(df)
 
+    async def asummarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Asynchronously summarize a dataframe."""
+        return await asyncio.to_thread(self.data_loader.summarize_dataframe, df)
+
     def analyze_with_chunking(
         self, df: pd.DataFrame, analysis_types: List[str]
     ) -> Dict[str, Any]:
         """Analyze a DataFrame using chunked processing."""
         return self.data_loader.analyze_with_chunking(df, analysis_types)
 
+    async def aanalyze_with_chunking(
+        self, df: pd.DataFrame, analysis_types: List[str]
+    ) -> Dict[str, Any]:
+        """Asynchronously analyze a DataFrame using chunked processing."""
+        return await asyncio.to_thread(
+            self.data_loader.analyze_with_chunking, df, analysis_types
+        )
+
     def diagnose_data_flow(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Diagnostic method to check data processing flow."""
         return self.data_loader.diagnose_data_flow(df)
+
+    async def adiagnose_data_flow(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Asynchronously diagnose data processing flow."""
+        return await asyncio.to_thread(self.data_loader.diagnose_data_flow, df)
 
     def _get_real_uploaded_data(self) -> Dict[str, Any]:
         """Load and summarize all uploaded records."""
         return self.data_loader.get_real_uploaded_data()
 
+    async def _aget_real_uploaded_data(self) -> Dict[str, Any]:
+        """Asynchronously load all uploaded records."""
+        return await asyncio.to_thread(self.data_loader.get_real_uploaded_data)
+
     def _get_analytics_with_fixed_processor(self) -> Dict[str, Any]:
         """Get analytics using the sample file processor."""
         return self.data_loader.get_analytics_with_fixed_processor()
+
+    async def _aget_analytics_with_fixed_processor(self) -> Dict[str, Any]:
+        """Asynchronously get analytics using the sample file processor."""
+        return await asyncio.to_thread(
+            self.data_loader.get_analytics_with_fixed_processor
+        )
 
     @cache_with_lock(_cache_manager, ttl=600)
     def _get_database_analytics(self) -> Dict[str, Any]:
         """Get analytics from database."""
         return self.database_retriever.get_analytics()
 
+    async def _aget_database_analytics(self) -> Dict[str, Any]:
+        """Asynchronously get analytics from database."""
+        return await asyncio.to_thread(self.database_retriever.get_analytics)
+
     @cache_with_lock(_cache_manager, ttl=300)
+    @override
     def get_dashboard_summary(self) -> Dict[str, Any]:
         """Get a basic dashboard summary"""
         try:
@@ -239,6 +287,14 @@ class AnalyticsService(AnalyticsServiceProtocol):
     ) -> tuple[pd.DataFrame, int]:
         """Return dataframe and original row count for pattern analysis."""
         return self.data_loader.load_patterns_dataframe(data_source)
+
+    async def _aload_patterns_dataframe(
+        self, data_source: str | None
+    ) -> tuple[pd.DataFrame, int]:
+        """Asynchronously load dataframe for pattern analysis."""
+        return await asyncio.to_thread(
+            self.data_loader.load_patterns_dataframe, data_source
+        )
 
     # ------------------------------------------------------------------
     # Pattern analysis helpers
@@ -328,15 +384,18 @@ class AnalyticsService(AnalyticsServiceProtocol):
     # ------------------------------------------------------------------
     # AnalyticsProviderProtocol implementation
     # ------------------------------------------------------------------
+    @override
     def process_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Alias for :meth:`process_data` required by ``AnalyticsProviderProtocol``."""
         return self.process_data(df)
 
+    @override
     def process_data(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Process ``df`` and return a metrics dictionary."""
         cleaned = self.clean_uploaded_dataframe(df)
         return self.summarize_dataframe(cleaned)
 
+    @override
     def get_metrics(self) -> Dict[str, Any]:
         """Return current analytics metrics."""
         return self.get_analytics_status()
@@ -344,6 +403,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
     # ------------------------------------------------------------------
     # Placeholder implementations for abstract methods
     # ------------------------------------------------------------------
+    @override
     def analyze_access_patterns(
         self, days: int, user_id: str | None = None
     ) -> Dict[str, Any]:
@@ -355,6 +415,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         )
         return {"patterns": [], "days": days, "user_id": user_id}
 
+    @override
     def detect_anomalies(
         self, data: pd.DataFrame, sensitivity: float = 0.5
     ) -> List[Dict[str, Any]]:
@@ -362,6 +423,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         logger.debug("detect_anomalies called with sensitivity=%s", sensitivity)
         return []
 
+    @override
     def generate_report(
         self, report_type: str, params: Dict[str, Any]
     ) -> Dict[str, Any]:

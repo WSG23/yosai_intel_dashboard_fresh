@@ -153,14 +153,15 @@ class CSSQualityAnalyzer:
         size_kb = total_size / 1024
 
         # Determine status
-        if size_kb <= dynamic_config.css.bundle_excellent_kb:
-            status = "excellent"
-        elif size_kb <= dynamic_config.css.bundle_good_kb:
-            status = "good"
-        elif size_kb <= dynamic_config.css.bundle_warning_kb:
-            status = "warning"
-        else:
-            status = "critical"
+        match size_kb:
+            case _ if size_kb <= dynamic_config.css.bundle_excellent_kb:
+                status = "excellent"
+            case _ if size_kb <= dynamic_config.css.bundle_good_kb:
+                status = "good"
+            case _ if size_kb <= dynamic_config.css.bundle_warning_kb:
+                status = "warning"
+            case _:
+                status = "critical"
 
         return CSSMetric(
             "bundle_size",
@@ -210,14 +211,15 @@ class CSSQualityAnalyzer:
         else:
             token_usage_percent = 100
 
-        if token_usage_percent >= 95:
-            status = "excellent"
-        elif token_usage_percent >= 85:
-            status = "good"
-        elif token_usage_percent >= 70:
-            status = "warning"
-        else:
-            status = "critical"
+        match token_usage_percent:
+            case _ if token_usage_percent >= 95:
+                status = "excellent"
+            case _ if token_usage_percent >= 85:
+                status = "good"
+            case _ if token_usage_percent >= 70:
+                status = "warning"
+            case _:
+                status = "critical"
 
         return CSSMetric(
             "design_token_usage",
@@ -282,14 +284,15 @@ class CSSQualityAnalyzer:
         else:
             high_specificity_percent = 0
 
-        if high_specificity_percent <= 5:
-            status = "excellent"
-        elif high_specificity_percent <= 10:
-            status = "good"
-        elif high_specificity_percent <= 20:
-            status = "warning"
-        else:
-            status = "critical"
+        match high_specificity_percent:
+            case _ if high_specificity_percent <= 5:
+                status = "excellent"
+            case _ if high_specificity_percent <= 10:
+                status = "good"
+            case _ if high_specificity_percent <= 20:
+                status = "warning"
+            case _:
+                status = "critical"
 
         return CSSMetric(
             "selector_specificity",
@@ -331,14 +334,15 @@ class CSSQualityAnalyzer:
 
         accessibility_score = max(0, accessibility_score)
 
-        if accessibility_score >= 95:
-            status = "excellent"
-        elif accessibility_score >= 85:
-            status = "good"
-        elif accessibility_score >= 70:
-            status = "warning"
-        else:
-            status = "critical"
+        match accessibility_score:
+            case _ if accessibility_score >= 95:
+                status = "excellent"
+            case _ if accessibility_score >= 85:
+                status = "good"
+            case _ if accessibility_score >= 70:
+                status = "warning"
+            case _:
+                status = "critical"
 
         return CSSMetric(
             "accessibility_compliance",
