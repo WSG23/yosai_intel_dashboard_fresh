@@ -1248,6 +1248,7 @@ The SQL file creates an `access_events` hypertable with policies:
 The durations may be adjusted via the environment variables
 `TIMESCALE_COMPRESSION_DAYS` and `TIMESCALE_RETENTION_DAYS`.
 
+
 It also defines indexes used by the migration:
 
 * `idx_access_events_timestamp` on the event timestamp

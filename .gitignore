@@ -115,6 +115,7 @@ translations/**/*.mo
 cache/
 !gateway/internal/cache/
 !gateway/plugins/cache/
+!gateway/cache/
 venv
 venv_dashboard/
 
