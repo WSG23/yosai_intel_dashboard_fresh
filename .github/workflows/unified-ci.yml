@@ -25,10 +25,10 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -r requirements.lock
-      - name: Dry run migration
-        run: python scripts/migrate_to_clean_arch.py --dry-run
       - name: Validate directory structure
         run: python scripts/validate_structure.py
+      - name: Verify imports
+        run: python scripts/verify_imports.py
 
   lint:
     needs: [validate-configs, clean-arch-check]
