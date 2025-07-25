@@ -18,6 +18,10 @@ from services.interfaces import (
 from services.upload.controllers.upload_controller import UnifiedUploadController
 from services.upload.core.processor import UploadProcessingService
 from services.upload.core.validator import ClientSideValidator
+from services.upload.core.file_validator import FileValidator
+from services.upload.core.file_processor_service import FileProcessor
+from services.upload.core.learning_coordinator import LearningCoordinator
+from services.upload.core.ui_builder import UploadUIBuilder
 from services.upload.protocols import (
     FileProcessorProtocol,
     UploadControllerProtocol,
@@ -61,6 +65,26 @@ def register_upload_services(container: ServiceContainer) -> None:
         "upload_validator",
         ClientSideValidator,
         protocol=UploadValidatorProtocol,
+    )
+
+    container.register_singleton(
+        "file_validator",
+        FileValidator,
+    )
+
+    container.register_singleton(
+        "file_processor_service",
+        FileProcessor,
+    )
+
+    container.register_singleton(
+        "learning_coordinator",
+        LearningCoordinator,
+    )
+
+    container.register_singleton(
+        "ui_builder",
+        UploadUIBuilder,
     )
 
     container.register_singleton(
