@@ -27,8 +27,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: yosai-config
-            - secretRef:
-                name: yosai-secrets
             - configMapRef:
                 name: vault-config
             - secretRef:

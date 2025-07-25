@@ -39,8 +39,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: yosai-config
+            - configMapRef:
+                name: vault-config
             - secretRef:
-                name: yosai-secrets
+                name: vault-secret
           resources:
             requests:
               cpu: "100m"

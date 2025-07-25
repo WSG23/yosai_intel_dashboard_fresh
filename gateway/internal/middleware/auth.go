@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"os"
@@ -16,6 +17,11 @@ import (
 // Auth middleware validates a JWT Authorization header.
 func Auth(next http.Handler) http.Handler {
 	secret := []byte(os.Getenv("JWT_SECRET"))
+	if f := os.Getenv("JWT_SECRET_FILE"); f != "" {
+		if data, err := os.ReadFile(f); err == nil {
+			secret = bytes.TrimSpace(data)
+		}
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHdr := r.Header.Get("Authorization")
 		if authHdr == "" {

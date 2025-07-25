@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vault
+  namespace: yosai-dev
+spec:
+  serviceName: vault
+  replicas: 3
+  selector:
+    matchLabels:
+      app: vault
+  template:
+    metadata:
+      labels:
+        app: vault
+    spec:
+      containers:
+        - name: vault
+          image: hashicorp/vault:1.15
+          args: ["server", "-config=/vault/config"]
+          env:
+            - name: VAULT_LOCAL_CONFIG
+              value: |
+                ui = true
+                listener "tcp" { address = "0.0.0.0:8200" tls_disable = 1 }
+                storage "file" { path = "/vault/data" }
+          ports:
+            - containerPort: 8200
+              name: http
+          volumeMounts:
+            - name: data
+              mountPath: /vault/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

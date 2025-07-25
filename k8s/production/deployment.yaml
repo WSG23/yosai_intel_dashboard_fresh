@@ -4,6 +4,7 @@ metadata:
   name: yosai-dashboard
   labels:
     app: yosai-dashboard
+    track: stable
 spec:
   replicas: 2
   strategy:
@@ -14,10 +15,12 @@ spec:
   selector:
     matchLabels:
       app: yosai-dashboard
+      track: stable
   template:
     metadata:
       labels:
         app: yosai-dashboard
+        track: stable
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
@@ -41,16 +44,16 @@ spec:
               value: "yosai_intel"
             - name: DB_USER
               value: "postgres"
-            - name: DB_PASSWORD
+            - name: VAULT_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: vault-config
+                  key: VAULT_ADDR
+            - name: VAULT_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: yosai-secrets
-                  key: DB_PASSWORD
-            - name: SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: yosai-secrets
-                  key: SECRET_KEY
+                  name: vault-secret
+                  key: VAULT_TOKEN
             - name: REDIS_HOST
               value: "redis"
             - name: REDIS_PORT

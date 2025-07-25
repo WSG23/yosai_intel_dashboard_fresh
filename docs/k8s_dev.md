@@ -1,7 +1,7 @@
 # Kubernetes Development Environment
 
 This guide explains how to start a local Kubernetes cluster for the Yōsai Intel Dashboard.
-It installs [k3s](https://k3s.io), [Linkerd](https://linkerd.io), the [Strimzi](https://strimzi.io) Kafka operator, and a small observability stack.
+It installs [k3s](https://k3s.io), [Istio](https://istio.io), the [Strimzi](https://strimzi.io) Kafka operator, and a small observability stack.
 
 ## Setup
 
@@ -11,9 +11,9 @@ Run the helper script which installs all dependencies and creates the required n
 scripts/setup_k8s_dev.sh
 ```
 
-The script installs k3s if it is not already present, then deploys Linkerd, the Strimzi operator, and Prometheus/Grafana via Helm.
+The script installs k3s if it is not already present, then deploys Istio, the Strimzi operator, and Prometheus/Grafana via Helm.
 
-It also applies the manifests in `k8s/linkerd` so the service mesh is deployed automatically.
+It also applies the manifests in `k8s/istio` so the service mesh is deployed automatically.
 
 ## Deploying the Dashboard
 

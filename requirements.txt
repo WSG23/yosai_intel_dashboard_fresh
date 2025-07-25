@@ -68,3 +68,4 @@ opentelemetry-exporter-jaeger==1.21.0
 pika==1.3.2
 boto3==1.34.103
 
+feast==0.51.0
