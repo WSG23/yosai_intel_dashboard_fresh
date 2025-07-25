@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import os
 import secrets
+from typing import Iterable
+
+import requests
 
 import hvac
 
@@ -18,6 +21,16 @@ def rotate_field(client: hvac.Client, path: str, field: str) -> str:
     return value
 
 
+def _notify_services(urls: Iterable[str]) -> None:
+    """POST to `/invalidate-secret` on each base URL."""
+    for url in urls:
+        url = url.rstrip("/") + "/invalidate-secret"
+        try:
+            requests.post(url, timeout=5)
+        except Exception as exc:  # pragma: no cover - best effort
+            print(f"warning: failed to notify {url}: {exc}")
+
+
 def main() -> None:
     addr = os.environ["VAULT_ADDR"]
     token = os.environ["VAULT_TOKEN"]
@@ -27,6 +40,10 @@ def main() -> None:
     print("rotated DB and JWT secrets")
     print("DB_PASSWORD=", db)
     print("JWT_SECRET=", jwt)
+
+    urls = os.getenv("SECRET_INVALIDATE_URLS")
+    if urls:
+        _notify_services(u.strip() for u in urls.split(",") if u.strip())
 
 
 if __name__ == "__main__":

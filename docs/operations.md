@@ -10,6 +10,14 @@ Manual rotation can be performed with:
 ```bash
 python scripts/vault_rotate.py
 ```
-Pods will read the new values on the next request because the Vault
-client caches secrets in memory. In emergency situations follow the
-[break glass procedure](break_glass.md).
+Set `SECRET_INVALIDATE_URLS` to a comma-separated list of service
+addresses before running the script. Each address should expose a
+`/invalidate-secret` endpoint that triggers `invalidate_secret()` so new
+credentials are reloaded immediately:
+
+```bash
+export SECRET_INVALIDATE_URLS="http://dashboard:8050,http://analytics:8001"
+python scripts/vault_rotate.py
+```
+
+In emergency situations follow the [break glass procedure](break_glass.md).
