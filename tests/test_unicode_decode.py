@@ -1,6 +1,6 @@
 import pytest
 
-from yosai_intel_dashboard.src.core.unicode import safe_unicode_decode
+from core.unicode import safe_unicode_decode
 
 
 def test_removes_invalid_surrogates():

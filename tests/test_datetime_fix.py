@@ -1,7 +1,7 @@
 import pandas as pd
 
 from analytics.utils import ensure_datetime_columns
-from yosai_intel_dashboard.src.services.analytics_service import AnalyticsService
+from services.analytics_service import AnalyticsService
 
 
 def create_test_data(rows=100):

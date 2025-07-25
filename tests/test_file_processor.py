@@ -5,7 +5,7 @@ import io
 import pandas as pd
 import pytest
 
-from yosai_intel_dashboard.src.services.data_processing.file_processor import (
+from services.data_processing.file_processor import (
     UnicodeFileProcessor,
     create_file_preview,
     process_uploaded_file,

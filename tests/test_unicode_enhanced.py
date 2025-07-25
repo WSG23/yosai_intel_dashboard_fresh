@@ -1,6 +1,6 @@
 import pytest
 
-from yosai_intel_dashboard.src.core.unicode import (
+from core.unicode import (
     EnhancedUnicodeProcessor,
     SurrogateHandlingConfig,
     SurrogateHandlingStrategy,

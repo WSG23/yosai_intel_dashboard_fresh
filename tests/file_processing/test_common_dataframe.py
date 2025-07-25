@@ -1,6 +1,6 @@
 import pandas as pd
 
-from yosai_intel_dashboard.src.services.data_processing.common import process_dataframe
+from services.data_processing.common import process_dataframe
 
 
 def test_process_dataframe_csv(tmp_path):

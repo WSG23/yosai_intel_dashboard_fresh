@@ -1,6 +1,6 @@
 import pytest
 
-from yosai_intel_dashboard.src.services.data_enhancer import get_ai_column_suggestions
+from services.data_enhancer import get_ai_column_suggestions
 
 
 def test_basic_suggestions():

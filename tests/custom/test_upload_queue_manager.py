@@ -1,5 +1,5 @@
 import asyncio
-from yosai_intel_dashboard.src.services.upload.upload_queue_manager import UploadQueueManager
+from services.upload.upload_queue_manager import UploadQueueManager
 
 
 async def _handler(item: str) -> str:

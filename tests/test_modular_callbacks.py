@@ -1,4 +1,4 @@
-from yosai_intel_dashboard.src.core.callback_modules import CallbackModuleRegistry
+from core.callback_modules import CallbackModuleRegistry
 
 
 class DummyModule:

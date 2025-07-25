@@ -1,7 +1,7 @@
 import os
 
 from config import get_config, reload_config
-from yosai_intel_dashboard.src.services import AnalyticsService
+from services import AnalyticsService
 
 
 def test_fixed_processor_paths_from_env(monkeypatch):

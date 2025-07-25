@@ -1,6 +1,6 @@
 from flask import Flask, Response, stream_with_context
 
-from yosai_intel_dashboard.src.core.app_factory.health import register_health_endpoints
+from core.app_factory.health import register_health_endpoints
 
 
 class DummyProgress:

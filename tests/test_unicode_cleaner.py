@@ -1,6 +1,6 @@
 import pandas as pd
 
-from yosai_intel_dashboard.src.core.unicode import (
+from core.unicode import (
     UnicodeProcessor,
     safe_encode_text,
     sanitize_dataframe,

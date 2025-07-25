@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Dict
 from flask import Flask, session
 
-from yosai_intel_dashboard.src.core.protocols import ConfigurationProtocol
+from core.protocols import ConfigurationProtocol
 
 # Ensure project root is on path
 sys.path.append(str(Path(__file__).resolve().parents[2]))
@@ -41,7 +41,7 @@ class FakeConfiguration(ConfigurationProtocol):
         return {"valid": True}
 
 
-from yosai_intel_dashboard.src.core.auth import User, _determine_session_timeout, _apply_session_timeout
+from core.auth import User, _determine_session_timeout, _apply_session_timeout
 
 
 def test_determine_session_timeout(monkeypatch):
