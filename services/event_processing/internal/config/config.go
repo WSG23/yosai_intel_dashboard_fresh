@@ -13,6 +13,7 @@ type Config struct {
 	GroupID string                 `yaml:"group_id"`
 	Topic   string                 `yaml:"topic"`
 	Breaker CircuitBreakerSettings `yaml:"breaker"`
+
 }
 
 // Load reads configuration from path. Environment variables override YAML.
@@ -49,6 +50,7 @@ func Load(path string) (*Config, error) {
 	if v := os.Getenv("BREAKER_RECOVERY_TIMEOUT"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
 			cfg.Breaker.RecoveryTimeout = n
+
 		}
 	}
 	if cfg.GroupID == "" {
@@ -62,6 +64,7 @@ func Load(path string) (*Config, error) {
 	}
 	if cfg.Breaker.RecoveryTimeout == 0 {
 		cfg.Breaker.RecoveryTimeout = 30
+
 	}
 	return &cfg, nil
 }

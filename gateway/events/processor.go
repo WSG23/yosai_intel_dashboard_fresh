@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/WSG23/resilience"
 	"github.com/WSG23/yosai-gateway/internal/tracing"
 	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/prometheus/client_golang/prometheus"
@@ -17,17 +18,15 @@ import (
 	"github.com/WSG23/yosai-gateway/internal/cache"
 	"github.com/WSG23/yosai-gateway/internal/engine"
 	ikafka "github.com/WSG23/yosai-gateway/internal/kafka"
-
 )
 
 var accessEventsTopic = "access-events"
 
 var (
-       eventsProcessed = prometheus.NewCounter(prometheus.CounterOpts{
-               Name: "event_processor_events_processed_total",
-               Help: "Number of access events processed",
-       })
-
+	eventsProcessed = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "event_processor_events_processed_total",
+		Help: "Number of access events processed",
+	})
 )
 
 func init() {
@@ -58,7 +57,7 @@ func NewEventProcessor(brokers string, c cache.CacheService, e *engine.CachedRul
 		return nil, err
 	}
 	reg := ikafka.NewSchemaRegistry("", settings)
-	cb := gobreaker.NewCircuitBreaker(settings)
+	cb := resilience.NewGoBreaker("event-processor", settings)
 	return &EventProcessor{producer: producer, consumer: consumer, cache: c, engine: e, registry: reg, breaker: cb}, nil
 }
 

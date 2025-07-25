@@ -27,8 +27,9 @@ from typing import Any, Iterable, List, Mapping, Sequence, cast
 import psycopg2
 from psycopg2.extensions import connection, cursor
 from psycopg2.extras import DictCursor, execute_batch
-from database.secure_exec import execute_query, execute_command
 from tqdm import tqdm
+
+from database.secure_exec import execute_command, execute_query
 
 CHUNK_SIZE = 10_000
 CHECKPOINT_TABLE = "migration_checkpoint"
@@ -173,19 +174,34 @@ def setup_timescale(conn: connection) -> None:
 
         # indexes for common query patterns
         cur.execute(
-            "CREATE INDEX IF NOT EXISTS idx_access_events_person ON access_events(person_id)"
+            (
+                "CREATE INDEX IF NOT EXISTS idx_access_events_person "
+                "ON access_events(person_id)"
+            )
         )
         cur.execute(
-            "CREATE INDEX IF NOT EXISTS idx_access_events_device ON access_events(door_id)"
+            (
+                "CREATE INDEX IF NOT EXISTS idx_access_events_device "
+                "ON access_events(door_id)"
+            )
         )
         cur.execute(
-            "CREATE INDEX IF NOT EXISTS idx_access_events_location ON access_events(facility_id)"
+            (
+                "CREATE INDEX IF NOT EXISTS idx_access_events_location "
+                "ON access_events(facility_id)"
+            )
         )
         cur.execute(
-            "CREATE INDEX IF NOT EXISTS idx_access_events_decision ON access_events(access_result)"
+            (
+                "CREATE INDEX IF NOT EXISTS idx_access_events_decision "
+                "ON access_events(access_result)"
+            )
         )
         cur.execute(
-            "CREATE INDEX IF NOT EXISTS idx_access_events_metadata ON access_events USING GIN(metadata)"
+            (
+                "CREATE INDEX IF NOT EXISTS idx_access_events_metadata "
+                "ON access_events USING GIN(metadata)"
+            )
         )
 
         # continuous aggregate
@@ -230,7 +246,7 @@ def setup_timescale(conn: connection) -> None:
             """
             SELECT add_compression_policy(
                 'access_events',
-                INTERVAL '7 days',
+                INTERVAL '30 days',
                 if_not_exists => TRUE
             )
             """
@@ -239,7 +255,7 @@ def setup_timescale(conn: connection) -> None:
             """
             SELECT add_retention_policy(
                 'access_events',
-                INTERVAL '90 days',
+                INTERVAL '365 days',
                 if_not_exists => TRUE
             )
             """
@@ -380,7 +396,9 @@ def run_verification(target_conn: connection) -> None:
         )
         tables = [r[0] for r in cur.fetchall()]
         LOG.info("Tables: %s", ", ".join(tables))
-        execute_query(cur, "SELECT * FROM timescaledb_information.compressed_hypertables")
+        execute_query(
+            cur, "SELECT * FROM timescaledb_information.compressed_hypertables"
+        )
         LOG.info("Compressed hypertables:")
         for row in cur.fetchall():
             LOG.info(str(row))

@@ -41,6 +41,7 @@ class SchemaRegistryClient:
         resp.raise_for_status()
         return resp.json()
 
+    @lru_cache(maxsize=64)
     def get_schema(self, subject: str, version: int | str = "latest") -> SchemaInfo:
         data = self._get(f"/subjects/{subject}/versions/{version}")
         return SchemaInfo(
@@ -60,6 +61,25 @@ class SchemaRegistryClient:
             {"schema": json.dumps(schema)},
         )
         return bool(data.get("is_compatible"))
+
+    def register_schema(self, subject: str, schema: Dict[str, Any]) -> int:
+        """Register a new schema version under ``subject`` and return the version."""
+        data = self._post(
+            f"/subjects/{subject}/versions",
+            {"schema": json.dumps(schema)},
+        )
+        version = data.get("version")
+        if version is None:
+            versions = self._get(f"/subjects/{subject}/versions")
+            version = max(versions)
+
+        # invalidate cached schema for this subject
+        try:
+            self.get_schema.cache_clear()
+        except AttributeError:
+            pass
+
+        return int(version)
 
 
 __all__ = ["SchemaRegistryClient", "SchemaInfo"]

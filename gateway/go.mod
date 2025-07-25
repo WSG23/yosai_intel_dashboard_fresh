@@ -5,6 +5,7 @@ go 1.23.8
 require github.com/gorilla/mux v1.8.1
 
 require (
+	github.com/WSG23/resilience v0.0.0
 	github.com/WSG23/yosai-framework v0.0.0
 	github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0
 	github.com/alicebob/miniredis/v2 v2.35.0
@@ -12,6 +13,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.3
 	github.com/gorilla/websocket v1.5.0
 	github.com/hashicorp/consul/api v1.32.1
+	github.com/hashicorp/vault/api v1.20.0
 	github.com/lib/pq v1.10.9
 	github.com/prometheus/client_golang v1.22.0
 	github.com/rabbitmq/amqp091-go v1.5.0
@@ -55,7 +57,6 @@ require (
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.1-vault-7 // indirect
 	github.com/hashicorp/serf v0.10.2 // indirect
-	github.com/hashicorp/vault/api v1.20.0 // indirect
 	github.com/linkedin/goavro/v2 v2.14.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -86,3 +87,5 @@ require (
 replace github.com/WSG23/yosai-framework => ../go/framework
 
 replace github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors => ../shared/errors
+
+replace github.com/WSG23/resilience => ../resilience

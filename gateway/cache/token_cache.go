@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -30,7 +31,7 @@ func (t *TokenCache) Get(ctx context.Context, tokenID string) (*auth.EnhancedCla
 
 	val, err := t.client.Get(ctx, tokenKey(tokenID)).Result()
 	if err != nil {
-		if err == redis.Nil || err == context.DeadlineExceeded {
+		if err == redis.Nil || errors.Is(err, context.DeadlineExceeded) {
 			return nil, nil
 		}
 		return nil, err
@@ -67,7 +68,7 @@ func (t *TokenCache) IsBlacklisted(ctx context.Context, tokenID string) (bool, e
 
 	exists, err := t.client.Exists(ctx, blacklistKey(tokenID)).Result()
 	if err != nil {
-		if err == redis.Nil || err == context.DeadlineExceeded {
+		if err == redis.Nil || errors.Is(err, context.DeadlineExceeded) {
 			return false, nil
 		}
 		return false, err

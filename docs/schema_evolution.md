@@ -11,3 +11,6 @@ backward compatible changes. The following rules apply:
 Compatibility of new schemas is validated in CI using the
 `scripts/check_schema_compatibility.py` tool which parses
 all schema files and fails if any are invalid.
+
+Generated reference documentation for each schema is available under
+[`docs/avro/`](avro/).

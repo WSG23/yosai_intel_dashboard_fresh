@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/sony/gobreaker"
@@ -32,6 +31,7 @@ func NewEventHandler(store repository.TokenStore, settings gobreaker.Settings) *
 		settings.ReadyToTrip = func(c gobreaker.Counts) bool { return c.ConsecutiveFailures > 5 }
 	}
 	b := resilience.NewGoBreaker(settings)
+
 	return &EventHandler{store: store, breaker: b}
 }
 

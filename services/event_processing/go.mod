@@ -2,6 +2,7 @@ module github.com/WSG23/yosai-event-processing
 
 go 1.23.8
 
+
 require (
 	github.com/WSG23/resilience v0.0.0
 	github.com/WSG23/yosai-framework v0.0.0
@@ -9,6 +10,7 @@ require (
 	github.com/prometheus/client_golang v1.22.0
 	github.com/sony/gobreaker v1.0.0
 	github.com/xeipuuv/gojsonschema v1.2.0
+
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -35,11 +37,13 @@ require (
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
+
 )
 
 replace github.com/WSG23/yosai-framework => ../../go/framework
 
 replace github.com/WSG23/resilience => ../../resilience
+
 
 replace github.com/WSG23/yosai-gateway => ../../gateway
 

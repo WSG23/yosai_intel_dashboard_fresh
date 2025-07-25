@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -65,7 +66,41 @@ func Load(path string) (*Config, error) {
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
+	overrideEnv(&cfg)
 	return &cfg, nil
+}
+
+func overrideEnv(cfg *Config) {
+	if v := os.Getenv("CB_DATABASE_FAILURE_THRESHOLD"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			cfg.Database.FailureThreshold = n
+		}
+	}
+	if v := os.Getenv("CB_DATABASE_RECOVERY_TIMEOUT"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			cfg.Database.RecoveryTimeout = n
+		}
+	}
+	if v := os.Getenv("CB_EXTERNAL_API_FAILURE_THRESHOLD"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			cfg.ExternalAPI.FailureThreshold = n
+		}
+	}
+	if v := os.Getenv("CB_EXTERNAL_API_RECOVERY_TIMEOUT"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			cfg.ExternalAPI.RecoveryTimeout = n
+		}
+	}
+	if v := os.Getenv("CB_EVENT_PROCESSOR_FAILURE_THRESHOLD"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			cfg.EventProcessor.FailureThreshold = n
+		}
+	}
+	if v := os.Getenv("CB_EVENT_PROCESSOR_RECOVERY_TIMEOUT"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			cfg.EventProcessor.RecoveryTimeout = n
+		}
+	}
 }
 
 // Timeout returns the timeout as time.Duration.

@@ -2,14 +2,17 @@
 
 The dashboard can store access events in TimescaleDB for efficient time-series
 analytics. Hypertables are created automatically when the `TimescaleDBManager`
-initialises. Events are compressed after seven days and removed after ninety
-days using retention policies.
+initialises. Events are compressed after thirty days and removed after one
+year using retention policies. The policy durations can be overridden with the
+environment variables `TIMESCALE_COMPRESSION_DAYS` and
+`TIMESCALE_RETENTION_DAYS`.
+
 
 ## Data Retention
 
 ```sql
-SELECT add_compression_policy('access_events', INTERVAL '7 days');
-SELECT add_retention_policy('access_events', INTERVAL '90 days');
+SELECT add_compression_policy('access_events', INTERVAL '30 days');
+SELECT add_retention_policy('access_events', INTERVAL '365 days');
 ```
 
 Continuous aggregates refresh every five minutes to keep summary data up to
@@ -62,3 +65,22 @@ spec:
 ```
 
 The job also inherits the standard configuration from `yosai-config` and `yosai-secrets` via `envFrom` like the other microservices.
+
+## Backup and Restore
+
+Use `scripts/backup_timescale.sh` to create pg_dump archives of the Timescale database. Set `TIMESCALE_DSN` to the connection string and optionally `OUTPUT_DIR` and `RETENTION_DAYS`.
+
+```bash
+TIMESCALE_DSN=postgres://user:pass@db/timescale ./scripts/backup_timescale.sh
+```
+
+The script verifies the dump with `pg_restore --list` and removes backups older than `RETENTION_DAYS` (default 7 days).
+
+Restore a dump with `scripts/restore_timescale.sh`:
+
+```bash
+TIMESCALE_DSN=postgres://user:pass@db/timescale ./scripts/restore_timescale.sh backups/timescale_20240101_120000.dump
+```
+
+Always check that the restore completed successfully and that the expected tables are present.
+

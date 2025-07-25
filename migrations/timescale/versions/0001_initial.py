@@ -1,8 +1,11 @@
 """Timescale initial schema"""
+
 from __future__ import annotations
+
 from pathlib import Path
-from alembic import op
+
 import sqlalchemy as sa  # noqa:F401
+from alembic import op
 
 revision = "0001"
 down_revision = None
@@ -11,8 +14,14 @@ depends_on = None
 
 
 def upgrade() -> None:
-    sql_path = Path(__file__).resolve().parents[3] / "scripts" / "init_timescaledb.sql"
-    op.execute(sql_path.read_text())
+    base = Path(__file__).resolve().parents[1]
+    for fname in [
+        "001_create_hypertables.sql",
+        "002_create_continuous_aggregates.sql",
+        "003_setup_compression.sql",
+        "004_retention_policies.sql",
+    ]:
+        op.execute((base / fname).read_text())
 
 
 def downgrade() -> None:
