@@ -8,7 +8,7 @@ class Analytics:
     max_memory_mb = 1024
 
 
-from core.config import (
+from yosai_intel_dashboard.src.core.config import (
     get_upload_chunk_size,
     get_max_parallel_uploads,
     get_validator_rules,

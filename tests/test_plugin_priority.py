@@ -1,9 +1,9 @@
 import sys
 
 from config import create_config_manager
-from core.service_container import ServiceContainer
-from core.plugins.manager import ThreadSafePluginManager as PluginManager
-from services.data_processing.core.protocols import PluginPriority
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.core.plugins.manager import ThreadSafePluginManager as PluginManager
+from yosai_intel_dashboard.src.services.data_processing.core.protocols import PluginPriority
 
 
 def test_priority_order(tmp_path):
@@ -14,7 +14,7 @@ def test_priority_order(tmp_path):
     plugin_a = pkg_dir / "plugin_a.py"
     plugin_a.write_text(
         """
-from services.data_processing.core.protocols import PluginPriority
+from yosai_intel_dashboard.src.services.data_processing.core.protocols import PluginPriority
 class PluginA:
     class metadata:
         name = 'a'
@@ -33,7 +33,7 @@ def create_plugin():
     plugin_b = pkg_dir / "plugin_b.py"
     plugin_b.write_text(
         """
-from services.data_processing.core.protocols import PluginPriority
+from yosai_intel_dashboard.src.services.data_processing.core.protocols import PluginPriority
 class PluginB:
     class metadata:
         name = 'b'

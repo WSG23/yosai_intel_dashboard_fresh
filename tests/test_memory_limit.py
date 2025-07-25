@@ -4,9 +4,9 @@ import pytest
 from tests.fake_configuration import FakeConfiguration
 
 fake_cfg = FakeConfiguration()
-from core.performance import get_performance_monitor
-from services.data_processing.file_handler import process_file_simple
-from services.data_processing.unified_upload_validator import process_dataframe
+from yosai_intel_dashboard.src.core.performance import get_performance_monitor
+from yosai_intel_dashboard.src.services.data_processing.file_handler import process_file_simple
+from yosai_intel_dashboard.src.services.data_processing.unified_upload_validator import process_dataframe
 
 
 def test_memory_limit_abort_csv(monkeypatch, tmp_path):

@@ -3,7 +3,7 @@ import base64
 import pandas as pd
 import pytest
 
-from services.data_processing.unified_upload_validator import UnifiedUploadValidator
+from yosai_intel_dashboard.src.services.data_processing.unified_upload_validator import UnifiedUploadValidator
 
 
 @pytest.mark.parametrize("sep", [";", "\t"])

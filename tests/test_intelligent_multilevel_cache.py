@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from core.intelligent_multilevel_cache import IntelligentMultiLevelCache
+from yosai_intel_dashboard.src.core.intelligent_multilevel_cache import IntelligentMultiLevelCache
 from config.base import CacheConfig
 
 

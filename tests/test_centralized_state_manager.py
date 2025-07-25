@@ -1,4 +1,4 @@
-from core.state import CentralizedStateManager
+from yosai_intel_dashboard.src.core.state import CentralizedStateManager
 
 
 def test_state_updates_and_subscribe():

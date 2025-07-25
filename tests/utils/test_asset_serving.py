@@ -1,6 +1,6 @@
 import os
 
-from core.app_factory import create_app
+from yosai_intel_dashboard.src.core.app_factory import create_app
 from utils import debug_dash_asset_serving
 
 

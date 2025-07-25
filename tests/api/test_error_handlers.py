@@ -1,8 +1,8 @@
 import types
 from flask import Flask, Blueprint
 
-from core.error_handlers import register_error_handlers
-from core.exceptions import ValidationError, ServiceUnavailableError
+from yosai_intel_dashboard.src.core.error_handlers import register_error_handlers
+from yosai_intel_dashboard.src.core.exceptions import ValidationError, ServiceUnavailableError
 
 
 def _create_app():

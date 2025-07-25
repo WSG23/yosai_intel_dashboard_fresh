@@ -5,7 +5,7 @@ The dashboard collects runtime metrics through the `core.performance` module. A 
 Use `get_performance_monitor()` to access it and view summaries.
 
 ```python
-from core.performance import get_performance_monitor
+from yosai_intel_dashboard.src.core.performance import get_performance_monitor
 summary = get_performance_monitor().get_metrics_summary()
 ```
 
@@ -57,7 +57,7 @@ how often they are still invoked.  The decorator emits a Prometheus counter
 entries in the global `PerformanceMonitor`.  Example:
 
 ```python
-from core import deprecated
+from yosai_intel_dashboard.src.core import deprecated
 
 @deprecated("use new_service.process() instead")
 def old_process(*args):
@@ -204,7 +204,7 @@ files asynchronously and yields `DataFrame` chunks. Configure chunk size and
 memory limits with `ANALYTICS_CHUNK_SIZE` and `ANALYTICS_MAX_MEMORY_MB`.
 
 ```python
-from services.data_processing.async_file_processor import AsyncFileProcessor
+from yosai_intel_dashboard.src.services.data_processing.async_file_processor import AsyncFileProcessor
 
 processor = AsyncFileProcessor()
 async for chunk in processor.read_csv_chunks("large.csv"):

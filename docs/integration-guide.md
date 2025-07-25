@@ -13,8 +13,8 @@ into your existing Yōsai Intel application
 from flask import Flask
 from flask_login import login_required
 from config import create_config_manager
-from core.error_handlers import register_error_handlers
-from core.container import Container
+from yosai_intel_dashboard.src.core.error_handlers import register_error_handlers
+from yosai_intel_dashboard.src.core.container import Container
 from database.connection import create_database_connection
 
 # Import all compliance components
@@ -27,11 +27,11 @@ from config.compliance_setup import (
     setup_data_retention_scheduler
 )
 from controllers.compliance_controller import register_compliance_routes
-from services.compliance.breach_notification_service import create_breach_notification_service
-from services.compliance.cross_border_transfer_service import create_cross_border_transfer_service
-from services.compliance.compliance_dashboard import create_compliance_dashboard
-from services.compliance.data_retention_service import create_data_retention_service
-from services.compliance.dpia_service import create_dpia_service
+from yosai_intel_dashboard.src.services.compliance.breach_notification_service import create_breach_notification_service
+from yosai_intel_dashboard.src.services.compliance.cross_border_transfer_service import create_cross_border_transfer_service
+from yosai_intel_dashboard.src.services.compliance.compliance_dashboard import create_compliance_dashboard
+from yosai_intel_dashboard.src.services.compliance.data_retention_service import create_data_retention_service
+from yosai_intel_dashboard.src.services.compliance.dpia_service import create_dpia_service
 
 def create_app(config_name: str = None) -> Flask:
     """
@@ -178,7 +178,7 @@ def upgrade_existing_people_table():
 # Update your existing services to include compliance:
 
 from flask_login import current_user
-from core.container import Container
+from yosai_intel_dashboard.src.core.container import Container
 
 class EnhancedAnalyticsService:
     """
@@ -498,7 +498,7 @@ def run_compliance_tests():
     }
     
     try:
-        from core.container import Container
+        from yosai_intel_dashboard.src.core.container import Container
         container = Container()
         
         # Test 1: Database schema

@@ -4,7 +4,7 @@ import sys
 import pytest
 
 from config import DatabaseSettings
-from core.base_database_service import BaseDatabaseService
+from yosai_intel_dashboard.src.core.base_database_service import BaseDatabaseService
 
 
 def _install_fake_module(monkeypatch, name, factory_attr):

@@ -1,4 +1,4 @@
-from core.unicode import safe_unicode_decode, sanitize_for_utf8
+from yosai_intel_dashboard.src.core.unicode import safe_unicode_decode, sanitize_for_utf8
 
 
 def test_safe_unicode_decode_handles_surrogates():

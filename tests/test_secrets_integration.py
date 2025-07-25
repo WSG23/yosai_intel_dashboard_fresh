@@ -1,4 +1,4 @@
-from core.secret_manager import SecretsManager
+from yosai_intel_dashboard.src.core.secret_manager import SecretsManager
 
 
 def test_env_overrides_docker(tmp_path, monkeypatch):

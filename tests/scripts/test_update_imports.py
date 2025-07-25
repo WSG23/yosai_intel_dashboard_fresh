@@ -20,8 +20,8 @@ def test_update_imports_patterns(tmp_path: Path) -> None:
     import security.helpers
     from api.client import d
     import api.client
-    from plugins.extra import e
-    import plugins.extra
+    from yosai_intel_dashboard.src.plugins.extra import e
+    import yosai_intel_dashboard.src.plugins.extra
     """
     after = """
     from yosai_intel_dashboard.src.infrastructure.config.utils import a

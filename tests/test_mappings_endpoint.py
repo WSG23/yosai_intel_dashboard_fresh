@@ -2,7 +2,7 @@ import pandas as pd
 from flask import Flask
 
 import mappings_endpoint
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
 import importlib
 from pathlib import Path
 import sys
@@ -89,7 +89,7 @@ def _create_app(monkeypatch):
     container.register_singleton("device_learning_service", device_service)
     container.register_singleton("consolidated_learning_service", column_service)
 
-    import core.service_container as sc
+    import yosai_intel_dashboard.src.core.service_container as sc
     monkeypatch.setattr(sc, "ServiceContainer", lambda: container)
 
     return app, store, device_service, column_service

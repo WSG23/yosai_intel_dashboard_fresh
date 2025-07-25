@@ -25,7 +25,7 @@ services_stub.__path__ = [str(Path(__file__).resolve().parents[1] / "services")]
 sys.modules.setdefault("services", services_stub)
 publish_event = importlib.import_module("services.event_publisher").publish_event
 
-from services.event_publisher import publish_event
+from yosai_intel_dashboard.src.services.event_publisher import publish_event
 
 
 class DummyBus:

@@ -7,7 +7,7 @@ import tempfile
 import pandas as pd
 import pytest
 
-from services.analytics_service import AnalyticsService
+from yosai_intel_dashboard.src.services.analytics_service import AnalyticsService
 
 
 def test_complete_dataset_analysis():

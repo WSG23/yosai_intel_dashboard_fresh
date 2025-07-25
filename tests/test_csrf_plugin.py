@@ -1,7 +1,7 @@
 import os
 
 from config import reload_config
-from core import app_factory
+from yosai_intel_dashboard.src.core import app_factory
 
 
 def test_csrf_plugin_enabled_in_production(monkeypatch):
@@ -14,7 +14,7 @@ def test_csrf_plugin_enabled_in_production(monkeypatch):
     monkeypatch.setenv("AUTH0_AUDIENCE", "dummy")
     reload_config()
 
-    from core.plugins import PluginManager
+    from yosai_intel_dashboard.src.core.plugins import PluginManager
 
     monkeypatch.setattr(PluginManager, "load_all_plugins", lambda self: None)
 

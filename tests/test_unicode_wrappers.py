@@ -5,8 +5,8 @@ import pytest
 
 from config.database_exceptions import UnicodeEncodingError
 from unicode_toolkit import UnicodeSQLProcessor
-from core.unicode import UnicodeProcessor as UtilsProcessor  # Alias check
-from core.unicode import (
+from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor as UtilsProcessor  # Alias check
+from yosai_intel_dashboard.src.core.unicode import (
     clean_unicode_surrogates,
     clean_unicode_text,
     contains_surrogates,

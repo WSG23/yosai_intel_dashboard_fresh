@@ -16,7 +16,7 @@ if "services" not in sys.modules:
 from tests.stubs.flask_wtf import CSRFProtect, generate_csrf
 from flask import Flask, jsonify
 import werkzeug
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
 
 class DummyUploadService:
     async def process_uploaded_files(self, contents, filenames):

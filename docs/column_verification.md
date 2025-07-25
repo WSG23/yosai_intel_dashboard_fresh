@@ -13,7 +13,7 @@ features. The function expects a `TrulyUnifiedCallbacks` or
 
 ```python
 from components.column_verification import register_callbacks
-from core.master_callback_system import MasterCallbackSystem
+from yosai_intel_dashboard.src.core.master_callback_system import MasterCallbackSystem
 
 callbacks = MasterCallbackSystem(app)
 register_callbacks(callbacks)

@@ -6,7 +6,7 @@ from dash import dcc, html
 import shutil
 import pytest
 
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 
 pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")

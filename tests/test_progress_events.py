@@ -1,7 +1,7 @@
 import asyncio
 
-from services.progress_events import ProgressEventManager
-from services.task_queue import clear_task, create_task
+from yosai_intel_dashboard.src.services.progress_events import ProgressEventManager
+from yosai_intel_dashboard.src.services.task_queue import clear_task, create_task
 
 
 def test_progress_event_generator():

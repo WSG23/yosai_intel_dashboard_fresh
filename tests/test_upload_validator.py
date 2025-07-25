@@ -2,7 +2,7 @@ from pathlib import Path
 
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
-from services.data_processing.unified_upload_validator import (
+from yosai_intel_dashboard.src.services.data_processing.unified_upload_validator import (
     UnifiedUploadValidator as UploadValidator,
 )
 

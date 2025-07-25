@@ -2,7 +2,7 @@ import asyncio
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from services.task_queue import TaskQueue
+from yosai_intel_dashboard.src.services.task_queue import TaskQueue
 
 queue = TaskQueue()
 import pytest

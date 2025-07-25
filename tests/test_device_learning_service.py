@@ -2,7 +2,7 @@ import json
 
 import pandas as pd
 
-from services.device_learning_service import DeviceLearningService
+from yosai_intel_dashboard.src.services.device_learning_service import DeviceLearningService
 
 
 def _init_service(tmp_path):

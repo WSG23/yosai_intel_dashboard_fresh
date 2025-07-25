@@ -1,5 +1,5 @@
 import time
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
 import types
 from tests.plugins.test_plugin_manager import _install_protocol_stubs
 
@@ -14,7 +14,7 @@ class FakeProc:
 
 def test_monitoring_alerts(monkeypatch):
     _install_protocol_stubs(monkeypatch)
-    from core.plugins.performance_manager import EnhancedThreadSafePluginManager
+    from yosai_intel_dashboard.src.core.plugins.performance_manager import EnhancedThreadSafePluginManager
 
     class DummyConfig:
         def __init__(self):

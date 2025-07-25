@@ -1,7 +1,7 @@
 import pytest
 
-from core.exceptions import ValidationError
-from services.data_processing.unified_upload_validator import UnifiedUploadValidator
+from yosai_intel_dashboard.src.core.exceptions import ValidationError
+from yosai_intel_dashboard.src.services.data_processing.unified_upload_validator import UnifiedUploadValidator
 
 
 def test_validator_methods_basic():

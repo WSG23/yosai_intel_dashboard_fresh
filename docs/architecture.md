@@ -43,8 +43,8 @@ needed:
 
 ```python
 from config import create_config_manager
-from core.container import Container
-from services.analytics_service import create_analytics_service
+from yosai_intel_dashboard.src.core.container import Container
+from yosai_intel_dashboard.src.services.analytics_service import create_analytics_service
 
 container = Container()
 container.register("config", create_config_manager())

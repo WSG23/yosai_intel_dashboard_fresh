@@ -1,6 +1,6 @@
 import pytest
 
-from core.unicode import (
+from yosai_intel_dashboard.src.core.unicode import (
     normalize_unicode_safely,
     detect_surrogate_pairs,
     sanitize_for_utf8,

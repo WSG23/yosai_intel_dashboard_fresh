@@ -5,7 +5,7 @@ import types
 import pandas as pd
 from flask import Flask
 
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 

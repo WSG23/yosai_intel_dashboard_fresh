@@ -3,9 +3,9 @@ from typing import Any, Dict, List, Callable, Protocol, runtime_checkable, asser
 import pandas as pd
 import pytest
 
-from core.service_container import ServiceContainer
-from services.analytics_service import AnalyticsService
-from core.protocols import (
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.services.analytics_service import AnalyticsService
+from yosai_intel_dashboard.src.core.protocols import (
     AnalyticsServiceProtocol,
     ConfigurationProtocol,
     SecurityServiceProtocol,
@@ -173,7 +173,7 @@ class TestProtocolCompliance:
         assert_type(cfg, ConfigurationProtocol)
 
     def test_analytics_service_compliance(self):
-        from services.analytics_service import AnalyticsService
+        from yosai_intel_dashboard.src.services.analytics_service import AnalyticsService
 
         class ConcreteAnalyticsService(AnalyticsService):
             def analyze_access_patterns(self, days: int) -> Dict[str, Any]:

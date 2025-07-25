@@ -5,7 +5,7 @@ from mapping.processors.column_processor import ColumnProcessor
 from mapping.processors.device_processor import DeviceProcessor
 from mapping.processors.ai_processor import AIColumnMapperAdapter
 from mapping.models import MappingModel
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
 
 
 class DummyAdapter:
