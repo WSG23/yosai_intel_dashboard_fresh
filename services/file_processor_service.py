@@ -19,6 +19,7 @@ from services.data_processing.unified_file_validator import (
     safe_decode_with_unicode_handling,
 )
 from utils.protocols import SafeDecoderProtocol
+from validation import FileValidator
 from utils.memory_utils import memory_safe
 
 from yosai_framework.service import BaseService
@@ -28,8 +29,6 @@ logger = logging.getLogger(__name__)
 
 class FileProcessorService(BaseService):
     """File processing service implementation"""
-
-    ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
 
     # Encoding detection order for robust decoding
     ENCODING_PRIORITY = [
@@ -57,46 +56,23 @@ class FileProcessorService(BaseService):
         self,
         config: ConfigurationServiceProtocol,
         decoder: SafeDecoderProtocol = safe_decode_with_unicode_handling,
+        validator: FileValidator | None = None,
     ) -> None:
         super().__init__("file-processor", "")
         self.start()
         self.config = config
         self.max_file_size_mb = config.get_max_upload_size_mb()
         self._decoder = decoder
+        self._validator = validator or FileValidator(self.max_file_size_mb)
 
     def _do_initialize(self) -> None:
         """Initialize file processor"""
         pass  # No special initialization needed
 
     def validate_file(self, filename: str, content: bytes) -> Dict[str, Any]:
-        """Validate uploaded file"""
+        """Validate ``content`` using :class:`FileValidator`."""
         filename = UnicodeHelper.clean_text(filename)
-        issues = []
-
-        # Check file extension
-        file_ext = Path(filename).suffix.lower()
-        if file_ext not in self.ALLOWED_EXTENSIONS:
-            issues.append(
-                f"File type {file_ext} not allowed. Allowed: {self.ALLOWED_EXTENSIONS}"
-            )
-
-        # Check file size
-        size_mb = len(content) / (1024 * 1024)
-        if size_mb > self.max_file_size_mb:
-            issues.append(
-                f"File too large: {size_mb:.1f}MB > {self.max_file_size_mb}MB"
-            )
-
-        # Check for empty file
-        if len(content) == 0:
-            issues.append("File is empty")
-
-        return {
-            "valid": len(issues) == 0,
-            "issues": issues,
-            "size_mb": size_mb,
-            "extension": file_ext,
-        }
+        return self._validator.validate_file_upload(filename, content)
 
     @memory_safe(max_memory_mb=500)
     def process_file(self, file_content: bytes, filename: str) -> pd.DataFrame:
