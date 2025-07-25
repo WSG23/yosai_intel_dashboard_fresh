@@ -20,15 +20,4 @@ spec:
                     name: vault-config
                 - secretRef:
                     name: vault-secret
-              env:
-                - name: SOURCE_DSN
-                  valueFrom:
-                    secretKeyRef:
-                      name: timescale-dsns
-                      key: SOURCE_DSN
-                - name: TARGET_DSN
-                  valueFrom:
-                    secretKeyRef:
-                      name: timescale-dsns
-                      key: TARGET_DSN
 

@@ -1,6 +1,11 @@
-import os
+from __future__ import annotations
+
 import logging
+import os
+
 import asyncpg
+
+from services.common.secrets import get_secret
 
 logger = logging.getLogger(__name__)
 
@@ -14,11 +19,15 @@ class TimescaleDBManager:
 
     # ------------------------------------------------------------------
     def _build_dsn(self) -> str:
-        host = os.getenv("TIMESCALE_HOST", "localhost")
-        port = os.getenv("TIMESCALE_PORT", "5433")
-        db = os.getenv("TIMESCALE_DB_NAME", "yosai_timescale")
-        user = os.getenv("TIMESCALE_DB_USER", "postgres")
-        pwd = os.getenv("TIMESCALE_DB_PASSWORD", "")
+        host = os.getenv("TIMESCALE_HOST") or get_secret("secret/data/timescale#host")
+        port = os.getenv("TIMESCALE_PORT") or get_secret("secret/data/timescale#port")
+        db = os.getenv("TIMESCALE_DB_NAME") or get_secret("secret/data/timescale#name")
+        user = os.getenv("TIMESCALE_DB_USER") or get_secret(
+            "secret/data/timescale#user"
+        )
+        pwd = os.getenv("TIMESCALE_DB_PASSWORD") or get_secret(
+            "secret/data/timescale#password"
+        )
         return f"postgresql://{user}:{pwd}@{host}:{port}/{db}"
 
     # ------------------------------------------------------------------
@@ -27,8 +36,16 @@ class TimescaleDBManager:
         if self.pool is None:
             self.pool = await asyncpg.create_pool(
                 dsn=self.dsn,
-                min_size=int(os.getenv("TIMESCALE_POOL_MIN", "1")),
-                max_size=int(os.getenv("TIMESCALE_POOL_MAX", "5")),
+                min_size=int(
+                    os.getenv("TIMESCALE_POOL_MIN")
+                    or get_secret("secret/data/timescale#pool_min")
+                    or 1
+                ),
+                max_size=int(
+                    os.getenv("TIMESCALE_POOL_MAX")
+                    or get_secret("secret/data/timescale#pool_max")
+                    or 5
+                ),
             )
             async with self.pool.acquire() as conn:
                 await self._setup(conn)
