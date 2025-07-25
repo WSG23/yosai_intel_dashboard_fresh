@@ -36,5 +36,5 @@ SELECT add_continuous_aggregate_policy('access_events_5min',
     end_offset => INTERVAL '1 minute',
     schedule_interval => INTERVAL '5 minutes');
 
-SELECT add_compression_policy('access_events', INTERVAL '7 days');
-SELECT add_retention_policy('access_events', INTERVAL '90 days');
+SELECT add_compression_policy('access_events', INTERVAL '30 days');
+SELECT add_retention_policy('access_events', INTERVAL '365 days');
