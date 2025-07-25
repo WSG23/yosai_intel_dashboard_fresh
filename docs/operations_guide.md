@@ -164,3 +164,27 @@ scripts/rollback.sh
 
 Then scale down or delete the faulty pods once the service is stable.
 
+
+## Enabling Microservice Manifests
+
+YAML manifests for each microservice reside in `k8s/services`. Apply them to
+create the Deployment, standard `Service`, and headless `Service` objects:
+
+```bash
+kubectl apply -f k8s/services/analytics-service.yaml
+kubectl apply -f k8s/services/api-gateway.yaml
+kubectl apply -f k8s/services/event-ingestion.yaml
+```
+
+The directory also contains example templates for blue/green and canary
+strategies using Istio `VirtualService` weight rules. Adjust the weights and
+apply the files when performing controlled rollouts:
+
+```bash
+kubectl apply -f k8s/services/bluegreen-template.yaml
+kubectl apply -f k8s/services/canary-template.yaml
+```
+
+To enable mTLS between services, adapt the `k8s/services/mtls-snippet.yaml`
+configuration. It mirrors the `ISTIO_MUTUAL` settings from
+`k8s/istio/destination-rules.yaml`.

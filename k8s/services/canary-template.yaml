@@ -1,0 +1,85 @@
+# Template for canary deployment using Istio weight-based routing
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-service-stable
+  labels:
+    app: example-service
+    track: stable
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: example-service
+      track: stable
+  template:
+    metadata:
+      labels:
+        app: example-service
+        track: stable
+    spec:
+      containers:
+        - name: example-service
+          image: example:latest
+          ports:
+            - containerPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-service-canary
+  labels:
+    app: example-service
+    track: canary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: example-service
+      track: canary
+  template:
+    metadata:
+      labels:
+        app: example-service
+        track: canary
+    spec:
+      containers:
+        - name: example-service
+          image: example:new
+          ports:
+            - containerPort: 8000
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: example-service
+spec:
+  host: example-service
+  subsets:
+    - name: stable
+      labels:
+        track: stable
+    - name: canary
+      labels:
+        track: canary
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: example-service
+spec:
+  hosts:
+    - example-service
+  http:
+    - route:
+        - destination:
+            host: example-service
+            subset: stable
+          weight: 90
+        - destination:
+            host: example-service
+            subset: canary
+          weight: 10
