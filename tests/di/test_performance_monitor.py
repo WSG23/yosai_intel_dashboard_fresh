@@ -1,6 +1,6 @@
 import time
-from core.service_container import ServiceContainer
-from core.performance_monitor import DIPerformanceMonitor
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.core.performance_monitor import DIPerformanceMonitor
 
 
 def test_container_records_resolution_time():

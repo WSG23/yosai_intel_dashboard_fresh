@@ -1,7 +1,7 @@
 import logging
 import pytest
 
-from core.error_handling import (
+from yosai_intel_dashboard.src.core.error_handling import (
     ErrorHandler,
     ErrorCategory,
     ErrorSeverity,

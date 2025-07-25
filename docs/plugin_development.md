@@ -13,7 +13,7 @@ plugin exposes a `create_plugin()` factory that returns an object implementing
 ```python
 # plugins/my_plugin.py
 from dataclasses import dataclass
-from services.data_processing.core.protocols import (
+from yosai_intel_dashboard.src.services.data_processing.core.protocols import (
     PluginProtocol,
     CallbackPluginProtocol,
     PluginMetadata,

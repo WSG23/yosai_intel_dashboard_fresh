@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from core.exceptions import ValidationError
+from yosai_intel_dashboard.src.core.exceptions import ValidationError
 from validation.security_validator import SecurityValidator
 from security.xss_validator import XSSPrevention
 

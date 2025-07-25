@@ -3,9 +3,9 @@ import time
 from pathlib import Path
 
 from config import create_config_manager
-from core.service_container import ServiceContainer
-from core.plugins.manager import ThreadSafePluginManager as PluginManager
-from services.data_processing.core.protocols import PluginMetadata
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.core.plugins.manager import ThreadSafePluginManager as PluginManager
+from yosai_intel_dashboard.src.services.data_processing.core.protocols import PluginMetadata
 
 
 class SimplePlugin:
@@ -57,7 +57,7 @@ def test_load_all_plugins(tmp_path):
     plugin_file = pkg_dir / "plug.py"
     plugin_file.write_text(
         """
-from services.data_processing.core.protocols import PluginMetadata
+from yosai_intel_dashboard.src.services.data_processing.core.protocols import PluginMetadata
 
 class Plug:
     metadata = PluginMetadata(

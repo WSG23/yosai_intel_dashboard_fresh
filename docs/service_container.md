@@ -10,9 +10,9 @@ explicit instance is not supplied.
 Create a container and register implementations with the desired lifetime:
 
 ```python
-from core.service_container import ServiceContainer
-from services.analytics_service import AnalyticsService
-from services.interfaces import AnalyticsServiceProtocol
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.services.analytics_service import AnalyticsService
+from yosai_intel_dashboard.src.services.interfaces import AnalyticsServiceProtocol
 
 container = ServiceContainer()
 container.register_singleton(

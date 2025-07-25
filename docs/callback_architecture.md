@@ -9,8 +9,8 @@ namespace.
 ## Registering Callbacks
 
 ```python
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from core.callback_events import CallbackEvent
+from yosai_intel_dashboard.src.core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
 
 callbacks = TrulyUnifiedCallbacks(app)
 
@@ -45,7 +45,7 @@ def submit_query(n):
 
 ```python
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
-from core.callback_events import CallbackEvent
+from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
 
 events = CallbackManager()
 
@@ -63,7 +63,7 @@ useful when a Dash callback needs to orchestrate multiple steps.
 
 
 ```python
-from core.callbacks import UnifiedCallbackManager
+from yosai_intel_dashboard.src.core.callbacks import UnifiedCallbackManager
 
 ops = UnifiedCallbackManager()
 ops.register_operation("refresh", load_data)

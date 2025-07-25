@@ -1,7 +1,7 @@
 import pytest
 import dash_bootstrap_components as dbc
 
-from services.analytics_processing import create_analysis_results_display
+from yosai_intel_dashboard.src.services.analytics_processing import create_analysis_results_display
 
 pytestmark = pytest.mark.usefixtures("fake_dbc")
 

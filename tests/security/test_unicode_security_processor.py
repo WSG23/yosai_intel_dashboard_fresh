@@ -1,4 +1,4 @@
-from core.unicode import sanitize_unicode_input
+from yosai_intel_dashboard.src.core.unicode import sanitize_unicode_input
 
 
 def test_sanitize_unicode_removes_surrogates_and_normalizes():

@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Callable
 import pandas as pd
 
 try:
-    from services.upload.protocols import UploadStorageProtocol, FileProcessorProtocol
+    from yosai_intel_dashboard.src.services.upload.protocols import UploadStorageProtocol, FileProcessorProtocol
 except Exception:  # pragma: no cover - fallback stubs for optional deps
     from typing import Protocol
 
@@ -31,7 +31,7 @@ except Exception:  # pragma: no cover - fallback stubs for optional deps
         ) -> tuple[pd.DataFrame, str]: ...
 
 try:
-    from services.interfaces import (
+    from yosai_intel_dashboard.src.services.interfaces import (
         DeviceLearningServiceProtocol,
         UploadDataServiceProtocol,
     )
@@ -61,7 +61,7 @@ except Exception:  # pragma: no cover - fallback stubs
         def load_dataframe(self, filename: str) -> pd.DataFrame: ...
 
 try:
-    from services.configuration_service import ConfigurationServiceProtocol
+    from yosai_intel_dashboard.src.services.configuration_service import ConfigurationServiceProtocol
 except Exception:  # pragma: no cover - fallback stub
     from typing import Protocol
 
@@ -70,7 +70,7 @@ except Exception:  # pragma: no cover - fallback stub
         def get_max_upload_size_bytes(self) -> int: ...
 
 try:
-    from core.protocols import UnicodeProcessorProtocol
+    from yosai_intel_dashboard.src.core.protocols import UnicodeProcessorProtocol
 except Exception:  # pragma: no cover - fallback stub
     from typing import Protocol
 

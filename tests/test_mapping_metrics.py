@@ -1,5 +1,5 @@
 import pandas as pd
-from core import performance
+from yosai_intel_dashboard.src.core import performance
 import importlib.util
 from pathlib import Path
 

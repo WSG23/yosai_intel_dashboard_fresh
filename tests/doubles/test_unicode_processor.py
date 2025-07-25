@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.protocols import UnicodeProcessorProtocol
+from yosai_intel_dashboard.src.core.protocols import UnicodeProcessorProtocol
 
 
 class TestUnicodeProcessor(UnicodeProcessorProtocol):

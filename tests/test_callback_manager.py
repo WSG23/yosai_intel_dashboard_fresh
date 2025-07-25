@@ -1,6 +1,6 @@
 import threading
 
-from core.callback_events import CallbackEvent
+from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
 
 

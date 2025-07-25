@@ -109,7 +109,7 @@ dependency injection mechanism. It resolves services by name and caches
 instances created by registered factories.
 
 ```python
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
 
 container = ServiceContainer()
 container.register_factory("db", DatabaseManager)

@@ -13,7 +13,7 @@ def test_detect_deprecated_imports(tmp_path):
     rules = tmp_path / "rules.yaml"
     rules.write_text("deprecated_imports:\n  - old.module\n", encoding="utf-8")
 
-    create_temp_file(tmp_path / "a.py", "import services.analytics.data_loader\n")
+    create_temp_file(tmp_path / "a.py", "import yosai_intel_dashboard.src.services.analytics.data_loader\n")
     create_temp_file(tmp_path / "b.py", "from old.module import foo\n")
 
     detector = LegacyCodeDetector(rules)

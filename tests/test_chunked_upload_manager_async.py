@@ -5,7 +5,7 @@ import pytest
 
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
-from services.upload.chunked_upload_manager_async import ChunkedUploadManager
+from yosai_intel_dashboard.src.services.upload.chunked_upload_manager_async import ChunkedUploadManager
 from utils.upload_store import UploadedDataStore
 
 

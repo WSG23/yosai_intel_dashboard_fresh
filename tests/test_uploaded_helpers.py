@@ -7,7 +7,7 @@ from analytics.file_processing_utils import (
     update_counts,
     update_timestamp_range,
 )
-from services import AnalyticsService
+from yosai_intel_dashboard.src.services import AnalyticsService
 from tests.fakes import FakeUploadDataService, FakeUploadStore
 
 

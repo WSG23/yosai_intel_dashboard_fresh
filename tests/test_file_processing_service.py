@@ -1,6 +1,6 @@
 import pandas as pd
 
-from services.data_processing.file_processor import FileProcessor
+from yosai_intel_dashboard.src.services.data_processing.file_processor import FileProcessor
 
 
 def test_process_csv(tmp_path):

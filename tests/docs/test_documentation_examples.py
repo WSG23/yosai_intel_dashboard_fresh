@@ -1,5 +1,5 @@
 from analytics_core import create_manager
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
 
 
 class DatabaseManager:

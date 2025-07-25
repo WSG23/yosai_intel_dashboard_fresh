@@ -1,6 +1,6 @@
 import pandas as pd
 
-from services.upload_data_service import (
+from yosai_intel_dashboard.src.services.upload_data_service import (
     get_uploaded_data,
     get_uploaded_filenames,
     clear_uploaded_data,

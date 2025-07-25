@@ -36,7 +36,7 @@ This separation makes the pipeline extensible and easier to test as new data sou
 Example event:
 ```python
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
-from core.callback_events import CallbackEvent
+from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
 
 manager = CallbackManager()
 manager.trigger(CallbackEvent.FILE_UPLOAD_COMPLETE, "uploader", {"rows": len(df)})
