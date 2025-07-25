@@ -15,6 +15,8 @@ import (
 	"syscall"
 	"time"
 
+	vault "github.com/hashicorp/vault/api"
+
 	_ "github.com/lib/pq"
 
 	"github.com/WSG23/yosai-gateway/events"
@@ -46,6 +48,41 @@ func validateRequiredEnv(vars []string) {
 	}
 }
 
+func newVaultClient() (*vault.Client, error) {
+	cfg := vault.DefaultConfig()
+	if err := cfg.ReadEnvironment(); err != nil {
+		return nil, err
+	}
+	c, err := vault.NewClient(cfg)
+	if err != nil {
+		return nil, err
+	}
+	token := os.Getenv("VAULT_TOKEN")
+	if token == "" {
+		return nil, fmt.Errorf("VAULT_TOKEN not set")
+	}
+	c.SetToken(token)
+	return c, nil
+}
+
+func readVaultField(c *vault.Client, path string) (string, error) {
+	parts := strings.SplitN(path, "#", 2)
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid vault path %q", path)
+	}
+	p, field := parts[0], parts[1]
+	secretPath := strings.TrimPrefix(p, "secret/data/")
+	s, err := c.KVv2("secret").Get(context.Background(), secretPath)
+	if err != nil {
+		return "", err
+	}
+	val, ok := s.Data[field].(string)
+	if !ok {
+		return "", fmt.Errorf("field %s not found at %s", field, p)
+	}
+	return val, nil
+}
+
 func main() {
 	b, err := framework.NewServiceBuilder("gateway", "")
 	if err != nil {
@@ -58,7 +95,20 @@ func main() {
 	go svc.Start()
 	defer svc.Stop()
 
-	validateRequiredEnv([]string{"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_GATEWAY_NAME"})
+	validateRequiredEnv([]string{"DB_HOST", "DB_PORT", "DB_USER", "DB_GATEWAY_NAME"})
+
+	vclient, err := newVaultClient()
+	if err != nil {
+		log.Fatalf("failed to init vault client: %v", err)
+	}
+	dbPassword, err := readVaultField(vclient, "secret/data/db#password")
+	if err != nil {
+		log.Fatalf("failed to read db password: %v", err)
+	}
+	jwtSecret, err := readVaultField(vclient, "secret/data/jwt#secret")
+	if err != nil {
+		log.Fatalf("failed to read jwt secret: %v", err)
+	}
 
 	shutdown, err := tracing.InitTracing("gateway")
 	if err != nil {
@@ -88,7 +138,7 @@ func main() {
 		sslMode = "require"
 	}
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
-		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), dbName, os.Getenv("DB_PASSWORD"), sslMode)
+		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), dbName, dbPassword, sslMode)
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		tracing.Logger.Fatalf("failed to connect db: %v", err)
@@ -179,7 +229,7 @@ func main() {
 
 	// enable middleware based on env vars
 	if os.Getenv("ENABLE_AUTH") == "1" {
-		g.UseAuth()
+		g.UseAuth([]byte(jwtSecret))
 
 	}
 

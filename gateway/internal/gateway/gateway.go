@@ -57,8 +57,8 @@ func New() (*Gateway, error) {
 }
 
 // UseAuth enables auth middleware.
-func (g *Gateway) UseAuth() {
-	g.router.Use(imw.Auth)
+func (g *Gateway) UseAuth(secret []byte) {
+	g.router.Use(imw.Auth(secret))
 }
 
 // UseRateLimit enables rate limiting middleware.

@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -13,16 +12,15 @@ import (
 	"github.com/WSG23/yosai-gateway/internal/middleware"
 )
 
-func setupRouter() *mux.Router {
+func setupRouter(secret []byte) *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/health", HealthCheck).Methods(http.MethodGet)
-	r.Use(middleware.Auth)
+	r.Use(middleware.Auth(secret))
 	return r
 }
 
 func TestHealthUnauthorized(t *testing.T) {
-	os.Setenv("JWT_SECRET", "test")
-	r := setupRouter()
+	r := setupRouter([]byte("test"))
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	resp := httptest.NewRecorder()
@@ -35,8 +33,7 @@ func TestHealthUnauthorized(t *testing.T) {
 
 func TestHealthAuthorized(t *testing.T) {
 	secret := []byte("test")
-	os.Setenv("JWT_SECRET", string(secret))
-	r := setupRouter()
+	r := setupRouter(secret)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": "svc",
