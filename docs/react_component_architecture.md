@@ -16,15 +16,14 @@ hooks.
 - **Settings** – application preferences (`src/pages/Settings.tsx`).
 
 Navigation between pages is handled by the **Navbar** component
-(`src/components/layout/Navbar.tsx`) which uses `react-router-dom`.
+(`src/components/shared/Navbar.tsx`) which uses `react-router-dom`.
 
 ## Shared Components
 
 Reusable widgets such as `Button`, `Card`, `Input` and `ProgressBar` are defined
 in `src/components/shared`. Complex upload functionality is split into smaller
 components under `src/components/upload` (for example
-`FilePreview` and `ColumnMappingModal`). Layout helpers like `Navbar` and the
-optional `Sidebar` live under `src/components/layout`.
+`FilePreview` and `ColumnMappingModal`).
 
 ## Hooks
 
