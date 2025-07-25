@@ -1245,6 +1245,10 @@ The SQL file creates an `access_events` hypertable with policies:
 * **Compression** after thirty days: `add_compression_policy('access_events', INTERVAL '30 days')`
 * **Retention** after one year: `add_retention_policy('access_events', INTERVAL '365 days')`
 
+The durations may be adjusted via the environment variables
+`TIMESCALE_COMPRESSION_DAYS` and `TIMESCALE_RETENTION_DAYS`.
+
+
 It also defines indexes used by the migration:
 
 * `idx_access_events_timestamp` on the event timestamp

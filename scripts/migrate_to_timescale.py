@@ -174,19 +174,34 @@ def setup_timescale(conn: connection) -> None:
 
         # indexes for common query patterns
         cur.execute(
-            "CREATE INDEX IF NOT EXISTS idx_access_events_person ON access_events(person_id)"
+            (
+                "CREATE INDEX IF NOT EXISTS idx_access_events_person "
+                "ON access_events(person_id)"
+            )
         )
         cur.execute(
-            "CREATE INDEX IF NOT EXISTS idx_access_events_device ON access_events(door_id)"
+            (
+                "CREATE INDEX IF NOT EXISTS idx_access_events_device "
+                "ON access_events(door_id)"
+            )
         )
         cur.execute(
-            "CREATE INDEX IF NOT EXISTS idx_access_events_location ON access_events(facility_id)"
+            (
+                "CREATE INDEX IF NOT EXISTS idx_access_events_location "
+                "ON access_events(facility_id)"
+            )
         )
         cur.execute(
-            "CREATE INDEX IF NOT EXISTS idx_access_events_decision ON access_events(access_result)"
+            (
+                "CREATE INDEX IF NOT EXISTS idx_access_events_decision "
+                "ON access_events(access_result)"
+            )
         )
         cur.execute(
-            "CREATE INDEX IF NOT EXISTS idx_access_events_metadata ON access_events USING GIN(metadata)"
+            (
+                "CREATE INDEX IF NOT EXISTS idx_access_events_metadata "
+                "ON access_events USING GIN(metadata)"
+            )
         )
 
         # continuous aggregate
