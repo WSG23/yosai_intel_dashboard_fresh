@@ -1,0 +1,97 @@
+# Template for blue/green deployment using Istio routing
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-service-blue
+  labels:
+    app: example-service
+    color: blue
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: example-service
+      color: blue
+  template:
+    metadata:
+      labels:
+        app: example-service
+        color: blue
+    spec:
+      containers:
+        - name: example-service
+          image: example:latest
+          ports:
+            - containerPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-service-green
+  labels:
+    app: example-service
+    color: green
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: example-service
+      color: green
+  template:
+    metadata:
+      labels:
+        app: example-service
+        color: green
+    spec:
+      containers:
+        - name: example-service
+          image: example:latest
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: example-service
+spec:
+  selector:
+    app: example-service
+    color: blue
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: example-service
+spec:
+  host: example-service
+  subsets:
+    - name: blue
+      labels:
+        color: blue
+    - name: green
+      labels:
+        color: green
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: example-service
+spec:
+  hosts:
+    - example-service
+  http:
+    - route:
+        - destination:
+            host: example-service
+            subset: blue
+          weight: 100
+        - destination:
+            host: example-service
+            subset: green
+          weight: 0
