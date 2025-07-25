@@ -16,16 +16,8 @@ __all__ = [
     "UnicodeValidator",
     "UnicodeSanitizer",
     "UnicodeEncoder",
-    "clean_unicode_surrogates",
-    "clean_unicode_text",
-    "safe_encode_text",
-    "UnicodeQueryHandler",
-    "decode_upload_content",
-    "sanitize_dataframe",
-    "encode_query",
-
+    "UnicodeSQLProcessor",
 ]
-
 
 def __getattr__(name: str):
     if name == "UnicodeValidator":
@@ -38,7 +30,7 @@ def __getattr__(name: str):
         from core import unicode as _u
 
         return _u.sanitize_unicode_input
-    if name == "UnicodeEncoder":
+    if name in {"UnicodeEncoder", "UnicodeSQLProcessor"}:
         from core import unicode as _u
 
         return _u.UnicodeSQLProcessor
@@ -49,53 +41,34 @@ def __getattr__(name: str):
     if name == "UnicodeQueryHandler":
         from config.database_exceptions import UnicodeEncodingError
 
-        class _Handler:
-            @staticmethod
-            def safe_encode_query(query):
-                cleaned = clean_unicode_surrogates(query)
-                if cleaned != query:
-                    raise UnicodeEncodingError("Invalid Unicode", original_value=query)
-                return cleaned
+class UnicodeQueryHandler:
+    """Compatibility wrapper for safe SQL encoding."""
 
-            @staticmethod
-            def safe_encode_params(params):
-                if params is None:
-                    return None
-                if isinstance(params, dict):
-                    return {k: _Handler.safe_encode_query(v) for k, v in params.items()}
-                if isinstance(params, (list, tuple, set)):
-                    return type(params)(_Handler.safe_encode_query(v) for v in params)
-                return _Handler.safe_encode_query(params)
+    @staticmethod
+    def safe_encode_query(query: str) -> str:
+        from core.unicode import UnicodeSQLProcessor
 
-        return _Handler
-    if name == "clean_unicode_surrogates":
-        def _clean(text: str, replacement: str = "") -> str:
-            if not isinstance(text, str):
-                text = str(text)
-            out = []
-            i = 0
-            while i < len(text):
-                ch = text[i]
-                code = ord(ch)
-                if 0xD800 <= code <= 0xDBFF and i + 1 < len(text):
-                    next_code = ord(text[i + 1])
-                    if 0xDC00 <= next_code <= 0xDFFF:
-                        pair = ((code - 0xD800) << 10) + (next_code - 0xDC00) + 0x10000
-                        out.append(chr(pair))
-                        i += 2
-                        continue
-                    if replacement:
-                        out.append(replacement)
-                    i += 1
-                    continue
-                if 0xDC00 <= code <= 0xDFFF:
-                    if replacement:
-                        out.append(replacement)
-                    i += 1
-                    continue
-                out.append(ch)
-                i += 1
-            return "".join(out)
+        return UnicodeSQLProcessor.encode_query(query)
 
-        return _clean
-    raise AttributeError(name)
+    @staticmethod
+    def safe_encode_params(params):
+        if params is None:
+            return None
+        return tuple(
+            UnicodeQueryHandler.safe_encode_query(p) if isinstance(p, str) else p
+            for p in params
+        )
+
+
+__all__.append("UnicodeQueryHandler")
+
+
+def clean_unicode_surrogates(text: str, replacement: str = "") -> str:
+    """Compatibility shim for legacy imports."""
+    from core.unicode import clean_surrogate_chars
+
+    return clean_surrogate_chars(text, replacement)
+
+
+__all__.append("clean_unicode_surrogates")
+

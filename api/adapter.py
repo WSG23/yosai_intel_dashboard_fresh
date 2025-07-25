@@ -15,7 +15,7 @@ from services.security import require_token
 
 csrf = CSRFProtect()
 
-from api.analytics_endpoints import register_analytics_blueprints, init_cache_manager
+from api.analytics_router import router as analytics_router, init_cache_manager
 from settings_endpoint import settings_bp
 
 from config.constants import API_PORT
@@ -30,7 +30,9 @@ def create_api_app() -> "FastAPI":
     validate_all_secrets()
     service = BaseService("api", "")
     service.start()
-    build_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "build"))
+    build_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), os.pardir, "build")
+    )
     app = Flask(__name__, static_folder=build_dir, static_url_path="/")
 
     # Initialize RBAC service
@@ -52,8 +54,8 @@ def create_api_app() -> "FastAPI":
     settings = get_security_config()
     CORS(app, origins=settings.cors_origins)
 
-    # Third-party analytics demo endpoints
-    register_analytics_blueprints(app)
+    # Third-party analytics demo endpoints (FastAPI router)
+    service.app.include_router(analytics_router)
     service.app.add_event_handler("startup", init_cache_manager)
 
     # Core upload and mapping endpoints
