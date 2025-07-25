@@ -874,6 +874,7 @@ with the helper tools:
 ```bash
 python tools/validate_unicode_cleanup.py
 python tools/validate_unicode_migration.py
+python tools/audit_unicode_usage.py
 ```
 
 The repository also includes a helper for enforcing snake_case names.
