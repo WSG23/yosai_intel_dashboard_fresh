@@ -4,12 +4,40 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Optional
+import sys
+from pathlib import Path
 
-from config.base import DataQualityThresholds
+from typing import TYPE_CHECKING
+pkg = sys.modules.get("monitoring")
+if pkg is not None and not getattr(pkg, "__path__", None):  # fix test stubs
+    pkg.__path__ = [str(Path(__file__).resolve().parent)]
 
-from core.performance import MetricType, get_performance_monitor
-from core.monitoring.user_experience_metrics import AlertConfig, AlertDispatcher
-from config import get_monitoring_config
+try:
+    from monitoring.prometheus.data_quality import (
+        avro_decoding_failures,
+        compatibility_failures,
+    )
+except Exception:  # pragma: no cover - metrics optional for tests
+    class _DummyCounter:
+        def inc(self) -> None:
+            pass
+
+    avro_decoding_failures = _DummyCounter()
+    compatibility_failures = _DummyCounter()
+
+if TYPE_CHECKING:  # pragma: no cover - for type hints only
+    from config.base import DataQualityThresholds
+
+try:  # pragma: no cover - optional dependency
+    from config import get_monitoring_config
+except Exception:  # pragma: no cover - minimal fallback for tests
+    def get_monitoring_config() -> dict:
+        return {}
+
+# Local imports are deferred to avoid heavy dependencies during module import
+if TYPE_CHECKING:  # pragma: no cover - type hints only
+    from core.performance import MetricType
+    from core.monitoring.user_experience_metrics import AlertConfig, AlertDispatcher
 
 
 @dataclass
@@ -24,7 +52,11 @@ class DataQualityMetrics:
 class DataQualityMonitor:
     """Emit data quality metrics and trigger alerts based on thresholds."""
 
-    def __init__(self, thresholds: Optional["DataQualityThresholds"] = None, dispatcher: Optional[AlertDispatcher] = None) -> None:
+    def __init__(
+        self,
+        thresholds: Optional["DataQualityThresholds"] = None,
+        dispatcher: Optional["AlertDispatcher"] = None,
+    ) -> None:
         cfg = get_monitoring_config()
         dq_cfg = getattr(cfg, "data_quality", None)
         if isinstance(dq_cfg, dict):
@@ -38,27 +70,44 @@ class DataQualityMonitor:
 
         alert_cfg = getattr(cfg, "alerting", {})
         if isinstance(alert_cfg, dict):
+            from core.monitoring.user_experience_metrics import AlertConfig
             ac = AlertConfig(
                 slack_webhook=alert_cfg.get("slack_webhook"),
                 email=alert_cfg.get("email"),
                 webhook_url=alert_cfg.get("webhook_url"),
             )
         else:
+            from core.monitoring.user_experience_metrics import AlertConfig
             ac = AlertConfig(
                 slack_webhook=getattr(alert_cfg, "slack_webhook", None),
                 email=getattr(alert_cfg, "email", None),
                 webhook_url=getattr(alert_cfg, "webhook_url", None),
             )
+        from core.monitoring.user_experience_metrics import AlertDispatcher
         self.dispatcher = dispatcher or AlertDispatcher(ac)
+        self._avro_failures = 0
+        self._compatibility_failures = 0
 
     # ------------------------------------------------------------------
     def emit(self, metrics: DataQualityMetrics) -> None:
         """Record metrics and send alerts if thresholds are exceeded."""
+        from core.performance import MetricType, get_performance_monitor
+
         monitor = get_performance_monitor()
-        monitor.record_metric("data_quality.missing_ratio", metrics.missing_ratio, MetricType.FILE_PROCESSING)
-        monitor.record_metric("data_quality.outlier_ratio", metrics.outlier_ratio, MetricType.FILE_PROCESSING)
         monitor.record_metric(
-            "data_quality.schema_violations", metrics.schema_violations, MetricType.FILE_PROCESSING
+            "data_quality.missing_ratio",
+            metrics.missing_ratio,
+            MetricType.FILE_PROCESSING,
+        )
+        monitor.record_metric(
+            "data_quality.outlier_ratio",
+            metrics.outlier_ratio,
+            MetricType.FILE_PROCESSING,
+        )
+        monitor.record_metric(
+            "data_quality.schema_violations",
+            metrics.schema_violations,
+            MetricType.FILE_PROCESSING,
         )
         self._check_thresholds(metrics)
 
@@ -81,6 +130,33 @@ class DataQualityMonitor:
             msg = "Data quality alert: " + "; ".join(problems)
             self.dispatcher.send_alert(msg)
 
+    # ------------------------------------------------------------------
+    def record_avro_failure(self) -> None:
+        """Increment counter for Avro decoding failures."""
+        self._avro_failures += 1
+        avro_decoding_failures.inc()
+        if (
+            self.thresholds.max_avro_decode_failures
+            and self._avro_failures > self.thresholds.max_avro_decode_failures
+        ):
+            self.dispatcher.send_alert(
+                "Data quality alert: avro decoding failures exceeded threshold"
+            )
+
+    # ------------------------------------------------------------------
+    def record_compatibility_failure(self) -> None:
+        """Increment counter for schema compatibility check failures."""
+        self._compatibility_failures += 1
+        compatibility_failures.inc()
+        if (
+            self.thresholds.max_compatibility_failures
+            and self._compatibility_failures
+            > self.thresholds.max_compatibility_failures
+        ):
+            self.dispatcher.send_alert(
+                "Data quality alert: compatibility checks failed"
+            )
+
 
 _data_quality_monitor: Optional[DataQualityMonitor] = None
 
@@ -97,5 +173,9 @@ __all__ = [
     "DataQualityMetrics",
     "DataQualityMonitor",
     "DataQualityThresholds",
+    "avro_decoding_failures",
+    "compatibility_failures",
+    "record_avro_failure",
+    "record_compatibility_failure",
     "get_data_quality_monitor",
 ]

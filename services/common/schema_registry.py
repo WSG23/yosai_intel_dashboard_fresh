@@ -9,6 +9,7 @@ from functools import lru_cache
 from typing import Any, Dict
 
 import requests
+from monitoring.data_quality_monitor import get_data_quality_monitor
 
 
 @dataclass
@@ -59,7 +60,10 @@ class SchemaRegistryClient:
             f"/compatibility/subjects/{subject}/versions/{version}",
             {"schema": json.dumps(schema)},
         )
-        return bool(data.get("is_compatible"))
+        is_compatible = bool(data.get("is_compatible"))
+        if not is_compatible:
+            get_data_quality_monitor().record_compatibility_failure()
+        return is_compatible
 
 
 __all__ = ["SchemaRegistryClient", "SchemaInfo"]

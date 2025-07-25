@@ -11,6 +11,7 @@ from confluent_kafka import Consumer
 from fastavro import parse_schema, schemaless_reader
 
 from services.common.schema_registry import SchemaRegistryClient
+from monitoring.data_quality_monitor import get_data_quality_monitor
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,7 @@ class AvroConsumer:
         try:
             msg.decoded = self._decode(msg.value())  # type: ignore[attr-defined]
         except Exception as exc:
+            get_data_quality_monitor().record_avro_failure()
             logger.error("Failed to decode message: %s", exc)
             return None
         return msg

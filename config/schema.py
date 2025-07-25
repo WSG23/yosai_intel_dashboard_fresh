@@ -158,6 +158,8 @@ class DataQualityThresholds(BaseModel):
     max_missing_ratio: float = 0.1
     max_outlier_ratio: float = 0.01
     max_schema_violations: int = 0
+    max_avro_decode_failures: int = 0
+    max_compatibility_failures: int = 0
 
 
 class SecretValidationSettings(BaseModel):

@@ -1,30 +1,16 @@
-"""Monitoring utilities package."""
+"""Monitoring utilities package with lazy imports."""
 
-from core.performance import PerformanceMonitor
-
-from .data_quality_monitor import (
-    DataQualityMetrics,
-    DataQualityMonitor,
-    get_data_quality_monitor,
-)
-from .kafka_health import check_cluster_health
-from .model_performance_monitor import (
-    ModelMetrics,
-    ModelPerformanceMonitor,
-    get_model_performance_monitor,
-)
-from .ui_monitor import RealTimeUIMonitor, get_ui_monitor
-from .prometheus.deprecation import (
-    deprecated_calls,
-    record_deprecated_call,
-    start_deprecation_metrics_server,
-)
+from __future__ import annotations
 
 __all__ = [
     "PerformanceMonitor",
     "DataQualityMonitor",
     "DataQualityMetrics",
     "get_data_quality_monitor",
+    "avro_decoding_failures",
+    "compatibility_failures",
+    "record_avro_failure",
+    "record_compatibility_failure",
     "ModelPerformanceMonitor",
     "ModelMetrics",
     "get_model_performance_monitor",
@@ -35,3 +21,57 @@ __all__ = [
     "record_deprecated_call",
     "start_deprecation_metrics_server",
 ]
+
+
+def __getattr__(name: str):
+    if name == "PerformanceMonitor":
+        from core.performance import PerformanceMonitor
+        return PerformanceMonitor
+    if name in {
+        "DataQualityMonitor",
+        "DataQualityMetrics",
+        "get_data_quality_monitor",
+        "avro_decoding_failures",
+        "compatibility_failures",
+        "record_avro_failure",
+        "record_compatibility_failure",
+    }:
+        from .data_quality_monitor import (
+            DataQualityMonitor,
+            DataQualityMetrics,
+            get_data_quality_monitor,
+            avro_decoding_failures,
+            compatibility_failures,
+            record_avro_failure,
+            record_compatibility_failure,
+        )
+        return locals()[name]
+    if name == "check_cluster_health":
+        from .kafka_health import check_cluster_health
+        return check_cluster_health
+    if name in {
+        "ModelPerformanceMonitor",
+        "ModelMetrics",
+        "get_model_performance_monitor",
+    }:
+        from .model_performance_monitor import (
+            ModelPerformanceMonitor,
+            ModelMetrics,
+            get_model_performance_monitor,
+        )
+        return locals()[name]
+    if name in {"RealTimeUIMonitor", "get_ui_monitor"}:
+        from .ui_monitor import RealTimeUIMonitor, get_ui_monitor
+        return locals()[name]
+    if name in {
+        "deprecated_calls",
+        "record_deprecated_call",
+        "start_deprecation_metrics_server",
+    }:
+        from .prometheus.deprecation import (
+            deprecated_calls,
+            record_deprecated_call,
+            start_deprecation_metrics_server,
+        )
+        return locals()[name]
+    raise AttributeError(name)
