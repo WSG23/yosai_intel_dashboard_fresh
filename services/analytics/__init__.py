@@ -1,5 +1,6 @@
 """Analytics Domain Public API."""
 
+from .async_service import AsyncAnalyticsService
 from .calculator import Calculator
 from .data_loader import DataLoader
 from .metrics_calculator import MetricsCalculator
@@ -40,4 +41,5 @@ __all__ = [
     "build_sliding_window_query",
     "fetch_time_buckets",
     "fetch_sliding_window",
+    "AsyncAnalyticsService",
 ]
