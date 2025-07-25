@@ -5,6 +5,11 @@ try:  # Python 3.12+
 except ImportError:  # pragma: no cover - <3.12
     from typing_extensions import override
 
+try:  # Python 3.12+
+    from typing import override
+except ImportError:  # pragma: no cover - fallback for older versions
+    from typing_extensions import override
+
 import pandas as pd
 
 from core.service_container import ServiceContainer

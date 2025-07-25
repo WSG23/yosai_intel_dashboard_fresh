@@ -16,6 +16,11 @@ try:  # Python 3.12+
 except ImportError:  # pragma: no cover - <3.12
     from typing_extensions import override
 
+try:  # Python 3.12+
+    from typing import override
+except ImportError:  # pragma: no cover - fallback for older versions
+    from typing_extensions import override
+
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
@@ -220,6 +225,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         """Get analytics from database."""
         return self.database_retriever.get_analytics()
 
+    @override
     @cache_with_lock(_cache_manager, ttl=300)
     @override
     def get_dashboard_summary(self) -> Dict[str, Any]:
@@ -333,15 +339,18 @@ class AnalyticsService(AnalyticsServiceProtocol):
     # ------------------------------------------------------------------
     # AnalyticsProviderProtocol implementation
     # ------------------------------------------------------------------
+    @override
     def process_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Alias for :meth:`process_data` required by ``AnalyticsProviderProtocol``."""
         return self.process_data(df)
 
+    @override
     def process_data(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Process ``df`` and return a metrics dictionary."""
         cleaned = self.clean_uploaded_dataframe(df)
         return self.summarize_dataframe(cleaned)
 
+    @override
     def get_metrics(self) -> Dict[str, Any]:
         """Return current analytics metrics."""
         return self.get_analytics_status()
