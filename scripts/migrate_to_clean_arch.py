@@ -6,6 +6,7 @@ import argparse
 import json
 import shutil
 import sys
+import tarfile
 from pathlib import Path
 
 from migrate import _check_git_clean  # reuse helper from migrate.py
@@ -41,52 +42,45 @@ def move_path(src: Path, dest: Path, dry_run: bool) -> None:
         shutil.move(str(src), str(dest))
 
 
-def backup_directory(src: Path, backup_root: Path, dry_run: bool) -> None:
-    """Copy ``src`` into ``backup_root`` preserving directory structure."""
-    if not src.exists():
-        return
-    dest = backup_root / src.relative_to(ROOT)
+def create_backup(mapping: dict[str, str], archive: Path, dry_run: bool) -> None:
+    """Archive the directories defined in ``mapping``."""
     if dry_run:
-        print(f"[DRY] Backup {src} -> {dest}")
+        print(f"[DRY] Creating backup {archive}")
         return
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    if dest.exists():
-        shutil.rmtree(dest)
-    shutil.copytree(src, dest)
+    with tarfile.open(archive, "w:gz") as tar:
+        for src_rel in mapping.keys():
+            src = ROOT / src_rel
+            if src.exists():
+                tar.add(src, arcname=src_rel)
 
 
-def restore_directory(src: Path, backup_root: Path, dry_run: bool) -> None:
-    """Restore ``src`` from ``backup_root`` if a backup exists."""
-    backup = backup_root / src.relative_to(ROOT)
-    if not backup.exists():
-        return
+def restore_backup(archive: Path, dry_run: bool) -> None:
+    """Extract directories from ``archive`` into the repository root."""
     if dry_run:
-        print(f"[DRY] Restore {src} <- {backup}")
+        print(f"[DRY] Restoring from {archive}")
         return
-    if src.exists():
-        shutil.rmtree(src)
-    shutil.copytree(backup, src)
+    with tarfile.open(archive, "r:gz") as tar:
+        tar.extractall(path=ROOT)
 
 
-def migrate(mapping: dict[str, str], dry_run: bool, backup_root: Path | None = None) -> None:
+def migrate(mapping: dict[str, str], dry_run: bool, backup_archive: Path | None = None) -> None:
+    if backup_archive is not None:
+        create_backup(mapping, backup_archive, dry_run)
     for src_rel, dest_rel in mapping.items():
         src = ROOT / src_rel
         dest = ROOT / dest_rel
-        if backup_root is not None:
-            backup_directory(src, backup_root, dry_run)
         move_path(src, dest, dry_run)
 
 
-def rollback(mapping: dict[str, str], backup_root: Path, dry_run: bool) -> None:
-    for src_rel, dest_rel in mapping.items():
-        src = ROOT / src_rel
+def rollback(mapping: dict[str, str], archive: Path, dry_run: bool) -> None:
+    for dest_rel in mapping.values():
         dest = ROOT / dest_rel
         if dest.exists():
             if dry_run:
                 print(f"[DRY] Removing {dest}")
             else:
                 shutil.rmtree(dest)
-        restore_directory(src, backup_root, dry_run)
+    restore_backup(archive, dry_run)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -96,12 +90,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--backup",
         type=Path,
-        help="Directory to store backups before moving",
+        help="Create backup archive before moving",
     )
     parser.add_argument(
         "--rollback",
-        action="store_true",
-        help="Restore directories from backup",
+        type=Path,
+        help="Restore directories from the given backup archive",
     )
     args = parser.parse_args(argv)
 
@@ -109,11 +103,9 @@ def main(argv: list[str] | None = None) -> int:
     _check_git_clean()
 
     if args.rollback:
-        if args.backup is None:
-            raise SystemExit("--rollback requires --backup")
-        rollback(mapping, args.backup, args.dry_run)
+        rollback(mapping, args.rollback, args.dry_run)
     else:
-        migrate(mapping, dry_run=args.dry_run, backup_root=args.backup)
+        migrate(mapping, dry_run=args.dry_run, backup_archive=args.backup)
     return 0
 
 

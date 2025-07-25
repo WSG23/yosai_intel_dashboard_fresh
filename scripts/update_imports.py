@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import re
 from pathlib import Path
+from typing import IO
 
 ROOT = Path(__file__).resolve().parents[1]
 PATTERNS = {
@@ -27,7 +28,7 @@ PATTERNS = {
 }
 
 
-def update_file(path: Path) -> None:
+def update_file(path: Path, reporter: IO[str] | None = None) -> bool:
     text = path.read_text()
     new_text = text
     for pattern, repl in PATTERNS.items():
@@ -35,19 +36,42 @@ def update_file(path: Path) -> None:
     if new_text != text:
         path.write_text(new_text)
         print(f"Updated {path}")
+        if reporter is not None:
+            reporter.write(f"{path}\n")
+        return True
+    return False
 
 
-def process_paths(paths: list[Path]) -> None:
+def process_paths(paths: list[Path], reporter: IO[str] | None = None) -> None:
     for root in paths:
         for py_file in root.rglob("*.py"):
-            update_file(py_file)
+            update_file(py_file, reporter)
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Rewrite import statements")
     parser.add_argument("paths", nargs="*", type=Path, default=[ROOT])
+    parser.add_argument(
+        "--verify",
+        action="store_true",
+        help="Run verify_imports after rewriting",
+    )
+    parser.add_argument("--report", type=Path, help="File to record updated paths")
     args = parser.parse_args(argv)
-    process_paths(args.paths)
+
+    report_fh: IO[str] | None = None
+    if args.report is not None:
+        report_fh = args.report.open("w", encoding="utf-8")
+
+    process_paths(args.paths, reporter=report_fh)
+
+    if report_fh is not None:
+        report_fh.close()
+
+    if args.verify:
+        from scripts.verify_imports import verify_paths
+
+        return verify_paths(args.paths)
     return 0
 
 

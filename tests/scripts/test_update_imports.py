@@ -45,3 +45,20 @@ def test_update_imports_cli(tmp_path: Path) -> None:
     main([str(tmp_path)])
     expected = "from yosai_intel_dashboard.src.infrastructure.config import x\n"
     assert file_path.read_text() == expected
+
+
+def test_update_imports_report_and_verify(tmp_path: Path) -> None:
+    bad = tmp_path / "bad.py"
+    bad.write_text("from config import y\n")
+    report = tmp_path / "changes.txt"
+    exit_code = main([
+        str(tmp_path),
+        "--verify",
+        "--report",
+        str(report),
+    ])
+    expected = "from yosai_intel_dashboard.src.infrastructure.config import y\n"
+    assert bad.read_text() == expected
+    assert report.read_text().strip() == str(bad)
+    assert exit_code == 0
+
