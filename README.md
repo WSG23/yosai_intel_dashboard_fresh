@@ -38,6 +38,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Comprehensive Testing Strategy](docs/comprehensive_testing_strategy.md)
 - [Service Mesh Evaluation](docs/service_mesh_evaluation.md)
 - [Internal Service Interfaces](docs/internal_services.md)
+- [Analytics Async Service](docs/analytics_async_migration.md)
 - [Feature Store](docs/feature_store.md)
 
 <p align="center">
@@ -927,7 +928,7 @@ manager.execute_query_with_retry("SELECT 1")
 -### Services Layer (`services/`)
 - All services rely on `yosai_framework.BaseService` for metrics, tracing and health endpoints.
 - **analytics_service.py**: Business logic for analytics ([docs](docs/analytics_service.md))
-  
+
   Register an instance with the container to access analytics operations:
 
   ```python
@@ -948,6 +949,10 @@ manager.execute_query_with_retry("SELECT 1")
   ```bash
   python -m uvicorn services.analytics_microservice.app:app --host 0.0.0.0 --port 8001
   ```
+
+- **Async analytics microservice**: FastAPI implementation using an async
+  database engine and Redis cache
+  ([docs](docs/analytics_async_migration.md)).
 
 
 - **device_learning_service.py**: Persists learned device mappings ([docs](docs/device_learning_service.md))
