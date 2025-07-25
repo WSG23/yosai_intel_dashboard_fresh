@@ -29,6 +29,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Protocol, runtime_checkable
 
+try:  # Python 3.12+
+    from typing import override
+except ImportError:  # pragma: no cover - fallback for older versions
+    from typing_extensions import override
+
 import pandas as pd
 
 from core.service_container import ServiceContainer
@@ -127,6 +132,7 @@ class MetadataEnhancementEngine(MetadataEnhancementProtocol):
         self.compliance = ComplianceChecker()
 
     # ------------------------------------------------------------------
+    @override
     def enhance_metadata(self) -> Dict[str, Any]:
         """Run enhancement pipeline and return aggregated results."""
         uploaded = self.upload_data_service.get_uploaded_data()
