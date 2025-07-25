@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import boto3
 import mlflow
@@ -50,9 +50,9 @@ class ModelRegistry:
         database_url: str,
         bucket: str,
         *,
-        s3_client: Optional[Any] = None,
-        mlflow_uri: Optional[str] = None,
-        metric_thresholds: Optional[Dict[str, float]] = None,
+        s3_client: Any | None = None,
+        mlflow_uri: str | None = None,
+        metric_thresholds: Dict[str, float] | None = None,
     ) -> None:
         self.engine = create_engine(database_url)
         Base.metadata.create_all(self.engine)
@@ -91,8 +91,8 @@ class ModelRegistry:
         metrics: Dict[str, float],
         dataset_hash: str,
         *,
-        version: Optional[str] = None,
-        training_date: Optional[datetime] = None,
+        version: str | None = None,
+        training_date: datetime | None = None,
     ) -> ModelRecord:
         session = self._session()
         try:
@@ -135,10 +135,10 @@ class ModelRegistry:
     def get_model(
         self,
         name: str,
-        version: Optional[str] = None,
+        version: str | None = None,
         *,
         active_only: bool = False,
-    ) -> Optional[ModelRecord]:
+    ) -> ModelRecord | None:
         session = self._session()
         try:
             stmt = select(ModelRecord).where(ModelRecord.name == name)
@@ -152,7 +152,7 @@ class ModelRegistry:
         finally:
             session.close()
 
-    def list_models(self, name: Optional[str] = None) -> List[ModelRecord]:
+    def list_models(self, name: str | None = None) -> List[ModelRecord]:
         session = self._session()
         try:
             stmt = select(ModelRecord)

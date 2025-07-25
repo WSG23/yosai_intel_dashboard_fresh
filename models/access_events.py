@@ -6,7 +6,7 @@ Handles all database operations for access control events
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 import pandas as pd
 
@@ -25,7 +25,7 @@ class AccessEventModel(BaseModel):
     """Model for access control events with full type safety"""
 
     @monitor_query_performance()
-    def get_data(self, filters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
+    def get_data(self, filters: Dict[str, Any] | None = None) -> pd.DataFrame:
         """Get access events with optional filtering"""
 
         base_query = """

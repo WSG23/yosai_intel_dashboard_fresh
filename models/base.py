@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 """Base classes for data models used throughout the application."""
 import logging
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import pandas as pd
 
 logger = logging.getLogger(__name__)
 
 
+@dataclass
 class BaseModel:
     """Base class for all models"""
 
-    def __init__(self, data_source: Optional[Any] = None):
-        self.data_source = data_source
-        self.created_at = datetime.now()
+    data_source: Any | None = None
+    created_at: datetime = field(default_factory=datetime.now)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert model to dictionary"""
@@ -28,12 +29,11 @@ class BaseModel:
         return True
 
 
+@dataclass
 class AccessEventModel(BaseModel):
     """Model for access control events"""
 
-    def __init__(self, data_source: Optional[Any] = None):
-        super().__init__(data_source)
-        self.events: List[Dict[str, Any]] = []
+    events: List[Dict[str, Any]] = field(default_factory=list)
 
     def load_from_dataframe(self, df: pd.DataFrame) -> bool:
         """Load events from pandas DataFrame"""
@@ -134,12 +134,11 @@ class AccessEventModel(BaseModel):
             return {}
 
 
+@dataclass
 class AnomalyDetectionModel(BaseModel):
     """Model for anomaly detection"""
 
-    def __init__(self, data_source: Optional[Any] = None):
-        super().__init__(data_source)
-        self.anomalies: List[Dict[str, Any]] = []
+    anomalies: List[Dict[str, Any]] = field(default_factory=list)
 
     def detect_anomalies(self, events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Detect anomalies in access events"""
@@ -220,13 +219,13 @@ class ModelFactory:
     """Factory for creating model instances"""
 
     @staticmethod
-    def create_access_model(data_source: Optional[Any] = None) -> AccessEventModel:
+    def create_access_model(data_source: Any | None = None) -> AccessEventModel:
         """Create AccessEventModel instance"""
         return AccessEventModel(data_source)
 
     @staticmethod
     def create_anomaly_model(
-        data_source: Optional[Any] = None,
+        data_source: Any | None = None,
     ) -> AnomalyDetectionModel:
         """Create AnomalyDetectionModel instance"""
         return AnomalyDetectionModel(data_source)
