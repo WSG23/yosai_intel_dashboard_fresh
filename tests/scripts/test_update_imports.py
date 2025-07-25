@@ -12,28 +12,13 @@ def _run_update(tmp_path: Path, content: str) -> str:
 
 def test_update_imports_patterns(tmp_path: Path) -> None:
     before = """
-    from config.utils import a
-    import config.utils
-    from monitoring.metrics import b
-    import monitoring.metrics
-    from security.auth import c
-    import security.helpers
-    from api.client import d
-    import api.client
-    from plugins.extra import e
-    import plugins.extra
+    from models.user import a
+    import models.user
     """
     after = """
-    from config.utils import a
-    import config.utils
-    from monitoring.metrics import b
-    import monitoring.metrics
-    from security.auth import c
-    import security.helpers
-    from api.client import d
-    import api.client
-    from api.plugins.extra import e
-    import api.plugins.extra
+    from yosai_intel_dashboard.src.core.domain.user import a
+    import yosai_intel_dashboard.src.core.domain.user
+
     """
     result = _run_update(tmp_path, before)
     assert result == textwrap.dedent(after)
@@ -41,15 +26,16 @@ def test_update_imports_patterns(tmp_path: Path) -> None:
 
 def test_update_imports_cli(tmp_path: Path) -> None:
     file_path = tmp_path / "example.py"
-    file_path.write_text("from config import x\n")
+    file_path.write_text("from models import x\n")
     main([str(tmp_path)])
-    expected = "from config import x\n"
+    expected = "from yosai_intel_dashboard.src.core.domain import x\n"
+
     assert file_path.read_text() == expected
 
 
 def test_update_imports_report_and_verify(tmp_path: Path) -> None:
     bad = tmp_path / "bad.py"
-    bad.write_text("from config import y\n")
+    bad.write_text("from models import y\n")
     report = tmp_path / "changes.txt"
     exit_code = main([
         str(tmp_path),
@@ -57,7 +43,8 @@ def test_update_imports_report_and_verify(tmp_path: Path) -> None:
         "--report",
         str(report),
     ])
-    expected = "from config import y\n"
+    expected = "from yosai_intel_dashboard.src.core.domain import y\n"
+
     assert bad.read_text() == expected
     assert report.read_text().strip() == str(bad)
     assert exit_code == 0

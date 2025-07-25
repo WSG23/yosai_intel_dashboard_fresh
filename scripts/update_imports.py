@@ -8,23 +8,14 @@ from pathlib import Path
 from typing import IO
 
 ROOT = Path(__file__).resolve().parents[1]
+# Rewrite patterns for imports.  Only modules that have been fully
+# migrated to the new ``yosai_intel_dashboard.src`` layout are included
+# here.  Packages such as ``config`` or ``services`` still live at the
+# repository root, so rewriting them would break imports.  As new
+# packages are migrated they can be added back to this mapping.
 PATTERNS = {
-    r"\bfrom\s+core(\.|\s)": "from yosai_intel_dashboard.src.core\\1",
-    r"\bimport\s+core(\.|$)": "import yosai_intel_dashboard.src.core\\1",
-    r"\bfrom\s+services(\.|\s)": "from yosai_intel_dashboard.src.services\\1",
-    r"\bimport\s+services(\.|$)": "import yosai_intel_dashboard.src.services\\1",
     r"\bfrom\s+models(\.|\s)": "from yosai_intel_dashboard.src.core.domain\\1",
     r"\bimport\s+models(\.|$)": "import yosai_intel_dashboard.src.core.domain\\1",
-    r"\bfrom\s+config(\.|\s)": "from yosai_intel_dashboard.src.infrastructure.config\\1",
-    r"\bimport\s+config(\.|$)": "import yosai_intel_dashboard.src.infrastructure.config\\1",
-    r"\bfrom\s+monitoring(\.|\s)": "from yosai_intel_dashboard.src.infrastructure.monitoring\\1",
-    r"\bimport\s+monitoring(\.|$)": "import yosai_intel_dashboard.src.infrastructure.monitoring\\1",
-    r"\bfrom\s+security(\.|\s)": "from yosai_intel_dashboard.src.infrastructure.security\\1",
-    r"\bimport\s+security(\.|$)": "import yosai_intel_dashboard.src.infrastructure.security\\1",
-    r"\bfrom\s+api(\.|\s)": "from yosai_intel_dashboard.src.adapters.api\\1",
-    r"\bimport\s+api(\.|$)": "import yosai_intel_dashboard.src.adapters.api\\1",
-    r"\bfrom\s+plugins(\.|\s)": "from yosai_intel_dashboard.src.adapters.api.plugins\\1",
-    r"\bimport\s+plugins(\.|$)": "import yosai_intel_dashboard.src.adapters.api.plugins\\1",
 }
 
 

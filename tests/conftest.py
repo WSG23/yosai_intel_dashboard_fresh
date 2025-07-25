@@ -69,8 +69,11 @@ if "monitoring.prometheus" not in sys.modules:
     dep_mod.deprecated_calls = []
     dep_mod.record_deprecated_call = lambda name: dep_mod.deprecated_calls.append(name)
     dep_mod.start_deprecation_metrics_server = lambda *a, **k: None
+    metrics_mod = types.ModuleType("monitoring.prometheus.model_metrics")
+    metrics_mod.update_model_metrics = lambda *a, **k: None
     sys.modules["monitoring.prometheus"] = prom_pkg
     sys.modules["monitoring.prometheus.deprecation"] = dep_mod
+    sys.modules["monitoring.prometheus.model_metrics"] = metrics_mod
 
 
 def pytest_ignore_collect(path, config):
