@@ -1,5 +1,9 @@
 import logging
 from typing import Any, Dict, List
+try:  # Python 3.12+
+    from typing import override
+except ImportError:  # pragma: no cover - <3.12 fallback
+    from typing_extensions import override
 
 import pandas as pd
 
@@ -17,28 +21,34 @@ class UploadDataService(UploadDataServiceProtocol):
     def __init__(self, store: UploadedDataStore = uploaded_data_store) -> None:
         self.store = store
 
+    @override
     def get_uploaded_data(self) -> Dict[str, pd.DataFrame]:
         return self.store.get_all_data()
 
+    @override
     def get_uploaded_filenames(self) -> List[str]:
         return self.store.get_filenames()
 
+    @override
     def clear_uploaded_data(self) -> None:
         self.store.clear_all()
         logger.info("Uploaded data cleared")
 
+    @override
     def get_file_info(self) -> Dict[str, Dict[str, Any]]:
         return self.store.get_file_info()
 
+    @override
     def load_dataframe(self, filename: str) -> pd.DataFrame:
         return self.store.load_dataframe(filename)
 
+    @override
     def load_mapping(self, filename: str) -> Dict[str, Any]:
         return self.store.load_mapping(filename)
 
+    @override
     def save_mapping(self, filename: str, mapping: Dict[str, Any]) -> None:
         self.store.save_mapping(filename, mapping)
-
 
 
 def _resolve_service(
@@ -109,7 +119,6 @@ def save_mapping(
 ) -> None:
     svc = _resolve_service(service, container)
     svc.save_mapping(filename, mapping)
-
 
 
 __all__ = [

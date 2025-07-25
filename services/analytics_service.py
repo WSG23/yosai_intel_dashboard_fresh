@@ -11,6 +11,10 @@ import os
 import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol
+try:  # Python 3.12+
+    from typing import override
+except ImportError:  # pragma: no cover - <3.12 fallback
+    from typing_extensions import override
 
 import pandas as pd
 
@@ -52,10 +56,12 @@ class ConfigProviderProtocol(Protocol):
 class AnalyticsProviderProtocol(Protocol):
     """Basic analytics provider interface."""
 
+    @override
     def process_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Process ``df`` and return analytics metrics."""
         ...
 
+    @override
     def get_metrics(self) -> Dict[str, Any]:
         """Return current analytics metrics."""
         ...
@@ -217,6 +223,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         return self.database_retriever.get_analytics()
 
     @cache_with_lock(_cache_manager, ttl=300)
+    @override
     def get_dashboard_summary(self) -> Dict[str, Any]:
         """Get a basic dashboard summary"""
         try:
@@ -328,6 +335,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
     # ------------------------------------------------------------------
     # AnalyticsProviderProtocol implementation
     # ------------------------------------------------------------------
+    @override
     def process_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Alias for :meth:`process_data` required by ``AnalyticsProviderProtocol``."""
         return self.process_data(df)
@@ -337,6 +345,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         cleaned = self.clean_uploaded_dataframe(df)
         return self.summarize_dataframe(cleaned)
 
+    @override
     def get_metrics(self) -> Dict[str, Any]:
         """Return current analytics metrics."""
         return self.get_analytics_status()
@@ -344,6 +353,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
     # ------------------------------------------------------------------
     # Placeholder implementations for abstract methods
     # ------------------------------------------------------------------
+    @override
     def analyze_access_patterns(
         self, days: int, user_id: str | None = None
     ) -> Dict[str, Any]:
@@ -355,6 +365,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         )
         return {"patterns": [], "days": days, "user_id": user_id}
 
+    @override
     def detect_anomalies(
         self, data: pd.DataFrame, sensitivity: float = 0.5
     ) -> List[Dict[str, Any]]:
@@ -362,6 +373,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         logger.debug("detect_anomalies called with sensitivity=%s", sensitivity)
         return []
 
+    @override
     def generate_report(
         self, report_type: str, params: Dict[str, Any]
     ) -> Dict[str, Any]:
