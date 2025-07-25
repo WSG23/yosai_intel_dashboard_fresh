@@ -14,7 +14,9 @@ sys.path.insert(0, str(ROOT))
 def _stub_analytics_deps() -> None:
     """Stub heavy dependencies so the analytics app can be imported."""
     otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
-    otel_stub.FastAPIInstrumentor = types.SimpleNamespace(instrument_app=lambda *a, **k: None)
+    otel_stub.FastAPIInstrumentor = types.SimpleNamespace(
+        instrument_app=lambda *a, **k: None
+    )
     sys.modules.setdefault("opentelemetry.instrumentation.fastapi", otel_stub)
 
     prom_stub = types.ModuleType("prometheus_fastapi_instrumentator")
@@ -82,7 +84,9 @@ def _stub_analytics_deps() -> None:
 def _stub_ingestion_deps() -> None:
     """Stub heavy dependencies for the ingestion service."""
     otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
-    otel_stub.FastAPIInstrumentor = types.SimpleNamespace(instrument_app=lambda *a, **k: None)
+    otel_stub.FastAPIInstrumentor = types.SimpleNamespace(
+        instrument_app=lambda *a, **k: None
+    )
     sys.modules.setdefault("opentelemetry.instrumentation.fastapi", otel_stub)
 
     prom_stub = types.ModuleType("prometheus_fastapi_instrumentator")
@@ -129,7 +133,16 @@ def load_app(path: Path, module_name: str):
 
 
 def main() -> None:
-    os.environ.setdefault("JWT_SECRET", "secret")
+    if "JWT_SECRET" not in os.environ:
+        try:
+            from services.common.secrets import get_secret
+
+            os.environ["JWT_SECRET"] = get_secret("secret/data/jwt#secret")
+        except Exception as exc:  # noqa: BLE001
+            raise RuntimeError(
+                "JWT_SECRET must be supplied via environment variable or Vault"
+            ) from exc
+
     os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
     analytics_path = ROOT / "services" / "analytics_microservice" / "app.py"
     ingestion_path = ROOT / "services" / "event-ingestion" / "app.py"
