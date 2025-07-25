@@ -6,7 +6,7 @@ import (
 )
 
 func TestLoadValidConfig(t *testing.T) {
-	cfg, err := Load("../../config/circuit-breakers.yaml")
+	cfg, err := Load("../../../config/circuit-breakers.yaml")
 	if err != nil {
 		t.Fatalf("load valid: %v", err)
 	}

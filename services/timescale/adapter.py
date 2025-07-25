@@ -1,10 +1,7 @@
 from __future__ import annotations
-
 from typing import Any, List, Dict
-
 from .manager import TimescaleDBManager
 from services.analytics_microservice import queries
-
 
 class TimescaleAdapter:
     """High level helper for common TimescaleDB analytics queries."""
@@ -21,3 +18,4 @@ class TimescaleAdapter:
         await self.manager.connect()
         assert self.manager.pool is not None
         return await queries.top_doors(self.manager.pool, days, limit)
+

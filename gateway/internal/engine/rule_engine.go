@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/WSG23/resilience"
 	"github.com/WSG23/yosai-gateway/internal/cache"
 	"github.com/sony/gobreaker"
 )
@@ -51,7 +52,7 @@ func NewRuleEngineWithSettings(db *sql.DB, settings gobreaker.Settings) (*RuleEn
 		single.Close()
 		return nil, err
 	}
-	cb := gobreaker.NewCircuitBreaker(settings)
+	cb := resilience.NewGoBreaker("rule-engine", settings)
 	return &RuleEngine{db: db, stmtSingle: single, stmtWarm: warm, breaker: cb}, nil
 }
 

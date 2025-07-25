@@ -9,6 +9,7 @@ from .manager import TimescaleDBManager
 from .adapter import TimescaleAdapter
 from .models import Base, AccessEvent, AccessEvent5Min
 
+
 __all__ = [
     "TimescaleDBManager",
     "TimescaleAdapter",
