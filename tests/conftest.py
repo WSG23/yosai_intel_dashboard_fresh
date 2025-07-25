@@ -1,10 +1,11 @@
 """Test configuration and fixtures"""
 
+from __future__ import annotations
+
+import importlib.util
 import sys
 import types
 from pathlib import Path
-import importlib.util
-
 
 _missing_packages = [
     pkg for pkg in ("yaml", "psutil") if importlib.util.find_spec(pkg) is None
@@ -60,6 +61,16 @@ if "boto3" not in sys.modules and "boto3" in _missing_optional:
 
 if "confluent_kafka" not in sys.modules and "confluent_kafka" in _missing_optional:
     sys.modules["confluent_kafka"] = types.ModuleType("confluent_kafka")
+
+if "monitoring.prometheus" not in sys.modules:
+    prom_pkg = types.ModuleType("monitoring.prometheus")
+    prom_pkg.__path__ = []
+    dep_mod = types.ModuleType("monitoring.prometheus.deprecation")
+    dep_mod.deprecated_calls = []
+    dep_mod.record_deprecated_call = lambda name: dep_mod.deprecated_calls.append(name)
+    dep_mod.start_deprecation_metrics_server = lambda *a, **k: None
+    sys.modules["monitoring.prometheus"] = prom_pkg
+    sys.modules["monitoring.prometheus.deprecation"] = dep_mod
 
 
 def pytest_ignore_collect(path, config):
