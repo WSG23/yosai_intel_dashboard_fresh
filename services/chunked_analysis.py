@@ -11,6 +11,7 @@ from dask.distributed import Client, LocalCluster
 
 from analytics.chunked_analytics_controller import ChunkedAnalyticsController
 from config.config import get_analytics_config
+from validation.data_validator import DataValidator
 from validation.security_validator import SecurityValidator
 
 from .result_formatting import regular_analysis
@@ -25,6 +26,10 @@ def _validate_dataframe(
     original_rows = len(df)
     csv_bytes = df.to_csv(index=False).encode("utf-8")
     validator.validate_file_upload("data.csv", csv_bytes)
+    df_validator = DataValidator(required_columns=["timestamp", "person_id"])
+    result = df_validator.validate_dataframe(df)
+    if not result.valid:
+        raise ValueError("; ".join(result.issues or []))
     needs_chunking = True
     validated_rows = len(df)
     logger.info(
