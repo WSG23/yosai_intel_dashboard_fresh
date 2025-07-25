@@ -96,11 +96,11 @@ class TimescaleDBManager:
         )
         await conn.execute(
             "SELECT add_compression_policy('access_events',"
-            " INTERVAL '7 days', if_not_exists => TRUE)"
+            " INTERVAL '30 days', if_not_exists => TRUE)"
         )
         await conn.execute(
             "SELECT add_retention_policy('access_events',"
-            " INTERVAL '90 days', if_not_exists => TRUE)"
+            " INTERVAL '365 days', if_not_exists => TRUE)"
         )
 
     # ------------------------------------------------------------------
