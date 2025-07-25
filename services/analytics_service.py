@@ -136,7 +136,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self.calculator = Calculator(self.report_generator)
         self.publisher = Publisher(self.event_bus)
 
-    def _initialize_database(self):
+    def _initialize_database(self) -> None:
         """Initialize database connection via helper."""
         (
             self.database_manager,
@@ -268,7 +268,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
         return self.calculator.analyze_patterns(df, original_rows)
 
     @cache_with_lock(_cache_manager, ttl=600)
-    def get_unique_patterns_analysis(self, data_source: str | None = None):
+    def get_unique_patterns_analysis(
+        self, data_source: str | None = None
+    ) -> Dict[str, Any]:
         """Get unique patterns analysis for the requested source."""
         logger = logging.getLogger(__name__)
 
