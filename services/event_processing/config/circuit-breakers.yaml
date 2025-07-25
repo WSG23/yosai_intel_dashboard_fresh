@@ -1,0 +1,3 @@
+repository:
+  failure_threshold: 5
+  recovery_timeout: 30

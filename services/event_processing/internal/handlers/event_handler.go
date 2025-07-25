@@ -19,8 +19,19 @@ type EventHandler struct {
 	breaker *gobreaker.CircuitBreaker
 }
 
+// NewEventHandler creates an EventHandler using the provided settings.
 func NewEventHandler(store repository.TokenStore, settings gobreaker.Settings) *EventHandler {
-	b := resilience.NewGoBreaker("repo", settings)
+	if settings.Name == "" {
+		settings.Name = "repo"
+	}
+	if settings.Timeout == 0 {
+		settings.Timeout = 5 * time.Second
+	}
+	if settings.ReadyToTrip == nil {
+		settings.ReadyToTrip = func(c gobreaker.Counts) bool { return c.ConsecutiveFailures > 5 }
+	}
+	b := resilience.NewGoBreaker(settings)
+
 	return &EventHandler{store: store, breaker: b}
 }
 

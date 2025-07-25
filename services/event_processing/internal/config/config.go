@@ -9,11 +9,11 @@ import (
 
 // Config describes runtime configuration for the event processor.
 type Config struct {
-	Brokers          string `yaml:"brokers"`
-	GroupID          string `yaml:"group_id"`
-	Topic            string `yaml:"topic"`
-	FailureThreshold int    `yaml:"failure_threshold"`
-	RecoveryTimeout  int    `yaml:"recovery_timeout"`
+	Brokers string                 `yaml:"brokers"`
+	GroupID string                 `yaml:"group_id"`
+	Topic   string                 `yaml:"topic"`
+	Breaker CircuitBreakerSettings `yaml:"breaker"`
+
 }
 
 // Load reads configuration from path. Environment variables override YAML.
@@ -29,6 +29,10 @@ func Load(path string) (*Config, error) {
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
+
+	if bc, err := LoadBreaker(""); err == nil {
+		cfg.Breaker = bc.Repository
+	}
 	if v := os.Getenv("BROKERS"); v != "" {
 		cfg.Brokers = v
 	}
@@ -38,14 +42,15 @@ func Load(path string) (*Config, error) {
 	if v := os.Getenv("TOPIC"); v != "" {
 		cfg.Topic = v
 	}
-	if v := os.Getenv("CB_FAILURE_THRESHOLD"); v != "" {
+	if v := os.Getenv("BREAKER_FAILURE_THRESHOLD"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
-			cfg.FailureThreshold = n
+			cfg.Breaker.FailureThreshold = n
 		}
 	}
-	if v := os.Getenv("CB_RECOVERY_TIMEOUT"); v != "" {
+	if v := os.Getenv("BREAKER_RECOVERY_TIMEOUT"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
-			cfg.RecoveryTimeout = n
+			cfg.Breaker.RecoveryTimeout = n
+
 		}
 	}
 	if cfg.GroupID == "" {
@@ -54,11 +59,12 @@ func Load(path string) (*Config, error) {
 	if cfg.Topic == "" {
 		cfg.Topic = "events"
 	}
-	if cfg.FailureThreshold == 0 {
-		cfg.FailureThreshold = 5
+	if cfg.Breaker.FailureThreshold == 0 {
+		cfg.Breaker.FailureThreshold = 5
 	}
-	if cfg.RecoveryTimeout == 0 {
-		cfg.RecoveryTimeout = 30
+	if cfg.Breaker.RecoveryTimeout == 0 {
+		cfg.Breaker.RecoveryTimeout = 30
+
 	}
 	return &cfg, nil
 }
