@@ -18,7 +18,7 @@ def debug_dash_object(app: Any) -> None:
 
 
 if __name__ == "__main__":
-    from core.app_factory import create_app
+    from yosai_intel_dashboard.src.core.app_factory import create_app
 
     app = create_app(mode="simple")
     debug_dash_object(app)

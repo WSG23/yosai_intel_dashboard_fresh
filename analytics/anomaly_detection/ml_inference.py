@@ -7,11 +7,11 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from monitoring.model_performance_monitor import (
+from utils.sklearn_compat import optional_import
+from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (
     ModelMetrics,
     get_model_performance_monitor,
 )
-from utils.sklearn_compat import optional_import
 
 IsolationForest = optional_import("sklearn.ensemble.IsolationForest")
 DBSCAN = optional_import("sklearn.cluster.DBSCAN")

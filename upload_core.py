@@ -10,25 +10,29 @@ from typing import Any, Dict, List, Tuple
 import dash_bootstrap_components as dbc
 from dash import html, no_update
 
-from services.interfaces import get_device_learning_service
-from services.task_queue import (
+from yosai_intel_dashboard.src.services.data_processing.unified_upload_validator import (
+    UnifiedUploadValidator,
+)
+from yosai_intel_dashboard.src.services.interfaces import get_device_learning_service
+from yosai_intel_dashboard.src.services.rabbitmq_client import RabbitMQClient
+from yosai_intel_dashboard.src.services.task_queue import (
     TaskQueue,
     TaskQueueProtocol,
 )
-from services.rabbitmq_client import RabbitMQClient
-from services.upload import (
+from yosai_intel_dashboard.src.services.upload import (
     AISuggestionService,
     ChunkedUploadManager,
     ClientSideValidator,
     ModalService,
     get_trigger_id,
 )
-from services.upload.upload_queue_manager import UploadQueueManager
-from services.data_processing.unified_upload_validator import UnifiedUploadValidator
-from services.upload.protocols import (
+from yosai_intel_dashboard.src.services.upload.protocols import (
     DeviceLearningServiceProtocol,
     UploadProcessingServiceProtocol,
     UploadStorageProtocol,
+)
+from yosai_intel_dashboard.src.services.upload.upload_queue_manager import (
+    UploadQueueManager,
 )
 
 logger = logging.getLogger(__name__)
@@ -256,7 +260,9 @@ class UploadCore:
                 raise ValueError(f"DataFrame for '{filename}' is empty")
 
             learning_service.save_user_device_mappings(df, filename, user_mappings)
-            from services.ai_mapping_store import ai_mapping_store
+            from yosai_intel_dashboard.src.services.ai_mapping_store import (
+                ai_mapping_store,
+            )
 
             ai_mapping_store.update(user_mappings)
 

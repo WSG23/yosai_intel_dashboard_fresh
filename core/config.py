@@ -4,10 +4,16 @@ from __future__ import annotations
 
 from typing import Any
 
-from config.constants import DEFAULT_CHUNK_SIZE, UploadLimits, FileProcessingLimits
-from config.config import get_analytics_config
-from config.dynamic_config import dynamic_config
 from core.protocols import ConfigurationProtocol
+from yosai_intel_dashboard.src.infrastructure.config.config import get_analytics_config
+from yosai_intel_dashboard.src.infrastructure.config.constants import (
+    DEFAULT_CHUNK_SIZE,
+    FileProcessingLimits,
+    UploadLimits,
+)
+from config.dynamic_config import (
+    dynamic_config,
+)
 
 
 def get_ai_confidence_threshold() -> float:
@@ -53,9 +59,12 @@ def get_db_pool_size() -> int:
 def get_max_display_rows(config: ConfigurationProtocol = dynamic_config) -> int:
     """Return maximum number of rows to show in previews."""
     try:
-        return get_analytics_config().max_display_rows or config.analytics.max_display_rows
+        return (
+            get_analytics_config().max_display_rows or config.analytics.max_display_rows
+        )
     except Exception:
         return config.analytics.max_display_rows
+
 
 __all__ = [
     "get_ai_confidence_threshold",

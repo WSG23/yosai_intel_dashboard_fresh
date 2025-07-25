@@ -19,6 +19,7 @@ from typing import Any, Callable, Iterable, Optional, Union
 
 import pandas as pd  # type: ignore[import]
 
+from unicode_toolkit import clean_unicode_surrogates
 from security.unicode_security_validator import (
     UnicodeSecurityConfig,
     UnicodeSecurityValidator,
@@ -30,7 +31,6 @@ from .security_patterns import (
     SQL_INJECTION_PATTERNS,
     XSS_PATTERNS,
 )
-from unicode_toolkit import clean_unicode_surrogates
 
 logger = logging.getLogger(__name__)
 

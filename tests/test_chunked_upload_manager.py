@@ -2,9 +2,10 @@ import pandas as pd
 import pytest
 
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-
-from services.upload.chunked_upload_manager import ChunkedUploadManager
 from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.services.upload.chunked_upload_manager import (
+    ChunkedUploadManager,
+)
 
 
 def _create_csv(path, rows=30):
@@ -48,7 +49,9 @@ def test_chunked_upload_manager_resume(tmp_path, monkeypatch):
         original_add_file(name, chunk_df)
 
     monkeypatch.setattr(store, "add_file", fail_second)
-    from config.connection_retry import ConnectionRetryExhausted
+    from yosai_intel_dashboard.src.infrastructure.config.connection_retry import (
+        ConnectionRetryExhausted,
+    )
 
     with pytest.raises(ConnectionRetryExhausted):
         mgr.upload_file(data_file)

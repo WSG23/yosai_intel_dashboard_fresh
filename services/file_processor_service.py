@@ -11,17 +11,19 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from services.configuration_service import ConfigurationServiceProtocol
-from .stream_processor import StreamProcessor
-from core.unicode import process_large_csv_content
 from analytics_core.utils.unicode_processor import UnicodeHelper
-from services.data_processing.unified_file_validator import (
+from utils.memory_utils import memory_safe
+from utils.protocols import SafeDecoderProtocol
+from yosai_framework.service import BaseService
+from yosai_intel_dashboard.src.core.unicode import process_large_csv_content
+from yosai_intel_dashboard.src.services.configuration_service import (
+    ConfigurationServiceProtocol,
+)
+from yosai_intel_dashboard.src.services.data_processing.unified_file_validator import (
     safe_decode_with_unicode_handling,
 )
-from utils.protocols import SafeDecoderProtocol
-from utils.memory_utils import memory_safe
 
-from yosai_framework.service import BaseService
+from .stream_processor import StreamProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -219,7 +221,7 @@ class FileProcessorService(BaseService):
                     return text
             except Exception:
                 continue
-        from core.unicode import safe_unicode_decode
+        from yosai_intel_dashboard.src.core.unicode import safe_unicode_decode
 
         logger.warning("All encodings failed, using replacement characters")
         return safe_unicode_decode(content, "utf-8")
@@ -243,4 +245,3 @@ class FileProcessorService(BaseService):
 
         printable = sum(1 for c in text if c.isprintable() or c.isspace())
         return (printable / len(text)) > 0.7
-

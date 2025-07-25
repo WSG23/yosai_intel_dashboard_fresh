@@ -4,11 +4,12 @@
 from __future__ import annotations
 
 import os
-from graphviz import Digraph
-from dash import Dash
 
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from services.upload.callbacks import UploadCallbacks
+from dash import Dash
+from graphviz import Digraph
+
+from yosai_intel_dashboard.src.core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.services.upload.callbacks import UploadCallbacks
 
 
 def load_callbacks() -> TrulyUnifiedCallbacks:

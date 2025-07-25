@@ -4,18 +4,26 @@
 from __future__ import annotations
 
 import logging
-import pandas as pd
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set
 from uuid import uuid4
 
-from core.protocols import DatabaseProtocol
-from core.audit_logger import ComplianceAuditLogger
-from services.compliance.consent_service import ConsentService
-from services.compliance.data_retention_service import DataRetentionService
-from models.compliance import ConsentType, DataSensitivityLevel
+import pandas as pd
+
 from database.secure_exec import execute_query
-from services.data_processing.file_processor import FileProcessor
+from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
+from yosai_intel_dashboard.src.core.domain.compliance import (
+    ConsentType,
+    DataSensitivityLevel,
+)
+from core.protocols import DatabaseProtocol
+from yosai_intel_dashboard.src.services.compliance.consent_service import ConsentService
+from yosai_intel_dashboard.src.services.compliance.data_retention_service import (
+    DataRetentionService,
+)
+from yosai_intel_dashboard.src.services.data_processing.file_processor import (
+    FileProcessor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -581,7 +589,7 @@ def enhance_existing_csv_upload():
 
     # Your existing upload route enhanced:
 
-    from flask import request, jsonify
+    from flask import jsonify, request
     from flask_login import current_user, login_required
 
     @app.route("/api/upload/csv", methods=["POST"])

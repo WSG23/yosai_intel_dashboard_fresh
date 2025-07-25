@@ -2,7 +2,9 @@ import json
 
 from flask import Flask
 
-from security.validation_middleware import ValidationMiddleware
+from yosai_intel_dashboard.src.infrastructure.security.validation_middleware import (
+    ValidationMiddleware,
+)
 
 
 def _create_upload_app() -> Flask:

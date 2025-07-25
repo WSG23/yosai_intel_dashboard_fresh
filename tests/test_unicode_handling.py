@@ -1,7 +1,9 @@
 import pytest
 
-from config.database_exceptions import UnicodeEncodingError
 from unicode_toolkit import UnicodeSQLProcessor
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
+    UnicodeEncodingError,
+)
 
 
 def test_surrogate_pair_encoding():

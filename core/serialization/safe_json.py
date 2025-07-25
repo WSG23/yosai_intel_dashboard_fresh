@@ -7,7 +7,7 @@ import logging
 from dataclasses import asdict, is_dataclass
 from typing import Any
 
-from core.unicode import sanitize_unicode_input
+from yosai_intel_dashboard.src.core.unicode import sanitize_unicode_input
 
 try:  # Optional Flask-Babel
     from flask_babel import LazyString

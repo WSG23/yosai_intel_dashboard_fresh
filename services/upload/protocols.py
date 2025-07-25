@@ -17,8 +17,10 @@ from typing import (
 
 import pandas as pd
 
-from core.service_container import ServiceContainer
-from services.protocols.device_learning import DeviceLearningServiceProtocol
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.services.protocols.device_learning import (
+    DeviceLearningServiceProtocol,
+)
 
 
 @runtime_checkable
@@ -243,33 +245,36 @@ def get_device_learning_service(
     c = _get_container(container)
     if c and c.has("device_learning_service"):
         return c.get("device_learning_service")
-    from services.interfaces import get_device_learning_service as _get
+    from yosai_intel_dashboard.src.services.interfaces import (
+        get_device_learning_service as _get,
+    )
 
     return _get()
+
 
 @runtime_checkable
 class UploadDataServiceProtocol(Protocol):
     """Protocol for upload data services."""
-    
+
     @abstractmethod
     def get_upload_data(self) -> Dict[str, Any]: ...
-    
+
     @abstractmethod
     def store_upload_data(self, data: Dict[str, Any]) -> bool: ...
-    
+
     @abstractmethod
     def clear_data(self) -> None: ...
 
-@runtime_checkable  
+
+@runtime_checkable
 class DeviceLearningServiceProtocol(Protocol):
     """Protocol for device learning services."""
-    
+
     @abstractmethod
     def get_user_device_mappings(self, filename: str) -> Dict[str, Any]: ...
-    
+
     @abstractmethod
     def save_device_mappings(self, mappings: Dict[str, Any]) -> bool: ...
-    
+
     @abstractmethod
     def learn_from_data(self, df: pd.DataFrame) -> Dict[str, Any]: ...
-

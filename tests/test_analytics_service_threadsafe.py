@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 
-from services import analytics_service
+from yosai_intel_dashboard.src.services import analytics_service
 
 
 def test_get_analytics_service_threadsafe(monkeypatch):

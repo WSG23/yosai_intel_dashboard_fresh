@@ -19,6 +19,7 @@ __all__ = [
     "UnicodeSQLProcessor",
 ]
 
+
 def __getattr__(name: str):
     if name == "UnicodeValidator":
         from importlib import import_module
@@ -39,14 +40,17 @@ def __getattr__(name: str):
 
         return _u.UnicodeSQLProcessor
     if name == "UnicodeQueryHandler":
-        from config.database_exceptions import UnicodeEncodingError
+        from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
+            UnicodeEncodingError,
+        )
+
 
 class UnicodeQueryHandler:
     """Compatibility wrapper for safe SQL encoding."""
 
     @staticmethod
     def safe_encode_query(query: str) -> str:
-        from core.unicode import UnicodeSQLProcessor
+        from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
 
         return UnicodeSQLProcessor.encode_query(query)
 
@@ -65,10 +69,9 @@ __all__.append("UnicodeQueryHandler")
 
 def clean_unicode_surrogates(text: str, replacement: str = "") -> str:
     """Compatibility shim for legacy imports."""
-    from core.unicode import clean_surrogate_chars
+    from yosai_intel_dashboard.src.core.unicode import clean_surrogate_chars
 
     return clean_surrogate_chars(text, replacement)
 
 
 __all__.append("clean_unicode_surrogates")
-

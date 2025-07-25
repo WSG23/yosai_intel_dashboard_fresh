@@ -1,4 +1,6 @@
-from config.dynamic_config import DynamicConfigManager
+from config.dynamic_config import (
+    DynamicConfigManager,
+)
 
 
 def test_invalid_yaml_types(tmp_path, monkeypatch):

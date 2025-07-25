@@ -1,14 +1,18 @@
-from validation.security_validator import SecurityValidator
-from services.analytics.upload_analytics import UploadAnalyticsProcessor
-from services.data_processing.file_processor import FileProcessor
-from services.data_processing.processor import Processor
 from tests.builders import TestDataBuilder
+from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
+    UploadAnalyticsProcessor,
+)
+from yosai_intel_dashboard.src.services.data_processing.file_processor import (
+    FileProcessor,
+)
+from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 
 
 def _create_components():
     from flask import Flask
 
-    from core.cache import cache
+    from yosai_intel_dashboard.src.core.cache import cache
 
     cache.init_app(Flask(__name__))
 

@@ -8,8 +8,8 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from core.base_model import BaseModel
-from core.performance import get_performance_monitor
+from yosai_intel_dashboard.src.core.base_model import BaseModel
+from yosai_intel_dashboard.src.core.performance import get_performance_monitor
 
 
 class PerformanceAnalytics(BaseModel):

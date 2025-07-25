@@ -2,12 +2,15 @@ import json
 import logging
 
 from flask import Blueprint, Response, abort, jsonify, request
-from marshmallow import Schema, fields
 from flask_apispec import doc, marshal_with, use_kwargs
+from marshmallow import Schema, fields
 
-from core.cache_manager import CacheConfig, InMemoryCacheManager
-from services.cached_analytics import CachedAnalyticsService
-from services.security import require_permission
+from yosai_intel_dashboard.src.core.cache_manager import (
+    CacheConfig,
+    InMemoryCacheManager,
+)
+from yosai_intel_dashboard.src.services.cached_analytics import CachedAnalyticsService
+from yosai_intel_dashboard.src.services.security import require_permission
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +27,7 @@ class AnalyticsQuerySchema(Schema):
 class AnalyticsResponseSchema(Schema):
     status = fields.String()
     data = fields.Dict()
+
 
 # Cached analytics helper
 _cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=300))
@@ -183,7 +187,11 @@ def get_export_formats():
 @analytics_bp.route("/all", methods=["GET"])
 @analytics_bp.route("/<source_type>", methods=["GET"])
 @require_permission("analytics.read")
-@doc(description="Get analytics by source", params={"source_type": "Source type"}, tags=["analytics"])
+@doc(
+    description="Get analytics by source",
+    params={"source_type": "Source type"},
+    tags=["analytics"],
+)
 @use_kwargs(AnalyticsQuerySchema, location="query")
 @marshal_with(AnalyticsResponseSchema)
 def get_analytics_by_source(source_type="all", **args):

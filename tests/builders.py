@@ -1,26 +1,27 @@
 from __future__ import annotations
 
 import os
-
 from typing import Any, Dict
 
 import pandas as pd
 
-from config.complete_service_registration import register_all_services
-from core.service_container import ServiceContainer
-from core.protocols import (
-    UnicodeProcessorProtocol,
-    ConfigurationProtocol,
-)
-from services.upload.protocols import (
-    UploadStorageProtocol,
-    FileProcessorProtocol,
-)
-from tests.test_doubles import InMemoryUploadStore
 from tests.fakes import (
     FakeConfigurationService,
     FakeFileProcessor,
     FakeUnicodeProcessor,
+)
+from tests.test_doubles import InMemoryUploadStore
+from core.protocols import (
+    ConfigurationProtocol,
+    UnicodeProcessorProtocol,
+)
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.config.complete_service_registration import (
+    register_all_services,
+)
+from yosai_intel_dashboard.src.services.upload.protocols import (
+    FileProcessorProtocol,
+    UploadStorageProtocol,
 )
 
 

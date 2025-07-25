@@ -1,10 +1,11 @@
+import importlib.machinery
+import importlib.util
+import sys
+
 import pandas as pd
 
-import importlib.util
-import importlib.machinery
-import sys
-from core.service_container import ServiceContainer
 from mapping.models import RuleBasedModel
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
 
 # Insert stub before importing the adapter
 stub = importlib.util.module_from_spec(

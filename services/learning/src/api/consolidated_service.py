@@ -3,6 +3,7 @@ Consolidated learning service for device and column mappings.
 Replaces services/device_learning_service.py
 """
 
+import asyncio
 import hashlib
 import json
 import logging
@@ -11,11 +12,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
-import asyncio
 
-from core.cache_manager import InMemoryCacheManager, CacheConfig
+from yosai_intel_dashboard.src.core.cache_manager import (
+    CacheConfig,
+    InMemoryCacheManager,
+)
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
+
 
 class ConsolidatedLearningService:
     """Unified learning service for all mapping types."""
@@ -96,7 +100,9 @@ class ConsolidatedLearningService:
     def apply_to_global_store(self, df: pd.DataFrame, filename: str) -> bool:
         """Apply learned mappings to global device mapping store."""
         try:
-            from services.ai_mapping_store import ai_mapping_store
+            from yosai_intel_dashboard.src.services.ai_mapping_store import (
+                ai_mapping_store,
+            )
         except ImportError:
             self.logger.warning("Could not import global device mappings store")
             return False

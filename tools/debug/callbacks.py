@@ -1,7 +1,7 @@
 """Callback debugging helpers."""
 
-from core.app_factory import create_app
-from core.callback_registry import _callback_registry
+from yosai_intel_dashboard.src.core.app_factory import create_app
+from yosai_intel_dashboard.src.core.callback_registry import _callback_registry
 
 
 def debug_callback_conflicts() -> None:

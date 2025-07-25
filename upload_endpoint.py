@@ -2,14 +2,15 @@
 import base64
 
 from flask import Blueprint, abort, jsonify, request
+from flask_apispec import doc, marshal_with, use_kwargs
 from flask_wtf.csrf import validate_csrf
 from marshmallow import Schema, fields
-from flask_apispec import doc, marshal_with, use_kwargs
-
-from config.service_registration import register_upload_services
 
 # Use the shared DI container configured at application startup
 from core.container import container
+from yosai_intel_dashboard.src.infrastructure.config.service_registration import (
+    register_upload_services,
+)
 
 if not container.has("upload_processor"):
     register_upload_services(container)
@@ -50,7 +51,7 @@ def upload_files():
                 if not file.filename:
                     continue
                 file_bytes = file.read()
-                b64 = base64.b64encode(file_bytes).decode('utf-8', errors='replace')
+                b64 = base64.b64encode(file_bytes).decode("utf-8", errors="replace")
                 mime = file.mimetype or "application/octet-stream"
                 contents.append(f"data:{mime};base64,{b64}")
                 filenames.append(file.filename)

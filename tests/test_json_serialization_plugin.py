@@ -11,15 +11,17 @@ import pandas as pd
 import pytest
 from flask import Flask
 
-from config import create_config_manager
-from core.service_container import ServiceContainer
-from core.json_serialization_plugin import (
+from yosai_intel_dashboard.src.core.json_serialization_plugin import (
     JsonCallbackService,
     JsonSerializationConfig,
     JsonSerializationPlugin,
     JsonSerializationService,
 )
-from core.plugins.manager import ThreadSafePluginManager as PluginManager
+from yosai_intel_dashboard.src.core.plugins.manager import (
+    ThreadSafePluginManager as PluginManager,
+)
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 
 # Legacy DI tests were skipped previously. Run them now.
 # pytest.skip("legacy DI tests skipped", allow_module_level=True)

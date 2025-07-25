@@ -6,10 +6,10 @@ import threading
 import time
 from typing import Any, Dict, List
 
-from config import ConfigManager
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
-from core.service_container import ServiceContainer
-from services.data_processing.core.protocols import (
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.config import ConfigManager
+from yosai_intel_dashboard.src.services.data_processing.core.protocols import (
     CallbackPluginProtocol,
     PluginPriority,
     PluginProtocol,

@@ -6,13 +6,14 @@ Main Compliance Plugin Class - Extracted from __init__.py
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from core.plugins.base import BasePlugin
+from yosai_intel_dashboard.src.core.plugins.base import BasePlugin
+
+from .api import ComplianceAPI
 from .config import ComplianceConfig
 from .database import ComplianceDatabase
-from .api import ComplianceAPI
 from .middleware import ComplianceMiddleware
 from .services import ComplianceServices
 
@@ -340,5 +341,3 @@ class CompliancePlugin(BasePlugin):
             "issues": issues,
             "last_check": self._get_current_timestamp(),
         }
-
-

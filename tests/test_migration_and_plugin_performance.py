@@ -1,11 +1,13 @@
 import pytest
 
-from core.plugins.performance_manager import PluginPerformanceManager
 from tools.migration_validator import (
     MigrationValidator,
     test_migration_equivalence,
     test_migration_performance,
     test_migration_security,
+)
+from yosai_intel_dashboard.src.core.plugins.performance_manager import (
+    PluginPerformanceManager,
 )
 
 

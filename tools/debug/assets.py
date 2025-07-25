@@ -5,9 +5,9 @@ from __future__ import annotations
 import os
 from typing import Iterable
 
-from core.app_factory import create_app
 from utils.assets_debug import check_navbar_assets, debug_dash_asset_serving
 from utils.assets_utils import get_nav_icon
+from yosai_intel_dashboard.src.core.app_factory import create_app
 
 DEFAULT_ICONS = [
     "analytics",

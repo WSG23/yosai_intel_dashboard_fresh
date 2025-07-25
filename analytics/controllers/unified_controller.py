@@ -5,9 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable, Dict, List, Optional
 
-from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
 from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
 
 
 class UnifiedAnalyticsController:

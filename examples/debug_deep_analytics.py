@@ -65,7 +65,9 @@ def test_complete_pipeline():
     # Step 3: Test file upload module
     print("📤 STEP 3: Testing file upload module")
     try:
-        from services.upload_data_service import get_uploaded_data
+        from yosai_intel_dashboard.src.services.upload_data_service import (
+            get_uploaded_data,
+        )
 
         uploaded_files = get_uploaded_data()
         print(f"✅ File upload module found {len(uploaded_files)} files")
@@ -83,7 +85,9 @@ def test_complete_pipeline():
     # Step 4: Test analytics service data loading
     print("📈 STEP 4: Testing analytics service data loading")
     try:
-        from services.analytics_service import AnalyticsService
+        from yosai_intel_dashboard.src.services.analytics_service import (
+            AnalyticsService,
+        )
 
         service = AnalyticsService()
         loaded_data = service.load_uploaded_data()
@@ -132,7 +136,9 @@ def test_complete_pipeline():
     # Step 6: Test summarize_dataframe function
     print("📊 STEP 6: Testing summarize_dataframe function")
     try:
-        from services.analytics_summary import summarize_dataframe
+        from yosai_intel_dashboard.src.services.analytics_summary import (
+            summarize_dataframe,
+        )
 
         # Use cleaned data if available, otherwise original
         test_df = cleaned_df if "cleaned_df" in locals() else original_df
@@ -155,7 +161,9 @@ def test_complete_pipeline():
     # Step 7: Test analytics service processing
     print("⚙️  STEP 7: Testing analytics service processing")
     try:
-        from services.analytics_service import AnalyticsService
+        from yosai_intel_dashboard.src.services.analytics_service import (
+            AnalyticsService,
+        )
 
         service = AnalyticsService()
 

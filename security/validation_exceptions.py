@@ -1,6 +1,8 @@
 """Custom security-related exceptions and helpers."""
 
-from core.exceptions import ValidationError as CoreValidationError
+from core.exceptions import (
+    ValidationError as CoreValidationError,
+)
 
 
 class SecurityViolation(Exception):

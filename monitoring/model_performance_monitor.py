@@ -5,8 +5,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
-from core.performance import MetricType, get_performance_monitor
-from monitoring.prometheus.model_metrics import update_model_metrics
+from yosai_intel_dashboard.src.core.performance import (
+    MetricType,
+    get_performance_monitor,
+)
+from monitoring.prometheus.model_metrics import (
+    update_model_metrics,
+)
 
 
 @dataclass

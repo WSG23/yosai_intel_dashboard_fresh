@@ -16,6 +16,7 @@ from flask import (
     url_for,
 )
 
+
 # Localised helpers from deprecated archive modules
 def load_dataframe(path: Path) -> pd.DataFrame:
     """Load CSV/JSON/Excel into a DataFrame."""
@@ -39,9 +40,7 @@ def enhance_data_with_mappings(
 
     if column_mapping:
         rename_dict = {
-            original: mapped
-            for original, mapped in column_mapping.items()
-            if mapped
+            original: mapped for original, mapped in column_mapping.items() if mapped
         }
         if rename_dict:
             enhanced_df = enhanced_df.rename(columns=rename_dict)
@@ -70,7 +69,8 @@ def safe_file_write(path: Path, text: str) -> None:
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(text)
 
-from config.constants import API_PORT
+
+from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
 
 app = Flask(__name__)
 

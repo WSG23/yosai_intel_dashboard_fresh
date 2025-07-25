@@ -1,16 +1,20 @@
 """Enhanced cache managers implementing the interface"""
 
-import logging
 import json
-import dill
+import logging
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
+import dill
 import redis
 
+from yosai_intel_dashboard.src.infrastructure.config.constants import (
+    DEFAULT_CACHE_HOST,
+    DEFAULT_CACHE_PORT,
+)
+
 from .interfaces import ICacheManager
-from config.constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
 
 logger = logging.getLogger(__name__)
 
@@ -221,7 +225,7 @@ class AdvancedRedisCacheManager(RedisCacheManager):
         )
 
     def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
-        """Set value with TTL from config if not provided."""
+        """Set value with TTL from yosai_intel_dashboard.src.infrastructure.config if not provided."""
         if not self._started:
             return
         try:

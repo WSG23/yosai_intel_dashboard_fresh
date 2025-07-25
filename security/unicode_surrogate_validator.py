@@ -6,9 +6,9 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from core.exceptions import ValidationError
-from core.unicode import contains_surrogates
 from security_callback_controller import SecurityEvent, emit_security_event
+from core.exceptions import ValidationError
+from yosai_intel_dashboard.src.core.unicode import contains_surrogates
 
 
 @dataclass
@@ -27,9 +27,7 @@ class UnicodeSurrogateValidator:
         self.logger = logging.getLogger(__name__)
 
         if contains_surrogates(self.config.replacement):
-            raise ValueError(
-                "Replacement string cannot include surrogate code points"
-            )
+            raise ValueError("Replacement string cannot include surrogate code points")
 
     def sanitize(self, value: Any) -> str:
         """Return ``value`` with surrogates handled according to configuration."""

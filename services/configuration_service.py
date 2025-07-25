@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Any, Dict, Protocol, runtime_checkable
 
-from config.dynamic_config import DynamicConfigManager, dynamic_config
+from config.dynamic_config import (
+    DynamicConfigManager,
+    dynamic_config,
+)
 
 
 @runtime_checkable

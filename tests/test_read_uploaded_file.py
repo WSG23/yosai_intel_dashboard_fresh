@@ -1,6 +1,7 @@
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-
-from services.data_processing.file_processor import FileProcessor
+from yosai_intel_dashboard.src.services.data_processing.file_processor import (
+    FileProcessor,
+)
 
 
 def test_read_uploaded_file_basic():

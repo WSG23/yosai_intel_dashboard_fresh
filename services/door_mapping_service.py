@@ -11,13 +11,15 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 # ADD after existing imports
-from services.ai_device_generator import AIDeviceGenerator
-from services.common import ModelRegistry
-from services.configuration_service import (
+from yosai_intel_dashboard.src.services.ai_device_generator import AIDeviceGenerator
+from yosai_intel_dashboard.src.services.common import ModelRegistry
+from yosai_intel_dashboard.src.services.configuration_service import (
     ConfigurationServiceProtocol,
     DynamicConfigurationService,
 )
-from services.learning.src.api.consolidated_service import get_learning_service
+from yosai_intel_dashboard.src.services.learning.src.api.consolidated_service import (
+    get_learning_service,
+)
 
 logger = logging.getLogger(__name__)
 

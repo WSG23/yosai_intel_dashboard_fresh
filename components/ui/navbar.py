@@ -2,11 +2,13 @@
 """Enhanced navbar component with logo and proper import safety."""
 
 import logging
-from typing import Any, Optional, Dict
+from typing import Any, Dict, Optional
 
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from core.callback_registry import handle_register_with_deduplication
 from components.streamlined_component import StreamlinedComponent
+from yosai_intel_dashboard.src.core.callback_registry import (
+    handle_register_with_deduplication,
+)
+from yosai_intel_dashboard.src.core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 logger = logging.getLogger(__name__)
 
@@ -229,9 +231,8 @@ class NavbarComponent(StreamlinedComponent):
             return
 
         try:
-            register = (
-                getattr(manager, "register_callback", None)
-                or getattr(manager, "handle_register", None)
+            register = getattr(manager, "register_callback", None) or getattr(
+                manager, "handle_register", None
             )
             if register is None:
                 register = lambda *a, **k: handle_register_with_deduplication(manager, *a, **k)  # type: ignore[misc]

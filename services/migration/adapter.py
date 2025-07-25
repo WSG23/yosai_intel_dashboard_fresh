@@ -12,10 +12,10 @@ import aiohttp
 import pandas as pd
 from kafka import KafkaProducer
 
-from core.service_container import ServiceContainer
-from services.feature_flags import feature_flags
-from services.interfaces import AnalyticsServiceProtocol
-from services.resilience.circuit_breaker import (
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.services.feature_flags import feature_flags
+from yosai_intel_dashboard.src.services.interfaces import AnalyticsServiceProtocol
+from yosai_intel_dashboard.src.services.resilience.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
 )
@@ -214,7 +214,9 @@ def register_migration_services(container: MigrationContainer) -> None:
     event_adapter = EventServiceAdapter(base_url=k8s_service_url("events"))
     container.register_with_adapter("event_processor", None, event_adapter)
 
-    from services.analytics_service import create_analytics_service
+    from yosai_intel_dashboard.src.services.analytics_service import (
+        create_analytics_service,
+    )
 
     python_analytics = create_analytics_service()
     analytics_adapter = AnalyticsServiceAdapter(
@@ -228,8 +230,12 @@ def register_migration_services(container: MigrationContainer) -> None:
 
     if container._migration_flags["use_timescaledb"]:
         try:
-            from services.timescale import models as timescale_models  # noqa:F401
-            from services.timescale.manager import TimescaleDBManager
+            from yosai_intel_dashboard.src.services.timescale import (  # noqa:F401
+                models as timescale_models,
+            )
+            from yosai_intel_dashboard.src.services.timescale.manager import (
+                TimescaleDBManager,
+            )
         except Exception:  # pragma: no cover - optional dependency
             pass
         else:

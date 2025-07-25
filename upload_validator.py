@@ -1,13 +1,17 @@
 """Compatibility wrapper around :class:`UnifiedUploadValidator`."""
+
 from __future__ import annotations
 
-from typing import Optional, Any
+from typing import Any, Optional
 
-from config.dynamic_config import dynamic_config
-from core.protocols import ConfigurationProtocol
-
-from services.data_processing.unified_upload_validator import UnifiedUploadValidator
 from upload_types import ValidationResult
+from core.protocols import ConfigurationProtocol
+from config.dynamic_config import (
+    dynamic_config,
+)
+from yosai_intel_dashboard.src.services.data_processing.unified_upload_validator import (
+    UnifiedUploadValidator,
+)
 
 
 def create_config_methods(cls):
@@ -22,6 +26,7 @@ def common_init(self, config=None):
     self.max_size_mb = self.config.get("max_upload_size_mb", 100)
     self.ai_threshold = self.config.get("ai_confidence_threshold", 0.8)
     self.chunk_size = self.config.get("upload_chunk_size", 1048576)
+
 
 UploadValidator = UnifiedUploadValidator
 
@@ -38,4 +43,3 @@ class UploadValidator(UnifiedUploadValidator):
         common_init(self, config)
         if max_size_mb is not None:
             self.max_size_mb = max_size_mb
-

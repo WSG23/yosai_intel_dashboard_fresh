@@ -16,7 +16,9 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import pandas as pd
 import psutil
 
-from config.dynamic_config import dynamic_config
+from config.dynamic_config import (
+    dynamic_config,
+)
 
 from .base_model import BaseModel
 from .cpu_optimizer import CPUOptimizer
@@ -263,7 +265,10 @@ class PerformanceMonitor:
         cutoff = datetime.now() - timedelta(hours=hours)
         counts: Dict[str, int] = defaultdict(int)
         for metric in self.metrics:
-            if metric.timestamp >= cutoff and metric.metric_type == MetricType.DEPRECATED_USAGE:
+            if (
+                metric.timestamp >= cutoff
+                and metric.metric_type == MetricType.DEPRECATED_USAGE
+            ):
                 counts[metric.name] += 1
         return dict(counts)
 

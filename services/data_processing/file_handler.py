@@ -5,20 +5,26 @@ from typing import Any, Optional, Tuple
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
-from config.constants import DEFAULT_CHUNK_SIZE
-from core.performance import get_performance_monitor
+from upload_types import ValidationResult
+from yosai_intel_dashboard.src.core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
-from core.unicode import process_large_csv_content, sanitize_for_utf8, sanitize_dataframe
-from services.data_processing.core.exceptions import (
+from yosai_intel_dashboard.src.core.unicode import (
+    process_large_csv_content,
+    sanitize_dataframe,
+    sanitize_for_utf8,
+)
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
+from config.dynamic_config import (
+    dynamic_config,
+)
+from yosai_intel_dashboard.src.services.data_processing.core.exceptions import (
     FileProcessingError,
     FileValidationError,
 )
-from services.data_processing.unified_upload_validator import (
+from yosai_intel_dashboard.src.services.data_processing.unified_upload_validator import (
     UnifiedUploadValidator,
     safe_decode_with_unicode_handling,
 )
-from upload_types import ValidationResult
 
 
 def create_config_methods(cls):

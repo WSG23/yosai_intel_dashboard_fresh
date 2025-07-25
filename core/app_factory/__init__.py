@@ -7,7 +7,7 @@ from dash import dcc, html
 
 # Import Path for building robust file paths
 from components.ui.navbar import create_navbar_layout
-from core.error_handlers import register_error_handlers
+from yosai_intel_dashboard.src.core.error_handlers import register_error_handlers
 
 
 def create_app(mode=None, **kwargs):

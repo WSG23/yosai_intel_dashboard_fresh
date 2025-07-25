@@ -1,18 +1,32 @@
 # tests/compliance/test_compliance_framework.py
 """Comprehensive test suite for GDPR/APPI compliance framework"""
 
-import pytest
 import json
 from datetime import datetime, timedelta, timezone
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 from uuid import uuid4
 
-from services.compliance.consent_service import ConsentService
-from services.compliance.dsar_service import DSARService, DSARRequestType, DSARStatus
-from services.compliance.data_retention_service import DataRetentionService
-from services.compliance.dpia_service import DPIAService, DPIATrigger, RiskLevel
-from core.audit_logger import ComplianceAuditLogger
-from models.compliance import ConsentType, DataSensitivityLevel
+import pytest
+
+from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
+from yosai_intel_dashboard.src.core.domain.compliance import (
+    ConsentType,
+    DataSensitivityLevel,
+)
+from yosai_intel_dashboard.src.services.compliance.consent_service import ConsentService
+from yosai_intel_dashboard.src.services.compliance.data_retention_service import (
+    DataRetentionService,
+)
+from yosai_intel_dashboard.src.services.compliance.dpia_service import (
+    DPIAService,
+    DPIATrigger,
+    RiskLevel,
+)
+from yosai_intel_dashboard.src.services.compliance.dsar_service import (
+    DSARRequestType,
+    DSARService,
+    DSARStatus,
+)
 
 
 class TestConsentService:
@@ -471,7 +485,7 @@ class ComplianceUsageExamples:
         from flask import request, jsonify
         from flask_login import current_user
         from core.container import Container
-        from models.compliance import ConsentType
+        from yosai_intel_dashboard.src.core.domain.compliance import ConsentType
         
         @app.route('/api/users/register', methods=['POST'])
         def register_user():
@@ -514,9 +528,9 @@ class ComplianceUsageExamples:
     def example_biometric_processing_with_consent_check(self):
         """Example: Biometric processing with consent verification"""
         example_code = '''
-        from services.compliance.consent_service import ConsentService
-        from models.compliance import ConsentType
-        from core.audit_logger import ComplianceAuditLogger
+        from yosai_intel_dashboard.src.services.compliance.consent_service import ConsentService
+        from yosai_intel_dashboard.src.core.domain.compliance import ConsentType
+        from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
         
         def process_facial_recognition(user_id: str, image_data: bytes):
             """Process facial recognition with consent verification"""

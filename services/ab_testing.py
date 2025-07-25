@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, Optional
 
 import joblib
 
-from models.ml import ModelRegistry
+from yosai_intel_dashboard.src.core.domain.ml import ModelRegistry
 
 
 class ModelABTester:
@@ -60,7 +60,9 @@ class ModelABTester:
             record = self.registry.get_model(self.model_name, version=version)
             if record is None:
                 self.logger.warning(
-                    "Model %s version %s not found in registry", self.model_name, version
+                    "Model %s version %s not found in registry",
+                    self.model_name,
+                    version,
                 )
                 continue
             self.model_dir.mkdir(parents=True, exist_ok=True)
@@ -69,13 +71,20 @@ class ModelABTester:
                 try:
                     self.registry.download_artifact(record.storage_uri, str(local_path))
                 except Exception as exc:  # pragma: no cover - network failures
-                    self.logger.error("Failed to download model %s:%s - %s", self.model_name, version, exc)
+                    self.logger.error(
+                        "Failed to download model %s:%s - %s",
+                        self.model_name,
+                        version,
+                        exc,
+                    )
                     continue
             try:
                 model = joblib.load(local_path)
                 self.models[version] = model
             except Exception as exc:  # pragma: no cover - invalid files
-                self.logger.error("Failed to load model artifact %s - %s", local_path, exc)
+                self.logger.error(
+                    "Failed to load model artifact %s - %s", local_path, exc
+                )
 
     # ------------------------------------------------------------------
     def set_weights(self, weights: Dict[str, float]) -> None:

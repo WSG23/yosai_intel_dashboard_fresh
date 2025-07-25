@@ -1,6 +1,6 @@
 import pytest
 
-from config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 
 REQUIRED_AUTH_VARS = [
     "AUTH0_CLIENT_ID",

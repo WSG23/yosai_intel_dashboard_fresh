@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate OpenAPI JSON for FastAPI microservices."""
-import json
 import importlib.util
+import json
 import os
 import sys
 import types
@@ -66,6 +66,7 @@ def _stub_analytics_deps() -> None:
     yf_config_stub.load_config = lambda path: DummyCfg()
     sys.modules["yosai_framework.config"] = yf_config_stub
     import yosai_framework.service as yf_service
+
     yf_service.load_config = yf_config_stub.load_config
 
     redis_stub = types.ModuleType("redis")
@@ -135,7 +136,7 @@ def load_app(path: Path, module_name: str):
 def main() -> None:
     if "JWT_SECRET" not in os.environ:
         try:
-            from services.common.secrets import get_secret
+            from yosai_intel_dashboard.src.services.common.secrets import get_secret
 
             os.environ["JWT_SECRET"] = get_secret("secret/data/jwt#secret")
         except Exception as exc:  # noqa: BLE001

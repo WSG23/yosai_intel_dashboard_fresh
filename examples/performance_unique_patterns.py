@@ -2,19 +2,19 @@
 """Measure execution time of get_unique_patterns_analysis."""
 
 import logging
-import sys
 import random
+import sys
 import uuid
+from datetime import datetime, timedelta
 from pathlib import Path
 from time import perf_counter
-from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from services.analytics_service import AnalyticsService
+from yosai_intel_dashboard.src.services.analytics_service import AnalyticsService
 
 
 def generate_sample_access_data(num_records: int = 1000):
@@ -50,15 +50,23 @@ def generate_sample_access_data(num_records: int = 1000):
             business_start = random_date.replace(hour=8, minute=0, second=0)
             business_end = random_date.replace(hour=18, minute=0, second=0)
             random_date = business_start + timedelta(
-                seconds=random.randint(0, int((business_end - business_start).total_seconds()))
+                seconds=random.randint(
+                    0, int((business_end - business_start).total_seconds())
+                )
             )
-        person_id = random.choice(users) if random.random() < 0.8 else random.choice(visitors)
+        person_id = (
+            random.choice(users) if random.random() < 0.8 else random.choice(visitors)
+        )
         door_id = random.choice(doors)
         if door_id in ["SERVER_ROOM_A", "EXECUTIVE_FLOOR", "CLEAN_ROOM"]:
             access_result = np.random.choice(access_results, p=[0.6, 0.35, 0.03, 0.02])
         else:
             access_result = np.random.choice(access_results, p=access_weights)
-        badge_status = random.choice(["Invalid", "Expired", "Suspended"]) if access_result == "Denied" else "Valid"
+        badge_status = (
+            random.choice(["Invalid", "Expired", "Suspended"])
+            if access_result == "Denied"
+            else "Valid"
+        )
         door_held_time = random.uniform(0.5, 5.0) if access_result == "Granted" else 0.0
         data.append(
             {
@@ -76,6 +84,7 @@ def generate_sample_access_data(num_records: int = 1000):
         )
     df = pd.DataFrame(data).sort_values("timestamp").reset_index(drop=True)
     return df
+
 
 logger = logging.getLogger(__name__)
 

@@ -1,22 +1,27 @@
 from __future__ import annotations
 
-from flask import Flask
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
+from flask import Flask
 from flask_apispec import FlaskApiSpec
-
 
 
 def create_flask_app() -> Flask:
     """Create a Flask app with all blueprints registered."""
-    from upload_endpoint import upload_bp
+    import yosai_intel_dashboard.src.adapters.api.plugin_performance as plugin_perf
+    import yosai_intel_dashboard.src.adapters.api.risk_scoring as risk
     from device_endpoint import device_bp
     from mappings_endpoint import mappings_bp
-    from api.settings_endpoint import settings_bp
-    from api.analytics_endpoints import analytics_bp, graphs_bp, export_bp
-    from plugins.compliance_plugin.compliance_controller import compliance_bp
-    import api.plugin_performance as plugin_perf
-    import api.risk_scoring as risk
+    from upload_endpoint import upload_bp
+    from yosai_intel_dashboard.src.adapters.api.analytics_endpoints import (
+        analytics_bp,
+        export_bp,
+        graphs_bp,
+    )
+    from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.compliance_controller import (
+        compliance_bp,
+    )
+    from yosai_intel_dashboard.src.adapters.api.settings_endpoint import settings_bp
 
     app = Flask(__name__)
     app.register_blueprint(upload_bp)

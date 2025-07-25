@@ -14,11 +14,13 @@ class _LocatorMeta(type):
         if name == "get_unicode_handler":
             warnings.warn(
                 "PluginServiceLocator.get_unicode_handler() is deprecated; "
-                "import from core.unicode instead",
+                "import from yosai_intel_dashboard.src.core.unicode instead",
                 DeprecationWarning,
                 stacklevel=2,
             )
-            from core import unicode as _unicode  # type: ignore
+            from yosai_intel_dashboard.src.core import (
+                unicode as _unicode,  # type: ignore
+            )
 
             return lambda: _unicode
         raise AttributeError(name)
@@ -46,8 +48,12 @@ class PluginServiceLocator(metaclass=_LocatorMeta):
     @classmethod
     def _load_ai_plugin(cls) -> Optional[Any]:
         try:
-            from plugins.ai_classification.config import get_ai_config
-            from plugins.ai_classification.plugin import AIClassificationPlugin
+            from yosai_intel_dashboard.src.adapters.api.plugins.ai_classification.config import (
+                get_ai_config,
+            )
+            from yosai_intel_dashboard.src.adapters.api.plugins.ai_classification.plugin import (
+                AIClassificationPlugin,
+            )
         except Exception as exc:  # pragma: no cover - optional
             logger.warning("AI classification plugin unavailable: %s", exc)
             return None
@@ -61,7 +67,9 @@ class PluginServiceLocator(metaclass=_LocatorMeta):
     @classmethod
     def _load_json_plugin(cls) -> Optional[Any]:
         try:
-            from core.json_serialization_plugin import quick_start
+            from yosai_intel_dashboard.src.core.json_serialization_plugin import (
+                quick_start,
+            )
         except Exception as exc:  # pragma: no cover - optional
             logger.warning("JSON serialization plugin unavailable: %s", exc)
             return None
@@ -131,7 +139,7 @@ def __getattr__(name: str):
     if name == "get_unicode_handler":
         warnings.warn(
             "plugins.service_locator.get_unicode_handler() is deprecated; "
-            "import from core.unicode instead",
+            "import from yosai_intel_dashboard.src.core.unicode instead",
             DeprecationWarning,
             stacklevel=2,
         )

@@ -10,7 +10,11 @@ from typing import Any, Dict, Iterator, List
 import numpy as np
 import pandas as pd
 
-from config.constants import AnalysisThresholds, AnalyticsConstants, DEFAULT_CHUNK_SIZE
+from yosai_intel_dashboard.src.infrastructure.config.constants import (
+    DEFAULT_CHUNK_SIZE,
+    AnalysisThresholds,
+    AnalyticsConstants,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +24,9 @@ class ChunkedAnalyticsController:
 
     def __init__(self, chunk_size: int = None, max_workers: int = None) -> None:
         try:
-            from config.dynamic_config import dynamic_config
+            from config.dynamic_config import (
+                dynamic_config,
+            )
 
             if hasattr(dynamic_config, "analytics"):
                 self.chunk_size = chunk_size or getattr(

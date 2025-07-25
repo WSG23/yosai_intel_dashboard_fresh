@@ -3,7 +3,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from plugins.ai_classification.plugin import AIClassificationPlugin
+from yosai_intel_dashboard.src.adapters.api.plugins.ai_classification.plugin import (
+    AIClassificationPlugin,
+)
 
 
 def test_start_initializes_services(monkeypatch):

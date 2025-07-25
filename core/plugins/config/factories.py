@@ -3,8 +3,11 @@
 import logging
 from typing import Any, Callable, Dict, List, Type
 
+from yosai_intel_dashboard.src.core.intelligent_multilevel_cache import (
+    IntelligentMultiLevelCache,
+)
+
 from .interfaces import ICacheManager, IDatabaseManager
-from core.intelligent_multilevel_cache import IntelligentMultiLevelCache
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +78,9 @@ class CacheManagerFactory:
         """Create cache manager based on configuration"""
         # Import here to avoid circular imports
         from .cache_manager import (
+            AdvancedRedisCacheManager,
             MemoryCacheManager,
             RedisCacheManager,
-            AdvancedRedisCacheManager,
         )
 
         # Register default managers if not already registered

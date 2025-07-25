@@ -1,6 +1,6 @@
 from typing import Any, Awaitable, Callable, Dict
 
-from services.task_queue_protocol import TaskQueueProtocol
+from yosai_intel_dashboard.src.services.task_queue_protocol import TaskQueueProtocol
 
 
 class StubTaskQueue(TaskQueueProtocol):

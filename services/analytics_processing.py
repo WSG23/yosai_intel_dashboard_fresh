@@ -5,11 +5,13 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import html
 
-from core.unicode import safe_format_number, sanitize_for_utf8
-from services import get_analytics_service
+from yosai_intel_dashboard.src.core.unicode import safe_format_number, sanitize_for_utf8
+from yosai_intel_dashboard.src.services import get_analytics_service
 
 try:
-    from services.ai_suggestions import generate_column_suggestions
+    from yosai_intel_dashboard.src.services.ai_suggestions import (
+        generate_column_suggestions,
+    )
 
     AI_SUGGESTIONS_AVAILABLE = True
 except Exception:  # pragma: no cover - optional AI suggestions
@@ -21,9 +23,9 @@ except Exception:  # pragma: no cover - optional AI suggestions
         return {}
 
 
-from services.upload_data_service import get_uploaded_data
-from services.interfaces import get_upload_data_service
 from utils.preview_utils import serialize_dataframe_preview
+from yosai_intel_dashboard.src.services.interfaces import get_upload_data_service
+from yosai_intel_dashboard.src.services.upload_data_service import get_uploaded_data
 
 logger = logging.getLogger(__name__)
 

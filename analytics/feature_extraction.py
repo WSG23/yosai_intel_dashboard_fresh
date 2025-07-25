@@ -5,7 +5,9 @@ from typing import Optional
 
 import pandas as pd
 
-from security.unicode_security_handler import UnicodeSecurityHandler
+from yosai_intel_dashboard.src.infrastructure.security.unicode_security_handler import (
+    UnicodeSecurityHandler,
+)
 
 __all__ = ["extract_event_features"]
 
@@ -24,8 +26,10 @@ def extract_event_features(
     try:
         string_cols = df_clean.select_dtypes(include=["object"]).columns
         for col in string_cols:
-            df_clean[col] = df_clean[col].astype(str).apply(
-                UnicodeSecurityHandler.sanitize_unicode_input
+            df_clean[col] = (
+                df_clean[col]
+                .astype(str)
+                .apply(UnicodeSecurityHandler.sanitize_unicode_input)
             )
     except Exception as exc:  # pragma: no cover - log and continue
         logger.warning("Unicode sanitization failed: %s", exc)
@@ -46,7 +50,9 @@ def extract_event_features(
     df_clean["hour"] = df_clean["timestamp"].dt.hour
     df_clean["day_of_week"] = df_clean["timestamp"].dt.dayofweek
     df_clean["is_weekend"] = df_clean["day_of_week"].isin([5, 6])
-    df_clean["is_after_hours"] = df_clean["hour"].isin(list(range(0, 6)) + list(range(22, 24)))
+    df_clean["is_after_hours"] = df_clean["hour"].isin(
+        list(range(0, 6)) + list(range(22, 24))
+    )
     df_clean["access_granted"] = (df_clean["access_result"] == "Granted").astype(int)
 
     # Counts per user and door

@@ -2,12 +2,11 @@ from __future__ import annotations
 
 """Data quality metric utilities."""
 
-from dataclasses import dataclass
-from typing import Optional
 import sys
+from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING, Optional
 
-from typing import TYPE_CHECKING
 pkg = sys.modules.get("monitoring")
 if pkg is not None and not getattr(pkg, "__path__", None):  # fix test stubs
     pkg.__path__ = [str(Path(__file__).resolve().parent)]
@@ -18,6 +17,7 @@ try:
         compatibility_failures,
     )
 except Exception:  # pragma: no cover - metrics optional for tests
+
     class _DummyCounter:
         def inc(self) -> None:
             pass
@@ -26,18 +26,25 @@ except Exception:  # pragma: no cover - metrics optional for tests
     compatibility_failures = _DummyCounter()
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
-    from config.base import DataQualityThresholds
+    from config.base import (
+        DataQualityThresholds,
+    )
 
 try:  # pragma: no cover - optional dependency
-    from config import get_monitoring_config
+    from yosai_intel_dashboard.src.infrastructure.config import get_monitoring_config
 except Exception:  # pragma: no cover - minimal fallback for tests
+
     def get_monitoring_config() -> dict:
         return {}
 
+
 # Local imports are deferred to avoid heavy dependencies during module import
 if TYPE_CHECKING:  # pragma: no cover - type hints only
-    from core.performance import MetricType
-    from core.monitoring.user_experience_metrics import AlertConfig, AlertDispatcher
+    from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import (
+        AlertConfig,
+        AlertDispatcher,
+    )
+    from yosai_intel_dashboard.src.core.performance import MetricType
 
 
 @dataclass
@@ -60,30 +67,45 @@ class DataQualityMonitor:
         cfg = get_monitoring_config()
         dq_cfg = getattr(cfg, "data_quality", None)
         if isinstance(dq_cfg, dict):
-            from config.base import DataQualityThresholds
+            from config.base import (
+                DataQualityThresholds,
+            )
+
             self.thresholds = DataQualityThresholds(**dq_cfg)
         elif dq_cfg is not None:
             self.thresholds = dq_cfg
         else:
-            from config.base import DataQualityThresholds
+            from config.base import (
+                DataQualityThresholds,
+            )
+
             self.thresholds = thresholds or DataQualityThresholds()
 
         alert_cfg = getattr(cfg, "alerting", {})
         if isinstance(alert_cfg, dict):
-            from core.monitoring.user_experience_metrics import AlertConfig
+            from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import (
+                AlertConfig,
+            )
+
             ac = AlertConfig(
                 slack_webhook=alert_cfg.get("slack_webhook"),
                 email=alert_cfg.get("email"),
                 webhook_url=alert_cfg.get("webhook_url"),
             )
         else:
-            from core.monitoring.user_experience_metrics import AlertConfig
+            from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import (
+                AlertConfig,
+            )
+
             ac = AlertConfig(
                 slack_webhook=getattr(alert_cfg, "slack_webhook", None),
                 email=getattr(alert_cfg, "email", None),
                 webhook_url=getattr(alert_cfg, "webhook_url", None),
             )
-        from core.monitoring.user_experience_metrics import AlertDispatcher
+        from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import (
+            AlertDispatcher,
+        )
+
         self.dispatcher = dispatcher or AlertDispatcher(ac)
         self._avro_failures = 0
         self._compatibility_failures = 0
@@ -91,7 +113,10 @@ class DataQualityMonitor:
     # ------------------------------------------------------------------
     def emit(self, metrics: DataQualityMetrics) -> None:
         """Record metrics and send alerts if thresholds are exceeded."""
-        from core.performance import MetricType, get_performance_monitor
+        from yosai_intel_dashboard.src.core.performance import (
+            MetricType,
+            get_performance_monitor,
+        )
 
         monitor = get_performance_monitor()
         monitor.record_metric(

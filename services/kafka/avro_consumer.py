@@ -7,12 +7,15 @@ import logging
 import struct
 from typing import Any, Iterable, Optional
 
-from confluent_kafka import Consumer, Producer
 from fastavro import parse_schema, schemaless_reader
 
-from services.common.schema_registry import SchemaRegistryClient
-from monitoring.data_quality_monitor import get_data_quality_monitor
-
+from confluent_kafka import Consumer, Producer
+from yosai_intel_dashboard.src.infrastructure.monitoring.data_quality_monitor import (
+    get_data_quality_monitor,
+)
+from yosai_intel_dashboard.src.services.common.schema_registry import (
+    SchemaRegistryClient,
+)
 
 logger = logging.getLogger(__name__)
 

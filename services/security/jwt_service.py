@@ -1,7 +1,8 @@
 import time
+
 from jose import jwt
 
-from services.common.secrets import get_secret
+from yosai_intel_dashboard.src.services.common.secrets import get_secret
 
 _SECRET_PATH = "secret/data/jwt#secret"
 

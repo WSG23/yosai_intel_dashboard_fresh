@@ -7,11 +7,11 @@ from typing import Any
 import dash_bootstrap_components as dbc
 from dash import html
 
-from services.analytics_processing import (
+from yosai_intel_dashboard.src.services.analytics_processing import (
     create_analysis_results_display,
     create_analysis_results_display_safe,
 )
-from services.data_processing.analytics_engine import (
+from yosai_intel_dashboard.src.services.data_processing.analytics_engine import (
     AI_SUGGESTIONS_AVAILABLE,
     analyze_data_with_service,
     get_analytics_service_safe,
@@ -19,7 +19,6 @@ from services.data_processing.analytics_engine import (
     process_quality_analysis_safe,
     process_suggests_analysis_safe,
 )
-
 
 # ------------------------------------------------------------
 # Helper analysis functions

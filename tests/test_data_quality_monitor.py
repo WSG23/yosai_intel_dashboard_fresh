@@ -1,10 +1,11 @@
 import pandas as pd
-from monitoring.data_quality_monitor import (
-    DataQualityMonitor,
+
+from yosai_intel_dashboard.src.infrastructure.monitoring.data_quality_monitor import (
     DataQualityMetrics,
+    DataQualityMonitor,
     DataQualityThresholds,
+    get_data_quality_monitor,
 )
-from monitoring.data_quality_monitor import get_data_quality_monitor
 
 
 def test_data_quality_monitor_alert(monkeypatch):
@@ -25,7 +26,8 @@ def test_data_quality_monitor_alert(monkeypatch):
 
 
 def test_processor_evaluates_quality(monkeypatch):
-    import types, sys
+    import sys
+    import types
 
     # Provide minimal Processor stub if services package is absent
     if "services.data_processing.processor" not in sys.modules:
@@ -53,7 +55,7 @@ def test_processor_evaluates_quality(monkeypatch):
         module.Processor = Processor
         sys.modules["services.data_processing.processor"] = module
 
-    from services.data_processing.processor import Processor
+    from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 
     proc = Processor()
     df = pd.DataFrame(

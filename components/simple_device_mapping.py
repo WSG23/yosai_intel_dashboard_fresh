@@ -7,12 +7,14 @@ from dash import html
 from dash._callback_context import callback_context
 
 if TYPE_CHECKING:
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+    from yosai_intel_dashboard.src.core.truly_unified_callbacks import (
+        TrulyUnifiedCallbacks,
+    )
 
 import logging
 
 from analytics.controllers.unified_controller import UnifiedAnalyticsController
-from core.error_handling import handle_errors
+from yosai_intel_dashboard.src.core.error_handling import handle_errors
 
 logger = logging.getLogger(__name__)
 from typing import Any, Dict, List
@@ -21,12 +23,13 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash.dependencies import ALL, Input, Output, State
 
-from services.ai_mapping_store import ai_mapping_store
+from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
+
 # Import helper to access the learning service via the DI container
-from services.interfaces import (
+from yosai_intel_dashboard.src.services.interfaces import (
     DoorMappingServiceProtocol,
-    get_door_mapping_service,
     get_device_learning_service,
+    get_door_mapping_service,
 )
 
 # Options for special device areas shared with verification component
@@ -93,9 +96,7 @@ def generate_ai_device_defaults(
     """Generate AI-based defaults, prioritizing learned mappings"""
     learning_service = get_device_learning_service()
 
-    if learning_service.apply_learned_mappings_to_global_store(
-        df, "current_upload"
-    ):
+    if learning_service.apply_learned_mappings_to_global_store(df, "current_upload"):
         logger.info("🎯 Applied learned mappings as defaults")
         return
 
@@ -103,9 +104,7 @@ def generate_ai_device_defaults(
     result = svc.process_uploaded_data(df, client_profile)
     ai_mapping_store.clear()
     for device in result["devices"]:
-        learned_mapping = learning_service.get_device_mapping_by_name(
-            device["door_id"]
-        )
+        learned_mapping = learning_service.get_device_mapping_by_name(device["door_id"])
         if learned_mapping:
             ai_mapping_store.set(device["door_id"], learned_mapping)
             logger.info(f"🎓 Used learned mapping for {device['door_id']}")
@@ -515,14 +514,16 @@ def apply_ai_device_suggestions(suggestions, devices):
     return floor_values, access_values, special_values, security_values
 
 
-@handle_errors(service="simple_device_mapping", operation="populate_simple_device_modal")
+@handle_errors(
+    service="simple_device_mapping", operation="populate_simple_device_modal"
+)
 def populate_simple_device_modal(is_open):
     """Populate modal with actual devices from uploaded data and global store."""
     if not is_open:
         return dash.no_update
 
     # First try to get devices from global store (preferred)
-    from services.ai_mapping_store import ai_mapping_store
+    from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
 
     store_devices = ai_mapping_store.all()
 
@@ -534,7 +535,7 @@ def populate_simple_device_modal(is_open):
         return create_simple_device_modal_with_ai(device_list)
 
     # Fallback: Get devices from uploaded data
-    from services.upload_data_service import get_uploaded_data
+    from yosai_intel_dashboard.src.services.upload_data_service import get_uploaded_data
 
     uploaded_data = get_uploaded_data()
 

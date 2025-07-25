@@ -15,10 +15,10 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-from config.constants import DEFAULT_CHUNK_SIZE
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from database.baseline_metrics import BaselineMetricsDB
 from utils.sklearn_compat import optional_import
+from yosai_intel_dashboard.src.core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
 
 from .chunk_processor import ChunkedDataProcessor, MemoryConfig
 

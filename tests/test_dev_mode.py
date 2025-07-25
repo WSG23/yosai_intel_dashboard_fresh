@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from config import dev_mode
+from yosai_intel_dashboard.src.infrastructure.config import dev_mode
 
 
 def test_dev_mode_requires_secrets(monkeypatch, caplog):

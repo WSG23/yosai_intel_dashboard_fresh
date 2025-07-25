@@ -1,4 +1,5 @@
 """Shared DataFrame parsing utilities."""
+
 from __future__ import annotations
 
 import io
@@ -8,11 +9,13 @@ from typing import Optional, Tuple
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
-from config.constants import DEFAULT_CHUNK_SIZE
-from core.performance import get_performance_monitor
-from core.protocols import ConfigurationProtocol
 from utils.file_utils import safe_decode_with_unicode_handling
+from yosai_intel_dashboard.src.core.performance import get_performance_monitor
+from core.protocols import ConfigurationProtocol
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
+from config.dynamic_config import (
+    dynamic_config,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +49,11 @@ def process_dataframe(
                     for chunk in reader:
                         monitor.throttle_if_needed()
                         chunks.append(chunk)
-                    df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+                    df = (
+                        pd.concat(chunks, ignore_index=True)
+                        if chunks
+                        else pd.DataFrame()
+                    )
                     return df, None
                 except UnicodeDecodeError:
                     continue
@@ -64,7 +71,11 @@ def process_dataframe(
                     for chunk in reader:
                         monitor.throttle_if_needed()
                         chunks.append(chunk)
-                    df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+                    df = (
+                        pd.concat(chunks, ignore_index=True)
+                        if chunks
+                        else pd.DataFrame()
+                    )
                     return df, None
                 except UnicodeDecodeError:
                     continue

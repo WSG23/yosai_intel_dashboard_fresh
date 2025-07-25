@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Set
 
-from core.unicode import sanitize_unicode_input
+from yosai_intel_dashboard.src.core.unicode import sanitize_unicode_input
 
 logger = logging.getLogger(__name__)
 

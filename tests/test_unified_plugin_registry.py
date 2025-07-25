@@ -1,6 +1,6 @@
 import enum
-import pytest
 
+import pytest
 from dash import Dash, html
 from flask.json.provider import DefaultJSONProvider
 
@@ -14,13 +14,17 @@ class EnumJSONProvider(DefaultJSONProvider):
 
 import sys
 
-from config import create_config_manager
-from core.service_container import ServiceContainer
-from core.plugins.auto_config import PluginAutoConfiguration
-from core.plugins.unified_registry import UnifiedPluginRegistry
+from yosai_intel_dashboard.src.core.plugins.auto_config import PluginAutoConfiguration
+from yosai_intel_dashboard.src.core.plugins.unified_registry import (
+    UnifiedPluginRegistry,
+)
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 
 pytestmark = pytest.mark.usefixtures("fake_dash")
-from services.data_processing.core.protocols import PluginMetadata
+from yosai_intel_dashboard.src.services.data_processing.core.protocols import (
+    PluginMetadata,
+)
 
 
 class DummyPlugin:

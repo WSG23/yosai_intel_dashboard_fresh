@@ -13,14 +13,22 @@ from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
-from core.exceptions import ValidationError
-from core.performance import get_performance_monitor
-from core.protocols import ConfigurationProtocol
-from core.unicode import UnicodeProcessor, sanitize_dataframe, sanitize_for_utf8, safe_unicode_decode
 from upload_types import ValidationResult
-from .unified_upload_validator import UnifiedUploadValidator
+from core.exceptions import ValidationError
+from yosai_intel_dashboard.src.core.performance import get_performance_monitor
+from core.protocols import ConfigurationProtocol
+from yosai_intel_dashboard.src.core.unicode import (
+    UnicodeProcessor,
+    safe_unicode_decode,
+    sanitize_dataframe,
+    sanitize_for_utf8,
+)
+from config.dynamic_config import (
+    dynamic_config,
+)
+
 from .common import process_dataframe
+from .unified_upload_validator import UnifiedUploadValidator
 
 
 def create_config_methods(cls):
@@ -159,7 +167,9 @@ class UnifiedFileValidator:
         if max_size_mb is not None:
             self.max_size_mb = max_size_mb
         self._string_validator = _lazy_string_validator()
-        self._basic_validator = UnifiedUploadValidator(self.max_size_mb, config=self.config)
+        self._basic_validator = UnifiedUploadValidator(
+            self.max_size_mb, config=self.config
+        )
 
     def _sanitize_string(self, value: str) -> str:
         cleaned = sanitize_for_utf8(str(value))

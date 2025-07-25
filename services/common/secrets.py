@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import Optional
 
-from config.environment import get_environment
+from yosai_intel_dashboard.src.infrastructure.config.environment import get_environment
 
 from .vault_client import VaultClient
 

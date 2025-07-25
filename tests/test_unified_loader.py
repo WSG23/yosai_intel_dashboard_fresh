@@ -1,5 +1,5 @@
-import types
 import sys
+import types
 
 
 def _stub_optional_modules():
@@ -28,7 +28,9 @@ security:
     monkeypatch.setenv("SECRET_KEY", "envsecret")
 
     _stub_optional_modules()
-    from config.unified_loader import UnifiedLoader
+    from yosai_intel_dashboard.src.infrastructure.config.unified_loader import (
+        UnifiedLoader,
+    )
 
     loader = UnifiedLoader(str(path))
     cfg = loader.load()

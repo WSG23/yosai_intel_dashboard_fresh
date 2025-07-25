@@ -1,7 +1,9 @@
-import pandas as pd
-from core import performance
 import importlib.util
 from pathlib import Path
+
+import pandas as pd
+
+from yosai_intel_dashboard.src.core import performance
 
 spec = importlib.util.spec_from_file_location(
     "ai_processor",

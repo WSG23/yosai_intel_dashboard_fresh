@@ -1,9 +1,13 @@
 import logging
 from typing import Any, Optional, Tuple
 
-from config.database_exceptions import DatabaseError
-from services.db_analytics_helper import DatabaseAnalyticsHelper
-from services.summary_reporter import SummaryReporter
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
+    DatabaseError,
+)
+from yosai_intel_dashboard.src.services.db_analytics_helper import (
+    DatabaseAnalyticsHelper,
+)
+from yosai_intel_dashboard.src.services.summary_reporter import SummaryReporter
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +25,12 @@ def initialize_database(
                 SummaryReporter(database),
             )
 
-        from config import get_database_config
-        from config.database_manager import (
-            DatabaseSettings as ManagerConfig,
+        from yosai_intel_dashboard.src.infrastructure.config import get_database_config
+        from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
             DatabaseManager,
+        )
+        from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
+            DatabaseSettings as ManagerConfig,
         )
 
         cfg = get_database_config()

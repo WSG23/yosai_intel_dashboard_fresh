@@ -54,7 +54,11 @@ class CSRFConfig:
     @classmethod
     def for_development(cls, **kwargs):
         """Create development configuration"""
-        defaults = {"enabled": False, "ssl_strict": False, "secret_key": os.environ.get("SECRET_KEY", "")}
+        defaults = {
+            "enabled": False,
+            "ssl_strict": False,
+            "secret_key": os.environ.get("SECRET_KEY", ""),
+        }
         defaults.update(kwargs)
         return cls(**defaults)
 
@@ -146,7 +150,9 @@ class EnhancedCSRFManager:
 
         # Set secret key if not present
         if not server.config.get("SECRET_KEY"):
-            server.config["SECRET_KEY"] = self.config.secret_key or os.environ.get("SECRET_KEY", "")
+            server.config["SECRET_KEY"] = self.config.secret_key or os.environ.get(
+                "SECRET_KEY", ""
+            )
 
         # Configure CSRF based on mode
         if self.mode in [CSRFMode.ENABLED, CSRFMode.PRODUCTION]:
@@ -193,11 +199,11 @@ class EnhancedCSRFManager:
         for route in default_exempt_routes:
             self.add_exempt_route(route)
 
-        # Add custom exempt routes from config
+        # Add custom exempt routes from yosai_intel_dashboard.src.infrastructure.config
         for route in self.config.exempt_routes:
             self.add_exempt_route(route)
 
-        # Add custom exempt views from config
+        # Add custom exempt views from yosai_intel_dashboard.src.infrastructure.config
         for view in self.config.exempt_views:
             self.add_exempt_view(view)
 

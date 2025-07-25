@@ -16,7 +16,7 @@ from database.secure_exec import execute_command, execute_query
 
 LOG = logging.getLogger(__name__)
 
-from services.common.secrets import get_secret
+from yosai_intel_dashboard.src.services.common.secrets import get_secret
 
 
 def _resolve_dsn(value: str | None, field: str) -> str:

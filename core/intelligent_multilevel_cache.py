@@ -145,7 +145,9 @@ class IntelligentMultiLevelCache:
                 if expiry and now > expiry:
                     file.unlink(missing_ok=True)
                 else:
-                    await self.set(key, obj["value"], ttl=int(expiry - now) if expiry else ttl)
+                    await self.set(
+                        key, obj["value"], ttl=int(expiry - now) if expiry else ttl
+                    )
                     return obj["value"]
             except Exception as exc:  # pragma: no cover - best effort
                 logger.warning("Disk read failed for %s: %s", key, exc)
@@ -179,7 +181,7 @@ class IntelligentMultiLevelCache:
 
 async def create_intelligent_cache_manager() -> IntelligentMultiLevelCache:
     """Initialize cache manager from configuration."""
-    from config.config import get_cache_config
+    from yosai_intel_dashboard.src.infrastructure.config.config import get_cache_config
 
     cfg = get_cache_config()
     manager = IntelligentMultiLevelCache(cfg)

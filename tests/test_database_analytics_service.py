@@ -1,4 +1,6 @@
-from services.database_analytics_service import DatabaseAnalyticsService
+from yosai_intel_dashboard.src.services.database_analytics_service import (
+    DatabaseAnalyticsService,
+)
 
 
 class FakeConnection:

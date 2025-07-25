@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Protocol, runtime_checkable
 
 import pandas as pd
 
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
 
 
 @runtime_checkable
@@ -89,7 +89,9 @@ def get_upload_validator(
     c = _get_container(container)
     if c and c.has("upload_validator"):
         return c.get("upload_validator")
-    from services.upload.core.validator import ClientSideValidator
+    from yosai_intel_dashboard.src.services.upload.core.validator import (
+        ClientSideValidator,
+    )
 
     return ClientSideValidator()
 
@@ -100,7 +102,7 @@ def get_export_service(
     c = _get_container(container)
     if c and c.has("export_service"):
         return c.get("export_service")
-    import services.export_service as svc
+    import yosai_intel_dashboard.src.services.export_service as svc
 
     return svc
 
@@ -111,7 +113,9 @@ def get_door_mapping_service(
     c = _get_container(container)
     if c and c.has("door_mapping_service"):
         return c.get("door_mapping_service")
-    from services.door_mapping_service import door_mapping_service
+    from yosai_intel_dashboard.src.services.door_mapping_service import (
+        door_mapping_service,
+    )
 
     return door_mapping_service
 
@@ -123,7 +127,9 @@ def get_device_learning_service(
     c = _get_container(container)
     if c and c.has("device_learning_service"):
         return c.get("device_learning_service")
-    from services.device_learning_service import create_device_learning_service
+    from yosai_intel_dashboard.src.services.device_learning_service import (
+        create_device_learning_service,
+    )
 
     return create_device_learning_service()
 
@@ -135,8 +141,10 @@ def get_upload_data_service(
     c = _get_container(container)
     if c and c.has("upload_data_service"):
         return c.get("upload_data_service")
-    from services.upload_data_service import UploadDataService as UploadDataSvc
     from utils.upload_store import uploaded_data_store
+    from yosai_intel_dashboard.src.services.upload_data_service import (
+        UploadDataService as UploadDataSvc,
+    )
 
     return UploadDataSvc(uploaded_data_store)
 
@@ -154,10 +162,11 @@ __all__ = [
     "get_upload_data_service",
 ]
 
+
 @runtime_checkable
 class UploadDataServiceProtocol(Protocol):
     """Interface for upload data services."""
-    
+
     def get_upload_data(self) -> Dict[str, Any]: ...
     def store_upload_data(self, data: Dict[str, Any]) -> bool: ...
     def clear_data(self) -> None: ...
@@ -181,11 +190,11 @@ class UploadDataService(Protocol):
 
     def save_mapping(self, filename: str, mapping: Dict[str, Any]) -> None: ...
 
-@runtime_checkable  
+
+@runtime_checkable
 class DeviceLearningServiceProtocol(Protocol):
     """Interface for device learning services."""
-    
+
     def get_user_device_mappings(self, filename: str) -> Dict[str, Any]: ...
     def save_device_mappings(self, mappings: Dict[str, Any]) -> bool: ...
     def learn_from_data(self, df: pd.DataFrame) -> Dict[str, Any]: ...
-

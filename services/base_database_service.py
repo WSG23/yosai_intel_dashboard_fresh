@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Optional
 
-from core.base_model import BaseModel
+from yosai_intel_dashboard.src.core.base_model import BaseModel
 
 
 class BaseDatabaseService(BaseModel):

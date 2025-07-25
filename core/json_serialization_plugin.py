@@ -11,8 +11,10 @@ from typing import Any, Dict, Optional, cast
 
 import pandas as pd
 
-from core.serialization import SafeJSONSerializer
-from services.data_processing.core.protocols import PluginMetadata
+from yosai_intel_dashboard.src.core.serialization import SafeJSONSerializer
+from yosai_intel_dashboard.src.services.data_processing.core.protocols import (
+    PluginMetadata,
+)
 
 from .base_model import BaseModel
 

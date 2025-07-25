@@ -7,8 +7,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, List
 
-from core.security import SecurityLevel, security_auditor
 from security_callback_controller import SecurityEvent, emit_security_event
+from yosai_intel_dashboard.src.core.security import SecurityLevel, security_auditor
 
 logger = logging.getLogger(__name__)
 
@@ -36,20 +36,28 @@ class SecurityThreat:
 class MLSecurityEngine:
     """Asynchronous ML-based security threat detection engine."""
 
-    def __init__(self, model: Callable[[List[Dict[str, Any]]], Awaitable[List[Dict[str, Any]]]]):
+    def __init__(
+        self, model: Callable[[List[Dict[str, Any]]], Awaitable[List[Dict[str, Any]]]]
+    ):
         self.model = model
         self.logger = logging.getLogger(__name__)
 
-    async def _extract_security_features(self, events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def _extract_security_features(
+        self, events: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Extract features from raw events for model input."""
         await asyncio.sleep(0)  # allow cooperative scheduling
         return events
 
-    async def _run_threat_detection_model(self, features: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def _run_threat_detection_model(
+        self, features: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Run the underlying ML model to detect threats."""
         return await self.model(features)
 
-    async def analyze_security_events(self, events: List[Dict[str, Any]]) -> List[SecurityThreat]:
+    async def analyze_security_events(
+        self, events: List[Dict[str, Any]]
+    ) -> List[SecurityThreat]:
         """Analyze events, emit callbacks, and return detected threats."""
         if not events:
             return []

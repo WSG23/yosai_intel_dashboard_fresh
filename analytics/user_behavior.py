@@ -7,11 +7,11 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-from monitoring.model_performance_monitor import (
+from utils.sklearn_compat import optional_import
+from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (
     ModelMetrics,
     get_model_performance_monitor,
 )
-from utils.sklearn_compat import optional_import
 
 KMeans = optional_import("sklearn.cluster.KMeans")
 DataConversionWarning = optional_import("sklearn.exceptions.DataConversionWarning")
@@ -158,7 +158,9 @@ class UserBehaviorAnalyzer:
         df_clean = df.copy(deep=False)
 
         # Handle Unicode issues
-        from security.unicode_security_handler import UnicodeSecurityHandler
+        from yosai_intel_dashboard.src.infrastructure.security.unicode_security_handler import (
+            UnicodeSecurityHandler,
+        )
 
         string_columns = df_clean.select_dtypes(include=["object"]).columns
         for col in string_columns:

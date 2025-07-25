@@ -1,5 +1,3 @@
-from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-
 from analytics.file_processing_utils import (
     aggregate_counts,
     calculate_date_range,
@@ -7,8 +5,9 @@ from analytics.file_processing_utils import (
     update_counts,
     update_timestamp_range,
 )
-from services import AnalyticsService
 from tests.fakes import FakeUploadDataService, FakeUploadStore
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
+from yosai_intel_dashboard.src.services import AnalyticsService
 
 
 def test_load_uploaded_data():

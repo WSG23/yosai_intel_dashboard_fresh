@@ -4,15 +4,19 @@ from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import pytest
 
-from core.unicode import (
+from yosai_intel_dashboard.src.core.unicode import (
     contains_surrogates,
     safe_decode_bytes,
     safe_encode_text,
     safe_format_number,
     sanitize_dataframe,
 )
-from security.unicode_security_validator import UnicodeSecurityValidator
-from security.validation_exceptions import ValidationError
+from security.unicode_security_validator import (
+    UnicodeSecurityValidator,
+)
+from yosai_intel_dashboard.src.infrastructure.security.validation_exceptions import (
+    ValidationError,
+)
 
 
 def test_safe_encode_text_surrogates():

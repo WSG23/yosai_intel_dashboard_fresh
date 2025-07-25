@@ -8,23 +8,27 @@ import pandas as pd
 from dash.dash import no_update
 
 from components.file_preview import create_file_preview_ui
-from services.async_file_processor import AsyncFileProcessor
-from services.data_enhancer import get_ai_column_suggestions
-from services.interfaces import (
+from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.services.async_file_processor import AsyncFileProcessor
+from yosai_intel_dashboard.src.services.data_enhancer import get_ai_column_suggestions
+from yosai_intel_dashboard.src.services.interfaces import (
     UploadDataServiceProtocol,
     get_device_learning_service,
 )
-from services.upload.async_processor import AsyncUploadProcessor
-from services.upload.protocols import (
+from yosai_intel_dashboard.src.services.upload.async_processor import (
+    AsyncUploadProcessor,
+)
+from yosai_intel_dashboard.src.services.upload.protocols import (
     DeviceLearningServiceProtocol,
     FileProcessorProtocol,
     UploadProcessingServiceProtocol,
     UploadStorageProtocol,
     UploadValidatorProtocol,
 )
-from services.upload.utils.file_parser import create_file_preview
-from services.upload_data_service import UploadDataService
-from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.services.upload.utils.file_parser import (
+    create_file_preview,
+)
+from yosai_intel_dashboard.src.services.upload_data_service import UploadDataService
 
 logger = logging.getLogger(__name__)
 
@@ -264,7 +268,9 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
                         filename
                     )
                     if user_mappings:
-                        from services.ai_mapping_store import ai_mapping_store
+                        from yosai_intel_dashboard.src.services.ai_mapping_store import (
+                            ai_mapping_store,
+                        )
 
                         ai_mapping_store.clear()
                         for device, mapping in user_mappings.items():
@@ -277,7 +283,9 @@ class UploadProcessingService(UploadProcessingServiceProtocol):
                         )
                     else:
                         logger.info("🆕 First upload - AI will be used")
-                        from services.ai_mapping_store import ai_mapping_store
+                        from yosai_intel_dashboard.src.services.ai_mapping_store import (
+                            ai_mapping_store,
+                        )
 
                         ai_mapping_store.clear()
                         self.auto_apply_learned_mappings(df, filename)

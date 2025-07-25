@@ -2,10 +2,10 @@ from __future__ import annotations
 
 """Machine learning risk scoring utilities."""
 
-from typing import TYPE_CHECKING, Any, Optional, Tuple
 import hashlib
 import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, Optional, Tuple
 
 import joblib
 import pandas as pd
@@ -33,8 +33,9 @@ def optional_import(name: str, fallback: type | None = None) -> Any:
         )
         return fallback
 
+
 if TYPE_CHECKING:  # pragma: no cover - imported for type checking only
-    from models.ml import ModelRegistry
+    from yosai_intel_dashboard.src.core.domain.ml import ModelRegistry
 else:  # pragma: no cover - runtime fallback
     ModelRegistry = Any  # type: ignore
 
@@ -50,13 +51,13 @@ if LogisticRegression is None:  # pragma: no cover - fallback definitions
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             raise ImportError("scikit-learn is required for LogisticRegression")
 
+
 if GradientBoostingClassifier is None:  # pragma: no cover - fallback definitions
 
     class GradientBoostingClassifier:  # type: ignore
         def __init__(self, *args: Any, **kwargs: Any) -> None:
-            raise ImportError(
-                "scikit-learn is required for GradientBoostingClassifier"
-            )
+            raise ImportError("scikit-learn is required for GradientBoostingClassifier")
+
 
 if StandardScaler is None:  # pragma: no cover - fallback definitions
 
@@ -66,6 +67,7 @@ if StandardScaler is None:  # pragma: no cover - fallback definitions
 
         def transform(self, X: pd.DataFrame) -> pd.DataFrame:
             return X
+
 
 __all__ = ["train_risk_model", "predict_risk_score"]
 

@@ -13,7 +13,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from config.dynamic_config import dynamic_config
+from config.dynamic_config import (
+    dynamic_config,
+)
 
 logger = logging.getLogger(__name__)
 

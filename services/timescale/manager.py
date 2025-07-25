@@ -8,7 +8,7 @@ import time
 import asyncpg
 
 from database.metrics import queries_total, query_errors_total
-from services.common.secrets import get_secret
+from yosai_intel_dashboard.src.services.common.secrets import get_secret
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +124,6 @@ class TimescaleDBManager:
         await conn.execute(
             "SELECT add_retention_policy('access_events',"
             f" INTERVAL '{retention_days} days', if_not_exists => TRUE)"
-
         )
 
     # ------------------------------------------------------------------

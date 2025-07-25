@@ -13,11 +13,13 @@ import pandas as pd
 from dash import ALL, MATCH, Input, Output, State, dcc, html
 
 from components.plugin_adapter import ComponentPluginAdapter
-from services.data_enhancer import (
+from yosai_intel_dashboard.src.services.data_enhancer import (
     get_ai_column_suggestions as simple_column_suggestions,
 )
-from services.learning.src.api.consolidated_service import get_learning_service
-from services.upload_data_service import load_dataframe
+from yosai_intel_dashboard.src.services.learning.src.api.consolidated_service import (
+    get_learning_service,
+)
+from yosai_intel_dashboard.src.services.upload_data_service import load_dataframe
 
 try:
     from analytics.controllers import UnifiedAnalyticsController
@@ -25,7 +27,9 @@ except ImportError:  # pragma: no cover - optional dependency
     UnifiedAnalyticsController = None
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+    from yosai_intel_dashboard.src.core.truly_unified_callbacks import (
+        TrulyUnifiedCallbacks,
+    )
 
 
 class ColumnVerifierProtocol(Protocol):
@@ -556,7 +560,9 @@ def save_verified_mappings(
         logger.info(f"   Context: {training_data['learning_context']}")
 
         # Try to save using the plugin adapter
-        plugin_saved = adapter.save_verified_mappings(filename, column_mappings, metadata)
+        plugin_saved = adapter.save_verified_mappings(
+            filename, column_mappings, metadata
+        )
         if not plugin_saved:
             logger.info("AI system save failed or unavailable")
         else:
@@ -668,7 +674,9 @@ def save_column_mappings_callback(
         logger.warning("No column mappings provided for %s", filename)
         return "❌ No mappings", "danger"
 
-    missing_required = [f for f in REQUIRED_STANDARD_FIELDS if f not in mappings.values()]
+    missing_required = [
+        f for f in REQUIRED_STANDARD_FIELDS if f not in mappings.values()
+    ]
     if missing_required:
         logger.warning("Missing required fields for %s: %s", filename, missing_required)
 

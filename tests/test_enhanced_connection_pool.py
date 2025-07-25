@@ -1,8 +1,12 @@
 import pytest
 
-from database.connection_pool import EnhancedConnectionPool, CircuitBreaker
-from config.database_manager import MockConnection
-from config.database_exceptions import ConnectionValidationFailed
+from database.connection_pool import CircuitBreaker, EnhancedConnectionPool
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
+    ConnectionValidationFailed,
+)
+from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
+    MockConnection,
+)
 
 
 def factory():

@@ -1,4 +1,4 @@
-from core.navigation.enterprise_navigation_manager import (
+from yosai_intel_dashboard.src.core.navigation.enterprise_navigation_manager import (
     EnterpriseNavigationManager,
     NavigationLoopError,
 )

@@ -12,13 +12,14 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from config.dynamic_config import dynamic_config
-from core.base_model import BaseModel
-
 # Import the high-level ``SecurityValidator`` used across the application.
 # This module keeps no internal validation logic and instead delegates to
 # :class:`~core.security_validator.SecurityValidator` for sanitization tasks.
 from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.core.base_model import BaseModel
+from config.dynamic_config import (
+    dynamic_config,
+)
 
 
 class SecurityLevel(Enum):
@@ -332,7 +333,9 @@ def initialize_validation_callbacks() -> None:
     """Set up request validation callbacks on import."""
     try:
         from analytics_core.callbacks.unified_callback_manager import CallbackManager
-        from security.validation_middleware import ValidationMiddleware
+        from yosai_intel_dashboard.src.infrastructure.security.validation_middleware import (
+            ValidationMiddleware,
+        )
     except Exception:
         # Optional components may be missing in minimal environments
         return

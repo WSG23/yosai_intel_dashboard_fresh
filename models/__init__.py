@@ -3,7 +3,7 @@
 Simplified Models Package
 """
 
-from services import registry
+from yosai_intel_dashboard.src.services import registry
 
 from .entities import Door, Facility, Person
 

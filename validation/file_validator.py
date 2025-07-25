@@ -5,7 +5,9 @@ import io
 from pathlib import Path
 from typing import Iterable, Tuple
 
-from config.dynamic_config import dynamic_config
+from config.dynamic_config import (
+    dynamic_config,
+)
 
 from .core import ValidationResult
 from .rules import CompositeValidator, ValidationRule
@@ -56,9 +58,13 @@ class CSVFormulaRule(ValidationRule):
 class FileValidator(CompositeValidator):
     """High level file validator based on configurable rules."""
 
-    def __init__(self, max_size_mb: int | None = None, allowed_ext: Iterable[str] | None = None) -> None:
-        size_mb = max_size_mb if max_size_mb is not None else getattr(
-            dynamic_config.security, "max_upload_mb", 10
+    def __init__(
+        self, max_size_mb: int | None = None, allowed_ext: Iterable[str] | None = None
+    ) -> None:
+        size_mb = (
+            max_size_mb
+            if max_size_mb is not None
+            else getattr(dynamic_config.security, "max_upload_mb", 10)
         )
         size = size_mb * 1024 * 1024
         default_types = getattr(dynamic_config, "upload", None)

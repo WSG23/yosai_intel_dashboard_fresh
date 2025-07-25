@@ -5,7 +5,7 @@ from typing import Iterator
 
 from flask import Response, stream_with_context
 
-from services.task_queue import get_status
+from yosai_intel_dashboard.src.services.task_queue import get_status
 
 
 class ProgressEventManager:

@@ -1,7 +1,7 @@
 import pandas as pd
 
-import core.unicode as handler
-from core.unicode import UnicodeProcessor, sanitize_dataframe
+import yosai_intel_dashboard.src.core.unicode as handler
+from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor, sanitize_dataframe
 
 
 def test_unicode_handler_centralization():
@@ -16,7 +16,9 @@ def test_unicode_handler_centralization():
     assert list(cleaned_df.columns) == ["c"]
     assert cleaned_df.iloc[0, 0] == "x"
 
-    from security.unicode_security_handler import UnicodeSecurityHandler
+    from yosai_intel_dashboard.src.infrastructure.security.unicode_security_handler import (
+        UnicodeSecurityHandler,
+    )
 
     assert UnicodeSecurityHandler.sanitize_unicode_input(text) == cleaned
     sec_df = UnicodeSecurityHandler.sanitize_dataframe(df)

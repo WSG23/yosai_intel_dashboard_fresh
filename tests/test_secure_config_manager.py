@@ -1,9 +1,12 @@
 import types
+
 import pytest
 from cryptography.fernet import Fernet
 
-from config.secure_config_manager import SecureConfigManager
 from core.exceptions import ConfigurationError
+from yosai_intel_dashboard.src.infrastructure.config.secure_config_manager import (
+    SecureConfigManager,
+)
 
 
 def test_vault_secret_resolution(monkeypatch, tmp_path):
@@ -127,4 +130,3 @@ security:
     mgr = SecureConfigManager()
 
     assert mgr.get_database_config().password == "aws-secret"
-

@@ -1,5 +1,6 @@
 import sys
 import types
+
 import pandas as pd
 
 # Provide lightweight stubs required for importing device_endpoint
@@ -18,22 +19,26 @@ services_mod = sys.modules.setdefault("services", types.ModuleType("services"))
 services_mod.__path__ = [str((__file__)).rsplit("/tests/", 1)[0] + "/services"]
 
 from device_endpoint import (
-    load_stored_data,
-    determine_device_column,
+    build_ai_device_mappings,
     build_device_mappings,
     build_user_device_mappings,
-    build_ai_device_mappings,
+    determine_device_column,
+    load_stored_data,
 )
+
 
 class DummyUploadService:
     def __init__(self, df_map):
         self.store = types.SimpleNamespace(get_all_data=lambda: df_map)
+
     def auto_apply_learned_mappings(self, df, filename):
         return False
+
 
 class DummyDeviceService:
     def __init__(self, user_map=None):
         self.user_map = user_map or {}
+
     def get_user_device_mappings(self, filename):
         return self.user_map
 
@@ -76,7 +81,8 @@ def test_build_device_mappings_ai(monkeypatch):
     df = pd.DataFrame({})
     dsvc = DummyDeviceService()
     ai_map = {"dev": {"device_type": "door", "confidence": 0.7}}
-    from services.ai_mapping_store import ai_mapping_store
+    from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
+
     monkeypatch.setattr(ai_mapping_store, "clear", lambda: None)
     monkeypatch.setattr(ai_mapping_store, "all", lambda: ai_map)
     usvc = DummyUploadService({})
@@ -102,7 +108,8 @@ def test_build_user_device_mappings_helper():
 def test_build_ai_device_mappings_helper(monkeypatch):
     df = pd.DataFrame({})
     ai_map = {"dev": {"device_type": "door", "confidence": 0.7}}
-    from services.ai_mapping_store import ai_mapping_store
+    from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
+
     monkeypatch.setattr(ai_mapping_store, "clear", lambda: None)
     monkeypatch.setattr(ai_mapping_store, "all", lambda: ai_map)
     usvc = DummyUploadService({})

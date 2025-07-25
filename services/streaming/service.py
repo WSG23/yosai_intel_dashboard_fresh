@@ -1,8 +1,10 @@
 import logging
 from typing import Any, Dict, Generator, Optional
 
-from config.dynamic_config import dynamic_config
 from yosai_framework.service import BaseService
+from config.dynamic_config import (
+    dynamic_config,
+)
 
 logger = logging.getLogger(__name__)
 

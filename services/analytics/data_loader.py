@@ -5,9 +5,13 @@ from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
-from services.controllers.upload_controller import UploadProcessingController
-from services.data_processing.processor import Processor
+from config.dynamic_config import (
+    dynamic_config,
+)
+from yosai_intel_dashboard.src.services.controllers.upload_controller import (
+    UploadProcessingController,
+)
+from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 
 logger = logging.getLogger(__name__)
 

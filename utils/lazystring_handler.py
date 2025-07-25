@@ -3,7 +3,7 @@
 import logging
 from typing import Any
 
-from core.serialization import SafeJSONSerializer
+from yosai_intel_dashboard.src.core.serialization import SafeJSONSerializer
 
 logger = logging.getLogger(__name__)
 

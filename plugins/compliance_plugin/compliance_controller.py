@@ -7,19 +7,20 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from flask import Blueprint, jsonify, request
-
 from flask_login import current_user, login_required
 
-from core.audit_logger import ComplianceAuditLogger
-from core.container import Container
-from core.rbac import require_role
-from validation.security_validator import SecurityValidator
-from models.compliance import ConsentType, DSARRequestType
-from services.compliance.consent_service import ConsentService
-from services.compliance.dsar_service import DSARService
-from services.security import require_role
 from database.secure_exec import execute_query
-
+from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
+from core.container import Container
+from yosai_intel_dashboard.src.core.domain.compliance import (
+    ConsentType,
+    DSARRequestType,
+)
+from yosai_intel_dashboard.src.core.rbac import require_role
+from yosai_intel_dashboard.src.services.compliance.consent_service import ConsentService
+from yosai_intel_dashboard.src.services.compliance.dsar_service import DSARService
+from yosai_intel_dashboard.src.services.security import require_role
 
 logger = logging.getLogger(__name__)
 

@@ -17,7 +17,7 @@ def add_debug_hooks():
     """Add debugging hooks to track data flow"""
 
     # Hook 1: Patch process_uploaded_file
-    from services import upload_service
+    from yosai_intel_dashboard.src.services import upload_service
 
     original_process = upload_service.process_uploaded_file
 
@@ -34,14 +34,14 @@ def add_debug_hooks():
     upload_service.process_uploaded_file = debug_process_uploaded_file
 
     # Hook 2: Patch UnifiedFileValidator.validate_file
-    from services.data_processing.unified_file_validator import UnifiedFileValidator
+    from yosai_intel_dashboard.src.services.data_processing.unified_file_validator import (
+        UnifiedFileValidator,
+    )
 
     original_validate = UnifiedFileValidator.validate_file
 
     def debug_validate_file_contents(self, contents, filename):
-        logger.info(
-            f"🔒 HOOK 2: UnifiedFileValidator.validate_file() for {filename}"
-        )
+        logger.info(f"🔒 HOOK 2: UnifiedFileValidator.validate_file() for {filename}")
         df = original_validate(self, contents, filename)
         rows = len(df)
         logger.info(f"🎯 HOOK 2: UnifiedFileValidator result: {rows} rows")
@@ -72,7 +72,9 @@ def add_debug_hooks():
 
     # Hook 4: Patch FileProcessor.process_uploaded_contents if available
     try:
-        from services.data_processing.file_processor import FileProcessor
+        from yosai_intel_dashboard.src.services.data_processing.file_processor import (
+            FileProcessor,
+        )
 
         original_process = FileProcessor.process_uploaded_contents
 

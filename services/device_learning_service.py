@@ -12,8 +12,12 @@ from dash import html
 from dash._callback_context import callback_context
 from dash.dependencies import Input, Output
 
-from services.learning.src.api.consolidated_service import get_learning_service
-from services.protocols.device_learning import DeviceLearningServiceProtocol
+from yosai_intel_dashboard.src.services.learning.src.api.consolidated_service import (
+    get_learning_service,
+)
+from yosai_intel_dashboard.src.services.protocols.device_learning import (
+    DeviceLearningServiceProtocol,
+)
 
 
 @runtime_checkable
@@ -36,7 +40,9 @@ class DeviceServiceProtocol(Protocol):
 
 
 if TYPE_CHECKING:
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+    from yosai_intel_dashboard.src.core.truly_unified_callbacks import (
+        TrulyUnifiedCallbacks,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +188,9 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
         logger.info(f"🔍 DEBUG - filename: {filename}")
 
         try:
-            from services.ai_mapping_store import ai_mapping_store
+            from yosai_intel_dashboard.src.services.ai_mapping_store import (
+                ai_mapping_store,
+            )
 
             learned_mappings = self.get_learned_mappings(df, filename)
             logger.info(

@@ -5,13 +5,17 @@ A simple Streamlit UI to test the complete pipeline visually
 """
 # mypy: ignore-errors
 
-import streamlit as st  # type: ignore
-import pandas as pd
-from services.data_processing.file_processor import FileProcessor
 import sys
 from pathlib import Path
-from config.app_config import UploadConfig
+
+import pandas as pd
 import plotly.express as px
+import streamlit as st  # type: ignore
+
+from yosai_intel_dashboard.src.infrastructure.config.app_config import UploadConfig
+from yosai_intel_dashboard.src.services.data_processing.file_processor import (
+    FileProcessor,
+)
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -19,6 +23,7 @@ sys.path.insert(0, str(project_root))
 
 
 # Apply our fixes
+
 
 def apply_all_fixes():
     """Apply development-only monkey patches for compatibility."""
@@ -32,7 +37,9 @@ def apply_all_fixes():
             CallbackManager.register_handler = CallbackManager.handle_register
 
         # Step 2: Missing methods fix
-        from services.upload_processing import UploadAnalyticsProcessor
+        from yosai_intel_dashboard.src.services.upload_processing import (
+            UploadAnalyticsProcessor,
+        )
 
         if not hasattr(UploadAnalyticsProcessor, "get_analytics_from_uploaded_data"):
 
@@ -137,7 +144,9 @@ def show_dashboard_overview():
         col1, col2, col3 = st.columns(3)
 
         try:
-            from services.analytics_service import AnalyticsService
+            from yosai_intel_dashboard.src.services.analytics_service import (
+                AnalyticsService,
+            )
 
             analytics = AnalyticsService()
             health = analytics.health_check()
@@ -195,7 +204,9 @@ def show_dashboard_overview():
     st.subheader("🗺️ Device Mappings Overview")
 
     try:
-        from services.device_learning_service import DeviceLearningService
+        from yosai_intel_dashboard.src.services.device_learning_service import (
+            DeviceLearningService,
+        )
 
         device_service = DeviceLearningService()
         mappings = device_service.learned_mappings
@@ -288,7 +299,9 @@ def show_file_processing():
             st.subheader("🤖 AI Column Suggestions")
             if st.button("Get AI Suggestions"):
                 try:
-                    from services.data_enhancer import get_ai_column_suggestions
+                    from yosai_intel_dashboard.src.services.data_enhancer import (
+                        get_ai_column_suggestions,
+                    )
 
                     suggestions = get_ai_column_suggestions(df)
 
@@ -316,7 +329,9 @@ def show_device_mapping():
     st.write("Explore your learned device mappings and building layout")
 
     try:
-        from services.device_learning_service import DeviceLearningService
+        from yosai_intel_dashboard.src.services.device_learning_service import (
+            DeviceLearningService,
+        )
 
         device_service = DeviceLearningService()
         mappings = device_service.learned_mappings
@@ -369,7 +384,9 @@ def show_device_mapping():
                             "Security Level": details.get("security_level", "N/A"),
                             "Entry Point": "✅" if details.get("is_entry") else "❌",
                             "Exit Point": "✅" if details.get("is_exit") else "❌",
-                            "Restricted": "🔒" if details.get("is_restricted") else "🔓",
+                            "Restricted": (
+                                "🔒" if details.get("is_restricted") else "🔓"
+                            ),
                             "Confidence": details.get("confidence", 0),
                         }
                     )
@@ -435,7 +452,9 @@ def show_analytics_engine():
 
     # Initialize analytics
     try:
-        from services.analytics_service import AnalyticsService
+        from yosai_intel_dashboard.src.services.analytics_service import (
+            AnalyticsService,
+        )
 
         analytics = AnalyticsService()
 
@@ -446,7 +465,6 @@ def show_analytics_engine():
 
         if parquet_path.exists():
             df = pd.read_parquet(parquet_path)
-
 
             st.success(f"✅ Loaded Enhanced Security Demo: {len(df)} access events")
 

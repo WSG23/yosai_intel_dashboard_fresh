@@ -1,5 +1,5 @@
-from core.app_factory import create_app
 from utils.assets_debug import check_navbar_assets
+from yosai_intel_dashboard.src.core.app_factory import create_app
 
 
 def _make_app(monkeypatch):

@@ -14,8 +14,13 @@ from typing import Any, Dict, List, Optional, Protocol
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
-from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
+from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.core.cache_manager import (
+    CacheConfig,
+    InMemoryCacheManager,
+    cache_with_lock,
+)
+from yosai_intel_dashboard.src.core.domain.ml import ModelRegistry
 from core.protocols import (
     AnalyticsServiceProtocol,
     ConfigurationProtocol,
@@ -23,20 +28,31 @@ from core.protocols import (
     EventBusProtocol,
     StorageProtocol,
 )
-from validation.security_validator import SecurityValidator
-from services.analytics.calculator import Calculator
-from services.analytics.data_loader import DataLoader
-from services.analytics.protocols import DataProcessorProtocol
-from services.analytics.publisher import Publisher
-from services.analytics_summary import generate_sample_analytics
-from services.controllers.upload_controller import UploadProcessingController
-from services.data_processing.processor import Processor
-from services.database_retriever import DatabaseAnalyticsRetriever
-from services.helpers.database_initializer import initialize_database
-from services.interfaces import get_upload_data_service
-from services.summary_report_generator import SummaryReportGenerator
-from services.upload_data_service import UploadDataService
-from models.ml import ModelRegistry
+from config.dynamic_config import (
+    dynamic_config,
+)
+from yosai_intel_dashboard.src.services.analytics.calculator import Calculator
+from yosai_intel_dashboard.src.services.analytics.data_loader import DataLoader
+from yosai_intel_dashboard.src.services.analytics.protocols import DataProcessorProtocol
+from yosai_intel_dashboard.src.services.analytics.publisher import Publisher
+from yosai_intel_dashboard.src.services.analytics_summary import (
+    generate_sample_analytics,
+)
+from yosai_intel_dashboard.src.services.controllers.upload_controller import (
+    UploadProcessingController,
+)
+from yosai_intel_dashboard.src.services.data_processing.processor import Processor
+from yosai_intel_dashboard.src.services.database_retriever import (
+    DatabaseAnalyticsRetriever,
+)
+from yosai_intel_dashboard.src.services.helpers.database_initializer import (
+    initialize_database,
+)
+from yosai_intel_dashboard.src.services.interfaces import get_upload_data_service
+from yosai_intel_dashboard.src.services.summary_report_generator import (
+    SummaryReportGenerator,
+)
+from yosai_intel_dashboard.src.services.upload_data_service import UploadDataService
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 
@@ -64,10 +80,14 @@ class AnalyticsProviderProtocol(Protocol):
 def ensure_analytics_config():
     """Emergency fix to ensure analytics configuration exists."""
     try:
-        from config.dynamic_config import dynamic_config
+        from config.dynamic_config import (
+            dynamic_config,
+        )
 
         if not hasattr(dynamic_config, "analytics"):
-            from config.constants import AnalyticsConstants
+            from yosai_intel_dashboard.src.infrastructure.config.constants import (
+                AnalyticsConstants,
+            )
 
             dynamic_config.analytics = AnalyticsConstants()
     except (ImportError, AttributeError) as exc:
@@ -115,7 +135,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
             self.data_processor = data_processor
         # Legacy attribute aliases
         self.data_loading_service = self.processor
-        from services.data_processing.unified_file_validator import UnifiedFileValidator
+        from yosai_intel_dashboard.src.services.data_processing.unified_file_validator import (
+            UnifiedFileValidator,
+        )
 
         self.file_handler = UnifiedFileValidator()
 

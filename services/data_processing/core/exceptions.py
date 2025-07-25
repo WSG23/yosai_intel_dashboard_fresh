@@ -1,7 +1,7 @@
 """File processing exception hierarchy."""
 
-from core.exceptions import YosaiBaseException
 from shared.errors.types import ErrorCode
+from core.exceptions import YosaiBaseException
 
 
 class FileProcessingError(YosaiBaseException):

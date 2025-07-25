@@ -1,4 +1,6 @@
-from services.analytics_processing import _extract_enhanced_security_details
+from yosai_intel_dashboard.src.services.analytics_processing import (
+    _extract_enhanced_security_details,
+)
 
 
 def test_extract_enhanced_security_details_basic():

@@ -1,9 +1,10 @@
 import logging
+
 import pytest
 
-from core.error_handling import (
-    ErrorHandler,
+from yosai_intel_dashboard.src.core.error_handling import (
     ErrorCategory,
+    ErrorHandler,
     ErrorSeverity,
     with_error_handling,
 )
@@ -30,7 +31,9 @@ def test_with_error_handling_decorator(monkeypatch, caplog):
     handler = ErrorHandler(logger=logging.getLogger("test"))
     monkeypatch.setattr("core.error_handling.error_handler", handler)
 
-    @with_error_handling(category=ErrorCategory.CONFIGURATION, severity=ErrorSeverity.MEDIUM)
+    @with_error_handling(
+        category=ErrorCategory.CONFIGURATION, severity=ErrorSeverity.MEDIUM
+    )
     def fail():
         raise RuntimeError("oops")
 

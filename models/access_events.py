@@ -10,10 +10,12 @@ from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
-from config.constants import DataProcessingLimits
-from core.query_optimizer import monitor_query_performance
-from validation.security_validator import SecurityValidator
 from database.secure_exec import execute_command, execute_query
+from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.core.query_optimizer import monitor_query_performance
+from yosai_intel_dashboard.src.infrastructure.config.constants import (
+    DataProcessingLimits,
+)
 
 from .base import BaseModel
 from .enums import AccessResult, BadgeStatus
@@ -339,7 +341,9 @@ class AccessEventModel(BaseModel):
 def create_access_event_model(db_connection=None) -> AccessEventModel:
     """Factory function to create AccessEventModel instance"""
     if db_connection is None:
-        from config.database_manager import get_database
+        from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
+            get_database,
+        )
 
         db_connection = get_database()
 

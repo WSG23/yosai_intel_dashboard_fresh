@@ -1,11 +1,15 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 from typing import Optional
 
-from services.cached_analytics import CachedAnalyticsService
-from core.cache_manager import CacheConfig, InMemoryCacheManager
-from services.security import require_permission
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
+from yosai_intel_dashboard.src.core.cache_manager import (
+    CacheConfig,
+    InMemoryCacheManager,
+)
+from yosai_intel_dashboard.src.services.cached_analytics import CachedAnalyticsService
+from yosai_intel_dashboard.src.services.security import require_permission
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
 

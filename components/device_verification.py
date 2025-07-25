@@ -12,10 +12,12 @@ from dash.dependencies import ALL, MATCH, Input, Output, State
 
 from analytics.controllers.unified_controller import UnifiedAnalyticsController
 from components.simple_device_mapping import special_areas_options
-from services.ai_mapping_store import ai_mapping_store
+from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
 
 if TYPE_CHECKING:
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+    from yosai_intel_dashboard.src.core.truly_unified_callbacks import (
+        TrulyUnifiedCallbacks,
+    )
 
 logger = logging.getLogger(__name__)
 

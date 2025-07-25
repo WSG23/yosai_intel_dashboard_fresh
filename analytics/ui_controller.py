@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
 
 from .business_service import AnalyticsBusinessService
 

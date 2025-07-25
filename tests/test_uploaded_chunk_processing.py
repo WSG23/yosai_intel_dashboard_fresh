@@ -1,6 +1,5 @@
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-
-from services import AnalyticsService
+from yosai_intel_dashboard.src.services import AnalyticsService
 
 
 def test_process_uploaded_data_directly_chunked(tmp_path):

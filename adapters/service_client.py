@@ -6,10 +6,18 @@ import ssl
 from typing import Any, MutableMapping
 
 import aiohttp
-from tenacity import AsyncRetrying, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tenacity import (
+    AsyncRetrying,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
-from services.resilience.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
 from tracing import propagate_context
+from yosai_intel_dashboard.src.services.resilience.circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerOpen,
+)
 
 
 class K8sResolver:

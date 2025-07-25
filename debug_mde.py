@@ -12,7 +12,7 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import Input, Output, State, dcc, html
 
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 logger = logging.getLogger(__name__)
 

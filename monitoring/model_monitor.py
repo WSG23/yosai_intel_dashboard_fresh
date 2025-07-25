@@ -7,13 +7,15 @@ import time
 import warnings
 from typing import Optional
 
-from config import get_monitoring_config
-from models.ml.model_registry import ModelRegistry
-from monitoring.model_performance_monitor import (
+from yosai_intel_dashboard.src.core.domain.ml.model_registry import ModelRegistry
+from yosai_intel_dashboard.src.infrastructure.config import get_monitoring_config
+from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (
     ModelMetrics,
     get_model_performance_monitor,
 )
-from monitoring.prometheus.model_metrics import update_model_metrics
+from monitoring.prometheus.model_metrics import (
+    update_model_metrics,
+)
 
 
 class ModelMonitor:
@@ -83,4 +85,3 @@ class ModelMonitor:
 
 
 __all__ = ["ModelMonitor"]
-

@@ -2,8 +2,11 @@ from __future__ import annotations
 
 """Callback manager for the upload domain."""
 
-from core.callback_registry import CallbackRegistry, ComponentCallbackManager
 from upload_callbacks import UploadCallbackManager
+from yosai_intel_dashboard.src.core.callback_registry import (
+    CallbackRegistry,
+    ComponentCallbackManager,
+)
 
 
 class UploadCallbacks(ComponentCallbackManager):

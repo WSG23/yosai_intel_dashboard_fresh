@@ -2,26 +2,31 @@ import asyncio
 import os
 
 from fastapi.middleware.wsgi import WSGIMiddleware
-from flask import Flask, jsonify, request, send_from_directory, Response
+from flask import Flask, Response, jsonify, request, send_from_directory
 from flask_cors import CORS
-from config import get_security_config
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 
 from yosai_framework.service import BaseService
-
-from core.rbac import RBACService, create_rbac_service
-from core.secrets_validator import validate_all_secrets
-from services.security import require_token
+from yosai_intel_dashboard.src.core.rbac import RBACService, create_rbac_service
+from yosai_intel_dashboard.src.core.secrets_validator import validate_all_secrets
+from yosai_intel_dashboard.src.infrastructure.config import get_security_config
+from yosai_intel_dashboard.src.services.security import require_token
 
 csrf = CSRFProtect()
 
-from api.analytics_router import router as analytics_router, init_cache_manager
 from settings_endpoint import settings_bp
 
-from config.constants import API_PORT
 from device_endpoint import device_bp
 from mappings_endpoint import mappings_bp
 from upload_endpoint import upload_bp
+from yosai_intel_dashboard.src.adapters.api.analytics_router import (
+    init_cache_manager,
+)
+from yosai_intel_dashboard.src.adapters.api.analytics_router import (
+    router as analytics_router,
+)
+from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
+
 from .callbacks_endpoint import callbacks_bp
 
 

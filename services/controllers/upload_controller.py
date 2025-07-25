@@ -1,11 +1,14 @@
-import pandas as pd
 from typing import Any, Dict, List
 
+import pandas as pd
+
 from validation.security_validator import SecurityValidator
-from services.analytics.upload_analytics import UploadAnalyticsProcessor
-from services.interfaces import get_upload_data_service
-from services.upload_data_service import UploadDataService
-from services.data_processing.processor import Processor
+from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
+    UploadAnalyticsProcessor,
+)
+from yosai_intel_dashboard.src.services.data_processing.processor import Processor
+from yosai_intel_dashboard.src.services.interfaces import get_upload_data_service
+from yosai_intel_dashboard.src.services.upload_data_service import UploadDataService
 
 
 class UploadProcessingController:

@@ -4,16 +4,17 @@ from typing import Callable, Optional, Protocol
 
 from flask import Response, request
 
-from config.dynamic_config import dynamic_config
-from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
-from core.exceptions import ValidationError
 from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
+from core.exceptions import ValidationError
+from config.dynamic_config import (
+    dynamic_config,
+)
 
 
 class Validator(Protocol):
-    def validate(self, data: str) -> str:
-        ...
+    def validate(self, data: str) -> str: ...
 
 
 class ValidationOrchestrator:
@@ -72,7 +73,10 @@ class ValidationMiddleware:
             ):
                 return None
             try:
-                from core.unicode import safe_unicode_decode, sanitize_for_utf8
+                from yosai_intel_dashboard.src.core.unicode import (
+                    safe_unicode_decode,
+                    sanitize_for_utf8,
+                )
 
                 raw_text = safe_unicode_decode(request.data, "utf-8")
                 sanitized = sanitize_for_utf8(raw_text)

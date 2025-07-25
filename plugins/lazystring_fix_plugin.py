@@ -7,9 +7,11 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
-from core.serialization import SafeJSONSerializer
-from core.unicode import sanitize_unicode_input
-from services.data_processing.core.protocols import PluginMetadata
+from yosai_intel_dashboard.src.core.serialization import SafeJSONSerializer
+from yosai_intel_dashboard.src.core.unicode import sanitize_unicode_input
+from yosai_intel_dashboard.src.services.data_processing.core.protocols import (
+    PluginMetadata,
+)
 
 # Optional Babel import
 try:

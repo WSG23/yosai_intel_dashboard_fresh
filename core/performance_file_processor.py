@@ -7,9 +7,9 @@ import logging
 from pathlib import Path
 from typing import IO, Callable, Iterable, List, Optional, Union
 
-from config.constants import DEFAULT_CHUNK_SIZE
-
 import pandas as pd
+
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
 
 try:
     import psutil
@@ -23,7 +23,9 @@ class PerformanceFileProcessor:
     def __init__(
         self, chunk_size: int = DEFAULT_CHUNK_SIZE, *, max_memory_mb: int | None = None
     ) -> None:
-        from config.dynamic_config import dynamic_config
+        from config.dynamic_config import (
+            dynamic_config,
+        )
 
         self.chunk_size = chunk_size
         self.logger = logging.getLogger(__name__)

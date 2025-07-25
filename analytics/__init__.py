@@ -28,7 +28,9 @@ from .ui_controller import AnalyticsUIController
 def initialize_security_callbacks() -> None:
     """Initialize security callbacks for the analytics package."""
     try:
-        from security import SecurityModuleIntegration  # type: ignore
+        from yosai_intel_dashboard.src.infrastructure.security import (
+            SecurityModuleIntegration,  # type: ignore
+        )
     except Exception:
         # Security integration not available
         return

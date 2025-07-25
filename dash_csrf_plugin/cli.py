@@ -7,7 +7,8 @@ import sys
 from typing import Any, Dict
 
 import click
-from config.constants import DEFAULT_APP_PORT
+
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_APP_PORT
 
 from .config import CSRFConfig, CSRFMode
 from .plugin import DashCSRFPlugin

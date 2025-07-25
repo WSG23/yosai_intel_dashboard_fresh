@@ -3,7 +3,9 @@
 import logging
 from typing import Any, Dict, List, Optional
 
-from services.data_processing.core.protocols import PluginMetadata
+from yosai_intel_dashboard.src.services.data_processing.core.protocols import (
+    PluginMetadata,
+)
 
 from .config import AIClassificationConfig, get_ai_config
 from .database.csv_storage import CSVStorageRepository

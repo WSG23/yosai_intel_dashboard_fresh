@@ -14,11 +14,13 @@ from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
-from services.task_queue import create_task, get_status
-from services.rabbitmq_client import RabbitMQClient
-from services.upload.protocols import FileProcessorProtocol
 from utils.memory_utils import check_memory_limit
+from config.dynamic_config import (
+    dynamic_config,
+)
+from yosai_intel_dashboard.src.services.rabbitmq_client import RabbitMQClient
+from yosai_intel_dashboard.src.services.task_queue import create_task, get_status
+from yosai_intel_dashboard.src.services.upload.protocols import FileProcessorProtocol
 
 from .file_processor import UnicodeFileProcessor
 

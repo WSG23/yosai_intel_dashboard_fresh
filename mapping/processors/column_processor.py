@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+from typing import Any
+
 import pandas as pd
 
 from mapping.core.interfaces import ProcessorInterface
 from mapping.core.models import ProcessingResult
+from mapping.helpers import map_and_clean
 from mapping.processors.ai_processor import AIColumnMapperAdapter
 from core.container import container as default_container
-from typing import Any
-from mapping.helpers import map_and_clean
 
 
 class ColumnProcessor(ProcessorInterface):

@@ -1,13 +1,16 @@
 import types
-import pytest
 
+import pytest
 from dash import no_update
-from upload_core import UploadCore
-from services.upload.core.processor import UploadProcessingService
+
 from tests.fakes import (
-    FakeUploadStore,
     FakeDeviceLearningService,
     FakeUploadDataService,
+    FakeUploadStore,
+)
+from upload_core import UploadCore
+from yosai_intel_dashboard.src.services.upload.core.processor import (
+    UploadProcessingService,
 )
 
 

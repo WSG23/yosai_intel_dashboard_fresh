@@ -1,12 +1,13 @@
 import pandas as pd
 from flask import Blueprint, abort, jsonify, request
-from marshmallow import Schema, fields
 from flask_apispec import doc, marshal_with, use_kwargs
-
-from config.service_registration import register_upload_services
+from marshmallow import Schema, fields
 
 # Use the shared DI container for dependency resolution
 from core.container import container
+from yosai_intel_dashboard.src.infrastructure.config.service_registration import (
+    register_upload_services,
+)
 
 if not container.has("upload_processor"):
     register_upload_services(container)
@@ -56,12 +57,10 @@ def build_user_device_mappings(user_mappings: dict) -> dict:
     return device_mappings
 
 
-def build_ai_device_mappings(
-    df: pd.DataFrame, filename: str, upload_service
-) -> dict:
+def build_ai_device_mappings(df: pd.DataFrame, filename: str, upload_service) -> dict:
     """Generate mappings for AI-suggested devices."""
 
-    from services.ai_mapping_store import ai_mapping_store
+    from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
 
     ai_mapping_store.clear()
     learned_applied = upload_service.auto_apply_learned_mappings(df, filename)

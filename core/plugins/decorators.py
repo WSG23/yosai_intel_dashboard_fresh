@@ -5,7 +5,7 @@ import logging
 from functools import wraps
 from typing import Any, Callable, Optional
 
-from core.unicode import sanitize_for_utf8
+from yosai_intel_dashboard.src.core.unicode import sanitize_for_utf8
 
 logger = logging.getLogger(__name__)
 

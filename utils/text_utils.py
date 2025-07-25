@@ -4,7 +4,7 @@ Text utilities for safe text handling
 
 from typing import Any, Union
 
-from core.unicode import clean_surrogate_chars
+from yosai_intel_dashboard.src.core.unicode import clean_surrogate_chars
 
 
 def safe_text(text: Union[str, Any]) -> str:
@@ -89,4 +89,3 @@ def truncate_text(text: str, max_length: int = 100, suffix: str = "...") -> str:
 
 
 __all__ = ["safe_text", "sanitize_text_for_dash", "format_file_size", "truncate_text"]
-

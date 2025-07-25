@@ -8,7 +8,7 @@ from typing import Tuple
 
 import pandas as pd
 
-from core.unicode import sanitize_dataframe
+from yosai_intel_dashboard.src.core.unicode import sanitize_dataframe
 
 _logger = logging.getLogger(__name__)
 

@@ -1,7 +1,11 @@
 """Utility helpers for Yōsai Intel Dashboard."""
 
-from core.unicode import (
+from mapping.processors.ai_processor import AIColumnMapperAdapter
+from yosai_intel_dashboard.src.core.unicode import (
     ChunkedUnicodeProcessor,
+    EnhancedUnicodeProcessor,
+    SurrogateHandlingConfig,
+    SurrogateHandlingStrategy,
     UnicodeProcessor,
     UnicodeSecurityProcessor,
     UnicodeSQLProcessor,
@@ -16,13 +20,8 @@ from core.unicode import (
     sanitize_dataframe,
     sanitize_unicode_input,
     secure_unicode_sanitization,
-    utf8_safe_encode,
     utf8_safe_decode,
-)
-from core.unicode import (
-    EnhancedUnicodeProcessor,
-    SurrogateHandlingConfig,
-    SurrogateHandlingStrategy,
+    utf8_safe_encode,
 )
 
 from .assets_debug import (
@@ -36,11 +35,10 @@ from .debug_tools import (
     find_repeated_imports,
     print_registration_report,
 )
-from mapping.processors.ai_processor import AIColumnMapperAdapter
+from .file_utils import safe_decode_with_unicode_handling
 from .mapping_helpers import standardize_column_names
 from .preview_utils import serialize_dataframe_preview
 from .protocols import SafeDecoderProtocol
-from .file_utils import safe_decode_with_unicode_handling
 
 __all__ = [
     "UnicodeProcessor",

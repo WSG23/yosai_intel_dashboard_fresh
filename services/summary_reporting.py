@@ -33,8 +33,12 @@ class SummaryReporter:
             health["database"] = "not_configured"
 
         try:
-            from services.upload_data_service import get_uploaded_filenames
-            from services.interfaces import get_upload_data_service
+            from yosai_intel_dashboard.src.services.interfaces import (
+                get_upload_data_service,
+            )
+            from yosai_intel_dashboard.src.services.upload_data_service import (
+                get_uploaded_filenames,
+            )
 
             health["uploaded_files"] = len(
                 get_uploaded_filenames(get_upload_data_service())
@@ -47,8 +51,12 @@ class SummaryReporter:
         """Return available data source options."""
         options = [{"label": "Sample Data", "value": "sample"}]
         try:
-            from services.upload_data_service import get_uploaded_filenames
-            from services.interfaces import get_upload_data_service
+            from yosai_intel_dashboard.src.services.interfaces import (
+                get_upload_data_service,
+            )
+            from yosai_intel_dashboard.src.services.upload_data_service import (
+                get_uploaded_filenames,
+            )
 
             uploaded_files = get_uploaded_filenames(get_upload_data_service())
             if uploaded_files:
@@ -83,8 +91,12 @@ class SummaryReporter:
             "service_health": self.health_check(),
         }
         try:
-            from services.upload_data_service import get_uploaded_filenames
-            from services.interfaces import get_upload_data_service
+            from yosai_intel_dashboard.src.services.interfaces import (
+                get_upload_data_service,
+            )
+            from yosai_intel_dashboard.src.services.upload_data_service import (
+                get_uploaded_filenames,
+            )
 
             status["uploaded_files"] = len(
                 get_uploaded_filenames(get_upload_data_service())

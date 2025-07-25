@@ -16,7 +16,9 @@ class BaseReader:
     class CannotParse(Exception):
         """Raised when a reader cannot parse a file."""
 
-    def __init__(self, *, unicode_processor: UnicodeProcessorProtocol | None = None) -> None:
+    def __init__(
+        self, *, unicode_processor: UnicodeProcessorProtocol | None = None
+    ) -> None:
         self.unicode_processor = unicode_processor or get_unicode_processor()
 
     def read(self, file_path: str, hint: Optional[Dict] = None) -> pd.DataFrame:
@@ -24,4 +26,3 @@ class BaseReader:
 
     def _sanitize(self, df: pd.DataFrame) -> pd.DataFrame:
         return self.unicode_processor.sanitize_dataframe(df)
-

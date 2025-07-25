@@ -9,8 +9,10 @@ from typing import Iterable, List
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
-from core.performance import get_performance_monitor
+from yosai_intel_dashboard.src.core.performance import get_performance_monitor
+from config.dynamic_config import (
+    dynamic_config,
+)
 
 logger = logging.getLogger(__name__)
 

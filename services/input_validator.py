@@ -1,17 +1,17 @@
 """Backward compatibility wrapper for :class:`UnifiedUploadValidator`."""
+
 from __future__ import annotations
 
 from typing import Any, Optional
 
-
-from services.data_processing.unified_upload_validator import (
-    UnifiedUploadValidator,
-    _lazy_string_validator,
-)
 from upload_types import ValidationResult
-from services.configuration_service import (
+from yosai_intel_dashboard.src.services.configuration_service import (
     ConfigurationServiceProtocol,
     DynamicConfigurationService,
+)
+from yosai_intel_dashboard.src.services.data_processing.unified_upload_validator import (
+    UnifiedUploadValidator,
+    _lazy_string_validator,
 )
 
 
@@ -43,4 +43,3 @@ class InputValidator(UnifiedUploadValidator):
         if max_size_mb is not None:
             self.max_size_mb = max_size_mb
         self._string_validator = _lazy_string_validator()
-

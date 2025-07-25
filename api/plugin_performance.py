@@ -2,15 +2,21 @@
 
 from __future__ import annotations
 
-from api.adapter import api_adapter
 from app import app
 from flask import abort, jsonify, request
-from marshmallow import Schema, fields
 from flask_apispec import doc, marshal_with, use_kwargs
+from marshmallow import Schema, fields
 
-from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
-from core.plugins.performance_manager import EnhancedThreadSafePluginManager
 from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.adapters.api.adapter import api_adapter
+from yosai_intel_dashboard.src.core.cache_manager import (
+    CacheConfig,
+    InMemoryCacheManager,
+    cache_with_lock,
+)
+from yosai_intel_dashboard.src.core.plugins.performance_manager import (
+    EnhancedThreadSafePluginManager,
+)
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 

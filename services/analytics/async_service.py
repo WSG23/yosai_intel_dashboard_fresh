@@ -6,7 +6,7 @@ from typing import Any, Dict, Protocol
 
 import asyncpg
 
-from core.cache_manager import CacheConfig, RedisCacheManager
+from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, RedisCacheManager
 
 
 class AsyncAnalyticsRepository(Protocol):

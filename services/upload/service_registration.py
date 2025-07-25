@@ -2,31 +2,39 @@
 
 from __future__ import annotations
 
-from config.dynamic_config import dynamic_config
-from core.service_container import (
+from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.core.service_container import (
     CircularDependencyError,
     DependencyInjectionError,
     ServiceContainer,
     ServiceLifetime,
 )
-from services.async_file_processor import AsyncFileProcessor
-from services.device_learning_service import DeviceLearningService
-from services.interfaces import (
+from config.dynamic_config import (
+    dynamic_config,
+)
+from yosai_intel_dashboard.src.services.async_file_processor import AsyncFileProcessor
+from yosai_intel_dashboard.src.services.device_learning_service import (
+    DeviceLearningService,
+)
+from yosai_intel_dashboard.src.services.interfaces import (
     DeviceLearningServiceProtocol,
     UploadDataServiceProtocol,
 )
-from services.upload.controllers.upload_controller import UnifiedUploadController
-from services.upload.core.processor import UploadProcessingService
-from services.upload.core.validator import ClientSideValidator
-from services.upload.protocols import (
+from yosai_intel_dashboard.src.services.upload.controllers.upload_controller import (
+    UnifiedUploadController,
+)
+from yosai_intel_dashboard.src.services.upload.core.processor import (
+    UploadProcessingService,
+)
+from yosai_intel_dashboard.src.services.upload.core.validator import ClientSideValidator
+from yosai_intel_dashboard.src.services.upload.protocols import (
     FileProcessorProtocol,
     UploadControllerProtocol,
     UploadProcessingServiceProtocol,
     UploadStorageProtocol,
     UploadValidatorProtocol,
 )
-from services.upload_data_service import UploadDataService
-from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.services.upload_data_service import UploadDataService
 
 
 def register_upload_services(container: ServiceContainer) -> None:

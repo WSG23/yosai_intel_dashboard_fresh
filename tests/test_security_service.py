@@ -3,7 +3,9 @@ import pytest
 from tests.fake_configuration import FakeConfiguration
 
 fake_cfg = FakeConfiguration()
-from services.data_processing.unified_upload_validator import UnifiedUploadValidator
+from yosai_intel_dashboard.src.services.data_processing.unified_upload_validator import (
+    UnifiedUploadValidator,
+)
 
 
 def test_malicious_filename_is_invalid():

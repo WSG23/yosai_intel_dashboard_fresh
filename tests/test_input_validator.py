@@ -1,6 +1,8 @@
 import pandas as pd
 
-from services.data_processing.unified_upload_validator import UnifiedUploadValidator
+from yosai_intel_dashboard.src.services.data_processing.unified_upload_validator import (
+    UnifiedUploadValidator,
+)
 
 
 def test_none_upload_rejected():

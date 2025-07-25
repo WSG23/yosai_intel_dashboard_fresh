@@ -28,15 +28,17 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import Input, Output, State, callback_context, dash_table, dcc, html
 
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from config.constants import DEFAULT_CHUNK_SIZE
+from yosai_intel_dashboard.src.core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
 
 # Logger for this module. Configuration happens in __main__.
 logger = logging.getLogger(__name__)
 
 # Try to import existing services with fallbacks
 try:
-    from services.data_enhancer import get_ai_column_suggestions
+    from yosai_intel_dashboard.src.services.data_enhancer import (
+        get_ai_column_suggestions,
+    )
 
     AI_COLUMN_SERVICE_AVAILABLE = True
     logger.info("✅ AI Column Service loaded successfully")
@@ -45,8 +47,10 @@ except ImportError:
     logger.warning("⚠️ AI Column Service not available - using fallback")
 
 try:
-    from services.door_mapping_service import DoorMappingService
-    from services.interfaces import get_door_mapping_service
+    from yosai_intel_dashboard.src.services.door_mapping_service import (
+        DoorMappingService,
+    )
+    from yosai_intel_dashboard.src.services.interfaces import get_door_mapping_service
 
     AI_DOOR_SERVICE_AVAILABLE = True
     logger.info("✅ AI Door Service loaded successfully")
@@ -55,7 +59,7 @@ except ImportError as e:
     logger.warning(f"⚠️ AI Door Service not available - using fallback: {e}")
 
 try:
-    from core.service_container import ServiceContainer
+    from yosai_intel_dashboard.src.core.service_container import ServiceContainer
 
     CONTAINER_AVAILABLE = True
     logger.info("✅ Service Container available")
@@ -66,7 +70,9 @@ except ImportError:
 
 # Configuration fallback
 try:
-    from services.configuration_service import DynamicConfigurationService
+    from yosai_intel_dashboard.src.services.configuration_service import (
+        DynamicConfigurationService,
+    )
 
     CONFIG_SERVICE_AVAILABLE = True
     logger.info("✅ Configuration Service available")
@@ -75,7 +81,7 @@ except ImportError:
     logger.warning("⚠️ Configuration Service not available")
 
     # Create a minimal config fallback
-    from core.config import (
+    from yosai_intel_dashboard.src.core.config import (
         get_ai_confidence_threshold,
         get_upload_chunk_size,
     )
@@ -225,7 +231,9 @@ class MultiBuildingDataEnhancer:
         # Try existing service first
         if AI_COLUMN_SERVICE_AVAILABLE:
             try:
-                from services.data_enhancer import get_ai_column_suggestions
+                from yosai_intel_dashboard.src.services.data_enhancer import (
+                    get_ai_column_suggestions,
+                )
 
                 return get_ai_column_suggestions(
                     df, MultiBuildingDataEnhancer.STANDARD_FIELDS

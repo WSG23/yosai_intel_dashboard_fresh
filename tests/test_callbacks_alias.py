@@ -4,8 +4,8 @@ import dash
 if not hasattr(dash, "no_update"):
     dash.no_update = None
 
-from core.callbacks import UnifiedCallbackManager
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.core.callbacks import UnifiedCallbackManager
+from yosai_intel_dashboard.src.core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 
 def test_unified_callback_manager_alias():

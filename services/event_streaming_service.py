@@ -9,8 +9,11 @@ from typing import Any, Optional
 
 from kafka import KafkaConsumer, KafkaProducer
 
-from config.kafka_config import KafkaConfig, from_environment
 from yosai_framework.service import BaseService
+from yosai_intel_dashboard.src.infrastructure.config.kafka_config import (
+    KafkaConfig,
+    from_environment,
+)
 
 logger = logging.getLogger(__name__)
 

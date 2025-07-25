@@ -1,12 +1,13 @@
 import asyncio
 
+from tests.fakes import FakeUploadDataService
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-
-from services.upload import UploadProcessingService
 from upload_core import UploadCore
 from utils.upload_store import UploadedDataStore
-from services.device_learning_service import DeviceLearningService
-from tests.fakes import FakeUploadDataService
+from yosai_intel_dashboard.src.services.device_learning_service import (
+    DeviceLearningService,
+)
+from yosai_intel_dashboard.src.services.upload import UploadProcessingService
 
 
 def test_multi_part_upload_row_count(async_runner):

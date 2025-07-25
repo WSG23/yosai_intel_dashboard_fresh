@@ -1,9 +1,13 @@
-import pytest
 import dash
 import dash_bootstrap_components as dbc
-from dash import html, dcc, Output, Input
+import pytest
+from dash import Input, Output, dcc, html
 
-from core.theme_manager import apply_theme_settings, sanitize_theme, DEFAULT_THEME
+from yosai_intel_dashboard.src.core.theme_manager import (
+    DEFAULT_THEME,
+    apply_theme_settings,
+    sanitize_theme,
+)
 
 pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 
@@ -12,7 +16,9 @@ def create_theme_app():
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
     # Import and create unified callback coordinator
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+    from yosai_intel_dashboard.src.core.truly_unified_callbacks import (
+        TrulyUnifiedCallbacks,
+    )
 
     coordinator = TrulyUnifiedCallbacks(app)
 

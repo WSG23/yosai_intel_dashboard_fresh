@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.core.truly_unified_callbacks import TrulyUnifiedCallbacks
+
 from .streamlined_component import StreamlinedComponent
 
 

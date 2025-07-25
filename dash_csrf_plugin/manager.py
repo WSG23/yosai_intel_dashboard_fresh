@@ -143,7 +143,7 @@ class CSRFManager:
         for route in default_exempt_routes:
             self.add_exempt_route(route)
 
-        # Add custom exempt routes from config
+        # Add custom exempt routes from yosai_intel_dashboard.src.infrastructure.config
         for route in self.config.exempt_routes:
             self.add_exempt_route(route)
 

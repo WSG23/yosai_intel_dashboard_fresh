@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Dict
 
-from core.performance import get_performance_monitor
+from yosai_intel_dashboard.src.core.performance import get_performance_monitor
 
 from .user_experience_metrics import AlertDispatcher
 

@@ -6,7 +6,7 @@ from typing import Any
 
 import pandas as pd
 
-from core.unicode import UnicodeProcessor
+from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor
 
 
 def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:

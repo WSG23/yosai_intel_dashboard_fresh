@@ -24,6 +24,7 @@ form::
         "analytics": Dict[str, Any],
     }
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -31,9 +32,13 @@ from typing import Any, Dict, List, Protocol, runtime_checkable
 
 import pandas as pd
 
-from core.service_container import ServiceContainer
-from services.analytics.protocols import AnalyticsServiceProtocol
-from services.upload.protocols import UploadDataServiceProtocol
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.services.analytics.protocols import (
+    AnalyticsServiceProtocol,
+)
+from yosai_intel_dashboard.src.services.upload.protocols import (
+    UploadDataServiceProtocol,
+)
 
 
 @runtime_checkable
@@ -76,9 +81,7 @@ class PatternLearner:
     def learn(self, df: pd.DataFrame) -> Dict[str, Any]:
         if df.empty or not {"person_id", "door_id"}.issubset(df.columns):
             return {"common_paths": []}
-        paths = (
-            df.groupby(["person_id", "door_id"]).size().reset_index(name="count")
-        )
+        paths = df.groupby(["person_id", "door_id"]).size().reset_index(name="count")
         top = paths.sort_values("count", ascending=False).head(3)
         return {"common_paths": top.to_dict("records")}
 
@@ -130,7 +133,11 @@ class MetadataEnhancementEngine(MetadataEnhancementProtocol):
     def enhance_metadata(self) -> Dict[str, Any]:
         """Run enhancement pipeline and return aggregated results."""
         uploaded = self.upload_data_service.get_uploaded_data()
-        df = pd.concat(uploaded.values(), ignore_index=True) if uploaded else pd.DataFrame()
+        df = (
+            pd.concat(uploaded.values(), ignore_index=True)
+            if uploaded
+            else pd.DataFrame()
+        )
 
         return {
             "behavior": self.behavioral_analysis.analyze(df),
@@ -145,6 +152,7 @@ class MetadataEnhancementEngine(MetadataEnhancementProtocol):
 # ---------------------------------------------------------------------------
 # Service registration helper
 # ---------------------------------------------------------------------------
+
 
 def register_metadata_services(container: ServiceContainer) -> None:
     """Register :class:`MetadataEnhancementEngine` with ``container``."""

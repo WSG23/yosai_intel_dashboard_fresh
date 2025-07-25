@@ -1,5 +1,9 @@
-from core.cache_manager import InMemoryCacheManager, CacheConfig
 import asyncio
+
+from yosai_intel_dashboard.src.core.cache_manager import (
+    CacheConfig,
+    InMemoryCacheManager,
+)
 
 manager = InMemoryCacheManager(CacheConfig())
 

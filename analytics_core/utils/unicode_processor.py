@@ -3,7 +3,8 @@ from __future__ import annotations
 """Simplified Unicode helpers reused across analytics core."""
 
 import pandas as pd
-from core.unicode import UnicodeProcessor
+
+from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor
 
 
 class UnicodeHelper(UnicodeProcessor):
@@ -19,4 +20,3 @@ class UnicodeHelper(UnicodeProcessor):
 
 
 __all__ = ["UnicodeHelper"]
-

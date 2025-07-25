@@ -1,12 +1,13 @@
 import asyncio
-import pandas as pd
+
 import pandas as pd
 import pytest
 
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-
-from services.upload.chunked_upload_manager_async import ChunkedUploadManager
 from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.services.upload.chunked_upload_manager_async import (
+    ChunkedUploadManager,
+)
 
 
 def _create_csv(path, rows=30):
@@ -51,7 +52,9 @@ def test_async_chunked_upload_manager_resume(tmp_path, monkeypatch, async_runner
         original_add_file(name, chunk_df)
 
     monkeypatch.setattr(store, "add_file", fail_second)
-    from config.connection_retry import ConnectionRetryExhausted
+    from yosai_intel_dashboard.src.infrastructure.config.connection_retry import (
+        ConnectionRetryExhausted,
+    )
 
     with pytest.raises(ConnectionRetryExhausted):
         async_runner(mgr.upload_file(data_file))

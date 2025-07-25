@@ -1,6 +1,7 @@
 """Manage Parquet file storage with metadata tracking."""
 
 from __future__ import annotations
+
 import json
 import logging
 from datetime import datetime
@@ -9,8 +10,8 @@ from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
-from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
 from core.container import get_unicode_processor
 from core.protocols import UnicodeProcessorProtocol
 

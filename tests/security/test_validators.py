@@ -1,9 +1,11 @@
 import pandas as pd
 import pytest
 
-from core.exceptions import ValidationError
 from validation.security_validator import SecurityValidator
-from security.xss_validator import XSSPrevention
+from core.exceptions import ValidationError
+from yosai_intel_dashboard.src.infrastructure.security.xss_validator import (
+    XSSPrevention,
+)
 
 
 def test_unicode_normalization():
@@ -68,7 +70,9 @@ def test_csv_safe_dataframe_allowed():
 def _create_test_app():
     from flask import Flask
 
-    from security.validation_middleware import ValidationMiddleware
+    from yosai_intel_dashboard.src.infrastructure.security.validation_middleware import (
+        ValidationMiddleware,
+    )
 
     app = Flask(__name__)
     middleware = ValidationMiddleware()

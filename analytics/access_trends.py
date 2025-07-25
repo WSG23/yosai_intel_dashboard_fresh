@@ -106,7 +106,9 @@ class AccessTrendsAnalyzer:
         df_clean = df.copy(deep=False)
 
         # Handle Unicode issues
-        from security.unicode_security_handler import UnicodeSecurityHandler
+        from yosai_intel_dashboard.src.infrastructure.security.unicode_security_handler import (
+            UnicodeSecurityHandler,
+        )
 
         string_columns = df_clean.select_dtypes(include=["object"]).columns
         for col in string_columns:

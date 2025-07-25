@@ -1,4 +1,4 @@
-import config.constants as constants
+import yosai_intel_dashboard.src.infrastructure.config.constants as constants
 
 
 def test_default_ports():

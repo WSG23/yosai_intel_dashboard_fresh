@@ -10,9 +10,8 @@ from typing import Iterable
 
 import requests
 
-from services.kafka.avro_consumer import AvroConsumer
-from services.kafka.avro_producer import AvroProducer
-
+from yosai_intel_dashboard.src.services.kafka.avro_consumer import AvroConsumer
+from yosai_intel_dashboard.src.services.kafka.avro_producer import AvroProducer
 
 SCHEMA_MAP = {
     "schemas/avro/access_event_v1.avsc": [
@@ -28,7 +27,9 @@ def fetch_current_versions(registry_url: str, subjects: Iterable[str]) -> None:
     """Print current schema versions for ``subjects``."""
     for sub in subjects:
         try:
-            resp = requests.get(f"{registry_url}/subjects/{sub}/versions/latest", timeout=5)
+            resp = requests.get(
+                f"{registry_url}/subjects/{sub}/versions/latest", timeout=5
+            )
             if resp.status_code == 404:
                 logging.info("Subject %s not found", sub)
                 continue
@@ -39,7 +40,9 @@ def fetch_current_versions(registry_url: str, subjects: Iterable[str]) -> None:
             logging.error("Failed to fetch version for %s: %s", sub, exc)
 
 
-def register_new_version(registry_url: str, subject: str, schema_path: Path, dry_run: bool) -> None:
+def register_new_version(
+    registry_url: str, subject: str, schema_path: Path, dry_run: bool
+) -> None:
     schema_text = schema_path.read_text(encoding="utf-8")
     payload = {"schema": schema_text}
     if dry_run:
@@ -140,7 +143,9 @@ def main(argv: list[str] | None = None) -> int:
             if not topic:
                 continue
             for sub in subs:
-                reprocess_topic(topic, sub, args.brokers, args.schema_registry, args.dry_run)
+                reprocess_topic(
+                    topic, sub, args.brokers, args.schema_registry, args.dry_run
+                )
 
     return 0
 

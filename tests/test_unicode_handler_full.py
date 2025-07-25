@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
-from core.unicode import (
+from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
+from yosai_intel_dashboard.src.core.unicode import (
     ChunkedUnicodeProcessor,
     UnicodeProcessor,
     clean_unicode_text,
@@ -46,8 +46,10 @@ def callback_handler(event: CallbackEvent):
 
 _GLOBAL = CallbackController()
 fire_event = _GLOBAL.fire_event
-from services.data_processing.file_processor import FileProcessor as RobustFileProcessor
-from services.data_processing.file_processor import (
+from yosai_intel_dashboard.src.services.data_processing.file_processor import (
+    FileProcessor as RobustFileProcessor,
+)
+from yosai_intel_dashboard.src.services.data_processing.file_processor import (
     process_file_simple,
 )
 

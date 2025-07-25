@@ -48,7 +48,9 @@ def test_unique_patterns_specific():
     # Step 2: Test get_uploaded_data directly
     print("📁 STEP 2: Testing get_uploaded_data()")
     try:
-        from services.upload_data_service import get_uploaded_data
+        from yosai_intel_dashboard.src.services.upload_data_service import (
+            get_uploaded_data,
+        )
 
         uploaded_data = get_uploaded_data()
 
@@ -71,7 +73,7 @@ def test_unique_patterns_specific():
     # Step 3: Test analytics service creation
     print("⚙️  STEP 3: Testing AnalyticsService creation")
     try:
-        from services import AnalyticsService
+        from yosai_intel_dashboard.src.services import AnalyticsService
 
         service = AnalyticsService()
         print("   ✅ AnalyticsService created successfully")
@@ -147,7 +149,9 @@ def test_unique_patterns_specific():
     print("🔍 STEP 6: Manual step-by-step test of unique patterns logic")
     try:
         print("   6a. Getting uploaded data...")
-        from services.upload_data_service import get_uploaded_data
+        from yosai_intel_dashboard.src.services.upload_data_service import (
+            get_uploaded_data,
+        )
 
         uploaded_data = get_uploaded_data()
         print(f"      Found {len(uploaded_data)} files")
@@ -200,7 +204,9 @@ def test_unique_patterns_specific():
         # Test if clean_uploaded_dataframe has any limits
         import inspect
 
-        from services.analytics_service import AnalyticsService
+        from yosai_intel_dashboard.src.services.analytics_service import (
+            AnalyticsService,
+        )
 
         # Get the source code of clean_uploaded_dataframe
         source = inspect.getsource(AnalyticsService.clean_uploaded_dataframe)

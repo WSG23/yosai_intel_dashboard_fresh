@@ -3,7 +3,10 @@ from __future__ import annotations
 """Unified callback manager used throughout analytics core."""
 
 from typing import Any, List
-from core.callback_manager import CallbackManager as _BaseCallbackManager
+
+from yosai_intel_dashboard.src.core.callback_manager import (
+    CallbackManager as _BaseCallbackManager,
+)
 
 
 class UnifiedCallbackManager(_BaseCallbackManager):
@@ -19,4 +22,3 @@ class UnifiedCallbackManager(_BaseCallbackManager):
 CallbackManager = UnifiedCallbackManager
 
 __all__ = ["UnifiedCallbackManager", "CallbackManager"]
-

@@ -6,10 +6,12 @@ from typing import Any
 
 from dash.dependencies import Input, Output, State
 
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from components.simple_device_mapping import (
+    register_callbacks as register_device_callbacks,
+)
+from yosai_intel_dashboard.src.core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 from .file_callbacks import UploadCallbackManager
-from components.simple_device_mapping import register_callbacks as register_device_callbacks
 
 
 class MappingCallbackManager:

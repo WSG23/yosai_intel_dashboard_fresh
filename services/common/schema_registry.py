@@ -9,7 +9,10 @@ from functools import lru_cache
 from typing import Any, Dict
 
 import requests
-from monitoring.data_quality_monitor import get_data_quality_monitor
+
+from yosai_intel_dashboard.src.infrastructure.monitoring.data_quality_monitor import (
+    get_data_quality_monitor,
+)
 
 
 @dataclass

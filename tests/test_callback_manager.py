@@ -1,7 +1,7 @@
 import threading
 
-from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
 
 
 def test_thread_safe_registration_and_trigger():

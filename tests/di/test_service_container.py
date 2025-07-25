@@ -1,10 +1,10 @@
 import pytest
 
-from core.service_container import (
+from yosai_intel_dashboard.src.core.service_container import (
+    CircularDependencyError,
+    DependencyInjectionError,
     ServiceContainer,
     ServiceLifetime,
-    DependencyInjectionError,
-    CircularDependencyError,
 )
 
 

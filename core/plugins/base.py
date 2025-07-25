@@ -9,7 +9,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
-from core.base_model import BaseModel
+from yosai_intel_dashboard.src.core.base_model import BaseModel
 
 from .protocols import PluginMetadata, PluginProtocol, PluginStatus
 

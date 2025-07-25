@@ -4,7 +4,10 @@
 is simply an alias of :class:`TrulyUnifiedCallbacks`.
 """
 
-from core.truly_unified_callbacks import Operation, TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.core.truly_unified_callbacks import (
+    Operation,
+    TrulyUnifiedCallbacks,
+)
 
 # Alias kept for backwards compatibility
 UnifiedCallbackManager = TrulyUnifiedCallbacks

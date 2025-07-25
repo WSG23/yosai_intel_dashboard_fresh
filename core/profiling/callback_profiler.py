@@ -5,7 +5,7 @@ import logging
 import time
 from typing import Any, Callable, Dict, List, Optional
 
-from core.base_model import BaseModel
+from yosai_intel_dashboard.src.core.base_model import BaseModel
 
 
 class CallbackProfiler(BaseModel):

@@ -32,11 +32,15 @@ except Exception:  # pragma: no cover - container not initialized
 
 if not _cfg:
     try:
-        from config.dynamic_config import dynamic_config as _cfg  # type: ignore
+        from config.dynamic_config import (
+            dynamic_config as _cfg,  # type: ignore
+        )
     except Exception:  # pragma: no cover - optional config
         _cfg = None
 
-from config.constants import MAX_DISPLAY_ROWS as DEFAULT_MAX_DISPLAY_ROWS
+from yosai_intel_dashboard.src.infrastructure.config.constants import (
+    MAX_DISPLAY_ROWS as DEFAULT_MAX_DISPLAY_ROWS,
+)
 
 if _cfg is not None and hasattr(_cfg, "analytics"):
     MAX_DISPLAY_ROWS = getattr(

@@ -5,8 +5,8 @@ from typing import Dict, Iterable, List, Optional
 import pandas as pd
 from rapidfuzz import process
 
-from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
 
 REQUIRED_COLUMNS = ["person_id", "door_id", "access_result", "timestamp"]
 OPTIONAL_COLUMNS = ["device_name", "location"]
@@ -54,4 +54,3 @@ def map_columns(
                 },
             )
     return df_out
-

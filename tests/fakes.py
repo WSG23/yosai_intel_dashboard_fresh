@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Callable
+from typing import Any, Callable, Dict, List
 
 import pandas as pd
 
 try:
-    from services.upload.protocols import UploadStorageProtocol, FileProcessorProtocol
+    from yosai_intel_dashboard.src.services.upload.protocols import (
+        FileProcessorProtocol,
+        UploadStorageProtocol,
+    )
 except Exception:  # pragma: no cover - fallback stubs for optional deps
     from typing import Protocol
 
@@ -30,8 +33,9 @@ except Exception:  # pragma: no cover - fallback stubs for optional deps
             self, contents: str, filename: str
         ) -> tuple[pd.DataFrame, str]: ...
 
+
 try:
-    from services.interfaces import (
+    from yosai_intel_dashboard.src.services.interfaces import (
         DeviceLearningServiceProtocol,
         UploadDataServiceProtocol,
     )
@@ -60,14 +64,18 @@ except Exception:  # pragma: no cover - fallback stubs
         def get_file_info(self) -> Dict[str, Dict[str, Any]]: ...
         def load_dataframe(self, filename: str) -> pd.DataFrame: ...
 
+
 try:
-    from services.configuration_service import ConfigurationServiceProtocol
+    from yosai_intel_dashboard.src.services.configuration_service import (
+        ConfigurationServiceProtocol,
+    )
 except Exception:  # pragma: no cover - fallback stub
     from typing import Protocol
 
     class ConfigurationServiceProtocol(Protocol):
         def get_max_upload_size_mb(self) -> int: ...
         def get_max_upload_size_bytes(self) -> int: ...
+
 
 try:
     from core.protocols import UnicodeProcessorProtocol
@@ -78,13 +86,17 @@ except Exception:  # pragma: no cover - fallback stub
         def clean_text(self, text: str, replacement: str = "") -> str: ...
         def safe_encode_text(self, value: Any) -> str: ...
         def safe_decode_text(self, data: bytes, encoding: str = "utf-8") -> str: ...
+
+
 try:
     from components.column_verification import ColumnVerifierProtocol
 except Exception:  # pragma: no cover - fallback stub to avoid heavy imports
     from typing import Protocol
 
     class ColumnVerifierProtocol(Protocol):
-        def create_column_verification_modal(self, file_info: Dict[str, Any]) -> Any: ...
+        def create_column_verification_modal(
+            self, file_info: Dict[str, Any]
+        ) -> Any: ...
 
         def register_callbacks(
             self, manager: Any, controller: Any | None = None

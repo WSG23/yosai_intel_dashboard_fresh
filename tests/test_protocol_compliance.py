@@ -1,18 +1,18 @@
-from typing import Any, Dict, List, Callable, Protocol, runtime_checkable, assert_type
+from typing import Any, Callable, Dict, List, Protocol, assert_type, runtime_checkable
 
 import pandas as pd
 import pytest
 
-from core.service_container import ServiceContainer
-from services.analytics_service import AnalyticsService
 from core.protocols import (
     AnalyticsServiceProtocol,
     ConfigurationProtocol,
-    SecurityServiceProtocol,
     DatabaseProtocol,
     EventBusProtocol,
+    SecurityServiceProtocol,
     StorageProtocol,
 )
+from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.services.analytics_service import AnalyticsService
 
 
 @runtime_checkable
@@ -166,14 +166,18 @@ def env_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
 
 class TestProtocolCompliance:
     def test_configuration_service_compliance(self):
-        from config import create_config_manager
+        from yosai_intel_dashboard.src.infrastructure.config import (
+            create_config_manager,
+        )
 
         cfg = create_config_manager()
         assert isinstance(cfg, ConfigurationProtocol)
         assert_type(cfg, ConfigurationProtocol)
 
     def test_analytics_service_compliance(self):
-        from services.analytics_service import AnalyticsService
+        from yosai_intel_dashboard.src.services.analytics_service import (
+            AnalyticsService,
+        )
 
         class ConcreteAnalyticsService(AnalyticsService):
             def analyze_access_patterns(self, days: int) -> Dict[str, Any]:
@@ -205,7 +209,9 @@ class TestProtocolCompliance:
         assert_type(service, SecurityServiceProtocol)
 
     def test_all_registered_services_implement_protocols(self):
-        from config.complete_service_registration import register_all_services
+        from yosai_intel_dashboard.src.infrastructure.config.complete_service_registration import (
+            register_all_services,
+        )
 
         container = ServiceContainer()
         register_all_services(container)

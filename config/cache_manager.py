@@ -5,8 +5,11 @@ import os
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
+from yosai_intel_dashboard.src.core.intelligent_multilevel_cache import (
+    IntelligentMultiLevelCache,
+)
+
 from .constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
-from core.intelligent_multilevel_cache import IntelligentMultiLevelCache
 
 
 @dataclass

@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from api.adapter import api_adapter
 from app import app
 from flask import abort, jsonify, request
-from marshmallow import Schema, fields
 from flask_apispec import doc, marshal_with, use_kwargs
+from marshmallow import Schema, fields
 
 from analytics.risk_scoring import calculate_risk_score
 from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.adapters.api.adapter import api_adapter
 
 
 class RiskInputSchema(Schema):

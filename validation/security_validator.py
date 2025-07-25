@@ -4,8 +4,10 @@ import html
 import re
 from typing import Iterable
 
-from config.dynamic_config import dynamic_config
 from core.exceptions import ValidationError
+from config.dynamic_config import (
+    dynamic_config,
+)
 
 from .core import ValidationResult
 from .file_validator import FileValidator

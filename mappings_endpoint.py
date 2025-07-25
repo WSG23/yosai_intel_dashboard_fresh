@@ -1,12 +1,14 @@
 from flask import Blueprint, abort, jsonify, request
-from marshmallow import Schema, fields
 from flask_apispec import doc, marshal_with, use_kwargs
+from marshmallow import Schema, fields
 
-from config.service_registration import register_upload_services
+from unicode_toolkit import clean_unicode_surrogates
 
 # Shared container ensures services are available across blueprints
 from core.container import container
-from unicode_toolkit import clean_unicode_surrogates
+from yosai_intel_dashboard.src.infrastructure.config.service_registration import (
+    register_upload_services,
+)
 
 if not container.has("upload_processor"):
     register_upload_services(container)

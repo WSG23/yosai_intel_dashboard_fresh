@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html
 
 from components.upload import UploadArea
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 callbacks = TrulyUnifiedCallbacks(app)

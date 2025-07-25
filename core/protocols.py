@@ -9,9 +9,9 @@ from abc import abstractmethod
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Protocol, runtime_checkable
 
-from .callback_events import CallbackEvent
-
 import pandas as pd
+
+from .callback_events import CallbackEvent
 
 
 @runtime_checkable
@@ -450,6 +450,6 @@ def get_unicode_processor(
     c = _get_container(container)
     if c and c.has("unicode_processor"):
         return c.get("unicode_processor")
-    from core.unicode import UnicodeProcessor
+    from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor
 
     return UnicodeProcessor()

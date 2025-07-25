@@ -11,7 +11,7 @@ except ImportError as exc:
     )
     sys.exit(1)
 
-from core.app_factory import create_app
+from yosai_intel_dashboard.src.core.app_factory import create_app
 
 
 def main() -> None:

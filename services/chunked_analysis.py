@@ -10,8 +10,8 @@ import pandas as pd
 from dask.distributed import Client, LocalCluster
 
 from analytics.chunked_analytics_controller import ChunkedAnalyticsController
-from config.config import get_analytics_config
 from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.infrastructure.config.config import get_analytics_config
 
 from .result_formatting import regular_analysis
 

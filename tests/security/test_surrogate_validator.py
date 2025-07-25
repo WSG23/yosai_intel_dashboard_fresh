@@ -23,7 +23,7 @@ def validator_module():
 
     import importlib
 
-    import security.unicode_surrogate_validator as mod
+    import yosai_intel_dashboard.src.infrastructure.security.unicode_surrogate_validator as mod
 
     importlib.reload(mod)
     # Provide SecurityEvent for the lazy import pattern used in the module
