@@ -48,6 +48,11 @@ jobs:
           set -xe
           python scripts/check_schema_compatibility.py
 
+      - name: Schema Registry compatibility
+        run: |
+          set -xe
+          python scripts/check_registry_schema_compatibility.py
+
       - name: Bandit
         run: |
           set -xe
