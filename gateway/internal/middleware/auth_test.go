@@ -12,8 +12,7 @@ import (
 )
 
 func TestAuthMiddlewareSuccessAndFailure(t *testing.T) {
-	t.Setenv("JWT_SECRET", "test")
-	h := Auth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := Auth([]byte("test"))(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -47,8 +46,7 @@ func TestAuthMiddlewareSuccessAndFailure(t *testing.T) {
 }
 
 func TestAuthMiddlewareExpired(t *testing.T) {
-	t.Setenv("JWT_SECRET", "test")
-	h := Auth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := Auth([]byte("test"))(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &auth.EnhancedClaims{
