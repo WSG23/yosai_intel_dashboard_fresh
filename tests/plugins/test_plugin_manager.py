@@ -8,7 +8,7 @@ from typing import Any, Dict, Protocol
 import pytest
 
 from config import create_config_manager
-from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from core.service_container import ServiceContainer
 
 
 def _install_protocol_stubs(monkeypatch: "pytest.MonkeyPatch") -> None:
@@ -79,7 +79,7 @@ def test_thread_stops_after_atexit(monkeypatch):
 
     monkeypatch.setattr(atexit, "register", fake_register)
 
-    from yosai_intel_dashboard.src.core.plugins.manager import ThreadSafePluginManager as PluginManager
+    from core.plugins.manager import ThreadSafePluginManager as PluginManager
 
     mgr = PluginManager(
         ServiceContainer(), create_config_manager(), health_check_interval=1

@@ -6,12 +6,12 @@ from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 from tests.fake_configuration import FakeConfiguration
 
 fake_cfg = FakeConfiguration()
-from yosai_intel_dashboard.src.services.data_enhancer import (
+from services.data_enhancer import (
     apply_fuzzy_column_matching,
     get_mapping_suggestions,
 )
-from yosai_intel_dashboard.src.services.data_processing.file_processor import process_uploaded_file
-from yosai_intel_dashboard.src.services.data_processing.unified_upload_validator import UnifiedUploadValidator
+from services.data_processing.file_processor import process_uploaded_file
+from services.data_processing.unified_upload_validator import UnifiedUploadValidator
 from validation.security_validator import SecurityValidator
 
 

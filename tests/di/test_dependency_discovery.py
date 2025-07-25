@@ -1,6 +1,6 @@
 import pytest
 
-from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from core.service_container import ServiceContainer
 
 
 class Foo:

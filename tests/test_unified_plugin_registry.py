@@ -15,12 +15,12 @@ class EnumJSONProvider(DefaultJSONProvider):
 import sys
 
 from config import create_config_manager
-from yosai_intel_dashboard.src.core.service_container import ServiceContainer
-from yosai_intel_dashboard.src.core.plugins.auto_config import PluginAutoConfiguration
-from yosai_intel_dashboard.src.core.plugins.unified_registry import UnifiedPluginRegistry
+from core.service_container import ServiceContainer
+from core.plugins.auto_config import PluginAutoConfiguration
+from core.plugins.unified_registry import UnifiedPluginRegistry
 
 pytestmark = pytest.mark.usefixtures("fake_dash")
-from yosai_intel_dashboard.src.services.data_processing.core.protocols import PluginMetadata
+from services.data_processing.core.protocols import PluginMetadata
 
 
 class DummyPlugin:

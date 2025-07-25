@@ -1,4 +1,4 @@
-from yosai_intel_dashboard.src.services.analytics_processing import (
+from services.analytics_processing import (
     _extract_counts,
     _extract_security_metrics,
 )

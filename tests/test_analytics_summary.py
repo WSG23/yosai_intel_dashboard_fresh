@@ -1,6 +1,6 @@
 import pandas as pd
 
-from yosai_intel_dashboard.src.services.analytics_summary import (
+from services.analytics_summary import (
     generate_basic_analytics,
     generate_sample_analytics,
 )

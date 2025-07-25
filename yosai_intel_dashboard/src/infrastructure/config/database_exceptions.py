@@ -1,39 +1,27 @@
-"""Database-related exception classes."""
+"""Compatibility wrapper for `config.database_exceptions`."""
 
-from typing import Any, Optional
+from __future__ import annotations
 
+import importlib
 
-class DatabaseError(Exception):
-    """Base exception for database operations."""
-
-    pass
-
-
-class ConnectionRetryExhausted(DatabaseError):
-    """Exception raised when connection retry attempts are exhausted."""
-
-    def __init__(self, message: str, retry_count: int = 0) -> None:
-        super().__init__(message)
-        self.retry_count = retry_count
+_mod: object | None = None
+__all__: list[str] = []
 
 
-class ConnectionValidationFailed(DatabaseError):
-    """Exception raised when database connection validation fails."""
-
-    pass
-
-
-class UnicodeEncodingError(DatabaseError):
-    """Exception raised when Unicode encoding fails in database operations."""
-
-    def __init__(self, message: str, original_value: Optional[Any] = None) -> None:
-        super().__init__(message)
-        self.original_value = original_value
+def _load() -> None:
+    global _mod, __all__
+    if _mod is None:
+        _mod = importlib.import_module("config.database_exceptions")
+        __all__ = getattr(
+            _mod, "__all__", [n for n in dir(_mod) if not n.startswith("_")]
+        )
 
 
-__all__ = [
-    "DatabaseError",
-    "ConnectionRetryExhausted",
-    "ConnectionValidationFailed",
-    "UnicodeEncodingError",
-]
+def __getattr__(name: str) -> object:
+    _load()
+    return getattr(_mod, name)
+
+
+def __dir__() -> list[str]:
+    _load()
+    return __all__

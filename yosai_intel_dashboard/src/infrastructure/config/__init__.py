@@ -18,8 +18,13 @@ from pathlib import Path
 __path__.append(str(Path(__file__).resolve().parents[4] / "config"))
 
 
-def __getattr__(name: str):
-    if name in {"DatabaseError", "ConnectionRetryExhausted", "ConnectionValidationFailed", "UnicodeEncodingError"}:
+def __getattr__(name: str) -> object:
+    if name in {
+        "DatabaseError",
+        "ConnectionRetryExhausted",
+        "ConnectionValidationFailed",
+        "UnicodeEncodingError",
+    }:
         module = import_module(f"{__name__}.database_exceptions")
         return getattr(module, name)
     if name == "execute_secure_query":

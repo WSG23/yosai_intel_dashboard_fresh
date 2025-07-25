@@ -2,7 +2,7 @@ import pandas as pd
 from pathlib import Path
 
 from file_processing.column_mapper import map_columns
-from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
+from core.callback_events import CallbackEvent
 from analytics_core.callbacks.unified_callback_manager import CallbackManager
 
 

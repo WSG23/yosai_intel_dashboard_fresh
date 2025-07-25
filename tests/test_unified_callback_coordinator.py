@@ -1,8 +1,8 @@
 import pytest
 from dash import Dash, Input, Output
 
-from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
-from yosai_intel_dashboard.src.core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from core.callback_events import CallbackEvent
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 pytestmark = pytest.mark.usefixtures("fake_dash")
 

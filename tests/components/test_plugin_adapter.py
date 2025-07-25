@@ -2,7 +2,7 @@ import pandas as pd
 
 import components.plugin_adapter as plugin_adapter
 from components.plugin_adapter import ComponentPluginAdapter
-from yosai_intel_dashboard.src.core.unicode import clean_unicode_text, sanitize_dataframe
+from core.unicode import clean_unicode_text, sanitize_dataframe
 
 
 def test_get_ai_column_suggestions_with_plugin(monkeypatch):

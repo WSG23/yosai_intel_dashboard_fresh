@@ -18,6 +18,7 @@ def test_update_imports_patterns(tmp_path: Path) -> None:
     after = """
     from yosai_intel_dashboard.src.core.domain.user import a
     import yosai_intel_dashboard.src.core.domain.user
+
     """
     result = _run_update(tmp_path, before)
     assert result == textwrap.dedent(after)
@@ -28,6 +29,7 @@ def test_update_imports_cli(tmp_path: Path) -> None:
     file_path.write_text("from models import x\n")
     main([str(tmp_path)])
     expected = "from yosai_intel_dashboard.src.core.domain import x\n"
+
     assert file_path.read_text() == expected
 
 
@@ -42,6 +44,7 @@ def test_update_imports_report_and_verify(tmp_path: Path) -> None:
         str(report),
     ])
     expected = "from yosai_intel_dashboard.src.core.domain import y\n"
+
     assert bad.read_text() == expected
     assert report.read_text().strip() == str(bad)
     assert exit_code == 0

@@ -1,6 +1,6 @@
 import pytest
 
-from yosai_intel_dashboard.src.core.unicode import object_count
+from core.unicode import object_count
 
 
 def test_object_count_basic():

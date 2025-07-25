@@ -1,7 +1,7 @@
 import pytest
 
 from config.constants import SecurityLimits
-from yosai_intel_dashboard.src.core.serialization import SafeJSONSerializer
+from core.serialization import SafeJSONSerializer
 
 serializer = SafeJSONSerializer()
 

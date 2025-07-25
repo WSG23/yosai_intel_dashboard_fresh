@@ -1,6 +1,6 @@
 import pytest
 
-from yosai_intel_dashboard.src.core.cache_manager import InMemoryCacheManager, cache_with_lock, CacheConfig
+from core.cache_manager import InMemoryCacheManager, cache_with_lock, CacheConfig
 
 
 @pytest.mark.asyncio

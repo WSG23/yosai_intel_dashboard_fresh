@@ -7,12 +7,12 @@ from typing import Any, Dict
 import pandas as pd
 
 from config.complete_service_registration import register_all_services
-from yosai_intel_dashboard.src.core.service_container import ServiceContainer
-from yosai_intel_dashboard.src.core.protocols import (
+from core.service_container import ServiceContainer
+from core.protocols import (
     UnicodeProcessorProtocol,
     ConfigurationProtocol,
 )
-from yosai_intel_dashboard.src.services.upload.protocols import (
+from services.upload.protocols import (
     UploadStorageProtocol,
     FileProcessorProtocol,
 )
