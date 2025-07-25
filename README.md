@@ -1242,8 +1242,8 @@ Add `--test-mode` to perform a dry run on the first chunk only.
 
 The SQL file creates an `access_events` hypertable with policies:
 
-* **Compression** after one day: `add_compression_policy('access_events', INTERVAL '1 day')`
-* **Retention** after seven days: `add_retention_policy('access_events', INTERVAL '7 days')`
+* **Compression** after thirty days: `add_compression_policy('access_events', INTERVAL '30 days')`
+* **Retention** after one year: `add_retention_policy('access_events', INTERVAL '365 days')`
 
 It also defines indexes used by the migration:
 
