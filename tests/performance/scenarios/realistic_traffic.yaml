@@ -1,0 +1,13 @@
+# Example traffic pattern definitions
+ramp_up:
+  - duration: 60
+    users: 1000
+  - duration: 120
+    users: 5000
+  - duration: 180
+    users: 10000
+mix:
+  granted: 0.7
+  denied: 0.2
+  tailgating: 0.05
+  forced: 0.05
