@@ -33,7 +33,12 @@ app = service.app
 
 from services.common.secrets import get_secret
 
-JWT_SECRET = get_secret("secret/data/jwt#secret")
+_SECRET_PATH = "secret/data/jwt#secret"
+
+
+def _jwt_secret() -> str:
+    """Return the current JWT secret."""
+    return get_secret(_SECRET_PATH)
 
 
 def verify_token(authorization: str = Header("")) -> None:
@@ -45,7 +50,7 @@ def verify_token(authorization: str = Header("")) -> None:
         )
     token = authorization.split(" ", 1)[1]
     try:
-        claims = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        claims = jwt.decode(token, _jwt_secret(), algorithms=["HS256"])
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -70,8 +75,8 @@ class PatternsRequest(BaseModel):
 
 @app.on_event("startup")
 async def _startup() -> None:
-    if not JWT_SECRET:
-        raise RuntimeError("missing JWT secret")
+    # Ensure the JWT secret can be retrieved on startup
+    _jwt_secret()
 
 
     cfg = get_database_config()

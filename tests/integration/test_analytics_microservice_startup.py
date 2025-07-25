@@ -68,12 +68,22 @@ sys.modules["config"] = config_stub
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_startup_requires_jwt_secret(monkeypatch):
-    monkeypatch.delenv("JWT_SECRET", raising=False)
+    class DummySecrets:
+        def get_secret(self, key):
+            raise RuntimeError("missing")
+
+        def invalidate(self, key=None):
+            pass
+
+    secrets_mod = types.ModuleType("services.common.secrets")
+    secrets_mod.get_secret = DummySecrets().get_secret
+    secrets_mod.invalidate_secret = lambda key=None: None
+    monkeypatch.setitem(sys.modules, "services.common.secrets", secrets_mod)
 
     app_spec = importlib.util.spec_from_file_location(
         "services.analytics_microservice.app",
         SERVICES_PATH / "analytics_microservice" / "app.py",
     )
     app_module = importlib.util.module_from_spec(app_spec)
-    with pytest.raises(KeyError):
+    with pytest.raises(RuntimeError):
         app_spec.loader.exec_module(app_module)

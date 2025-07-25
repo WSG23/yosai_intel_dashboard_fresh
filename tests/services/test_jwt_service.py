@@ -25,7 +25,11 @@ def load_jwt_service(monkeypatch, secret: str = "secret"):
         sys.modules["services.security"] = security_mod
     security_mod.__path__ = [str(SERVICES_PATH / "security")]
 
-    monkeypatch.setenv("JWT_SECRET", secret)
+    secrets_mod = types.ModuleType("services.common.secrets")
+    secrets_mod.get_secret = lambda key: secret
+    secrets_mod.invalidate_secret = lambda key=None: None
+    monkeypatch.setitem(sys.modules, "services.common.secrets", secrets_mod)
+
     module_name = "services.security.jwt_service"
     if module_name in sys.modules:
         module = sys.modules[module_name]
@@ -57,5 +61,7 @@ def test_invalid_signature_returns_none(monkeypatch):
     now = int(time.time())
     monkeypatch.setattr(svc.time, "time", lambda: now)
     token = svc.generate_service_jwt("svc", expires_in=30)
-    svc.SERVICE_JWT_SECRET = "secret-two"
+    # Change the secret used for verification
+    secrets_mod = sys.modules["services.common.secrets"]
+    secrets_mod.get_secret = lambda key: "secret-two"
     assert svc.verify_service_jwt(token) is None
