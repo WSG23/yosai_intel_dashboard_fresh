@@ -1256,12 +1256,11 @@ It also defines indexes used by the migration:
 
 A continuous aggregate `access_event_hourly` summarises hourly counts per facility and refreshes automatically once the migration is complete.
 
-Set the connection strings via the environment variables `SOURCE_DSN` and `TARGET_DSN`.  In Kubernetes deployments the following variables control the Timescale connection:
-
-```text
-TIMESCALE_HOST, TIMESCALE_PORT, TIMESCALE_DB_NAME,
-TIMESCALE_DB_USER, TIMESCALE_DB_PASSWORD
-```
+Set the connection strings via the environment variables `SOURCE_DSN` and
+`TARGET_DSN`. If unset, they are loaded from Vault at
+`secret/data/timescale#source` and `secret/data/timescale#target`. The
+`TimescaleDBManager` also retrieves its host, port, database, user and password
+fields from the same Vault path.
 
 The default `docker-compose.dev.yml` exposes TimescaleDB on port `5433`.
 

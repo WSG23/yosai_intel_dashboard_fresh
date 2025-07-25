@@ -11,14 +11,24 @@ from typing import Any
 import psycopg2
 from prometheus_client import Gauge, start_http_server
 from psycopg2.extras import DictCursor, execute_values
-from database.secure_exec import execute_query, execute_command
+
+from database.secure_exec import execute_command, execute_query
 
 LOG = logging.getLogger(__name__)
 
 from services.common.secrets import get_secret
 
-SRC_DSN = os.getenv("SOURCE_DSN") or get_secret("secret/data/timescale#source")
-TGT_DSN = os.getenv("TARGET_DSN") or get_secret("secret/data/timescale#target")
+
+def _resolve_dsn(value: str | None, field: str) -> str:
+    if value:
+        if value.startswith("vault:"):
+            return get_secret(value[len("vault:") :])
+        return value
+    return get_secret(f"secret/data/timescale#{field}")
+
+
+SRC_DSN = _resolve_dsn(os.getenv("SOURCE_DSN"), "source")
+TGT_DSN = _resolve_dsn(os.getenv("TARGET_DSN"), "target")
 POLL_INTERVAL = int(os.getenv("REPLICATION_INTERVAL", "60"))
 METRICS_PORT = int(os.getenv("REPLICATION_METRICS_PORT", "8004"))
 
