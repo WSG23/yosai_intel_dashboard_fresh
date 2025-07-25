@@ -15,8 +15,10 @@ from database.secure_exec import execute_query, execute_command
 
 LOG = logging.getLogger(__name__)
 
-SRC_DSN = os.getenv("SOURCE_DSN", "dbname=yosai_intel")
-TGT_DSN = os.getenv("TARGET_DSN", "dbname=yosai_timescale")
+from services.common.secrets import get_secret
+
+SRC_DSN = os.getenv("SOURCE_DSN") or get_secret("secret/data/timescale#source")
+TGT_DSN = os.getenv("TARGET_DSN") or get_secret("secret/data/timescale#target")
 POLL_INTERVAL = int(os.getenv("REPLICATION_INTERVAL", "60"))
 METRICS_PORT = int(os.getenv("REPLICATION_METRICS_PORT", "8004"))
 

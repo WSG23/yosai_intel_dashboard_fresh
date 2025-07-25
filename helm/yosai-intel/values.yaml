@@ -15,7 +15,7 @@ serviceAccount:
   name: ""
 
 podAnnotations:
-  linkerd.io/inject: enabled
+  sidecar.istio.io/inject: "true"
 
 resources:
   limits:

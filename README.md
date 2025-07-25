@@ -38,6 +38,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Comprehensive Testing Strategy](docs/comprehensive_testing_strategy.md)
 - [Service Mesh Evaluation](docs/service_mesh_evaluation.md)
 - [Internal Service Interfaces](docs/internal_services.md)
+- [Feature Store](docs/feature_store.md)
 
 <p align="center">
   <img src="docs/architecture.svg" alt="High-level architecture diagram" width="600" />
@@ -176,7 +177,8 @@ startup. Ensure the following variables are set:
 `DB_HOST`, `DB_USER` and `DB_NAME` can also be overridden if they differ
 from the defaults. For production deployments store these secrets in
 HashiCorp Vault or AWS Secrets Manager as described in
-[docs/secret_management.md](docs/secret_management.md).
+[docs/secret_management.md](docs/secret_management.md). Vault deployment
+details are provided in [docs/vault_integration.md](docs/vault_integration.md).
 
 ### RBAC Setup
 
@@ -872,6 +874,7 @@ with the helper tools:
 ```bash
 python tools/validate_unicode_cleanup.py
 python tools/validate_unicode_migration.py
+python tools/audit_unicode_usage.py
 ```
 
 The repository also includes a helper for enforcing snake_case names.
@@ -1318,6 +1321,12 @@ python scripts/train_anomaly_models.py data/sample_access_events.csv
 ```
 
 Set `MODEL_REGISTRY_DB` and `MODEL_REGISTRY_BUCKET` to configure where the artifacts and metadata are stored. Pass `--include-iso` to also train an IsolationForest model.
+
+To train the full suite of security models run:
+
+```bash
+python scripts/train_security_models.py data/sample_access_events.csv
+```
 
 
 

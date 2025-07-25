@@ -1,6 +1,15 @@
 """Unified Unicode utilities package."""
 
 from .core import UnicodeProcessor
+from .helpers import (
+    UnicodeQueryHandler,
+    clean_unicode_surrogates,
+    clean_unicode_text,
+    decode_upload_content,
+    safe_encode_text,
+    sanitize_dataframe,
+)
+from .sql_safe import encode_query
 
 __all__ = [
     "UnicodeProcessor",
@@ -9,7 +18,6 @@ __all__ = [
     "UnicodeEncoder",
     "UnicodeSQLProcessor",
 ]
-
 
 def __getattr__(name: str):
     if name == "UnicodeValidator":
@@ -26,8 +34,12 @@ def __getattr__(name: str):
         from core import unicode as _u
 
         return _u.UnicodeSQLProcessor
-    raise AttributeError(name)
+    if name == "UnicodeSQLProcessor":
+        from core import unicode as _u
 
+        return _u.UnicodeSQLProcessor
+    if name == "UnicodeQueryHandler":
+        from config.database_exceptions import UnicodeEncodingError
 
 class UnicodeQueryHandler:
     """Compatibility wrapper for safe SQL encoding."""
@@ -59,3 +71,4 @@ def clean_unicode_surrogates(text: str, replacement: str = "") -> str:
 
 
 __all__.append("clean_unicode_surrogates")
+

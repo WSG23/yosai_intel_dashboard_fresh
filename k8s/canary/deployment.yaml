@@ -34,16 +34,16 @@ spec:
               value: "yosai_intel"
             - name: DB_USER
               value: "postgres"
-            - name: DB_PASSWORD
+            - name: VAULT_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: vault-config
+                  key: VAULT_ADDR
+            - name: VAULT_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: yosai-secrets
-                  key: DB_PASSWORD
-            - name: SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: yosai-secrets
-                  key: SECRET_KEY
+                  name: vault-secret
+                  key: VAULT_TOKEN
             - name: REDIS_HOST
               value: "redis"
             - name: REDIS_PORT

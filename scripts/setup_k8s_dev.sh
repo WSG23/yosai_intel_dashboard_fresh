@@ -8,16 +8,19 @@ fi
 
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 
-# Install Linkerd CLI if missing
-if ! command -v linkerd >/dev/null 2>&1; then
-  curl -sL https://run.linkerd.io/install | sh
-  export PATH=$PATH:$HOME/.linkerd2/bin
+# Install Istio CLI if missing
+if ! command -v istioctl >/dev/null 2>&1; then
+  curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.21.0 sh -
+  export PATH=$PATH:$(pwd)/istio-1.21.0/bin
 fi
 
-# Install Linkerd control plane and viz extension
-linkerd install --crds | kubectl apply -f -
-linkerd install | kubectl apply -f -
-linkerd viz install | kubectl apply -f -
+# Install Istio control plane using the demo profile
+istioctl install -y --set profile=demo
+
+# Label namespaces for automatic sidecar injection
+for ns in yosai-prod yosai-staging yosai-dev; do
+  kubectl label namespace "$ns" istio-injection=enabled --overwrite
+done
 
 # Install Strimzi Kafka operator
 kubectl create namespace kafka --dry-run=client -o yaml | kubectl apply -f -
@@ -40,6 +43,6 @@ done
 # Apply base manifests
 kubectl apply -f k8s/base
 
-# Apply Linkerd service mesh configuration
-kubectl apply -f k8s/linkerd
+# Apply Istio service mesh configuration
+kubectl apply -f k8s/istio
 

@@ -1,10 +1,9 @@
-import os
 import time
 from jose import jwt
 
-SERVICE_JWT_SECRET = os.getenv("JWT_SECRET")
-if not SERVICE_JWT_SECRET:
-    raise RuntimeError("JWT_SECRET environment variable must be set")
+from services.common.secrets import get_secret
+
+SERVICE_JWT_SECRET = get_secret("secret/data/jwt#secret")
 
 
 def generate_service_jwt(service_name: str, expires_in: int = 300) -> str:
