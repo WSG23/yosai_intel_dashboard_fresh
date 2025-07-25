@@ -14,6 +14,10 @@ import json
 from services.streaming.service import StreamingService
 from services.security import verify_service_jwt
 from tracing import trace_async_operation
+from infrastructure.discovery.health_check import (
+    register_health_check,
+    setup_health_checks,
+)
 
 SERVICE_NAME = "event-ingestion-service"
 os.environ.setdefault("YOSAI_SERVICE_NAME", SERVICE_NAME)
@@ -24,6 +28,8 @@ try:
     service = StreamingService()
 except Exception:
     service = None
+
+register_health_check(app, "streaming", lambda _: service is not None)
 
 
 def verify_token(authorization: str = Header("")) -> None:
@@ -64,6 +70,7 @@ async def shutdown() -> None:
 
 FastAPIInstrumentor.instrument_app(app)
 Instrumentator().instrument(app).expose(app)
+setup_health_checks(app)
 
 
 @app.on_event("startup")

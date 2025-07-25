@@ -25,6 +25,10 @@ from core.events import EventBus
 from services.cached_analytics import CachedAnalyticsService
 from services.common.async_db import get_pool
 from services.security import require_permission
+from infrastructure.discovery.health_check import (
+    setup_health_checks,
+    register_health_check,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +41,11 @@ cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=300))
 analytics_service = CachedAnalyticsService(cache_manager)
 
 app = FastAPI(dependencies=[Depends(require_permission("analytics.read"))])
+
+
+register_health_check(app, "cache", lambda _: True)
+register_health_check(app, "event_bus", lambda _: True)
+setup_health_checks(app)
 
 
 async def get_service() -> CachedAnalyticsService:
