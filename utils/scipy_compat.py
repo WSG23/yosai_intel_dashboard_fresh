@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import logging
-import unicodedata
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
+from validation import UnicodeValidator
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -20,23 +20,18 @@ __all__ = [
 ]
 
 
+_validator = UnicodeValidator()
+
+
 def sanitize_unicode_data(data: Any) -> Any:
-    """Sanitize data to handle Unicode surrogate characters."""
+    """Recursively sanitize data using :class:`UnicodeValidator`."""
     if isinstance(data, str):
-        try:
-            # Remove surrogate characters that can't be encoded in UTF-8
-            cleaned = data.encode('utf-8', 'replace').decode('utf-8')
-            # Normalize Unicode characters
-            cleaned = unicodedata.normalize('NFKC', cleaned)
-            return cleaned
-        except (UnicodeError, ValueError):
-            # Fallback: remove all non-ASCII characters
-            return ''.join(char for char in data if ord(char) < 128)
-    elif isinstance(data, dict):
+        return _validator.validate_text(data)
+    if isinstance(data, dict):
         return {key: sanitize_unicode_data(value) for key, value in data.items()}
-    elif isinstance(data, list):
+    if isinstance(data, list):
         return [sanitize_unicode_data(item) for item in data]
-    elif isinstance(data, tuple):
+    if isinstance(data, tuple):
         return tuple(sanitize_unicode_data(item) for item in data)
     return data
 
