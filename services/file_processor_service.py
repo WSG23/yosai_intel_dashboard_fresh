@@ -2,6 +2,8 @@
 File Processing Service for Yōsai Intel Dashboard
 """
 
+from __future__ import annotations
+
 import csv
 import io
 import json
@@ -11,16 +13,16 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from services.configuration_service import ConfigurationServiceProtocol
-from .stream_processor import StreamProcessor
-from core.unicode import process_large_csv_content
 from analytics_core.utils.unicode_processor import UnicodeHelper
+from config.constants import UPLOAD_ALLOWED_EXTENSIONS
+from core.unicode import process_large_csv_content
+from services.configuration_service import ConfigurationServiceProtocol
 from utils.file_utils import safe_decode_with_unicode_handling
-
-from utils.protocols import SafeDecoderProtocol
 from utils.memory_utils import memory_safe
-
+from utils.protocols import SafeDecoderProtocol
 from yosai_framework.service import BaseService
+
+from .stream_processor import StreamProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +30,7 @@ logger = logging.getLogger(__name__)
 class FileProcessorService(BaseService):
     """File processing service implementation"""
 
-    ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
+    ALLOWED_EXTENSIONS = UPLOAD_ALLOWED_EXTENSIONS
 
     # Encoding detection order for robust decoding
     ENCODING_PRIORITY = [
