@@ -7,9 +7,9 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
+from core.protocols.plugin import PluginMetadata
 from core.serialization import SafeJSONSerializer
 from core.unicode import sanitize_unicode_input
-from services.data_processing.core.protocols import PluginMetadata
 
 # Optional Babel import
 try:

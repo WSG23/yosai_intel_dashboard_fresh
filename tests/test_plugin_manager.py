@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import sys
 import time
 from pathlib import Path
 
 from config import create_config_manager
-from core.service_container import ServiceContainer
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
-from services.data_processing.core.protocols import PluginMetadata
+from core.protocols.plugin import PluginMetadata
+from core.service_container import ServiceContainer
 
 
 class SimplePlugin:
@@ -57,7 +59,7 @@ def test_load_all_plugins(tmp_path):
     plugin_file = pkg_dir / "plug.py"
     plugin_file.write_text(
         """
-from services.data_processing.core.protocols import PluginMetadata
+from core.protocols.plugin import PluginMetadata
 
 class Plug:
     metadata = PluginMetadata(

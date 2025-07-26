@@ -3,6 +3,8 @@ Self-Contained JSON Serialization Plugin
 Handles all JSON serialization issues internally with minimal external dependencies
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from dataclasses import asdict, dataclass, is_dataclass
@@ -11,8 +13,8 @@ from typing import Any, Dict, Optional, cast
 
 import pandas as pd
 
+from core.protocols.plugin import PluginMetadata
 from core.serialization import SafeJSONSerializer
-from services.data_processing.core.protocols import PluginMetadata
 
 from .base_model import BaseModel
 
