@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import base64
 import csv
 import io
+import logging
 from pathlib import Path
-from typing import Iterable, Tuple
+from typing import Dict, Iterable, List, Tuple
 
 from config.dynamic_config import dynamic_config
+from services.upload.protocols import UploadValidatorProtocol
 
 from .core import ValidationResult
 from .rules import CompositeValidator, ValidationRule
@@ -53,12 +56,22 @@ class CSVFormulaRule(ValidationRule):
         return ValidationResult(True, data)
 
 
+logger = logging.getLogger(__name__)
+
+
 class FileValidator(CompositeValidator):
     """High level file validator based on configurable rules."""
 
-    def __init__(self, max_size_mb: int | None = None, allowed_ext: Iterable[str] | None = None) -> None:
-        size_mb = max_size_mb if max_size_mb is not None else getattr(
-            dynamic_config.security, "max_upload_mb", 10
+    def __init__(
+        self,
+        max_size_mb: int | None = None,
+        allowed_ext: Iterable[str] | None = None,
+        validator: UploadValidatorProtocol | None = None,
+    ) -> None:
+        size_mb = (
+            max_size_mb
+            if max_size_mb is not None
+            else getattr(dynamic_config.security, "max_upload_mb", 10)
         )
         size = size_mb * 1024 * 1024
         default_types = getattr(dynamic_config, "upload", None)
@@ -73,6 +86,16 @@ class FileValidator(CompositeValidator):
             CSVFormulaRule(),
         ]
         super().__init__(rules)
+        self.validator = validator
+
+    def _decode_content(self, content: str | bytes) -> bytes:
+        if isinstance(content, bytes):
+            return content
+        try:
+            data = content.split(",", 1)[1]
+            return base64.b64decode(data)
+        except Exception:
+            return b""
 
     def validate_file_upload(self, filename: str, content: bytes) -> dict:
         result = self.validate((filename, content))
@@ -80,3 +103,27 @@ class FileValidator(CompositeValidator):
             return {"valid": False, "issues": result.issues or []}
         size_mb = len(content) / (1024 * 1024)
         return {"valid": True, "filename": filename, "size_mb": size_mb}
+
+    # ------------------------------------------------------------------
+    def validate(self, filename: str, content: str) -> Tuple[bool, str]:
+        data = self._decode_content(content)
+        res = self.validate_file_upload(filename, data)
+        if not res["valid"]:
+            return False, ", ".join(res["issues"])
+        if self.validator:
+            try:
+                return self.validator.validate(filename, content)
+            except Exception as exc:  # pragma: no cover - delegate errors
+                logger.error("Validation failed for %s: %s", filename, exc)
+                return False, str(exc)
+        return True, ""
+
+    def validate_files(
+        self, contents: List[str], filenames: List[str]
+    ) -> Dict[str, str]:
+        results: Dict[str, str] = {}
+        for content, name in zip(contents, filenames):
+            ok, msg = self.validate(name, content)
+            if not ok:
+                results[name] = msg or "invalid"
+        return results

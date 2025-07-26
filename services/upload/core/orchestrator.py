@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import Any, Callable, Dict, List, Tuple
 
@@ -5,6 +7,9 @@ import pandas as pd
 
 from services.async_file_processor import AsyncFileProcessor
 from services.data_enhancer import get_ai_column_suggestions
+from services.upload.core.file_processor_service import FileProcessor
+from services.upload.core.learning_coordinator import LearningCoordinator
+from services.upload.core.ui_builder import UploadUIBuilder
 from services.upload.protocols import (
     DeviceLearningServiceProtocol,
     FileProcessorProtocol,
@@ -12,11 +17,8 @@ from services.upload.protocols import (
     UploadStorageProtocol,
     UploadValidatorProtocol,
 )
-from services.upload.core.file_processor_service import FileProcessor
-from services.upload.core.file_validator import FileValidator
-from services.upload.core.learning_coordinator import LearningCoordinator
-from services.upload.core.ui_builder import UploadUIBuilder
 from services.upload_data_service import UploadDataService, UploadDataServiceProtocol
+from validation.file_validator import FileValidator
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +37,9 @@ class UploadOrchestrator(UploadProcessingServiceProtocol):
     ) -> None:
         self.store = store
         self.data_service = data_service or UploadDataService(store)
-        self.processor = FileProcessor(store, processor or AsyncFileProcessor(), self.data_service)
+        self.processor = FileProcessor(
+            store, processor or AsyncFileProcessor(), self.data_service
+        )
         self.validator = FileValidator(validator)
         self.learner = LearningCoordinator(learning_service)
         self.ui = ui_builder or UploadUIBuilder()
@@ -65,7 +69,9 @@ class UploadOrchestrator(UploadProcessingServiceProtocol):
     def _ensure_list(self, value: List[str] | str) -> List[str]:
         return value if isinstance(value, list) else [value]
 
-    def _group_parts(self, contents: List[str], names: List[str]) -> Dict[str, List[str]]:
+    def _group_parts(
+        self, contents: List[str], names: List[str]
+    ) -> Dict[str, List[str]]:
         grouped: Dict[str, List[str]] = {}
         for content, name in zip(contents, names):
             grouped.setdefault(name, []).append(content)
@@ -87,7 +93,9 @@ class UploadOrchestrator(UploadProcessingServiceProtocol):
             "extensions": {},
         }
 
-    def _assemble_result(self, processed: Dict[str, Dict[str, Any]], errors: Dict[str, str]) -> Dict[str, Any]:
+    def _assemble_result(
+        self, processed: Dict[str, Dict[str, Any]], errors: Dict[str, str]
+    ) -> Dict[str, Any]:
         result = self._empty_result()
         for fname, msg in errors.items():
             result["upload_results"].append(self.ui.build_failure_alert(msg))
@@ -95,22 +103,30 @@ class UploadOrchestrator(UploadProcessingServiceProtocol):
         for fname, info in processed.items():
             if "error" in info:
                 result["upload_results"].append(
-                    self.ui.build_failure_alert(f"Error processing {fname}: {info['error']}")
+                    self.ui.build_failure_alert(
+                        f"Error processing {fname}: {info['error']}"
+                    )
                 )
                 result["validation_results"][fname] = {"error": info["error"]}
                 continue
             self._add_file_result(result, fname, info)
         if result["file_info_dict"]:
             result["upload_nav"] = self.ui.build_navigation()
-        result["processing_stats"] = self.ui.build_processing_stats(result["file_info_dict"])
+        result["processing_stats"] = self.ui.build_processing_stats(
+            result["file_info_dict"]
+        )
         return result
 
-    def _add_file_result(self, result: Dict[str, Any], fname: str, info: Dict[str, Any]) -> None:
+    def _add_file_result(
+        self, result: Dict[str, Any], fname: str, info: Dict[str, Any]
+    ) -> None:
         df = info["df"]
         rows = info["rows"]
         cols = info["cols"]
         result["upload_results"].append(self.ui.build_success_alert(fname, rows, cols))
-        result["file_preview_components"].append(self.ui.build_file_preview_component(df, fname))
+        result["file_preview_components"].append(
+            self.ui.build_file_preview_component(df, fname)
+        )
         column_names = info["column_names"]
         file_info = {
             "filename": fname,
@@ -126,10 +142,13 @@ class UploadOrchestrator(UploadProcessingServiceProtocol):
         result["column_mappings"][fname] = info.get("mapping", {})
         self._update_device_mappings(result, fname, df)
 
-    def _update_device_mappings(self, result: Dict[str, Any], fname: str, df: pd.DataFrame) -> None:
+    def _update_device_mappings(
+        self, result: Dict[str, Any], fname: str, df: pd.DataFrame
+    ) -> None:
         user = self.learner.user_mappings(fname)
         if user:
             from services.ai_mapping_store import ai_mapping_store
+
             ai_mapping_store.clear()
             for dev, mapping in user.items():
                 mapping["source"] = "user_confirmed"
@@ -138,6 +157,7 @@ class UploadOrchestrator(UploadProcessingServiceProtocol):
             logger.info("✅ Loaded %s saved mappings - AI SKIPPED", len(user))
         else:
             from services.ai_mapping_store import ai_mapping_store
+
             ai_mapping_store.clear()
             self.learner.auto_apply(df, fname)
             result["device_mappings"][fname] = {}
