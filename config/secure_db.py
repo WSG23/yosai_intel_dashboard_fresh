@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
-from database.secure_exec import execute_secure_query
+from typing import Any, Iterable
 
+from database.secure_exec import execute_secure_query as _exec_secure_query
+from unicode_toolkit import UnicodeQueryHandler
 
 __all__ = ["execute_secure_query"]
 
