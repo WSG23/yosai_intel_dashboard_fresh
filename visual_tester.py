@@ -24,7 +24,7 @@ def apply_all_fixes():
     """Apply development-only monkey patches for compatibility."""
     try:
         # Step 1: Callback fix
-        from analytics_core.callbacks.unified_callback_manager import CallbackManager
+        from core.callbacks import UnifiedCallbackManager as CallbackManager
 
         if hasattr(CallbackManager, "handle_register") and not hasattr(
             CallbackManager, "register_handler"

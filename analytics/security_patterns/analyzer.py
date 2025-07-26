@@ -51,9 +51,7 @@ if StandardScaler is None:  # pragma: no cover
 
 from analytics.security_metrics import SecurityMetrics
 from analytics.security_score_calculator import SecurityScoreCalculator
-from analytics_core.callbacks.unified_callback_manager import (
-    CallbackManager as SecurityCallbackController,
-)
+from core.callbacks import UnifiedCallbackManager as SecurityCallbackController
 from security_callback_controller import (
     SecurityEvent,
     emit_security_event,

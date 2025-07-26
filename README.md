@@ -1136,7 +1136,7 @@ safe_query = SQLProcessor.encode_query(query)
 
 ### Firing events
 ```python
-from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callbacks import UnifiedCallbackManager as CallbackManager
 from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
 
 manager = CallbackManager()

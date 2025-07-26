@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional, Tuple
 import pandas as pd
 
 from core.callback_events import CallbackEvent
-from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callbacks import UnifiedCallbackManager
 from core.container import get_unicode_processor
 from core.protocols import UnicodeProcessorProtocol
 
@@ -30,7 +30,7 @@ class StorageManager:
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self._metadata_path = self.base_dir / "metadata.json"
         self._metadata: Dict[str, Any] = {}
-        self.unified_callbacks = CallbackManager()
+        self.unified_callbacks = UnifiedCallbackManager()
         self.unicode_processor = unicode_processor or get_unicode_processor()
         self._load_metadata()
 

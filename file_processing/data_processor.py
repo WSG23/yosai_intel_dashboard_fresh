@@ -8,7 +8,7 @@ from typing import Dict, Optional
 import pandas as pd
 
 from core.callback_events import CallbackEvent
-from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callbacks import UnifiedCallbackManager
 from .format_detector import FormatDetector, UnsupportedFormatError
 from .readers import ArchiveReader, CSVReader, ExcelReader, FWFReader, JSONReader
 
@@ -43,7 +43,7 @@ class DataProcessor:
         self.config = config or DataProcessorConfig()
         self.device_registry: Dict[str, Dict] = device_registry or {}
         self.pipeline_metadata: Dict[str, Dict] = {}
-        self.unified_callbacks = CallbackManager()
+        self.unified_callbacks = UnifiedCallbackManager()
 
     def _normalize_timestamps(self, df: pd.DataFrame) -> pd.DataFrame:
         """

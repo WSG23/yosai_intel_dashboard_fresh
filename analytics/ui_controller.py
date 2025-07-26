@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 
 from core.callback_events import CallbackEvent
-from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callbacks import UnifiedCallbackManager
 
 from .business_service import AnalyticsBusinessService
 
@@ -16,10 +16,10 @@ class AnalyticsUIController:
     def __init__(
         self,
         service: AnalyticsBusinessService,
-        callback_manager: Optional[CallbackManager] = None,
+        callback_manager: Optional[UnifiedCallbackManager] = None,
     ) -> None:
         self.service = service
-        self.callback_manager = callback_manager or CallbackManager()
+        self.callback_manager = callback_manager or UnifiedCallbackManager()
 
     # ------------------------------------------------------------------
     def handle_analysis_request(self, ui_data: Any) -> Dict[str, Any]:

@@ -6,7 +6,7 @@ import logging
 from typing import Any, Callable, Dict, List, Optional
 
 from core.callback_events import CallbackEvent
-from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callbacks import UnifiedCallbackManager
 from validation.security_validator import SecurityValidator
 
 
@@ -23,11 +23,11 @@ class UnifiedAnalyticsController:
 
     def __init__(
         self,
-        callback_manager: Optional[CallbackManager] = None,
+        callback_manager: Optional[UnifiedCallbackManager] = None,
         security_validator: Optional[SecurityValidator] = None,
     ) -> None:
         self.logger = logging.getLogger(__name__)
-        self._manager = callback_manager or CallbackManager()
+        self._manager = callback_manager or UnifiedCallbackManager()
         self._validator = security_validator or SecurityValidator()
 
     # ------------------------------------------------------------------

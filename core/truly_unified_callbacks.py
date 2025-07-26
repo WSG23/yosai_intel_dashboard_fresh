@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
+import asyncio
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import (
@@ -91,6 +92,9 @@ class TrulyUnifiedCallbacks:
         self._namespaces: Dict[str, List[str]] = defaultdict(list)
         self._groups: Dict[str, List[Operation]] = defaultdict(list)
         self._registered_components: Set[str] = set()
+        self._event_metrics: Dict[CallbackEvent, Dict[str, float | int]] = defaultdict(
+            lambda: {"calls": 0, "exceptions": 0, "total_time": 0.0}
+        )
 
     # ------------------------------------------------------------------
     def callback(self, *args: Any, **kwargs: Any):
@@ -288,6 +292,14 @@ class TrulyUnifiedCallbacks:
             self._event_callbacks[event].sort(key=lambda c: c.priority)
 
     # ------------------------------------------------------------------
+    def unregister_event(self, event: CallbackEvent, func: Callable[..., Any]) -> None:
+        """Remove a previously registered event callback."""
+        with self._lock:
+            self._event_callbacks[event] = [
+                cb for cb in self._event_callbacks.get(event, []) if cb.func != func
+            ]
+
+    # ------------------------------------------------------------------
     def trigger_event(
         self, event: CallbackEvent, *args: Any, **kwargs: Any
     ) -> List[Any]:
@@ -303,14 +315,63 @@ class TrulyUnifiedCallbacks:
                 if cb.timeout and duration > cb.timeout:
                     raise TimeoutError(f"Operation exceeded {cb.timeout}s")
                 results.append(result)
+                metric = self._event_metrics[event]
+                metric["calls"] += 1
+                metric["total_time"] += duration
             except Exception as exc:  # pragma: no cover - log and continue
                 error_handler.handle_error(
                     exc,
                     severity=ErrorSeverity.HIGH,
                     context={"event": event.name, "callback": cb.func.__name__},
                 )
+                metric = self._event_metrics[event]
+                metric["calls"] += 1
+                metric["exceptions"] += 1
+            results.append(None)
+        return results
+
+    async def trigger_event_async(
+        self, event: CallbackEvent, *args: Any, **kwargs: Any
+    ) -> List[Any]:
+        """Asynchronously trigger callbacks registered for *event*."""
+        results: List[Any] = []
+        callbacks = list(self._event_callbacks.get(event, []))
+        for cb in callbacks:
+            wrapped = with_retry(max_attempts=cb.retries + 1)(cb.func)
+            start = time.perf_counter()
+            try:
+                if asyncio.iscoroutinefunction(wrapped):
+                    result = await wrapped(*args, **kwargs)
+                else:
+                    result = wrapped(*args, **kwargs)
+                duration = time.perf_counter() - start
+                if cb.timeout and duration > cb.timeout:
+                    raise TimeoutError(f"Operation exceeded {cb.timeout}s")
+                results.append(result)
+                metric = self._event_metrics[event]
+                metric["calls"] += 1
+                metric["total_time"] += duration
+            except Exception as exc:  # pragma: no cover - log and continue
+                error_handler.handle_error(
+                    exc,
+                    severity=ErrorSeverity.HIGH,
+                    context={"event": event.name, "callback": cb.func.__name__},
+                )
+                metric = self._event_metrics[event]
+                metric["calls"] += 1
+                metric["exceptions"] += 1
                 results.append(None)
         return results
+
+    def get_event_callbacks(self, event: CallbackEvent) -> List[Callable[..., Any]]:
+        """Return registered callbacks for *event*."""
+        with self._lock:
+            return [cb.func for cb in self._event_callbacks.get(event, [])]
+
+    def get_event_metrics(self, event: CallbackEvent) -> Dict[str, float | int]:
+        """Return execution metrics for *event*."""
+        with self._lock:
+            return dict(self._event_metrics.get(event, {}))
 
     # Operation groups --------------------------------------------------
     def register_operation(
@@ -394,6 +455,14 @@ class TrulyUnifiedCallbacks:
             manager = manager_cls(registry)
             self._namespaces.setdefault(manager.component_name, [])
             manager.register_all()
+
+    # Compatibility wrappers -------------------------------------------
+    register_callback = register_event
+    unregister_callback = unregister_event
+    trigger = trigger_event
+    trigger_async = trigger_event_async
+    get_callbacks = get_event_callbacks
+    get_metrics = get_event_metrics
 
 
 __all__ = ["TrulyUnifiedCallbacks"]

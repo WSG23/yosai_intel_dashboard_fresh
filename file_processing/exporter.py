@@ -8,7 +8,7 @@ from typing import Dict
 import pandas as pd
 
 from core.callback_events import CallbackEvent
-from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callbacks import UnifiedCallbackManager
 from core.container import get_unicode_processor
 from core.protocols import UnicodeProcessorProtocol
 from .column_mapper import REQUIRED_COLUMNS
@@ -43,7 +43,7 @@ def export_to_csv(
     *,
     processor: UnicodeProcessorProtocol | None = None,
 ) -> None:
-    controller = CallbackManager()
+    controller = UnifiedCallbackManager()
     _validate_columns(df)
     processor = processor or get_unicode_processor()
     df_clean = processor.sanitize_dataframe(df)
@@ -65,7 +65,7 @@ def export_to_json(
     *,
     processor: UnicodeProcessorProtocol | None = None,
 ) -> None:
-    controller = CallbackManager()
+    controller = UnifiedCallbackManager()
     _validate_columns(df)
     processor = processor or get_unicode_processor()
     df_clean = processor.sanitize_dataframe(df)

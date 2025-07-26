@@ -7,7 +7,7 @@ from typing import Iterable, List, Optional, Tuple, Dict
 import pandas as pd
 
 from core.callback_events import CallbackEvent
-from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callbacks import UnifiedCallbackManager
 from core.container import get_unicode_processor
 from core.protocols import UnicodeProcessorProtocol
 
@@ -26,7 +26,7 @@ class FormatDetector:
         unicode_processor: UnicodeProcessorProtocol | None = None,
     ) -> None:
         self.readers: List = list(readers) if readers else []
-        self.unified_callbacks = CallbackManager()
+        self.unified_callbacks = UnifiedCallbackManager()
         self.unicode_processor = unicode_processor or get_unicode_processor()
 
     def detect_and_load(
