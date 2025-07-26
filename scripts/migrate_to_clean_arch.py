@@ -24,6 +24,36 @@ DEFAULT_MAPPING = {
 }
 
 
+def gather_status(mapping: dict[str, str]) -> dict[str, str]:
+    """Return migration status for each mapped directory."""
+    status: dict[str, str] = {}
+    for src_rel, dest_rel in mapping.items():
+        src = ROOT / src_rel
+        dest = ROOT / dest_rel
+        if dest.exists() and not src.exists():
+            status[src_rel] = "migrated"
+        elif src.exists():
+            status[src_rel] = "pending"
+        else:
+            status[src_rel] = "missing"
+    return status
+
+
+def print_report(status: dict[str, str]) -> None:
+    pending = [src for src, st in status.items() if st == "pending"]
+    migrated = sum(1 for st in status.values() if st == "migrated")
+    found = sum(1 for st in status.values() if st != "missing")
+    pct = (migrated / found * 100) if found else 0.0
+
+    if pending:
+        print("Directories pending migration:")
+        for src in pending:
+            print(f" - {src}")
+    else:
+        print("All mapped directories have been migrated.")
+    print(f"Migrated {migrated}/{found} directories ({pct:.1f}%)")
+
+
 def load_mapping(path: str | None) -> dict[str, str]:
     if path:
         with open(path, "r", encoding="utf-8") as fh:
@@ -97,15 +127,28 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help="Restore directories from the given backup archive",
     )
+    parser.add_argument(
+        "--report",
+        action="store_true",
+        help="Show migration status without moving files",
+    )
     args = parser.parse_args(argv)
 
     mapping = load_mapping(args.config)
+    if args.report:
+        status = gather_status(mapping)
+        print_report(status)
+        return 0
+
     _check_git_clean()
 
     if args.rollback:
         rollback(mapping, args.rollback, args.dry_run)
     else:
         migrate(mapping, dry_run=args.dry_run, backup_archive=args.backup)
+
+    status = gather_status(mapping)
+    print_report(status)
     return 0
 
 
