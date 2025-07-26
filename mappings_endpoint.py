@@ -1,6 +1,8 @@
-from flask import Blueprint, abort, jsonify, request
-from marshmallow import Schema, fields
-from flask_apispec import doc, marshal_with, use_kwargs
+from flask import Blueprint, abort, request
+from flask_apispec import doc
+from pydantic import BaseModel
+
+from utils.pydantic_decorators import validate_input, validate_output
 
 from config.service_registration import register_upload_services
 
@@ -14,41 +16,40 @@ if not container.has("upload_processor"):
 mappings_bp = Blueprint("mappings", __name__)
 
 
-class FileMappingSchema(Schema):
-    file_id = fields.String(required=True)
-    mappings = fields.Dict()
+class FileMappingSchema(BaseModel):
+    file_id: str
+    mappings: dict | None = None
 
 
-class MappingSaveSchema(Schema):
-    filename = fields.String(required=True)
-    mapping_type = fields.String()
-    column_mappings = fields.Dict()
-    device_mappings = fields.Dict()
+class MappingSaveSchema(BaseModel):
+    filename: str
+    mapping_type: str | None = None
+    column_mappings: dict | None = None
+    device_mappings: dict | None = None
 
 
-class ProcessSchema(Schema):
-    filename = fields.String(required=True)
-    column_mappings = fields.Dict()
-    device_mappings = fields.Dict()
+class ProcessSchema(BaseModel):
+    filename: str
+    column_mappings: dict | None = None
+    device_mappings: dict | None = None
 
 
-class SuccessSchema(Schema):
-    status = fields.String()
-    enhanced_filename = fields.String(load_default=None)
-    rows = fields.Integer(load_default=None)
-    columns = fields.Integer(load_default=None)
+class SuccessSchema(BaseModel):
+    status: str
+    enhanced_filename: str | None = None
+    rows: int | None = None
+    columns: int | None = None
 
 
 @mappings_bp.route("/v1/mappings/columns", methods=["POST"])
 @doc(description="Save column mappings", tags=["mappings"])
-@use_kwargs(FileMappingSchema, location="json")
-@marshal_with(SuccessSchema)
-def save_column_mappings_route(**payload):
+@validate_input(FileMappingSchema)
+@validate_output(SuccessSchema)
+def save_column_mappings_route(payload: FileMappingSchema):
     """Persist column mappings for a processed file."""
     try:
-        payload = request.get_json(force=True)
-        file_id = payload.get("file_id")
-        mappings = payload.get("mappings", {})
+        file_id = payload.file_id
+        mappings = payload.mappings or {}
 
         if not file_id:
             abort(400, description="file_id is required")
@@ -56,7 +57,7 @@ def save_column_mappings_route(**payload):
         service = container.get("consolidated_learning_service")
         service.save_column_mappings(file_id, mappings)
 
-        return jsonify({"status": "success"}), 200
+        return {"status": "success"}, 200
     except KeyError as exc:
         abort(500, description=clean_unicode_surrogates(exc))
     except Exception as exc:
@@ -65,14 +66,13 @@ def save_column_mappings_route(**payload):
 
 @mappings_bp.route("/v1/mappings/devices", methods=["POST"])
 @doc(description="Save device mappings", tags=["mappings"])
-@use_kwargs(FileMappingSchema, location="json")
-@marshal_with(SuccessSchema)
-def save_device_mappings_route(**payload):
+@validate_input(FileMappingSchema)
+@validate_output(SuccessSchema)
+def save_device_mappings_route(payload: FileMappingSchema):
     """Persist device mappings for a processed file."""
     try:
-        payload = request.get_json(force=True)
-        file_id = payload.get("file_id")
-        mappings = payload.get("mappings", {})
+        file_id = payload.file_id
+        mappings = payload.mappings or {}
 
         if not file_id:
             abort(400, description="file_id is required")
@@ -80,7 +80,7 @@ def save_device_mappings_route(**payload):
         service = container.get("device_learning_service")
         service.save_device_mappings(file_id, mappings)
 
-        return jsonify({"status": "success"}), 200
+        return {"status": "success"}, 200
     except KeyError as exc:
         abort(500, description=clean_unicode_surrogates(exc))
     except Exception as exc:
@@ -89,20 +89,19 @@ def save_device_mappings_route(**payload):
 
 @mappings_bp.route("/v1/mappings/save", methods=["POST"])
 @doc(description="Save mappings", tags=["mappings"])
-@use_kwargs(MappingSaveSchema, location="json")
-@marshal_with(SuccessSchema)
-def save_mappings(**data):
+@validate_input(MappingSaveSchema)
+@validate_output(SuccessSchema)
+def save_mappings(payload: MappingSaveSchema):
     """Save column or device mappings"""
     try:
-        data = request.json
-        filename = data.get("filename")
-        mapping_type = data.get("mapping_type")
+        filename = payload.filename
+        mapping_type = payload.mapping_type
 
         # Get services
 
         if mapping_type == "column":
             # Save column mappings
-            column_mappings = data.get("column_mappings", {})
+            column_mappings = payload.column_mappings or {}
 
             # Use consolidated learning service if available
             learning_service = container.get("consolidated_learning_service")
@@ -111,7 +110,7 @@ def save_mappings(**data):
 
         elif mapping_type == "device":
             # Save device mappings
-            device_mappings = data.get("device_mappings", {})
+            device_mappings = payload.device_mappings or {}
 
             device_service = container.get("device_learning_service")
             if device_service:
@@ -125,7 +124,7 @@ def save_mappings(**data):
                         properties=mapping.get("properties", {}),
                     )
 
-        return jsonify({"status": "success"}), 200
+        return {"status": "success"}, 200
 
     except Exception as e:
         abort(500, description=clean_unicode_surrogates(e))
@@ -133,15 +132,14 @@ def save_mappings(**data):
 
 @mappings_bp.route("/v1/process-enhanced", methods=["POST"])
 @doc(description="Process data with mappings", tags=["mappings"])
-@use_kwargs(ProcessSchema, location="json")
-@marshal_with(SuccessSchema)
-def process_enhanced_data(**data):
+@validate_input(ProcessSchema)
+@validate_output(SuccessSchema)
+def process_enhanced_data(payload: ProcessSchema):
     """Process data with applied mappings"""
     try:
-        data = request.json
-        filename = data.get("filename")
-        column_mappings = data.get("column_mappings", {})
-        device_mappings = data.get("device_mappings", {})
+        filename = payload.filename
+        column_mappings = payload.column_mappings or {}
+        device_mappings = payload.device_mappings or {}
 
         # Get services
         upload_service = container.get("upload_processor")
@@ -172,17 +170,12 @@ def process_enhanced_data(**data):
         enhanced_filename = f"enhanced_{filename}"
         upload_service.store.store_data(enhanced_filename, df)
 
-        return (
-            jsonify(
-                {
-                    "status": "success",
-                    "enhanced_filename": enhanced_filename,
-                    "rows": len(df),
-                    "columns": len(df.columns),
-                }
-            ),
-            200,
-        )
+        return {
+            "status": "success",
+            "enhanced_filename": enhanced_filename,
+            "rows": len(df),
+            "columns": len(df.columns),
+        }, 200
 
     except Exception as e:
         abort(500, description=clean_unicode_surrogates(e))
