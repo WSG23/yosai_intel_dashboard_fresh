@@ -25,6 +25,7 @@ import pandas as pd
 
 from config.dynamic_config import dynamic_config
 from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
+from core.di_decorators import injectable, inject
 from core.protocols import (
     AnalyticsServiceProtocol,
     ConfigurationProtocol,
@@ -100,9 +101,11 @@ LARGE_DATA_THRESHOLD = dynamic_config.analytics.large_data_threshold
 """Row count above which data is considered large."""
 
 
+@injectable
 class AnalyticsService(AnalyticsServiceProtocol):
     """Analytics service implementing ``AnalyticsServiceProtocol``."""
 
+    @inject
     def __init__(
         self,
         database: DatabaseProtocol | None = None,
@@ -118,7 +121,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
         publisher: Publisher | None = None,
         report_generator: SummaryReportGenerator | None = None,
         db_retriever: DatabaseAnalyticsRetriever | None = None,
-    ):
+        upload_controller: UploadProcessingController | None = None,
+        upload_processor: UploadAnalyticsProcessor | None = None,
+    ) -> None:
         self.database = database
         self.data_processor = data_processor or Processor(
             validator=SecurityValidator()
@@ -140,16 +145,23 @@ class AnalyticsService(AnalyticsServiceProtocol):
         from services.data_processing.unified_file_validator import UnifiedFileValidator
         self.file_handler = UnifiedFileValidator()
 
-        upload_processor = UploadAnalyticsProcessor(self.validation_service, self.processor)
-        self.upload_controller = UploadProcessingController(
-            self.validation_service,
-            self.processor,
-            self.upload_data_service,
-            upload_processor,
-        )
-        self.upload_processor = self.upload_controller.upload_processor
+        if upload_processor is None:
+            upload_processor = UploadAnalyticsProcessor(self.validation_service, self.processor)
+        if upload_controller is None:
+            self.upload_controller = UploadProcessingController(
+                self.validation_service,
+                self.processor,
+                self.upload_data_service,
+                upload_processor,
+            )
+        else:
+            self.upload_controller = upload_controller
+        self.upload_processor = upload_processor
         self.report_generator = report_generator or SummaryReportGenerator()
         self._setup_database(db_retriever)
+        loader = loader or DataLoader(self.upload_controller, self.processor)
+        calculator = calculator or Calculator(self.report_generator)
+        publisher = publisher or Publisher(self.event_bus)
         self._create_orchestrator(loader, calculator, publisher)
 
 
@@ -168,16 +180,14 @@ class AnalyticsService(AnalyticsServiceProtocol):
 
     def _create_orchestrator(
         self,
-        loader: DataLoader | None,
-        calculator: Calculator | None,
-        publisher: Publisher | None,
+        loader: DataLoader,
+        calculator: Calculator,
+        publisher: Publisher,
     ) -> None:
         """Set up loader, calculator, publisher and orchestrator."""
-        self.data_loader = loader or DataLoader(
-            self.upload_controller, self.processor
-        )
-        self.calculator = calculator or Calculator(self.report_generator)
-        self.publisher = publisher or Publisher(self.event_bus)
+        self.data_loader = loader
+        self.calculator = calculator
+        self.publisher = publisher
         self.orchestrator = AnalyticsOrchestrator(
             self.data_loader,
             self.validation_service,

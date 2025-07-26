@@ -2,7 +2,6 @@ from __future__ import annotations
 
 """Lightweight decorators for dependency injection."""
 
-from functools import wraps
 from typing import Any, Callable, TypeVar
 
 T = TypeVar("T")
