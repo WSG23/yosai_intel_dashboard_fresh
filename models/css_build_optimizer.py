@@ -154,11 +154,12 @@ class CSSQualityAnalyzer:
 
         # Determine status
         match size_kb:
-            case size if size <= dynamic_config.css.bundle_excellent_kb:
+            case _ if size_kb <= dynamic_config.css.bundle_excellent_kb:
                 status = "excellent"
-            case size if size <= dynamic_config.css.bundle_good_kb:
+            case _ if size_kb <= dynamic_config.css.bundle_good_kb:
                 status = "good"
-            case size if size <= dynamic_config.css.bundle_warning_kb:
+            case _ if size_kb <= dynamic_config.css.bundle_warning_kb:
+
                 status = "warning"
             case _:
                 status = "critical"
@@ -212,11 +213,12 @@ class CSSQualityAnalyzer:
             token_usage_percent = 100
 
         match token_usage_percent:
-            case pct if pct >= 95:
+            case _ if token_usage_percent >= 95:
                 status = "excellent"
-            case pct if pct >= 85:
+            case _ if token_usage_percent >= 85:
                 status = "good"
-            case pct if pct >= 70:
+            case _ if token_usage_percent >= 70:
+
                 status = "warning"
             case _:
                 status = "critical"
@@ -285,11 +287,12 @@ class CSSQualityAnalyzer:
             high_specificity_percent = 0
 
         match high_specificity_percent:
-            case pct if pct <= 5:
+            case _ if high_specificity_percent <= 5:
                 status = "excellent"
-            case pct if pct <= 10:
+            case _ if high_specificity_percent <= 10:
                 status = "good"
-            case pct if pct <= 20:
+            case _ if high_specificity_percent <= 20:
+
                 status = "warning"
             case _:
                 status = "critical"
@@ -335,11 +338,12 @@ class CSSQualityAnalyzer:
         accessibility_score = max(0, accessibility_score)
 
         match accessibility_score:
-            case score if score >= 95:
+            case _ if accessibility_score >= 95:
                 status = "excellent"
-            case score if score >= 85:
+            case _ if accessibility_score >= 85:
                 status = "good"
-            case score if score >= 70:
+            case _ if accessibility_score >= 70:
+
                 status = "warning"
             case _:
                 status = "critical"

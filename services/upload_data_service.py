@@ -1,8 +1,8 @@
 import logging
 from typing import Any, Dict, List
-try:  # Python 3.12+
+try:
     from typing import override
-except ImportError:  # pragma: no cover - <3.12 fallback
+except ImportError:  # pragma: no cover - for Python <3.12
 
     from typing_extensions import override
 
