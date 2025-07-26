@@ -6,7 +6,7 @@ from config.service_registration import register_upload_services
 
 # Shared container ensures services are available across blueprints
 from core.container import container
-from unicode_toolkit import clean_unicode_surrogates
+from core.unicode import clean_unicode_surrogates
 
 if not container.has("upload_processor"):
     register_upload_services(container)

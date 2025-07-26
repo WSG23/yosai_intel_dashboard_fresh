@@ -91,7 +91,7 @@ except ImportError:
             return get_upload_chunk_size()
 
 
-from unicode_toolkit import clean_unicode_surrogates
+from core.unicode import clean_unicode_surrogates
 
 
 class AdvancedUnicodeHandler:

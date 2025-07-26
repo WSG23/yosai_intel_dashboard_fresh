@@ -4,7 +4,8 @@ This module exposes the main interfaces for the upload domain.
 Other packages should import from here rather than submodules.
 """
 
-from unicode_toolkit import decode_upload_content, safe_encode_text
+from core.unicode import safe_encode_text
+from unicode_toolkit import decode_upload_content
 from utils.upload_store import UploadedDataStore as UploadStorage
 
 from .ai import AISuggestionService, analyze_device_name_with_ai

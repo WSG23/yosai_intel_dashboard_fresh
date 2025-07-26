@@ -5,26 +5,26 @@ from __future__ import annotations
 from base64 import b64decode
 from typing import Any, Iterable, Optional, Tuple
 
-from .core import UnicodeProcessor
-from .pandas_integration import sanitize_dataframe
-from .sql_safe import encode_query
-
-_processor = UnicodeProcessor()
-
+from core.unicode import (
+    UnicodeSQLProcessor,
+    sanitize_dataframe,
+    clean_unicode_surrogates as _clean_unicode_surrogates,
+    safe_encode_text as _safe_encode_text,
+)
 
 def clean_unicode_text(text: Any) -> str:
     """Normalize and strip dangerous characters from ``text``."""
-    return _processor.process(text)
+    return _safe_encode_text(text)
 
 
 def clean_unicode_surrogates(text: Any) -> str:
     """Return ``text`` with UTF-16 surrogate code points removed."""
-    return _processor.clean_surrogate_chars(text)
+    return _clean_unicode_surrogates(str(text))
 
 
 def safe_encode_text(value: Any) -> str:
     """Public wrapper mirroring legacy ``safe_encode_text``."""
-    return _processor.process(value)
+    return _safe_encode_text(value)
 
 
 class UnicodeQueryHandler:
@@ -32,7 +32,7 @@ class UnicodeQueryHandler:
 
     @staticmethod
     def safe_encode_query(query: Any) -> str:
-        return encode_query(query, _processor)
+        return UnicodeSQLProcessor.encode_query(query)
 
     @staticmethod
     def safe_encode_params(params: Optional[Iterable[Any]]) -> Optional[Iterable[Any]]:
@@ -41,7 +41,7 @@ class UnicodeQueryHandler:
         encoded = []
         for item in params:
             if isinstance(item, str):
-                encoded.append(encode_query(item, _processor))
+                encoded.append(UnicodeSQLProcessor.encode_query(item))
             else:
                 encoded.append(item)
         return type(params)(encoded)

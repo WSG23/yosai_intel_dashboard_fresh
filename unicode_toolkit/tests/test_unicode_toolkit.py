@@ -1,14 +1,11 @@
 import pandas as pd
 
-from unicode_toolkit import UnicodeProcessor
-from unicode_toolkit.pandas_integration import sanitize_dataframe
-from unicode_toolkit.sql_safe import encode_query
+from core.unicode import UnicodeProcessor, sanitize_dataframe, UnicodeSQLProcessor
 
 
 def test_processor_basic():
-    proc = UnicodeProcessor()
-    assert proc.process("A\ud800B") == "AB"
-    assert proc.clean_surrogate_chars("X\ud800Y") == "XY"
+    assert UnicodeProcessor.clean_text("A\ud800B") == "AB"
+    assert UnicodeProcessor.clean_surrogate_chars("X\ud800Y") == "XY"
 
 
 def test_dataframe_helper():
@@ -19,4 +16,4 @@ def test_dataframe_helper():
 
 
 def test_sql_encoding():
-    assert encode_query("SELECT 'a'\ud800") == "SELECT 'a'"
+    assert UnicodeSQLProcessor.encode_query("SELECT 'a'\ud800") == "SELECT 'a'"

@@ -1,50 +1,32 @@
+"""Compatibility wrappers delegating to :mod:`core.unicode`."""
+
 from __future__ import annotations
 
-"""Core Unicode processing utilities with pluggable strategies."""
+from typing import Any, Iterable, Optional
 
-from typing import Any, Iterable, List, Optional
+import pandas as pd  # type: ignore[import]
 
-from .strategies import (
-    ControlCharacterStrategy,
-    SurrogateRemovalStrategy,
-    WhitespaceNormalizationStrategy,
-)
+from core.unicode import UnicodeProcessor as _UnicodeProcessor
+from core.unicode import UnicodeSQLProcessor, sanitize_dataframe
 
 
 class UnicodeProcessor:
-    """Process text using a pipeline of strategies."""
+    """Shim class preserving the previous interface."""
 
-    def __init__(self, strategies: Optional[Iterable] = None) -> None:
-        if strategies is None:
-            strategies = [
-                SurrogateRemovalStrategy(),
-                ControlCharacterStrategy(),
-                WhitespaceNormalizationStrategy(),
-            ]
-        self.strategies: List = list(strategies)
+    def __init__(self, strategies: Optional[Iterable] = None) -> None:  # pragma: no cover - compatibility
+        pass
 
     def process(self, text: Any) -> str:
-        if text is None:
-            return ""
-        if not isinstance(text, str):
-            text = str(text)
-        for strat in self.strategies:
-            text = strat.apply(text)
-        return text
+        return _UnicodeProcessor.safe_encode_text(text)
 
-    # Convenience wrappers -------------------------------------------------
     def clean_surrogate_chars(self, text: Any) -> str:
-        return SurrogateRemovalStrategy().apply(str(text))
+        return _UnicodeProcessor.clean_surrogate_chars(str(text))
 
-    def sanitize_dataframe(self, df: 'pd.DataFrame') -> 'pd.DataFrame':
-        from .pandas_integration import sanitize_dataframe
-
-        return sanitize_dataframe(df, self)
+    def sanitize_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        return sanitize_dataframe(df)
 
     def encode_sql_query(self, query: Any) -> str:
-        from .sql_safe import encode_query
-
-        return encode_query(query, self)
+        return UnicodeSQLProcessor.encode_query(query)
 
 
 __all__ = ["UnicodeProcessor"]
