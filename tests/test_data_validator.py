@@ -1,16 +1,28 @@
 import pandas as pd
-from analytics.security_score_calculator import SecurityScoreCalculator
-from services.data_processing.unified_upload_validator import validate_dataframe_content
+
+from validation.data_validator import DataValidator
 
 
-def test_data_validator_missing_required_columns():
-    df = pd.DataFrame({"timestamp": ["2024-01-01"]})
-    valid, message = SecurityScoreCalculator().validate_dataframe(df)
-    assert not valid
-    assert "Missing required columns" in message
+def test_data_validator_missing_cols():
+    df = pd.DataFrame({"a": [1]})
+    validator = DataValidator(required_columns=["a", "b"])
+    result = validator.validate_dataframe(df)
+    assert not result.valid
+    assert "missing_columns" in result.issues[0]
 
 
-def test_dataframe_validation_flags_dangerous_column():
-    df = pd.DataFrame({"=cmd": ["1"]})
-    result = validate_dataframe_content(df)
-    assert "suspicious_column_names" in result["issues"]
+def test_data_validator_empty_df():
+    df = pd.DataFrame()
+    validator = DataValidator()
+    result = validator.validate_dataframe(df)
+    assert not result.valid
+    assert "empty_dataframe" in result.issues
+
+
+def test_data_validator_suspicious_columns():
+    df = pd.DataFrame({"=cmd": [1], "b": [2]})
+    validator = DataValidator()
+    result = validator.validate_dataframe(df)
+    assert not result.valid
+    assert any("suspicious_column_names" in issue for issue in result.issues)
+

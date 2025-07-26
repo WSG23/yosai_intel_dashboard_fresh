@@ -6,6 +6,8 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from validation.data_validator import DataValidator, DataValidatorProtocol
+
 import numpy as np
 import pandas as pd
 from validation.unicode_validator import UnicodeValidator
@@ -40,9 +42,16 @@ def sanitize_unicode_data(data: Any) -> Any:
 
 class StatisticalAnomalyDetector:
     """Modular statistical anomaly detector with Unicode safety."""
-    
-    def __init__(self, logger: Optional[logging.Logger] = None):
+
+    def __init__(
+        self,
+        logger: Optional[logging.Logger] = None,
+        validator: DataValidatorProtocol | None = None,
+    ) -> None:
         self.logger = logger or logging.getLogger(__name__)
+        self.validator = validator or DataValidator(
+            required_columns=["timestamp", "person_id"]
+        )
     
     def _safe_zscore_calculation(self, data: np.ndarray) -> np.ndarray:
         """Calculate Z-scores with error handling."""
@@ -64,25 +73,13 @@ class StatisticalAnomalyDetector:
             self.logger.warning(f"Z-score calculation failed: {e}")
             return np.zeros_like(data)
     
-    def _validate_dataframe(self, df: pd.DataFrame) -> bool:
-        """Validate DataFrame for anomaly detection."""
-        required_columns = ['timestamp', 'person_id']
-        
-        if df.empty:
-            self.logger.warning("Empty DataFrame provided")
-            return False
-        
-        missing_cols = [col for col in required_columns if col not in df.columns]
-        if missing_cols:
-            self.logger.warning(f"Missing required columns: {missing_cols}")
-            return False
-        
-        return True
-    
     def detect_frequency_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
         """Detect frequency-based anomalies with Unicode safety."""
-        if not self._validate_dataframe(df):
+        result = self.validator.validate_dataframe(df)
+        if not result.valid:
+            self.logger.warning("; ".join(result.issues or []))
             return []
+        df = result.sanitized if result.sanitized is not None else df
         
         anomalies: List[Dict[str, Any]] = []
         
@@ -141,8 +138,11 @@ class StatisticalAnomalyDetector:
     
     def detect_statistical_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
         """Detect statistical anomalies using Z-score and IQR methods with Unicode safety."""
-        if not self._validate_dataframe(df):
+        result = self.validator.validate_dataframe(df)
+        if not result.valid:
+            self.logger.warning("; ".join(result.issues or []))
             return []
+        df = result.sanitized if result.sanitized is not None else df
         
         anomalies: List[Dict[str, Any]] = []
         
