@@ -5,7 +5,7 @@ Core entity models for the Yōsai Intel system
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from utils.result_types import Result, failure, success
 
@@ -18,15 +18,15 @@ class Person:
     """Immutable Person entity with validation"""
 
     person_id: str
-    name: Optional[str] = None
-    employee_id: Optional[str] = None
-    department: Optional[str] = None
+    name: str | None = None
+    employee_id: str | None = None
+    department: str | None = None
     clearance_level: int = 1
     access_groups: Tuple[str, ...] = field(default_factory=tuple)
     is_visitor: bool = False
-    host_person_id: Optional[str] = None
+    host_person_id: str | None = None
     created_at: datetime = field(default_factory=datetime.now)
-    last_active: Optional[datetime] = None
+    last_active: datetime | None = None
     risk_score: float = 0.0
 
     def __post_init__(self) -> None:
@@ -85,12 +85,12 @@ class Door:
     door_name: str
     facility_id: str
     area_id: str
-    floor: Optional[str] = None
+    floor: str | None = None
     door_type: DoorType = DoorType.STANDARD
     required_clearance: int = 1
     is_critical: bool = False
-    location_coordinates: Optional[Tuple[float, float]] = None
-    device_id: Optional[str] = None
+    location_coordinates: Tuple[float, float] | None = None
+    device_id: str | None = None
     is_active: bool = True
     created_at: datetime = field(default_factory=datetime.now)
 
@@ -118,8 +118,8 @@ class Facility:
 
     facility_id: str
     facility_name: str
-    campus_id: Optional[str] = None
-    address: Optional[str] = None
+    campus_id: str | None = None
+    address: str | None = None
     timezone: str = "UTC"
     operating_hours: Dict[str, Any] = field(default_factory=dict)
     security_level: int = 1

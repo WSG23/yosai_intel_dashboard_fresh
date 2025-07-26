@@ -5,7 +5,7 @@ Event and transaction models for the Yōsai Intel system
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from .enums import AccessResult, AnomalyType, BadgeStatus, SeverityLevel, TicketStatus
 
@@ -18,7 +18,7 @@ class AccessEvent:
     timestamp: datetime
     person_id: str
     door_id: str
-    badge_id: Optional[str] = None
+    badge_id: str | None = None
     access_result: AccessResult = AccessResult.DENIED
     badge_status: BadgeStatus = BadgeStatus.INVALID
     door_held_open_time: float = 0.0
@@ -54,11 +54,11 @@ class AnomalyDetection:
     confidence_score: float
     description: str
     detected_at: datetime
-    ai_model_version: Optional[str] = None
+    ai_model_version: str | None = None
     additional_context: Dict[str, Any] = field(default_factory=dict)
-    is_verified: Optional[bool] = None
-    verified_by: Optional[str] = None
-    verified_at: Optional[datetime] = None
+    is_verified: bool | None = None
+    verified_by: str | None = None
+    verified_at: datetime | None = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
@@ -84,18 +84,18 @@ class IncidentTicket:
 
     ticket_id: str
     event_id: str
-    anomaly_id: Optional[str] = None
+    anomaly_id: str | None = None
     status: TicketStatus = TicketStatus.NEW
     threat_score: int = 0  # 0-100
     facility_location: str = ""
     area: str = ""
-    device_id: Optional[str] = None
-    access_group: Optional[str] = None
+    device_id: str | None = None
+    access_group: str | None = None
     created_at: datetime = field(default_factory=datetime.now)
-    assigned_to: Optional[str] = None
-    resolved_at: Optional[datetime] = None
-    resolution_type: Optional[str] = None
-    resolution_notes: Optional[str] = None
+    assigned_to: str | None = None
+    resolved_at: datetime | None = None
+    resolution_type: str | None = None
+    resolution_notes: str | None = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""

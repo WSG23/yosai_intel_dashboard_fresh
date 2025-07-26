@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from validation.unicode_validator import UnicodeValidator
 
 from monitoring.model_performance_monitor import (
     ModelMetrics,
@@ -17,6 +18,8 @@ KMeans = optional_import("sklearn.cluster.KMeans")
 DataConversionWarning = optional_import("sklearn.exceptions.DataConversionWarning")
 silhouette_score = optional_import("sklearn.metrics.silhouette_score")
 StandardScaler = optional_import("sklearn.preprocessing.StandardScaler")
+
+_validator = UnicodeValidator()
 
 if KMeans is None:  # pragma: no cover - fallback definitions
 
@@ -158,15 +161,8 @@ class UserBehaviorAnalyzer:
         df_clean = df.copy(deep=False)
 
         # Handle Unicode issues
-        from security.unicode_security_handler import UnicodeSecurityHandler
+        df_clean = _validator.validate_dataframe(df_clean)
 
-        string_columns = df_clean.select_dtypes(include=["object"]).columns
-        for col in string_columns:
-            df_clean[col] = (
-                df_clean[col]
-                .astype(str)
-                .apply(UnicodeSecurityHandler.sanitize_unicode_input)
-            )
 
         # Ensure required columns
         required_cols = ["timestamp", "person_id", "door_id", "access_result"]

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 """Analytics Service - Enhanced with Unique Patterns Analysis.
 
 Uploaded files are validated with
@@ -16,6 +18,7 @@ try:  # Python 3.12+
 except ImportError:  # pragma: no cover - <3.12 fallback
     from typing_extensions import override
 
+
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
@@ -27,7 +30,7 @@ from core.protocols import (
     EventBusProtocol,
     StorageProtocol,
 )
-from validation.security_validator import SecurityValidator
+from models.ml import ModelRegistry
 from services.analytics.calculator import Calculator
 from services.analytics.data_loader import DataLoader
 from services.analytics.protocols import DataProcessorProtocol
@@ -40,7 +43,7 @@ from services.helpers.database_initializer import initialize_database
 from services.interfaces import get_upload_data_service
 from services.summary_report_generator import SummaryReportGenerator
 from services.upload_data_service import UploadDataService
-from models.ml import ModelRegistry
+from validation.security_validator import SecurityValidator
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 
@@ -77,7 +80,7 @@ def ensure_analytics_config():
 
             dynamic_config.analytics = AnalyticsConstants()
     except (ImportError, AttributeError) as exc:
-        logger.error("Failed to ensure analytics configuration: %s", exc)
+        logger.error(f"Failed to ensure analytics configuration: {exc}")
 
 
 logger = logging.getLogger(__name__)
@@ -142,7 +145,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self.calculator = Calculator(self.report_generator)
         self.publisher = Publisher(self.event_bus)
 
-    def _initialize_database(self):
+    def _initialize_database(self) -> None:
         """Initialize database connection via helper."""
         (
             self.database_manager,
@@ -166,7 +169,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
                 return self._process_uploaded_data_directly(uploaded_data)
 
         except (ImportError, FileNotFoundError, OSError, RuntimeError) as e:
-            logger.error("Uploaded data check failed: %s", e, exc_info=True)
+            logger.error(f"Uploaded data check failed: {e}", exc_info=True)
         except Exception:
             logger.exception("Unexpected error during uploaded data check")
             raise
@@ -222,6 +225,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         """Get analytics from database."""
         return self.database_retriever.get_analytics()
 
+    @override
     @cache_with_lock(_cache_manager, ttl=300)
     @override
     def get_dashboard_summary(self) -> Dict[str, Any]:
@@ -275,7 +279,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
         return self.calculator.analyze_patterns(df, original_rows)
 
     @cache_with_lock(_cache_manager, ttl=600)
-    def get_unique_patterns_analysis(self, data_source: str | None = None):
+    def get_unique_patterns_analysis(
+        self, data_source: str | None = None
+    ) -> Dict[str, Any]:
         """Get unique patterns analysis for the requested source."""
         logger = logging.getLogger(__name__)
 
@@ -340,6 +346,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         """Alias for :meth:`process_data` required by ``AnalyticsProviderProtocol``."""
         return self.process_data(df)
 
+    @override
     def process_data(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Process ``df`` and return a metrics dictionary."""
         cleaned = self.clean_uploaded_dataframe(df)
@@ -359,9 +366,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
     ) -> Dict[str, Any]:
         """Analyze access patterns over the given timeframe."""
         logger.debug(
-            "analyze_access_patterns called with days=%s user_id=%s",
-            days,
-            user_id,
+            f"analyze_access_patterns called with days={days} user_id={user_id}"
         )
         return {"patterns": [], "days": days, "user_id": user_id}
 
@@ -370,7 +375,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self, data: pd.DataFrame, sensitivity: float = 0.5
     ) -> List[Dict[str, Any]]:
         """Detect anomalies in the provided data."""
-        logger.debug("detect_anomalies called with sensitivity=%s", sensitivity)
+        logger.debug(f"detect_anomalies called with sensitivity={sensitivity}")
         return []
 
     @override
@@ -379,16 +384,14 @@ class AnalyticsService(AnalyticsServiceProtocol):
     ) -> Dict[str, Any]:
         """Generate an analytics report."""
         logger.debug(
-            "generate_report called with report_type=%s params=%s",
-            report_type,
-            params,
+            f"generate_report called with report_type={report_type} params={params}"
         )
         return {"report_type": report_type, "params": params}
 
     # ------------------------------------------------------------------
     def load_model_from_registry(
-        self, name: str, *, destination_dir: Optional[str] = None
-    ) -> Optional[str]:
+        self, name: str, *, destination_dir: str | None = None
+    ) -> str | None:
         """Download the active model from the registry."""
         if self.model_registry is None:
             return None
@@ -403,17 +406,17 @@ class AnalyticsService(AnalyticsServiceProtocol):
             self.model_registry.download_artifact(record.storage_uri, str(local_path))
             return str(local_path)
         except Exception:  # pragma: no cover - best effort
-            logger.exception("Failed to download model %s", name)
+            logger.exception(f"Failed to download model {name}")
             return None
 
 
 # Global service instance
-_analytics_service: Optional[AnalyticsService] = None
+_analytics_service: AnalyticsService | None = None
 _analytics_service_lock = threading.Lock()
 
 
 def get_analytics_service(
-    service: Optional[AnalyticsService] = None,
+    service: AnalyticsService | None = None,
     config_provider: ConfigProviderProtocol | None = None,
     model_registry: ModelRegistry | None = None,
 ) -> AnalyticsService:

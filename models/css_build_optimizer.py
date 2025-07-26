@@ -11,7 +11,7 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from config.dynamic_config import dynamic_config
 
@@ -153,14 +153,15 @@ class CSSQualityAnalyzer:
         size_kb = total_size / 1024
 
         # Determine status
-        if size_kb <= dynamic_config.css.bundle_excellent_kb:
-            status = "excellent"
-        elif size_kb <= dynamic_config.css.bundle_good_kb:
-            status = "good"
-        elif size_kb <= dynamic_config.css.bundle_warning_kb:
-            status = "warning"
-        else:
-            status = "critical"
+        match size_kb:
+            case size if size <= dynamic_config.css.bundle_excellent_kb:
+                status = "excellent"
+            case size if size <= dynamic_config.css.bundle_good_kb:
+                status = "good"
+            case size if size <= dynamic_config.css.bundle_warning_kb:
+                status = "warning"
+            case _:
+                status = "critical"
 
         return CSSMetric(
             "bundle_size",
@@ -210,14 +211,15 @@ class CSSQualityAnalyzer:
         else:
             token_usage_percent = 100
 
-        if token_usage_percent >= 95:
-            status = "excellent"
-        elif token_usage_percent >= 85:
-            status = "good"
-        elif token_usage_percent >= 70:
-            status = "warning"
-        else:
-            status = "critical"
+        match token_usage_percent:
+            case pct if pct >= 95:
+                status = "excellent"
+            case pct if pct >= 85:
+                status = "good"
+            case pct if pct >= 70:
+                status = "warning"
+            case _:
+                status = "critical"
 
         return CSSMetric(
             "design_token_usage",
@@ -282,14 +284,15 @@ class CSSQualityAnalyzer:
         else:
             high_specificity_percent = 0
 
-        if high_specificity_percent <= 5:
-            status = "excellent"
-        elif high_specificity_percent <= 10:
-            status = "good"
-        elif high_specificity_percent <= 20:
-            status = "warning"
-        else:
-            status = "critical"
+        match high_specificity_percent:
+            case pct if pct <= 5:
+                status = "excellent"
+            case pct if pct <= 10:
+                status = "good"
+            case pct if pct <= 20:
+                status = "warning"
+            case _:
+                status = "critical"
 
         return CSSMetric(
             "selector_specificity",
@@ -331,14 +334,15 @@ class CSSQualityAnalyzer:
 
         accessibility_score = max(0, accessibility_score)
 
-        if accessibility_score >= 95:
-            status = "excellent"
-        elif accessibility_score >= 85:
-            status = "good"
-        elif accessibility_score >= 70:
-            status = "warning"
-        else:
-            status = "critical"
+        match accessibility_score:
+            case score if score >= 95:
+                status = "excellent"
+            case score if score >= 85:
+                status = "good"
+            case score if score >= 70:
+                status = "warning"
+            case _:
+                status = "critical"
 
         return CSSMetric(
             "accessibility_compliance",
@@ -473,7 +477,7 @@ class CSSOptimizer:
 
 
 def generate_css_report(
-    css_dir: Path, output_file: Optional[Path] = None
+    css_dir: Path, output_file: Path | None = None
 ) -> Dict[str, Any]:
     """Generate comprehensive CSS quality report"""
 

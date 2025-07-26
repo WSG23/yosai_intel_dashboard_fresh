@@ -31,6 +31,7 @@ from typing import Any, Dict, List, Protocol, runtime_checkable
 try:  # Python 3.12+
     from typing import override
 except ImportError:  # pragma: no cover - <3.12 fallback
+
     from typing_extensions import override
 
 import pandas as pd
