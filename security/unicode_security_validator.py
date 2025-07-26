@@ -375,29 +375,6 @@ class UnicodeSecurityValidator:
         return report
 
 
-class UnicodeMemoryManager:
-    """Memory-safe Unicode processing for large datasets"""
-
-    @staticmethod
-    def process_large_text(
-        text: str,
-        validator: UnicodeSecurityValidator,
-        chunk_size: int = 100000,
-    ) -> str:
-        if len(text) <= chunk_size:
-            return validator.validate_and_sanitize(text)
-
-        sanitized_chunks = []
-        for i in range(0, len(text), chunk_size):
-            chunk = text[i : i + chunk_size]
-            sanitized_chunks.append(validator.validate_and_sanitize(chunk))
-        return "".join(sanitized_chunks)
-
-    @staticmethod
-    def estimate_memory_usage(text: str) -> float:
-        return len(text) * 4 / (1024 * 1024)
-
-
 def create_unicode_validator(
     strict_mode: bool = True, remove_surrogates: bool = True
 ) -> UnicodeSecurityValidator:
@@ -431,7 +408,6 @@ __all__ = [
     "UnicodeSecurityConfig",
     "SecurityThreatLevel",
     "SecurityError",
-    "UnicodeMemoryManager",
     "create_unicode_validator",
     "sanitize_for_utf8",
     "detect_surrogate_pairs",
