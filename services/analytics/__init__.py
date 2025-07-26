@@ -1,6 +1,6 @@
 """Analytics Domain Public API."""
 
-from .async_service import AsyncAnalyticsService
+from .async_service import AsyncAnalyticsService, PGAnalyticsRepository
 from .calculator import Calculator, create_calculator
 from .data_loader import DataLoader, create_loader
 from .metrics_calculator import MetricsCalculator
@@ -47,5 +47,6 @@ __all__ = [
     "fetch_time_buckets",
     "fetch_sliding_window",
     "AsyncAnalyticsService",
+    "PGAnalyticsRepository",
     "AnalyticsOrchestrator",
 ]
