@@ -5,7 +5,9 @@ import threading
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 
-import requests
+import asyncio
+import aiohttp
+import aiofiles
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +25,15 @@ class FeatureFlagManager:
         self._last_mtime: float | None = None
         self.load_flags()
 
-    def load_flags(self) -> None:
-        """Load flags from the configured source."""
+    async def load_flags_async(self) -> None:
+        """Asynchronously load flags from the configured source."""
         data: Dict[str, Any] = {}
         if self.source.startswith("http://") or self.source.startswith("https://"):
             try:
-                resp = requests.get(self.source, timeout=2)
-                resp.raise_for_status()
-                data = resp.json()
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(self.source, timeout=2) as resp:
+                        resp.raise_for_status()
+                        data = await resp.json()
             except Exception as exc:  # pragma: no cover - network failures
                 logger.warning("Failed to fetch flags from %s: %s", self.source, exc)
                 return
@@ -43,8 +46,9 @@ class FeatureFlagManager:
                 return
             self._last_mtime = mtime
             try:
-                with open(path) as fh:
-                    data = json.load(fh)
+                async with aiofiles.open(path) as fh:
+                    content = await fh.read()
+                    data = json.loads(content)
             except Exception as exc:  # pragma: no cover - bad file
                 logger.warning("Failed to read %s: %s", path, exc)
                 return
@@ -58,6 +62,10 @@ class FeatureFlagManager:
                         cb(self._flags.copy())
                     except Exception as exc:  # pragma: no cover - callback errors
                         logger.warning("Feature flag callback failed: %s", exc)
+
+    def load_flags(self) -> None:
+        """Synchronous wrapper for :meth:`load_flags_async`."""
+        asyncio.run(self.load_flags_async())
 
     def start(self) -> None:
         """Start background watcher for flag changes."""
@@ -76,8 +84,9 @@ class FeatureFlagManager:
 
     def _watch(self) -> None:
         while not self._stop.is_set():
-            self.load_flags()
-            self._stop.wait(self.poll_interval)
+            asyncio.run(self.load_flags_async())
+            if self._stop.wait(self.poll_interval):
+                break
 
     def is_enabled(self, name: str, default: bool = False) -> bool:
         """Return True if *name* flag is enabled."""
