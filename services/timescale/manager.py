@@ -7,6 +7,7 @@ import time
 
 import asyncpg
 
+from core.error_handling import ErrorCategory, with_async_error_handling
 from database.metrics import queries_total, query_errors_total
 from services.common.secrets import get_secret
 
@@ -124,10 +125,10 @@ class TimescaleDBManager:
         await conn.execute(
             "SELECT add_retention_policy('access_events',"
             f" INTERVAL '{retention_days} days', if_not_exists => TRUE)"
-
         )
 
     # ------------------------------------------------------------------
+    @with_async_error_handling(category=ErrorCategory.DATABASE, reraise=True)
     async def fetch(self, query: str, *args: object) -> list[asyncpg.Record]:
         if self.pool is None:
             await self.connect()
@@ -137,15 +138,16 @@ class TimescaleDBManager:
         try:
             async with self.pool.acquire() as conn:
                 result = await conn.fetch(query, *args)
-            elapsed_ms = (time.perf_counter() - start) * 1000
-            if elapsed_ms > 1000:
-                logger.warning("Slow query: %.2fms", elapsed_ms)
-            return result
         except Exception:
             query_errors_total.inc()
             elapsed_ms = (time.perf_counter() - start) * 1000
             logger.error("Query failed after %.2fms", elapsed_ms)
             raise
+        else:
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            if elapsed_ms > 1000:
+                logger.warning("Slow query: %.2fms", elapsed_ms)
+            return result
 
     # ------------------------------------------------------------------
     async def close(self) -> None:
@@ -154,6 +156,7 @@ class TimescaleDBManager:
             self.pool = None
 
     # ------------------------------------------------------------------
+    @with_async_error_handling(category=ErrorCategory.DATABASE)
     async def check_integrity(self) -> None:
         """Verify hypertable and continuous aggregate integrity."""
         if self.pool is None:
@@ -183,10 +186,7 @@ class TimescaleDBManager:
     # ------------------------------------------------------------------
     async def _health_monitor_loop(self, interval: int) -> None:
         while True:
-            try:
-                await self.check_integrity()
-            except Exception as exc:  # pragma: no cover - best effort
-                logger.error("Timescale health check failed: %s", exc)
+            await self.check_integrity()
             await asyncio.sleep(interval)
 
     async def start_health_monitor(self, interval: int = 300) -> None:
