@@ -20,7 +20,6 @@ from services.data_processing.unified_file_validator import (
 )
 from validation import FileValidator
 from utils.protocols import SafeDecoderProtocol
-from validation import FileValidator
 from utils.memory_utils import memory_safe
 
 from yosai_framework.service import BaseService
@@ -30,6 +29,8 @@ logger = logging.getLogger(__name__)
 
 class FileProcessorService(BaseService):
     """File processing service implementation"""
+
+    ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
 
     # Encoding detection order for robust decoding
     ENCODING_PRIORITY = [
@@ -64,15 +65,17 @@ class FileProcessorService(BaseService):
         self.config = config
         self.max_file_size_mb = config.get_max_upload_size_mb()
         self._decoder = decoder
-        self._validator = validator or FileValidator(self.max_file_size_mb)
+        self._validator = validator or FileValidator(
+            max_size_mb=self.max_file_size_mb,
+            allowed_ext=self.ALLOWED_EXTENSIONS,
+        )
 
     def _do_initialize(self) -> None:
         """Initialize file processor"""
         pass  # No special initialization needed
 
     def validate_file(self, filename: str, content: bytes) -> Dict[str, Any]:
-        """Validate ``content`` using :class:`FileValidator`."""
-
+        """Validate uploaded file using :class:`FileValidator`."""
         filename = UnicodeHelper.clean_text(filename)
         return self._validator.validate_file_upload(filename, content)
 
