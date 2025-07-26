@@ -6,6 +6,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from utils.io_helpers import read_json, write_json
+from utils.unicode_handler import UnicodeHandler
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,10 +38,10 @@ class CSVStorageRepository:
         try:
             file_path = self._get_session_file_path(session_id)
             if file_path.exists():
-                with open(file_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    self.sessions[session_id] = data
-                    return data
+                data = read_json(file_path)
+                self.sessions[session_id] = data
+                logger.info("Sanitized read from %s", file_path)
+                return data
         except Exception as e:
             logger.error(f"Failed to load session {session_id}: {e}")
         return None
@@ -54,8 +57,8 @@ class CSVStorageRepository:
                 "session_id": session_id,
             }
 
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(data_with_meta, f, indent=2, ensure_ascii=False)
+            write_json(file_path, data_with_meta)
+            logger.info("Sanitized write to %s", file_path)
 
             self.sessions[session_id] = data_with_meta
             logger.info(f"Session {session_id} saved to file")
@@ -212,8 +215,8 @@ class CSVStorageRepository:
                 "saved_at": datetime.now().isoformat(),
             }
 
-            with open(permanent_file, "w", encoding="utf-8") as f:
-                json.dump(permanent_data, f, indent=2, ensure_ascii=False)
+            write_json(permanent_file, permanent_data)
+            logger.info("Sanitized write to %s", permanent_file)
 
             logger.info(
                 f"Session {session_id} saved permanently for client {client_id}"
