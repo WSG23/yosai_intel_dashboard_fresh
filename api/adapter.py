@@ -15,7 +15,10 @@ from services.security import require_token
 
 csrf = CSRFProtect()
 
-from api.analytics_router import router as analytics_router, init_cache_manager
+from yosai_intel_dashboard.src.adapters.api.analytics_router import (
+    router as analytics_router,
+    init_cache_manager,
+)
 from settings_endpoint import settings_bp
 
 from config.constants import API_PORT

@@ -3,6 +3,7 @@ import time
 from pathlib import Path
 import json
 
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -14,6 +15,7 @@ from fastapi import (
     UploadFile,
     status,
 )
+
 from jose import jwt
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -34,7 +36,13 @@ from shared.errors.types import ErrorCode
 
 
 SERVICE_NAME = "analytics-microservice"
-service = BaseService(SERVICE_NAME, "")
+service = (
+    ServiceBuilder(SERVICE_NAME)
+    .with_logging()
+    .with_metrics("")
+    .with_health()
+    .build()
+)
 app = service.app
 
 

@@ -21,7 +21,9 @@ def _create_app(monkeypatch):
             pass
 
         async def get_analytics_summary(self, facility, date_range):
-            from api.analytics_endpoints import MOCK_DATA
+            from yosai_intel_dashboard.src.adapters.api.analytics_endpoints import (
+                MOCK_DATA
+            )
             return MOCK_DATA
 
     monkeypatch.setitem(
@@ -55,7 +57,9 @@ def _create_app(monkeypatch):
         types.SimpleNamespace(require_token=lambda f: f, require_permission=lambda p: (lambda f: f)),
     )
 
-    from api.analytics_endpoints import register_analytics_blueprints
+    from yosai_intel_dashboard.src.adapters.api.analytics_endpoints import (
+        register_analytics_blueprints
+    )
 
     app = Flask(__name__)
     app.config["SECRET_KEY"] = "test-key"

@@ -3,14 +3,18 @@ from __future__ import annotations
 
 from typing import Mapping
 
-from config.dynamic_config import dynamic_config
+
 
 from .file_validator import FileValidator
 from .security_validator import SQLRule, SecurityValidator, XSSRule
 
 
 def create_security_validator(config: Mapping[str, bool] | None = None) -> SecurityValidator:
-    cfg = config or dynamic_config.uploads.VALIDATOR_RULES
+    if config is None:
+        from config.dynamic_config import dynamic_config
+        cfg = dynamic_config.uploads.VALIDATOR_RULES
+    else:
+        cfg = config
     rules = []
     if cfg.get("xss", True):
         rules.append(XSSRule())

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from api.adapter import api_adapter
+from yosai_intel_dashboard.src.adapters.api.adapter import api_adapter
 from app import app
 from flask import abort, jsonify, request
 from marshmallow import Schema, fields
