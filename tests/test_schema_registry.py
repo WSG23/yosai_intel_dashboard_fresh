@@ -4,8 +4,7 @@ import importlib.util
 import sys
 from unittest.mock import AsyncMock, MagicMock
 
-import aiohttp
-import pytest
+
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location(
@@ -18,44 +17,17 @@ spec.loader.exec_module(schema_registry)
 SchemaRegistryClient = schema_registry.SchemaRegistryClient
 
 
-class DummyRequest:
-    def __init__(self, data: dict):
-        self.resp = MagicMock()
-        self.resp.json = AsyncMock(return_value=data)
-        self.resp.raise_for_status = lambda: None
+def test_get_schema(monkeypatch):
+    async def fake_get_async(self, path: str):
+        assert path == "/subjects/test/versions/latest"
+        return {
+            "id": 1,
+            "version": 1,
+            "schema": '{"type":"record","name":"t","fields":[]}',
+        }
 
-    async def __aenter__(self):
-        return self.resp
+    monkeypatch.setattr(SchemaRegistryClient, "_get_async", fake_get_async)
 
-    async def __aexit__(self, exc_type, exc, tb):
-        pass
-
-
-class DummySession:
-    def __init__(self, data: dict):
-        self.data = data
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc, tb):
-        pass
-
-    def get(self, url: str, timeout=None):
-        assert url == "http://sr/subjects/test/versions/latest"
-        return DummyRequest(self.data)
-
-    def post(self, url: str, json=None, headers=None, timeout=None):
-        return DummyRequest(self.data)
-
-
-def test_get_schema(monkeypatch, async_runner):
-    data = {
-        "id": 1,
-        "version": 1,
-        "schema": '{"type":"record","name":"t","fields":[]}',
-    }
-    monkeypatch.setattr(aiohttp, "ClientSession", lambda: DummySession(data))
     client = SchemaRegistryClient("http://sr")
     info = async_runner(client.get_schema("test"))
     assert info.id == 1
@@ -66,17 +38,16 @@ def test_get_schema(monkeypatch, async_runner):
 def test_get_schema_cached(monkeypatch, async_runner):
     calls = []
 
-    class CountSession(DummySession):
-        def get(self, url: str, timeout=None):
-            calls.append(url)
-            return super().get(url, timeout)
+    async def fake_get_async(self, path: str):
+        calls.append(path)
+        return {
+            "id": 1,
+            "version": 1,
+            "schema": '{"type":"record","name":"t","fields":[]}',
+        }
 
-    data = {
-        "id": 1,
-        "version": 1,
-        "schema": '{"type":"record","name":"t","fields":[]}',
-    }
-    monkeypatch.setattr(aiohttp, "ClientSession", lambda: CountSession(data))
+    monkeypatch.setattr(SchemaRegistryClient, "_get_async", fake_get_async)
+
     client = SchemaRegistryClient("http://sr")
     first = async_runner(client.get_schema("test"))
     second = async_runner(client.get_schema("test"))
@@ -84,30 +55,26 @@ def test_get_schema_cached(monkeypatch, async_runner):
     assert len(calls) == 1
 
 
-def test_check_compatibility(monkeypatch, async_runner):
-    data = {"is_compatible": True}
+def test_check_compatibility(monkeypatch):
+    async def fake_post_async(self, path: str, payload: dict):
+        assert path == "/compatibility/subjects/test/versions/latest"
+        return {"is_compatible": True}
 
-    class CompatSession(DummySession):
-        def post(self, url: str, json=None, headers=None, timeout=None):
-            assert url == "http://sr/compatibility/subjects/test/versions/latest"
-            return DummyRequest(data)
+    monkeypatch.setattr(SchemaRegistryClient, "_post_async", fake_post_async)
 
-    monkeypatch.setattr(aiohttp, "ClientSession", lambda: CompatSession(data))
     client = SchemaRegistryClient("http://sr")
     assert async_runner(
         client.check_compatibility("test", {"type": "record", "name": "t", "fields": []})
     )
 
 
-def test_register_schema(monkeypatch, async_runner):
-    data = {"version": 2}
+def test_register_schema(monkeypatch):
+    async def fake_post_async(self, path: str, payload: dict):
+        assert path == "/subjects/test-value/versions"
+        return {"version": 2}
 
-    class RegSession(DummySession):
-        def post(self, url: str, json=None, headers=None, timeout=None):
-            assert url == "http://sr/subjects/test-value/versions"
-            return DummyRequest(data)
+    monkeypatch.setattr(SchemaRegistryClient, "_post_async", fake_post_async)
 
-    monkeypatch.setattr(aiohttp, "ClientSession", lambda: RegSession(data))
     client = SchemaRegistryClient("http://sr")
     version = async_runner(
         client.register_schema("test-value", {"type": "record", "name": "t", "fields": []})
