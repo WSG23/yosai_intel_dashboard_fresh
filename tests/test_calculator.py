@@ -36,7 +36,7 @@ sys.modules["opentelemetry.sdk.trace.export"].BatchSpanProcessor = object
 sys.modules.setdefault("structlog", types.ModuleType("structlog"))
 sys.modules["structlog"].BoundLogger = object
 
-from services.analytics.calculator import Calculator  # noqa: E402
+from services.analytics.processing.calculator import Calculator  # noqa: E402
 
 
 def _make_df():

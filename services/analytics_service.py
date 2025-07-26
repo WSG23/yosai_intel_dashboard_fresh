@@ -32,14 +32,19 @@ from core.protocols import (
     StorageProtocol,
 )
 from models.ml import ModelRegistry
-from services.analytics.calculator import Calculator
-from services.analytics.data_loader import DataLoader
+from services.analytics.processing.calculator import Calculator
+from services.analytics.data.loader import DataLoader
+from services.analytics.data.validator import Validator
+from services.analytics.data.transformer import DataTransformer
+from services.analytics.processing.aggregator import Aggregator
+from services.analytics.processing.analyzer import Analyzer
+from services.analytics.storage.repository import AnalyticsRepository
+from services.analytics.events.publisher import Publisher
+from services.analytics.orchestrator import AnalyticsOrchestrator
 from services.analytics.protocols import DataProcessorProtocol
-from services.analytics.publisher import Publisher
 from services.analytics_summary import generate_sample_analytics
 from services.controllers.upload_controller import UploadProcessingController
 from services.data_processing.processor import Processor
-from services.database_retriever import DatabaseAnalyticsRetriever
 from services.helpers.database_initializer import initialize_database
 from services.interfaces import get_upload_data_service
 from services.summary_report_generator import SummaryReportGenerator
@@ -140,11 +145,25 @@ class AnalyticsService(AnalyticsServiceProtocol):
             self.db_helper,
             self.summary_reporter,
         ) = initialize_database(self.database)
-        self.database_retriever = DatabaseAnalyticsRetriever(self.db_helper)
         self.report_generator = SummaryReportGenerator()
         self.data_loader = DataLoader(self.upload_controller, self.processor)
+        self.validator = Validator(self.validation_service)
+        self.transformer = DataTransformer()
         self.calculator = Calculator(self.report_generator)
+        self.aggregator = Aggregator()
+        self.analyzer = Analyzer(self.calculator)
+        self.repository = AnalyticsRepository(self.db_helper)
         self.publisher = Publisher(self.event_bus)
+        self.orchestrator = AnalyticsOrchestrator(
+            loader=self.data_loader,
+            validator=self.validator,
+            transformer=self.transformer,
+            calculator=self.calculator,
+            aggregator=self.aggregator,
+            analyzer=self.analyzer,
+            repository=self.repository,
+            publisher=self.publisher,
+        )
 
     def _initialize_database(self) -> None:
         """Initialize database connection via helper."""
@@ -189,15 +208,13 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self, uploaded_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Process uploaded files using chunked streaming."""
-        return self.upload_controller.process_uploaded_data_directly(uploaded_data)
+        return self.orchestrator.process_uploaded_data_directly(uploaded_data)
 
     async def aprocess_uploaded_data_directly(
         self, uploaded_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Asynchronously process uploaded files."""
-        return await asyncio.to_thread(
-            self.upload_controller.process_uploaded_data_directly, uploaded_data
-        )
+        return await self.orchestrator.aprocess_uploaded_data_directly(uploaded_data)
 
     def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
         """Load uploaded data from the file upload page."""
@@ -262,11 +279,11 @@ class AnalyticsService(AnalyticsServiceProtocol):
     @cache_with_lock(_cache_manager, ttl=600)
     def _get_database_analytics(self) -> Dict[str, Any]:
         """Get analytics from database."""
-        return self.database_retriever.get_analytics()
+        return self.orchestrator.get_database_analytics()
 
     async def _aget_database_analytics(self) -> Dict[str, Any]:
         """Asynchronously get analytics from database."""
-        return await asyncio.to_thread(self.database_retriever.get_analytics)
+        return await asyncio.to_thread(self.orchestrator.get_database_analytics)
 
 
     @cache_with_lock(_cache_manager, ttl=300)
@@ -274,10 +291,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
     def get_dashboard_summary(self) -> Dict[str, Any]:
         """Get a basic dashboard summary"""
         try:
-            summary = self.get_analytics_from_uploaded_data()
-            self.publisher.publish(summary)
-
-            return summary
+            return self.orchestrator.get_dashboard_summary()
         except RuntimeError as e:
             logger.error(f"Dashboard summary failed: {e}")
             return {"status": "error", "message": str(e)}
@@ -338,31 +352,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
 
         try:
             logger.info("🎯 Starting Unique Patterns Analysis")
-
-            df, original_rows = self._load_patterns_dataframe(data_source)
-            if df.empty:
-                logger.warning("❌ No uploaded data found for unique patterns analysis")
-                return {
-                    "status": "no_data",
-                    "message": "No uploaded files available",
-                    "data_summary": {"total_records": 0},
-                }
-
-            result = self._analyze_patterns(df, original_rows)
-
-            result_total = result["data_summary"]["total_records"]
-            self._log_analysis_summary(result_total, original_rows)
-
-            self.publisher.publish(result)
-
-            return result
-
+            return self.orchestrator.get_unique_patterns_analysis(data_source)
         except RuntimeError as e:
             logger.error(f"❌ Unique patterns analysis failed: {e}")
-            import traceback
-
-            traceback.print_exc()
-
             return {
                 "status": "error",
                 "message": f"Unique patterns analysis failed: {str(e)}",
