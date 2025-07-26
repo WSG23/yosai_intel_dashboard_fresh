@@ -110,8 +110,10 @@ def get_analysis_type_options() -> List[Dict[str, str]]:
 
 def clean_analysis_data_unicode(df: pd.DataFrame) -> pd.DataFrame:
     """Return DataFrame sanitized for Unicode issues."""
+    validator = UnicodeValidator()
     try:
         return UnicodeValidator().validate_dataframe(df)
+
     except Exception as exc:  # pragma: no cover - best effort
         logger.exception("Unicode sanitization failed: %s", exc)
         return df

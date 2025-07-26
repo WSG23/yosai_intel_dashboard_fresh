@@ -110,6 +110,7 @@ class AccessTrendsAnalyzer:
 
         df_clean = UnicodeValidator().validate_dataframe(df_clean)
 
+
         # Convert timestamp
         if not pd.api.types.is_datetime64_any_dtype(df_clean["timestamp"]):
             df_clean["timestamp"] = pd.to_datetime(df_clean["timestamp"])

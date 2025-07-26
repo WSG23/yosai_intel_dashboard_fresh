@@ -24,6 +24,7 @@ def prepare_security_data(
     validator = UnicodeValidator()
     df_clean = validator.validate_dataframe(df_clean)
 
+
     # Ensure required columns exist
     required_cols = ["timestamp", "person_id", "door_id", "access_result"]
     missing_cols = [col for col in required_cols if col not in df_clean.columns]

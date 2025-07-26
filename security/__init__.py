@@ -8,6 +8,7 @@ from core.exceptions import ValidationError
 from .attack_detection import AttackDetection
 from .secrets_validator import SecretsValidator, register_health_endpoint
 from .unicode_security_validator import UnicodeSecurityValidator
+from validation import UnicodeValidator
 from .validation_exceptions import SecurityViolation
 from .secure_query_wrapper import (
     execute_secure_sql,

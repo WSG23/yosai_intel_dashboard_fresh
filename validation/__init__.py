@@ -14,6 +14,7 @@ __all__ = [
     "CompositeValidator",
     "UnicodeValidator",
     "SecurityValidator",
+    "UnicodeValidator",
     "FileValidator",
     "create_file_validator",
     "create_security_validator",

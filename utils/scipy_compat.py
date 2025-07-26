@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 from validation.unicode_validator import UnicodeValidator
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -25,6 +26,7 @@ _validator = UnicodeValidator()
 
 def sanitize_unicode_data(data: Any) -> Any:
     """Sanitize data recursively using :class:`UnicodeValidator`."""
+
     if isinstance(data, str):
         return _validator.validate_text(data)
     if isinstance(data, dict):

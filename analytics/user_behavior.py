@@ -163,6 +163,7 @@ class UserBehaviorAnalyzer:
         # Handle Unicode issues
         df_clean = _validator.validate_dataframe(df_clean)
 
+
         # Ensure required columns
         required_cols = ["timestamp", "person_id", "door_id", "access_result"]
         missing_cols = [col for col in required_cols if col not in df_clean.columns]

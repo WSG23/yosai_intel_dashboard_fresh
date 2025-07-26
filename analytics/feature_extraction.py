@@ -24,6 +24,7 @@ def extract_event_features(
     try:
         validator = UnicodeValidator()
         df_clean = validator.validate_dataframe(df_clean)
+
     except Exception as exc:  # pragma: no cover - log and continue
         logger.warning("Unicode sanitization failed: %s", exc)
 
