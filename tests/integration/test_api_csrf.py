@@ -19,7 +19,11 @@ def _create_app(monkeypatch):
     analytics_stub = types.SimpleNamespace(
         register_analytics_blueprints=lambda app: None
     )
-    monkeypatch.setitem(sys.modules, "api.analytics_endpoints", analytics_stub)
+    monkeypatch.setitem(
+        sys.modules,
+        "yosai_intel_dashboard.src.adapters.api.analytics_endpoints",
+        analytics_stub,
+    )
 
     container = types.SimpleNamespace(
         services={"file_processor": DummyFileProcessor()},
@@ -32,7 +36,9 @@ def _create_app(monkeypatch):
     upload_endpoint = importlib.import_module("upload_endpoint")
     monkeypatch.setattr(upload_endpoint, "container", container, raising=False)
 
-    adapter = importlib.import_module("api.adapter")
+    adapter = importlib.import_module(
+        "yosai_intel_dashboard.src.adapters.api.adapter"
+    )
     return adapter.create_api_app()
 
 
