@@ -15,10 +15,8 @@ from services.configuration_service import ConfigurationServiceProtocol
 from .stream_processor import StreamProcessor
 from core.unicode import process_large_csv_content
 from analytics_core.utils.unicode_processor import UnicodeHelper
-from services.data_processing.unified_file_validator import (
-    safe_decode_with_unicode_handling,
-)
-from validation import FileValidator
+from utils.file_utils import safe_decode_with_unicode_handling
+
 from utils.protocols import SafeDecoderProtocol
 from utils.memory_utils import memory_safe
 
@@ -224,4 +222,3 @@ class FileProcessorService(BaseService):
 
         printable = sum(1 for c in text if c.isprintable() or c.isspace())
         return (printable / len(text)) > 0.7
-
