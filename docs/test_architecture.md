@@ -61,6 +61,7 @@ function is executed on first resolution and the instance is cached:
 
 ```python
 from yosai_intel_dashboard.src.core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.services.data_processing.file_processor import FileProcessor
 
 container = ServiceContainer()
 container.register_singleton("logger", DummyLogger())
