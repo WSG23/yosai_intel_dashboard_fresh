@@ -1,5 +1,6 @@
-"""Dependency injection utilities."""
+"""Dependency injection helpers."""
 
-from .container import DIContainer, DIScope
+from .bootstrap import bootstrap_container
 
-__all__ = ["DIContainer", "DIScope"]
+__all__ = ["bootstrap_container"]
+

@@ -9,12 +9,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Import Flask app directly from adapter
 from yosai_intel_dashboard.src.adapters.api.adapter import create_api_app
 from config.constants import API_PORT
-
+from yosai_intel_dashboard.src.core.di.bootstrap import bootstrap_container
 
 
 def main() -> None:
     """Start the API development server."""
+    container = bootstrap_container()
     app = create_api_app()
+    # Expose the DI container on the FastAPI state for access by services
+    app.state.container = container
 
     print("\n🚀 Starting Yosai Intel Dashboard API...")
     print(f"   Available at: http://localhost:{API_PORT}")
