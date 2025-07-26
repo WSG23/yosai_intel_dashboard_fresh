@@ -31,6 +31,7 @@ from .security_patterns import (
     XSS_PATTERNS,
 )
 from unicode_toolkit import clean_unicode_surrogates
+from config.database_exceptions import UnicodeEncodingError
 
 logger = logging.getLogger(__name__)
 
@@ -292,7 +293,10 @@ class UnicodeSQLProcessor:
 
     @staticmethod
     def encode_query(query: Any) -> str:
-        cleaned = UnicodeProcessor.clean_text(query)
+        original = str(query)
+        if contains_surrogates(original):
+            raise UnicodeEncodingError("surrogate characters detected", original)
+        cleaned = UnicodeProcessor.clean_text(original)
         try:
             cleaned.encode("utf-8")
         except Exception as exc:  # pragma: no cover - best effort
