@@ -36,13 +36,14 @@ from models.ml import ModelRegistry
 from services.analytics.calculator import Calculator, create_calculator
 from services.analytics.data_loader import DataLoader, create_loader
 from services.analytics.protocols import DataProcessorProtocol
-from services.analytics.publisher import Publisher
+from services.analytics.publisher import Publisher, create_publisher
 from services.analytics.orchestrator import AnalyticsOrchestrator
 
 from services.analytics_summary import generate_sample_analytics
 from services.controllers.upload_controller import UploadProcessingController
 from services.data_processing.processor import Processor
 from services.helpers.database_initializer import initialize_database
+from services.database_retriever import DatabaseAnalyticsRetriever
 from services.interfaces import get_upload_data_service
 from services.summary_report_generator import SummaryReportGenerator
 from services.upload_data_service import UploadDataService
