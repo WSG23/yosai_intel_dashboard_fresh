@@ -6,6 +6,7 @@ import asyncio
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 
+import asyncio
 import aiohttp
 import aiofiles
 
@@ -25,15 +26,15 @@ class FeatureFlagManager:
         self._last_mtime: float | None = None
         asyncio.run(self.load_flags())
 
-    async def load_flags(self) -> None:
-        """Load flags from the configured source."""
+    async def load_flags_async(self) -> None:
+        """Asynchronously load flags from the configured source."""
+
         data: Dict[str, Any] = {}
         if self.source.startswith("http://") or self.source.startswith("https://"):
             try:
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(
-                        self.source, timeout=aiohttp.ClientTimeout(total=2)
-                    ) as resp:
+                    async with session.get(self.source, timeout=2) as resp:
+
                         resp.raise_for_status()
                         data = await resp.json()
             except Exception as exc:  # pragma: no cover - network failures
@@ -65,6 +66,10 @@ class FeatureFlagManager:
                     except Exception as exc:  # pragma: no cover - callback errors
                         logger.warning("Feature flag callback failed: %s", exc)
 
+    def load_flags(self) -> None:
+        """Synchronous wrapper for :meth:`load_flags_async`."""
+        asyncio.run(self.load_flags_async())
+
     def start(self) -> None:
         """Start background watcher for flag changes."""
         if self._thread and self._thread.is_alive():
@@ -82,8 +87,10 @@ class FeatureFlagManager:
 
     def _watch(self) -> None:
         while not self._stop.is_set():
-            asyncio.run(self.load_flags())
-            self._stop.wait(self.poll_interval)
+            asyncio.run(self.load_flags_async())
+            if self._stop.wait(self.poll_interval):
+                break
+
 
     def is_enabled(self, name: str, default: bool = False) -> bool:
         """Return True if *name* flag is enabled."""
