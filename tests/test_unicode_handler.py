@@ -1,7 +1,7 @@
 import pytest
 
 from config.database_exceptions import UnicodeEncodingError
-from unicode_toolkit import UnicodeSQLProcessor
+from core.unicode import UnicodeSQLProcessor
 
 
 def _encode_params(value):

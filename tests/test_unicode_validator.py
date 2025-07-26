@@ -1,4 +1,4 @@
-from unicode_toolkit import UnicodeValidator
+from security.unicode_security_validator import UnicodeSecurityValidator as UnicodeValidator
 
 
 def test_unicode_validator_sanitizes_surrogates():

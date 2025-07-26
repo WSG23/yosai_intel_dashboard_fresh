@@ -30,7 +30,6 @@ from .security_patterns import (
     SQL_INJECTION_PATTERNS,
     XSS_PATTERNS,
 )
-from unicode_toolkit import clean_unicode_surrogates
 from config.database_exceptions import UnicodeEncodingError
 
 logger = logging.getLogger(__name__)
@@ -411,6 +410,12 @@ def clean_surrogate_chars(text: str, replacement: str = "") -> str:
     """Return ``text`` with surrogate code points removed or replaced."""
 
     return UnicodeProcessor.clean_surrogate_chars(text, replacement)
+
+
+def clean_unicode_surrogates(text: str, replacement: str = "") -> str:
+    """Alias for :func:`clean_surrogate_chars`."""
+
+    return clean_surrogate_chars(text, replacement)
 
 
 def sanitize_unicode_input(text: Union[str, Any]) -> str:

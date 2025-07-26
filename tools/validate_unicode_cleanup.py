@@ -8,12 +8,12 @@ import sys
 import warnings
 from pathlib import Path
 
-from unicode_toolkit import UnicodeProcessor
+from core.unicode import UnicodeProcessor
 
 # Ensure project root is importable
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from unicode_toolkit import (
+from core.unicode import (
     clean_unicode_text,
     safe_encode_text,
     sanitize_dataframe,

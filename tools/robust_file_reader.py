@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Union
 
-from unicode_toolkit import UnicodeProcessor
+from core.unicode import UnicodeProcessor
 
 _processor = UnicodeProcessor()
 

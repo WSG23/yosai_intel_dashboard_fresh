@@ -1,74 +1,29 @@
-"""Unified Unicode utilities package."""
+"""Compatibility wrappers providing legacy entry points."""
 
-from .core import UnicodeProcessor
-from .helpers import (
-    UnicodeQueryHandler,
+from __future__ import annotations
+
+from core.unicode import (
+    UnicodeSQLProcessor,
+    sanitize_dataframe,
+    safe_encode_text,
     clean_unicode_surrogates,
     clean_unicode_text,
-    decode_upload_content,
-    safe_encode_text,
-    sanitize_dataframe,
+    sanitize_unicode_input,
+    UnicodeProcessor,
 )
-from .sql_safe import encode_query
+from security.unicode_security_validator import UnicodeSecurityValidator as UnicodeValidator
+
+from .helpers import decode_upload_content, UnicodeQueryHandler
 
 __all__ = [
     "UnicodeProcessor",
     "UnicodeValidator",
-    "UnicodeSanitizer",
-    "UnicodeEncoder",
     "UnicodeSQLProcessor",
+    "UnicodeQueryHandler",
+    "decode_upload_content",
+    "clean_unicode_text",
+    "clean_unicode_surrogates",
+    "safe_encode_text",
+    "sanitize_dataframe",
+    "sanitize_unicode_input",
 ]
-
-def __getattr__(name: str):
-    if name == "UnicodeValidator":
-        from importlib import import_module
-
-        return import_module(
-            "security.unicode_security_validator"
-        ).UnicodeSecurityValidator
-    if name == "UnicodeSanitizer":
-        from core import unicode as _u
-
-        return _u.sanitize_unicode_input
-    if name in {"UnicodeEncoder", "UnicodeSQLProcessor"}:
-        from core import unicode as _u
-
-        return _u.UnicodeSQLProcessor
-    if name == "UnicodeSQLProcessor":
-        from core import unicode as _u
-
-        return _u.UnicodeSQLProcessor
-    if name == "UnicodeQueryHandler":
-        from config.database_exceptions import UnicodeEncodingError
-
-class UnicodeQueryHandler:
-    """Compatibility wrapper for safe SQL encoding."""
-
-    @staticmethod
-    def safe_encode_query(query: str) -> str:
-        from core.unicode import UnicodeSQLProcessor
-
-        return UnicodeSQLProcessor.encode_query(query)
-
-    @staticmethod
-    def safe_encode_params(params):
-        if params is None:
-            return None
-        return tuple(
-            UnicodeQueryHandler.safe_encode_query(p) if isinstance(p, str) else p
-            for p in params
-        )
-
-
-__all__.append("UnicodeQueryHandler")
-
-
-def clean_unicode_surrogates(text: str, replacement: str = "") -> str:
-    """Compatibility shim for legacy imports."""
-    from core.unicode import clean_surrogate_chars
-
-    return clean_surrogate_chars(text, replacement)
-
-
-__all__.append("clean_unicode_surrogates")
-

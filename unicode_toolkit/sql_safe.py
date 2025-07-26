@@ -4,21 +4,14 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from .core import UnicodeProcessor
+from core.unicode import UnicodeSQLProcessor
 
 
-def encode_query(query: Any, processor: Optional[UnicodeProcessor] = None) -> str:
+def encode_query(query: Any, processor: Optional[object] = None) -> str:
     """Return ``query`` cleaned for safe SQL execution."""
 
-    if processor is None:
-        processor = UnicodeProcessor()
-
-    cleaned = processor.process(query)
-    try:
-        cleaned.encode("utf-8")
-    except Exception:
-        cleaned = cleaned.encode("utf-8", "ignore").decode("utf-8", "ignore")
-    return cleaned
+    # ``processor`` argument kept for backward compatibility
+    return UnicodeSQLProcessor.encode_query(query)
 
 
 __all__ = ["encode_query"]

@@ -1,43 +1,22 @@
+"""Deprecated strategy classes kept for backward compatibility."""
+
 from __future__ import annotations
 
-"""Built-in processing strategies for :class:`UnicodeProcessor`."""
-
-import re
-import unicodedata
-from typing import Any
-
-
 class BaseStrategy:
-    def apply(self, text: str) -> str:
-        raise NotImplementedError
-
-
-_SURROGATE_RE = re.compile(r"[\uD800-\uDFFF]")
-_CONTROL_RE = re.compile(r"[\x00-\x1F\x7F]")
-_DANGEROUS_PREFIX_RE = re.compile(r"^[=+\-@]+")
+    def apply(self, text: str) -> str:  # pragma: no cover - compatibility stub
+        return text
 
 
 class SurrogateRemovalStrategy(BaseStrategy):
-    """Remove UTF-16 surrogate code points."""
-
-    def apply(self, text: str) -> str:
-        return _SURROGATE_RE.sub("", text)
+    pass
 
 
 class ControlCharacterStrategy(BaseStrategy):
-    """Strip ASCII control characters."""
-
-    def apply(self, text: str) -> str:
-        cleaned = _CONTROL_RE.sub("", text)
-        return _DANGEROUS_PREFIX_RE.sub("", cleaned)
+    pass
 
 
 class WhitespaceNormalizationStrategy(BaseStrategy):
-    """Collapse repeated whitespace and normalize to NFC."""
-
-    def apply(self, text: str) -> str:
-        normalized = unicodedata.normalize("NFC", text)
-        return " ".join(normalized.split())
+    pass
 
 
 __all__ = [
