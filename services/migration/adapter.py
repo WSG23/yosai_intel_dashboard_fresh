@@ -155,15 +155,17 @@ class AnalyticsServiceAdapter(ServiceAdapter, AnalyticsServiceProtocol):
                     return await response.json()
 
     # ``AnalyticsServiceProtocol`` methods ---------------------------------
+    async def get_dashboard_summary_async(self) -> Dict[str, Any]:
+        return await self.call("get_dashboard_summary")
+
     def get_dashboard_summary(self) -> Dict[str, Any]:
-        loop = asyncio.new_event_loop()
-        return loop.run_until_complete(self.call("get_dashboard_summary"))
+        return asyncio.run(self.get_dashboard_summary_async())
+
+    async def get_access_patterns_analysis_async(self, days: int = 7) -> Dict[str, Any]:
+        return await self.call("get_access_patterns_analysis", days=days)
 
     def get_access_patterns_analysis(self, days: int = 7) -> Dict[str, Any]:
-        loop = asyncio.new_event_loop()
-        return loop.run_until_complete(
-            self.call("get_access_patterns_analysis", days=days)
-        )
+        return asyncio.run(self.get_access_patterns_analysis_async(days))
 
     def process_dataframe(
         self, df: pd.DataFrame
