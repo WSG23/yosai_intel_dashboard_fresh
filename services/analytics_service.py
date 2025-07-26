@@ -117,7 +117,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
         db_retriever: DatabaseAnalyticsRetriever | None = None,
     ):
         self.database = database
-        self.data_processor = data_processor or Processor(validator=SecurityValidator())
+        self.data_processor = data_processor or Processor(
+            validator=SecurityValidator()
+        )
         self.config = config
         self.event_bus = event_bus
         self.storage = storage
@@ -133,7 +135,6 @@ class AnalyticsService(AnalyticsServiceProtocol):
         # Legacy attribute aliases
         self.data_loading_service = self.processor
         from services.data_processing.unified_file_validator import UnifiedFileValidator
-
         self.file_handler = UnifiedFileValidator()
 
         self.upload_controller = UploadProcessingController(
@@ -142,16 +143,36 @@ class AnalyticsService(AnalyticsServiceProtocol):
             self.upload_data_service,
         )
         self.upload_processor = self.upload_controller.upload_processor
+        self.report_generator = report_generator or SummaryReportGenerator()
+        self._setup_database(db_retriever)
+        self._create_orchestrator(loader, calculator, publisher)
+
+
+    def _setup_database(
+        self, db_retriever: DatabaseAnalyticsRetriever | None = None
+    ) -> None:
+        """Initialize database helpers and retriever."""
         (
             self.database_manager,
             self.db_helper,
             self.summary_reporter,
         ) = initialize_database(self.database)
-        self.database_retriever = DatabaseAnalyticsRetriever(self.db_helper)
-        self.report_generator = SummaryReportGenerator()
-        self.data_loader = DataLoader(self.upload_controller, self.processor)
-        self.calculator = Calculator(self.report_generator)
-        self.publisher = Publisher(self.event_bus)
+        self.database_retriever = db_retriever or DatabaseAnalyticsRetriever(
+            self.db_helper
+        )
+
+    def _create_orchestrator(
+        self,
+        loader: DataLoader | None,
+        calculator: Calculator | None,
+        publisher: Publisher | None,
+    ) -> None:
+        """Set up loader, calculator, publisher and orchestrator."""
+        self.data_loader = loader or DataLoader(
+            self.upload_controller, self.processor
+        )
+        self.calculator = calculator or Calculator(self.report_generator)
+        self.publisher = publisher or Publisher(self.event_bus)
         self.orchestrator = AnalyticsOrchestrator(
             self.data_loader,
             self.validation_service,
@@ -159,15 +180,6 @@ class AnalyticsService(AnalyticsServiceProtocol):
             self.database_retriever,
             self.publisher,
         )
-
-
-    def _initialize_database(self) -> None:
-        """Initialize database connection via helper."""
-        (
-            self.database_manager,
-            self.db_helper,
-            self.summary_reporter,
-        ) = initialize_database(self.database)
 
     def get_analytics_from_uploaded_data(self) -> Dict[str, Any]:
         """Process uploaded files via orchestrator."""
