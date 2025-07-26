@@ -17,7 +17,8 @@ jobs:
           kubectl apply --dry-run=client -f k8s/canary
 
   clean-arch-check:
-    needs: validate-configs
+    # fix: dependency should be array
+    needs: [validate-configs]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -72,7 +73,8 @@ jobs:
           golangci-lint run ./...
 
   test:
-    needs: lint
+    # fix: dependency should be array
+    needs: [lint]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -114,7 +116,8 @@ jobs:
           path: gateway/coverage.out
 
   frontend-test:
-    needs: lint
+    # fix: dependency should be array
+    needs: [lint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -129,7 +132,8 @@ jobs:
         run: npm test --prefix yosai-upload -- --watchAll=false
 
   frontend-build:
-    needs: frontend-test
+    # fix: dependency should be array
+    needs: [frontend-test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -194,7 +198,8 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
-    needs: build-images
+    # fix: dependency should be array
+    needs: [build-images]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
