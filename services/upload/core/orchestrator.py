@@ -12,11 +12,15 @@ from services.upload.core.learning_coordinator import LearningCoordinator
 from services.upload.core.ui_builder import UploadUIBuilder
 from services.upload.protocols import (
     DeviceLearningServiceProtocol,
-    FileProcessorProtocol,
     UploadProcessingServiceProtocol,
     UploadStorageProtocol,
     UploadValidatorProtocol,
 )
+from core.protocols import FileProcessorProtocol
+from services.upload.core.file_processor_service import FileProcessor
+from services.upload.core.file_validator import FileValidator
+from services.upload.core.learning_coordinator import LearningCoordinator
+from services.upload.core.ui_builder import UploadUIBuilder
 from services.upload_data_service import UploadDataService, UploadDataServiceProtocol
 from validation.file_validator import FileValidator
 

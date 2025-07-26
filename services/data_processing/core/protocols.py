@@ -59,24 +59,6 @@ class AnalyticsServiceProtocol(Protocol):
         ...
 
 
-@runtime_checkable
-class FileProcessorProtocol(Protocol):
-    """Protocol for file processing operations"""
-
-    @abstractmethod
-    def validate_file(self, filename: str, content: bytes) -> Dict[str, Any]:
-        """Validate uploaded file"""
-        ...
-
-    @abstractmethod
-    def process_file(self, file_content: bytes, filename: str) -> pd.DataFrame:
-        """Process uploaded file and return DataFrame"""
-        ...
-
-    @abstractmethod
-    def health_check(self) -> Dict[str, Any]:
-        """Check service health"""
-        ...
 
 
 @runtime_checkable

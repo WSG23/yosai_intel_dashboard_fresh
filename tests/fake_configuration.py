@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 from core.protocols import ConfigurationProtocol
 try:
-    from services.configuration_service import ConfigurationServiceProtocol
+    from core.protocols import ConfigurationServiceProtocol
 except Exception:  # pragma: no cover - optional deps
     from typing import Protocol
 

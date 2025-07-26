@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, Dict, Protocol
+from typing import Any, Dict
 
 from .app_config import UploadConfig
 from .base_loader import BaseConfigLoader
@@ -18,13 +18,6 @@ from .environment import select_config_file
 
 logger = logging.getLogger(__name__)
 
-
-class ConfigurationServiceProtocol(Protocol):
-    """Minimal configuration service interface."""
-
-    def get_max_upload_size_mb(self) -> int: ...
-
-    def get_max_upload_size_bytes(self) -> int: ...
 
 
 class DynamicConfigManager(BaseConfigLoader):

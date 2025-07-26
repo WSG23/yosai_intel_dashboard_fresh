@@ -5,7 +5,8 @@ from typing import Any, Dict, List, Callable
 import pandas as pd
 
 try:
-    from services.upload.protocols import UploadStorageProtocol, FileProcessorProtocol
+    from services.upload.protocols import UploadStorageProtocol
+    from core.protocols import FileProcessorProtocol
 except Exception:  # pragma: no cover - fallback stubs for optional deps
     from typing import Protocol
 
@@ -61,7 +62,7 @@ except Exception:  # pragma: no cover - fallback stubs
         def load_dataframe(self, filename: str) -> pd.DataFrame: ...
 
 try:
-    from services.configuration_service import ConfigurationServiceProtocol
+    from core.protocols import ConfigurationServiceProtocol
 except Exception:  # pragma: no cover - fallback stub
     from typing import Protocol
 

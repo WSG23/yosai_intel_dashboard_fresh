@@ -7,9 +7,9 @@ from utils.upload_store import UploadedDataStore
 from services.upload.protocols import (
     UploadProcessingServiceProtocol,
     UploadValidatorProtocol,
-    FileProcessorProtocol,
     UploadStorageProtocol,
 )
+from core.protocols import FileProcessorProtocol
 
 
 def test_processing_service_implements_protocol() -> None:

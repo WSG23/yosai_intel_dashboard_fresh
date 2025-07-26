@@ -17,7 +17,7 @@ import pandas as pd
 from config.dynamic_config import dynamic_config
 from services.task_queue import create_task, get_status
 from services.rabbitmq_client import RabbitMQClient
-from services.upload.protocols import FileProcessorProtocol
+from core.protocols import FileProcessorProtocol
 from utils.memory_utils import check_memory_limit
 
 from .file_processor import UnicodeFileProcessor
