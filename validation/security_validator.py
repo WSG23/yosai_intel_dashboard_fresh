@@ -40,13 +40,15 @@ class SecurityValidator(CompositeValidator):
     def validate_input(self, value: str, field_name: str = "input") -> dict:
         result = self.validate(value)
         if not result.valid:
-            raise ValidationError("; ".join(result.issues or []))
+            issue = result.issues[0] if result.issues else "invalid"
+            raise ValidationError(field_name, "; ".join(result.issues or []), issue)
         return {"valid": True, "sanitized": result.sanitized or value}
 
     def validate_file_upload(self, filename: str, content: bytes) -> dict:
         result = self.file_validator.validate_file_upload(filename, content)
         if not result["valid"]:
-            raise ValidationError("; ".join(result["issues"]))
+            issue = result["issues"][0] if result["issues"] else "invalid"
+            raise ValidationError("file", "; ".join(result["issues"]), issue)
         return result
 
 

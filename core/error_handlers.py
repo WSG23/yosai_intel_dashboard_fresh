@@ -36,9 +36,14 @@ def register_error_handlers(app: Flask) -> None:
             error,
             category=ErrorCategory.USER_INPUT,
             severity=ErrorSeverity.MEDIUM,
-            context={"code": error.error_code.value, "message": error.message},
+            context={"code": getattr(error, "error_code", ErrorCode.INTERNAL).value, "message": error.message},
         )
-        status = _CODE_TO_STATUS.get(error.error_code, 500)
+        status = _CODE_TO_STATUS.get(getattr(error, "error_code", ErrorCode.INTERNAL), 500)
+        if hasattr(error, "field") and hasattr(error, "code"):
+            body = {"code": error.code, "message": error.message, "field": error.field}
+            if error.details:
+                body["details"] = error.details
+            return jsonify(body), status
         return _json_body(error.error_code, error.message, error.details), status
 
     @app.errorhandler(HTTPException)

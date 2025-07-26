@@ -41,7 +41,7 @@ class ValidationMiddleware:
             def validate(self, data: str) -> str:
                 result = self.validator.validate_input(data, "request")
                 if not result["valid"]:
-                    raise ValidationError("Invalid input")
+                    raise ValidationError("request", "Invalid input", "invalid_input")
                 return result["sanitized"]
 
         self.orchestrator = ValidationOrchestrator([_Adapter()])

@@ -44,7 +44,7 @@ class UnicodeSurrogateValidator:
         )
 
         if self.config.mode == "strict":
-            raise ValidationError("Surrogate characters not allowed")
+            raise ValidationError("value", "Surrogate characters not allowed", "unicode_surrogates")
 
         replacement = self.config.replacement if self.config.mode == "replace" else ""
         cleaned = "".join(

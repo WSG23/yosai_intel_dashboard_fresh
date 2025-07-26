@@ -13,7 +13,7 @@ def _create_app():
 
     @bp.route('/fail')
     def fail_route():
-        raise ValidationError('bad')
+        raise ValidationError('field', 'bad', 'invalid')
 
     @bp.route('/unavail')
     def unavail_route():
@@ -34,8 +34,7 @@ def test_yosai_base_exception_handled():
     resp = client.get('/fail')
     assert resp.status_code == 400
     body = resp.get_json()
-    assert body["code"] == "invalid_input"
-    assert body["message"] == "bad"
+    assert body == {"code": "invalid", "message": "bad", "field": "field"}
 
 
 def test_service_unavailable_error():

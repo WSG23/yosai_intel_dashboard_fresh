@@ -15,7 +15,7 @@ class YosaiBaseException(Exception):
         error_code: ErrorCode = ErrorCode.INTERNAL,
     ) -> None:
         self.message = message
-        self.details = details or {}
+        self.details = details
         self.error_code = error_code
         super().__init__(self.message)
 
@@ -34,11 +34,23 @@ class DatabaseError(YosaiBaseException):
         super().__init__(message, details, ErrorCode.INTERNAL)
 
 
-class ValidationError(YosaiBaseException):
-    """Data validation errors"""
+# Alias used by higher layers
+AppError = YosaiBaseException
 
-    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+
+class ValidationError(AppError):
+    """Data validation errors with field context."""
+
+    def __init__(
+        self,
+        field: str,
+        message: str,
+        code: str = ErrorCode.INVALID_INPUT.value,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
         super().__init__(message, details, ErrorCode.INVALID_INPUT)
+        self.field = field
+        self.code = code
 
 
 class SecurityError(YosaiBaseException):

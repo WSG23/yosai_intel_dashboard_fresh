@@ -148,10 +148,11 @@ class UnifiedFileValidator:
             cleaned,
             re.IGNORECASE | re.DOTALL,
         ):
-            raise ValidationError("Potentially dangerous characters detected")
+            raise ValidationError("input", "Potentially dangerous characters detected", "xss")
         result = self._string_validator.validate_input(cleaned, "input")
         if not result["valid"]:
-            raise ValidationError("; ".join(result["issues"]))
+            issue = result["issues"][0] if result["issues"] else "invalid"
+            raise ValidationError("input", "; ".join(result["issues"]), issue)
         import bleach
 
         return bleach.clean(result["sanitized"], strip=True)
@@ -165,15 +166,15 @@ class UnifiedFileValidator:
         cleaned = UnicodeProcessor.safe_encode_text(cleaned)
 
         if os.path.basename(cleaned) != cleaned:
-            raise ValidationError("Path separators not allowed in filename")
+            raise ValidationError("filename", "Path separators not allowed in filename", "invalid_path")
         if len(cleaned) > 100:
-            raise ValidationError("Filename too long")
+            raise ValidationError("filename", "Filename too long", "too_long")
         if not SAFE_FILENAME_RE.fullmatch(cleaned):
-            raise ValidationError("Invalid filename")
+            raise ValidationError("filename", "Invalid filename", "invalid_filename")
 
         ext = Path(cleaned).suffix.lower()
         if ext not in self.ALLOWED_EXTENSIONS:
-            raise ValidationError(f"Unsupported file type: {ext}")
+            raise ValidationError("filename", f"Unsupported file type: {ext}", "invalid_extension")
         return cleaned
 
     # ------------------------------------------------------------------
@@ -217,19 +218,20 @@ class UnifiedFileValidator:
 
         file_bytes = safe_decode_file(contents)
         if file_bytes is None:
-            raise ValidationError("Invalid base64 contents")
+            raise ValidationError("contents", "Invalid base64 contents", "invalid_base64")
 
         sec_result = self.validate_file_meta(sanitized_name, len(file_bytes))
         if not sec_result["valid"]:
-            raise ValidationError("; ".join(sec_result["issues"]))
+            issue = sec_result["issues"][0] if sec_result["issues"] else "invalid"
+            raise ValidationError("file", "; ".join(sec_result["issues"]), issue)
 
         df, err = process_dataframe(file_bytes, sanitized_name, config=self.config)
         if df is None:
-            raise ValidationError(err or "Unable to parse file")
+            raise ValidationError("file", err or "Unable to parse file", "parse_error")
 
         metrics = self.validate_dataframe(df)
         if not metrics.get("valid", False):
-            raise ValidationError(metrics.get("error", "Invalid dataframe"))
+            raise ValidationError("dataframe", metrics.get("error", "Invalid dataframe"), "invalid_dataframe")
 
         df = sanitize_dataframe(df)
         return df

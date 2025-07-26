@@ -10,5 +10,5 @@ class BusinessLogicValidator:
 
     def validate(self, data: Any) -> Any:
         if data is None:
-            raise ValidationError("Data cannot be None")
+            raise ValidationError("data", "Data cannot be None", "required")
         return data

@@ -11,5 +11,5 @@ class XSSPrevention:
     @staticmethod
     def sanitize_html_output(value: str) -> str:
         if not isinstance(value, str):
-            raise ValidationError("Expected string for HTML sanitization")
+            raise ValidationError("value", "Expected string for HTML sanitization", "invalid_type")
         return html.escape(value)
