@@ -5,10 +5,12 @@ import csv
 import io
 import logging
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple, TYPE_CHECKING
 
-from config.dynamic_config import dynamic_config
-from services.upload.protocols import UploadValidatorProtocol
+if TYPE_CHECKING:  # pragma: no cover - optional dependency
+    from services.upload.protocols import UploadValidatorProtocol
+else:
+    UploadValidatorProtocol = Any
 
 from .core import ValidationResult
 from .rules import CompositeValidator, ValidationRule
@@ -68,12 +70,13 @@ class FileValidator(CompositeValidator):
         allowed_ext: Iterable[str] | None = None,
         validator: UploadValidatorProtocol | None = None,
     ) -> None:
-        size_mb = (
-            max_size_mb
-            if max_size_mb is not None
-            else getattr(dynamic_config.security, "max_upload_mb", 10)
-        )
+        if max_size_mb is None:
+            from config.dynamic_config import dynamic_config
+            size_mb = getattr(dynamic_config.security, "max_upload_mb", 10)
+        else:
+            size_mb = max_size_mb
         size = size_mb * 1024 * 1024
+        from config.dynamic_config import dynamic_config
         default_types = getattr(dynamic_config, "upload", None)
         if default_types and hasattr(default_types, "allowed_file_types"):
             defaults = default_types.allowed_file_types

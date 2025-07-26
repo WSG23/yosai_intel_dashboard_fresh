@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from typing import Any, Iterable, Optional
 
-from core.unicode import UnicodeSQLProcessor, clean_unicode_surrogates
 from database.secure_exec import execute_query, execute_command
 
 logger = logging.getLogger(__name__)
@@ -17,6 +16,8 @@ def execute_secure_sql(
     """Safely execute a read query using parameterization."""
     if not isinstance(query, str):
         raise TypeError("query must be a string")
+    from core.unicode import UnicodeSQLProcessor, clean_unicode_surrogates
+
     sanitized_query = UnicodeSQLProcessor.encode_query(query)
     sanitized_params = None
     if params is not None:
@@ -38,6 +39,8 @@ def execute_secure_command(
     """Safely execute an INSERT/UPDATE/DELETE using parameterization."""
     if not isinstance(command, str):
         raise TypeError("command must be a string")
+    from core.unicode import UnicodeSQLProcessor, clean_unicode_surrogates
+
     sanitized_cmd = UnicodeSQLProcessor.encode_query(command)
     sanitized_params = None
     if params is not None:

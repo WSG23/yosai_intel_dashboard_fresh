@@ -58,6 +58,10 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     config_stub.get_database_config = lambda: _Cfg()
     sys.modules["config"] = config_stub
 
+    env_stub = types.ModuleType("config.environment")
+    env_stub.get_environment = lambda: "test"
+    sys.modules["config.environment"] = env_stub
+
     validate_stub = types.ModuleType("config.validate")
     validate_stub.validate_required_env = lambda vars: None
     sys.modules["config.validate"] = validate_stub
