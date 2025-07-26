@@ -106,15 +106,10 @@ class AccessTrendsAnalyzer:
         df_clean = df.copy(deep=False)
 
         # Handle Unicode issues
-        from security.unicode_security_handler import UnicodeSecurityHandler
+        from validation.unicode_validator import UnicodeValidator
 
-        string_columns = df_clean.select_dtypes(include=["object"]).columns
-        for col in string_columns:
-            df_clean[col] = (
-                df_clean[col]
-                .astype(str)
-                .apply(UnicodeSecurityHandler.sanitize_unicode_input)
-            )
+        df_clean = UnicodeValidator().validate_dataframe(df_clean)
+
 
         # Convert timestamp
         if not pd.api.types.is_datetime64_any_dtype(df_clean["timestamp"]):

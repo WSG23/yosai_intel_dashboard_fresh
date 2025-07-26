@@ -11,7 +11,7 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from config.dynamic_config import dynamic_config
 
@@ -159,6 +159,7 @@ class CSSQualityAnalyzer:
             case _ if size_kb <= dynamic_config.css.bundle_good_kb:
                 status = "good"
             case _ if size_kb <= dynamic_config.css.bundle_warning_kb:
+
                 status = "warning"
             case _:
                 status = "critical"
@@ -217,6 +218,7 @@ class CSSQualityAnalyzer:
             case _ if token_usage_percent >= 85:
                 status = "good"
             case _ if token_usage_percent >= 70:
+
                 status = "warning"
             case _:
                 status = "critical"
@@ -290,6 +292,7 @@ class CSSQualityAnalyzer:
             case _ if high_specificity_percent <= 10:
                 status = "good"
             case _ if high_specificity_percent <= 20:
+
                 status = "warning"
             case _:
                 status = "critical"
@@ -340,6 +343,7 @@ class CSSQualityAnalyzer:
             case _ if accessibility_score >= 85:
                 status = "good"
             case _ if accessibility_score >= 70:
+
                 status = "warning"
             case _:
                 status = "critical"
@@ -477,7 +481,7 @@ class CSSOptimizer:
 
 
 def generate_css_report(
-    css_dir: Path, output_file: Optional[Path] = None
+    css_dir: Path, output_file: Path | None = None
 ) -> Dict[str, Any]:
     """Generate comprehensive CSS quality report"""
 

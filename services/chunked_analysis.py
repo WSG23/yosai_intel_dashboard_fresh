@@ -11,7 +11,9 @@ from dask.distributed import Client, LocalCluster
 
 from analytics.chunked_analytics_controller import ChunkedAnalyticsController
 from config.config import get_analytics_config
+from validation.data_validator import DataValidator
 from validation.security_validator import SecurityValidator
+from validation.data_validator import DataValidator
 
 from .result_formatting import regular_analysis
 
@@ -19,14 +21,22 @@ logger = logging.getLogger(__name__)
 
 
 def _validate_dataframe(
-    df: pd.DataFrame, validator: SecurityValidator
+    df: pd.DataFrame,
+    validator: SecurityValidator,
 ) -> tuple[int, int, bool]:
-    """Validate ``df`` and return original and validated row counts."""
+    """Validate ``df`` using :class:`DataValidator`."""
+
     original_rows = len(df)
     csv_bytes = df.to_csv(index=False).encode("utf-8")
     validator.validate_file_upload("data.csv", csv_bytes)
-    needs_chunking = True
+
+    df_validator = DataValidator()
+    result = df_validator.validate_dataframe(df)
+    if not result.valid:
+        logger.warning("Data issues detected: %s", result.issues)
+
     validated_rows = len(df)
+    needs_chunking = True
     logger.info(
         "📋 After validation: %s rows, chunking needed: %s",
         f"{validated_rows:,}",

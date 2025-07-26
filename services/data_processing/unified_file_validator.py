@@ -17,7 +17,12 @@ from config.dynamic_config import dynamic_config
 from core.exceptions import ValidationError
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
-from core.unicode import UnicodeProcessor, sanitize_dataframe, sanitize_for_utf8, safe_unicode_decode
+from core.unicode import (
+    UnicodeProcessor,
+    sanitize_dataframe,
+    sanitize_for_utf8,
+    safe_unicode_decode,
+)
 from upload_types import ValidationResult
 from .unified_upload_validator import UnifiedUploadValidator
 from .common import process_dataframe
@@ -49,15 +54,6 @@ ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
 
 
 logger = logging.getLogger(__name__)
-
-
-def safe_decode_with_unicode_handling(data: bytes, encoding: str) -> str:
-    """Decode bytes using ``encoding`` and sanitize output."""
-
-    text = safe_unicode_decode(data, encoding)
-
-    cleaned = sanitize_for_utf8(text)
-    return cleaned.replace("\ufffd", "")
 
 
 def safe_decode_file(contents: str) -> Optional[bytes]:
@@ -159,7 +155,9 @@ class UnifiedFileValidator:
         if max_size_mb is not None:
             self.max_size_mb = max_size_mb
         self._string_validator = _lazy_string_validator()
-        self._basic_validator = UnifiedUploadValidator(self.max_size_mb, config=self.config)
+        self._basic_validator = UnifiedUploadValidator(
+            self.max_size_mb, config=self.config
+        )
 
     def _sanitize_string(self, value: str) -> str:
         cleaned = sanitize_for_utf8(str(value))
@@ -269,7 +267,6 @@ class UnifiedFileValidator:
 __all__ = [
     "UnifiedFileValidator",
     "ValidationResult",
-    "safe_decode_with_unicode_handling",
     "safe_decode_file",
     "process_dataframe",
     "validate_dataframe_content",

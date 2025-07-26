@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 try:
     from typing import override
 except ImportError:  # pragma: no cover - for Python <3.12
+
     from typing_extensions import override
 
 import pandas as pd
@@ -49,7 +50,6 @@ class UploadDataService(UploadDataServiceProtocol):
     @override
     def save_mapping(self, filename: str, mapping: Dict[str, Any]) -> None:
         self.store.save_mapping(filename, mapping)
-
 
 
 def _resolve_service(
@@ -120,7 +120,6 @@ def save_mapping(
 ) -> None:
     svc = _resolve_service(service, container)
     svc.save_mapping(filename, mapping)
-
 
 
 __all__ = [

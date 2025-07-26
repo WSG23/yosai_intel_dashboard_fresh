@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.orm import declarative_base
@@ -61,7 +61,7 @@ class PerformanceSettingsManager:
     def __init__(
         self,
         database_manager: IDatabaseManager,
-        cache_manager: Optional[ICacheManager] = None,
+        cache_manager: ICacheManager | None = None,
         cache_ttl: int = 300,
     ) -> None:
         self.db = database_manager
@@ -94,7 +94,7 @@ class PerformanceSettingsManager:
         return settings
 
     # ------------------------------------------------------------------
-    def get_setting(self, name: str) -> Optional[PerformanceSetting]:
+    def get_setting(self, name: str) -> PerformanceSetting | None:
         """Return a single setting by name."""
         settings = self.load_settings()
         for item in settings:
@@ -142,7 +142,7 @@ class PerformanceSettingsManager:
         )
 
     # ------------------------------------------------------------------
-    def _validate(self, name: str, value: Any, type_name: Optional[str]) -> None:
+    def _validate(self, name: str, value: Any, type_name: str | None) -> None:
         if not name or len(name) > 128:
             raise ValueError("setting_name must be between 1 and 128 characters")
         if type_name is not None and type_name not in {"int", "float", "str", "bool", "json", "string"}:
