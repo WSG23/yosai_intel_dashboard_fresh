@@ -16,9 +16,4 @@ class Publisher:
         publish_event(self.event_bus, payload, event)
 
 
-def create_publisher(event_bus: EventBusProtocol | None = None) -> "Publisher":
-    """Create a :class:`Publisher` with default dependencies."""
-    return Publisher(event_bus)
-
-
-__all__ = ["Publisher", "create_publisher"]
+__all__ = ["Publisher"]

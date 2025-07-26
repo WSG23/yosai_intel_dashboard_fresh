@@ -8,17 +8,17 @@ Uploaded files are validated with
 processing to ensure they are present, non-empty and within the configured size
 limits.
 """
+import asyncio
 import logging
 import os
 import threading
-import asyncio
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol
+
 try:
     from typing import override
 except ImportError:  # pragma: no cover - for Python <3.12
     from typing_extensions import override
-
 
 import pandas as pd
 
@@ -32,15 +32,15 @@ from core.protocols import (
     StorageProtocol,
 )
 from models.ml import ModelRegistry
-from services.analytics.calculator import Calculator
-from services.analytics.data_loader import DataLoader
+from services.analytics.calculator import Calculator, create_calculator
+from services.analytics.data_loader import DataLoader, create_loader
 from services.analytics.protocols import DataProcessorProtocol
 from services.analytics.publisher import Publisher
 from services.analytics.orchestrator import AnalyticsOrchestrator
+
 from services.analytics_summary import generate_sample_analytics
 from services.controllers.upload_controller import UploadProcessingController
 from services.data_processing.processor import Processor
-from services.database_retriever import DatabaseAnalyticsRetriever
 from services.helpers.database_initializer import initialize_database
 from services.interfaces import get_upload_data_service
 from services.summary_report_generator import SummaryReportGenerator
@@ -109,6 +109,12 @@ class AnalyticsService(AnalyticsServiceProtocol):
         storage: StorageProtocol | None = None,
         upload_data_service: UploadDataService | None = None,
         model_registry: ModelRegistry | None = None,
+        *,
+        loader: DataLoader | None = None,
+        calculator: Calculator | None = None,
+        publisher: Publisher | None = None,
+        report_generator: SummaryReportGenerator | None = None,
+        db_retriever: DatabaseAnalyticsRetriever | None = None,
     ):
         self.database = database
         self.data_processor = data_processor or Processor(validator=SecurityValidator())
@@ -154,6 +160,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
             self.publisher,
         )
 
+
     def _initialize_database(self) -> None:
         """Initialize database connection via helper."""
         (
@@ -197,15 +204,13 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self, uploaded_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Process uploaded files using chunked streaming."""
-        return self.upload_controller.process_uploaded_data_directly(uploaded_data)
+        return self.orchestrator.process_uploaded_data_directly(uploaded_data)
 
     async def aprocess_uploaded_data_directly(
         self, uploaded_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Asynchronously process uploaded files."""
-        return await asyncio.to_thread(
-            self.upload_controller.process_uploaded_data_directly, uploaded_data
-        )
+        return await self.orchestrator.aprocess_uploaded_data_directly(uploaded_data)
 
     def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
         """Load uploaded data from the file upload page."""
@@ -270,12 +275,11 @@ class AnalyticsService(AnalyticsServiceProtocol):
     @cache_with_lock(_cache_manager, ttl=600)
     def _get_database_analytics(self) -> Dict[str, Any]:
         """Get analytics from database."""
-        return self.database_retriever.get_analytics()
+        return self.orchestrator.get_database_analytics()
 
     async def _aget_database_analytics(self) -> Dict[str, Any]:
         """Asynchronously get analytics from database."""
-        return await asyncio.to_thread(self.database_retriever.get_analytics)
-
+        return await asyncio.to_thread(self.orchestrator.get_database_analytics)
 
     @cache_with_lock(_cache_manager, ttl=300)
     @override
@@ -283,6 +287,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         """Get a basic dashboard summary"""
         try:
             return self.orchestrator.process_uploaded_data()
+
         except RuntimeError as e:
             logger.error(f"Dashboard summary failed: {e}")
             return {"status": "error", "message": str(e)}
@@ -343,31 +348,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
 
         try:
             logger.info("🎯 Starting Unique Patterns Analysis")
-
-            df, original_rows = self._load_patterns_dataframe(data_source)
-            if df.empty:
-                logger.warning("❌ No uploaded data found for unique patterns analysis")
-                return {
-                    "status": "no_data",
-                    "message": "No uploaded files available",
-                    "data_summary": {"total_records": 0},
-                }
-
-            result = self._analyze_patterns(df, original_rows)
-
-            result_total = result["data_summary"]["total_records"]
-            self._log_analysis_summary(result_total, original_rows)
-
-            self.publisher.publish(result)
-
-            return result
-
+            return self.orchestrator.get_unique_patterns_analysis(data_source)
         except RuntimeError as e:
             logger.error(f"❌ Unique patterns analysis failed: {e}")
-            import traceback
-
-            traceback.print_exc()
-
             return {
                 "status": "error",
                 "message": f"Unique patterns analysis failed: {str(e)}",
@@ -492,6 +475,10 @@ def get_analytics_service(
                 _analytics_service = AnalyticsService(
                     config=config_provider,
                     model_registry=model_registry,
+                    loader=create_loader(),
+                    calculator=create_calculator(),
+                    publisher=create_publisher(),
+                    report_generator=SummaryReportGenerator(),
                 )
     return _analytics_service
 
@@ -501,7 +488,14 @@ def create_analytics_service(
     model_registry: ModelRegistry | None = None,
 ) -> AnalyticsService:
     """Create new analytics service instance"""
-    return AnalyticsService(config=config_provider, model_registry=model_registry)
+    return AnalyticsService(
+        config=config_provider,
+        model_registry=model_registry,
+        loader=create_loader(),
+        calculator=create_calculator(),
+        publisher=create_publisher(),
+        report_generator=SummaryReportGenerator(),
+    )
 
 
 __all__ = ["AnalyticsService", "get_analytics_service", "create_analytics_service"]

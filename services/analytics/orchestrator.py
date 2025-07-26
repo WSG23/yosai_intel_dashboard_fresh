@@ -36,6 +36,7 @@ class AnalyticsOrchestrator:
         self.loader = loader
         self.validator = validator
         self.processor = processor
+
         self.repository = repository
         self.publisher = publisher
 
@@ -85,3 +86,4 @@ class AnalyticsOrchestrator:
 
 
 __all__ = ["AnalyticsOrchestrator", "AnalyticsRepositoryProtocol"]
+

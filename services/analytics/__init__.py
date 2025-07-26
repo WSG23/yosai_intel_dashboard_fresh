@@ -1,8 +1,8 @@
 """Analytics Domain Public API."""
 
 from .async_service import AsyncAnalyticsService
-from .calculator import Calculator
-from .data_loader import DataLoader
+from .calculator import Calculator, create_calculator
+from .data_loader import DataLoader, create_loader
 from .metrics_calculator import MetricsCalculator
 from .preparation import prepare_dataframe
 from .protocols import (
@@ -13,6 +13,7 @@ from .protocols import (
 )
 from .publisher import Publisher
 from .orchestrator import AnalyticsOrchestrator
+
 from .timescale_queries import (
     build_sliding_window_query,
     build_time_bucket_query,
@@ -36,8 +37,11 @@ __all__ = [
     "prepare_dataframe",
     "MetricsCalculator",
     "DataLoader",
+    "create_loader",
     "Calculator",
+    "create_calculator",
     "Publisher",
+    "create_publisher",
     "build_time_bucket_query",
     "build_sliding_window_query",
     "fetch_time_buckets",

@@ -10,8 +10,8 @@ from services.summary_report_generator import SummaryReportGenerator
 class Calculator:
     """Perform analytics calculations for uploaded data."""
 
-    def __init__(self, generator: SummaryReportGenerator) -> None:
-        self.generator = generator
+    def __init__(self, generator: SummaryReportGenerator | None = None) -> None:
+        self.generator = generator or SummaryReportGenerator()
 
     def calculate_stats(self, df: pd.DataFrame) -> Tuple[int, int, int, int]:
         return self.generator.calculate_stats(df)
@@ -36,12 +36,4 @@ class Calculator:
         return result
 
 
-def create_calculator(
-    generator: SummaryReportGenerator | None = None,
-) -> "Calculator":
-    """Create a :class:`Calculator` with default dependencies."""
-    generator = generator or SummaryReportGenerator()
-    return Calculator(generator)
-
-
-__all__ = ["Calculator", "create_calculator"]
+__all__ = ["Calculator"]
