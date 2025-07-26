@@ -7,7 +7,16 @@ Defines clear contracts for all major system components
 
 from abc import abstractmethod
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Protocol, runtime_checkable
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Protocol,
+    Tuple,
+    runtime_checkable,
+)
 
 from .callback_events import CallbackEvent
 
@@ -87,16 +96,21 @@ class AnalyticsServiceProtocol(Protocol):
 
 @runtime_checkable
 class FileProcessorProtocol(Protocol):
-    """Protocol for file processing operations"""
+    """Protocol for processing uploaded file contents."""
 
     @abstractmethod
-    def validate_file(self, filename: str, file_size: int) -> Dict[str, Any]:
-        """Validate uploaded file"""
+    async def process_file(
+        self,
+        content: str,
+        filename: str,
+        progress_callback: Optional[Callable[[str, int], None]] = None,
+    ) -> pd.DataFrame:
+        """Process uploaded file content into a DataFrame."""
         ...
 
     @abstractmethod
-    def process_file(self, file_content: bytes, filename: str) -> Dict[str, Any]:
-        """Process uploaded file and return structured data"""
+    def read_uploaded_file(self, contents: str, filename: str) -> Tuple[pd.DataFrame, str]:
+        """Read an uploaded file and return a DataFrame and error."""
         ...
 
 
@@ -188,6 +202,27 @@ class ConfigProviderProtocol(Protocol):
     def get_security_config(self) -> Dict[str, Any]:
         """Return security configuration."""
         ...
+
+
+@runtime_checkable
+class ConfigurationServiceProtocol(Protocol):
+    """Interface for accessing runtime configuration values."""
+
+    def get_max_upload_size_mb(self) -> int: ...
+
+    def get_max_upload_size_bytes(self) -> int: ...
+
+    def validate_large_file_support(self) -> bool: ...
+
+    def get_upload_chunk_size(self) -> int: ...
+
+    def get_max_parallel_uploads(self) -> int: ...
+
+    def get_validator_rules(self) -> Dict[str, Any]: ...
+
+    def get_ai_confidence_threshold(self) -> int: ...
+
+    def get_db_pool_size(self) -> int: ...
 
 
 @runtime_checkable

@@ -7,11 +7,11 @@ from services.async_file_processor import AsyncFileProcessor
 from services.data_enhancer import get_ai_column_suggestions
 from services.upload.protocols import (
     DeviceLearningServiceProtocol,
-    FileProcessorProtocol,
     UploadProcessingServiceProtocol,
     UploadStorageProtocol,
     UploadValidatorProtocol,
 )
+from core.protocols import FileProcessorProtocol
 from services.upload.core.file_processor_service import FileProcessor
 from services.upload.core.file_validator import FileValidator
 from services.upload.core.learning_coordinator import LearningCoordinator

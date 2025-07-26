@@ -1,10 +1,6 @@
 from tests.fake_configuration import FakeConfiguration
 import importlib.util
 import sys
-import types
-
-config_stub = types.SimpleNamespace(ConfigurationServiceProtocol=object)
-sys.modules.setdefault("services.configuration_service", config_stub)
 
 spec = importlib.util.spec_from_file_location(
     "services.file_processor_service", "services/file_processor_service.py"

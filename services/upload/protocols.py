@@ -19,6 +19,7 @@ import pandas as pd
 
 from core.service_container import ServiceContainer
 from services.protocols.device_learning import DeviceLearningServiceProtocol
+from core.protocols import FileProcessorProtocol
 
 
 @runtime_checkable
@@ -61,26 +62,7 @@ class UploadValidatorProtocol(Protocol):
         ...
 
 
-@runtime_checkable
-class FileProcessorProtocol(Protocol):
-    """Protocol for processing uploaded file contents."""
 
-    @abstractmethod
-    async def process_file(
-        self,
-        content: str,
-        filename: str,
-        progress_callback: Optional[Callable[[str, int], None]] = None,
-    ) -> pd.DataFrame:
-        """Process uploaded file content into a DataFrame."""
-        ...
-
-    @abstractmethod
-    def read_uploaded_file(
-        self, contents: str, filename: str
-    ) -> Tuple[pd.DataFrame, str]:
-        """Read an uploaded file and return a DataFrame and error."""
-        ...
 
 
 @runtime_checkable

@@ -5,10 +5,8 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from services.common.config_utils import common_init, create_config_methods
-from services.configuration_service import (
-    ConfigurationServiceProtocol,
-    DynamicConfigurationService,
-)
+from core.protocols import ConfigurationServiceProtocol
+from services.configuration_service import DynamicConfigurationService
 from services.data_processing.unified_upload_validator import UnifiedUploadValidator
 from services.data_processing.validation_utils import _lazy_string_validator
 from upload_types import ValidationResult

@@ -14,13 +14,13 @@ from .core.validator import ClientSideValidator as UploadValidator
 from .helpers import save_ai_training_data
 from .protocols import (
     DeviceLearningServiceProtocol,
-    FileProcessorProtocol,
     UploadControllerProtocol,
     UploadProcessingServiceProtocol,
     UploadStorageProtocol,
     UploadValidatorProtocol,
     get_device_learning_service,
 )
+from core.protocols import FileProcessorProtocol
 
 __all__ = [
     "UploadProcessingServiceProtocol",

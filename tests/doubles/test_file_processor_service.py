@@ -4,7 +4,7 @@ from typing import Callable, Optional, Tuple
 
 import pandas as pd
 
-from services.upload.protocols import FileProcessorProtocol
+from core.protocols import FileProcessorProtocol
 
 
 class FileProcessorServiceStub(FileProcessorProtocol):

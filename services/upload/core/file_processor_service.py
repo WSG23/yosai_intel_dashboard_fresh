@@ -3,7 +3,8 @@ from typing import Any, Callable, Dict, List
 
 import pandas as pd
 
-from services.upload.protocols import FileProcessorProtocol, UploadStorageProtocol, UploadDataServiceProtocol
+from core.protocols import FileProcessorProtocol
+from services.upload.protocols import UploadStorageProtocol, UploadDataServiceProtocol
 
 logger = logging.getLogger(__name__)
 
