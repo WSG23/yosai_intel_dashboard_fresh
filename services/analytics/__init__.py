@@ -11,7 +11,9 @@ from .protocols import (
     MetricsCalculatorProtocol,
     ReportGeneratorProtocol,
 )
-from .publisher import Publisher, create_publisher
+from .publisher import Publisher
+from .orchestrator import AnalyticsOrchestrator
+
 from .timescale_queries import (
     build_sliding_window_query,
     build_time_bucket_query,
@@ -45,4 +47,5 @@ __all__ = [
     "fetch_time_buckets",
     "fetch_sliding_window",
     "AsyncAnalyticsService",
+    "AnalyticsOrchestrator",
 ]
