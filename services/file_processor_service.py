@@ -14,7 +14,7 @@ from typing import Any, Dict, List
 import pandas as pd
 
 from analytics_core.utils.unicode_processor import UnicodeHelper
-from config.constants import UPLOAD_ALLOWED_EXTENSIONS
+from config.constants import UPLOAD_ALLOWED_EXTENSIONS, DEFAULT_CHUNK_SIZE
 from core.unicode import process_large_csv_content
 from core.protocols import ConfigurationServiceProtocol
 from utils.file_utils import safe_decode_with_unicode_handling
@@ -22,28 +22,19 @@ from utils.memory_utils import memory_safe
 from utils.protocols import SafeDecoderProtocol
 from yosai_framework.service import BaseService
 
+from services.data_processing.base_file_processor import BaseFileProcessor
+from validation.file_validator import FileValidator
+
 from .stream_processor import StreamProcessor
 
 logger = logging.getLogger(__name__)
 
 
-class FileProcessorService(BaseService):
+class FileProcessorService(BaseService, BaseFileProcessor):
     """File processing service implementation"""
 
     ALLOWED_EXTENSIONS = UPLOAD_ALLOWED_EXTENSIONS
 
-    # Encoding detection order for robust decoding
-    ENCODING_PRIORITY = [
-        "utf-8",
-        "utf-8-sig",
-        "utf-16",
-        "utf-16-le",
-        "utf-16-be",
-        "latin1",
-        "cp1252",
-        "iso-8859-1",
-        "ascii",
-    ]
 
     # Default CSV parsing options
     CSV_OPTIONS: Dict[str, Any] = {
@@ -59,12 +50,16 @@ class FileProcessorService(BaseService):
         config: ConfigurationServiceProtocol,
         decoder: SafeDecoderProtocol = safe_decode_with_unicode_handling,
         validator: FileValidator | None = None,
+        *,
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
     ) -> None:
-        super().__init__("file-processor", "")
+        BaseService.__init__(self, "file-processor", "")
+        BaseFileProcessor.__init__(
+            self, chunk_size=chunk_size, decoder=decoder
+        )
         self.start()
         self.config = config
         self.max_file_size_mb = config.get_max_upload_size_mb()
-        self._decoder = decoder
         self._validator = validator or FileValidator(
             max_size_mb=self.max_file_size_mb,
             allowed_ext=self.ALLOWED_EXTENSIONS,
@@ -106,10 +101,10 @@ class FileProcessorService(BaseService):
         if len(content) > 10 * 1024 * 1024:
             text_content = process_large_csv_content(content)
         else:
-            text_content = self._decode_with_fallback(content)
+            text_content = self.decode_with_fallback(content)
 
         # Sanitize any surrogate characters that may remain after decoding
-        text_content = self._decode_with_surrogate_handling(
+        text_content = self.decode_with_surrogate_handling(
             text_content.encode("utf-8", "surrogatepass"),
             "utf-8",
         )
@@ -148,7 +143,7 @@ class FileProcessorService(BaseService):
     def _process_json(self, content: bytes) -> pd.DataFrame:
         """Process JSON file with robust decoding."""
         logger.debug("Processing JSON content")
-        text_content = self._decode_with_fallback(content)
+        text_content = self.decode_with_fallback(content)
 
         try:
             data = json.loads(text_content)
@@ -173,54 +168,3 @@ class FileProcessorService(BaseService):
         except Exception as e:
             raise ValueError(f"Error reading Excel file: {e}")
 
-    def _decode_with_fallback(self, content: bytes) -> str:
-        """Decode bytes using multiple encodings with basic heuristics."""
-        encoding = None
-        try:
-            import chardet as chardet_module  # type: ignore
-        except ImportError:  # pragma: no cover - optional dependency
-            chardet_module = None
-        if chardet_module is not None:
-            detected = chardet_module.detect(content)
-            encoding = detected.get("encoding")
-        if encoding:
-            try:
-                text = self._decoder(content, encoding)
-                if self._is_reasonable_text(text):
-                    logger.debug("Decoded content using detected %s", encoding)
-                    return text
-            except Exception:
-                pass
-
-        for enc in self.ENCODING_PRIORITY:
-            try:
-                text = self._decoder(content, enc)
-                if self._is_reasonable_text(text):
-                    logger.debug("Decoded content using %s", enc)
-                    return text
-            except Exception:
-                continue
-        from core.unicode import safe_unicode_decode
-
-        logger.warning("All encodings failed, using replacement characters")
-        return safe_unicode_decode(content, "utf-8")
-
-    def _decode_with_surrogate_handling(self, data: bytes, encoding: str) -> str:
-        """Decode ``data`` and remove surrogate code points."""
-        try:
-            text = data.decode(encoding, errors="surrogatepass")
-        except Exception:
-            text = data.decode(encoding, errors="replace")
-        return UnicodeHelper.clean_text(text)
-
-    def _is_reasonable_text(self, text: str) -> bool:
-        """Basic check to ensure decoded text looks valid."""
-        if not text.strip():
-            return False
-
-        replacement_ratio = text.count("\ufffd") / len(text)
-        if replacement_ratio > 0.1:
-            return False
-
-        printable = sum(1 for c in text if c.isprintable() or c.isspace())
-        return (printable / len(text)) > 0.7

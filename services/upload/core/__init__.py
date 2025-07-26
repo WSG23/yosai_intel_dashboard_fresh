@@ -1,10 +1,12 @@
 """Core upload services."""
-from .processor import UploadProcessingService, UploadOrchestrator
-from .validator import ClientSideValidator
-from .file_validator import FileValidator
+
+from validation.file_validator import FileValidator
+
 from .file_processor_service import FileProcessor
 from .learning_coordinator import LearningCoordinator
+from .processor import UploadOrchestrator, UploadProcessingService
 from .ui_builder import UploadUIBuilder
+from .validator import ClientSideValidator
 
 __all__ = [
     "UploadProcessingService",

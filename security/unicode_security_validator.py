@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 import pandas as pd
+from core.exceptions import SecurityError
 
 
 class SecurityThreatLevel(Enum):
@@ -35,10 +36,6 @@ class UnicodeSecurityConfig:
     allow_emoji: bool = True
     allow_special_chars: bool = False
     log_violations: bool = True
-
-
-class SecurityError(Exception):
-    """Security-related error in Unicode processing"""
 
 
 class UnicodeSecurityValidator:
@@ -280,9 +277,7 @@ class UnicodeSecurityValidator:
             elif char.isprintable():
                 safe_chars.append(char)
             elif self.config.log_violations:
-                self.logger.debug(
-                    f"Removed control character: U+{ord(char):04X}"
-                )
+                self.logger.debug(f"Removed control character: U+{ord(char):04X}")
         return "".join(safe_chars)
 
     # ------------------------------------------------------------------
@@ -365,9 +360,7 @@ class UnicodeSecurityValidator:
             report["security_issues"].append("Potential script mixing attack")
 
         if report["non_printable_ratio"] > 0.1:
-            report["security_issues"].append(
-                "High ratio of non-printable characters"
-            )
+            report["security_issues"].append("High ratio of non-printable characters")
 
         if report["has_encoding_exploits"]:
             report["security_issues"].append("Potential encoding-based exploit")
@@ -436,4 +429,3 @@ __all__ = [
     "sanitize_for_utf8",
     "detect_surrogate_pairs",
 ]
-

@@ -1,5 +1,8 @@
-from services.upload.core.file_validator import FileValidator
+from __future__ import annotations
+
 from services.upload.protocols import UploadValidatorProtocol
+from validation.file_validator import FileValidator
+
 
 class DummyValidator(UploadValidatorProtocol):
     def validate(self, filename: str, content: str):
