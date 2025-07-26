@@ -32,6 +32,15 @@ from unicode_toolkit import sanitize_dataframe
 clean_df = sanitize_dataframe(df, progress=True)
 ```
 
+### Unified Handler
+```python
+from config.unicode_handler import UnicodeHandler
+
+handler = UnicodeHandler()
+safe_query = handler.encode_query(query)
+clean_name = handler.clean_filename("data\ud800.csv")
+```
+
 ### Using `unicode_toolkit`
 
 Install the library with `pip install unicode_toolkit` and replace old
