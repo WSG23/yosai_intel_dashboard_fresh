@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import sys
+import types
+
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
 from core.service_container import ServiceContainer
-import types
 
 
 class DummyConfigManager:
@@ -18,7 +21,7 @@ def _create_cycle_pkg(tmp_path):
     (pkg_dir / "__init__.py").write_text("")
     (pkg_dir / "a.py").write_text(
         """
-from services.data_processing.core.protocols import PluginMetadata
+from core.protocols.plugin import PluginMetadata
 
 class APlugin:
     metadata = PluginMetadata(
@@ -45,7 +48,7 @@ def create_plugin():
     )
     (pkg_dir / "b.py").write_text(
         """
-from services.data_processing.core.protocols import PluginMetadata
+from core.protocols.plugin import PluginMetadata
 
 class BPlugin:
     metadata = PluginMetadata(
@@ -79,7 +82,7 @@ def _create_missing_dep_pkg(tmp_path):
     (pkg_dir / "__init__.py").write_text("")
     (pkg_dir / "plug.py").write_text(
         """
-from services.data_processing.core.protocols import PluginMetadata
+from core.protocols.plugin import PluginMetadata
 
 class P:
     metadata = PluginMetadata(

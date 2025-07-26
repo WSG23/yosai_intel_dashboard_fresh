@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
-from functools import lru_cache
 from typing import Any, Dict
 
-import requests
+import aiohttp
+from asyncio import Lock
 from monitoring.data_quality_monitor import get_data_quality_monitor
 
 
@@ -28,36 +28,58 @@ class SchemaRegistryClient:
         self.url = (
             url or os.getenv("SCHEMA_REGISTRY_URL", "http://localhost:8081")
         ).rstrip("/")
+        self._schema_cache: Dict[tuple[str, str], SchemaInfo] = {}
+        self._id_cache: Dict[int, SchemaInfo] = {}
+        self._lock = Lock()
 
-    def _get(self, path: str) -> Any:
-        resp = requests.get(f"{self.url}{path}", timeout=5)
-        resp.raise_for_status()
-        return resp.json()
+    async def _get(self, path: str) -> Any:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"{self.url}{path}",
+                timeout=aiohttp.ClientTimeout(total=5),
+            ) as resp:
+                resp.raise_for_status()
+                return await resp.json()
 
-    def _post(self, path: str, payload: Dict[str, Any]) -> Any:
+    async def _post(self, path: str, payload: Dict[str, Any]) -> Any:
         headers = {"Content-Type": "application/vnd.schemaregistry.v1+json"}
-        resp = requests.post(
-            f"{self.url}{path}", json=payload, headers=headers, timeout=5
-        )
-        resp.raise_for_status()
-        return resp.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{self.url}{path}",
+                json=payload,
+                headers=headers,
+                timeout=aiohttp.ClientTimeout(total=5),
+            ) as resp:
+                resp.raise_for_status()
+                return await resp.json()
 
-    @lru_cache(maxsize=64)
-    def get_schema(self, subject: str, version: int | str = "latest") -> SchemaInfo:
-        data = self._get(f"/subjects/{subject}/versions/{version}")
-        return SchemaInfo(
+    async def get_schema(self, subject: str, version: int | str = "latest") -> SchemaInfo:
+        key = (subject, str(version))
+        async with self._lock:
+            if key in self._schema_cache:
+                return self._schema_cache[key]
+        data = await self._get(f"/subjects/{subject}/versions/{version}")
+        info = SchemaInfo(
             id=data["id"], version=data["version"], schema=json.loads(data["schema"])
         )
+        async with self._lock:
+            self._schema_cache[key] = info
+        return info
 
-    @lru_cache(maxsize=64)
-    def get_schema_by_id(self, schema_id: int) -> SchemaInfo:
-        data = self._get(f"/schemas/ids/{schema_id}")
-        return SchemaInfo(id=schema_id, version=-1, schema=json.loads(data["schema"]))
+    async def get_schema_by_id(self, schema_id: int) -> SchemaInfo:
+        async with self._lock:
+            if schema_id in self._id_cache:
+                return self._id_cache[schema_id]
+        data = await self._get(f"/schemas/ids/{schema_id}")
+        info = SchemaInfo(id=schema_id, version=-1, schema=json.loads(data["schema"]))
+        async with self._lock:
+            self._id_cache[schema_id] = info
+        return info
 
-    def check_compatibility(
+    async def check_compatibility(
         self, subject: str, schema: Dict[str, Any], version: str = "latest"
     ) -> bool:
-        data = self._post(
+        data = await self._post(
             f"/compatibility/subjects/{subject}/versions/{version}",
             {"schema": json.dumps(schema)},
         )
@@ -66,24 +88,28 @@ class SchemaRegistryClient:
             get_data_quality_monitor().record_compatibility_failure()
         return is_compatible
 
-    def register_schema(self, subject: str, schema: Dict[str, Any]) -> int:
+    async def register_schema(self, subject: str, schema: Dict[str, Any]) -> int:
         """Register a new schema version under ``subject`` and return the version."""
-        data = self._post(
+        data = await self._post(
             f"/subjects/{subject}/versions",
             {"schema": json.dumps(schema)},
         )
         version = data.get("version")
         if version is None:
-            versions = self._get(f"/subjects/{subject}/versions")
+            versions = await self._get(f"/subjects/{subject}/versions")
             version = max(versions)
 
         # invalidate cached schema for this subject
-        try:
-            self.get_schema.cache_clear()
-        except AttributeError:
-            pass
+        async with self._lock:
+            self._schema_cache.pop((subject, str(version)), None)
+            self._id_cache.pop(int(version), None)
 
         return int(version)
+
+    async def clear_cache(self) -> None:
+        async with self._lock:
+            self._schema_cache.clear()
+            self._id_cache.clear()
 
 
 __all__ = ["SchemaRegistryClient", "SchemaInfo"]

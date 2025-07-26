@@ -10,13 +10,13 @@ if os.getenv("LIGHTWEIGHT_SERVICES"):
     __all__ = []
 else:
 
+    from .ab_testing import ModelABTester
     from .ai_mapping_store import ai_mapping_store
     from .analytics.calculator import Calculator
     from .analytics.data_loader import DataLoader
     from .analytics.publisher import Publisher
     from .analytics.upload_analytics import UploadAnalyticsProcessor
     from .analytics_generator import AnalyticsGenerator
-    from .ab_testing import ModelABTester
     from .analytics_processor import AnalyticsProcessor
     from .async_file_processor import AsyncFileProcessor
     from .chunked_analysis import analyze_with_chunking
@@ -26,6 +26,7 @@ else:
     from .database_retriever import DatabaseAnalyticsRetriever
     from .db_analytics_helper import DatabaseAnalyticsHelper
     from .event_publisher import publish_event
+    from .explainability_service import ExplainabilityService
     from .helpers.database_initializer import initialize_database
     from .microservices_architect import MicroservicesArchitect, ServiceBoundary
     from .registry import get_service
@@ -96,4 +97,5 @@ else:
         "MicroservicesArchitect",
         "ServiceBoundary",
         "ModelABTester",
+        "ExplainabilityService",
     ]

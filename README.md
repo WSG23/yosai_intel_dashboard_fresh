@@ -40,6 +40,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Internal Service Interfaces](docs/internal_services.md)
 - [Analytics Async Service](docs/analytics_async_migration.md)
 - [Feature Store](docs/feature_store.md)
+- [Async Patterns](docs/async_patterns.md)
 
 <p align="center">
   <img src="docs/architecture.svg" alt="High-level architecture diagram" width="600" />
@@ -504,6 +505,9 @@ critical vulnerabilities are detected. Download the artifact from the
   `unicode_toolkit` package. Import the new helpers such as
   `TextProcessor` and `SQLProcessor` to clean input and safely encode SQL
   statements. See the migration section below for details.
+- **Unified Unicode Handler**: the `UnicodeHandler` class delegates to
+  `QueryUnicodeHandler` and `FileUnicodeHandler` so all sanitization
+  relies on the same `core.unicode` implementation.
 - **Event Driven Callbacks**: Plugins react to events via the unified
   `TrulyUnifiedCallbacks` manager.
   This single interface replaces previous callback controllers.
@@ -869,7 +873,8 @@ implementations can be swapped in for tests. Helper functions like
 
 Unicode handling is now provided by the standalone `unicode_toolkit`
 package. Legacy helpers from `core.unicode` remain as thin wrappers
-around this library. Detect outdated usage and validate the migration
+around this library. A convenience `UnicodeHandler` class combines the
+file and query utilities so you can migrate incrementally. Detect outdated usage and validate the migration
 with the helper tools:
 
 ```bash

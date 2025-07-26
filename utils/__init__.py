@@ -41,6 +41,8 @@ from .mapping_helpers import standardize_column_names
 from .preview_utils import serialize_dataframe_preview
 from .protocols import SafeDecoderProtocol
 from .file_utils import safe_decode_with_unicode_handling
+from .unicode_handler import UnicodeHandler
+from .io_helpers import read_json, write_json, read_text, write_text
 
 __all__ = [
     "UnicodeProcessor",
@@ -75,4 +77,9 @@ __all__ = [
     "debug_callback_registration_flow",
     "find_repeated_imports",
     "print_registration_report",
+    "UnicodeHandler",
+    "read_json",
+    "write_json",
+    "read_text",
+    "write_text",
 ]

@@ -1,4 +1,6 @@
 # flake8: noqa: E402
+from __future__ import annotations
+
 import asyncio
 import json
 import shutil
@@ -8,8 +10,8 @@ import types
 
 import dash
 import dash_bootstrap_components as dbc
-from dash import dcc, html
 import pytest
+from dash import dcc, html
 
 # Stub heavy optional analytics dependencies
 for _mod in (
@@ -27,11 +29,11 @@ if "scipy" not in sys.modules:
 sys.modules.setdefault("scipy.stats", types.ModuleType("scipy.stats"))
 sys.modules["scipy"].stats = sys.modules["scipy.stats"]
 
+from config import create_config_manager
 from core.events import EventBus
 from core.plugins.auto_config import setup_plugins
 from core.service_container import ServiceContainer
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from config import create_config_manager
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
@@ -50,7 +52,7 @@ def _build_plugin(tmp_path):
     plugin_code = """
 from dash import Output, Input
 from dash.exceptions import PreventUpdate
-from services.data_processing.core.protocols import PluginMetadata
+from core.protocols.plugin import PluginMetadata
 from core.plugins.callback_unifier import CallbackUnifier
 
 class SamplePlugin:

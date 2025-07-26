@@ -220,11 +220,8 @@ class MVPTestApp(BaseDatabaseService):
                 logger.info(f"📁 Processing file: {filename}")
                 
                 # Use existing base code upload service
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                
                 assert self.upload_service is not None
-                result_dict = loop.run_until_complete(
+                result_dict = asyncio.run(
                     self.upload_service.process_uploaded_files([contents], [filename])
                 )
                 
@@ -232,7 +229,6 @@ class MVPTestApp(BaseDatabaseService):
                 upload_results = result_dict.get('upload_results', [])
                 preview_components = result_dict.get('file_preview_components', [])
                 file_info = result_dict.get('file_info_dict', {})
-                loop.close()
                 
                 logger.info(f"✅ Base code processing complete")
                 

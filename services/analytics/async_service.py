@@ -7,6 +7,8 @@ from typing import Any, Dict, Protocol
 import asyncpg
 
 from core.cache_manager import CacheConfig, RedisCacheManager
+from core.error_handling import with_async_error_handling
+
 from .common_queries import fetch_access_patterns, fetch_dashboard_summary
 
 
@@ -69,6 +71,7 @@ class AsyncAnalyticsService:
         await self.cache.stop()
 
     # ------------------------------------------------------------------
+    @with_async_error_handling(reraise=True)
     async def get_dashboard_summary(self, days: int = 7) -> Dict[str, Any]:
         """Return dashboard summary using caching."""
         key = f"dashboard_summary:{days}"
@@ -76,15 +79,12 @@ class AsyncAnalyticsService:
             cached = await self.cache.get(key)
             if cached is not None:
                 return cached
-            try:
-                async with self.repo.pool.acquire() as conn:
-                    result = await self.repo.fetch_dashboard_summary(conn, days)
-            except Exception as exc:  # pragma: no cover - runtime failures
-                logger.exception("Dashboard summary query failed: %s", exc)
-                raise
+            async with self.repo.pool.acquire() as conn:
+                result = await self.repo.fetch_dashboard_summary(conn, days)
             await self.cache.set(key, result, self.cache_ttl)
             return result
 
+    @with_async_error_handling(reraise=True)
     async def get_access_patterns(self, days: int = 7) -> Dict[str, Any]:
         """Return access pattern statistics with caching."""
         key = f"access_patterns:{days}"
@@ -92,31 +92,30 @@ class AsyncAnalyticsService:
             cached = await self.cache.get(key)
             if cached is not None:
                 return cached
-            try:
-                async with self.repo.pool.acquire() as conn:
-                    result = await self.repo.fetch_access_patterns(conn, days)
-            except Exception as exc:  # pragma: no cover - runtime failures
-                logger.exception("Access patterns query failed: %s", exc)
-                raise
+            async with self.repo.pool.acquire() as conn:
+                result = await self.repo.fetch_access_patterns(conn, days)
             await self.cache.set(key, result, self.cache_ttl)
             return result
+
+    async def _combined_analytics(self, days: int = 7) -> Dict[str, Any]:
+        async with (
+            self.repo.pool.acquire() as conn1,
+            self.repo.pool.acquire() as conn2,
+        ):
+            summary_task = self.repo.fetch_dashboard_summary(conn1, days)
+            patterns_task = self.repo.fetch_access_patterns(conn2, days)
+            summary, patterns = await asyncio.gather(summary_task, patterns_task)
+        return {"summary": summary, "patterns": patterns}
+
+    @with_async_error_handling(reraise=True)
+    async def _combined_analytics_safe(self, days: int = 7) -> Dict[str, Any]:
+        return await self._combined_analytics(days)
 
     async def get_combined_analytics(self, days: int = 7) -> Dict[str, Any]:
         """Return summary and pattern analytics concurrently."""
         try:
-            async with (
-                self.repo.pool.acquire() as conn1,
-                self.repo.pool.acquire() as conn2,
-            ):
-                summary_task = self.repo.fetch_dashboard_summary(conn1, days)
-                patterns_task = self.repo.fetch_access_patterns(conn2, days)
-                summary, patterns = await asyncio.gather(
-                    summary_task,
-                    patterns_task,
-                )
-            return {"summary": summary, "patterns": patterns}
+            return await self._combined_analytics_safe(days)
         except Exception as exc:  # pragma: no cover - runtime failures
-            logger.exception("Combined analytics failed: %s", exc)
             return {"status": "error", "message": str(exc)}
 
 

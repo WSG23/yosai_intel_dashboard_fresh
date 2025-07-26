@@ -2,16 +2,18 @@ import json
 import os
 
 from filelock import FileLock
-from flask import Blueprint, abort, jsonify, request
-from marshmallow import Schema, fields
-from flask_apispec import doc, marshal_with, use_kwargs
+from flask import Blueprint, abort, request
+from flask_apispec import doc
+from pydantic import BaseModel
+
+from utils.pydantic_decorators import validate_input, validate_output
 
 settings_bp = Blueprint("settings", __name__)
 
 
-class SettingsSchema(Schema):
-    theme = fields.String()
-    itemsPerPage = fields.Integer(data_key="itemsPerPage")
+class SettingsSchema(BaseModel):
+    theme: str | None = None
+    itemsPerPage: int | None = None
 
 SETTINGS_FILE = os.getenv(
     "YOSAI_SETTINGS_FILE",
@@ -46,26 +48,24 @@ def _save_settings(settings: dict) -> None:
 
 @settings_bp.route("/api/v1/settings", methods=["GET"])
 @doc(description="Get user settings", tags=["settings"])
-@marshal_with(SettingsSchema)
+@validate_output(SettingsSchema)
 def get_settings():
     """Return saved user settings or defaults."""
     settings = _load_settings()
-    return jsonify(settings), 200
+    return settings, 200
 
 
 @settings_bp.route("/api/v1/settings", methods=["POST", "PUT"])
 @doc(description="Update user settings", tags=["settings"])
-@use_kwargs(SettingsSchema, location="json")
-@marshal_with(SettingsSchema)
-def update_settings(**data):
+@validate_input(SettingsSchema)
+@validate_output(SettingsSchema)
+def update_settings(payload: SettingsSchema):
     """Update and persist user settings."""
-    data = data or {}
-    if not isinstance(data, dict):
-        abort(400, description="Invalid payload")
+    data = payload.dict(exclude_none=True)
     settings = _load_settings()
     settings.update(data)
     try:
         _save_settings(settings)
     except Exception as exc:
         abort(500, description=str(exc))
-    return jsonify({"status": "success", "settings": settings}), 200
+    return {"status": "success", "settings": settings}, 200
