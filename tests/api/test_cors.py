@@ -21,7 +21,11 @@ def _create_app(monkeypatch, origins):
         register_analytics_blueprints=lambda app: None,
         init_cache_manager=lambda: None,
     )
-    monkeypatch.setitem(sys.modules, "api.analytics_endpoints", analytics_stub)
+    monkeypatch.setitem(
+        sys.modules,
+        "yosai_intel_dashboard.src.adapters.api.analytics_endpoints",
+        analytics_stub,
+    )
 
     container = types.SimpleNamespace(
         services={"file_processor": object()},
@@ -78,7 +82,9 @@ def _create_app(monkeypatch, origins):
         lambda: types.SimpleNamespace(cors_origins=origins),
     )
 
-    adapter = importlib.import_module("api.adapter")
+    adapter = importlib.import_module(
+        "yosai_intel_dashboard.src.adapters.api.adapter"
+    )
     return adapter.create_api_app()
 
 
