@@ -29,6 +29,25 @@ repositories to simplify development and deployment.
 These directories will be removed from the main repo once their new
 repositories are published.
 
+## Clean Architecture Migration Status
+
+The `scripts/migrate_to_clean_arch.py` helper moves legacy modules into the
+`yosai_intel_dashboard/src` hierarchy. Run it with `--report` to view progress.
+
+| Directory | Destination | Status |
+|-----------|-------------|--------|
+| `core/` | `yosai_intel_dashboard/src/core/domain` | Pending |
+| `models/` | `yosai_intel_dashboard/src/core/domain` | Pending |
+| `services/` | `yosai_intel_dashboard/src/services` | Pending |
+| `config/` | `yosai_intel_dashboard/src/infrastructure/config` | Pending |
+| `monitoring/` | `yosai_intel_dashboard/src/infrastructure/monitoring` | Pending |
+| `security/` | `yosai_intel_dashboard/src/infrastructure/security` | Pending |
+| `api/` | `yosai_intel_dashboard/src/adapters/api` | Pending |
+| `plugins/` | `yosai_intel_dashboard/src/adapters/api/plugins` | Pending |
+
+_Migrated 0 of 8 directories (0%)_
+
+
 ## Migration Steps
 
 1. Create new repositories under the organization for each directory
@@ -42,4 +61,23 @@ repositories are published.
    in this repo until the migration is complete.
 6. Remove the directories from the monorepo after successful builds
    and deployment testing.
+
+### Completing Directory Extraction
+
+To move the remaining directories into the clean architecture layout:
+
+1. Ensure your working tree has no uncommitted changes.
+2. Optionally create a backup archive:
+   ```bash
+   python scripts/migrate_to_clean_arch.py --backup migrate_backup.tar.gz
+   ```
+3. Run the migration script:
+   ```bash
+   python scripts/migrate_to_clean_arch.py
+   ```
+4. Verify progress with:
+   ```bash
+   python scripts/migrate_to_clean_arch.py --report
+   ```
+5. Commit and push the changes once the report shows 100% migrated.
 
