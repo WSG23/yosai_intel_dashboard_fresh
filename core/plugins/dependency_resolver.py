@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import DefaultDict, Dict, List, Set
 
-
-from services.data_processing.core.protocols import PluginProtocol
+from core.protocols.plugin import PluginProtocol
 
 
 class CircularDependencyError(ValueError):

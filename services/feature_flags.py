@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import threading
+import asyncio
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 
@@ -23,15 +24,17 @@ class FeatureFlagManager:
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._last_mtime: float | None = None
-        self.load_flags()
+        asyncio.run(self.load_flags())
 
     async def load_flags_async(self) -> None:
         """Asynchronously load flags from the configured source."""
+
         data: Dict[str, Any] = {}
         if self.source.startswith("http://") or self.source.startswith("https://"):
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(self.source, timeout=2) as resp:
+
                         resp.raise_for_status()
                         data = await resp.json()
             except Exception as exc:  # pragma: no cover - network failures
@@ -87,6 +90,7 @@ class FeatureFlagManager:
             asyncio.run(self.load_flags_async())
             if self._stop.wait(self.poll_interval):
                 break
+
 
     def is_enabled(self, name: str, default: bool = False) -> bool:
         """Return True if *name* flag is enabled."""

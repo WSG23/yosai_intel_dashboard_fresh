@@ -9,6 +9,7 @@ from config.dynamic_config import dynamic_config
 from services.controllers.upload_controller import UploadProcessingController
 from services.data_processing.processor import Processor
 from services.interfaces import get_upload_data_service
+from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from validation.security_validator import SecurityValidator
 
 logger = logging.getLogger(__name__)
@@ -117,10 +118,13 @@ def create_loader(
     if controller is None:
         validator = SecurityValidator()
         processor = processor or Processor(validator=validator)
+        upload_service = get_upload_data_service()
+        upload_processor = UploadAnalyticsProcessor(validator, processor)
         controller = UploadProcessingController(
             validator,
             processor,
-            get_upload_data_service(),
+            upload_service,
+            upload_processor,
         )
     else:
         processor = processor or Processor(validator=SecurityValidator())

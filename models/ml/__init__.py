@@ -1,6 +1,7 @@
 """Machine learning model utilities."""
 
 from .model_registry import ModelRegistry, ModelRecord
+from .base_model import BaseModel, ModelMetadata
 from .security_models import (
     TrainResult,
     train_access_anomaly_iforest,
@@ -13,6 +14,8 @@ from .security_models import (
 __all__ = [
     "ModelRegistry",
     "ModelRecord",
+    "BaseModel",
+    "ModelMetadata",
     "TrainResult",
     "train_access_anomaly_iforest",
     "train_risk_scoring_xgboost",

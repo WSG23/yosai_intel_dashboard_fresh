@@ -280,14 +280,14 @@ class ServiceContainer(BaseModel):
         if not hasattr(warmer, "warm"):
             return
 
-        try:
-            import asyncio
+        import asyncio
 
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
             asyncio.run(warmer.warm())
-        except RuntimeError:  # event loop already running
-            loop = asyncio.new_event_loop()
-            loop.run_until_complete(warmer.warm())
-            loop.close()
+        else:
+            asyncio.run_coroutine_threadsafe(warmer.warm(), loop).result()
 
     # ------------------------------------------------------------------
     def validate_registrations(self) -> Dict[str, List[str]]:

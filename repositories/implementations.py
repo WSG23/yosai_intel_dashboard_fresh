@@ -4,17 +4,26 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from datetime import datetime
 from typing import List, Optional
 
 from models.entities import AccessEvent, Door, Person
 from models.enums import AccessResult, BadgeStatus, DoorType
+from utils.unicode_handler import UnicodeHandler
+
+logger = logging.getLogger(__name__)
 from database.types import DatabaseConnection
 
 from .interfaces import IAccessEventRepository, IDoorRepository, IPersonRepository
 
 
+def _sanitize(value: Optional[str]) -> Optional[str]:
+    return UnicodeHandler.sanitize(value) if value is not None else None
+
+
 def _row_to_person(row: dict) -> Person:
+    row = {k: UnicodeHandler.sanitize(v) for k, v in row.items()}
     return Person(
         person_id=row["person_id"],
         name=row.get("name"),
@@ -43,6 +52,7 @@ def _row_to_person(row: dict) -> Person:
 
 
 def _row_to_event(row: dict) -> AccessEvent:
+    row = {k: UnicodeHandler.sanitize(v) for k, v in row.items()}
     return AccessEvent(
         event_id=row["event_id"],
         timestamp=datetime.fromisoformat(row["timestamp"]),
@@ -59,6 +69,7 @@ def _row_to_event(row: dict) -> AccessEvent:
 
 
 def _row_to_door(row: dict) -> Door:
+    row = {k: UnicodeHandler.sanitize(v) for k, v in row.items()}
     return Door(
         door_id=row["door_id"],
         door_name=row.get("door_name"),
@@ -109,18 +120,19 @@ class PersonRepository(IPersonRepository):
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         params = (
-            person.person_id,
-            person.name,
-            person.employee_id,
-            person.department,
+            _sanitize(person.person_id),
+            _sanitize(person.name),
+            _sanitize(person.employee_id),
+            _sanitize(person.department),
             person.clearance_level,
-            ",".join(person.access_groups),
+            _sanitize(",".join(person.access_groups)),
             int(person.is_visitor),
-            person.host_person_id,
+            _sanitize(person.host_person_id),
             person.created_at.isoformat(),
             person.last_active.isoformat() if person.last_active else None,
             person.risk_score,
         )
+        logger.info("Sanitized query: %s", query)
         await asyncio.to_thread(self.conn.execute_command, query, params)
         return person
 
@@ -132,23 +144,26 @@ class PersonRepository(IPersonRepository):
             "last_active=%s, risk_score=%s WHERE person_id=%s"
         )
         params = (
-            person.name,
-            person.employee_id,
-            person.department,
+            _sanitize(person.name),
+            _sanitize(person.employee_id),
+            _sanitize(person.department),
             person.clearance_level,
-            ",".join(person.access_groups),
+            _sanitize(",".join(person.access_groups)),
             int(person.is_visitor),
-            person.host_person_id,
+            _sanitize(person.host_person_id),
             person.last_active.isoformat() if person.last_active else None,
             person.risk_score,
-            person.person_id,
+            _sanitize(person.person_id),
         )
+        logger.info("Sanitized query: %s", query)
         await asyncio.to_thread(self.conn.execute_command, query, params)
         return person
 
     # --------------------------------------------------------------
     async def delete(self, person_id: str) -> bool:
         query = "DELETE FROM people WHERE person_id=%s"
+        person_id = _sanitize(person_id)
+        logger.info("Sanitized query: %s", query)
         await asyncio.to_thread(self.conn.execute_command, query, (person_id,))
         return True
 
@@ -215,19 +230,20 @@ class AccessEventRepository(IAccessEventRepository):
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         params = (
-            event.event_id,
+            _sanitize(event.event_id),
             event.timestamp.isoformat(),
-            event.person_id,
-            event.door_id,
-            event.badge_id,
+            _sanitize(event.person_id),
+            _sanitize(event.door_id),
+            _sanitize(event.badge_id),
             event.access_result.value,
             event.badge_status.value,
             event.door_held_open_time,
             int(event.entry_without_badge),
-            event.device_status,
+            _sanitize(event.device_status),
             json.dumps(event.raw_data),
             datetime.now().isoformat(),
         )
+        logger.info("Sanitized query: %s", query)
         await asyncio.to_thread(self.conn.execute_command, query, params)
         return event
 
