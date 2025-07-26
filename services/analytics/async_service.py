@@ -7,6 +7,7 @@ from typing import Any, Dict, Protocol
 import asyncpg
 
 from core.cache_manager import CacheConfig, RedisCacheManager
+from .common_queries import fetch_access_patterns, fetch_dashboard_summary
 
 
 class AsyncAnalyticsRepository(Protocol):
@@ -26,6 +27,23 @@ class AsyncAnalyticsRepository(Protocol):
 
 
 logger = logging.getLogger(__name__)
+
+
+class PGAnalyticsRepository:
+    """Default repository using :mod:`asyncpg` and shared queries."""
+
+    def __init__(self, pool: asyncpg.Pool) -> None:
+        self.pool = pool
+
+    async def fetch_dashboard_summary(
+        self, conn: asyncpg.Connection, days: int = 7
+    ) -> Dict[str, Any]:
+        return await fetch_dashboard_summary(conn, days)
+
+    async def fetch_access_patterns(
+        self, conn: asyncpg.Connection, days: int = 7
+    ) -> Dict[str, Any]:
+        return await fetch_access_patterns(conn, days)
 
 
 class AsyncAnalyticsService:
@@ -102,4 +120,8 @@ class AsyncAnalyticsService:
             return {"status": "error", "message": str(exc)}
 
 
-__all__ = ["AsyncAnalyticsService", "AsyncAnalyticsRepository"]
+__all__ = [
+    "AsyncAnalyticsService",
+    "AsyncAnalyticsRepository",
+    "PGAnalyticsRepository",
+]
