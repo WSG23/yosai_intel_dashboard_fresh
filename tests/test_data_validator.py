@@ -25,3 +25,4 @@ def test_data_validator_suspicious_columns():
     result = validator.validate_dataframe(df)
     assert not result.valid
     assert any("suspicious_column_names" in issue for issue in result.issues)
+

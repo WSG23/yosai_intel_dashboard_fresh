@@ -9,15 +9,17 @@ from config.dynamic_config import dynamic_config
 from config.constants import DEFAULT_CHUNK_SIZE
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
-from core.unicode import process_large_csv_content, sanitize_for_utf8, sanitize_dataframe
+from core.unicode import (
+    process_large_csv_content,
+    sanitize_for_utf8,
+    sanitize_dataframe,
+)
 from services.data_processing.core.exceptions import (
     FileProcessingError,
     FileValidationError,
 )
-from services.data_processing.unified_upload_validator import (
-    UnifiedUploadValidator,
-    safe_decode_with_unicode_handling,
-)
+from services.data_processing.unified_upload_validator import UnifiedUploadValidator
+from utils.file_utils import safe_decode_with_unicode_handling
 from upload_types import ValidationResult
 
 

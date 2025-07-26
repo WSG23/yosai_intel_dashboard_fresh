@@ -11,6 +11,7 @@ from .data_validator import (
     MissingColumnsRule,
     SuspiciousColumnNameRule,
 )
+
 from .rules import CompositeValidator, ValidationRule
 
 __all__ = [
@@ -18,7 +19,9 @@ __all__ = [
     "Validator",
     "ValidationRule",
     "CompositeValidator",
+    "UnicodeValidator",
     "SecurityValidator",
+    "UnicodeValidator",
     "FileValidator",
     "DataValidator",
     "DataValidatorProtocol",
