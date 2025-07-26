@@ -317,9 +317,7 @@ class UnifiedUploadValidator:
 __all__ = [
     "UnifiedUploadValidator",
     "ValidationResult",
-    "safe_decode_with_unicode_handling",
     "safe_decode_file",
     "process_dataframe",
     "validate_dataframe_content",
 ]
-

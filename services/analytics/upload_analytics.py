@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from core.security_validator import SecurityValidator
+from validation.data_validator import DataValidator, DataValidatorProtocol
 from services.analytics_summary import summarize_dataframe
 from services.chunked_analysis import analyze_with_chunking
 from services.upload_processing import (
@@ -26,9 +26,10 @@ def summarize_dataframes(dfs: List[pd.DataFrame]) -> Dict[str, Any]:
 
 
 def run_anomaly_detection(
-    df: pd.DataFrame, validator: SecurityValidator
+    df: pd.DataFrame, validator: DataValidatorProtocol | None = None
 ) -> Dict[str, Any]:
     """Run anomaly detection using chunked analysis."""
+    validator = validator or DataValidator(required_columns=["timestamp", "person_id"])
     return analyze_with_chunking(df, validator, ["anomaly"])
 
 

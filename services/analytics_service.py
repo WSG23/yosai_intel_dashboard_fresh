@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 """Analytics Service - Enhanced with Unique Patterns Analysis.
 
 Uploaded files are validated with
@@ -12,6 +14,7 @@ import threading
 from pathlib import Path
 from typing import Any, Dict, List, Protocol
 
+
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
@@ -23,7 +26,7 @@ from core.protocols import (
     EventBusProtocol,
     StorageProtocol,
 )
-from validation.security_validator import SecurityValidator
+from models.ml import ModelRegistry
 from services.analytics.calculator import Calculator
 from services.analytics.data_loader import DataLoader
 from services.analytics.protocols import DataProcessorProtocol
@@ -36,7 +39,7 @@ from services.helpers.database_initializer import initialize_database
 from services.interfaces import get_upload_data_service
 from services.summary_report_generator import SummaryReportGenerator
 from services.upload_data_service import UploadDataService
-from models.ml import ModelRegistry
+from validation.security_validator import SecurityValidator
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 
@@ -136,7 +139,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self.calculator = Calculator(self.report_generator)
         self.publisher = Publisher(self.event_bus)
 
-    def _initialize_database(self):
+    def _initialize_database(self) -> None:
         """Initialize database connection via helper."""
         (
             self.database_manager,
@@ -216,7 +219,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
         """Get analytics from database."""
         return self.database_retriever.get_analytics()
 
+    @override
     @cache_with_lock(_cache_manager, ttl=300)
+    @override
     def get_dashboard_summary(self) -> Dict[str, Any]:
         """Get a basic dashboard summary"""
         try:
@@ -268,7 +273,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
         return self.calculator.analyze_patterns(df, original_rows)
 
     @cache_with_lock(_cache_manager, ttl=600)
-    def get_unique_patterns_analysis(self, data_source: str | None = None):
+    def get_unique_patterns_analysis(
+        self, data_source: str | None = None
+    ) -> Dict[str, Any]:
         """Get unique patterns analysis for the requested source."""
         logger = logging.getLogger(__name__)
 
@@ -328,15 +335,18 @@ class AnalyticsService(AnalyticsServiceProtocol):
     # ------------------------------------------------------------------
     # AnalyticsProviderProtocol implementation
     # ------------------------------------------------------------------
+    @override
     def process_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Alias for :meth:`process_data` required by ``AnalyticsProviderProtocol``."""
         return self.process_data(df)
 
+    @override
     def process_data(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Process ``df`` and return a metrics dictionary."""
         cleaned = self.clean_uploaded_dataframe(df)
         return self.summarize_dataframe(cleaned)
 
+    @override
     def get_metrics(self) -> Dict[str, Any]:
         """Return current analytics metrics."""
         return self.get_analytics_status()
@@ -344,6 +354,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
     # ------------------------------------------------------------------
     # Placeholder implementations for abstract methods
     # ------------------------------------------------------------------
+    @override
     def analyze_access_patterns(
         self, days: int, user_id: str | None = None
     ) -> Dict[str, Any]:
@@ -353,6 +364,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         )
         return {"patterns": [], "days": days, "user_id": user_id}
 
+    @override
     def detect_anomalies(
         self, data: pd.DataFrame, sensitivity: float = 0.5
     ) -> List[Dict[str, Any]]:
@@ -360,6 +372,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         logger.debug(f"detect_anomalies called with sensitivity={sensitivity}")
         return []
 
+    @override
     def generate_report(
         self, report_type: str, params: Dict[str, Any]
     ) -> Dict[str, Any]:

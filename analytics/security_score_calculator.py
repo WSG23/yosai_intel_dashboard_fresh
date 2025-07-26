@@ -10,8 +10,7 @@ import pandas as pd
 from pandas import Series, DataFrame
 
 # Unicode-safe string handling
-from security.unicode_security_handler import UnicodeSecurityHandler
-
+from validation.unicode_validator import UnicodeValidator
 
 @dataclass
 class SecurityCalculationConfig:
@@ -51,10 +50,12 @@ class SecurityScoreCalculator:
     def __init__(self, config: Optional[SecurityCalculationConfig] = None):
         self.config = config or SecurityCalculationConfig()
         self.logger = logging.getLogger(__name__)
+        self._validator = UnicodeValidator()
 
     def sanitize_unicode_text(self, text: str) -> str:
-        """Sanitize ``text`` using the shared security handler."""
-        return UnicodeSecurityHandler.sanitize_unicode_input(text)
+        """Sanitize ``text`` using :class:`UnicodeValidator`."""
+        return self._validator.validate_text(text)
+
 
     def validate_dataframe(self, df: pd.DataFrame) -> Tuple[bool, str]:
         """Validate required columns exist and add missing ones"""
