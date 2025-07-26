@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Iterable, Protocol
+import re
+from typing import Iterable, Pattern, Protocol
 
 import pandas as pd
 
@@ -9,74 +10,77 @@ from .rules import CompositeValidator, ValidationRule
 
 
 class DataValidatorProtocol(Protocol):
-    """Protocol for dataframe validators."""
+    """Protocol for DataFrame validators."""
 
     def validate_dataframe(self, df: pd.DataFrame) -> ValidationResult:
         ...
 
 
-class DataValidationRule(ValidationRule, Protocol):
-    """Rule interface specialized for :class:`pandas.DataFrame`."""
+class EmptyDataRule(ValidationRule):
+    """Fail if the DataFrame is empty."""
 
-    def validate(self, df: pd.DataFrame) -> ValidationResult:  # type: ignore[override]
-        ...
-
-
-class MissingColumnsRule(DataValidationRule):
-    def __init__(self, required: Iterable[str]) -> None:
-        self.required = list(required)
-
-    def validate(self, df: pd.DataFrame) -> ValidationResult:  # type: ignore[override]
-        missing = [c for c in self.required if c not in df.columns]
-        if missing:
-            return ValidationResult(False, df, [f"missing_columns:{','.join(missing)}"])
-        return ValidationResult(True, df)
-
-
-class EmptyDataRule(DataValidationRule):
-    def validate(self, df: pd.DataFrame) -> ValidationResult:  # type: ignore[override]
+    def validate(self, df: pd.DataFrame) -> ValidationResult:
         if df.empty:
             return ValidationResult(False, df, ["empty_dataframe"])
         return ValidationResult(True, df)
 
 
-class SuspiciousColumnNameRule(DataValidationRule):
-    def __init__(self, prefixes: Iterable[str] | None = None) -> None:
-        self.prefixes = [p.lower() for p in (prefixes or ["=", "+", "-", "@", "cmd", "system"])]
+class MissingColumnsRule(ValidationRule):
+    """Ensure required columns are present."""
 
-    def validate(self, df: pd.DataFrame) -> ValidationResult:  # type: ignore[override]
-        suspicious = [c for c in df.columns if any(str(c).lower().startswith(p) for p in self.prefixes)]
-        if suspicious:
-            return ValidationResult(False, df, [f"suspicious_column_names:{','.join(map(str, suspicious))}"])
+    def __init__(self, required: Iterable[str]) -> None:
+        self.required = list(required)
+
+    def validate(self, df: pd.DataFrame) -> ValidationResult:
+        missing = [c for c in self.required if c not in df.columns]
+        if missing:
+            issue = f"missing_columns:{','.join(missing)}"
+            return ValidationResult(False, df, [issue])
         return ValidationResult(True, df)
 
 
-class DataValidator(CompositeValidator, DataValidatorProtocol):
-    """Validate pandas DataFrames using configurable rules."""
+class SuspiciousColumnNameRule(ValidationRule):
+    """Detect suspicious column names that may indicate malicious input."""
+
+    DEFAULT_PATTERN = re.compile(r"(?i)^(?:=|\+|-|@)|cmd|system|drop|delete|exec")
+
+    def __init__(self, pattern: Pattern[str] | None = None) -> None:
+        self.pattern = pattern or self.DEFAULT_PATTERN
+
+    def validate(self, df: pd.DataFrame) -> ValidationResult:
+        suspicious = [c for c in df.columns if self.pattern.search(str(c))]
+        if suspicious:
+            issue = f"suspicious_columns:{','.join(map(str, suspicious))}"
+            return ValidationResult(False, df, [issue])
+        return ValidationResult(True, df)
+
+
+class DataValidator(CompositeValidator):
+    """Validate DataFrames for analytics modules."""
+
 
     def __init__(
         self,
         required_columns: Iterable[str] | None = None,
-        suspicious_prefixes: Iterable[str] | None = None,
-        extra_rules: Iterable[DataValidationRule] | None = None,
+        rules: Iterable[ValidationRule] | None = None,
+        suspicious_pattern: Pattern[str] | None = None,
     ) -> None:
-        rules: list[ValidationRule] = [EmptyDataRule()]
+        base_rules = list(rules or [])
         if required_columns:
-            rules.append(MissingColumnsRule(required_columns))
-        rules.append(SuspiciousColumnNameRule(suspicious_prefixes))
-        if extra_rules:
-            rules.extend(extra_rules)
-        super().__init__(rules)
+            base_rules.append(MissingColumnsRule(required_columns))
+        base_rules.append(EmptyDataRule())
+        base_rules.append(SuspiciousColumnNameRule(suspicious_pattern))
+        super().__init__(base_rules)
+
 
     def validate_dataframe(self, df: pd.DataFrame) -> ValidationResult:
         return self.validate(df)
 
 
 __all__ = [
-    "DataValidatorProtocol",
-    "DataValidationRule",
-    "MissingColumnsRule",
-    "EmptyDataRule",
-    "SuspiciousColumnNameRule",
     "DataValidator",
+    "DataValidatorProtocol",
+    "EmptyDataRule",
+    "MissingColumnsRule",
+    "SuspiciousColumnNameRule",
 ]
