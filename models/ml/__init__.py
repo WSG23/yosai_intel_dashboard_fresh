@@ -1,6 +1,7 @@
 """Machine learning model utilities."""
 
 from .model_registry import ModelRegistry, ModelRecord
+from .data_quality import DataQualityFramework
 from .security_models import (
     TrainResult,
     train_access_anomaly_iforest,
@@ -19,4 +20,5 @@ __all__ = [
     "train_predictive_maintenance_lstm",
     "train_user_clustering_dbscan",
     "train_online_threat_detector",
+    "DataQualityFramework",
 ]
