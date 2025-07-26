@@ -1,13 +1,9 @@
 import logging
 from typing import Any, Dict, List
 try:  # Python 3.12+
-    from typing import override  # type: ignore[attr-defined]
-except ImportError:  # pragma: no cover - <3.12
-    from typing_extensions import override
-
-try:  # Python 3.12+
     from typing import override
-except ImportError:  # pragma: no cover - fallback for older versions
+except ImportError:  # pragma: no cover - <3.12 fallback
+
     from typing_extensions import override
 
 import pandas as pd
@@ -47,12 +43,13 @@ class UploadDataService(UploadDataServiceProtocol):
     def load_dataframe(self, filename: str) -> pd.DataFrame:
         return self.store.load_dataframe(filename)
 
+    @override
     def load_mapping(self, filename: str) -> Dict[str, Any]:
         return self.store.load_mapping(filename)
 
+    @override
     def save_mapping(self, filename: str, mapping: Dict[str, Any]) -> None:
         self.store.save_mapping(filename, mapping)
-
 
 
 def _resolve_service(
@@ -123,7 +120,6 @@ def save_mapping(
 ) -> None:
     svc = _resolve_service(service, container)
     svc.save_mapping(filename, mapping)
-
 
 
 __all__ = [

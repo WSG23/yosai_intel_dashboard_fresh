@@ -12,7 +12,11 @@ import logging
 import os
 import threading
 from pathlib import Path
-from typing import Any, Dict, List, Protocol
+from typing import Any, Dict, List, Optional, Protocol
+try:  # Python 3.12+
+    from typing import override
+except ImportError:  # pragma: no cover - <3.12 fallback
+    from typing_extensions import override
 
 
 import pandas as pd
@@ -55,10 +59,12 @@ class ConfigProviderProtocol(Protocol):
 class AnalyticsProviderProtocol(Protocol):
     """Basic analytics provider interface."""
 
+    @override
     def process_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Process ``df`` and return analytics metrics."""
         ...
 
+    @override
     def get_metrics(self) -> Dict[str, Any]:
         """Return current analytics metrics."""
         ...
