@@ -1,4 +1,7 @@
-from .unified_callback_manager import UnifiedCallbackManager, CallbackManager
+from core.callbacks import UnifiedCallbackManager
+
+# Backwards compatibility alias
+CallbackManager = UnifiedCallbackManager
 
 __all__ = ["UnifiedCallbackManager", "CallbackManager"]
 

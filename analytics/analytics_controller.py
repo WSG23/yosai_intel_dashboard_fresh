@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callbacks import UnifiedCallbackManager
 
 from .business_service import AnalyticsBusinessService
 from .data_repository import AnalyticsDataRepository
@@ -17,7 +17,7 @@ class AnalyticsController(AnalyticsUIController):
     def __init__(
         self,
         repository: Optional[AnalyticsDataRepository] = None,
-        callback_manager: Optional[CallbackManager] = None,
+        callback_manager: Optional[UnifiedCallbackManager] = None,
     ) -> None:
         repository = repository or AnalyticsDataRepository()
         service = AnalyticsBusinessService(repository)

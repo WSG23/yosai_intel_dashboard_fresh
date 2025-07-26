@@ -8,7 +8,7 @@ from typing import List
 
 import pandas as pd
 
-from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callbacks import UnifiedCallbackManager
 from core.callback_events import CallbackEvent
 from core.protocols import UnicodeProcessorProtocol
 from file_processing.format_detector import FormatDetector
@@ -29,7 +29,7 @@ class ArchiveReader(BaseReader):
         self, *, unicode_processor: UnicodeProcessorProtocol | None = None
     ) -> None:
         super().__init__(unicode_processor=unicode_processor)
-        self.callback_controller = CallbackManager()
+        self.callback_controller = UnifiedCallbackManager()
 
     def read(self, file_path: str, hint: dict | None = None) -> pd.DataFrame:
         path = Path(file_path)

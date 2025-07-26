@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, List, Optional
 from dash import Dash
 
 from config import ConfigManager
-from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callbacks import UnifiedCallbackManager
 from core.service_container import ServiceContainer
 from core.plugins.manager import ThreadSafePluginManager
 from services.data_processing.core.protocols import PluginProtocol
@@ -27,11 +27,11 @@ class UnifiedPluginRegistry:
         container: ServiceContainer,
         config_manager: ConfigManager,
         package: str = "plugins",
-        callback_manager: Optional[CallbackManager] = None,
+        callback_manager: Optional[UnifiedCallbackManager] = None,
     ) -> None:
         self.app = app
         self.container = container
-        self.callback_manager = callback_manager or CallbackManager()
+        self.callback_manager = callback_manager or UnifiedCallbackManager()
 
         # Import lazily to avoid circular dependency during module import
         from core.truly_unified_callbacks import TrulyUnifiedCallbacks

@@ -7,7 +7,7 @@ import time
 from typing import Any, Dict, List
 
 from config import ConfigManager
-from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callbacks import UnifiedCallbackManager
 from core.service_container import ServiceContainer
 from services.data_processing.core.protocols import (
     CallbackPluginProtocol,
@@ -165,7 +165,7 @@ class PluginManager:
             return False
 
     def register_plugin_callbacks(
-        self, app: Any, manager: CallbackManager
+        self, app: Any, manager: UnifiedCallbackManager
     ) -> List[Any]:
         """Register callbacks for all loaded plugins"""
         results = []

@@ -10,7 +10,7 @@ from datetime import datetime
 import pytest
 
 from core.callback_events import CallbackEvent
-from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callbacks import UnifiedCallbackManager as CallbackManager
 
 
 class CallbackContext:

@@ -44,7 +44,7 @@ def submit_query(n):
 `CallbackManager` delivers application events outside of Dash callbacks.
 
 ```python
-from analytics_core.callbacks.unified_callback_manager import CallbackManager
+from core.callbacks import UnifiedCallbackManager as CallbackManager
 from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
 
 events = CallbackManager()

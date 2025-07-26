@@ -1,8 +1,6 @@
 """Security patterns analysis subpackage."""
 
-from analytics_core.callbacks.unified_callback_manager import (
-    CallbackManager as SecurityCallbackController,
-)
+from core.callbacks import UnifiedCallbackManager as SecurityCallbackController
 from security_callback_controller import (
     SecurityEvent,
     emit_security_event,

@@ -13,7 +13,7 @@ sys.path.insert(0, str(project_root))
 
 # Apply callback patch first
 try:
-    from analytics_core.callbacks.unified_callback_manager import CallbackManager
+    from core.callbacks import UnifiedCallbackManager as CallbackManager
     if hasattr(CallbackManager, 'handle_register') and not hasattr(CallbackManager, 'register_handler'):
         CallbackManager.register_handler = CallbackManager.handle_register
         print("✅ Callback patch applied")
