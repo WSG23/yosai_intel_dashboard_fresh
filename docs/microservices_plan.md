@@ -57,12 +57,15 @@ variables.  The registry endpoint is configured via `SERVICE_REGISTRY_URL`
 (defaults to `http://localhost:8500`).  When the analytics or events services
 are available in the registry, the application automatically routes requests to
 them through the corresponding adapters.
+For Kubernetes deployments, DNS resolution is recommended and a registry
+client is typically unnecessary.
 
 ### Migration to Kubernetes DNS
 
-The Kubernetes deployment no longer uses a registry client.  Services are
-addressed directly via DNS using the pattern
-`<service>.<namespace>.svc.cluster.local`.  The `SERVICE_DISCOVERY_URL`
-environment variable has been removed from the default configuration and any
-references can be safely deleted.
+The preferred setup relies on Kubernetes DNS rather than a registry client.
+Services are addressed directly using the pattern
+`<service>.<namespace>.svc.cluster.local`.
+The legacy `SERVICE_DISCOVERY_URL` variable has been replaced by
+`SERVICE_REGISTRY_URL` for local deployments and can be removed from
+Kubernetes manifests.
 
