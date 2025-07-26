@@ -23,6 +23,10 @@ def __getattr__(name: str):
         from validation.security_validator import SecurityValidator as _SV
 
         return _SV
+    if name == "UnicodeValidator":
+        from validation.unicode_validator import UnicodeValidator as _UV
+
+        return _UV
     if name in {"UnicodeSurrogateValidator", "SurrogateHandlingConfig"}:
         from .unicode_surrogate_validator import (
             SurrogateHandlingConfig as _SHC,

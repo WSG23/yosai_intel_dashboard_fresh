@@ -5,9 +5,7 @@ from typing import Optional
 
 import pandas as pd
 
-from validation import UnicodeValidator
-
-_validator = UnicodeValidator()
+from validation.unicode_validator import UnicodeValidator
 
 __all__ = ["extract_event_features"]
 
@@ -24,11 +22,9 @@ def extract_event_features(
 
     # Sanitize string columns
     try:
-        string_cols = df_clean.select_dtypes(include=["object"]).columns
-        for col in string_cols:
-            df_clean[col] = df_clean[col].astype(str).apply(
-                _validator.validate_text
-            )
+        validator = UnicodeValidator()
+        df_clean = validator.validate_dataframe(df_clean)
+
     except Exception as exc:  # pragma: no cover - log and continue
         logger.warning("Unicode sanitization failed: %s", exc)
 

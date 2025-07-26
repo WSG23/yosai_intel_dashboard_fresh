@@ -19,15 +19,11 @@ def prepare_security_data(
     df_clean = df.copy(deep=False)
 
     # Handle Unicode issues
-    from validation import UnicodeValidator
+    from validation.unicode_validator import UnicodeValidator
 
     validator = UnicodeValidator()
+    df_clean = validator.validate_dataframe(df_clean)
 
-    string_columns = df_clean.select_dtypes(include=["object"]).columns
-    for col in string_columns:
-        df_clean[col] = (
-            df_clean[col].astype(str).apply(validator.validate_text)
-        )
 
     # Ensure required columns exist
     required_cols = ["timestamp", "person_id", "door_id", "access_result"]
