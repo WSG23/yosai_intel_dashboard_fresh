@@ -36,6 +36,7 @@ from services.analytics.calculator import Calculator
 from services.analytics.data_loader import DataLoader
 from services.analytics.protocols import DataProcessorProtocol
 from services.analytics.publisher import Publisher
+from services.analytics.orchestrator import AnalyticsOrchestrator
 from services.analytics_summary import generate_sample_analytics
 from services.controllers.upload_controller import UploadProcessingController
 from services.data_processing.processor import Processor
@@ -145,6 +146,13 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self.data_loader = DataLoader(self.upload_controller, self.processor)
         self.calculator = Calculator(self.report_generator)
         self.publisher = Publisher(self.event_bus)
+        self.orchestrator = AnalyticsOrchestrator(
+            self.data_loader,
+            self.validation_service,
+            self.processor,
+            self.database_retriever,
+            self.publisher,
+        )
 
     def _initialize_database(self) -> None:
         """Initialize database connection via helper."""
@@ -155,8 +163,8 @@ class AnalyticsService(AnalyticsServiceProtocol):
         ) = initialize_database(self.database)
 
     def get_analytics_from_uploaded_data(self) -> Dict[str, Any]:
-        """Get analytics from uploaded files using helper."""
-        return self.upload_controller.get_analytics_from_uploaded_data()
+        """Process uploaded files via orchestrator."""
+        return self.orchestrator.process_uploaded_data()
 
     def get_analytics_by_source(self, source: str) -> Dict[str, Any]:
         """Get analytics from specified source with forced uploaded data check"""
@@ -274,10 +282,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
     def get_dashboard_summary(self) -> Dict[str, Any]:
         """Get a basic dashboard summary"""
         try:
-            summary = self.get_analytics_from_uploaded_data()
-            self.publisher.publish(summary)
-
-            return summary
+            return self.orchestrator.process_uploaded_data()
         except RuntimeError as e:
             logger.error(f"Dashboard summary failed: {e}")
             return {"status": "error", "message": str(e)}
