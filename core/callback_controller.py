@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import threading
 import weakref
+import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Protocol
@@ -136,30 +137,52 @@ class CallbackController(BaseModel):
         }
         self._initialized = True
 
+    def register(
+        self,
+        event: CallbackEvent,
+        callback: CallbackProtocol,
+        weak: bool = False,
+    ) -> None:
+        """Register *callback* for *event*."""
+        self._registry.register(event, callback, weak)
+        logger.debug(f"Registered callback for {event.name}")
+
+    # ------------------------------------------------------------------
     def handle_register(
         self,
         event: CallbackEvent,
         callback: CallbackProtocol,
         weak: bool = False,
     ) -> None:
-        self._registry.register(event, callback, weak)
-        logger.debug(f"Registered callback for {event.name}")
+        """Compatibility wrapper for :meth:`register`."""
+        self.register(event, callback, weak)
 
-    def handle_unregister(
-        self, event: CallbackEvent, callback: CallbackProtocol
-    ) -> bool:
+    def unregister(self, event: CallbackEvent, callback: CallbackProtocol) -> bool:
+        """Unregister *callback* from *event*."""
         success = self._registry.unregister(event, callback)
         if success:
             logger.debug(f"Unregistered callback for {event.name}")
         return success
 
-    def fire_event(
+    # ------------------------------------------------------------------
+    def handle_unregister(
+        self, event: CallbackEvent, callback: CallbackProtocol
+    ) -> bool:
+        """Compatibility wrapper for :meth:`unregister`."""
+        return self.unregister(event, callback)
+
+    # Backwards compatibility aliases
+    register_handler = register
+    unregister_handler = unregister
+
+    async def emit(
         self,
         event: CallbackEvent,
         source_id: str,
         data: Optional[Dict[str, Any]] = None,
         metadata: Optional[Dict[str, Any]] = None,
-    ) -> None:
+    ) -> List[Any]:
+        """Trigger callbacks for *event* asynchronously."""
         context = CallbackContext(
             event_type=event,
             source_id=source_id,
@@ -173,17 +196,34 @@ class CallbackController(BaseModel):
 
         if not callbacks:
             logger.debug(f"No callbacks registered for {event.name}")
-            return
+            return []
 
         logger.debug(f"Firing {event.name} to {len(callbacks)} callbacks")
 
+        results: List[Any] = []
         for callback in callbacks:
             try:
-                callback(context)
+                if asyncio.iscoroutinefunction(callback):
+                    result = await callback(context)
+                else:
+                    result = callback(context)
                 self._stats["callbacks_executed"] += 1
+                results.append(result)
             except Exception as exc:  # pragma: no cover - log and continue
                 self._stats["errors"] += 1
                 self._handle_callback_error(exc, context, callback)
+                results.append(None)
+        return results
+
+    def fire_event(
+        self,
+        event: CallbackEvent,
+        source_id: str,
+        data: Optional[Dict[str, Any]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Synchronous wrapper for :meth:`emit`."""
+        asyncio.run(self.emit(event, source_id, data, metadata))
 
     def register_error_handler(
         self, handler: Callable[[Exception, CallbackContext], None]
@@ -196,6 +236,12 @@ class CallbackController(BaseModel):
     def reset_stats(self) -> None:
         self._stats = {"events_fired": 0, "callbacks_executed": 0, "errors": 0}
 
+    def clear(self, event: Optional[CallbackEvent] = None) -> None:
+        """Remove callbacks for *event* or all if None."""
+        self._registry.clear(event)
+        logger.info("Cleared all callbacks")
+
+    # ------------------------------------------------------------------
     def clear_all_callbacks(self) -> None:
         self._registry.clear()
         logger.info("Cleared all callbacks")
