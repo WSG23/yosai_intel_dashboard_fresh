@@ -3,7 +3,7 @@ import logging
 
 import pytest
 
-from yosai_framework import service as svc_mod
+from yosai_framework import ServiceBuilder, service as svc_mod
 from yosai_framework.config import ServiceConfig
 
 
@@ -13,7 +13,14 @@ def _dummy_config(*_):
 
 def test_structlog_json(monkeypatch, caplog):
     monkeypatch.setattr(svc_mod, "load_config", _dummy_config)
-    svc = svc_mod.BaseService("test", "cfg")
+    svc = (
+        ServiceBuilder("test")
+        .with_config("cfg")
+        .with_logging()
+        .with_metrics("")
+        .with_health()
+        .build()
+    )
     with caplog.at_level(logging.INFO):
         svc.start()
         svc.log.info("hello")
@@ -26,7 +33,14 @@ def test_structlog_json(monkeypatch, caplog):
 
 def test_metrics_registered(monkeypatch):
     monkeypatch.setattr(svc_mod, "load_config", _dummy_config)
-    svc = svc_mod.BaseService("test", "cfg")
+    svc = (
+        ServiceBuilder("test")
+        .with_config("cfg")
+        .with_logging()
+        .with_metrics("")
+        .with_health()
+        .build()
+    )
     svc.start()
     names = svc_mod.REGISTRY._names_to_collectors.keys()
     assert "yosai_request_total" in names
