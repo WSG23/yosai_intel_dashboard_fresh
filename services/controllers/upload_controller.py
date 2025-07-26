@@ -3,24 +3,27 @@ from typing import Any, Dict, List
 
 from validation.security_validator import SecurityValidator
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
-from services.interfaces import get_upload_data_service
 from services.upload_data_service import UploadDataService
 from services.data_processing.processor import Processor
+from core.di_decorators import injectable, inject
 
 
+@injectable
 class UploadProcessingController:
     """Delegate upload related operations to :class:`UploadAnalyticsProcessor`."""
 
+    @inject
     def __init__(
         self,
         validator: SecurityValidator,
         processor: Processor,
-        upload_data_service: UploadDataService | None = None,
+        upload_data_service: UploadDataService,
+        upload_processor: UploadAnalyticsProcessor,
     ) -> None:
         self.validator = validator
         self.processor = processor
-        self.upload_data_service = upload_data_service or get_upload_data_service()
-        self.upload_processor = UploadAnalyticsProcessor(self.validator, self.processor)
+        self.upload_data_service = upload_data_service
+        self.upload_processor = upload_processor
 
     def get_analytics_from_uploaded_data(self) -> Dict[str, Any]:
         return self.upload_processor.get_analytics_from_uploaded_data()
