@@ -140,10 +140,12 @@ class AnalyticsService(AnalyticsServiceProtocol):
         from services.data_processing.unified_file_validator import UnifiedFileValidator
         self.file_handler = UnifiedFileValidator()
 
+        upload_processor = UploadAnalyticsProcessor(self.validation_service, self.processor)
         self.upload_controller = UploadProcessingController(
             self.validation_service,
             self.processor,
             self.upload_data_service,
+            upload_processor,
         )
         self.upload_processor = self.upload_controller.upload_processor
         self.report_generator = report_generator or SummaryReportGenerator()

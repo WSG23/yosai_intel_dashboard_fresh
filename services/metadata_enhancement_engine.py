@@ -37,6 +37,7 @@ except ImportError:  # pragma: no cover - for Python <3.12
 import pandas as pd
 
 from core.service_container import ServiceContainer
+from core.di_decorators import injectable, inject
 from services.analytics.protocols import AnalyticsServiceProtocol
 from services.upload.protocols import UploadDataServiceProtocol
 
@@ -115,21 +116,28 @@ class ComplianceChecker:
         return {"compliant": not missing, "missing_columns": missing}
 
 
+@injectable
 class MetadataEnhancementEngine(MetadataEnhancementProtocol):
     """Orchestrates metadata enhancement subcomponents."""
 
+    @inject
     def __init__(
         self,
         upload_data_service: UploadDataServiceProtocol,
         analytics_service: AnalyticsServiceProtocol,
+        behavior_analyzer: BehaviorAnalyzer,
+        security_refiner: SecurityRefiner,
+        pattern_learner: PatternLearner,
+        temporal_analyzer: TemporalAnalyzer,
+        compliance_checker: ComplianceChecker,
     ) -> None:
         self.upload_data_service = upload_data_service
         self.analytics_service = analytics_service
-        self.behavioral_analysis = BehaviorAnalyzer()
-        self.security_refinement = SecurityRefiner()
-        self.pattern_learning = PatternLearner()
-        self.temporal_analytics = TemporalAnalyzer()
-        self.compliance = ComplianceChecker()
+        self.behavioral_analysis = behavior_analyzer
+        self.security_refinement = security_refiner
+        self.pattern_learning = pattern_learner
+        self.temporal_analytics = temporal_analyzer
+        self.compliance = compliance_checker
 
     # ------------------------------------------------------------------
     @override
@@ -158,6 +166,12 @@ class MetadataEnhancementEngine(MetadataEnhancementProtocol):
 
 def register_metadata_services(container: ServiceContainer) -> None:
     """Register :class:`MetadataEnhancementEngine` with ``container``."""
+
+    container.register_transient("behavior_analyzer", BehaviorAnalyzer)
+    container.register_transient("security_refiner", SecurityRefiner)
+    container.register_transient("pattern_learner", PatternLearner)
+    container.register_transient("temporal_analyzer", TemporalAnalyzer)
+    container.register_transient("compliance_checker", ComplianceChecker)
 
     container.register_singleton(
         "metadata_engine",
