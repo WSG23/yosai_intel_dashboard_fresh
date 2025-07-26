@@ -12,7 +12,7 @@ from fastapi import (
     Form,
     FastAPI,
 )
-from yosai_framework.service import BaseService
+from yosai_framework import ServiceBuilder
 from shared.errors.types import ErrorCode
 from yosai_framework.errors import ServiceError
 from jose import jwt
@@ -34,7 +34,13 @@ from infrastructure.discovery.health_check import (
 
 
 SERVICE_NAME = "analytics-microservice"
-service = BaseService(SERVICE_NAME, "")
+service = (
+    ServiceBuilder(SERVICE_NAME)
+    .with_logging()
+    .with_metrics("")
+    .with_health()
+    .build()
+)
 app = service.app
 
 
