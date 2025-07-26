@@ -1,12 +1,15 @@
+from __future__ import annotations
+
+import enum
+import importlib.util
 import sys
 import types
-import importlib.util
-import enum
+
 from flask.json.provider import DefaultJSONProvider
 
 # Minimal services stubs
 spec = importlib.util.spec_from_file_location(
-    "services.data_processing.core.protocols", "tests/stubs/protocols_stub.py"
+    "core.protocols.plugin", "tests/stubs/protocols_stub.py"
 )
 protocols_mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(protocols_mod)
@@ -27,14 +30,15 @@ sys.modules["services"] = services_mod
 sys.modules["services.registry"] = registry_mod
 sys.modules["services.data_processing"] = data_proc_mod
 sys.modules["services.data_processing.core"] = core_mod
-sys.modules["services.data_processing.core.protocols"] = protocols_mod
+sys.modules["core.protocols.plugin"] = protocols_mod
 
 import pytest
 from flask import Flask
-from core.service_container import ServiceContainer
-from core.plugins.manager import PluginManager
+
 from config import create_config_manager
-from services.data_processing.core.protocols import PluginMetadata
+from core.plugins.manager import PluginManager
+from core.protocols.plugin import PluginMetadata
+from core.service_container import ServiceContainer
 
 
 class EnumJSONProvider(DefaultJSONProvider):

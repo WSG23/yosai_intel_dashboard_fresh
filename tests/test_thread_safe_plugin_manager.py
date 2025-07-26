@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import time
 from concurrent.futures import ThreadPoolExecutor
 
 from config import create_config_manager
-from core.service_container import ServiceContainer
 from core.plugins.manager import ThreadSafePluginManager
-from services.data_processing.core.protocols import PluginMetadata
+from core.protocols.plugin import PluginMetadata
+from core.service_container import ServiceContainer
 
 
 class ConcurrencyPlugin:

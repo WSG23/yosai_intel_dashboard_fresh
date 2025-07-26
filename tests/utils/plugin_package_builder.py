@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import sys
+import textwrap
 from contextlib import AbstractContextManager
 from pathlib import Path
-import textwrap
 
 
 class PluginPackageBuilder(AbstractContextManager):
@@ -50,7 +50,7 @@ class PluginPackageBuilder(AbstractContextManager):
         (self._pkg_path / "__init__.py").write_text("")
         plugin_code = f"""
 from dash import Output, Input
-from services.data_processing.core.protocols import PluginMetadata
+from core.protocols.plugin import PluginMetadata
 from core.plugins.callback_unifier import CallbackUnifier
 
 class AutoPlugin:

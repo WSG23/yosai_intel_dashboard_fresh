@@ -1,16 +1,18 @@
+from __future__ import annotations
+
 import os
 import sys
-import pytest
 
+import pytest
 from dash import Dash, Input, Output
 
 from config import create_config_manager
-from core.service_container import ServiceContainer
 from core.json_serialization_plugin import JsonSerializationPlugin
 from core.plugins.auto_config import setup_plugins
 from core.plugins.callback_unifier import CallbackUnifier
 from core.plugins.decorators import safe_callback
-from services.data_processing.core.protocols import PluginMetadata
+from core.protocols.plugin import PluginMetadata
+from core.service_container import ServiceContainer
 
 pytestmark = pytest.mark.usefixtures("fake_dash")
 
@@ -35,7 +37,7 @@ def _create_package(tmp_path):
     (pkg / "__init__.py").write_text("")
     plugin_code = """
 from dash import Output, Input
-from services.data_processing.core.protocols import PluginMetadata
+from core.protocols.plugin import PluginMetadata
 from core.plugins.callback_unifier import CallbackUnifier
 
 class AutoPlugin:
