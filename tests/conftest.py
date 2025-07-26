@@ -314,9 +314,7 @@ def mock_auth_env(monkeypatch: pytest.MonkeyPatch) -> None:
 def async_runner() -> Generator[callable, None, None]:
     """Run async coroutines in a dedicated event loop."""
 
-    loop = asyncio.new_event_loop()
-    yield lambda coro: loop.run_until_complete(coro)
-    loop.close()
+    yield asyncio.run
 
 
 @pytest.fixture

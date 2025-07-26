@@ -19,7 +19,7 @@ class AnalyticsWebSocketServer:
         self.port = port
         self.event_bus = event_bus or EventBus()
         self.clients: Set[WebSocketServerProtocol] = set()
-        self._loop = asyncio.new_event_loop()
+        self._loop: asyncio.AbstractEventLoop | None = None
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
         if self.event_bus:
@@ -36,11 +36,13 @@ class AnalyticsWebSocketServer:
         finally:
             self.clients.discard(websocket)
 
+    async def _serve(self) -> None:
+        self._loop = asyncio.get_running_loop()
+        async with serve(self._handler, self.host, self.port):
+            await asyncio.Event().wait()
+
     def _run(self) -> None:
-        asyncio.set_event_loop(self._loop)
-        ws_server = serve(self._handler, self.host, self.port)
-        self._loop.run_until_complete(ws_server)
-        self._loop.run_forever()
+        asyncio.run(self._serve())
 
     async def _broadcast_async(self, message: str) -> None:
         for ws in set(self.clients):
@@ -52,7 +54,10 @@ class AnalyticsWebSocketServer:
 
     def broadcast(self, data: dict) -> None:
         message = json.dumps(data)
-        asyncio.run_coroutine_threadsafe(self._broadcast_async(message), self._loop)
+        if self._loop is not None:
+            asyncio.run_coroutine_threadsafe(
+                self._broadcast_async(message), self._loop
+            )
 
 
 __all__ = ["AnalyticsWebSocketServer"]
