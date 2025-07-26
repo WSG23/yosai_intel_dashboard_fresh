@@ -1,10 +1,14 @@
 """Application-wide constants for Yōsai Intel Dashboard."""
 
+from __future__ import annotations
+
 import os
 from dataclasses import dataclass
 
 # Default chunk size used across services when reading or uploading large files
 DEFAULT_CHUNK_SIZE: int = 50_000
+# File extensions supported across upload services
+UPLOAD_ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
 
 
 class SecurityLimits:

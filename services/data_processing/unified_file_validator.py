@@ -13,44 +13,26 @@ from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
+from config.constants import UPLOAD_ALLOWED_EXTENSIONS
 from config.dynamic_config import dynamic_config
 from core.exceptions import ValidationError
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
 from core.unicode import (
     UnicodeProcessor,
+    safe_unicode_decode,
     sanitize_dataframe,
     sanitize_for_utf8,
-    safe_unicode_decode,
 )
+from services.common.config_utils import common_init, create_config_methods
+from services.data_processing.validation_utils import _lazy_string_validator
 from upload_types import ValidationResult
-from .unified_upload_validator import UnifiedUploadValidator
+
 from .common import process_dataframe
-
-
-def create_config_methods(cls):
-    cls.get_ai_confidence_threshold = lambda self: self.ai_threshold
-    cls.get_max_upload_size_mb = lambda self: self.max_size_mb
-    cls.get_upload_chunk_size = lambda self: self.chunk_size
-    return cls
-
-
-def common_init(self, config=None):
-    self.config = config or {}
-    self.max_size_mb = self.config.get("max_upload_size_mb", 100)
-    self.ai_threshold = self.config.get("ai_confidence_threshold", 0.8)
-    self.chunk_size = self.config.get("upload_chunk_size", 1048576)
-
-
-def _lazy_string_validator() -> Any:
-    """Import :class:`SecurityValidator` lazily from the new package."""
-    from validation.security_validator import SecurityValidator as StringValidator
-
-    return StringValidator()
-
+from .unified_upload_validator import UnifiedUploadValidator
 
 SAFE_FILENAME_RE = re.compile(r"^[A-Za-z0-9._\- ]{1,100}$")
-ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
+ALLOWED_EXTENSIONS = UPLOAD_ALLOWED_EXTENSIONS
 
 
 logger = logging.getLogger(__name__)

@@ -1,40 +1,29 @@
 """Unified file validation and security handling."""
 
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Any, Optional, Tuple
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
 from config.constants import DEFAULT_CHUNK_SIZE
+from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
 from core.unicode import (
     process_large_csv_content,
-    sanitize_for_utf8,
     sanitize_dataframe,
+    sanitize_for_utf8,
 )
+from services.common.config_utils import common_init, create_config_methods
 from services.data_processing.core.exceptions import (
     FileProcessingError,
     FileValidationError,
 )
 from services.data_processing.unified_upload_validator import UnifiedUploadValidator
-from utils.file_utils import safe_decode_with_unicode_handling
 from upload_types import ValidationResult
-
-
-def create_config_methods(cls):
-    cls.get_ai_confidence_threshold = lambda self: self.ai_threshold
-    cls.get_max_upload_size_mb = lambda self: self.max_size_mb
-    cls.get_upload_chunk_size = lambda self: self.chunk_size
-    return cls
-
-
-def common_init(self, config=None):
-    self.config = config or {}
-    self.max_size_mb = self.config.get("max_upload_size_mb", 100)
-    self.ai_threshold = self.config.get("ai_confidence_threshold", 0.8)
-    self.chunk_size = self.config.get("upload_chunk_size", 1048576)
+from utils.file_utils import safe_decode_with_unicode_handling
 
 
 def process_file_simple(
