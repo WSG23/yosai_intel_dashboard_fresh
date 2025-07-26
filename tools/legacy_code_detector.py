@@ -1,130 +1,159 @@
 #!/usr/bin/env python3
-"""Detect usage of legacy modules and dependencies.
+"""Detect legacy or unused files in a project.
 
-This script walks the project tree, parses Python files using ``ast`` and
-reports imports of deprecated modules or objects. The list of deprecated
-modules/dependencies is defined in a YAML rules file.
+This tool searches for old or deprecated file names, checks timestamps via Git,
+ and performs a simple import analysis to highlight potential dead code.
 """
-
 from __future__ import annotations
 
-import argparse
 import ast
 import json
+import re
+import subprocess
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
-
-import yaml
-
-DEFAULT_RULES_FILE = Path("tools/legacy_rules.yaml")
+from typing import Dict, List, Set
 
 
-class LegacyCodeDetector:
-    """Scan Python files and requirements for legacy usage."""
+@dataclass
+class FileInfo:
+    path: Path
+    last_commit: datetime | None
+    mtime: datetime
 
-    def __init__(self, rules_path: Optional[Path] = None) -> None:
-        self.rules_path = rules_path or DEFAULT_RULES_FILE
-        self.rules = {
-            "deprecated_imports": ["services.analytics.data_loader"],
-            "deprecated_objects": ["DataLoadingService"],
-            "deprecated_dependencies": [],
-        }
-        if self.rules_path.exists():
-            self._load_rules(self.rules_path)
 
-    # ---------------------------------------------------------
-    def _load_rules(self, path: Path) -> None:
-        data = yaml.safe_load(path.read_text()) or {}
-        for key in self.rules:
-            if key in data:
-                self.rules[key].extend(data[key])
+class LegacyDetector:
+    NAME_PATTERNS = re.compile(
+        r"(old|backup|copy|temp|deprecated|test|\d{4}|v\d+)|\.(bak|old|orig)$",
+        re.IGNORECASE,
+    )
 
-    # ---------------------------------------------------------
-    def scan_file(self, path: Path) -> List[str]:
-        issues: List[str] = []
+    def __init__(self, project_root: Path) -> None:
+        self.root = project_root
+        self.exclude_dirs = {".git", "node_modules", "__pycache__", ".venv", "venv"}
+        self.now = datetime.now()
+        self.six_months = self.now - timedelta(days=180)
+        self.one_year = self.now - timedelta(days=365)
+        self.python_files: List[Path] = []
+        self.infos: Dict[Path, FileInfo] = {}
+        self.imports: Dict[Path, Set[str]] = {}
+        self.defines: Set[str] = set()
+
+    # Collect python files
+    def _gather_python_files(self) -> None:
+        for path in self.root.rglob("*.py"):
+            if any(part in self.exclude_dirs for part in path.parts):
+                continue
+            self.python_files.append(path)
+
+    # Get git timestamp for file
+    def _git_last_commit(self, path: Path) -> datetime | None:
         try:
-            tree = ast.parse(path.read_text(encoding="utf-8"))
+            ts = subprocess.check_output(
+                ["git", "log", "-1", "--format=%ct", str(path)],
+                cwd=self.root,
+                stderr=subprocess.DEVNULL,
+                text=True,
+            ).strip()
+            if ts:
+                return datetime.fromtimestamp(int(ts))
         except Exception:
-            return issues
+            pass
+        return None
 
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                for alias in node.names:
-                    full_name = alias.name
-                    issues.extend(self._check_name(full_name))
-                    issues.extend(self._check_object(alias.name))
-            elif isinstance(node, ast.ImportFrom):
-                module = node.module or ""
-                for alias in node.names:
-                    full_name = f"{module}.{alias.name}" if module else alias.name
-                    issues.extend(self._check_name(full_name))
-                    issues.extend(self._check_object(alias.name))
-        return issues
+    def _collect_file_info(self) -> None:
+        for path in self.python_files:
+            mtime = datetime.fromtimestamp(path.stat().st_mtime)
+            commit_ts = self._git_last_commit(path)
+            self.infos[path] = FileInfo(path, commit_ts, mtime)
 
-    def _check_name(self, name: str) -> Iterable[str]:
-        for mod in self.rules["deprecated_imports"]:
-            if name == mod or name.startswith(mod + "."):
-                return [f"deprecated import: {name}"]
-        return []
+    # Analyze imports
+    def _analyze_imports(self) -> None:
+        self.module_map: Dict[str, Path] = {}
+        for path in self.python_files:
+            module_name = ".".join(path.relative_to(self.root).with_suffix("").parts)
+            self.module_map[module_name] = path
+            self.defines.add(module_name)
 
-    def _check_object(self, name: str) -> Iterable[str]:
-        if name in self.rules["deprecated_objects"]:
-            return [f"deprecated object: {name}"]
-        return []
+        for path in self.python_files:
+            try:
+                tree = ast.parse(path.read_text())
+            except Exception:
+                continue
+            used: Set[str] = set()
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.Import, ast.ImportFrom)):
+                    for alias in node.names:
+                        name = alias.name.split(".")[0]
+                        used.add(name)
+            self.imports[path] = used
 
-    # ---------------------------------------------------------
-    def scan_directory(self, root: Path) -> Dict[str, List[str]]:
-        results: Dict[str, List[str]] = {}
-        for file in root.rglob("*.py"):
-            if file.is_file():
-                issues = self.scan_file(file)
-                if issues:
-                    results[str(file)] = issues
-        return results
+    def detect_legacy(self) -> Dict[str, List[str]]:
+        self._gather_python_files()
+        self._collect_file_info()
+        self._analyze_imports()
 
-    # ---------------------------------------------------------
-    def check_requirements(self, req_path: Path) -> List[str]:
-        issues: List[str] = []
-        if not req_path.exists():
-            return issues
-        lines = [l.strip() for l in req_path.read_text().splitlines() if l.strip() and not l.startswith("#")]
-        for dep in self.rules["deprecated_dependencies"]:
-            for line in lines:
-                pkg = line.split("==")[0]
-                if pkg == dep:
-                    issues.append(f"deprecated dependency: {dep}")
-        return issues
+        suspect_names = []
+        stale_files = []
+        unused_modules = []
+        circular_pairs = []
+
+        module_usage: Dict[str, Set[str]] = {m: set() for m in self.defines}
+        for file, imports in self.imports.items():
+            for mod in imports:
+                if mod in module_usage:
+                    module_usage[mod].add(str(file))
+
+        for path, info in self.infos.items():
+            if self.NAME_PATTERNS.search(path.name):
+                suspect_names.append(str(path))
+            if (
+                info.last_commit and info.last_commit < self.one_year
+            ) or info.mtime < self.six_months:
+                stale_files.append(str(path))
+            module_name = ".".join(path.relative_to(self.root).with_suffix("").parts)
+            if not module_usage.get(module_name):
+                unused_modules.append(str(path))
+
+        # Detect circular imports
+        for file, imports in self.imports.items():
+            module_name = ".".join(file.relative_to(self.root).with_suffix("").parts)
+            for mod in imports:
+                if mod in self.defines:
+                    importer = self.module_map[mod]
+                    if module_name in self.imports.get(importer, set()):
+                        pair = tuple(sorted((str(file), str(importer))))
+                        if pair not in circular_pairs:
+                            circular_pairs.append(pair)
+
+        return {
+            "suspicious_names": suspect_names,
+            "stale_files": stale_files,
+            "unused_modules": unused_modules,
+            "circular_imports": circular_pairs,
+        }
 
 
-def _parse_args(argv: Optional[Iterable[str]] = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Detect legacy modules")
-    parser.add_argument("path", nargs="?", default=".", help="directory to scan")
-    parser.add_argument("--rules", type=Path, default=DEFAULT_RULES_FILE, help="rules YAML file")
-    parser.add_argument("--format", choices=["text", "json"], default="text")
-    parser.add_argument("--check-requirements", action="store_true", help="inspect requirements.txt")
-    return parser.parse_args(list(argv) if argv else None)
+def main() -> None:
+    import argparse
 
+    parser = argparse.ArgumentParser(description="Scan for legacy or unused files")
+    parser.add_argument("path", nargs="?", default=".", help="Project directory")
+    parser.add_argument("--json", action="store_true", help="Output JSON")
+    args = parser.parse_args()
 
-def main(argv: Optional[Iterable[str]] = None) -> int:
-    args = _parse_args(argv)
-    detector = LegacyCodeDetector(args.rules)
-    root = Path(args.path)
-    report = detector.scan_directory(root)
+    detector = LegacyDetector(Path(args.path).resolve())
+    results = detector.detect_legacy()
 
-    if args.check_requirements:
-        req_issues = detector.check_requirements(root / "requirements.txt")
-        if req_issues:
-            report["requirements.txt"] = req_issues
-
-    if args.format == "json":
-        print(json.dumps(report, indent=2))
+    if args.json:
+        print(json.dumps(results, indent=2))
     else:
-        for file, issues in report.items():
-            print(file)
-            for issue in issues:
-                print(f"  - {issue}")
-    return 1 if report else 0
+        for key, items in results.items():
+            print(f"\n{key} ({len(items)})")
+            for item in items:
+                print(f"  - {item}")
 
 
-if __name__ == "__main__":  # pragma: no cover - CLI entry
-    raise SystemExit(main())
+if __name__ == "__main__":
+    main()
