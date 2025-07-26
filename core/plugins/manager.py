@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import importlib
 import logging
@@ -8,13 +10,13 @@ from typing import Any, Dict, List
 
 from config import ConfigManager
 from core.callbacks import UnifiedCallbackManager
-from core.service_container import ServiceContainer
-from services.data_processing.core.protocols import (
+from core.protocols.plugin import (
     CallbackPluginProtocol,
     PluginPriority,
     PluginProtocol,
     PluginStatus,
 )
+from core.service_container import ServiceContainer
 
 from .dependency_resolver import PluginDependencyResolver
 

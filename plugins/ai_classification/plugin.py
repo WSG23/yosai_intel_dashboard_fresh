@@ -3,7 +3,7 @@
 import logging
 from typing import Any, Dict, List, Optional
 
-from services.data_processing.core.protocols import PluginMetadata
+from core.protocols.plugin import PluginMetadata
 
 from .config import AIClassificationConfig, get_ai_config
 from .database.csv_storage import CSVStorageRepository
@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 class AIClassificationPlugin:
     """Enhanced plugin implementing CSV related services"""
+
+from __future__ import annotations
 
     metadata = PluginMetadata(
         name="ai_classification",

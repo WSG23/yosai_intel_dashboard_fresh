@@ -7,9 +7,9 @@ from dash import Dash
 
 from config import ConfigManager
 from core.callbacks import UnifiedCallbackManager
-from core.service_container import ServiceContainer
 from core.plugins.manager import ThreadSafePluginManager
-from services.data_processing.core.protocols import PluginProtocol
+from core.protocols.plugin import PluginProtocol
+from core.service_container import ServiceContainer
 from services.registry import registry as service_registry
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints

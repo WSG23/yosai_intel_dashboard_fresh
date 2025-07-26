@@ -19,6 +19,9 @@ from fastapi import (
 from jose import jwt
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
+from services.analytics_microservice.unicode_middleware import (
+    UnicodeSanitizationMiddleware,
+)
 from pydantic import BaseModel
 from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
@@ -44,6 +47,7 @@ service = (
     .build()
 )
 app = service.app
+app.add_middleware(UnicodeSanitizationMiddleware)
 
 
 async def _db_check(_: FastAPI) -> bool:

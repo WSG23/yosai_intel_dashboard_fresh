@@ -9,7 +9,7 @@ from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 from core.base_model import BaseModel
-from services.data_processing.core.protocols import PluginProtocol
+from core.protocols.plugin import PluginProtocol
 
 from .manager import ThreadSafePluginManager
 
