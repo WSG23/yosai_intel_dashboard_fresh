@@ -1,36 +1,36 @@
-import logging
+import os
 import time
+from pathlib import Path
+import json
 
 from fastapi import (
-    Depends,
-    Header,
-    HTTPException,
-    status,
     APIRouter,
-    UploadFile,
+    Depends,
+    FastAPI,
     File,
     Form,
-    FastAPI,
+    Header,
+    HTTPException,
+    UploadFile,
+    status,
 )
-from yosai_framework.service import BaseService
-from shared.errors.types import ErrorCode
-from yosai_framework.errors import ServiceError
 from jose import jwt
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
-from pathlib import Path
-import json
+from yosai_framework.errors import ServiceError
+from yosai_framework.service import BaseService
 
 from config import get_database_config
-from config.validate import validate_required_env
-from services.analytics_microservice import async_queries
-from services.common.async_db import close_pool, create_pool, get_pool
-from services.common import async_db
 from infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
 )
+from services.analytics_microservice import async_queries
+from services.common import async_db
+from services.common.async_db import close_pool, create_pool, get_pool
+from services.common.secrets import get_secret
+from shared.errors.types import ErrorCode
 
 
 SERVICE_NAME = "analytics-microservice"
@@ -43,8 +43,6 @@ async def _db_check(_: FastAPI) -> bool:
 
 
 register_health_check(app, "database", _db_check)
-
-from services.common.secrets import get_secret
 
 _SECRET_PATH = "secret/data/jwt#secret"
 
