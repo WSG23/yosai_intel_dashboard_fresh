@@ -12,16 +12,8 @@ import logging
 import os
 import threading
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol
-try:  # Python 3.12+
-    from typing import override  # type: ignore[attr-defined]
-except ImportError:  # pragma: no cover - <3.12
-    from typing_extensions import override
+from typing import Any, Dict, List, Protocol
 
-try:  # Python 3.12+
-    from typing import override
-except ImportError:  # pragma: no cover - fallback for older versions
-    from typing_extensions import override
 
 import pandas as pd
 
@@ -82,7 +74,7 @@ def ensure_analytics_config():
 
             dynamic_config.analytics = AnalyticsConstants()
     except (ImportError, AttributeError) as exc:
-        logger.error("Failed to ensure analytics configuration: %s", exc)
+        logger.error(f"Failed to ensure analytics configuration: {exc}")
 
 
 logger = logging.getLogger(__name__)
@@ -171,7 +163,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
                 return self._process_uploaded_data_directly(uploaded_data)
 
         except (ImportError, FileNotFoundError, OSError, RuntimeError) as e:
-            logger.error("Uploaded data check failed: %s", e, exc_info=True)
+            logger.error(f"Uploaded data check failed: {e}", exc_info=True)
         except Exception:
             logger.exception("Unexpected error during uploaded data check")
             raise
@@ -368,9 +360,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
     ) -> Dict[str, Any]:
         """Analyze access patterns over the given timeframe."""
         logger.debug(
-            "analyze_access_patterns called with days=%s user_id=%s",
-            days,
-            user_id,
+            f"analyze_access_patterns called with days={days} user_id={user_id}"
         )
         return {"patterns": [], "days": days, "user_id": user_id}
 
@@ -379,7 +369,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self, data: pd.DataFrame, sensitivity: float = 0.5
     ) -> List[Dict[str, Any]]:
         """Detect anomalies in the provided data."""
-        logger.debug("detect_anomalies called with sensitivity=%s", sensitivity)
+        logger.debug(f"detect_anomalies called with sensitivity={sensitivity}")
         return []
 
     @override
@@ -388,16 +378,14 @@ class AnalyticsService(AnalyticsServiceProtocol):
     ) -> Dict[str, Any]:
         """Generate an analytics report."""
         logger.debug(
-            "generate_report called with report_type=%s params=%s",
-            report_type,
-            params,
+            f"generate_report called with report_type={report_type} params={params}"
         )
         return {"report_type": report_type, "params": params}
 
     # ------------------------------------------------------------------
     def load_model_from_registry(
-        self, name: str, *, destination_dir: Optional[str] = None
-    ) -> Optional[str]:
+        self, name: str, *, destination_dir: str | None = None
+    ) -> str | None:
         """Download the active model from the registry."""
         if self.model_registry is None:
             return None
@@ -412,17 +400,17 @@ class AnalyticsService(AnalyticsServiceProtocol):
             self.model_registry.download_artifact(record.storage_uri, str(local_path))
             return str(local_path)
         except Exception:  # pragma: no cover - best effort
-            logger.exception("Failed to download model %s", name)
+            logger.exception(f"Failed to download model {name}")
             return None
 
 
 # Global service instance
-_analytics_service: Optional[AnalyticsService] = None
+_analytics_service: AnalyticsService | None = None
 _analytics_service_lock = threading.Lock()
 
 
 def get_analytics_service(
-    service: Optional[AnalyticsService] = None,
+    service: AnalyticsService | None = None,
     config_provider: ConfigProviderProtocol | None = None,
     model_registry: ModelRegistry | None = None,
 ) -> AnalyticsService:

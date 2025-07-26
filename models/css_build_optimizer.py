@@ -11,7 +11,7 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from config.dynamic_config import dynamic_config
 
@@ -477,7 +477,7 @@ class CSSOptimizer:
 
 
 def generate_css_report(
-    css_dir: Path, output_file: Optional[Path] = None
+    css_dir: Path, output_file: Path | None = None
 ) -> Dict[str, Any]:
     """Generate comprehensive CSS quality report"""
 
