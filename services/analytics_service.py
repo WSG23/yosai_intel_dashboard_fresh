@@ -8,17 +8,17 @@ Uploaded files are validated with
 processing to ensure they are present, non-empty and within the configured size
 limits.
 """
+import asyncio
 import logging
 import os
 import threading
-import asyncio
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol
+
 try:
     from typing import override
 except ImportError:  # pragma: no cover - for Python <3.12
     from typing_extensions import override
-
 
 import pandas as pd
 
@@ -32,10 +32,10 @@ from core.protocols import (
     StorageProtocol,
 )
 from models.ml import ModelRegistry
-from services.analytics.calculator import Calculator
-from services.analytics.data_loader import DataLoader
+from services.analytics.calculator import Calculator, create_calculator
+from services.analytics.data_loader import DataLoader, create_loader
 from services.analytics.protocols import DataProcessorProtocol
-from services.analytics.publisher import Publisher
+from services.analytics.publisher import Publisher, create_publisher
 from services.analytics_summary import generate_sample_analytics
 from services.controllers.upload_controller import UploadProcessingController
 from services.data_processing.processor import Processor
@@ -108,6 +108,12 @@ class AnalyticsService(AnalyticsServiceProtocol):
         storage: StorageProtocol | None = None,
         upload_data_service: UploadDataService | None = None,
         model_registry: ModelRegistry | None = None,
+        *,
+        loader: DataLoader | None = None,
+        calculator: Calculator | None = None,
+        publisher: Publisher | None = None,
+        report_generator: SummaryReportGenerator | None = None,
+        db_retriever: DatabaseAnalyticsRetriever | None = None,
     ):
         self.database = database
         self.data_processor = data_processor or Processor(validator=SecurityValidator())
@@ -140,11 +146,15 @@ class AnalyticsService(AnalyticsServiceProtocol):
             self.db_helper,
             self.summary_reporter,
         ) = initialize_database(self.database)
-        self.database_retriever = DatabaseAnalyticsRetriever(self.db_helper)
-        self.report_generator = SummaryReportGenerator()
-        self.data_loader = DataLoader(self.upload_controller, self.processor)
-        self.calculator = Calculator(self.report_generator)
-        self.publisher = Publisher(self.event_bus)
+        self.database_retriever = db_retriever or DatabaseAnalyticsRetriever(
+            self.db_helper
+        )
+        self.report_generator = report_generator or SummaryReportGenerator()
+        self.data_loader = loader or create_loader(
+            self.upload_controller, self.processor
+        )
+        self.calculator = calculator or create_calculator(self.report_generator)
+        self.publisher = publisher or create_publisher(self.event_bus)
 
     def _initialize_database(self) -> None:
         """Initialize database connection via helper."""
@@ -267,7 +277,6 @@ class AnalyticsService(AnalyticsServiceProtocol):
     async def _aget_database_analytics(self) -> Dict[str, Any]:
         """Asynchronously get analytics from database."""
         return await asyncio.to_thread(self.database_retriever.get_analytics)
-
 
     @cache_with_lock(_cache_manager, ttl=300)
     @override
@@ -487,6 +496,10 @@ def get_analytics_service(
                 _analytics_service = AnalyticsService(
                     config=config_provider,
                     model_registry=model_registry,
+                    loader=create_loader(),
+                    calculator=create_calculator(),
+                    publisher=create_publisher(),
+                    report_generator=SummaryReportGenerator(),
                 )
     return _analytics_service
 
@@ -496,7 +509,14 @@ def create_analytics_service(
     model_registry: ModelRegistry | None = None,
 ) -> AnalyticsService:
     """Create new analytics service instance"""
-    return AnalyticsService(config=config_provider, model_registry=model_registry)
+    return AnalyticsService(
+        config=config_provider,
+        model_registry=model_registry,
+        loader=create_loader(),
+        calculator=create_calculator(),
+        publisher=create_publisher(),
+        report_generator=SummaryReportGenerator(),
+    )
 
 
 __all__ = ["AnalyticsService", "get_analytics_service", "create_analytics_service"]

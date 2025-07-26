@@ -8,6 +8,8 @@ import pandas as pd
 from config.dynamic_config import dynamic_config
 from services.controllers.upload_controller import UploadProcessingController
 from services.data_processing.processor import Processor
+from services.interfaces import get_upload_data_service
+from validation.security_validator import SecurityValidator
 
 logger = logging.getLogger(__name__)
 
@@ -107,4 +109,22 @@ class DataLoader:
         return combined_df, total_original_rows
 
 
-__all__ = ["DataLoader"]
+def create_loader(
+    controller: UploadProcessingController | None = None,
+    processor: Processor | None = None,
+) -> "DataLoader":
+    """Create a :class:`DataLoader` with default dependencies."""
+    if controller is None:
+        validator = SecurityValidator()
+        processor = processor or Processor(validator=validator)
+        controller = UploadProcessingController(
+            validator,
+            processor,
+            get_upload_data_service(),
+        )
+    else:
+        processor = processor or Processor(validator=SecurityValidator())
+    return DataLoader(controller, processor)
+
+
+__all__ = ["DataLoader", "create_loader"]
