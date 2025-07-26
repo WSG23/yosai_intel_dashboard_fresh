@@ -18,6 +18,7 @@ from analytics_core.utils.unicode_processor import UnicodeHelper
 from services.data_processing.unified_file_validator import (
     safe_decode_with_unicode_handling,
 )
+from validation import FileValidator
 from utils.protocols import SafeDecoderProtocol
 from validation import FileValidator
 from utils.memory_utils import memory_safe
@@ -71,6 +72,7 @@ class FileProcessorService(BaseService):
 
     def validate_file(self, filename: str, content: bytes) -> Dict[str, Any]:
         """Validate ``content`` using :class:`FileValidator`."""
+
         filename = UnicodeHelper.clean_text(filename)
         return self._validator.validate_file_upload(filename, content)
 

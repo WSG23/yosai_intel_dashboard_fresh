@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - optional AI suggestions
         return {}
 
 
-from security.unicode_security_handler import UnicodeSecurityHandler
+from validation.unicode_validator import UnicodeValidator
 from services.interfaces import get_upload_data_service
 from utils.preview_utils import serialize_dataframe_preview
 
@@ -110,8 +110,10 @@ def get_analysis_type_options() -> List[Dict[str, str]]:
 
 def clean_analysis_data_unicode(df: pd.DataFrame) -> pd.DataFrame:
     """Return DataFrame sanitized for Unicode issues."""
+    validator = UnicodeValidator()
     try:
-        return UnicodeSecurityHandler.sanitize_dataframe(df)
+        return UnicodeValidator().validate_dataframe(df)
+
     except Exception as exc:  # pragma: no cover - best effort
         logger.exception("Unicode sanitization failed: %s", exc)
         return df
