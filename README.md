@@ -40,6 +40,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Internal Service Interfaces](docs/internal_services.md)
 - [Analytics Async Service](docs/analytics_async_migration.md)
 - [Feature Store](docs/feature_store.md)
+- [Async Patterns](docs/async_patterns.md)
 
 <p align="center">
   <img src="docs/architecture.svg" alt="High-level architecture diagram" width="600" />
