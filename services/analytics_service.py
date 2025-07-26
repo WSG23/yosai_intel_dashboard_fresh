@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-from __future__ import annotations
-
 """Analytics Service - Enhanced with Unique Patterns Analysis.
 
 Uploaded files are validated with
@@ -8,12 +6,15 @@ Uploaded files are validated with
 processing to ensure they are present, non-empty and within the configured size
 limits.
 """
+
+from __future__ import annotations
+
 import asyncio
 import logging
 import os
 import threading
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Dict, List, Protocol
 
 try:
     from typing import override
@@ -43,6 +44,7 @@ from services.analytics_summary import generate_sample_analytics
 from services.controllers.upload_controller import UploadProcessingController
 from services.data_processing.processor import Processor
 from services.helpers.database_initializer import initialize_database
+from services.database_retriever import DatabaseAnalyticsRetriever
 from services.interfaces import get_upload_data_service
 from services.summary_report_generator import SummaryReportGenerator
 from services.upload_data_service import UploadDataService
