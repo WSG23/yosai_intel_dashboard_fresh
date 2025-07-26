@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import sys
 import time
@@ -14,7 +16,7 @@ from core.service_container import ServiceContainer
 def _install_protocol_stubs(monkeypatch: "pytest.MonkeyPatch") -> None:
     """Install minimal protocol stubs under services.data_processing.core."""
 
-    protocols = types.ModuleType("services.data_processing.core.protocols")
+    protocols = types.ModuleType("core.protocols.plugin")
 
     class PluginPriority(Enum):
         CRITICAL = 0
@@ -63,7 +65,7 @@ def _install_protocol_stubs(monkeypatch: "pytest.MonkeyPatch") -> None:
     monkeypatch.setitem(sys.modules, "services.data_processing.core", core_pkg)
     monkeypatch.setitem(
         sys.modules,
-        "services.data_processing.core.protocols",
+        "core.protocols.plugin",
         protocols,
     )
 

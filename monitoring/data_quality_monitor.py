@@ -28,6 +28,17 @@ except Exception:  # pragma: no cover - metrics optional for tests
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
     from config.base import DataQualityThresholds
 
+else:  # pragma: no cover - runtime import for tests
+    try:
+        from config.base import DataQualityThresholds
+    except Exception:  # pragma: no cover - minimal fallback
+        class DataQualityThresholds:
+            max_missing_ratio: float = 0.1
+            max_outlier_ratio: float = 0.01
+            max_schema_violations: int = 0
+            max_avro_decode_failures: int = 0
+            max_compatibility_failures: int = 0
+
 try:  # pragma: no cover - optional dependency
     from config import get_monitoring_config
 except Exception:  # pragma: no cover - minimal fallback for tests

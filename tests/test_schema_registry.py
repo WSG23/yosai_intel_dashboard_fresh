@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
+
 
 from pathlib import Path
 
@@ -26,14 +27,15 @@ def test_get_schema(monkeypatch):
         }
 
     monkeypatch.setattr(SchemaRegistryClient, "_get_async", fake_get_async)
+
     client = SchemaRegistryClient("http://sr")
-    info = client.get_schema("test")
+    info = async_runner(client.get_schema("test"))
     assert info.id == 1
     assert info.version == 1
     assert info.schema["name"] == "t"
 
 
-def test_get_schema_cached(monkeypatch):
+def test_get_schema_cached(monkeypatch, async_runner):
     calls = []
 
     async def fake_get_async(self, path: str):
@@ -45,9 +47,10 @@ def test_get_schema_cached(monkeypatch):
         }
 
     monkeypatch.setattr(SchemaRegistryClient, "_get_async", fake_get_async)
+
     client = SchemaRegistryClient("http://sr")
-    first = client.get_schema("test")
-    second = client.get_schema("test")
+    first = async_runner(client.get_schema("test"))
+    second = async_runner(client.get_schema("test"))
     assert first is second
     assert len(calls) == 1
 
@@ -58,9 +61,10 @@ def test_check_compatibility(monkeypatch):
         return {"is_compatible": True}
 
     monkeypatch.setattr(SchemaRegistryClient, "_post_async", fake_post_async)
+
     client = SchemaRegistryClient("http://sr")
-    assert client.check_compatibility(
-        "test", {"type": "record", "name": "t", "fields": []}
+    assert async_runner(
+        client.check_compatibility("test", {"type": "record", "name": "t", "fields": []})
     )
 
 
@@ -70,8 +74,9 @@ def test_register_schema(monkeypatch):
         return {"version": 2}
 
     monkeypatch.setattr(SchemaRegistryClient, "_post_async", fake_post_async)
+
     client = SchemaRegistryClient("http://sr")
-    version = client.register_schema(
-        "test-value", {"type": "record", "name": "t", "fields": []}
+    version = async_runner(
+        client.register_schema("test-value", {"type": "record", "name": "t", "fields": []})
     )
     assert version == 2

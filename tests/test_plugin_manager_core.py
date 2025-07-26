@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 import importlib
 import sys
 import types
 from pathlib import Path
 
 from config import create_config_manager
-from core.service_container import ServiceContainer
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
-from services.data_processing.core.protocols import PluginMetadata, PluginStatus
+from core.protocols.plugin import PluginMetadata, PluginStatus
+from core.service_container import ServiceContainer
 
 
 class DummyPlugin:
@@ -111,7 +113,7 @@ def test_load_all_plugins(tmp_path, monkeypatch):
     plugin_module = pkg_dir / "plugin_a.py"
     plugin_module.write_text(
         """
-from services.data_processing.core.protocols import PluginMetadata
+from core.protocols.plugin import PluginMetadata
 
 class Plugin:
     metadata = PluginMetadata(

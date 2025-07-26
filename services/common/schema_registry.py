@@ -5,11 +5,11 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
-from functools import lru_cache
 from typing import Any, Dict
 
 import asyncio
 import aiohttp
+
 from monitoring.data_quality_monitor import get_data_quality_monitor
 
 
@@ -36,11 +36,13 @@ class SchemaRegistryClient:
             async with session.get(
                 f"{self.url}{path}",
                 timeout=aiohttp.ClientTimeout(total=5.0),
+
             ) as resp:
                 resp.raise_for_status()
                 return await resp.json()
 
     async def _post_async(self, path: str, payload: Dict[str, Any]) -> Any:
+
         headers = {"Content-Type": "application/vnd.schemaregistry.v1+json"}
         async with aiohttp.ClientSession() as session:
             async with session.post(
@@ -48,6 +50,7 @@ class SchemaRegistryClient:
                 json=payload,
                 headers=headers,
                 timeout=aiohttp.ClientTimeout(total=5.0),
+
             ) as resp:
                 resp.raise_for_status()
                 return await resp.json()
@@ -86,6 +89,7 @@ class SchemaRegistryClient:
         self, subject: str, schema: Dict[str, Any], version: str = "latest"
     ) -> bool:
         data = await self._post_async(
+
             f"/compatibility/subjects/{subject}/versions/{version}",
             {"schema": json.dumps(schema)},
         )
@@ -104,24 +108,24 @@ class SchemaRegistryClient:
     async def register_schema_async(self, subject: str, schema: Dict[str, Any]) -> int:
         """Register a new schema version under ``subject`` and return the version."""
         data = await self._post_async(
+
             f"/subjects/{subject}/versions",
             {"schema": json.dumps(schema)},
         )
         version = data.get("version")
         if version is None:
             versions = await self._get_async(f"/subjects/{subject}/versions")
+
             version = max(versions)
 
         # invalidate cached schema for this subject
-        try:
-            self.get_schema.cache_clear()
-        except AttributeError:
-            pass
+        async with self._lock:
+            self._schema_cache.pop((subject, str(version)), None)
+            self._id_cache.pop(int(version), None)
 
         return int(version)
 
     def register_schema(self, subject: str, schema: Dict[str, Any]) -> int:
         return asyncio.run(self.register_schema_async(subject, schema))
-
 
 __all__ = ["SchemaRegistryClient", "SchemaInfo"]

@@ -18,9 +18,9 @@ from typing import (
     runtime_checkable,
 )
 
-from .callback_events import CallbackEvent
-
 import pandas as pd
+
+from core.callback_events import CallbackEvent
 
 
 @runtime_checkable
@@ -109,7 +109,9 @@ class FileProcessorProtocol(Protocol):
         ...
 
     @abstractmethod
-    def read_uploaded_file(self, contents: str, filename: str) -> Tuple[pd.DataFrame, str]:
+    def read_uploaded_file(
+        self, contents: str, filename: str
+    ) -> Tuple[pd.DataFrame, str]:
         """Read an uploaded file and return a DataFrame and error."""
         ...
 
@@ -462,7 +464,7 @@ class UnicodeProcessorProtocol(Protocol):
         ...
 
 
-from .service_container import ServiceContainer
+from core.service_container import ServiceContainer
 
 
 def _get_container(
