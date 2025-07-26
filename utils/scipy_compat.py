@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import logging
-import unicodedata
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+from validation.data_validator import DataValidator, DataValidatorProtocol
 
 import numpy as np
 import pandas as pd
 
 from validation.data_validator import DataValidator, DataValidatorProtocol
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -22,23 +24,19 @@ __all__ = [
 ]
 
 
+_validator = UnicodeValidator()
+
+
 def sanitize_unicode_data(data: Any) -> Any:
-    """Sanitize data to handle Unicode surrogate characters."""
+    """Sanitize data recursively using :class:`UnicodeValidator`."""
+
     if isinstance(data, str):
-        try:
-            # Remove surrogate characters that can't be encoded in UTF-8
-            cleaned = data.encode('utf-8', 'replace').decode('utf-8')
-            # Normalize Unicode characters
-            cleaned = unicodedata.normalize('NFKC', cleaned)
-            return cleaned
-        except (UnicodeError, ValueError):
-            # Fallback: remove all non-ASCII characters
-            return ''.join(char for char in data if ord(char) < 128)
-    elif isinstance(data, dict):
+        return _validator.validate_text(data)
+    if isinstance(data, dict):
         return {key: sanitize_unicode_data(value) for key, value in data.items()}
-    elif isinstance(data, list):
+    if isinstance(data, list):
         return [sanitize_unicode_data(item) for item in data]
-    elif isinstance(data, tuple):
+    if isinstance(data, tuple):
         return tuple(sanitize_unicode_data(item) for item in data)
     return data
 
@@ -55,6 +53,7 @@ class StatisticalAnomalyDetector:
         self.validator: DataValidatorProtocol = validator or DataValidator(
             required_columns=["timestamp", "person_id"]
         )
+
 
     def _safe_zscore_calculation(self, data: np.ndarray) -> np.ndarray:
         """Calculate Z-scores with error handling."""
@@ -86,8 +85,10 @@ class StatisticalAnomalyDetector:
 
     def detect_frequency_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
         """Detect frequency-based anomalies with Unicode safety."""
-        if not self._validate_dataframe(df):
-            return []
+        result = self.validator.validate_dataframe(df)
+        if not result.valid:
+            self.logger.warning("; ".join(result.issues or []))
+            return [
 
         anomalies: List[Dict[str, Any]] = []
 
@@ -146,9 +147,11 @@ class StatisticalAnomalyDetector:
 
     def detect_statistical_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
         """Detect statistical anomalies using Z-score and IQR methods with Unicode safety."""
-        if not self._validate_dataframe(df):
+        result = self.validator.validate_dataframe(df)
+        if not result.valid:
+            self.logger.warning("; ".join(result.issues or []))
             return []
-
+<<
         anomalies: List[Dict[str, Any]] = []
 
         try:

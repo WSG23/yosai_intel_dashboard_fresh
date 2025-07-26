@@ -58,6 +58,7 @@ class SuspiciousColumnNameRule(ValidationRule):
 class DataValidator(CompositeValidator):
     """Validate DataFrames for analytics modules."""
 
+
     def __init__(
         self,
         required_columns: Iterable[str] | None = None,
@@ -70,6 +71,7 @@ class DataValidator(CompositeValidator):
         base_rules.append(EmptyDataRule())
         base_rules.append(SuspiciousColumnNameRule(suspicious_pattern))
         super().__init__(base_rules)
+
 
     def validate_dataframe(self, df: pd.DataFrame) -> ValidationResult:
         return self.validate(df)
