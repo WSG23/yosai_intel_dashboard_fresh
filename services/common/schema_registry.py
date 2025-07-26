@@ -54,12 +54,12 @@ class SchemaRegistryClient:
 
     # Backwards compatible synchronous wrappers ------------------------
     def _get(self, path: str) -> Any:
-        loop = asyncio.new_event_loop()
-        return loop.run_until_complete(self._get_async(path))
+        """Synchronous wrapper around :meth:`_get_async`."""
+        return asyncio.run(self._get_async(path))
 
     def _post(self, path: str, payload: Dict[str, Any]) -> Any:
-        loop = asyncio.new_event_loop()
-        return loop.run_until_complete(self._post_async(path, payload))
+        """Synchronous wrapper around :meth:`_post_async`."""
+        return asyncio.run(self._post_async(path, payload))
 
     # ------------------------------------------------------------------
     async def get_schema_async(
@@ -72,8 +72,7 @@ class SchemaRegistryClient:
 
     @lru_cache(maxsize=64)
     def get_schema(self, subject: str, version: int | str = "latest") -> SchemaInfo:
-        loop = asyncio.new_event_loop()
-        return loop.run_until_complete(self.get_schema_async(subject, version))
+        return asyncio.run(self.get_schema_async(subject, version))
 
     async def get_schema_by_id_async(self, schema_id: int) -> SchemaInfo:
         data = await self._get_async(f"/schemas/ids/{schema_id}")
@@ -81,8 +80,7 @@ class SchemaRegistryClient:
 
     @lru_cache(maxsize=64)
     def get_schema_by_id(self, schema_id: int) -> SchemaInfo:
-        loop = asyncio.new_event_loop()
-        return loop.run_until_complete(self.get_schema_by_id_async(schema_id))
+        return asyncio.run(self.get_schema_by_id_async(schema_id))
 
     async def check_compatibility_async(
         self, subject: str, schema: Dict[str, Any], version: str = "latest"
@@ -99,8 +97,7 @@ class SchemaRegistryClient:
     def check_compatibility(
         self, subject: str, schema: Dict[str, Any], version: str = "latest"
     ) -> bool:
-        loop = asyncio.new_event_loop()
-        return loop.run_until_complete(
+        return asyncio.run(
             self.check_compatibility_async(subject, schema, version)
         )
 
@@ -124,8 +121,7 @@ class SchemaRegistryClient:
         return int(version)
 
     def register_schema(self, subject: str, schema: Dict[str, Any]) -> int:
-        loop = asyncio.new_event_loop()
-        return loop.run_until_complete(self.register_schema_async(subject, schema))
+        return asyncio.run(self.register_schema_async(subject, schema))
 
 
 __all__ = ["SchemaRegistryClient", "SchemaInfo"]
