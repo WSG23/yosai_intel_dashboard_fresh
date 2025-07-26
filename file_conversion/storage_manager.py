@@ -13,6 +13,7 @@ from core.callback_events import CallbackEvent
 from core.callbacks import UnifiedCallbackManager
 from core.container import get_unicode_processor
 from core.protocols import UnicodeProcessorProtocol
+from utils.io_helpers import read_json, write_json
 
 _logger = logging.getLogger(__name__)
 
@@ -38,16 +39,14 @@ class StorageManager:
     def _load_metadata(self) -> None:
         try:
             if self._metadata_path.exists():
-                with open(self._metadata_path, "r", encoding="utf-8") as fh:
-                    self._metadata = json.load(fh)
+                self._metadata = read_json(self._metadata_path)
         except Exception as exc:  # pragma: no cover - best effort
             _logger.error("Failed to load metadata: %s", exc)
             self._metadata = {}
 
     def _save_metadata(self) -> None:
         try:
-            with open(self._metadata_path, "w", encoding="utf-8") as fh:
-                json.dump(self._metadata, fh, indent=2, default=str)
+            write_json(self._metadata_path, self._metadata)
         except Exception as exc:  # pragma: no cover - best effort
             _logger.error("Failed to save metadata: %s", exc)
 
