@@ -9,23 +9,28 @@ import {
   Settings
 } from './pages';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ZustandProvider } from './state';
 
 import "./index.css";
+const queryClient = new QueryClient();
 const rootEl = document.getElementById('root');
 if (rootEl) {
   const root = ReactDOM.createRoot(rootEl as HTMLElement);
   root.render(
     <React.StrictMode>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/upload" replace />} />
-          <Route path="/upload" element={<Upload />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/graphs" element={<Graphs />} />
-          <Route path="/export" element={<Export />} />
-          <Route path="/settings" element={<Settings />} />
-        </Routes>
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Navigate to="/upload" replace />} />
+            <Route path="/upload" element={<Upload />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/graphs" element={<Graphs />} />
+            <Route path="/export" element={<Export />} />
+            <Route path="/settings" element={<Settings />} />
+          </Routes>
+        </BrowserRouter>
+      </QueryClientProvider>
 
     </React.StrictMode>
   );
@@ -36,9 +41,11 @@ if (rtEl) {
   const rtRoot = ReactDOM.createRoot(rtEl as HTMLElement);
   rtRoot.render(
     <React.StrictMode>
-      <ZustandProvider>
-        <RealTimeAnalyticsPage />
-      </ZustandProvider>
+      <QueryClientProvider client={queryClient}>
+        <ZustandProvider>
+          <RealTimeAnalyticsPage />
+        </ZustandProvider>
+      </QueryClientProvider>
     </React.StrictMode>
   );
 }
