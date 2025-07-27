@@ -159,13 +159,13 @@ async def _shutdown() -> None:
     service.stop()
 
 
-@app.post("/api/v1/analytics/get_dashboard_summary")
+@app.post("/api/v1/analytics/dashboard-summary")
 async def dashboard_summary(_: None = Depends(verify_token)):
     pool = await get_pool()
     return await async_queries.fetch_dashboard_summary(pool)
 
 
-@app.post("/api/v1/analytics/get_access_patterns_analysis")
+@app.post("/api/v1/analytics/access-patterns")
 async def access_patterns(req: PatternsRequest, _: None = Depends(verify_token)):
     pool = await get_pool()
     return await async_queries.fetch_access_patterns(pool, req.days)
