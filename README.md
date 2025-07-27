@@ -965,6 +965,7 @@ manager.execute_query_with_retry("SELECT 1")
 
 
 - **device_learning_service.py**: Persists learned device mappings ([docs](docs/device_learning_service.md))
+- **Model predictions**: POST data to `/api/v1/models/{name}/predict` to run the active model and receive predictions
 - Caching and performance optimization
 - Modular and testable
 

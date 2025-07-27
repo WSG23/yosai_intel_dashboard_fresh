@@ -4,6 +4,7 @@ import pathlib
 import sys
 import types
 import time
+import joblib
 from unittest.mock import AsyncMock
 
 import httpx
@@ -233,3 +234,38 @@ async def test_model_registry_endpoints(tmp_path):
         )
         assert resp.status_code == 200
         assert resp.json()["active_version"] == "1"
+
+
+@pytest.mark.asyncio
+async def test_predict_endpoint(tmp_path):
+    module, _, _ = load_app()
+    module.app.state.model_dir = tmp_path
+    class Dummy:
+        def predict(self, data):
+            return [len(data)]
+
+    model = Dummy()
+    path = tmp_path / "demo" / "1" / "model.joblib"
+    path.parent.mkdir(parents=True)
+    joblib.dump(model, path)
+    module.app.state.model_registry = {
+        "demo": [{"name": "demo", "version": "1", "path": str(path), "active": True}]
+    }
+    module.preload_active_models()
+
+    token = jwt.encode(
+        {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
+        "secret",
+        algorithm="HS256",
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    transport = httpx.ASGITransport(app=module.app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post(
+            "/api/v1/models/demo/predict",
+            headers=headers,
+            json={"data": [1, 2]},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["predictions"] == [2]
