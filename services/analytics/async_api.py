@@ -23,6 +23,7 @@ from starlette.types import ASGIApp
 from core.cache_manager import CacheConfig, InMemoryCacheManager
 from core.events import EventBus
 from services.cached_analytics import CachedAnalyticsService
+from services.websocket_server import AnalyticsWebSocketServer
 from services.common.async_db import get_pool
 from services.security import require_permission
 from infrastructure.discovery.health_check import (
@@ -38,7 +39,8 @@ logger = logging.getLogger(__name__)
 
 event_bus = EventBus()
 cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=300))
-analytics_service = CachedAnalyticsService(cache_manager)
+analytics_service = CachedAnalyticsService(cache_manager, event_bus=event_bus)
+ws_server: AnalyticsWebSocketServer | None = None
 
 app = FastAPI(dependencies=[Depends(require_permission("analytics.read"))])
 
@@ -55,7 +57,16 @@ async def get_service() -> CachedAnalyticsService:
 
 @app.on_event("startup")
 async def _startup() -> None:
+    global ws_server
     await cache_manager.start()
+    ws_server = AnalyticsWebSocketServer(event_bus)
+
+
+@app.on_event("shutdown")
+async def _shutdown() -> None:
+    await cache_manager.stop()
+    if ws_server is not None:
+        ws_server.stop()
 
 
 # ---------------------------------------------------------------------------
@@ -208,4 +219,4 @@ async def analytics_sse() -> StreamingResponse:
     return StreamingResponse(_generator(), media_type="text/event-stream")
 
 
-__all__ = ["app", "get_service", "event_bus"]
+__all__ = ["app", "get_service", "event_bus", "ws_server"]
