@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import logging
 import threading
+import os
+import hashlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -114,13 +116,24 @@ class BaseModel(ABC):
         monitor.log_metrics(metrics)
 
     # ------------------------------------------------------------------
-    def predict(self, data: Any) -> Any:
-        """Thread-safe prediction wrapper."""
+    def predict(self, data: Any, *, log_prediction: bool | None = None) -> Any:
+        """Thread-safe prediction wrapper with optional event logging."""
         prepared = self._sanitize_input(data)
         with self._predict_lock:
             if torch is not None and hasattr(self.model, "to"):
                 self.model.to(self.device)
-            return self._predict(prepared)
+            result = self._predict(prepared)
+
+        if log_prediction is None:
+            flag = os.getenv("MODEL_PREDICTION_LOGGING", "0").lower()
+            log_prediction = flag in {"1", "true", "yes"}
+
+        if log_prediction:
+            monitor = get_model_performance_monitor()
+            input_hash = self._hash_input(prepared)
+            monitor.log_prediction(input_hash, result, datetime.utcnow())
+
+        return result
 
     @abstractmethod
     def _predict(self, data: Any) -> Any:
@@ -139,6 +152,14 @@ class BaseModel(ABC):
         if isinstance(data, dict):
             return {k: self._sanitize_input(v) for k, v in data.items()}
         return data
+
+    def _hash_input(self, data: Any) -> str:
+        """Return a stable SHA256 hash for ``data``."""
+        try:
+            normalized = json.dumps(data, sort_keys=True, default=str)
+        except Exception:
+            normalized = str(data)
+        return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
     # ------------------------------------------------------------------
     def explain_shap(self, data: Any) -> Any:

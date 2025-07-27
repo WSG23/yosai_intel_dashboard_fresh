@@ -3,7 +3,10 @@ from __future__ import annotations
 """Utilities for tracking ML model performance."""
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
+
+import logging
+from datetime import datetime
 
 from core.performance import MetricType, get_performance_monitor
 from monitoring.prometheus.model_metrics import update_model_metrics
@@ -22,10 +25,14 @@ class ModelPerformanceMonitor:
     """Log model metrics and detect simple performance drift."""
 
     def __init__(
-        self, baseline: Optional[ModelMetrics] = None, drift_threshold: float = 0.05
+        self,
+        baseline: Optional[ModelMetrics] = None,
+        drift_threshold: float = 0.05,
+        logger: Optional[logging.Logger] = None,
     ) -> None:
         self.baseline = baseline
         self.drift_threshold = drift_threshold
+        self.logger = logger or logging.getLogger("model_predictions")
 
     # ------------------------------------------------------------------
     def log_metrics(self, metrics: ModelMetrics) -> None:
@@ -41,6 +48,24 @@ class ModelPerformanceMonitor:
             "model.recall", metrics.recall, MetricType.FILE_PROCESSING
         )
         update_model_metrics(metrics)
+
+    # ------------------------------------------------------------------
+    def log_prediction(
+        self,
+        input_hash: str,
+        prediction: Any,
+        timestamp: Optional[datetime] = None,
+    ) -> None:
+        """Emit a prediction event via the configured logger."""
+        ts = timestamp or datetime.utcnow()
+        self.logger.info(
+            "model_prediction",
+            extra={
+                "input_hash": input_hash,
+                "prediction": prediction,
+                "timestamp": ts.isoformat(),
+            },
+        )
 
     # ------------------------------------------------------------------
     def detect_drift(self, metrics: ModelMetrics) -> bool:
