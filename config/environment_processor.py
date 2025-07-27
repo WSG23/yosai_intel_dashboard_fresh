@@ -85,7 +85,9 @@ class EnvironmentProcessor:
                 if (v := self._to_int("PBKDF2_ITERATIONS")) is not None:
                     sec.pbkdf2_iterations = v
             if hasattr(sec, "rate_limit_requests"):
-                if (v := self._to_int("RATE_LIMIT_API")) is not None:
+                if (v := self._to_int("RATE_LIMIT_REQUESTS")) is None:
+                    v = self._to_int("RATE_LIMIT_API")
+                if v is not None:
                     sec.rate_limit_requests = v
             if hasattr(sec, "rate_limit_window_minutes"):
                 if (v := self._to_int("RATE_LIMIT_WINDOW")) is not None:
@@ -145,7 +147,6 @@ class EnvironmentProcessor:
 
         # Generic YOSAI_* overrides
         self._apply_prefixed_overrides(config)
-
 
     def _apply_prefixed_overrides(self, config: Any) -> None:
         """Apply overrides for variables starting with ``YOSAI_``."""

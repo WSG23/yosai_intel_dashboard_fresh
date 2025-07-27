@@ -813,7 +813,7 @@ defaults:
 
 
 - `PBKDF2_ITERATIONS` – password hashing iterations
-- `RATE_LIMIT_API` – number of requests allowed per window
+ - `RATE_LIMIT_REQUESTS` – number of requests allowed per window
 - `RATE_LIMIT_WINDOW` – rate limit window in minutes
 - `MAX_UPLOAD_MB` – maximum allowed upload size
 - `DB_POOL_SIZE` – database connection pool size

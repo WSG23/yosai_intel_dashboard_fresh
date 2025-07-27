@@ -1,8 +1,7 @@
+import json
 import os
 import time
 from pathlib import Path
-import json
-
 
 from fastapi import (
     APIRouter,
@@ -12,42 +11,61 @@ from fastapi import (
     Form,
     Header,
     HTTPException,
+    Request,
     UploadFile,
     status,
 )
-
+from fastapi.responses import JSONResponse
 from jose import jwt
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
-from services.analytics_microservice.unicode_middleware import (
-    UnicodeSanitizationMiddleware,
-)
 from pydantic import BaseModel
-from yosai_framework.errors import ServiceError
-from yosai_framework.service import BaseService
 
 from config import get_database_config
+from core.security import RateLimiter
 from infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
 )
 from services.analytics_microservice import async_queries
+from services.analytics_microservice.unicode_middleware import (
+    UnicodeSanitizationMiddleware,
+)
 from services.common import async_db
 from services.common.async_db import close_pool, create_pool, get_pool
 from services.common.secrets import get_secret
 from shared.errors.types import ErrorCode
-
+from yosai_framework.errors import ServiceError
+from yosai_framework.service import BaseService
 
 SERVICE_NAME = "analytics-microservice"
 service = (
-    ServiceBuilder(SERVICE_NAME)
-    .with_logging()
-    .with_metrics("")
-    .with_health()
-    .build()
+    ServiceBuilder(SERVICE_NAME).with_logging().with_metrics("").with_health().build()
 )
 app = service.app
 app.add_middleware(UnicodeSanitizationMiddleware)
+
+rate_limiter = RateLimiter()
+
+
+@app.middleware("http")
+async def rate_limit(request: Request, call_next):
+    auth = request.headers.get("Authorization", "")
+    identifier = (
+        auth.split(" ", 1)[1] if auth.startswith("Bearer ") else request.client.host
+    )
+    result = rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
+    if not result["allowed"]:
+        headers = {}
+        retry = result.get("retry_after")
+        if retry:
+            headers["Retry-After"] = str(int(retry))
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content={"detail": "rate limit exceeded"},
+            headers=headers,
+        )
+    return await call_next(request)
 
 
 async def _db_check(_: FastAPI) -> bool:
@@ -101,7 +119,6 @@ async def _startup() -> None:
     # Ensure the JWT secret can be retrieved on startup
     _jwt_secret()
 
-
     cfg = get_database_config()
     await create_pool(
         cfg.get_connection_string(),
@@ -150,7 +167,6 @@ async def health_ready() -> dict[str, str]:
         status_code=503,
         detail=ServiceError(ErrorCode.UNAVAILABLE, "not ready").to_dict(),
     )
-
 
 
 @app.on_event("shutdown")
@@ -203,12 +219,16 @@ async def list_versions(name: str, _: None = Depends(verify_token)):
     return {
         "name": name,
         "versions": [e["version"] for e in registry],
-        "active_version": next((e["version"] for e in registry if e.get("active")), None),
+        "active_version": next(
+            (e["version"] for e in registry if e.get("active")), None
+        ),
     }
 
 
 @models_router.post("/{name}/rollback")
-async def rollback(name: str, version: str = Form(...), _: None = Depends(verify_token)):
+async def rollback(
+    name: str, version: str = Form(...), _: None = Depends(verify_token)
+):
     registry = app.state.model_registry.get(name)
     if not registry:
         raise HTTPException(status_code=404, detail="model not found")
@@ -230,5 +250,9 @@ setup_health_checks(app)
 @app.on_event("startup")
 async def _write_openapi() -> None:
     """Persist OpenAPI schema for docs."""
-    docs_path = Path(__file__).resolve().parents[2] / "docs" / "analytics_microservice_openapi.json"
+    docs_path = (
+        Path(__file__).resolve().parents[2]
+        / "docs"
+        / "analytics_microservice_openapi.json"
+    )
     docs_path.write_text(json.dumps(app.openapi(), indent=2))

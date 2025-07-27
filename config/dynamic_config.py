@@ -5,19 +5,18 @@ from typing import Any, Dict
 from .app_config import UploadConfig
 from .base_loader import BaseConfigLoader
 from .constants import (
+    DEFAULT_CHUNK_SIZE,
     AnalyticsConstants,
     CSSConstants,
     DatabaseConstants,
-    StreamingConstants,
     PerformanceConstants,
     SecurityConstants,
+    StreamingConstants,
     UploadLimits,
-    DEFAULT_CHUNK_SIZE,
 )
 from .environment import select_config_file
 
 logger = logging.getLogger(__name__)
-
 
 
 class DynamicConfigManager(BaseConfigLoader):
@@ -97,9 +96,11 @@ class DynamicConfigManager(BaseConfigLoader):
         if iterations is not None:
             self.security.pbkdf2_iterations = int(iterations)
 
-        rate_limit_api = os.getenv("RATE_LIMIT_API")
-        if rate_limit_api is not None:
-            self.security.rate_limit_requests = int(rate_limit_api)
+        requests_limit = os.getenv("RATE_LIMIT_REQUESTS")
+        if requests_limit is None:
+            requests_limit = os.getenv("RATE_LIMIT_API")
+        if requests_limit is not None:
+            self.security.rate_limit_requests = int(requests_limit)
 
         rate_limit_window = os.getenv("RATE_LIMIT_WINDOW")
         if rate_limit_window is not None:
@@ -286,7 +287,6 @@ dynamic_config = DynamicConfigManager()
 def diagnose_upload_config():
     """Diagnostic function to check upload configuration"""
     import os
-
 
     print("=== Upload Configuration Diagnosis ===")
     print(f"Environment MAX_UPLOAD_MB: {os.getenv('MAX_UPLOAD_MB', 'Not Set')}")
