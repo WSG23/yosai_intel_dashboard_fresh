@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import json
 import os
 import time
+from dataclasses import asdict
 from pathlib import Path
 
+import pandas as pd
 from fastapi import (
     APIRouter,
     Depends,
@@ -15,13 +19,14 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.responses import JSONResponse
+
 from jose import jwt
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 
 
+from analytics import anomaly_detection, feature_extraction, security_patterns
 from config import get_database_config
 from core.security import RateLimiter
 from infrastructure.discovery.health_check import (
@@ -36,6 +41,8 @@ from services.common import async_db
 from services.common.async_db import close_pool, create_pool, get_pool
 from services.common.secrets import get_secret
 from shared.errors.types import ErrorCode
+from yosai_framework import ServiceBuilder
+
 from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
 
@@ -209,6 +216,50 @@ async def access_patterns(req: PatternsRequest, _: None = Depends(verify_token))
     result = await async_queries.fetch_access_patterns(pool, req.days)
     await app.state.redis.set(cache_key, json.dumps(result), ex=app.state.cache_ttl)
     return result
+
+
+@app.post("/api/v1/analytics/threat_assessment")
+async def threat_assessment(
+    request: Request,
+    file: UploadFile | None = File(None),
+    _: None = Depends(verify_token),
+):
+    """Run threat assessment on raw intel data."""
+    try:
+        if file is not None:
+            raw_bytes = await file.read()
+            payload = json.loads(raw_bytes.decode("utf-8"))
+        else:
+            payload = await request.json()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail="invalid payload") from exc
+
+    if isinstance(payload, list):
+        df = pd.DataFrame(payload)
+    elif isinstance(payload, dict) and "data" in payload:
+        df = pd.DataFrame(payload["data"])
+    else:
+        df = pd.DataFrame(payload)
+
+    features = feature_extraction.extract_event_features(df)
+    anomaly = anomaly_detection.AnomalyDetector().analyze_anomalies(features)
+    patterns = security_patterns.SecurityPatternsAnalyzer().analyze_security_patterns(
+        features
+    )
+
+    ad_result = asdict(anomaly)
+    sp_result = asdict(patterns)
+
+    combined_risk = (
+        ad_result.get("risk_assessment", {}).get("risk_score", 0.0)
+        + sp_result.get("overall_score", 0.0) / 100
+    ) / 2
+
+    return {
+        "anomaly_detection": ad_result,
+        "security_patterns": sp_result,
+        "combined_risk_score": combined_risk,
+    }
 
 
 models_router = APIRouter(prefix="/api/v1/models", tags=["models"])
