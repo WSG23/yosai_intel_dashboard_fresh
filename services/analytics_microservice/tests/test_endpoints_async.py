@@ -1,14 +1,17 @@
+from __future__ import annotations
+
 import importlib.util
 import os
 import pathlib
 import sys
-import types
 import time
 import joblib
+
 from unittest.mock import AsyncMock
 
 import httpx
 import pytest
+from fastapi import FastAPI
 from jose import jwt
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2]
@@ -98,9 +101,7 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     yf_config_stub.ServiceConfig = DummyCfg
     yf_config_stub.load_config = lambda path: DummyCfg()
     sys.modules["yosai_framework.config"] = yf_config_stub
-    import yosai_framework.service as yf_service
 
-    yf_service.load_config = yf_config_stub.load_config
 
     redis_stub = types.ModuleType("redis")
     redis_async = types.ModuleType("redis.asyncio")
@@ -113,6 +114,145 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     queries_stub.fetch_dashboard_summary = AsyncMock(return_value={"status": "ok"})
     queries_stub.fetch_access_patterns = AsyncMock(return_value={"days": 7})
     sys.modules["services.analytics_microservice.async_queries"] = queries_stub
+
+    health_stub = types.ModuleType("infrastructure.discovery.health_check")
+    health_stub.register_health_check = lambda *a, **k: None
+    health_stub.setup_health_checks = lambda app: None
+    health_stub.DependencyHealthMiddleware = lambda app: app
+    sys.modules["infrastructure.discovery.health_check"] = health_stub
+
+    service_stub = types.ModuleType("yosai_framework.service")
+
+    class DummyService:
+        def __init__(self):
+            self.app = FastAPI()
+            self.app.state.live = True
+            self.app.state.ready = True
+            self.app.state.startup_complete = True
+
+        def stop(self):
+            pass
+
+    class DummyBuilder:
+        def __init__(self, name: str):
+            self
+
+        def with_logging(self, *a, **k):
+            return self
+
+        def with_metrics(self, *a, **k):
+            return self
+
+        def with_health(self):
+            return self
+
+        def build(self):
+            return DummyService()
+
+    service_stub.BaseService = DummyService
+    service_stub.ServiceBuilder = DummyBuilder
+    sys.modules["yosai_framework.service"] = service_stub
+    yf_pkg = types.ModuleType("yosai_framework")
+    yf_pkg.ServiceBuilder = DummyBuilder
+    yf_pkg.BaseService = DummyService
+    errors_stub = types.ModuleType("yosai_framework.errors")
+
+    class ServiceError(Exception):
+        pass
+
+    errors_stub.ServiceError = ServiceError
+    sys.modules["yosai_framework"] = yf_pkg
+    sys.modules["yosai_framework.errors"] = errors_stub
+
+    secrets_stub = types.ModuleType("services.common.secrets")
+    secrets_stub.get_secret = lambda path: "secret"
+    sys.modules["services.common.secrets"] = secrets_stub
+
+    # Stub analytics modules used by threat_assessment endpoint
+    fe_stub = types.ModuleType("analytics.feature_extraction")
+    fe_stub.extract_event_features = lambda df, logger=None: df
+
+    ad_stub = types.ModuleType("analytics.anomaly_detection")
+
+    @dataclass
+    class DummyResult:
+        total_anomalies: int = 0
+        severity_distribution: dict = None
+        detection_summary: dict = None
+        risk_assessment: dict = None
+        recommendations: list = None
+        processing_metadata: dict = None
+
+    class DummyDetector:
+        def analyze_anomalies(self, df):
+            return DummyResult(
+                severity_distribution={},
+                detection_summary={},
+                risk_assessment={"risk_score": 0},
+                recommendations=[],
+                processing_metadata={},
+            )
+
+    ad_stub.AnomalyDetector = DummyDetector
+
+    sp_stub = types.ModuleType("analytics.security_patterns")
+
+    @dataclass
+    class DummyAssessment:
+        overall_score: int = 0
+        risk_level: str = "low"
+        confidence_interval: tuple = (0.0, 0.0)
+        threat_indicators: list = None
+        pattern_analysis: dict = None
+        recommendations: list = None
+
+    class DummyAnalyzer:
+        def analyze_security_patterns(self, df):
+            return DummyAssessment(
+                threat_indicators=[],
+                pattern_analysis={},
+                recommendations=[],
+            )
+
+    sp_stub.SecurityPatternsAnalyzer = DummyAnalyzer
+
+    analytics_pkg = types.ModuleType("analytics")
+    analytics_pkg.feature_extraction = fe_stub
+    analytics_pkg.anomaly_detection = ad_stub
+    analytics_pkg.security_patterns = sp_stub
+    sys.modules["analytics"] = analytics_pkg
+    sys.modules["analytics.feature_extraction"] = fe_stub
+    sys.modules["analytics.anomaly_detection"] = ad_stub
+    sys.modules["analytics.security_patterns"] = sp_stub
+
+    # Minimal stubs for unicode and validation utilities
+    core_unicode = types.ModuleType("core.unicode")
+    core_unicode.sanitize_for_utf8 = lambda x: x
+    core_pkg = types.ModuleType("core")
+    core_pkg.unicode = core_unicode
+    sys.modules["core"] = core_pkg
+    sys.modules["core.unicode"] = core_unicode
+
+    unicode_stub = types.ModuleType("utils.unicode_handler")
+
+    class DummyHandler:
+        @staticmethod
+        def sanitize(obj):
+            return obj
+
+    unicode_stub.UnicodeHandler = DummyHandler
+    sys.modules["utils.unicode_handler"] = unicode_stub
+
+    val_stub = types.ModuleType("validation.unicode_validator")
+
+    class DummyValidator:
+        def validate_dataframe(self, df):
+            return df
+
+    val_stub.UnicodeValidator = DummyValidator
+    sys.modules["validation.unicode_validator"] = val_stub
+
+    sys.modules.setdefault("hvac", types.ModuleType("hvac"))
 
     os.environ["JWT_SECRET"] = jwt_secret
 
@@ -253,6 +393,7 @@ async def test_predict_endpoint(tmp_path):
     }
     module.preload_active_models()
 
+
     token = jwt.encode(
         {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
         "secret",
@@ -269,3 +410,4 @@ async def test_predict_endpoint(tmp_path):
         )
         assert resp.status_code == 200
         assert resp.json()["predictions"] == [2]
+
