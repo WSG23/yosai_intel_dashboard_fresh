@@ -1,13 +1,11 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
-import RealTimeAnalyticsPage from './pages/RealTimeAnalyticsPage';
-import {
-  Upload,
-  Analytics,
-  Graphs,
-  Export,
-  Settings
-} from './pages';
+const RealTimeAnalyticsPage = React.lazy(() => import('./pages/RealTimeAnalyticsPage'));
+const Upload = React.lazy(() => import('./pages/Upload'));
+const Analytics = React.lazy(() => import('./pages/Analytics'));
+const Graphs = React.lazy(() => import('./pages/Graphs'));
+const Export = React.lazy(() => import('./pages/Export'));
+const Settings = React.lazy(() => import('./pages/Settings'));
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ZustandProvider } from './state';
@@ -19,8 +17,9 @@ if (rootEl) {
   const root = ReactDOM.createRoot(rootEl as HTMLElement);
   root.render(
     <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
+      <BrowserRouter>
+        <Suspense fallback={<div>Loading...</div>}>
+
           <Routes>
             <Route path="/" element={<Navigate to="/upload" replace />} />
             <Route path="/upload" element={<Upload />} />
@@ -29,8 +28,9 @@ if (rootEl) {
             <Route path="/export" element={<Export />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
-        </BrowserRouter>
-      </QueryClientProvider>
+        </Suspense>
+      </BrowserRouter>
+
 
     </React.StrictMode>
   );
@@ -41,11 +41,12 @@ if (rtEl) {
   const rtRoot = ReactDOM.createRoot(rtEl as HTMLElement);
   rtRoot.render(
     <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <ZustandProvider>
+      <ZustandProvider>
+        <Suspense fallback={<div>Loading...</div>}>
           <RealTimeAnalyticsPage />
-        </ZustandProvider>
-      </QueryClientProvider>
+        </Suspense>
+      </ZustandProvider>
+
     </React.StrictMode>
   );
 }
