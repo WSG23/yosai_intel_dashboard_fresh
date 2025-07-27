@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import AsyncIterator, Optional
+from typing import Any, AsyncIterator, Optional
 
 from fastapi import (
     Depends,
@@ -16,6 +16,9 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.responses import JSONResponse, StreamingResponse
+
+from services.analytics_service import get_analytics_service
+from services.summary_report_generator import SummaryReportGenerator
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.types import ASGIApp
@@ -25,6 +28,8 @@ from core.events import EventBus
 from services.cached_analytics import CachedAnalyticsService
 from services.common.async_db import get_pool
 from services.security import require_permission
+
+from pydantic import BaseModel
 from infrastructure.discovery.health_check import (
     setup_health_checks,
     register_health_check,
@@ -95,6 +100,15 @@ class AnalyticsQuery:
         self.range = range
 
 
+class ReportRequest(BaseModel):
+    """Parameters for report generation."""
+
+    type: str
+    timeframe: str | None = None
+    format: str | None = "json"
+    params: dict[str, Any] | None = None
+
+
 @app.get("/api/v1/analytics/patterns")
 async def get_patterns_analysis(
     query: AnalyticsQuery = Depends(),
@@ -162,6 +176,32 @@ async def get_all_analytics(
 ):
     data = await service.get_analytics_summary(query.facility_id, query.range)
     return JSONResponse(content=data)
+
+
+@app.post("/api/v1/analytics/report")
+async def generate_report(
+    req: ReportRequest,
+    _: None = Depends(require_permission("analytics.read")),
+):
+    """Generate an analytics report asynchronously."""
+    service = get_analytics_service()
+    if service is None:
+        raise HTTPException(status_code=503, detail="analytics service unavailable")
+
+    report = await asyncio.to_thread(
+        service.generate_report,
+        req.type,
+        {"timeframe": req.timeframe, **(req.params or {})},
+    )
+
+    if req.format == "file":
+        body = json.dumps(report, indent=2)
+        headers = {
+            "Content-Disposition": f"attachment; filename={req.type}_report.json"
+        }
+        return StreamingResponse(iter([body]), media_type="application/json", headers=headers)
+
+    return JSONResponse(content=report)
 
 
 # ---------------------------------------------------------------------------
