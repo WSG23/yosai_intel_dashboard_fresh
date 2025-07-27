@@ -958,6 +958,8 @@ manager.execute_query_with_retry("SELECT 1")
 - **Async analytics microservice**: FastAPI implementation using an async
   database engine and Redis cache
   ([docs](docs/analytics_async_migration.md)).
+  Models can be managed via `/api/v1/models/register` and predictions are
+  available at `/api/v1/models/{name}/predict` by posting `{"data": [...]}`.
 
 
 - **device_learning_service.py**: Persists learned device mappings ([docs](docs/device_learning_service.md))

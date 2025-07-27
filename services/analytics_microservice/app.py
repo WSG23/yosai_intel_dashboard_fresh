@@ -2,6 +2,7 @@ import os
 import time
 from pathlib import Path
 import json
+import joblib
 
 
 from fastapi import (
@@ -25,6 +26,7 @@ from services.analytics_microservice.unicode_middleware import (
 from pydantic import BaseModel
 from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
+from yosai_framework.builder import ServiceBuilder
 
 from config import get_database_config
 from infrastructure.discovery.health_check import (
@@ -40,13 +42,10 @@ from shared.errors.types import ErrorCode
 
 SERVICE_NAME = "analytics-microservice"
 service = (
-    ServiceBuilder(SERVICE_NAME)
-    .with_logging()
-    .with_metrics("")
-    .with_health()
-    .build()
+    ServiceBuilder(SERVICE_NAME).with_logging().with_metrics("").with_health().build()
 )
 app = service.app
+setup_health_checks(app)
 app.add_middleware(UnicodeSanitizationMiddleware)
 
 
@@ -96,11 +95,14 @@ class PatternsRequest(BaseModel):
     days: int = 7
 
 
+class PredictionRequest(BaseModel):
+    data: list
+
+
 @app.on_event("startup")
 async def _startup() -> None:
     # Ensure the JWT secret can be retrieved on startup
     _jwt_secret()
-
 
     cfg = get_database_config()
     await create_pool(
@@ -114,6 +116,16 @@ async def _startup() -> None:
     app.state.model_dir = Path(os.environ.get("MODEL_DIR", "model_store"))
     app.state.model_dir.mkdir(parents=True, exist_ok=True)
     app.state.model_registry = {}
+    app.state.models = {}
+    for name, entries in app.state.model_registry.items():
+        active = next((e for e in entries if e.get("active")), None)
+        if active:
+            path = Path(active["path"])
+            if path.exists():
+                try:
+                    app.state.models[name] = joblib.load(path)
+                except Exception:
+                    app.state.models.pop(name, None)
     app.state.ready = True
     app.state.startup_complete = True
 
@@ -150,7 +162,6 @@ async def health_ready() -> dict[str, str]:
         status_code=503,
         detail=ServiceError(ErrorCode.UNAVAILABLE, "not ready").to_dict(),
     )
-
 
 
 @app.on_event("shutdown")
@@ -192,6 +203,12 @@ async def register_model(
     for entry in registry:
         entry["active"] = False
     registry.append(meta)
+    if not hasattr(app.state, "models"):
+        app.state.models = {}
+    try:
+        app.state.models[name] = joblib.load(dest_path)
+    except Exception:
+        app.state.models.pop(name, None)
     return meta
 
 
@@ -203,12 +220,16 @@ async def list_versions(name: str, _: None = Depends(verify_token)):
     return {
         "name": name,
         "versions": [e["version"] for e in registry],
-        "active_version": next((e["version"] for e in registry if e.get("active")), None),
+        "active_version": next(
+            (e["version"] for e in registry if e.get("active")), None
+        ),
     }
 
 
 @models_router.post("/{name}/rollback")
-async def rollback(name: str, version: str = Form(...), _: None = Depends(verify_token)):
+async def rollback(
+    name: str, version: str = Form(...), _: None = Depends(verify_token)
+):
     registry = app.state.model_registry.get(name)
     if not registry:
         raise HTTPException(status_code=404, detail="model not found")
@@ -219,16 +240,46 @@ async def rollback(name: str, version: str = Form(...), _: None = Depends(verify
     return {"name": name, "active_version": version}
 
 
+@models_router.post("/{name}/predict")
+async def predict(name: str, req: PredictionRequest, _: None = Depends(verify_token)):
+    model = app.state.models.get(name)
+    if model is None:
+        registry = app.state.model_registry.get(name)
+        if not registry:
+            raise HTTPException(status_code=404, detail="model not found")
+        active = next((e for e in registry if e.get("active")), None)
+        if not active:
+            raise HTTPException(status_code=404, detail="no active version")
+        path = Path(active["path"])
+        if not path.exists():
+            raise HTTPException(status_code=404, detail="model file missing")
+        try:
+            model = joblib.load(path)
+            app.state.models[name] = model
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(status_code=500, detail="failed to load model") from exc
+    try:
+        preds = model.predict(req.data)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail="prediction failed") from exc
+    if hasattr(preds, "tolist"):
+        preds = preds.tolist()
+    return {"predictions": preds}
+
+
 app.include_router(models_router)
 
 
 FastAPIInstrumentor.instrument_app(app)
 Instrumentator().instrument(app).expose(app)
-setup_health_checks(app)
 
 
 @app.on_event("startup")
 async def _write_openapi() -> None:
     """Persist OpenAPI schema for docs."""
-    docs_path = Path(__file__).resolve().parents[2] / "docs" / "analytics_microservice_openapi.json"
+    docs_path = (
+        Path(__file__).resolve().parents[2]
+        / "docs"
+        / "analytics_microservice_openapi.json"
+    )
     docs_path.write_text(json.dumps(app.openapi(), indent=2))

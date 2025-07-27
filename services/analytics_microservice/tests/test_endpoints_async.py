@@ -38,12 +38,56 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     prom_stub.Instrumentator = lambda: DummyInstr()
     sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
 
+    unicode_stub = types.ModuleType("utils.unicode_handler")
+
+    class UnicodeHandler:
+        @staticmethod
+        def sanitize(value):
+            return value
+
+    unicode_stub.UnicodeHandler = UnicodeHandler
+    sys.modules.setdefault("utils.unicode_handler", unicode_stub)
 
     db_stub = types.ModuleType("services.common.async_db")
     db_stub.create_pool = AsyncMock()
     db_stub.close_pool = AsyncMock()
     db_stub.get_pool = AsyncMock(return_value=object())
     sys.modules["services.common.async_db"] = db_stub
+
+    registry_stub = types.ModuleType("services.common.model_registry")
+
+    class ModelRegistry:
+        pass
+
+    registry_stub.ModelRegistry = ModelRegistry
+    sys.modules.setdefault("services.common.model_registry", registry_stub)
+
+    hvac_stub = types.ModuleType("hvac")
+    sys.modules.setdefault("hvac", hvac_stub)
+
+    secrets_stub = types.ModuleType("services.common.secrets")
+
+    def get_secret(_: str) -> str:
+        secret = os.getenv("JWT_SECRET", "")
+        if not secret or secret == "change-me":
+            raise RuntimeError("missing")
+        return secret
+
+    secrets_stub.get_secret = get_secret
+    sys.modules.setdefault("services.common.secrets", secrets_stub)
+
+    hc_stub = types.ModuleType("infrastructure.discovery.health_check")
+
+    def register_health_check(app, name, func):
+        app.state.health_checks = getattr(app.state, "health_checks", {})
+        app.state.health_checks[name] = func
+
+    def setup_health_checks(app):
+        pass
+
+    hc_stub.register_health_check = register_health_check
+    hc_stub.setup_health_checks = setup_health_checks
+    sys.modules.setdefault("infrastructure.discovery.health_check", hc_stub)
 
     config_stub = types.ModuleType("config")
 
@@ -56,6 +100,18 @@ def load_app(jwt_secret: str = "secret") -> tuple:
         connection_timeout = 1
 
     config_stub.get_database_config = lambda: _Cfg()
+
+    class DatabaseSettings:
+        def __init__(self, type: str = "", **kwargs):
+            self.type = type
+            self.host = ""
+            self.port = 0
+            self.name = ""
+            self.user = ""
+            self.password = ""
+            self.connection_timeout = 1
+
+    config_stub.DatabaseSettings = DatabaseSettings
     sys.modules["config"] = config_stub
 
     env_stub = types.ModuleType("config.environment")
@@ -78,6 +134,7 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     yf_config_stub.load_config = lambda path: DummyCfg()
     sys.modules["yosai_framework.config"] = yf_config_stub
     import yosai_framework.service as yf_service
+
     yf_service.load_config = yf_config_stub.load_config
 
     redis_stub = types.ModuleType("redis")
@@ -174,7 +231,9 @@ async def test_model_registry_endpoints(tmp_path):
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         files = {"file": ("model.bin", b"data")}
         data = {"name": "demo", "version": "1"}
-        resp = await client.post("/api/v1/models/register", headers=headers, data=data, files=files)
+        resp = await client.post(
+            "/api/v1/models/register", headers=headers, data=data, files=files
+        )
         assert resp.status_code == 200
         assert resp.json()["version"] == "1"
 
