@@ -129,7 +129,12 @@ jobs:
       - name: Install deps
         run: npm ci --prefix yosai-upload
       - name: Run frontend tests
-        run: npm test --prefix yosai-upload -- --watchAll=false
+        run: npm test --prefix yosai-upload -- --coverage --watchAll=false
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: yosai-upload/coverage/lcov.info
 
   frontend-build:
     # fix: dependency should be array
