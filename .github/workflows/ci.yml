@@ -87,7 +87,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: coverage.xml
+          files: coverage.xml,coverage/lcov.info
       - name: Go Coverage
         run: |
           set -xe
@@ -101,7 +101,12 @@ jobs:
       - name: Lint
         run: npm run lint
       - name: Jest Tests
-        run: npm test -- --watchAll=false
+        run: npm test -- --coverage --watchAll=false
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: coverage/lcov.info
       - name: Cypress Tests
         run: npx cypress run
       - name: Upload audit report

@@ -7,6 +7,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
+from error_handling.middleware import ErrorHandlingMiddleware
 
 from core.security import RateLimiter
 from infrastructure.discovery.health_check import (
@@ -25,6 +26,7 @@ os.environ.setdefault("YOSAI_SERVICE_NAME", SERVICE_NAME)
 CONFIG_PATH = pathlib.Path(__file__).with_name("service_config.yaml")
 service_base = BaseService(SERVICE_NAME, str(CONFIG_PATH))
 app = service_base.app
+app.add_middleware(ErrorHandlingMiddleware)
 try:
     service = StreamingService()
 except Exception:

@@ -21,6 +21,7 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 
+
 from config import get_database_config
 from core.security import RateLimiter
 from infrastructure.discovery.health_check import (
@@ -43,6 +44,7 @@ service = (
     ServiceBuilder(SERVICE_NAME).with_logging().with_metrics("").with_health().build()
 )
 app = service.app
+app.add_middleware(ErrorHandlingMiddleware)
 app.add_middleware(UnicodeSanitizationMiddleware)
 
 rate_limiter = RateLimiter()
@@ -127,7 +129,10 @@ async def _startup() -> None:
         timeout=cfg.connection_timeout,
     )
 
-    # Redis or other dependencies would be initialized here
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    app.state.redis = aioredis.from_url(redis_url, decode_responses=True)
+    app.state.cache_ttl = int(os.getenv("CACHE_TTL", "300"))
+
     app.state.model_dir = Path(os.environ.get("MODEL_DIR", "model_store"))
     app.state.model_dir.mkdir(parents=True, exist_ok=True)
     app.state.model_registry = {}
@@ -172,25 +177,45 @@ async def health_ready() -> dict[str, str]:
 @app.on_event("shutdown")
 async def _shutdown() -> None:
     await close_pool()
+    redis = getattr(app.state, "redis", None)
+    if redis is not None:
+        await redis.close()
     service.stop()
 
 
 @app.post("/api/v1/analytics/get_dashboard_summary")
+@rate_limit_decorator()
+
 async def dashboard_summary(_: None = Depends(verify_token)):
+    cache_key = "dashboard_summary"
+    cached = await app.state.redis.get(cache_key)
+    if cached:
+        return json.loads(cached)
     pool = await get_pool()
-    return await async_queries.fetch_dashboard_summary(pool)
+    result = await async_queries.fetch_dashboard_summary(pool)
+    await app.state.redis.set(cache_key, json.dumps(result), ex=app.state.cache_ttl)
+    return result
 
 
 @app.post("/api/v1/analytics/get_access_patterns_analysis")
+@rate_limit_decorator()
+
 async def access_patterns(req: PatternsRequest, _: None = Depends(verify_token)):
+    cache_key = f"access:{req.days}"
+    cached = await app.state.redis.get(cache_key)
+    if cached:
+        return json.loads(cached)
     pool = await get_pool()
-    return await async_queries.fetch_access_patterns(pool, req.days)
+    result = await async_queries.fetch_access_patterns(pool, req.days)
+    await app.state.redis.set(cache_key, json.dumps(result), ex=app.state.cache_ttl)
+    return result
 
 
 models_router = APIRouter(prefix="/api/v1/models", tags=["models"])
 
 
 @models_router.post("/register")
+@rate_limit_decorator()
 async def register_model(
     name: str = Form(...),
     version: str = Form(...),
@@ -212,6 +237,7 @@ async def register_model(
 
 
 @models_router.get("/{name}")
+@rate_limit_decorator()
 async def list_versions(name: str, _: None = Depends(verify_token)):
     registry = app.state.model_registry.get(name)
     if not registry:
@@ -229,6 +255,7 @@ async def list_versions(name: str, _: None = Depends(verify_token)):
 async def rollback(
     name: str, version: str = Form(...), _: None = Depends(verify_token)
 ):
+
     registry = app.state.model_registry.get(name)
     if not registry:
         raise HTTPException(status_code=404, detail="model not found")

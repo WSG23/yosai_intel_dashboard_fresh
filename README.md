@@ -489,6 +489,10 @@ as the **pip-audit-report** artifact. It runs on pull requests and fails when
 critical vulnerabilities are detected. Download the artifact from the
 **Actions** tab to review dependency vulnerability results.
 
+Coverage results are uploaded to **Codecov** for every pull request. Open the
+`codecov` check from the PR status page to explore detailed line coverage and
+changes introduced by the branch.
+
 ## <span aria-hidden="true">📋</span> Features
 
 - **Real-time Security Monitoring**: Live access control event monitoring

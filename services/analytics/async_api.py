@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import AsyncIterator, Optional
+from typing import Any, AsyncIterator, Optional
 
 from fastapi import (
     Depends,
@@ -16,6 +16,9 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.responses import JSONResponse, StreamingResponse
+
+from services.analytics_service import get_analytics_service
+from services.summary_report_generator import SummaryReportGenerator
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.types import ASGIApp
@@ -23,8 +26,11 @@ from starlette.types import ASGIApp
 from core.cache_manager import CacheConfig, InMemoryCacheManager
 from core.events import EventBus
 from services.cached_analytics import CachedAnalyticsService
+from services.websocket_server import AnalyticsWebSocketServer
 from services.common.async_db import get_pool
 from services.security import require_permission
+
+from pydantic import BaseModel
 from infrastructure.discovery.health_check import (
     setup_health_checks,
     register_health_check,
@@ -38,7 +44,8 @@ logger = logging.getLogger(__name__)
 
 event_bus = EventBus()
 cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=300))
-analytics_service = CachedAnalyticsService(cache_manager)
+analytics_service = CachedAnalyticsService(cache_manager, event_bus=event_bus)
+ws_server: AnalyticsWebSocketServer | None = None
 
 app = FastAPI(dependencies=[Depends(require_permission("analytics.read"))])
 
@@ -55,7 +62,16 @@ async def get_service() -> CachedAnalyticsService:
 
 @app.on_event("startup")
 async def _startup() -> None:
+    global ws_server
     await cache_manager.start()
+    ws_server = AnalyticsWebSocketServer(event_bus)
+
+
+@app.on_event("shutdown")
+async def _shutdown() -> None:
+    await cache_manager.stop()
+    if ws_server is not None:
+        ws_server.stop()
 
 
 # ---------------------------------------------------------------------------
@@ -93,6 +109,15 @@ class AnalyticsQuery:
     ) -> None:
         self.facility_id = facility_id
         self.range = range
+
+
+class ReportRequest(BaseModel):
+    """Parameters for report generation."""
+
+    type: str
+    timeframe: str | None = None
+    format: str | None = "json"
+    params: dict[str, Any] | None = None
 
 
 @app.get("/api/v1/analytics/patterns")
@@ -164,6 +189,32 @@ async def get_all_analytics(
     return JSONResponse(content=data)
 
 
+@app.post("/api/v1/analytics/report")
+async def generate_report(
+    req: ReportRequest,
+    _: None = Depends(require_permission("analytics.read")),
+):
+    """Generate an analytics report asynchronously."""
+    service = get_analytics_service()
+    if service is None:
+        raise HTTPException(status_code=503, detail="analytics service unavailable")
+
+    report = await asyncio.to_thread(
+        service.generate_report,
+        req.type,
+        {"timeframe": req.timeframe, **(req.params or {})},
+    )
+
+    if req.format == "file":
+        body = json.dumps(report, indent=2)
+        headers = {
+            "Content-Disposition": f"attachment; filename={req.type}_report.json"
+        }
+        return StreamingResponse(iter([body]), media_type="application/json", headers=headers)
+
+    return JSONResponse(content=report)
+
+
 # ---------------------------------------------------------------------------
 # Real-time update feeds
 # ---------------------------------------------------------------------------
@@ -208,4 +259,4 @@ async def analytics_sse() -> StreamingResponse:
     return StreamingResponse(_generator(), media_type="text/event-stream")
 
 
-__all__ = ["app", "get_service", "event_bus"]
+__all__ = ["app", "get_service", "event_bus", "ws_server"]

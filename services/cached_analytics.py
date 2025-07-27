@@ -3,6 +3,8 @@ from __future__ import annotations
 """Analytics service with caching using :class:`CacheManager`."""
 
 from typing import Any, Dict
+
+from core.protocols import EventBusProtocol
 import asyncio
 
 from core.cache_manager import CacheManager
@@ -12,9 +14,15 @@ from services.analytics_summary import generate_sample_analytics
 class CachedAnalyticsService:
     """Provide cached analytics summaries."""
 
-    def __init__(self, cache_manager: CacheManager, ttl_seconds: int = 300) -> None:
+    def __init__(
+        self,
+        cache_manager: CacheManager,
+        ttl_seconds: int = 300,
+        event_bus: EventBusProtocol | None = None,
+    ) -> None:
         self.cache_manager = cache_manager
         self.ttl_seconds = ttl_seconds
+        self.event_bus = event_bus
 
     async def _compute_metrics(self, facility_id: str, date_range: str) -> Dict[str, Any]:
         """Compute analytics metrics for the given parameters."""
@@ -31,6 +39,11 @@ class CachedAnalyticsService:
             return cached
         metrics = await self._compute_metrics(facility_id, date_range)
         await self.cache_manager.set(key, metrics, self.ttl_seconds)
+        if self.event_bus:
+            try:
+                self.event_bus.publish("analytics_update", metrics)
+            except Exception:  # pragma: no cover - best effort
+                pass
         return metrics
 
     def get_analytics_summary_sync(self, facility_id: str, date_range: str) -> Dict[str, Any]:
