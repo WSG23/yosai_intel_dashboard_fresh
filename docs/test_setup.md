@@ -84,8 +84,10 @@ npm run build-css  # or python tools/build_css.py
 
 ## 3. Run the Tests
 
-Execute the full suite with coverage reporting:
+Execute the full suite with coverage reporting. Enable the lightweight service
+implementations so heavy optional dependencies are not required:
 ```bash
+export LIGHTWEIGHT_SERVICES=1
 pytest --cov
 ```
 

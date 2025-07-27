@@ -21,6 +21,13 @@ pip install -r tests/requirements-extra.txt
 
 When the optional packages are missing, tests depending on them are automatically skipped.
 
+Before running the suite locally, enable the lightweight service mode so heavy
+dependencies are stubbed out:
+
+```bash
+export LIGHTWEIGHT_SERVICES=1
+pytest
+```
 
 ## Query Count Checks
 
