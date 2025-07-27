@@ -97,10 +97,10 @@
         }
       }
     },
-    "/api/v1/analytics/get_dashboard_summary": {
+    "/api/v1/analytics/dashboard-summary": {
       "post": {
         "summary": "Dashboard Summary",
-        "operationId": "dashboard_summary_api_v1_analytics_get_dashboard_summary_post",
+        "operationId": "dashboard_summary_api_v1_analytics_dashboard_summary_post",
         "parameters": [
           {
             "name": "authorization",
@@ -135,10 +135,10 @@
         }
       }
     },
-    "/api/v1/analytics/get_access_patterns_analysis": {
+    "/api/v1/analytics/access-patterns": {
       "post": {
         "summary": "Access Patterns",
-        "operationId": "access_patterns_api_v1_analytics_get_access_patterns_analysis_post",
+        "operationId": "access_patterns_api_v1_analytics_access_patterns_post",
         "parameters": [
           {
             "name": "authorization",
