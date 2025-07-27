@@ -1,9 +1,12 @@
+from __future__ import annotations
+
+import json
 import os
 import time
+from dataclasses import asdict
 from pathlib import Path
-import json
 
-
+import pandas as pd
 from fastapi import (
     APIRouter,
     Depends,
@@ -12,39 +15,36 @@ from fastapi import (
     Form,
     Header,
     HTTPException,
+    Request,
     UploadFile,
     status,
 )
-
 from jose import jwt
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
-from services.analytics_microservice.unicode_middleware import (
-    UnicodeSanitizationMiddleware,
-)
 from pydantic import BaseModel
-from yosai_framework.errors import ServiceError
-from yosai_framework.service import BaseService
 
+from analytics import anomaly_detection, feature_extraction, security_patterns
 from config import get_database_config
 from infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
 )
 from services.analytics_microservice import async_queries
+from services.analytics_microservice.unicode_middleware import (
+    UnicodeSanitizationMiddleware,
+)
 from services.common import async_db
 from services.common.async_db import close_pool, create_pool, get_pool
 from services.common.secrets import get_secret
 from shared.errors.types import ErrorCode
-
+from yosai_framework import ServiceBuilder
+from yosai_framework.errors import ServiceError
+from yosai_framework.service import BaseService
 
 SERVICE_NAME = "analytics-microservice"
 service = (
-    ServiceBuilder(SERVICE_NAME)
-    .with_logging()
-    .with_metrics("")
-    .with_health()
-    .build()
+    ServiceBuilder(SERVICE_NAME).with_logging().with_metrics("").with_health().build()
 )
 app = service.app
 app.add_middleware(UnicodeSanitizationMiddleware)
@@ -101,7 +101,6 @@ async def _startup() -> None:
     # Ensure the JWT secret can be retrieved on startup
     _jwt_secret()
 
-
     cfg = get_database_config()
     await create_pool(
         cfg.get_connection_string(),
@@ -152,7 +151,6 @@ async def health_ready() -> dict[str, str]:
     )
 
 
-
 @app.on_event("shutdown")
 async def _shutdown() -> None:
     await close_pool()
@@ -169,6 +167,50 @@ async def dashboard_summary(_: None = Depends(verify_token)):
 async def access_patterns(req: PatternsRequest, _: None = Depends(verify_token)):
     pool = await get_pool()
     return await async_queries.fetch_access_patterns(pool, req.days)
+
+
+@app.post("/api/v1/analytics/threat_assessment")
+async def threat_assessment(
+    request: Request,
+    file: UploadFile | None = File(None),
+    _: None = Depends(verify_token),
+):
+    """Run threat assessment on raw intel data."""
+    try:
+        if file is not None:
+            raw_bytes = await file.read()
+            payload = json.loads(raw_bytes.decode("utf-8"))
+        else:
+            payload = await request.json()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail="invalid payload") from exc
+
+    if isinstance(payload, list):
+        df = pd.DataFrame(payload)
+    elif isinstance(payload, dict) and "data" in payload:
+        df = pd.DataFrame(payload["data"])
+    else:
+        df = pd.DataFrame(payload)
+
+    features = feature_extraction.extract_event_features(df)
+    anomaly = anomaly_detection.AnomalyDetector().analyze_anomalies(features)
+    patterns = security_patterns.SecurityPatternsAnalyzer().analyze_security_patterns(
+        features
+    )
+
+    ad_result = asdict(anomaly)
+    sp_result = asdict(patterns)
+
+    combined_risk = (
+        ad_result.get("risk_assessment", {}).get("risk_score", 0.0)
+        + sp_result.get("overall_score", 0.0) / 100
+    ) / 2
+
+    return {
+        "anomaly_detection": ad_result,
+        "security_patterns": sp_result,
+        "combined_risk_score": combined_risk,
+    }
 
 
 models_router = APIRouter(prefix="/api/v1/models", tags=["models"])
@@ -203,12 +245,16 @@ async def list_versions(name: str, _: None = Depends(verify_token)):
     return {
         "name": name,
         "versions": [e["version"] for e in registry],
-        "active_version": next((e["version"] for e in registry if e.get("active")), None),
+        "active_version": next(
+            (e["version"] for e in registry if e.get("active")), None
+        ),
     }
 
 
 @models_router.post("/{name}/rollback")
-async def rollback(name: str, version: str = Form(...), _: None = Depends(verify_token)):
+async def rollback(
+    name: str, version: str = Form(...), _: None = Depends(verify_token)
+):
     registry = app.state.model_registry.get(name)
     if not registry:
         raise HTTPException(status_code=404, detail="model not found")
@@ -230,5 +276,9 @@ setup_health_checks(app)
 @app.on_event("startup")
 async def _write_openapi() -> None:
     """Persist OpenAPI schema for docs."""
-    docs_path = Path(__file__).resolve().parents[2] / "docs" / "analytics_microservice_openapi.json"
+    docs_path = (
+        Path(__file__).resolve().parents[2]
+        / "docs"
+        / "analytics_microservice_openapi.json"
+    )
     docs_path.write_text(json.dumps(app.openapi(), indent=2))
