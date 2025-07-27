@@ -16,6 +16,8 @@ from fastapi import (
     status,
 )
 
+from core.security import rate_limit_decorator
+
 from jose import jwt
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -160,12 +162,14 @@ async def _shutdown() -> None:
 
 
 @app.post("/api/v1/analytics/get_dashboard_summary")
+@rate_limit_decorator()
 async def dashboard_summary(_: None = Depends(verify_token)):
     pool = await get_pool()
     return await async_queries.fetch_dashboard_summary(pool)
 
 
 @app.post("/api/v1/analytics/get_access_patterns_analysis")
+@rate_limit_decorator()
 async def access_patterns(req: PatternsRequest, _: None = Depends(verify_token)):
     pool = await get_pool()
     return await async_queries.fetch_access_patterns(pool, req.days)
@@ -175,6 +179,7 @@ models_router = APIRouter(prefix="/api/v1/models", tags=["models"])
 
 
 @models_router.post("/register")
+@rate_limit_decorator()
 async def register_model(
     name: str = Form(...),
     version: str = Form(...),
@@ -196,6 +201,7 @@ async def register_model(
 
 
 @models_router.get("/{name}")
+@rate_limit_decorator()
 async def list_versions(name: str, _: None = Depends(verify_token)):
     registry = app.state.model_registry.get(name)
     if not registry:
@@ -208,6 +214,7 @@ async def list_versions(name: str, _: None = Depends(verify_token)):
 
 
 @models_router.post("/{name}/rollback")
+@rate_limit_decorator()
 async def rollback(name: str, version: str = Form(...), _: None = Depends(verify_token)):
     registry = app.state.model_registry.get(name)
     if not registry:
