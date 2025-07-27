@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { FixedSizeList as List } from 'react-window';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Activity, Users, DoorOpen, AlertCircle } from 'lucide-react';
@@ -89,7 +90,7 @@ export const RealTimeMonitoring: React.FC = () => {
   useEffect(() => {
     if (activeData) {
       const event = JSON.parse(activeData) as AccessEvent;
-      setEvents((prev) => [event, ...prev].slice(0, 100));
+      setEvents((prev) => [event, ...prev].slice(0, 1000));
       updateMetrics(event);
     }
   }, [activeData]);
@@ -135,11 +136,18 @@ export const RealTimeMonitoring: React.FC = () => {
           <CardTitle>Live Access Events</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-96 overflow-y-auto">
-            {events.map((event) => (
-              <EventRow key={event.eventId} event={event} />
-            ))}
-          </div>
+          <List
+            height={384}
+            itemCount={events.length}
+            itemSize={48}
+            width="100%"
+          >
+            {({ index, style }) => (
+              <div style={style} key={events[index].eventId}>
+                <EventRow event={events[index]} />
+              </div>
+            )}
+          </List>
         </CardContent>
       </Card>
     </div>
