@@ -7,8 +7,11 @@ const Graphs = React.lazy(() => import('./pages/Graphs'));
 const Export = React.lazy(() => import('./pages/Export'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ZustandProvider } from './state';
 
 import "./index.css";
+const queryClient = new QueryClient();
 const rootEl = document.getElementById('root');
 if (rootEl) {
   const root = ReactDOM.createRoot(rootEl as HTMLElement);
@@ -16,6 +19,7 @@ if (rootEl) {
     <React.StrictMode>
       <BrowserRouter>
         <Suspense fallback={<div>Loading...</div>}>
+
           <Routes>
             <Route path="/" element={<Navigate to="/upload" replace />} />
             <Route path="/upload" element={<Upload />} />
@@ -26,6 +30,7 @@ if (rootEl) {
           </Routes>
         </Suspense>
       </BrowserRouter>
+
 
     </React.StrictMode>
   );
@@ -41,6 +46,7 @@ if (rtEl) {
           <RealTimeAnalyticsPage />
         </Suspense>
       </ZustandProvider>
+
     </React.StrictMode>
   );
 }

@@ -1,11 +1,12 @@
 import asyncio
-from fastapi import FastAPI, Header, HTTPException, status, Depends
+from fastapi import Header, HTTPException, status
 from shared.errors.types import ErrorCode
 from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
 
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
+from error_handling.middleware import ErrorHandlingMiddleware
 
 import os
 import pathlib
@@ -24,6 +25,7 @@ os.environ.setdefault("YOSAI_SERVICE_NAME", SERVICE_NAME)
 CONFIG_PATH = pathlib.Path(__file__).with_name("service_config.yaml")
 service_base = BaseService(SERVICE_NAME, str(CONFIG_PATH))
 app = service_base.app
+app.add_middleware(ErrorHandlingMiddleware)
 try:
     service = StreamingService()
 except Exception:
@@ -76,5 +78,9 @@ setup_health_checks(app)
 @app.on_event("startup")
 async def _write_openapi() -> None:
     """Persist OpenAPI schema for docs."""
-    docs_path = pathlib.Path(__file__).resolve().parents[2] / "docs" / "event_ingestion_openapi.json"
+    docs_path = (
+        pathlib.Path(__file__).resolve().parents[2]
+        / "docs"
+        / "event_ingestion_openapi.json"
+    )
     docs_path.write_text(json.dumps(app.openapi(), indent=2))

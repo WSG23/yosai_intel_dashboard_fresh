@@ -5,7 +5,14 @@ import time
 from functools import wraps
 from typing import Callable
 
-from .jwt_service import generate_service_jwt, verify_service_jwt
+from .jwt_service import (
+    generate_service_jwt,
+    generate_refresh_jwt,
+    generate_token_pair,
+    verify_service_jwt,
+    verify_refresh_jwt,
+    refresh_access_token,
+)
 
 from flask import jsonify, request
 
@@ -129,7 +136,11 @@ __all__ = [
     "generate_service_token",
     "rotate_service_token",
     "generate_service_jwt",
+    "generate_refresh_jwt",
+    "generate_token_pair",
     "verify_service_jwt",
+    "verify_refresh_jwt",
+    "refresh_access_token",
     "require_token",
     "require_permission",
     "require_role",
