@@ -47,14 +47,35 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     config_stub = types.ModuleType("config")
 
     class _Cfg:
+        def __init__(self):
+            self.type = "sqlite"
+            self.host = "localhost"
+            self.port = 5432
+            self.name = "test"
+            self.user = "user"
+            self.password = ""
+            self.connection_timeout = 1
+
         def get_connection_string(self):
             return "postgresql://"
 
         initial_pool_size = 1
         max_pool_size = 1
-        connection_timeout = 1
 
+    config_stub.DatabaseSettings = _Cfg
     config_stub.get_database_config = lambda: _Cfg()
+    dynamic_module = types.ModuleType("config.dynamic_config")
+    dynamic_module.dynamic_config = {}
+    sys.modules["config.dynamic_config"] = dynamic_module
+    base_module = types.ModuleType("config.base")
+    base_module.CacheConfig = lambda *a, **k: None
+    sys.modules["config.base"] = base_module
+    db_exc_module = types.ModuleType("config.database_exceptions")
+    class _UnicodeErr(Exception):
+        def __init__(self, *a, **k):
+            pass
+    db_exc_module.UnicodeEncodingError = _UnicodeErr
+    sys.modules["config.database_exceptions"] = db_exc_module
     sys.modules["config"] = config_stub
 
     env_stub = types.ModuleType("config.environment")
