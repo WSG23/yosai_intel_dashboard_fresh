@@ -6,6 +6,10 @@ All validation in the Yōsai Intel Dashboard is provided by the `security` packa
 
 Use the unified package for all validation needs:
 
+Validation errors are raised using `ValidationError(field, message, code)` where
+`field` identifies the offending input, `message` provides a human readable
+explanation and `code` is a stable error identifier.
+
 ```python
 from security import SecurityValidator, UnifiedFileValidator
 
@@ -13,15 +17,18 @@ from security import SecurityValidator, UnifiedFileValidator
 validator = SecurityValidator()
 file_validator = UnifiedFileValidator()
 
+# Each validation error is raised with the field name, a message and an
+# error code. This allows callers to precisely identify what went wrong.
+
 # Input validation
 result = validator.validate_input(user_input, "field_name")
 if not result['valid']:
-    raise ValidationError(result['issues'])
+    raise ValidationError("field_name", "; ".join(result['issues']), "invalid_input")
 
 # File upload validation (replaces SecureFileValidator)
 result = file_validator.validate_file_upload(filename, file_bytes)
 if not result['valid']:
-    raise ValidationError(result['issues'])
+    raise ValidationError("filename", "; ".join(result['issues']), "invalid_file")
 ```
 
 ## Validation Features
