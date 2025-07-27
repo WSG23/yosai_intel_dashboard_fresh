@@ -5,8 +5,8 @@ import os
 import pathlib
 import sys
 import time
-import types
-from dataclasses import dataclass
+import joblib
+
 from unittest.mock import AsyncMock
 
 import httpx
@@ -377,8 +377,23 @@ async def test_model_registry_endpoints(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_threat_assessment_endpoint():
+async def test_predict_endpoint(tmp_path):
     module, _, _ = load_app()
+    module.app.state.model_dir = tmp_path
+    class Dummy:
+        def predict(self, data):
+            return [len(data)]
+
+    model = Dummy()
+    path = tmp_path / "demo" / "1" / "model.joblib"
+    path.parent.mkdir(parents=True)
+    joblib.dump(model, path)
+    module.app.state.model_registry = {
+        "demo": [{"name": "demo", "version": "1", "path": str(path), "active": True}]
+    }
+    module.preload_active_models()
+
+
     token = jwt.encode(
         {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
         "secret",
@@ -386,22 +401,13 @@ async def test_threat_assessment_endpoint():
     )
     headers = {"Authorization": f"Bearer {token}"}
 
-    sample = [
-        {
-            "timestamp": "2024-01-01T00:00:00",
-            "person_id": "u1",
-            "door_id": "d1",
-            "access_result": "Granted",
-        }
-    ]
-
     transport = httpx.ASGITransport(app=module.app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.post(
-            "/api/v1/analytics/threat_assessment",
+            "/api/v1/models/demo/predict",
             headers=headers,
-            json=sample,
+            json={"data": [1, 2]},
         )
         assert resp.status_code == 200
-        data = resp.json()
-        assert "combined_risk_score" in data
+        assert resp.json()["predictions"] == [2]
+

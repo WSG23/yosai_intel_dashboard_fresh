@@ -406,6 +406,18 @@
         ],
         "title": "Body_rollback_api_v1_models__name__rollback_post"
       },
+      "Body_predict_api_v1_models__name__predict_post": {
+        "properties": {
+          "data": {
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "Body_predict_api_v1_models__name__predict_post"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -462,6 +474,66 @@
           "type"
         ],
         "title": "ValidationError"
+      }
+    },
+    "/api/v1/models/{name}/predict": {
+      "post": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Predict",
+        "operationId": "predict_api_v1_models__name__predict_post",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_predict_api_v1_models__name__predict_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "securitySchemes": {

@@ -5,6 +5,7 @@ import os
 import time
 from dataclasses import asdict
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 from fastapi import (
@@ -24,6 +25,8 @@ from jose import jwt
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
+import joblib
+import redis.asyncio as aioredis
 
 
 from analytics import anomaly_detection, feature_extraction, security_patterns
@@ -119,8 +122,25 @@ def verify_token(authorization: str = Header("")) -> None:
         )
 
 
+def preload_active_models() -> None:
+    """Load active models from the registry into memory."""
+    app.state.models = {}
+    for name, registry in app.state.model_registry.items():
+        for entry in registry:
+            if entry.get("active"):
+                try:
+                    model = joblib.load(entry["path"])
+                    entry["object"] = model
+                    app.state.models[name] = model
+                except Exception:  # pragma: no cover - ignore invalid models
+                    pass
+
 class PatternsRequest(BaseModel):
     days: int = 7
+
+
+class PredictRequest(BaseModel):
+    data: Any
 
 
 @app.on_event("startup")
@@ -143,6 +163,7 @@ async def _startup() -> None:
     app.state.model_dir = Path(os.environ.get("MODEL_DIR", "model_store"))
     app.state.model_dir.mkdir(parents=True, exist_ok=True)
     app.state.model_registry = {}
+    preload_active_models()
     app.state.ready = True
     app.state.startup_complete = True
 
@@ -280,6 +301,12 @@ async def register_model(
     dest_path.write_bytes(contents)
     meta = {"name": name, "version": version, "path": str(dest_path)}
     meta["active"] = True
+    try:
+        model_obj = joblib.load(dest_path)
+        meta["object"] = model_obj
+        app.state.models[name] = model_obj
+    except Exception:  # pragma: no cover - invalid model file
+        meta["object"] = None
     registry = app.state.model_registry.setdefault(name, [])
     for entry in registry:
         entry["active"] = False
@@ -314,7 +341,37 @@ async def rollback(
         raise HTTPException(status_code=404, detail="version not found")
     for entry in registry:
         entry["active"] = entry["version"] == version
+
+    preload_active_models()
     return {"name": name, "active_version": version}
+
+
+@models_router.post("/{name}/predict")
+@rate_limit_decorator()
+async def predict(
+    name: str,
+    req: PredictRequest,
+    _: None = Depends(verify_token),
+):
+    registry = app.state.model_registry.get(name)
+    if not registry:
+        raise HTTPException(status_code=404, detail="model not found")
+    active = next((e for e in registry if e.get("active")), None)
+    if not active:
+        raise HTTPException(status_code=404, detail="no active version")
+    model_obj = active.get("object")
+    if model_obj is None:
+        try:
+            model_obj = joblib.load(active["path"])
+            active["object"] = model_obj
+            app.state.models[name] = model_obj
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
+    try:
+        result = model_obj.predict(req.data)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return {"predictions": result}
 
 
 app.include_router(models_router)
