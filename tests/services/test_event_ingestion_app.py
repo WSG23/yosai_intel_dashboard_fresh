@@ -12,15 +12,20 @@ SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
 
 def load_module():
     otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
-    otel_stub.FastAPIInstrumentor = types.SimpleNamespace(instrument_app=lambda *a, **k: None)
+    otel_stub.FastAPIInstrumentor = types.SimpleNamespace(
+        instrument_app=lambda *a, **k: None
+    )
     sys.modules.setdefault("opentelemetry.instrumentation.fastapi", otel_stub)
 
     prom_stub = types.ModuleType("prometheus_fastapi_instrumentator")
+
     class DummyInstr:
         def instrument(self, app):
             return self
+
         def expose(self, app):
             return self
+
     prom_stub.Instrumentator = lambda: DummyInstr()
     sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
     sys.path.insert(0, str(SERVICES_PATH / "event-ingestion"))
@@ -78,3 +83,16 @@ def test_health_endpoint(monkeypatch):
     resp = client.get("/health")
     assert resp.status_code == 200
     assert resp.json() == {"status": "ok"}
+
+
+def test_error_handling_middleware():
+    module = load_module()
+
+    @module.app.get("/boom")
+    async def _boom():
+        raise RuntimeError("fail")
+
+    client = TestClient(module.app)
+    resp = client.get("/boom")
+    assert resp.status_code == 500
+    assert resp.json() == {"code": "internal", "message": "fail"}
