@@ -82,6 +82,18 @@ If the CSS bundle has not been built yet, generate it:
 npm run build-css  # or python tools/build_css.py
 ```
 
+### Make the Package Importable
+
+The tests rely on absolute imports such as `services.resilience`. Ensure the
+repository root is on `PYTHONPATH` or install the project in editable mode:
+
+```bash
+pip install -e .
+```
+
+Without one of these steps you may encounter `ModuleNotFoundError` during test
+collection.
+
 ## 3. Run the Tests
 
 Execute the full suite with coverage reporting:
