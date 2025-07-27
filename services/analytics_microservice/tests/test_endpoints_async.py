@@ -38,7 +38,6 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     prom_stub.Instrumentator = lambda: DummyInstr()
     sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
 
-
     db_stub = types.ModuleType("services.common.async_db")
     db_stub.create_pool = AsyncMock()
     db_stub.close_pool = AsyncMock()
@@ -78,6 +77,7 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     yf_config_stub.load_config = lambda path: DummyCfg()
     sys.modules["yosai_framework.config"] = yf_config_stub
     import yosai_framework.service as yf_service
+
     yf_service.load_config = yf_config_stub.load_config
 
     redis_stub = types.ModuleType("redis")
@@ -159,6 +159,27 @@ async def test_unauthorized_request():
 
 
 @pytest.mark.asyncio
+async def test_internal_error_response():
+    module, queries_stub, _ = load_app()
+    queries_stub.fetch_dashboard_summary.side_effect = RuntimeError("boom")
+    token = jwt.encode(
+        {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
+        "secret",
+        algorithm="HS256",
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    transport = httpx.ASGITransport(app=module.app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post(
+            "/api/v1/analytics/get_dashboard_summary",
+            headers=headers,
+        )
+        assert resp.status_code == 500
+        assert resp.json() == {"code": "internal", "message": "boom"}
+
+
+@pytest.mark.asyncio
 async def test_model_registry_endpoints(tmp_path):
     module, _, _ = load_app()
     module.app.state.model_dir = tmp_path
@@ -174,7 +195,9 @@ async def test_model_registry_endpoints(tmp_path):
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         files = {"file": ("model.bin", b"data")}
         data = {"name": "demo", "version": "1"}
-        resp = await client.post("/api/v1/models/register", headers=headers, data=data, files=files)
+        resp = await client.post(
+            "/api/v1/models/register", headers=headers, data=data, files=files
+        )
         assert resp.status_code == 200
         assert resp.json()["version"] == "1"
 
