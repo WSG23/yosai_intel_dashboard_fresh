@@ -43,6 +43,7 @@ from .protocols import SafeDecoderProtocol
 from .file_utils import safe_decode_with_unicode_handling
 from .unicode_handler import UnicodeHandler
 from .io_helpers import read_json, write_json, read_text, write_text
+from .hashing import hash_dataframe
 
 __all__ = [
     "UnicodeProcessor",
@@ -82,4 +83,5 @@ __all__ = [
     "write_json",
     "read_text",
     "write_text",
+    "hash_dataframe",
 ]
