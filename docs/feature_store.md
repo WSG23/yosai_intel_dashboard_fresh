@@ -28,3 +28,9 @@ The `anomaly_features` view exposes the following features:
 
 Use the :class:`models.ml.feature_store.FeastFeatureStore` helper to fetch
 historical or online features and to monitor basic feature drift.
+
+## Feature Pipeline
+
+See [feature_pipeline.md](feature_pipeline.md) for using the `FeaturePipeline`
+class to perform batch and real-time feature computation and rollback of model
+versions.
