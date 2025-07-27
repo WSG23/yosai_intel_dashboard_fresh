@@ -1,8 +1,7 @@
+import json
 import os
 import time
 from pathlib import Path
-import json
-
 
 from fastapi import (
     APIRouter,
@@ -12,35 +11,33 @@ from fastapi import (
     Form,
     Header,
     HTTPException,
+    Request,
     UploadFile,
     status,
 )
-
-from core.security import rate_limit_decorator
-
+from fastapi.responses import JSONResponse
 from jose import jwt
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
-import redis.asyncio as aioredis
-from services.analytics_microservice.unicode_middleware import (
-    UnicodeSanitizationMiddleware,
-)
-from error_handling.middleware import ErrorHandlingMiddleware
 from pydantic import BaseModel
-from yosai_framework.errors import ServiceError
-from yosai_framework import ServiceBuilder
+
 
 from config import get_database_config
+from core.security import RateLimiter
 from infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
 )
 from services.analytics_microservice import async_queries
+from services.analytics_microservice.unicode_middleware import (
+    UnicodeSanitizationMiddleware,
+)
 from services.common import async_db
 from services.common.async_db import close_pool, create_pool, get_pool
 from services.common.secrets import get_secret
 from shared.errors.types import ErrorCode
-
+from yosai_framework.errors import ServiceError
+from yosai_framework.service import BaseService
 
 SERVICE_NAME = "analytics-microservice"
 service = (
@@ -49,6 +46,28 @@ service = (
 app = service.app
 app.add_middleware(ErrorHandlingMiddleware)
 app.add_middleware(UnicodeSanitizationMiddleware)
+
+rate_limiter = RateLimiter()
+
+
+@app.middleware("http")
+async def rate_limit(request: Request, call_next):
+    auth = request.headers.get("Authorization", "")
+    identifier = (
+        auth.split(" ", 1)[1] if auth.startswith("Bearer ") else request.client.host
+    )
+    result = rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
+    if not result["allowed"]:
+        headers = {}
+        retry = result.get("retry_after")
+        if retry:
+            headers["Retry-After"] = str(int(retry))
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content={"detail": "rate limit exceeded"},
+            headers=headers,
+        )
+    return await call_next(request)
 
 
 async def _db_check(_: FastAPI) -> bool:
@@ -233,8 +252,9 @@ async def list_versions(name: str, _: None = Depends(verify_token)):
 
 
 @models_router.post("/{name}/rollback")
-@rate_limit_decorator()
-async def rollback(name: str, version: str = Form(...), _: None = Depends(verify_token)):
+async def rollback(
+    name: str, version: str = Form(...), _: None = Depends(verify_token)
+):
 
     registry = app.state.model_registry.get(name)
     if not registry:

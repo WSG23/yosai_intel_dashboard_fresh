@@ -1,24 +1,25 @@
 import asyncio
-from fastapi import Header, HTTPException, status
-from shared.errors.types import ErrorCode
-from yosai_framework.errors import ServiceError
-from yosai_framework.service import BaseService
+import json
+import os
+import pathlib
 
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 from error_handling.middleware import ErrorHandlingMiddleware
 
-import os
-import pathlib
-import json
-
-from services.streaming.service import StreamingService
-from services.security import verify_service_jwt
-from tracing import trace_async_operation
+from core.security import RateLimiter
 from infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
 )
+from services.security import verify_service_jwt
+from services.streaming.service import StreamingService
+from shared.errors.types import ErrorCode
+from tracing import trace_async_operation
+from yosai_framework.errors import ServiceError
+from yosai_framework.service import BaseService
 
 SERVICE_NAME = "event-ingestion-service"
 os.environ.setdefault("YOSAI_SERVICE_NAME", SERVICE_NAME)
@@ -32,6 +33,28 @@ except Exception:
     service = None
 
 register_health_check(app, "streaming", lambda _: service is not None)
+
+rate_limiter = RateLimiter()
+
+
+@app.middleware("http")
+async def rate_limit(request: Request, call_next):
+    auth = request.headers.get("Authorization", "")
+    identifier = (
+        auth.split(" ", 1)[1] if auth.startswith("Bearer ") else request.client.host
+    )
+    result = rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
+    if not result["allowed"]:
+        headers = {}
+        retry = result.get("retry_after")
+        if retry:
+            headers["Retry-After"] = str(int(retry))
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content={"detail": "rate limit exceeded"},
+            headers=headers,
+        )
+    return await call_next(request)
 
 
 def verify_token(authorization: str = Header("")) -> None:
