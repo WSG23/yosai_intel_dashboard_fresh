@@ -5,7 +5,7 @@ import { FilePreview } from "./FilePreview";
 import { ColumnMappingModal } from "./ColumnMappingModal";
 import { DeviceMappingModal } from "./DeviceMappingModal";
 import { UploadedFile, ProcessingStatus as Status } from "./types";
-import axios from "axios/dist/node/axios.cjs";
+import axios from "axios";
 
 const CONCURRENCY_LIMIT = parseInt(
   process.env.REACT_APP_UPLOAD_CONCURRENCY || "3",
