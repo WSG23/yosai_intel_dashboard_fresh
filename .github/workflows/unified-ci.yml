@@ -100,6 +100,11 @@ jobs:
         with:
           name: python-coverage
           path: coverage.xml
+      - name: Upload coverage to Codecov
+        if: matrix.lang == 'python'
+        uses: codecov/codecov-action@v3
+        with:
+          files: coverage.xml
       - name: Set up Go
         if: matrix.lang == 'go'
         uses: actions/setup-go@v4
