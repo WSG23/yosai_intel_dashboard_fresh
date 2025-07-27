@@ -79,6 +79,7 @@ htmlcov/
 .coverage
 .coverage.*
 coverage.xml
+coverage/
 # Documentation
 docs/_build/
 docs/portal/
