@@ -15,7 +15,6 @@ def _init_client() -> VaultClient:
 
     if env == "development":
         addr = addr or "http://127.0.0.1:8200"
-        token = token or "root"
 
     if not addr or not token:
         raise RuntimeError("VAULT_ADDR and VAULT_TOKEN must be set")

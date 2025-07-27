@@ -24,9 +24,10 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from services.analytics_microservice.unicode_middleware import (
     UnicodeSanitizationMiddleware,
 )
+from error_handling.middleware import ErrorHandlingMiddleware
 from pydantic import BaseModel
 from yosai_framework.errors import ServiceError
-from yosai_framework.service import BaseService
+from yosai_framework import ServiceBuilder
 
 from config import get_database_config
 from infrastructure.discovery.health_check import (
@@ -42,13 +43,10 @@ from shared.errors.types import ErrorCode
 
 SERVICE_NAME = "analytics-microservice"
 service = (
-    ServiceBuilder(SERVICE_NAME)
-    .with_logging()
-    .with_metrics("")
-    .with_health()
-    .build()
+    ServiceBuilder(SERVICE_NAME).with_logging().with_metrics("").with_health().build()
 )
 app = service.app
+app.add_middleware(ErrorHandlingMiddleware)
 app.add_middleware(UnicodeSanitizationMiddleware)
 
 
@@ -103,7 +101,6 @@ async def _startup() -> None:
     # Ensure the JWT secret can be retrieved on startup
     _jwt_secret()
 
-
     cfg = get_database_config()
     await create_pool(
         cfg.get_connection_string(),
@@ -154,7 +151,6 @@ async def health_ready() -> dict[str, str]:
     )
 
 
-
 @app.on_event("shutdown")
 async def _shutdown() -> None:
     await close_pool()
@@ -163,6 +159,7 @@ async def _shutdown() -> None:
 
 @app.post("/api/v1/analytics/get_dashboard_summary")
 @rate_limit_decorator()
+
 async def dashboard_summary(_: None = Depends(verify_token)):
     pool = await get_pool()
     return await async_queries.fetch_dashboard_summary(pool)
@@ -170,6 +167,7 @@ async def dashboard_summary(_: None = Depends(verify_token)):
 
 @app.post("/api/v1/analytics/get_access_patterns_analysis")
 @rate_limit_decorator()
+
 async def access_patterns(req: PatternsRequest, _: None = Depends(verify_token)):
     pool = await get_pool()
     return await async_queries.fetch_access_patterns(pool, req.days)
@@ -209,13 +207,16 @@ async def list_versions(name: str, _: None = Depends(verify_token)):
     return {
         "name": name,
         "versions": [e["version"] for e in registry],
-        "active_version": next((e["version"] for e in registry if e.get("active")), None),
+        "active_version": next(
+            (e["version"] for e in registry if e.get("active")), None
+        ),
     }
 
 
 @models_router.post("/{name}/rollback")
 @rate_limit_decorator()
 async def rollback(name: str, version: str = Form(...), _: None = Depends(verify_token)):
+
     registry = app.state.model_registry.get(name)
     if not registry:
         raise HTTPException(status_code=404, detail="model not found")
@@ -237,5 +238,9 @@ setup_health_checks(app)
 @app.on_event("startup")
 async def _write_openapi() -> None:
     """Persist OpenAPI schema for docs."""
-    docs_path = Path(__file__).resolve().parents[2] / "docs" / "analytics_microservice_openapi.json"
+    docs_path = (
+        Path(__file__).resolve().parents[2]
+        / "docs"
+        / "analytics_microservice_openapi.json"
+    )
     docs_path.write_text(json.dumps(app.openapi(), indent=2))

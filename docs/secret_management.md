@@ -120,10 +120,11 @@ For local development a Vault dev server can be used. Start Vault with:
 vault server -dev
 ```
 
-The services default to `http://127.0.0.1:8200` and token `root` when
-`YOSAI_ENV` is set to `development`. In production deployments
-`VAULT_ADDR` and `VAULT_TOKEN` must be provided via environment variables
-or the accompanying Kubernetes `ConfigMap` and `Secret` manifests.
+The services default to `http://127.0.0.1:8200` when `YOSAI_ENV` is set to
+`development`. Provide `VAULT_TOKEN` explicitly using the token printed by
+the dev server. In all deployments `VAULT_ADDR` and `VAULT_TOKEN` must be
+supplied via environment variables or the accompanying Kubernetes
+`ConfigMap` and `Secret` manifests.
 
 Secrets are fetched through `services.common.secrets.get_secret()` which
 uses an in-memory cache. Call `invalidate_secret()` after rotating a
