@@ -55,6 +55,11 @@ jobs:
         with:
           name: python-coverage
           path: coverage.xml
+      - name: Upload coverage to Codecov
+        if: matrix.job == 'python'
+        uses: codecov/codecov-action@v3
+        with:
+          files: coverage.xml
       - name: Run Go tests (gateway)
         if: matrix.job == 'go'
         working-directory: ./gateway

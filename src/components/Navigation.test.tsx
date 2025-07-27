@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 jest.mock('react-router-dom', () => ({
   Link: ({ children, ...props }: any) => <a {...props}>{children}</a>,
   useLocation: () => ({ pathname: '/' }),
+  useNavigate: () => jest.fn(),
   MemoryRouter: ({ children }: any) => <div>{children}</div>,
 }), { virtual: true });
 import Navigation, { Header, Sidebar } from './Navigation';

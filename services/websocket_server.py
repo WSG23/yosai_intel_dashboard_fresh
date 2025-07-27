@@ -59,5 +59,11 @@ class AnalyticsWebSocketServer:
                 self._broadcast_async(message), self._loop
             )
 
+    def stop(self) -> None:
+        """Stop the server thread and event loop."""
+        if self._loop is not None:
+            self._loop.call_soon_threadsafe(self._loop.stop)
+            self._thread.join(timeout=1)
+
 
 __all__ = ["AnalyticsWebSocketServer"]

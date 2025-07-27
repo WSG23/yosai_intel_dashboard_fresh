@@ -489,6 +489,10 @@ as the **pip-audit-report** artifact. It runs on pull requests and fails when
 critical vulnerabilities are detected. Download the artifact from the
 **Actions** tab to review dependency vulnerability results.
 
+Coverage results are uploaded to **Codecov** for every pull request. Open the
+`codecov` check from the PR status page to explore detailed line coverage and
+changes introduced by the branch.
+
 ## <span aria-hidden="true">📋</span> Features
 
 - **Real-time Security Monitoring**: Live access control event monitoring
@@ -813,7 +817,7 @@ defaults:
 
 
 - `PBKDF2_ITERATIONS` – password hashing iterations
-- `RATE_LIMIT_API` – number of requests allowed per window
+ - `RATE_LIMIT_REQUESTS` – number of requests allowed per window
 - `RATE_LIMIT_WINDOW` – rate limit window in minutes
 - `MAX_UPLOAD_MB` – maximum allowed upload size
 - `DB_POOL_SIZE` – database connection pool size

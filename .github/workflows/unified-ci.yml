@@ -100,6 +100,11 @@ jobs:
         with:
           name: python-coverage
           path: coverage.xml
+      - name: Upload coverage to Codecov
+        if: matrix.lang == 'python'
+        uses: codecov/codecov-action@v3
+        with:
+          files: coverage.xml
       - name: Set up Go
         if: matrix.lang == 'go'
         uses: actions/setup-go@v4
@@ -129,7 +134,12 @@ jobs:
       - name: Install deps
         run: npm ci --prefix yosai-upload
       - name: Run frontend tests
-        run: npm test --prefix yosai-upload -- --watchAll=false
+        run: npm test --prefix yosai-upload -- --coverage --watchAll=false
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: yosai-upload/coverage/lcov.info
 
   frontend-build:
     # fix: dependency should be array

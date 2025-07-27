@@ -22,7 +22,15 @@ export const useUploadWebSocket = () => {
     sockets.current[taskId] = ws;
   };
 
-  return { subscribeToUploadProgress };
+  const unsubscribe = (taskId: string) => {
+    const ws = sockets.current[taskId];
+    if (ws) {
+      ws.close();
+      delete sockets.current[taskId];
+    }
+  };
+
+  return { subscribeToUploadProgress, unsubscribe };
 };
 
 export default useUploadWebSocket;
