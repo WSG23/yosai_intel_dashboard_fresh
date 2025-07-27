@@ -3,6 +3,8 @@ from __future__ import annotations
 import importlib.util
 import os
 import pathlib
+import types
+from dataclasses import dataclass
 import sys
 import time
 import joblib
@@ -15,6 +17,12 @@ from fastapi import FastAPI
 from jose import jwt
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2]
+
+
+class Dummy:
+    def predict(self, data):
+        return [len(data)]
+
 
 # stub out the heavy 'services' package before pytest imports it
 services_stub = types.ModuleType("services")
@@ -42,11 +50,19 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     prom_stub.Instrumentator = lambda: DummyInstr()
     sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
 
+    import builtins
+
+    builtins.ErrorHandlingMiddleware = lambda app, *a, **k: app
+    builtins.rate_limit_decorator = lambda *a, **k: (lambda func: func)
+
     db_stub = types.ModuleType("services.common.async_db")
     db_stub.create_pool = AsyncMock()
     db_stub.close_pool = AsyncMock()
     db_stub.get_pool = AsyncMock(return_value=object())
     sys.modules["services.common.async_db"] = db_stub
+    common_pkg = types.ModuleType("services.common")
+    common_pkg.async_db = db_stub
+    sys.modules["services.common"] = common_pkg
 
     config_stub = types.ModuleType("config")
 
@@ -75,9 +91,11 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     base_module.CacheConfig = lambda *a, **k: None
     sys.modules["config.base"] = base_module
     db_exc_module = types.ModuleType("config.database_exceptions")
+
     class _UnicodeErr(Exception):
         def __init__(self, *a, **k):
             pass
+
     db_exc_module.UnicodeEncodingError = _UnicodeErr
     sys.modules["config.database_exceptions"] = db_exc_module
     sys.modules["config"] = config_stub
@@ -101,7 +119,6 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     yf_config_stub.ServiceConfig = DummyCfg
     yf_config_stub.load_config = lambda path: DummyCfg()
     sys.modules["yosai_framework.config"] = yf_config_stub
-
 
     redis_stub = types.ModuleType("redis")
     redis_async = types.ModuleType("redis.asyncio")
@@ -168,6 +185,73 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     secrets_stub.get_secret = lambda path: "secret"
     sys.modules["services.common.secrets"] = secrets_stub
 
+    # Stub ModelRegistry used by the microservice
+    registry_mod = types.ModuleType("models.ml.model_registry")
+
+    @dataclass
+    class DummyRecord:
+        name: str
+        version: str
+        storage_uri: str
+        is_active: bool = False
+
+    class DummyRegistry:
+        def __init__(self, *a, **k):
+            self.models: dict[str, dict[str, DummyRecord]] = {}
+
+        def register_model(
+            self,
+            name: str,
+            model_path: str,
+            metrics: dict,
+            dataset_hash: str,
+            *,
+            version: str | None = None,
+            training_date: None | object = None,
+        ) -> DummyRecord:
+            rec = DummyRecord(name, version or "1", model_path)
+            self.models.setdefault(name, {})[rec.version] = rec
+            return rec
+
+        def set_active_version(self, name: str, version: str) -> None:
+            for r in self.models.get(name, {}).values():
+                r.is_active = r.version == version
+
+        def get_model(
+            self,
+            name: str,
+            version: str | None = None,
+            *,
+            active_only: bool = False,
+        ) -> DummyRecord | None:
+            if active_only:
+                for r in self.models.get(name, {}).values():
+                    if r.is_active:
+                        return r
+                return None
+            if version:
+                return self.models.get(name, {}).get(version)
+            return None
+
+        def list_models(self, name: str | None = None):
+            if name:
+                return list(self.models.get(name, {}).values())
+            res = []
+            for d in self.models.values():
+                res.extend(d.values())
+            return res
+
+        def download_artifact(self, src: str, dest: str) -> None:
+            Path(dest).write_bytes(Path(src).read_bytes())
+
+    registry_mod.ModelRegistry = DummyRegistry
+    registry_mod.ModelRecord = DummyRecord
+    sys.modules["models.ml.model_registry"] = registry_mod
+    ml_pkg = types.ModuleType("models.ml")
+    ml_pkg.ModelRegistry = DummyRegistry
+    ml_pkg.ModelRecord = DummyRecord
+    sys.modules["models.ml"] = ml_pkg
+
     # Stub analytics modules used by threat_assessment endpoint
     fe_stub = types.ModuleType("analytics.feature_extraction")
     fe_stub.extract_event_features = lambda df, logger=None: df
@@ -230,8 +314,17 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     core_unicode.sanitize_for_utf8 = lambda x: x
     core_pkg = types.ModuleType("core")
     core_pkg.unicode = core_unicode
+    security_stub = types.ModuleType("core.security")
+
+    class DummyRateLimiter:
+        def is_allowed(self, *a, **k):
+            return {"allowed": True}
+
+    security_stub.RateLimiter = DummyRateLimiter
+    core_pkg.security = security_stub
     sys.modules["core"] = core_pkg
     sys.modules["core.unicode"] = core_unicode
+    sys.modules["core.security"] = security_stub
 
     unicode_stub = types.ModuleType("utils.unicode_handler")
 
@@ -298,9 +391,7 @@ async def test_dashboard_summary_endpoint():
 
     transport = httpx.ASGITransport(app=module.app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        resp = await client.post(
-            "/api/v1/analytics/dashboard-summary", headers=headers
-        )
+        resp = await client.post("/api/v1/analytics/dashboard-summary", headers=headers)
         assert resp.status_code == 200
         assert resp.json() == {"status": "ok"}
 
@@ -345,7 +436,9 @@ async def test_internal_error_response():
 async def test_model_registry_endpoints(tmp_path):
     module, _, _ = load_app()
     module.app.state.model_dir = tmp_path
-    module.app.state.model_registry = {}
+    from models.ml import ModelRegistry
+
+    module.app.state.model_registry = ModelRegistry()
     token = jwt.encode(
         {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
         "secret",
@@ -380,19 +473,18 @@ async def test_model_registry_endpoints(tmp_path):
 async def test_predict_endpoint(tmp_path):
     module, _, _ = load_app()
     module.app.state.model_dir = tmp_path
-    class Dummy:
-        def predict(self, data):
-            return [len(data)]
 
     model = Dummy()
     path = tmp_path / "demo" / "1" / "model.joblib"
     path.parent.mkdir(parents=True)
     joblib.dump(model, path)
-    module.app.state.model_registry = {
-        "demo": [{"name": "demo", "version": "1", "path": str(path), "active": True}]
-    }
-    module.preload_active_models()
+    from models.ml import ModelRegistry
 
+    registry = ModelRegistry()
+    registry.register_model("demo", str(path), {}, "", version="1")
+    registry.set_active_version("demo", "1")
+    module.app.state.model_registry = registry
+    module.preload_active_models()
 
     token = jwt.encode(
         {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
@@ -410,4 +502,3 @@ async def test_predict_endpoint(tmp_path):
         )
         assert resp.status_code == 200
         assert resp.json()["predictions"] == [2]
-
