@@ -65,3 +65,21 @@ def test_invalid_signature_returns_none(monkeypatch):
     secrets_mod = sys.modules["services.common.secrets"]
     secrets_mod.get_secret = lambda key: "secret-two"
     assert svc.verify_service_jwt(token) is None
+
+
+def test_refresh_token_flow(monkeypatch):
+    svc = load_jwt_service(monkeypatch, "secret")
+    now = int(time.time())
+    monkeypatch.setattr(svc.time, "time", lambda: now)
+    access, refresh = svc.generate_token_pair("svc", access_expires_in=1, refresh_expires_in=10)
+    assert svc.verify_service_jwt(access)["iss"] == "svc"
+    assert svc.verify_refresh_jwt(refresh)["iss"] == "svc"
+
+    # expire access token
+    monkeypatch.setattr(svc.time, "time", lambda: now + 2)
+    assert svc.verify_service_jwt(access) is None
+
+    new_access = svc.refresh_access_token(refresh, expires_in=5)
+    assert new_access is not None
+    claims = svc.verify_service_jwt(new_access)
+    assert claims["iss"] == "svc"
