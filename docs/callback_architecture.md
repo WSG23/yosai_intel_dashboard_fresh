@@ -75,6 +75,12 @@ def refresh(btn):
     return str(results[-1])
 ```
 
+For IO heavy steps you can execute the group concurrently:
+
+```python
+results = await ops.execute_group_async("refresh", btn)
+```
+
 ## Consolidated Callback Management
 
 A single startup task should orchestrate all callback registration steps to prevent duplicated logic:

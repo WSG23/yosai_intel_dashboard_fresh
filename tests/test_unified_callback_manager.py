@@ -1,4 +1,6 @@
 import pytest
+import asyncio
+import time
 from dash import Dash
 
 from core import TrulyUnifiedCallbacks
@@ -43,3 +45,21 @@ def test_timeout_records_error():
     assert any(
         ctx.message.startswith("Operation slow") for ctx in error_handler.error_history
     )
+
+
+def test_execute_group_async(async_runner):
+    manager = TrulyUnifiedCallbacks(Dash(__name__))
+
+    async def slow(x):
+        await asyncio.sleep(0.01)
+        return x
+
+    manager.register_operation("grp", slow, name="a")
+    manager.register_operation("grp", slow, name="b")
+
+    start = time.perf_counter()
+    results = async_runner(manager.execute_group_async("grp", 7))
+    duration = time.perf_counter() - start
+
+    assert results == [7, 7]
+    assert duration < 0.02
