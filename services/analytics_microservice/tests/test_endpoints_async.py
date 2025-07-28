@@ -391,7 +391,10 @@ async def test_dashboard_summary_endpoint():
 
     transport = httpx.ASGITransport(app=module.app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        resp = await client.post("/api/v1/analytics/dashboard-summary", headers=headers)
+        resp = await client.get(
+            "/api/v1/analytics/dashboard-summary", headers=headers
+        )
+
         assert resp.status_code == 200
         assert resp.json() == {"status": "ok"}
 
@@ -404,7 +407,7 @@ async def test_unauthorized_request():
     module, _, _ = load_app()
     transport = httpx.ASGITransport(app=module.app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        resp = await client.post("/api/v1/analytics/dashboard-summary")
+        resp = await client.get("/api/v1/analytics/dashboard-summary")
         assert resp.status_code == 401
         assert resp.json() == {
             "detail": {"code": "unauthorized", "message": "unauthorized"}
@@ -424,8 +427,8 @@ async def test_internal_error_response():
 
     transport = httpx.ASGITransport(app=module.app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        resp = await client.post(
-            "/api/v1/analytics/get_dashboard_summary",
+        resp = await client.get(
+            "/api/v1/analytics/dashboard-summary",
             headers=headers,
         )
         assert resp.status_code == 500

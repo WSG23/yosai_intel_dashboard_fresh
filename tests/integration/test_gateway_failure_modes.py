@@ -50,8 +50,8 @@ def test_gateway_breaker_counts_on_downtime(tmp_path):
 
         for _ in range(6):
             try:
-                requests.post(
-                    f"http://{g_host}:{g_port}/api/v1/analytics/get_dashboard_summary",
+                requests.get(
+                    f"http://{g_host}:{g_port}/api/v1/analytics/dashboard-summary",
                     timeout=5,
                 )
             except requests.RequestException:

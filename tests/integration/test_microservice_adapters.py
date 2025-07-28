@@ -63,5 +63,5 @@ def test_analytics_service_adapter_microservice(monkeypatch):
     migration_adapter.register_migration_services(container)
 
     adapter = container.get("analytics_service")
-    expected = client.post("/api/v1/analytics/get_dashboard_summary").json()
+    expected = client.get("/api/v1/analytics/dashboard-summary").json()
     assert adapter.get_dashboard_summary() == expected
