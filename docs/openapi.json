@@ -6,15 +6,6 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "invalidRequest": {
-                "summary": "Invalid request",
-                "value": {
-                  "code": "bad_request",
-                  "message": "Invalid query parameter"
-                }
-              }
             }
           }
         },
@@ -25,15 +16,6 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "resourceMissing": {
-                "summary": "Requested resource not found",
-                "value": {
-                  "code": "not_found",
-                  "message": "Event not found"
-                }
-              }
             }
           }
         },
@@ -73,6 +55,11 @@
         ],
         "type": "object"
       },
+      "AnalyticsUpdate": {
+        "additionalProperties": true,
+        "description": "Generic analytics update broadcast over WebSocket.",
+        "type": "object"
+      },
       "Error": {
         "properties": {
           "code": {
@@ -102,16 +89,29 @@
           }
         },
         "type": "object"
+      },
+      "WebhookAlertPayload": {
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
       }
     },
     "securitySchemes": {
-      "apiKey": {
+      "csrfToken": {
+        "description": "Anti-CSRF token required for mutating operations",
         "in": "header",
-        "name": "X-API-Key",
+        "name": "X-CSRF-Token",
         "type": "apiKey"
       },
-      "bearerAuth": {
+      "jwtAuth": {
         "bearerFormat": "JWT",
+        "description": "Signed JWT present in the Authorization header",
         "scheme": "bearer",
         "type": "http"
       }
@@ -121,7 +121,7 @@
     "contact": {
       "email": "api-support@yosai.com"
     },
-    "description": "Physical security intelligence and access control API.\n\n# Authentication\nUse Bearer token (JWT) or API key authentication.\n\n# Versioning\nAPI version is included in the URL path (e.g., /v2/events).\n",
+    "description": "Physical security intelligence and access control API.\n\n# Authentication\nUse Bearer token (JWT) for inter-service communication and require an\n`X-CSRF-Token` header on state-changing requests.\n\n# Versioning\nAPI version is included in the URL path (e.g., /v2/events).\n",
     "license": {
       "name": "Apache 2.0",
       "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
@@ -141,22 +141,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EventListResponse"
-                },
-                "examples": {
-                  "success": {
-                    "summary": "A list of events",
-                    "value": {
-                      "events": [
-                        {
-                          "event_id": "evt_123",
-                          "person_id": "pers_456",
-                          "door_id": "door_1",
-                          "timestamp": "2024-05-01T10:00:00Z",
-                          "result": "granted"
-                        }
-                      ]
-                    }
-                  }
                 }
               }
             },
@@ -172,99 +156,18 @@
         "summary": "List access events",
         "tags": [
           "Events"
-        ],
-        "parameters": [
-          {
-            "name": "start_time",
-            "in": "query",
-            "description": "Return events occurring after this ISO-8601 timestamp",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "name": "end_time",
-            "in": "query",
-            "description": "Return events occurring before this ISO-8601 timestamp",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Maximum number of events to return",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 100
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "Number of events to skip before starting to collect the result set",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0
-            }
-          }
         ]
-      }
-    },
-    "/v2/events/{event_id}": {
-      "get": {
-        "summary": "Retrieve a single access event",
-        "operationId": "getAccessEvent",
-        "tags": [
-          "Events"
-        ],
-        "parameters": [
-          {
-            "name": "event_id",
-            "in": "path",
-            "description": "Unique identifier for the event",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessEvent"
-                },
-                "examples": {
-                  "success": {
-                    "summary": "Event detail",
-                    "value": {
-                      "event_id": "evt_123",
-                      "person_id": "pers_456",
-                      "door_id": "door_1",
-                      "timestamp": "2024-05-01T10:00:00Z",
-                      "result": "granted"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
       }
     }
   },
+  "security": [
+    {
+      "jwtAuth": []
+    },
+    {
+      "csrfToken": []
+    }
+  ],
   "servers": [
     {
       "description": "Production",
