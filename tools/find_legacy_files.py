@@ -3,8 +3,11 @@ import datetime
 import os
 import re
 import subprocess
+import logging
 from pathlib import Path
 from typing import Iterable, Tuple
+
+logger = logging.getLogger(__name__)
 
 PATTERNS = [
     r"old",
@@ -81,14 +84,15 @@ def main() -> None:
     args = parser.parse_args()
 
     for path, reasons in scan(Path(".")):
-        print(f"{path}  # {', '.join(reasons)}")
+        logger.info(f"{path}  # {', '.join(reasons)}")
         if args.delete:
             try:
                 os.remove(path)
-                print(f"Removed {path}")
+                logger.info(f"Removed {path}")
             except OSError as exc:
-                print(f"Failed to remove {path}: {exc}")
+                logger.error(f"Failed to remove {path}: {exc}")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     main()
