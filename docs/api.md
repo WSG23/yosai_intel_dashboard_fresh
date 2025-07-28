@@ -27,6 +27,10 @@ for the dashboard API. A helper script automates generation:
 The script writes the Go client under `pkg/eventclient` and the Python client
 under `analytics/clients/event_client`.
 
+After generation, quickly review the resulting files.  Remove any obsolete
+comments or unused code (for example the old Python 3 ``long`` type note) before
+committing the client directories.
+
 ### Regenerating after changes
 Run the generator whenever API routes or schemas change:
 

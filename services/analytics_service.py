@@ -102,6 +102,47 @@ LARGE_DATA_THRESHOLD = dynamic_config.analytics.large_data_threshold
 """Row count above which data is considered large."""
 
 
+class DataSourceRouter:
+    """Helper to route analytics requests based on source."""
+
+    def __init__(self, orchestrator: AnalyticsOrchestrator) -> None:
+        self.orchestrator = orchestrator
+
+    def get_analytics(self, source: str) -> Dict[str, Any]:
+        """Return analytics data for ``source``."""
+        try:
+            uploaded_data = self.orchestrator.loader.load_uploaded_data()
+            if uploaded_data and source in ["uploaded", "sample"]:
+                logger.info(
+                    "Forcing uploaded data usage (source was: %s)", source
+                )
+                return self.orchestrator.process_uploaded_data_directly(
+                    uploaded_data
+                )
+        except (
+            ImportError,
+            FileNotFoundError,
+            OSError,
+            RuntimeError,
+            ValueError,
+            pd.errors.ParserError,
+        ) as exc:
+            logger.error(
+                "Uploaded data check failed (%s): %s",
+                type(exc).__name__,
+                exc,
+                exc_info=True,
+            )
+
+        if source == "sample":
+            return generate_sample_analytics()
+        if source == "uploaded":
+            return {"status": "no_data", "message": "No uploaded files available"}
+        if source == "database":
+            return self.orchestrator.get_database_analytics()
+        return {"status": "error", "message": f"Unknown source: {source}"}
+
+
 @injectable
 class AnalyticsService(AnalyticsServiceProtocol):
     """Analytics service implementing ``AnalyticsServiceProtocol``."""
@@ -165,6 +206,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         calculator = calculator or Calculator(self.report_generator)
         publisher = publisher or Publisher(self.event_bus)
         self._create_orchestrator(loader, calculator, publisher)
+        self.router = DataSourceRouter(self.orchestrator)
 
     def _setup_database(
         self, db_retriever: DatabaseAnalyticsRetriever | None = None
@@ -202,40 +244,8 @@ class AnalyticsService(AnalyticsServiceProtocol):
         return self.orchestrator.process_uploaded_data()
 
     def get_analytics_by_source(self, source: str) -> Dict[str, Any]:
-        """Get analytics from specified source with forced uploaded data check"""
-
-        # FORCE CHECK: If uploaded data exists, use it regardless of source
-        try:
-            uploaded_data = self.load_uploaded_data()
-
-            if uploaded_data and source in ["uploaded", "sample"]:
-                logger.info(f"Forcing uploaded data usage (source was: {source})")
-                return self._process_uploaded_data_directly(uploaded_data)
-
-        except (
-            ImportError,
-            FileNotFoundError,
-            OSError,
-            RuntimeError,
-            ValueError,
-            pd.errors.ParserError,
-        ) as exc:
-            logger.error(
-                "Uploaded data check failed (%s): %s",
-                type(exc).__name__,
-                exc,
-                exc_info=True,
-            )
-
-        # Original logic for when no uploaded data
-        if source == "sample":
-            return generate_sample_analytics()
-        elif source == "uploaded":
-            return {"status": "no_data", "message": "No uploaded files available"}
-        elif source == "database":
-            return self._get_database_analytics()
-        else:
-            return {"status": "error", "message": f"Unknown source: {source}"}
+        """Get analytics from the specified source."""
+        return self.router.get_analytics(source)
 
     def _process_uploaded_data_directly(
         self, uploaded_data: Dict[str, Any]

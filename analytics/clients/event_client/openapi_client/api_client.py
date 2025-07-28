@@ -61,7 +61,6 @@ class ApiClient:
     PRIMITIVE_TYPES = (float, bool, bytes, str, int)
     NATIVE_TYPES_MAPPING = {
         'int': int,
-        # Python 3 does not differentiate ``long`` from ``int``
         'float': float,
         'str': str,
         'bool': bool,
