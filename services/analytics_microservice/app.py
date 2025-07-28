@@ -19,6 +19,7 @@ from fastapi import (
     Request,
     UploadFile,
     status,
+    Query,
 )
 
 from jose import jwt
@@ -211,7 +212,7 @@ async def _shutdown() -> None:
     service.stop()
 
 
-@app.post("/api/v1/analytics/get_dashboard_summary")
+@app.get("/api/v1/analytics/dashboard-summary")
 @rate_limit_decorator()
 
 async def dashboard_summary(_: None = Depends(verify_token)):
@@ -225,16 +226,18 @@ async def dashboard_summary(_: None = Depends(verify_token)):
     return result
 
 
-@app.post("/api/v1/analytics/get_access_patterns_analysis")
+@app.get("/api/v1/analytics/access-patterns")
 @rate_limit_decorator()
 
-async def access_patterns(req: PatternsRequest, _: None = Depends(verify_token)):
-    cache_key = f"access:{req.days}"
+async def access_patterns(
+    days: int = Query(7), _: None = Depends(verify_token)
+):
+    cache_key = f"access:{days}"
     cached = await app.state.redis.get(cache_key)
     if cached:
         return json.loads(cached)
     pool = await get_pool()
-    result = await async_queries.fetch_access_patterns(pool, req.days)
+    result = await async_queries.fetch_access_patterns(pool, days)
     await app.state.redis.set(cache_key, json.dumps(result), ex=app.state.cache_ttl)
     return result
 

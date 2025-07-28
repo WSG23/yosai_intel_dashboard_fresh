@@ -73,8 +73,8 @@ def test_gateway_end_to_end(tmp_path):
         start_metrics = requests.get(metrics_url, timeout=30)
         start_total = get_total_requests(start_metrics.text)
 
-        resp = requests.post(
-            f"http://{g_host}:{g_port}/api/v1/analytics/get_dashboard_summary",
+        resp = requests.get(
+            f"http://{g_host}:{g_port}/api/v1/analytics/dashboard-summary",
             timeout=30,
         )
         assert resp.status_code == 200

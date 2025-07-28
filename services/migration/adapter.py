@@ -147,12 +147,27 @@ class AnalyticsServiceAdapter(ServiceAdapter, AnalyticsServiceProtocol):
     async def _call_microservice(self, method: str, params: Dict[str, Any]) -> Any:
         async with self.circuit_breaker:
             async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.microservice_url}/v1/analytics/{method}",
-                    json=params,
-                    timeout=aiohttp.ClientTimeout(total=30.0),
-                ) as response:
-                    return await response.json()
+                if method == "get_dashboard_summary":
+                    async with session.get(
+                        f"{self.microservice_url}/v1/analytics/dashboard-summary",
+                        params=params,
+                        timeout=aiohttp.ClientTimeout(total=30.0),
+                    ) as response:
+                        return await response.json()
+                elif method == "get_access_patterns_analysis":
+                    async with session.get(
+                        f"{self.microservice_url}/v1/analytics/access-patterns",
+                        params=params,
+                        timeout=aiohttp.ClientTimeout(total=30.0),
+                    ) as response:
+                        return await response.json()
+                else:
+                    async with session.post(
+                        f"{self.microservice_url}/v1/analytics/{method}",
+                        json=params,
+                        timeout=aiohttp.ClientTimeout(total=30.0),
+                    ) as response:
+                        return await response.json()
 
     # ``AnalyticsServiceProtocol`` methods ---------------------------------
     async def get_dashboard_summary_async(self) -> Dict[str, Any]:

@@ -98,9 +98,9 @@
       }
     },
     "/api/v1/analytics/dashboard-summary": {
-      "post": {
+      "get": {
         "summary": "Dashboard Summary",
-        "operationId": "dashboard_summary_api_v1_analytics_dashboard_summary_post",
+        "operationId": "dashboard_summary_api_v1_analytics_dashboard_summary_get",
         "parameters": [
           {
             "name": "authorization",
@@ -147,9 +147,9 @@
       }
     },
     "/api/v1/analytics/access-patterns": {
-      "post": {
+      "get": {
         "summary": "Access Patterns",
-        "operationId": "access_patterns_api_v1_analytics_access_patterns_post",
+        "operationId": "access_patterns_api_v1_analytics_access_patterns_get",
         "parameters": [
           {
             "name": "authorization",
@@ -160,18 +160,14 @@
               "default": "",
               "title": "Authorization"
             }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {"type": "integer", "default": 7, "title": "Days"}
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PatternsRequest"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -430,17 +426,6 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
-      },
-      "PatternsRequest": {
-        "properties": {
-          "days": {
-            "type": "integer",
-            "title": "Days",
-            "default": 7
-          }
-        },
-        "type": "object",
-        "title": "PatternsRequest"
       },
       "ValidationError": {
         "properties": {
