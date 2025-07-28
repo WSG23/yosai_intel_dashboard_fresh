@@ -61,7 +61,7 @@ class ApiClient:
     PRIMITIVE_TYPES = (float, bool, bytes, str, int)
     NATIVE_TYPES_MAPPING = {
         'int': int,
-        'long': int, # TODO remove as only py3 is supported?
+        # Python 3 does not differentiate ``long`` from ``int``
         'float': float,
         'str': str,
         'bool': bool,
@@ -337,7 +337,7 @@ class ApiClient:
 
         If obj is None, return None.
         If obj is SecretStr, return obj.get_secret_value()
-        If obj is str, int, long, float, bool, return directly.
+        If obj is str, int, float, bool, return directly.
         If obj is datetime.datetime, datetime.date
             convert to string in iso8601 format.
         If obj is decimal.Decimal return string representation.
@@ -719,7 +719,7 @@ class ApiClient:
         :param data: str.
         :param klass: class literal.
 
-        :return: int, long, float, str, bool.
+        :return: int, float, str, bool.
         """
         try:
             return klass(data)
