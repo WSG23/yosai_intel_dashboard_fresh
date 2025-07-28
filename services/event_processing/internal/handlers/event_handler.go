@@ -30,7 +30,7 @@ func NewEventHandler(store repository.TokenStore, settings gobreaker.Settings) *
 	if settings.ReadyToTrip == nil {
 		settings.ReadyToTrip = func(c gobreaker.Counts) bool { return c.ConsecutiveFailures > 5 }
 	}
-	b := resilience.NewGoBreaker(settings)
+	b := resilience.NewGoBreaker(settings.Name, settings)
 
 	return &EventHandler{store: store, breaker: b}
 }
