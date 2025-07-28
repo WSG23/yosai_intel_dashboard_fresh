@@ -46,4 +46,5 @@ def test_metrics_registered(monkeypatch):
     assert "yosai_request_total" in names
     assert "yosai_request_duration_seconds" in names
     assert "yosai_error_total" in names
+    assert "yosai_request_memory_mb" in names
     svc.stop()

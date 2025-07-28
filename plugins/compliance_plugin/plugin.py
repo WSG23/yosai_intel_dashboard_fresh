@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict, List, Optional
+
+from plugins.common_callbacks import csv_pre_process_callback
 from pathlib import Path
 
 from core.plugins.base import BasePlugin
@@ -217,26 +219,16 @@ class CompliancePlugin(BasePlugin):
     # Hook implementations
     def _hook_csv_pre_process(self, **kwargs) -> Dict[str, Any]:
         """Hook called before CSV processing"""
-        if not self.services or not self.services.csv_processor:
-            return {"status": "proceed"}
-
         file_path = kwargs.get("file_path")
-        upload_context = kwargs.get("upload_context", {})
+        upload_context = kwargs.get("upload_context")
         uploaded_by = kwargs.get("uploaded_by")
 
-        # Run compliance analysis
-        result = self.services.csv_processor.analyze_csv_compliance(
-            file_path, upload_context, uploaded_by
+        return csv_pre_process_callback(
+            self.services,
+            file_path,
+            upload_context,
+            uploaded_by,
         )
-
-        if not result.get("authorized", True):
-            return {
-                "status": "block",
-                "reason": result.get("reason", "Compliance check failed"),
-                "details": result,
-            }
-
-        return {"status": "proceed", "compliance_metadata": result}
 
     def _hook_csv_post_process(self, **kwargs) -> Dict[str, Any]:
         """Hook called after CSV processing"""

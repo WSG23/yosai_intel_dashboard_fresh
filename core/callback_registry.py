@@ -66,18 +66,15 @@ class GlobalCallbackRegistry(BaseModel):
         if callback_id in self.registered_callbacks:
             existing = self.callback_sources.get(callback_id, "unknown")
             logger.warning(
-                "Callback ID '%s' already registered by %s, "
-                "skipping registration from %s",
-                callback_id,
-                existing,
-                module_name,
+                f"Callback ID '{callback_id}' already registered by {existing}, "
+                f"skipping registration from {module_name}"
             )
             return False
 
         self.registered_callbacks.add(callback_id)
         self.registration_sources[callback_id] = module_name
         self.registration_order.append(callback_id)
-        logger.debug("Registered callback '%s' from %s", callback_id, module_name)
+        logger.debug(f"Registered callback '{callback_id}' from {module_name}")
         return True
 
     def get_conflicts(self) -> Dict[str, str]:
@@ -98,9 +95,7 @@ class GlobalCallbackRegistry(BaseModel):
                 cid: self.callback_sources.get(cid, "unknown") for cid in duplicates
             }
             logger.info(
-                "Skipping duplicate callback registration from %s: %s",
-                source_module,
-                existing,
+                f"Skipping duplicate callback registration from {source_module}: {existing}"
             )
             return False
 
@@ -108,10 +103,7 @@ class GlobalCallbackRegistry(BaseModel):
             register_func()
         except Exception as exc:  # pragma: no cover - defensive
             logger.error(
-                "Failed to register callbacks %s from %s: %s",
-                list(callback_ids),
-                source_module,
-                exc,
+                f"Failed to register callbacks {list(callback_ids)} from {source_module}: {exc}"
             )
             return False
 
@@ -246,7 +238,7 @@ def safe_callback_registration(callback_id: str, module_name: str = "unknown"):
         @functools.wraps(register_func)
         def wrapper(*args, **kwargs):
             if _callback_registry.is_registered(callback_id):
-                logger.info("Skipping duplicate callback registration: %s", callback_id)
+                logger.info(f"Skipping duplicate callback registration: {callback_id}")
                 return None
             result = register_func(*args, **kwargs)
             _callback_registry.register(callback_id, module_name)
@@ -277,9 +269,7 @@ def handle_register_with_deduplication(
 
     if _callback_registry.is_registered(callback_id):
         logger.info(
-            "Skipping duplicate callback registration: %s from %s",
-            callback_id,
-            source_module,
+            f"Skipping duplicate callback registration: {callback_id} from {source_module}"
         )
         return lambda func: func
 

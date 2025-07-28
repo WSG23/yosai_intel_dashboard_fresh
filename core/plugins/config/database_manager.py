@@ -95,7 +95,7 @@ class SQLiteDatabaseManager(IDatabaseManager):
                 success=True, connection=self.connection, connection_type="sqlite"
             )
         except Exception as e:
-            logger.error("SQLite connection failed: %s", e)
+            logger.error(f"SQLite connection failed: {e}")
             return ConnectionResult(
                 success=False,
                 connection=None,
@@ -114,7 +114,7 @@ class SQLiteDatabaseManager(IDatabaseManager):
             cur.close()
             return True
         except Exception as e:
-            logger.error("SQLite test query failed: %s", e)
+            logger.error(f"SQLite test query failed: {e}")
             return False
 
     def close_connection(self) -> None:
@@ -145,7 +145,7 @@ class SQLiteDatabaseManager(IDatabaseManager):
             conn.commit()
             return cur.rowcount
         except Exception as e:
-            logger.error("SQLite query failed: %s", e)
+            logger.error(f"SQLite query failed: {e}")
             raise
 
 

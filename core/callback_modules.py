@@ -49,14 +49,14 @@ class CallbackModuleRegistry(BaseModel):
         module_id = module.COMPONENT_ID
 
         if module_id in self._modules:
-            logger.warning("Module %s already registered", module_id)
+            logger.warning(f"Module {module_id} already registered")
             return False
 
         callback_ids = module.get_callback_ids()
         conflicts = [cid for cid in callback_ids if cid in self._registered_ids]
         if conflicts:
             logger.error(
-                "Module %s has conflicting callbacks: %s", module_id, conflicts
+                f"Module {module_id} has conflicting callbacks: {conflicts}"
             )
             return False
 
@@ -76,9 +76,9 @@ class CallbackModuleRegistry(BaseModel):
         for module_id, module in self._modules.items():
             try:
                 module.register_callbacks(manager)
-                logger.info("Initialized module: %s", module_id)
+                logger.info(f"Initialized module: {module_id}")
             except Exception as exc:  # pragma: no cover - defensive
-                logger.error("Failed to initialize %s: %s", module_id, exc)
+                logger.error(f"Failed to initialize {module_id}: {exc}")
 
 
 __all__ = ["CallbackModule", "CallbackModuleRegistry"]

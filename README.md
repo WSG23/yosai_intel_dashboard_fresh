@@ -666,6 +666,7 @@ in‑process memory cache. Configure the connection with:
 REDIS_HOST=localhost  # Redis server host
 REDIS_PORT=6379       # Redis port
 CACHE_TTL_SECONDS=300 # Default TTL for cached analytics
+JWKS_CACHE_TTL=300    # TTL for cached JWKS responses
 ```
 
 Each cached entry is stored with the specified TTL. When running multiple

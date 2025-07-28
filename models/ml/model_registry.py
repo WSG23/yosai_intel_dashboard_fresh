@@ -15,6 +15,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    Float,
     Integer,
     JSON,
     String,
@@ -39,6 +40,7 @@ class ModelRecord(Base):
     version = Column(String(20), nullable=False)
     training_date = Column(DateTime, default=datetime.utcnow)
     metrics = Column(JSON)
+    accuracy = Column(Float)
     dataset_hash = Column(String(64))
     storage_uri = Column(String(255))
     mlflow_run_id = Column(String(64))
@@ -122,6 +124,7 @@ class ModelRegistry:
                     version=version,
                     training_date=training_date or datetime.utcnow(),
                     metrics=metrics,
+                    accuracy=metrics.get("accuracy"),
                     dataset_hash=dataset_hash,
                     storage_uri=storage_uri,
                     mlflow_run_id=run_id,
@@ -165,6 +168,10 @@ class ModelRegistry:
             return list(session.execute(stmt).scalars().all())
         finally:
             session.close()
+
+    def list_versions(self, name: str) -> List[ModelRecord]:
+        """Return all versions for a given model name."""
+        return self.list_models(name)
 
     def delete_model(self, model_id: int) -> None:
         session = self._session()

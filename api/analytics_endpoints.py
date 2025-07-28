@@ -9,6 +9,7 @@ from marshmallow import Schema, fields
 from flask_apispec import doc, marshal_with, use_kwargs
 
 from core.cache_manager import CacheConfig, InMemoryCacheManager
+from config import get_cache_config
 from services.cached_analytics import CachedAnalyticsService
 from services.security import require_permission
 
@@ -31,7 +32,8 @@ class AnalyticsResponseSchema(Schema):
     data = fields.Dict()
 
 # Cached analytics helper
-_cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=300))
+cfg = get_cache_config()
+_cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=cfg.ttl))
 
 _cached_service = CachedAnalyticsService(_cache_manager)
 

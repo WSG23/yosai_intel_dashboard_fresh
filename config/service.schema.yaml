@@ -9,5 +9,8 @@ properties:
     type: string
   tracing_endpoint:
     type: string
+  enable_profiling:
+    type: boolean
+    default: false
 required:
   - service_name

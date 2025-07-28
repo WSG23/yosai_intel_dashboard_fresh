@@ -6,6 +6,15 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "invalidRequest": {
+                "summary": "Invalid request",
+                "value": {
+                  "code": "bad_request",
+                  "message": "Invalid query parameter"
+                }
+              }
             }
           }
         },
@@ -16,6 +25,15 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "resourceMissing": {
+                "summary": "Requested resource not found",
+                "value": {
+                  "code": "not_found",
+                  "message": "Event not found"
+                }
+              }
             }
           }
         },
@@ -94,7 +112,6 @@
       },
       "bearerAuth": {
         "bearerFormat": "JWT",
-
         "scheme": "bearer",
         "type": "http"
       }
@@ -109,7 +126,6 @@
       "name": "Apache 2.0",
       "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
     },
-
     "termsOfService": "https://yosai.com/terms",
     "title": "Yōsai Intel Dashboard API",
     "version": "2.0.0"
@@ -125,6 +141,22 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EventListResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "A list of events",
+                    "value": {
+                      "events": [
+                        {
+                          "event_id": "evt_123",
+                          "person_id": "pers_456",
+                          "door_id": "door_1",
+                          "timestamp": "2024-05-01T10:00:00Z",
+                          "result": "granted"
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             },
@@ -140,7 +172,96 @@
         "summary": "List access events",
         "tags": [
           "Events"
+        ],
+        "parameters": [
+          {
+            "name": "start_time",
+            "in": "query",
+            "description": "Return events occurring after this ISO-8601 timestamp",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "description": "Return events occurring before this ISO-8601 timestamp",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of events to return",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of events to skip before starting to collect the result set",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
         ]
+      }
+    },
+    "/v2/events/{event_id}": {
+      "get": {
+        "summary": "Retrieve a single access event",
+        "operationId": "getAccessEvent",
+        "tags": [
+          "Events"
+        ],
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "description": "Unique identifier for the event",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessEvent"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Event detail",
+                    "value": {
+                      "event_id": "evt_123",
+                      "person_id": "pers_456",
+                      "door_id": "door_1",
+                      "timestamp": "2024-05-01T10:00:00Z",
+                      "result": "granted"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
       }
     }
   },
@@ -150,7 +271,6 @@
       "url": "https://api.yosai.com/v2"
     },
     {
-
       "description": "Staging",
       "url": "https://staging-api.yosai.com/v2"
     },

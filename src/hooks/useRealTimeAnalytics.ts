@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useWebSocket } from './useWebSocket';
 
 export interface RealTimeAnalytics {
   [key: string]: any;
@@ -9,26 +10,21 @@ export const useRealTimeAnalytics = (
   interval: number = 1000,
   socketFactory?: (url: string) => WebSocket,
 ) => {
+  const { data: raw } = useWebSocket(url, socketFactory);
   const [data, setData] = useState<RealTimeAnalytics | null>(null);
   const [summary, setSummary] = useState<RealTimeAnalytics | null>(null);
   const [charts, setCharts] = useState<RealTimeAnalytics | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    const ws = socketFactory ? socketFactory(url) : new WebSocket(url);
-    wsRef.current = ws;
-    ws.onmessage = (ev: MessageEvent) => {
+    if (raw) {
       try {
-        const parsed = JSON.parse(ev.data as string);
+        const parsed = JSON.parse(raw);
         setData(parsed);
       } catch {
         /* ignore malformed messages */
       }
-    };
-    return () => {
-      ws.close();
-    };
-  }, [url, socketFactory]);
+    }
+  }, [raw]);
 
   useEffect(() => {
     const id = setInterval(() => {

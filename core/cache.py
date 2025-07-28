@@ -20,7 +20,7 @@ def init_app(app) -> None:
             config={"CACHE_TYPE": "simple", "CACHE_DEFAULT_TIMEOUT": 300},
         )
     except Exception as exc:  # pragma: no cover - fallback
-        logger.error("Cache initialization failed: %s", exc)
+        logger.error(f"Cache initialization failed: {exc}")
         _fallback_init(app)
 
 

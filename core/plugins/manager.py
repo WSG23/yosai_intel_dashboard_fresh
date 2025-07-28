@@ -87,7 +87,7 @@ class PluginManager:
         try:
             pkg = importlib.import_module(self.package)
         except ModuleNotFoundError:
-            logger.info("Plugins package '%s' not found", self.package)
+            logger.info(f"Plugins package '{self.package}' not found")
             return []
 
         discovered: List[PluginProtocol] = []
@@ -107,20 +107,20 @@ class PluginManager:
                 if plugin:
                     discovered.append(plugin)
                 self.loaded_plugins.append(module)
-                logger.info("Loaded plugin %s", module_name)
+                logger.info(f"Loaded plugin {module_name}")
             except Exception as exc:
-                logger.error("Failed to load plugin %s: %s", module_name, exc)
+                logger.error(f"Failed to load plugin {module_name}: {exc}")
 
         try:
             ordered = self._resolver.resolve(discovered)
         except ValueError as exc:
             if "Circular dependency" in str(exc):
-                logger.error("Plugin dependency cycle detected: %s", exc)
+                logger.error(f"Plugin dependency cycle detected: {exc}")
                 return []
-            logger.error("Failed to resolve plugin dependencies: %s", exc)
+            logger.error(f"Failed to resolve plugin dependencies: {exc}")
             return []
         except Exception as exc:
-            logger.error("Failed to resolve plugin dependencies: %s", exc)
+            logger.error(f"Failed to resolve plugin dependencies: {exc}")
             return []
 
         ordered.sort(key=self._get_priority)
@@ -141,7 +141,7 @@ class PluginManager:
             config = self.config_manager.get_plugin_config(name)
 
             if not callable(getattr(plugin, "health_check", None)):
-                logger.error("Plugin %s does not implement health_check", name)
+                logger.error(f"Plugin {name} does not implement health_check")
                 self.plugin_status[name] = PluginStatus.FAILED
                 return False
 
@@ -150,19 +150,19 @@ class PluginManager:
                 try:
                     plugin.configure(config)
                 except Exception as exc:
-                    logger.error("Failed to configure plugin %s: %s", name, exc)
+                    logger.error(f"Failed to configure plugin {name}: {exc}")
                     self.plugin_status[name] = PluginStatus.FAILED
                     return False
                 plugin.start()
                 self.plugins[name] = plugin
                 self.plugin_status[name] = PluginStatus.STARTED
-                logger.info("Loaded plugin %s", name)
+                logger.info(f"Loaded plugin {name}")
                 return True
             self.plugin_status[name] = PluginStatus.FAILED
             return False
         except Exception as exc:
             logger.error(
-                "Failed to load plugin %s: %s", getattr(plugin, "metadata", plugin), exc
+                f"Failed to load plugin {getattr(plugin, 'metadata', plugin)}: {exc}"
             )
             return False
 
@@ -174,7 +174,7 @@ class PluginManager:
         try:
             self.register_health_endpoint(app)
         except Exception as exc:  # pragma: no cover - log and continue
-            logger.error("Failed to register plugin health endpoint: %s", exc)
+            logger.error(f"Failed to register plugin health endpoint: {exc}")
         for plugin in self.plugins.values():
             if isinstance(plugin, CallbackPluginProtocol) or hasattr(
                 plugin, "register_callbacks"
@@ -183,7 +183,7 @@ class PluginManager:
                     result = plugin.register_callbacks(manager, self.container)
                     results.append(result)
                 except Exception as exc:  # pragma: no cover - log and continue
-                    logger.error("Failed to register callbacks for %s: %s", plugin, exc)
+                    logger.error(f"Failed to register callbacks for {plugin}: {exc}")
                     results.append(False)
         return results
 
@@ -207,7 +207,7 @@ class PluginManager:
             try:
                 self.health_snapshot = self.get_plugin_health()
             except Exception as exc:
-                logger.error("Health monitoring error: %s", exc)
+                logger.error(f"Health monitoring error: {exc}")
             time.sleep(self._health_check_interval)
 
     def stop_health_monitor(self) -> None:
@@ -226,7 +226,7 @@ class PluginManager:
                 else:
                     self.plugin_status[name] = PluginStatus.FAILED
             except Exception as exc:  # pragma: no cover - defensive
-                logger.error("Failed to stop plugin %s: %s", name, exc)
+                logger.error(f"Failed to stop plugin {name}: {exc}")
                 self.plugin_status[name] = PluginStatus.FAILED
 
     def register_health_endpoint(self, app: Any) -> None:
@@ -322,7 +322,7 @@ class ThreadSafePluginManager(PluginManager):
                 try:
                     self.health_snapshot = self.get_plugin_health()
                 except Exception as exc:  # pragma: no cover - defensive
-                    logger.error("Health monitoring error: %s", exc)
+                    logger.error(f"Health monitoring error: {exc}")
             time.sleep(self._health_check_interval)
 
     # ------------------------------------------------------------------

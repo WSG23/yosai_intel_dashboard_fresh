@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+"""Utilities for storing and retrieving baseline metrics.
+
+This module provides :class:`BaselineMetricsDB` which offers a simple
+interface for persisting baseline metrics in a relational database.
+Applications can use ``update_baseline`` and ``get_baseline`` to manage
+historical performance metrics.
+"""
+
 import logging
 from typing import Dict, List
 

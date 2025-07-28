@@ -24,7 +24,7 @@ from flask_login import (
 )
 from jose import jwt
 
-from config import get_security_config
+from config import get_security_config, get_cache_config
 
 from .secret_manager import SecretsManager
 
@@ -87,7 +87,7 @@ def init_auth(app) -> None:
 
 def _get_jwks(domain: str) -> dict:
     """Return cached JWKS for a domain if within TTL, otherwise fetch."""
-    ttl = int(os.getenv("JWKS_CACHE_TTL", "300"))
+    ttl = get_cache_config().jwks_ttl
     now = time.time()
     cached = _jwks_cache.get(domain)
     if cached and now - cached[1] < ttl:
@@ -99,7 +99,7 @@ def _get_jwks(domain: str) -> dict:
         with urlopen(jwks_url, timeout=timeout) as resp:
             jwks = json.load(resp)
     except (URLError, socket.timeout) as exc:
-        logger.warning("Failed to fetch JWKS from %s: %s", jwks_url, exc)
+        logger.warning(f"Failed to fetch JWKS from {jwks_url}: {exc}")
         if cached:
             return cached[0]
         raise

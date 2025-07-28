@@ -24,7 +24,7 @@ class CacheConfig:
     port: int = int(os.getenv("CACHE_PORT", "6379"))
     db: int = int(os.getenv("CACHE_DB", "0"))
     key_prefix: str = os.getenv("CACHE_PREFIX", "yosai:")
-    timeout_seconds: int = int(os.getenv("CACHE_TTL", "300"))
+    timeout_seconds: int = 300
 
 
 class CacheManager(ABC):
@@ -134,7 +134,7 @@ class RedisCacheManager(CacheManager):
         try:
             await self._redis.ping()
         except Exception as exc:  # pragma: no cover - fallback
-            logger.error("Redis unavailable: %s", exc)
+            logger.error(f"Redis unavailable: {exc}")
             self._redis = None
         await self._fallback.start()
 
@@ -153,7 +153,7 @@ class RedisCacheManager(CacheManager):
                 if data is not None:
                     return json.loads(data.decode("utf-8"))
             except Exception as exc:  # pragma: no cover - fallback
-                logger.warning("Redis GET failed for %s: %s", key, exc)
+                logger.warning(f"Redis GET failed for {key}: {exc}")
         return await self._fallback.get(key)
 
     async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
@@ -167,7 +167,7 @@ class RedisCacheManager(CacheManager):
                     await self._redis.set(self._full_key(key), payload)
                 return
             except Exception as exc:  # pragma: no cover - fallback
-                logger.warning("Redis SET failed for %s: %s", key, exc)
+                logger.warning(f"Redis SET failed for {key}: {exc}")
         await self._fallback.set(key, value, ttl)
 
     async def delete(self, key: str) -> bool:
@@ -177,7 +177,7 @@ class RedisCacheManager(CacheManager):
                 if removed:
                     return True
             except Exception as exc:  # pragma: no cover - fallback
-                logger.warning("Redis DEL failed for %s: %s", key, exc)
+                logger.warning(f"Redis DEL failed for {key}: {exc}")
         return await self._fallback.delete(key)
 
     async def clear(self) -> None:
@@ -185,7 +185,7 @@ class RedisCacheManager(CacheManager):
             try:
                 await self._redis.flushdb()
             except Exception as exc:  # pragma: no cover - fallback
-                logger.warning("Redis FLUSHDB failed: %s", exc)
+                logger.warning(f"Redis FLUSHDB failed: {exc}")
         await self._fallback.clear()
 
     def get_lock(self, key: str, timeout: int = 10):
