@@ -45,7 +45,7 @@ class AlertDispatcher:
                     timeout=5,
                 )
             except Exception as exc:  # pragma: no cover - network
-                self.logger.warning("Slack alert failed: %s", exc)
+                self.logger.warning(f"Slack alert failed: {exc}")
 
     # ------------------------------------------------------------------
     async def _send_slack_async(self, message: str) -> None:
@@ -58,7 +58,7 @@ class AlertDispatcher:
                         timeout=aiohttp.ClientTimeout(total=5),
                     )
             except Exception as exc:  # pragma: no cover - network
-                self.logger.warning("Slack alert failed: %s", exc)
+                self.logger.warning(f"Slack alert failed: {exc}")
         elif self.config.slack_webhook:
             self._send_slack_sync(message)
 
@@ -72,7 +72,7 @@ class AlertDispatcher:
                     timeout=5,
                 )
             except Exception as exc:  # pragma: no cover - network
-                self.logger.warning("Webhook alert failed: %s", exc)
+                self.logger.warning(f"Webhook alert failed: {exc}")
 
     # ------------------------------------------------------------------
     async def _send_webhook_async(self, message: str) -> None:
@@ -85,7 +85,7 @@ class AlertDispatcher:
                         timeout=aiohttp.ClientTimeout(total=5),
                     )
             except Exception as exc:  # pragma: no cover - network
-                self.logger.warning("Webhook alert failed: %s", exc)
+                self.logger.warning(f"Webhook alert failed: {exc}")
         elif self.config.webhook_url:
             self._send_webhook_sync(message)
 
@@ -97,7 +97,7 @@ class AlertDispatcher:
                 smtp.sendmail("noreply@example.com", [self.config.email], message)
                 smtp.quit()
             except Exception as exc:  # pragma: no cover - external
-                self.logger.warning("Email alert failed: %s", exc)
+                self.logger.warning(f"Email alert failed: {exc}")
 
     # ------------------------------------------------------------------
     async def _send_email_async(self, message: str) -> None:
@@ -112,7 +112,7 @@ class AlertDispatcher:
                 )
                 await smtp.quit()
             except Exception as exc:  # pragma: no cover - external
-                self.logger.warning("Email alert failed: %s", exc)
+                self.logger.warning(f"Email alert failed: {exc}")
         elif self.config.email:
             self._send_email_sync(message)
 

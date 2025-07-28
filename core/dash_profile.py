@@ -17,7 +17,7 @@ def handle_profile(callback_id: str):
                 duration_ms = (time.perf_counter() - start) * 1000
                 if duration_ms > 100:
                     logging.warning(
-                        "Callback %s took %.2f ms", callback_id, duration_ms
+                        f"Callback {callback_id} took {duration_ms:.2f} ms"
                     )
                 return result
 
@@ -29,7 +29,7 @@ def handle_profile(callback_id: str):
             result = func(*args, **kwargs)
             duration_ms = (time.perf_counter() - start) * 1000
             if duration_ms > 100:
-                logging.warning("Callback %s took %.2f ms", callback_id, duration_ms)
+                logging.warning(f"Callback {callback_id} took {duration_ms:.2f} ms")
             return result
 
         return sync_wrapper

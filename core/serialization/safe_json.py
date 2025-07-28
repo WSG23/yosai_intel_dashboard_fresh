@@ -73,7 +73,7 @@ class SafeJSONSerializer:
             if hasattr(obj, "__dict__"):
                 return {k: self._sanitize(v) for k, v in vars(obj).items()}
         except Exception as exc:  # pragma: no cover - best effort
-            logger.warning("SafeJSONSerializer failed: %s", exc)
+            logger.warning(f"SafeJSONSerializer failed: {exc}")
             return sanitize_unicode_input(str(obj))
 
         return obj

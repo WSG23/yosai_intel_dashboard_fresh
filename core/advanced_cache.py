@@ -41,7 +41,7 @@ class AdvancedCacheManager:
             await self._redis.ping()
             logger.info("Advanced cache manager connected to Redis")
         except Exception as exc:  # pragma: no cover - best effort
-            logger.error("Failed to connect to Redis: %s", exc)
+            logger.error(f"Failed to connect to Redis: {exc}")
             self._redis = None
 
     # ------------------------------------------------------------------
@@ -67,7 +67,7 @@ class AdvancedCacheManager:
                 data = await self._redis.get(full_key)
                 return json.loads(data.decode("utf-8")) if data is not None else None
             except Exception as exc:  # pragma: no cover - best effort
-                logger.warning("Redis GET failed for %s: %s", full_key, exc)
+                logger.warning(f"Redis GET failed for {full_key}: {exc}")
                 return None
         # Fallback to memory
         if key not in self._memory:
@@ -91,7 +91,7 @@ class AdvancedCacheManager:
                     await self._redis.set(full_key, payload)
                 return
             except Exception as exc:  # pragma: no cover - best effort
-                logger.warning("Redis SET failed for %s: %s", full_key, exc)
+                logger.warning(f"Redis SET failed for {full_key}: {exc}")
         # Fallback to memory
         expiry = time.time() + expire if expire else None
         self._memory[key] = (value, expiry)
@@ -105,7 +105,7 @@ class AdvancedCacheManager:
                 if removed:
                     return True
             except Exception as exc:  # pragma: no cover - best effort
-                logger.warning("Redis DEL failed for %s: %s", full_key, exc)
+                logger.warning(f"Redis DEL failed for {full_key}: {exc}")
         return self._memory.pop(key, None) is not None
 
     # ------------------------------------------------------------------
@@ -114,7 +114,7 @@ class AdvancedCacheManager:
             try:
                 await self._redis.flushdb()
             except Exception as exc:  # pragma: no cover - best effort
-                logger.warning("Redis FLUSHDB failed: %s", exc)
+                logger.warning(f"Redis FLUSHDB failed: {exc}")
         self._memory.clear()
 
     # ------------------------------------------------------------------

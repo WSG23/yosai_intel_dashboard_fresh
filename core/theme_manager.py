@@ -18,7 +18,7 @@ def sanitize_theme(theme: str | None) -> str:
     cleaned = sanitize_unicode_input(theme or "").lower()
     if cleaned in ALLOWED_THEMES:
         return cleaned
-    logger.debug("Invalid theme '%s', falling back to '%s'", theme, DEFAULT_THEME)
+    logger.debug(f"Invalid theme '{theme}', falling back to '{DEFAULT_THEME}'")
     return DEFAULT_THEME
 
 
@@ -74,4 +74,4 @@ def apply_theme_settings(app) -> None:
             else:
                 app.index_string = snippet + app.index_string
     except Exception as exc:  # pragma: no cover - best effort
-        logger.warning("Failed to apply theme settings: %s", exc)
+        logger.warning(f"Failed to apply theme settings: {exc}")

@@ -86,7 +86,7 @@ class UnicodeProcessor:
             try:
                 text = str(text)
             except Exception as exc:  # pragma: no cover - defensive
-                logger.error("Failed to convert %s to str: %s", type(text), exc)
+                logger.error(f"Failed to convert {type(text)} to str: {exc}")
                 return ""
 
         out: list[str] = []
@@ -144,19 +144,19 @@ class UnicodeProcessor:
             try:
                 text = str(text)
             except Exception as exc:  # pragma: no cover - extreme defensive
-                logger.error("Failed to convert %s to str: %s", type(text), exc)
+                logger.error(f"Failed to convert {type(text)} to str: {exc}")
                 return ""
 
         try:
             text = text.encode("utf-16", "surrogatepass").decode("utf-16")
             text = unicodedata.normalize("NFKC", text)
         except Exception as exc:  # pragma: no cover - defensive
-            logger.warning("Unicode normalization failed: %s", exc)
+            logger.warning(f"Unicode normalization failed: {exc}")
 
         try:
             text = _SURROGATE_RE.sub(replacement, text)
         except Exception as exc:  # pragma: no cover - defensive
-            logger.warning("Surrogate removal failed: %s", exc)
+            logger.warning(f"Surrogate removal failed: {exc}")
             text = "".join(ch for ch in text if not (0xD800 <= ord(ch) <= 0xDFFF))
 
         text = _CONTROL_RE.sub("", text)
@@ -165,7 +165,7 @@ class UnicodeProcessor:
         try:
             text.encode("utf-8")
         except UnicodeEncodeError as exc:  # pragma: no cover - best effort
-            logger.error("Unencodable characters removed: %s", exc)
+            logger.error(f"Unencodable characters removed: {exc}")
             text = text.encode("utf-8", "ignore").decode("utf-8", "ignore")
 
         return text
@@ -178,7 +178,7 @@ class UnicodeProcessor:
         try:
             text = data.decode(encoding, errors="surrogatepass")
         except Exception as exc:  # pragma: no cover - defensive
-            logger.warning("Primary decode failed: %s", exc)
+            logger.warning(f"Primary decode failed: {exc}")
             try:
                 text = data.decode(encoding, errors="ignore")
             except Exception:
@@ -299,7 +299,7 @@ class UnicodeSQLProcessor:
         try:
             cleaned.encode("utf-8")
         except Exception as exc:  # pragma: no cover - best effort
-            logger.error("Unicode encode failed: %s", exc)
+            logger.error(f"Unicode encode failed: {exc}")
             cleaned = cleaned.encode("utf-8", "ignore").decode("utf-8", "ignore")
         return cleaned
 
@@ -425,7 +425,7 @@ def sanitize_unicode_input(text: Union[str, Any]) -> str:
         try:
             text = str(text)
         except Exception as exc:  # pragma: no cover - defensive
-            logger.warning("Failed to convert %r to str: %s", text, exc)
+            logger.warning(f"Failed to convert {text!r} to str: {exc}")
             return ""
 
     def _strip_pairs(val: str) -> str:
@@ -456,17 +456,17 @@ def sanitize_unicode_input(text: Union[str, Any]) -> str:
         sanitized = unicodedata.normalize("NFKC", sanitized)
         return _drop_dangerous_prefix(sanitized)
     except UnicodeError as exc:  # pragma: no cover - best effort
-        logger.warning("Unicode sanitization failed: %s", exc)
+        logger.warning(f"Unicode sanitization failed: {exc}")
         cleaned = UnicodeProcessor.clean_surrogate_chars(text)
         try:
             cleaned = _unicode_validator.validate_and_sanitize(cleaned)
             cleaned = unicodedata.normalize("NFKC", cleaned)
             return _drop_dangerous_prefix(cleaned)
         except Exception as inner:  # pragma: no cover - extreme defensive
-            logger.error("Normalization retry failed: %s", inner)
+            logger.error(f"Normalization retry failed: {inner}")
             return cleaned
     except Exception as exc:  # pragma: no cover - extreme defensive
-        logger.error("sanitize_unicode_input failed: %s", exc)
+        logger.error(f"sanitize_unicode_input failed: {exc}")
         cleaned = "".join(ch for ch in str(text) if not (0xD800 <= ord(ch) <= 0xDFFF))
         return _drop_dangerous_prefix(cleaned)
 
@@ -491,7 +491,7 @@ def safe_format_number(value: Union[int, float]) -> Optional[str]:
         if isinstance(value, (int, float)) and math.isfinite(float(value)):
             return f"{value:,}"
     except (ValueError, TypeError) as exc:  # pragma: no cover - defensive
-        logger.warning("Failed to format number %r: %s", value, exc)
+        logger.warning(f"Failed to format number {value!r}: {exc}")
     return None
 
 
@@ -542,7 +542,7 @@ def secure_unicode_sanitization(value: Any, *, check_malicious: bool = True) -> 
     except SecurityError:
         raise
     except Exception as exc:  # pragma: no cover - best effort
-        logger.warning("secure_unicode_sanitization failed: %s", exc)
+        logger.warning(f"secure_unicode_sanitization failed: {exc}")
         return validator.validate_and_sanitize(str(value))
 
 
@@ -652,7 +652,7 @@ class EnhancedUnicodeProcessor:
             text = unicodedata.normalize(self.config.normalize_form, text)
         except Exception as exc:  # pragma: no cover - defensive
             if self.config.log_errors:
-                logger.warning("Unicode normalization failed: %s", exc)
+                logger.warning(f"Unicode normalization failed: {exc}")
 
         return text
 
@@ -690,7 +690,7 @@ def safe_unicode_decode(data: Any, encoding: str = "utf-8") -> str:
     try:
         text = data.decode(encoding, errors="surrogatepass")
     except UnicodeError as exc:
-        logger.warning("Primary decode failed: %s", exc)
+        logger.warning(f"Primary decode failed: {exc}")
         try:
             text = data.decode(encoding, errors="replace")
         except Exception:
@@ -709,13 +709,13 @@ def normalize_unicode_safely(text: Any, form: str = "NFKC") -> str:
         try:
             text = str(text)
         except Exception as exc:  # pragma: no cover - defensive
-            logger.error("Failed to convert %r to str: %s", text, exc)
+            logger.error(f"Failed to convert {text!r} to str: {exc}")
             raise UnicodeNormalizationError(str(exc)) from exc
 
     try:
         return unicodedata.normalize(form, text)
     except Exception as exc:  # pragma: no cover - best effort
-        logger.error("Unicode normalization failed: %s", exc)
+        logger.error(f"Unicode normalization failed: {exc}")
         raise UnicodeNormalizationError(str(exc)) from exc
 
 
@@ -733,7 +733,7 @@ def sanitize_for_utf8(value: Any) -> str:
     except SecurityError:
         raise
     except Exception as exc:  # pragma: no cover - best effort
-        logger.error("Unicode sanitization failed: %s", exc)
+        logger.error(f"Unicode sanitization failed: {exc}")
         return _unicode_validator.validate_and_sanitize(str(value))
 
 

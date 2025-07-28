@@ -49,7 +49,7 @@ class CentralizedStateManager:
             try:
                 sub(state_snapshot, action)
             except Exception as exc:  # pragma: no cover - subscriber errors
-                logger.exception("State subscriber error: %s", exc)
+                logger.exception(f"State subscriber error: {exc}")
 
     # ------------------------------------------------------------------
     def subscribe(self, listener: Subscriber) -> Callable[[], None]:
