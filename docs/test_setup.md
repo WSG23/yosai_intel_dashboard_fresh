@@ -100,7 +100,7 @@ Execute the full suite with coverage reporting. Enable the lightweight service
 implementations so heavy optional dependencies are not required:
 ```bash
 export LIGHTWEIGHT_SERVICES=1
-pytest --cov
+pytest --cov --cov-fail-under=80
 ```
 
 Static analysis and linting checks can be run as well:

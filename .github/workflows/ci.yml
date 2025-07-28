@@ -80,10 +80,10 @@ jobs:
           set -xe
           python tools/organize_imports.py --check
 
-      - name: PyTest
-        run: |
-          set -xe
-          LIGHTWEIGHT_SERVICES=1 pytest --maxfail=1 --disable-warnings -q --cov=. --cov-report=xml
+        - name: PyTest
+          run: |
+            set -xe
+            LIGHTWEIGHT_SERVICES=1 pytest --maxfail=1 --disable-warnings -q --cov=. --cov-report=xml --cov-fail-under=80
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
