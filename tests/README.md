@@ -1,13 +1,13 @@
 # Running the Test Suite
 
-Before running any tests, install the required packages listed in
-`requirements-test.txt`:
+**Important**: install the test dependencies **before** invoking `pytest` so that
+all helper modules can be imported. Use one of the commands below:
 
 ```bash
 pip install -r requirements-test.txt
 ```
 
-You can also run the helper script:
+Or run the helper script:
 
 ```bash
 scripts/setup_tests.sh
