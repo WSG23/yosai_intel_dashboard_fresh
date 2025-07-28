@@ -43,29 +43,12 @@ except Exception:  # pragma: no cover - optional dependency
     CONFIG_SERVICE_AVAILABLE = False
     logger.warning("⚠️ Configuration Service not available")
 
-    from utils.config_resolvers import (
-        resolve_ai_confidence_threshold,
-        resolve_max_upload_size_mb,
-        resolve_upload_chunk_size,
-    )
-
-    class FallbackConfigService:
-        def get_ai_confidence_threshold(self) -> float:
-            return resolve_ai_confidence_threshold()
-
-        def get_max_upload_size_mb(self) -> int:
-            return resolve_max_upload_size_mb()
-
-        def get_upload_chunk_size(self) -> int:
-            return resolve_upload_chunk_size()
-
 
 __all__ = [
     "AI_COLUMN_SERVICE_AVAILABLE",
     "AI_DOOR_SERVICE_AVAILABLE",
     "CONTAINER_AVAILABLE",
     "CONFIG_SERVICE_AVAILABLE",
-    "FallbackConfigService",
     "DoorMappingService",
     "get_door_mapping_service",
     "ServiceContainer",

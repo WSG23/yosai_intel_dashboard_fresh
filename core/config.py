@@ -4,50 +4,49 @@ from __future__ import annotations
 
 from typing import Any
 
-from config.constants import DEFAULT_CHUNK_SIZE, UploadLimits, FileProcessingLimits
 from config.config import get_analytics_config
 from config.dynamic_config import dynamic_config
 from core.protocols import ConfigurationProtocol
 
 
 def get_ai_confidence_threshold() -> float:
-    """Default confidence threshold for AI based features."""
-    return 0.85
+    """Return the AI confidence threshold from the dynamic configuration."""
+    return dynamic_config.get_ai_confidence_threshold()
 
 
 def get_upload_chunk_size() -> int:
-    """Default chunk size for uploads."""
-    return DEFAULT_CHUNK_SIZE
+    """Return the upload chunk size from the dynamic configuration."""
+    return dynamic_config.get_upload_chunk_size()
 
 
 def get_max_parallel_uploads() -> int:
-    """Number of parallel uploads allowed."""
-    return UploadLimits.MAX_PARALLEL_UPLOADS
+    """Return the maximum number of parallel uploads from the dynamic configuration."""
+    return dynamic_config.get_max_parallel_uploads()
 
 
 def get_validator_rules() -> dict:
-    """Return validator rules for uploads."""
-    return UploadLimits.VALIDATOR_RULES
+    """Return validator rules for uploads from the dynamic configuration."""
+    return dynamic_config.get_validator_rules()
 
 
 def get_max_upload_size_mb() -> int:
-    """Maximum upload size allowed in megabytes."""
-    return FileProcessingLimits.MAX_FILE_UPLOAD_SIZE_MB
+    """Return the maximum upload size in megabytes from the dynamic configuration."""
+    return dynamic_config.get_max_upload_size_mb()
 
 
 def get_max_upload_size_bytes() -> int:
-    """Maximum upload size allowed in bytes."""
-    return get_max_upload_size_mb() * 1024 * 1024
+    """Return the maximum upload size in bytes from the dynamic configuration."""
+    return dynamic_config.get_max_upload_size_bytes()
 
 
 def validate_large_file_support() -> bool:
-    """Whether large file uploads are supported."""
-    return get_max_upload_size_mb() >= 50
+    """Return ``True`` if large file uploads are supported."""
+    return dynamic_config.validate_large_file_support()
 
 
 def get_db_pool_size() -> int:
-    """Default database connection pool size."""
-    return 10
+    """Return the configured database pool size."""
+    return dynamic_config.get_db_pool_size()
 
 
 def get_max_display_rows(config: ConfigurationProtocol = dynamic_config) -> int:

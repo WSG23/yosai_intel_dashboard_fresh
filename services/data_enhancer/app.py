@@ -30,11 +30,6 @@ from .config import (
     DynamicConfigurationService,
 )
 
-try:  # Optional fallback service
-    from .config import FallbackConfigService
-except Exception:  # pragma: no cover - fallback may not exist
-    FallbackConfigService = None
-
 if CONTAINER_AVAILABLE:
     from core.service_container import ServiceContainer
 
@@ -240,13 +235,7 @@ class MultiBuildingDataEnhancer:
         if AI_DOOR_SERVICE_AVAILABLE:
             try:
                 # Try to create proper config for the service
-                config = None
-                if CONFIG_SERVICE_AVAILABLE:
-                    config = DynamicConfigurationService()
-                elif FallbackConfigService is not None:
-                    config = FallbackConfigService()
-                else:
-                    config = None
+                config = DynamicConfigurationService() if CONFIG_SERVICE_AVAILABLE else None
 
                 # Try to use the real service
                 door_service = DoorMappingService(config)
