@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	"github.com/alicebob/miniredis/v2"
+	"github.com/redis/go-redis/v9"
 )
 
 func TestRBACServiceCaching(t *testing.T) {
@@ -53,5 +56,27 @@ func TestRBACServiceHasPermission(t *testing.T) {
 	}
 	if ok {
 		t.Fatal("expected false")
+	}
+}
+
+func TestRBACServiceRedisStore(t *testing.T) {
+	srv, err := miniredis.Run()
+	if err != nil {
+		t.Fatalf("failed to start miniredis: %v", err)
+	}
+	defer srv.Close()
+
+	client := redis.NewClient(&redis.Options{Addr: srv.Addr()})
+	if err := client.Set(context.Background(), "permissions:carol", "alpha,beta", 0).Err(); err != nil {
+		t.Fatalf("failed to set redis key: %v", err)
+	}
+
+	svc := NewWithStore(NewRedisStore(client, "permissions"), time.Minute)
+	perms, err := svc.Permissions(context.Background(), "carol")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(perms) != 2 || perms[0] != "alpha" || perms[1] != "beta" {
+		t.Fatalf("unexpected perms: %v", perms)
 	}
 }
