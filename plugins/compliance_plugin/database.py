@@ -39,7 +39,7 @@ class ComplianceDatabase:
             bool: True if schema was created/verified successfully
         """
         try:
-            # Check if we have the SQL from models file or schema file
+            # Check if we have the SQL from yosai_intel_dashboard.src.core.domain file or schema file
             schema_sql = self._get_schema_sql()
             
             if schema_sql:
@@ -68,7 +68,7 @@ class ComplianceDatabase:
             str: SQL schema creation statements
         """
         try:
-            # First try to get SQL from models file
+            # First try to get SQL from yosai_intel_dashboard.src.core.domain file
             from .models.compliance import CREATE_COMPLIANCE_TABLES_SQL
             return CREATE_COMPLIANCE_TABLES_SQL
         except ImportError:

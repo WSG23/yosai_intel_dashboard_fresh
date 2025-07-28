@@ -29,7 +29,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 import joblib
 import redis.asyncio as aioredis
-from models.ml import ModelRegistry
+from yosai_intel_dashboard.src.core.domain.ml import ModelRegistry
 
 
 from analytics import anomaly_detection, feature_extraction, security_patterns

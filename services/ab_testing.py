@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, Optional
 
 import joblib
 
-from models.ml import ModelRegistry
+from yosai_intel_dashboard.src.core.domain.ml import ModelRegistry
 
 
 class ModelABTester:

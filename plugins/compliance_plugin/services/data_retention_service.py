@@ -10,7 +10,7 @@ from uuid import uuid4
 
 from core.protocols import DatabaseProtocol
 from core.audit_logger import ComplianceAuditLogger
-from models.compliance import DataSensitivityLevel
+from yosai_intel_dashboard.src.core.domain.compliance import DataSensitivityLevel
 from database.secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)
