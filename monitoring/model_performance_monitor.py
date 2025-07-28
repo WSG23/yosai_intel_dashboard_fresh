@@ -9,7 +9,10 @@ import logging
 from datetime import datetime
 
 from core.performance import MetricType, get_performance_monitor
-from monitoring.prometheus.model_metrics import update_model_metrics
+from monitoring.prometheus.model_metrics import (
+    update_model_metrics,
+    start_model_metrics_server,
+)
 
 
 @dataclass
@@ -72,11 +75,16 @@ class ModelPerformanceMonitor:
         """Return ``True`` if metrics deviate from the baseline by ``drift_threshold``."""
         if not self.baseline:
             return False
-        return any(
-            abs(getattr(metrics, field) - getattr(self.baseline, field))
-            > self.drift_threshold
-            for field in ("accuracy", "precision", "recall")
-        )
+        for field in ("accuracy", "precision", "recall"):
+            current = getattr(metrics, field)
+            baseline = getattr(self.baseline, field)
+            if baseline == 0:
+                diff = abs(current - baseline)
+            else:
+                diff = abs(current - baseline) / baseline
+            if diff - self.drift_threshold > 1e-9:
+                return True
+        return False
 
 
 _model_performance_monitor: Optional[ModelPerformanceMonitor] = None
@@ -86,6 +94,7 @@ def get_model_performance_monitor() -> ModelPerformanceMonitor:
     """Return the global :class:`ModelPerformanceMonitor` instance."""
     global _model_performance_monitor
     if _model_performance_monitor is None:
+        start_model_metrics_server()
         _model_performance_monitor = ModelPerformanceMonitor()
     return _model_performance_monitor
 
