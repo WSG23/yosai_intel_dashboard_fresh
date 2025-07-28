@@ -151,11 +151,19 @@ with this Python release and newer.
    ```
 5. **Set up environment:**
    ```bash
-   cp .env.example .env
-   # Generate random development secrets
-   python scripts/generate_dev_secrets.py >> .env
-   # Edit .env with your configuration (e.g. set HOST and database info)
-   ```
+    cp .env.example .env
+    # Generate random development secrets
+    python scripts/generate_dev_secrets.py >> .env
+    # Edit .env with your configuration (e.g. set HOST and database info)
+    # or store them in Vault
+    vault kv put secret/data/yosai \
+      SECRET_KEY=$(openssl rand -base64 32) \
+      DB_PASSWORD=my-db-pass \
+      AUTH0_CLIENT_ID=my-id \
+      AUTH0_CLIENT_SECRET=my-secret \
+      AUTH0_DOMAIN=example.auth0.com \
+      AUTH0_AUDIENCE=https://api.example.com
+    ```
 `setup_dev_mode` checks for the `DB_PASSWORD` variable. The sample
 `.env.example` includes a placeholder value. If this variable is
 missing only a warning is emitted on startup, but database features
