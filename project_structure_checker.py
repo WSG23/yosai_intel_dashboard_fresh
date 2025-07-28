@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
     if has_python:
         print(f"\n💡 Ready to run code analyzer!")
-        print(f"   Run: python3 -m analysis.unified_analyzer {Path(path).absolute()}")
+        print(f"   Run: python3 -m tools.legacy_code_detector {Path(path).absolute()}")
     else:
         print(f"\n❌ No Python files found. Please check:")
         print(f"   1. You're in the correct directory")

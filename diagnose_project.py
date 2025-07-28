@@ -131,8 +131,8 @@ if __name__ == "__main__":
 
     if stats["source_files"] == 0:
         print("\n❌ No source files will be analyzed!")
-        print("   The unified_analyzer will fail with this project structure.")
+        print("   The legacy_code_detector will fail with this project structure.")
         sys.exit(1)
     else:
         print(f"\n✅ Found {stats['source_files']} source files to analyze")
-        print("   The unified_analyzer should work with this project.")
+        print("   The legacy_code_detector should work with this project.")
