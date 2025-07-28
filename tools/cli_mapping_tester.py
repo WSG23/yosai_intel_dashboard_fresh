@@ -68,7 +68,7 @@ async def test_mapping_service(file_path: str, verbose: bool = False, suggest_on
         # Step 2: Test AI Column Suggestions
         logger.info("=== STEP 2: AI Column Suggestions ===")
         try:
-            from services.data_enhancer import get_ai_column_suggestions
+            from services.data_enhancer.mapping_utils import get_ai_column_suggestions
             
             # Test AI suggestions for the columns
             suggestions = get_ai_column_suggestions(df)

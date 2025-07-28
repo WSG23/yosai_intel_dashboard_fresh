@@ -46,7 +46,7 @@ async def explore_mapping_services(file_path: str, verbose: bool = False) -> dic
         
         # Explore AI Suggestions in detail
         logger.info("=== AI SUGGESTIONS DETAILED ===")
-        from services.data_enhancer import get_ai_column_suggestions
+        from services.data_enhancer.mapping_utils import get_ai_column_suggestions
         suggestions = get_ai_column_suggestions(df)
         
         result["ai_suggestions_detailed"] = suggestions

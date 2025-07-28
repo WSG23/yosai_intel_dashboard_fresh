@@ -46,7 +46,7 @@ from core.service_container import ServiceContainer
 from services.upload import UploadProcessingService
 from components.file_preview import create_file_preview_ui
 from services.upload.utils.file_parser import create_file_preview
-from services.data_enhancer import get_ai_column_suggestions
+from services.data_enhancer.mapping_utils import get_ai_column_suggestions
 from services.device_learning_service import DeviceLearningService
 from analytics.db_interface import AnalyticsDataAccessor
 

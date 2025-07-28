@@ -6,7 +6,7 @@ from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 from tests.fake_configuration import FakeConfiguration
 
 fake_cfg = FakeConfiguration()
-from services.data_enhancer import (
+from services.data_enhancer.mapping_utils import (
     apply_fuzzy_column_matching,
     get_mapping_suggestions,
 )

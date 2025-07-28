@@ -1,6 +1,6 @@
 import pytest
 
-from services.data_enhancer import get_ai_column_suggestions
+from services.data_enhancer.mapping_utils import get_ai_column_suggestions
 
 
 def test_basic_suggestions():
