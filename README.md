@@ -948,8 +948,8 @@ manager.execute_query_with_retry("SELECT 1")
   Register an instance with the container to access analytics operations:
 
   ```python
-  from yosai_intel_dashboard.src.core.container import Container
-  from yosai_intel_dashboard.src.services.analytics_service import create_analytics_service
+   from yosai_intel_dashboard.src.core.container import Container
+   from services.analytics_service import create_analytics_service
 
   container = Container()
   container.register("analytics", create_analytics_service())
