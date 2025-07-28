@@ -1,9 +1,15 @@
 """Unified service communication primitives."""
 
-from .protocols import MessageBus, ServiceClient
-from .rest_client import AsyncRestClient, RetryPolicy, create_service_client, CircuitBreakerOpen
+from services.resilience.circuit_breaker import CircuitBreaker
+
 from .message_queue import AsyncQueueClient
-from .circuit_breaker import CircuitBreaker
+from .protocols import MessageBus, ServiceClient
+from .rest_client import (
+    AsyncRestClient,
+    CircuitBreakerOpen,
+    RetryPolicy,
+    create_service_client,
+)
 
 __all__ = [
     "MessageBus",

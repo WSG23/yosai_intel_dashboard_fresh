@@ -10,7 +10,8 @@ from uuid import uuid4
 import aiohttp
 import structlog
 
-from .circuit_breaker import CircuitBreaker, CircuitBreakerOpen
+from services.resilience.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
+
 from .protocols import ServiceClient
 
 
@@ -86,6 +87,7 @@ class AsyncRestClient(ServiceClient):
 
 # ----------------------------------------------------------------------
 
+
 def create_service_client(service_name: str) -> ServiceClient:
     """Create a service client resolving *service_name* URL from env vars."""
     env = f"{service_name.upper()}_SERVICE_URL"
@@ -93,4 +95,9 @@ def create_service_client(service_name: str) -> ServiceClient:
     return AsyncRestClient(base_url)
 
 
-__all__ = ["AsyncRestClient", "RetryPolicy", "create_service_client", "CircuitBreakerOpen"]
+__all__ = [
+    "AsyncRestClient",
+    "RetryPolicy",
+    "create_service_client",
+    "CircuitBreakerOpen",
+]
