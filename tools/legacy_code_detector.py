@@ -5,8 +5,6 @@ from __future__ import annotations
 import ast
 import json
 import re
-import subprocess
-import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -14,6 +12,12 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 import yaml
+from tools.legacy_utils import (
+    PATTERNS as DEFAULT_PATTERNS,
+    git_last_commit,
+    iter_files,
+    matches_patterns,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +32,7 @@ class FileInfo:
 class LegacyCodeDetector:
     """Detect deprecated usage and analyze legacy files."""
 
-    NAME_PATTERNS = re.compile(
-        r"(old|backup|copy|temp|deprecated|test|\d{4}|v\d+)|\.(bak|old|orig)$",
-        re.IGNORECASE,
-    )
+    FILE_PATTERNS = list(DEFAULT_PATTERNS) + [r"test"]
     DEPRECATED_OBJECTS = {"DataLoadingService"}
     DEFAULT_DEPRECATED_IMPORTS = ["services.analytics.data_loader"]
 
@@ -47,7 +48,9 @@ class LegacyCodeDetector:
             self.rules = yaml.safe_load(Path(rules_path).read_text()) or {}
         self.deprecated_imports: List[str] = self.rules.get("deprecated_imports", [])
         self.deprecated_imports.extend(self.DEFAULT_DEPRECATED_IMPORTS)
-        self.deprecated_dependencies: List[str] = self.rules.get("deprecated_dependencies", [])
+        self.deprecated_dependencies: List[str] = self.rules.get(
+            "deprecated_dependencies", []
+        )
         self.languages = languages or ["python"]
         self.exclude_dirs = exclude_dirs or {
             ".git",
@@ -74,15 +77,14 @@ class LegacyCodeDetector:
         self.imports: Dict[Path, Set[str]] = {}
         self.defines: Set[str] = set()
         self.issues: Dict[str, List[str]] = defaultdict(list)
+        self.file_patterns = self.FILE_PATTERNS
 
     # ------------------------------------------------------------------
     # helpers used by analyzer section
     def _iter_files(self, root: Path, extensions: List[str]) -> List[Path]:
         files: List[Path] = []
-        for ext in extensions:
-            for fpath in root.rglob(f"*{ext}"):
-                if any(ex in fpath.parts for ex in self.exclude_dirs):
-                    continue
+        for fpath in iter_files(root, self.exclude_dirs):
+            if fpath.suffix in extensions:
                 files.append(fpath)
         return files
 
@@ -96,14 +98,11 @@ class LegacyCodeDetector:
             ".jsx": "JavaScript",
             ".tsx": "TypeScript",
         }
-        for p in root.rglob("*"):
-            if p.is_file():
-                if any(ex in p.parts for ex in self.exclude_dirs):
-                    continue
-                stats["total_files"] += 1
-                lang = ext_to_lang.get(p.suffix.lower())
-                if lang:
-                    stats["files_by_type"][lang].append(p)
+        for p in iter_files(root, self.exclude_dirs):
+            stats["total_files"] += 1
+            lang = ext_to_lang.get(p.suffix.lower())
+            if lang:
+                stats["files_by_type"][lang].append(p)
         return stats
 
     def _analyze_python(self, root: Path) -> Dict:
@@ -118,10 +117,17 @@ class LegacyCodeDetector:
                 for node in ast.walk(tree):
                     if isinstance(node, ast.FunctionDef):
                         sig = f"{node.name}({','.join(arg.arg for arg in node.args.args)})"
-                        signatures[sig].append({"file": str(py_file.relative_to(root)), "line": node.lineno})
+                        signatures[sig].append(
+                            {
+                                "file": str(py_file.relative_to(root)),
+                                "line": node.lineno,
+                            }
+                        )
                 for match in re.finditer(r"\.encode\(\)|\.decode\(\)", content):
                     line_no = content[: match.start()].count("\n") + 1
-                    unicode_issues.append({"file": str(py_file.relative_to(root)), "line": line_no})
+                    unicode_issues.append(
+                        {"file": str(py_file.relative_to(root)), "line": line_no}
+                    )
             except Exception as exc:  # pragma: no cover - robustness
                 self.issues["parse_errors"].append(f"{py_file}: {exc}")
         for sig, locs in signatures.items():
@@ -142,7 +148,9 @@ class LegacyCodeDetector:
                     content = fpath.read_text(encoding="utf-8", errors="ignore")
                     for match in re.finditer(pattern, content):
                         line_no = content[: match.start()].count("\n") + 1
-                        issues[lang].append({"file": str(fpath.relative_to(root)), "line": line_no})
+                        issues[lang].append(
+                            {"file": str(fpath.relative_to(root)), "line": line_no}
+                        )
                 except Exception:
                     continue
         total = sum(len(v) for v in issues.values())
@@ -152,24 +160,12 @@ class LegacyCodeDetector:
     # legacy detection helpers (former LegacyDetector)
     def _gather_python_files(self, root: Path) -> None:
         self.python_files = []
-        for path in root.rglob("*.py"):
-            if any(part in self.exclude_dirs for part in path.parts):
-                continue
-            self.python_files.append(path)
+        for path in iter_files(root, self.exclude_dirs):
+            if path.suffix == ".py":
+                self.python_files.append(path)
 
     def _git_last_commit(self, root: Path, path: Path) -> datetime | None:
-        try:
-            ts = subprocess.check_output(
-                ["git", "log", "-1", "--format=%ct", str(path)],
-                cwd=root,
-                stderr=subprocess.DEVNULL,
-                text=True,
-            ).strip()
-            if ts:
-                return datetime.fromtimestamp(int(ts))
-        except Exception:
-            pass
-        return None
+        return git_last_commit(path, cwd=root)
 
     def _collect_file_info(self, root: Path) -> None:
         self.infos = {}
@@ -210,7 +206,11 @@ class LegacyCodeDetector:
             content = path.read_text(encoding="utf-8", errors="ignore")
             issues: List[str] = []
             for mod in self.deprecated_imports:
-                if re.search(rf"^\s*from\s+{re.escape(mod)}\s+import|^\s*import\s+{re.escape(mod)}", content, re.MULTILINE):
+                if re.search(
+                    rf"^\s*from\s+{re.escape(mod)}\s+import|^\s*import\s+{re.escape(mod)}",
+                    content,
+                    re.MULTILINE,
+                ):
                     issues.append(f"deprecated import: {mod}")
             for obj in self.DEPRECATED_OBJECTS:
                 if obj in content:
@@ -246,9 +246,11 @@ class LegacyCodeDetector:
                     module_usage[mod].add(str(file))
 
         for path, info in self.infos.items():
-            if self.NAME_PATTERNS.search(path.name):
+            if matches_patterns(path, self.file_patterns):
                 suspect_names.append(str(path))
-            if (info.last_commit and info.last_commit < self.one_year) or info.mtime < self.six_months:
+            if (
+                info.last_commit and info.last_commit < self.one_year
+            ) or info.mtime < self.six_months:
                 stale_files.append(str(path))
             module_name = ".".join(path.with_suffix("").parts)
             if not module_usage.get(module_name):
@@ -282,7 +284,10 @@ class LegacyCodeDetector:
         return results
 
     def generate_report(self, results: Dict, root: Path) -> str:
-        lines = [f"Project: {root}", f"Total files: {results['structure']['total_files']}"]
+        lines = [
+            f"Project: {root}",
+            f"Total files: {results['structure']['total_files']}",
+        ]
         if "python" in results:
             py = results["python"]
             lines.append(f"Python files analyzed: {py['files_analyzed']}")
