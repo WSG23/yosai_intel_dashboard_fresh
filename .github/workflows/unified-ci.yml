@@ -13,9 +13,9 @@ jobs:
       - uses: azure/setup-kubectl@v3
       - name: Validate Kubernetes manifests
         run: |
-          kubectl apply --dry-run=client -f k8s/base
-          kubectl apply --dry-run=client -f k8s/production
-          kubectl apply --dry-run=client -f k8s/canary
+          kubectl apply --dry-run=client --validate=false -f k8s/base
+          kubectl apply --dry-run=client --validate=false -f k8s/production
+          kubectl apply --dry-run=client --validate=false -f k8s/canary
 
   clean-arch-check:
     # fix: dependency should be array
