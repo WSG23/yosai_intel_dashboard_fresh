@@ -1,5 +1,7 @@
 """Enhanced AI Classification Plugin with CSV Processing"""
 
+from __future__ import annotations
+
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -18,8 +20,6 @@ logger = logging.getLogger(__name__)
 
 class AIClassificationPlugin:
     """Enhanced plugin implementing CSV related services"""
-
-from __future__ import annotations
 
     metadata = PluginMetadata(
         name="ai_classification",
