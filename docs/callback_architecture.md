@@ -58,8 +58,10 @@ events.register_callback(CallbackEvent.ANALYSIS_COMPLETE, on_complete)
 ## Grouped Operations
 
 `UnifiedCallbackManager` (an alias of `TrulyUnifiedCallbacks` exposed from
-`core.callbacks`) can execute a series of operations sequentially. This is
-useful when a Dash callback needs to orchestrate multiple steps.
+`core.callbacks`) can execute a series of operations sequentially. New code
+should import `TrulyUnifiedCallbacks` directly, but the alias remains for
+backwards compatibility. This is useful when a Dash callback needs to
+orchestrate multiple steps.
 
 
 ```python
@@ -89,5 +91,7 @@ A single startup task should orchestrate all callback registration steps to prev
 2. Register Dash and event callbacks through one `TrulyUnifiedCallbacks` instance.
 3. Deduplicate IDs using `GlobalCallbackRegistry` and expose conflict details.
 4. Provide a unified decorator so modules never call `app.callback` directly.
+5. Import `TrulyUnifiedCallbacks` from `core.truly_unified_callbacks` in new
+   code. Avoid deprecated aliases like `MasterCallbackSystem`.
 
 Running this task at initialization ensures consistent behavior and avoids code conflicts across the application.
