@@ -498,6 +498,8 @@ critical vulnerabilities are detected. Download the artifact from the
 Coverage results are uploaded to **Codecov** for every pull request. Open the
 `codecov` check from the PR status page to explore detailed line coverage and
 changes introduced by the branch.
+The CI pipeline enforces a minimum **80%** coverage threshold using
+`--cov-fail-under=80`.
 
 ## <span aria-hidden="true">📋</span> Features
 
