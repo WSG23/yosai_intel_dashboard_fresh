@@ -13,14 +13,14 @@ from migrate import _check_git_clean  # reuse helper from migrate.py
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MAPPING = {
-    "core": "yosai_intel_dashboard/src/core/domain",
-    "models": "yosai_intel_dashboard/src/core/domain",
-    "services": "yosai_intel_dashboard/src/services",
-    "config": "yosai_intel_dashboard/src/infrastructure/config",
-    "monitoring": "yosai_intel_dashboard/src/infrastructure/monitoring",
-    "security": "yosai_intel_dashboard/src/infrastructure/security",
-    "api": "yosai_intel_dashboard/src/adapters/api",
-    "plugins": "yosai_intel_dashboard/src/adapters/api/plugins",
+    "core": "models",
+    "models": "models",
+    "services": "services",
+    "config": "config",
+    "monitoring": "monitoring",
+    "security": "security",
+    "api": "api",
+    "plugins": "api/plugins",
 }
 
 

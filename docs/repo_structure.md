@@ -36,14 +36,14 @@ The `scripts/migrate_to_clean_arch.py` helper moves legacy modules into the
 
 | Directory | Destination | Status |
 |-----------|-------------|--------|
-| `core/` | `yosai_intel_dashboard/src/core/domain` | Pending |
-| `models/` | `yosai_intel_dashboard/src/core/domain` | Pending |
-| `services/` | `yosai_intel_dashboard/src/services` | Pending |
-| `config/` | `yosai_intel_dashboard/src/infrastructure/config` | Pending |
-| `monitoring/` | `yosai_intel_dashboard/src/infrastructure/monitoring` | Pending |
-| `security/` | `yosai_intel_dashboard/src/infrastructure/security` | Pending |
-| `api/` | `yosai_intel_dashboard/src/adapters/api` | Pending |
-| `plugins/` | `yosai_intel_dashboard/src/adapters/api/plugins` | Pending |
+| `core/` | `models` | Pending |
+| `models/` | `models` | Pending |
+| `services/` | `services` | Pending |
+| `config/` | `config` | Pending |
+| `monitoring/` | `monitoring` | Pending |
+| `security/` | `security` | Pending |
+| `api/` | `api` | Pending |
+| `plugins/` | `api/plugins` | Pending |
 
 _Migrated 0 of 8 directories (0%)_
 

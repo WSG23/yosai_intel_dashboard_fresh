@@ -5,7 +5,7 @@ while keeping memory usage under control. Data is streamed in chunks and
 the current memory footprint can be observed after each chunk.
 
 ```python
-from yosai_intel_dashboard.src.core import PerformanceFileProcessor
+from core import PerformanceFileProcessor
 
 processor = PerformanceFileProcessor(chunk_size=50_000)
 

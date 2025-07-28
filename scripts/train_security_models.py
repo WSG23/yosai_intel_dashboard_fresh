@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from yosai_intel_dashboard.src.core.domain.ml import (
+from models.ml import (
     ModelRegistry,
     train_access_anomaly_iforest,
     train_online_threat_detector,

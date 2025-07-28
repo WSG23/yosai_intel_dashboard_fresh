@@ -33,7 +33,7 @@ from core.protocols import (
     EventBusProtocol,
     StorageProtocol,
 )
-from yosai_intel_dashboard.src.core.domain.ml import ModelRegistry
+from models.ml import ModelRegistry
 from services.analytics.calculator import Calculator, create_calculator
 from services.analytics.data_loader import DataLoader, create_loader
 from services.analytics.protocols import DataProcessorProtocol

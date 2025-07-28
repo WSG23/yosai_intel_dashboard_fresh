@@ -12,7 +12,7 @@ from services.compliance.dsar_service import DSARService, DSARRequestType, DSARS
 from services.compliance.data_retention_service import DataRetentionService
 from services.compliance.dpia_service import DPIAService, DPIATrigger, RiskLevel
 from core.audit_logger import ComplianceAuditLogger
-from yosai_intel_dashboard.src.core.domain.compliance import ConsentType, DataSensitivityLevel
+from models.compliance import ConsentType, DataSensitivityLevel
 
 
 class TestConsentService:
@@ -471,7 +471,7 @@ class ComplianceUsageExamples:
         from flask import request, jsonify
         from flask_login import current_user
         from core.container import Container
-        from yosai_intel_dashboard.src.core.domain.compliance import ConsentType
+        from models.compliance import ConsentType
         
         @app.route('/api/users/register', methods=['POST'])
         def register_user():
@@ -515,7 +515,7 @@ class ComplianceUsageExamples:
         """Example: Biometric processing with consent verification"""
         example_code = '''
         from services.compliance.consent_service import ConsentService
-        from yosai_intel_dashboard.src.core.domain.compliance import ConsentType
+        from models.compliance import ConsentType
         from core.audit_logger import ComplianceAuditLogger
         
         def process_facial_recognition(user_id: str, image_data: bytes):

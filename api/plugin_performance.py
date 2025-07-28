@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from yosai_intel_dashboard.src.adapters.api.adapter import api_adapter
+from api.adapter import api_adapter
 from app import app
 from flask import jsonify, request
 from error_handling import ErrorCategory, ErrorHandler

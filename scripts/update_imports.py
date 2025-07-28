@@ -14,8 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 # repository root, so rewriting them would break imports.  As new
 # packages are migrated they can be added back to this mapping.
 PATTERNS = {
-    r"\bfrom\s+models(\.|\s)": "from yosai_intel_dashboard.src.core.domain\\1",
-    r"\bimport\s+models(\.|$)": "import yosai_intel_dashboard.src.core.domain\\1",
+    r"\bfrom\s+models(\.|\s)": "from models\\1",
+    r"\bimport\s+models(\.|$)": "import models\\1",
 }
 
 

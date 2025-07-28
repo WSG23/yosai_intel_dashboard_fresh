@@ -7,18 +7,18 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_DIRS = [
-    "yosai_intel_dashboard/src/core/domain",
+    "models",
     "yosai_intel_dashboard/src/core/use_cases",
     "yosai_intel_dashboard/src/core/interfaces",
-    "yosai_intel_dashboard/src/adapters/api",
+    "api",
     "yosai_intel_dashboard/src/adapters/persistence",
     "yosai_intel_dashboard/src/adapters/ui",
-    "yosai_intel_dashboard/src/infrastructure/config",
-    "yosai_intel_dashboard/src/infrastructure/security",
-    "yosai_intel_dashboard/src/infrastructure/monitoring",
-    "yosai_intel_dashboard/src/services/analytics",
-    "yosai_intel_dashboard/src/services/events",
-    "yosai_intel_dashboard/src/services/ml",
+    "config",
+    "security",
+    "monitoring",
+    "services/analytics",
+    "services/events",
+    "services/ml",
 ]
 
 

@@ -26,7 +26,7 @@ a `create_plugin()` function so the `PluginManager` can instantiate it.
 ```python
 # plugins/hello_world.py
 from dash import Input, Output
-from yosai_intel_dashboard.src.services.data_processing.core.protocols import CallbackPluginProtocol, PluginMetadata
+from services.data_processing.core.protocols import CallbackPluginProtocol, PluginMetadata
 
 
 class HelloWorldPlugin(CallbackPluginProtocol):

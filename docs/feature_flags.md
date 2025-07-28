@@ -38,7 +38,7 @@ Use `services.feature_flags.feature_flags.is_enabled(name)` to check a
 flag:
 
 ```python
-from yosai_intel_dashboard.src.services.feature_flags import feature_flags
+from services.feature_flags import feature_flags
 
 if feature_flags.is_enabled("use_timescaledb"):
     ...

@@ -643,8 +643,8 @@ caches during start-up. This avoids expensive database queries on the first
 request.
 
 ```python
-from yosai_intel_dashboard.src.core.cache_warmer import IntelligentCacheWarmer
-from yosai_intel_dashboard.src.core.hierarchical_cache_manager import HierarchicalCacheManager
+from core.cache_warmer import IntelligentCacheWarmer
+from core.hierarchical_cache_manager import HierarchicalCacheManager
 
 cache = HierarchicalCacheManager()
 warmer = IntelligentCacheWarmer(cache, loader=load_from_db)
@@ -714,7 +714,7 @@ resolved from anywhere:
 
 
 ```python
-from yosai_intel_dashboard.src.core.container import Container
+from core.container import Container
 from config import create_config_manager
 
 container = Container()
@@ -867,7 +867,7 @@ previous `config_manager.py` have been removed. Create a container and access
 the new unified configuration through it instead:
 
 ```python
-from yosai_intel_dashboard.src.core.container import Container
+from core.container import Container
 from config import create_config_manager
 
 container = Container()
@@ -911,7 +911,7 @@ Use `EnhancedThreadSafePluginManager` to track plugin load times and
 resource usage:
 
 ```python
-from yosai_intel_dashboard.src.core.plugins.performance_manager import EnhancedThreadSafePluginManager
+from core.plugins.performance_manager import EnhancedThreadSafePluginManager
 manager = EnhancedThreadSafePluginManager(container, config)
 data = manager.get_plugin_performance_metrics()
 ```
@@ -948,7 +948,7 @@ manager.execute_query_with_retry("SELECT 1")
   Register an instance with the container to access analytics operations:
 
   ```python
-   from yosai_intel_dashboard.src.core.container import Container
+   from core.container import Container
    from services.analytics_service import create_analytics_service
 
   container = Container()
@@ -1154,7 +1154,7 @@ safe_query = SQLProcessor.encode_query(query)
 ### Firing events
 ```python
 from core.callbacks import UnifiedCallbackManager as CallbackManager
-from yosai_intel_dashboard.src.core.callback_events import CallbackEvent
+from core.callback_events import CallbackEvent
 
 manager = CallbackManager()
 manager.trigger(CallbackEvent.ANALYSIS_COMPLETE, "analytics", {"rows": 42})
@@ -1162,7 +1162,7 @@ manager.trigger(CallbackEvent.ANALYSIS_COMPLETE, "analytics", {"rows": 42})
 
 Performance metrics can be retrieved via:
 ```python
-from yosai_intel_dashboard.src.core.performance import get_performance_monitor
+from core.performance import get_performance_monitor
 summary = get_performance_monitor().get_metrics_summary()
 ```
 ### Standardizing column names

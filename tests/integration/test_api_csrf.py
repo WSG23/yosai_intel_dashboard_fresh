@@ -21,7 +21,7 @@ def _create_app(monkeypatch):
     )
     monkeypatch.setitem(
         sys.modules,
-        "yosai_intel_dashboard.src.adapters.api.analytics_endpoints",
+        "api.analytics_endpoints",
         analytics_stub,
     )
 
@@ -37,7 +37,7 @@ def _create_app(monkeypatch):
     monkeypatch.setattr(upload_endpoint, "container", container, raising=False)
 
     adapter = importlib.import_module(
-        "yosai_intel_dashboard.src.adapters.api.adapter"
+        "api.adapter"
     )
     return adapter.create_api_app()
 

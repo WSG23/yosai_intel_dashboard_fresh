@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from yosai_intel_dashboard.src.adapters.api.spec import create_spec
+from api.spec import create_spec
 
 
 def main() -> None:

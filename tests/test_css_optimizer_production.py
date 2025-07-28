@@ -1,4 +1,4 @@
-from yosai_intel_dashboard.src.core.domain.css_build_optimizer import CSSOptimizer
+from models.css_build_optimizer import CSSOptimizer
 
 
 def test_build_production_css_bundle(tmp_path):

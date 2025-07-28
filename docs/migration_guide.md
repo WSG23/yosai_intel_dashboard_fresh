@@ -10,7 +10,7 @@ sanitization helpers and SQL encoding functions.
 
 ### Text Processing Migration
 ```python
-from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor, UnicodeSecurityProcessor
+from core.unicode import UnicodeProcessor, UnicodeSecurityProcessor
 
 result = UnicodeProcessor.clean_text(text)
 
