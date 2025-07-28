@@ -30,7 +30,7 @@ jobs:
       - name: Validate directory structure
         run: python scripts/validate_structure.py
       - name: Verify imports
-        run: python scripts/verify_imports.py
+        run: PYTHONPATH=. python scripts/verify_imports.py
 
   lint:
     needs: [validate-configs, clean-arch-check]
