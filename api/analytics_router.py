@@ -5,11 +5,13 @@ from typing import Optional
 
 from services.cached_analytics import CachedAnalyticsService
 from core.cache_manager import CacheConfig, InMemoryCacheManager
+from config import get_cache_config
 from services.security import require_permission
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
 
-_cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=300))
+cfg = get_cache_config()
+_cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=cfg.ttl))
 _cached_service = CachedAnalyticsService(_cache_manager)
 
 

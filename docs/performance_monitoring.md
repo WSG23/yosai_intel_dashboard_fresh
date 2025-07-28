@@ -166,7 +166,9 @@ def get_unique_patterns_analysis(self, data_source: str | None = None):
 
 Cached results are stored in memory and optionally in Redis if available. Cache
 entries expire automatically after the TTL, ensuring that repeated dashboard
-requests do not trigger heavy calculations unnecessarily.
+requests do not trigger heavy calculations unnecessarily. The TTL values for
+analytics results and JWKS lookups are defined in `CacheConfig` (see
+`config/base.py`).
 
 ### L1/L2/L3 Cache Levels
 
