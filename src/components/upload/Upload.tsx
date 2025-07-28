@@ -5,7 +5,8 @@ import { FilePreview } from "./FilePreview";
 import { ColumnMappingModal } from "./ColumnMappingModal";
 import { DeviceMappingModal } from "./DeviceMappingModal";
 import { UploadedFile, ProcessingStatus as Status } from "./types";
-import axios from "axios";
+import { api } from "../../api/client";
+
 
 const CONCURRENCY_LIMIT = parseInt(
   process.env.REACT_APP_UPLOAD_CONCURRENCY || "3",
@@ -70,12 +71,12 @@ const Upload: React.FC = () => {
     );
 
     try {
-      const response = await axios.post(`${API_URL}/api/v1/upload`, formData);
+      const response = await api.post(`${API_URL}/api/v1/upload`, formData);
       const { job_id } = response.data;
 
       const poll = setInterval(async () => {
         try {
-          const res = await axios.get(
+          const res = await api.get(
             `${API_URL}/api/v1/upload/status/${job_id}`,
           );
           const progress = res.data.progress ?? 0;

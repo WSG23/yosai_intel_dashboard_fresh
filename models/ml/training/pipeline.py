@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, Tuple
-import hashlib
 import logging
 from pathlib import Path
 
 import pandas as pd
 import numpy as np
+
+from utils.hashing import hash_dataframe
 
 from utils.sklearn_compat import optional_import
 from models.ml import ModelRegistry
@@ -25,12 +26,6 @@ DaskLocalCluster = optional_import("dask.distributed.LocalCluster")
 mlflow = optional_import("mlflow")
 
 logger = logging.getLogger(__name__)
-
-
-def _hash_dataframe(df: pd.DataFrame) -> str:
-    """Return SHA256 hash of ``df`` serialized as CSV."""
-    csv_bytes = df.to_csv(index=False).encode()
-    return hashlib.sha256(csv_bytes).hexdigest()
 
 
 @dataclass
@@ -151,7 +146,7 @@ class TrainingPipeline:
         if target_column not in df:
             raise ValueError(f"target column '{target_column}' missing")
 
-        dataset_hash = _hash_dataframe(df)
+        dataset_hash = hash_dataframe(df)
         y = df[target_column].values
         X = (
             df.drop(columns=[target_column])

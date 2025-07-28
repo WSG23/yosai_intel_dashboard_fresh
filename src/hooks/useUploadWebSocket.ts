@@ -6,10 +6,11 @@ interface ProgressCallback {
 
 export const useUploadWebSocket = () => {
   const sockets = useRef<Record<string, WebSocket>>({});
+  const baseUrl = process.env.REACT_APP_WS_URL || window.location.host;
 
   const subscribeToUploadProgress = (taskId: string, cb: ProgressCallback) => {
     if (sockets.current[taskId]) return;
-    const ws = new WebSocket(`ws://localhost:5001/ws/upload/${taskId}`);
+    const ws = new WebSocket(`ws://${baseUrl}/ws/upload/${taskId}`);
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.progress !== undefined) {

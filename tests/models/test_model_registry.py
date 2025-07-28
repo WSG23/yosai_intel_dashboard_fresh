@@ -2,6 +2,16 @@ import types
 import importlib
 import importlib.util
 from pathlib import Path
+import sys
+
+if "services.resilience" not in sys.modules:
+    sys.modules["services.resilience"] = types.ModuleType("services.resilience")
+if "services.resilience.metrics" not in sys.modules:
+    metrics_stub = types.ModuleType("services.resilience.metrics")
+    metrics_stub.circuit_breaker_state = types.SimpleNamespace(
+        labels=lambda *a, **k: types.SimpleNamespace(inc=lambda *a, **k: None)
+    )
+    sys.modules["services.resilience.metrics"] = metrics_stub
 
 import pytest
 
@@ -43,12 +53,7 @@ class DummyMlflow:
 
 @pytest.fixture
 def registry(monkeypatch, stub_services_registry):
-    path = (
-        Path(__file__).resolve().parents[2]
-        / "models"
-        / "ml"
-        / "model_registry.py"
-    )
+    path = Path(__file__).resolve().parents[2] / "models" / "ml" / "model_registry.py"
     spec = importlib.util.spec_from_file_location("model_registry", path)
     mr = importlib.util.module_from_spec(spec)
     assert spec.loader
@@ -108,3 +113,43 @@ def test_set_active_version_closes_session(tmp_path, registry, track_session_clo
     registry.set_active_version("m4", model.version)
     assert len(track_session_closes) >= 1
 
+
+def test_download_artifact_file_scheme(tmp_path, registry):
+    src = tmp_path / "src.bin"
+    src.write_text("data")
+    dest = tmp_path / "dest.bin"
+    registry.download_artifact(f"file://{src}", str(dest))
+    assert dest.read_text() == "data"
+
+
+def test_download_artifact_local_path(tmp_path, registry):
+    src = tmp_path / "src2.bin"
+    src.write_text("info")
+    dest = tmp_path / "dest2.bin"
+    registry.download_artifact(str(src), str(dest))
+    assert dest.read_text() == "info"
+
+
+def test_download_artifact_http(monkeypatch, tmp_path, registry):
+    class DummyResponse:
+        def __init__(self, data: bytes) -> None:
+            self._data = data
+
+        def raise_for_status(self) -> None:
+            pass
+
+        def iter_content(self, chunk_size: int = 8192):
+            yield self._data
+
+    requests_mod = registry.download_artifact.__globals__["requests"]
+    monkeypatch.setattr(
+        requests_mod, "get", lambda url, stream=True: DummyResponse(b"xyz")
+    )
+    dest = tmp_path / "dest3.bin"
+    registry.download_artifact("http://example.com/file.bin", str(dest))
+    assert dest.read_text() == "xyz"
+
+
+def test_download_artifact_invalid_scheme(tmp_path, registry):
+    with pytest.raises(ValueError):
+        registry.download_artifact("ftp://host/file.bin", str(tmp_path / "x"))

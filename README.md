@@ -182,6 +182,11 @@ HashiCorp Vault or AWS Secrets Manager as described in
 [docs/secret_management.md](docs/secret_management.md). Vault deployment
 details are provided in [docs/vault_integration.md](docs/vault_integration.md).
 
+#### Frontend WebSocket URL
+
+Set `REACT_APP_WS_URL` to override the host used for WebSocket connections.
+When unset the front end falls back to `window.location.host`.
+
 ### RBAC Setup
 
 Apply the initial database schema before enabling role based access

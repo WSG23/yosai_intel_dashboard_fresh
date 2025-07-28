@@ -63,6 +63,15 @@ fetch the secret with a name matching the requested key. With the
 `VAULT_ADDR` and `VAULT_TOKEN` environment variables. Keys may include a
 field selector like `secret/data/db#password` to read specific values.
 
+## Kubernetes Secrets
+
+The `k8s/base/secrets.yaml` file in the repository is provided only as a
+template. It contains placeholder values such as `<managed-secret>` so that
+real credentials are never stored in Git. Supply the actual values using your
+deployment pipeline or reference a sealed secret created by your cluster's
+secret manager. Patch the manifest at deploy time or mount the secrets from an
+external system to keep them out of version control.
+
 ### AWS Secrets Manager Configuration
 
 `SecureConfigManager` also understands strings starting with `"aws-secrets:"`.
