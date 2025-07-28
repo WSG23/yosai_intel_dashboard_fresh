@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 import base64
 
-from flask import Blueprint, abort, request
+from flask import Blueprint, jsonify, request
+from error_handling import ErrorCategory, ErrorHandler
+from yosai_framework.errors import CODE_TO_STATUS
+from shared.errors.types import ErrorCode
 from flask_wtf.csrf import validate_csrf
 from flask_apispec import doc
 from pydantic import BaseModel
@@ -17,6 +20,8 @@ if not container.has("upload_processor"):
     register_upload_services(container)
 
 upload_bp = Blueprint("upload", __name__)
+
+handler = ErrorHandler()
 
 
 class UploadRequestSchema(BaseModel):
@@ -47,7 +52,10 @@ def upload_files(payload: UploadRequestSchema):
         try:
             validate_csrf(token)
         except Exception:
-            abort(400, description="Invalid CSRF token")
+            err = handler.handle(
+                ValueError("Invalid CSRF token"), ErrorCategory.INVALID_INPUT
+            )
+            return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INVALID_INPUT]
 
         contents = []
         filenames = []
@@ -68,14 +76,18 @@ def upload_files(payload: UploadRequestSchema):
 
         file_processor = container.get("file_processor")
         if not contents or not filenames:
-            abort(400, description="No file provided")
+            err = handler.handle(
+                ValueError("No file provided"), ErrorCategory.INVALID_INPUT
+            )
+            return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INVALID_INPUT]
 
         job_id = file_processor.process_file_async(contents[0], filenames[0])
 
         return {"job_id": job_id}, 202
 
     except Exception as e:
-        abort(500, description=str(e))
+        err = handler.handle(e, ErrorCategory.INTERNAL)
+        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
 
 
 @upload_bp.route("/v1/upload/status/<job_id>", methods=["GET"])

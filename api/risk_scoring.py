@@ -4,12 +4,17 @@ from __future__ import annotations
 
 from yosai_intel_dashboard.src.adapters.api.adapter import api_adapter
 from app import app
-from flask import abort, jsonify, request
+from flask import jsonify, request
+from error_handling import ErrorCategory, ErrorHandler
+from yosai_framework.errors import CODE_TO_STATUS
+from shared.errors.types import ErrorCode
 from marshmallow import Schema, fields
 from flask_apispec import doc, marshal_with, use_kwargs
 
 from analytics.risk_scoring import calculate_risk_score
 from validation.security_validator import SecurityValidator
+
+handler = ErrorHandler()
 
 
 class RiskInputSchema(Schema):
@@ -33,7 +38,10 @@ def calculate_score_endpoint(**payload):
     for key, value in payload.items():
         check = SecurityValidator().validate_input(str(value), key)
         if not check["valid"]:
-            abort(400, description="Invalid parameter")
+            err = handler.handle(
+                ValueError("Invalid parameter"), ErrorCategory.INVALID_INPUT
+            )
+            return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INVALID_INPUT]
 
     anomaly = float(payload.get("anomaly_score", 0))
     patterns = float(payload.get("pattern_score", 0))

@@ -1,7 +1,10 @@
 import json
 import logging
 
-from flask import Blueprint, Response, abort, jsonify, request
+from flask import Blueprint, Response, jsonify, request
+from error_handling import ErrorCategory, ErrorHandler
+from yosai_framework.errors import CODE_TO_STATUS
+from shared.errors.types import ErrorCode
 from marshmallow import Schema, fields
 from flask_apispec import doc, marshal_with, use_kwargs
 
@@ -15,6 +18,8 @@ logger = logging.getLogger(__name__)
 analytics_bp = Blueprint("analytics", __name__, url_prefix="/api/v1/analytics")
 graphs_bp = Blueprint("graphs", __name__, url_prefix="/api/v1/graphs")
 export_bp = Blueprint("export", __name__, url_prefix="/api/v1/export")
+
+handler = ErrorHandler()
 
 
 class AnalyticsQuerySchema(Schema):
@@ -112,7 +117,8 @@ def get_chart_data(chart_type, **args):
         return jsonify(
             {"type": "timeline", "data": data.get("hourly_distribution", {})}
         )
-    abort(400, description="Unknown chart type")
+    err = handler.handle(ValueError("Unknown chart type"), ErrorCategory.INVALID_INPUT)
+    return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INVALID_INPUT]
 
 
 @export_bp.route("/analytics/json", methods=["GET"])
@@ -197,4 +203,5 @@ def get_analytics_by_source(source_type="all", **args):
         return jsonify(data)
     except Exception as e:
         logger.error("Analytics error: %s", e)
-        abort(500, description=str(e))
+        err = handler.handle(e, ErrorCategory.INTERNAL)
+        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from yosai_intel_dashboard.src.adapters.api.adapter import api_adapter
 from app import app
-from flask import abort, jsonify, request
+from flask import jsonify, request
+from error_handling import ErrorCategory, ErrorHandler
+from yosai_framework.errors import CODE_TO_STATUS
+from shared.errors.types import ErrorCode
 from marshmallow import Schema, fields
 from flask_apispec import doc, marshal_with, use_kwargs
 
@@ -13,8 +16,8 @@ from config import get_cache_config
 from core.plugins.performance_manager import EnhancedThreadSafePluginManager
 from validation.security_validator import SecurityValidator
 
-cfg = get_cache_config()
-_cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=cfg.ttl))
+_cache_manager = InMemoryCacheManager(CacheConfig())
+handler = ErrorHandler()
 
 
 class PerformanceQuerySchema(Schema):
@@ -39,7 +42,10 @@ class PluginPerformanceAPI:
         name = request.args.get("plugin", "")
         result = SecurityValidator().validate_input(name, "plugin")
         if not result["valid"]:
-            abort(400, description="Invalid plugin")
+            err = handler.handle(
+                ValueError("Invalid plugin"), ErrorCategory.INVALID_INPUT
+            )
+            return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INVALID_INPUT]
         data = manager.get_plugin_performance_metrics(name)
         safe = api_adapter.unicode_processor.process_dict(data)
         return jsonify(safe)
@@ -54,7 +60,10 @@ class PluginPerformanceAPI:
             for k, v in payload.items():
                 check = SecurityValidator().validate_input(str(v), k)
                 if not check["valid"]:
-                    abort(400, description="Invalid payload")
+                    err = handler.handle(
+                        ValueError("Invalid payload"), ErrorCategory.INVALID_INPUT
+                    )
+                    return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INVALID_INPUT]
             manager.performance_manager.performance_thresholds.update(payload)
             return jsonify({"status": "updated"})
         history = manager.performance_manager.alert_history
@@ -77,7 +86,10 @@ class PluginPerformanceAPI:
             for k, v in payload.items():
                 check = SecurityValidator().validate_input(str(v), k)
                 if not check["valid"]:
-                    abort(400, description="Invalid payload")
+                    err = handler.handle(
+                        ValueError("Invalid payload"), ErrorCategory.INVALID_INPUT
+                    )
+                    return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INVALID_INPUT]
             manager.performance_manager.performance_thresholds.update(payload)
             return jsonify({"status": "updated"})
         cfg = manager.performance_manager.performance_thresholds
