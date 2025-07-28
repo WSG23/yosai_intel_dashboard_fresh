@@ -6,7 +6,7 @@ throughout the tests and documentation.
 """
 
 # ``CentralizedAnalyticsManager`` is imported lazily inside ``create_manager`` to
-# avoid circular imports when ``analytics_core`` is imported from submodules.
+# avoid circular imports when ``analytics.core`` is imported from submodules.
 
 __all__ = ["CentralizedAnalyticsManager", "create_manager"]
 

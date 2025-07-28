@@ -1,4 +1,4 @@
-from analytics_core import create_manager
+from analytics.core import create_manager
 from core.service_container import ServiceContainer
 
 

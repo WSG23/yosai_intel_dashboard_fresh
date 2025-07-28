@@ -1,4 +1,4 @@
-from analytics_core import create_manager
+from analytics.core import create_manager
 
 
 def test_create_manager() -> None:
