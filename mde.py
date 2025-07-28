@@ -36,7 +36,7 @@ from components.column_verification import (
 from components.simple_device_mapping import (
     register_callbacks as register_device_callbacks,
 )
-from core.master_callback_system import MasterCallbackSystem
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 import logging
 from services.base_database_service import BaseDatabaseService
 
@@ -96,7 +96,7 @@ class MVPTestApp(BaseDatabaseService):
         self.app.title = "MVP Data Enhancement - Base Code Test"  # type: ignore[attr-defined]
 
         # Manager allowing callbacks for dynamically created components
-        self.callback_manager = MasterCallbackSystem(self.app)
+        self.callback_manager = TrulyUnifiedCallbacks(self.app)
         
         # Simple layout testing the complete flow
         self.app.layout = dbc.Container([  # type: ignore[attr-defined]
@@ -201,15 +201,17 @@ class MVPTestApp(BaseDatabaseService):
         except Exception as e:
             logger.warning(f"⚠️ Device mapping callbacks failed: {e}")
         
-        @self.app.callback(
-            [Output('upload-results', 'children'),
-             Output('column-mapping', 'children'),
-             Output('device-analysis', 'children'),
-             Output('enhanced-data', 'children'),
-             Output('session-store', 'data')],
-            [Input('upload-area', 'contents')],
-            [State('upload-area', 'filename'),
-             State('session-store', 'data')]
+        @self.callback_manager.callback(
+            [Output("upload-results", "children"),
+             Output("column-mapping", "children"),
+             Output("device-analysis", "children"),
+             Output("enhanced-data", "children"),
+             Output("session-store", "data")],
+            [Input("upload-area", "contents")],
+            [State("upload-area", "filename"),
+             State("session-store", "data")],
+            callback_id="handle_upload",
+            component_name="mvp_demo",
         )
         def handle_upload(contents, filename, session_data):
             """Process upload using existing base code"""
@@ -271,12 +273,14 @@ class MVPTestApp(BaseDatabaseService):
                 error_display = dbc.Alert(f"Processing failed: {safe_str(e)}", color="danger")
                 return error_display, "", "", "", session_data
         
-        @self.app.callback(
-            Output('download-component', 'data'),
-            [Input('download-csv', 'n_clicks'),
-             Input('download-json', 'n_clicks')],
-            [State('session-store', 'data')],
-            prevent_initial_call=True
+        @self.callback_manager.callback(
+            Output("download-component", "data"),
+            [Input("download-csv", "n_clicks"),
+             Input("download-json", "n_clicks")],
+            [State("session-store", "data")],
+            prevent_initial_call=True,
+            callback_id="handle_download",
+            component_name="mvp_demo",
         )
         def handle_download(csv_clicks, json_clicks, session_data):
             """Handle download using base code"""
