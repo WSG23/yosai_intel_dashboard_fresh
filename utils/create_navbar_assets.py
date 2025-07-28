@@ -216,12 +216,14 @@ def main():
     """
     Main function to create missing navbar assets.
     """
-    print("🎨 Creating Navbar Assets")
-    print("=" * 50)
+    logger.info("🎨 Creating Navbar Assets")
+    logger.info("=" * 50)
     
     # Check existing icons
     existing = check_existing_icons()
-    print(f"📁 Existing icons: {', '.join(existing) if existing else 'None'}")
+    logger.info(
+        f"📁 Existing icons: {', '.join(existing) if existing else 'None'}"
+    )
     
     # Create missing icons  
     results = create_missing_icons()
@@ -230,24 +232,32 @@ def main():
     successful = [name for name, success in results.items() if success]
     failed = [name for name, success in results.items() if not success]
     
-    print(f"\n✅ Successfully created: {', '.join(successful) if successful else 'None'}")
-    print(f"❌ Failed to create: {', '.join(failed) if failed else 'None'}")
+    logger.info(
+        f"\n✅ Successfully created: {', '.join(successful) if successful else 'None'}"
+    )
+    logger.info(f"❌ Failed to create: {', '.join(failed) if failed else 'None'}")
     
     if not PIL_AVAILABLE:
-        print("\n⚠️  PIL/Pillow not available - created placeholder files")
-        print("   Install Pillow for better icon generation: pip install Pillow")
+        logger.warning(
+            "\n⚠️  PIL/Pillow not available - created placeholder files"
+        )
+        logger.warning(
+            "   Install Pillow for better icon generation: pip install Pillow"
+        )
     
     total_created = len(successful)
     total_icons = len(ICON_DEFINITIONS)
     
-    print(f"\n📊 Summary: {total_created}/{total_icons} icons available")
+    logger.info(f"\n📊 Summary: {total_created}/{total_icons} icons available")
     
     if total_created == total_icons:
-        print("🎉 All navbar icons created successfully!")
+        logger.info("🎉 All navbar icons created successfully!")
     elif total_created > 0:
-        print("⚠️  Some icons created - navbar will use FontAwesome fallbacks for missing icons")
+        logger.info(
+            "⚠️  Some icons created - navbar will use FontAwesome fallbacks for missing icons"
+        )
     else:
-        print("❌ No icons created - navbar will use FontAwesome fallbacks")
+        logger.info("❌ No icons created - navbar will use FontAwesome fallbacks")
 
 
 if __name__ == "__main__":

@@ -1,91 +1,87 @@
 from __future__ import annotations
 
-import asyncio
 import logging
-import os
-from dataclasses import dataclass
+import ssl
 from typing import Any, MutableMapping
-from uuid import uuid4
 
 import aiohttp
-import structlog
+from tenacity import (
+    AsyncRetrying,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from services.resilience.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
 
 from .protocols import ServiceClient
 
 
-@dataclass
-class RetryPolicy:
-    max_attempts: int = 3
-    base_delay: float = 1.0
-    max_delay: float = 60.0
-    exponential_base: float = 2.0
+class RestClient:
+    """Asynchronous HTTP client with circuit breaker and retries."""
 
-
-class AsyncRestClient(ServiceClient):
-    """Asynchronous HTTP client with retries and circuit breaker."""
+    log = logging.getLogger(__name__)
 
     def __init__(
         self,
         base_url: str,
         *,
-        timeout: float = 5.0,
-        retry_policy: RetryPolicy | None = None,
         failure_threshold: int = 5,
         recovery_timeout: int = 60,
+        retries: int = 3,
+        timeout: float = 5.0,
+        mtls_cert: str | None = None,
+        mtls_key: str | None = None,
+        verify_ssl: bool = True,
     ) -> None:
         self.base_url = base_url.rstrip("/")
-        self.timeout = aiohttp.ClientTimeout(total=timeout)
-        self.retry_policy = retry_policy or RetryPolicy()
         self.circuit_breaker = CircuitBreaker(
             failure_threshold, recovery_timeout, name=base_url
         )
-        self.log: structlog.BoundLogger = structlog.get_logger(__name__)
+        self.retries = retries
+        self.timeout = aiohttp.ClientTimeout(total=timeout)
+        self._ssl = self._create_ssl_context(mtls_cert, mtls_key, verify_ssl)
+
+    # ------------------------------------------------------------------
+    def _create_ssl_context(
+        self, cert: str | None, key: str | None, verify_ssl: bool
+    ) -> ssl.SSLContext | bool | None:
+        if cert and key:
+            ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+            ctx.load_cert_chain(certfile=cert, keyfile=key)
+            if not verify_ssl:
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+            return ctx
+        if not verify_ssl:
+            return False
+        return None
 
     # ------------------------------------------------------------------
     async def request(self, method: str, path: str, **kwargs: Any) -> Any:
+        """Send an HTTP request with retries and tracing."""
+
         url = self.base_url + path
         headers: MutableMapping[str, str] = kwargs.pop("headers", {}) or {}
-        request_id = headers.get("X-Request-ID", uuid4().hex)
-        headers["X-Request-ID"] = request_id
+        propagate_context(headers)
         kwargs["headers"] = headers
-        attempt = 0
-        delay = self.retry_policy.base_delay
-        log = self.log.bind(request_id=request_id, url=url, method=method)
 
-        while True:
-            try:
-                async with self.circuit_breaker:
-                    async with aiohttp.ClientSession() as session:
-                        async with session.request(
-                            method,
-                            url,
-                            timeout=self.timeout,
-                            **kwargs,
-                        ) as resp:
-                            log.info("request", status=resp.status)
-                            resp.raise_for_status()
-                            ctype = resp.headers.get("Content-Type", "")
-                            if "application/json" in ctype:
-                                return await resp.json()
-                            return await resp.text()
-            except CircuitBreakerOpen:
-                log.warning("circuit_open")
-                raise
-            except Exception as exc:
-                attempt += 1
-                log.warning("request_failed", attempt=attempt, error=str(exc))
-                if attempt >= self.retry_policy.max_attempts:
-                    raise
-                await asyncio.sleep(delay)
-                delay = min(
-                    delay * self.retry_policy.exponential_base,
-                    self.retry_policy.max_delay,
-                )
-
-
-# ----------------------------------------------------------------------
+        async def _do_request() -> Any:
+            async with self.circuit_breaker:
+                async with aiohttp.ClientSession() as session:
+                    async with session.request(
+                        method,
+                        url,
+                        timeout=self.timeout,
+                        ssl=self._ssl,
+                        **kwargs,
+                    ) as resp:
+                        self.log.info("%s %s -> %s", method, url, resp.status)
+                        resp.raise_for_status()
+                        ctype = resp.headers.get("Content-Type", "")
+                        if "application/json" in ctype:
+                            return await resp.json()
+                        return await resp.text()
 
 
 def create_service_client(service_name: str) -> ServiceClient:
@@ -101,3 +97,4 @@ __all__ = [
     "create_service_client",
     "CircuitBreakerOpen",
 ]
+

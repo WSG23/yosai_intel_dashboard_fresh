@@ -5,7 +5,7 @@ from typing import IO, Iterable, List, Union, Callable
 
 import pandas as pd
 
-from analytics_core.utils.unicode_processor import UnicodeHelper
+from analytics.core.utils.unicode_processor import UnicodeHelper
 from utils.file_utils import safe_decode_with_unicode_handling
 from utils.memory_utils import check_memory_limit
 from config.constants import DEFAULT_CHUNK_SIZE

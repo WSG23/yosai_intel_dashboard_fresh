@@ -289,6 +289,22 @@ class DynamicConfigManager(BaseConfigLoader):
 dynamic_config = DynamicConfigManager()
 
 
+class ConfigHelper:
+    """Convenience accessors for frequently used configuration values."""
+
+    @staticmethod
+    def ai_confidence_threshold() -> float:
+        return dynamic_config.get_ai_confidence_threshold()
+
+    @staticmethod
+    def max_upload_size_mb() -> int:
+        return dynamic_config.get_max_upload_size_mb()
+
+    @staticmethod
+    def upload_chunk_size() -> int:
+        return dynamic_config.get_upload_chunk_size()
+
+
 def diagnose_upload_config():
     """Diagnostic function to check upload configuration"""
     import os

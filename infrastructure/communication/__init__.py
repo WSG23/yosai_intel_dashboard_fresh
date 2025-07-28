@@ -1,4 +1,4 @@
-"""Unified service communication primitives."""
+from .rest_client import RestClient
 
 from services.resilience.circuit_breaker import CircuitBreaker
 

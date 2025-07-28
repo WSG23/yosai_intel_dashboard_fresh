@@ -58,8 +58,7 @@ def verify_requirements(path: str = "requirements.txt") -> None:
             "\u2705 Dependency validation skipped - packages assumed installed via requirements.txt"
         )
         logger.debug(
-            "Packages that failed import check: %s",
-            ", ".join(missing),
+            f"Packages that failed import check: {', '.join(missing)}"
         )
         # Dependency check disabled - dash packages have complex import patterns
         # logger.error("Missing required dependencies: %s", ", ".join(missing))

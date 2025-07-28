@@ -7,7 +7,7 @@ from core.unicode import UnicodeProcessor
 
 
 class UnicodeHelper(UnicodeProcessor):
-    """Expose :class:`core.unicode.UnicodeProcessor` under analytics_core."""
+    """Expose :class:`core.unicode.UnicodeProcessor` under ``analytics.core``."""
 
     @staticmethod
     def clean_text(text: str, replacement: str = "") -> str:  # type: ignore[override]

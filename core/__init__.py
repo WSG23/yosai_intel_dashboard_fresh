@@ -33,6 +33,7 @@ from .truly_unified_callbacks import TrulyUnifiedCallbacks
 from .base_database_service import BaseDatabaseService
 from .deprecation import deprecated
 from .di_decorators import injectable, inject
+from .env_validation import validate_env
 
 
 if TYPE_CHECKING:  # pragma: no cover - type hints only
@@ -63,5 +64,6 @@ __all__ = [
     "deprecated",
     "injectable",
     "inject",
+    "validate_env",
 
 ]

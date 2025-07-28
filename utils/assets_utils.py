@@ -64,8 +64,7 @@ def ensure_navbar_assets(app=None) -> dict[str, bool]:
     ]
     if missing_before:
         logging.getLogger(__name__).info(
-            "Attempting to create missing navbar icons: %s",
-            ", ".join(missing_before),
+            f"Attempting to create missing navbar icons: {', '.join(missing_before)}"
         )
 
     ensure_all_navbar_assets(app)
@@ -74,7 +73,7 @@ def ensure_navbar_assets(app=None) -> dict[str, bool]:
     missing_after = [n for n, ok in summary.items() if not ok]
     if missing_after:
         logging.getLogger(__name__).warning(
-            "Navbar icons still missing: %s", ", ".join(missing_after)
+            f"Navbar icons still missing: {', '.join(missing_after)}"
         )
     return summary
 

@@ -174,7 +174,6 @@ dash-bootstrap-components>=1.4.0
 plotly>=5.15.0
 
 # Data processing
-openpyxl>=3.0.0
 xlrd>=2.0.0
 
 # Web framework

@@ -29,9 +29,7 @@ class CPUOptimizer:
         pct = self.cpu_percent()
         if pct > self.threshold_pct:
             self.logger.warning(
-                "CPU usage %.1f%% exceeds threshold %.1f%%",
-                pct,
-                self.threshold_pct,
+                f"CPU usage {pct:.1f}% exceeds threshold {self.threshold_pct:.1f}%"
             )
         return pct
 

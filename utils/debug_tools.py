@@ -34,7 +34,9 @@ def debug_callback_registration_flow(target_class: Any | None = None) -> None:
 
     original = getattr(target_class, "handle_register_with_deduplication", None)
     if original is None:
-        logger.warning("handle_register_with_deduplication not found on %s", target_class)
+        logger.warning(
+            f"handle_register_with_deduplication not found on {target_class}"
+        )
         return
 
     @functools.wraps(original)
@@ -45,9 +47,7 @@ def debug_callback_registration_flow(target_class: Any | None = None) -> None:
         timestamp = time.time()
         _REGISTRATION_LOG.append((callback_id, timestamp, module_name))
         logger.debug(
-            "Registering %s from %s via handle_register_with_deduplication",
-            callback_id,
-            module_name,
+            f"Registering {callback_id} from {module_name} via handle_register_with_deduplication"
         )
         return original(self, *args, **kwargs)
 

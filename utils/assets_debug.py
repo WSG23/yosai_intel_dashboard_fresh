@@ -40,8 +40,7 @@ def check_navbar_assets(
         results[safe_encode_text(name)] = exists
         if warn and not exists:
             logger.warning(
-                "Navbar icon missing: %s",
-                safe_encode_text(str(path)),
+                f"Navbar icon missing: {safe_encode_text(str(path))}"
             )
     return results
 
@@ -65,18 +64,18 @@ def debug_dash_asset_serving(app: Any, icon: str = "analytics.png") -> bool:
         ok = res.status_code == 200
         if not ok:
             logger.warning(
-                "Asset serving failed for %s (status %s)", path, res.status_code
+                f"Asset serving failed for {path} (status {res.status_code})"
             )
         return ok
     except Exception as exc:  # pragma: no cover - best effort
-        logger.error("Asset serving test error: %s", exc)
+        logger.error(f"Asset serving test error: {exc}")
         return False
 
 
 def log_asset_info(icon: str) -> None:
     """Log whether a navbar icon file exists."""
     path = NAVBAR_ICON_DIR / icon
-    logger.info("Icon path %s exists=%s", path, path.is_file())
+    logger.info(f"Icon path {path} exists={path.is_file()}")
 
 
 def navbar_icon(filename: str, alt: str, fallback_text: str, *, warn: bool = True):
@@ -92,7 +91,7 @@ def navbar_icon(filename: str, alt: str, fallback_text: str, *, warn: bool = Tru
             alt=alt,
         )
     if warn:
-        logger.warning("Missing navbar icon: %s", safe_encode_text(filename))
+        logger.warning(f"Missing navbar icon: {safe_encode_text(filename)}")
     return html.Span(fallback_text, className="nav-icon nav-icon--fallback")
 
 

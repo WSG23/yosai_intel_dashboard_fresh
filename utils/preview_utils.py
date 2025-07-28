@@ -33,5 +33,5 @@ def serialize_dataframe_preview(df: pd.DataFrame) -> List[Dict[str, Any]]:
             return []
         return preview
     except Exception as exc:  # pragma: no cover - best effort
-        logger.exception("Failed to serialize dataframe preview: %s", exc)
+        logger.exception(f"Failed to serialize dataframe preview: {exc}")
         return []
