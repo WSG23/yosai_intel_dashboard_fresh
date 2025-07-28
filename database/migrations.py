@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+"""Wrapper around Alembic commands for managing schema migrations.
+
+The :class:`MigrationManager` simplifies common upgrade and downgrade
+operations and keeps a small in-memory history for rollbacks.
+"""
+
 import logging
 from typing import List
 

@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+"""Adaptive connection pool that adjusts size based on usage.
+
+The :class:`IntelligentConnectionPool` automatically expands or shrinks
+its pool of connections depending on current demand. Use ``acquire`` and
+``release`` like a standard connection pool to obtain connections while
+metrics are tracked for analysis.
+"""
+
 import threading
 import time
 from typing import Callable, Dict, List, Tuple, Any
