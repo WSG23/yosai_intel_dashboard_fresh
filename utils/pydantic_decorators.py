@@ -3,8 +3,13 @@ from __future__ import annotations
 from functools import wraps
 from typing import Any, Type
 
-from flask import abort, jsonify, request
+from flask import jsonify, request
+from error_handling import ErrorCategory, ErrorHandler
+from yosai_framework.errors import CODE_TO_STATUS
+from shared.errors.types import ErrorCode
 from pydantic import BaseModel, ValidationError
+
+handler = ErrorHandler()
 
 
 def validate_input(model: Type[BaseModel]):
@@ -17,7 +22,8 @@ def validate_input(model: Type[BaseModel]):
             try:
                 validated = model.model_validate(data)
             except ValidationError as exc:  # pragma: no cover - runtime check
-                abort(400, description=str(exc))
+                err = handler.handle(exc, ErrorCategory.INVALID_INPUT)
+                return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INVALID_INPUT]
             kwargs["payload"] = validated
             return func(*args, **kwargs)
 
@@ -45,7 +51,8 @@ def validate_output(model: Type[BaseModel]):
             try:
                 model.model_validate(body_data)
             except ValidationError as exc:  # pragma: no cover - runtime check
-                abort(500, description=str(exc))
+                err = handler.handle(exc, ErrorCategory.INTERNAL)
+                return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
             return jsonify(body_data), status
 
         return wrapper

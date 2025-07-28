@@ -1,5 +1,8 @@
 import pandas as pd
-from flask import Blueprint, abort, request
+from flask import Blueprint, jsonify, request
+from error_handling import ErrorCategory, ErrorHandler
+from yosai_framework.errors import CODE_TO_STATUS
+from shared.errors.types import ErrorCode
 from flask_apispec import doc
 from pydantic import BaseModel
 
@@ -14,6 +17,8 @@ if not container.has("upload_processor"):
     register_upload_services(container)
 
 device_bp = Blueprint("device", __name__)
+
+handler = ErrorHandler()
 
 
 class DeviceSuggestSchema(BaseModel):
@@ -115,7 +120,10 @@ def suggest_devices(payload: DeviceSuggestSchema):
 
         df = load_stored_data(filename, upload_service)
         if df is None:
-            abort(404, description="File data not found")
+            err = handler.handle(
+                FileNotFoundError("File data not found"), ErrorCategory.NOT_FOUND
+            )
+            return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.NOT_FOUND]
 
         device_column = determine_device_column(column_mappings, df)
         devices = df[device_column].dropna().unique().tolist() if device_column else []
@@ -127,4 +135,5 @@ def suggest_devices(payload: DeviceSuggestSchema):
         return {"devices": devices, "device_mappings": device_mappings}, 200
 
     except Exception as e:
-        abort(500, description=str(e))
+        err = handler.handle(e, ErrorCategory.INTERNAL)
+        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
