@@ -21,6 +21,7 @@ __all__ = [
     "record_deprecated_call",
     "start_deprecation_metrics_server",
     "InferenceDriftJob",
+    "request_duration",
 ]
 
 
@@ -78,4 +79,7 @@ def __getattr__(name: str):
     if name == "InferenceDriftJob":
         from .inference_drift_job import InferenceDriftJob
         return InferenceDriftJob
+    if name == "request_duration":
+        from .request_metrics import request_duration
+        return request_duration
     raise AttributeError(name)

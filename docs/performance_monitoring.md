@@ -81,6 +81,18 @@ and memory usage. The middleware updates the `yosai_request_duration_seconds`
 and `yosai_request_memory_mb` Prometheus histograms for every request. Disable
 it again with `ENABLE_PROFILING=false`.
 
+### API Request Timing
+
+The API adds a lightweight `TimingMiddleware` that measures how long each
+request takes to process. Durations are exported via the
+`api_request_duration_seconds` Prometheus histogram and can be scraped from the
+`/metrics` endpoint. Values are in seconds and can be aggregated with
+`histogram_quantile` to monitor typical latencies (e.g. p95).
+
+Low percentiles close to zero indicate fast responses while higher values or a
+steadily increasing trend suggest performance issues with a particular route or
+dependency.
+
 ### Deprecated Function Usage
 
 Decorate legacy helpers with `@deprecated` from `core` to automatically record

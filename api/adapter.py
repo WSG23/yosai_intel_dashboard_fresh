@@ -27,6 +27,7 @@ from mappings_endpoint import mappings_bp
 from upload_endpoint import upload_bp
 from .callbacks_endpoint import callbacks_bp
 from token_endpoint import token_bp
+from middleware.performance import TimingMiddleware
 
 
 def create_api_app() -> "FastAPI":
@@ -34,6 +35,7 @@ def create_api_app() -> "FastAPI":
     validate_all_secrets()
     service = BaseService("api", "")
     service.start()
+    service.app.add_middleware(TimingMiddleware)
     build_dir = os.path.abspath(
         os.path.join(os.path.dirname(__file__), os.pardir, "build")
     )
