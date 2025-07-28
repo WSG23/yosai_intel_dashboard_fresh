@@ -28,6 +28,31 @@ docker run -p 9090:9090 \
   prom/prometheus
 ```
 
+Additional alert rules can be added under
+`monitoring/prometheus/rules/app_alerts.yml`. Typical rules monitor CPU and
+memory consumption:
+
+```yaml
+- alert: CPUHighUsage
+  expr: avg(rate(container_cpu_usage_seconds_total[5m])) by (pod) > 0.8
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: Pod CPU usage above 80% for 5 minutes
+- alert: MemoryHighUsage
+  expr: container_memory_usage_bytes{image!=""} /
+    container_spec_memory_limit_bytes{image!=""} > 0.9
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: Pod memory usage above 90% of limit
+```
+
+Grafana can visualise these metrics using the dashboard template in
+`monitoring/grafana/dashboards/unified-platform.json`.
+
 ### Circuit Breaker Metrics
 
 Both the Python and Go services expose circuit breaker transitions using the
