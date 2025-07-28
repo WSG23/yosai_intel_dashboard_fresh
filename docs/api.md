@@ -54,6 +54,45 @@ This command runs the Go generator and then imports both FastAPI services to
 write `docs/analytics_microservice_openapi.json` and
 `docs/event_ingestion_openapi.json`.
 
+## Flask/FastAPI Adapter
+
+Legacy dashboards still rely on Flask routes for file uploads and admin views.
+`api/adapter.py` builds a Flask `app` and then mounts it inside the FastAPI
+service using `WSGIMiddleware`. FastAPI handles its own routes first (such as
+`/api/v1/analytics`) and forwards any remaining paths to the Flask app.
+
+```python
+from fastapi.middleware.wsgi import WSGIMiddleware
+
+csrf.init_app(app)
+service.app.mount("/", WSGIMiddleware(app))
+```
+
+### Request Flow
+
+The sequence below illustrates how a request passes through the adapter and when
+CSRF protection is enforced.
+
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant FA as FastAPI
+    participant FL as Flask
+    participant BP as Blueprint
+
+    B->>FA: HTTP request
+    alt FastAPI route
+        FA-->>B: Response
+    else Flask route
+        FA->>FL: via WSGIMiddleware
+        FL->>FL: before_request -> csrf.protect()
+        FL->>BP: dispatch
+        BP-->>FL: Response
+        FL-->>FA: Return
+        FA-->>B: Response
+    end
+```
+
 
 ## API Versioning
 
