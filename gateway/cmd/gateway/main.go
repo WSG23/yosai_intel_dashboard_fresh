@@ -261,6 +261,7 @@ func main() {
 	limiter := mw.NewRateLimiter(rlClient, *rlConf)
 	limiter.SetWindow(window)
 	g.UseRateLimit(limiter)
+	g.UseSecurityHeaders()
 
 	addr := ":8080"
 	if port := os.Getenv("PORT"); port != "" {

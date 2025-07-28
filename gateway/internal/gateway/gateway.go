@@ -71,6 +71,11 @@ func (g *Gateway) UseRBAC(s *rbac.RBACService, perm string) {
 	g.router.Use(imw.RequirePermission(s, perm))
 }
 
+// UseSecurityHeaders adds default security headers to all responses.
+func (g *Gateway) UseSecurityHeaders() {
+	g.router.Use(imw.SecurityHeaders())
+}
+
 // Handler returns the root HTTP handler.
 func (g *Gateway) Handler() http.Handler {
 	return g.plugins.BuildMiddlewareChain(g.router)
