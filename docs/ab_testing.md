@@ -21,7 +21,7 @@ Create a tester instance and call `predict` with your input data:
 
 ```python
 from models.ml import ModelRegistry
-from yosai_intel_dashboard.src.services.ab_testing import ModelABTester
+from services.ab_testing import ModelABTester
 
 registry = ModelRegistry("sqlite:///registry.db", "ml-bucket")
 tester = ModelABTester("my-model", registry)

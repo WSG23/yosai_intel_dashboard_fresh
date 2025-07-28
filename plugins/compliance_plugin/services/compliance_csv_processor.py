@@ -13,7 +13,7 @@ from core.protocols import DatabaseProtocol
 from core.audit_logger import ComplianceAuditLogger
 from services.compliance.consent_service import ConsentService
 from services.compliance.data_retention_service import DataRetentionService
-from yosai_intel_dashboard.src.core.domain.compliance import ConsentType, DataSensitivityLevel
+from models.compliance import ConsentType, DataSensitivityLevel
 from database.secure_exec import execute_query
 from services.data_processing.file_processor import FileProcessor
 

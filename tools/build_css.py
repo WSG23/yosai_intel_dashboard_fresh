@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from yosai_intel_dashboard.src.core.domain import css_build_optimizer
+from models import css_build_optimizer
 
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 

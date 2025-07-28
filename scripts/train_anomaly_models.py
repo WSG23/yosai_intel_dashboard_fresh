@@ -21,12 +21,12 @@ import pandas as pd
 from sklearn.ensemble import IsolationForest
 
 from analytics.anomaly_detection.data_prep import prepare_anomaly_data
-from yosai_intel_dashboard.src.core.domain.anomaly_models import (
+from models.anomaly_models import (
     autoencoder_reconstruction_error,
     train_autoencoder_model,
     train_dbscan_model,
 )
-from yosai_intel_dashboard.src.core.domain.ml import ModelRegistry
+from models.ml import ModelRegistry
 
 
 LOG = logging.getLogger(__name__)
