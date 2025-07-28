@@ -2,6 +2,8 @@
 
 This reference summarises the main tables used by the dashboard. Full DDL files can be found under `deployment/` and `migrations/`.
 
+See [database/table_relationships.md](database/table_relationships.md) for a diagram of how the tables relate to each other.
+
 ## access_events
 
 Stores every access control event from the facility devices. The table is configured as a hypertable when TimescaleDB is enabled.
@@ -80,4 +82,26 @@ python -m services.index_optimizer_cli create <table> <column> [column...]
 ```
 
 The `analyze_index_usage()` method returns current statistics while `recommend_new_indexes()` emits `CREATE INDEX` statements if columns are not indexed.
+
+## Important Indexes
+
+The default schema defines several indexes for performance:
+
+* `idx_access_events_timestamp` on `access_events(timestamp)`
+* `idx_access_events_person_id` on `access_events(person_id)`
+* `idx_access_events_door_id` on `access_events(door_id)`
+* `idx_anomaly_detections_detected_at` on `anomaly_detections(detected_at)`
+* `idx_anomaly_detections_type` on `anomaly_detections(anomaly_type)`
+* `idx_incident_tickets_status` on `incident_tickets(status)`
+
+Use the index optimizer CLI above to analyse additional queries and create new indexes as needed.
+
+## Retention Policies
+
+When TimescaleDB is enabled, `access_events` is configured as a hypertable with the following policies:
+
+* **Compression** after thirty days: `add_compression_policy('access_events', INTERVAL '30 days')`
+* **Retention** after one year: `add_retention_policy('access_events', INTERVAL '365 days')`
+
+The durations can be overridden by the environment variables `TIMESCALE_COMPRESSION_DAYS` and `TIMESCALE_RETENTION_DAYS`.
 
