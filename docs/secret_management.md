@@ -139,6 +139,56 @@ Secrets are fetched through `services.common.secrets.get_secret()` which
 uses an in-memory cache. Call `invalidate_secret()` after rotating a
 value to force a reload.
 
+### Creating Secrets in Vault
+
+To store secrets centrally create a path for the dashboard in Vault. The
+default examples assume the KV engine is mounted at `secret`:
+
+```bash
+vault kv put secret/data/yosai \
+  SECRET_KEY="$(openssl rand -base64 32)" \
+  DB_PASSWORD="change-me" \
+  AUTH0_CLIENT_ID="<client-id>" \
+  AUTH0_CLIENT_SECRET="<client-secret>" \
+  AUTH0_DOMAIN="example.auth0.com" \
+  AUTH0_AUDIENCE="https://api.example.com"
+```
+
+Reference these fields from your configuration using the `vault:` prefix:
+
+```yaml
+security:
+  secret_key: vault:secret/data/yosai#SECRET_KEY
+database:
+  password: vault:secret/data/yosai#DB_PASSWORD
+auth0:
+  client_id: vault:secret/data/yosai#AUTH0_CLIENT_ID
+  client_secret: vault:secret/data/yosai#AUTH0_CLIENT_SECRET
+  domain: vault:secret/data/yosai#AUTH0_DOMAIN
+  audience: vault:secret/data/yosai#AUTH0_AUDIENCE
+```
+
+### Environment Overrides
+
+Environment variables override values from YAML after secrets are
+resolved. Set variables to a `vault:` URI to fetch them directly from
+Vault:
+
+```bash
+export VAULT_ADDR=https://vault.example.com
+export VAULT_TOKEN=s.xxxxxx
+export SECRET_BACKEND=vault
+
+export SECRET_KEY=vault:secret/data/yosai#SECRET_KEY
+export DB_PASSWORD=vault:secret/data/yosai#DB_PASSWORD
+export AUTH0_CLIENT_ID=vault:secret/data/yosai#AUTH0_CLIENT_ID
+export AUTH0_CLIENT_SECRET=vault:secret/data/yosai#AUTH0_CLIENT_SECRET
+export AUTH0_DOMAIN=vault:secret/data/yosai#AUTH0_DOMAIN
+export AUTH0_AUDIENCE=vault:secret/data/yosai#AUTH0_AUDIENCE
+
+python start_api.py
+```
+
 ## Incident Handling
 
 If you suspect a secret has been exposed:
