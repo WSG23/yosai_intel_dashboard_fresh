@@ -1,13 +1,13 @@
 # Centralized Analytics Manager
 
 The analytics system is now orchestrated by `CentralizedAnalyticsManager` from
-`analytics_core`.  It coordinates the core, AI, performance and data-processing
+`analytics.core`.  It coordinates the core, AI, performance and data-processing
 services while exposing a single entry point for triggering analytics flows.
 
 ## Example Usage
 
 ```python
-from analytics_core import create_manager
+from analytics.core import create_manager
 
 # Build a manager with the default stub services
 manager = create_manager()
