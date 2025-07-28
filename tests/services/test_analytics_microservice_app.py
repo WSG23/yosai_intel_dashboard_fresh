@@ -111,10 +111,11 @@ def test_access_patterns_endpoint(app_fixture):
     client, dummy = app_fixture
     token = _token("secret")
     resp = client.post(
-        "/api/v1/analytics/get_access_patterns_analysis",
+        "/api/v1/analytics/access-patterns?page=1&size=50",
         json={"days": 3},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 200
-    assert resp.json() == {"days": 3}
+    assert resp.json()["page"] == 1
+    assert resp.json()["size"] == 50
     assert dummy.pattern_calls == [3]
