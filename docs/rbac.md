@@ -54,3 +54,12 @@ curl -X POST "$PERMISSION_SERVICE_URL/roles" \
 
 The service URL defaults to `http://localhost:8081`. Override it by
 setting the `PERMISSION_SERVICE_URL` environment variable.
+
+## Migration Notes
+
+Gateway versions after v1.4 fetch permissions from a storage backend
+instead of environment variables.  Use `rbac.NewWithStore()` with either
+`NewSQLStore` or `NewRedisStore` and populate the `roles` and
+`permissions` tables created by `002_add_rbac.sql`.  The previous
+environment variable behaviour is still available through `rbac.New()`
+for backwards compatibility.
