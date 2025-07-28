@@ -53,7 +53,7 @@ provided, allowing tests to supply lightweight mocks. See
 [docs/service_container.md](docs/service_container.md) for registration
 patterns and lifetime options.
 
-The dashboard is extensible through a lightweight plugin system. Plugins live in the `plugins/` directory and are loaded by a `PluginManager`. See [docs/plugins.md](docs/plugins.md) for discovery, configuration details and a simple **Hello World** example. The [plugin lifecycle diagram](docs/plugin_lifecycle.md) illustrates how plugins are discovered, dependencies resolved and health checks performed.
+The dashboard is extensible through a lightweight plugin system. Plugins live in the `plugins/` directory and are loaded by a `PluginManager`. See [docs/plugins.md](docs/plugins.md) for discovery, configuration details and a simple **Hello World** example. The [plugin lifecycle diagram](docs/plugin_lifecycle.md) illustrates how plugins are discovered, dependencies resolved and health checks performed. Pass `fail_fast=True` to the manager if plugin import failures should abort startup instead of merely being logged.
 
 ```
 yosai_intel_dashboard/

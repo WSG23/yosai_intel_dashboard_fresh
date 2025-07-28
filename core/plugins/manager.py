@@ -24,7 +24,22 @@ logger = logging.getLogger(__name__)
 
 
 class PluginManager:
-    """Simple plugin manager that loads plugins from the 'plugins' package."""
+    """Simple plugin manager that loads plugins from the 'plugins' package.
+
+    Parameters
+    ----------
+    container:
+        Dependency injection container for service lookups.
+    config_manager:
+        Application configuration manager.
+    package:
+        Package name to search for plugins.
+    health_check_interval:
+        Seconds between plugin health snapshots.
+    fail_fast:
+        When ``True`` raise an exception on any plugin load failure
+        instead of logging and continuing.
+    """
 
     def __init__(
         self,
@@ -32,10 +47,13 @@ class PluginManager:
         config_manager: ConfigManager,
         package: str = "plugins",
         health_check_interval: int = 60,
+        *,
+        fail_fast: bool = False,
     ):
         self.container = container
         self.config_manager = config_manager
         self.package = package
+        self.fail_fast = fail_fast
         self._resolver = PluginDependencyResolver()
         self.loaded_plugins: List[Any] = []
         self.plugins: Dict[str, PluginProtocol] = {}
@@ -108,19 +126,29 @@ class PluginManager:
                     discovered.append(plugin)
                 self.loaded_plugins.append(module)
                 logger.info(f"Loaded plugin {module_name}")
-            except Exception as exc:
+            except (ImportError, AttributeError) as exc:
                 logger.error(f"Failed to load plugin {module_name}: {exc}")
+                if self.fail_fast:
+                    raise
+            except Exception as exc:  # pragma: no cover - unexpected
+                logger.error(f"Failed to load plugin {module_name}: {exc}")
+                if self.fail_fast:
+                    raise
 
         try:
             ordered = self._resolver.resolve(discovered)
         except ValueError as exc:
             if "Circular dependency" in str(exc):
                 logger.error(f"Plugin dependency cycle detected: {exc}")
-                return []
-            logger.error(f"Failed to resolve plugin dependencies: {exc}")
+            else:
+                logger.error(f"Failed to resolve plugin dependencies: {exc}")
+            if self.fail_fast:
+                raise
             return []
         except Exception as exc:
             logger.error(f"Failed to resolve plugin dependencies: {exc}")
+            if self.fail_fast:
+                raise
             return []
 
         ordered.sort(key=self._get_priority)
@@ -152,6 +180,8 @@ class PluginManager:
                 except Exception as exc:
                     logger.error(f"Failed to configure plugin {name}: {exc}")
                     self.plugin_status[name] = PluginStatus.FAILED
+                    if self.fail_fast:
+                        raise
                     return False
                 plugin.start()
                 self.plugins[name] = plugin
@@ -160,10 +190,12 @@ class PluginManager:
                 return True
             self.plugin_status[name] = PluginStatus.FAILED
             return False
-        except Exception as exc:
+        except Exception as exc:  # pragma: no cover - unexpected
             logger.error(
                 f"Failed to load plugin {getattr(plugin, 'metadata', plugin)}: {exc}"
             )
+            if self.fail_fast:
+                raise
             return False
 
     def register_plugin_callbacks(
@@ -185,6 +217,8 @@ class PluginManager:
                 except Exception as exc:  # pragma: no cover - log and continue
                     logger.error(f"Failed to register callbacks for {plugin}: {exc}")
                     results.append(False)
+                    if self.fail_fast:
+                        raise
         return results
 
     def get_plugin_health(self) -> Dict[str, Any]:

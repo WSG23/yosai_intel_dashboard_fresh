@@ -6,7 +6,9 @@ This document explains how plugins are discovered, configured, and managed at ru
 
 Plugins live in the `plugins/` directory by default. The `PluginManager` scans this package with `pkgutil.iter_modules` and imports every submodule. A plugin module should expose a `create_plugin()` function, a `plugin` instance, or an `init_plugin(container, config)` function that returns an object implementing `PluginProtocol`.
 
-You can change the search location by passing a different package name to `PluginManager(package="myplugins")` when constructing it.
+You can change the search location by passing a different package name to `PluginManager(package="myplugins")` when constructing it.  Set
+`fail_fast=True` if plugin import errors should halt startup instead of only
+being logged.
 
 ## Configuration
 
