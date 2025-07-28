@@ -97,7 +97,7 @@
         }
       }
     },
-    "/api/v1/analytics/dashboard-summary": {
+    "/v1/analytics/dashboard-summary": {
       "get": {
         "summary": "Dashboard Summary",
         "operationId": "dashboard_summary_api_v1_analytics_dashboard_summary_get",
@@ -166,7 +166,7 @@
         ]
       }
     },
-    "/api/v1/analytics/access-patterns": {
+    "/v1/analytics/access-patterns": {
       "get": {
         "summary": "Access Patterns",
         "operationId": "access_patterns_api_v1_analytics_access_patterns_get",
@@ -221,7 +221,7 @@
         ]
       }
     },
-    "/api/v1/models/register": {
+    "/v1/models/register": {
       "post": {
         "tags": [
           "models"
@@ -272,7 +272,7 @@
         }
       }
     },
-    "/api/v1/models/{name}": {
+    "/v1/models/{name}": {
       "get": {
         "tags": [
           "models"
@@ -322,7 +322,7 @@
         }
       }
     },
-    "/api/v1/models/{name}/rollback": {
+    "/v1/models/{name}/rollback": {
       "post": {
         "tags": [
           "models"
@@ -481,7 +481,7 @@
         "title": "ValidationError"
       }
     },
-    "/api/v1/models/{name}/predict": {
+    "/v1/models/{name}/predict": {
       "post": {
         "tags": [
           "models"

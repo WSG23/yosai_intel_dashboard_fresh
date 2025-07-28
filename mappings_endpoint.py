@@ -47,7 +47,11 @@ class SuccessSchema(BaseModel):
 
 
 @mappings_bp.route("/v1/mappings/columns", methods=["POST"])
-@doc(description="Save column mappings", tags=["mappings"])
+@doc(
+    description="Save column mappings",
+    tags=["mappings"],
+    responses={200: "Success", 400: "Invalid input", 500: "Server Error"},
+)
 @validate_input(FileMappingSchema)
 @validate_output(SuccessSchema)
 def save_column_mappings_route(payload: FileMappingSchema):
@@ -75,7 +79,11 @@ def save_column_mappings_route(payload: FileMappingSchema):
 
 
 @mappings_bp.route("/v1/mappings/devices", methods=["POST"])
-@doc(description="Save device mappings", tags=["mappings"])
+@doc(
+    description="Save device mappings",
+    tags=["mappings"],
+    responses={200: "Success", 400: "Invalid input", 500: "Server Error"},
+)
 @validate_input(FileMappingSchema)
 @validate_output(SuccessSchema)
 def save_device_mappings_route(payload: FileMappingSchema):
@@ -103,7 +111,11 @@ def save_device_mappings_route(payload: FileMappingSchema):
 
 
 @mappings_bp.route("/v1/mappings/save", methods=["POST"])
-@doc(description="Save mappings", tags=["mappings"])
+@doc(
+    description="Save mappings",
+    tags=["mappings"],
+    responses={200: "Success", 500: "Server Error"},
+)
 @validate_input(MappingSaveSchema)
 @validate_output(SuccessSchema)
 def save_mappings(payload: MappingSaveSchema):
@@ -147,7 +159,11 @@ def save_mappings(payload: MappingSaveSchema):
 
 
 @mappings_bp.route("/v1/process-enhanced", methods=["POST"])
-@doc(description="Process data with mappings", tags=["mappings"])
+@doc(
+    description="Process data with mappings",
+    tags=["mappings"],
+    responses={200: "Success", 404: "Not Found", 500: "Server Error"},
+)
 @validate_input(ProcessSchema)
 @validate_output(SuccessSchema)
 def process_enhanced_data(payload: ProcessSchema):

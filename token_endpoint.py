@@ -23,6 +23,7 @@ class AccessTokenResponse(BaseModel):
 @token_bp.route("/v1/token/refresh", methods=["POST"])
 @validate_input(RefreshRequest)
 @validate_output(AccessTokenResponse)
+@doc(description="Refresh access token", tags=["token"], responses={200: "Success", 401: "Unauthorized"})
 def refresh_token_endpoint(payload: RefreshRequest):
     new_token = refresh_access_token(payload.refresh_token)
     if not new_token:

@@ -51,8 +51,8 @@ def _save_settings(settings: dict) -> None:
             json.dump(settings, f)
 
 
-@settings_bp.route("/api/v1/settings", methods=["GET"])
-@doc(description="Get user settings", tags=["settings"])
+@settings_bp.route("/v1/settings", methods=["GET"])
+@doc(description="Get user settings", tags=["settings"], responses={200: "Success"})
 @validate_output(SettingsSchema)
 def get_settings():
     """Return saved user settings or defaults."""
@@ -60,8 +60,8 @@ def get_settings():
     return settings, 200
 
 
-@settings_bp.route("/api/v1/settings", methods=["POST", "PUT"])
-@doc(description="Update user settings", tags=["settings"])
+@settings_bp.route("/v1/settings", methods=["POST", "PUT"])
+@doc(description="Update user settings", tags=["settings"], responses={200: "Success", 500: "Server Error"})
 @validate_input(SettingsSchema)
 @validate_output(SettingsSchema)
 def update_settings(payload: SettingsSchema):

@@ -77,7 +77,7 @@ def _create_app(monkeypatch):
 def test_patterns_returns_json(monkeypatch):
     app = _create_app(monkeypatch)
     client = app.test_client()
-    resp = client.get("/api/v1/analytics/patterns")
+    resp = client.get("/v1/analytics/patterns")
     assert resp.status_code == 200
     assert resp.is_json
     assert "status" in resp.get_json()
