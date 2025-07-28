@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime as _dt
 import time
 from typing import Any, Dict, Protocol
+import asyncio
 
 import asyncpg
 
@@ -57,8 +58,26 @@ async def fetch_dashboard_summary(conn: _Fetcher, days: int = 7) -> Dict[str, An
     }
 
 
-async def fetch_access_patterns(conn: _Fetcher, days: int = 7) -> Dict[str, Any]:
-    """Return access pattern analytics using an asyncpg connection."""
+async def fetch_access_patterns(
+    conn: _Fetcher,
+    days: int = 7,
+    *,
+    limit: int | None = None,
+    offset: int | None = None,
+) -> Dict[str, Any]:
+    """Return access pattern analytics using an asyncpg connection.
+
+    Parameters
+    ----------
+    conn:
+        Connection or pool used to execute the query.
+    days:
+        Number of days back to include in the analysis.
+    limit:
+        Maximum number of rows to return.
+    offset:
+        Row offset for pagination.
+    """
     end_date = _dt.datetime.now()
     start_date = end_date - _dt.timedelta(days=days)
 
@@ -69,10 +88,24 @@ async def fetch_access_patterns(conn: _Fetcher, days: int = 7) -> Dict[str, Any]
         GROUP BY hour
         ORDER BY hour
     """
+    count_query = f"SELECT COUNT(*) FROM ({hourly_query}) AS sub"
+
+    query = hourly_query
+    params = [start_date, end_date]
+    if limit is not None:
+        query += f" LIMIT ${len(params) + 1}"
+        params.append(limit)
+    if offset is not None:
+        query += f" OFFSET ${len(params) + 1}"
+        params.append(offset)
+
     start = time.perf_counter()
     queries_total.inc()
     try:
-        rows = await conn.fetch(hourly_query, start_date, end_date)
+        rows, total = await asyncio.gather(
+            conn.fetch(query, *params),
+            conn.fetchval(count_query, start_date, end_date),
+        )
     except Exception:
         query_errors_total.inc()
         raise
@@ -82,13 +115,14 @@ async def fetch_access_patterns(conn: _Fetcher, days: int = 7) -> Dict[str, Any]
             import logging
 
             logging.getLogger(__name__).warning("Slow query: %.2fms", elapsed_ms)
+
     hourly_data = [dict(r) for r in rows]
     peak_hour = max((r["hour"] for r in rows), default=None)
 
     return {
         "hourly_data": hourly_data,
         "peak_hour": peak_hour,
-        "total_hours_analyzed": len(hourly_data),
+        "total_count": int(total),
     }
 
 

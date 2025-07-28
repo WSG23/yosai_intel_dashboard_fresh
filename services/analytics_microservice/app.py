@@ -16,6 +16,7 @@ from fastapi import (
     Form,
     Header,
     HTTPException,
+    Query,
     Request,
     UploadFile,
     status,
@@ -225,16 +226,28 @@ async def dashboard_summary(_: None = Depends(verify_token)):
     return result
 
 
-@app.post("/api/v1/analytics/get_access_patterns_analysis")
+@app.post("/api/v1/analytics/access-patterns")
 @rate_limit_decorator()
 
-async def access_patterns(req: PatternsRequest, _: None = Depends(verify_token)):
-    cache_key = f"access:{req.days}"
+async def access_patterns(
+    req: PatternsRequest,
+    page: int = Query(1, ge=1),
+    size: int = Query(100, ge=1),
+    _: None = Depends(verify_token),
+):
+    cache_key = f"access:{req.days}:{page}:{size}"
     cached = await app.state.redis.get(cache_key)
     if cached:
         return json.loads(cached)
     pool = await get_pool()
-    result = await async_queries.fetch_access_patterns(pool, req.days)
+    result = await async_queries.fetch_access_patterns(
+        pool,
+        req.days,
+        limit=size,
+        offset=(page - 1) * size,
+    )
+    result["page"] = page
+    result["size"] = size
     await app.state.redis.set(cache_key, json.dumps(result), ex=app.state.cache_ttl)
     return result
 
