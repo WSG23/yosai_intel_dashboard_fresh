@@ -89,3 +89,11 @@ Found 2 instances:
 - SQLite
 
 ## Recommendations
+
+To improve overall quality and maintainability:
+
+1. Add missing Python docstrings and split long functions into smaller helpers.
+2. Handle errors explicitly in Go code to avoid silent failures.
+3. Replace `var` declarations with `const` or `let` and enable strict mode for JavaScript files.
+4. Remove debug-only code before deployment.
+5. Document API contracts for every microservice to keep interfaces clear.

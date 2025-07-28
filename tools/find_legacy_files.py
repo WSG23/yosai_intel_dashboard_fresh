@@ -6,6 +6,7 @@ import argparse
 import os
 from pathlib import Path
 
+
 from tools.legacy_utils import IGNORE_DIRS, scan_legacy_files
 
 
@@ -16,13 +17,15 @@ def main() -> None:
 
     for path, reasons in scan_legacy_files(Path("."), ignore_dirs=IGNORE_DIRS):
         print(f"{path}  # {', '.join(reasons)}")
+
         if args.delete:
             try:
                 os.remove(path)
-                print(f"Removed {path}")
+                logger.info(f"Removed {path}")
             except OSError as exc:
-                print(f"Failed to remove {path}: {exc}")
+                logger.error(f"Failed to remove {path}: {exc}")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     main()

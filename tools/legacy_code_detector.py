@@ -19,6 +19,8 @@ from tools.legacy_utils import (
     matches_patterns,
 )
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class FileInfo:
@@ -314,14 +316,15 @@ def main() -> None:
     results = {"deprecated_usage": deprecated, "legacy": legacy, "analysis": analysis}
 
     if args.json:
-        print(json.dumps(results, indent=2, default=str))
+        logger.info(json.dumps(results, indent=2, default=str))
     else:
-        print(detector.generate_report(analysis, root))
+        logger.info(detector.generate_report(analysis, root))
         for file, issues in deprecated.items():
-            print(f"\n{file}")
+            logger.info(f"\n{file}")
             for issue in issues:
-                print(f"  - {issue}")
+                logger.info(f"  - {issue}")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     main()
