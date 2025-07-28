@@ -105,7 +105,6 @@ nest-asyncio==1.6.0
 nodeenv==1.9.1
 numpy==1.26.4
 oauthlib==3.3.1
-openpyxl==3.1.5
 opentelemetry-api==1.35.0
 opentelemetry-sdk==1.35.0
 opentelemetry-exporter-jaeger==1.35.0
@@ -217,5 +216,4 @@ websockets==11.0.3
 Werkzeug==2.3.7
 wsproto==1.2.0
 WTForms==3.2.1
-xlsxwriter==3.2.5
 zipp==3.23.0
