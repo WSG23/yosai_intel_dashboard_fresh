@@ -49,6 +49,13 @@ HTTP port (defaults to `8004`).
 All services expose their runtime metrics at `/metrics` so Prometheus can scrape
 them without additional configuration.
 
+### Request Profiling Middleware
+
+Set `ENABLE_PROFILING=true` to enable a middleware that records request latency
+and memory usage. The middleware updates the `yosai_request_duration_seconds`
+and `yosai_request_memory_mb` Prometheus histograms for every request. Disable
+it again with `ENABLE_PROFILING=false`.
+
 ### Deprecated Function Usage
 
 Decorate legacy helpers with `@deprecated` from `core` to automatically record

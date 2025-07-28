@@ -17,6 +17,7 @@ class ServiceConfig:
     log_level: str = "INFO"
     metrics_addr: str = ""
     tracing_endpoint: str = ""
+    enable_profiling: bool = False
 
 
 def load_config(path: str) -> ServiceConfig:
@@ -31,6 +32,8 @@ def load_config(path: str) -> ServiceConfig:
             data[key[6:].lower()] = value
 
     cfg = ServiceConfig(**data)
+    if isinstance(cfg.enable_profiling, str):
+        cfg.enable_profiling = cfg.enable_profiling.lower() in {"1", "true", "yes"}
     errors = validate_config(
         YosaiConfig(
             service_name=cfg.service_name,
