@@ -16,6 +16,8 @@ import threading
 from pathlib import Path
 from typing import Any, Dict, List, Protocol
 
+import requests
+
 try:
     from typing import override
 except ImportError:  # pragma: no cover - for Python <3.12
@@ -25,7 +27,7 @@ import pandas as pd
 
 from config.dynamic_config import dynamic_config
 from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
-from core.di_decorators import injectable, inject
+from core.di_decorators import inject, injectable
 from core.protocols import (
     AnalyticsServiceProtocol,
     ConfigurationProtocol,
@@ -36,16 +38,15 @@ from core.protocols import (
 from models.ml import ModelRegistry
 from services.analytics.calculator import Calculator, create_calculator
 from services.analytics.data_loader import DataLoader, create_loader
+from services.analytics.orchestrator import AnalyticsOrchestrator
 from services.analytics.protocols import DataProcessorProtocol
 from services.analytics.publisher import Publisher, create_publisher
-from services.analytics.orchestrator import AnalyticsOrchestrator
-from services.database_retriever import DatabaseAnalyticsRetriever
-
+from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.analytics_summary import generate_sample_analytics
 from services.controllers.upload_controller import UploadProcessingController
 from services.data_processing.processor import Processor
-from services.helpers.database_initializer import initialize_database
 from services.database_retriever import DatabaseAnalyticsRetriever
+from services.helpers.database_initializer import initialize_database
 from services.interfaces import get_upload_data_service
 from services.summary_report_generator import SummaryReportGenerator
 from services.upload_data_service import UploadDataService
@@ -125,9 +126,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         upload_processor: UploadAnalyticsProcessor | None = None,
     ) -> None:
         self.database = database
-        self.data_processor = data_processor or Processor(
-            validator=SecurityValidator()
-        )
+        self.data_processor = data_processor or Processor(validator=SecurityValidator())
         self.config = config
         self.event_bus = event_bus
         self.storage = storage
@@ -143,10 +142,13 @@ class AnalyticsService(AnalyticsServiceProtocol):
         # Legacy attribute aliases
         self.data_loading_service = self.processor
         from services.data_processing.unified_file_validator import UnifiedFileValidator
+
         self.file_handler = UnifiedFileValidator()
 
         if upload_processor is None:
-            upload_processor = UploadAnalyticsProcessor(self.validation_service, self.processor)
+            upload_processor = UploadAnalyticsProcessor(
+                self.validation_service, self.processor
+            )
         if upload_controller is None:
             self.upload_controller = UploadProcessingController(
                 self.validation_service,
@@ -163,7 +165,6 @@ class AnalyticsService(AnalyticsServiceProtocol):
         calculator = calculator or Calculator(self.report_generator)
         publisher = publisher or Publisher(self.event_bus)
         self._create_orchestrator(loader, calculator, publisher)
-
 
     def _setup_database(
         self, db_retriever: DatabaseAnalyticsRetriever | None = None
@@ -211,11 +212,20 @@ class AnalyticsService(AnalyticsServiceProtocol):
                 logger.info(f"Forcing uploaded data usage (source was: {source})")
                 return self._process_uploaded_data_directly(uploaded_data)
 
-        except (ImportError, FileNotFoundError, OSError, RuntimeError) as e:
-            logger.error(f"Uploaded data check failed: {e}", exc_info=True)
-        except Exception:
-            logger.exception("Unexpected error during uploaded data check")
-            raise
+        except (
+            ImportError,
+            FileNotFoundError,
+            OSError,
+            RuntimeError,
+            ValueError,
+            pd.errors.ParserError,
+        ) as exc:
+            logger.error(
+                "Uploaded data check failed (%s): %s",
+                type(exc).__name__,
+                exc,
+                exc_info=True,
+            )
 
         # Original logic for when no uploaded data
         if source == "sample":
@@ -469,10 +479,23 @@ class AnalyticsService(AnalyticsServiceProtocol):
         dest.mkdir(parents=True, exist_ok=True)
         local_path = dest / os.path.basename(record.storage_uri)
         try:
-            self.model_registry.download_artifact(record.storage_uri, str(local_path))
+            self.model_registry.download_artifact(
+                record.storage_uri,
+                str(local_path),
+            )
             return str(local_path)
-        except Exception:  # pragma: no cover - best effort
-            logger.exception(f"Failed to download model {name}")
+        except (
+            OSError,
+            RuntimeError,
+            requests.RequestException,
+            ValueError,
+        ) as exc:  # pragma: no cover - best effort
+            logger.error(
+                "Failed to download model %s (%s): %s",
+                name,
+                type(exc).__name__,
+                exc,
+            )
             return None
 
 
