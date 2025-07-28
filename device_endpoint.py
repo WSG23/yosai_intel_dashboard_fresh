@@ -106,7 +106,11 @@ def build_device_mappings(
 
 
 @device_bp.route("/v1/ai/suggest-devices", methods=["POST"])
-@doc(description="Suggest device mappings", tags=["device"])
+@doc(
+    description="Suggest device mappings",
+    tags=["device"],
+    responses={200: "Success", 404: "File not found", 500: "Server Error"},
+)
 @validate_input(DeviceSuggestSchema)
 @validate_output(DeviceResponseSchema)
 def suggest_devices(payload: DeviceSuggestSchema):

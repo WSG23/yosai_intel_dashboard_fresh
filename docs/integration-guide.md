@@ -286,7 +286,7 @@ document.getElementById('save-consent-preferences').onclick = function() {
     });
     
     // Save consents via API
-    fetch('/api/v1/compliance/consent', {
+    fetch('/v1/compliance/consent', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -299,7 +299,7 @@ document.getElementById('save-consent-preferences').onclick = function() {
 
 document.getElementById('download-my-data').onclick = function() {
     // Request data export
-    fetch('/api/v1/compliance/dsar/request', {
+    fetch('/v1/compliance/dsar/request', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -313,7 +313,7 @@ document.getElementById('download-my-data').onclick = function() {
 
 document.getElementById('delete-my-data').onclick = function() {
     if (confirm('Are you sure you want to permanently delete all your data? This cannot be undone.')) {
-        fetch('/api/v1/compliance/dsar/request', {
+        fetch('/v1/compliance/dsar/request', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({

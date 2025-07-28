@@ -9,6 +9,10 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, Optional
 from flask import Blueprint, request, jsonify
+from error_handling import ErrorCategory, ErrorHandler
+from yosai_framework.errors import CODE_TO_STATUS
+from shared.errors.types import ErrorCode
+from flask_apispec import doc
 
 logger = logging.getLogger(__name__)
 
@@ -29,13 +33,15 @@ class ComplianceAPI:
         """
         self.container = container
         self.config = config
-        self.blueprint = Blueprint('compliance', __name__, url_prefix='/api/v1/compliance')
+        self.blueprint = Blueprint('compliance', __name__, url_prefix='/v1/compliance')
+        self.handler = ErrorHandler()
         self._setup_routes()
     
     def _setup_routes(self) -> None:
         """Setup API routes"""
         
         @self.blueprint.route('/health', methods=['GET'])
+        @doc(tags=['compliance'], responses={200: 'Healthy', 500: 'Server Error'})
         def health_check():
             """Health check endpoint"""
             try:
@@ -47,12 +53,11 @@ class ComplianceAPI:
                 }), 200
             except Exception as e:
                 logger.error(f"Health check failed: {e}")
-                return jsonify({
-                    'status': 'unhealthy',
-                    'error': str(e)
-                }), 500
+                err = self.handler.handle(e, ErrorCategory.INTERNAL)
+                return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
         
         @self.blueprint.route('/consent', methods=['POST'])
+        @doc(tags=['compliance'], responses={200: 'Success', 400: 'Bad Request', 503: 'Service Unavailable', 500: 'Server Error'})
         def grant_consent():
             """Grant consent for data processing"""
             try:
@@ -70,10 +75,11 @@ class ComplianceAPI:
                     'status': 'success',
                     'message': 'Consent granted successfully'
                 }), 200
-                    
+
             except Exception as e:
                 logger.error(f"Error granting consent: {e}")
-                return jsonify({'error': 'Internal server error'}), 500
+                err = self.handler.handle(e, ErrorCategory.INTERNAL)
+                return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
     
     def register_routes(self, app) -> bool:
         """

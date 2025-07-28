@@ -38,7 +38,11 @@ class StatusSchema(BaseModel):
 
 
 @upload_bp.route("/v1/upload", methods=["POST"])
-@doc(description="Upload a file", tags=["upload"])
+@doc(
+    description="Upload a file",
+    tags=["upload"],
+    responses={202: "Accepted", 400: "Invalid CSRF token", 500: "Server Error"},
+)
 @validate_input(UploadRequestSchema)
 @validate_output(UploadResponseSchema)
 def upload_files(payload: UploadRequestSchema):
@@ -91,7 +95,7 @@ def upload_files(payload: UploadRequestSchema):
 
 
 @upload_bp.route("/v1/upload/status/<job_id>", methods=["GET"])
-@doc(params={"job_id": "Upload job id"}, tags=["upload"])
+@doc(params={"job_id": "Upload job id"}, tags=["upload"], responses={200: "Success"})
 @validate_output(StatusSchema)
 def upload_status(job_id: str):
     """Return background processing status for ``job_id``."""

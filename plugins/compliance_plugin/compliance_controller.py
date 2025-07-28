@@ -7,6 +7,9 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from flask import Blueprint, jsonify, request
+from error_handling import ErrorCategory, ErrorHandler
+from yosai_framework.errors import CODE_TO_STATUS
+from shared.errors.types import ErrorCode
 
 from flask_login import current_user, login_required
 
@@ -24,7 +27,9 @@ from database.secure_exec import execute_query
 logger = logging.getLogger(__name__)
 
 # Create blueprint for compliance endpoints
-compliance_bp = Blueprint("compliance", __name__, url_prefix="/api/v1/compliance")
+compliance_bp = Blueprint("compliance", __name__, url_prefix="/v1/compliance")
+
+handler = ErrorHandler()
 
 
 def get_services() -> tuple[ConsentService, DSARService, ComplianceAuditLogger]:
@@ -119,7 +124,8 @@ def grant_consent():
 
     except Exception as e:
         logger.error(f"Error granting consent: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+        err = handler.handle(e, ErrorCategory.INTERNAL)
+        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
 
 
 @compliance_bp.route("/consent/<consent_type>", methods=["DELETE"])
@@ -184,7 +190,8 @@ def withdraw_consent(consent_type: str):
 
     except Exception as e:
         logger.error(f"Error withdrawing consent: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+        err = handler.handle(e, ErrorCategory.INTERNAL)
+        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
 
 
 @compliance_bp.route("/consent/status", methods=["GET"])
@@ -249,7 +256,8 @@ def get_consent_status():
 
     except Exception as e:
         logger.error(f"Error getting consent status: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+        err = handler.handle(e, ErrorCategory.INTERNAL)
+        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
 
 
 @compliance_bp.route("/dsar/request", methods=["POST"])
@@ -340,7 +348,8 @@ def create_dsar_request():
 
     except Exception as e:
         logger.error(f"Error creating DSAR request: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+        err = handler.handle(e, ErrorCategory.INTERNAL)
+        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
 
 
 @compliance_bp.route("/dsar/requests", methods=["GET"])
@@ -384,7 +393,8 @@ def get_user_dsar_requests():
 
     except Exception as e:
         logger.error(f"Error getting DSAR requests: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+        err = handler.handle(e, ErrorCategory.INTERNAL)
+        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
 
 
 @compliance_bp.route("/admin/dsar/pending", methods=["GET"])
@@ -436,7 +446,8 @@ def get_pending_dsar_requests():
 
     except Exception as e:
         logger.error(f"Error getting pending DSAR requests: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+        err = handler.handle(e, ErrorCategory.INTERNAL)
+        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
 
 
 @compliance_bp.route("/admin/dsar/<request_id>/process", methods=["POST"])
@@ -492,7 +503,8 @@ def process_dsar_request(request_id: str):
 
     except Exception as e:
         logger.error(f"Error processing DSAR request {request_id}: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+        err = handler.handle(e, ErrorCategory.INTERNAL)
+        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
 
 
 @compliance_bp.route("/audit/my-data", methods=["GET"])
@@ -539,7 +551,8 @@ def get_my_audit_trail():
 
     except Exception as e:
         logger.error(f"Error getting audit trail: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+        err = handler.handle(e, ErrorCategory.INTERNAL)
+        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
 
 
 @compliance_bp.route("/admin/compliance-report", methods=["GET"])
@@ -604,7 +617,8 @@ def generate_compliance_report():
 
     except Exception as e:
         logger.error(f"Error generating compliance report: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+        err = handler.handle(e, ErrorCategory.INTERNAL)
+        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
 
 
 @compliance_bp.route("/health", methods=["GET"])
@@ -648,28 +662,33 @@ def compliance_health_check():
 
     except Exception as e:
         logger.error(f"Compliance health check failed: {e}")
-        return jsonify({"status": "unhealthy", "error": str(e)}), 503
+        err = handler.handle(e, ErrorCategory.INTERNAL)
+        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
 
 
 # Error handlers
 @compliance_bp.errorhandler(400)
 def bad_request(error):
-    return jsonify({"error": "Bad request"}), 400
+    err = handler.handle(error, ErrorCategory.INVALID_INPUT)
+    return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INVALID_INPUT]
 
 
 @compliance_bp.errorhandler(403)
 def forbidden(error):
-    return jsonify({"error": "Forbidden - insufficient permissions"}), 403
+    err = handler.handle(error, ErrorCategory.UNAUTHORIZED)
+    return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.UNAUTHORIZED]
 
 
 @compliance_bp.errorhandler(404)
 def not_found(error):
-    return jsonify({"error": "Resource not found"}), 404
+    err = handler.handle(error, ErrorCategory.NOT_FOUND)
+    return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.NOT_FOUND]
 
 
 @compliance_bp.errorhandler(500)
 def internal_error(error):
-    return jsonify({"error": "Internal server error"}), 500
+    err = handler.handle(error, ErrorCategory.INTERNAL)
+    return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
 
 
 # Register blueprint function

@@ -99,7 +99,7 @@ def test_dashboard_summary_endpoint(app_fixture):
     client, dummy = app_fixture
     token = _token("secret")
     resp = client.get(
-        "/api/v1/analytics/dashboard-summary",
+        "/v1/analytics/dashboard-summary",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 200
@@ -111,7 +111,7 @@ def test_access_patterns_endpoint(app_fixture):
     client, dummy = app_fixture
     token = _token("secret")
     resp = client.get(
-        "/api/v1/analytics/access-patterns",
+        "/v1/analytics/access-patterns",
         params={"days": 3},
 
         headers={"Authorization": f"Bearer {token}"},

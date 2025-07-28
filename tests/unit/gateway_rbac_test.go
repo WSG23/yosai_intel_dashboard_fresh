@@ -16,7 +16,7 @@ func TestGatewayRBACHeaders(t *testing.T) {
 
 	paths := []string{
 		"/api/v1/doors/foo",
-		"/api/v1/analytics/foo",
+                "/v1/analytics/foo",
 		"/api/v1/events/foo",
 		"/admin/foo",
 	}

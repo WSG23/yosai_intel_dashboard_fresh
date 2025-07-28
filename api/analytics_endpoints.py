@@ -15,9 +15,9 @@ from services.security import require_permission
 
 logger = logging.getLogger(__name__)
 
-analytics_bp = Blueprint("analytics", __name__, url_prefix="/api/v1/analytics")
-graphs_bp = Blueprint("graphs", __name__, url_prefix="/api/v1/graphs")
-export_bp = Blueprint("export", __name__, url_prefix="/api/v1/export")
+analytics_bp = Blueprint("analytics", __name__, url_prefix="/v1/analytics")
+graphs_bp = Blueprint("graphs", __name__, url_prefix="/v1/graphs")
+export_bp = Blueprint("export", __name__, url_prefix="/v1/export")
 
 handler = ErrorHandler()
 
@@ -76,7 +76,7 @@ MOCK_DATA = {
 
 @analytics_bp.route("/patterns", methods=["GET"])
 @require_permission("analytics.read")
-@doc(description="Get pattern analytics", tags=["analytics"])
+@doc(description="Get pattern analytics", tags=["analytics"], responses={200: "Success", 500: "Server Error"})
 @use_kwargs(AnalyticsQuerySchema, location="query")
 @marshal_with(AnalyticsResponseSchema)
 def get_patterns_analysis(**args):
@@ -88,7 +88,7 @@ def get_patterns_analysis(**args):
 
 @analytics_bp.route("/sources", methods=["GET"])
 @require_permission("analytics.read")
-@doc(description="List data sources", tags=["analytics"])
+@doc(description="List data sources", tags=["analytics"], responses={200: "Success"})
 @marshal_with(AnalyticsResponseSchema)
 def get_data_sources():
     return jsonify({"sources": [{"value": "test", "label": "Test Data Source"}]})
@@ -96,7 +96,7 @@ def get_data_sources():
 
 @analytics_bp.route("/health", methods=["GET"])
 @require_permission("analytics.read")
-@doc(description="Analytics service health", tags=["analytics"])
+@doc(description="Analytics service health", tags=["analytics"], responses={200: "Success"})
 @marshal_with(AnalyticsResponseSchema)
 def analytics_health():
     return jsonify({"status": "healthy", "service": "minimal"})
@@ -104,7 +104,7 @@ def analytics_health():
 
 @graphs_bp.route("/chart/<chart_type>", methods=["GET"])
 @require_permission("analytics.read")
-@doc(description="Get chart data", params={"chart_type": "Chart type"}, tags=["graphs"])
+@doc(description="Get chart data", params={"chart_type": "Chart type"}, tags=["graphs"], responses={200: "Success", 400: "Invalid chart", 500: "Server Error"})
 @use_kwargs(AnalyticsQuerySchema, location="query")
 @marshal_with(AnalyticsResponseSchema)
 def get_chart_data(chart_type, **args):
@@ -123,7 +123,7 @@ def get_chart_data(chart_type, **args):
 
 @export_bp.route("/analytics/json", methods=["GET"])
 @require_permission("analytics.read")
-@doc(description="Export analytics as JSON", tags=["export"])
+@doc(description="Export analytics as JSON", tags=["export"], responses={200: "Success"})
 @use_kwargs(AnalyticsQuerySchema, location="query")
 def export_analytics_json(**args):
     facility = request.args.get("facility_id", "default")
@@ -145,7 +145,7 @@ def register_analytics_blueprints(app):
 
 @graphs_bp.route("/available-charts", methods=["GET"])
 @require_permission("analytics.read")
-@doc(description="List available charts", tags=["graphs"])
+@doc(description="List available charts", tags=["graphs"], responses={200: "Success"})
 @marshal_with(AnalyticsResponseSchema)
 def get_available_charts():
     """Get list of available chart types."""
@@ -176,7 +176,7 @@ def get_available_charts():
 
 @export_bp.route("/formats", methods=["GET"])
 @require_permission("analytics.read")
-@doc(description="List export formats", tags=["export"])
+@doc(description="List export formats", tags=["export"], responses={200: "Success"})
 @marshal_with(AnalyticsResponseSchema)
 def get_export_formats():
     """Get available export formats."""
@@ -191,7 +191,7 @@ def get_export_formats():
 @analytics_bp.route("/all", methods=["GET"])
 @analytics_bp.route("/<source_type>", methods=["GET"])
 @require_permission("analytics.read")
-@doc(description="Get analytics by source", params={"source_type": "Source type"}, tags=["analytics"])
+@doc(description="Get analytics by source", params={"source_type": "Source type"}, tags=["analytics"], responses={200: "Success", 500: "Server Error"})
 @use_kwargs(AnalyticsQuerySchema, location="query")
 @marshal_with(AnalyticsResponseSchema)
 def get_analytics_by_source(source_type="all", **args):
