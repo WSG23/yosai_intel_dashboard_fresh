@@ -13,7 +13,8 @@ from tenacity import (
 )
 
 from services.resilience.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
-from tracing import propagate_context
+
+from .protocols import ServiceClient
 
 
 class RestClient:
@@ -82,14 +83,18 @@ class RestClient:
                             return await resp.json()
                         return await resp.text()
 
-        async for attempt in AsyncRetrying(
-            reraise=True,
-            stop=stop_after_attempt(self.retries),
-            wait=wait_exponential(multiplier=0.5, min=0.5, max=5),
-            retry=retry_if_exception_type(aiohttp.ClientError),
-        ):
-            with attempt:
-                return await _do_request()
+
+def create_service_client(service_name: str) -> ServiceClient:
+    """Create a service client resolving *service_name* URL from env vars."""
+    env = f"{service_name.upper()}_SERVICE_URL"
+    base_url = os.getenv(env, f"http://{service_name}")
+    return AsyncRestClient(base_url)
 
 
-__all__ = ["RestClient", "CircuitBreakerOpen"]
+__all__ = [
+    "AsyncRestClient",
+    "RetryPolicy",
+    "create_service_client",
+    "CircuitBreakerOpen",
+]
+
