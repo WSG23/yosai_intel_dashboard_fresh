@@ -2,8 +2,6 @@ package rbac
 
 import (
 	"context"
-	"os"
-	"strings"
 	"sync"
 	"time"
 )
@@ -13,6 +11,7 @@ type RBACService struct {
 	mu    sync.Mutex
 	ttl   time.Duration
 	cache map[string]cacheEntry
+	store PermissionStore
 }
 
 type cacheEntry struct {
@@ -22,10 +21,15 @@ type cacheEntry struct {
 
 // New returns a new RBACService with the given TTL for cached entries.
 func New(ttl time.Duration) *RBACService {
+	return NewWithStore(EnvStore{}, ttl)
+}
+
+// NewWithStore returns a new RBACService with the provided store and TTL for cached entries.
+func NewWithStore(store PermissionStore, ttl time.Duration) *RBACService {
 	if ttl <= 0 {
 		ttl = time.Minute
 	}
-	return &RBACService{ttl: ttl, cache: make(map[string]cacheEntry)}
+	return &RBACService{ttl: ttl, cache: make(map[string]cacheEntry), store: store}
 }
 
 // Permissions returns the permission list for a subject, populating the cache if needed.
@@ -51,26 +55,10 @@ func (r *RBACService) Permissions(ctx context.Context, subject string) ([]string
 }
 
 func (r *RBACService) fetchPermissions(ctx context.Context, subject string) ([]string, error) {
-	// For this example permissions are provided via environment variables
-	// using the key PERMISSIONS_<SUBJECT>. A fallback PERMISSIONS key is used
-	// when none are defined for the specific subject.
-	key := "PERMISSIONS_" + strings.ToUpper(subject)
-	v := os.Getenv(key)
-	if v == "" {
-		v = os.Getenv("PERMISSIONS")
-	}
-	if v == "" {
+	if r.store == nil {
 		return nil, nil
 	}
-	parts := strings.Split(v, ",")
-	perms := make([]string, 0, len(parts))
-	for _, p := range parts {
-		p = strings.TrimSpace(p)
-		if p != "" {
-			perms = append(perms, p)
-		}
-	}
-	return perms, nil
+	return r.store.Permissions(ctx, subject)
 }
 
 // HasPermission checks if subject has the given permission.

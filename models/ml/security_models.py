@@ -2,7 +2,6 @@ from __future__ import annotations
 
 """Training utilities for core ML models."""
 
-import hashlib
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,6 +10,8 @@ from typing import Any, Tuple
 import joblib
 import numpy as np
 import pandas as pd
+
+from utils.hashing import hash_dataframe
 
 from utils.sklearn_compat import optional_import
 from analytics.feature_extraction import extract_event_features
@@ -82,11 +83,6 @@ if keras is None:  # pragma: no cover - fallback definitions
             Adam = object
 
 
-# ---------------------------------------------------------------------------
-def _hash_dataframe(df: pd.DataFrame) -> str:
-    """Return SHA256 hash of ``df`` serialized as CSV."""
-    csv_bytes = df.to_csv(index=False).encode()
-    return hashlib.sha256(csv_bytes).hexdigest()
 
 
 @dataclass
@@ -271,7 +267,7 @@ def _register_model(
             recall=metrics.get("recall", 0.0),
         )
     )
-    dataset_hash = _hash_dataframe(df)
+    dataset_hash = hash_dataframe(df)
     with Path(f"{name}.joblib").open("wb") as fh:
         joblib.dump(model_obj, fh)
     record = registry.register_model(name, f"{name}.joblib", metrics, dataset_hash)

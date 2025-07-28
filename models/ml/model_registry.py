@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import os
 import logging
+import shutil
 from datetime import datetime
 from typing import Any, Dict, List
+from urllib.parse import urlparse
 
 import boto3
 import mlflow
+import requests
 from packaging.version import Version
 from sqlalchemy import (
     Boolean,
@@ -192,10 +195,25 @@ class ModelRegistry:
 
     # --------------------------------------------------------------
     def download_artifact(self, storage_uri: str, destination: str) -> None:
-        if storage_uri.startswith("s3://"):
-            path = storage_uri[5:]
-            bucket, key = path.split("/", 1)
+        parsed = urlparse(storage_uri)
+        scheme = parsed.scheme
+
+        if scheme == "s3":
+            bucket = parsed.netloc
+            key = parsed.path.lstrip("/")
             self.s3.download_file(bucket, key, destination)
+        elif scheme in ("file", ""):
+            src = parsed.path if scheme == "file" else storage_uri
+            shutil.copy(src, destination)
+        elif scheme in ("http", "https"):
+            resp = requests.get(storage_uri, stream=True)
+            resp.raise_for_status()
+            with open(destination, "wb") as fh:
+                for chunk in resp.iter_content(chunk_size=8192):
+                    if chunk:
+                        fh.write(chunk)
+        else:
+            raise ValueError(f"Unsupported storage URI scheme: {scheme}")
 
 
 __all__ = ["ModelRegistry", "ModelRecord", "Base"]

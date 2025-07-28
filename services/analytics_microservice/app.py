@@ -16,6 +16,7 @@ from fastapi import (
     Form,
     Header,
     HTTPException,
+    Query,
     Request,
     UploadFile,
     status,
@@ -28,6 +29,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 import joblib
 import redis.asyncio as aioredis
+from models.ml import ModelRegistry
 
 
 from analytics import anomaly_detection, feature_extraction, security_patterns
@@ -126,15 +128,31 @@ def verify_token(authorization: str = Header("")) -> None:
 def preload_active_models() -> None:
     """Load active models from the registry into memory."""
     app.state.models = {}
-    for name, registry in app.state.model_registry.items():
-        for entry in registry:
-            if entry.get("active"):
-                try:
-                    model = joblib.load(entry["path"])
-                    entry["object"] = model
-                    app.state.models[name] = model
-                except Exception:  # pragma: no cover - ignore invalid models
-                    pass
+    registry: ModelRegistry = app.state.model_registry
+    try:
+        records = registry.list_models()
+    except Exception:  # pragma: no cover - registry unavailable
+        return
+    names = {r.name for r in records}
+    for name in names:
+        record = registry.get_model(name, active_only=True)
+        if record is None:
+            continue
+        local_dir = app.state.model_dir / name / record.version
+        local_dir.mkdir(parents=True, exist_ok=True)
+        filename = os.path.basename(record.storage_uri)
+        local_path = local_dir / filename
+        if not local_path.exists():
+            try:
+                registry.download_artifact(record.storage_uri, str(local_path))
+            except Exception:  # pragma: no cover - best effort
+                continue
+        try:
+            model_obj = joblib.load(local_path)
+            app.state.models[name] = model_obj
+        except Exception:  # pragma: no cover - invalid model
+            continue
+
 
 class PatternsRequest(BaseModel):
     days: int = 7
@@ -163,7 +181,11 @@ async def _startup() -> None:
 
     app.state.model_dir = Path(os.environ.get("MODEL_DIR", "model_store"))
     app.state.model_dir.mkdir(parents=True, exist_ok=True)
-    app.state.model_registry = {}
+
+    db_url = os.getenv("MODEL_REGISTRY_DB", "sqlite:///model_registry.db")
+    bucket = os.getenv("MODEL_REGISTRY_BUCKET", "local-models")
+    mlflow_uri = os.getenv("MLFLOW_URI")
+    app.state.model_registry = ModelRegistry(db_url, bucket, mlflow_uri=mlflow_uri)
     preload_active_models()
     app.state.ready = True
     app.state.startup_complete = True
@@ -214,7 +236,6 @@ async def _shutdown() -> None:
 
 @app.get("/api/v1/analytics/dashboard-summary")
 @rate_limit_decorator()
-
 async def dashboard_summary(_: None = Depends(verify_token)):
     cache_key = "dashboard_summary"
     cached = await app.state.redis.get(cache_key)
@@ -233,11 +254,13 @@ async def access_patterns(
     days: int = Query(7), _: None = Depends(verify_token)
 ):
     cache_key = f"access:{days}"
+
     cached = await app.state.redis.get(cache_key)
     if cached:
         return json.loads(cached)
     pool = await get_pool()
     result = await async_queries.fetch_access_patterns(pool, days)
+
     await app.state.redis.set(cache_key, json.dumps(result), ex=app.state.cache_ttl)
     return result
 
@@ -302,33 +325,35 @@ async def register_model(
     dest_path = dest_dir / file.filename
     contents = await file.read()
     dest_path.write_bytes(contents)
-    meta = {"name": name, "version": version, "path": str(dest_path)}
-    meta["active"] = True
     try:
-        model_obj = joblib.load(dest_path)
-        meta["object"] = model_obj
-        app.state.models[name] = model_obj
-    except Exception:  # pragma: no cover - invalid model file
-        meta["object"] = None
-    registry = app.state.model_registry.setdefault(name, [])
-    for entry in registry:
-        entry["active"] = False
-    registry.append(meta)
-    return meta
+        record = app.state.model_registry.register_model(
+            name,
+            str(dest_path),
+            {},
+            "",
+            version=version,
+        )
+        app.state.model_registry.set_active_version(name, record.version)
+        try:
+            model_obj = joblib.load(dest_path)
+            app.state.models[name] = model_obj
+        except Exception:  # pragma: no cover - invalid model file
+            pass
+    except Exception as exc:  # pragma: no cover - registry failure
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return {"name": name, "version": record.version}
 
 
 @models_router.get("/{name}")
 @rate_limit_decorator()
 async def list_versions(name: str, _: None = Depends(verify_token)):
-    registry = app.state.model_registry.get(name)
-    if not registry:
+    records = app.state.model_registry.list_models(name)
+    if not records:
         raise HTTPException(status_code=404, detail="model not found")
     return {
         "name": name,
-        "versions": [e["version"] for e in registry],
-        "active_version": next(
-            (e["version"] for e in registry if e.get("active")), None
-        ),
+        "versions": [r.version for r in records],
+        "active_version": next((r.version for r in records if r.is_active), None),
     }
 
 
@@ -336,14 +361,13 @@ async def list_versions(name: str, _: None = Depends(verify_token)):
 async def rollback(
     name: str, version: str = Form(...), _: None = Depends(verify_token)
 ):
-
-    registry = app.state.model_registry.get(name)
-    if not registry:
-        raise HTTPException(status_code=404, detail="model not found")
-    if version not in [e["version"] for e in registry]:
+    records = app.state.model_registry.list_models(name)
+    if not records or version not in [r.version for r in records]:
         raise HTTPException(status_code=404, detail="version not found")
-    for entry in registry:
-        entry["active"] = entry["version"] == version
+    try:
+        app.state.model_registry.set_active_version(name, version)
+    except Exception as exc:  # pragma: no cover - registry failure
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     preload_active_models()
     return {"name": name, "active_version": version}
@@ -356,17 +380,24 @@ async def predict(
     req: PredictRequest,
     _: None = Depends(verify_token),
 ):
-    registry = app.state.model_registry.get(name)
-    if not registry:
-        raise HTTPException(status_code=404, detail="model not found")
-    active = next((e for e in registry if e.get("active")), None)
-    if not active:
+    record = app.state.model_registry.get_model(name, active_only=True)
+    if record is None:
         raise HTTPException(status_code=404, detail="no active version")
-    model_obj = active.get("object")
+    local_dir = app.state.model_dir / name / record.version
+    local_dir.mkdir(parents=True, exist_ok=True)
+    local_path = local_dir / os.path.basename(record.storage_uri)
+    if not local_path.exists():
+        try:
+            app.state.model_registry.download_artifact(
+                record.storage_uri, str(local_path)
+            )
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    model_obj = app.state.models.get(name)
     if model_obj is None:
         try:
-            model_obj = joblib.load(active["path"])
-            active["object"] = model_obj
+            model_obj = joblib.load(local_path)
             app.state.models[name] = model_obj
         except Exception as exc:
             raise HTTPException(status_code=500, detail=str(exc)) from exc

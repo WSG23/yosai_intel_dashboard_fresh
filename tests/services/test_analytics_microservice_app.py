@@ -113,8 +113,10 @@ def test_access_patterns_endpoint(app_fixture):
     resp = client.get(
         "/api/v1/analytics/access-patterns",
         params={"days": 3},
+
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 200
-    assert resp.json() == {"days": 3}
+    assert resp.json()["page"] == 1
+    assert resp.json()["size"] == 50
     assert dummy.pattern_calls == [3]

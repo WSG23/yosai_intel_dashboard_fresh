@@ -21,3 +21,13 @@ python scripts/vault_rotate.py
 ```
 
 In emergency situations follow the [break glass procedure](break_glass.md).
+
+## Gateway Security Headers
+
+The gateway adds several HTTP response headers to improve security:
+
+- `Content-Security-Policy: default-src 'self'`
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
+
+These headers are applied globally by middleware and help prevent content injection attacks, framing vulnerabilities, and MIME type sniffing.
