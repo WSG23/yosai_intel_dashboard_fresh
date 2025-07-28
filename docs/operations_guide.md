@@ -24,6 +24,33 @@ to track how far the TimescaleDB copy lags behind the primary database. The
 alert rule defined in `monitoring/alerts.yml` fires when this value exceeds
 60&nbsp;seconds for five minutes.
 
+### CPU & Memory Alerts
+
+Prometheus also records CPU and memory usage for each pod. Edit
+`monitoring/prometheus/rules/app_alerts.yml` to trigger alerts when resource
+limits are approached. Example rules:
+
+```yaml
+- alert: CPUHighUsage
+  expr: avg(rate(container_cpu_usage_seconds_total[5m])) by (pod) > 0.8
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: Pod CPU usage above 80% for 5 minutes
+- alert: MemoryHighUsage
+  expr: container_memory_usage_bytes{image!=""} /
+    container_spec_memory_limit_bytes{image!=""} > 0.9
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: Pod memory usage above 90% of limit
+```
+
+Import `monitoring/grafana/dashboards/unified-platform.json` into Grafana to view
+CPU and memory graphs based on these metrics.
+
 ## Performance Dashboards
 
 Prometheus scrapes metrics from `/metrics` using the sample
