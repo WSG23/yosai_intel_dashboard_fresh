@@ -288,7 +288,7 @@ def show_file_processing():
             st.subheader("🤖 AI Column Suggestions")
             if st.button("Get AI Suggestions"):
                 try:
-                    from services.data_enhancer import get_ai_column_suggestions
+                    from services.data_enhancer.mapping_utils import get_ai_column_suggestions
 
                     suggestions = get_ai_column_suggestions(df)
 

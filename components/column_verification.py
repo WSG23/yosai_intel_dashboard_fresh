@@ -13,7 +13,7 @@ import pandas as pd
 from dash import ALL, MATCH, Input, Output, State, dcc, html
 
 from components.plugin_adapter import ComponentPluginAdapter
-from services.data_enhancer import (
+from services.data_enhancer.mapping_utils import (
     get_ai_column_suggestions as simple_column_suggestions,
 )
 from services.learning.src.api.consolidated_service import get_learning_service

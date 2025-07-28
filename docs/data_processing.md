@@ -9,7 +9,7 @@ services/
   data_processing/
       file_processor.py     # Validate and parse uploads
       processor.py          # Coordinate validation and enhancement
-      data_enhancer.py      # Enrich DataFrame columns
+      data_enhancer/        # Data enhancer package
       analytics_engine.py   # Produce charts and metrics
 ```
 
