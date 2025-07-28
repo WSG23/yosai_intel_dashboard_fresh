@@ -28,3 +28,23 @@ Example message:
   "data_summary": {"total_records": 120}
 }
 ```
+
+## Demo Provider
+
+`services/websocket_data_provider.py` offers a small helper that periodically
+publishes sample analytics to the `EventBus`. When used together with
+`AnalyticsWebSocketServer` it enables a fully self-contained demo of the real
+-time dashboard:
+
+```python
+from core.events import EventBus
+from services.websocket_server import AnalyticsWebSocketServer
+from services.websocket_data_provider import WebSocketDataProvider
+
+bus = EventBus()
+server = AnalyticsWebSocketServer(bus)
+provider = WebSocketDataProvider(bus)
+```
+
+The provider runs on a background thread and can be stopped via
+`provider.stop()`.
