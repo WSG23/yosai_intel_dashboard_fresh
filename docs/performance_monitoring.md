@@ -277,3 +277,25 @@ With the default settings the system should handle more than 2,500 events per
 minute while keeping the average processing latency under a second.  Metrics
 are scraped from the gateway at `http://localhost:9090` and can be visualised
 using the example Grafana dashboard in `dashboards/performance/load_test.json`.
+
+### Psutil and Tracemalloc Profiling
+
+Two helper scripts under `monitoring/` capture runtime resource usage.
+
+* `psutil_profile.py` monitors a running PID or executes a command while recording CPU and memory usage.
+
+  ```bash
+  python -m monitoring.psutil_profile 1234 --duration 30 --interval 1 --output profile.json
+  ```
+
+  To profile a new command:
+
+  ```bash
+  python -m monitoring.psutil_profile python my_script.py --duration 10
+  ```
+
+* `tracemalloc_profile.py` runs a Python script with `tracemalloc` enabled and prints the top allocation sites. A snapshot can be saved for later analysis.
+
+  ```bash
+  python -m monitoring.tracemalloc_profile scripts/my_job.py --snapshot allocs.snap
+  ```

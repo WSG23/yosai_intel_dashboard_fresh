@@ -50,6 +50,17 @@ jobs:
             --prom-url http://localhost:9090 \
             --rate 50 --duration 60 | tee load_test_results.json
 
+      - name: Profile analytics service
+        run: |
+          CID=$(docker compose -f load-tests/docker-compose.yml ps -q analytics-service)
+          docker exec "$CID" python -m monitoring.psutil_profile 1 --duration 5 --interval 1 > psutil_analytics.log
+
+      - name: Upload profiling results
+        uses: actions/upload-artifact@v4
+        with:
+          name: psutil-profile
+          path: psutil_analytics.log
+
       - name: Upload throughput results
         uses: actions/upload-artifact@v4
         with:
