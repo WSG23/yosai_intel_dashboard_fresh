@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+"""Thread-safe connection pool with circuit breaking.
+
+The :class:`EnhancedConnectionPool` provided here manages a pool of
+database connections while monitoring failures using a simple circuit
+breaker. Applications should create a pool with a factory function that
+returns new connections and then use ``acquire``/``release`` to control
+usage.
+"""
+
 import threading
 import time
 from typing import Any, Callable, Dict, List, Tuple
