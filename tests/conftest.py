@@ -32,7 +32,7 @@ if "services" not in sys.modules:
     sys.modules["services.resilience.metrics"] = metrics_mod
 
 # Optional heavy dependencies used by a subset of tests
-_optional_packages = {"hvac", "cryptography", "boto3", "confluent_kafka"}
+_optional_packages = {"hvac", "cryptography", "boto3", "confluent_kafka", "mlflow"}
 _missing_optional = [
     pkg for pkg in _optional_packages if importlib.util.find_spec(pkg) is None
 ]
@@ -66,6 +66,83 @@ if "cryptography" not in sys.modules and "cryptography" in _missing_optional:
 
 if "boto3" not in sys.modules and "boto3" in _missing_optional:
     sys.modules["boto3"] = types.ModuleType("boto3")
+
+if "mlflow" not in sys.modules and "mlflow" in _missing_optional:
+    mlflow_stub = types.ModuleType("mlflow")
+
+    class DummyRun:
+        def __init__(self):
+            self.info = types.SimpleNamespace(run_id="run")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            pass
+
+    mlflow_stub.start_run = lambda *a, **k: DummyRun()
+    mlflow_stub.log_metric = lambda *a, **k: None
+    mlflow_stub.log_artifact = lambda *a, **k: None
+    mlflow_stub.log_text = lambda *a, **k: None
+    mlflow_stub.set_tracking_uri = lambda *a, **k: None
+    sys.modules["mlflow"] = mlflow_stub
+
+if "requests" not in sys.modules:
+    sys.modules["requests"] = types.ModuleType("requests")
+
+if "mapping.models" not in sys.modules:
+    mapping_models_stub = types.ModuleType("mapping.models")
+
+    class MappingModel:
+        pass
+
+    class HeuristicMappingModel(MappingModel):
+        pass
+
+    class MLMappingModel(MappingModel):
+        pass
+
+    def load_model_from_config(*a, **k):
+        return HeuristicMappingModel()
+
+    class ColumnRules:
+        english: dict = {}
+        japanese: dict = {}
+
+    def load_rules(*a, **k):
+        return ColumnRules()
+
+    mapping_models_stub.MappingModel = MappingModel
+    mapping_models_stub.HeuristicMappingModel = HeuristicMappingModel
+    mapping_models_stub.MLMappingModel = MLMappingModel
+    mapping_models_stub.load_model_from_config = load_model_from_config
+    mapping_models_stub.ColumnRules = ColumnRules
+    mapping_models_stub.load_rules = load_rules
+    mapping_pkg = types.ModuleType("mapping")
+    mapping_pkg.__path__ = []
+    mapping_pkg.models = mapping_models_stub
+
+    processors_pkg = types.ModuleType("mapping.processors")
+    processors_pkg.__path__ = []
+    ai_module = types.ModuleType("mapping.processors.ai_processor")
+
+    class AIColumnMapperAdapter:
+        def __init__(self, *a, **k): ...
+
+        def get_ai_column_suggestions(self, *a, **k):
+            return {}
+
+        def save_verified_mappings(self, *a, **k):
+            return True
+
+    ai_module.AIColumnMapperAdapter = AIColumnMapperAdapter
+    processors_pkg.ai_processor = ai_module
+
+    sys.modules["mapping.models"] = mapping_models_stub
+    sys.modules["mapping"] = mapping_pkg
+    sys.modules["mapping.processors"] = processors_pkg
+    sys.modules["mapping.processors.ai_processor"] = ai_module
+    mapping_pkg.processors = processors_pkg
 
 if "confluent_kafka" not in sys.modules and "confluent_kafka" in _missing_optional:
     sys.modules["confluent_kafka"] = types.ModuleType("confluent_kafka")
@@ -141,7 +218,46 @@ from typing import Any, Generator
 import pandas as pd
 import pytest
 
-from tests.fake_unicode_processor import FakeUnicodeProcessor
+
+class FakeUnicodeProcessor:
+    """Minimal Unicode processor used for tests."""
+
+    def clean_surrogate_chars(self, text: str, replacement: str = "") -> str:
+        if not isinstance(text, str):
+            text = str(text)
+        text = text.replace("\ud800", replacement).replace("\udfff", replacement)
+        return text.replace("\x00", "")
+
+    def clean_text(self, text: str, replacement: str = "") -> str:
+        return self.clean_surrogate_chars(text, replacement)
+
+    def safe_decode_bytes(self, data: bytes, encoding: str = "utf-8") -> str:
+        try:
+            return data.decode(encoding, errors="ignore")
+        except Exception:
+            return ""
+
+    def safe_decode_text(self, data: bytes, encoding: str = "utf-8") -> str:
+        return self.safe_decode_bytes(data, encoding)
+
+    def safe_encode_text(self, value: Any) -> str:
+        if isinstance(value, bytes):
+            return self.safe_decode_bytes(value)
+        if value is None:
+            return ""
+        return str(value)
+
+    def sanitize_dataframe(
+        self,
+        df: pd.DataFrame,
+        *,
+        progress: "bool | Callable[[int, int], None] | None" = None,
+    ) -> pd.DataFrame:
+        df_clean = df.copy()
+        df_clean.columns = [self.safe_encode_text(c).lstrip("=+-@") for c in df_clean.columns]
+        for col in df_clean.select_dtypes(include=["object"]).columns:
+            df_clean[col] = df_clean[col].apply(self.safe_encode_text)
+        return df_clean
 
 try:
     from services.upload.protocols import UploadStorageProtocol
@@ -167,7 +283,15 @@ except Exception:  # pragma: no cover - optional dep fallback
         def validate_config(self) -> dict[str, Any]: ...
 
 
-from core.container import Container
+try:
+    from core.container import Container
+except Exception:  # pragma: no cover - optional dep fallback
+    class Container(dict):
+        def register(self, name: str, value: Any) -> None:
+            self[name] = value
+
+        def get(self, name: str) -> Any:
+            return self[name]
 
 try:  # Optional real models may not be available in minimal environments
     from models.entities import AccessEvent, Door, Person
