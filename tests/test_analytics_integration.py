@@ -5,7 +5,7 @@ Complete Integration Tests for Analytics System
 import pandas as pd
 import pytest
 
-from models import ModelFactory
+from yosai_intel_dashboard.src.core.domain import ModelFactory
 from services import create_analytics_service, get_analytics_service
 
 

@@ -34,7 +34,7 @@ def optional_import(name: str, fallback: type | None = None) -> Any:
         return fallback
 
 if TYPE_CHECKING:  # pragma: no cover - imported for type checking only
-    from models.ml import ModelRegistry
+    from yosai_intel_dashboard.src.core.domain.ml import ModelRegistry
 else:  # pragma: no cover - runtime fallback
     ModelRegistry = Any  # type: ignore
 

@@ -4,7 +4,7 @@ from scripts.verify_imports import verify_paths, main
 
 def test_verify_paths_detects_legacy(tmp_path: Path) -> None:
     file = tmp_path / "bad.py"
-    file.write_text("from models import x\n")
+    file.write_text("from yosai_intel_dashboard.src.core.domain import x\n")
     result = verify_paths([tmp_path])
     assert result == 1
 

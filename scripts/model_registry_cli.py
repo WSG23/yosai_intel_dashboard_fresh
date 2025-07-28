@@ -6,7 +6,7 @@ import argparse
 import logging
 from typing import List
 
-from models.ml.model_registry import ModelRegistry
+from yosai_intel_dashboard.src.core.domain.ml.model_registry import ModelRegistry
 
 LOG = logging.getLogger(__name__)
 

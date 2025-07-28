@@ -11,7 +11,7 @@ from services.compliance.consent_service import create_consent_service
 from services.compliance.dsar_service import create_dsar_service
 from core.audit_logger import create_audit_logger
 from controllers.compliance_controller import register_compliance_routes
-from models.compliance import CREATE_COMPLIANCE_TABLES_SQL
+from yosai_intel_dashboard.src.core.domain.compliance import CREATE_COMPLIANCE_TABLES_SQL
 
 logger = logging.getLogger(__name__)
 
@@ -162,7 +162,7 @@ def consent_required(consent_type: str, jurisdiction: str = "EU"):
         def wrapper(*args, **kwargs):
             from flask_login import current_user
             from core.container import Container
-            from models.compliance import ConsentType
+            from yosai_intel_dashboard.src.core.domain.compliance import ConsentType
             from flask import jsonify
 
             try:

@@ -13,8 +13,8 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.inspection import permutation_importance
 
 from analytics.feature_extraction import extract_event_features
-from models.ml.feature_store import FeastFeatureStore
-from models.ml.model_registry import ModelRegistry
+from yosai_intel_dashboard.src.core.domain.ml.feature_store import FeastFeatureStore
+from yosai_intel_dashboard.src.core.domain.ml.model_registry import ModelRegistry
 
 logger = logging.getLogger(__name__)
 

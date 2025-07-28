@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from models.entities import Person, Door, AccessEvent
-from models.enums import AccessResult, BadgeStatus, DoorType
+from yosai_intel_dashboard.src.core.domain.entities import Person, Door, AccessEvent
+from yosai_intel_dashboard.src.core.domain.enums import AccessResult, BadgeStatus, DoorType
 from repositories.implementations import (
     PersonRepository,
     DoorRepository,

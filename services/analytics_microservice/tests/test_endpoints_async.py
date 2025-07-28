@@ -439,7 +439,7 @@ async def test_internal_error_response():
 async def test_model_registry_endpoints(tmp_path):
     module, _, _ = load_app()
     module.app.state.model_dir = tmp_path
-    from models.ml import ModelRegistry
+    from yosai_intel_dashboard.src.core.domain.ml import ModelRegistry
 
     module.app.state.model_registry = ModelRegistry()
     token = jwt.encode(
@@ -481,7 +481,7 @@ async def test_predict_endpoint(tmp_path):
     path = tmp_path / "demo" / "1" / "model.joblib"
     path.parent.mkdir(parents=True)
     joblib.dump(model, path)
-    from models.ml import ModelRegistry
+    from yosai_intel_dashboard.src.core.domain.ml import ModelRegistry
 
     registry = ModelRegistry()
     registry.register_model("demo", str(path), {}, "", version="1")

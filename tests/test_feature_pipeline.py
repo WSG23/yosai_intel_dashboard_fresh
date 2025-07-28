@@ -40,7 +40,7 @@ class DummyS3:
 def test_load_definitions(tmp_path):
     path = tmp_path / "defs.yaml"
     path.write_text(json.dumps(FEATURE_DEF))
-    from models.ml.feature_pipeline import FeaturePipeline
+    from yosai_intel_dashboard.src.core.domain.ml.feature_pipeline import FeaturePipeline
 
     pipe = FeaturePipeline(path)
     pipe.load_definitions()
@@ -50,7 +50,7 @@ def test_load_definitions(tmp_path):
 def test_fit_transform(tmp_path):
     path = tmp_path / "defs.json"
     path.write_text(json.dumps(FEATURE_DEF))
-    from models.ml.feature_pipeline import FeaturePipeline
+    from yosai_intel_dashboard.src.core.domain.ml.feature_pipeline import FeaturePipeline
 
     data = pd.DataFrame(
         {
@@ -72,7 +72,7 @@ def test_fit_transform(tmp_path):
 def test_batch_online(tmp_path):
     path = tmp_path / "defs.json"
     path.write_text(json.dumps(FEATURE_DEF))
-    from models.ml.feature_pipeline import FeaturePipeline
+    from yosai_intel_dashboard.src.core.domain.ml.feature_pipeline import FeaturePipeline
 
     store = DummyStore()
     pipe = FeaturePipeline(path, feature_store=store)
@@ -86,7 +86,7 @@ def test_batch_online(tmp_path):
 def test_importance_and_drift(tmp_path):
     path = tmp_path / "defs.json"
     path.write_text(json.dumps(FEATURE_DEF))
-    from models.ml.feature_pipeline import FeaturePipeline
+    from yosai_intel_dashboard.src.core.domain.ml.feature_pipeline import FeaturePipeline
 
     data = pd.DataFrame(
         {
@@ -110,8 +110,8 @@ def test_importance_and_drift(tmp_path):
 def test_versioning_and_rollback(tmp_path):
     path = tmp_path / "defs.json"
     path.write_text(json.dumps(FEATURE_DEF))
-    from models.ml.feature_pipeline import FeaturePipeline
-    from models.ml.model_registry import ModelRegistry
+    from yosai_intel_dashboard.src.core.domain.ml.feature_pipeline import FeaturePipeline
+    from yosai_intel_dashboard.src.core.domain.ml.model_registry import ModelRegistry
 
     registry = ModelRegistry("sqlite:///:memory:", bucket="b", s3_client=DummyS3())
     pipe = FeaturePipeline(path, registry=registry)
