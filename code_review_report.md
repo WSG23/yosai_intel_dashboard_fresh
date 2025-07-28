@@ -54,7 +54,7 @@ Found 702 potential encoding issues
 
 ## Python 3 Compliance
 ✗ Found Python 2 code that needs updating:
-  - unified_analyzer.py:
+  - legacy_code_detector.py:
     • Line 507: print_statement - print r
   - plugins/compliance_plugin/api.py:
     • Line 32: print_statement - print =
@@ -79,7 +79,7 @@ API files:
 ## Security Scan Results
 ⚠️  Found 46 potential security issues:
   - sql_injection: 38 instances
-    • unified_analyzer.py:481
+    • legacy_code_detector.py:481
   - hardcoded_secret: 7 instances
     • yosai-assessment/code-quality-analyzer.py:17
     • tests/session_tests/test_session_lifetime.py:68
