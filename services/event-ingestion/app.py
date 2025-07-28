@@ -1,15 +1,18 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import os
 import pathlib
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
+from fastapi import Header, HTTPException, Request, status
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
-from error_handling.middleware import ErrorHandlingMiddleware
 
 from core.security import RateLimiter
+from error_handling.middleware import ErrorHandlingMiddleware
 from infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
@@ -96,6 +99,46 @@ async def shutdown() -> None:
 FastAPIInstrumentor.instrument_app(app)
 Instrumentator().instrument(app).expose(app)
 setup_health_checks(app)
+
+
+def custom_openapi() -> dict:
+    """Add bearerAuth security scheme and Authorization header."""
+    if app.openapi_schema:
+        return app.openapi_schema
+    schema = get_openapi(
+        title=app.title,
+        version="0.1.0",
+        routes=app.routes,
+    )
+    components = schema.setdefault("components", {})
+    security = components.setdefault("securitySchemes", {})
+    security["bearerAuth"] = {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+    }
+    for path in schema.get("paths", {}).values():
+        for method in path.values():
+            params = method.setdefault("parameters", [])
+            if not any(p.get("name") == "authorization" for p in params):
+                params.append(
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": False,
+                        "schema": {
+                            "type": "string",
+                            "default": "",
+                            "title": "Authorization",
+                        },
+                    }
+                )
+            method.setdefault("security", [{"bearerAuth": []}])
+    app.openapi_schema = schema
+    return schema
+
+
+app.openapi = custom_openapi
 
 
 @app.on_event("startup")
