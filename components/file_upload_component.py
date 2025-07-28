@@ -7,14 +7,15 @@ import uuid
 
 from components.device_verification import register_modal_callback
 from components.upload import UploadArea
-from upload_callbacks import UploadCallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from typing import Any
 
 
 class FileUploadComponent:
     """Simple wrapper bundling the upload layout and callbacks."""
 
     def __init__(self) -> None:
-        self.callback_manager = UploadCallbackManager()
+        pass
 
     def layout(self) -> html.Div:
         """Return the Dash layout for the upload page."""
@@ -97,10 +98,12 @@ class FileUploadComponent:
             fluid=True,
         )
 
-    def register_callbacks(self, manager, controller=None) -> None:
+    def register_callbacks(
+        self, manager: TrulyUnifiedCallbacks, controller: Any | None = None
+    ) -> None:
         """Register upload callbacks with the given manager."""
         register_modal_callback(manager)
-        self.callback_manager.register(manager, controller)
+        manager.register_upload_callbacks(controller)
 
 
 __all__ = ["FileUploadComponent"]
