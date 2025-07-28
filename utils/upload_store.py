@@ -198,7 +198,9 @@ class UploadedDataStore(UploadStorageProtocol):
                 with open(path, "r", encoding="utf-8", errors="replace") as fh:
                     return json.load(fh)
             except Exception as exc:  # pragma: no cover - best effort
-                logger.error("Error loading mapping %s: %s", filename, exc)
+                logger.error(
+                    f"Error loading mapping {filename}: {exc}"
+                )
         return {}
 
     def save_mapping(self, filename: str, mapping: Dict[str, Any]) -> None:
@@ -208,7 +210,7 @@ class UploadedDataStore(UploadStorageProtocol):
             with open(path, "w", encoding="utf-8") as fh:
                 json.dump(mapping, fh, indent=2)
         except Exception as exc:  # pragma: no cover - best effort
-            logger.error("Error saving mapping %s: %s", filename, exc)
+            logger.error(f"Error saving mapping {filename}: {exc}")
 
     def get_all_data(self) -> Dict[str, pd.DataFrame]:
         return {fname: self.load_dataframe(fname) for fname in self.get_filenames()}

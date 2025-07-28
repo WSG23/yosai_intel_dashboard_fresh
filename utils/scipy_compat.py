@@ -80,7 +80,7 @@ class StatisticalAnomalyDetector:
 
         result = self.validator.validate_dataframe(df)
         if not result.valid:
-            self.logger.warning("Data validation issues: %s", result.issues)
+            self.logger.warning(f"Data validation issues: {result.issues}")
         return result.valid
 
     def detect_frequency_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
@@ -230,7 +230,7 @@ def get_stats_module():
         from scipy import stats
         return stats
     except Exception as exc:
-        logger.warning("scipy.stats unavailable: %s", exc)
+        logger.warning(f"scipy.stats unavailable: {exc}")
         return FallbackStats()
 
 stats = get_stats_module()

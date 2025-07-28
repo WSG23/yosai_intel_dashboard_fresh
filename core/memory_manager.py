@@ -31,7 +31,7 @@ class MemoryManager:
         used = self.usage_mb()
         if used > self.limit_mb:
             self.logger.warning(
-                "Memory usage %.1f MB exceeds limit %.1f MB", used, self.limit_mb
+                f"Memory usage {used:.1f} MB exceeds limit {self.limit_mb:.1f} MB"
             )
 
 

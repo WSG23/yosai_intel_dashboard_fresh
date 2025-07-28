@@ -484,7 +484,9 @@ class TrulyUnifiedCallbacks:
                     UnifiedUploadController,
                 )
             except Exception as exc:  # pragma: no cover - import errors logged
-                logger.error("Failed to import UnifiedUploadController: %s", exc)
+                logger.error(
+                    f"Failed to import UnifiedUploadController: {exc}"
+                )
                 return
 
             controller = UnifiedUploadController(callbacks=self)
