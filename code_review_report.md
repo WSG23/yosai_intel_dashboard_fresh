@@ -29,8 +29,7 @@ Files with long functions (>50 lines):
   - examples/debug_deep_analytics.py: avg 222.0 lines/function
   - examples/diagnostic_script.py: avg 222.0 lines/function
   - examples/unique_patterns_debug.py: avg 217.0 lines/function
-  - diagnose_project.py: avg 95.0 lines/function
-  - project_structure_checker.py: avg 93.0 lines/function
+For a full project sweep use `python tools/legacy_code_detector.py`.
 
 ## Callback Analysis
 Total callbacks found: 49
