@@ -333,10 +333,12 @@ class TrulyUnifiedCallbacks:
     async def trigger_event_async(
         self, event: CallbackEvent, *args: Any, **kwargs: Any
     ) -> List[Any]:
-        """Asynchronously trigger callbacks registered for *event*."""
-        results: List[Any] = []
-        callbacks = list(self._event_callbacks.get(event, []))
-        for cb in callbacks:
+        """Asynchronously trigger callbacks registered for *event*.
+
+        Callbacks are executed concurrently using ``asyncio`` when possible.
+        """
+
+        async def _run(cb: EventCallback) -> Any:
             wrapped = with_retry(max_attempts=cb.retries + 1)(cb.func)
             start = time.perf_counter()
             try:
@@ -347,10 +349,10 @@ class TrulyUnifiedCallbacks:
                 duration = time.perf_counter() - start
                 if cb.timeout and duration > cb.timeout:
                     raise TimeoutError(f"Operation exceeded {cb.timeout}s")
-                results.append(result)
                 metric = self._event_metrics[event]
                 metric["calls"] += 1
                 metric["total_time"] += duration
+                return result
             except Exception as exc:  # pragma: no cover - log and continue
                 error_handler.handle_error(
                     exc,
@@ -360,8 +362,11 @@ class TrulyUnifiedCallbacks:
                 metric = self._event_metrics[event]
                 metric["calls"] += 1
                 metric["exceptions"] += 1
-                results.append(None)
-        return results
+                return None
+
+        callbacks = list(self._event_callbacks.get(event, []))
+        tasks = [asyncio.create_task(_run(cb)) for cb in callbacks]
+        return await asyncio.gather(*tasks) if tasks else []
 
     def get_event_callbacks(self, event: CallbackEvent) -> List[Callable[..., Any]]:
         """Return registered callbacks for *event*."""
@@ -414,6 +419,39 @@ class TrulyUnifiedCallbacks:
                 )
                 results.append(None)
         return results
+
+    async def execute_group_async(
+        self, group: str, *args: Any, **kwargs: Any
+    ) -> List[Any]:
+        """Execute all operations in a group concurrently."""
+
+        async def _run(op: Operation) -> Any:
+            wrapped = with_retry(max_attempts=op.retries + 1)(op.func)
+            start = time.perf_counter()
+            try:
+                if asyncio.iscoroutinefunction(wrapped):
+                    result = await wrapped(*args, **kwargs)
+                else:
+                    result = wrapped(*args, **kwargs)
+                duration = time.perf_counter() - start
+                if op.timeout and duration > op.timeout:
+                    raise TimeoutError(
+                        f"Operation {op.name} exceeded {op.timeout}s"
+                    )
+                return result
+            except Exception as exc:  # pragma: no cover - log and continue
+                error_handler.handle_error(
+                    exc,
+                    severity=ErrorSeverity.HIGH,
+                    context={"operation": op.name, "group": group},
+                )
+                return None
+
+        with self._lock:
+            operations = list(self._groups.get(group, []))
+
+        tasks = [asyncio.create_task(_run(op)) for op in operations]
+        return await asyncio.gather(*tasks) if tasks else []
 
     # ------------------------------------------------------------------
     def register_component_callbacks(

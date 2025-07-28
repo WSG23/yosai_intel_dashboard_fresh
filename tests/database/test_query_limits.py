@@ -62,6 +62,9 @@ class RecordingManager:
     def get_connection(self):
         return self.connection
 
+    def release_connection(self, conn):
+        pass
+
 
 def test_database_analytics_query_count():
     manager = RecordingManager()

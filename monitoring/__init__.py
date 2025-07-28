@@ -20,6 +20,7 @@ __all__ = [
     "deprecated_calls",
     "record_deprecated_call",
     "start_deprecation_metrics_server",
+    "InferenceDriftJob",
 ]
 
 
@@ -74,4 +75,7 @@ def __getattr__(name: str):
             start_deprecation_metrics_server,
         )
         return locals()[name]
+    if name == "InferenceDriftJob":
+        from .inference_drift_job import InferenceDriftJob
+        return InferenceDriftJob
     raise AttributeError(name)

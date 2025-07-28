@@ -9,10 +9,12 @@ from marshmallow import Schema, fields
 from flask_apispec import doc, marshal_with, use_kwargs
 
 from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
+from config import get_cache_config
 from core.plugins.performance_manager import EnhancedThreadSafePluginManager
 from validation.security_validator import SecurityValidator
 
-_cache_manager = InMemoryCacheManager(CacheConfig())
+cfg = get_cache_config()
+_cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=cfg.ttl))
 
 
 class PerformanceQuerySchema(Schema):

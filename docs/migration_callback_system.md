@@ -16,6 +16,9 @@ on `TrulyUnifiedCallbacks`,
 4. Organize multi-step operations using `UnifiedCallbackManager` imported from
    `core.callbacks` (alias of `TrulyUnifiedCallbacks`) and call `execute_group`
    within Dash callbacks.
+5. `trigger_async` now executes callbacks concurrently. Use
+   `UnifiedCallbackManager.execute_group_async` to run operations in parallel
+   when they are IO bound.
 
 
 All modules must migrate to this API before upgrading. The legacy wrappers are

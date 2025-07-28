@@ -20,8 +20,16 @@ if _missing_packages:
 # Provide a lightweight 'services' package to avoid importing heavy dependencies
 if "services" not in sys.modules:
     services_stub = types.ModuleType("services")
-    services_stub.__path__ = []
+    services_path = Path(__file__).resolve().parents[1] / "services"
+    services_stub.__path__ = [str(services_path)]
     sys.modules["services"] = services_stub
+    resilience_mod = types.ModuleType("services.resilience")
+    metrics_mod = types.ModuleType("services.resilience.metrics")
+    metrics_mod.circuit_breaker_state = types.SimpleNamespace(
+        labels=lambda *a, **k: types.SimpleNamespace(inc=lambda *a, **k: None)
+    )
+    sys.modules["services.resilience"] = resilience_mod
+    sys.modules["services.resilience.metrics"] = metrics_mod
 
 # Optional heavy dependencies used by a subset of tests
 _optional_packages = {"hvac", "cryptography", "boto3", "confluent_kafka"}

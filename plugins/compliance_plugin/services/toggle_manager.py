@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Set
 from core.rbac import require_role
 from services.data_processing.file_processor import FileProcessor
 from database.secure_exec import execute_command, execute_query
+from plugins.common_callbacks import csv_pre_process_callback
 
 logger = logging.getLogger(__name__)
 
@@ -627,9 +628,10 @@ class CompliancePlugin(BasePlugin):
 
         # Proceed with normal compliance checking
         if self.services and self.services.csv_processor:
-            result = self.services.csv_processor.analyze_csv_compliance(
+            result = csv_pre_process_callback(
+                self.services,
                 kwargs.get("file_path"),
-                kwargs.get("upload_context", {}),
+                kwargs.get("upload_context"),
                 kwargs.get("uploaded_by"),
             )
 

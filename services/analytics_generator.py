@@ -12,8 +12,10 @@ from core.cache_manager import (
     InMemoryCacheManager,
     CacheConfig,
 )
+from config import get_cache_config
 
-_cache_manager = InMemoryCacheManager(CacheConfig())
+cfg = get_cache_config()
+_cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=cfg.ttl))
 
 logger = logging.getLogger(__name__)
 

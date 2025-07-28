@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+"""Tools for analysing database query performance.
+
+The :class:`DatabasePerformanceAnalyzer` records timing information for
+executed queries which can then be inspected for bottlenecks.
+"""
+
 import logging
 from typing import Any, Dict, List
 

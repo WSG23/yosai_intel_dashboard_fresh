@@ -25,6 +25,9 @@ class FakeDBManager:
     def get_connection(self):
         return FakeConnection()
 
+    def release_connection(self, conn):
+        pass
+
 
 def test_database_analytics_basic():
     service = DatabaseAnalyticsService(FakeDBManager())

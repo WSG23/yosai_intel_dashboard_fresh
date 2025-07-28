@@ -41,6 +41,10 @@ class BaseService:
         self._setup_metrics()
         self._setup_tracing()
         self._setup_signals()
+        if self.config.enable_profiling:
+            from .profiling_middleware import ProfilingMiddleware
+
+            self.app.add_middleware(ProfilingMiddleware, service=self)
         self.running = True
         self.app.state.startup_complete = True
         self.app.state.ready = True
@@ -112,6 +116,17 @@ class BaseService:
             self.error_total = Counter(
                 "yosai_error_total",
                 "Total errors encountered",
+                registry=CollectorRegistry(),
+            )
+
+        if "yosai_request_memory_mb" not in REGISTRY._names_to_collectors:
+            self.request_memory = Histogram(
+                "yosai_request_memory_mb", "Change in memory usage during request"
+            )
+        else:  # pragma: no cover - defensive
+            self.request_memory = Histogram(
+                "yosai_request_memory_mb",
+                "Change in memory usage during request",
                 registry=CollectorRegistry(),
             )
 

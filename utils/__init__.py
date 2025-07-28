@@ -44,6 +44,11 @@ from .file_utils import safe_decode_with_unicode_handling
 from .unicode_handler import UnicodeHandler
 from .io_helpers import read_json, write_json, read_text, write_text
 from .hashing import hash_dataframe
+from .config_resolvers import (
+    resolve_ai_confidence_threshold,
+    resolve_max_upload_size_mb,
+    resolve_upload_chunk_size,
+)
 
 __all__ = [
     "UnicodeProcessor",
@@ -84,4 +89,7 @@ __all__ = [
     "read_text",
     "write_text",
     "hash_dataframe",
+    "resolve_ai_confidence_threshold",
+    "resolve_max_upload_size_mb",
+    "resolve_upload_chunk_size",
 ]

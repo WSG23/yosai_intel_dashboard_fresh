@@ -24,7 +24,7 @@ class CacheConfig:
     port: int = int(os.getenv("CACHE_PORT", "6379"))
     db: int = int(os.getenv("CACHE_DB", "0"))
     key_prefix: str = os.getenv("CACHE_PREFIX", "yosai:")
-    timeout_seconds: int = int(os.getenv("CACHE_TTL", "300"))
+    timeout_seconds: int = 300
 
 
 class CacheManager(ABC):

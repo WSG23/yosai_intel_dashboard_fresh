@@ -90,3 +90,9 @@ are clamped to a maximum of **500 MB**. The following variables are affected:
 If a higher value is provided, a warning will be logged and the value will be
 reduced to 500 MB.
 
+## Maintenance Notes
+
+As of the current release there are no outstanding TODO comments related to
+security validation. The `SecurityValidator` and associated utilities are
+fully implemented and ready for production use.
+
