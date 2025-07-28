@@ -37,7 +37,7 @@ class RBACService:
                 if data is not None:
                     return data.decode("utf-8").split(",")
             except Exception as exc:  # pragma: no cover - best effort
-                logger.warning("Redis get failed for %s: %s", cache_key, exc)
+                logger.warning(f"Redis get failed for {cache_key}: {exc}")
         rows = await self.pool.fetch(
             "SELECT role FROM user_roles WHERE user_id=$1", user_id
         )
@@ -46,7 +46,7 @@ class RBACService:
             try:
                 await self.redis.setex(cache_key, self.ttl, ",".join(roles))
             except Exception as exc:  # pragma: no cover - best effort
-                logger.warning("Redis set failed for %s: %s", cache_key, exc)
+                logger.warning(f"Redis set failed for {cache_key}: {exc}")
         return roles
 
     # ------------------------------------------------------------------
@@ -58,7 +58,7 @@ class RBACService:
                 if data is not None:
                     return data.decode("utf-8").split(",")
             except Exception as exc:  # pragma: no cover - best effort
-                logger.warning("Redis get failed for %s: %s", cache_key, exc)
+                logger.warning(f"Redis get failed for {cache_key}: {exc}")
         rows = await self.pool.fetch(
             "SELECT permission FROM user_permissions WHERE user_id=$1", user_id
         )
@@ -67,7 +67,7 @@ class RBACService:
             try:
                 await self.redis.setex(cache_key, self.ttl, ",".join(perms))
             except Exception as exc:  # pragma: no cover - best effort
-                logger.warning("Redis set failed for %s: %s", cache_key, exc)
+                logger.warning(f"Redis set failed for {cache_key}: {exc}")
         return perms
 
     # ------------------------------------------------------------------

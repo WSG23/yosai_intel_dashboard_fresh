@@ -44,7 +44,7 @@ class UnifiedPluginRegistry:
         try:
             self.plugin_manager.register_health_endpoint(app)
         except Exception as exc:  # pragma: no cover - defensive
-            logger.error("Failed to register plugin health endpoint: %s", exc)
+            logger.error(f"Failed to register plugin health endpoint: {exc}")
 
     # ------------------------------------------------------------------
     def register_plugin(self, plugin: PluginProtocol) -> bool:

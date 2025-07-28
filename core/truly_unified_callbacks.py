@@ -155,7 +155,7 @@ class TrulyUnifiedCallbacks:
                         o, "allow_duplicate", False
                     )
                     if key in self._output_map and not allow_dup_output:
-                        logger.warning("Output '%s' conflict - allowing duplicate", key)
+                        logger.warning(f"Output '{key}' conflict - allowing duplicate")
 
                 wrapped = self.app.callback(
                     outputs,
@@ -251,13 +251,13 @@ class TrulyUnifiedCallbacks:
         """Log a summary of registered callbacks grouped by namespace."""
         with self._lock:
             for namespace, ids in self._namespaces.items():
-                logger.info("Callbacks for %s:", namespace)
+                logger.info(f"Callbacks for {namespace}:")
                 for cid in ids:
                     reg = self._dash_callbacks[cid]
                     outputs_str = ", ".join(
                         f"{o.component_id}.{o.component_property}" for o in reg.outputs
                     )
-                    logger.info("  %s -> %s", cid, outputs_str)
+                    logger.info(f"  {cid} -> {outputs_str}")
 
     # Event callbacks ---------------------------------------------------
     def register_event(
@@ -279,7 +279,7 @@ class TrulyUnifiedCallbacks:
                 if args and isinstance(args[0], str):
                     result = self.security.validate_input(args[0], "input")
                     if not result["valid"]:
-                        logger.error("Security validation failed: %s", result["issues"])
+                        logger.error(f"Security validation failed: {result['issues']}")
                         return None
                     args = (result["sanitized"],) + args[1:]
                 return original(*args, **kwargs)
@@ -424,7 +424,7 @@ class TrulyUnifiedCallbacks:
         component_id = getattr(component_class, "COMPONENT_ID", component_class.__name__)
 
         if component_id in self._registered_components:
-            logger.warning("Component %s already registered, skipping", component_id)
+            logger.warning(f"Component {component_id} already registered, skipping")
             return
 
         try:
@@ -432,9 +432,9 @@ class TrulyUnifiedCallbacks:
             if hasattr(component, "register_callbacks"):
                 component.register_callbacks(self)
                 self._registered_components.add(component_id)
-                logger.info("Registered callbacks for %s", component_id)
+                logger.info(f"Registered callbacks for {component_id}")
         except Exception as e:  # pragma: no cover - defensive
-            logger.error("Failed to register %s: %s", component_id, e)
+            logger.error(f"Failed to register {component_id}: {e}")
 
     # ------------------------------------------------------------------
     def register_all_callbacks(

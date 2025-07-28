@@ -78,7 +78,7 @@ class PerformanceFileProcessor:
                     try:
                         progress_callback(rows, mem_mb)
                     except Exception as exc:  # pragma: no cover - defensive
-                        self.logger.warning("Progress callback failed: %s", exc)
+                        self.logger.warning(f"Progress callback failed: {exc}")
 
                 if stream:
                     yield chunk
@@ -91,10 +91,7 @@ class PerformanceFileProcessor:
                 if buffer:
                     yield pd.concat(buffer, ignore_index=True)
             self.logger.info(
-                "Processed %s rows from %s (memory %.1f MB)",
-                rows,
-                file_path,
-                mem_mb,
+                f"Processed {rows} rows from {file_path} (memory {mem_mb:.1f} MB)"
             )
 
         gen = generator()

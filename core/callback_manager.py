@@ -73,7 +73,7 @@ class CallbackManager(BaseModel):
                 results.append(result)
                 self._record_metric(event, start)
             except Exception as exc:  # pragma: no cover - log and continue
-                logger.exception("Callback error on %s: %s", event.name, exc)
+                logger.exception(f"Callback error on {event.name}: {exc}")
                 self._record_metric(event, start, error=True)
                 results.append(None)
         return results
@@ -95,7 +95,7 @@ class CallbackManager(BaseModel):
                 results.append(result)
                 self._record_metric(event, start)
             except Exception as exc:  # pragma: no cover - log and continue
-                logger.exception("Callback error on %s: %s", event.name, exc)
+                logger.exception(f"Callback error on {event.name}: {exc}")
                 self._record_metric(event, start, error=True)
                 results.append(None)
         return results

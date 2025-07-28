@@ -49,7 +49,7 @@ class PluginServiceLocator(metaclass=_LocatorMeta):
             from plugins.ai_classification.config import get_ai_config
             from plugins.ai_classification.plugin import AIClassificationPlugin
         except Exception as exc:  # pragma: no cover - optional
-            logger.warning("AI classification plugin unavailable: %s", exc)
+            logger.warning(f"AI classification plugin unavailable: {exc}")
             return None
 
         plugin = AIClassificationPlugin(get_ai_config())
@@ -63,13 +63,13 @@ class PluginServiceLocator(metaclass=_LocatorMeta):
         try:
             from core.json_serialization_plugin import quick_start
         except Exception as exc:  # pragma: no cover - optional
-            logger.warning("JSON serialization plugin unavailable: %s", exc)
+            logger.warning(f"JSON serialization plugin unavailable: {exc}")
             return None
 
         try:
             return quick_start()
         except Exception as exc:  # pragma: no cover - defensive
-            logger.warning("JSON serialization plugin failed to start: %s", exc)
+            logger.warning(f"JSON serialization plugin failed to start: {exc}")
             return None
 
     # Public API -------------------------------------------------------

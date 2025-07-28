@@ -99,7 +99,7 @@ def _get_jwks(domain: str) -> dict:
         with urlopen(jwks_url, timeout=timeout) as resp:
             jwks = json.load(resp)
     except (URLError, socket.timeout) as exc:
-        logger.warning("Failed to fetch JWKS from %s: %s", jwks_url, exc)
+        logger.warning(f"Failed to fetch JWKS from {jwks_url}: {exc}")
         if cached:
             return cached[0]
         raise

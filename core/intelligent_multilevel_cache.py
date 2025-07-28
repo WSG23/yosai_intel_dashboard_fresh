@@ -62,7 +62,7 @@ class IntelligentMultiLevelCache:
             await self._redis.ping()
             logger.info("Intelligent cache connected to Redis")
         except Exception as exc:  # pragma: no cover - best effort
-            logger.error("Redis unavailable: %s", exc)
+            logger.error(f"Redis unavailable: {exc}")
             self._redis = None
 
     # ------------------------------------------------------------------
@@ -101,11 +101,11 @@ class IntelligentMultiLevelCache:
                 else:
                     await self._redis.set(self._full_key(key), data)
             except Exception as exc:  # pragma: no cover - best effort
-                logger.warning("Redis SET failed for %s: %s", key, exc)
+                logger.warning(f"Redis SET failed for {key}: {exc}")
         try:
             (self.disk_path / f"{self._full_key(key)}.json").write_bytes(data)
         except Exception as exc:  # pragma: no cover - best effort
-            logger.warning("Disk write failed for %s: %s", key, exc)
+            logger.warning(f"Disk write failed for {key}: {exc}")
 
     # ------------------------------------------------------------------
     async def get(
@@ -135,7 +135,7 @@ class IntelligentMultiLevelCache:
                         self._record_memory(key, obj["value"], expiry)
                         return obj["value"]
             except Exception as exc:  # pragma: no cover - best effort
-                logger.warning("Redis GET failed for %s: %s", key, exc)
+                logger.warning(f"Redis GET failed for {key}: {exc}")
 
         file = self.disk_path / f"{self._full_key(key)}.json"
         if file.exists():
@@ -148,7 +148,7 @@ class IntelligentMultiLevelCache:
                     await self.set(key, obj["value"], ttl=int(expiry - now) if expiry else ttl)
                     return obj["value"]
             except Exception as exc:  # pragma: no cover - best effort
-                logger.warning("Disk read failed for %s: %s", key, exc)
+                logger.warning(f"Disk read failed for {key}: {exc}")
 
         if loader:
             value = await loader()

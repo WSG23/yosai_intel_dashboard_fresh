@@ -45,7 +45,7 @@ class AsyncPostgreSQLManager:
                 await conn.execute("SELECT 1")
             return True
         except Exception as exc:  # pragma: no cover - best effort
-            logger.warning("Async DB health check failed: %s", exc)
+            logger.warning(f"Async DB health check failed: {exc}")
             return False
 
     async def close(self) -> None:
