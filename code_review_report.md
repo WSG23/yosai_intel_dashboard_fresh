@@ -70,9 +70,8 @@ Found 702 potential encoding issues
     • Line 136: print_statement - print i
 
 ## API Analysis
-Total API endpoints found: 22
+Total API endpoints found: 18
 API files:
-  - investor_demo_interface.py: 4 endpoints
   - debug_route.py: 1 endpoints
   - plugins/compliance_plugin/tests/test_compliance_framework.py: 1 endpoints
   - plugins/compliance_plugin/services/compliance_csv_processor.py: 1 endpoints
