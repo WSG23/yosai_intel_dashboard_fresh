@@ -4,12 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from dash.dependencies import Input, Output, State
-
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 from ui.callbacks.column_callbacks import toggle_custom_field
-from ui.callbacks.file_callbacks import UploadCallbackManager
 from components.simple_device_mapping import register_callbacks as register_device_callbacks
 
 
@@ -21,4 +18,4 @@ class CallbackManager:
 
     def register_all(self, manager: TrulyUnifiedCallbacks) -> None:
         register_device_callbacks(manager)
-        UploadCallbackManager().register(manager)
+        manager.register_upload_callbacks()

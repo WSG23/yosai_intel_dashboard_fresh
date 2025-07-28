@@ -475,6 +475,38 @@ class TrulyUnifiedCallbacks:
             logger.error(f"Failed to register {component_id}: {e}")
 
     # ------------------------------------------------------------------
+    def register_upload_callbacks(self, controller: Any | None = None) -> None:
+        """Register upload related callbacks from a controller."""
+
+        if controller is None:
+            try:
+                from services.upload.controllers.upload_controller import (
+                    UnifiedUploadController,
+                )
+            except Exception as exc:  # pragma: no cover - import errors logged
+                logger.error("Failed to import UnifiedUploadController: %s", exc)
+                return
+
+            controller = UnifiedUploadController(callbacks=self)
+
+        callback_sources = [
+            getattr(controller, "upload_callbacks", lambda: [])(),
+            getattr(controller, "progress_callbacks", lambda: [])(),
+            getattr(controller, "validation_callbacks", lambda: [])(),
+        ]
+
+        for defs in callback_sources:
+            for func, outputs, inputs, states, cid, extra in defs:
+                self.register_handler(
+                    outputs,
+                    inputs,
+                    states,
+                    callback_id=cid,
+                    component_name="file_upload",
+                    **extra,
+                )(func)
+
+    # ------------------------------------------------------------------
     def register_all_callbacks(
         self, *manager_classes: type["ComponentCallbackManager"]
     ) -> None:
