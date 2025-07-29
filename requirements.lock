@@ -72,6 +72,7 @@ cssutils==2.8.0
     # via -r requirements.txt
 cycler==0.12.1
     # via matplotlib
+
 dask[array,dataframe]==2024.4.1
     # via
     #   -r requirements.txt
@@ -79,6 +80,7 @@ dask[array,dataframe]==2024.4.1
     #   feast
 dask-expr==1.0.11
     # via dask
+
 dill==0.3.9
     # via
     #   -r requirements.txt
@@ -145,6 +147,7 @@ imageio==2.37.0
     # via scikit-image
 importlib-metadata==8.7.0
     # via opentelemetry-api
+
 iniconfig==2.1.0
     # via pytest
 itsdangerous==2.2.0
@@ -164,6 +167,7 @@ joblib==1.3.2
     # via
     #   -r requirements.txt
     #   scikit-learn
+
 jsonschema==4.25.0
     # via
     #   feast
@@ -271,6 +275,7 @@ pillow==11.3.0
     #   scikit-image
 plotly==5.15.0
     # via -r requirements.txt
+
 pluggy==1.6.0
     # via
     #   pytest

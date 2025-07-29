@@ -11,7 +11,7 @@ from shared.errors.types import ErrorCode
 from marshmallow import Schema, fields
 from flask_apispec import doc, marshal_with, use_kwargs
 
-from analytics.risk_scoring import calculate_risk_score
+from services.analytics_service import calculate_risk_score
 from validation.security_validator import SecurityValidator
 
 handler = ErrorHandler()

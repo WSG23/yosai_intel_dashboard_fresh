@@ -771,8 +771,7 @@ defined in `gunicorn.conf.py`.
 The secret key is not included in the default YAML files. **You must**
 set `SECRET_KEY` in your environment or a `.env` file before starting
 the application. The API now raises a `RuntimeError` if the variable is
-missing. The example scripts under `examples/` also rely on this
-variable through the `SecretManager` helper.
+missing.
 
 When `YOSAI_ENV=production` the application will refuse to start unless both
 `DB_PASSWORD` and `SECRET_KEY` are provided via environment variables or Docker
@@ -1382,18 +1381,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines. In short:
 3. Format code with `black` and run `flake8`
 4. Follow type safety guidelines and maintain the modular architecture
 5. Add tests for new functionality and update documentation when applicable
-6. Optional debug helpers live in `examples/`. Run the upload helper with
-   `python examples/debug_live_upload.py` to validate environment setup
-7. The example CSRF scripts in `examples/` read `SECRET_KEY` from the
-   environment using the `SecretManager`. Set this variable in your shell or
-   `.env` file before running them.
-8. The full pipeline diagnostic helper now lives at
-   `examples/diagnostic_script.py` (replacing the old
-   `examples/debugcsv.py`) and can be run with
-   `python examples/diagnostic_script.py`.
-9. Outdated prototype scripts, including the legacy adapters, have been
+6. Run the built-in debugging CLI with `python -m tools.debug` to validate
+   your environment and inspect callback dependencies.
+7. Set `SECRET_KEY` in your shell or `.env` file when running development
+   tools that require it.
+8. Outdated prototype scripts, including the legacy adapters, have been
     removed from the repository.
-10. The original MVP demo modules have also been deleted and are no longer
+9. The original MVP demo modules have also been deleted and are no longer
     part of the codebase.
 
 ## <span aria-hidden="true">📦</span> Versioning
