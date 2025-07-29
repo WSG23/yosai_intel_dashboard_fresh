@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Optional, Tuple
+import base64
 
 import pandas as pd
 
@@ -21,7 +22,7 @@ from services.data_processing.core.exceptions import (
     FileProcessingError,
     FileValidationError,
 )
-from services.data_processing.unified_upload_validator import UnifiedUploadValidator
+from validation.security_validator import SecurityValidator
 from upload_types import ValidationResult
 from utils.file_utils import safe_decode_with_unicode_handling
 
@@ -82,28 +83,26 @@ class FileHandler:
         common_init(self, config)
         if max_size_mb is not None:
             self.max_size_mb = max_size_mb
-        self.validator = UnifiedUploadValidator(self.max_size_mb, config=self.config)
+        self.validator = SecurityValidator()
 
     def sanitize_filename(self, filename: str) -> str:
         return self.validator.sanitize_filename(filename)
 
     def validate_file_upload(self, file_obj: Any) -> ValidationResult:
-        """Run basic checks on ``file_obj`` using :class:`UnifiedUploadValidator`."""
+        """Run basic checks on ``file_obj`` using :class:`SecurityValidator`."""
         if file_obj is None:
             return ValidationResult(False, "No file provided")
         try:
             import pandas as pd
 
             if isinstance(file_obj, pd.DataFrame):
-                metrics = self.validator.validate_dataframe(file_obj)
-                return ValidationResult(
-                    metrics.get("valid", False),
-                    (
-                        metrics.get("error", "ok")
-                        if not metrics.get("valid", False)
-                        else "ok"
-                    ),
-                )
+                size_mb = file_obj.memory_usage(deep=True).sum() / (1024 * 1024)
+                if size_mb > self.max_size_mb:
+                    return ValidationResult(
+                        False,
+                        f"Dataframe too large: {size_mb:.1f}MB > {self.max_size_mb}MB",
+                    )
+                return ValidationResult(True, "ok")
         except Exception:
             pass
         if isinstance(file_obj, (str, Path)):
@@ -113,10 +112,10 @@ class FileHandler:
             size_mb = path.stat().st_size / (1024 * 1024)
             if size_mb == 0:
                 return ValidationResult(False, "File is empty")
-            if size_mb > self.validator.max_size_mb:
+            if size_mb > self.max_size_mb:
                 return ValidationResult(
                     False,
-                    f"File too large: {size_mb:.1f}MB > {self.validator.max_size_mb}MB",
+                    f"File too large: {size_mb:.1f}MB > {self.max_size_mb}MB",
                 )
             return ValidationResult(True, "ok")
 
@@ -124,10 +123,10 @@ class FileHandler:
             size_mb = len(file_obj) / (1024 * 1024)
             if size_mb == 0:
                 return ValidationResult(False, "File is empty")
-            if size_mb > self.validator.max_size_mb:
+            if size_mb > self.max_size_mb:
                 return ValidationResult(
                     False,
-                    f"File too large: {size_mb:.1f}MB > {self.validator.max_size_mb}MB",
+                    f"File too large: {size_mb:.1f}MB > {self.max_size_mb}MB",
                 )
             return ValidationResult(True, "ok")
 
@@ -135,7 +134,15 @@ class FileHandler:
 
     def process_base64_contents(self, contents: str, filename: str) -> pd.DataFrame:
         """Decode ``contents`` and return a validated :class:`~pandas.DataFrame`."""
-        return self.validator.validate_file(contents, filename)
+        if "," not in contents:
+            raise FileValidationError("Invalid contents")
+        _, data = contents.split(",", 1)
+        file_bytes = base64.b64decode(data)
+        self.validator.validate_file_upload(filename, file_bytes)
+        df, err = process_file_simple(file_bytes, filename, config=self.config)
+        if df is None:
+            raise FileProcessingError(err or "Invalid file")
+        return df
 
 
 __all__ = [

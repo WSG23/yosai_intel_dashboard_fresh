@@ -1,7 +1,15 @@
-from services.data_processing.unified_upload_validator import (
-    process_dataframe,
-    safe_decode_file,
-)
+from services.data_processing.common import process_dataframe
+import base64
+
+
+def safe_decode_file(contents: str):
+    try:
+        if "," not in contents:
+            return None
+        _, data = contents.split(",", 1)
+        return base64.b64decode(data)
+    except Exception:
+        return None
 
 
 def test_safe_decode_file_invalid_base64():

@@ -11,7 +11,7 @@ from services.data_enhancer.mapping_utils import (
     get_mapping_suggestions,
 )
 from services.data_processing.file_processor import process_uploaded_file
-from services.data_processing.unified_upload_validator import UnifiedUploadValidator
+from validation.security_validator import SecurityValidator
 from validation.security_validator import SecurityValidator
 
 
@@ -27,7 +27,7 @@ def test_enhanced_processor(tmp_path):
     csv_path = tmp_path / "sample.csv"
     df.to_csv(csv_path, index=False)
 
-    processor = UnifiedUploadValidator()
+    processor = SecurityValidator()
 
     df_loaded = pd.read_csv(csv_path)
     suggestions = get_mapping_suggestions(df_loaded)

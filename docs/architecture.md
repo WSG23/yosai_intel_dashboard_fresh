@@ -17,14 +17,14 @@ See [React Component Architecture](react_component_architecture.md) for an overv
 ## Latest Changes
 
 - **Unified Validation Package** – Input and file validation are exported from
-  the `security` package. Import `SecurityValidator` and
-  `UnifiedFileValidator` from there instead of referencing the modules
-  directly. The deprecated `SecureFileValidator` class has been removed.
+  the `security` package. Import `SecurityValidator` from there instead of
+  referencing the modules directly. The deprecated `SecureFileValidator` class
+  has been removed.
 
 - **Separated Analytics Modules** – The previously monolithic
   `AnalyticsService` has been broken into smaller modules under
-`services/data_processing/` and `analytics/`.  `UnifiedFileValidator`,
-`Processor` and `AnalyticsEngine` handle file loading, cleaning and metric
+`services/data_processing/` and `analytics/`. `Processor` and `AnalyticsEngine`
+handle file loading, cleaning and metric
 generation while controllers manage UI callbacks.
 - **Service Builder Pattern** – Microservices now create a
   `ServiceBuilder` instance which attaches logging, metrics and health checks

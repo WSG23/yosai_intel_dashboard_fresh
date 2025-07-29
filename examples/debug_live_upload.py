@@ -33,23 +33,23 @@ def add_debug_hooks():
 
     upload_service.process_uploaded_file = debug_process_uploaded_file
 
-    # Hook 2: Patch UnifiedFileValidator.validate_file
-    from services.data_processing.unified_file_validator import UnifiedFileValidator
+    # Hook 2: Patch FileHandler.process_base64_contents
+    from services.data_processing.file_handler import FileHandler
 
-    original_validate = UnifiedFileValidator.validate_file
+    original_validate = FileHandler.process_base64_contents
 
     def debug_validate_file_contents(self, contents, filename):
         logger.info(
-            f"🔒 HOOK 2: UnifiedFileValidator.validate_file() for {filename}"
+            f"🔒 HOOK 2: FileHandler.process_base64_contents() for {filename}"
         )
         df = original_validate(self, contents, filename)
         rows = len(df)
-        logger.info(f"🎯 HOOK 2: UnifiedFileValidator result: {rows} rows")
+        logger.info(f"🎯 HOOK 2: FileHandler result: {rows} rows")
         if rows == 150:
-            logger.error(f"🚨 FOUND 150 ROW LIMIT in UnifiedFileValidator!")
+            logger.error(f"🚨 FOUND 150 ROW LIMIT in FileHandler!")
         return df
 
-    UnifiedFileValidator.validate_file = debug_validate_file_contents
+    FileHandler.process_base64_contents = debug_validate_file_contents
 
     # Hook 3: Patch utils.file_validator.process_dataframe
     from utils import file_validator

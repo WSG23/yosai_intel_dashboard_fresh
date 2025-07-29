@@ -22,7 +22,7 @@ else:
     from .chunked_analysis import analyze_with_chunking
     from .controllers.upload_controller import UploadProcessingController
     from .data_processing.processor import Processor
-    from .data_processing.unified_file_validator import UnifiedFileValidator
+    from .data_processing.file_handler import FileHandler
     from .database_retriever import DatabaseAnalyticsRetriever
     from .db_analytics_helper import DatabaseAnalyticsHelper
     from .event_publisher import publish_event
@@ -58,8 +58,8 @@ else:
         compliance_pkg = None
 
     # Resolve optional services from the registry
-    UnifiedFileValidatorService = get_service("UnifiedFileValidator")
-    FILE_VALIDATOR_AVAILABLE = UnifiedFileValidatorService is not None
+    FileHandlerService = get_service("FileHandler")
+    FILE_HANDLER_AVAILABLE = FileHandlerService is not None
 
     get_analytics_service = get_service("get_analytics_service")
     create_analytics_service = get_service("create_analytics_service")
@@ -67,8 +67,8 @@ else:
     ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
 
     __all__ = [
-        "UnifiedFileValidator",
-        "FILE_VALIDATOR_AVAILABLE",
+        "FileHandler",
+        "FILE_HANDLER_AVAILABLE",
         "get_analytics_service",
         "create_analytics_service",
         "AnalyticsService",

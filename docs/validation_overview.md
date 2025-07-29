@@ -1,6 +1,6 @@
 # Validation Overview
 
-All validation in the Yōsai Intel Dashboard is provided by the `security` package which exposes `SecurityValidator` and `UnifiedFileValidator`. Previous individual validator classes have been removed and their functionality consolidated.
+All validation in the Yōsai Intel Dashboard is provided by the `security` package which exposes `SecurityValidator`. Previous individual validator classes have been removed and their functionality consolidated.
 
 If your code imports `InputValidator` or `UploadValidator`, switch to `validation.security_validator.SecurityValidator` instead.
 
@@ -13,11 +13,10 @@ Validation errors are raised using `ValidationError(field, message, code)` where
 explanation and `code` is a stable error identifier.
 
 ```python
-from security import SecurityValidator, UnifiedFileValidator
+from security import SecurityValidator
 
 
 validator = SecurityValidator()
-file_validator = UnifiedFileValidator()
 
 # Each validation error is raised with the field name, a message and an
 # error code. This allows callers to precisely identify what went wrong.
@@ -28,7 +27,7 @@ if not result['valid']:
     raise ValidationError("field_name", "; ".join(result['issues']), "invalid_input")
 
 # File upload validation (replaces SecureFileValidator)
-result = file_validator.validate_file_upload(filename, file_bytes)
+result = validator.validate_file_upload(filename, file_bytes)
 if not result['valid']:
     raise ValidationError("filename", "; ".join(result['issues']), "invalid_file")
 ```
@@ -49,13 +48,12 @@ All legacy validators have been removed. Update your code to use
 `SecurityValidator` for both input and file checks:
 
 ```python
-from security import SecurityValidator, UnifiedFileValidator
+from security import SecurityValidator
 
 
 validator = SecurityValidator()
-file_validator = UnifiedFileValidator()
 csv_bytes = df.to_csv(index=False).encode("utf-8")
-result = file_validator.validate_file_upload("data.csv", csv_bytes)
+result = validator.validate_file_upload("data.csv", csv_bytes)
 result = validator.validate_input(user_input, "query_parameter")
 ```
 

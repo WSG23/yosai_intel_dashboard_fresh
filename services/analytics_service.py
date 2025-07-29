@@ -2,7 +2,7 @@
 """Analytics Service - Enhanced with Unique Patterns Analysis.
 
 Uploaded files are validated with
-``services.data_processing.unified_file_validator.UnifiedFileValidator`` before
+``services.data_processing.file_handler.FileHandler`` before
 processing to ensure they are present, non-empty and within the configured size
 limits.
 """
@@ -182,9 +182,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
             self.data_processor = data_processor
         # Legacy attribute aliases
         self.data_loading_service = self.processor
-        from services.data_processing.unified_file_validator import UnifiedFileValidator
+        from services.data_processing.file_handler import FileHandler
 
-        self.file_handler = UnifiedFileValidator()
+        self.file_handler = FileHandler()
 
         if upload_processor is None:
             upload_processor = UploadAnalyticsProcessor(

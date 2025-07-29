@@ -20,7 +20,7 @@ container.register_singleton(
     AnalyticsService,
     protocol=AnalyticsServiceProtocol,
 )
-container.register_transient("validator", UnifiedFileValidator)
+container.register_transient("validator", SecurityValidator)
 container.register_scoped("request_logger", RequestLogger)
 ```
 
