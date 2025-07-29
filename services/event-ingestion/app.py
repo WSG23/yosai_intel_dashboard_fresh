@@ -13,7 +13,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from core.security import RateLimiter
 from error_handling.middleware import ErrorHandlingMiddleware
-from infrastructure.discovery.health_check import (
+from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
 )

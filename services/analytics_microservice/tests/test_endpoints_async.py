@@ -132,11 +132,15 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     queries_stub.fetch_access_patterns = AsyncMock(return_value={"days": 7})
     sys.modules["services.analytics_microservice.async_queries"] = queries_stub
 
-    health_stub = types.ModuleType("infrastructure.discovery.health_check")
+    health_stub = types.ModuleType(
+        "yosai_intel_dashboard.src.infrastructure.discovery.health_check"
+    )
     health_stub.register_health_check = lambda *a, **k: None
     health_stub.setup_health_checks = lambda app: None
     health_stub.DependencyHealthMiddleware = lambda app: app
-    sys.modules["infrastructure.discovery.health_check"] = health_stub
+    sys.modules[
+        "yosai_intel_dashboard.src.infrastructure.discovery.health_check"
+    ] = health_stub
 
     service_stub = types.ModuleType("yosai_framework.service")
 
