@@ -8,7 +8,7 @@ Files analyzed: 1057
 Total functions analyzed: 5184
 Found 548 duplicate function signatures:
   - __init__(self): 146 occurrences
-    • mde.py:47
+    • mde.py (removed):47
     • mapping/storage/base.py:31
   - get_ai_confidence_threshold(self): 6 occurrences
     • data_enhancer.py:84
@@ -46,9 +46,9 @@ Callback distribution:
 ## Unicode Handling
 Found 702 potential encoding issues
   - test_base_services.py:6 - Potential encoding issue: str(PROJECT_ROOT))
-  - mde.py:12 - Potential encoding issue: str(PROJECT_ROOT))
-  - mde.py:262 - Potential encoding issue: str(e)}", color="danger")
-  - mde.py:389 - Potential encoding issue: str(e)}", color="warning")
+  - mde.py (removed):12 - Potential encoding issue: str(PROJECT_ROOT))
+  - mde.py (removed):262 - Potential encoding issue: str(e)}", color="danger")
+  - mde.py (removed):389 - Potential encoding issue: str(e)}", color="warning")
   - upload_endpoint.py:40 - Potential encoding issue: .decode()
 ✓ 90 files use proper UTF-8 encoding
 
