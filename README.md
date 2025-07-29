@@ -966,9 +966,12 @@ manager.execute_query_with_retry("SELECT 1")
 
   analytics = container.get("analytics")
   ```
-  
+
   The `AnalyticsService` conforms to `AnalyticsServiceProtocol`, so you can
   substitute your own implementation during tests.
+
+  The legacy Flask blueprint has been removed. Use the FastAPI microservice
+  endpoints instead.
 
   Run the analytics microservice via the unified BaseService:
 

@@ -1,8 +1,8 @@
 # API Documentation
 
-The Flask routes expose an API used by the dashboard. A Swagger UI is
-available at `/api/docs` when the application is running. The complete
-OpenAPI description lives in `api/openapi/yosai-api-v2.yaml` and can be
+The dashboard API combines legacy Flask routes with new FastAPI microservices.
+A Swagger UI is available at `/api/docs` when the application is running. The
+complete OpenAPI description lives in `api/openapi/yosai-api-v2.yaml` and can be
 converted to JSON with:
 
 ```bash

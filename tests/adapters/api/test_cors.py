@@ -17,15 +17,6 @@ if "services" not in sys.modules:
 
 
 def _create_app(monkeypatch, origins):
-    analytics_stub = types.SimpleNamespace(
-        register_analytics_blueprints=lambda app: None,
-        init_cache_manager=lambda: None,
-    )
-    monkeypatch.setitem(
-        sys.modules,
-        "api.analytics_endpoints",
-        analytics_stub,
-    )
 
     container = types.SimpleNamespace(
         services={"file_processor": object()},

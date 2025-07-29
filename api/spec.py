@@ -13,11 +13,6 @@ def create_flask_app() -> Flask:
     from device_endpoint import device_bp
     from mappings_endpoint import mappings_bp
     from api.settings_endpoint import settings_bp
-    from api.analytics_endpoints import (
-        analytics_bp,
-        graphs_bp,
-        export_bp,
-    )
     from plugins.compliance_plugin.compliance_controller import compliance_bp
     import api.plugin_performance as plugin_perf
     import api.risk_scoring as risk
@@ -27,9 +22,6 @@ def create_flask_app() -> Flask:
     app.register_blueprint(device_bp)
     app.register_blueprint(mappings_bp)
     app.register_blueprint(settings_bp)
-    app.register_blueprint(analytics_bp)
-    app.register_blueprint(graphs_bp)
-    app.register_blueprint(export_bp)
     app.register_blueprint(compliance_bp)
 
     # Attach additional routes that expect a global ``app`` variable.
