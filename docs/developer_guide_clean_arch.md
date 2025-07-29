@@ -43,7 +43,7 @@ Add this command to your pre-commit hooks to avoid accidentally adding modules i
 the wrong location.
 For detecting leftover modules or unused code run:
 ```bash
-python tools/legacy_code_detector.py
+python archive/legacy_code_detector.py
 ```
 ## Backups and Rollback
 
