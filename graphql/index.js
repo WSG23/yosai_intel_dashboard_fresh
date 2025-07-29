@@ -1,5 +1,7 @@
 const express = require('express');
-const { ApolloServer, gql } = require('apollo-server-express');
+const { ApolloServer, gql } = require('@apollo/server');
+const { expressMiddleware } = require('@apollo/server/express4');
+const { ApolloServerPluginDrainHttpServer } = require('@apollo/server/plugin/drainHttpServer');
 const { createServer } = require('http');
 const { WebSocketServer } = require('ws');
 const { useServer } = require('graphql-ws/lib/use/ws');
@@ -67,18 +69,24 @@ async function start() {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    context: ({ req }) => ({ token: req.headers.authorization }),
-    validationRules: [depthLimit(5)]
+    validationRules: [depthLimit(5)],
+    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })]
   });
   await server.start();
-  server.applyMiddleware({ app, path: '/graphql' });
+  app.use(
+    '/graphql',
+    express.json(),
+    expressMiddleware(server, {
+      context: async ({ req }) => ({ token: req.headers.authorization })
+    })
+  );
 
   const wsServer = new WebSocketServer({ server: httpServer, path: '/graphql' });
   useServer({ schema: server.schema, context: () => ({}) }, wsServer);
 
   const PORT = process.env.GRAPHQL_PORT || 4000;
   httpServer.listen(PORT, () => {
-    console.log(`GraphQL server ready at http://localhost:${PORT}${server.graphqlPath}`);
+    console.log(`GraphQL server ready at http://localhost:${PORT}/graphql`);
   });
 }
 
