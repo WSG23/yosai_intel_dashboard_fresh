@@ -26,7 +26,7 @@ needed in production.
 `requirements.txt` lists all core dependencies. The most important packages are:
 
 - `Flask` and extensions (`Flask-Babel`, `Flask-Login`, `Flask-WTF`,
-  `Flask-Compress`, `Flask-Talisman`, `Flask-Caching`)
+  `Flask-Talisman`, `Flask-Caching`)
 - `dash`, `dash-bootstrap-components`, `dash-extensions`, `dash-leaflet`
 - `plotly`
 - `pandas`, `numpy`

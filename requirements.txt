@@ -6,7 +6,6 @@ Werkzeug==2.3.7
 flask-babel==4.0.0
 Flask-Login==0.6.2
 Flask-WTF==1.1.1
-Flask-Compress==1.18
 flask-talisman==1.1.0
 Flask-Caching==2.0.2
 dash==2.18.2

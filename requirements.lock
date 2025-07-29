@@ -56,7 +56,6 @@ flasgger==0.9.7.1
 Flask==2.3.3
 flask-babel==4.0.0
 Flask-Caching==2.0.2
-Flask-Compress==1.18
 flask-cors==6.0.1
 Flask-Login==0.6.2
 flask-talisman==1.1.0
