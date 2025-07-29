@@ -1387,15 +1387,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines. In short:
 7. The example CSRF scripts in `examples/` read `SECRET_KEY` from the
    environment using the `SecretManager`. Set this variable in your shell or
    `.env` file before running them.
-8. A legacy `lazystring` fix plugin sample is kept in
-   `examples/legacy_lazystring_fix_plugin.py` for reference only.
-9. The full pipeline diagnostic helper now lives at
+8. The full pipeline diagnostic helper now lives at
    `examples/diagnostic_script.py` (replacing the old
    `examples/debugcsv.py`) and can be run with
    `python examples/diagnostic_script.py`.
-10. Outdated prototype scripts, including the legacy adapters, have been
+9. Outdated prototype scripts, including the legacy adapters, have been
     removed from the repository.
-11. The original MVP demo modules have also been deleted and are no longer
+10. The original MVP demo modules have also been deleted and are no longer
     part of the codebase.
 
 ## <span aria-hidden="true">📦</span> Versioning
