@@ -7,7 +7,8 @@ from config.secrets_validator import DockerSecretSource, SecretsValidator
 
 
 def test_docker_secret_source(tmp_path):
-    (tmp_path / "SECRET_KEY").write_text("dockersecret" * 4)
+    # placeholder value used for test secrets
+    (tmp_path / "SECRET_KEY").write_text("placeholdersecret" * 2)
     src = DockerSecretSource(tmp_path)
     assert src.get_secret("SECRET_KEY").startswith("dockersecret")
     assert src.get_secret("MISSING") is None

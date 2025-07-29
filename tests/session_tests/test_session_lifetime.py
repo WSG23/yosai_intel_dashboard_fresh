@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -65,7 +66,8 @@ def test_apply_session_timeout_sets_flask_values(monkeypatch):
     )
     monkeypatch.setattr("core.auth.get_security_config", cfg.get_security_config)
     app = Flask(__name__)
-    app.secret_key = "x"
+    # use a throwaway value rather than a real secret
+    app.secret_key = os.urandom(16).hex()
     user = User("1", "Admin", "a@b.com", ["admin"])
     with app.app_context():
         with app.test_request_context():
