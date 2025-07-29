@@ -87,15 +87,15 @@ get_service = registry.get_service
 # Register built-in optional services
 register_service(
     "FileProcessor",
-    "services.data_processing.unified_file_validator:UnifiedFileValidator",
+    "services.data_processing.file_handler:FileHandler",
 )
 register_service(
     "FileHandler",
-    "services.data_processing.unified_file_validator:UnifiedFileValidator",
+    "services.data_processing.file_handler:FileHandler",
 )
 register_service(
     "UnifiedFileValidator",
-    "services.data_processing.unified_file_validator:UnifiedFileValidator",
+    "services.data_processing.file_handler:FileHandler",
 )
 register_service(
     "UploadAnalyticsProcessor",

@@ -7,7 +7,7 @@ from core.callback_events import CallbackEvent
 from core.callbacks import UnifiedCallbackManager
 from core.unicode import UnicodeProcessor
 from file_conversion.storage_manager import StorageManager
-from services.data_processing.unified_file_validator import UnifiedFileValidator
+from services.data_processing.file_handler import FileHandler
 
 _logger = logging.getLogger(__name__)
 callback_manager = UnifiedCallbackManager()
@@ -45,7 +45,7 @@ def process_file_upload(
         Information about the processed file.
     """
     storage = storage or StorageManager()
-    validator = UnifiedFileValidator()
+    validator = FileHandler()
     start = time.perf_counter()
 
     df = validator.validate_file(contents, filename)

@@ -39,10 +39,9 @@ Import validators from the `security` package rather than accessing the
 modules directly:
 
 ```python
-from security import SecurityValidator, UnifiedFileValidator
+from security import SecurityValidator
 
 validator = SecurityValidator()
-file_validator = UnifiedFileValidator()
 ```
 
 The package consolidates all validation utilities and keeps the
