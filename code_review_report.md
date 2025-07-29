@@ -81,7 +81,6 @@ API files:
   - sql_injection: 38 instances
     • archive/legacy_code_detector.py:481
   - hardcoded_secret: 7 instances
-    • yosai-assessment/code-quality-analyzer.py:17
     • tests/session_tests/test_session_lifetime.py:68
   - exec_usage: 1 instances
     • independent_tests/test_page_container_layout.py:19
