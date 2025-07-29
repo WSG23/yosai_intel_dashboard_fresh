@@ -25,10 +25,6 @@ Found 548 duplicate function signatures:
 
 ## Modularity Assessment
 Modular files: 682/1055
-Files with long functions (>50 lines):
-  - examples/debug_deep_analytics.py: avg 222.0 lines/function
-  - examples/diagnostic_script.py: avg 222.0 lines/function
-  - examples/unique_patterns_debug.py: avg 217.0 lines/function
 
 ## Callback Analysis
 Total callbacks found: 49
