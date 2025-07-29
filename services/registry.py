@@ -94,8 +94,8 @@ register_service(
     "services.data_processing.file_handler:FileHandler",
 )
 register_service(
-    "UnifiedFileValidator",
-    "services.data_processing.file_handler:FileHandler",
+    "SecurityValidator",
+    "validation.security_validator:SecurityValidator",
 )
 register_service(
     "UploadAnalyticsProcessor",
