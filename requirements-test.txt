@@ -1,12 +1,12 @@
 # Packages required exclusively for running the tests
-pytest==8.4.1
+pytest==7.4.0
 pytest-asyncio>=0.23
-pytest-cov>=2.12.0
-PyYAML>=6.0
+pytest-cov==6.2.1
+PyYAML==6.0.1
 psutil>=5.9.0
 selenium>=4.20.0
-requests>=2.32.0
-pydantic==2.11.7
+requests==2.32.4
+pydantic==2.10.6
 pandas==2.1.4
 scipy==1.11.3
 sqlparse==0.5.3
