@@ -11,12 +11,15 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 import pandas as pd
 import psutil
 
 from config.dynamic_config import dynamic_config
+
+if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
+    from monitoring.model_performance_monitor import ModelMetrics
 
 from .base_model import BaseModel
 from .cpu_optimizer import CPUOptimizer
@@ -266,6 +269,41 @@ class PerformanceMonitor:
             if metric.timestamp >= cutoff and metric.metric_type == MetricType.DEPRECATED_USAGE:
                 counts[metric.name] += 1
         return dict(counts)
+
+    # ------------------------------------------------------------------
+    def get_average_model_metrics(self) -> Optional["ModelMetrics"]:
+        """Return mean model metrics from recorded values."""
+        acc = self.aggregated_metrics.get("model.accuracy", [])
+        prec = self.aggregated_metrics.get("model.precision", [])
+        rec = self.aggregated_metrics.get("model.recall", [])
+        if not (acc and prec and rec):
+            return None
+        from monitoring.model_performance_monitor import ModelMetrics
+
+        return ModelMetrics(
+            accuracy=sum(acc) / len(acc),
+            precision=sum(prec) / len(prec),
+            recall=sum(rec) / len(rec),
+        )
+
+    # ------------------------------------------------------------------
+    def detect_model_drift(
+        self, baseline: "ModelMetrics", *, threshold: float = 0.05
+    ) -> bool:
+        """Return ``True`` if averaged metrics deviate from ``baseline``."""
+        current = self.get_average_model_metrics()
+        if current is None:
+            return False
+        for field in ("accuracy", "precision", "recall"):
+            cur_val = getattr(current, field)
+            base_val = getattr(baseline, field)
+            if base_val == 0:
+                diff = abs(cur_val - base_val)
+            else:
+                diff = abs(cur_val - base_val) / base_val
+            if diff - threshold > 1e-9:
+                return True
+        return False
 
     def _percentile(self, values: List[float], percentile: int) -> float:
         """Calculate percentile of values"""
