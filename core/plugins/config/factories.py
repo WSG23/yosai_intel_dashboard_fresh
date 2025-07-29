@@ -27,8 +27,7 @@ class DatabaseManagerFactory:
         """Create database manager based on configuration"""
         # Import here to avoid circular imports
         from .database_manager import (
-            MockDatabaseManager,
-            PostgreSQLDatabaseManager,
+            AsyncPostgreSQLManager,
             SQLiteDatabaseManager,
         )
 
@@ -36,17 +35,16 @@ class DatabaseManagerFactory:
         if not cls._managers:
             cls._managers.update(
                 {
-                    "mock": MockDatabaseManager,
-                    "postgresql": PostgreSQLDatabaseManager,
+                    "postgresql": AsyncPostgreSQLManager,
                     "sqlite": SQLiteDatabaseManager,
                 }
             )
 
-        db_type = getattr(database_config, "type", "mock")
+        db_type = getattr(database_config, "type", "sqlite")
 
         if db_type not in cls._managers:
-            logger.warning(f"Unknown database type: {db_type}, using mock")
-            db_type = "mock"
+            logger.warning(f"Unknown database type: {db_type}, using sqlite")
+            db_type = "sqlite"
 
         manager_class = cls._managers[db_type]
         return manager_class(database_config)

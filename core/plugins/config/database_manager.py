@@ -44,33 +44,6 @@ class MockDatabaseManager(IDatabaseManager):
         return f"Mock result for: {query}"
 
 
-class PostgreSQLDatabaseManager(IDatabaseManager):
-    """Deprecated synchronous PostgreSQL manager."""
-
-    def __init__(self, database_config) -> None:
-        self.config = database_config
-
-    def get_connection(self) -> ConnectionResult:  # pragma: no cover - legacy
-        raise NotImplementedError(
-            "PostgreSQLDatabaseManager is deprecated. "
-            "Use AsyncPostgreSQLManager instead."
-        )
-
-    def test_connection(self) -> bool:  # pragma: no cover - legacy
-        return False
-
-    def close_connection(self) -> None:  # pragma: no cover - legacy
-        pass
-
-    def execute_query(
-        self, query: str, params: Optional[Dict] = None
-    ) -> Any:  # pragma: no cover - legacy
-        raise NotImplementedError(
-            "PostgreSQLDatabaseManager is deprecated. "
-            "Use AsyncPostgreSQLManager instead."
-        )
-
-
 class SQLiteDatabaseManager(IDatabaseManager):
     """SQLite database manager"""
 
@@ -151,7 +124,6 @@ class SQLiteDatabaseManager(IDatabaseManager):
 
 __all__ = [
     "MockDatabaseManager",
-    "PostgreSQLDatabaseManager",
     "SQLiteDatabaseManager",
     "AsyncPostgreSQLManager",
 ]
