@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import base64
+from services.data_processing.file_handler import FileHandler
 
 from flask import Blueprint, jsonify, request
 from error_handling import ErrorCategory, ErrorHandler
@@ -63,6 +64,13 @@ def upload_files(payload: UploadRequestSchema):
 
         contents = []
         filenames = []
+        file_processor = container.get("file_processor")
+        validator = getattr(file_processor, "validator", None)
+        if validator is None:
+            try:
+                validator = container.get("file_handler")
+            except Exception:
+                validator = FileHandler().validator
 
         # Support both multipart/form-data and raw JSON payloads
         if request.files:
@@ -70,7 +78,15 @@ def upload_files(payload: UploadRequestSchema):
                 if not file.filename:
                     continue
                 file_bytes = file.read()
-                b64 = base64.b64encode(file_bytes).decode('utf-8', errors='replace')
+                try:
+                    validator.validate_file_upload(file.filename, file_bytes)
+                except Exception as exc:
+                    err = handler.handle(exc, ErrorCategory.INVALID_INPUT)
+                    return (
+                        jsonify(err.to_dict()),
+                        CODE_TO_STATUS[ErrorCode.INVALID_INPUT],
+                    )
+                b64 = base64.b64encode(file_bytes).decode("utf-8", errors="replace")
                 mime = file.mimetype or "application/octet-stream"
                 contents.append(f"data:{mime};base64,{b64}")
                 filenames.append(file.filename)
@@ -78,7 +94,6 @@ def upload_files(payload: UploadRequestSchema):
             contents = payload.contents or []
             filenames = payload.filenames or []
 
-        file_processor = container.get("file_processor")
         if not contents or not filenames:
             err = handler.handle(
                 ValueError("No file provided"), ErrorCategory.INVALID_INPUT
