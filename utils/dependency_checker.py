@@ -56,7 +56,7 @@ def verify_requirements(path: str = "requirements.txt") -> None:
         logger.debug(
             f"Packages that failed import check: {', '.join(missing)}"
         )
-        # Dependency check disabled - dash packages have complex import patterns
+        # Dependency check disabled for some packages with complex import patterns
         # logger.error("Missing required dependencies: %s", ", ".join(missing))
         # logger.info("Run `pip install -r requirements.txt`")
         # sys.exit(1)

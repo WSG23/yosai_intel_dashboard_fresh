@@ -72,11 +72,7 @@ cssutils==2.8.0
     # via -r requirements.txt
 cycler==0.12.1
     # via matplotlib
-    # via
-    #   -r requirements.txt
-    # via -r requirements.txt
-    # via -r requirements.txt
-    # via -r requirements.txt
+
 dask[array,dataframe]==2024.4.1
     # via
     #   -r requirements.txt
@@ -84,15 +80,13 @@ dask[array,dataframe]==2024.4.1
     #   feast
 dask-expr==1.0.11
     # via dask
-dataclass-wizard==0.22.3
+
 dill==0.3.9
     # via
     #   -r requirements.txt
     #   feast
 ecdsa==0.19.1
     # via python-jose
-editorconfig==0.17.1
-    # via jsbeautifier
 fairlearn==0.10.0
     # via -r requirements.txt
 fastapi==0.116.1
@@ -117,12 +111,10 @@ flask==2.3.3
 flask-babel==4.0.0
     # via -r requirements.txt
 flask-caching==2.0.2
-    # via
-    #   -r requirements.txt
+    # via -r requirements.txt
 flask-cors==6.0.1
     # via -r requirements.txt
 flask-login==0.6.2
-    # via -r requirements.txt
     # via -r requirements.txt
 flask-wtf==1.1.1
     # via -r requirements.txt
@@ -154,8 +146,8 @@ idna==3.10
 imageio==2.37.0
     # via scikit-image
 importlib-metadata==8.7.0
-    # via
-    #   opentelemetry-api
+    # via opentelemetry-api
+
 iniconfig==2.1.0
     # via pytest
 itsdangerous==2.2.0
@@ -175,7 +167,7 @@ joblib==1.3.2
     # via
     #   -r requirements.txt
     #   scikit-learn
-jsbeautifier==1.15.4
+
 jsonschema==4.25.0
     # via
     #   feast
@@ -205,12 +197,10 @@ mistune==3.1.3
     # via flasgger
 mmh3==5.2.0
     # via feast
-more-itertools==9.1.0
 mypy==1.17.0
     # via sqlalchemy
 mypy-extensions==1.1.0
     # via mypy
-nest-asyncio==1.6.0
 networkx==3.5
     # via scikit-image
 numba==0.61.2
@@ -284,8 +274,8 @@ pillow==11.3.0
     #   matplotlib
     #   scikit-image
 plotly==5.15.0
-    # via
-    #   -r requirements.txt
+    # via -r requirements.txt
+
 pluggy==1.6.0
     # via
     #   pytest
@@ -372,7 +362,6 @@ requests==2.32.4
     #   -r requirements.txt
     #   feast
     #   hvac
-retrying==1.4.1
 rpds-py==0.26.0
     # via
     #   jsonschema
@@ -404,7 +393,6 @@ six==1.17.0
     #   bleach
     #   ecdsa
     #   flasgger
-    #   jsbeautifier
     #   python-dateutil
 slicer==0.0.7
     # via shap
@@ -481,7 +469,7 @@ websockets==11.0.3
     # via
     #   -r requirements.txt
     #   uvicorn
-werkzeug==2.3.7
+werkzeug==3.0.6
     # via
     #   -r requirements.txt
     #   flask
@@ -491,6 +479,3 @@ wtforms==3.2.1
     # via flask-wtf
 zipp==3.23.0
     # via importlib-metadata
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
