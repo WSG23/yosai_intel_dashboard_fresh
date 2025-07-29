@@ -11,7 +11,8 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import Any, Callable, Dict, List, Optional, Tuple, Mapping, Iterable
+
 
 import pandas as pd
 import psutil
@@ -271,37 +272,36 @@ class PerformanceMonitor:
         return dict(counts)
 
     # ------------------------------------------------------------------
-    def get_average_model_metrics(self) -> Optional["ModelMetrics"]:
-        """Return mean model metrics from recorded values."""
-        acc = self.aggregated_metrics.get("model.accuracy", [])
-        prec = self.aggregated_metrics.get("model.precision", [])
-        rec = self.aggregated_metrics.get("model.recall", [])
-        if not (acc and prec and rec):
-            return None
-        from monitoring.model_performance_monitor import ModelMetrics
-
-        return ModelMetrics(
-            accuracy=sum(acc) / len(acc),
-            precision=sum(prec) / len(prec),
-            recall=sum(rec) / len(rec),
-        )
-
-    # ------------------------------------------------------------------
     def detect_model_drift(
-        self, baseline: "ModelMetrics", *, threshold: float = 0.05
+        self,
+        metrics: Mapping[str, float],
+        baseline: Mapping[str, float],
+        *,
+        drift_threshold: float = 0.05,
+        fields: Iterable[str] = ("accuracy", "precision", "recall"),
     ) -> bool:
-        """Return ``True`` if averaged metrics deviate from ``baseline``."""
-        current = self.get_average_model_metrics()
-        if current is None:
-            return False
-        for field in ("accuracy", "precision", "recall"):
-            cur_val = getattr(current, field)
-            base_val = getattr(baseline, field)
-            if base_val == 0:
-                diff = abs(cur_val - base_val)
-            else:
-                diff = abs(cur_val - base_val) / base_val
-            if diff - threshold > 1e-9:
+        """Return ``True`` if ``metrics`` deviate from ``baseline`` by more than ``drift_threshold``.
+
+        Parameters
+        ----------
+        metrics:
+            Mapping of metric names to current values.
+        baseline:
+            Mapping of metric names to baseline values.
+        drift_threshold:
+            Relative difference above which drift is flagged.
+        fields:
+            Metric keys to compare. Defaults to ``("accuracy", "precision", "recall")``.
+        """
+
+        for field in fields:
+            if field not in metrics or field not in baseline:
+                continue
+            current = metrics[field]
+            base = baseline[field]
+            diff = abs(current - base) if base == 0 else abs(current - base) / base
+            if diff - drift_threshold > 1e-9:
+
                 return True
         return False
 

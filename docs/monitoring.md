@@ -15,6 +15,18 @@ metrics = ModelMetrics(accuracy=0.95, precision=0.92, recall=0.90)
 monitor.log_metrics(metrics)
 if monitor.detect_drift(metrics):
     print("Model drift detected")
+
+# Alternatively, compare metrics directly using
+# :meth:`PerformanceMonitor.detect_model_drift`:
+
+```python
+from core.performance import get_performance_monitor
+
+pm = get_performance_monitor()
+baseline = {"accuracy": 0.95, "precision": 0.92, "recall": 0.90}
+if pm.detect_model_drift(metrics.__dict__, baseline):
+    print("Model drift detected")
+```
 ```
 
 To expose the metrics for Prometheus scraping start the server:

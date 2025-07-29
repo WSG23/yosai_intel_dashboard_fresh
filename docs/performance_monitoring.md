@@ -162,22 +162,21 @@ ui.record_frame_time(16.7)
 ui.record_callback_duration("update_chart", 0.05)
 ```
 
-## Model Monitoring
+### Model Drift Detection
 
-`PerformanceMonitor` keeps a running list of `model.accuracy`,
-`model.precision` and `model.recall` values recorded by
-`ModelPerformanceMonitor`. The helper method `detect_model_drift()`
-compares the averaged metrics against a baseline and returns ``True`` when the
-relative difference exceeds the configured threshold.
+`PerformanceMonitor` includes a helper for simple model drift checks. Pass the
+current metrics and the training baseline to `detect_model_drift` to see if any
+metric deviates by more than a threshold (default 5%):
 
 ```python
-from monitoring.model_performance_monitor import ModelMetrics
 from core.performance import get_performance_monitor
 
-baseline = ModelMetrics(accuracy=0.92, precision=0.88, recall=0.90)
-monitor = get_performance_monitor()
-if monitor.detect_model_drift(baseline, threshold=0.05):
-    print("Model drift detected")
+pm = get_performance_monitor()
+baseline = {"accuracy": 0.95, "precision": 0.92, "recall": 0.90}
+live = {"accuracy": 0.80, "precision": 0.91, "recall": 0.88}
+if pm.detect_model_drift(live, baseline):
+    print("Drift detected")
+
 ```
 
 ## Caching Strategy
