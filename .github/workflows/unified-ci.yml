@@ -94,7 +94,7 @@ jobs:
           pip install -r requirements-test.txt
       - name: Run Python tests
         if: matrix.lang == 'python'
-        run: pytest --cov=./ --cov-report=xml -q
+        run: pytest --cov=./ --cov-report=xml -q --cov-fail-under=80
       - name: Upload Python coverage
         if: matrix.lang == 'python'
         uses: actions/upload-artifact@v4
