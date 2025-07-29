@@ -11,7 +11,11 @@ from uuid import uuid4
 
 from core.protocols import DatabaseProtocol
 from core.audit_logger import ComplianceAuditLogger
-from models.compliance import DSARRequest, DSARRequestType, DSARStatus
+from yosai_intel_dashboard.models.compliance import (
+    DSARRequest,
+    DSARRequestType,
+    DSARStatus,
+)
 from core.unicode import safe_unicode_encode
 from database.secure_exec import execute_command, execute_query
 

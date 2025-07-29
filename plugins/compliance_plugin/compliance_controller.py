@@ -17,7 +17,7 @@ from core.audit_logger import ComplianceAuditLogger
 from core.container import Container
 from core.rbac import require_role
 from validation.security_validator import SecurityValidator
-from models.compliance import ConsentType, DSARRequestType
+from yosai_intel_dashboard.models.compliance import ConsentType, DSARRequestType
 from services.compliance.consent_service import ConsentService
 from services.compliance.dsar_service import DSARService
 from services.security import require_role

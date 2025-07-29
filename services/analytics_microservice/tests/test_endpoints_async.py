@@ -391,9 +391,7 @@ async def test_dashboard_summary_endpoint():
 
     transport = httpx.ASGITransport(app=module.app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        resp = await client.get(
-            "/api/v1/analytics/dashboard-summary", headers=headers
-        )
+        resp = await client.get("/api/v1/analytics/dashboard-summary", headers=headers)
 
         assert resp.status_code == 200
         assert resp.json() == {"status": "ok"}
@@ -439,7 +437,7 @@ async def test_internal_error_response():
 async def test_model_registry_endpoints(tmp_path):
     module, _, _ = load_app()
     module.app.state.model_dir = tmp_path
-    from models.ml import ModelRegistry
+    from yosai_intel_dashboard.models.ml import ModelRegistry
 
     module.app.state.model_registry = ModelRegistry()
     token = jwt.encode(
@@ -481,7 +479,7 @@ async def test_predict_endpoint(tmp_path):
     path = tmp_path / "demo" / "1" / "model.joblib"
     path.parent.mkdir(parents=True)
     joblib.dump(model, path)
-    from models.ml import ModelRegistry
+    from yosai_intel_dashboard.models.ml import ModelRegistry
 
     registry = ModelRegistry()
     registry.register_model("demo", str(path), {}, "", version="1")

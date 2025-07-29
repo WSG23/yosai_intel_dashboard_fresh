@@ -6,7 +6,7 @@ from typing import List, Optional
 
 import pandas as pd
 
-from models.enums import AccessResult, AnomalyType
+from yosai_intel_dashboard.models.enums import AccessResult, AnomalyType
 from .types import ThreatIndicator
 from .pattern_detection import _attack_info
 

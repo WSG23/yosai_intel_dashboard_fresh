@@ -254,10 +254,13 @@ class FakeUnicodeProcessor:
         progress: "bool | Callable[[int, int], None] | None" = None,
     ) -> pd.DataFrame:
         df_clean = df.copy()
-        df_clean.columns = [self.safe_encode_text(c).lstrip("=+-@") for c in df_clean.columns]
+        df_clean.columns = [
+            self.safe_encode_text(c).lstrip("=+-@") for c in df_clean.columns
+        ]
         for col in df_clean.select_dtypes(include=["object"]).columns:
             df_clean[col] = df_clean[col].apply(self.safe_encode_text)
         return df_clean
+
 
 try:
     from services.upload.protocols import UploadStorageProtocol
@@ -286,6 +289,7 @@ except Exception:  # pragma: no cover - optional dep fallback
 try:
     from core.container import Container
 except Exception:  # pragma: no cover - optional dep fallback
+
     class Container(dict):
         def register(self, name: str, value: Any) -> None:
             self[name] = value
@@ -293,9 +297,10 @@ except Exception:  # pragma: no cover - optional dep fallback
         def get(self, name: str) -> Any:
             return self[name]
 
+
 try:  # Optional real models may not be available in minimal environments
-    from models.entities import AccessEvent, Door, Person
-    from models.enums import AccessResult, DoorType
+    from yosai_intel_dashboard.models.entities import AccessEvent, Door, Person
+    from yosai_intel_dashboard.models.enums import AccessResult, DoorType
 except Exception:  # pragma: no cover - fallback stubs
     AccessEvent = Door = Person = object
     AccessResult = DoorType = object
