@@ -13,6 +13,7 @@ Create a container and register implementations with the desired lifetime:
 from core.service_container import ServiceContainer
 from services.analytics_service import AnalyticsService
 from services.interfaces import AnalyticsServiceProtocol
+from validation import FileValidator
 
 container = ServiceContainer()
 container.register_singleton(
@@ -20,7 +21,7 @@ container.register_singleton(
     AnalyticsService,
     protocol=AnalyticsServiceProtocol,
 )
-container.register_transient("validator", SecurityValidator)
+container.register_transient("validator", FileValidator)
 container.register_scoped("request_logger", RequestLogger)
 ```
 
