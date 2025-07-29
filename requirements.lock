@@ -129,7 +129,6 @@ platformdirs==4.3.8
 plotly==5.15.0
 pluggy==1.6.0
 polars==1.31.0
-prefect==3.2.7
 prometheus_client==0.22.1
 prometheus-fastapi-instrumentator==7.1.0
 protobuf==6.31.1
@@ -137,7 +136,6 @@ psutil==7.0.0
 psycopg2-binary==2.9.7
 pulsar-client==3.8.0
 py-serializable==2.1.0
-pyarrow==21.0.0
 pyasn1==0.6.1
 pycodestyle==2.14.0
 pycparser==2.22
