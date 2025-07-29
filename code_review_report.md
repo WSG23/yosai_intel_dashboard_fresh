@@ -29,7 +29,6 @@ Files with long functions (>50 lines):
   - examples/debug_deep_analytics.py: avg 222.0 lines/function
   - examples/diagnostic_script.py: avg 222.0 lines/function
   - examples/unique_patterns_debug.py: avg 217.0 lines/function
-For a full project sweep use `python archive/legacy_code_detector.py`.
 
 ## Callback Analysis
 Total callbacks found: 49
@@ -54,8 +53,6 @@ Found 702 potential encoding issues
 
 ## Python 3 Compliance
 ✗ Found Python 2 code that needs updating:
-  - archive/legacy_code_detector.py:
-    • Line 507: print_statement - print r
   - plugins/compliance_plugin/api.py:
     • Line 32: print_statement - print =
   - plugins/compliance_plugin/compliance_controller.py:
@@ -79,7 +76,6 @@ API files:
 ## Security Scan Results
 ⚠️  Found 46 potential security issues:
   - sql_injection: 38 instances
-    • archive/legacy_code_detector.py:481
   - hardcoded_secret: 7 instances
     • yosai-assessment/code-quality-analyzer.py:17
     • tests/session_tests/test_session_lifetime.py:68
