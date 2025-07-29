@@ -2,7 +2,10 @@ import pytest
 import threading
 import time
 
-from database.connection_pool import EnhancedConnectionPool, CircuitBreaker
+from database.intelligent_connection_pool import (
+    IntelligentConnectionPool,
+    CircuitBreaker,
+)
 from config.database_manager import MockConnection
 from config.database_exceptions import ConnectionValidationFailed
 
@@ -12,7 +15,7 @@ def factory():
 
 
 def test_pool_metrics():
-    pool = EnhancedConnectionPool(factory, 1, 2, timeout=1, shrink_timeout=1)
+    pool = IntelligentConnectionPool(factory, 1, 2, timeout=1, shrink_timeout=1)
     conn = pool.get_connection()
     pool.release_connection(conn)
     metrics = pool.get_metrics()
@@ -34,7 +37,7 @@ def bad_factory():
 
 
 def test_circuit_breaker_opens_on_failures():
-    pool = EnhancedConnectionPool(
+    pool = IntelligentConnectionPool(
         bad_factory,
         1,
         1,
@@ -51,7 +54,7 @@ def test_circuit_breaker_opens_on_failures():
 
 
 def test_connection_count_under_load():
-    pool = EnhancedConnectionPool(factory, 2, 4, timeout=1, shrink_timeout=1)
+    pool = IntelligentConnectionPool(factory, 2, 4, timeout=1, shrink_timeout=1)
     results = []
     lock = threading.Lock()
 
