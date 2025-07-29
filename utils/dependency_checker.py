@@ -13,11 +13,7 @@ PACKAGE_MODULE_MAP: Dict[str, str] = {
     "flask-caching": "flask_caching",
     "flask-compress": "flask_compress",
     "flask-login": "flask_login",
-    "flask-talisman": "flask_talisman",
     "flask-wtf": "flask_wtf",
-    "dash-bootstrap-components": "dash_bootstrap_components",
-    "dash-extensions": "dash_extensions",
-    "dash-leaflet": "dash_leaflet",
     "psycopg2-binary": "psycopg2",
     "python-dotenv": "dotenv",
     "python-jose": "jose",
@@ -60,7 +56,7 @@ def verify_requirements(path: str = "requirements.txt") -> None:
         logger.debug(
             f"Packages that failed import check: {', '.join(missing)}"
         )
-        # Dependency check disabled - dash packages have complex import patterns
+        # Dependency check disabled for some packages with complex import patterns
         # logger.error("Missing required dependencies: %s", ", ".join(missing))
         # logger.info("Run `pip install -r requirements.txt`")
         # sys.exit(1)
