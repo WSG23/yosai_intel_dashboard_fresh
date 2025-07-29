@@ -11,7 +11,7 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Mapping, Iterable
 
 import pandas as pd
 import psutil
@@ -266,6 +266,39 @@ class PerformanceMonitor:
             if metric.timestamp >= cutoff and metric.metric_type == MetricType.DEPRECATED_USAGE:
                 counts[metric.name] += 1
         return dict(counts)
+
+    # ------------------------------------------------------------------
+    def detect_model_drift(
+        self,
+        metrics: Mapping[str, float],
+        baseline: Mapping[str, float],
+        *,
+        drift_threshold: float = 0.05,
+        fields: Iterable[str] = ("accuracy", "precision", "recall"),
+    ) -> bool:
+        """Return ``True`` if ``metrics`` deviate from ``baseline`` by more than ``drift_threshold``.
+
+        Parameters
+        ----------
+        metrics:
+            Mapping of metric names to current values.
+        baseline:
+            Mapping of metric names to baseline values.
+        drift_threshold:
+            Relative difference above which drift is flagged.
+        fields:
+            Metric keys to compare. Defaults to ``("accuracy", "precision", "recall")``.
+        """
+
+        for field in fields:
+            if field not in metrics or field not in baseline:
+                continue
+            current = metrics[field]
+            base = baseline[field]
+            diff = abs(current - base) if base == 0 else abs(current - base) / base
+            if diff - drift_threshold > 1e-9:
+                return True
+        return False
 
     def _percentile(self, values: List[float], percentile: int) -> float:
         """Calculate percentile of values"""
