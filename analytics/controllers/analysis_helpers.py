@@ -14,11 +14,11 @@ from analytics.core.utils.results_display import (
 from services.data_processing.analytics_engine import (
     AI_SUGGESTIONS_AVAILABLE,
     analyze_data_with_service,
-    get_analytics_service_safe,
     get_data_source_options_safe,
     process_quality_analysis_safe,
     process_suggests_analysis_safe,
 )
+from services import get_analytics_service
 
 
 # ------------------------------------------------------------
@@ -53,7 +53,7 @@ def run_service_analysis(data_source: str, analysis_type: str):
 def run_unique_patterns_analysis(data_source: str):
     """Run unique patterns analysis using the analytics service."""
     try:
-        analytics_service = get_analytics_service_safe()
+        analytics_service = get_analytics_service()
         if not analytics_service:
             return dbc.Alert("Analytics service not available", color="danger")
         results = analytics_service.get_unique_patterns_analysis(data_source)
@@ -441,7 +441,7 @@ def dispatch_analysis(button_id: str, data_source: str):
 def update_status_alert(_trigger: Any) -> str:
     """Return status alert message based on service health."""
     try:
-        service = get_analytics_service_safe()
+        service = get_analytics_service()
         suggests_available = AI_SUGGESTIONS_AVAILABLE
 
         if service and suggests_available:

@@ -61,9 +61,20 @@ else:
     FileHandlerService = get_service("FileHandler")
     FILE_HANDLER_AVAILABLE = FileHandlerService is not None
 
-    get_analytics_service = get_service("get_analytics_service")
     create_analytics_service = get_service("create_analytics_service")
     AnalyticsService = get_service("AnalyticsService")
+
+    def get_analytics_service():
+        """Return a shared :class:`AnalyticsService` instance if available."""
+        getter = get_service("get_analytics_service")
+        if getter is None:
+            return None
+        try:
+            return getter()
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.exception("Failed to initialize AnalyticsService: %s", exc)
+            return None
+
     ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
 
     __all__ = [

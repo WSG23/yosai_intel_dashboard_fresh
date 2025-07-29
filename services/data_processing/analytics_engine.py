@@ -5,10 +5,7 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-try:
-    from services import get_analytics_service  # type: ignore
-except Exception:  # pragma: no cover - avoid circular import during tests
-    get_analytics_service = None
+from services import get_analytics_service  # type: ignore
 try:
     from services.ai_suggestions import generate_column_suggestions
 
@@ -34,17 +31,6 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def get_analytics_service_safe():
-    """Return a shared :class:`AnalyticsService` instance if available."""
-    if get_analytics_service is None:
-        return None
-    try:
-        return get_analytics_service()
-    except Exception as exc:  # pragma: no cover - best effort
-        logger.exception("Failed to initialize AnalyticsService: %s", exc)
-        return None
-
-
 def get_data_source_options_safe() -> List[Dict[str, str]]:
     """Return dropdown options for available data sources."""
     options: List[Dict[str, str]] = []
@@ -59,7 +45,7 @@ def get_data_source_options_safe() -> List[Dict[str, str]]:
     except Exception:
         pass
     try:
-        service = get_analytics_service_safe()
+        service = get_analytics_service()
         if service:
             service_sources = service.get_data_source_options()
             for source_dict in service_sources:
@@ -293,7 +279,7 @@ def process_quality_analysis(data_source: str) -> Dict[str, Any]:
 def analyze_data_with_service(data_source: str, analysis_type: str) -> Dict[str, Any]:
     """Run analysis using the analytics service with chunked processing."""
     try:
-        service = get_analytics_service_safe()
+        service = get_analytics_service()
         if not service:
             return {"error": "Analytics service not available"}
 
@@ -346,7 +332,6 @@ def analyze_data_with_service_safe(
 
 
 __all__ = [
-    "get_analytics_service_safe",
     "get_data_source_options_safe",
     "get_latest_uploaded_source_value",
     "get_analysis_type_options",
