@@ -40,7 +40,6 @@ gunicorn==23.0.0
 chardet==5.2.0
 pyOpenSSL==25.1.0
 SQLAlchemy==2.0.41
-prefect==3.2.7
 click==8.1.8
 pytest-cov==6.2.1
 hvac==2.3.0
