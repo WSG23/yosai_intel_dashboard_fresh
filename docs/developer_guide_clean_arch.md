@@ -41,10 +41,6 @@ python scripts/validate_structure.py
 
 Add this command to your pre-commit hooks to avoid accidentally adding modules in
 the wrong location.
-For detecting leftover modules or unused code run:
-```bash
-python archive/legacy_code_detector.py
-```
 ## Backups and Rollback
 
 The migration script can create an archive of the directories it moves. Use `--backup` with the target path:
