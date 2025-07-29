@@ -31,7 +31,7 @@ from services.common.async_db import get_pool
 from services.security import require_permission
 
 from pydantic import BaseModel
-from infrastructure.discovery.health_check import (
+from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     setup_health_checks,
     register_health_check,
 )

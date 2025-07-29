@@ -35,7 +35,7 @@ from models.ml import ModelRegistry
 from analytics import anomaly_detection, feature_extraction, security_patterns
 from config import get_database_config
 from core.security import RateLimiter
-from infrastructure.discovery.health_check import (
+from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
 )
