@@ -162,6 +162,24 @@ ui.record_frame_time(16.7)
 ui.record_callback_duration("update_chart", 0.05)
 ```
 
+## Model Monitoring
+
+`PerformanceMonitor` keeps a running list of `model.accuracy`,
+`model.precision` and `model.recall` values recorded by
+`ModelPerformanceMonitor`. The helper method `detect_model_drift()`
+compares the averaged metrics against a baseline and returns ``True`` when the
+relative difference exceeds the configured threshold.
+
+```python
+from monitoring.model_performance_monitor import ModelMetrics
+from core.performance import get_performance_monitor
+
+baseline = ModelMetrics(accuracy=0.92, precision=0.88, recall=0.90)
+monitor = get_performance_monitor()
+if monitor.detect_model_drift(baseline, threshold=0.05):
+    print("Model drift detected")
+```
+
 ## Caching Strategy
 
 Several analytics methods use `advanced_cache.cache_with_lock` to store results.
