@@ -35,7 +35,6 @@ def load_analytics_helpers() -> None:  # pragma: no cover - optional
         clean_analysis_data_unicode,
         get_ai_suggestions_for_file,
         get_analysis_type_options,
-        get_analytics_service_safe,
         get_data_source_options_safe,
         get_latest_uploaded_source_value,
         process_quality_analysis,
@@ -46,7 +45,6 @@ def load_analytics_helpers() -> None:  # pragma: no cover - optional
 
     globals().update(
         AI_SUGGESTIONS_AVAILABLE=_AI,
-        get_analytics_service_safe=get_analytics_service_safe,
         get_data_source_options_safe=get_data_source_options_safe,
         get_latest_uploaded_source_value=get_latest_uploaded_source_value,
         get_analysis_type_options=get_analysis_type_options,

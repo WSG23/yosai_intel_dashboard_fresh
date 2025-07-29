@@ -106,11 +106,11 @@ async def test_analytics_with_mappings(verbose: bool = False) -> dict:
                 # Test analytics functions from data_processing.analytics_engine
                 print("\n--- Testing analytics engine functions ---")
                 try:
-                    from services.data_processing.analytics_engine import get_analytics_service_safe
-                    
-                    analytics_func = get_analytics_service_safe()
+                    from services import get_analytics_service
+
+                    analytics_func = get_analytics_service()
                     result["analytics_engine_functions"] = {
-                        "get_analytics_service_safe": str(type(analytics_func)) if analytics_func else None
+                        "get_analytics_service": str(type(analytics_func)) if analytics_func else None
                     }
                     print(f"Analytics engine functions loaded: {analytics_func is not None}")
                     
