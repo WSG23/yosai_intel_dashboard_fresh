@@ -35,13 +35,14 @@ instance.
 
 ## Replacing Direct Validator Usage
 
-Import validators from the `security` package rather than accessing the
+Import validators from the `validation` package rather than accessing the
 modules directly:
 
 ```python
-from security import SecurityValidator
+from validation import SecurityValidator, FileValidator
 
 validator = SecurityValidator()
+file_validator = FileValidator()
 ```
 
 The package consolidates all validation utilities and keeps the
@@ -80,10 +81,12 @@ def test_health():
 
 ### Validation Rules
 ```python
-from security import SecurityValidator
+from validation import SecurityValidator, FileValidator
 
 def test_validation():
-    v = SecurityValidator()
-    result = v.validate_input("SELECT 1", "query")
+    sv = SecurityValidator()
+    fv = FileValidator()
+    result = sv.validate_input("SELECT 1", "query")
     assert result["valid"]
+    assert fv.validate_file_upload("demo.csv", b"col\n1")["valid"]
 ```
