@@ -2,7 +2,7 @@
 # These packages must be installed before running the application.
 # The Dockerfiles and scripts/setup.sh handle this automatically.
 Flask==2.3.3
-Werkzeug==2.3.7
+Werkzeug==3.0.6
 flask-babel==4.0.0
 Flask-Login==0.6.2
 Flask-WTF==1.1.1
