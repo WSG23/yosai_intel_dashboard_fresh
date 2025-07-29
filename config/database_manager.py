@@ -344,7 +344,7 @@ class EnhancedPostgreSQLManager(DatabaseManager):
     ) -> None:
         super().__init__(config)
         self.optimizer = DatabaseQueryOptimizer()
-        from database.connection_pool import EnhancedConnectionPool
+        from database.intelligent_connection_pool import IntelligentConnectionPool
         from database.performance_analyzer import DatabasePerformanceAnalyzer
 
         from .connection_retry import ConnectionRetryManager, RetryConfig
@@ -354,7 +354,7 @@ class EnhancedPostgreSQLManager(DatabaseManager):
         )
         self.performance_analyzer = DatabasePerformanceAnalyzer()
 
-        self.pool = EnhancedConnectionPool(
+        self.pool = IntelligentConnectionPool(
             self._create_connection,
             self.config.initial_pool_size,
             self.config.max_pool_size,
