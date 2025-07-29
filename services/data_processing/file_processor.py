@@ -17,7 +17,7 @@ from core.performance import get_performance_monitor
 from core.unicode import safe_format_number
 from core.performance_file_processor import PerformanceFileProcessor
 from core.unicode import safe_unicode_decode
-from analytics.core.utils.unicode_processor import UnicodeHelper
+from core.unicode import UnicodeProcessor as UnicodeHelper
 from .file_handler import process_file_simple
 from core.config import get_max_display_rows
 

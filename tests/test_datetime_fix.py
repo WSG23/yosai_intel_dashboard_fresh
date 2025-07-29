@@ -1,6 +1,6 @@
 import pandas as pd
 
-from analytics.utils import ensure_datetime_columns
+from services.result_formatting import ensure_datetime_columns
 from services.analytics_service import AnalyticsService
 
 

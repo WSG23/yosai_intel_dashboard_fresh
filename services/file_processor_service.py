@@ -13,7 +13,7 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from analytics.core.utils.unicode_processor import UnicodeHelper
+from core.unicode import UnicodeProcessor as UnicodeHelper
 from config.constants import UPLOAD_ALLOWED_EXTENSIONS, DEFAULT_CHUNK_SIZE
 from core.unicode import process_large_csv_content
 from core.protocols import ConfigurationServiceProtocol
