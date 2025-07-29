@@ -1,4 +1,5 @@
 import importlib
+import os
 import sys
 
 # Provide stubs when optional dependencies are missing
@@ -31,7 +32,8 @@ def _create_app(monkeypatch):
     importlib.reload(upload_endpoint)
 
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = "test-key"
+    # Use a throwaway value instead of a real secret
+    app.config["SECRET_KEY"] = os.urandom(16).hex()
     CSRFProtect(app)
     if not hasattr(werkzeug, "__version__"):
         werkzeug.__version__ = "3"
