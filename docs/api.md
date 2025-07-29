@@ -15,34 +15,6 @@ by Swagger UI to display the API reference or used to generate client SDKs.
 The CI workflow runs this command and uploads the generated `openapi.json` as an
 artifact so the specification is available from workflow runs.
 
-### Generating API clients
-
-Use [OpenAPI Generator](https://openapi-generator.tech/) to create typed clients
-for the dashboard API. A helper script automates generation:
-
-```bash
-./scripts/generate_clients.sh
-```
-
-The script writes the Go client under `pkg/eventclient` and the Python client
-under `analytics/clients/event_client`.
-
-After generation, quickly review the resulting files.  Remove any obsolete
-comments or unused code (for example the old Python 3 ``long`` type note) before
-committing the client directories.
-
-### Regenerating after changes
-Run the generator whenever API routes or schemas change:
-
-```bash
-go run ./api/openapi
-./scripts/generate_clients.sh docs/openapi.json
-```
-
-Commit the updated `docs/openapi.json`, `analytics/clients/event_client`, and
-`pkg/eventclient` directories so the specification and generated clients stay in
-sync with the codebase. CI will fail if these files differ from the checked in
-versions.
 
 ### FastAPI microservices
 
