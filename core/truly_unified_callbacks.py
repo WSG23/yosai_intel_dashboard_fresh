@@ -78,7 +78,7 @@ class TrulyUnifiedCallbacks:
     ) -> None:
         self.app = app
         if security_validator is None:
-            from .security_validator import SecurityValidator
+            from validation.security_validator import SecurityValidator
 
             self.security = SecurityValidator()
         else:
