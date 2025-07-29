@@ -77,7 +77,6 @@ API files:
 ⚠️  Found 46 potential security issues:
   - sql_injection: 38 instances
   - hardcoded_secret: 7 instances
-    • yosai-assessment/code-quality-analyzer.py:17
     • tests/session_tests/test_session_lifetime.py:68
   - exec_usage: 1 instances
     • independent_tests/test_page_container_layout.py:19
