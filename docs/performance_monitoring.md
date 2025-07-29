@@ -176,6 +176,7 @@ baseline = {"accuracy": 0.95, "precision": 0.92, "recall": 0.90}
 live = {"accuracy": 0.80, "precision": 0.91, "recall": 0.88}
 if pm.detect_model_drift(live, baseline):
     print("Drift detected")
+
 ```
 
 ## Caching Strategy

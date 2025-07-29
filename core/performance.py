@@ -13,10 +13,14 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple, Mapping, Iterable
 
+
 import pandas as pd
 import psutil
 
 from config.dynamic_config import dynamic_config
+
+if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
+    from monitoring.model_performance_monitor import ModelMetrics
 
 from .base_model import BaseModel
 from .cpu_optimizer import CPUOptimizer
@@ -297,6 +301,7 @@ class PerformanceMonitor:
             base = baseline[field]
             diff = abs(current - base) if base == 0 else abs(current - base) / base
             if diff - drift_threshold > 1e-9:
+
                 return True
         return False
 
