@@ -12,7 +12,7 @@ start_api.py
              └─ services.registry
                  └─ services.analytics.upload_analytics
                      └─ services.chunked_analysis
-                         └─ core.security_validator
+                        └─ validation.security_validator
                              └─ security_callback_controller
                                  └─ core.callback_events
 ```

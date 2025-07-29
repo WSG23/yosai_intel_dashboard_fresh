@@ -17,7 +17,7 @@ from core.base_model import BaseModel
 
 # Import the high-level ``SecurityValidator`` used across the application.
 # This module keeps no internal validation logic and instead delegates to
-# :class:`~core.security_validator.SecurityValidator` for sanitization tasks.
+# :class:`~validation.security_validator.SecurityValidator` for sanitization tasks.
 from validation.security_validator import SecurityValidator
 
 

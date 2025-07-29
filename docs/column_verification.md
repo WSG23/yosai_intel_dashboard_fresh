@@ -8,14 +8,13 @@ It relies on **Dash** and **dash-bootstrap-components** for rendering and uses
 ## Usage
 
 Call `register_callbacks` during application startup to enable the interactive
-features. The function expects a `TrulyUnifiedCallbacks` or
-`MasterCallbackSystem` instance:
+features. The function expects a `TrulyUnifiedCallbacks` instance:
 
 ```python
 from components.column_verification import register_callbacks
-from core.master_callback_system import MasterCallbackSystem
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
-callbacks = MasterCallbackSystem(app)
+callbacks = TrulyUnifiedCallbacks(app)
 register_callbacks(callbacks)
 ```
 
