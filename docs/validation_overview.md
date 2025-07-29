@@ -2,6 +2,8 @@
 
 All validation in the Yōsai Intel Dashboard is provided by the `security` package which exposes `SecurityValidator` and `UnifiedFileValidator`. Previous individual validator classes have been removed and their functionality consolidated.
 
+If your code imports `InputValidator` or `UploadValidator`, switch to `validation.security_validator.SecurityValidator` instead.
+
 ## Current Validation Architecture
 
 Use the unified package for all validation needs:
@@ -63,6 +65,8 @@ These classes have been COMPLETELY REMOVED:
 - ❌ `XSSPrevention`
 - ❌ `SecureFileValidator`
 - ❌ `BusinessLogicValidator`
+- ❌ `InputValidator`
+- ❌ `UploadValidator`
 
 Use `SecurityValidator` for all validation needs.
 
