@@ -35,7 +35,7 @@ from core.protocols import (
     EventBusProtocol,
     StorageProtocol,
 )
-from models.ml import ModelRegistry
+from yosai_intel_dashboard.models.ml import ModelRegistry
 from services.analytics.calculator import Calculator, create_calculator
 from services.analytics.data_loader import DataLoader, create_loader
 from services.analytics.orchestrator import AnalyticsOrchestrator
@@ -113,12 +113,8 @@ class DataSourceRouter:
         try:
             uploaded_data = self.orchestrator.loader.load_uploaded_data()
             if uploaded_data and source in ["uploaded", "sample"]:
-                logger.info(
-                    "Forcing uploaded data usage (source was: %s)", source
-                )
-                return self.orchestrator.process_uploaded_data_directly(
-                    uploaded_data
-                )
+                logger.info("Forcing uploaded data usage (source was: %s)", source)
+                return self.orchestrator.process_uploaded_data_directly(uploaded_data)
         except (
             ImportError,
             FileNotFoundError,

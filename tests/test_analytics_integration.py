@@ -5,7 +5,7 @@ Complete Integration Tests for Analytics System
 import pandas as pd
 import pytest
 
-from models import ModelFactory
+from yosai_intel_dashboard.models.base import ModelFactory
 from services import create_analytics_service, get_analytics_service
 
 
@@ -60,7 +60,7 @@ def test_model_factory_absent(monkeypatch):
         return original(name)
 
     monkeypatch.setattr(reg, "get_service", fake_get_service)
-    import models as models_pkg
+    import yosai_intel_dashboard.models as models_pkg
 
     reload(models_pkg)
     assert models_pkg.ModelFactory is None

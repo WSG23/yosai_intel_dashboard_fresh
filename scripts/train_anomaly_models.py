@@ -21,12 +21,12 @@ import pandas as pd
 from sklearn.ensemble import IsolationForest
 
 from analytics.anomaly_detection.data_prep import prepare_anomaly_data
-from models.anomaly_models import (
+from yosai_intel_dashboard.models.anomaly_models import (
     autoencoder_reconstruction_error,
     train_autoencoder_model,
     train_dbscan_model,
 )
-from models.ml import ModelRegistry
+from yosai_intel_dashboard.models.ml import ModelRegistry
 
 
 LOG = logging.getLogger(__name__)
@@ -43,7 +43,9 @@ def compute_dataset_hash(df: pd.DataFrame) -> str:
     return hashlib.sha256(csv_bytes).hexdigest()
 
 
-def train_models(df: pd.DataFrame, include_iso: bool) -> list[tuple[str, Any, dict[str, float]]]:
+def train_models(
+    df: pd.DataFrame, include_iso: bool
+) -> list[tuple[str, Any, dict[str, float]]]:
     """Train anomaly models and return metadata tuples."""
     results: list[tuple[str, Any, dict[str, float]]] = []
 
@@ -82,20 +84,28 @@ def train_models(df: pd.DataFrame, include_iso: bool) -> list[tuple[str, Any, di
 
     if include_iso:
         iso = IsolationForest(random_state=42, contamination=0.1)
-        iso.fit(df[[
-            "hour",
-            "day_of_week",
-            "is_weekend",
-            "is_after_hours",
-            "access_granted",
-        ]])
-        scores = -iso.decision_function(df[[
-            "hour",
-            "day_of_week",
-            "is_weekend",
-            "is_after_hours",
-            "access_granted",
-        ]])
+        iso.fit(
+            df[
+                [
+                    "hour",
+                    "day_of_week",
+                    "is_weekend",
+                    "is_after_hours",
+                    "access_granted",
+                ]
+            ]
+        )
+        scores = -iso.decision_function(
+            df[
+                [
+                    "hour",
+                    "day_of_week",
+                    "is_weekend",
+                    "is_after_hours",
+                    "access_granted",
+                ]
+            ]
+        )
         results.append(
             (
                 "isolation_forest_anomaly",

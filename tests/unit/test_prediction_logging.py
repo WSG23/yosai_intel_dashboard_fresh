@@ -4,7 +4,9 @@ import sys
 
 # Stub resilience metrics to avoid optional dependency errors
 metrics_mod = ModuleType("services.resilience.metrics")
-metrics_mod.circuit_breaker_state = SimpleNamespace(labels=lambda *a, **k: SimpleNamespace(inc=lambda: None))
+metrics_mod.circuit_breaker_state = SimpleNamespace(
+    labels=lambda *a, **k: SimpleNamespace(inc=lambda: None)
+)
 resilience_pkg = ModuleType("services.resilience")
 resilience_pkg.metrics = metrics_mod
 services_pkg = ModuleType("services")
@@ -12,8 +14,9 @@ sys.modules.setdefault("services", services_pkg)
 sys.modules.setdefault("services.resilience", resilience_pkg)
 sys.modules.setdefault("services.resilience.metrics", metrics_mod)
 
-from models.ml.base_model import BaseModel, ModelMetadata
+from yosai_intel_dashboard.models.ml.base_model import BaseModel, ModelMetadata
 from monitoring import model_performance_monitor as mpm
+
 
 class DummyModel(BaseModel):
     def __init__(self):

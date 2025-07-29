@@ -12,7 +12,11 @@ from flask import request
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from models.compliance import ConsentLog, ConsentType, DataSensitivityLevel
+from yosai_intel_dashboard.models.compliance import (
+    ConsentLog,
+    ConsentType,
+    DataSensitivityLevel,
+)
 from core.protocols import DatabaseProtocol
 from core.audit_logger import ComplianceAuditLogger
 from database.secure_exec import execute_command, execute_query

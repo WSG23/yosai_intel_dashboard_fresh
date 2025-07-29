@@ -13,7 +13,7 @@ import numpy as np
 from utils.hashing import hash_dataframe
 
 from utils.sklearn_compat import optional_import
-from models.ml import ModelRegistry
+from yosai_intel_dashboard.models.ml import ModelRegistry
 
 # Optional heavy dependencies
 KFold = optional_import("sklearn.model_selection.KFold")

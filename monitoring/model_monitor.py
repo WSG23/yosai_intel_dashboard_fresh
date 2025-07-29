@@ -8,7 +8,7 @@ import warnings
 from typing import Optional
 
 from config import get_monitoring_config
-from models.ml.model_registry import ModelRegistry
+from yosai_intel_dashboard.models.ml.model_registry import ModelRegistry
 from monitoring.model_performance_monitor import (
     ModelMetrics,
     get_model_performance_monitor,
@@ -83,4 +83,3 @@ class ModelMonitor:
 
 
 __all__ = ["ModelMonitor"]
-

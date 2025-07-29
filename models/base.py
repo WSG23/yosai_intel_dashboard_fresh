@@ -306,7 +306,7 @@ class ModelFactory:
             return analytics
 
         except Exception as e:
-            logger.error(f"Error extracting analytics from models: {e}")
+            logger.error(f"Error extracting analytics from package models: {e}")
             return {}
 
 

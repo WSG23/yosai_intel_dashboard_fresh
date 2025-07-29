@@ -29,7 +29,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 import joblib
 import redis.asyncio as aioredis
-from models.ml import ModelRegistry
+from yosai_intel_dashboard.models.ml import ModelRegistry
 
 
 from analytics import anomaly_detection, feature_extraction, security_patterns
@@ -249,10 +249,7 @@ async def dashboard_summary(_: None = Depends(verify_token)):
 
 @app.get("/api/v1/analytics/access-patterns")
 @rate_limit_decorator()
-
-async def access_patterns(
-    days: int = Query(7), _: None = Depends(verify_token)
-):
+async def access_patterns(days: int = Query(7), _: None = Depends(verify_token)):
     cache_key = f"access:{days}"
 
     cached = await app.state.redis.get(cache_key)
