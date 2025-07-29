@@ -25,7 +25,6 @@ from config.constants import API_PORT
 from device_endpoint import device_bp
 from mappings_endpoint import mappings_bp
 from upload_endpoint import upload_bp
-from .callbacks_endpoint import callbacks_bp
 from token_endpoint import token_bp
 from middleware.performance import TimingMiddleware
 
@@ -69,7 +68,6 @@ def create_api_app() -> "FastAPI":
     app.register_blueprint(device_bp)
     app.register_blueprint(mappings_bp)
     app.register_blueprint(settings_bp)
-    app.register_blueprint(callbacks_bp)
     app.register_blueprint(token_bp)
 
     @app.route("/", defaults={"path": ""})
