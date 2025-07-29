@@ -4,6 +4,8 @@ from .async_service import AsyncAnalyticsService, PGAnalyticsRepository
 from .calculator import Calculator, create_calculator
 from .data_loader import DataLoader, create_loader
 from .metrics_calculator import MetricsCalculator
+from .generator import AnalyticsGenerator
+from .processor import AnalyticsProcessor
 from .preparation import prepare_dataframe
 from .protocols import (
     AnalyticsServiceProtocol,
@@ -49,4 +51,6 @@ __all__ = [
     "AsyncAnalyticsService",
     "PGAnalyticsRepository",
     "AnalyticsOrchestrator",
+    "AnalyticsGenerator",
+    "AnalyticsProcessor",
 ]
