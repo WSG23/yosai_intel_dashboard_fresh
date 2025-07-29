@@ -3,7 +3,72 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from analytics.utils import ensure_datetime_columns, safe_datetime_operation
+
+def ensure_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Return a copy of ``df`` with any datetime-like columns parsed."""
+
+    df = df.copy(deep=False)
+    timestamp_columns = [
+        "timestamp",
+        "datetime",
+        "date",
+        "time",
+        "created_at",
+        "updated_at",
+    ]
+    for col in df.columns:
+        if (
+            col.lower() in timestamp_columns
+            or "time" in col.lower()
+            or "date" in col.lower()
+        ):
+            if df[col].dtype == "object":
+                try:
+                    logger.info("Converting column '%s' to datetime", col)
+                    df[col] = pd.to_datetime(df[col], errors="coerce")
+                    logger.info("✅ Successfully converted '%s' to datetime", col)
+                except Exception as exc:  # pragma: no cover - best effort
+                    logger.warning(
+                        "⚠️ Could not convert '%s' to datetime: %s", col, exc
+                    )
+    return df
+
+
+def safe_datetime_operation(df: pd.DataFrame, column: str, operation: str) -> Any:
+    """Safely perform a datetime ``operation`` on ``df[column]``."""
+
+    if column not in df.columns:
+        logger.warning("Column '%s' not found in DataFrame", column)
+        return None
+
+    if df[column].dtype == "object":
+        logger.info("Converting '%s' to datetime for operation '%s'", column, operation)
+        df[column] = pd.to_datetime(df[column], errors="coerce")
+
+    try:
+        if operation == "date":
+            return df[column].dt.date
+        if operation == "hour":
+            return df[column].dt.hour
+        if operation == "day":
+            return df[column].dt.day
+        if operation == "month":
+            return df[column].dt.month
+        if operation == "year":
+            return df[column].dt.year
+        if operation == "dayofweek":
+            return df[column].dt.dayofweek
+        if operation == "weekday":
+            return df[column].dt.day_name()
+        logger.warning("Unknown datetime operation: %s", operation)
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error(
+            "Error performing datetime operation '%s' on column '%s': %s",
+            operation,
+            column,
+            exc,
+        )
+    return None
 
 logger = logging.getLogger(__name__)
 

@@ -14,7 +14,7 @@ import logging
 import os
 import threading
 from pathlib import Path
-from typing import Any, Dict, List, Protocol
+from typing import Any, Dict, List, Protocol, NamedTuple
 
 import requests
 
@@ -554,4 +554,42 @@ def create_analytics_service(
     )
 
 
-__all__ = ["AnalyticsService", "get_analytics_service", "create_analytics_service"]
+class RiskScoreResult(NamedTuple):
+    """Simple risk score container."""
+
+    score: float
+    level: str
+
+
+def _risk_level(score: float) -> str:
+    if score >= 75:
+        return "critical"
+    if score >= 50:
+        return "high"
+    if score >= 25:
+        return "medium"
+    return "low"
+
+
+def calculate_risk_score(
+    anomaly_component: float = 0.0,
+    pattern_component: float = 0.0,
+    behavior_component: float = 0.0,
+) -> RiskScoreResult:
+    """Combine numeric risk components into a final score."""
+
+    score = (
+        max(0.0, min(anomaly_component, 100.0))
+        + max(0.0, min(pattern_component, 100.0))
+        + max(0.0, min(behavior_component, 100.0))
+    ) / 3
+    score = round(score, 2)
+    return RiskScoreResult(score=score, level=_risk_level(score))
+
+__all__ = [
+    "AnalyticsService",
+    "get_analytics_service",
+    "create_analytics_service",
+    "RiskScoreResult",
+    "calculate_risk_score",
+]

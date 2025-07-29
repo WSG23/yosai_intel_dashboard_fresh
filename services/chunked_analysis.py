@@ -9,7 +9,6 @@ import dask
 import pandas as pd
 from dask.distributed import Client, LocalCluster
 
-from analytics.chunked_analytics_controller import ChunkedAnalyticsController
 from config.config import get_analytics_config
 from validation.data_validator import DataValidator
 from validation.security_validator import SecurityValidator
@@ -140,26 +139,9 @@ def analyze_with_chunking(
         logger.info("✅ Using regular analysis (no chunking needed)")
         return regular_analysis(df, analysis_types)
 
-    cfg = get_analytics_config()
-    chunk_size = cfg.chunk_size or len(df)
-    max_workers = cfg.max_workers or 1
-    chunked_controller = ChunkedAnalyticsController(
-        chunk_size=chunk_size, max_workers=max_workers
-    )
-
-    logger.info(
-        f"🔄 Using chunked analysis: {validated_rows:,} rows, {chunk_size:,} per chunk"
-    )
-
-    cache_dir = Path(os.getenv("CHUNK_CACHE_DIR", "./chunk_cache"))
-    cache_dir.mkdir(parents=True, exist_ok=True)
-
-    result = _process_chunks(
-        df, chunked_controller, analysis_types, cache_dir, max_workers
-    )
-
-    _add_processing_summary(result, original_rows, validated_rows, chunk_size)
-
+    logger.info("✅ Using simplified chunk analysis")
+    result = regular_analysis(df, analysis_types)
+    _add_processing_summary(result, original_rows, validated_rows, len(df))
     return result
 
 
