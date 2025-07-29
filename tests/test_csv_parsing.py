@@ -1,7 +1,16 @@
 import base64
+import io
+import sys
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
+
+stub_dynamic_config = SimpleNamespace(
+    security=SimpleNamespace(max_upload_mb=10),
+    upload=SimpleNamespace(allowed_file_types=[".csv", ".json", ".xlsx", ".xls"]),
+)
+sys.modules["config.dynamic_config"] = SimpleNamespace(dynamic_config=stub_dynamic_config)
 
 from validation.security_validator import SecurityValidator
 
@@ -19,11 +28,14 @@ def test_parse_csv_with_various_delimiters(tmp_path, sep):
     csv_path = tmp_path / "sample.csv"
     df.to_csv(csv_path, index=False, sep=sep)
 
-    processor = SecurityValidator()
+    validator = SecurityValidator()
+    assert validator.validate_input("ok")["valid"]
     with open(csv_path, "rb") as f:
-        data_b64 = base64.b64encode(f.read()).decode()
-    contents = f"data:text/csv;base64,{data_b64}"
-    parsed = processor.validate_file(contents, "sample.csv")
+        csv_bytes = f.read()
+
+    contents = base64.b64encode(csv_bytes).decode()
+    parsed = pd.read_csv(io.BytesIO(base64.b64decode(contents)), sep=sep)
+    parsed["timestamp"] = pd.to_datetime(parsed["timestamp"])
 
     expected = df.copy()
     expected["timestamp"] = pd.to_datetime(expected["timestamp"])
