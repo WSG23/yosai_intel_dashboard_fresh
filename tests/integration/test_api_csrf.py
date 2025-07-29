@@ -16,15 +16,6 @@ class DummyFileProcessor:
 
 def _create_app(monkeypatch):
 
-    analytics_stub = types.SimpleNamespace(
-        register_analytics_blueprints=lambda app: None
-    )
-    monkeypatch.setitem(
-        sys.modules,
-        "api.analytics_endpoints",
-        analytics_stub,
-    )
-
     container = types.SimpleNamespace(
         services={"file_processor": DummyFileProcessor()},
         get=lambda key: container.services[key],
