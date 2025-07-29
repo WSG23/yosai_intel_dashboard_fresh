@@ -1,0 +1,189 @@
+openapi: 3.0.3
+info:
+  title: "Y\u014Dsai Intel Dashboard API"
+  version: 2.0.0
+  description: |
+    Physical security intelligence and access control API.
+    
+    # Authentication
+    
+    Use Bearer token (JWT) for inter-service communication and require an
+    `X-CSRF-Token` header on state-changing requests.
+    
+    # Versioning
+    
+    API version is included in the URL path (e.g., /v2/events).
+servers:
+  - url: https://api.yosai.com/v2
+    description: Production
+  - url: https://staging-api.yosai.com/v2
+    description: Staging
+  - url: http://localhost:8080/v2
+    description: Development
+components:
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Signed JWT present in the Authorization header
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: Anti-CSRF token required for mutating operations
+  schemas:
+    AccessEvent:
+      type: object
+      required: [person_id, door_id, timestamp]
+      properties:
+        door_id:
+          type: string
+        event_id:
+          type: string
+        person_id:
+          type: string
+        result:
+          type: string
+          enum: [granted, denied, tailgating, forced]
+        timestamp:
+          type: string
+          format: date-time
+    AnalyticsUpdate:
+      type: object
+      description: Generic analytics update broadcast over WebSocket.
+      additionalProperties: true
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+    EventListResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessEvent'
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+    AccessTokenResponse:
+      type: object
+      required: [access_token]
+      properties:
+        access_token:
+          type: string
+    Settings:
+      type: object
+      properties:
+        theme:
+          type: string
+          nullable: true
+        itemsPerPage:
+          type: integer
+          nullable: true
+paths:
+  /events:
+    get:
+      summary: List access events
+      operationId: listAccessEvents
+      tags: [Events]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/token/refresh:
+    post:
+      summary: Refresh access token
+      tags: [token]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessTokenResponse'
+        '401':
+          description: Unauthorized
+  /v1/settings:
+    get:
+      summary: Get user settings
+      tags: [settings]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+    post:
+      summary: Update user settings
+      tags: [settings]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Settings'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '500':
+          description: Server Error
+    put:
+      summary: Update user settings
+      tags: [settings]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Settings'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '500':
+          description: Server Error
+security:
+  - jwtAuth: []
+  - csrfToken: []
+tags:
+  - name: Events
+    description: Access control events
+  - name: Analytics
+    description: Analytics and reporting
+  - name: token
+    description: Token operations
+  - name: settings
+    description: User settings management
