@@ -13,6 +13,7 @@ if "services.resilience.metrics" not in sys.modules:
     )
     sys.modules["services.resilience.metrics"] = metrics_stub
 
+import pandas as pd
 import pytest
 
 from sqlalchemy.orm import Session as SASession
@@ -153,3 +154,57 @@ def test_download_artifact_http(monkeypatch, tmp_path, registry):
 def test_download_artifact_invalid_scheme(tmp_path, registry):
     with pytest.raises(ValueError):
         registry.download_artifact("ftp://host/file.bin", str(tmp_path / "x"))
+
+
+def test_log_features_and_drift(monkeypatch, stub_services_registry):
+    # Provide minimal stubs so mlflow import succeeds
+    stub_req = types.ModuleType("requests")
+    adapters_mod = types.ModuleType("requests.adapters")
+    class HTTPAdapter:  # minimal stub
+        pass
+    adapters_mod.HTTPAdapter = HTTPAdapter
+    stub_req.adapters = adapters_mod
+    stub_req.exceptions = types.ModuleType("requests.exceptions")
+    monkeypatch.setitem(sys.modules, "requests", stub_req)
+    monkeypatch.setitem(sys.modules, "requests.adapters", adapters_mod)
+    monkeypatch.setitem(sys.modules, "requests.exceptions", stub_req.exceptions)
+
+    mlflow_stub = types.ModuleType("mlflow")
+    class DummyRun:
+        def __init__(self):
+            self.info = types.SimpleNamespace(run_id="run")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            pass
+
+    mlflow_stub.start_run = lambda *a, **k: DummyRun()
+    mlflow_stub.log_metric = lambda *a, **k: None
+    mlflow_stub.log_artifact = lambda *a, **k: None
+    mlflow_stub.set_tracking_uri = lambda *a, **k: None
+    monkeypatch.setitem(sys.modules, "mlflow", mlflow_stub)
+
+    services_pkg = types.ModuleType("services")
+    services_pkg.__path__ = [str(Path(__file__).resolve().parents[2] / "services")]
+    registry_mod = types.ModuleType("services.registry")
+    registry_mod.get_service = lambda name: None
+    services_pkg.registry = registry_mod
+    monkeypatch.setitem(sys.modules, "services", services_pkg)
+    monkeypatch.setitem(sys.modules, "services.registry", registry_mod)
+
+    path = Path(__file__).resolve().parents[2] / "models" / "ml" / "model_registry.py"
+    spec = importlib.util.spec_from_file_location("model_registry", path)
+    mr = importlib.util.module_from_spec(spec)
+    assert spec.loader
+    spec.loader.exec_module(mr)
+    monkeypatch.setattr(mr, "mlflow", DummyMlflow())
+    registry = mr.ModelRegistry("sqlite:///:memory:", bucket="bucket", s3_client=DummyS3())
+
+    df1 = pd.DataFrame({"a": [0, 1, 0, 1]})
+    df2 = pd.DataFrame({"a": [1, 1, 1, 1]})
+    registry.log_features("demo", df1)
+    registry.log_features("demo", df2)
+    metrics = registry.get_drift_metrics("demo")
+    assert metrics["a"] > 0
