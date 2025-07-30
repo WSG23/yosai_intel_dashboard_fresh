@@ -20,6 +20,11 @@ jobs:
           set -xe
           pip install -r requirements.lock
           pip install -r requirements-test.txt
+      - name: Run pre-commit
+        run: |
+          set -xe
+          pip install pre-commit
+          pre-commit run --all-files --show-diff-on-failure
       - name: Upload OpenAPI
         uses: actions/upload-artifact@v4
         with:

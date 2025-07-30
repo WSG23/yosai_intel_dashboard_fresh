@@ -4,6 +4,8 @@ export default [
     rules: {
       semi: "error",
       quotes: ["error", "single"],
+      eqeqeq: "error",
+      "no-console": "warn",
     },
   },
   {
