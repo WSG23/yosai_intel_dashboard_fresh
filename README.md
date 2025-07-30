@@ -1105,6 +1105,7 @@ See the [data model diagram](docs/data_model.md) for an overview of key entities
 The running application exposes Swagger-based API docs at `http://<host>:<port>/api/docs`.
 - Performance & log monitoring: [docs/performance_monitoring.md](docs/performance_monitoring.md)
 - Large file processing: [docs/performance_file_processor.md](docs/performance_file_processor.md)
+- Profiling the data processor: [docs/profile_data_processor.md](docs/profile_data_processor.md)
 - Upload progress SSE: `/upload/progress/<task_id>` streams `data: <progress>` events roughly 60 times per second.
 - Callback design: [docs/callback_architecture.md](docs/callback_architecture.md)
 - State stores: [docs/state_management.md](docs/state_management.md)
