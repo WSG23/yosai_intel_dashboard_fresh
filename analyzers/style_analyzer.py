@@ -32,7 +32,9 @@ class StyleAnalyzer(BaseAnalyzer):
                             severity="info",
                             message=f"Line too long: {line_length} chars",
                             rule="line_length",
-                            suggestion=f"Break long lines (max: {MAX_LINE_LENGTH} chars)",
+                            suggestion=(
+                                f"Break long lines (max: {MAX_LINE_LENGTH} chars)"
+                            ),
                         )
                     )
 

@@ -12,7 +12,8 @@ sys.modules.setdefault("redis.asyncio", types.ModuleType("redis.asyncio"))
 if "pydantic" not in sys.modules:
     pydantic_stub = types.ModuleType("pydantic")
 
-    class BaseModel: ...
+    class BaseModel:
+        pass
 
     def Field(*args, **kwargs):
         return None
@@ -42,7 +43,7 @@ if "google.protobuf" not in sys.modules:
     sys.modules["google.protobuf.internal"] = internal_mod
 
 # Load root test stubs for optional dependencies
-import tests.conftest  # noqa: F401
+import tests.conftest  # noqa: F401,E402
 
 # Provide lightweight stubs for core and security modules used by UnicodeHandler
 core_unicode = types.ModuleType("core.unicode")
@@ -67,7 +68,7 @@ class UnicodeSecurityValidator:
 security_validator.UnicodeSecurityValidator = UnicodeSecurityValidator
 sys.modules["security.unicode_security_validator"] = security_validator
 
-from config.unicode_handler import UnicodeHandler
+from config.unicode_handler import UnicodeHandler  # noqa: E402
 
 
 def test_sanitize_removes_surrogates_and_normalizes():
