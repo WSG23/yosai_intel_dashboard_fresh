@@ -4,8 +4,6 @@ from dash import Dash, html
 
 from simple_di import ServiceContainer
 from services.greeting import GreetingService
-from pages.greetings import layout as greetings_layout
-from pages.greetings.callbacks import register_callbacks
 
 
 def create_app() -> Dash:
@@ -13,10 +11,23 @@ def create_app() -> Dash:
     container = ServiceContainer()
     container.register("greeting_service", GreetingService())
 
-    app = Dash(__name__)
-    app.layout = html.Div([greetings_layout()])
+    from pages import greetings
 
-    register_callbacks(app, container)
+    app = Dash(__name__)
+    app.layout = html.Div([greetings.layout()])
+
+    # Always register greeting callbacks
+    greetings.register_callbacks(app, container)
+
+    # Optionally register other feature callbacks
+    for name in ("upload", "device_learning", "data_enhancer"):
+        try:
+            module = __import__(f"pages.{name}", fromlist=["register_callbacks"])
+            if hasattr(module, "register_callbacks"):
+                module.register_callbacks(app, container)
+        except Exception:
+            # Feature optional in minimal environment
+            continue
 
     # Expose container for testing/usage
     app._container = container

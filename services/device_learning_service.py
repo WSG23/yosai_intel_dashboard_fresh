@@ -8,9 +8,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional, Protocol, runtime_checkable
 
 import pandas as pd
-from dash import html
-from dash._callback_context import callback_context
-from dash.dependencies import Input, Output
 
 from services.learning.src.api.consolidated_service import get_learning_service
 from services.protocols.device_learning import DeviceLearningServiceProtocol
@@ -368,60 +365,3 @@ def create_device_learning_service() -> DeviceLearningService:
     return DeviceLearningService()
 
 
-def create_learning_callbacks(manager: "TrulyUnifiedCallbacks") -> None:
-    """Register device learning callback with coordinator."""
-
-    @manager.register_handler(
-        Output("device-learning-status", "children"),
-        [
-            Input("file-upload-store", "data"),
-            Input("device-mappings-confirmed", "data"),
-        ],
-        prevent_initial_call=True,
-        callback_id="device_learning",
-        component_name="device_learning_service",
-    )
-    def handle_device_learning(upload_data, confirmed_mappings):
-        """Handle learning using consolidated service."""
-        ctx = callback_context
-
-        if not ctx.triggered:
-            return ""
-
-        trigger_id = ctx.triggered[0]["prop_id"]
-
-        learning_service = get_learning_service()
-
-        if "file-upload-store" in trigger_id and upload_data:
-            # File uploaded - try to apply learned mappings
-            df = pd.DataFrame(upload_data["data"])
-            filename = upload_data["filename"]
-
-            if learning_service.apply_to_global_store(df, filename):
-                return html.Div(
-                    [
-                        html.I(
-                            className="fas fa-brain me-2", **{"aria-hidden": "true"}
-                        ),
-                        "Learned device mappings applied!",
-                    ],
-                    className="text-success",
-                )
-
-        elif "device-mappings-confirmed" in trigger_id and confirmed_mappings:
-            # Mappings confirmed - save for future use
-            df = pd.DataFrame(confirmed_mappings["original_data"])
-            filename = confirmed_mappings["filename"]
-            mappings = confirmed_mappings["mappings"]
-
-            fingerprint = learning_service.save_complete_mapping(df, filename, mappings)
-
-            return html.Div(
-                [
-                    html.I(className="fas fa-save me-2", **{"aria-hidden": "true"}),
-                    f"Mappings saved! ID: {fingerprint[:8]}",
-                ],
-                className="text-success",
-            )
-
-        return ""

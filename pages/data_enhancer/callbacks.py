@@ -2,12 +2,27 @@ from __future__ import annotations
 
 """Callbacks for the data enhancer feature."""
 
+from dash.dependencies import Input, Output
+from dash import html
+from dash.exceptions import PreventUpdate
+
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 
-def register_callbacks(app, ICON_PATHS) -> None:
+def register_callbacks(app, container) -> None:
     """Register data enhancer callbacks."""
     callbacks = TrulyUnifiedCallbacks(app)
-    # TODO: migrate callbacks from ``services.data_enhancer.app`` to this module.
-    # Placeholder to illustrate grouping by feature.
-    _ = callbacks  # suppress unused-variable lint
+
+    @callbacks.callback(
+        Output("upload-status", "children"),
+        [Input("upload-data", "contents")],
+        [Input("upload-data", "filename")],
+        callback_id="handle_file_upload_enhanced",
+        component_name="data_enhancer",
+    )
+    def handle_file_upload(contents, filename):
+        if not contents:
+            raise PreventUpdate
+        return html.Div(f"Received {filename}")
+
+    return None
