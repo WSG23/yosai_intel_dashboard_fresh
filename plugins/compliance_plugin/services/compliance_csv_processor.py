@@ -13,6 +13,7 @@ from yosai_intel_dashboard.models.compliance import ConsentType, DataSensitivity
 
 from core.audit_logger import ComplianceAuditLogger
 from core.protocols import DatabaseProtocol
+from core.unicode import safe_encode_text
 from database.secure_exec import execute_query
 from services.compliance.consent_service import ConsentService
 from services.compliance.data_retention_service import DataRetentionService
@@ -597,10 +598,14 @@ def enhance_existing_csv_upload():
 
         # Get upload context from request
         upload_context = {
-            "processing_purpose": request.form.get("purpose", ""),
-            "data_source": request.form.get("data_source", ""),
-            "consent_confirmed": request.form.get("consent_confirmed") == "true",
-            "dpo_approval": request.form.get("dpo_approval") == "true",
+            "processing_purpose": safe_encode_text(request.form.get("purpose", "")),
+            "data_source": safe_encode_text(request.form.get("data_source", "")),
+            "consent_confirmed": safe_encode_text(
+                request.form.get("consent_confirmed", "")
+            )
+            == "true",
+            "dpo_approval": safe_encode_text(request.form.get("dpo_approval", ""))
+            == "true",
             "data_controller_upload": current_user.has_role("data_controller"),
         }
 

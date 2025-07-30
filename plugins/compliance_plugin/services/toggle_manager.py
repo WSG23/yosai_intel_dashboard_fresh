@@ -13,6 +13,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
 from core.rbac import require_role
+from core.unicode import safe_encode_text
 from database.secure_exec import execute_command, execute_query
 from plugins.common_callbacks import csv_pre_process_callback
 from services.data_processing.file_processor import FileProcessor
@@ -659,16 +660,20 @@ def create_enhanced_csv_upload_with_toggles():
 
         # Enhanced upload context with toggle-relevant information
         upload_context = {
-            "processing_purpose": request.form.get("purpose", ""),
-            "data_source": request.form.get("data_source", ""),
-            "client_id": request.form.get("client_id", ""),  # NEW: Client identifier
-            "user_type": request.form.get("user_type", "employee"),  # NEW: User type
-            "jurisdiction": request.form.get("jurisdiction", "EU"),
-            "consent_confirmed": request.form.get("consent_confirmed") == "true",
-            "compliance_bypass_reason": request.form.get(
-                "bypass_reason", ""
+            "processing_purpose": safe_encode_text(request.form.get("purpose", "")),
+            "data_source": safe_encode_text(request.form.get("data_source", "")),
+            "client_id": safe_encode_text(request.form.get("client_id", "")),  # NEW: Client identifier
+            "user_type": safe_encode_text(request.form.get("user_type", "employee")),  # NEW: User type
+            "jurisdiction": safe_encode_text(request.form.get("jurisdiction", "EU")),
+            "consent_confirmed": safe_encode_text(
+                request.form.get("consent_confirmed", "")
+            )
+            == "true",
+            "compliance_bypass_reason": safe_encode_text(
+                request.form.get("bypass_reason", "")
             ),  # NEW: Manual bypass
-            "dpo_approval": request.form.get("dpo_approval") == "true",
+            "dpo_approval": safe_encode_text(request.form.get("dpo_approval", ""))
+            == "true",
         }
 
         try:
@@ -771,8 +776,11 @@ def create_toggle_management_api():
         if not toggle_manager:
             return jsonify({"error": "Toggle manager not available"}), 503
 
-        scope_filter = request.args.get("scope")
-        active_only = request.args.get("active_only", "true").lower() == "true"
+        scope_filter = safe_encode_text(request.args.get("scope", "")) or None
+        active_only = (
+            safe_encode_text(request.args.get("active_only", "true")).lower()
+            == "true"
+        )
 
         scope_enum = None
         if scope_filter:

@@ -12,6 +12,7 @@ from config.service_registration import register_upload_services
 from core.container import container
 from error_handling import ErrorCategory, ErrorHandler, api_error_response
 from services.data_processing.file_handler import FileHandler
+from core.unicode import safe_encode_text
 from utils.pydantic_decorators import validate_input, validate_output
 
 if not container.has("upload_processor"):
@@ -46,10 +47,11 @@ class StatusSchema(BaseModel):
 def upload_files(payload: UploadRequestSchema):
     """Handle file upload and return expected structure for React frontend"""
     try:
-        token = (
+        token = safe_encode_text(
             request.headers.get("X-CSRFToken")
             or request.headers.get("X-CSRF-Token")
             or request.form.get("csrf_token")
+            or ""
         )
         try:
             validate_csrf(token)
@@ -75,9 +77,10 @@ def upload_files(payload: UploadRequestSchema):
             for file in request.files.values():
                 if not file.filename:
                     continue
+                filename = safe_encode_text(file.filename)
                 file_bytes = file.read()
                 try:
-                    validator.validate_file_upload(file.filename, file_bytes)
+                    validator.validate_file_upload(filename, file_bytes)
                 except Exception as exc:
                     return api_error_response(
                         exc,
@@ -87,10 +90,10 @@ def upload_files(payload: UploadRequestSchema):
                 b64 = base64.b64encode(file_bytes).decode("utf-8", errors="replace")
                 mime = file.mimetype or "application/octet-stream"
                 contents.append(f"data:{mime};base64,{b64}")
-                filenames.append(file.filename)
+                filenames.append(filename)
         else:
             contents = payload.contents or []
-            filenames = payload.filenames or []
+            filenames = [safe_encode_text(f) for f in (payload.filenames or [])]
 
         if not contents or not filenames:
             return api_error_response(

@@ -8,6 +8,7 @@ from config.dynamic_config import dynamic_config
 from core.callback_events import CallbackEvent
 from core.callbacks import UnifiedCallbackManager
 from core.exceptions import ValidationError
+from core.unicode import safe_encode_text
 from validation.security_validator import SecurityValidator
 
 
@@ -59,7 +60,7 @@ class ValidationMiddleware:
         # Validate query string parameters
         for value in request.args.values():
             try:
-                self.orchestrator.validate(value)
+                self.orchestrator.validate(safe_encode_text(value))
             except ValidationError:
                 return Response("Bad Request", status=400)
 

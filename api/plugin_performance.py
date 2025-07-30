@@ -13,6 +13,7 @@ from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_loc
 from core.plugins.performance_manager import EnhancedThreadSafePluginManager
 from error_handling import ErrorCategory, ErrorHandler
 from shared.errors.types import ErrorCode
+from core.unicode import safe_encode_text
 from validation.security_validator import SecurityValidator
 from yosai_framework.errors import CODE_TO_STATUS
 
@@ -39,7 +40,7 @@ class PluginPerformanceAPI:
     @cache_with_lock(_cache_manager, ttl=10)
     def get_plugin_performance():
         manager: EnhancedThreadSafePluginManager = app._yosai_plugin_manager  # type: ignore[attr-defined]
-        name = request.args.get("plugin", "")
+        name = safe_encode_text(request.args.get("plugin", ""))
         result = SecurityValidator().validate_input(name, "plugin")
         if not result["valid"]:
             err = handler.handle(

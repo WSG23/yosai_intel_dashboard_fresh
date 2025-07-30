@@ -6,7 +6,7 @@ from config.service_registration import register_upload_services
 
 # Shared container ensures services are available across blueprints
 from core.container import container
-from core.unicode import clean_unicode_surrogates
+from core.unicode import clean_unicode_surrogates, safe_encode_text
 from error_handling import ErrorCategory, ErrorHandler, api_error_response
 from utils.pydantic_decorators import validate_input, validate_output
 
@@ -116,7 +116,7 @@ def save_device_mappings_route(payload: FileMappingSchema):
 def save_mappings(payload: MappingSaveSchema):
     """Save column or device mappings"""
     try:
-        filename = payload.filename
+        filename = safe_encode_text(payload.filename)
         mapping_type = payload.mapping_type
 
         # Get services
@@ -163,7 +163,7 @@ def save_mappings(payload: MappingSaveSchema):
 def process_enhanced_data(payload: ProcessSchema):
     """Process data with applied mappings"""
     try:
-        filename = payload.filename
+        filename = safe_encode_text(payload.filename)
         column_mappings = payload.column_mappings or {}
         device_mappings = payload.device_mappings or {}
 

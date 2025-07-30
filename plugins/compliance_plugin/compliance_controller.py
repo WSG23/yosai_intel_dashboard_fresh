@@ -13,6 +13,7 @@ from yosai_intel_dashboard.models.compliance import ConsentType, DSARRequestType
 from core.audit_logger import ComplianceAuditLogger
 from core.container import Container
 from core.rbac import require_role
+from core.unicode import safe_encode_text
 from database.secure_exec import execute_query
 from error_handling import ErrorCategory, ErrorHandler
 from services.compliance.consent_service import ConsentService
@@ -154,7 +155,7 @@ def withdraw_consent(consent_type: str):
           description: No active consent found
     """
     try:
-        jurisdiction = request.args.get("jurisdiction", "EU")
+        jurisdiction = safe_encode_text(request.args.get("jurisdiction", "EU"))
 
         try:
             consent_type_enum = ConsentType(consent_type)
@@ -224,7 +225,7 @@ def get_consent_status():
                       type: object
     """
     try:
-        jurisdiction = request.args.get("jurisdiction", "EU")
+        jurisdiction = safe_encode_text(request.args.get("jurisdiction", "EU"))
 
         # Get services
         consent_service, _, _ = get_services()
@@ -415,7 +416,9 @@ def get_pending_dsar_requests():
           description: Pending DSAR requests retrieved
     """
     try:
-        due_within_days = request.args.get("due_within_days", 7, type=int)
+        due_within_days = int(
+            safe_encode_text(request.args.get("due_within_days", "7")) or "7"
+        )
 
         # Get services
         _, dsar_service, audit_logger = get_services()
@@ -526,7 +529,7 @@ def get_my_audit_trail():
           description: Audit trail retrieved
     """
     try:
-        days = request.args.get("days", 30, type=int)
+        days = int(safe_encode_text(request.args.get("days", "30")) or "30")
         if days < 1 or days > 365:
             return jsonify({"error": "Days must be between 1 and 365"}), 400
 
@@ -578,8 +581,8 @@ def generate_compliance_report():
           description: Compliance report generated
     """
     try:
-        start_date_str = request.args.get("start_date")
-        end_date_str = request.args.get("end_date")
+        start_date_str = safe_encode_text(request.args.get("start_date", ""))
+        end_date_str = safe_encode_text(request.args.get("end_date", ""))
 
         # Default to last 30 days if no dates provided
         if not start_date_str or not end_date_str:

@@ -6,6 +6,10 @@ from pathlib import Path
 import pandas as pd
 from flask import Flask
 
+sys.modules.setdefault(
+    "flask_apispec", types.SimpleNamespace(doc=lambda *a, **k: (lambda f: f))
+)
+
 import mappings_endpoint
 from core.service_container import ServiceContainer
 
@@ -149,3 +153,24 @@ def test_process_enhanced(monkeypatch):
     data = resp.get_json()
     assert data["enhanced_filename"] == "enhanced_file.csv"
     assert "enhanced_file.csv" in store.get_filenames()
+
+
+def test_malicious_filename_cleaned(monkeypatch):
+    app, _store, device_service, column_service = _create_app(monkeypatch)
+    client = app.test_client()
+
+    malicious = "<script>.csv"
+
+    resp = client.post(
+        "/v1/mappings/save",
+        json={
+            "filename": malicious,
+            "mapping_type": "column",
+            "column_mappings": {"orig": "device_name"},
+        },
+    )
+    assert resp.status_code == 200
+    from core.unicode import safe_encode_text
+
+    sanitized = safe_encode_text(malicious)
+    assert sanitized in column_service.saved

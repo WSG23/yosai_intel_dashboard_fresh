@@ -9,6 +9,7 @@ from config.service_registration import register_upload_services
 from core.container import container
 from error_handling import ErrorCategory, ErrorHandler, api_error_response
 from utils.pydantic_decorators import validate_input, validate_output
+from core.unicode import safe_encode_text
 
 if not container.has("upload_processor"):
     register_upload_services(container)
@@ -111,7 +112,7 @@ def build_device_mappings(
 def suggest_devices(payload: DeviceSuggestSchema):
     """Get device suggestions using DeviceLearningService"""
     try:
-        filename = payload.filename
+        filename = safe_encode_text(payload.filename)
         column_mappings = payload.column_mappings or {}
 
         device_service = container.get("device_learning_service")
