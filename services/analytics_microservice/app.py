@@ -34,6 +34,7 @@ from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
 
 from analytics import anomaly_detection, feature_extraction, security_patterns
 from config import get_database_config
+from config.config_loader import load_service_config
 from core.security import RateLimiter
 from services.analytics_microservice import async_queries
 from services.analytics_microservice.unicode_middleware import (
@@ -153,17 +154,16 @@ async def _startup() -> None:
         timeout=cfg.connection_timeout,
     )
 
-    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-    app.state.redis = aioredis.from_url(redis_url, decode_responses=True)
-    app.state.cache_ttl = int(os.getenv("CACHE_TTL", "300"))
+    svc_cfg = load_service_config()
+    app.state.redis = aioredis.from_url(svc_cfg.redis_url, decode_responses=True)
+    app.state.cache_ttl = svc_cfg.cache_ttl
 
-    app.state.model_dir = Path(os.environ.get("MODEL_DIR", "model_store"))
+    app.state.model_dir = svc_cfg.model_dir
     app.state.model_dir.mkdir(parents=True, exist_ok=True)
 
-    db_url = os.getenv("MODEL_REGISTRY_DB", "sqlite:///model_registry.db")
-    bucket = os.getenv("MODEL_REGISTRY_BUCKET", "local-models")
-    mlflow_uri = os.getenv("MLFLOW_URI")
-    app.state.model_registry = ModelRegistry(db_url, bucket, mlflow_uri=mlflow_uri)
+    app.state.model_registry = ModelRegistry(
+        svc_cfg.registry_db, svc_cfg.registry_bucket, mlflow_uri=svc_cfg.mlflow_uri
+    )
     preload_active_models()
     app.state.ready = True
     app.state.startup_complete = True

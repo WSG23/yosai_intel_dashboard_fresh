@@ -7,10 +7,38 @@ import logging
 import os
 from pathlib import Path
 from typing import Any, Dict, Optional
+from dataclasses import dataclass
 
 from .base_loader import BaseConfigLoader
 from .environment import select_config_file
 from .protocols import ConfigLoaderProtocol
+
+
+@dataclass
+class ServiceSettings:
+    """Settings specific to microservices."""
+
+    redis_url: str = "redis://localhost:6379/0"
+    cache_ttl: int = 300
+    model_dir: Path = Path("model_store")
+    registry_db: str = "sqlite:///model_registry.db"
+    registry_bucket: str = "local-models"
+    mlflow_uri: Optional[str] = None
+
+
+def load_service_config() -> ServiceSettings:
+    """Return service settings from environment with defaults."""
+
+    return ServiceSettings(
+        redis_url=os.getenv("REDIS_URL", ServiceSettings.redis_url),
+        cache_ttl=int(os.getenv("CACHE_TTL", str(ServiceSettings.cache_ttl))),
+        model_dir=Path(os.getenv("MODEL_DIR", str(ServiceSettings.model_dir))),
+        registry_db=os.getenv("MODEL_REGISTRY_DB", ServiceSettings.registry_db),
+        registry_bucket=os.getenv(
+            "MODEL_REGISTRY_BUCKET", ServiceSettings.registry_bucket
+        ),
+        mlflow_uri=os.getenv("MLFLOW_URI"),
+    )
 
 
 def validate_uploads_config(config: Dict[str, Any]) -> Dict[str, Any]:
@@ -68,4 +96,10 @@ class ConfigLoader(BaseConfigLoader, ConfigLoaderProtocol):
         return validate_uploads_config(data)
 
 
-__all__ = ["ConfigLoader", "ConfigLoaderProtocol", "validate_uploads_config"]
+__all__ = [
+    "ConfigLoader",
+    "ConfigLoaderProtocol",
+    "validate_uploads_config",
+    "ServiceSettings",
+    "load_service_config",
+]

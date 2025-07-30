@@ -19,6 +19,7 @@ from core.security import RateLimiter
 from error_handling.middleware import ErrorHandlingMiddleware
 from services.auth import verify_jwt_token
 from services.streaming.service import StreamingService
+from config.config_loader import load_service_config
 from shared.errors.types import ErrorCode
 from tracing import trace_async_operation
 from yosai_framework.errors import ServiceError
@@ -79,6 +80,8 @@ async def _consume_loop() -> None:
 
 @app.on_event("startup")
 async def startup() -> None:
+    # Load environment driven settings
+    load_service_config()
     service.initialize()
     asyncio.create_task(
         trace_async_operation("consume_loop", "ingest", _consume_loop())
