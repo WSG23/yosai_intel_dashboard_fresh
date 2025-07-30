@@ -3,8 +3,8 @@
 from locust import LoadTestShape
 from locust.env import Environment
 
-from .events_load import EventIngestionUser
 from .analytics_load import AnalyticsQueryUser
+from .events_load import EventIngestionUser
 
 
 class RampUpShape(LoadTestShape):
@@ -24,6 +24,7 @@ class RampUpShape(LoadTestShape):
             if run_time < total:
                 return (stage["users"], stage["spawn_rate"])
         return None
+
 
 # Locust uses Environment to register users when launched via CLI
 class UserEnvironment(Environment):

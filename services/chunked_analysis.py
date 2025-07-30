@@ -12,7 +12,6 @@ from dask.distributed import Client, LocalCluster
 from config.config import get_analytics_config
 from validation.data_validator import DataValidator
 from validation.security_validator import SecurityValidator
-from validation.data_validator import DataValidator
 
 from .result_formatting import regular_analysis
 

@@ -21,10 +21,14 @@ def _create_app(monkeypatch, origins):
     container = types.SimpleNamespace(
         services={"file_processor": object()},
         get=lambda key: container.services[key],
-        register_singleton=lambda key, value: container.services.__setitem__(key, value),
+        register_singleton=lambda key, value: container.services.__setitem__(
+            key, value
+        ),
         has=lambda key: key in container.services,
     )
-    monkeypatch.setitem(sys.modules, "core.container", types.SimpleNamespace(container=container))
+    monkeypatch.setitem(
+        sys.modules, "core.container", types.SimpleNamespace(container=container)
+    )
 
     class DummyService:
         def __init__(self, name, config_path):
@@ -32,14 +36,21 @@ def _create_app(monkeypatch, origins):
 
             self.name = name
             self.app = FastAPI(title=name)
-            self.log = types.SimpleNamespace(info=lambda *a, **k: None, error=lambda *a, **k: None)
+            self.log = types.SimpleNamespace(
+                info=lambda *a, **k: None, error=lambda *a, **k: None
+            )
 
         def start(self):
             pass
 
-    monkeypatch.setitem(sys.modules, "yosai_framework.service", types.SimpleNamespace(BaseService=DummyService))
+    monkeypatch.setitem(
+        sys.modules,
+        "yosai_framework.service",
+        types.SimpleNamespace(BaseService=DummyService),
+    )
 
     from flask import Blueprint
+
     upload_stub = types.ModuleType("upload_endpoint")
     upload_stub.upload_bp = Blueprint("upload", __name__)
     device_stub = types.ModuleType("device_endpoint")
@@ -73,9 +84,7 @@ def _create_app(monkeypatch, origins):
         lambda: types.SimpleNamespace(cors_origins=origins),
     )
 
-    adapter = importlib.import_module(
-        "api.adapter"
-    )
+    adapter = importlib.import_module("api.adapter")
     return adapter.create_api_app()
 
 

@@ -1,5 +1,5 @@
-import types
 import sys
+import types
 from pathlib import Path
 
 import pytest
@@ -14,6 +14,7 @@ services_stub.__path__ = [str(Path(__file__).resolve().parents[1] / "services")]
 sys.modules["services"] = services_stub
 
 import pandas as pd
+
 from services.analytics.data.validator import Validator  # noqa: E402
 
 

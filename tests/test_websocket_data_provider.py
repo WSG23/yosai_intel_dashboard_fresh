@@ -1,6 +1,7 @@
+import time
+
 from core.events import EventBus
 from services.websocket_data_provider import WebSocketDataProvider
-import time
 
 
 def test_websocket_data_provider_publishes():

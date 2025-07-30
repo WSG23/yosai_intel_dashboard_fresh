@@ -59,8 +59,6 @@ class AnalyticsServiceProtocol(Protocol):
         ...
 
 
-
-
 @runtime_checkable
 class ConfigurationProtocol(Protocol):
     """Protocol for configuration management"""
@@ -246,4 +244,3 @@ class PluginManagerProtocol(Protocol):
     def get_plugin_status(self, plugin_name: str) -> PluginStatus:
         """Get current status of a plugin"""
         ...
-

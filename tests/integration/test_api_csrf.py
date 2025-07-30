@@ -19,17 +19,19 @@ def _create_app(monkeypatch):
     container = types.SimpleNamespace(
         services={"file_processor": DummyFileProcessor()},
         get=lambda key: container.services[key],
-        register_singleton=lambda key, value: container.services.__setitem__(key, value),
+        register_singleton=lambda key, value: container.services.__setitem__(
+            key, value
+        ),
         has=lambda key: key in container.services,
     )
-    monkeypatch.setitem(sys.modules, "core.container", types.SimpleNamespace(container=container))
+    monkeypatch.setitem(
+        sys.modules, "core.container", types.SimpleNamespace(container=container)
+    )
 
     upload_endpoint = importlib.import_module("upload_endpoint")
     monkeypatch.setattr(upload_endpoint, "container", container, raising=False)
 
-    adapter = importlib.import_module(
-        "api.adapter"
-    )
+    adapter = importlib.import_module("api.adapter")
     return adapter.create_api_app()
 
 

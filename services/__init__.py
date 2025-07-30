@@ -14,15 +14,15 @@ else:
     from .ai_mapping_store import ai_mapping_store
     from .analytics.calculator import Calculator
     from .analytics.data_loader import DataLoader
-    from .analytics.publisher import Publisher
-    from .analytics.upload_analytics import UploadAnalyticsProcessor
     from .analytics.generator import AnalyticsGenerator
     from .analytics.processor import AnalyticsProcessor
+    from .analytics.publisher import Publisher
+    from .analytics.upload_analytics import UploadAnalyticsProcessor
     from .async_file_processor import AsyncFileProcessor
     from .chunked_analysis import analyze_with_chunking
     from .controllers.upload_controller import UploadProcessingController
-    from .data_processing.processor import Processor
     from .data_processing.file_handler import FileHandler
+    from .data_processing.processor import Processor
     from .database_retriever import DatabaseAnalyticsRetriever
     from .db_analytics_helper import DatabaseAnalyticsHelper
     from .event_publisher import publish_event

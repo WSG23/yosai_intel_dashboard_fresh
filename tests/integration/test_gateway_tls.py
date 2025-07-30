@@ -1,9 +1,10 @@
 import shutil
 import subprocess
-import requests
+
 import pytest
-from testcontainers.redis import RedisContainer
+import requests
 from testcontainers.core.container import DockerContainer
+from testcontainers.redis import RedisContainer
 
 
 @pytest.mark.integration
@@ -15,21 +16,24 @@ def test_gateway_tls_connection(tmp_path):
     cert_dir.mkdir()
     cert_path = cert_dir / "server.crt"
     key_path = cert_dir / "server.key"
-    subprocess.run([
-        "openssl",
-        "req",
-        "-new",
-        "-x509",
-        "-nodes",
-        "-days",
-        "1",
-        "-subj",
-        "/CN=localhost",
-        "-out",
-        str(cert_path),
-        "-keyout",
-        str(key_path),
-    ], check=True)
+    subprocess.run(
+        [
+            "openssl",
+            "req",
+            "-new",
+            "-x509",
+            "-nodes",
+            "-days",
+            "1",
+            "-subj",
+            "/CN=localhost",
+            "-out",
+            str(cert_path),
+            "-keyout",
+            str(key_path),
+        ],
+        check=True,
+    )
 
     pg = (
         DockerContainer("bitnami/postgresql:15")
@@ -50,7 +54,9 @@ def test_gateway_tls_connection(tmp_path):
         redis_host = redis.get_container_host_ip()
         redis_port = redis.get_exposed_port(redis.port_to_expose)
 
-        gateway_image = DockerContainer.from_dockerfile(".", dockerfile="Dockerfile.gateway").build()
+        gateway_image = DockerContainer.from_dockerfile(
+            ".", dockerfile="Dockerfile.gateway"
+        ).build()
         gateway = (
             DockerContainer(gateway_image)
             .with_exposed_ports(8080)
@@ -68,4 +74,3 @@ def test_gateway_tls_connection(tmp_path):
             g_port = gw.get_exposed_port(8080)
             resp = requests.get(f"http://{g_host}:{g_port}/health", timeout=30)
             assert resp.status_code == 200
-

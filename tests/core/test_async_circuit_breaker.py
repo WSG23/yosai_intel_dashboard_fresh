@@ -1,5 +1,6 @@
 import asyncio
 import time
+
 import pytest
 
 from core.async_utils.async_circuit_breaker import CircuitBreaker, CircuitBreakerOpen

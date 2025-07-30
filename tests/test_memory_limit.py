@@ -5,8 +5,8 @@ from tests.fake_configuration import FakeConfiguration
 
 fake_cfg = FakeConfiguration()
 from core.performance import get_performance_monitor
-from services.data_processing.file_handler import process_file_simple
 from services.data_processing.common import process_dataframe
+from services.data_processing.file_handler import process_file_simple
 
 
 def test_memory_limit_abort_csv(monkeypatch, tmp_path):

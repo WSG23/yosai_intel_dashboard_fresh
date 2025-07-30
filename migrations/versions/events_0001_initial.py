@@ -1,8 +1,9 @@
 """Initial schema for events database"""
+
 from __future__ import annotations
 
-from alembic import op
 import sqlalchemy as sa  # noqa:F401
+from alembic import op
 
 revision = "events_0001"
 down_revision = None

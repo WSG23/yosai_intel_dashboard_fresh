@@ -6,12 +6,11 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from validation.data_validator import DataValidator, DataValidatorProtocol
-
 import numpy as np
 import pandas as pd
 
 from validation.data_validator import DataValidator, DataValidatorProtocol
+from validation.unicode_validator import UnicodeValidator
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +53,6 @@ class StatisticalAnomalyDetector:
             required_columns=["timestamp", "person_id"]
         )
 
-
     def _safe_zscore_calculation(self, data: np.ndarray) -> np.ndarray:
         """Calculate Z-scores with error handling."""
         try:
@@ -88,38 +86,54 @@ class StatisticalAnomalyDetector:
         result = self.validator.validate_dataframe(df)
         if not result.valid:
             self.logger.warning("; ".join(result.issues or []))
-            return [
+            return []
 
         anomalies: List[Dict[str, Any]] = []
 
         try:
             # Sanitize string columns
             df_clean = df.copy()
-            for col in df_clean.select_dtypes(include=['object']).columns:
+            for col in df_clean.select_dtypes(include=["object"]).columns:
                 df_clean[col] = df_clean[col].apply(sanitize_unicode_data)
 
-            person_stats = df_clean.groupby('person_id').agg({
-                'timestamp': ['count', 'min', 'max'],
-                'access_granted': 'sum' if 'access_granted' in df_clean.columns else lambda x: len(x)
-            }).round(2)
+            person_stats = (
+                df_clean.groupby("person_id")
+                .agg(
+                    {
+                        "timestamp": ["count", "min", "max"],
+                        "access_granted": (
+                            "sum"
+                            if "access_granted" in df_clean.columns
+                            else lambda x: len(x)
+                        ),
+                    }
+                )
+                .round(2)
+            )
 
-            person_stats.columns = ['total_attempts', 'first_access', 'last_access', 'successful_attempts']
+            person_stats.columns = [
+                "total_attempts",
+                "first_access",
+                "last_access",
+                "successful_attempts",
+            ]
 
             if len(person_stats) < 2:
                 return anomalies
 
             # Use robust percentile-based threshold
-            freq_threshold = person_stats['total_attempts'].quantile(0.95)
+            freq_threshold = person_stats["total_attempts"].quantile(0.95)
 
             if freq_threshold <= 0:
                 return anomalies
 
-            high_freq_users = person_stats[person_stats['total_attempts'] > freq_threshold]
+            high_freq_users = person_stats[
+                person_stats["total_attempts"] > freq_threshold
+            ]
 
             for person_id, stats_row in high_freq_users.iterrows():
                 # Calculate Z-score for this user's frequency
-                all_frequencies = person_stats['total_attempts'].values
-                user_freq = stats_row['total_attempts']
+                all_frequencies = person_stats["total_attempts"].values
                 z_scores = self._safe_zscore_calculation(all_frequencies)
                 user_idx = person_stats.index.get_loc(person_id)
                 user_zscore = z_scores[user_idx] if user_idx < len(z_scores) else 0
@@ -128,14 +142,16 @@ class StatisticalAnomalyDetector:
                     "type": "activity_burst",
                     "user_id": sanitize_unicode_data(str(person_id)),
                     "details": {
-                        "total_attempts": int(stats_row['total_attempts']),
-                        "successful_attempts": int(stats_row['successful_attempts']),
-                        "time_span": sanitize_unicode_data(str(stats_row['last_access'] - stats_row['first_access'])),
+                        "total_attempts": int(stats_row["total_attempts"]),
+                        "successful_attempts": int(stats_row["successful_attempts"]),
+                        "time_span": sanitize_unicode_data(
+                            str(stats_row["last_access"] - stats_row["first_access"])
+                        ),
                         "z_score": float(user_zscore),
                     },
                     "severity": calculate_severity_from_zscore(abs(user_zscore)),
                     "confidence": min(0.95, abs(user_zscore) / 4.0),
-                    "timestamp": datetime.now()
+                    "timestamp": datetime.now(),
                 }
 
                 anomalies.append(sanitize_unicode_data(anomaly_data))
@@ -145,33 +161,36 @@ class StatisticalAnomalyDetector:
 
         return anomalies
 
-    def detect_statistical_anomalies(self, df: pd.DataFrame, sensitivity: float) -> List[Dict[str, Any]]:
+    def detect_statistical_anomalies(
+        self, df: pd.DataFrame, sensitivity: float
+    ) -> List[Dict[str, Any]]:
         """Detect statistical anomalies using Z-score and IQR methods with Unicode safety."""
         result = self.validator.validate_dataframe(df)
         if not result.valid:
             self.logger.warning("; ".join(result.issues or []))
             return []
-<<
         anomalies: List[Dict[str, Any]] = []
 
         try:
             # Sanitize DataFrame
             df_clean = df.copy()
-            for col in df_clean.select_dtypes(include=['object']).columns:
+            for col in df_clean.select_dtypes(include=["object"]).columns:
                 df_clean[col] = df_clean[col].apply(sanitize_unicode_data)
 
             # Ensure timestamp is datetime
-            if not pd.api.types.is_datetime64_any_dtype(df_clean['timestamp']):
-                df_clean['timestamp'] = pd.to_datetime(df_clean['timestamp'], errors='coerce')
+            if not pd.api.types.is_datetime64_any_dtype(df_clean["timestamp"]):
+                df_clean["timestamp"] = pd.to_datetime(
+                    df_clean["timestamp"], errors="coerce"
+                )
 
             # Remove rows with invalid timestamps
-            df_clean = df_clean.dropna(subset=['timestamp'])
+            df_clean = df_clean.dropna(subset=["timestamp"])
 
             if len(df_clean) < 5:  # Need minimum data for statistics
                 return anomalies
 
             # Hourly access pattern analysis
-            hourly_access = df_clean.groupby(df_clean['timestamp'].dt.hour).size()
+            hourly_access = df_clean.groupby(df_clean["timestamp"].dt.hour).size()
 
             if len(hourly_access) < 2:
                 return anomalies
@@ -199,7 +218,7 @@ class StatisticalAnomalyDetector:
                     },
                     "severity": calculate_severity_from_zscore(abs(z_score)),
                     "confidence": min(0.95, abs(z_score) / 4.0),
-                    "timestamp": datetime.now()
+                    "timestamp": datetime.now(),
                 }
 
                 anomalies.append(sanitize_unicode_data(anomaly_data))
@@ -212,14 +231,14 @@ class StatisticalAnomalyDetector:
 
 class FallbackStats:
     @staticmethod
-    def zscore(a, axis=0, ddof=0, nan_policy='propagate'):
+    def zscore(a, axis=0, ddof=0, nan_policy="propagate"):
         a = np.asarray(a)
         if axis is None:
             a = a.ravel()
             axis = 0
         mean = np.mean(a, axis=axis, keepdims=True)
         std = np.std(a, axis=axis, ddof=ddof, keepdims=True)
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with np.errstate(divide="ignore", invalid="ignore"):
             z = (a - mean) / std
             z = np.where(std == 0, 0, z)
         return z
@@ -228,12 +247,15 @@ class FallbackStats:
 def get_stats_module():
     try:
         from scipy import stats
+
         return stats
     except Exception as exc:
         logger.warning(f"scipy.stats unavailable: {exc}")
         return FallbackStats()
 
+
 stats = get_stats_module()
+
 
 def calculate_severity_from_zscore(z_score: float) -> str:
     """Calculate severity level from Z-score with input validation."""
@@ -253,13 +275,17 @@ def calculate_severity_from_zscore(z_score: float) -> str:
 
 
 # Backwards compatibility functions
-def detect_frequency_anomalies(df: pd.DataFrame, logger: Optional[logging.Logger] = None) -> List[Dict[str, Any]]:
+def detect_frequency_anomalies(
+    df: pd.DataFrame, logger: Optional[logging.Logger] = None
+) -> List[Dict[str, Any]]:
     """Detect frequency-based anomalies (backwards compatible interface)."""
     detector = StatisticalAnomalyDetector(logger)
     return detector.detect_frequency_anomalies(df)
 
 
-def detect_statistical_anomalies(df: pd.DataFrame, sensitivity: float, logger: Optional[logging.Logger] = None) -> List[Dict[str, Any]]:
+def detect_statistical_anomalies(
+    df: pd.DataFrame, sensitivity: float, logger: Optional[logging.Logger] = None
+) -> List[Dict[str, Any]]:
     """Detect statistical anomalies (backwards compatible interface)."""
     detector = StatisticalAnomalyDetector(logger)
     return detector.detect_statistical_anomalies(df, sensitivity)

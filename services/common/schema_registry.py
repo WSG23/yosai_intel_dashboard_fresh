@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 from dataclasses import dataclass
 from typing import Any, Dict
 
-import asyncio
 import aiohttp
 
 from monitoring.data_quality_monitor import get_data_quality_monitor
@@ -36,7 +36,6 @@ class SchemaRegistryClient:
             async with session.get(
                 f"{self.url}{path}",
                 timeout=aiohttp.ClientTimeout(total=5.0),
-
             ) as resp:
                 resp.raise_for_status()
                 return await resp.json()
@@ -50,7 +49,6 @@ class SchemaRegistryClient:
                 json=payload,
                 headers=headers,
                 timeout=aiohttp.ClientTimeout(total=5.0),
-
             ) as resp:
                 resp.raise_for_status()
                 return await resp.json()
@@ -89,7 +87,6 @@ class SchemaRegistryClient:
         self, subject: str, schema: Dict[str, Any], version: str = "latest"
     ) -> bool:
         data = await self._post_async(
-
             f"/compatibility/subjects/{subject}/versions/{version}",
             {"schema": json.dumps(schema)},
         )
@@ -101,14 +98,11 @@ class SchemaRegistryClient:
     def check_compatibility(
         self, subject: str, schema: Dict[str, Any], version: str = "latest"
     ) -> bool:
-        return asyncio.run(
-            self.check_compatibility_async(subject, schema, version)
-        )
+        return asyncio.run(self.check_compatibility_async(subject, schema, version))
 
     async def register_schema_async(self, subject: str, schema: Dict[str, Any]) -> int:
         """Register a new schema version under ``subject`` and return the version."""
         data = await self._post_async(
-
             f"/subjects/{subject}/versions",
             {"schema": json.dumps(schema)},
         )
@@ -127,5 +121,6 @@ class SchemaRegistryClient:
 
     def register_schema(self, subject: str, schema: Dict[str, Any]) -> int:
         return asyncio.run(self.register_schema_async(subject, schema))
+
 
 __all__ = ["SchemaRegistryClient", "SchemaInfo"]

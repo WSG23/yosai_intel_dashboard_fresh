@@ -4,7 +4,7 @@ import logging
 import threading
 from typing import Optional, Set
 
-from websockets import serve, WebSocketServerProtocol
+from websockets import WebSocketServerProtocol, serve
 
 from core.events import EventBus
 
@@ -14,7 +14,12 @@ logger = logging.getLogger(__name__)
 class AnalyticsWebSocketServer:
     """Simple WebSocket server broadcasting analytics updates."""
 
-    def __init__(self, event_bus: Optional[EventBus] = None, host: str = "0.0.0.0", port: int = 6789) -> None:
+    def __init__(
+        self,
+        event_bus: Optional[EventBus] = None,
+        host: str = "0.0.0.0",
+        port: int = 6789,
+    ) -> None:
         self.host = host
         self.port = port
         self.event_bus = event_bus or EventBus()
@@ -55,9 +60,7 @@ class AnalyticsWebSocketServer:
     def broadcast(self, data: dict) -> None:
         message = json.dumps(data)
         if self._loop is not None:
-            asyncio.run_coroutine_threadsafe(
-                self._broadcast_async(message), self._loop
-            )
+            asyncio.run_coroutine_threadsafe(self._broadcast_async(message), self._loop)
 
     def stop(self) -> None:
         """Stop the server thread and event loop."""

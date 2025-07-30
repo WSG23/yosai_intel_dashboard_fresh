@@ -29,9 +29,10 @@ from __future__ import annotations
 
 import argparse
 import json
-import dill
 import sys
 from pathlib import Path
+
+import dill
 
 
 def migrate(pkl_file: Path) -> Path:

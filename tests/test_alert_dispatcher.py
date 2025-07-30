@@ -1,7 +1,8 @@
 import asyncio
+
 import pytest
 
-from core.monitoring.user_experience_metrics import AlertDispatcher, AlertConfig
+from core.monitoring.user_experience_metrics import AlertConfig, AlertDispatcher
 
 
 class DummyResp:
@@ -46,7 +47,9 @@ class DummySMTP:
 async def test_send_alert_async(monkeypatch):
     calls = []
     monkeypatch.setattr("aiohttp.ClientSession", lambda: DummySession(calls))
-    monkeypatch.setattr("aiosmtplib.SMTP", lambda hostname="localhost": DummySMTP(hostname))
+    monkeypatch.setattr(
+        "aiosmtplib.SMTP", lambda hostname="localhost": DummySMTP(hostname)
+    )
 
     dispatcher = AlertDispatcher(
         AlertConfig(
@@ -66,26 +69,37 @@ def test_send_alert_sync_fallback(monkeypatch):
 
     def dummy_post(url, json=None, timeout=None):
         calls.append((url, json))
+
         class Resp:
             pass
+
         return Resp()
 
     class DummySMTPBlocking:
         def __init__(self, hostname="localhost"):
             self.hostname = hostname
+
         def sendmail(self, from_addr, to_addrs, message):
             calls.append(("sendmail", from_addr, to_addrs, message))
+
         def quit(self):
             pass
 
     monkeypatch.setattr("requests.post", dummy_post)
     monkeypatch.setattr("smtplib.SMTP", lambda host: DummySMTPBlocking(host))
-    monkeypatch.setattr("aiohttp.ClientSession", lambda: (_ for _ in ()).throw(AssertionError("async called")))
-    monkeypatch.setattr("aiosmtplib.SMTP", lambda *a, **k: (_ for _ in ()).throw(AssertionError("async called")))
+    monkeypatch.setattr(
+        "aiohttp.ClientSession",
+        lambda: (_ for _ in ()).throw(AssertionError("async called")),
+    )
+    monkeypatch.setattr(
+        "aiosmtplib.SMTP",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("async called")),
+    )
 
     class Loop:
         def is_running(self):
             return True
+
     monkeypatch.setattr(asyncio, "get_running_loop", lambda: Loop())
 
     dispatcher = AlertDispatcher(

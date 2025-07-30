@@ -1,13 +1,13 @@
 """Data processing utilities."""
 
 from .async_file_processor import AsyncFileProcessor
+from .base_file_processor import BaseFileProcessor
 from .file_handler import FileHandler, process_file_simple
 
 # ``FileProcessor`` was removed in favor of ``UnicodeFileProcessor``.  Import
 # the new class here and optionally expose it under the old name for backward
 # compatibility.
 from .file_processor import UnicodeFileProcessor
-from .base_file_processor import BaseFileProcessor
 
 # Provide the legacy name ``FileProcessor`` for callers that still import it
 # from ``services.data_processing``.

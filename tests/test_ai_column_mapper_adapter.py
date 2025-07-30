@@ -3,8 +3,8 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-from mapping.models import load_rules
 
+from mapping.models import load_rules
 
 spec = importlib.util.spec_from_file_location(
     "ai_column_mapper",

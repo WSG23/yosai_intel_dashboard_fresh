@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
 import base64
-from services.data_processing.file_handler import FileHandler
 
 from flask import Blueprint, jsonify, request
-from error_handling import ErrorCategory, ErrorHandler, api_error_response
-from flask_wtf.csrf import validate_csrf
 from flask_apispec import doc
+from flask_wtf.csrf import validate_csrf
 from pydantic import BaseModel
-
-from utils.pydantic_decorators import validate_input, validate_output
 
 from config.service_registration import register_upload_services
 
 # Use the shared DI container configured at application startup
 from core.container import container
+from error_handling import ErrorCategory, ErrorHandler, api_error_response
+from services.data_processing.file_handler import FileHandler
+from utils.pydantic_decorators import validate_input, validate_output
 
 if not container.has("upload_processor"):
     register_upload_services(container)
@@ -110,7 +109,13 @@ def upload_files(payload: UploadRequestSchema):
 
 @upload_bp.route("/v1/upload/status/<job_id>", methods=["GET"])
 @doc(
-    params={"job_id": {"description": "Upload job id", "in": "path", "schema": {"type": "string"}}},
+    params={
+        "job_id": {
+            "description": "Upload job id",
+            "in": "path",
+            "schema": {"type": "string"},
+        }
+    },
     tags=["upload"],
     responses={200: "Success"},
 )

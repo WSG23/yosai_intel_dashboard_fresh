@@ -2,11 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from core.protocols import ConfigurationServiceProtocol
-
 from config.dynamic_config import DynamicConfigManager, dynamic_config
-
-
+from core.protocols import ConfigurationServiceProtocol
 
 
 class DynamicConfigurationService(ConfigurationServiceProtocol):

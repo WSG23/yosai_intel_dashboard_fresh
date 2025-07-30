@@ -3,6 +3,7 @@ from __future__ import annotations
 """Event subscription helper."""
 
 from typing import Any
+
 from core.protocols import EventBusProtocol
 
 

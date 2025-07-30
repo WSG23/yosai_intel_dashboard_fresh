@@ -14,7 +14,7 @@ import logging
 import os
 import threading
 from pathlib import Path
-from typing import Any, Dict, List, Protocol, NamedTuple
+from typing import Any, Dict, List, NamedTuple, Protocol
 
 import requests
 
@@ -24,6 +24,7 @@ except ImportError:  # pragma: no cover - for Python <3.12
     from typing_extensions import override
 
 import pandas as pd
+from yosai_intel_dashboard.models.ml import ModelRegistry
 
 from config.dynamic_config import dynamic_config
 from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
@@ -35,7 +36,6 @@ from core.protocols import (
     EventBusProtocol,
     StorageProtocol,
 )
-from yosai_intel_dashboard.models.ml import ModelRegistry
 from services.analytics.calculator import Calculator, create_calculator
 from services.analytics.data_loader import DataLoader, create_loader
 from services.analytics.orchestrator import AnalyticsOrchestrator
@@ -585,6 +585,7 @@ def calculate_risk_score(
     ) / 3
     score = round(score, 2)
     return RiskScoreResult(score=score, level=_risk_level(score))
+
 
 __all__ = [
     "AnalyticsService",

@@ -3,15 +3,14 @@ from __future__ import annotations
 import importlib.util
 import os
 import pathlib
-import types
-from dataclasses import dataclass
 import sys
 import time
-import joblib
-
+import types
+from dataclasses import dataclass
 from unittest.mock import AsyncMock
 
 import httpx
+import joblib
 import pytest
 from fastapi import FastAPI
 from jose import jwt
@@ -138,9 +137,9 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     health_stub.register_health_check = lambda *a, **k: None
     health_stub.setup_health_checks = lambda app: None
     health_stub.DependencyHealthMiddleware = lambda app: app
-    sys.modules[
-        "yosai_intel_dashboard.src.infrastructure.discovery.health_check"
-    ] = health_stub
+    sys.modules["yosai_intel_dashboard.src.infrastructure.discovery.health_check"] = (
+        health_stub
+    )
 
     service_stub = types.ModuleType("yosai_framework.service")
 

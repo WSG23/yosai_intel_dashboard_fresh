@@ -6,9 +6,9 @@ import os
 from typing import Iterable
 
 from core.app_factory import create_app
+from core.env_validation import validate_env
 from utils.assets_debug import check_navbar_assets, debug_dash_asset_serving
 from utils.assets_utils import get_nav_icon
-from core.env_validation import validate_env
 
 DEFAULT_ICONS = [
     "analytics",

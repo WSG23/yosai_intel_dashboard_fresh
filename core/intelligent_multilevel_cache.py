@@ -145,7 +145,9 @@ class IntelligentMultiLevelCache:
                 if expiry and now > expiry:
                     file.unlink(missing_ok=True)
                 else:
-                    await self.set(key, obj["value"], ttl=int(expiry - now) if expiry else ttl)
+                    await self.set(
+                        key, obj["value"], ttl=int(expiry - now) if expiry else ttl
+                    )
                     return obj["value"]
             except Exception as exc:  # pragma: no cover - best effort
                 logger.warning(f"Disk read failed for {key}: {exc}")

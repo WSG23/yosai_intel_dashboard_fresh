@@ -25,7 +25,9 @@ class DataHandler:
         """Return a summary dictionary for ``df``."""
         return self.controller.summarize_dataframe(df)
 
-    def analyze_with_chunking(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
+    def analyze_with_chunking(
+        self, df: pd.DataFrame, analysis_types: List[str]
+    ) -> Dict[str, Any]:
         """Analyze ``df`` using chunked processing."""
         return self.controller.analyze_with_chunking(df, analysis_types)
 

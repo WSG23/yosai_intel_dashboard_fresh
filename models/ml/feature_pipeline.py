@@ -11,10 +11,10 @@ import yaml
 from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.inspection import permutation_importance
-
-from analytics.feature_extraction import extract_event_features
 from yosai_intel_dashboard.models.ml.feature_store import FeastFeatureStore
 from yosai_intel_dashboard.models.ml.model_registry import ModelRegistry
+
+from analytics.feature_extraction import extract_event_features
 
 logger = logging.getLogger(__name__)
 

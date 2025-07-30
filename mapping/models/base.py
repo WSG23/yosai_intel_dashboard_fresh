@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import importlib
+import json
+import time
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from typing import Any, Dict, Tuple
-import json
-import yaml
-import importlib
+
 import pandas as pd
-import time
+import yaml
 
 from core.performance import MetricType, get_performance_monitor
 
@@ -18,7 +19,9 @@ class MappingModel(ABC):
     CACHE_SIZE = 128
 
     def __init__(self) -> None:
-        self._cache: "OrderedDict[Tuple[str, str], Dict[str, Dict[str, Any]]]" = OrderedDict()
+        self._cache: "OrderedDict[Tuple[str, str], Dict[str, Dict[str, Any]]]" = (
+            OrderedDict()
+        )
         self.monitor = get_performance_monitor()
 
     # ------------------------------------------------------------------
@@ -28,7 +31,9 @@ class MappingModel(ABC):
         raise NotImplementedError
 
     # ------------------------------------------------------------------
-    def cached_suggest(self, df: pd.DataFrame, filename: str) -> Dict[str, Dict[str, Any]]:
+    def cached_suggest(
+        self, df: pd.DataFrame, filename: str
+    ) -> Dict[str, Dict[str, Any]]:
         """Return suggestions using an internal LRU cache."""
         key = ("|".join(df.columns), filename)
         if key in self._cache:
@@ -43,7 +48,9 @@ class MappingModel(ABC):
         )
         accuracy = 0.0
         if df.columns.size:
-            accuracy = sum(1 for v in result.values() if v.get("field")) / len(df.columns)
+            accuracy = sum(1 for v in result.values() if v.get("field")) / len(
+                df.columns
+            )
         self.monitor.record_metric(
             "mapping.suggest.accuracy", accuracy, MetricType.FILE_PROCESSING
         )

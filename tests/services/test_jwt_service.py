@@ -6,7 +6,6 @@ import types
 
 import pytest
 
-
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
 
 
@@ -71,7 +70,9 @@ def test_refresh_token_flow(monkeypatch):
     svc = load_jwt_service(monkeypatch, "secret")
     now = int(time.time())
     monkeypatch.setattr(svc.time, "time", lambda: now)
-    access, refresh = svc.generate_token_pair("svc", access_expires_in=1, refresh_expires_in=10)
+    access, refresh = svc.generate_token_pair(
+        "svc", access_expires_in=1, refresh_expires_in=10
+    )
     assert svc.verify_service_jwt(access)["iss"] == "svc"
     assert svc.verify_refresh_jwt(refresh)["iss"] == "svc"
 

@@ -5,14 +5,14 @@ from __future__ import annotations
 from api.adapter import api_adapter
 from app import app
 from flask import jsonify, request
-from error_handling import ErrorCategory, ErrorHandler
-from yosai_framework.errors import CODE_TO_STATUS
-from shared.errors.types import ErrorCode
-from marshmallow import Schema, fields
 from flask_apispec import doc, marshal_with, use_kwargs
+from marshmallow import Schema, fields
 
+from error_handling import ErrorCategory, ErrorHandler
 from services.analytics_service import calculate_risk_score
+from shared.errors.types import ErrorCode
 from validation.security_validator import SecurityValidator
+from yosai_framework.errors import CODE_TO_STATUS
 
 handler = ErrorHandler()
 

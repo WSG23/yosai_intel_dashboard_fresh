@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import base64
 from pathlib import Path
 from typing import Any, Optional, Tuple
-import base64
 
 import pandas as pd
 
@@ -22,9 +22,9 @@ from services.data_processing.core.exceptions import (
     FileProcessingError,
     FileValidationError,
 )
-from validation.security_validator import SecurityValidator
 from upload_types import ValidationResult
 from utils.file_utils import safe_decode_with_unicode_handling
+from validation.security_validator import SecurityValidator
 
 
 def process_file_simple(

@@ -5,12 +5,10 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-
-from services.upload.upload_queue_manager import UploadQueueManager
-from services.upload.chunked_upload_manager import ChunkedUploadManager
-
 from config.connection_retry import ConnectionRetryManager, RetryConfig
+from services.upload.chunked_upload_manager import ChunkedUploadManager
+from services.upload.upload_queue_manager import UploadQueueManager
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 
 @pytest.fixture

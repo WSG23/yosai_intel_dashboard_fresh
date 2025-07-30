@@ -1,13 +1,14 @@
-import pytest
 import threading
 import time
 
-from database.intelligent_connection_pool import (
-    IntelligentConnectionPool,
-    CircuitBreaker,
-)
-from config.database_manager import MockConnection
+import pytest
+
 from config.database_exceptions import ConnectionValidationFailed
+from config.database_manager import MockConnection
+from database.intelligent_connection_pool import (
+    CircuitBreaker,
+    IntelligentConnectionPool,
+)
 
 
 def factory():

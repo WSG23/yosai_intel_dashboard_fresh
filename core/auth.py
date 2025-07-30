@@ -24,7 +24,7 @@ from flask_login import (
 )
 from jose import jwt
 
-from config import get_security_config, get_cache_config
+from config import get_cache_config, get_security_config
 
 from .secret_manager import SecretsManager
 

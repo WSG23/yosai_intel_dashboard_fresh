@@ -6,26 +6,25 @@ Database Manager - Fixed imports for streamlined architecture
 """
 import logging
 import sqlite3
-
-from database.secure_exec import execute_command, execute_query
 import threading
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from core.unicode import UnicodeSQLProcessor
-from database.types import DatabaseConnection
 from database.query_optimizer import DatabaseQueryOptimizer
+from database.secure_exec import execute_command, execute_query
+from database.types import DatabaseConnection
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints
     from .connection_pool import DatabaseConnectionPool
 
-from .schema import DatabaseSettings
 from .database_exceptions import ConnectionValidationFailed, DatabaseError
 from .protocols import (
     ConnectionRetryManagerProtocol,
     RetryConfigProtocol,
 )
+from .schema import DatabaseSettings
 
 logger = logging.getLogger(__name__)
 

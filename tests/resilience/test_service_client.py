@@ -1,3 +1,4 @@
+import asyncio
 import importlib.util
 import pathlib
 import sys
@@ -5,7 +6,6 @@ import types
 
 import aiohttp
 import pytest
-import asyncio
 
 services_path = pathlib.Path(__file__).resolve().parents[2] / "services"
 stub_pkg = types.ModuleType("services")
@@ -34,7 +34,9 @@ cb_module = importlib.util.module_from_spec(cb_spec)
 cb_spec.loader.exec_module(cb_module)  # type: ignore
 sys.modules["services.resilience.circuit_breaker"] = cb_module
 
-module_path = pathlib.Path(__file__).resolve().parents[2] / "adapters" / "service_client.py"
+module_path = (
+    pathlib.Path(__file__).resolve().parents[2] / "adapters" / "service_client.py"
+)
 spec = importlib.util.spec_from_file_location("service_client", module_path)
 service_client = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(service_client)  # type: ignore
@@ -58,7 +60,7 @@ class FakeResponse:
         return {"ok": True}
 
     async def text(self):
-        return "{\"ok\": true}"
+        return '{"ok": true}'
 
     def raise_for_status(self):
         pass

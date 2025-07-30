@@ -1,6 +1,7 @@
 import time
-from core.service_container import ServiceContainer
 import types
+
+from core.service_container import ServiceContainer
 from tests.plugins.test_plugin_manager import _install_protocol_stubs
 
 

@@ -1,13 +1,15 @@
 """Simple registry for optional services."""
 
+import asyncio
 import logging
+import os
 from importlib import import_module
 from typing import Any, Dict, Optional
 
-import os
-import asyncio
 import aiohttp
+
 from tracing import propagate_context
+
 from .base_database_service import BaseDatabaseService
 
 logger = logging.getLogger(__name__)
@@ -46,7 +48,11 @@ class ServiceDiscovery:
     """Client for fetching microservice addresses from Consul-like registry."""
 
     def __init__(self, base_url: str | None = None) -> None:
-        url = base_url or os.getenv("SERVICE_REGISTRY_URL") or os.getenv("CONSUL_ADDR", "http://localhost:8500")
+        url = (
+            base_url
+            or os.getenv("SERVICE_REGISTRY_URL")
+            or os.getenv("CONSUL_ADDR", "http://localhost:8500")
+        )
         self.base_url = url.rstrip("/")
         self.session = aiohttp.ClientSession()
 

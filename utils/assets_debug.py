@@ -39,9 +39,7 @@ def check_navbar_assets(
         exists = path.is_file()
         results[safe_encode_text(name)] = exists
         if warn and not exists:
-            logger.warning(
-                f"Navbar icon missing: {safe_encode_text(str(path))}"
-            )
+            logger.warning(f"Navbar icon missing: {safe_encode_text(str(path))}")
     return results
 
 

@@ -35,7 +35,11 @@ class MicroservicesArchitect:
         "Learning Service": ["Analytics Service"],
     }
 
-    def __init__(self, modules: Dict[str, Any] | None = None, services_root: str | Path | None = None) -> None:
+    def __init__(
+        self,
+        modules: Dict[str, Any] | None = None,
+        services_root: str | Path | None = None,
+    ) -> None:
         # Existing modules or other context objects can be passed in.
         self.modules = modules or {}
         self.services_root = Path(services_root or Path(__file__).resolve().parent)
@@ -58,7 +62,9 @@ class MicroservicesArchitect:
         boundaries: List[ServiceBoundary] = []
         for boundary_name, modules in service_map.items():
             description = "Modules: " + ", ".join(sorted(modules))
-            boundaries.append(ServiceBoundary(name=boundary_name, description=description))
+            boundaries.append(
+                ServiceBoundary(name=boundary_name, description=description)
+            )
 
         return boundaries
 

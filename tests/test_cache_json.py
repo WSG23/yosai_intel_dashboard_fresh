@@ -1,5 +1,6 @@
-from core.cache_manager import InMemoryCacheManager, CacheConfig
 import asyncio
+
+from core.cache_manager import CacheConfig, InMemoryCacheManager
 
 manager = InMemoryCacheManager(CacheConfig())
 

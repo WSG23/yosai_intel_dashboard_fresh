@@ -1,7 +1,4 @@
-from . import html
-from . import dcc
-from . import dependencies
-from . import _callback
+from . import _callback, dcc, dependencies, html
 
 # Re-export commonly used classes for convenience
 Input = dependencies.Input

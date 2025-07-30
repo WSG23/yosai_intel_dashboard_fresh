@@ -1,5 +1,4 @@
 from __future__ import annotations
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -9,6 +8,8 @@ import pandas as pd
 
 from core.callback_events import CallbackEvent
 from core.callbacks import UnifiedCallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+
 from .format_detector import FormatDetector, UnsupportedFormatError
 from .readers import ArchiveReader, CSVReader, ExcelReader, FWFReader, JSONReader
 
@@ -37,7 +38,8 @@ class DataProcessor:
         device_registry: Optional[Dict[str, Dict]] = None,
     ) -> None:
         self.format_detector = FormatDetector(
-            readers or [CSVReader(), JSONReader(), ExcelReader(), FWFReader(), ArchiveReader()]
+            readers
+            or [CSVReader(), JSONReader(), ExcelReader(), FWFReader(), ArchiveReader()]
         )
         self.hint = hint or {}
         self.config = config or DataProcessorConfig()
@@ -51,9 +53,7 @@ class DataProcessor:
         'date', 'hour_of_day', and 'day_of_week' fields.
         """
         df = df.copy()
-        df["timestamp"] = pd.to_datetime(
-            df["timestamp"], errors="raise", utc=False
-        )
+        df["timestamp"] = pd.to_datetime(df["timestamp"], errors="raise", utc=False)
         df["timestamp"] = (
             df["timestamp"]
             .dt.tz_localize(self.config.default_tz, ambiguous="infer")
@@ -74,11 +74,11 @@ class DataProcessor:
         df = df.copy()
         pid_re = re.compile(self.config.person_id_pattern)
         bid_re = re.compile(self.config.badge_id_pattern)
-        df["person_id_valid"] = df["person_id"].astype(str).apply(
-            lambda x: bool(pid_re.fullmatch(x))
+        df["person_id_valid"] = (
+            df["person_id"].astype(str).apply(lambda x: bool(pid_re.fullmatch(x)))
         )
-        df["badge_id_valid"] = df["badge_id"].astype(str).apply(
-            lambda x: bool(bid_re.fullmatch(x))
+        df["badge_id_valid"] = (
+            df["badge_id"].astype(str).apply(lambda x: bool(bid_re.fullmatch(x)))
         )
         df.loc[~df["person_id_valid"], "person_id"] = None
         df.loc[~df["badge_id_valid"], "badge_id"] = None
@@ -178,15 +178,20 @@ class DataProcessor:
         """
         df = df.copy()
         df["is_entry"] = df.apply(
-            lambda r: True
-            if pd.isna(r.get("is_entry")) and "entrance" in str(r["device_name"]).lower()
-            else r.get("is_entry"),
+            lambda r: (
+                True
+                if pd.isna(r.get("is_entry"))
+                and "entrance" in str(r["device_name"]).lower()
+                else r.get("is_entry")
+            ),
             axis=1,
         )
         df["is_exit"] = df.apply(
-            lambda r: True
-            if pd.isna(r.get("is_exit")) and "exit" in str(r["device_name"]).lower()
-            else r.get("is_exit"),
+            lambda r: (
+                True
+                if pd.isna(r.get("is_exit")) and "exit" in str(r["device_name"]).lower()
+                else r.get("is_exit")
+            ),
             axis=1,
         )
         return df
@@ -224,7 +229,9 @@ class DataProcessor:
 
     def load_file(self, file_path: str) -> pd.DataFrame:
         try:
-            df_raw, meta = self.format_detector.detect_and_load(file_path, hint=self.hint)
+            df_raw, meta = self.format_detector.detect_and_load(
+                file_path, hint=self.hint
+            )
             self.pipeline_metadata["last_ingest"] = meta
             return df_raw
         except UnsupportedFormatError as exc:
@@ -273,4 +280,3 @@ class DataProcessor:
         df = self._tag_lineage(df)
 
         return df
-

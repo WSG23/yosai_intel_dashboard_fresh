@@ -2,9 +2,9 @@ from __future__ import annotations
 
 """High level interface aggregating Unicode helpers."""
 
+import logging
 from pathlib import Path
 from typing import Any, Callable
-import logging
 
 from core.container import get_unicode_processor
 from core.protocols import UnicodeProcessorProtocol

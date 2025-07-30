@@ -8,6 +8,7 @@ try:
     from .auto_config import PluginAutoConfiguration
     from .manager import ThreadSafePluginManager as PluginManager
     from .performance_manager import EnhancedThreadSafePluginManager
+
     PLUGINS_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Plugin system not available: {e}")

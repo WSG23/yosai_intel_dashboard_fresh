@@ -8,8 +8,8 @@ from typing import List
 
 import pandas as pd
 
-from core.callbacks import UnifiedCallbackManager
 from core.callback_events import CallbackEvent
+from core.callbacks import UnifiedCallbackManager
 from core.protocols import UnicodeProcessorProtocol
 from file_processing.format_detector import FormatDetector
 

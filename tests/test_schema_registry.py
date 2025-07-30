@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-from unittest.mock import AsyncMock, MagicMock
-
-
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock
 
 spec = importlib.util.spec_from_file_location(
     "schema_registry", Path("services/common/schema_registry.py")
@@ -64,7 +62,9 @@ def test_check_compatibility(monkeypatch):
 
     client = SchemaRegistryClient("http://sr")
     assert async_runner(
-        client.check_compatibility("test", {"type": "record", "name": "t", "fields": []})
+        client.check_compatibility(
+            "test", {"type": "record", "name": "t", "fields": []}
+        )
     )
 
 
@@ -77,6 +77,8 @@ def test_register_schema(monkeypatch):
 
     client = SchemaRegistryClient("http://sr")
     version = async_runner(
-        client.register_schema("test-value", {"type": "record", "name": "t", "fields": []})
+        client.register_schema(
+            "test-value", {"type": "record", "name": "t", "fields": []}
+        )
     )
     assert version == 2

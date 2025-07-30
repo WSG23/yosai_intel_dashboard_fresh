@@ -1,8 +1,8 @@
 import pytest
 
 from security.threat_intelligence import (
-    ThreatIntelligenceSystem,
     AutomatedResponseOrchestrator,
+    ThreatIntelligenceSystem,
 )
 
 

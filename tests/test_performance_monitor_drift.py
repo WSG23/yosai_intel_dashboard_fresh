@@ -3,11 +3,17 @@ from types import ModuleType, SimpleNamespace
 
 # minimal config stub
 cfg_mod = ModuleType("config")
+
+
 class DatabaseSettings:
     def __init__(self, type: str = "sqlite", **_: object) -> None:
         self.type = type
+
+
 cfg_mod.DatabaseSettings = DatabaseSettings
-cfg_mod.dynamic_config = SimpleNamespace(performance=SimpleNamespace(memory_usage_threshold_mb=1024))
+cfg_mod.dynamic_config = SimpleNamespace(
+    performance=SimpleNamespace(memory_usage_threshold_mb=1024)
+)
 sys.modules["config"] = cfg_mod
 sys.modules["config.dynamic_config"] = cfg_mod
 

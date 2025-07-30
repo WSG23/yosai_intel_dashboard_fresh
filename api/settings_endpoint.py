@@ -4,10 +4,9 @@ import os
 from filelock import FileLock
 from flask import Blueprint, jsonify, request
 from flask_apispec import doc
-from error_handling import ErrorCategory, ErrorHandler, api_error_response
-
 from pydantic import BaseModel
 
+from error_handling import ErrorCategory, ErrorHandler, api_error_response
 from utils.pydantic_decorators import validate_input, validate_output
 
 settings_bp = Blueprint("settings", __name__)
@@ -18,6 +17,7 @@ handler = ErrorHandler()
 class SettingsSchema(BaseModel):
     theme: str | None = None
     itemsPerPage: int | None = None
+
 
 SETTINGS_FILE = os.getenv(
     "YOSAI_SETTINGS_FILE",
@@ -60,7 +60,11 @@ def get_settings():
 
 
 @settings_bp.route("/v1/settings", methods=["POST", "PUT"])
-@doc(description="Update user settings", tags=["settings"], responses={200: "Success", 500: "Server Error"})
+@doc(
+    description="Update user settings",
+    tags=["settings"],
+    responses={200: "Success", 500: "Server Error"},
+)
 @validate_input(SettingsSchema)
 @validate_output(SettingsSchema)
 def update_settings(payload: SettingsSchema):

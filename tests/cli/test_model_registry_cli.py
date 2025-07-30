@@ -1,7 +1,7 @@
 import importlib.util
-from pathlib import Path
 import sys
 import types
+from pathlib import Path
 
 import pytest
 
@@ -60,14 +60,16 @@ def test_cli_list_and_activate(tmp_path: Path, cli_module, capsys):
     out = capsys.readouterr().out
     assert rec1.version in out and rec2.version in out
 
-    cli_module.main([
-        "--db-url",
-        db_url,
-        "--bucket",
-        "bucket",
-        "activate",
-        "demo",
-        rec2.version,
-    ])
+    cli_module.main(
+        [
+            "--db-url",
+            db_url,
+            "--bucket",
+            "bucket",
+            "activate",
+            "demo",
+            rec2.version,
+        ]
+    )
     active = registry.get_model("demo", active_only=True)
     assert active.version == rec2.version

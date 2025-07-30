@@ -1,10 +1,11 @@
-import io
 import importlib
+import importlib.util
+import io
 import json
 import sys
-from types import ModuleType, SimpleNamespace
-import importlib.util
 from pathlib import Path
+from types import ModuleType, SimpleNamespace
+
 from flask import Flask
 
 
@@ -20,7 +21,9 @@ def test_get_and_update_settings(monkeypatch):
     fs: dict[str, str] = {}
 
     # Stub flask_apispec before importing the endpoint
-    monkeypatch.setitem(sys.modules, "flask_apispec", SimpleNamespace(doc=lambda *a, **k: (lambda f: f)))
+    monkeypatch.setitem(
+        sys.modules, "flask_apispec", SimpleNamespace(doc=lambda *a, **k: (lambda f: f))
+    )
 
     # Provide minimal yosai_framework.errors to avoid heavy deps
     fake_errors = ModuleType("yosai_framework.errors")
@@ -53,8 +56,12 @@ def test_get_and_update_settings(monkeypatch):
 
     settings_endpoint = importlib.import_module("api.settings_endpoint")
 
-    monkeypatch.setattr(settings_endpoint, "SETTINGS_FILE", "settings.json", raising=False)
-    monkeypatch.setattr(settings_endpoint, "LOCK_FILE", "settings.json.lock", raising=False)
+    monkeypatch.setattr(
+        settings_endpoint, "SETTINGS_FILE", "settings.json", raising=False
+    )
+    monkeypatch.setattr(
+        settings_endpoint, "LOCK_FILE", "settings.json.lock", raising=False
+    )
     monkeypatch.setattr(settings_endpoint, "FileLock", lambda p: DummyLock())
 
     def fake_exists(path):
@@ -98,6 +105,3 @@ def test_get_and_update_settings(monkeypatch):
     resp = client.get("/v1/settings")
     assert resp.status_code == 200
     assert resp.get_json() == payload
-
-
-

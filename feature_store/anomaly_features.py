@@ -1,7 +1,10 @@
 from datetime import timedelta
-from feast import Entity, Field, FeatureView, FeatureService
-from feast.types import Int64, Float32
-from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import PostgreSQLSource
+
+from feast import Entity, FeatureService, FeatureView, Field
+from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import (
+    PostgreSQLSource,
+)
+from feast.types import Float32, Int64
 
 # Entities
 person = Entity(name="person_id", join_keys=["person_id"])

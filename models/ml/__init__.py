@@ -1,7 +1,7 @@
 """Machine learning model utilities."""
 
-from .model_registry import ModelRegistry, ModelRecord
 from .base_model import BaseModel, ModelMetadata
+from .model_registry import ModelRecord, ModelRegistry
 from .security_models import (
     TrainResult,
     train_access_anomaly_iforest,

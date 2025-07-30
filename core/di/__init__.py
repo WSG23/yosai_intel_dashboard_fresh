@@ -5,6 +5,6 @@ This module re-exports the most commonly used decorators from
 applications.
 """
 
-from .decorators import injectable, inject, singleton, transient
+from .decorators import inject, injectable, singleton, transient
 
 __all__ = ["injectable", "inject", "singleton", "transient"]

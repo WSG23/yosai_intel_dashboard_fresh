@@ -4,10 +4,11 @@ from functools import wraps
 from typing import Any, Type
 
 from flask import jsonify, request
-from error_handling import ErrorCategory, ErrorHandler
-from yosai_framework.errors import CODE_TO_STATUS
-from shared.errors.types import ErrorCode
 from pydantic import BaseModel, ValidationError
+
+from error_handling import ErrorCategory, ErrorHandler
+from shared.errors.types import ErrorCode
+from yosai_framework.errors import CODE_TO_STATUS
 
 handler = ErrorHandler()
 

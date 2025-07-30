@@ -1,6 +1,6 @@
 import importlib.util
-import pandas as pd
 
+import pandas as pd
 
 spec = importlib.util.spec_from_file_location(
     "unique_patterns_analyzer", "analytics/unique_patterns_analyzer.py"

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from .service_container import ServiceContainer
 from .protocols import (
     AnalyticsServiceProtocol,
     ConfigurationProtocol,
     UnicodeProcessorProtocol,
 )
+from .service_container import ServiceContainer
 
 # Global container instance used across the application
 container = ServiceContainer()

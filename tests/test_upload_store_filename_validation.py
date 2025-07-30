@@ -1,6 +1,6 @@
-from tests.utils.builders import DataFrameBuilder
 import pytest
 
+from tests.utils.builders import DataFrameBuilder
 from utils.upload_store import UploadedDataStore
 
 

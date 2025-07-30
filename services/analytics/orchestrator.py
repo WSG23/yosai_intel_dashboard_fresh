@@ -2,8 +2,9 @@ from __future__ import annotations
 
 """High level orchestration for analytics workflows."""
 
-from typing import Any, Dict, Protocol
 import logging
+from typing import Any, Dict, Protocol
+
 import pandas as pd
 
 from validation.security_validator import SecurityValidator
@@ -18,7 +19,9 @@ logger = logging.getLogger(__name__)
 class AnalyticsRepositoryProtocol(Protocol):
     """Minimal repository used by :class:`AnalyticsOrchestrator`."""
 
-    def save_summary(self, summary: Dict[str, Any]) -> None:  # pragma: no cover - interface
+    def save_summary(
+        self, summary: Dict[str, Any]
+    ) -> None:  # pragma: no cover - interface
         ...
 
 
@@ -67,7 +70,9 @@ class AnalyticsOrchestrator:
                 self.publisher.publish(result)
                 return result
 
-            combined = frames[0] if len(frames) == 1 else pd.concat(frames, ignore_index=True)
+            combined = (
+                frames[0] if len(frames) == 1 else pd.concat(frames, ignore_index=True)
+            )
             summary = self.loader.summarize_dataframe(combined)
 
             if self.repository is not None:
@@ -86,4 +91,3 @@ class AnalyticsOrchestrator:
 
 
 __all__ = ["AnalyticsOrchestrator", "AnalyticsRepositoryProtocol"]
-

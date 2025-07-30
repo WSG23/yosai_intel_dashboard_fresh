@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """Minimal protocol for Flask-like apps."""
 
-from typing import Protocol, Callable, Any, runtime_checkable, Iterable
+from typing import Any, Callable, Iterable, Protocol, runtime_checkable
 
 
 @runtime_checkable

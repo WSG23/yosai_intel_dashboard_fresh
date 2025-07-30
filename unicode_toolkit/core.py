@@ -13,7 +13,9 @@ from core.unicode import UnicodeSQLProcessor, sanitize_dataframe
 class UnicodeProcessor:
     """Shim class preserving the previous interface."""
 
-    def __init__(self, strategies: Optional[Iterable] = None) -> None:  # pragma: no cover - compatibility
+    def __init__(
+        self, strategies: Optional[Iterable] = None
+    ) -> None:  # pragma: no cover - compatibility
         pass
 
     def process(self, text: Any) -> str:

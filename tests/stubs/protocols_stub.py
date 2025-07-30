@@ -1,6 +1,6 @@
-from enum import Enum
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, List, Protocol, runtime_checkable
+from enum import Enum
+from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
 
 
 class PluginStatus(Enum):

@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict
 
-from config.validator import YosaiConfig, validate_config
-
 import jsonschema
 import yaml
+
+from config.validator import YosaiConfig, validate_config
 
 SCHEMA_PATH = Path(__file__).resolve().parents[1] / "config" / "service.schema.yaml"
 

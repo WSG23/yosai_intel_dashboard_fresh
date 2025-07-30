@@ -1,8 +1,8 @@
-import types
 import importlib
 import importlib.util
-from pathlib import Path
 import sys
+import types
+from pathlib import Path
 
 if "services.resilience" not in sys.modules:
     sys.modules["services.resilience"] = types.ModuleType("services.resilience")
@@ -15,7 +15,6 @@ if "services.resilience.metrics" not in sys.modules:
 
 import pandas as pd
 import pytest
-
 from sqlalchemy.orm import Session as SASession
 
 
@@ -160,8 +159,10 @@ def test_log_features_and_drift(monkeypatch, stub_services_registry):
     # Provide minimal stubs so mlflow import succeeds
     stub_req = types.ModuleType("requests")
     adapters_mod = types.ModuleType("requests.adapters")
+
     class HTTPAdapter:  # minimal stub
         pass
+
     adapters_mod.HTTPAdapter = HTTPAdapter
     stub_req.adapters = adapters_mod
     stub_req.exceptions = types.ModuleType("requests.exceptions")
@@ -170,6 +171,7 @@ def test_log_features_and_drift(monkeypatch, stub_services_registry):
     monkeypatch.setitem(sys.modules, "requests.exceptions", stub_req.exceptions)
 
     mlflow_stub = types.ModuleType("mlflow")
+
     class DummyRun:
         def __init__(self):
             self.info = types.SimpleNamespace(run_id="run")
@@ -200,7 +202,9 @@ def test_log_features_and_drift(monkeypatch, stub_services_registry):
     assert spec.loader
     spec.loader.exec_module(mr)
     monkeypatch.setattr(mr, "mlflow", DummyMlflow())
-    registry = mr.ModelRegistry("sqlite:///:memory:", bucket="bucket", s3_client=DummyS3())
+    registry = mr.ModelRegistry(
+        "sqlite:///:memory:", bucket="bucket", s3_client=DummyS3()
+    )
 
     df1 = pd.DataFrame({"a": [0, 1, 0, 1]})
     df2 = pd.DataFrame({"a": [1, 1, 1, 1]})

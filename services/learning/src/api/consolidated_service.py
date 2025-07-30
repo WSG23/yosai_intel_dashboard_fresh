@@ -3,6 +3,7 @@ Consolidated learning service for device and column mappings.
 Replaces services/device_learning_service.py
 """
 
+import asyncio
 import hashlib
 import json
 import logging
@@ -11,11 +12,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
-import asyncio
 
-from core.cache_manager import InMemoryCacheManager, CacheConfig
+from core.cache_manager import CacheConfig, InMemoryCacheManager
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
+
 
 class ConsolidatedLearningService:
     """Unified learning service for all mapping types."""

@@ -1,18 +1,18 @@
-from typing import Any, Dict, List, Callable, Protocol, runtime_checkable, assert_type
+from typing import Any, Callable, Dict, List, Protocol, assert_type, runtime_checkable
 
 import pandas as pd
 import pytest
 
-from core.service_container import ServiceContainer
-from services.analytics_service import AnalyticsService
 from core.protocols import (
     AnalyticsServiceProtocol,
     ConfigurationProtocol,
-    SecurityServiceProtocol,
     DatabaseProtocol,
     EventBusProtocol,
+    SecurityServiceProtocol,
     StorageProtocol,
 )
+from core.service_container import ServiceContainer
+from services.analytics_service import AnalyticsService
 
 
 @runtime_checkable

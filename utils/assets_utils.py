@@ -1,6 +1,8 @@
-from pathlib import Path
 import logging
+from pathlib import Path
+
 from flask import request, url_for
+
 from utils.assets_debug import check_navbar_assets
 
 ASSET_ICON_DIR = Path(__file__).resolve().parent.parent / "assets" / "navbar_icons"

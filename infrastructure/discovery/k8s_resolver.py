@@ -29,7 +29,9 @@ class K8sResolver:
         url = f"http://{address}:{port}/health/ready"
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=aiohttp.ClientTimeout(total=1.0)) as resp:
+                async with session.get(
+                    url, timeout=aiohttp.ClientTimeout(total=1.0)
+                ) as resp:
                     return resp.status < 400
         except Exception:
             return False

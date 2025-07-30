@@ -1,8 +1,8 @@
 import base64
 import importlib
 
-from tests.fake_configuration import FakeConfiguration
 from services.data_processing import file_processor as upload_module
+from tests.fake_configuration import FakeConfiguration
 
 
 def test_env_max_upload_limit(monkeypatch):

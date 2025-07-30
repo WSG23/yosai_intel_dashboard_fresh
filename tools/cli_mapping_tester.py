@@ -5,11 +5,11 @@ Usage: python tools/cli_mapping_tester.py <file_path> [--verbose] [--suggest-onl
 """
 
 import argparse
+import asyncio
 import json
 import logging
 import sys
 import traceback
-import asyncio
 from pathlib import Path
 from typing import Any, Dict
 
@@ -17,43 +17,47 @@ from typing import Any, Dict
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+
 def setup_logging(verbose: bool = False) -> None:
     """Configure logging for CLI tool"""
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        level=level
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=level
     )
 
-async def test_mapping_service(file_path: str, verbose: bool = False, suggest_only: bool = False) -> Dict[str, Any]:
+
+async def test_mapping_service(
+    file_path: str, verbose: bool = False, suggest_only: bool = False
+) -> Dict[str, Any]:
     """Test the mapping service pipeline: file processing -> column mapping -> device learning"""
     setup_logging(verbose)
     logger = logging.getLogger(__name__)
-    
+
     try:
         path = Path(file_path)
         if not path.exists():
             return {"success": False, "error": f"File not found: {file_path}"}
-        
+
         logger.info(f"Testing mapping service pipeline for: {file_path}")
-        
+
         # Step 1: Process file with AsyncFileProcessor
         logger.info("=== STEP 1: File Processing ===")
         from services.data_processing.async_file_processor import AsyncFileProcessor
-        
+
         processor = AsyncFileProcessor()
-        
-        with open(path, 'rb') as f:
+
+        with open(path, "rb") as f:
             content = f.read()
-        
+
         import base64
-        content_b64 = base64.b64encode(content).decode('utf-8')
+
+        content_b64 = base64.b64encode(content).decode("utf-8")
         content_with_prefix = f"data:application/octet-stream;base64,{content_b64}"
-        
+
         df = await processor.process_file(content_with_prefix, path.name)
         logger.info(f"File processed: {len(df)} rows, {len(df.columns)} columns")
         logger.info(f"Columns: {list(df.columns)}")
-        
+
         result = {
             "success": True,
             "file_path": file_path,
@@ -61,66 +65,66 @@ async def test_mapping_service(file_path: str, verbose: bool = False, suggest_on
                 "rows": len(df),
                 "columns": len(df.columns),
                 "column_names": list(df.columns),
-                "sample_data": df.head(2).to_dict('records') if len(df) > 0 else []
-            }
+                "sample_data": df.head(2).to_dict("records") if len(df) > 0 else [],
+            },
         }
-        
+
         # Step 2: Test AI Column Suggestions
         logger.info("=== STEP 2: AI Column Suggestions ===")
         try:
             from services.data_enhancer.mapping_utils import get_ai_column_suggestions
-            
+
             # Test AI suggestions for the columns
             suggestions = get_ai_column_suggestions(df)
-            logger.info(f"AI suggestions generated: {len(suggestions) if suggestions else 0} suggestions")
-            
+            logger.info(
+                f"AI suggestions generated: {len(suggestions) if suggestions else 0} suggestions"
+            )
+
             result["ai_suggestions"] = {
                 "success": True,
                 "suggestions": suggestions,
-                "suggestion_count": len(suggestions) if suggestions else 0
+                "suggestion_count": len(suggestions) if suggestions else 0,
             }
-            
+
         except Exception as ai_error:
             logger.warning(f"AI suggestions failed: {ai_error}")
-            result["ai_suggestions"] = {
-                "success": False,
-                "error": str(ai_error)
-            }
-        
+            result["ai_suggestions"] = {"success": False, "error": str(ai_error)}
+
         # Step 3: Test Device Learning Service
         logger.info("=== STEP 3: Device Learning Service ===")
         try:
             from services.device_learning_service import DeviceLearningService
-            
+
             device_service = DeviceLearningService()
-            
+
             # Test learning from the dataframe
-            if hasattr(device_service, 'learn_from_dataframe'):
+            if hasattr(device_service, "learn_from_dataframe"):
                 learning_result = device_service.learn_from_dataframe(df, path.name)
                 logger.info(f"Device learning completed")
-                
+
                 result["device_learning"] = {
                     "success": True,
-                    "learning_result": learning_result
+                    "learning_result": learning_result,
                 }
             else:
                 # Try other methods that might exist
-                available_methods = [method for method in dir(device_service) if not method.startswith('_')]
+                available_methods = [
+                    method
+                    for method in dir(device_service)
+                    if not method.startswith("_")
+                ]
                 logger.info(f"Available device learning methods: {available_methods}")
-                
+
                 result["device_learning"] = {
                     "success": True,
                     "available_methods": available_methods,
-                    "note": "learn_from_dataframe method not found"
+                    "note": "learn_from_dataframe method not found",
                 }
-                
+
         except Exception as device_error:
             logger.warning(f"Device learning failed: {device_error}")
-            result["device_learning"] = {
-                "success": False,
-                "error": str(device_error)
-            }
-        
+            result["device_learning"] = {"success": False, "error": str(device_error)}
+
         # Step 4: Test Mapping Application (if not suggest-only)
         if not suggest_only:
             logger.info("=== STEP 4: Mapping Application ===")
@@ -130,40 +134,43 @@ async def test_mapping_service(file_path: str, verbose: bool = False, suggest_on
                 if mappings_file.exists():
                     with open(mappings_file) as f:
                         mappings_data = json.load(f)
-                    
+
                     result["mapping_application"] = {
                         "success": True,
                         "mappings_from_file": True,
-                        "mappings_data_keys": list(mappings_data.keys()) if mappings_data else []
+                        "mappings_data_keys": (
+                            list(mappings_data.keys()) if mappings_data else []
+                        ),
                     }
                 else:
                     result["mapping_application"] = {
                         "success": False,
-                        "error": "No learned_mappings.json found"
+                        "error": "No learned_mappings.json found",
                     }
-                        
+
             except Exception as app_error:
                 logger.warning(f"Mapping application failed: {app_error}")
                 result["mapping_application"] = {
                     "success": False,
-                    "error": str(app_error)
+                    "error": str(app_error),
                 }
-        
+
         logger.info("=== MAPPING SERVICE PIPELINE COMPLETE ===")
         return result
-        
+
     except Exception as e:
         logger.error(f"Mapping service pipeline failed: {str(e)}")
         if verbose:
             logger.error(traceback.format_exc())
-        
+
         return {
             "success": False,
             "error": str(e),
             "error_type": type(e).__name__,
             "file_path": file_path,
-            "traceback": traceback.format_exc() if verbose else None
+            "traceback": traceback.format_exc() if verbose else None,
         }
+
 
 def main():
     """Main CLI entry point"""
@@ -175,23 +182,33 @@ Examples:
   python tools/cli_mapping_tester.py test_unicode_upload.csv --verbose
   python tools/cli_mapping_tester.py temp/uploaded_data/Enhanced_Security_Demo.csv.parquet --suggest-only
   python tools/cli_mapping_tester.py data/learned_mappings.json
-        """
+        """,
     )
-    
+
     parser.add_argument("file_path", help="Path to the file to process")
-    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
-    parser.add_argument("--suggest-only", "-s", action="store_true", help="Only test AI suggestions, skip mapping application")
-    
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose logging"
+    )
+    parser.add_argument(
+        "--suggest-only",
+        "-s",
+        action="store_true",
+        help="Only test AI suggestions, skip mapping application",
+    )
+
     args = parser.parse_args()
-    
+
     # Test the mapping service
-    result = asyncio.run(test_mapping_service(args.file_path, args.verbose, args.suggest_only))
-    
+    result = asyncio.run(
+        test_mapping_service(args.file_path, args.verbose, args.suggest_only)
+    )
+
     # Output results
     print(json.dumps(result, indent=2, default=str))
-    
+
     # Exit with appropriate code
     sys.exit(0 if result["success"] else 1)
+
 
 if __name__ == "__main__":
     main()

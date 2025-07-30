@@ -1,6 +1,6 @@
 """Prometheus metrics for data quality issues."""
 
-from prometheus_client import Counter, REGISTRY
+from prometheus_client import REGISTRY, Counter
 from prometheus_client.core import CollectorRegistry
 
 if "avro_decoding_failures_total" not in REGISTRY._names_to_collectors:

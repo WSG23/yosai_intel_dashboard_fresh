@@ -1,8 +1,8 @@
 import asyncio
 import importlib.util
 import pathlib
-import types
 import sys
+import types
 
 import pytest
 

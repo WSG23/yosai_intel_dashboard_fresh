@@ -1,4 +1,5 @@
 import asyncio
+
 from core.cache_warmer import IntelligentCacheWarmer, UsagePatternAnalyzer
 from core.hierarchical_cache_manager import HierarchicalCacheManager
 
@@ -20,4 +21,3 @@ def test_predicted_keys_cached(async_runner):
 
     assert cache.get("a") == "value-a"
     assert cache.get("b") == "value-b"
-

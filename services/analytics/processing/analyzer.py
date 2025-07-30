@@ -2,7 +2,8 @@ from __future__ import annotations
 
 """High level pattern analysis."""
 
-from typing import Dict, Any
+from typing import Any, Dict
+
 import pandas as pd
 
 from .calculator import Calculator

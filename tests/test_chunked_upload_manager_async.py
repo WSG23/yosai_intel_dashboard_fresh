@@ -1,11 +1,10 @@
 import asyncio
-import pandas as pd
+
 import pandas as pd
 import pytest
 
-from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-
 from services.upload.chunked_upload_manager_async import ChunkedUploadManager
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 from utils.upload_store import UploadedDataStore
 
 

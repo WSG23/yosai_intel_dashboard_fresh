@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, List
 import pandas as pd
 
 from core.protocols import FileProcessorProtocol
-from services.upload.protocols import UploadStorageProtocol, UploadDataServiceProtocol
+from services.upload.protocols import UploadDataServiceProtocol, UploadStorageProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,9 @@ class FileProcessor:
         content: str,
         progress_cb: Callable[[str, int], None] | None,
     ) -> Dict[str, Any]:
-        df = await self.processor.process_file(content, filename, progress_callback=progress_cb)
+        df = await self.processor.process_file(
+            content, filename, progress_callback=progress_cb
+        )
         mapping: Dict[str, str] = {}
         try:
             mapping = self.data_service.load_mapping(filename)

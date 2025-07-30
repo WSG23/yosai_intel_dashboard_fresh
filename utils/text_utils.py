@@ -89,4 +89,3 @@ def truncate_text(text: str, max_length: int = 100, suffix: str = "...") -> str:
 
 
 __all__ = ["safe_text", "sanitize_text_for_dash", "format_file_size", "truncate_text"]
-

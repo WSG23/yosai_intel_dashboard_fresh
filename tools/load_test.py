@@ -71,10 +71,13 @@ def run_test(brokers: str, prom_url: str, rate: float, duration: int) -> None:
     deadline = time.time() + 30
     processed = 0.0
     while time.time() < deadline:
-        processed = query_prometheus(
-            prom_url,
-            "event_processor_events_processed_total",
-        ) - start_count
+        processed = (
+            query_prometheus(
+                prom_url,
+                "event_processor_events_processed_total",
+            )
+            - start_count
+        )
         if processed >= sent:
             break
         time.sleep(1)

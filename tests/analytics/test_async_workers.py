@@ -32,7 +32,9 @@ async def test_start_and_stop(monkeypatch):
     monkeypatch.setattr(workers, "create_advanced_cache_manager", fake_create)
     queue: asyncio.Queue[asyncio.Future] = asyncio.Queue()
 
-    await workers.start_workers(calc_interval=0, cache_refresh_interval=0, task_queue=queue)
+    await workers.start_workers(
+        calc_interval=0, cache_refresh_interval=0, task_queue=queue
+    )
     await asyncio.sleep(0.1)
     await queue.put(asyncio.sleep(0))
     await asyncio.sleep(0.1)

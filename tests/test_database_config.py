@@ -1,9 +1,9 @@
 import pytest
 
 from config import DatabaseSettings
-from tests.fake_configuration import FakeConfiguration
 from config.connection_pool import DatabaseConnectionPool
 from config.database_manager import MockConnection
+from tests.fake_configuration import FakeConfiguration
 
 
 def factory():

@@ -7,10 +7,13 @@ from typing import Any, Iterable, Optional, Tuple
 
 from core.unicode import (
     UnicodeSQLProcessor,
-    sanitize_dataframe,
-    clean_unicode_surrogates as _clean_unicode_surrogates,
-    safe_encode_text as _safe_encode_text,
 )
+from core.unicode import clean_unicode_surrogates as _clean_unicode_surrogates
+from core.unicode import safe_encode_text as _safe_encode_text
+from core.unicode import (
+    sanitize_dataframe,
+)
+
 
 def clean_unicode_text(text: Any) -> str:
     """Normalize and strip dangerous characters from ``text``."""

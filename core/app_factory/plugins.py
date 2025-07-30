@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Any, Optional, cast
 if TYPE_CHECKING:  # pragma: no cover - imported for type checking only
     from dash import Dash
 
-from core.service_container import ServiceContainer
 from core.plugins.auto_config import PluginAutoConfiguration
+from core.service_container import ServiceContainer
 
 
 def _initialize_plugins(

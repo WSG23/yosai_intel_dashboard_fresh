@@ -1,8 +1,8 @@
-from unittest.mock import MagicMock
+import importlib.util
 import sys
 import types
-import importlib.util
 from pathlib import Path
+from unittest.mock import MagicMock
 
 
 def _install_core_stub(monkeypatch):
@@ -36,8 +36,11 @@ def _load_ai_plugin(monkeypatch, repo_success=True):
     _install_core_stub(monkeypatch)
     path = Path("plugins/ai_classification/plugin.py")
     import importlib
+
     pkg = importlib.import_module("plugins.ai_classification")
-    spec = importlib.util.spec_from_file_location("plugins.ai_classification.plugin", path)
+    spec = importlib.util.spec_from_file_location(
+        "plugins.ai_classification.plugin", path
+    )
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     pkg.plugin = module

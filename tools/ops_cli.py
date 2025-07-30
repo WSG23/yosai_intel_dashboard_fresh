@@ -76,15 +76,17 @@ def test_all():
 @click.argument("service")
 def logs(service):
     """Tail logs for a specific service."""
-    run([
-        "docker",
-        "compose",
-        "-f",
-        str(ROOT / COMPOSE_ALL_FILE),
-        "logs",
-        "-f",
-        service,
-    ])
+    run(
+        [
+            "docker",
+            "compose",
+            "-f",
+            str(ROOT / COMPOSE_ALL_FILE),
+            "logs",
+            "-f",
+            service,
+        ]
+    )
 
 
 @cli.command()

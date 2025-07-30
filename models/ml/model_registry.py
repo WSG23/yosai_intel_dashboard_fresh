@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import os
 import logging
+import os
 import shutil
 from datetime import datetime
 from typing import Any, Dict, List
@@ -9,16 +9,16 @@ from urllib.parse import urlparse
 
 import boto3
 import mlflow
-import requests
 import pandas as pd
+import requests
 from packaging.version import Version
 from sqlalchemy import (
+    JSON,
     Boolean,
     Column,
     DateTime,
     Float,
     Integer,
-    JSON,
     String,
     create_engine,
     select,

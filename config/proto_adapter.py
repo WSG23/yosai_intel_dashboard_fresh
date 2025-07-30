@@ -1,19 +1,20 @@
 """Adapters between protobuf configs and existing dataclasses."""
+
 from __future__ import annotations
 
-from .generated.protobuf.config.schema import config_pb2
 from .base import (
-    AppConfig,
-    DatabaseConfig,
-    SecurityConfig,
-    SampleFilesConfig,
     AnalyticsConfig,
-    MonitoringConfig,
+    AppConfig,
     CacheConfig,
-    UploadConfig,
-    SecretValidationConfig,
     Config,
+    DatabaseConfig,
+    MonitoringConfig,
+    SampleFilesConfig,
+    SecretValidationConfig,
+    SecurityConfig,
+    UploadConfig,
 )
+from .generated.protobuf.config.schema import config_pb2
 
 
 def to_dataclasses(cfg: config_pb2.YosaiConfig) -> Config:

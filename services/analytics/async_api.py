@@ -16,25 +16,23 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.responses import JSONResponse, StreamingResponse
-
-from services.analytics_service import get_analytics_service
-from services.summary_report_generator import SummaryReportGenerator
+from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.types import ASGIApp
+from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
+    register_health_check,
+    setup_health_checks,
+)
 
 from core.cache_manager import CacheConfig, InMemoryCacheManager
 from core.events import EventBus
+from services.analytics_service import get_analytics_service
 from services.cached_analytics import CachedAnalyticsService
-from services.websocket_server import AnalyticsWebSocketServer
 from services.common.async_db import get_pool
 from services.security import require_permission
-
-from pydantic import BaseModel
-from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
-    setup_health_checks,
-    register_health_check,
-)
+from services.summary_report_generator import SummaryReportGenerator
+from services.websocket_server import AnalyticsWebSocketServer
 
 logger = logging.getLogger(__name__)
 
@@ -210,7 +208,9 @@ async def generate_report(
         headers = {
             "Content-Disposition": f"attachment; filename={req.type}_report.json"
         }
-        return StreamingResponse(iter([body]), media_type="application/json", headers=headers)
+        return StreamingResponse(
+            iter([body]), media_type="application/json", headers=headers
+        )
 
     return JSONResponse(content=report)
 

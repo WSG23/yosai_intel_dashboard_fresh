@@ -52,9 +52,12 @@ def get_db_pool_size() -> int:
 def get_max_display_rows(config: ConfigurationProtocol = dynamic_config) -> int:
     """Return maximum number of rows to show in previews."""
     try:
-        return get_analytics_config().max_display_rows or config.analytics.max_display_rows
+        return (
+            get_analytics_config().max_display_rows or config.analytics.max_display_rows
+        )
     except Exception:
         return config.analytics.max_display_rows
+
 
 __all__ = [
     "get_ai_confidence_threshold",

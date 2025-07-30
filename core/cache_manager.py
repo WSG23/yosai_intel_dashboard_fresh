@@ -196,6 +196,7 @@ class RedisCacheManager(CacheManager):
 
 # ----------------------------------------------------------------------
 
+
 def cache_with_lock(
     manager: CacheManager,
     ttl: Optional[int] = None,
@@ -218,9 +219,13 @@ def cache_with_lock(
                 cached = await manager.get(cache_key)
                 if cached is not None:
                     return cached
-                result = await func(*args, **kwargs) if is_async else func(*args, **kwargs)
+                result = (
+                    await func(*args, **kwargs) if is_async else func(*args, **kwargs)
+                )
                 override = os.getenv(env_var)
-                effective_ttl = int(override) if override and override.isdigit() else ttl
+                effective_ttl = (
+                    int(override) if override and override.isdigit() else ttl
+                )
                 await manager.set(cache_key, result, effective_ttl)
                 return result
 

@@ -12,11 +12,12 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
+from core.protocols import ConfigurationServiceProtocol
+
 # ADD after existing imports
 from services.ai_device_generator import AIDeviceGenerator
 from services.common import ModelRegistry
 from services.common.config_utils import common_init, create_config_methods
-from core.protocols import ConfigurationServiceProtocol
 from services.configuration_service import DynamicConfigurationService
 from services.learning.src.api.consolidated_service import get_learning_service
 

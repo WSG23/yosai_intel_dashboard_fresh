@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from typing import Any, Tuple
-from flask import jsonify, Response
+
+from flask import Response, jsonify
 
 from shared.errors.types import ErrorCode
 
@@ -29,4 +30,3 @@ def api_error_response(
     err = h.handle(exc, category, details)
     status = CODE_TO_STATUS.get(ErrorCode(err.category.value), 500)
     return jsonify(err.to_dict()), status
-

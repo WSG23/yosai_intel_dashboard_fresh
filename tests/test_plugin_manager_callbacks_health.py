@@ -1,6 +1,7 @@
 import importlib
 import pathlib
 import sys
+
 import pytest
 
 # Import real Flask even when stubs shadow it on PYTHONPATH
@@ -13,6 +14,7 @@ for p in list(sys.path):
         break
 try:
     from flask import Flask as RealFlask
+
     Flask = RealFlask
 finally:
     if stub_path:
@@ -47,7 +49,10 @@ def test_callbacks_and_health_endpoint(monkeypatch, tmp_path):
             cfg = create_config_manager()
             cfg.config.plugin_settings[builder.plugin_name] = {"enabled": True}
             manager = PluginManager(
-                ServiceContainer(), cfg, package=builder.package_name, health_check_interval=1
+                ServiceContainer(),
+                cfg,
+                package=builder.package_name,
+                health_check_interval=1,
             )
             manager.load_all_plugins()
 

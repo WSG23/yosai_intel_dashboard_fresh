@@ -2,7 +2,6 @@ import pandas as pd
 
 from analytics.security_patterns import SecurityPatternsAnalyzer, prepare_security_data
 from analytics.security_patterns.pattern_detection import detect_critical_door_risks
-
 from database.connection import create_database_connection
 
 
@@ -103,4 +102,3 @@ def test_detect_odd_time_zero_baseline_std(monkeypatch):
 
     threats = detect_odd_time(df)
     assert len(threats) == 1
-
