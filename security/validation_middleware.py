@@ -56,12 +56,14 @@ class ValidationMiddleware:
         if request.content_length and request.content_length > self.max_body_size:
             return Response("Request Entity Too Large", status=413)
 
-        # Validate query string parameters
-        for value in request.args.values():
+        # Validate query string parameters and store sanitized versions
+        sanitized_args = {}
+        for key, value in request.args.items():
             try:
-                self.orchestrator.validate(value)
+                sanitized_args[key] = self.orchestrator.validate(value)
             except ValidationError:
                 return Response("Bad Request", status=400)
+        request.sanitized_args = sanitized_args
 
         # Validate body content
         if request.data:

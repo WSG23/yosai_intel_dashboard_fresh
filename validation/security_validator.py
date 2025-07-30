@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import html
 import re
+import os
 from typing import Iterable
 
 from core.exceptions import ValidationError
+from config.dynamic_config import dynamic_config
 
 from .core import ValidationResult
 from .file_validator import FileValidator
@@ -37,6 +39,28 @@ class SecurityValidator(CompositeValidator):
         super().__init__(base_rules)
         self.file_validator = FileValidator()
 
+    def sanitize_filename(self, filename: str) -> str:
+        """Return a safe filename stripped of path components."""
+        name = os.path.basename(filename)
+        if not name or name in {".", ".."}:
+            raise ValidationError("Invalid filename")
+        return name
+
+    def validate_file_meta(self, filename: str, size_bytes: int) -> dict:
+        """Validate filename and size limits without reading contents."""
+        issues: list[str] = []
+        try:
+            sanitized = self.sanitize_filename(filename)
+        except ValidationError:
+            issues.append("Invalid filename")
+            sanitized = os.path.basename(filename)
+
+        max_bytes = dynamic_config.security.max_upload_mb * 1024 * 1024
+        if size_bytes > max_bytes:
+            issues.append("File too large")
+
+        return {"valid": not issues, "issues": issues, "filename": sanitized}
+
     def validate_input(self, value: str, field_name: str = "input") -> dict:
         result = self.validate(value)
         if not result.valid:
@@ -50,4 +74,9 @@ class SecurityValidator(CompositeValidator):
         return result
 
 
-__all__ = ["SecurityValidator", "XSSRule", "SQLRule", "FileValidator"]
+__all__ = [
+    "SecurityValidator",
+    "XSSRule",
+    "SQLRule",
+    "FileValidator",
+]

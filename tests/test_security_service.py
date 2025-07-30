@@ -19,3 +19,9 @@ def test_oversized_upload_is_invalid():
     result = validator.validate_file_meta("big.csv", too_big)
     assert result["valid"] is False
     assert any("File too large" in issue for issue in result["issues"])
+
+
+def test_sanitize_filename_strips_path_components():
+    validator = SecurityValidator()
+    sanitized = validator.sanitize_filename("../foo/bar.csv")
+    assert sanitized == "bar.csv"
