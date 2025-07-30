@@ -20,6 +20,7 @@ from core.protocols import ConfigurationProtocol
 
 # Core processing imports only - NO UI COMPONENTS
 from core.unicode import safe_format_number, safe_unicode_decode, sanitize_for_utf8
+from unicode_toolkit import safe_encode_text
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +90,11 @@ def process_uploaded_file(
     try:
         decoded, decode_err = _safe_b64decode(contents)
         if decoded is None:
-            logger.error("Base64 decode failed for %s: %s", filename, decode_err)
+            logger.error(
+                "Base64 decode failed for %s: %s",
+                safe_encode_text(filename),
+                safe_encode_text(decode_err),
+            )
             return {
                 "status": "error",
                 "error": decode_err,
@@ -126,8 +131,17 @@ def process_uploaded_file(
         return {"status": "success", "data": df, "filename": filename, "error": None}
 
     except Exception as e:
-        logger.error(f"File processing error for {filename}: {e}")
-        return {"status": "error", "error": str(e), "data": None, "filename": filename}
+        logger.error(
+            "File processing error for %s: %s",
+            safe_encode_text(filename),
+            safe_encode_text(e),
+        )
+        return {
+            "status": "error",
+            "error": str(e),
+            "data": None,
+            "filename": filename,
+        }
 
 
 def create_file_preview(

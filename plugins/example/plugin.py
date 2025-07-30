@@ -8,6 +8,7 @@ from dash import Input, Output
 from dash.exceptions import PreventUpdate
 
 from core.protocols.plugin import CallbackPluginProtocol, PluginMetadata
+from unicode_toolkit import safe_encode_text
 
 
 @dataclass
@@ -15,7 +16,7 @@ class GreetingService:
     greeting: str = "Hello"
 
     def greet(self, name: str) -> str:
-        return f"{self.greeting}, {name}!"
+        return f"{self.greeting}, {safe_encode_text(name)}!"
 
 
 class ExamplePlugin(CallbackPluginProtocol):

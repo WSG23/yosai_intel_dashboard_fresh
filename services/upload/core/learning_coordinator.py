@@ -1,4 +1,6 @@
 import logging
+
+from unicode_toolkit import safe_encode_text
 from typing import Dict
 
 import pandas as pd
@@ -18,7 +20,11 @@ class LearningCoordinator:
         try:
             return self.service.get_user_device_mappings(filename) or {}
         except Exception as exc:  # pragma: no cover - best effort
-            logger.error("Failed to load user mappings for %s: %s", filename, exc)
+            logger.error(
+                "Failed to load user mappings for %s: %s",
+                safe_encode_text(filename),
+                safe_encode_text(exc),
+            )
             return {}
 
     def auto_apply(self, df: pd.DataFrame, filename: str) -> bool:
@@ -30,5 +36,8 @@ class LearningCoordinator:
                 return True
             return False
         except Exception as exc:  # pragma: no cover - best effort
-            logger.error("Failed to auto-apply learned mappings: %s", exc)
+            logger.error(
+                "Failed to auto-apply learned mappings: %s",
+                safe_encode_text(exc),
+            )
             return False

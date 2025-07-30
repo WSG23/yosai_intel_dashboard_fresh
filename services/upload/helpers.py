@@ -5,6 +5,8 @@ from typing import Dict
 
 from dash._callback_context import callback_context
 
+from unicode_toolkit import safe_encode_text
+
 logger = logging.getLogger(__name__)
 
 
@@ -17,7 +19,7 @@ def get_trigger_id() -> str:
 def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Dict):
     """Save confirmed mappings for AI training."""
     try:
-        logger.info("🤖 Saving AI training data for %s", filename)
+        logger.info("🤖 Saving AI training data for %s", safe_encode_text(filename))
         training_data = {
             "filename": filename,
             "timestamp": datetime.now().isoformat(),

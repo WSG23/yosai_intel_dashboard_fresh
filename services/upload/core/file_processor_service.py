@@ -1,4 +1,6 @@
 import logging
+
+from unicode_toolkit import safe_encode_text
 from typing import Any, Callable, Dict, List
 
 import pandas as pd
@@ -44,7 +46,11 @@ class FileProcessor:
             if mapping:
                 df = df.rename(columns=mapping)
         except Exception as exc:  # pragma: no cover - best effort
-            logger.error("Failed to load mappings for %s: %s", filename, exc)
+            logger.error(
+                "Failed to load mappings for %s: %s",
+                safe_encode_text(filename),
+                safe_encode_text(exc),
+            )
         self.store.add_file(filename, df)
         return {
             "df": df,

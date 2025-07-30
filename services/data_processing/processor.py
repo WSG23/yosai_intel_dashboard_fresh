@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from unicode_toolkit import safe_encode_text
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterator, Optional, Tuple
@@ -216,7 +217,11 @@ class Processor:
                                 meta["date_range"]["end"], dates.max()
                             )
             except Exception as exc:  # pragma: no cover - best effort
-                logger.error("Error processing %s: %s", filename, exc)
+                logger.error(
+                    "Error processing %s: %s",
+                    safe_encode_text(filename),
+                    safe_encode_text(exc),
+                )
 
         if combined:
             final_df = pd.concat(combined, ignore_index=True)
