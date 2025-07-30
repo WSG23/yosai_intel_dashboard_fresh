@@ -262,7 +262,8 @@ docker-compose \
 
 `start.sh` reads variables from `.env` before launching the server. Ensure the
 file exists or pass the required values via `--env-file` when running the
-container.
+container. If you override the default command in Docker Compose, invoke
+`./start.sh` so the variables are loaded correctly.
 
 web UI on `http://localhost:8080`, pgAdmin on `http://localhost:5050`, and the API gateway on `http://localhost:8081`.
 
@@ -407,6 +408,8 @@ docker-compose -f docker-compose.prod.yml up -d
 The container entrypoint runs `start.sh`, which sources the `.env` file before
 launching Gunicorn. Make sure the file exists or supply one via Docker's
 `--env-file` option.
+When deploying manually or via Kubernetes, execute `start.sh` to ensure
+environment variables from `.env` are available to the app.
 Whenever you modify the code, rebuild the Docker image with `docker-compose build` (or `docker-compose up --build`) so the running container picks up your changes.
 Docker Compose expects the database password and Flask secret key to be
 provided via Docker secrets or environment variables. Create

@@ -27,5 +27,9 @@ EXPOSE 8050
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8050/ || exit 1
 
-# Run application with Gunicorn
-CMD ["gunicorn", "wsgi:server", "--bind", "0.0.0.0:8050"]
+# Copy start script
+COPY start.sh ./start.sh
+RUN chmod +x start.sh
+
+# Run application via start.sh so environment variables from `.env` are loaded
+CMD ["./start.sh"]
