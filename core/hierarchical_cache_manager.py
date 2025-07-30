@@ -17,6 +17,7 @@ class HierarchicalCacheManager(BaseModel):
         db: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
     ) -> None:
+        """Create the cache manager with optional config, DB and logger."""
         super().__init__(config, db, logger)
         self._level1: Dict[str, Any] = {}
         self._level2: Dict[str, Any] = {}

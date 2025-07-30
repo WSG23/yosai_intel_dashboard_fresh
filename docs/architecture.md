@@ -14,6 +14,15 @@ The factory builds the container, which then instantiates services. Services ope
 
 See [React Component Architecture](react_component_architecture.md) for an overview of the front-end structure.
 
+## Folder Structure
+
+The codebase is organized into a few top-level directories:
+
+- `core/` – shared framework utilities and base classes
+- `services/` – business logic and integration services
+- `repositories/` – database access layers
+- `plugins/` – optional extensions discovered at runtime
+
 ## Latest Changes
 
 - **Unified Validation Package** – Input and file validation are exported from

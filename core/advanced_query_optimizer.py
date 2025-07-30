@@ -18,6 +18,7 @@ class AdvancedQueryOptimizer(BaseModel):
         db: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
     ) -> None:
+        """Initialize optimizer with optional config, database and logger."""
         super().__init__(config, db, logger)
         self._rules: List[Callable[[str], str]] = []
 
