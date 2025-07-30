@@ -3,6 +3,10 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from config.dynamic_config import DynamicConfigManager, dynamic_config
+from config.utils import (
+    get_ai_confidence_threshold as _get_ai_confidence_threshold,
+    get_upload_chunk_size as _get_upload_chunk_size,
+)
 from core.protocols import ConfigurationServiceProtocol
 
 
@@ -23,7 +27,7 @@ class DynamicConfigurationService(ConfigurationServiceProtocol):
         return self._cfg.validate_large_file_support()
 
     def get_upload_chunk_size(self) -> int:
-        return self._cfg.get_upload_chunk_size()
+        return _get_upload_chunk_size(self._cfg)
 
     def get_max_parallel_uploads(self) -> int:
         return self._cfg.get_max_parallel_uploads()
@@ -32,7 +36,7 @@ class DynamicConfigurationService(ConfigurationServiceProtocol):
         return self._cfg.get_validator_rules()
 
     def get_ai_confidence_threshold(self) -> int:
-        return self._cfg.get_ai_confidence_threshold()
+        return _get_ai_confidence_threshold(self._cfg)
 
     def get_db_pool_size(self) -> int:
         return self._cfg.get_db_pool_size()

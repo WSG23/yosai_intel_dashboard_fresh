@@ -72,7 +72,7 @@ class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol):
         return self.get_max_upload_size_mb() >= 50
 
     def get_upload_chunk_size(self) -> int:
-        from core.config import get_upload_chunk_size
+        from config.utils import get_upload_chunk_size
 
         return get_upload_chunk_size()
 
@@ -87,7 +87,7 @@ class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol):
         return get_validator_rules()
 
     def get_ai_confidence_threshold(self) -> int:
-        from core.config import get_ai_confidence_threshold
+        from config.utils import get_ai_confidence_threshold
 
         return get_ai_confidence_threshold()
 
