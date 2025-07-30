@@ -11,7 +11,7 @@ from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from services.data_enhancer.processor import DataEnhancerProcessor
 
 
-def register_callbacks(app, ICON_PATHS=None) -> None:
+def register_callbacks(app, container) -> None:
     """Register data enhancer callbacks."""
     callbacks = TrulyUnifiedCallbacks(app)
     _register(callbacks)
@@ -112,4 +112,3 @@ def _register(cb: TrulyUnifiedCallbacks) -> None:
             raise PreventUpdate
         df = pd.read_json(data, orient="split")
         return dcc.send_data_frame(df.to_csv, "enhanced.csv", index=False)
-
