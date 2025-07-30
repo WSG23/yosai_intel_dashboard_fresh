@@ -50,7 +50,10 @@ class DataProcessor:
 
         self._person_id_re = re.compile(self.config.person_id_pattern)
         self._badge_id_re = re.compile(self.config.badge_id_pattern)
+        # Cache expensive lookups
         self._device_lookup_cache: Dict[str, Dict] = {}
+        self._person_id_cache: Dict[str, bool] = {}
+        self._badge_id_cache: Dict[str, bool] = {}
 
     def _normalize_timestamps(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -77,12 +80,17 @@ class DataProcessor:
         df = df.copy()
         person_series = df["person_id"].astype(str)
         badge_series = df["badge_id"].astype(str)
-        df["person_id_valid"] = person_series.str.fullmatch(self._person_id_re).fillna(
-            False
-        )
-        df["badge_id_valid"] = badge_series.str.fullmatch(self._badge_id_re).fillna(
-            False
-        )
+
+        # Cache regex results for unique values to avoid repeated matching
+        for val in person_series.unique():
+            if val not in self._person_id_cache:
+                self._person_id_cache[val] = bool(self._person_id_re.fullmatch(val))
+        for val in badge_series.unique():
+            if val not in self._badge_id_cache:
+                self._badge_id_cache[val] = bool(self._badge_id_re.fullmatch(val))
+
+        df["person_id_valid"] = person_series.map(self._person_id_cache).fillna(False)
+        df["badge_id_valid"] = badge_series.map(self._badge_id_cache).fillna(False)
         df.loc[~df["person_id_valid"], "person_id"] = None
         df.loc[~df["badge_id_valid"], "badge_id"] = None
         invalid_p = int((~df["person_id_valid"]).sum())
@@ -152,18 +160,15 @@ class DataProcessor:
             "denied": 0,
         }
 
-        def to_code(val: object) -> Optional[int]:
-            key = str(val).strip().lower().rstrip(".")
-            code = mapping.get(key)
-            if code is None:
-                self.unified_callbacks.trigger(
-                    CallbackEvent.SYSTEM_WARNING,
-                    "access_result_enum",
-                    {"warning": f"Unknown access_result '{val}'", "value": val},
-                )
-            return code
-
-        df["access_result_code"] = df["access_result"].apply(to_code)
+        normalized = df["access_result"].astype(str).str.strip().str.lower().str.rstrip(".")
+        df["access_result_code"] = normalized.map(mapping)
+        unknown = df[df["access_result_code"].isna()]["access_result"].unique()
+        for val in unknown:
+            self.unified_callbacks.trigger(
+                CallbackEvent.SYSTEM_WARNING,
+                "access_result_enum",
+                {"warning": f"Unknown access_result '{val}'", "value": val},
+            )
         return df
 
     def _hash_event_fingerprint(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -174,11 +179,16 @@ class DataProcessor:
 
         df = df.copy()
 
-        def make_hash(row: pd.Series) -> str:
-            s = f"{row['timestamp']}_{row['person_id']}_{row['door_id']}"
-            return hashlib.sha256(s.encode("utf-8")).hexdigest()
-
-        df["event_fingerprint"] = df.apply(make_hash, axis=1)
+        combined = (
+            df["timestamp"].astype(str)
+            + "_"
+            + df["person_id"].astype(str)
+            + "_"
+            + df["door_id"].astype(str)
+        )
+        df["event_fingerprint"] = combined.map(
+            lambda s: hashlib.sha256(s.encode("utf-8")).hexdigest()
+        )
         return df
 
     def _infer_boolean_flags(self, df: pd.DataFrame) -> pd.DataFrame:
