@@ -1,3 +1,7 @@
+import pytest
+
+# These tests rely on the external 'analytics' package
+pytest.importorskip("analytics")
 from analytics.core import create_manager
 
 
