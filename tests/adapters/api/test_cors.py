@@ -51,18 +51,18 @@ def _create_app(monkeypatch, origins):
 
     from flask import Blueprint
 
-    upload_stub = types.ModuleType("upload_endpoint")
+    upload_stub = types.ModuleType("services.upload_endpoint")
     upload_stub.upload_bp = Blueprint("upload", __name__)
-    device_stub = types.ModuleType("device_endpoint")
+    device_stub = types.ModuleType("services.device_endpoint")
     device_stub.device_bp = Blueprint("device", __name__)
-    mappings_stub = types.ModuleType("mappings_endpoint")
+    mappings_stub = types.ModuleType("services.mappings_endpoint")
     mappings_stub.mappings_bp = Blueprint("mappings", __name__)
     settings_stub = types.ModuleType("settings_endpoint")
     settings_stub.settings_bp = Blueprint("settings", __name__)
     for name, mod in {
-        "upload_endpoint": upload_stub,
-        "device_endpoint": device_stub,
-        "mappings_endpoint": mappings_stub,
+        "services.upload_endpoint": upload_stub,
+        "services.device_endpoint": device_stub,
+        "services.mappings_endpoint": mappings_stub,
         "settings_endpoint": settings_stub,
     }.items():
         monkeypatch.setitem(sys.modules, name, mod)

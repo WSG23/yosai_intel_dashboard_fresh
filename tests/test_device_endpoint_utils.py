@@ -18,7 +18,7 @@ sys.modules.setdefault("config.service_registration", service_reg_stub)
 services_mod = sys.modules.setdefault("services", types.ModuleType("services"))
 services_mod.__path__ = [str((__file__)).rsplit("/tests/", 1)[0] + "/services"]
 
-from device_endpoint import (
+from services.device_endpoint import (
     build_ai_device_mappings,
     build_device_mappings,
     build_user_device_mappings,

@@ -1,7 +1,7 @@
 import pytest
 
-import security_callback_controller
-from security_callback_controller import SecurityEvent
+import services.security_callback_controller as security_callback_controller
+from services.security_callback_controller import SecurityEvent
 
 
 @pytest.fixture

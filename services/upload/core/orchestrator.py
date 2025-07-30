@@ -11,7 +11,7 @@ from services.data_enhancer.mapping_utils import get_ai_column_suggestions
 from services.upload.core.file_processor_service import FileProcessor
 from services.upload.core.file_validator import FileValidator
 from services.upload.core.learning_coordinator import LearningCoordinator
-from services.upload.core.ui_builder import UploadUIBuilder
+from components.upload.ui_builder import UploadUIBuilder
 from services.upload.protocols import (
     DeviceLearningServiceProtocol,
     UploadProcessingServiceProtocol,

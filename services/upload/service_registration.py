@@ -20,7 +20,7 @@ from services.upload.controllers.upload_controller import UnifiedUploadControlle
 from services.upload.core.file_processor_service import FileProcessor
 from services.upload.core.learning_coordinator import LearningCoordinator
 from services.upload.core.processor import UploadProcessingService
-from services.upload.core.ui_builder import UploadUIBuilder
+from components.upload.ui_builder import UploadUIBuilder
 from services.upload.core.validator import ClientSideValidator
 from services.upload.protocols import (
     UploadControllerProtocol,

@@ -11,7 +11,7 @@ from core.container import get_unicode_processor
 from core.protocols import UnicodeProcessorProtocol
 from core.unicode import UnicodeProcessor as UnicodeHelper
 from core.unicode import contains_surrogates
-from security_callback_controller import SecurityEvent, emit_security_event
+from services.security_callback_controller import SecurityEvent, emit_security_event
 
 logger = logging.getLogger(__name__)
 

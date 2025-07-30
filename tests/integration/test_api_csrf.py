@@ -29,7 +29,7 @@ def _create_app(monkeypatch):
         sys.modules, "core.container", types.SimpleNamespace(container=container)
     )
 
-    upload_endpoint = importlib.import_module("upload_endpoint")
+    upload_endpoint = importlib.import_module("services.upload_endpoint")
     monkeypatch.setattr(upload_endpoint, "container", container, raising=False)
 
     adapter = importlib.import_module("api.adapter")

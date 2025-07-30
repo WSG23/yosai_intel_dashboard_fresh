@@ -14,6 +14,8 @@ from .ai import AISuggestionService, analyze_device_name_with_ai
 from .controllers.upload_controller import UnifiedUploadController as UploadController
 from .core.processor import UploadProcessingService
 from .helpers import save_ai_training_data
+from .upload_core import UploadCore
+from .upload_types import ValidationResult, UploadResult
 from .protocols import (
     DeviceLearningServiceProtocol,
     UploadControllerProtocol,
@@ -40,6 +42,9 @@ __all__ = [
     "AISuggestionService",
     "analyze_device_name_with_ai",
     "save_ai_training_data",
+    "UploadCore",
+    "ValidationResult",
+    "UploadResult",
 ]
 
 DOMAIN_NAME = "upload"
