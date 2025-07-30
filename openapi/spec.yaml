@@ -1,226 +1,241 @@
-openapi: 3.0.3
 info:
-  title: "Y\u014Dsai Intel Dashboard API"
-  version: 2.0.0
-  description: |
-    Physical security intelligence and access control API.
-    
-    # Authentication
-    
-    Use Bearer token (JWT) for inter-service communication and require an
-    `X-CSRF-Token` header on state-changing requests.
-    
-    # Versioning
-    
-    API version is included in the URL path (e.g., /v2/events).
-servers:
-  - url: https://api.yosai.com/v2
-    description: Production
-  - url: https://staging-api.yosai.com/v2
-    description: Staging
-  - url: http://localhost:8080/v2
-    description: Development
-components:
-  securitySchemes:
-    jwtAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: Signed JWT present in the Authorization header
-    csrfToken:
-      type: apiKey
-      in: header
-      name: X-CSRF-Token
-      description: Anti-CSRF token required for mutating operations
-  schemas:
-    AccessEvent:
-      type: object
-      required: [person_id, door_id, timestamp]
-      properties:
-        door_id:
-          type: string
-        event_id:
-          type: string
-        person_id:
-          type: string
-        result:
-          type: string
-          enum: [granted, denied, tailgating, forced]
-        timestamp:
-          type: string
-          format: date-time
-    AnalyticsUpdate:
-      type: object
-      description: Generic analytics update broadcast over WebSocket.
-      additionalProperties: true
-    Error:
-      type: object
-      required: [code, message]
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        details:
-          type: object
-          additionalProperties: true
-    EventListResponse:
-      type: object
-      properties:
-        events:
-          type: array
-          items:
-            $ref: '#/components/schemas/AccessEvent'
-    RefreshRequest:
-      type: object
-      required: [refresh_token]
-      properties:
-        refresh_token:
-          type: string
-    AccessTokenResponse:
-      type: object
-      required: [access_token]
-      properties:
-        access_token:
-          type: string
-    Settings:
-      type: object
-      properties:
-        theme:
-          type: string
-          nullable: true
-        itemsPerPage:
-          type: integer
-          nullable: true
-  responses:
-    BadRequest:
-      description: Invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            code: invalid_input
-            message: Invalid request
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            code: not_found
-            message: Item not found
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            code: unauthorized
-            message: Unauthorized
-    ServerError:
-      description: Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            code: internal
-            message: Server error
+  title: Yosai Dashboard API
+  version: 1.0.0
+openapi: 3.0.2
 paths:
-  /events:
-    get:
-      summary: List access events
-      operationId: listAccessEvents
-      tags: [Events]
+  /v1/ai/suggest-devices:
+    options:
+      description: Suggest device mappings
+      parameters: []
       responses:
         '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EventListResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: '#/components/responses/Success'
         '404':
-          $ref: '#/components/responses/NotFound'
-  /v1/token/refresh:
+          $ref: '#/components/responses/File not found'
+        '500':
+          $ref: '#/components/responses/Server Error'
+      tags:
+      - device
     post:
-      summary: Refresh access token
-      tags: [token]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RefreshRequest'
+      description: Suggest device mappings
+      parameters: []
       responses:
         '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AccessTokenResponse'
-        '401':
-          description: Unauthorized
+          $ref: '#/components/responses/Success'
+        '404':
+          $ref: '#/components/responses/File not found'
+        '500':
+          $ref: '#/components/responses/Server Error'
+      tags:
+      - device
+  /v1/mappings/columns:
+    options:
+      description: Save column mappings
+      parameters: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/Invalid input'
+        '500':
+          $ref: '#/components/responses/Server Error'
+      tags:
+      - mappings
+    post:
+      description: Save column mappings
+      parameters: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/Invalid input'
+        '500':
+          $ref: '#/components/responses/Server Error'
+      tags:
+      - mappings
+  /v1/mappings/devices:
+    options:
+      description: Save device mappings
+      parameters: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/Invalid input'
+        '500':
+          $ref: '#/components/responses/Server Error'
+      tags:
+      - mappings
+    post:
+      description: Save device mappings
+      parameters: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/Invalid input'
+        '500':
+          $ref: '#/components/responses/Server Error'
+      tags:
+      - mappings
+  /v1/mappings/save:
+    options:
+      description: Save mappings
+      parameters: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '500':
+          $ref: '#/components/responses/Server Error'
+      tags:
+      - mappings
+    post:
+      description: Save mappings
+      parameters: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '500':
+          $ref: '#/components/responses/Server Error'
+      tags:
+      - mappings
+  /v1/process-enhanced:
+    options:
+      description: Process data with mappings
+      parameters: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '404':
+          $ref: '#/components/responses/Not Found'
+        '500':
+          $ref: '#/components/responses/Server Error'
+      tags:
+      - mappings
+    post:
+      description: Process data with mappings
+      parameters: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '404':
+          $ref: '#/components/responses/Not Found'
+        '500':
+          $ref: '#/components/responses/Server Error'
+      tags:
+      - mappings
   /v1/settings:
     get:
-      summary: Get user settings
-      tags: [settings]
+      description: Get user settings
+      parameters: []
       responses:
         '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Settings'
+          $ref: '#/components/responses/Success'
+      tags:
+      - settings
+    options:
+      description: Update user settings
+      parameters: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '500':
+          $ref: '#/components/responses/Server Error'
+      tags:
+      - settings
     post:
-      summary: Update user settings
-      tags: [settings]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Settings'
+      description: Update user settings
+      parameters: []
       responses:
         '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Settings'
+          $ref: '#/components/responses/Success'
         '500':
-          description: Server Error
+          $ref: '#/components/responses/Server Error'
+      tags:
+      - settings
     put:
-      summary: Update user settings
-      tags: [settings]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Settings'
+      description: Update user settings
+      parameters: []
       responses:
         '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Settings'
+          $ref: '#/components/responses/Success'
         '500':
-          description: Server Error
-security:
-  - jwtAuth: []
-  - csrfToken: []
-tags:
-  - name: Events
-    description: Access control events
-  - name: Analytics
-    description: Analytics and reporting
-  - name: token
-    description: Token operations
-  - name: settings
-    description: User settings management
+          $ref: '#/components/responses/Server Error'
+      tags:
+      - settings
+  /v1/token/refresh:
+    options:
+      description: Refresh access token
+      parameters: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      tags:
+      - token
+    post:
+      description: Refresh access token
+      parameters: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      tags:
+      - token
+  /v1/upload:
+    options:
+      description: Upload a file
+      parameters: []
+      responses:
+        '202':
+          $ref: '#/components/responses/Accepted'
+        '400':
+          $ref: '#/components/responses/Invalid CSRF token'
+        '500':
+          $ref: '#/components/responses/Server Error'
+      tags:
+      - upload
+    post:
+      description: Upload a file
+      parameters: []
+      responses:
+        '202':
+          $ref: '#/components/responses/Accepted'
+        '400':
+          $ref: '#/components/responses/Invalid CSRF token'
+        '500':
+          $ref: '#/components/responses/Server Error'
+      tags:
+      - upload
+  /v1/upload/status/{job_id}:
+    get:
+      parameters:
+      - description: Upload job id
+        in: path
+        name: job_id
+        required: true
+        schema:
+          type: string
+        type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      tags:
+      - upload
+    options:
+      parameters:
+      - description: Upload job id
+        in: path
+        name: job_id
+        required: true
+        schema:
+          type: string
+        type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      tags:
+      - upload
+

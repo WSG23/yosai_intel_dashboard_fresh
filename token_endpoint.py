@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify
+from flask_apispec import doc
 from error_handling import ErrorCategory, ErrorHandler, api_error_response
 from pydantic import BaseModel
 from utils.pydantic_decorators import validate_input, validate_output
