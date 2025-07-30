@@ -4,17 +4,18 @@
 from __future__ import annotations
 
 import logging
-import pandas as pd
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set
 from uuid import uuid4
 
-from core.protocols import DatabaseProtocol
+import pandas as pd
+from yosai_intel_dashboard.models.compliance import ConsentType, DataSensitivityLevel
+
 from core.audit_logger import ComplianceAuditLogger
+from core.protocols import DatabaseProtocol
+from database.secure_exec import execute_query
 from services.compliance.consent_service import ConsentService
 from services.compliance.data_retention_service import DataRetentionService
-from yosai_intel_dashboard.models.compliance import ConsentType, DataSensitivityLevel
-from database.secure_exec import execute_query
 from services.data_processing.file_processor import FileProcessor
 
 logger = logging.getLogger(__name__)
@@ -504,9 +505,9 @@ class ComplianceCSVProcessor:
             df = execute_query(self.db, query_sql)
             user_csv_data = []
 
-            for _, row in df.iterrows():
-                processing_id = row["processing_id"]
-                storage_location = row["storage_location"]
+            for row in df.itertuples(index=False):
+                processing_id = row.processing_id
+                storage_location = row.storage_location
 
                 # Load the CSV data
                 try:
@@ -519,9 +520,9 @@ class ComplianceCSVProcessor:
                         user_csv_data.append(
                             {
                                 "processing_id": processing_id,
-                                "upload_timestamp": row["upload_timestamp"],
+                                "upload_timestamp": row.upload_timestamp,
                                 "user_data": user_data_found.to_dict("records"),
-                                "classification": row["classification"],
+                                "classification": row.classification,
                             }
                         )
 
@@ -581,7 +582,7 @@ def enhance_existing_csv_upload():
 
     # Your existing upload route enhanced:
 
-    from flask import request, jsonify
+    from flask import jsonify, request
     from flask_login import current_user, login_required
 
     @app.route("/api/upload/csv", methods=["POST"])

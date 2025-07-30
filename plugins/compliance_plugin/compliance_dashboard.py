@@ -4,17 +4,17 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Protocol
-from dataclasses import dataclass
 
-from core.protocols import DatabaseProtocol
 from core.audit_logger import ComplianceAuditLogger
+from core.protocols import DatabaseProtocol
+from database.secure_exec import execute_query
 from services.compliance.consent_service import ConsentService
-from services.compliance.dsar_service import DSARService
 from services.compliance.data_retention_service import DataRetentionService
 from services.compliance.dpia_service import DPIAService
-from database.secure_exec import execute_query
+from services.compliance.dsar_service import DSARService
 
 logger = logging.getLogger(__name__)
 
@@ -621,16 +621,16 @@ class ComplianceDashboard:
 
             df = execute_query(self.db, overdue_sql)
 
-            for _, row in df.iterrows():
-                days_overdue = int(row["days_overdue"])
+            for row in df.itertuples(index=False):
+                days_overdue = int(row.days_overdue)
                 severity = "critical" if days_overdue > 5 else "warning"
 
                 alerts.append(
                     ComplianceAlert(
-                        alert_id=f"overdue_dsar_{row['request_id']}",
+                        alert_id=f"overdue_dsar_{row.request_id}",
                         severity=severity,
-                        title=f"Overdue DSAR Request: {row['request_id']}",
-                        description=f"DSAR request of type '{row['request_type']}' is {days_overdue} days overdue",
+                        title=f"Overdue DSAR Request: {row.request_id}",
+                        description=f"DSAR request of type '{row.request_type}' is {days_overdue} days overdue",
                         category="dsar",
                         created_at=datetime.now(timezone.utc),
                         action_required=True,
