@@ -41,7 +41,11 @@ from services.analytics_microservice.unicode_middleware import (
     UnicodeSanitizationMiddleware,
 )
 from services.common import async_db
-from services.common.async_db import close_pool, create_pool, get_pool
+from services.common.async_db import close_pool, create_pool
+from services.analytics_microservice.analytics_service import (
+    AnalyticsService,
+    get_analytics_service,
+)
 from services.common.secrets import get_secret
 from shared.errors.types import ErrorCode
 from yosai_framework import ServiceBuilder
@@ -104,10 +108,10 @@ def verify_token(authorization: str = Header("")) -> dict:
     return verify_jwt_token(token)
 
 
-def preload_active_models() -> None:
+def preload_active_models(service: AnalyticsService) -> None:
     """Load active models from the registry into memory."""
-    app.state.models = {}
-    registry: ModelRegistry = app.state.model_registry
+    service.models = {}
+    registry: ModelRegistry = service.model_registry
     try:
         records = registry.list_models()
     except Exception:  # pragma: no cover - registry unavailable
@@ -117,7 +121,7 @@ def preload_active_models() -> None:
         record = registry.get_model(name, active_only=True)
         if record is None:
             continue
-        local_dir = app.state.model_dir / name / record.version
+        local_dir = service.model_dir / name / record.version
         local_dir.mkdir(parents=True, exist_ok=True)
         filename = os.path.basename(record.storage_uri)
         local_path = local_dir / filename
@@ -128,7 +132,7 @@ def preload_active_models() -> None:
                 continue
         try:
             model_obj = joblib.load(local_path)
-            app.state.models[name] = model_obj
+            service.models[name] = model_obj
         except Exception:  # pragma: no cover - invalid model
             continue
 
@@ -146,25 +150,38 @@ async def _startup() -> None:
     # Ensure the JWT secret can be retrieved on startup
     _jwt_secret()
 
+    if os.getenv("JWT_SECRET", "change-me") == "change-me":
+        raise RuntimeError("invalid JWT secret")
+
     cfg = get_database_config()
-    await create_pool(
+    pool = await create_pool(
         cfg.get_connection_string(),
         min_size=cfg.initial_pool_size,
         max_size=cfg.max_pool_size,
         timeout=cfg.connection_timeout,
     )
 
-    svc_cfg = load_service_config()
-    app.state.redis = aioredis.from_url(svc_cfg.redis_url, decode_responses=True)
-    app.state.cache_ttl = svc_cfg.cache_ttl
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    redis = aioredis.from_url(redis_url, decode_responses=True)
+    cache_ttl = int(os.getenv("CACHE_TTL", "300"))
 
-    app.state.model_dir = svc_cfg.model_dir
-    app.state.model_dir.mkdir(parents=True, exist_ok=True)
+    model_dir = Path(os.environ.get("MODEL_DIR", "model_store"))
+    model_dir.mkdir(parents=True, exist_ok=True)
 
-    app.state.model_registry = ModelRegistry(
-        svc_cfg.registry_db, svc_cfg.registry_bucket, mlflow_uri=svc_cfg.mlflow_uri
+    db_url = os.getenv("MODEL_REGISTRY_DB", "sqlite:///model_registry.db")
+    bucket = os.getenv("MODEL_REGISTRY_BUCKET", "local-models")
+    mlflow_uri = os.getenv("MLFLOW_URI")
+    registry = ModelRegistry(db_url, bucket, mlflow_uri=mlflow_uri)
+    service_obj = AnalyticsService(
+        redis,
+        pool,
+        registry,
+        cache_ttl=cache_ttl,
+        model_dir=model_dir,
     )
-    preload_active_models()
+    service_obj.preload_active_models()
+    app.state.analytics_service = service_obj
+
     app.state.ready = True
     app.state.startup_complete = True
 
@@ -205,38 +222,42 @@ async def health_ready() -> dict[str, str]:
 
 @app.on_event("shutdown")
 async def _shutdown() -> None:
-    await close_pool()
-    redis = getattr(app.state, "redis", None)
-    if redis is not None:
-        await redis.close()
+    svc: AnalyticsService | None = getattr(app.state, "analytics_service", None)
+    if svc is not None:
+        await svc.close()
     service.stop()
 
 
 @app.get("/api/v1/analytics/dashboard-summary")
 @rate_limit_decorator()
-async def dashboard_summary(_: None = Depends(verify_token)):
+async def dashboard_summary(
+    _: None = Depends(verify_token),
+    svc: AnalyticsService = Depends(get_analytics_service),
+):
     cache_key = "dashboard_summary"
-    cached = await app.state.redis.get(cache_key)
+    cached = await svc.redis.get(cache_key)
     if cached:
         return json.loads(cached)
-    pool = await get_pool()
-    result = await async_queries.fetch_dashboard_summary(pool)
-    await app.state.redis.set(cache_key, json.dumps(result), ex=app.state.cache_ttl)
+    result = await async_queries.fetch_dashboard_summary(svc.pool)
+    await svc.redis.set(cache_key, json.dumps(result), ex=svc.cache_ttl)
     return result
 
 
 @app.get("/api/v1/analytics/access-patterns")
 @rate_limit_decorator()
-async def access_patterns(days: int = Query(7), _: None = Depends(verify_token)):
+async def access_patterns(
+    days: int = Query(7),
+    _: None = Depends(verify_token),
+    svc: AnalyticsService = Depends(get_analytics_service),
+):
     cache_key = f"access:{days}"
 
-    cached = await app.state.redis.get(cache_key)
+    cached = await svc.redis.get(cache_key)
     if cached:
         return json.loads(cached)
-    pool = await get_pool()
-    result = await async_queries.fetch_access_patterns(pool, days)
+    result = await async_queries.fetch_access_patterns(svc.pool, days)
 
-    await app.state.redis.set(cache_key, json.dumps(result), ex=app.state.cache_ttl)
+    await svc.redis.set(cache_key, json.dumps(result), ex=svc.cache_ttl)
     return result
 
 
@@ -294,24 +315,25 @@ async def register_model(
     version: str = Form(...),
     file: UploadFile = File(...),
     _: None = Depends(verify_token),
+    svc: AnalyticsService = Depends(get_analytics_service),
 ):
-    dest_dir = app.state.model_dir / name / version
+    dest_dir = svc.model_dir / name / version
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_path = dest_dir / file.filename
     contents = await file.read()
     dest_path.write_bytes(contents)
     try:
-        record = app.state.model_registry.register_model(
+        record = svc.model_registry.register_model(
             name,
             str(dest_path),
             {},
             "",
             version=version,
         )
-        app.state.model_registry.set_active_version(name, record.version)
+        svc.model_registry.set_active_version(name, record.version)
         try:
             model_obj = joblib.load(dest_path)
-            app.state.models[name] = model_obj
+            svc.models[name] = model_obj
         except Exception:  # pragma: no cover - invalid model file
             pass
     except Exception as exc:  # pragma: no cover - registry failure
@@ -321,8 +343,12 @@ async def register_model(
 
 @models_router.get("/{name}")
 @rate_limit_decorator()
-async def list_versions(name: str, _: None = Depends(verify_token)):
-    records = app.state.model_registry.list_models(name)
+async def list_versions(
+    name: str,
+    _: None = Depends(verify_token),
+    svc: AnalyticsService = Depends(get_analytics_service),
+):
+    records = svc.model_registry.list_models(name)
     if not records:
         raise HTTPException(status_code=404, detail="model not found")
     return {
@@ -334,17 +360,20 @@ async def list_versions(name: str, _: None = Depends(verify_token)):
 
 @models_router.post("/{name}/rollback")
 async def rollback(
-    name: str, version: str = Form(...), _: None = Depends(verify_token)
+    name: str,
+    version: str = Form(...),
+    _: None = Depends(verify_token),
+    svc: AnalyticsService = Depends(get_analytics_service),
 ):
-    records = app.state.model_registry.list_models(name)
+    records = svc.model_registry.list_models(name)
     if not records or version not in [r.version for r in records]:
         raise HTTPException(status_code=404, detail="version not found")
     try:
-        app.state.model_registry.set_active_version(name, version)
+        svc.model_registry.set_active_version(name, version)
     except Exception as exc:  # pragma: no cover - registry failure
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    preload_active_models()
+    preload_active_models(svc)
     return {"name": name, "active_version": version}
 
 
@@ -354,26 +383,27 @@ async def predict(
     name: str,
     req: PredictRequest,
     _: None = Depends(verify_token),
+    svc: AnalyticsService = Depends(get_analytics_service),
 ):
-    record = app.state.model_registry.get_model(name, active_only=True)
+    record = svc.model_registry.get_model(name, active_only=True)
     if record is None:
         raise HTTPException(status_code=404, detail="no active version")
-    local_dir = app.state.model_dir / name / record.version
+    local_dir = svc.model_dir / name / record.version
     local_dir.mkdir(parents=True, exist_ok=True)
     local_path = local_dir / os.path.basename(record.storage_uri)
     if not local_path.exists():
         try:
-            app.state.model_registry.download_artifact(
+            svc.model_registry.download_artifact(
                 record.storage_uri, str(local_path)
             )
         except Exception as exc:
             raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    model_obj = app.state.models.get(name)
+    model_obj = svc.models.get(name)
     if model_obj is None:
         try:
             model_obj = joblib.load(local_path)
-            app.state.models[name] = model_obj
+            svc.models[name] = model_obj
         except Exception as exc:
             raise HTTPException(status_code=500, detail=str(exc)) from exc
     try:
@@ -382,7 +412,7 @@ async def predict(
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     try:
         df = pd.DataFrame(req.data)
-        app.state.model_registry.log_features(name, df)
+        svc.model_registry.log_features(name, df)
     except Exception:
         pass
     return {"predictions": result}
@@ -390,8 +420,12 @@ async def predict(
 
 @models_router.get("/{name}/drift")
 @rate_limit_decorator()
-async def get_drift(name: str, _: None = Depends(verify_token)):
-    metrics = app.state.model_registry.get_drift_metrics(name)
+async def get_drift(
+    name: str,
+    _: None = Depends(verify_token),
+    svc: AnalyticsService = Depends(get_analytics_service),
+):
+    metrics = svc.model_registry.get_drift_metrics(name)
     if not metrics:
         raise HTTPException(status_code=404, detail="no drift data")
     return metrics
