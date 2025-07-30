@@ -88,15 +88,13 @@ def apply_policies(conn: Connection, table: str = "access_events") -> None:
     )
     conn.execute(
         text(
-            f"SELECT add_compression_policy('{table}', INTERVAL '{hot}', "
-            "if_not_exists => TRUE)"
-        )
+            "SELECT add_compression_policy(:table, INTERVAL :hot, if_not_exists => TRUE)"
+        ).bindparams(table=table, hot=hot)
     )
     conn.execute(
         text(
-            f"SELECT add_retention_policy('{table}', INTERVAL '{retention}', "
-            "if_not_exists => TRUE)"
-        )
+            "SELECT add_retention_policy(:table, INTERVAL :retention, if_not_exists => TRUE)"
+        ).bindparams(table=table, retention=retention)
     )
 
 
