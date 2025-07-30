@@ -14,6 +14,10 @@ from core.callback_events import CallbackEvent
 
 callbacks = TrulyUnifiedCallbacks(app)
 
+``callbacks`` should be created once during application startup and
+shared with all modules and plugins for registration. Avoid instantiating
+``TrulyUnifiedCallbacks`` in individual modules.
+
 @callbacks.callback(Output('output', 'children'), Input('btn', 'n_clicks'))
 def handle_click(n):
     return f"Clicked {n} times"
