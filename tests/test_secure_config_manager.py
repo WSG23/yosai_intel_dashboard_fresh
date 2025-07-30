@@ -1,3 +1,4 @@
+import os
 import types
 
 import pytest
@@ -10,7 +11,8 @@ from core.exceptions import ConfigurationError
 def test_vault_secret_resolution(monkeypatch, tmp_path):
     key = Fernet.generate_key()
     f = Fernet(key)
-    encrypted = f.encrypt(b"super-secret").decode()
+    secret = os.urandom(16).hex()
+    encrypted = f.encrypt(secret.encode()).decode()
 
     class DummyKV:
         def read_secret_version(self, path):
@@ -42,8 +44,8 @@ security:
 
     mgr = SecureConfigManager()
 
-    assert mgr.get_database_config().password == "super-secret"
-    assert mgr.get_security_config().secret_key == "super-secret"
+    assert mgr.get_database_config().password == secret
+    assert mgr.get_security_config().secret_key == secret
 
 
 def test_missing_vault_credentials(monkeypatch, tmp_path):
@@ -95,13 +97,14 @@ database:
 
 
 def test_aws_secret_resolution(monkeypatch, tmp_path):
+    aws_secret = os.urandom(16).hex()
     class DummyAWS:
         def __init__(self, region_name=None):  # noqa: D401 - stub
             pass
 
         def get_secret_value(self, SecretId):
             assert SecretId == "prod/db_password"
-            return {"SecretString": "aws-secret"}
+            return {"SecretString": aws_secret}
 
     monkeypatch.setattr(
         "config.secure_config_manager.boto3.client", lambda *a, **k: DummyAWS()
@@ -127,4 +130,4 @@ security:
 
     mgr = SecureConfigManager()
 
-    assert mgr.get_database_config().password == "aws-secret"
+    assert mgr.get_database_config().password == aws_secret

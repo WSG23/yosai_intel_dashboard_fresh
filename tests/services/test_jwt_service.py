@@ -1,4 +1,5 @@
 import importlib
+import os
 import pathlib
 import sys
 import time
@@ -9,8 +10,11 @@ import pytest
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
 
 
-def load_jwt_service(monkeypatch, secret: str = "secret"):
+def load_jwt_service(monkeypatch, secret: str | None = None):
     """Import ``jwt_service`` with the given secret configured."""
+
+    if secret is None:
+        secret = os.urandom(16).hex()
 
     services_mod = sys.modules.get("services")
     if services_mod is None:
@@ -39,7 +43,7 @@ def load_jwt_service(monkeypatch, secret: str = "secret"):
 
 
 def test_token_valid_when_issued(monkeypatch):
-    svc = load_jwt_service(monkeypatch, "dummy-secret")
+    svc = load_jwt_service(monkeypatch, os.urandom(16).hex())
     now = int(time.time())
     monkeypatch.setattr(svc.time, "time", lambda: now)
     token = svc.generate_service_jwt("analytics", expires_in=30)
@@ -48,7 +52,7 @@ def test_token_valid_when_issued(monkeypatch):
 
 
 def test_expired_token_returns_none(monkeypatch):
-    svc = load_jwt_service(monkeypatch, "dummy-secret")
+    svc = load_jwt_service(monkeypatch, os.urandom(16).hex())
     now = int(time.time()) - 100
     monkeypatch.setattr(svc.time, "time", lambda: now)
     token = svc.generate_service_jwt("svc", expires_in=1)
@@ -56,7 +60,7 @@ def test_expired_token_returns_none(monkeypatch):
 
 
 def test_invalid_signature_returns_none(monkeypatch):
-    svc = load_jwt_service(monkeypatch, "secret-one")
+    svc = load_jwt_service(monkeypatch, os.urandom(16).hex())
     now = int(time.time())
     monkeypatch.setattr(svc.time, "time", lambda: now)
     token = svc.generate_service_jwt("svc", expires_in=30)
@@ -67,7 +71,7 @@ def test_invalid_signature_returns_none(monkeypatch):
 
 
 def test_refresh_token_flow(monkeypatch):
-    svc = load_jwt_service(monkeypatch, "secret")
+    svc = load_jwt_service(monkeypatch, os.urandom(16).hex())
     now = int(time.time())
     monkeypatch.setattr(svc.time, "time", lambda: now)
     access, refresh = svc.generate_token_pair(

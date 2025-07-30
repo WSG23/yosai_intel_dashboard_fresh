@@ -190,6 +190,8 @@ from the defaults. For production deployments store these secrets in
 HashiCorp Vault or AWS Secrets Manager as described in
 [docs/secret_management.md](docs/secret_management.md). Vault deployment
 details are provided in [docs/vault_integration.md](docs/vault_integration.md).
+Whenever possible set these values through environment variables or your
+secret management solution rather than hard coding them.
 
 #### Frontend WebSocket URL
 

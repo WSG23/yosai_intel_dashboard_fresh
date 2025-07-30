@@ -1,4 +1,5 @@
 import importlib
+import os
 import sys
 import types
 
@@ -37,7 +38,7 @@ def _create_app(monkeypatch):
 
 @pytest.mark.integration
 def test_csrf_token_and_protected_endpoint(monkeypatch):
-    monkeypatch.setenv("SECRET_KEY", "test-key")
+    monkeypatch.setenv("SECRET_KEY", os.urandom(16).hex())
     app = _create_app(monkeypatch)
     client = TestClient(app)
 

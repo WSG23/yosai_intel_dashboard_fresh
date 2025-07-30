@@ -1,5 +1,6 @@
 import importlib
 import importlib.util
+import os
 import sys
 import types
 from pathlib import Path
@@ -36,12 +37,13 @@ def test_missing_required_sections(monkeypatch, tmp_path):
 
 
 def test_invalid_section_type(monkeypatch, tmp_path):
-    yaml = """
+    secret = os.urandom(16).hex()
+    yaml = f"""
 app:
   title: Test
 database: []
 security:
-  secret_key: abc
+  secret_key: {secret}
 """
     data = importlib.import_module("yaml").safe_load(yaml)
     with pytest.raises(ConfigurationError):
@@ -49,14 +51,15 @@ security:
 
 
 def test_schema_validation(monkeypatch, tmp_path):
-    yaml = """
+    secret = os.urandom(16).hex()
+    yaml = f"""
 app:
   title: Test
   port: "oops"
 database:
   name: test.db
 security:
-  secret_key: xyz
+  secret_key: {secret}
 """
     data = importlib.import_module("yaml").safe_load(yaml)
     with pytest.raises(ConfigurationError):
@@ -69,13 +72,14 @@ def test_non_mapping_input():
 
 
 def test_valid_config(monkeypatch, tmp_path):
-    yaml_text = """
+    secret = os.urandom(16).hex()
+    yaml_text = f"""
 app:
   title: Test
 database:
   name: test.db
 security:
-  secret_key: xyz
+  secret_key: {secret}
 """
     config_data = importlib.import_module("yaml").safe_load(yaml_text)
     cfg = ConfigValidator.validate(config_data)

@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import pathlib
 import sys
 import time
@@ -68,23 +69,27 @@ def load_app():
 @pytest.fixture()
 def app_fixture(monkeypatch):
     class DummyVault:
+        def __init__(self):
+            self.secret = os.urandom(16).hex()
+
         def get_secret(self, path, field=None):
-            return "secret"
+            return self.secret
 
         def invalidate(self, key=None):
             pass
 
     common_stub = types.ModuleType("services.common")
     secrets_stub = types.ModuleType("services.common.secrets")
-    secrets_stub._init_client = lambda: DummyVault()
-    secrets_stub.get_secret = lambda key: "secret"
+    vault = DummyVault()
+    secrets_stub._init_client = lambda: vault
+    secrets_stub.get_secret = lambda key: vault.secret
     secrets_stub.invalidate_secret = lambda key=None: None
     common_stub.secrets = secrets_stub
     monkeypatch.setitem(sys.modules, "services.common", common_stub)
     monkeypatch.setitem(sys.modules, "services.common.secrets", secrets_stub)
     module, dummy = load_app()
     client = TestClient(module.app)
-    return client, dummy
+    return client, dummy, vault.secret
 
 
 def _token(secret: str) -> str:
@@ -96,8 +101,8 @@ def _token(secret: str) -> str:
 
 
 def test_dashboard_summary_endpoint(app_fixture):
-    client, dummy = app_fixture
-    token = _token("secret")
+    client, dummy, secret = app_fixture
+    token = _token(secret)
     resp = client.get(
         "/v1/analytics/dashboard-summary",
         headers={"Authorization": f"Bearer {token}"},
@@ -108,8 +113,8 @@ def test_dashboard_summary_endpoint(app_fixture):
 
 
 def test_access_patterns_endpoint(app_fixture):
-    client, dummy = app_fixture
-    token = _token("secret")
+    client, dummy, secret = app_fixture
+    token = _token(secret)
     resp = client.get(
         "/v1/analytics/access-patterns",
         params={"days": 3},

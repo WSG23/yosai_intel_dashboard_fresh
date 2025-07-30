@@ -1,3 +1,4 @@
+import os
 import sys
 import types
 
@@ -11,21 +12,23 @@ def _stub_optional_modules():
 
 
 def test_environment_processor_applied(monkeypatch, tmp_path):
-    cfg_text = """
+    secret = os.urandom(16).hex()
+    cfg_text = f"""
 app:
   host: localhost
   port: 8000
 database:
   host: db.local
 security:
-  secret_key: default
+  secret_key: {secret}
 """
     path = tmp_path / "config.yaml"
     path.write_text(cfg_text, encoding="utf-8")
 
     monkeypatch.setenv("YOSAI_DATABASE_HOST", "db.example.com")
     monkeypatch.setenv("YOSAI_PORT", "9000")
-    monkeypatch.setenv("SECRET_KEY", "envsecret")
+    env_secret = os.urandom(16).hex()
+    monkeypatch.setenv("SECRET_KEY", env_secret)
 
     _stub_optional_modules()
     from config.unified_loader import UnifiedLoader
@@ -35,4 +38,4 @@ security:
 
     assert cfg.database.host == "db.example.com"
     assert cfg.app.port == 9000
-    assert cfg.app.secret_key == "envsecret"
+    assert cfg.app.secret_key == env_secret
