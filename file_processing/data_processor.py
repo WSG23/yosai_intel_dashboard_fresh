@@ -241,36 +241,49 @@ class DataProcessor:
             )
             raise
 
-    # Main processing pipeline
-    def process(self, file_path: str) -> pd.DataFrame:
-        df = self.load_file(file_path)
-
+    def _apply_timestamp_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Normalize timestamps with error handling."""
         try:
-            df = self._normalize_timestamps(df)
+            return self._normalize_timestamps(df)
         except Exception as exc:  # pragma: no cover - log and continue
             self.unified_callbacks.trigger(
                 CallbackEvent.SYSTEM_WARNING,
                 "timestamp_normalization",
                 {"error": str(exc)},
             )
+            return df
 
+    def _apply_id_standardization(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Standardize IDs with error handling."""
         try:
-            df = self._standardize_ids(df)
+            return self._standardize_ids(df)
         except Exception as exc:  # pragma: no cover - log and continue
             self.unified_callbacks.trigger(
                 CallbackEvent.SYSTEM_WARNING,
                 "id_standardization",
                 {"error": str(exc)},
             )
+            return df
 
+    def _apply_device_enrichment(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Enrich device information with error handling."""
         try:
-            df = self._enrich_devices(df)
+            return self._enrich_devices(df)
         except Exception as exc:  # pragma: no cover - log and continue
             self.unified_callbacks.trigger(
                 CallbackEvent.SYSTEM_ERROR,
                 "device_enrichment",
                 {"error": str(exc)},
             )
+            return df
+
+    # Main processing pipeline
+    def process(self, file_path: str) -> pd.DataFrame:
+        df = self.load_file(file_path)
+
+        df = self._apply_timestamp_normalization(df)
+        df = self._apply_id_standardization(df)
+        df = self._apply_device_enrichment(df)
 
         df = self._enum_access_result(df)
         df = self._hash_event_fingerprint(df)

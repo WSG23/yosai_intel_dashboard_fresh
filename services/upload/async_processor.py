@@ -1,4 +1,3 @@
-import asyncio
 from pathlib import Path
 from typing import Any
 
@@ -6,7 +5,12 @@ import pandas as pd
 
 from core.config import get_max_display_rows
 from services.upload.utils.file_parser import UnicodeFileProcessor
-from utils.pandas_readers import read_csv, read_excel, read_json, read_parquet
+from utils.async_pandas_readers import (
+    async_read_csv,
+    async_read_excel,
+    async_read_json,
+    async_read_parquet,
+)
 
 
 class AsyncUploadProcessor:
@@ -16,23 +20,17 @@ class AsyncUploadProcessor:
         self.unicode_processor = UnicodeFileProcessor()
 
     async def read_csv(self, path: str | Path, **kwargs: Any) -> pd.DataFrame:
-        return await asyncio.to_thread(
-            read_csv, path, processor=self.unicode_processor, **kwargs
-        )
+        return await async_read_csv(path, processor=self.unicode_processor, **kwargs)
 
     async def read_excel(self, path: str | Path, **kwargs: Any) -> pd.DataFrame:
-        return await asyncio.to_thread(
-            read_excel, path, processor=self.unicode_processor, **kwargs
-        )
+        return await async_read_excel(path, processor=self.unicode_processor, **kwargs)
 
     async def read_json(self, path: str | Path, **kwargs: Any) -> pd.DataFrame:
-        return await asyncio.to_thread(
-            read_json, path, processor=self.unicode_processor, **kwargs
-        )
+        return await async_read_json(path, processor=self.unicode_processor, **kwargs)
 
     async def read_parquet(self, path: str | Path, **kwargs: Any) -> pd.DataFrame:
-        return await asyncio.to_thread(
-            read_parquet, path, processor=self.unicode_processor, **kwargs
+        return await async_read_parquet(
+            path, processor=self.unicode_processor, **kwargs
         )
 
     async def preview_from_parquet(
