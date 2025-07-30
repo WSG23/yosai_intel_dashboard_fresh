@@ -102,39 +102,15 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
 
 
 def register_analytics_services(container: ServiceContainer) -> None:
-    class SimpleAnalyticsService:
-        def get_dashboard_summary(self, time_range: str = "30d") -> Dict[str, Any]:
-            return {"status": "stub", "message": "Analytics not configured"}
+    """Register analytics components and service."""
 
-        def analyze_access_patterns(
-            self, days: int, user_id: str | None = None
-        ) -> Dict[str, Any]:
-            return {"status": "stub"}
-
-        def detect_anomalies(self, data, sensitivity: float = 0.5):
-            return []
-
-        def generate_report(
-            self, report_type: str, params: Dict[str, Any]
-        ) -> Dict[str, Any]:
-            return {"status": "stub"}
-
-        def get_user_activity_summary(
-            self, user_id: str, days: int = 30
-        ) -> Dict[str, Any]:
-            return {"status": "stub"}
-
-        def get_facility_statistics(
-            self, facility_id: str | None = None
-        ) -> Dict[str, Any]:
-            return {"status": "stub"}
-
-        def health_check(self) -> Dict[str, Any]:
-            return {"status": "healthy", "service": "analytics_stub"}
+    from core.protocols import AnalyticsServiceProtocol
+    from services.analytics_service import create_analytics_service
 
     container.register_singleton(
         "analytics_service",
-        SimpleAnalyticsService(),
+        create_analytics_service(),
+        protocol=AnalyticsServiceProtocol,
     )
 
 
