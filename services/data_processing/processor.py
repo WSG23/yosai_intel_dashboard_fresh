@@ -11,6 +11,7 @@ import pandas as pd
 from config.constants import DEFAULT_CHUNK_SIZE
 from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
+from unicode_toolkit import safe_encode_text
 from monitoring.data_quality_monitor import (
     DataQualityMetrics,
     get_data_quality_monitor,
@@ -138,7 +139,11 @@ class Processor:
                             "device_mappings": {},
                         }
                 except Exception as exc:  # pragma: no cover - best effort
-                    logger.error("Error loading mapping for %s: %s", fname, exc)
+                    logger.error(
+                        "Error loading mapping for %s: %s",
+                        safe_encode_text(fname),
+                        exc,
+                    )
 
             return data
         except Exception as exc:  # pragma: no cover - best effort
@@ -156,7 +161,11 @@ class Processor:
 
             logger.info("Found %d uploaded files", len(data))
             for name, df in data.items():
-                logger.info("%s: %d rows", name, len(df))
+                logger.info(
+                    "%s: %d rows",
+                    safe_encode_text(name),
+                    len(df),
+                )
             return data
         except ImportError:
             logger.error("Could not import uploaded data from file_upload")

@@ -18,6 +18,7 @@ from core.performance import get_performance_monitor
 from core.performance_file_processor import PerformanceFileProcessor
 from core.unicode import UnicodeProcessor as UnicodeHelper
 from core.unicode import safe_format_number, safe_unicode_decode
+from unicode_toolkit import safe_encode_text
 
 from .file_handler import process_file_simple
 
@@ -189,7 +190,11 @@ def process_uploaded_file(
         return {"success": True, "data": df, "filename": filename, "error": None}
 
     except Exception as e:
-        logger.error(f"File processing error for {filename}: {e}")
+        logger.error(
+            "File processing error for %s: %s",
+            safe_encode_text(filename),
+            e,
+        )
         return {"success": False, "error": str(e), "data": None, "filename": filename}
 
 

@@ -7,6 +7,7 @@ import asyncio
 import hashlib
 import json
 import logging
+from unicode_toolkit import safe_encode_text
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -58,7 +59,11 @@ class ConsolidatedLearningService:
             asyncio.run(_cache_manager.clear())
         except Exception:
             pass
-        self.logger.info(f"Saved mapping {fingerprint[:8]} for {filename}")
+        self.logger.info(
+            "Saved mapping %s for %s",
+            fingerprint[:8],
+            safe_encode_text(filename),
+        )
         return fingerprint
 
     def get_learned_mappings(self, df: pd.DataFrame, filename: str) -> Dict[str, Any]:
@@ -67,7 +72,10 @@ class ConsolidatedLearningService:
 
         if fingerprint in self.learned_data:
             learned = self.learned_data[fingerprint]
-            self.logger.info(f"Found exact match for {filename}")
+            self.logger.info(
+                "Found exact match for %s",
+                safe_encode_text(filename),
+            )
             return {
                 "device_mappings": learned["device_mappings"],
                 "column_mappings": learned["column_mappings"],
@@ -78,7 +86,10 @@ class ConsolidatedLearningService:
 
         similar = self._find_similar_mapping(df)
         if similar:
-            self.logger.info(f"Found similar mapping for {filename}")
+            self.logger.info(
+                "Found similar mapping for %s",
+                safe_encode_text(filename),
+            )
             return {
                 "device_mappings": similar["device_mappings"],
                 "column_mappings": similar["column_mappings"],

@@ -11,6 +11,7 @@ import pandas as pd
 
 from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
+from unicode_toolkit import safe_encode_text
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +34,17 @@ class UnlimitedFileProcessor:
             monitor.throttle_if_needed()
             rows += len(chunk)
             check_memory_limit(self.max_memory_mb, logger)
-            logger.debug("Processed %s rows from %s", rows, path.name)
+            logger.debug(
+                "Processed %s rows from %s",
+                rows,
+                safe_encode_text(path.name),
+            )
             yield chunk
-        logger.info("Finished processing %s rows from %s", rows, path.name)
+        logger.info(
+            "Finished processing %s rows from %s",
+            rows,
+            safe_encode_text(path.name),
+        )
 
     def load_csv(self, file_path: str | Path, encoding: str = "utf-8") -> pd.DataFrame:
         """Return the combined dataframe from all chunks."""
@@ -59,14 +68,18 @@ class UnlimitedFileProcessor:
             if expected != processed_rows:
                 logger.warning(
                     "Possible truncation reading %s: expected %s rows, got %s",
-                    file_path,
+                    safe_encode_text(str(file_path)),
                     expected,
                     processed_rows,
                 )
                 return False
             return True
         except Exception as exc:  # pragma: no cover - validation best effort
-            logger.error("Validation failed for %s: %s", file_path, exc)
+            logger.error(
+                "Validation failed for %s: %s",
+                safe_encode_text(str(file_path)),
+                exc,
+            )
             return False
 
 

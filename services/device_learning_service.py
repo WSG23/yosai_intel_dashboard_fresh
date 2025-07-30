@@ -3,6 +3,7 @@
 import hashlib
 import json
 import logging
+from unicode_toolkit import safe_encode_text
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional, Protocol, runtime_checkable
@@ -142,7 +143,9 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
             self.learned_mappings[fingerprint] = learning_data
 
             logger.info(
-                f"✅ Saved {len(device_mappings)} device mappings for {filename}"
+                "✅ Saved %s device mappings for %s",
+                len(device_mappings),
+                safe_encode_text(filename),
             )
             logger.info(f"📁 File: {mapping_file}")
 
@@ -160,12 +163,16 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
         if fingerprint in self.learned_mappings:
             learned_data = self.learned_mappings[fingerprint]
             logger.info(
-                f"🔄 Loaded {len(learned_data.get('mappings', {}))} learned mappings for {filename}"  # noqa: E501
+                "🔄 Loaded %s learned mappings for %s",
+                len(learned_data.get("mappings", {})),
+                safe_encode_text(filename),
             )
             return learned_data.get("mappings", {})
 
         logger.info(
-            f"No learned mappings found for {filename} (fingerprint: {fingerprint})"
+            "No learned mappings found for %s (fingerprint: %s)",
+            safe_encode_text(filename),
+            fingerprint,
         )
         return {}
 
@@ -176,7 +183,7 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
 
         # DETAILED DEBUG
         logger.info("🔍 DEBUG apply_learned_mappings_to_global_store called:")
-        logger.info(f"🔍 DEBUG - filename: {filename}")
+        logger.info("🔍 DEBUG - filename: %s", safe_encode_text(filename))
 
         try:
             from services.ai_mapping_store import ai_mapping_store
@@ -256,7 +263,7 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
     ) -> bool:
         """Save user-confirmed device mappings to database"""
         logger.info("🔍 DEBUG save_user_device_mappings called:")
-        logger.info(f"🔍 DEBUG - filename: {filename}")
+        logger.info("🔍 DEBUG - filename: %s", safe_encode_text(filename))
         logger.info(f"🔍 DEBUG - user_mappings type: {type(user_mappings)}")
         logger.info(
             f"🔍 DEBUG - user_mappings length: {len(user_mappings) if user_mappings else 'None'}"  # noqa: E501
@@ -288,7 +295,9 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
             self._persist_learned_mappings()
 
             logger.info(
-                f"✅ Saved user device mappings for {filename}: {len(user_mappings)} devices"  # noqa: E501
+                "✅ Saved user device mappings for %s: %s devices",
+                safe_encode_text(filename),
+                len(user_mappings),
             )
             return True
 
@@ -310,7 +319,10 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
                 ):
                     return data.get("device_mappings") or data.get("mappings", {})
 
-            logger.info(f"No user device mappings found for {filename}")
+            logger.info(
+                "No user device mappings found for %s",
+                safe_encode_text(filename),
+            )
             return {}
 
         except Exception as e:
