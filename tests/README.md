@@ -7,6 +7,9 @@ all helper modules can be imported. Use one of the commands below:
 pip install -r requirements-test.txt
 ```
 
+This installs mandatory dependencies such as `PyYAML`, `psutil` and `pandas`
+used by `tests/conftest.py`.
+
 Or run the helper script:
 
 ```bash
