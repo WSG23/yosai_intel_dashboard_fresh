@@ -59,8 +59,11 @@ class ExamplePlugin(CallbackPluginProtocol):
         """Example callback using the registered service."""
         svc: GreetingService = container.get("greeting_service")
 
-        @manager.app.callback(
-            Output("greet-output", "children"), Input("name-input", "value")
+        @manager.unified_callback(
+            Output("greet-output", "children"),
+            Input("name-input", "value"),
+            callback_id="example_greet",
+            component_name="example_plugin",
         )
         def _greet(name: str | None) -> str:
             if not name:

@@ -73,7 +73,12 @@ You can change the search location by passing a different package name to `Plugi
        def register_callbacks(self, manager, container) -> bool:
            svc: GreetingService = container.get("greeting_service")
 
-           @manager.app.callback(Output("greet-output", "children"), Input("name-input", "value"))
+           @manager.unified_callback(
+               Output("greet-output", "children"),
+               Input("name-input", "value"),
+               callback_id="example_greet",
+               component_name="example_plugin",
+           )
            def _greet(name):
                if not name:
                    raise PreventUpdate
