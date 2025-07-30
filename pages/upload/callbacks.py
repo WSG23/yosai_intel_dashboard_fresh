@@ -5,7 +5,7 @@ from __future__ import annotations
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 
-def register_callbacks(app, ICON_PATHS) -> None:
+def register_callbacks(app, container) -> None:
     """Register upload callbacks using the provided Dash *app*."""
     callbacks = TrulyUnifiedCallbacks(app)
     callbacks.register_upload_callbacks()
