@@ -1,4 +1,5 @@
-"""Simple RabbitMQ client for publishing tasks."""
+"""Minimal RabbitMQ publishing client."""
+
 
 from __future__ import annotations
 
@@ -13,6 +14,7 @@ class RabbitMQClient:
     """Lightweight publisher for RabbitMQ queues."""
 
     def __init__(self, url: str) -> None:
+        """Create a new client using the connection ``url``."""
         self._params = pika.URLParameters(url)
         self._connection = pika.BlockingConnection(self._params)
         self._channel = self._connection.channel()
@@ -20,6 +22,7 @@ class RabbitMQClient:
     def declare_queue(
         self,
         name: str,
+        """Declare a durable queue, optionally with DLQ and priority."""
         *,
         dead_letter: str | None = None,
         max_priority: int | None = None,
@@ -37,6 +40,7 @@ class RabbitMQClient:
         queue: str,
         task_type: str,
         payload: Any,
+        """Publish a task message and return its generated id."""
         *,
         priority: int = 0,
         delay_ms: int = 0,
@@ -58,6 +62,7 @@ class RabbitMQClient:
         return task["id"]
 
     def close(self) -> None:
+        """Close the underlying connection."""
         self._connection.close()
 
 

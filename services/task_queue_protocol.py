@@ -1,3 +1,5 @@
+"""Protocol specification for asynchronous task queues."""
+
 from typing import Any, Awaitable, Callable, Dict, Protocol, runtime_checkable
 
 

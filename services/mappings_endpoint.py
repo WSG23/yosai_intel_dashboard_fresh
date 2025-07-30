@@ -1,3 +1,5 @@
+"""Endpoints for saving and applying file mappings."""
+
 from flask import Blueprint, jsonify, request
 from flask_apispec import doc
 from pydantic import BaseModel

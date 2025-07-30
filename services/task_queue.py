@@ -1,3 +1,5 @@
+"""Simple thread-based asynchronous task queue implementation."""
+
 import asyncio
 import inspect
 import threading
@@ -24,6 +26,7 @@ class TaskQueue(TaskQueueProtocol):
     def create_task(
         self,
         func: Callable[[Callable[[int], None]], Awaitable[Any]] | Awaitable[Any],
+        """Schedule an async task and return its identifier."""
     ) -> str:
         task_id = str(uuid.uuid4())
         ctx = ot_context.get_current()
@@ -58,6 +61,7 @@ class TaskQueue(TaskQueueProtocol):
         return task_id
 
     def get_status(self, task_id: str) -> Dict[str, Any]:
+        """Return progress and result for a task."""
         with self._lock:
             status = self._tasks.get(task_id)
             if status is None:
@@ -65,6 +69,7 @@ class TaskQueue(TaskQueueProtocol):
             return dict(status)
 
     def clear_task(self, task_id: str) -> None:
+        """Remove task state once no longer needed."""
         with self._lock:
             self._tasks.pop(task_id, None)
 
@@ -73,16 +78,19 @@ _default_queue = TaskQueue()
 
 
 def create_task(
+    """Add a task to the default queue."""
     func: Callable[[Callable[[int], None]], Awaitable[Any]] | Awaitable[Any],
 ) -> str:
     return _default_queue.create_task(func)
 
 
 def get_status(task_id: str) -> Dict[str, Any]:
+    """Get status for a task from the default queue."""
     return _default_queue.get_status(task_id)
 
 
 def clear_task(task_id: str) -> None:
+    """Remove a task from the default queue."""
     _default_queue.clear_task(task_id)
 
 
