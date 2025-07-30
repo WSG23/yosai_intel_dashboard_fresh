@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from flask import Flask
+from flask import Flask, Blueprint
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from flask_apispec import FlaskApiSpec
@@ -43,6 +43,22 @@ if os.environ.get("SPEC_STUBS"):
 
     builtins.__import__ = stub_import
 
+    # Provide lightweight stand-ins for utility decorators used by endpoints
+    utils_stub = types.ModuleType("utils")
+
+    decorators_stub = types.ModuleType("utils.pydantic_decorators")
+
+    def _passthrough(_model=None):
+        def decorator(func):
+            return func
+        return decorator
+
+    decorators_stub.validate_input = _passthrough
+    decorators_stub.validate_output = _passthrough
+    utils_stub.pydantic_decorators = decorators_stub
+    sys.modules.setdefault("utils", utils_stub)
+    sys.modules.setdefault("utils.pydantic_decorators", decorators_stub)
+
     container_stub = types.SimpleNamespace(has=lambda name: True, get=lambda name, *a, **k: None)
     service_registration_stub = types.ModuleType("config.service_registration")
     service_registration_stub.register_upload_services = lambda container: None
@@ -50,7 +66,26 @@ if os.environ.get("SPEC_STUBS"):
 
     core_container_stub = types.ModuleType("core.container")
     core_container_stub.container = container_stub
+    core_container_stub.Container = object
     sys.modules.setdefault("core.container", core_container_stub)
+
+    security_stub = types.ModuleType("services.security")
+    security_stub.require_role = lambda role: (lambda func: func)
+    security_stub.refresh_access_token = lambda token: "token"
+    sys.modules.setdefault("services.security", security_stub)
+
+    core_exceptions_stub = types.ModuleType("core.exceptions")
+    class SecurityError(Exception):
+        pass
+    class ValidationError(Exception):
+        pass
+    core_exceptions_stub.SecurityError = SecurityError
+    core_exceptions_stub.ValidationError = ValidationError
+    sys.modules.setdefault("core.exceptions", core_exceptions_stub)
+
+    config_stub = types.ModuleType("config")
+    config_stub.get_security_config = lambda: {}
+    sys.modules.setdefault("config", config_stub)
 
     # Map package namespace used in imports to local modules
     yd_mod = types.ModuleType("yosai_intel_dashboard")
@@ -69,9 +104,16 @@ def create_flask_app() -> Flask:
     from mappings_endpoint import mappings_bp
     from api.settings_endpoint import settings_bp
     from token_endpoint import token_bp
-    from plugins.compliance_plugin.compliance_controller import compliance_bp
-    import api.plugin_performance as plugin_perf
-    import api.risk_scoring as risk
+
+    if not os.environ.get("SPEC_STUBS"):
+        from plugins.compliance_plugin.compliance_controller import compliance_bp
+        import api.plugin_performance as plugin_perf
+        import api.risk_scoring as risk
+    else:
+        compliance_bp = Blueprint("compliance", __name__, url_prefix="/v1/complia"
+                                 "nce")
+        plugin_perf = types.SimpleNamespace(app=None, PluginPerformanceAPI=lambda: None)
+        risk = types.SimpleNamespace(calculate_score_endpoint=lambda: ("", 200))
 
     app = Flask(__name__)
     app.register_blueprint(upload_bp)
@@ -82,15 +124,16 @@ def create_flask_app() -> Flask:
     app.register_blueprint(compliance_bp)
 
     # Attach additional routes that expect a global ``app`` variable.
-    plugin_perf.app = app  # type: ignore[attr-defined]
-    risk.app = app  # type: ignore[attr-defined]
-    plugin_perf.PluginPerformanceAPI()  # registers routes on ``app``
-    app.add_url_rule(
-        "/api/v1/risk/score",
-        view_func=risk.calculate_score_endpoint,
-        methods=["POST"],
-    )
-
+    if not os.environ.get("SPEC_STUBS"):
+        plugin_perf.app = app  # type: ignore[attr-defined]
+        risk.app = app  # type: ignore[attr-defined]
+        plugin_perf.PluginPerformanceAPI()  # registers routes on ``app``
+        app.add_url_rule(
+            "/api/v1/risk/score",
+            view_func=risk.calculate_score_endpoint,
+            methods=["POST"],
+        )
+    
     return app
 
 
