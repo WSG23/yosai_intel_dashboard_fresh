@@ -27,4 +27,23 @@ def validate_env(required_keys: Iterable[str]) -> None:
         )
 
 
-__all__ = ["validate_env"]
+# Environment variables required for application startup
+REQUIRED_ENV_VARS: list[str] = [
+    "SECRET_KEY",
+    "DB_PASSWORD",
+    "AUTH0_CLIENT_ID",
+    "AUTH0_CLIENT_SECRET",
+    "AUTH0_DOMAIN",
+    "AUTH0_AUDIENCE",
+    "JWT_SECRET",
+]
+
+
+def validate_required_env() -> list[str]:
+    """Validate and return the list of required environment variables."""
+
+    validate_env(REQUIRED_ENV_VARS)
+    return list(REQUIRED_ENV_VARS)
+
+
+__all__ = ["validate_env", "validate_required_env", "REQUIRED_ENV_VARS"]
