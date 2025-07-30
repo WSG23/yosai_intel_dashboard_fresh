@@ -22,6 +22,7 @@ from services.upload.core.learning_coordinator import LearningCoordinator
 from services.upload.core.processor import UploadProcessingService
 from services.upload.core.ui_builder import UploadUIBuilder
 from services.upload.core.validator import ClientSideValidator
+from services.upload.uploader import Uploader
 from services.upload.protocols import (
     UploadControllerProtocol,
     UploadProcessingServiceProtocol,
@@ -85,6 +86,11 @@ def register_upload_services(container: ServiceContainer) -> None:
     container.register_singleton(
         "ui_builder",
         UploadUIBuilder,
+    )
+
+    container.register_singleton(
+        "uploader",
+        lambda: Uploader(upload_store),
     )
 
     container.register_singleton(

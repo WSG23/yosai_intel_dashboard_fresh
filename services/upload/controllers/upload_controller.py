@@ -9,6 +9,9 @@ import pandas as pd
 from dash import Input, Output, State, dash_table, html
 from dash.exceptions import PreventUpdate
 
+from core.container import container
+from services.upload.uploader import Uploader
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,6 +22,10 @@ class UnifiedUploadController:
         self.callbacks = callbacks
         self._progress = 0
         self._files: List[str] = []
+        try:
+            self.uploader: Uploader = container.get("uploader")
+        except Exception:  # pragma: no cover - fallback when container missing
+            self.uploader = Uploader()
 
     def upload_callbacks(self) -> List[Tuple[Any, Any, Any, Any, str, dict]]:
         def handle_upload(contents, filename):
@@ -33,6 +40,7 @@ class UnifiedUploadController:
                     df = pd.DataFrame(data)
                 else:
                     df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
+                self.uploader.validate_and_store_file(contents, filename)
             except Exception as exc:
                 logger.error("Failed to parse uploaded file: %s", exc)
                 return False, {}

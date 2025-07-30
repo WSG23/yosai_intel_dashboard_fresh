@@ -14,6 +14,7 @@ from .ai import AISuggestionService, analyze_device_name_with_ai
 from .controllers.upload_controller import UnifiedUploadController as UploadController
 from .core.processor import UploadProcessingService
 from .helpers import save_ai_training_data
+from .uploader import Uploader
 from .protocols import (
     DeviceLearningServiceProtocol,
     UploadControllerProtocol,
@@ -35,6 +36,7 @@ __all__ = [
     "SecurityValidator",
     "UploadStorage",
     "UploadController",
+    "Uploader",
     "safe_encode_text",
     "decode_upload_content",
     "AISuggestionService",
