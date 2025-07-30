@@ -27,3 +27,14 @@ class TestServiceIntegration:
         storage = configured_container.get("file_storage")
         security = configured_container.get("security_validator")
         assert analytics and storage and security
+
+    def test_new_service_registrations(self, configured_container):
+        loader = configured_container.get("data_loader")
+        processor = configured_container.get("data_processing_service")
+        reporter = configured_container.get("report_generator")
+        publisher = configured_container.get("publisher")
+
+        assert loader is not None
+        assert processor is not None
+        assert reporter is not None
+        assert publisher is not None

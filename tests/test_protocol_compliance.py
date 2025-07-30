@@ -244,3 +244,26 @@ class TestProtocolCompliance:
             container.get("security_validator", SecurityServiceProtocol),
             SecurityServiceProtocol,
         )
+        from services.analytics.protocols import (
+            DataLoadingProtocol,
+            DataProcessorProtocol,
+            ReportGeneratorProtocol,
+            PublishingProtocol,
+        )
+
+        assert isinstance(
+            container.get("data_loader", DataLoadingProtocol),
+            DataLoadingProtocol,
+        )
+        assert isinstance(
+            container.get("data_processing_service", DataProcessorProtocol),
+            DataProcessorProtocol,
+        )
+        assert isinstance(
+            container.get("report_generator", ReportGeneratorProtocol),
+            ReportGeneratorProtocol,
+        )
+        assert isinstance(
+            container.get("publisher", PublishingProtocol),
+            PublishingProtocol,
+        )

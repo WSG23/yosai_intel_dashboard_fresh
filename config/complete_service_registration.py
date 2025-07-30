@@ -103,10 +103,53 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
 
 def register_analytics_services(container: ServiceContainer) -> None:
     """Register analytics components and service."""
-
     from core.protocols import AnalyticsServiceProtocol
+    from services.analytics.protocols import (
+        DataLoadingProtocol,
+        DataProcessorProtocol,
+        ReportGeneratorProtocol,
+        PublishingProtocol,
+    )
     from services.analytics_service import create_analytics_service
+    from services.data_loading_service import DataLoadingService
+    from services.data_processing_service import DataProcessingService
+    from services.report_generation_service import ReportGenerationService
+    from services.publishing_service import PublishingService
+    from services.controllers.upload_controller import UnifiedUploadController
+    from services.data_processing.processor import Processor
+    from validation.security_validator import SecurityValidator
 
+    container.register_singleton(
+        "data_processing_service",
+        DataProcessingService,
+        protocol=DataProcessorProtocol,
+        factory=lambda c: DataProcessingService(),
+    )
+    container.register_singleton(
+        "upload_controller",
+        UnifiedUploadController,
+    )
+    container.register_singleton(
+        "data_loader",
+        DataLoadingService,
+        protocol=DataLoadingProtocol,
+        factory=lambda c: DataLoadingService(
+            c.get("upload_controller"),
+            Processor(validator=SecurityValidator()),
+        ),
+    )
+    container.register_singleton(
+        "report_generator",
+        ReportGenerationService,
+        protocol=ReportGeneratorProtocol,
+        factory=lambda c: ReportGenerationService(),
+    )
+    container.register_singleton(
+        "publisher",
+        PublishingService,
+        protocol=PublishingProtocol,
+        factory=lambda c: PublishingService(c.get("event_bus")),
+    )
     container.register_singleton(
         "analytics_service",
         create_analytics_service(),

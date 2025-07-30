@@ -37,6 +37,10 @@ else:
         regular_analysis,
     )
     from .summary_report_generator import SummaryReportGenerator
+    from .data_loading_service import DataLoadingService
+    from .data_processing_service import DataProcessingService
+    from .report_generation_service import ReportGenerationService
+    from .publishing_service import PublishingService
     from .summary_reporter import SummaryReporter
 
     logger = logging.getLogger(__name__)
@@ -104,6 +108,10 @@ else:
         "DataLoader",
         "Calculator",
         "Publisher",
+        "DataLoadingService",
+        "DataProcessingService",
+        "ReportGenerationService",
+        "PublishingService",
         "AnalyticsProcessor",
         "MicroservicesArchitect",
         "ServiceBoundary",
