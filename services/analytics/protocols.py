@@ -49,6 +49,53 @@ class AnalyticsServiceProtocol(Protocol):
 
 
 @runtime_checkable
+class DataLoadingProtocol(Protocol):
+    """Load and prepare uploaded data for analytics."""
+
+    @abstractmethod
+    def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
+        """Return uploaded dataframes indexed by filename."""
+        ...
+
+    @abstractmethod
+    def clean_uploaded_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Clean a raw uploaded dataframe."""
+        ...
+
+    @abstractmethod
+    def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Summarize an uploaded dataframe."""
+        ...
+
+    @abstractmethod
+    def analyze_with_chunking(
+        self, df: pd.DataFrame, analysis_types: List[str]
+    ) -> Dict[str, Any]:
+        """Run chunked analysis on a dataframe."""
+        ...
+
+    @abstractmethod
+    def diagnose_data_flow(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Return diagnostics for the data processing flow."""
+        ...
+
+    @abstractmethod
+    def get_real_uploaded_data(self) -> Dict[str, Any]:
+        """Return a summary of all uploaded data."""
+        ...
+
+    @abstractmethod
+    def get_analytics_with_fixed_processor(self) -> Dict[str, Any]:
+        """Return analytics using the fixed sample processor."""
+        ...
+
+    @abstractmethod
+    def load_patterns_dataframe(self, data_source: str | None) -> tuple[pd.DataFrame, int]:
+        """Return dataframe and original row count for pattern analysis."""
+        ...
+
+
+@runtime_checkable
 class DataProcessorProtocol(Protocol):
     """Protocol for data processing operations."""
 
@@ -139,4 +186,14 @@ class MetricsCalculatorProtocol(Protocol):
         self, data: pd.DataFrame, window: str = "7d"
     ) -> Dict[str, Any]:
         """Calculate trend metrics over time window."""
+        ...
+
+
+@runtime_checkable
+class PublishingProtocol(Protocol):
+    """Publish analytics events."""
+
+    @abstractmethod
+    def publish(self, payload: Dict[str, Any], event: str = "analytics_update") -> None:
+        """Publish ``payload`` to the event bus."""
         ...
