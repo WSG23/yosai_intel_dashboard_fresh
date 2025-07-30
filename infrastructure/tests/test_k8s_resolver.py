@@ -4,9 +4,7 @@ from typing import Any, List
 
 import pytest
 
-from yosai_intel_dashboard.src.infrastructure.discovery.k8s_resolver import (
-    K8sResolver,
-)
+from infrastructure.discovery.k8s_resolver import K8sResolver
 
 
 class DummyLoop:
