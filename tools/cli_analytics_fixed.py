@@ -5,6 +5,7 @@ Test Analytics with callback fix applied
 
 import asyncio
 import json
+import logging
 import sys
 from pathlib import Path
 
@@ -123,6 +124,7 @@ async def test_analytics_with_fix():
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     result = asyncio.run(test_analytics_with_fix())
     print("\n" + "=" * 50)
     print("FINAL RESULTS:")
