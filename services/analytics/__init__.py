@@ -2,7 +2,7 @@
 
 from .async_service import AsyncAnalyticsService, PGAnalyticsRepository
 from .calculator import Calculator, create_calculator
-from .data_loader import DataLoader, create_loader
+from .data.loader import DataLoader
 from .generator import AnalyticsGenerator
 from .metrics_calculator import MetricsCalculator
 from .orchestrator import AnalyticsOrchestrator
@@ -38,7 +38,6 @@ __all__ = [
     "prepare_dataframe",
     "MetricsCalculator",
     "DataLoader",
-    "create_loader",
     "Calculator",
     "create_calculator",
     "Publisher",

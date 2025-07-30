@@ -9,7 +9,7 @@ import pandas as pd
 
 from validation.security_validator import SecurityValidator
 
-from .data_loader import DataLoader
+from .data.loader import DataLoader
 from .protocols import DataProcessorProtocol
 from .publisher import Publisher
 
