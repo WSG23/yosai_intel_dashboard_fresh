@@ -19,7 +19,9 @@ from core.security import RateLimiter
 from error_handling.middleware import ErrorHandlingMiddleware
 from services.security import verify_service_jwt
 from error_handling import http_error
+
 from services.streaming.service import StreamingService
+from config.config_loader import load_service_config
 from shared.errors.types import ErrorCode
 from tracing import trace_async_operation
 from yosai_framework.errors import ServiceError
@@ -61,7 +63,7 @@ async def rate_limit(request: Request, call_next):
     return await call_next(request)
 
 
-def verify_token(authorization: str = Header("")) -> None:
+def verify_token(authorization: str = Header("")) -> dict:
     if not authorization.startswith("Bearer "):
         raise http_error(
             ErrorCode.UNAUTHORIZED,
@@ -77,6 +79,7 @@ def verify_token(authorization: str = Header("")) -> None:
         )
 
 
+
 async def _consume_loop() -> None:
     while True:
         for msg in service.consume(timeout=1.0):
@@ -86,6 +89,8 @@ async def _consume_loop() -> None:
 
 @app.on_event("startup")
 async def startup() -> None:
+    # Load environment driven settings
+    load_service_config()
     service.initialize()
     asyncio.create_task(
         trace_async_operation("consume_loop", "ingest", _consume_loop())
