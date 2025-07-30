@@ -160,10 +160,7 @@ class HierarchicalLoader(BaseConfigLoader, ConfigLoaderProtocol):
     # ------------------------------------------------------------------
     def _deep_update(self, base: Dict[str, Any], updates: Dict[str, Any]) -> None:
         for key, value in updates.items():
-            if (
-                isinstance(value, dict)
-                and isinstance(base.get(key), dict)
-            ):
+            if isinstance(value, dict) and isinstance(base.get(key), dict):
                 self._deep_update(base[key], value)
             else:
                 base[key] = value

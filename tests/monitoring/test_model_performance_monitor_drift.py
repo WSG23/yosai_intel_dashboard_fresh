@@ -1,26 +1,35 @@
+import sys
 import types
 from types import SimpleNamespace
-import sys
 
 # minimal config stub to avoid heavy imports
 cfg_mod = types.ModuleType("config")
+
 
 class DatabaseSettings:
     def __init__(self, type: str = "sqlite", **_: object) -> None:
         self.type = type
 
+
 cfg_mod.DatabaseSettings = DatabaseSettings
-cfg_mod.dynamic_config = SimpleNamespace(performance=SimpleNamespace(memory_usage_threshold_mb=1024))
+cfg_mod.dynamic_config = SimpleNamespace(
+    performance=SimpleNamespace(memory_usage_threshold_mb=1024)
+)
 sys.modules["config"] = cfg_mod
 sys.modules["config.dynamic_config"] = cfg_mod
 
 # minimal performance monitor stub
 perf_mod = types.ModuleType("core.performance")
+
+
 class MetricType(SimpleNamespace):
     FILE_PROCESSING = "file"
 
+
 perf_mod.MetricType = MetricType
-perf_mod.get_performance_monitor = lambda: SimpleNamespace(record_metric=lambda *a, **k: None, aggregated_metrics={})
+perf_mod.get_performance_monitor = lambda: SimpleNamespace(
+    record_metric=lambda *a, **k: None, aggregated_metrics={}
+)
 sys.modules["core.performance"] = perf_mod
 
 # extend prometheus metrics stub
@@ -31,7 +40,9 @@ sys.modules["monitoring.prometheus.model_metrics"] = prom_mod
 
 # Stub services.resilience.metrics to avoid heavy deps
 metrics_mod = types.ModuleType("services.resilience.metrics")
-metrics_mod.circuit_breaker_state = SimpleNamespace(labels=lambda *a, **k: SimpleNamespace(inc=lambda *a, **k: None))
+metrics_mod.circuit_breaker_state = SimpleNamespace(
+    labels=lambda *a, **k: SimpleNamespace(inc=lambda *a, **k: None)
+)
 resilience_pkg = types.ModuleType("services.resilience")
 resilience_pkg.metrics = metrics_mod
 sys.modules.setdefault("services", types.ModuleType("services"))

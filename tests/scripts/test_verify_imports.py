@@ -1,5 +1,6 @@
 from pathlib import Path
-from scripts.verify_imports import verify_paths, main
+
+from scripts.verify_imports import main, verify_paths
 
 
 def test_verify_paths_detects_legacy(tmp_path: Path) -> None:

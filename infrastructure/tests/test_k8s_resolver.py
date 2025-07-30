@@ -15,7 +15,7 @@ class DummyLoop:
     async def getaddrinfo(self, *args: Any, **kwargs: Any):
         self.called = True
         return [
-            (socket.AF_INET, socket.SOCK_STREAM, 6, '', (addr, kwargs.get("port", 0)))
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", (addr, kwargs.get("port", 0)))
             for addr in self.addrs
         ]
 
@@ -77,8 +77,10 @@ async def test_resolve_healthy(monkeypatch):
 @pytest.mark.asyncio
 async def test_resolve_fallback_env(monkeypatch):
     loop = DummyLoop([])
+
     async def raise_gai(*args, **kwargs):
         raise socket.gaierror
+
     loop.getaddrinfo = raise_gai
     monkeypatch.setattr(asyncio, "get_running_loop", lambda: loop)
     monkeypatch.setenv("FOO_SERVICE_URL", "http://fallback:1234")

@@ -3,31 +3,31 @@
 import logging
 from typing import Any, Dict, Optional
 
+from .app_config import UploadConfig
 from .base import Config
+from .config_manager import ConfigManager, get_config, reload_config
+from .config_transformer import ConfigTransformer
+from .config_validator import ConfigValidator, ValidationResult
+from .constants import CSSConstants, PerformanceConstants, SecurityConstants
+from .dynamic_config import DynamicConfigManager, dynamic_config
+from .environment_processor import EnvironmentProcessor
+from .hierarchical_loader import HierarchicalLoader
+from .proto_adapter import to_dataclasses
+from .protocols import (
+    ConfigLoaderProtocol,
+    ConfigTransformerProtocol,
+    ConfigValidatorProtocol,
+)
 from .schema import (
     AppSettings,
     ConfigSchema,
     DatabaseSettings,
     SecuritySettings,
 )
-from .app_config import UploadConfig
-from .hierarchical_loader import HierarchicalLoader
-from .unified_loader import UnifiedLoader
-from .proto_adapter import to_dataclasses
-from .config_transformer import ConfigTransformer
-from .config_validator import ConfigValidator, ValidationResult
-from .constants import CSSConstants, PerformanceConstants, SecurityConstants
-from .dynamic_config import DynamicConfigManager, dynamic_config
-from .config_manager import ConfigManager, get_config, reload_config
 from .secure_config_manager import SecureConfigManager
-from .environment_processor import EnvironmentProcessor
 from .secure_db import execute_secure_query
 from .unicode_handler import UnicodeHandler
-from .protocols import (
-    ConfigLoaderProtocol,
-    ConfigTransformerProtocol,
-    ConfigValidatorProtocol,
-)
+from .unified_loader import UnifiedLoader
 
 
 def create_config_manager(
@@ -132,6 +132,7 @@ __all__ = [
     "UnicodeHandler",
 ]
 
+
 def get_monitoring_config() -> Dict[str, Any]:
     """Get monitoring configuration."""
     try:
@@ -141,8 +142,5 @@ def get_monitoring_config() -> Dict[str, Any]:
         return {
             "enabled": True,
             "data_quality_checks": True,
-            "alert_thresholds": {
-                "error_rate": 0.05,
-                "processing_time": 30
-            }
+            "alert_thresholds": {"error_rate": 0.05, "processing_time": 30},
         }

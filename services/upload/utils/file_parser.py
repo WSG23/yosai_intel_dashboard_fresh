@@ -12,19 +12,14 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import chardet
 import pandas as pd
 
+from config.constants import DEFAULT_CHUNK_SIZE
 from config.dynamic_config import dynamic_config
+from core.config import get_max_display_rows
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
-from core.unicode import safe_unicode_decode
-from config.constants import DEFAULT_CHUNK_SIZE
-from core.config import get_max_display_rows
 
 # Core processing imports only - NO UI COMPONENTS
-from core.unicode import sanitize_for_utf8
-
-
-
-from core.unicode import safe_format_number
+from core.unicode import safe_format_number, safe_unicode_decode, sanitize_for_utf8
 
 logger = logging.getLogger(__name__)
 

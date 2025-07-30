@@ -5,9 +5,9 @@ from typing import Any, Dict, List
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
+from core.config import get_max_display_rows
 from core.protocols import ConfigurationProtocol
 from core.unicode import sanitize_for_utf8
-from core.config import get_max_display_rows
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +23,7 @@ def serialize_dataframe_preview(df: pd.DataFrame) -> List[Dict[str, Any]]:
         limited_df = df.head(get_max_display_rows())
 
         preview = limited_df.head(5).to_dict("records")
-        preview = [
-            {k: sanitize_for_utf8(v) for k, v in row.items()}
-            for row in preview
-        ]
+        preview = [{k: sanitize_for_utf8(v) for k, v in row.items()} for row in preview]
         serialized = json.dumps(preview, ensure_ascii=False)
         if len(serialized.encode("utf-8")) >= 5 * 1024 * 1024:
             logger.warning("Serialized preview exceeds 5MB; omitting preview")

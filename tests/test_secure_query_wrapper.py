@@ -1,10 +1,10 @@
 import pytest
 
-from security.secure_query_wrapper import (
-    execute_secure_sql,
-    execute_secure_command,
-)
 from config.database_exceptions import UnicodeEncodingError
+from security.secure_query_wrapper import (
+    execute_secure_command,
+    execute_secure_sql,
+)
 
 
 class DummyConn:

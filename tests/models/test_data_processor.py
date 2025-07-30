@@ -1,11 +1,13 @@
-from pathlib import Path
 import importlib.util
 import sys
 import types
+from pathlib import Path
 
 import pandas as pd
 
-MODULE_PATH = Path(__file__).resolve().parents[2] / "models" / "ml" / "data_processor.py"
+MODULE_PATH = (
+    Path(__file__).resolve().parents[2] / "models" / "ml" / "data_processor.py"
+)
 
 # Provide lightweight stubs to avoid heavy imports during module loading
 constants_mod = types.ModuleType("config.constants")
@@ -33,25 +35,34 @@ KafkaConfig = dp_mod.KafkaConfig
 def _patch_kafka(monkeypatch):
     class DummyProducer:
         instances = []
+
         def __init__(self, conf):
             self.conf = conf
             DummyProducer.instances.append(self)
+
         def flush(self):
             pass
+
     class DummyConsumer:
         instances = []
+
         def __init__(self, conf):
             self.conf = conf
             self.subscribed = None
             DummyConsumer.instances.append(self)
+
         def subscribe(self, topics):
             self.subscribed = topics
+
         def poll(self, timeout):
             return None
+
         def commit(self, asynchronous=True):
             pass
+
         def close(self):
             pass
+
     monkeypatch.setattr(dp_mod, "Producer", DummyProducer)
     monkeypatch.setattr(dp_mod, "Consumer", DummyConsumer)
     return DummyProducer, DummyConsumer
@@ -96,7 +107,7 @@ def test_kafka_init(monkeypatch):
     DummyProducer, DummyConsumer = _patch_kafka(monkeypatch)
     cfg = ProcessorConfig(
         kafka=KafkaConfig(brokers="b:1", topic="t", group="g"),
-        checkpoint_path=Path("chk")
+        checkpoint_path=Path("chk"),
     )
     proc = DataProcessor(cfg)
     assert isinstance(proc._producer, DummyProducer)

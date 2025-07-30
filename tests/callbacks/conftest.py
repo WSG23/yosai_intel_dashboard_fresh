@@ -1,6 +1,8 @@
-import pytest
+import sys
+import types
 from pathlib import Path
-import sys, types
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:

@@ -1,5 +1,5 @@
-from database.intelligent_connection_pool import IntelligentConnectionPool
 from config.database_manager import MockConnection
+from database.intelligent_connection_pool import IntelligentConnectionPool
 
 
 def factory():

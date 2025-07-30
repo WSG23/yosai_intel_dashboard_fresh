@@ -1,14 +1,16 @@
-from typing import Any, List, Tuple
-import pandas as pd
-import dash_bootstrap_components as dbc
-from dash import dash_table, html, Input, Output, State
-from dash.exceptions import PreventUpdate
 import base64
 import io
 import json
 import logging
+from typing import Any, List, Tuple
+
+import dash_bootstrap_components as dbc
+import pandas as pd
+from dash import Input, Output, State, dash_table, html
+from dash.exceptions import PreventUpdate
 
 logger = logging.getLogger(__name__)
+
 
 class UnifiedUploadController:
     """Fixed upload controller with proper callback objects."""
@@ -22,7 +24,7 @@ class UnifiedUploadController:
         def handle_upload(contents, filename):
             if not contents or not filename:
                 raise PreventUpdate
-            
+
             try:
                 content_type, content_string = contents.split(",", 1)
                 decoded = base64.b64decode(content_string)

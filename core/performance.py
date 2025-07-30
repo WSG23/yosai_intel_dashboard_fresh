@@ -11,8 +11,7 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple, Mapping, Iterable
-
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Tuple
 
 import pandas as pd
 import psutil
@@ -267,7 +266,10 @@ class PerformanceMonitor:
         cutoff = datetime.now() - timedelta(hours=hours)
         counts: Dict[str, int] = defaultdict(int)
         for metric in self.metrics:
-            if metric.timestamp >= cutoff and metric.metric_type == MetricType.DEPRECATED_USAGE:
+            if (
+                metric.timestamp >= cutoff
+                and metric.metric_type == MetricType.DEPRECATED_USAGE
+            ):
                 counts[metric.name] += 1
         return dict(counts)
 
@@ -294,11 +296,11 @@ class PerformanceMonitor:
             Metric keys to compare. Defaults to ``("accuracy", "precision", "recall")``.
         """
 
-        for field in fields:
-            if field not in metrics or field not in baseline:
+        for metric_key in fields:
+            if metric_key not in metrics or metric_key not in baseline:
                 continue
-            current = metrics[field]
-            base = baseline[field]
+            current = metrics[metric_key]
+            base = baseline[metric_key]
             diff = abs(current - base) if base == 0 else abs(current - base) / base
             if diff - drift_threshold > 1e-9:
 

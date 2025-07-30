@@ -2,8 +2,8 @@
 """Generate static API documentation portal using Redoc."""
 from __future__ import annotations
 
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 # Mapping of spec file to (slug, title) for the generated docs
 SPECS: dict[str, tuple[str, str]] = {

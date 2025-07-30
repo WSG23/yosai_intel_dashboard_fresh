@@ -7,10 +7,11 @@ import logging
 import struct
 from typing import Any, Dict, Optional, Tuple
 
-from confluent_kafka import Producer
 from fastavro import parse_schema, schemaless_writer
 
+from confluent_kafka import Producer
 from services.common.schema_registry import SchemaRegistryClient
+
 from .metrics import serialization_errors_total
 
 logger = logging.getLogger(__name__)

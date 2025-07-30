@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from config.dynamic_config import dynamic_config
+from core.protocols import FileProcessorProtocol
 from core.service_container import (
     CircularDependencyError,
     DependencyInjectionError,
@@ -27,7 +28,6 @@ from services.upload.protocols import (
     UploadStorageProtocol,
     UploadValidatorProtocol,
 )
-from core.protocols import FileProcessorProtocol
 from services.upload_data_service import UploadDataService
 from utils.upload_store import UploadedDataStore
 from validation.file_validator import FileValidator

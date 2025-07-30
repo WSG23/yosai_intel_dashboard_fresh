@@ -1,13 +1,12 @@
 import json
 import queue
 import time
+from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, Optional
 
 import pytest
-
-from enum import Enum
-from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
 
 
 class AccessResult(Enum):
@@ -47,8 +46,6 @@ class AccessEvent:
             "entry_without_badge": self.entry_without_badge,
             "device_status": self.device_status,
         }
-
-
 
 
 class FakeKafkaProducer:

@@ -3,17 +3,19 @@
 from __future__ import annotations
 
 from core.unicode import (
+    UnicodeProcessor,
     UnicodeSQLProcessor,
-    sanitize_dataframe,
-    safe_encode_text,
     clean_unicode_surrogates,
     clean_unicode_text,
+    safe_encode_text,
+    sanitize_dataframe,
     sanitize_unicode_input,
-    UnicodeProcessor,
 )
-from security.unicode_security_validator import UnicodeSecurityValidator as UnicodeValidator
+from security.unicode_security_validator import (
+    UnicodeSecurityValidator as UnicodeValidator,
+)
 
-from .helpers import decode_upload_content, UnicodeQueryHandler
+from .helpers import UnicodeQueryHandler, decode_upload_content
 
 __all__ = [
     "UnicodeProcessor",

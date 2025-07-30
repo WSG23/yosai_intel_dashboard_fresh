@@ -3,12 +3,15 @@ import logging
 
 import pytest
 
-from yosai_framework import ServiceBuilder, service as svc_mod
+from yosai_framework import ServiceBuilder
+from yosai_framework import service as svc_mod
 from yosai_framework.config import ServiceConfig
 
 
 def _dummy_config(*_):
-    return ServiceConfig(service_name="test", log_level="INFO", metrics_addr="", tracing_endpoint="")
+    return ServiceConfig(
+        service_name="test", log_level="INFO", metrics_addr="", tracing_endpoint=""
+    )
 
 
 def test_structlog_json(monkeypatch, caplog):

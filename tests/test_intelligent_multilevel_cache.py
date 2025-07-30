@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from core.intelligent_multilevel_cache import IntelligentMultiLevelCache
 from config.base import CacheConfig
+from core.intelligent_multilevel_cache import IntelligentMultiLevelCache
 
 
 @pytest.mark.asyncio

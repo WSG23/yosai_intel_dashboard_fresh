@@ -8,11 +8,12 @@ from __future__ import annotations
 import logging
 import re
 import unicodedata
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
+
 from core.exceptions import SecurityError
 
 

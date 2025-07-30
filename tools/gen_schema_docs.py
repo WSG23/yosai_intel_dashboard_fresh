@@ -30,15 +30,15 @@ def type_repr(t: Any) -> str:
 
 def make_markdown(schema: dict[str, Any]) -> str:
     lines: List[str] = [f"# {schema['name']} Schema", ""]
-    if 'namespace' in schema:
+    if "namespace" in schema:
         lines.append(f"Namespace: `{schema['namespace']}`\n")
     lines.append("| Field | Type | Default |")
     lines.append("|-------|------|---------|")
-    for field in schema.get('fields', []):
-        name = field['name']
-        t = type_repr(field['type'])
-        default = field.get('default')
-        if default is None and 'default' not in field:
+    for field in schema.get("fields", []):
+        name = field["name"]
+        t = type_repr(field["type"])
+        default = field.get("default")
+        if default is None and "default" not in field:
             default_repr = ""
         else:
             default_repr = json.dumps(default)

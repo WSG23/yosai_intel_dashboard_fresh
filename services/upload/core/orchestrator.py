@@ -5,9 +5,11 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import pandas as pd
 
+from core.protocols import FileProcessorProtocol
 from services.async_file_processor import AsyncFileProcessor
 from services.data_enhancer.mapping_utils import get_ai_column_suggestions
 from services.upload.core.file_processor_service import FileProcessor
+from services.upload.core.file_validator import FileValidator
 from services.upload.core.learning_coordinator import LearningCoordinator
 from services.upload.core.ui_builder import UploadUIBuilder
 from services.upload.protocols import (
@@ -16,11 +18,6 @@ from services.upload.protocols import (
     UploadStorageProtocol,
     UploadValidatorProtocol,
 )
-from core.protocols import FileProcessorProtocol
-from services.upload.core.file_processor_service import FileProcessor
-from services.upload.core.file_validator import FileValidator
-from services.upload.core.learning_coordinator import LearningCoordinator
-from services.upload.core.ui_builder import UploadUIBuilder
 from services.upload_data_service import UploadDataService, UploadDataServiceProtocol
 from validation.file_validator import FileValidator
 

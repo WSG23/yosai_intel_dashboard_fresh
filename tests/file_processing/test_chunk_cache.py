@@ -1,9 +1,10 @@
-import os
-import json
-import pickle
 import hashlib
-import types
+import json
+import os
+import pickle
 import sys
+import types
+
 import pandas as pd
 import pytest
 

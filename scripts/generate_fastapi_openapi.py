@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate OpenAPI JSON for FastAPI microservices."""
-import json
 import importlib.util
+import json
 import os
 import sys
 import types
@@ -66,6 +66,7 @@ def _stub_analytics_deps() -> None:
     yf_config_stub.load_config = lambda path: DummyCfg()
     sys.modules["yosai_framework.config"] = yf_config_stub
     import yosai_framework.service as yf_service
+
     yf_service.load_config = yf_config_stub.load_config
 
     redis_stub = types.ModuleType("redis")

@@ -1,5 +1,7 @@
 import asyncio
+
 import pytest
+
 
 class Worker:
     def __init__(self):
@@ -17,6 +19,7 @@ class Worker:
         if self._task:
             await self._task
             self._task = None
+
 
 @pytest.mark.asyncio
 async def test_worker_schedule():

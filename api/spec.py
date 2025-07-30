@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from flask import Flask, Blueprint
-from apispec import APISpec
-from apispec.ext.marshmallow import MarshmallowPlugin
-from flask_apispec import FlaskApiSpec
 import os
 import sys
+
+from apispec import APISpec
+from apispec.ext.marshmallow import MarshmallowPlugin
+from flask import Blueprint, Flask
+from flask_apispec import FlaskApiSpec
 
 # Ensure project root is on the path when executed directly
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -13,8 +14,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 # Provide lightweight stubs for heavy dependencies when generating the spec
 if os.environ.get("SPEC_STUBS"):
     import builtins
-    import types
     import importlib
+    import types
 
     real_import = builtins.__import__
 
@@ -22,7 +23,9 @@ if os.environ.get("SPEC_STUBS"):
         try:
             return real_import(name, globals, locals, fromlist, level)
         except ModuleNotFoundError:
-            if name.startswith(("services", "config", "core", "yosai_intel_dashboard", "mapping")):
+            if name.startswith(
+                ("services", "config", "core", "yosai_intel_dashboard", "mapping")
+            ):
                 module = types.ModuleType(name)
                 for attr in fromlist:
                     setattr(module, attr, object())
@@ -31,7 +34,9 @@ if os.environ.get("SPEC_STUBS"):
             raise
         except ImportError as exc:
             # Handle missing attribute imports
-            if name.startswith(("services", "config", "core", "yosai_intel_dashboard", "mapping")):
+            if name.startswith(
+                ("services", "config", "core", "yosai_intel_dashboard", "mapping")
+            ):
                 module = sys.modules.get(name)
                 if module is None:
                     module = types.ModuleType(name)
@@ -51,6 +56,7 @@ if os.environ.get("SPEC_STUBS"):
     def _passthrough(_model=None):
         def decorator(func):
             return func
+
         return decorator
 
     decorators_stub.validate_input = _passthrough
@@ -59,7 +65,9 @@ if os.environ.get("SPEC_STUBS"):
     sys.modules.setdefault("utils", utils_stub)
     sys.modules.setdefault("utils.pydantic_decorators", decorators_stub)
 
-    container_stub = types.SimpleNamespace(has=lambda name: True, get=lambda name, *a, **k: None)
+    container_stub = types.SimpleNamespace(
+        has=lambda name: True, get=lambda name, *a, **k: None
+    )
     service_registration_stub = types.ModuleType("config.service_registration")
     service_registration_stub.register_upload_services = lambda container: None
     sys.modules.setdefault("config.service_registration", service_registration_stub)
@@ -75,10 +83,13 @@ if os.environ.get("SPEC_STUBS"):
     sys.modules.setdefault("services.security", security_stub)
 
     core_exceptions_stub = types.ModuleType("core.exceptions")
+
     class SecurityError(Exception):
         pass
+
     class ValidationError(Exception):
         pass
+
     core_exceptions_stub.SecurityError = SecurityError
     core_exceptions_stub.ValidationError = ValidationError
     sys.modules.setdefault("core.exceptions", core_exceptions_stub)
@@ -96,22 +107,24 @@ if os.environ.get("SPEC_STUBS"):
     sys.modules.setdefault("yosai_intel_dashboard", yd_mod)
 
 
-
 def create_flask_app() -> Flask:
     """Create a Flask app with all blueprints registered."""
-    from upload_endpoint import upload_bp
+    from api.settings_endpoint import settings_bp
+
     from device_endpoint import device_bp
     from mappings_endpoint import mappings_bp
-    from api.settings_endpoint import settings_bp
     from token_endpoint import token_bp
+    from upload_endpoint import upload_bp
 
     if not os.environ.get("SPEC_STUBS"):
-        from plugins.compliance_plugin.compliance_controller import compliance_bp
         import api.plugin_performance as plugin_perf
         import api.risk_scoring as risk
+
+        from plugins.compliance_plugin.compliance_controller import compliance_bp
     else:
-        compliance_bp = Blueprint("compliance", __name__, url_prefix="/v1/complia"
-                                 "nce")
+        compliance_bp = Blueprint(
+            "compliance", __name__, url_prefix="/v1/complia" "nce"
+        )
         plugin_perf = types.SimpleNamespace(app=None, PluginPerformanceAPI=lambda: None)
         risk = types.SimpleNamespace(calculate_score_endpoint=lambda: ("", 200))
 
@@ -133,7 +146,7 @@ def create_flask_app() -> Flask:
             view_func=risk.calculate_score_endpoint,
             methods=["POST"],
         )
-    
+
     return app
 
 

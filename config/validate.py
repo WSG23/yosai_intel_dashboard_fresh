@@ -12,4 +12,5 @@ def validate_required_env(vars: Iterable[str]) -> None:
             "Missing required environment variables: " + ", ".join(missing)
         )
 
+
 __all__ = ["validate_required_env"]

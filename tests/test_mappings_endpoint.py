@@ -1,12 +1,13 @@
+import importlib
+import sys
+import types
+from pathlib import Path
+
 import pandas as pd
 from flask import Flask
 
 import mappings_endpoint
 from core.service_container import ServiceContainer
-import importlib
-from pathlib import Path
-import sys
-import types
 
 # Ensure dash stubs are available for service imports
 if "dash" not in sys.modules:
@@ -36,12 +37,16 @@ if "dask" not in sys.modules:
 class DummyUploadProcessor:
     def __init__(self, store):
         self.store = store
+
+
 from tests.fakes import FakeUploadStore
 
 
 class StoreWithSave(FakeUploadStore):
     def store_data(self, filename: str, df: pd.DataFrame) -> None:
         self.add_file(filename, df)
+
+
 from tests.fakes import FakeDeviceLearningService
 
 
@@ -90,6 +95,7 @@ def _create_app(monkeypatch):
     container.register_singleton("consolidated_learning_service", column_service)
 
     import core.service_container as sc
+
     monkeypatch.setattr(sc, "ServiceContainer", lambda: container)
 
     return app, store, device_service, column_service

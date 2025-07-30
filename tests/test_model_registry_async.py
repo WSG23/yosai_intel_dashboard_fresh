@@ -1,7 +1,7 @@
+import asyncio
 import pathlib
 import sys
 import types
-import asyncio
 
 import pytest
 
@@ -12,16 +12,22 @@ sys.modules["services"] = stub_pkg
 
 from services.common.model_registry import ModelRegistry
 
+
 class DummyResponse:
     status = 200
+
     async def __aenter__(self):
         return self
+
     async def __aexit__(self, exc_type, exc, tb):
         pass
+
     async def json(self):
         return {"version": "v1"}
+
     def raise_for_status(self):
         pass
+
 
 class DummySession:
     closed = False
@@ -31,6 +37,7 @@ class DummySession:
 
     async def close(self):
         self.closed = True
+
 
 def test_get_active_version_async(monkeypatch):
     registry = ModelRegistry("http://example.com")

@@ -1,8 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
-from tests.utils.builders import DataFrameBuilder
 
+from tests.utils.builders import DataFrameBuilder
 from utils.upload_store import UploadedDataStore
 
 

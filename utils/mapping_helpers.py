@@ -1,12 +1,11 @@
 """Utility functions for mapping uploaded data columns."""
 
-from typing import Dict, Optional, Any
-
 import re
-
-from mapping.models import ColumnRules, load_rules
+from typing import Any, Dict, Optional
 
 import pandas as pd
+
+from mapping.models import ColumnRules, load_rules
 
 # Standard column mapping used across the project
 STANDARD_COLUMN_MAPPING: Dict[str, str] = {

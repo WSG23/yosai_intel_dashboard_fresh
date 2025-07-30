@@ -1,8 +1,8 @@
 import importlib.util
 import pathlib
 import sys
-import types
 import time
+import types
 
 import pytest
 from fastapi.testclient import TestClient
@@ -113,7 +113,6 @@ def test_access_patterns_endpoint(app_fixture):
     resp = client.get(
         "/v1/analytics/access-patterns",
         params={"days": 3},
-
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 200

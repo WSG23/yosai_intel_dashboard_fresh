@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 from typing import Iterable
 
-from scripts.find_sql_concat import iter_py_files, scan_file, apply_fixes
+from scripts.find_sql_concat import apply_fixes, iter_py_files, scan_file
 
 
 def main(argv: Iterable[str] | None = None) -> int:
@@ -35,7 +35,9 @@ def main(argv: Iterable[str] | None = None) -> int:
         for file, ln in findings:
             print(f"{file}:{ln}")
         if args.auto_fix:
-            print("Simple patterns were automatically rewritten. Review remaining occurrences manually.")
+            print(
+                "Simple patterns were automatically rewritten. Review remaining occurrences manually."
+            )
         return 1
 
     print("No SQL concatenation patterns detected.")

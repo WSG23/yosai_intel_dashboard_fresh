@@ -1,10 +1,11 @@
-import pandas as pd
 import tempfile
+
+import pandas as pd
 import yaml
 
-from mapping.models import load_model, RuleBasedModel
-from mapping.models.base import MappingModel
 from core.performance import PerformanceMonitor
+from mapping.models import RuleBasedModel, load_model
+from mapping.models.base import MappingModel
 
 
 def test_load_model_from_yaml(tmp_path):
@@ -20,7 +21,6 @@ def test_load_model_from_yaml(tmp_path):
     df = pd.DataFrame({"A": [1]})
     out = model.cached_suggest(df, "f.csv")
     assert out["A"]["field"] == "timestamp"
-
 
 
 def test_model_caching_and_metrics(monkeypatch):

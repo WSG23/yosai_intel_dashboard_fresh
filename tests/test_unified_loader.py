@@ -1,5 +1,5 @@
-import types
 import sys
+import types
 
 
 def _stub_optional_modules():

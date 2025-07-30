@@ -1,8 +1,9 @@
 """Initial schema for analytics database"""
+
 from __future__ import annotations
 
-from alembic import op
 import sqlalchemy as sa  # noqa:F401
+from alembic import op
 
 revision = "analytics_0001"
 down_revision = None

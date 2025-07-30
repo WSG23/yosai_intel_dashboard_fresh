@@ -25,11 +25,8 @@ def optional_import(name: str, fallback: Type | None = None) -> Any:
             module = __import__(name, fromlist=["*"])
         return module
     except Exception as exc:  # pragma: no cover - optional dependency
-        logger.warning(
-            f"Optional dependency '{name}' unavailable: {exc}"
-        )
+        logger.warning(f"Optional dependency '{name}' unavailable: {exc}")
         return fallback
 
 
 __all__ = ["optional_import"]
-

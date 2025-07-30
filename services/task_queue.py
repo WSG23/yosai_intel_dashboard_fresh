@@ -5,6 +5,7 @@ import uuid
 from typing import Any, Awaitable, Callable, Dict, Optional
 
 from opentelemetry import context as ot_context
+
 from tracing import propagate_context, trace_async_operation
 
 from .task_queue_protocol import TaskQueueProtocol

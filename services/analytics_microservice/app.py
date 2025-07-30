@@ -7,7 +7,9 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+import joblib
 import pandas as pd
+import redis.asyncio as aioredis
 from fastapi import (
     APIRouter,
     Depends,
@@ -20,25 +22,20 @@ from fastapi import (
     Request,
     UploadFile,
     status,
-    Query,
 )
-
 from jose import jwt
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
-import joblib
-import redis.asyncio as aioredis
 from yosai_intel_dashboard.models.ml import ModelRegistry
-
-
-from analytics import anomaly_detection, feature_extraction, security_patterns
-from config import get_database_config
-from core.security import RateLimiter
 from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
 )
+
+from analytics import anomaly_detection, feature_extraction, security_patterns
+from config import get_database_config
+from core.security import RateLimiter
 from services.analytics_microservice import async_queries
 from services.analytics_microservice.unicode_middleware import (
     UnicodeSanitizationMiddleware,
@@ -48,7 +45,6 @@ from services.common.async_db import close_pool, create_pool, get_pool
 from services.common.secrets import get_secret
 from shared.errors.types import ErrorCode
 from yosai_framework import ServiceBuilder
-
 from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
 

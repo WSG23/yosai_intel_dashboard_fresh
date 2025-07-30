@@ -2,21 +2,23 @@
 """Generate configuration reference documentation from Pydantic models."""
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import List, Tuple, Type
-import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = PROJECT_ROOT / "config"
 sys.path.insert(0, str(CONFIG_PATH))
 
-from pydantic import BaseModel
-from pydantic.fields import PydanticUndefined
-
 import importlib.util
 import types
 
-spec = importlib.util.spec_from_file_location("config.pydantic_models", CONFIG_PATH / "pydantic_models.py")
+from pydantic import BaseModel
+from pydantic.fields import PydanticUndefined
+
+spec = importlib.util.spec_from_file_location(
+    "config.pydantic_models", CONFIG_PATH / "pydantic_models.py"
+)
 pyd_models = importlib.util.module_from_spec(spec)
 assert spec.loader
 sys.modules.setdefault("config", types.ModuleType("config"))

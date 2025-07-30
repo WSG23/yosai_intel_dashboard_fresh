@@ -1,4 +1,5 @@
-import sys, types
+import sys
+import types
 
 sys.modules.setdefault("flask_caching", types.SimpleNamespace(Cache=object))
 if "dask" not in sys.modules:
@@ -19,8 +20,10 @@ if "dash" not in sys.modules:
     sys.modules.setdefault("dash._callback", types.ModuleType("dash._callback"))
 if "chardet" not in sys.modules:
     sys.modules["chardet"] = types.ModuleType("chardet")
-import pandas as pd
 from unittest.mock import MagicMock
+
+import pandas as pd
+
 from services.upload_data_service import UploadDataService
 from utils.upload_store import UploadedDataStore
 

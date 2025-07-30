@@ -54,4 +54,3 @@ def map_columns(
                 },
             )
     return df_out
-

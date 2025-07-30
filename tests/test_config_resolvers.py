@@ -1,17 +1,18 @@
-from types import SimpleNamespace, ModuleType
 import importlib.util
-from pathlib import Path
 import sys
+from pathlib import Path
+from types import ModuleType, SimpleNamespace
 
 # Create stub core.config module to avoid heavy dependencies
-stub = ModuleType('core.config')
+stub = ModuleType("core.config")
 stub.get_ai_confidence_threshold = lambda: 0.75
 stub.get_max_upload_size_mb = lambda: 10
 stub.get_upload_chunk_size = lambda: 128
-sys.modules['core.config'] = stub
+sys.modules["core.config"] = stub
 
 spec = importlib.util.spec_from_file_location(
-    'utils.config_resolvers', Path(__file__).resolve().parents[1] / 'utils' / 'config_resolvers.py'
+    "utils.config_resolvers",
+    Path(__file__).resolve().parents[1] / "utils" / "config_resolvers.py",
 )
 config_resolvers = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(config_resolvers)

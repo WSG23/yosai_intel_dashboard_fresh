@@ -56,7 +56,9 @@ def _collect_functions(file_path: Path) -> list[tuple[str, FunctionInfo]]:
             signature = (
                 node.name,
                 ast.dump(node.args, include_attributes=False),
-                ast.dump(ast.Module(body=body, type_ignores=[]), include_attributes=False),
+                ast.dump(
+                    ast.Module(body=body, type_ignores=[]), include_attributes=False
+                ),
             )
 
             const_value: object | None = None
@@ -153,7 +155,9 @@ def autofix(dup_map: dict[str, list[FunctionInfo]], root: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Find duplicate functions")
-    parser.add_argument("--autofix", action="store_true", help="Automatically replace simple duplicates")
+    parser.add_argument(
+        "--autofix", action="store_true", help="Automatically replace simple duplicates"
+    )
     args = parser.parse_args()
 
     root = Path(__file__).resolve().parents[1]

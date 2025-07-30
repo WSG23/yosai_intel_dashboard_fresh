@@ -13,14 +13,16 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
-    Enum as SQLEnum,
+)
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import (
     Integer,
     String,
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql import func
 
 Base = declarative_base()

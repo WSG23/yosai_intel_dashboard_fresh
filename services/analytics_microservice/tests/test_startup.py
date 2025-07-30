@@ -1,5 +1,6 @@
 import importlib.util
 import pathlib
+
 import pytest
 
 
@@ -9,6 +10,7 @@ def load_app(jwt_secret: str):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module.load_app(jwt_secret)
+
 
 @pytest.mark.asyncio
 async def test_startup_fails_on_placeholder():

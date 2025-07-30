@@ -11,19 +11,17 @@ from typing import Any, Dict, Iterable, Tuple
 import chardet
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
 from config.constants import DEFAULT_CHUNK_SIZE
-from core.performance import get_performance_monitor
-from core.unicode import safe_format_number
-from core.performance_file_processor import PerformanceFileProcessor
-from core.unicode import safe_unicode_decode
-from core.unicode import UnicodeProcessor as UnicodeHelper
-from .file_handler import process_file_simple
+from config.dynamic_config import dynamic_config
 from core.config import get_max_display_rows
+from core.performance import get_performance_monitor
+from core.performance_file_processor import PerformanceFileProcessor
+from core.unicode import UnicodeProcessor as UnicodeHelper
+from core.unicode import safe_format_number, safe_unicode_decode
+
+from .file_handler import process_file_simple
 
 # Core processing imports only - NO UI COMPONENTS
-
-
 
 
 logger = logging.getLogger(__name__)
@@ -57,14 +55,14 @@ class UnicodeFileProcessor:
         """Load a potentially huge CSV file via :class:`PerformanceFileProcessor`."""
 
         if chunk_size is None:
-            chunk_size = getattr(dynamic_config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE)
+            chunk_size = getattr(
+                dynamic_config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE
+            )
 
         processor = PerformanceFileProcessor(
             chunk_size=chunk_size, max_memory_mb=max_memory_mb
         )
-        return processor.process_large_csv(
-            file_path, encoding=encoding, stream=stream
-        )
+        return processor.process_large_csv(file_path, encoding=encoding, stream=stream)
 
     @staticmethod
     def sanitize_dataframe_unicode(
@@ -81,7 +79,9 @@ class UnicodeFileProcessor:
         """
 
         if chunk_size is None:
-            chunk_size = getattr(dynamic_config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE)
+            chunk_size = getattr(
+                dynamic_config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE
+            )
 
         obj_cols = list(df.select_dtypes(include=["object"]).columns)
 

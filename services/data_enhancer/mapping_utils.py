@@ -1,4 +1,5 @@
 """Utility functions for column matching and AI suggestions."""
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Sequence, Tuple
@@ -97,7 +98,9 @@ def apply_fuzzy_column_matching(
     return renamed, matches
 
 
-def apply_manual_mapping(df: pd.DataFrame, column_mapping: Dict[str, str]) -> pd.DataFrame:
+def apply_manual_mapping(
+    df: pd.DataFrame, column_mapping: Dict[str, str]
+) -> pd.DataFrame:
     """Rename DataFrame columns using an explicit mapping."""
     missing_source_cols = [
         source for source in column_mapping.values() if source not in df.columns
@@ -115,7 +118,9 @@ def get_mapping_suggestions(df: pd.DataFrame) -> Dict[str, Any]:
         "available_columns": list(df.columns),
         "required_columns": required_columns,
         "suggested_mappings": fuzzy_matches,
-        "missing_mappings": [col for col in required_columns if col not in fuzzy_matches],
+        "missing_mappings": [
+            col for col in required_columns if col not in fuzzy_matches
+        ],
     }
 
 
@@ -125,9 +130,15 @@ def get_ai_column_suggestions(columns: Sequence[str]) -> Dict[str, Dict[str, Any
     for column in columns:
         column_lower = column.lower()
         suggestion = {"field": "", "confidence": 0.0}
-        if any(keyword in column_lower for keyword in ["person", "user", "employee", "name"]):
+        if any(
+            keyword in column_lower
+            for keyword in ["person", "user", "employee", "name"]
+        ):
             suggestion = {"field": "person_id", "confidence": 0.7}
-        elif any(keyword in column_lower for keyword in ["door", "location", "device", "room"]):
+        elif any(
+            keyword in column_lower
+            for keyword in ["door", "location", "device", "room"]
+        ):
             suggestion = {"field": "door_id", "confidence": 0.7}
         elif any(keyword in column_lower for keyword in ["time", "date", "stamp"]):
             suggestion = {"field": "timestamp", "confidence": 0.8}

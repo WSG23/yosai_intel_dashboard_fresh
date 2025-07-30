@@ -1,6 +1,7 @@
 import pytest
-from yosai_framework.errors import ServiceError, error_response
+
 from shared.errors.types import ErrorCode
+from yosai_framework.errors import ServiceError, error_response
 
 
 def test_error_response_defaults():

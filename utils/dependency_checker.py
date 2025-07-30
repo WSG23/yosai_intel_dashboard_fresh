@@ -53,9 +53,7 @@ def verify_requirements(path: str = "requirements.txt") -> None:
         logger.info(
             "\u2705 Dependency validation skipped - packages assumed installed via requirements.txt"
         )
-        logger.debug(
-            f"Packages that failed import check: {', '.join(missing)}"
-        )
+        logger.debug(f"Packages that failed import check: {', '.join(missing)}")
         # Dependency check disabled for some packages with complex import patterns
         # logger.error("Missing required dependencies: %s", ", ".join(missing))
         # logger.info("Run `pip install -r requirements.txt`")

@@ -1,12 +1,31 @@
-from google.protobuf.internal import containers as _containers
+from typing import ClassVar as _ClassVar
+from typing import Iterable as _Iterable
+from typing import Mapping as _Mapping
+from typing import Optional as _Optional
+from typing import Union as _Union
+
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
+from google.protobuf.internal import containers as _containers
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class AnalyticsConfig(_message.Message):
-    __slots__ = ["anomaly_detection_enabled", "batch_size", "cache_timeout_seconds", "chunk_size", "data_retention_days", "enable_chunked_analysis", "enable_real_time", "force_full_dataset_analysis", "max_display_rows", "max_memory_mb", "max_records_per_query", "ml_models_path", "query_timeout_seconds"]
+    __slots__ = [
+        "anomaly_detection_enabled",
+        "batch_size",
+        "cache_timeout_seconds",
+        "chunk_size",
+        "data_retention_days",
+        "enable_chunked_analysis",
+        "enable_real_time",
+        "force_full_dataset_analysis",
+        "max_display_rows",
+        "max_memory_mb",
+        "max_records_per_query",
+        "ml_models_path",
+        "query_timeout_seconds",
+    ]
     ANOMALY_DETECTION_ENABLED_FIELD_NUMBER: _ClassVar[int]
     BATCH_SIZE_FIELD_NUMBER: _ClassVar[int]
     CACHE_TIMEOUT_SECONDS_FIELD_NUMBER: _ClassVar[int]
@@ -33,7 +52,22 @@ class AnalyticsConfig(_message.Message):
     max_records_per_query: int
     ml_models_path: str
     query_timeout_seconds: int
-    def __init__(self, cache_timeout_seconds: _Optional[int] = ..., max_records_per_query: _Optional[int] = ..., enable_real_time: bool = ..., batch_size: _Optional[int] = ..., chunk_size: _Optional[int] = ..., enable_chunked_analysis: bool = ..., anomaly_detection_enabled: bool = ..., ml_models_path: _Optional[str] = ..., data_retention_days: _Optional[int] = ..., query_timeout_seconds: _Optional[int] = ..., force_full_dataset_analysis: bool = ..., max_memory_mb: _Optional[int] = ..., max_display_rows: _Optional[int] = ...) -> None: ...
+    def __init__(
+        self,
+        cache_timeout_seconds: _Optional[int] = ...,
+        max_records_per_query: _Optional[int] = ...,
+        enable_real_time: bool = ...,
+        batch_size: _Optional[int] = ...,
+        chunk_size: _Optional[int] = ...,
+        enable_chunked_analysis: bool = ...,
+        anomaly_detection_enabled: bool = ...,
+        ml_models_path: _Optional[str] = ...,
+        data_retention_days: _Optional[int] = ...,
+        query_timeout_seconds: _Optional[int] = ...,
+        force_full_dataset_analysis: bool = ...,
+        max_memory_mb: _Optional[int] = ...,
+        max_display_rows: _Optional[int] = ...,
+    ) -> None: ...
 
 class AppConfig(_message.Message):
     __slots__ = ["debug", "environment", "host", "port", "secret_key", "title"]
@@ -49,10 +83,26 @@ class AppConfig(_message.Message):
     port: int
     secret_key: str
     title: str
-    def __init__(self, title: _Optional[str] = ..., debug: bool = ..., host: _Optional[str] = ..., port: _Optional[int] = ..., secret_key: _Optional[str] = ..., environment: _Optional[str] = ...) -> None: ...
+    def __init__(
+        self,
+        title: _Optional[str] = ...,
+        debug: bool = ...,
+        host: _Optional[str] = ...,
+        port: _Optional[int] = ...,
+        secret_key: _Optional[str] = ...,
+        environment: _Optional[str] = ...,
+    ) -> None: ...
 
 class CacheConfig(_message.Message):
-    __slots__ = ["enabled", "max_size", "prefix", "redis_url", "ttl", "use_memory_cache", "use_redis"]
+    __slots__ = [
+        "enabled",
+        "max_size",
+        "prefix",
+        "redis_url",
+        "ttl",
+        "use_memory_cache",
+        "use_redis",
+    ]
     ENABLED_FIELD_NUMBER: _ClassVar[int]
     MAX_SIZE_FIELD_NUMBER: _ClassVar[int]
     PREFIX_FIELD_NUMBER: _ClassVar[int]
@@ -67,10 +117,35 @@ class CacheConfig(_message.Message):
     ttl: int
     use_memory_cache: bool
     use_redis: bool
-    def __init__(self, enabled: bool = ..., ttl: _Optional[int] = ..., max_size: _Optional[int] = ..., redis_url: _Optional[str] = ..., use_memory_cache: bool = ..., use_redis: bool = ..., prefix: _Optional[str] = ...) -> None: ...
+    def __init__(
+        self,
+        enabled: bool = ...,
+        ttl: _Optional[int] = ...,
+        max_size: _Optional[int] = ...,
+        redis_url: _Optional[str] = ...,
+        use_memory_cache: bool = ...,
+        use_redis: bool = ...,
+        prefix: _Optional[str] = ...,
+    ) -> None: ...
 
 class DatabaseConfig(_message.Message):
-    __slots__ = ["async_connection_timeout", "async_pool_max_size", "async_pool_min_size", "connection_timeout", "host", "initial_pool_size", "max_pool_size", "name", "password", "port", "shrink_timeout", "type", "url", "use_intelligent_pool", "user"]
+    __slots__ = [
+        "async_connection_timeout",
+        "async_pool_max_size",
+        "async_pool_min_size",
+        "connection_timeout",
+        "host",
+        "initial_pool_size",
+        "max_pool_size",
+        "name",
+        "password",
+        "port",
+        "shrink_timeout",
+        "type",
+        "url",
+        "use_intelligent_pool",
+        "user",
+    ]
     ASYNC_CONNECTION_TIMEOUT_FIELD_NUMBER: _ClassVar[int]
     ASYNC_POOL_MAX_SIZE_FIELD_NUMBER: _ClassVar[int]
     ASYNC_POOL_MIN_SIZE_FIELD_NUMBER: _ClassVar[int]
@@ -101,10 +176,35 @@ class DatabaseConfig(_message.Message):
     url: str
     use_intelligent_pool: bool
     user: str
-    def __init__(self, type: _Optional[str] = ..., host: _Optional[str] = ..., port: _Optional[int] = ..., name: _Optional[str] = ..., user: _Optional[str] = ..., password: _Optional[str] = ..., url: _Optional[str] = ..., connection_timeout: _Optional[int] = ..., initial_pool_size: _Optional[int] = ..., max_pool_size: _Optional[int] = ..., async_pool_min_size: _Optional[int] = ..., async_pool_max_size: _Optional[int] = ..., async_connection_timeout: _Optional[int] = ..., shrink_timeout: _Optional[int] = ..., use_intelligent_pool: bool = ...) -> None: ...
+    def __init__(
+        self,
+        type: _Optional[str] = ...,
+        host: _Optional[str] = ...,
+        port: _Optional[int] = ...,
+        name: _Optional[str] = ...,
+        user: _Optional[str] = ...,
+        password: _Optional[str] = ...,
+        url: _Optional[str] = ...,
+        connection_timeout: _Optional[int] = ...,
+        initial_pool_size: _Optional[int] = ...,
+        max_pool_size: _Optional[int] = ...,
+        async_pool_min_size: _Optional[int] = ...,
+        async_pool_max_size: _Optional[int] = ...,
+        async_connection_timeout: _Optional[int] = ...,
+        shrink_timeout: _Optional[int] = ...,
+        use_intelligent_pool: bool = ...,
+    ) -> None: ...
 
 class MonitoringConfig(_message.Message):
-    __slots__ = ["error_reporting_enabled", "health_check_enabled", "health_check_interval", "log_retention_days", "metrics_enabled", "performance_monitoring", "sentry_dsn"]
+    __slots__ = [
+        "error_reporting_enabled",
+        "health_check_enabled",
+        "health_check_interval",
+        "log_retention_days",
+        "metrics_enabled",
+        "performance_monitoring",
+        "sentry_dsn",
+    ]
     ERROR_REPORTING_ENABLED_FIELD_NUMBER: _ClassVar[int]
     HEALTH_CHECK_ENABLED_FIELD_NUMBER: _ClassVar[int]
     HEALTH_CHECK_INTERVAL_FIELD_NUMBER: _ClassVar[int]
@@ -119,7 +219,16 @@ class MonitoringConfig(_message.Message):
     metrics_enabled: bool
     performance_monitoring: bool
     sentry_dsn: str
-    def __init__(self, health_check_enabled: bool = ..., metrics_enabled: bool = ..., health_check_interval: _Optional[int] = ..., performance_monitoring: bool = ..., error_reporting_enabled: bool = ..., sentry_dsn: _Optional[str] = ..., log_retention_days: _Optional[int] = ...) -> None: ...
+    def __init__(
+        self,
+        health_check_enabled: bool = ...,
+        metrics_enabled: bool = ...,
+        health_check_interval: _Optional[int] = ...,
+        performance_monitoring: bool = ...,
+        error_reporting_enabled: bool = ...,
+        sentry_dsn: _Optional[str] = ...,
+        log_retention_days: _Optional[int] = ...,
+    ) -> None: ...
 
 class SampleFilesConfig(_message.Message):
     __slots__ = ["csv_path", "json_path"]
@@ -127,7 +236,9 @@ class SampleFilesConfig(_message.Message):
     JSON_PATH_FIELD_NUMBER: _ClassVar[int]
     csv_path: str
     json_path: str
-    def __init__(self, csv_path: _Optional[str] = ..., json_path: _Optional[str] = ...) -> None: ...
+    def __init__(
+        self, csv_path: _Optional[str] = ..., json_path: _Optional[str] = ...
+    ) -> None: ...
 
 class SecretValidationConfig(_message.Message):
     __slots__ = ["severity"]
@@ -136,14 +247,27 @@ class SecretValidationConfig(_message.Message):
     def __init__(self, severity: _Optional[str] = ...) -> None: ...
 
 class SecurityConfig(_message.Message):
-    __slots__ = ["allowed_file_types", "cors_origins", "csrf_enabled", "max_failed_attempts", "max_upload_mb", "secret_key", "session_timeout", "session_timeout_by_role"]
+    __slots__ = [
+        "allowed_file_types",
+        "cors_origins",
+        "csrf_enabled",
+        "max_failed_attempts",
+        "max_upload_mb",
+        "secret_key",
+        "session_timeout",
+        "session_timeout_by_role",
+    ]
+
     class SessionTimeoutByRoleEntry(_message.Message):
         __slots__ = ["key", "value"]
         KEY_FIELD_NUMBER: _ClassVar[int]
         VALUE_FIELD_NUMBER: _ClassVar[int]
         key: str
         value: int
-        def __init__(self, key: _Optional[str] = ..., value: _Optional[int] = ...) -> None: ...
+        def __init__(
+            self, key: _Optional[str] = ..., value: _Optional[int] = ...
+        ) -> None: ...
+
     ALLOWED_FILE_TYPES_FIELD_NUMBER: _ClassVar[int]
     CORS_ORIGINS_FIELD_NUMBER: _ClassVar[int]
     CSRF_ENABLED_FIELD_NUMBER: _ClassVar[int]
@@ -160,7 +284,17 @@ class SecurityConfig(_message.Message):
     secret_key: str
     session_timeout: int
     session_timeout_by_role: _containers.ScalarMap[str, int]
-    def __init__(self, secret_key: _Optional[str] = ..., session_timeout: _Optional[int] = ..., session_timeout_by_role: _Optional[_Mapping[str, int]] = ..., cors_origins: _Optional[_Iterable[str]] = ..., csrf_enabled: bool = ..., max_failed_attempts: _Optional[int] = ..., max_upload_mb: _Optional[int] = ..., allowed_file_types: _Optional[_Iterable[str]] = ...) -> None: ...
+    def __init__(
+        self,
+        secret_key: _Optional[str] = ...,
+        session_timeout: _Optional[int] = ...,
+        session_timeout_by_role: _Optional[_Mapping[str, int]] = ...,
+        cors_origins: _Optional[_Iterable[str]] = ...,
+        csrf_enabled: bool = ...,
+        max_failed_attempts: _Optional[int] = ...,
+        max_upload_mb: _Optional[int] = ...,
+        allowed_file_types: _Optional[_Iterable[str]] = ...,
+    ) -> None: ...
 
 class UploadConfig(_message.Message):
     __slots__ = ["folder", "max_file_size_mb"]
@@ -168,10 +302,23 @@ class UploadConfig(_message.Message):
     MAX_FILE_SIZE_MB_FIELD_NUMBER: _ClassVar[int]
     folder: str
     max_file_size_mb: int
-    def __init__(self, folder: _Optional[str] = ..., max_file_size_mb: _Optional[int] = ...) -> None: ...
+    def __init__(
+        self, folder: _Optional[str] = ..., max_file_size_mb: _Optional[int] = ...
+    ) -> None: ...
 
 class YosaiConfig(_message.Message):
-    __slots__ = ["analytics", "app", "cache", "database", "environment", "monitoring", "sample_files", "secret_validation", "security", "uploads"]
+    __slots__ = [
+        "analytics",
+        "app",
+        "cache",
+        "database",
+        "environment",
+        "monitoring",
+        "sample_files",
+        "secret_validation",
+        "security",
+        "uploads",
+    ]
     ANALYTICS_FIELD_NUMBER: _ClassVar[int]
     APP_FIELD_NUMBER: _ClassVar[int]
     CACHE_FIELD_NUMBER: _ClassVar[int]
@@ -192,4 +339,16 @@ class YosaiConfig(_message.Message):
     secret_validation: SecretValidationConfig
     security: SecurityConfig
     uploads: UploadConfig
-    def __init__(self, app: _Optional[_Union[AppConfig, _Mapping]] = ..., database: _Optional[_Union[DatabaseConfig, _Mapping]] = ..., security: _Optional[_Union[SecurityConfig, _Mapping]] = ..., sample_files: _Optional[_Union[SampleFilesConfig, _Mapping]] = ..., analytics: _Optional[_Union[AnalyticsConfig, _Mapping]] = ..., monitoring: _Optional[_Union[MonitoringConfig, _Mapping]] = ..., cache: _Optional[_Union[CacheConfig, _Mapping]] = ..., uploads: _Optional[_Union[UploadConfig, _Mapping]] = ..., secret_validation: _Optional[_Union[SecretValidationConfig, _Mapping]] = ..., environment: _Optional[str] = ...) -> None: ...
+    def __init__(
+        self,
+        app: _Optional[_Union[AppConfig, _Mapping]] = ...,
+        database: _Optional[_Union[DatabaseConfig, _Mapping]] = ...,
+        security: _Optional[_Union[SecurityConfig, _Mapping]] = ...,
+        sample_files: _Optional[_Union[SampleFilesConfig, _Mapping]] = ...,
+        analytics: _Optional[_Union[AnalyticsConfig, _Mapping]] = ...,
+        monitoring: _Optional[_Union[MonitoringConfig, _Mapping]] = ...,
+        cache: _Optional[_Union[CacheConfig, _Mapping]] = ...,
+        uploads: _Optional[_Union[UploadConfig, _Mapping]] = ...,
+        secret_validation: _Optional[_Union[SecretValidationConfig, _Mapping]] = ...,
+        environment: _Optional[str] = ...,
+    ) -> None: ...

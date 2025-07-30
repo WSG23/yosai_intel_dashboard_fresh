@@ -6,6 +6,7 @@ from security.events import (
     emit_security_event,
     security_unified_callbacks,
 )
+
 SecurityCallbackController = UnifiedCallbackManager
 security_callback_controller = UnifiedCallbackManager()
 

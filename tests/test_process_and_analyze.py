@@ -1,8 +1,8 @@
-from validation.security_validator import SecurityValidator
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.data_processing.file_processor import FileProcessor
 from services.data_processing.processor import Processor
 from tests.builders import TestDataBuilder
+from validation.security_validator import SecurityValidator
 
 
 def _create_components():

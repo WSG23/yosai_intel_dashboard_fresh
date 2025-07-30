@@ -6,10 +6,10 @@ from typing import Any, Dict, List, Tuple
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
+from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.controllers.upload_controller import UploadProcessingController
 from services.data_processing.processor import Processor
 from services.interfaces import get_upload_data_service
-from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from validation.security_validator import SecurityValidator
 
 logger = logging.getLogger(__name__)

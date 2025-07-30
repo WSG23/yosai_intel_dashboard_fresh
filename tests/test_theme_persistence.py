@@ -1,9 +1,9 @@
-import pytest
 import dash
 import dash_bootstrap_components as dbc
-from dash import html, dcc, Output, Input
+import pytest
+from dash import Input, Output, dcc, html
 
-from core.theme_manager import apply_theme_settings, sanitize_theme, DEFAULT_THEME
+from core.theme_manager import DEFAULT_THEME, apply_theme_settings, sanitize_theme
 
 pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 

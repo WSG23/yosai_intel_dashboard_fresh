@@ -24,10 +24,12 @@ form::
         "analytics": Dict[str, Any],
     }
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Dict, List, Protocol, runtime_checkable
+
 try:
     from typing import override
 except ImportError:  # pragma: no cover - for Python <3.12
@@ -36,8 +38,8 @@ except ImportError:  # pragma: no cover - for Python <3.12
 
 import pandas as pd
 
+from core.di_decorators import inject, injectable
 from core.service_container import ServiceContainer
-from core.di_decorators import injectable, inject
 from services.analytics.protocols import AnalyticsServiceProtocol
 from services.upload.protocols import UploadDataServiceProtocol
 
@@ -82,9 +84,7 @@ class PatternLearner:
     def learn(self, df: pd.DataFrame) -> Dict[str, Any]:
         if df.empty or not {"person_id", "door_id"}.issubset(df.columns):
             return {"common_paths": []}
-        paths = (
-            df.groupby(["person_id", "door_id"]).size().reset_index(name="count")
-        )
+        paths = df.groupby(["person_id", "door_id"]).size().reset_index(name="count")
         top = paths.sort_values("count", ascending=False).head(3)
         return {"common_paths": top.to_dict("records")}
 
@@ -163,6 +163,7 @@ class MetadataEnhancementEngine(MetadataEnhancementProtocol):
 # ---------------------------------------------------------------------------
 # Service registration helper
 # ---------------------------------------------------------------------------
+
 
 def register_metadata_services(container: ServiceContainer) -> None:
     """Register :class:`MetadataEnhancementEngine` with ``container``."""

@@ -1,6 +1,6 @@
 import pathlib
 
-SQL_PATH = pathlib.Path('scripts/init_timescaledb.sql')
+SQL_PATH = pathlib.Path("scripts/init_timescaledb.sql")
 
 
 def _read_sql() -> str:

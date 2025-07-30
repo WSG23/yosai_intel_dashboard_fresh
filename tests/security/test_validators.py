@@ -2,8 +2,8 @@ import pandas as pd
 import pytest
 
 from core.exceptions import ValidationError
-from validation.security_validator import SecurityValidator
 from security.xss_validator import XSSPrevention
+from validation.security_validator import SecurityValidator
 
 
 def test_unicode_normalization():

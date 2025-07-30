@@ -1,8 +1,11 @@
 """Initial schema using TimescaleDB"""
+
 from __future__ import annotations
+
 from pathlib import Path
-from alembic import op
+
 import sqlalchemy as sa  # noqa:F401
+from alembic import op
 
 revision = "0001"
 down_revision = None

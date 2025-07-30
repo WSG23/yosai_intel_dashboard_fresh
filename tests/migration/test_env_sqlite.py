@@ -8,14 +8,19 @@ import alembic.context
 class DummyConnection:
     def __init__(self, dialect_name="sqlite"):
         self.dialect = type("dialect", (), {"name": dialect_name})()
+
     def connect(self):
         return self
+
     def __enter__(self):
         return self
+
     def __exit__(self, exc_type, exc, tb):
         pass
+
     def execute(self, *a, **k):
         pass
+
 
 class DummyEngine(DummyConnection):
     pass
@@ -27,11 +32,14 @@ def test_skip_timescale_for_sqlite(monkeypatch, tmp_path):
     alembic.context.config = SimpleNamespace(config_file_name=str(cfg_file))
     alembic.context.is_offline_mode = lambda: True
     alembic.context.configure = lambda **kw: None
+
     class DummyTxn:
         def __enter__(self):
             return self
+
         def __exit__(self, exc_type, exc, tb):
             pass
+
     alembic.context.begin_transaction = lambda: DummyTxn()
     alembic.context.run_migrations = lambda: None
     monkeypatch.setattr("logging.config.fileConfig", lambda *a, **k: None)
@@ -49,8 +57,10 @@ def test_skip_timescale_for_sqlite(monkeypatch, tmp_path):
     class DummyTxn:
         def __enter__(self):
             return self
+
         def __exit__(self, exc_type, exc, tb):
             pass
+
     monkeypatch.setattr(env.context, "begin_transaction", lambda: DummyTxn())
 
     parser = configparser.ConfigParser()

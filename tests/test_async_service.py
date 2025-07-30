@@ -1,12 +1,16 @@
 import pytest
 
+
 class FakeRedis:
     def __init__(self):
         self.store = {}
+
     async def get(self, key):
         return self.store.get(key)
+
     async def setex(self, key, ttl, value):
         self.store[key] = value
+
 
 class RBACService:
     def __init__(self, redis, ttl=60):
@@ -25,6 +29,7 @@ class RBACService:
         roles = await self._fetch_roles(user_id)
         await self.redis.setex(f"roles:{user_id}", self.ttl, roles)
         return roles
+
 
 @pytest.mark.asyncio
 async def test_service_uses_cache():

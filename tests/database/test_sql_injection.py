@@ -1,6 +1,7 @@
 import pytest
-from services.optimized_queries import OptimizedQueryService
+
 from services.migration.validators.integrity_checker import IntegrityChecker
+from services.optimized_queries import OptimizedQueryService
 
 
 class RecordingConn:
@@ -39,4 +40,4 @@ async def test_rowcount_equal_injection():
     malicious = "danger; DROP TABLE x;"
     await checker.rowcount_equal(pool, pool, malicious)
     assert malicious in pool.last_query
-    assert pool.last_query.startswith("SELECT COUNT(*) FROM \"")
+    assert pool.last_query.startswith('SELECT COUNT(*) FROM "')

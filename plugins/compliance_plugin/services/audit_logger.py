@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from flask import request, g
+from flask import g, request
 from flask_login import current_user
 
 from core.protocols import DatabaseProtocol

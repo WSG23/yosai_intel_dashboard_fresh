@@ -1,7 +1,7 @@
-import sys
-import types
 import dataclasses
 import importlib.util
+import sys
+import types
 from pathlib import Path
 
 import pytest
@@ -9,81 +9,92 @@ import pytest
 
 def load_database_manager():
     """Import config.database_manager with stubbed dependencies."""
-    if 'core.unicode' not in sys.modules:
-        unicode_mod = types.ModuleType('core.unicode')
+    if "core.unicode" not in sys.modules:
+        unicode_mod = types.ModuleType("core.unicode")
+
         class UnicodeSQLProcessor:
             @staticmethod
             def encode_query(query):
                 return str(query)
+
         unicode_mod.UnicodeSQLProcessor = UnicodeSQLProcessor
-        sys.modules['core.unicode'] = unicode_mod
+        sys.modules["core.unicode"] = unicode_mod
 
-    pkg = types.ModuleType('config')
+    pkg = types.ModuleType("config")
     pkg.__path__ = []
-    sys.modules['config'] = pkg
+    sys.modules["config"] = pkg
 
-    sys.modules['config.dynamic_config'] = types.ModuleType('config.dynamic_config')
-    sys.modules['config.dynamic_config'].dynamic_config = types.SimpleNamespace(
+    sys.modules["config.dynamic_config"] = types.ModuleType("config.dynamic_config")
+    sys.modules["config.dynamic_config"].dynamic_config = types.SimpleNamespace(
         get_db_connection_timeout=lambda: 1,
         get_db_pool_size=lambda: 1,
     )
 
     @dataclasses.dataclass
     class DatabaseSettings:
-        type: str = 'mock'
-        host: str = 'localhost'
+        type: str = "mock"
+        host: str = "localhost"
         port: int = 5432
-        name: str = 'db'
-        user: str = 'user'
-        password: str = ''
+        name: str = "db"
+        user: str = "user"
+        password: str = ""
         connection_timeout: int = 1
         initial_pool_size: int = 1
         max_pool_size: int = 1
         shrink_timeout: int = 0
 
-    schema_mod = types.ModuleType('config.schema')
+    schema_mod = types.ModuleType("config.schema")
     schema_mod.DatabaseSettings = DatabaseSettings
-    sys.modules['config.schema'] = schema_mod
+    sys.modules["config.schema"] = schema_mod
 
-    ex_mod = types.ModuleType('config.database_exceptions')
+    ex_mod = types.ModuleType("config.database_exceptions")
+
     class ConnectionRetryExhausted(Exception):
         pass
+
     class ConnectionValidationFailed(Exception):
         pass
+
     class DatabaseError(Exception):
         pass
+
     ex_mod.ConnectionRetryExhausted = ConnectionRetryExhausted
     ex_mod.ConnectionValidationFailed = ConnectionValidationFailed
     ex_mod.DatabaseError = DatabaseError
-    sys.modules['config.database_exceptions'] = ex_mod
+    sys.modules["config.database_exceptions"] = ex_mod
 
-    prot_mod = types.ModuleType('config.protocols')
+    prot_mod = types.ModuleType("config.protocols")
+
     class RetryConfigProtocol: ...
+
     class ConnectionRetryManagerProtocol: ...
+
     prot_mod.RetryConfigProtocol = RetryConfigProtocol
     prot_mod.ConnectionRetryManagerProtocol = ConnectionRetryManagerProtocol
-    sys.modules['config.protocols'] = prot_mod
+    sys.modules["config.protocols"] = prot_mod
 
-    retry_path = Path(__file__).resolve().parents[2] / 'config' / 'connection_retry.py'
-    spec = importlib.util.spec_from_file_location('config.connection_retry', retry_path)
+    retry_path = Path(__file__).resolve().parents[2] / "config" / "connection_retry.py"
+    spec = importlib.util.spec_from_file_location("config.connection_retry", retry_path)
     conn_retry_mod = importlib.util.module_from_spec(spec)
-    sys.modules['config.connection_retry'] = conn_retry_mod
+    sys.modules["config.connection_retry"] = conn_retry_mod
     spec.loader.exec_module(conn_retry_mod)
 
-    dm_path = Path(__file__).resolve().parents[2] / 'config' / 'database_manager.py'
-    spec = importlib.util.spec_from_file_location('config.database_manager', dm_path)
+    dm_path = Path(__file__).resolve().parents[2] / "config" / "database_manager.py"
+    spec = importlib.util.spec_from_file_location("config.database_manager", dm_path)
     dbm = importlib.util.module_from_spec(spec)
-    sys.modules['config.database_manager'] = dbm
+    sys.modules["config.database_manager"] = dbm
     spec.loader.exec_module(dbm)
     return dbm
 
 
 def make_manager(conn, attempts=3):
     dbm = load_database_manager()
-    retry_mod = sys.modules['config.connection_retry']
+    retry_mod = sys.modules["config.connection_retry"]
     cfg = dbm.DatabaseSettings()
     manager = dbm.EnhancedPostgreSQLManager(cfg)
-    manager.pool = types.SimpleNamespace(get_connection=lambda: conn, release_connection=lambda c: None)
+    manager.pool = types.SimpleNamespace(
+        get_connection=lambda: conn, release_connection=lambda c: None
+    )
     manager.retry_manager = retry_mod.ConnectionRetryManager(
         retry_mod.RetryConfig(max_attempts=attempts, base_delay=0, jitter=False)
     )
@@ -100,8 +111,8 @@ class FailingConnection:
     def execute_query(self, query, params=None):
         self.query_calls += 1
         if self.query_calls <= self.query_failures:
-            raise RuntimeError('boom')
-        return [{'ok': True}]
+            raise RuntimeError("boom")
+        return [{"ok": True}]
 
     def execute_command(self, cmd, params=None):
         pass
@@ -117,17 +128,17 @@ class FailingConnection:
 def test_execute_query_retries_until_success():
     conn = FailingConnection(query_failures=2)
     manager, dbm = make_manager(conn, attempts=3)
-    result = manager.execute_query_with_retry('SELECT 1')
-    assert result == [{'ok': True}]
+    result = manager.execute_query_with_retry("SELECT 1")
+    assert result == [{"ok": True}]
     assert conn.query_calls == 3
 
 
 def test_execute_query_retry_exhausted():
     conn = FailingConnection(query_failures=3)
     manager, dbm = make_manager(conn, attempts=2)
-    exc = sys.modules['config.database_exceptions'].ConnectionRetryExhausted
+    exc = sys.modules["config.database_exceptions"].ConnectionRetryExhausted
     with pytest.raises(exc):
-        manager.execute_query_with_retry('SELECT 1')
+        manager.execute_query_with_retry("SELECT 1")
 
 
 def test_health_check_retries_until_success():
@@ -140,6 +151,6 @@ def test_health_check_retries_until_success():
 def test_health_check_retry_exhausted():
     conn = FailingConnection(health_failures=5)
     manager, dbm = make_manager(conn, attempts=2)
-    exc = sys.modules['config.database_exceptions'].ConnectionRetryExhausted
+    exc = sys.modules["config.database_exceptions"].ConnectionRetryExhausted
     with pytest.raises(exc):
         manager.health_check_with_retry()

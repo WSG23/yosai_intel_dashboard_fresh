@@ -1,6 +1,6 @@
 import importlib.util
 from pathlib import Path
-from types import SimpleNamespace, ModuleType
+from types import ModuleType, SimpleNamespace
 
 from alembic import context as alembic_context
 
@@ -12,7 +12,9 @@ def load_env_module() -> ModuleType:
     if idx != -1:
         text = text[:idx]
     alembic_context.config = SimpleNamespace(
-        config_file_name=str(Path(__file__).resolve().parents[1] / "migrations" / "alembic.ini")
+        config_file_name=str(
+            Path(__file__).resolve().parents[1] / "migrations" / "alembic.ini"
+        )
     )
     module = ModuleType("alembic_env")
     exec(compile(text, str(path), "exec"), module.__dict__)

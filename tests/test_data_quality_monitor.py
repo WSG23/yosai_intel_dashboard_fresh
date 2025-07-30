@@ -1,10 +1,11 @@
 import pandas as pd
+
 from monitoring.data_quality_monitor import (
-    DataQualityMonitor,
     DataQualityMetrics,
+    DataQualityMonitor,
     DataQualityThresholds,
+    get_data_quality_monitor,
 )
-from monitoring.data_quality_monitor import get_data_quality_monitor
 
 
 def test_data_quality_monitor_alert(monkeypatch):
@@ -25,7 +26,8 @@ def test_data_quality_monitor_alert(monkeypatch):
 
 
 def test_processor_evaluates_quality(monkeypatch):
-    import types, sys
+    import sys
+    import types
 
     # Provide minimal Processor stub if services package is absent
     if "services.data_processing.processor" not in sys.modules:

@@ -1,9 +1,10 @@
-import pandas as pd
 from pathlib import Path
 
-from file_processing.column_mapper import map_columns
+import pandas as pd
+
 from core.callback_events import CallbackEvent
 from core.callbacks import UnifiedCallbackManager as CallbackManager
+from file_processing.column_mapper import map_columns
 
 
 def test_exact_mapping(tmp_path: Path):

@@ -28,7 +28,9 @@ class DummySession:
 
     async def execute(self, stmt):
         self.executed.append(stmt)
-        return types.SimpleNamespace(rowcount=1, scalars=lambda: types.SimpleNamespace(all=lambda: []))
+        return types.SimpleNamespace(
+            rowcount=1, scalars=lambda: types.SimpleNamespace(all=lambda: [])
+        )
 
 
 @pytest.mark.asyncio

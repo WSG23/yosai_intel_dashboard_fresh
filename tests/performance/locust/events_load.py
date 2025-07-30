@@ -1,7 +1,9 @@
 """Locust tasks for event ingestion throughput testing."""
 
 import json
-from locust import HttpUser, task, between
+
+from locust import HttpUser, between, task
+
 from .utils import generate_event
 
 

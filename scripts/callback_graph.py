@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 import os
-from graphviz import Digraph
+
 from dash import Dash
+from graphviz import Digraph
 
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from services.upload.callbacks import UploadCallbacks

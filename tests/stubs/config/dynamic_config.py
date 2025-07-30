@@ -9,10 +9,10 @@ class Analytics:
 
 
 from core.config import (
-    get_upload_chunk_size,
-    get_max_parallel_uploads,
-    get_validator_rules,
     get_ai_confidence_threshold,
+    get_max_parallel_uploads,
+    get_upload_chunk_size,
+    get_validator_rules,
 )
 
 

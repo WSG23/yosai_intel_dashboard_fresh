@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import logging
-from typing import IO, Iterable, List, Union, Callable
+from typing import IO, Callable, Iterable, List, Union
 
 import pandas as pd
 
+from config.constants import DEFAULT_CHUNK_SIZE
 from core.unicode import UnicodeProcessor as UnicodeHelper
 from utils.file_utils import safe_decode_with_unicode_handling
 from utils.memory_utils import check_memory_limit
-from config.constants import DEFAULT_CHUNK_SIZE
 
 logger = logging.getLogger(__name__)
 

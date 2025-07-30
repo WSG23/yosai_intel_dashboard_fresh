@@ -9,16 +9,16 @@ from typing import Any, Dict, List, Optional, Protocol
 from uuid import uuid4
 
 from flask import request
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-
+from sqlalchemy.orm import Session
 from yosai_intel_dashboard.models.compliance import (
     ConsentLog,
     ConsentType,
     DataSensitivityLevel,
 )
-from core.protocols import DatabaseProtocol
+
 from core.audit_logger import ComplianceAuditLogger
+from core.protocols import DatabaseProtocol
 from database.secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)

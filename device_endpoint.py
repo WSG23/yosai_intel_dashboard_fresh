@@ -1,16 +1,14 @@
 import pandas as pd
 from flask import Blueprint, jsonify, request
-from error_handling import ErrorCategory, ErrorHandler, api_error_response
-
 from flask_apispec import doc
 from pydantic import BaseModel
-
-from utils.pydantic_decorators import validate_input, validate_output
 
 from config.service_registration import register_upload_services
 
 # Use the shared DI container for dependency resolution
 from core.container import container
+from error_handling import ErrorCategory, ErrorHandler, api_error_response
+from utils.pydantic_decorators import validate_input, validate_output
 
 if not container.has("upload_processor"):
     register_upload_services(container)
@@ -62,9 +60,7 @@ def build_user_device_mappings(user_mappings: dict) -> dict:
     return device_mappings
 
 
-def build_ai_device_mappings(
-    df: pd.DataFrame, filename: str, upload_service
-) -> dict:
+def build_ai_device_mappings(df: pd.DataFrame, filename: str, upload_service) -> dict:
     """Generate mappings for AI-suggested devices."""
 
     from services.ai_mapping_store import ai_mapping_store

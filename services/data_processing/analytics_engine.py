@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 from services import get_analytics_service  # type: ignore
+
 try:
     from services.ai_suggestions import generate_column_suggestions
 
@@ -19,9 +20,9 @@ except Exception:  # pragma: no cover - optional AI suggestions
         return {}
 
 
-from validation.unicode_validator import UnicodeValidator
 from services.interfaces import get_upload_data_service
 from utils.preview_utils import serialize_dataframe_preview
+from validation.unicode_validator import UnicodeValidator
 
 logger = logging.getLogger(__name__)
 

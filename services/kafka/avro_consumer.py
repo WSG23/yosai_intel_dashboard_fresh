@@ -7,12 +7,11 @@ import logging
 import struct
 from typing import Any, Iterable, Optional
 
-from confluent_kafka import Consumer, Producer
 from fastavro import parse_schema, schemaless_reader
 
-from services.common.schema_registry import SchemaRegistryClient
+from confluent_kafka import Consumer, Producer
 from monitoring.data_quality_monitor import get_data_quality_monitor
-
+from services.common.schema_registry import SchemaRegistryClient
 
 logger = logging.getLogger(__name__)
 

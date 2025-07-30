@@ -1,13 +1,14 @@
 from __future__ import annotations
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 import pandas as pd
 
-from .base import BaseReader
 from core.callback_events import CallbackEvent
 from core.callbacks import UnifiedCallbackManager
 from core.protocols import UnicodeProcessorProtocol
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from services.data_processing.file_processor import FileProcessor
+
+from .base import BaseReader
 
 
 class CSVReader(BaseReader):
@@ -15,7 +16,9 @@ class CSVReader(BaseReader):
 
     format_name = "csv"
 
-    def __init__(self, *, unicode_processor: UnicodeProcessorProtocol | None = None) -> None:
+    def __init__(
+        self, *, unicode_processor: UnicodeProcessorProtocol | None = None
+    ) -> None:
         super().__init__(unicode_processor=unicode_processor)
         self.unified_callbacks = UnifiedCallbackManager()
 
@@ -48,4 +51,3 @@ class CSVReader(BaseReader):
             return 0.0
         ctrl = sum(1 for ch in text if ord(ch) < 32 or ord(ch) == 127)
         return ctrl / len(text)
-

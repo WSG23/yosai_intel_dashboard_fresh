@@ -5,10 +5,9 @@ adapter with convenience analytics queries, and SQLAlchemy models for
 the access event tables.
 """
 
-from .manager import TimescaleDBManager
 from .adapter import TimescaleAdapter
-from .models import Base, AccessEvent, AccessEvent5Min
-
+from .manager import TimescaleDBManager
+from .models import AccessEvent, AccessEvent5Min, Base
 
 __all__ = [
     "TimescaleDBManager",

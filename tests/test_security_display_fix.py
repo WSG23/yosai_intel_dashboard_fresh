@@ -1,5 +1,5 @@
-import pytest
 import dash_bootstrap_components as dbc
+import pytest
 
 from analytics.core.utils.results_display import create_analysis_results_display
 

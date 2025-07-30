@@ -4,7 +4,7 @@ import logging
 import threading
 import time
 import uuid
-from typing import Any, Callable, Dict, Iterable, List, Tuple, Awaitable
+from typing import Any, Awaitable, Callable, Dict, Iterable, List, Tuple
 
 logger = logging.getLogger(__name__)
 

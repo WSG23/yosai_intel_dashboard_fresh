@@ -1,6 +1,6 @@
-from types import SimpleNamespace, ModuleType
 import os
 import sys
+from types import ModuleType, SimpleNamespace
 
 # Stub resilience metrics to avoid optional dependency errors
 metrics_mod = ModuleType("services.resilience.metrics")
@@ -15,6 +15,7 @@ sys.modules.setdefault("services.resilience", resilience_pkg)
 sys.modules.setdefault("services.resilience.metrics", metrics_mod)
 
 from yosai_intel_dashboard.models.ml.base_model import BaseModel, ModelMetadata
+
 from monitoring import model_performance_monitor as mpm
 
 

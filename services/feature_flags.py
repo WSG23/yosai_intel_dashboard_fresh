@@ -1,14 +1,13 @@
+import asyncio
 import json
 import logging
 import os
 import threading
-import asyncio
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 
-import asyncio
-import aiohttp
 import aiofiles
+import aiohttp
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +89,6 @@ class FeatureFlagManager:
             asyncio.run(self.load_flags_async())
             if self._stop.wait(self.poll_interval):
                 break
-
 
     def is_enabled(self, name: str, default: bool = False) -> bool:
         """Return True if *name* flag is enabled."""

@@ -1,11 +1,12 @@
 """Feast feature store integration for ML pipelines."""
+
 from __future__ import annotations
 
 import logging
-from typing import List, Dict
+from typing import Dict, List
 
 import pandas as pd
-from feast import FeatureStore, FeatureService
+from feast import FeatureService, FeatureStore
 
 logger = logging.getLogger(__name__)
 

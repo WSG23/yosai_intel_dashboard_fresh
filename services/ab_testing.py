@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 
 import joblib
-
 from yosai_intel_dashboard.models.ml import ModelRegistry
 
 

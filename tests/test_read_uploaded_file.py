@@ -1,6 +1,5 @@
-from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-
 from services.data_processing.file_processor import FileProcessor
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 
 def test_read_uploaded_file_basic():

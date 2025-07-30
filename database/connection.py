@@ -3,10 +3,9 @@
 from typing import Optional, Protocol
 
 import pandas as pd
-
-from config.database_manager import DatabaseManager, MockConnection
 from opentelemetry import trace
 
+from config.database_manager import DatabaseManager, MockConnection
 from database.metrics import queries_total, query_errors_total
 
 
@@ -38,7 +37,7 @@ def create_database_connection() -> DatabaseConnection:
     db_manager = DatabaseManager(
         db_type=db_config.type,
         connection_string=getattr(db_config, "connection_string", ""),
-        **db_config.__dict__
+        **db_config.__dict__,
     )
 
     conn = db_manager.get_connection()
@@ -46,7 +45,9 @@ def create_database_connection() -> DatabaseConnection:
     tracer = trace.get_tracer("database")
 
     class InstrumentedConnection:
-        def execute_query(self, query: str, params: Optional[tuple] = None) -> pd.DataFrame:
+        def execute_query(
+            self, query: str, params: Optional[tuple] = None
+        ) -> pd.DataFrame:
             with tracer.start_as_current_span("execute_query"):
                 queries_total.inc()
                 try:

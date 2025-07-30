@@ -1,10 +1,10 @@
-import pytest
-
-import importlib.util
 import importlib
+import importlib.util
 import sys
-from pathlib import Path
 import types
+from pathlib import Path
+
+import pytest
 
 pkg = types.ModuleType("config")
 pkg.__path__ = [str(Path(__file__).resolve().parents[1] / "config")]
@@ -17,8 +17,8 @@ sys.modules["config.config_manager"] = _cfg_module
 spec.loader.exec_module(_cfg_module)  # type: ignore
 create_config_manager = _cfg_module.create_config_manager
 
-from core.exceptions import ConfigurationError
 from config.config_validator import ConfigValidator
+from core.exceptions import ConfigurationError
 
 
 def _write(tmp_path, text: str) -> str:

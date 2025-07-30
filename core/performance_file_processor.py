@@ -7,9 +7,9 @@ import logging
 from pathlib import Path
 from typing import IO, Callable, Iterable, List, Optional, Union
 
-from config.constants import DEFAULT_CHUNK_SIZE
-
 import pandas as pd
+
+from config.constants import DEFAULT_CHUNK_SIZE
 
 try:
     import psutil

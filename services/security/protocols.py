@@ -1,4 +1,5 @@
 """Security service protocols."""
+
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -9,14 +10,11 @@ class SecurityServiceProtocol(Protocol):
     """Perform security checks."""
 
     @abstractmethod
-    def validate(self, data: Any) -> bool:
-        ...
+    def validate(self, data: Any) -> bool: ...
 
 
 class AuthenticationProtocol(Protocol):
     """Authentication provider."""
 
     @abstractmethod
-    def authenticate(self, token: str) -> bool:
-
-        ...
+    def authenticate(self, token: str) -> bool: ...

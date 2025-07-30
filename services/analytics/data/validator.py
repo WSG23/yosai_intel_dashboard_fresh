@@ -3,7 +3,9 @@ from __future__ import annotations
 """Validation helper for analytics uploads."""
 
 from typing import Dict
+
 import pandas as pd
+
 from validation.security_validator import SecurityValidator
 
 

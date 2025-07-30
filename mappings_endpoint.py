@@ -1,16 +1,14 @@
 from flask import Blueprint, jsonify, request
-from error_handling import ErrorCategory, ErrorHandler, api_error_response
-
 from flask_apispec import doc
 from pydantic import BaseModel
-
-from utils.pydantic_decorators import validate_input, validate_output
 
 from config.service_registration import register_upload_services
 
 # Shared container ensures services are available across blueprints
 from core.container import container
 from core.unicode import clean_unicode_surrogates
+from error_handling import ErrorCategory, ErrorHandler, api_error_response
+from utils.pydantic_decorators import validate_input, validate_output
 
 if not container.has("upload_processor"):
     register_upload_services(container)

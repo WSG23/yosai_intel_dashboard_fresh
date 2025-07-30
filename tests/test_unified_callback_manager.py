@@ -1,6 +1,7 @@
-import pytest
 import asyncio
 import time
+
+import pytest
 from dash import Dash
 
 from core import TrulyUnifiedCallbacks

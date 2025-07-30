@@ -8,9 +8,9 @@ import re
 from pathlib import Path
 from typing import Dict, List
 
-from tools.robust_file_reader import safe_read_text
-
 import yaml
+
+from tools.robust_file_reader import safe_read_text
 
 _CAMEL_RE = re.compile(r"\b[a-z]+[A-Z][A-Za-z0-9]*\b")
 

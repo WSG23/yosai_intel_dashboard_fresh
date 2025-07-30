@@ -18,6 +18,7 @@ from mapping.models import ColumnRules, load_rules
 # Standardization helpers
 # ---------------------------------------------------------------------------
 
+
 def standardize_column_names(
     df: pd.DataFrame,
     rules: ColumnRules | None = None,

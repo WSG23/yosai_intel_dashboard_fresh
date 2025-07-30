@@ -6,13 +6,12 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from validation.data_validator import DataValidator, DataValidatorProtocol
 from services.analytics_summary import summarize_dataframe
 from services.chunked_analysis import analyze_with_chunking
 from services.upload_processing import (
     UploadAnalyticsProcessor as _UploadAnalyticsProcessor,
 )
-
+from validation.data_validator import DataValidator, DataValidatorProtocol
 
 
 def summarize_dataframes(dfs: List[pd.DataFrame]) -> Dict[str, Any]:

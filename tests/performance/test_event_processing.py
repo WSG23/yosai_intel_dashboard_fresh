@@ -1,6 +1,6 @@
+import random
 import time
 import uuid
-import random
 from datetime import datetime
 
 

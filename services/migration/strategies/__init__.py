@@ -1,6 +1,6 @@
-from .gateway_migration import GatewayMigration
-from .events_migration import EventsMigration
 from .analytics_migration import AnalyticsMigration
+from .events_migration import EventsMigration
+from .gateway_migration import GatewayMigration
 
 __all__ = [
     "GatewayMigration",

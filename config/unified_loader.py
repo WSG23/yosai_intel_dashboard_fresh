@@ -1,10 +1,11 @@
 """Load YAML or JSON configuration into protobuf structures."""
+
 from __future__ import annotations
 
 import json
 import os
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from google.protobuf import json_format
 

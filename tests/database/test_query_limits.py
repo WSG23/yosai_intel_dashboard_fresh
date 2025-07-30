@@ -1,4 +1,5 @@
-import sys, types
+import sys
+import types
 
 flask_stub = types.SimpleNamespace(
     request=types.SimpleNamespace(path=""), url_for=lambda *a, **k: ""

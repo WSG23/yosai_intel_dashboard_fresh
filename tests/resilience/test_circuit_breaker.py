@@ -2,6 +2,7 @@ import importlib.util
 import pathlib
 import sys
 import types
+
 import pytest
 
 services_path = pathlib.Path(__file__).resolve().parents[2] / "services"
@@ -9,8 +10,12 @@ stub_pkg = types.ModuleType("services")
 stub_pkg.__path__ = [str(services_path)]
 sys.modules.setdefault("services", stub_pkg)
 stub_interfaces = types.ModuleType("services.interfaces")
+
+
 class AnalyticsServiceProtocol:
     pass
+
+
 stub_interfaces.AnalyticsServiceProtocol = AnalyticsServiceProtocol
 sys.modules["services.interfaces"] = stub_interfaces
 sys.modules.setdefault("kafka", types.ModuleType("kafka"))
@@ -69,5 +74,3 @@ async def test_event_service_fallback_on_open(monkeypatch):
 
     result = await adapter._process_event({"event_id": "E1"})
     assert result["status"] == "unavailable"
-
-
