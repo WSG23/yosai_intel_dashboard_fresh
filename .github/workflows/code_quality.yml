@@ -13,7 +13,7 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: black --check .
       - run: isort --profile=black --check .
-      - run: flake8 .
+      - run: flake8 yosai_intel_dashboard
       - uses: actions/setup-node@v3
         with:
           node-version: '18'

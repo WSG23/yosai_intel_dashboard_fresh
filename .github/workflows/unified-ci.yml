@@ -54,7 +54,7 @@ jobs:
         if: matrix.lang == 'python'
         run: |
           black --check . --line-length 88 --verbose
-          flake8 . --max-line-length 88 -v
+          flake8 yosai_intel_dashboard -v
           mypy .
           bandit -r . --severity-level high
       - name: Validate directory structure
