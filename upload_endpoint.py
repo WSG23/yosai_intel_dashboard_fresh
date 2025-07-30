@@ -3,9 +3,7 @@ import base64
 from services.data_processing.file_handler import FileHandler
 
 from flask import Blueprint, jsonify, request
-from error_handling import ErrorCategory, ErrorHandler
-from yosai_framework.errors import CODE_TO_STATUS
-from shared.errors.types import ErrorCode
+from error_handling import ErrorCategory, ErrorHandler, api_error_response
 from flask_wtf.csrf import validate_csrf
 from flask_apispec import doc
 from pydantic import BaseModel
@@ -57,10 +55,11 @@ def upload_files(payload: UploadRequestSchema):
         try:
             validate_csrf(token)
         except Exception:
-            err = handler.handle(
-                ValueError("Invalid CSRF token"), ErrorCategory.INVALID_INPUT
+            return api_error_response(
+                ValueError("Invalid CSRF token"),
+                ErrorCategory.INVALID_INPUT,
+                handler=handler,
             )
-            return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INVALID_INPUT]
 
         contents = []
         filenames = []
@@ -81,10 +80,10 @@ def upload_files(payload: UploadRequestSchema):
                 try:
                     validator.validate_file_upload(file.filename, file_bytes)
                 except Exception as exc:
-                    err = handler.handle(exc, ErrorCategory.INVALID_INPUT)
-                    return (
-                        jsonify(err.to_dict()),
-                        CODE_TO_STATUS[ErrorCode.INVALID_INPUT],
+                    return api_error_response(
+                        exc,
+                        ErrorCategory.INVALID_INPUT,
+                        handler=handler,
                     )
                 b64 = base64.b64encode(file_bytes).decode("utf-8", errors="replace")
                 mime = file.mimetype or "application/octet-stream"
@@ -95,18 +94,18 @@ def upload_files(payload: UploadRequestSchema):
             filenames = payload.filenames or []
 
         if not contents or not filenames:
-            err = handler.handle(
-                ValueError("No file provided"), ErrorCategory.INVALID_INPUT
+            return api_error_response(
+                ValueError("No file provided"),
+                ErrorCategory.INVALID_INPUT,
+                handler=handler,
             )
-            return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INVALID_INPUT]
 
         job_id = file_processor.process_file_async(contents[0], filenames[0])
 
         return {"job_id": job_id}, 202
 
     except Exception as e:
-        err = handler.handle(e, ErrorCategory.INTERNAL)
-        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
+        return api_error_response(e, ErrorCategory.INTERNAL, handler=handler)
 
 
 @upload_bp.route("/v1/upload/status/<job_id>", methods=["GET"])

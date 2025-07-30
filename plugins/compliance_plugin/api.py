@@ -9,9 +9,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, Optional
 from flask import Blueprint, request, jsonify
-from error_handling import ErrorCategory, ErrorHandler
-from yosai_framework.errors import CODE_TO_STATUS
-from shared.errors.types import ErrorCode
+from error_handling import ErrorCategory, ErrorHandler, api_error_response
 from flask_apispec import doc
 
 logger = logging.getLogger(__name__)
@@ -53,8 +51,7 @@ class ComplianceAPI:
                 }), 200
             except Exception as e:
                 logger.error(f"Health check failed: {e}")
-                err = self.handler.handle(e, ErrorCategory.INTERNAL)
-                return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
+                return api_error_response(e, ErrorCategory.INTERNAL, handler=self.handler)
         
         @self.blueprint.route('/consent', methods=['POST'])
         @doc(tags=['compliance'], responses={200: 'Success', 400: 'Bad Request', 503: 'Service Unavailable', 500: 'Server Error'})
@@ -78,8 +75,7 @@ class ComplianceAPI:
 
             except Exception as e:
                 logger.error(f"Error granting consent: {e}")
-                err = self.handler.handle(e, ErrorCategory.INTERNAL)
-                return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
+                return api_error_response(e, ErrorCategory.INTERNAL, handler=self.handler)
     
     def register_routes(self, app) -> bool:
         """

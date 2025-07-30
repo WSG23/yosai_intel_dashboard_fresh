@@ -1,7 +1,5 @@
 from flask import Blueprint, jsonify
-from error_handling import ErrorCategory, ErrorHandler
-from yosai_framework.errors import CODE_TO_STATUS
-from shared.errors.types import ErrorCode
+from error_handling import ErrorCategory, ErrorHandler, api_error_response
 from pydantic import BaseModel
 from utils.pydantic_decorators import validate_input, validate_output
 from services.security import refresh_access_token
@@ -27,8 +25,9 @@ class AccessTokenResponse(BaseModel):
 def refresh_token_endpoint(payload: RefreshRequest):
     new_token = refresh_access_token(payload.refresh_token)
     if not new_token:
-        err = handler.handle(
-            PermissionError("invalid refresh token"), ErrorCategory.UNAUTHORIZED
+        return api_error_response(
+            PermissionError("invalid refresh token"),
+            ErrorCategory.UNAUTHORIZED,
+            handler=handler,
         )
-        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.UNAUTHORIZED]
     return {"access_token": new_token}

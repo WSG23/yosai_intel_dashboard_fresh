@@ -4,9 +4,8 @@ import os
 from filelock import FileLock
 from flask import Blueprint, jsonify, request
 from flask_apispec import doc
-from error_handling import ErrorCategory, ErrorHandler
-from yosai_framework.errors import CODE_TO_STATUS
-from shared.errors.types import ErrorCode
+from error_handling import ErrorCategory, ErrorHandler, api_error_response
+
 from pydantic import BaseModel
 
 from utils.pydantic_decorators import validate_input, validate_output
@@ -72,6 +71,5 @@ def update_settings(payload: SettingsSchema):
     try:
         _save_settings(settings)
     except Exception as exc:
-        err = handler.handle(exc, ErrorCategory.INTERNAL)
-        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
+        return api_error_response(exc, ErrorCategory.INTERNAL, handler=handler)
     return {"status": "success", "settings": settings}, 200

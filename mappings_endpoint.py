@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, request
-from error_handling import ErrorCategory, ErrorHandler
-from yosai_framework.errors import CODE_TO_STATUS
-from shared.errors.types import ErrorCode
+from error_handling import ErrorCategory, ErrorHandler, api_error_response
+
 from flask_apispec import doc
 from pydantic import BaseModel
 
@@ -61,21 +60,20 @@ def save_column_mappings_route(payload: FileMappingSchema):
         mappings = payload.mappings or {}
 
         if not file_id:
-            err = handler.handle(
-                ValueError("file_id is required"), ErrorCategory.INVALID_INPUT
+            return api_error_response(
+                ValueError("file_id is required"),
+                ErrorCategory.INVALID_INPUT,
+                handler=handler,
             )
-            return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INVALID_INPUT]
 
         service = container.get("consolidated_learning_service")
         service.save_column_mappings(file_id, mappings)
 
         return {"status": "success"}, 200
     except KeyError as exc:
-        err = handler.handle(exc, ErrorCategory.INTERNAL)
-        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
+        return api_error_response(exc, ErrorCategory.INTERNAL, handler=handler)
     except Exception as exc:
-        err = handler.handle(exc, ErrorCategory.INTERNAL)
-        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
+        return api_error_response(exc, ErrorCategory.INTERNAL, handler=handler)
 
 
 @mappings_bp.route("/v1/mappings/devices", methods=["POST"])
@@ -93,21 +91,20 @@ def save_device_mappings_route(payload: FileMappingSchema):
         mappings = payload.mappings or {}
 
         if not file_id:
-            err = handler.handle(
-                ValueError("file_id is required"), ErrorCategory.INVALID_INPUT
+            return api_error_response(
+                ValueError("file_id is required"),
+                ErrorCategory.INVALID_INPUT,
+                handler=handler,
             )
-            return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INVALID_INPUT]
 
         service = container.get("device_learning_service")
         service.save_device_mappings(file_id, mappings)
 
         return {"status": "success"}, 200
     except KeyError as exc:
-        err = handler.handle(exc, ErrorCategory.INTERNAL)
-        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
+        return api_error_response(exc, ErrorCategory.INTERNAL, handler=handler)
     except Exception as exc:
-        err = handler.handle(exc, ErrorCategory.INTERNAL)
-        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
+        return api_error_response(exc, ErrorCategory.INTERNAL, handler=handler)
 
 
 @mappings_bp.route("/v1/mappings/save", methods=["POST"])
@@ -154,8 +151,7 @@ def save_mappings(payload: MappingSaveSchema):
         return {"status": "success"}, 200
 
     except Exception as e:
-        err = handler.handle(e, ErrorCategory.INTERNAL)
-        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
+        return api_error_response(e, ErrorCategory.INTERNAL, handler=handler)
 
 
 @mappings_bp.route("/v1/process-enhanced", methods=["POST"])
@@ -181,10 +177,11 @@ def process_enhanced_data(payload: ProcessSchema):
         df = stored_data.get(filename)
 
         if df is None:
-            err = handler.handle(
-                FileNotFoundError("File data not found"), ErrorCategory.NOT_FOUND
+            return api_error_response(
+                FileNotFoundError("File data not found"),
+                ErrorCategory.NOT_FOUND,
+                handler=handler,
             )
-            return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.NOT_FOUND]
 
         # Apply column mappings (rename columns)
         if column_mappings:
@@ -213,5 +210,4 @@ def process_enhanced_data(payload: ProcessSchema):
         }, 200
 
     except Exception as e:
-        err = handler.handle(e, ErrorCategory.INTERNAL)
-        return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INTERNAL]
+        return api_error_response(e, ErrorCategory.INTERNAL, handler=handler)
