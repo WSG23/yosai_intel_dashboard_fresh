@@ -17,7 +17,7 @@ from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
 
 from core.security import RateLimiter
 from error_handling.middleware import ErrorHandlingMiddleware
-from services.security import verify_service_jwt
+from services.auth import verify_jwt_token
 from services.streaming.service import StreamingService
 from shared.errors.types import ErrorCode
 from tracing import trace_async_operation
@@ -60,18 +60,14 @@ async def rate_limit(request: Request, call_next):
     return await call_next(request)
 
 
-def verify_token(authorization: str = Header("")) -> None:
+def verify_token(authorization: str = Header("")) -> dict:
     if not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
         )
     token = authorization.split(" ", 1)[1]
-    if not verify_service_jwt(token):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
-        )
+    return verify_jwt_token(token)
 
 
 async def _consume_loop() -> None:
