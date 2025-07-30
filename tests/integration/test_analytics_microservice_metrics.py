@@ -13,7 +13,7 @@ services_stub.__path__ = [str(SERVICES_PATH)]
 sys.modules.setdefault("services", services_stub)
 
 # Ensure JWT_SECRET for microservice
-os.environ.setdefault("JWT_SECRET", "test")
+os.environ.setdefault("JWT_SECRET", os.urandom(16).hex())
 
 # Stub metrics and tracing instrumentation
 prom_stub = types.ModuleType("prometheus_fastapi_instrumentator")

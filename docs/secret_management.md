@@ -7,6 +7,10 @@ This guide covers how secrets are handled in the Yōsai Intel Dashboard.
 The application expects several secrets to be provided via environment
 variables, Docker secrets, or a cloud secret manager:
 
+Avoid hard coding these values in code or configuration files. Generate
+them dynamically with `os.urandom` during testing or store them securely
+in your secret backend.
+
 - `SECRET_KEY` – Flask and Dash session signing key
 - `DB_PASSWORD` – database account password
 - `AUTH0_CLIENT_ID` – Auth0 application identifier

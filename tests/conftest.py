@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import sys
 import types
 from pathlib import Path
@@ -422,11 +423,15 @@ def sample_doors() -> list[Door]:
 @pytest.fixture(autouse=True)
 def env_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     """Provide default environment variables for tests."""
+
+    def _rand() -> str:
+        return os.urandom(16).hex()
+
     required = {
-        "SECRET_KEY": "test",
-        "DB_PASSWORD": "pwd",
+        "SECRET_KEY": _rand(),
+        "DB_PASSWORD": _rand(),
         "AUTH0_CLIENT_ID": "cid",
-        "AUTH0_CLIENT_SECRET": "secret",
+        "AUTH0_CLIENT_SECRET": _rand(),
         "AUTH0_DOMAIN": "domain",
         "AUTH0_AUDIENCE": "aud",
     }

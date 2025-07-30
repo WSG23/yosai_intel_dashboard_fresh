@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from config import create_config_manager
@@ -19,6 +20,6 @@ def set_env(monkeypatch, secret: str) -> None:
 
 
 def test_invalid_secrets_raise(monkeypatch):
-    set_env(monkeypatch, "change-me")
+    set_env(monkeypatch, os.urandom(16).hex())
     with pytest.raises(ValueError):
         create_config_manager()

@@ -8,7 +8,8 @@ from config.dynamic_config import DynamicConfigManager
 
 
 def test_yaml_and_env_loading(monkeypatch, tmp_path):
-    yaml_text = """
+    secret = os.urandom(16).hex()
+    yaml_text = f"""
 app:
   title: "Demo ${APP_EXTRA}"
 database:
@@ -21,8 +22,8 @@ security:
 
     monkeypatch.setenv("YOSAI_CONFIG_FILE", str(path))
     monkeypatch.setenv("APP_EXTRA", "\u0394")
-    monkeypatch.setenv("SECRET_VAR", "secret")
-    monkeypatch.setenv("SECRET_KEY", "secret")
+    monkeypatch.setenv("SECRET_VAR", secret)
+    monkeypatch.setenv("SECRET_KEY", secret)
     # required env vars
     monkeypatch.setenv("DB_PASSWORD", "pwd")
     monkeypatch.setenv("AUTH0_CLIENT_ID", "cid")
@@ -44,11 +45,12 @@ def test_json_env_rules_parsed(monkeypatch):
 def test_env_overrides_applied(monkeypatch):
     monkeypatch.setenv("YOSAI_DATABASE_HOST", "db.example.com")
     monkeypatch.setenv("YOSAI_DATABASE_PORT", "1234")
-    monkeypatch.setenv("SECRET_KEY", "s")
-    monkeypatch.setenv("YOSAI_SECURITY_SECRET_KEY", "s")
-    monkeypatch.setenv("YOSAI_DATABASE_PASSWORD", "pwd")
+    secret = os.urandom(16).hex()
+    monkeypatch.setenv("SECRET_KEY", secret)
+    monkeypatch.setenv("YOSAI_SECURITY_SECRET_KEY", secret)
+    monkeypatch.setenv("YOSAI_DATABASE_PASSWORD", os.urandom(16).hex())
     monkeypatch.setenv("AUTH0_CLIENT_ID", "cid")
-    monkeypatch.setenv("AUTH0_CLIENT_SECRET", "secret")
+    monkeypatch.setenv("AUTH0_CLIENT_SECRET", os.urandom(16).hex())
     monkeypatch.setenv("AUTH0_DOMAIN", "dom")
     monkeypatch.setenv("AUTH0_AUDIENCE", "aud")
 
@@ -69,11 +71,12 @@ security: {}
     path.write_text(yaml_text, encoding="utf-8")
 
     monkeypatch.setenv("YOSAI_CONFIG_FILE", str(path))
-    monkeypatch.setenv("SECRET_KEY", "secret")
-    monkeypatch.setenv("YOSAI_SECURITY_SECRET_KEY", "secret")
-    monkeypatch.setenv("YOSAI_DATABASE_PASSWORD", "envpass")
+    secret = os.urandom(16).hex()
+    monkeypatch.setenv("SECRET_KEY", secret)
+    monkeypatch.setenv("YOSAI_SECURITY_SECRET_KEY", secret)
+    monkeypatch.setenv("YOSAI_DATABASE_PASSWORD", os.urandom(16).hex())
     monkeypatch.setenv("AUTH0_CLIENT_ID", "cid")
-    monkeypatch.setenv("AUTH0_CLIENT_SECRET", "csecret")
+    monkeypatch.setenv("AUTH0_CLIENT_SECRET", os.urandom(16).hex())
     monkeypatch.setenv("AUTH0_DOMAIN", "domain")
     monkeypatch.setenv("AUTH0_AUDIENCE", "aud")
 

@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 
 from config import create_config_manager
@@ -13,23 +14,24 @@ def test_dynamic_config_default_display_rows():
 
 
 def test_config_manager_loads_max_display_rows(tmp_path, monkeypatch):
-    yaml = """
+    secret = os.urandom(16).hex()
+    yaml = f"""
 app:
   title: Test
 database:
   name: test.db
 security:
-  secret_key: test
+  secret_key: {secret}
 analytics:
   max_display_rows: 123
 """
     path = tmp_path / "config.yaml"
     path.write_text(yaml)
     envs = {
-        "SECRET_KEY": "x",
-        "DB_PASSWORD": "x",
+        "SECRET_KEY": secret,
+        "DB_PASSWORD": os.urandom(16).hex(),
         "AUTH0_CLIENT_ID": "x",
-        "AUTH0_CLIENT_SECRET": "x",
+        "AUTH0_CLIENT_SECRET": os.urandom(16).hex(),
         "AUTH0_DOMAIN": "x",
         "AUTH0_AUDIENCE": "x",
     }
