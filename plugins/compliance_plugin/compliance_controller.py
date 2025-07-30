@@ -30,6 +30,18 @@ compliance_bp = Blueprint("compliance", __name__, url_prefix="/v1/compliance")
 handler = ErrorHandler()
 
 
+def _parse_int_param(param_name: str, default: int) -> int:
+    """Return sanitized integer query param or *default* if invalid."""
+    value = request.args.get(param_name)
+    if value is None:
+        return default
+
+    validator = SecurityValidator()
+    result = validator.validate_input(str(value), param_name)
+    sanitized = str(result.get("sanitized", value))
+    return int(sanitized) if sanitized.isdigit() else default
+
+
 def get_services() -> tuple[ConsentService, DSARService, ComplianceAuditLogger]:
     """Get compliance services from DI container"""
     container = Container()
@@ -415,7 +427,7 @@ def get_pending_dsar_requests():
           description: Pending DSAR requests retrieved
     """
     try:
-        due_within_days = request.args.get("due_within_days", 7, type=int)
+        due_within_days = _parse_int_param("due_within_days", 7)
 
         # Get services
         _, dsar_service, audit_logger = get_services()
@@ -526,7 +538,7 @@ def get_my_audit_trail():
           description: Audit trail retrieved
     """
     try:
-        days = request.args.get("days", 30, type=int)
+        days = _parse_int_param("days", 30)
         if days < 1 or days > 365:
             return jsonify({"error": "Days must be between 1 and 365"}), 400
 
