@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import random
 import time
+import logging
 from pathlib import Path
 from typing import Dict, List
 
 import yaml
 
 from ..locust.utils import EVENT_TYPES, random_user_id
+
+logger = logging.getLogger(__name__)
 
 
 def load_pattern(path: str) -> Dict:
@@ -47,4 +50,4 @@ if __name__ == "__main__":
     data = generate_events(args.pattern, args.count)
     with args.output.open("w", encoding="utf-8") as fh:
         json.dump(data, fh)
-    print(f"Generated {args.count} events to {args.output}")
+    logger.info("Generated %d events to %s", args.count, args.output)

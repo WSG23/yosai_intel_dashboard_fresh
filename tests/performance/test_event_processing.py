@@ -1,7 +1,10 @@
 import random
 import time
 import uuid
+import logging
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 class PerformanceTestRunner:
@@ -28,7 +31,9 @@ class PerformanceTestRunner:
             self.process_event(event)
         end = time.perf_counter()
         total = end - start
-        print(f"Processed {self.num_events} events in {total:.2f} seconds")
+        logger.info(
+            "Processed %d events in %.2f seconds", self.num_events, total
+        )
         return total
 
 

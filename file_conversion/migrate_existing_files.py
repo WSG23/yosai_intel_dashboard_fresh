@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .storage_manager import StorageManager
 
@@ -12,13 +15,13 @@ def main() -> None:
     storage = StorageManager()
     pkl_file = Path("Demo3_data_copy.csv.pkl")
     success, message = storage.migrate_pkl_to_parquet(pkl_file)
-    print(message)
+    logger.info(message)
     if success:
         df, err = storage.load_dataframe(pkl_file.with_suffix("").name)
         if err:
-            print(f"Load error: {err}")
+            logger.error("Load error: %s", err)
         else:
-            print(df.head())
+            logger.info("%s", df.head())
 
 
 if __name__ == "__main__":

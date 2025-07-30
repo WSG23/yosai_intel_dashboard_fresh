@@ -6,10 +6,13 @@ Test Analytics with callback fix applied
 import asyncio
 import json
 import sys
+import logging
 from pathlib import Path
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+
+logger = logging.getLogger(__name__)
 
 # Apply callback patch first
 try:
@@ -19,14 +22,14 @@ try:
         CallbackManager, "register_handler"
     ):
         CallbackManager.register_handler = CallbackManager.handle_register
-        print("✅ Callback patch applied")
+        logger.info("✅ Callback patch applied")
 except Exception as e:
-    print(f"⚠️  Callback patch failed: {e}")
+    logger.warning("⚠️  Callback patch failed: %s", e)
 
 
 async def test_analytics_with_fix():
     try:
-        print("=== TESTING ANALYTICS WITH CALLBACK FIX ===")
+        logger.info("=== TESTING ANALYTICS WITH CALLBACK FIX ===")
 
         import pandas as pd
 
@@ -36,38 +39,38 @@ async def test_analytics_with_fix():
         parquet_path = Path("temp/uploaded_data/Enhanced_Security_Demo.csv.parquet")
         df = pd.read_parquet(parquet_path)
 
-        print(f"Data loaded: {len(df)} access events")
-        print(f"Unique employees: {df['Employee Code'].nunique()}")
-        print(f"Unique doors: {df['Door Location'].nunique()}")
+        logger.info("Data loaded: %d access events", len(df))
+        logger.info("Unique employees: %d", df['Employee Code'].nunique())
+        logger.info("Unique doors: %d", df['Door Location'].nunique())
 
         # Initialize analytics service (should work without callback errors now)
-        print("\n--- Initializing AnalyticsService ---")
+        logger.info("\n--- Initializing AnalyticsService ---")
         try:
             analytics = AnalyticsService()
-            print("✅ AnalyticsService initialized successfully!")
+            logger.info("✅ AnalyticsService initialized successfully!")
 
             # Test health check
             health = analytics.health_check()
-            print(f"Health check: {health}")
+            logger.info("Health check: %s", health)
 
         except Exception as e:
-            print(f"❌ AnalyticsService initialization failed: {e}")
+            logger.error("❌ AnalyticsService initialization failed: %s", e)
             return {"success": False, "error": str(e)}
 
         result = {"success": True, "tests": {}}
 
         # Test 1: Dashboard Summary
-        print("\n--- Dashboard Summary ---")
+        logger.info("\n--- Dashboard Summary ---")
         try:
             summary = analytics.get_dashboard_summary()
             result["tests"]["dashboard_summary"] = {"success": True, "result": summary}
-            print(f"✅ Dashboard summary: {summary.get('status', 'unknown')}")
+            logger.info("✅ Dashboard summary: %s", summary.get('status', 'unknown'))
         except Exception as e:
             result["tests"]["dashboard_summary"] = {"success": False, "error": str(e)}
-            print(f"❌ Dashboard summary failed: {e}")
+            logger.error("❌ Dashboard summary failed: %s", e)
 
         # Test 2: Access Pattern Analysis
-        print("\n--- Access Pattern Analysis ---")
+        logger.info("\n--- Access Pattern Analysis ---")
         try:
             access_patterns = analytics.analyze_access_patterns(
                 days=1
@@ -76,57 +79,56 @@ async def test_analytics_with_fix():
                 "success": True,
                 "result": access_patterns,
             }
-            print(
-                f"✅ Access patterns found: {len(access_patterns.get('patterns', []))}"
+            logger.info(
+                "✅ Access patterns found: %d",
+                len(access_patterns.get('patterns', [])),
             )
         except Exception as e:
             result["tests"]["access_patterns"] = {"success": False, "error": str(e)}
-            print(f"❌ Access patterns failed: {e}")
+            logger.error("❌ Access patterns failed: %s", e)
 
         # Test 3: Anomaly Detection
-        print("\n--- Anomaly Detection ---")
+        logger.info("\n--- Anomaly Detection ---")
         try:
             anomalies = analytics.detect_anomalies(df)
             result["tests"]["anomaly_detection"] = {
                 "success": True,
                 "result": anomalies,
             }
-            print(
-                f"✅ Anomalies detected: {len(anomalies) if isinstance(anomalies, list) else 'N/A'}"
+            logger.info(
+                "✅ Anomalies detected: %s",
+                len(anomalies) if isinstance(anomalies, list) else "N/A",
             )
         except Exception as e:
             result["tests"]["anomaly_detection"] = {"success": False, "error": str(e)}
-            print(f"❌ Anomaly detection failed: {e}")
+            logger.error("❌ Anomaly detection failed: %s", e)
 
         # Test 4: Data Processing
-        print("\n--- Data Processing ---")
+        logger.info("\n--- Data Processing ---")
         try:
             processed = analytics.clean_uploaded_dataframe(df)
             result["tests"]["data_processing"] = {
                 "success": True,
                 "rows": len(processed),
             }
-            print(f"✅ Data processed: {len(processed)} rows")
+            logger.info("✅ Data processed: %d rows", len(processed))
         except Exception as e:
             result["tests"]["data_processing"] = {"success": False, "error": str(e)}
-            print(f"❌ Data processing failed: {e}")
+            logger.error("❌ Data processing failed: %s", e)
 
-        print("\n=== ANALYTICS TESTING WITH FIX COMPLETE ===")
+        logger.info("\n=== ANALYTICS TESTING WITH FIX COMPLETE ===")
         return result
 
     except Exception as e:
-        print(f"Analytics testing failed: {e}")
-        import traceback
-
-        traceback.print_exc()
+        logger.exception("Analytics testing failed: %s", e)
         return {"success": False, "error": str(e)}
 
 
 def main():
     result = asyncio.run(test_analytics_with_fix())
-    print("\n" + "=" * 50)
-    print("FINAL RESULTS:")
-    print(json.dumps(result, indent=2, default=str))
+    logger.info("\n" + "=" * 50)
+    logger.info("FINAL RESULTS:")
+    logger.info(json.dumps(result, indent=2, default=str))
 
 
 if __name__ == "__main__":
