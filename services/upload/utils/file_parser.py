@@ -6,6 +6,7 @@ Handles Unicode surrogate characters safely
 import io
 import json
 import logging
+from unicode_toolkit import safe_encode_text
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -126,7 +127,11 @@ def process_uploaded_file(
         return {"status": "success", "data": df, "filename": filename, "error": None}
 
     except Exception as e:
-        logger.error(f"File processing error for {filename}: {e}")
+        logger.error(
+            "File processing error for %s: %s",
+            safe_encode_text(filename),
+            e,
+        )
         return {"status": "error", "error": str(e), "data": None, "filename": filename}
 
 
