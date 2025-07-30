@@ -53,6 +53,115 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
+  /ai/suggest-devices:
+    post:
+      summary: Suggest device mappings
+      tags: [Analytics]
+      responses:
+        '200':
+          description: Successful response
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /mappings/columns:
+    post:
+      summary: Save column mappings
+      tags: [Analytics]
+      responses:
+        '200':
+          description: Successful response
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /mappings/devices:
+    post:
+      summary: Save device mappings
+      tags: [Analytics]
+      responses:
+        '200':
+          description: Successful response
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /mappings/save:
+    post:
+      summary: Save mappings
+      tags: [Analytics]
+      responses:
+        '200':
+          description: Successful response
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /process-enhanced:
+    post:
+      summary: Process data with mappings
+      tags: [Analytics]
+      responses:
+        '200':
+          description: Successful response
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /settings:
+    get:
+      summary: Get user settings
+      tags: [Analytics]
+      responses:
+        '200':
+          description: Successful response
+    post:
+      summary: Update user settings
+      tags: [Analytics]
+      responses:
+        '200':
+          description: Successful response
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      summary: Update user settings
+      tags: [Analytics]
+      responses:
+        '200':
+          description: Successful response
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /token/refresh:
+    post:
+      summary: Refresh access token
+      tags: [Analytics]
+      responses:
+        '200':
+          description: Successful response
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /upload:
+    post:
+      summary: Upload a file
+      tags: [Analytics]
+      responses:
+        '202':
+          $ref: '#/components/responses/Accepted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /upload/status/{job_id}:
+    get:
+      summary: Get upload status
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      tags: [Analytics]
+      responses:
+        '200':
+          description: Successful response
 
 components:
   securitySchemes:
@@ -127,3 +236,17 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Accepted:
+      description: Accepted
