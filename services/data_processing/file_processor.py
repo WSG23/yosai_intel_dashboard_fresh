@@ -137,8 +137,27 @@ def process_uploaded_file(
         # Decode base64 content
         import base64
 
-        content_type, content_string = contents.split(",")
-        decoded = base64.b64decode(content_string)
+        if "," not in contents:
+            return {
+                "success": False,
+                "error": "Invalid data URI",
+                "data": None,
+                "filename": filename,
+            }
+
+        _, content_string = contents.split(",", 1)
+        decoded = base64.b64decode(content_string, validate=True)
+
+        validator = SecurityValidator()
+        meta = validator.validate_file_meta(filename, len(decoded))
+        if not meta["valid"]:
+            return {
+                "success": False,
+                "error": "; ".join(meta["issues"]),
+                "data": None,
+                "filename": filename,
+            }
+        filename = meta["filename"]
 
         # Safe Unicode processing
         text_content = UnicodeFileProcessor.safe_decode_content(decoded)
@@ -158,7 +177,7 @@ def process_uploaded_file(
             df = pd.read_excel(io.BytesIO(decoded))
         else:
             return {
-                "status": "error",
+                "success": False,
                 "error": f"Unsupported file type: {filename}",
                 "data": None,
                 "filename": filename,
@@ -167,11 +186,11 @@ def process_uploaded_file(
         # Sanitize Unicode in DataFrame
         df = UnicodeFileProcessor.sanitize_dataframe_unicode(df)
 
-        return {"status": "success", "data": df, "filename": filename, "error": None}
+        return {"success": True, "data": df, "filename": filename, "error": None}
 
     except Exception as e:
         logger.error(f"File processing error for {filename}: {e}")
-        return {"status": "error", "error": str(e), "data": None, "filename": filename}
+        return {"success": False, "error": str(e), "data": None, "filename": filename}
 
 
 def create_file_preview(
