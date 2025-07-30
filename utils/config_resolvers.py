@@ -4,9 +4,31 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.config import get_ai_confidence_threshold as default_ai_confidence_threshold
-from core.config import get_max_upload_size_mb as default_max_upload_size_mb
-from core.config import get_upload_chunk_size as default_upload_chunk_size
+def _default_ai_confidence_threshold() -> float:
+    try:
+        from core.config import get_ai_confidence_threshold
+
+        return get_ai_confidence_threshold()
+    except Exception:
+        return 0.0
+
+
+def _default_max_upload_size_mb() -> int:
+    try:
+        from core.config import get_max_upload_size_mb
+
+        return get_max_upload_size_mb()
+    except Exception:
+        return 0
+
+
+def _default_upload_chunk_size() -> int:
+    try:
+        from core.config import get_upload_chunk_size
+
+        return get_upload_chunk_size()
+    except Exception:
+        return 0
 
 
 def resolve_ai_confidence_threshold(cfg: Any | None = None) -> float:
@@ -18,7 +40,7 @@ def resolve_ai_confidence_threshold(cfg: Any | None = None) -> float:
             return cfg.performance.ai_confidence_threshold
         if hasattr(cfg, "ai_threshold"):
             return cfg.ai_threshold
-    return default_ai_confidence_threshold()
+    return _default_ai_confidence_threshold()
 
 
 def resolve_max_upload_size_mb(cfg: Any | None = None) -> int:
@@ -30,7 +52,7 @@ def resolve_max_upload_size_mb(cfg: Any | None = None) -> int:
             return cfg.max_size_mb
         if hasattr(cfg, "security") and hasattr(cfg.security, "max_upload_mb"):
             return cfg.security.max_upload_mb
-    return default_max_upload_size_mb()
+    return _default_max_upload_size_mb()
 
 
 def resolve_upload_chunk_size(cfg: Any | None = None) -> int:
@@ -40,7 +62,7 @@ def resolve_upload_chunk_size(cfg: Any | None = None) -> int:
             return cfg.uploads.DEFAULT_CHUNK_SIZE
         if hasattr(cfg, "chunk_size"):
             return cfg.chunk_size
-    return default_upload_chunk_size()
+    return _default_upload_chunk_size()
 
 
 __all__ = [
