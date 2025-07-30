@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
 
-
 _cache_manager = InMemoryCacheManager(CacheConfig())
 
 

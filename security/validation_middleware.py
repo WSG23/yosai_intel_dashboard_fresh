@@ -12,8 +12,7 @@ from validation.security_validator import SecurityValidator
 
 
 class Validator(Protocol):
-    def validate(self, data: str) -> str:
-        ...
+    def validate(self, data: str) -> str: ...
 
 
 class ValidationOrchestrator:

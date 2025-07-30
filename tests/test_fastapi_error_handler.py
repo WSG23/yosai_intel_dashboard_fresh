@@ -1,8 +1,9 @@
 from fastapi import FastAPI
-from fastapi.testclient import TestClient
 from fastapi.responses import JSONResponse
-from yosai_framework.errors import ServiceError, error_response
+from fastapi.testclient import TestClient
+
 from shared.errors.types import ErrorCode
+from yosai_framework.errors import ServiceError, error_response
 
 app = FastAPI()
 

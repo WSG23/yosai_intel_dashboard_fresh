@@ -1,6 +1,7 @@
-from file_processing import exporter
 import pandas as pd
 import pytest
+
+from file_processing import exporter
 
 
 def test_sanitize_path(tmp_path):

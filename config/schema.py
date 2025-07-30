@@ -8,6 +8,8 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, model_validator
 
 from .app_config import UploadConfig
+from .base import Config as DataclassConfig
+from .base import require_env_var
 from .cache_config import CacheConfig
 from .constants import (
     DEFAULT_APP_HOST,
@@ -18,7 +20,6 @@ from .constants import (
     DEFAULT_DB_PORT,
 )
 from .dynamic_config import dynamic_config
-from .base import require_env_var, Config as DataclassConfig
 
 
 class AppSettings(BaseModel):
@@ -63,7 +64,9 @@ class DatabaseSettings(BaseModel):
                         f"@{values.host}:{values.port}/{values.name}"
                     )
                 else:
-                    values.url = f"postgresql://{values.host}:{values.port}/{values.name}"
+                    values.url = (
+                        f"postgresql://{values.host}:{values.port}/{values.name}"
+                    )
             elif values.type == "mysql":
                 if values.user and values.password:
                     values.url = (
@@ -88,9 +91,7 @@ class DatabaseSettings(BaseModel):
 class SecuritySettings(BaseModel):
     """Security related settings."""
 
-    secret_key: str = Field(
-        default_factory=lambda: require_env_var("SECRET_KEY")
-    )
+    secret_key: str = Field(default_factory=lambda: require_env_var("SECRET_KEY"))
     session_timeout: int = 3600
     session_timeout_by_role: Dict[str, int] = Field(default_factory=dict)
     cors_origins: List[str] = Field(default_factory=list)
@@ -132,9 +133,7 @@ class AnalyticsSettings(BaseModel):
     def clamp_memory(cls, values: "AnalyticsSettings") -> "AnalyticsSettings":
         if values.max_memory_mb > 500:
             warnings.warn(
-                (
-                    "max_memory_mb %s exceeds security limit of 500 MB; clamping to 500"
-                )
+                ("max_memory_mb %s exceeds security limit of 500 MB; clamping to 500")
                 % values.max_memory_mb,
                 RuntimeWarning,
                 stacklevel=2,
@@ -176,7 +175,9 @@ class ConfigSchema(BaseModel):
     data_quality: DataQualityThresholds = Field(default_factory=DataQualityThresholds)
     cache: CacheConfig = Field(default_factory=CacheConfig)
     uploads: UploadConfig = Field(default_factory=UploadConfig)
-    secret_validation: SecretValidationSettings = Field(default_factory=SecretValidationSettings)
+    secret_validation: SecretValidationSettings = Field(
+        default_factory=SecretValidationSettings
+    )
     environment: str = "development"
     plugin_settings: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
 

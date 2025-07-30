@@ -1,11 +1,11 @@
 import base64
-import pandas as pd
 
-from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
+import pandas as pd
 import pytest
 
 from core.callback_events import CallbackEvent
 from core.callbacks import UnifiedCallbackManager as CallbackManager
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 
 class TemporaryCallback:

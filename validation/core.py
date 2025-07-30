@@ -14,5 +14,4 @@ class ValidationResult:
 class Validator(Protocol):
     """Basic validator interface."""
 
-    def validate(self, data: Any) -> ValidationResult:
-        ...
+    def validate(self, data: Any) -> ValidationResult: ...

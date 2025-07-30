@@ -154,10 +154,11 @@ __all__ = [
     "get_upload_data_service",
 ]
 
+
 @runtime_checkable
 class UploadDataServiceProtocol(Protocol):
     """Interface for upload data services."""
-    
+
     def get_upload_data(self) -> Dict[str, Any]: ...
     def store_upload_data(self, data: Dict[str, Any]) -> bool: ...
     def clear_data(self) -> None: ...
@@ -181,11 +182,11 @@ class UploadDataService(Protocol):
 
     def save_mapping(self, filename: str, mapping: Dict[str, Any]) -> None: ...
 
-@runtime_checkable  
+
+@runtime_checkable
 class DeviceLearningServiceProtocol(Protocol):
     """Interface for device learning services."""
-    
+
     def get_user_device_mappings(self, filename: str) -> Dict[str, Any]: ...
     def save_device_mappings(self, mappings: Dict[str, Any]) -> bool: ...
     def learn_from_data(self, df: pd.DataFrame) -> Dict[str, Any]: ...
-

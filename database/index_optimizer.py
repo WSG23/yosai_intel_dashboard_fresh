@@ -24,12 +24,13 @@ class IndexOptimizer:
             conn = self.connection
             conn_name = conn.__class__.__name__
             if conn_name == "SQLiteConnection":
-                return execute_query(conn, 
-                    "SELECT name AS index_name, stat FROM sqlite_stat1"
+                return execute_query(
+                    conn, "SELECT name AS index_name, stat FROM sqlite_stat1"
                 )
             if conn_name == "PostgreSQLConnection":
-                return execute_query(conn, 
-                    """SELECT pg_class.relname AS index_name, idx_scan, idx_tup_read, idx_tup_fetch\n                       FROM pg_stat_user_indexes\n                       JOIN pg_class ON pg_stat_user_indexes.indexrelid = pg_class.oid"""
+                return execute_query(
+                    conn,
+                    """SELECT pg_class.relname AS index_name, idx_scan, idx_tup_read, idx_tup_fetch\n                       FROM pg_stat_user_indexes\n                       JOIN pg_class ON pg_stat_user_indexes.indexrelid = pg_class.oid""",
                 )
         except Exception as exc:  # pragma: no cover - best effort
             logger.warning("Failed to analyze index usage: %s", exc)
@@ -47,7 +48,8 @@ class IndexOptimizer:
                 rows = execute_query(conn, "PRAGMA index_list(?)", (table,))
                 existing = [row.get("name") for row in rows]
             elif conn_name == "PostgreSQLConnection":
-                rows = execute_query(conn, 
+                rows = execute_query(
+                    conn,
                     "SELECT indexname FROM pg_indexes WHERE tablename=%s",
                     (table,),
                 )

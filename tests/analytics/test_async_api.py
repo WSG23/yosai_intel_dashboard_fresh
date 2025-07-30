@@ -1,4 +1,5 @@
 import json
+
 from fastapi.testclient import TestClient
 
 from services.analytics.async_api import app, event_bus

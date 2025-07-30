@@ -8,15 +8,15 @@ from typing import TYPE_CHECKING, Any, Dict, Iterator, Optional, Tuple
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
 from config.constants import DEFAULT_CHUNK_SIZE
+from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
-from validation.security_validator import SecurityValidator
 from monitoring.data_quality_monitor import (
     DataQualityMetrics,
     get_data_quality_monitor,
 )
 from services.streaming import StreamingService
+from validation.security_validator import SecurityValidator
 
 if TYPE_CHECKING:  # pragma: no cover - used for type hints only
     from mapping.service import MappingService
@@ -123,7 +123,10 @@ class Processor:
                 ) as fh:
                     data = json.load(fh)
 
-            from services.upload_data_service import get_uploaded_filenames, load_mapping
+            from services.upload_data_service import (
+                get_uploaded_filenames,
+                load_mapping,
+            )
 
             for fname in get_uploaded_filenames():
                 try:
@@ -187,7 +190,7 @@ class Processor:
                     meta["column_mappings"][filename] = mappings[filename].get(
                         "column_mappings", {}
                     )
-                
+
                 combined.append(enriched)
                 meta["processed_files"] += 1
                 meta["total_records"] += len(enriched)

@@ -2,16 +2,16 @@ import pandas as pd
 import pytest
 
 from core.exceptions import ValidationError
-from validation.security_validator import SecurityValidator
-from security.xss_validator import XSSPrevention
-from validation.unicode_validator import UnicodeValidator
-from security.unicode_security_validator import UnicodeSecurityConfig
 from security.business_logic_validator import BusinessLogicValidator
-
+from security.unicode_security_validator import UnicodeSecurityConfig
+from security.xss_validator import XSSPrevention
+from validation.security_validator import SecurityValidator
+from validation.unicode_validator import UnicodeValidator
 
 # ----------------------------------------------------------------------
 # SecurityValidator validate_input / XSSPrevention.sanitize_html_output
 # ----------------------------------------------------------------------
+
 
 def test_validate_input_valid():
     validator = SecurityValidator()
@@ -38,6 +38,7 @@ def test_validate_output_invalid():
 # UnicodeValidator
 # ----------------------------------------------------------------------
 
+
 def test_unicode_validator_text():
     validator = UnicodeValidator(UnicodeSecurityConfig(strict_mode=False))
     text = "A\ud800B"
@@ -46,15 +47,16 @@ def test_unicode_validator_text():
 
 def test_unicode_validator_dataframe():
     validator = UnicodeValidator(UnicodeSecurityConfig(strict_mode=False))
-    df = pd.DataFrame({"col": ["bad\u202E", "ok"]})
+    df = pd.DataFrame({"col": ["bad\u202e", "ok"]})
     cleaned = validator.validate_dataframe(df)
-    assert "\u202E" not in cleaned.iloc[0, 0]
+    assert "\u202e" not in cleaned.iloc[0, 0]
     assert cleaned.iloc[0, 0] == "bad"
 
 
 # ----------------------------------------------------------------------
 # BusinessLogicValidator
 # ----------------------------------------------------------------------
+
 
 def test_business_validator_valid():
     validator = BusinessLogicValidator()

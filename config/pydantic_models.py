@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
 from typing import Dict, List, Optional
+
+from pydantic import BaseModel, Field
 
 from .constants import (
     DEFAULT_APP_HOST,
     DEFAULT_APP_PORT,
-    DEFAULT_DB_HOST,
-    DEFAULT_DB_PORT,
     DEFAULT_CACHE_HOST,
     DEFAULT_CACHE_PORT,
+    DEFAULT_DB_HOST,
+    DEFAULT_DB_PORT,
 )
 
 
@@ -51,7 +52,9 @@ class SecurityModel(BaseModel):
     csrf_enabled: bool = True
     max_failed_attempts: int = 5
     max_upload_mb: int = Field(default=50, json_schema_extra={"env": "MAX_UPLOAD_MB"})
-    allowed_file_types: List[str] = Field(default_factory=lambda: [".csv", ".json", ".xlsx"])
+    allowed_file_types: List[str] = Field(
+        default_factory=lambda: [".csv", ".json", ".xlsx"]
+    )
 
 
 class SampleFilesModel(BaseModel):
@@ -64,14 +67,20 @@ class AnalyticsModel(BaseModel):
     max_records_per_query: int = 500000
     enable_real_time: bool = True
     batch_size: int = 25000
-    chunk_size: int = Field(default=100000, json_schema_extra={"env": "ANALYTICS_CHUNK_SIZE"})
+    chunk_size: int = Field(
+        default=100000, json_schema_extra={"env": "ANALYTICS_CHUNK_SIZE"}
+    )
     enable_chunked_analysis: bool = True
     anomaly_detection_enabled: bool = True
     ml_models_path: str = "models/ml"
     data_retention_days: int = 30
-    query_timeout_seconds: int = Field(default=600, json_schema_extra={"env": "QUERY_TIMEOUT_SECONDS"})
+    query_timeout_seconds: int = Field(
+        default=600, json_schema_extra={"env": "QUERY_TIMEOUT_SECONDS"}
+    )
     force_full_dataset_analysis: bool = True
-    max_memory_mb: int = Field(default=500, json_schema_extra={"env": "ANALYTICS_MAX_MEMORY_MB"})
+    max_memory_mb: int = Field(
+        default=500, json_schema_extra={"env": "ANALYTICS_MAX_MEMORY_MB"}
+    )
     max_display_rows: int = 10000
 
 
@@ -93,13 +102,21 @@ class CacheModel(BaseModel):
     use_memory_cache: bool = True
     use_redis: bool = False
     prefix: str = "yosai_"
-    host: str = Field(default=DEFAULT_CACHE_HOST, json_schema_extra={"env": "CACHE_HOST"})
-    port: int = Field(default=DEFAULT_CACHE_PORT, json_schema_extra={"env": "CACHE_PORT"})
+    host: str = Field(
+        default=DEFAULT_CACHE_HOST, json_schema_extra={"env": "CACHE_HOST"}
+    )
+    port: int = Field(
+        default=DEFAULT_CACHE_PORT, json_schema_extra={"env": "CACHE_PORT"}
+    )
 
 
 class UploadModel(BaseModel):
-    folder: str = Field(default="/tmp/uploads", json_schema_extra={"env": "UPLOAD_FOLDER"})
-    max_file_size_mb: int = Field(default=16, json_schema_extra={"env": "MAX_FILE_SIZE_MB"})
+    folder: str = Field(
+        default="/tmp/uploads", json_schema_extra={"env": "UPLOAD_FOLDER"}
+    )
+    max_file_size_mb: int = Field(
+        default=16, json_schema_extra={"env": "MAX_FILE_SIZE_MB"}
+    )
 
     @property
     def max_file_size_bytes(self) -> int:
@@ -119,7 +136,8 @@ class ConfigModel(BaseModel):
     monitoring: MonitoringModel = Field(default_factory=MonitoringModel)
     cache: CacheModel = Field(default_factory=CacheModel)
     uploads: UploadModel = Field(default_factory=UploadModel)
-    secret_validation: SecretValidationModel = Field(default_factory=SecretValidationModel)
+    secret_validation: SecretValidationModel = Field(
+        default_factory=SecretValidationModel
+    )
     environment: str = "development"
     plugin_settings: Dict[str, Dict[str, object]] = Field(default_factory=dict)
-

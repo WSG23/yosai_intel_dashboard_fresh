@@ -2,19 +2,19 @@ from __future__ import annotations
 
 """Shared asyncpg-based query implementations for analytics."""
 
+import asyncio
 import datetime as _dt
 import time
 from typing import Any, Dict, Protocol
-import asyncio
 
 import asyncpg
 
 from database.metrics import queries_total, query_errors_total
 
+
 # a lightweight protocol so both Pool and Connection can be used
 class _Fetcher(Protocol):
-    async def fetch(self, query: str, *args: Any) -> list[asyncpg.Record]:
-        ...
+    async def fetch(self, query: str, *args: Any) -> list[asyncpg.Record]: ...
 
 
 async def fetch_dashboard_summary(conn: _Fetcher, days: int = 7) -> Dict[str, Any]:
@@ -44,7 +44,9 @@ async def fetch_dashboard_summary(conn: _Fetcher, days: int = 7) -> Dict[str, An
             logging.getLogger(__name__).warning("Slow query: %.2fms", elapsed_ms)
     total_events = sum(r["count"] for r in rows) if rows else 0
     success_events = sum(r["count"] for r in rows if r["status"] == "success")
-    success_rate = round((success_events / total_events) * 100, 2) if total_events else 0
+    success_rate = (
+        round((success_events / total_events) * 100, 2) if total_events else 0
+    )
     breakdown = [dict(r) for r in rows]
 
     return {

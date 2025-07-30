@@ -1,11 +1,12 @@
-import pandas as pd
 from typing import Any, Dict, List
 
-from validation.security_validator import SecurityValidator
+import pandas as pd
+
+from core.di_decorators import inject, injectable
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
-from services.upload_data_service import UploadDataService
 from services.data_processing.processor import Processor
-from core.di_decorators import injectable, inject
+from services.upload_data_service import UploadDataService
+from validation.security_validator import SecurityValidator
 
 
 @injectable

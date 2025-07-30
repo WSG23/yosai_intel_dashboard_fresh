@@ -1,5 +1,5 @@
 import time
-from typing import Callable, Awaitable
+from typing import Awaitable, Callable
 
 import psutil
 from fastapi import Request, Response
@@ -14,7 +14,9 @@ class ProfilingMiddleware(BaseHTTPMiddleware):
         self.service = service
         self.proc = psutil.Process()
 
-    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         start_time = time.perf_counter()
         start_mem = self.proc.memory_info().rss / (1024 * 1024)
         try:

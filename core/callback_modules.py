@@ -55,9 +55,7 @@ class CallbackModuleRegistry(BaseModel):
         callback_ids = module.get_callback_ids()
         conflicts = [cid for cid in callback_ids if cid in self._registered_ids]
         if conflicts:
-            logger.error(
-                f"Module {module_id} has conflicting callbacks: {conflicts}"
-            )
+            logger.error(f"Module {module_id} has conflicting callbacks: {conflicts}")
             return False
 
         self._modules[module_id] = module

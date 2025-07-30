@@ -1,12 +1,12 @@
 import logging
 
+from .app import create_standalone_app
 from .config import (
     AI_COLUMN_SERVICE_AVAILABLE,
     AI_DOOR_SERVICE_AVAILABLE,
     CONFIG_SERVICE_AVAILABLE,
     CONTAINER_AVAILABLE,
 )
-from .app import create_standalone_app
 
 
 def run_data_enhancer() -> None:
@@ -16,10 +16,18 @@ def run_data_enhancer() -> None:
     print("=" * 70)
     print("🚀 Starting MVP Data Enhancement Tool - Multi-Building Analysis")
     print("=" * 70)
-    print(f"🔧 AI Column Service: {'✅ Available' if AI_COLUMN_SERVICE_AVAILABLE else '⚠️ Enhanced Fallback'}")
-    print(f"🚪 AI Door Service: {'✅ Available' if AI_DOOR_SERVICE_AVAILABLE else '⚠️ Enhanced Fallback'}")
-    print(f"⚙️ Config Service: {'✅ Available' if CONFIG_SERVICE_AVAILABLE else '⚠️ Fallback'}")
-    print(f"🔌 Service Container: {'✅ Available' if CONTAINER_AVAILABLE else '⚠️ Not Available'}")
+    print(
+        f"🔧 AI Column Service: {'✅ Available' if AI_COLUMN_SERVICE_AVAILABLE else '⚠️ Enhanced Fallback'}"
+    )
+    print(
+        f"🚪 AI Door Service: {'✅ Available' if AI_DOOR_SERVICE_AVAILABLE else '⚠️ Enhanced Fallback'}"
+    )
+    print(
+        f"⚙️ Config Service: {'✅ Available' if CONFIG_SERVICE_AVAILABLE else '⚠️ Fallback'}"
+    )
+    print(
+        f"🔌 Service Container: {'✅ Available' if CONTAINER_AVAILABLE else '⚠️ Not Available'}"
+    )
     print("=" * 70)
 
     app = create_standalone_app()

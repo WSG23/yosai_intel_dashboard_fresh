@@ -10,6 +10,7 @@ from typing import List, Optional
 
 from yosai_intel_dashboard.models.entities import AccessEvent, Door, Person
 from yosai_intel_dashboard.models.enums import AccessResult, BadgeStatus, DoorType
+
 from utils.unicode_handler import UnicodeHandler
 
 logger = logging.getLogger(__name__)

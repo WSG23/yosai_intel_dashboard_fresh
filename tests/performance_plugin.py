@@ -1,4 +1,5 @@
 import inspect
+
 import pytest
 
 DURATION_TOTAL: dict[str, float] = {}

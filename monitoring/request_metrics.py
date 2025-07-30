@@ -1,6 +1,6 @@
 """Prometheus metrics for API request performance."""
 
-from prometheus_client import Histogram, REGISTRY
+from prometheus_client import REGISTRY, Histogram
 from prometheus_client.core import CollectorRegistry
 
 if "api_request_duration_seconds" not in REGISTRY._names_to_collectors:
@@ -15,4 +15,3 @@ else:  # pragma: no cover - defensive in tests
     )
 
 __all__ = ["request_duration"]
-

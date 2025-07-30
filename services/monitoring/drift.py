@@ -27,7 +27,9 @@ def population_stability_index(
     return float(psi)
 
 
-def compute_psi(base: pd.DataFrame, current: pd.DataFrame, *, bins: int = 10) -> Dict[str, float]:
+def compute_psi(
+    base: pd.DataFrame, current: pd.DataFrame, *, bins: int = 10
+) -> Dict[str, float]:
     """Return PSI for all common columns between ``base`` and ``current``."""
     metrics: Dict[str, float] = {}
     for col in base.columns.intersection(current.columns):

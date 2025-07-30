@@ -2,10 +2,10 @@ from __future__ import annotations
 
 """Truly unified callback system combining registry and coordinator."""
 
+import asyncio
 import logging
 import threading
 import time
-import asyncio
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import (
@@ -16,17 +16,17 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Set,
     Tuple,
     Type,
-    Set,
 )
 
 from dash import Dash
 from dash.dependencies import Input, Output, State
 
 from .callback_events import CallbackEvent
-from .error_handling import ErrorSeverity, error_handler, with_retry
 from .callback_registry import CallbackRegistry, ComponentCallbackManager
+from .error_handling import ErrorSeverity, error_handler, with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -435,9 +435,7 @@ class TrulyUnifiedCallbacks:
                     result = wrapped(*args, **kwargs)
                 duration = time.perf_counter() - start
                 if op.timeout and duration > op.timeout:
-                    raise TimeoutError(
-                        f"Operation {op.name} exceeded {op.timeout}s"
-                    )
+                    raise TimeoutError(f"Operation {op.name} exceeded {op.timeout}s")
                 return result
             except Exception as exc:  # pragma: no cover - log and continue
                 error_handler.handle_error(
@@ -459,7 +457,9 @@ class TrulyUnifiedCallbacks:
     ) -> None:
         """Register all callbacks from a component in one consolidated call."""
 
-        component_id = getattr(component_class, "COMPONENT_ID", component_class.__name__)
+        component_id = getattr(
+            component_class, "COMPONENT_ID", component_class.__name__
+        )
 
         if component_id in self._registered_components:
             logger.warning(f"Component {component_id} already registered, skipping")
@@ -484,9 +484,7 @@ class TrulyUnifiedCallbacks:
                     UnifiedUploadController,
                 )
             except Exception as exc:  # pragma: no cover - import errors logged
-                logger.error(
-                    f"Failed to import UnifiedUploadController: {exc}"
-                )
+                logger.error(f"Failed to import UnifiedUploadController: {exc}")
                 return
 
             controller = UnifiedUploadController(callbacks=self)

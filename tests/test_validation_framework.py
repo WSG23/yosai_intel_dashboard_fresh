@@ -1,8 +1,8 @@
 import pytest
 
-from validation.file_validator import FileValidator, CSVFormulaRule, FileSizeRule
-from validation.security_validator import SecurityValidator, XSSRule
+from validation.file_validator import CSVFormulaRule, FileSizeRule, FileValidator
 from validation.rules import CompositeValidator
+from validation.security_validator import SecurityValidator, XSSRule
 
 
 def test_composite_validator_custom_rule():

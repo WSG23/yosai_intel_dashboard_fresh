@@ -1,4 +1,5 @@
 """Basic analytics data processor implementation."""
+
 from __future__ import annotations
 
 from typing import Any, Dict, List
@@ -31,13 +32,17 @@ class DataProcessor(DataProcessorProtocol):
         """Return a very basic data quality summary."""
         return {"rows": len(df)}
 
-    def enrich_data(self, data: pd.DataFrame, enrichment_sources: List[str]) -> pd.DataFrame:
+    def enrich_data(
+        self, data: pd.DataFrame, enrichment_sources: List[str]
+    ) -> pd.DataFrame:
         """Return data unchanged."""
         return data
 
     # ------------------------------------------------------------------
     # Extra helper used by legacy tests
     # ------------------------------------------------------------------
-    def process_dataframe(self, df: pd.DataFrame, config: Dict[str, Any]) -> pd.DataFrame:
+    def process_dataframe(
+        self, df: pd.DataFrame, config: Dict[str, Any]
+    ) -> pd.DataFrame:
         """Compatibility shim calling :meth:`process_access_events`."""
         return self.process_access_events(df)

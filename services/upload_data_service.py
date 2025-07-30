@@ -1,5 +1,6 @@
 import logging
 from typing import Any, Dict, List
+
 try:
     from typing import override
 except ImportError:  # pragma: no cover - for Python <3.12
@@ -114,7 +115,6 @@ def load_mapping(
 def save_mapping(
     filename: str,
     mapping: Dict[str, Any],
-
     service: UploadDataServiceProtocol | None = None,
     container: ServiceContainer | None = None,
 ) -> None:
@@ -131,5 +131,4 @@ __all__ = [
     "load_dataframe",
     "load_mapping",
     "save_mapping",
-
 ]

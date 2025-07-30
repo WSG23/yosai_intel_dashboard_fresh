@@ -14,14 +14,21 @@ if "flask_cors" not in sys.modules:
 if "services" not in sys.modules:
     sys.modules["services"] = importlib.import_module("tests.stubs.services")
 
-from tests.stubs.flask_wtf import CSRFProtect, generate_csrf
-from flask import Flask, jsonify
 import werkzeug
+from flask import Flask, jsonify
+
 from core.service_container import ServiceContainer
+from tests.stubs.flask_wtf import CSRFProtect, generate_csrf
+
 
 class DummyUploadService:
     async def process_uploaded_files(self, contents, filenames):
-        return {"upload_results": [], "file_preview_components": [], "file_info_dict": {}}
+        return {
+            "upload_results": [],
+            "file_preview_components": [],
+            "file_info_dict": {},
+        }
+
 
 def _create_app(monkeypatch):
     container = ServiceContainer()
@@ -29,6 +36,7 @@ def _create_app(monkeypatch):
     monkeypatch.setattr("core.container.container", container, raising=False)
 
     import upload_endpoint
+
     importlib.reload(upload_endpoint)
 
     app = Flask(__name__)

@@ -1,8 +1,11 @@
 """Add RBAC tables"""
+
 from __future__ import annotations
+
 from pathlib import Path
-from alembic import op
+
 import sqlalchemy as sa  # noqa:F401
+from alembic import op
 
 revision = "0002"
 down_revision = "0001"

@@ -16,10 +16,10 @@ from typing import Any, Dict
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from core.service_container import ServiceContainer
-from config.service_registration import register_upload_services
-from services.file_processor_service import FileProcessorService
 from config import create_config_manager
+from config.service_registration import register_upload_services
+from core.service_container import ServiceContainer
+from services.file_processor_service import FileProcessorService
 
 
 def setup_logging(verbose: bool = False) -> None:

@@ -5,15 +5,16 @@ All deprecated individual validators have been removed and consolidated.
 """
 
 from core.exceptions import ValidationError
+from validation import UnicodeValidator
+
 from .attack_detection import AttackDetection
 from .secrets_validator import SecretsValidator, register_health_endpoint
-from .unicode_security_validator import UnicodeSecurityValidator
-from validation import UnicodeValidator
-from .validation_exceptions import SecurityViolation
 from .secure_query_wrapper import (
-    execute_secure_sql,
     execute_secure_command,
+    execute_secure_sql,
 )
+from .unicode_security_validator import UnicodeSecurityValidator
+from .validation_exceptions import SecurityViolation
 
 
 def __getattr__(name: str):
@@ -28,10 +29,8 @@ def __getattr__(name: str):
 
         return _UV
     if name in {"UnicodeSurrogateValidator", "SurrogateHandlingConfig"}:
-        from .unicode_surrogate_validator import (
-            SurrogateHandlingConfig as _SHC,
-            UnicodeSurrogateValidator as _USV,
-        )
+        from .unicode_surrogate_validator import SurrogateHandlingConfig as _SHC
+        from .unicode_surrogate_validator import UnicodeSurrogateValidator as _USV
 
         return {
             "UnicodeSurrogateValidator": _USV,
@@ -39,19 +38,18 @@ def __getattr__(name: str):
         }[name]
     raise AttributeError(name)
 
+
 # Public API - Only current, non-deprecated classes
 __all__ = [
     # Core validation
     "SecurityValidator",
     "ValidationError",
     "SecurityViolation",
-
     # Specialized validators
     "UnicodeSecurityValidator",
     "UnicodeValidator",
     "UnicodeSurrogateValidator",
     "SurrogateHandlingConfig",
-
     # Security utilities
     "AttackDetection",
     "SecretsValidator",

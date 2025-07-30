@@ -7,8 +7,10 @@ from typing import Any, Dict
 import asyncpg
 
 from services.analytics.common_queries import (
-    fetch_dashboard_summary as _fetch_dashboard_summary,
     fetch_access_patterns as _fetch_access_patterns,
+)
+from services.analytics.common_queries import (
+    fetch_dashboard_summary as _fetch_dashboard_summary,
 )
 
 

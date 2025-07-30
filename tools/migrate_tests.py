@@ -31,7 +31,9 @@ class SysModulesVisitor(ast.NodeVisitor):
 
     def visit_Call(self, node: ast.Call) -> None:
         # sys.modules.setdefault("foo", value)
-        if isinstance(node.func, ast.Attribute) and self._is_sys_modules(node.func.value):
+        if isinstance(node.func, ast.Attribute) and self._is_sys_modules(
+            node.func.value
+        ):
             if node.func.attr in {"setdefault", "pop"} and node.args:
                 mod = self._get_const(node.args[0])
                 if mod:
@@ -55,7 +57,12 @@ class SysModulesVisitor(ast.NodeVisitor):
 
     # --------------------------------------------------------------
     def _is_sys_modules(self, node: ast.AST) -> bool:
-        return isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "sys" and node.attr == "modules"
+        return (
+            isinstance(node, ast.Attribute)
+            and isinstance(node.value, ast.Name)
+            and node.value.id == "sys"
+            and node.attr == "modules"
+        )
 
     def _get_sys_modules_key(self, node: ast.AST) -> Optional[str]:
         if isinstance(node, ast.Subscript) and self._is_sys_modules(node.value):
@@ -106,7 +113,10 @@ def process_file(path: Path, apply: bool, show_diff: bool) -> None:
     new_text = apply_patches(text, patches)
     if show_diff:
         diff = difflib.unified_diff(
-            text.splitlines(), new_text.splitlines(), fromfile=str(path), tofile=str(path)
+            text.splitlines(),
+            new_text.splitlines(),
+            fromfile=str(path),
+            tofile=str(path),
         )
         print("\n".join(diff))
     if apply:
@@ -117,7 +127,9 @@ def main(argv: list[str]) -> None:
     parser = argparse.ArgumentParser(
         description="Rewrite sys.modules stubs to use protocol test doubles"
     )
-    parser.add_argument("paths", nargs="*", default=["tests"], help="files or directories to scan")
+    parser.add_argument(
+        "paths", nargs="*", default=["tests"], help="files or directories to scan"
+    )
     parser.add_argument("--apply", action="store_true", help="write changes to disk")
     parser.add_argument("--diff", action="store_true", help="show unified diff")
     args = parser.parse_args(argv[1:])

@@ -17,9 +17,9 @@ from typing import (
 
 import pandas as pd
 
+from core.protocols import FileProcessorProtocol
 from core.service_container import ServiceContainer
 from services.protocols.device_learning import DeviceLearningServiceProtocol
-from core.protocols import FileProcessorProtocol
 
 
 @runtime_checkable
@@ -60,9 +60,6 @@ class UploadValidatorProtocol(Protocol):
     def to_json(self) -> str:
         """Return validator configuration as JSON."""
         ...
-
-
-
 
 
 @runtime_checkable
@@ -229,36 +226,40 @@ def get_device_learning_service(
 
     return _get()
 
+
 @runtime_checkable
 class UploadDataServiceProtocol(Protocol):
     """Protocol for upload data services."""
-    
+
     @abstractmethod
     def get_upload_data(self) -> Dict[str, Any]: ...
-    
+
     @abstractmethod
     def store_upload_data(self, data: Dict[str, Any]) -> bool: ...
-    
+
     @abstractmethod
     def clear_data(self) -> None: ...
 
-@runtime_checkable  
+
+@runtime_checkable
 class DeviceLearningServiceProtocol(Protocol):
     """Protocol for device learning services."""
-    
+
     @abstractmethod
     def get_user_device_mappings(self, filename: str) -> Dict[str, Any]: ...
-    
+
     @abstractmethod
     def save_device_mappings(self, mappings: Dict[str, Any]) -> bool: ...
-    
+
     @abstractmethod
     def learn_from_data(self, df: pd.DataFrame) -> Dict[str, Any]: ...
 
 
 @runtime_checkable
 class FileValidatorServiceProtocol(Protocol):
-    def validate_files(self, contents: List[str], filenames: List[str]) -> Dict[str, str]: ...
+    def validate_files(
+        self, contents: List[str], filenames: List[str]
+    ) -> Dict[str, str]: ...
 
 
 @runtime_checkable
@@ -278,9 +279,17 @@ class LearningCoordinatorProtocol(Protocol):
 
 @runtime_checkable
 class UploadUIBuilderProtocol(Protocol):
-    def build_success_alert(self, filename: str, rows: int, cols: int, prefix: str = "Successfully uploaded", processed: bool = True) -> Any: ...
+    def build_success_alert(
+        self,
+        filename: str,
+        rows: int,
+        cols: int,
+        prefix: str = "Successfully uploaded",
+        processed: bool = True,
+    ) -> Any: ...
     def build_failure_alert(self, message: str) -> Any: ...
     def build_file_preview_component(self, df: pd.DataFrame, filename: str) -> Any: ...
     def build_navigation(self) -> Any: ...
-    def build_processing_stats(self, info: Dict[str, Dict[str, Any]]) -> Dict[str, Any]: ...
-
+    def build_processing_stats(
+        self, info: Dict[str, Dict[str, Any]]
+    ) -> Dict[str, Any]: ...

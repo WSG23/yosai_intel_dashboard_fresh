@@ -8,8 +8,9 @@ if TYPE_CHECKING:
     from .base import Config
 
 from core.exceptions import ConfigurationError
-from .protocols import ConfigTransformerProtocol
+
 from .env_overrides import apply_env_overrides
+from .protocols import ConfigTransformerProtocol
 
 logger = logging.getLogger(__name__)
 

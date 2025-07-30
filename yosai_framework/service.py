@@ -2,22 +2,20 @@ import logging
 import signal
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
-
 import structlog
+from fastapi import FastAPI, HTTPException
 from opentelemetry import trace
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from prometheus_client import (
+    REGISTRY,
+    CollectorRegistry,
     Counter,
     Histogram,
-    REGISTRY,
     start_http_server,
-    CollectorRegistry,
 )
-
 
 from .config import ServiceConfig, load_config
 
@@ -109,9 +107,7 @@ class BaseService:
             )
 
         if "yosai_error_total" not in REGISTRY._names_to_collectors:
-            self.error_total = Counter(
-                "yosai_error_total", "Total errors encountered"
-            )
+            self.error_total = Counter("yosai_error_total", "Total errors encountered")
         else:  # pragma: no cover - defensive
             self.error_total = Counter(
                 "yosai_error_total",
@@ -138,9 +134,7 @@ class BaseService:
         """Initialize OpenTelemetry tracing exported to Jaeger."""
         endpoint = self.config.tracing_endpoint or "http://localhost:14268/api/traces"
         exporter = JaegerExporter(collector_endpoint=endpoint)
-        provider = TracerProvider(
-            resource=Resource.create({"service.name": self.name})
-        )
+        provider = TracerProvider(resource=Resource.create({"service.name": self.name}))
         provider.add_span_processor(BatchSpanProcessor(exporter))
         trace.set_tracer_provider(provider)
 

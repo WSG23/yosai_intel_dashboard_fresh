@@ -20,13 +20,17 @@ def test_gateway_breaker_counts_on_downtime(tmp_path):
     if not shutil.which("docker"):
         pytest.skip("docker not available")
 
-    with PostgresContainer("postgres:15-alpine") as pg, RedisContainer("redis:7-alpine") as redis:
+    with PostgresContainer("postgres:15-alpine") as pg, RedisContainer(
+        "redis:7-alpine"
+    ) as redis:
         pg_host = pg.get_container_host_ip()
         pg_port = pg.get_exposed_port(pg.port)
         redis_host = redis.get_container_host_ip()
         redis_port = redis.get_exposed_port(redis.port_to_expose)
 
-        gateway_image = DockerContainer.from_dockerfile(".", dockerfile="Dockerfile.gateway").build()
+        gateway_image = DockerContainer.from_dockerfile(
+            ".", dockerfile="Dockerfile.gateway"
+        ).build()
         gateway = (
             DockerContainer(gateway_image)
             .with_exposed_ports(8080)

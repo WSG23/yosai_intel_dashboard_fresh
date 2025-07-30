@@ -2,8 +2,9 @@
 """Compliance plugin configuration"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 @dataclass
@@ -68,4 +69,3 @@ class ComplianceConfig:
             field.name: getattr(self, field.name)
             for field in self.__dataclass_fields__.values()
         }
-

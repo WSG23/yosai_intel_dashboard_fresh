@@ -1,6 +1,6 @@
 from examples.debug_deep_analytics import (
-    create_test_dataset,
     check_upload_store,
+    create_test_dataset,
     find_hardcoded_values,
 )
 
@@ -12,7 +12,8 @@ def test_create_test_dataset():
 
 
 def test_check_upload_store(tmp_path, monkeypatch):
-    import types, sys
+    import sys
+    import types
 
     class DummyStore:
         def __init__(self):

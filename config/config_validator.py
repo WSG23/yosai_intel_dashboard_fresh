@@ -10,7 +10,6 @@ from core.exceptions import ConfigurationError
 
 from .protocols import ConfigValidatorProtocol
 
-
 SCHEMA_PATH = Path(__file__).with_name("schema.json")
 try:
     SCHEMA = json.loads(SCHEMA_PATH.read_text())

@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from core.unicode import UnicodeProcessor, sanitize_unicode_input, sanitize_dataframe
+from core.unicode import UnicodeProcessor, sanitize_dataframe, sanitize_unicode_input
 
 
 def test_sanitize_unicode_input_normalizes_and_replaces():

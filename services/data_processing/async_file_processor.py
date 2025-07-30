@@ -15,9 +15,9 @@ from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Tuple
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
-from services.task_queue import create_task, get_status
-from services.rabbitmq_client import RabbitMQClient
 from core.protocols import FileProcessorProtocol
+from services.rabbitmq_client import RabbitMQClient
+from services.task_queue import create_task, get_status
 from utils.memory_utils import check_memory_limit
 
 from .file_processor import UnicodeFileProcessor

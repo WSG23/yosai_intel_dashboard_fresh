@@ -33,7 +33,10 @@ def register_schema(file_path: Path) -> bool:
     url = f"{SCHEMA_REGISTRY_URL}/subjects/{subject}/versions"
     response = requests.post(url, headers=HEADERS, data=payload, timeout=10)
     if response.status_code >= 300:
-        print(f"Failed to register {subject}: {response.status_code} {response.text}", file=sys.stderr)
+        print(
+            f"Failed to register {subject}: {response.status_code} {response.text}",
+            file=sys.stderr,
+        )
         return False
 
     # Try to read version from response, otherwise fetch it

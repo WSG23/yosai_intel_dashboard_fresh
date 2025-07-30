@@ -4,6 +4,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from services.data_enhancer.mapping_utils import get_ai_column_suggestions
+
     AI_COLUMN_SERVICE_AVAILABLE = True
     logger.info("✅ AI Column Service loaded successfully")
 except Exception:  # pragma: no cover - optional dependency

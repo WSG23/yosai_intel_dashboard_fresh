@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+
 class BaseStrategy:
     def apply(self, text: str) -> str:  # pragma: no cover - compatibility stub
         return text

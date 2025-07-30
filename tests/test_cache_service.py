@@ -1,4 +1,4 @@
-from services.analytics.storage.cache import cached, _cache_manager
+from services.analytics.storage.cache import _cache_manager, cached
 
 
 @cached(ttl=1)

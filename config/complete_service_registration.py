@@ -43,7 +43,7 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigValidator,
         create_config_manager,
     )
-    from config.database_manager import DatabaseSettings, DatabaseManager
+    from config.database_manager import DatabaseManager, DatabaseSettings
     from core.logging import LoggingService
     from services.configuration_service import (
         ConfigurationServiceProtocol,

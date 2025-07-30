@@ -4,8 +4,8 @@ from typing import Any
 
 import pandas as pd
 
-from services.upload.utils.file_parser import UnicodeFileProcessor
 from core.config import get_max_display_rows
+from services.upload.utils.file_parser import UnicodeFileProcessor
 
 
 class AsyncUploadProcessor:

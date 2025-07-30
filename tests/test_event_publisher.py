@@ -1,6 +1,6 @@
+import importlib
 import sys
 import types
-import importlib
 from pathlib import Path
 
 sys.modules.setdefault("flask_caching", types.SimpleNamespace(Cache=object))

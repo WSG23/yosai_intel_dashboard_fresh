@@ -4,14 +4,15 @@ This module exposes the main interfaces for the upload domain.
 Other packages should import from here rather than submodules.
 """
 
+from core.protocols import FileProcessorProtocol
 from core.unicode import safe_encode_text
 from unicode_toolkit import decode_upload_content
 from utils.upload_store import UploadedDataStore as UploadStorage
+from validation.security_validator import SecurityValidator
 
 from .ai import AISuggestionService, analyze_device_name_with_ai
 from .controllers.upload_controller import UnifiedUploadController as UploadController
 from .core.processor import UploadProcessingService
-from validation.security_validator import SecurityValidator
 from .helpers import save_ai_training_data
 from .protocols import (
     DeviceLearningServiceProtocol,
@@ -21,7 +22,6 @@ from .protocols import (
     UploadValidatorProtocol,
     get_device_learning_service,
 )
-from core.protocols import FileProcessorProtocol
 
 __all__ = [
     "UploadProcessingServiceProtocol",

@@ -12,5 +12,5 @@ class DummyBus:
 def test_subscribe():
     bus = DummyBus()
     sub = Subscriber(bus)
-    sub.subscribe('evt', lambda x: x)
+    sub.subscribe("evt", lambda x: x)
     assert bus.called

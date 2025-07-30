@@ -3,10 +3,11 @@
 from .async_service import AsyncAnalyticsService, PGAnalyticsRepository
 from .calculator import Calculator, create_calculator
 from .data_loader import DataLoader, create_loader
-from .metrics_calculator import MetricsCalculator
 from .generator import AnalyticsGenerator
-from .processor import AnalyticsProcessor
+from .metrics_calculator import MetricsCalculator
+from .orchestrator import AnalyticsOrchestrator
 from .preparation import prepare_dataframe
+from .processor import AnalyticsProcessor
 from .protocols import (
     AnalyticsServiceProtocol,
     DataProcessorProtocol,
@@ -14,8 +15,6 @@ from .protocols import (
     ReportGeneratorProtocol,
 )
 from .publisher import Publisher
-from .orchestrator import AnalyticsOrchestrator
-
 from .timescale_queries import (
     build_sliding_window_query,
     build_time_bucket_query,

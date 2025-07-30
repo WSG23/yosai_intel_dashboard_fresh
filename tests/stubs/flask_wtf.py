@@ -1,5 +1,6 @@
+from flask import abort, current_app, request, session
 from itsdangerous import URLSafeTimedSerializer
-from flask import current_app, session, request, abort
+
 
 class CSRFProtect:
     def __init__(self, app=None):
@@ -17,14 +18,17 @@ class CSRFProtect:
             except Exception:
                 abort(400)
 
+
 def _serializer():
     secret = current_app.config.get("SECRET_KEY", "secret")
     return URLSafeTimedSerializer(secret)
+
 
 def generate_csrf():
     token = _serializer().dumps("csrf")
     session["_csrf_token"] = token
     return token
+
 
 def validate_csrf(token):
     if not token:

@@ -1,4 +1,5 @@
 import types
+
 import pytest
 from cryptography.fernet import Fernet
 
@@ -127,4 +128,3 @@ security:
     mgr = SecureConfigManager()
 
     assert mgr.get_database_config().password == "aws-secret"
-

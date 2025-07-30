@@ -1,6 +1,7 @@
 import textwrap
 from pathlib import Path
-from scripts.update_imports import update_file, main
+
+from scripts.update_imports import main, update_file
 
 
 def _run_update(tmp_path: Path, content: str) -> str:

@@ -16,9 +16,7 @@ def handle_profile(callback_id: str):
                 result = await func(*args, **kwargs)
                 duration_ms = (time.perf_counter() - start) * 1000
                 if duration_ms > 100:
-                    logging.warning(
-                        f"Callback {callback_id} took {duration_ms:.2f} ms"
-                    )
+                    logging.warning(f"Callback {callback_id} took {duration_ms:.2f} ms")
                 return result
 
             return async_wrapper

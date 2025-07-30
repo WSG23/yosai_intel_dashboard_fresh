@@ -30,45 +30,89 @@ class UploadUIBuilder:
             [
                 html.H6(
                     [
-                        html.I(className="fas fa-check-circle me-2", **{"aria-hidden": "true"}),
+                        html.I(
+                            className="fas fa-check-circle me-2",
+                            **{"aria-hidden": "true"},
+                        ),
                         f"{prefix} {filename}",
                     ],
                     className="alert-heading",
                 ),
-                html.P([details, html.Br(), html.Small(f"Processed at {timestamp}", className="text-muted")]),
+                html.P(
+                    [
+                        details,
+                        html.Br(),
+                        html.Small(f"Processed at {timestamp}", className="text-muted"),
+                    ]
+                ),
             ],
             color="success",
             className="mb-3",
         )
 
     def build_failure_alert(self, message: str) -> dbc.Alert:
-        return dbc.Alert([
-            html.H6("Upload Failed", className="alert-heading"),
-            html.P(message),
-        ], color="danger")
+        return dbc.Alert(
+            [
+                html.H6("Upload Failed", className="alert-heading"),
+                html.P(message),
+            ],
+            color="danger",
+        )
 
     def build_file_preview_component(self, df: pd.DataFrame, filename: str) -> html.Div:
         preview_info = create_file_preview(df)
-        return html.Div([
-            create_file_preview_ui(preview_info),
-            dbc.Card([
-                dbc.CardHeader([html.H6("📋 Data Configuration", className="mb-0")]),
-                dbc.CardBody([
-                    html.P("Configure your data for analysis:", className="mb-3"),
-                    dbc.ButtonGroup([
-                        dbc.Button("📋 Verify Columns", id="verify-columns-btn-simple", color="primary", size="sm"),
-                        dbc.Button("🤖 Classify Devices", id="classify-devices-btn", color="info", size="sm"),
-                    ], className="w-100"),
-                ]),
-            ], className="mb-3"),
-        ])
+        return html.Div(
+            [
+                create_file_preview_ui(preview_info),
+                dbc.Card(
+                    [
+                        dbc.CardHeader(
+                            [html.H6("📋 Data Configuration", className="mb-0")]
+                        ),
+                        dbc.CardBody(
+                            [
+                                html.P(
+                                    "Configure your data for analysis:",
+                                    className="mb-3",
+                                ),
+                                dbc.ButtonGroup(
+                                    [
+                                        dbc.Button(
+                                            "📋 Verify Columns",
+                                            id="verify-columns-btn-simple",
+                                            color="primary",
+                                            size="sm",
+                                        ),
+                                        dbc.Button(
+                                            "🤖 Classify Devices",
+                                            id="classify-devices-btn",
+                                            color="info",
+                                            size="sm",
+                                        ),
+                                    ],
+                                    className="w-100",
+                                ),
+                            ]
+                        ),
+                    ],
+                    className="mb-3",
+                ),
+            ]
+        )
 
     def build_navigation(self) -> html.Div:
-        return html.Div([
-            html.Hr(),
-            html.H5("Ready for device analysis?"),
-            dbc.Button("🚀 Start Device Analysis", href="/device-analysis", color="success", size="lg"),
-        ])
+        return html.Div(
+            [
+                html.Hr(),
+                html.H5("Ready for device analysis?"),
+                dbc.Button(
+                    "🚀 Start Device Analysis",
+                    href="/device-analysis",
+                    color="success",
+                    size="lg",
+                ),
+            ]
+        )
 
     def build_processing_stats(self, info: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
         return {

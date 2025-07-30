@@ -11,11 +11,11 @@ import dash_bootstrap_components as dbc
 from dash import html, no_update
 
 from services.interfaces import get_device_learning_service
+from services.rabbitmq_client import RabbitMQClient
 from services.task_queue import (
     TaskQueue,
     TaskQueueProtocol,
 )
-from services.rabbitmq_client import RabbitMQClient
 from services.upload import (
     AISuggestionService,
     ChunkedUploadManager,
@@ -23,13 +23,13 @@ from services.upload import (
     ModalService,
     get_trigger_id,
 )
-from services.upload.upload_queue_manager import UploadQueueManager
-from validation.security_validator import SecurityValidator
 from services.upload.protocols import (
     DeviceLearningServiceProtocol,
     UploadProcessingServiceProtocol,
     UploadStorageProtocol,
 )
+from services.upload.upload_queue_manager import UploadQueueManager
+from validation.security_validator import SecurityValidator
 
 logger = logging.getLogger(__name__)
 

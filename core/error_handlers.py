@@ -7,6 +7,7 @@ from werkzeug.exceptions import HTTPException
 
 from core.exceptions import YosaiBaseException
 from shared.errors.types import ErrorCode
+
 from .error_handling import ErrorCategory, ErrorSeverity, error_handler
 
 _CODE_TO_STATUS: dict[ErrorCode, int] = {
@@ -55,7 +56,7 @@ def register_error_handlers(app: Flask) -> None:
             error,
             category=ErrorCategory.USER_INPUT,
             severity=ErrorSeverity.MEDIUM,
-            context={"http_code": code, "path": getattr(error, 'name', '')},
+            context={"http_code": code, "path": getattr(error, "name", "")},
         )
         return _json_body(err_code, error.description), code
 

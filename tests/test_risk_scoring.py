@@ -11,13 +11,16 @@ if "dash" not in sys.modules:
     sys.modules["dash._callback"] = dash_stub._callback  # type: ignore
 
 import importlib.util
-from pathlib import Path
 import types
 from dataclasses import dataclass
+from pathlib import Path
+
 import pandas as pd
 
 # Load feature_extraction module directly to avoid heavy package import
-FEATURE_PATH = Path(__file__).resolve().parents[1] / "analytics" / "feature_extraction.py"
+FEATURE_PATH = (
+    Path(__file__).resolve().parents[1] / "analytics" / "feature_extraction.py"
+)
 spec_feat = importlib.util.spec_from_file_location("feature_extraction", FEATURE_PATH)
 feature_mod = importlib.util.module_from_spec(spec_feat)
 spec_feat.loader.exec_module(feature_mod)
@@ -31,6 +34,7 @@ sys.modules.setdefault("analytics.feature_extraction", feature_mod)
 # Stub dependent modules to avoid heavy imports
 anom_types = types.ModuleType("analytics.anomaly_detection.types")
 
+
 @dataclass
 class AnomalyAnalysis:
     total_anomalies: int
@@ -39,10 +43,12 @@ class AnomalyAnalysis:
     risk_assessment: dict
     recommendations: list
 
+
 anom_types.AnomalyAnalysis = AnomalyAnalysis
 sys.modules["analytics.anomaly_detection.types"] = anom_types
 
 sec_analyzer = types.ModuleType("analytics.security_patterns.analyzer")
+
 
 @dataclass
 class SecurityAssessment:
@@ -53,10 +59,12 @@ class SecurityAssessment:
     pattern_analysis: dict
     recommendations: list
 
+
 sec_analyzer.SecurityAssessment = SecurityAssessment
 sys.modules["analytics.security_patterns.analyzer"] = sec_analyzer
 
 behav_mod = types.ModuleType("analytics.user_behavior")
+
 
 @dataclass
 class BehaviorAnalysis:
@@ -65,6 +73,7 @@ class BehaviorAnalysis:
     global_patterns: dict
     insights: list
     recommendations: list
+
 
 behav_mod.BehaviorAnalysis = BehaviorAnalysis
 sys.modules["analytics.user_behavior"] = behav_mod
@@ -75,7 +84,9 @@ risk_mod = importlib.util.module_from_spec(spec_risk)
 sys.modules["analytics.risk_scoring"] = risk_mod
 spec_risk.loader.exec_module(risk_mod)
 
-AnomalyAnalysis = risk_mod.AnomalyAnalysis if hasattr(risk_mod, "AnomalyAnalysis") else None
+AnomalyAnalysis = (
+    risk_mod.AnomalyAnalysis if hasattr(risk_mod, "AnomalyAnalysis") else None
+)
 RiskScoreResult = risk_mod.RiskScoreResult
 calculate_risk_score = risk_mod.calculate_risk_score
 combine_risk_factors = risk_mod.combine_risk_factors

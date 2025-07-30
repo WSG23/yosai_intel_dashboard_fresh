@@ -2,9 +2,9 @@ from __future__ import annotations
 
 """User experience metrics and alerting utilities."""
 
+import asyncio
 import logging
 import smtplib
-import asyncio
 from dataclasses import dataclass
 from typing import Optional
 

@@ -1,4 +1,5 @@
-import sys, types
+import sys
+import types
 
 sys.modules.setdefault("flask_caching", types.SimpleNamespace(Cache=object))
 if "dask" not in sys.modules:

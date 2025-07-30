@@ -27,9 +27,7 @@ class UnicodeSurrogateValidator:
         self.logger = logging.getLogger(__name__)
 
         if contains_surrogates(self.config.replacement):
-            raise ValueError(
-                "Replacement string cannot include surrogate code points"
-            )
+            raise ValueError("Replacement string cannot include surrogate code points")
 
     def sanitize(self, value: Any) -> str:
         """Return ``value`` with surrogates handled according to configuration."""

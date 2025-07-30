@@ -4,17 +4,17 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.config import (
-    get_ai_confidence_threshold as default_ai_confidence_threshold,
-    get_max_upload_size_mb as default_max_upload_size_mb,
-    get_upload_chunk_size as default_upload_chunk_size,
-)
+from core.config import get_ai_confidence_threshold as default_ai_confidence_threshold
+from core.config import get_max_upload_size_mb as default_max_upload_size_mb
+from core.config import get_upload_chunk_size as default_upload_chunk_size
 
 
 def resolve_ai_confidence_threshold(cfg: Any | None = None) -> float:
     """Return the AI confidence threshold from *cfg* or defaults."""
     if cfg is not None:
-        if hasattr(cfg, "performance") and hasattr(cfg.performance, "ai_confidence_threshold"):
+        if hasattr(cfg, "performance") and hasattr(
+            cfg.performance, "ai_confidence_threshold"
+        ):
             return cfg.performance.ai_confidence_threshold
         if hasattr(cfg, "ai_threshold"):
             return cfg.ai_threshold

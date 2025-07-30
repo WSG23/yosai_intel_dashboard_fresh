@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 from typing import Optional
 
-from services.cached_analytics import CachedAnalyticsService
-from core.cache_manager import CacheConfig, InMemoryCacheManager
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
 from config import get_cache_config
+from core.cache_manager import CacheConfig, InMemoryCacheManager
+from services.cached_analytics import CachedAnalyticsService
 from services.security import require_permission
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])

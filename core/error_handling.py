@@ -13,9 +13,10 @@ from typing import Any, Callable, Dict, List, Optional
 from prometheus_client import REGISTRY, Counter
 from prometheus_client.core import CollectorRegistry
 
+from shared.errors.types import ErrorCode
+
 from .base_model import BaseModel
 from .exceptions import YosaiBaseException
-from shared.errors.types import ErrorCode
 
 # Counter tracking circuit breaker state transitions. When the metric already
 # exists in the default registry (e.g. during test re-imports) we create the
@@ -298,7 +299,9 @@ def handle_errors(
                     from flask import g, has_request_context
 
                     if has_request_context():
-                        user_id = getattr(g, "user_id", None) or getattr(g, "current_user_id", None)
+                        user_id = getattr(g, "user_id", None) or getattr(
+                            g, "current_user_id", None
+                        )
                         request_id = getattr(g, "request_id", None)
                 except Exception:
                     pass

@@ -1,8 +1,9 @@
-import pandas as pd
-import pytest
 from pathlib import Path
 
-from file_processing.readers import CSVReader, JSONReader, ExcelReader
+import pandas as pd
+import pytest
+
+from file_processing.readers import CSVReader, ExcelReader, JSONReader
 
 
 @pytest.mark.parametrize(

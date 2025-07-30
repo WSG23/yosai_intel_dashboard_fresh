@@ -9,8 +9,8 @@ from typing import Optional, Tuple
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
 from config.constants import DEFAULT_CHUNK_SIZE
+from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
 from utils.file_utils import safe_decode_with_unicode_handling

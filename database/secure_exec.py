@@ -33,9 +33,7 @@ def execute_query(conn: Any, sql: str, params: Optional[Iterable[Any]] = None):
     raise AttributeError("Object has no execute or execute_query method")
 
 
-def execute_secure_query(
-    conn: Any, sql: str, params: Iterable[Any]
-) -> Any:
+def execute_secure_query(conn: Any, sql: str, params: Iterable[Any]) -> Any:
     """Execute a parameterized SELECT query enforcing provided params."""
     if params is None:
         raise ValueError("params must be provided for execute_secure_query")

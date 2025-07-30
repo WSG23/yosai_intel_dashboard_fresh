@@ -16,12 +16,8 @@ def check_memory_limit(max_mb: int, logger: logging.Logger) -> None:
         return
     mem_mb = psutil.Process().memory_info().rss / (1024 * 1024)
     if mem_mb > max_mb:
-        logger.error(
-            f"Memory usage {mem_mb:.1f} MB exceeds limit {max_mb} MB"
-        )
-        raise MemoryError(
-            f"Memory usage {mem_mb:.1f} MB exceeds limit {max_mb} MB"
-        )
+        logger.error(f"Memory usage {mem_mb:.1f} MB exceeds limit {max_mb} MB")
+        raise MemoryError(f"Memory usage {mem_mb:.1f} MB exceeds limit {max_mb} MB")
 
 
 def memory_safe(max_memory_mb: int) -> callable:

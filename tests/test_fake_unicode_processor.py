@@ -1,4 +1,5 @@
 import pandas as pd
+
 from tests.fake_unicode_processor import FakeUnicodeProcessor
 
 

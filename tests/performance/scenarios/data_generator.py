@@ -35,8 +35,8 @@ def generate_events(pattern_file: str, count: int) -> List[Dict]:
 
 
 if __name__ == "__main__":
-    import json
     import argparse
+    import json
 
     parser = argparse.ArgumentParser()
     parser.add_argument("pattern", help="YAML pattern file")

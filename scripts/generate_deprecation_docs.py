@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
+
 import yaml
 
-YAML_FILE = Path('deprecation.yml')
-OUTPUT_FILE = Path('docs/deprecation_timeline.md')
+YAML_FILE = Path("deprecation.yml")
+OUTPUT_FILE = Path("docs/deprecation_timeline.md")
 
 
 def generate_docs(yaml_path: Path = YAML_FILE, output_path: Path = OUTPUT_FILE) -> None:
@@ -31,17 +32,19 @@ def generate_docs(yaml_path: Path = YAML_FILE, output_path: Path = OUTPUT_FILE) 
         removal = item.get("removal_version", "-")
         lines.append(f"| {comp} | {since} | {removal} |")
 
-    lines.extend([
-        "",
-        "## Migration Guides",
-        "",
-        "Migration instructions for deprecated components will appear here.",
-        "",
-        "## Impact Analysis",
-        "",
-        "This section will detail user impact and remediation steps.",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Migration Guides",
+            "",
+            "Migration instructions for deprecated components will appear here.",
+            "",
+            "## Impact Analysis",
+            "",
+            "This section will detail user impact and remediation steps.",
+            "",
+        ]
+    )
 
     output_path.write_text("\n".join(lines))
 

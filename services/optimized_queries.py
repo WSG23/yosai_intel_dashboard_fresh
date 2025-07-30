@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List, Sequence
 
-from database.types import DatabaseConnection
 from database.secure_exec import execute_query, execute_secure_query
+from database.types import DatabaseConnection
 
 
 class OptimizedQueryService:
@@ -40,9 +40,7 @@ class OptimizedQueryService:
         try:
             rows = execute_secure_query(self.db, query, params)
         except Exception:  # Fallback for databases without ANY()
-            placeholders = ", ".join(
-                f"${i + 1}" for i in range(len(user_ids))
-            )
+            placeholders = ", ".join(f"${i + 1}" for i in range(len(user_ids)))
             query = f"SELECT * FROM people WHERE person_id IN ({placeholders})"
             params = tuple(user_ids)
             rows = execute_secure_query(self.db, query, params)

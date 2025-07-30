@@ -2,6 +2,9 @@
 
 from core.unicode import (
     ChunkedUnicodeProcessor,
+    EnhancedUnicodeProcessor,
+    SurrogateHandlingConfig,
+    SurrogateHandlingStrategy,
     UnicodeProcessor,
     UnicodeSecurityProcessor,
     UnicodeSQLProcessor,
@@ -16,14 +19,10 @@ from core.unicode import (
     sanitize_dataframe,
     sanitize_unicode_input,
     secure_unicode_sanitization,
-    utf8_safe_encode,
     utf8_safe_decode,
+    utf8_safe_encode,
 )
-from core.unicode import (
-    EnhancedUnicodeProcessor,
-    SurrogateHandlingConfig,
-    SurrogateHandlingStrategy,
-)
+from mapping.processors.ai_processor import AIColumnMapperAdapter
 
 from .assets_debug import (
     check_navbar_assets,
@@ -31,24 +30,23 @@ from .assets_debug import (
     log_asset_info,
 )
 from .assets_utils import get_nav_icon
-from .debug_tools import (
-    debug_callback_registration_flow,
-    find_repeated_imports,
-    print_registration_report,
-)
-from mapping.processors.ai_processor import AIColumnMapperAdapter
-from .mapping_helpers import standardize_column_names
-from .preview_utils import serialize_dataframe_preview
-from .protocols import SafeDecoderProtocol
-from .file_utils import safe_decode_with_unicode_handling
-from .unicode_handler import UnicodeHandler
-from .io_helpers import read_json, write_json, read_text, write_text
-from .hashing import hash_dataframe
 from .config_resolvers import (
     resolve_ai_confidence_threshold,
     resolve_max_upload_size_mb,
     resolve_upload_chunk_size,
 )
+from .debug_tools import (
+    debug_callback_registration_flow,
+    find_repeated_imports,
+    print_registration_report,
+)
+from .file_utils import safe_decode_with_unicode_handling
+from .hashing import hash_dataframe
+from .io_helpers import read_json, read_text, write_json, write_text
+from .mapping_helpers import standardize_column_names
+from .preview_utils import serialize_dataframe_preview
+from .protocols import SafeDecoderProtocol
+from .unicode_handler import UnicodeHandler
 
 __all__ = [
     "UnicodeProcessor",

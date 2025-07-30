@@ -7,13 +7,11 @@ from typing import Any, Dict, Optional
 
 import yaml
 
-
-from .config_transformer import ConfigTransformer
-
 from .base import (
     CacheConfig,
     Config,
 )
+from .config_transformer import ConfigTransformer
 from .schema import (
     AnalyticsSettings,
     AppSettings,

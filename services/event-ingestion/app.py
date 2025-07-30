@@ -10,13 +10,13 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
-
-from core.security import RateLimiter
-from error_handling.middleware import ErrorHandlingMiddleware
 from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
 )
+
+from core.security import RateLimiter
+from error_handling.middleware import ErrorHandlingMiddleware
 from services.security import verify_service_jwt
 from services.streaming.service import StreamingService
 from shared.errors.types import ErrorCode

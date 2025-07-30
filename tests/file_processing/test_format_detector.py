@@ -1,14 +1,15 @@
+from pathlib import Path
+
 import pandas as pd
 import pytest
-from pathlib import Path
 
 from file_processing.format_detector import FormatDetector, UnsupportedFormatError
 from file_processing.readers import (
+    ArchiveReader,
     CSVReader,
-    JSONReader,
     ExcelReader,
     FWFReader,
-    ArchiveReader,
+    JSONReader,
 )
 
 

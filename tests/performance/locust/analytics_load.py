@@ -1,6 +1,7 @@
 """Locust tasks for analytics query load testing."""
 
-from locust import HttpUser, task, between
+from locust import HttpUser, between, task
+
 from .utils import random_user_id
 
 

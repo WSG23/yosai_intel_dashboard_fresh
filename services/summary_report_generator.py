@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Tuple
 import pandas as pd
 
 from .analytics.processor import AnalyticsProcessor
-from .summary_reporter import format_patterns_result
 from .base_database_service import BaseDatabaseService
+from .summary_reporter import format_patterns_result
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +25,15 @@ class SummaryReportGenerator(BaseDatabaseService):
         """Return basic statistics for pattern analysis."""
         return self.processor.calculate_pattern_stats(df)
 
-    def analyze_users(self, df: pd.DataFrame, unique_users: int) -> Tuple[List[str], List[str], List[str]]:
+    def analyze_users(
+        self, df: pd.DataFrame, unique_users: int
+    ) -> Tuple[List[str], List[str], List[str]]:
         """Return user activity groupings."""
         return self.processor.analyze_user_patterns(df, unique_users)
 
-    def analyze_devices(self, df: pd.DataFrame, unique_devices: int) -> Tuple[List[str], List[str], List[str]]:
+    def analyze_devices(
+        self, df: pd.DataFrame, unique_devices: int
+    ) -> Tuple[List[str], List[str], List[str]]:
         """Return device activity groupings."""
         return self.processor.analyze_device_patterns(df, unique_devices)
 
@@ -55,10 +59,16 @@ class SummaryReportGenerator(BaseDatabaseService):
 
     def analyze_patterns(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Run the unique patterns analysis on ``df``."""
-        total_records, unique_users, unique_devices, date_span = self.calculate_stats(df)
+        total_records, unique_users, unique_devices, date_span = self.calculate_stats(
+            df
+        )
 
-        power_users, regular_users, occasional_users = self.analyze_users(df, unique_users)
-        high_traffic, moderate_traffic, low_traffic = self.analyze_devices(df, unique_devices)
+        power_users, regular_users, occasional_users = self.analyze_users(
+            df, unique_users
+        )
+        high_traffic, moderate_traffic, low_traffic = self.analyze_devices(
+            df, unique_devices
+        )
 
         total_interactions = self.count_interactions(df)
         success_rate = self.calculate_success_rate(df)

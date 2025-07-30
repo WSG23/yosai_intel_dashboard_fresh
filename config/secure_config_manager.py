@@ -13,8 +13,9 @@ from botocore.exceptions import ClientError
 from cryptography.fernet import Fernet
 from pydantic import BaseModel
 
-from .config_manager import ConfigManager
 from core.exceptions import ConfigurationError
+
+from .config_manager import ConfigManager
 
 
 class SecureConfigManager(ConfigManager):
@@ -47,7 +48,9 @@ class SecureConfigManager(ConfigManager):
         self.aws_client = None
         if self.aws_region:
             try:
-                self.aws_client = boto3.client("secretsmanager", region_name=self.aws_region)
+                self.aws_client = boto3.client(
+                    "secretsmanager", region_name=self.aws_region
+                )
             except Exception as exc:  # pragma: no cover - defensive
                 self.log.error("Failed to initialise AWS client: %s", exc)
                 raise ConfigurationError("Unable to initialise AWS client") from exc
@@ -135,4 +138,3 @@ class SecureConfigManager(ConfigManager):
 
 
 __all__ = ["SecureConfigManager"]
-

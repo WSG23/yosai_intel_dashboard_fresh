@@ -11,12 +11,18 @@ sys.modules.setdefault("redis", types.ModuleType("redis"))
 sys.modules.setdefault("redis.asyncio", types.ModuleType("redis.asyncio"))
 if "pydantic" not in sys.modules:
     pydantic_stub = types.ModuleType("pydantic")
+
     class BaseModel: ...
-    def Field(*args, **kwargs): return None
+
+    def Field(*args, **kwargs):
+        return None
+
     def model_validator(*args, **kwargs):
         def wrapper(fn):
             return fn
+
         return wrapper
+
     ConfigDict = dict
     pydantic_stub.BaseModel = BaseModel
     pydantic_stub.Field = Field
@@ -40,16 +46,24 @@ import tests.conftest  # noqa: F401
 
 # Provide lightweight stubs for core and security modules used by UnicodeHandler
 core_unicode = types.ModuleType("core.unicode")
+
+
 def clean_surrogate_chars(text: str) -> str:
     return text.encode("utf-16", "surrogatepass").decode("utf-16", "ignore")
+
+
 core_unicode.clean_surrogate_chars = clean_surrogate_chars
 sys.modules["core.unicode"] = core_unicode
 
 security_validator = types.ModuleType("security.unicode_security_validator")
+
+
 class UnicodeSecurityValidator:
     def validate_and_sanitize(self, text: str) -> str:
         cleaned = "".join(ch for ch in text if ord(ch) < 0x10000)
         return unicodedata.normalize("NFC", cleaned)
+
+
 security_validator.UnicodeSecurityValidator = UnicodeSecurityValidator
 sys.modules["security.unicode_security_validator"] = security_validator
 

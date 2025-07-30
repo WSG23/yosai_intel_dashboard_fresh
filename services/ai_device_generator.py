@@ -82,8 +82,12 @@ class AIDeviceGenerator:
             "exit": [r"exit|egress|out\b", r"gate.*exit"],
             "elevator": [r"elevator|lift|elev"],
             "stairwell": [r"staircase|stairs|stairwell"],
-            "fire_escape": [r"fire.*(?:exit|escape)|emergency.*(?:exit|escape)"],  # FIXED: Complete pattern
-            "restricted": [r"restricted|secure|authorized|private|limited"],  # ADD THIS LINE
+            "fire_escape": [
+                r"fire.*(?:exit|escape)|emergency.*(?:exit|escape)"
+            ],  # FIXED: Complete pattern
+            "restricted": [
+                r"restricted|secure|authorized|private|limited"
+            ],  # ADD THIS LINE
         }
 
         # Location-specific patterns for better naming

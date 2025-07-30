@@ -2,12 +2,12 @@ from __future__ import annotations
 
 """Scalable data processing pipeline with batch and stream support."""
 
+import json
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional
 
-import logging
-import json
 import pandas as pd
 
 from config.constants import DEFAULT_CHUNK_SIZE
@@ -168,12 +168,12 @@ class DataProcessor:
     # ------------------------------------------------------------------
     def _cleanse(self, df: pd.DataFrame) -> pd.DataFrame:
         # Unicode sanitization via existing helper
-        from services.data_processing.file_processor import (
-            UnicodeFileProcessor as _UFP,
-        )
+        from services.data_processing.file_processor import UnicodeFileProcessor as _UFP
 
         cleaned = _UFP.sanitize_dataframe_unicode(df, chunk_size=self.config.chunk_size)
-        return cleaned if isinstance(cleaned, pd.DataFrame) else pd.concat(list(cleaned))
+        return (
+            cleaned if isinstance(cleaned, pd.DataFrame) else pd.concat(list(cleaned))
+        )
 
     def _validate(self, df: pd.DataFrame) -> pd.DataFrame:
         try:

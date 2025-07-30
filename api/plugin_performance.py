@@ -5,16 +5,16 @@ from __future__ import annotations
 from api.adapter import api_adapter
 from app import app
 from flask import jsonify, request
-from error_handling import ErrorCategory, ErrorHandler
-from yosai_framework.errors import CODE_TO_STATUS
-from shared.errors.types import ErrorCode
-from marshmallow import Schema, fields
 from flask_apispec import doc, marshal_with, use_kwargs
+from marshmallow import Schema, fields
 
-from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
 from config import get_cache_config
+from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
 from core.plugins.performance_manager import EnhancedThreadSafePluginManager
+from error_handling import ErrorCategory, ErrorHandler
+from shared.errors.types import ErrorCode
 from validation.security_validator import SecurityValidator
+from yosai_framework.errors import CODE_TO_STATUS
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 handler = ErrorHandler()
@@ -63,7 +63,10 @@ class PluginPerformanceAPI:
                     err = handler.handle(
                         ValueError("Invalid payload"), ErrorCategory.INVALID_INPUT
                     )
-                    return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INVALID_INPUT]
+                    return (
+                        jsonify(err.to_dict()),
+                        CODE_TO_STATUS[ErrorCode.INVALID_INPUT],
+                    )
             manager.performance_manager.performance_thresholds.update(payload)
             return jsonify({"status": "updated"})
         history = manager.performance_manager.alert_history
@@ -89,7 +92,10 @@ class PluginPerformanceAPI:
                     err = handler.handle(
                         ValueError("Invalid payload"), ErrorCategory.INVALID_INPUT
                     )
-                    return jsonify(err.to_dict()), CODE_TO_STATUS[ErrorCode.INVALID_INPUT]
+                    return (
+                        jsonify(err.to_dict()),
+                        CODE_TO_STATUS[ErrorCode.INVALID_INPUT],
+                    )
             manager.performance_manager.performance_thresholds.update(payload)
             return jsonify({"status": "updated"})
         cfg = manager.performance_manager.performance_thresholds

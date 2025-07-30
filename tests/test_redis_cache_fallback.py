@@ -1,6 +1,6 @@
 import importlib
-import types
 import sys
+import types
 
 
 def test_redis_cache_manager_fallback(monkeypatch, fake_dash):

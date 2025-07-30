@@ -1,5 +1,5 @@
-import types
 import sys
+import types
 
 import monitoring.kafka_health as kh
 
@@ -41,9 +41,7 @@ class DummyAdmin:
         self._meta = meta
         self.consumer_groups = ["g1"]
         self.offsets = {
-            "g1": {
-                DummyTopicPartition("t", 0): types.SimpleNamespace(offset=5)
-            }
+            "g1": {DummyTopicPartition("t", 0): types.SimpleNamespace(offset=5)}
         }
 
     def list_topics(self, timeout=5):

@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-
 from validation.security_validator import SecurityValidator
 
 

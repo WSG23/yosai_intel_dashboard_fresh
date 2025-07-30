@@ -2,16 +2,15 @@ from __future__ import annotations
 
 """Utilities for tracking ML model performance."""
 
-from dataclasses import dataclass
-from typing import Any, Optional
-
 import logging
+from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, Optional
 
 from core.performance import MetricType, get_performance_monitor
 from monitoring.prometheus.model_metrics import (
-    update_model_metrics,
     start_model_metrics_server,
+    update_model_metrics,
 )
 
 

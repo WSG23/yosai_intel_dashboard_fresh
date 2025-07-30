@@ -3,6 +3,7 @@ import os
 
 logger = logging.getLogger(__name__)
 
+
 def setup_dev_mode():
     """Validate required secrets in development mode."""
     if os.getenv("YOSAI_ENV", "development") == "development":
@@ -14,7 +15,7 @@ def setup_dev_mode():
             "SECRET_KEY",
             "DB_PASSWORD",
         ]
-        
+
         missing = [key for key in required if not os.getenv(key)]
         if missing:
             logger.warning(f"Missing environment variables: {missing}")

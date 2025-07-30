@@ -6,17 +6,23 @@ from types import ModuleType, SimpleNamespace
 
 # stub config.dynamic_config for PerformanceMonitor
 cfg = ModuleType("config")
-cfg.dynamic_config = SimpleNamespace(performance=SimpleNamespace(memory_usage_threshold_mb=1024))
+cfg.dynamic_config = SimpleNamespace(
+    performance=SimpleNamespace(memory_usage_threshold_mb=1024)
+)
 sys.modules["config"] = cfg
 sys.modules["config.dynamic_config"] = cfg
 
 # minimal ModelMetrics stub used by detect_model_drift
 mpm_stub = ModuleType("monitoring.model_performance_monitor")
+
+
 @dataclass
 class ModelMetrics:
     accuracy: float
     precision: float
     recall: float
+
+
 mpm_stub.ModelMetrics = ModelMetrics
 sys.modules["monitoring.model_performance_monitor"] = mpm_stub
 
@@ -35,7 +41,9 @@ for name in ["base_model", "cpu_optimizer", "memory_manager"]:
     sys.modules[f"core.{name}"] = mod
     spec.loader.exec_module(mod)
 
-spec = importlib.util.spec_from_file_location("core.performance", Path("core/performance.py"))
+spec = importlib.util.spec_from_file_location(
+    "core.performance", Path("core/performance.py")
+)
 perf = importlib.util.module_from_spec(spec)
 perf.__package__ = "core"
 sys.modules["core.performance"] = perf

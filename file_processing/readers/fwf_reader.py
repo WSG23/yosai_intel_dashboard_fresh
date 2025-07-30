@@ -1,12 +1,13 @@
 from __future__ import annotations
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 import pandas as pd
 
-from .base import BaseReader
 from core.callback_events import CallbackEvent
 from core.callbacks import UnifiedCallbackManager
 from core.protocols import UnicodeProcessorProtocol
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+
+from .base import BaseReader
 
 
 class FWFReader(BaseReader):
@@ -14,13 +15,15 @@ class FWFReader(BaseReader):
 
     format_name = "fwf"
 
-    def __init__(self, *, unicode_processor: UnicodeProcessorProtocol | None = None) -> None:
+    def __init__(
+        self, *, unicode_processor: UnicodeProcessorProtocol | None = None
+    ) -> None:
         super().__init__(unicode_processor=unicode_processor)
         self.unified_callbacks = UnifiedCallbackManager()
 
     def read(self, file_path: str, hint: dict | None = None) -> pd.DataFrame:
         hint = hint or {}
-        if not str(file_path).lower().endswith('.fwf'):
+        if not str(file_path).lower().endswith(".fwf"):
             raise FWFReader.CannotParse("extension mismatch")
         try:
             df = pd.read_fwf(file_path, **hint)
@@ -38,4 +41,3 @@ class FWFReader(BaseReader):
 
 
 from .csv_reader import CSVReader
-

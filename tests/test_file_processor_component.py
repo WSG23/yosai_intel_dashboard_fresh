@@ -1,7 +1,8 @@
 import pandas as pd
-from tests.fakes import FakeUploadStore, FakeFileProcessor, FakeUploadDataService
-from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
+
 from services.upload.core.file_processor_service import FileProcessor
+from tests.fakes import FakeFileProcessor, FakeUploadDataService, FakeUploadStore
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 
 def test_file_processor_roundtrip(async_runner):

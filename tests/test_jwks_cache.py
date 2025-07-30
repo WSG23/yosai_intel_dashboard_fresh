@@ -23,6 +23,7 @@ def setup_auth(monkeypatch):
     )
 
     from config import reload_config
+
     reload_config()
     module = importlib.import_module("core.auth")
     importlib.reload(module)

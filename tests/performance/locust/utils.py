@@ -9,7 +9,9 @@ EVENT_TYPES: List[str] = ["granted", "denied", "tailgating", "forced"]
 
 def random_user_id() -> str:
     """Return a random user identifier."""
-    return "user-" + "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
+    return "user-" + "".join(
+        random.choices(string.ascii_lowercase + string.digits, k=8)
+    )
 
 
 def generate_event() -> Dict[str, str]:

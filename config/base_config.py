@@ -1,15 +1,15 @@
 """Backward compatible re-exports for configuration dataclasses."""
 
 from .base import (
-    AppConfig,
-    DatabaseConfig,
-    SecurityConfig,
-    SampleFilesConfig,
     AnalyticsConfig,
-    MonitoringConfig,
+    AppConfig,
     CacheConfig,
-    SecretValidationConfig,
     Config,
+    DatabaseConfig,
+    MonitoringConfig,
+    SampleFilesConfig,
+    SecretValidationConfig,
+    SecurityConfig,
 )
 
 __all__ = [

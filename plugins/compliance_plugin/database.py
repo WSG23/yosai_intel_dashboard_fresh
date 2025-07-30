@@ -10,7 +10,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from database.secure_exec import execute_query, execute_command
+from database.secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)
 

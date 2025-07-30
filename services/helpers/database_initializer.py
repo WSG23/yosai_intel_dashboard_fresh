@@ -23,9 +23,9 @@ def initialize_database(
 
         from config import get_database_config
         from config.database_manager import (
-            DatabaseSettings as ManagerConfig,
             DatabaseManager,
         )
+        from config.database_manager import DatabaseSettings as ManagerConfig
 
         cfg = get_database_config()
         manager_cfg = ManagerConfig(

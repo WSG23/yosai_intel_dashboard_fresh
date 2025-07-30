@@ -1,13 +1,12 @@
-import pytest
+import shutil
+
 import dash
 import dash_bootstrap_components as dbc
-from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-from dash import dcc, html
-import shutil
 import pytest
+from dash import dcc, html
 
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 

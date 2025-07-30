@@ -57,7 +57,8 @@
     "@typescript-eslint/parser": "^8.38.0",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "eslint-plugin-prettier": "^5.5.3",
-    "eslint-plugin-react": "^7.37.5"
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-config-prettier": "^9.1.0"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -65,7 +66,7 @@
     "test": "react-scripts test --coverage --watchAll=false",
     "eject": "react-scripts eject",
     "build-css": "sh scripts/build_css.sh",
-    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:a11y": "pa11y http://localhost:8050",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
