@@ -3,14 +3,16 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Protocol
 from uuid import uuid4
 
-from core.protocols import DatabaseProtocol
-from core.audit_logger import ComplianceAuditLogger
 from yosai_intel_dashboard.models.compliance import DataSensitivityLevel
+
+from core.audit_logger import ComplianceAuditLogger
+from core.protocols import DatabaseProtocol
 from database.secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)
@@ -200,27 +202,23 @@ class DataRetentionService:
 
             processed_count = 0
 
-            for _, row in df.iterrows():
-                user_id = row["person_id"]
-                consent_status = row.get("consent_status", {})
+            for row in df.itertuples(index=False):
+                user_id = row.person_id
+                consent_status = row.consent_status or {}
 
-                # Extract scheduled data types
                 if isinstance(consent_status, str):
-                    import json
-
                     consent_status = json.loads(consent_status)
 
-                scheduled_deletion = consent_status.get("scheduled_deletion", {})
-                data_types = scheduled_deletion.get(
+                data_types = consent_status.get("scheduled_deletion", {}).get(
                     "data_types", ["biometric_templates"]
                 )
 
-                # Process each data type
-                for data_type in data_types:
-                    if self.apply_retention_policy(data_type, user_id):
-                        processed_count += 1
+                processed_count += sum(
+                    1
+                    for data_type in data_types
+                    if self.apply_retention_policy(data_type, user_id)
+                )
 
-                # Clear the retention schedule
                 self._clear_retention_schedule(user_id)
 
             logger.info(f"Processed {processed_count} scheduled deletions")
@@ -304,29 +302,25 @@ class DataRetentionService:
             df = execute_query(self.db, query_sql, (cutoff_date,))
 
             upcoming_deletions = []
-            for _, row in df.iterrows():
-                consent_status = row.get("consent_status", {})
+            for row in df.itertuples(index=False):
+                consent_status = row.consent_status or {}
                 if isinstance(consent_status, str):
-                    import json
-
                     consent_status = json.loads(consent_status)
 
                 scheduled_deletion = consent_status.get("scheduled_deletion", {})
 
                 upcoming_deletions.append(
                     {
-                        "user_id": row["person_id"],
+                        "user_id": row.person_id,
                         "deletion_date": (
-                            row["data_retention_date"].isoformat()
-                            if row["data_retention_date"]
+                            row.data_retention_date.isoformat()
+                            if row.data_retention_date
                             else None
                         ),
                         "data_types": scheduled_deletion.get("data_types", []),
                         "days_remaining": (
-                            (
-                                row["data_retention_date"] - datetime.now(timezone.utc)
-                            ).days
-                            if row["data_retention_date"]
+                            (row.data_retention_date - datetime.now(timezone.utc)).days
+                            if row.data_retention_date
                             else None
                         ),
                     }

@@ -5,6 +5,7 @@ Compliance Toggle Manager - Granular control over when compliance applies
 
 from __future__ import annotations
 
+import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -12,9 +13,9 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
 from core.rbac import require_role
-from services.data_processing.file_processor import FileProcessor
 from database.secure_exec import execute_command, execute_query
 from plugins.common_callbacks import csv_pre_process_callback
+from services.data_processing.file_processor import FileProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -499,24 +500,20 @@ class ComplianceToggleManager:
 
             df = execute_query(self.db, query_sql)
 
-            for _, row in df.iterrows():
+            for row in df.itertuples(index=False):
                 toggle = ComplianceToggle(
-                    id=row["toggle_id"],
-                    scope=ComplianceScope(row["scope"]),
-                    scope_value=row["scope_value"],
-                    enabled=row["enabled"],
+                    id=row.toggle_id,
+                    scope=ComplianceScope(row.scope),
+                    scope_value=row.scope_value,
+                    enabled=row.enabled,
                     bypass_reason=(
-                        BypassReason(row["bypass_reason"])
-                        if row["bypass_reason"]
-                        else None
+                        BypassReason(row.bypass_reason) if row.bypass_reason else None
                     ),
-                    description=row["description"] or "",
-                    created_by=row["created_by"],
-                    created_at=row["created_at"],
-                    expires_at=row["expires_at"],
-                    conditions=(
-                        json.loads(row["conditions"]) if row["conditions"] else {}
-                    ),
+                    description=row.description or "",
+                    created_by=row.created_by,
+                    created_at=row.created_at,
+                    expires_at=row.expires_at,
+                    conditions=(json.loads(row.conditions) if row.conditions else {}),
                 )
 
                 self.toggles[toggle.id] = toggle

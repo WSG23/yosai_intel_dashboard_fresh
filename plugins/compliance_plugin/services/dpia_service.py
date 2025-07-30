@@ -3,14 +3,15 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Protocol
 from enum import Enum
+from typing import Any, Dict, List, Optional, Protocol
 from uuid import uuid4
 
-from core.protocols import DatabaseProtocol
 from core.audit_logger import ComplianceAuditLogger
+from core.protocols import DatabaseProtocol
 from database.secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)
@@ -350,11 +351,9 @@ class DPIAService:
             dpia_required_count = 0
             risk_distribution = {"low": 0, "medium": 0, "high": 0, "critical": 0}
 
-            for _, row in assessments_df.iterrows():
-                assessment_data = row["assessment_data"]
+            for row in assessments_df.itertuples(index=False):
+                assessment_data = row.assessment_data
                 if isinstance(assessment_data, str):
-                    import json
-
                     assessment_data = json.loads(assessment_data)
 
                 risk_level = assessment_data.get("risk_level", "low")
