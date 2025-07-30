@@ -1,3 +1,5 @@
+"""Token refresh API endpoint."""
+
 from flask import Blueprint, jsonify
 from flask_apispec import doc
 from pydantic import BaseModel
@@ -13,9 +15,11 @@ handler = ErrorHandler()
 
 class RefreshRequest(BaseModel):
     refresh_token: str
+    """Request payload schema for token refresh."""
 
 
 class AccessTokenResponse(BaseModel):
+    """Response schema containing a new access token."""
     access_token: str
 
 
@@ -28,6 +32,7 @@ class AccessTokenResponse(BaseModel):
     responses={200: "Success", 401: "Unauthorized"},
 )
 def refresh_token_endpoint(payload: RefreshRequest):
+    """Refresh the access token using the provided refresh token."""
     new_token = refresh_access_token(payload.refresh_token)
     if not new_token:
         return api_error_response(

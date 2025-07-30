@@ -1,3 +1,5 @@
+"""Handle file uploads with validation and basic metrics."""
+
 import logging
 import time
 from pathlib import Path

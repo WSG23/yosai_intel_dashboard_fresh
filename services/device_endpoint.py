@@ -1,3 +1,5 @@
+"""API endpoints for device mapping suggestions."""
+
 import pandas as pd
 from flask import Blueprint, jsonify, request
 from flask_apispec import doc
