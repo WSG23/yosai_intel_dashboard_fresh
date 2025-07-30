@@ -6,17 +6,21 @@ from typing import Any
 
 from config.config import get_analytics_config
 from config.dynamic_config import dynamic_config
+from config.utils import (
+    get_ai_confidence_threshold as _get_ai_confidence_threshold,
+    get_upload_chunk_size as _get_upload_chunk_size,
+)
 from core.protocols import ConfigurationProtocol
 
 
 def get_ai_confidence_threshold() -> float:
     """Return the AI confidence threshold from the dynamic configuration."""
-    return dynamic_config.get_ai_confidence_threshold()
+    return _get_ai_confidence_threshold(dynamic_config)
 
 
 def get_upload_chunk_size() -> int:
     """Return the upload chunk size from the dynamic configuration."""
-    return dynamic_config.get_upload_chunk_size()
+    return _get_upload_chunk_size(dynamic_config)
 
 
 def get_max_parallel_uploads() -> int:
