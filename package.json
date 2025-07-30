@@ -65,7 +65,7 @@
     "test": "react-scripts test --coverage --watchAll=false",
     "eject": "react-scripts eject",
     "build-css": "sh scripts/build_css.sh",
-    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:a11y": "pa11y http://localhost:8050",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
