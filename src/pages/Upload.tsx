@@ -12,3 +12,4 @@ const UploadPage: React.FC = () => (
 );
 
 export default UploadPage;
+export { parseCSV } from '../hooks/useFileParser';

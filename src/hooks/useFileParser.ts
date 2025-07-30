@@ -17,20 +17,50 @@ const sanitizeUnicode = (text: string): string => {
   return cleaned;
 };
 
-const parseCSV = (content: string): ParsedData => {
-  const lines = content.split(/\r?\n/).filter(l => l.trim());
-  if (lines.length === 0) return { rows: [], columns: [], devices: [] };
-  const headers = lines[0].split(',').map(h => sanitizeUnicode(h.trim()));
-  const rows = lines.slice(1).map(line => {
-    const values = line.split(',');
-    return headers.reduce((obj: any, header, idx) => {
-      obj[header] = sanitizeUnicode(values[idx]?.trim() || '');
-      return obj;
-    }, {});
+export const parseCSV = (content: string): ParsedData => {
+  const rows: string[][] = [];
+  let field = '';
+  let row: string[] = [];
+  let inQuotes = false;
+
+  for (let i = 0; i < content.length; i++) {
+    const ch = content[i];
+    if (ch === '"') {
+      if (inQuotes && content[i + 1] === '"') {
+        field += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ',' && !inQuotes) {
+      row.push(field);
+      field = '';
+    } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+      if (ch === '\r' && content[i + 1] === '\n') i++;
+      row.push(field);
+      rows.push(row);
+      field = '';
+      row = [];
+    } else {
+      field += ch;
+    }
+  }
+  row.push(field);
+  rows.push(row);
+
+  if (rows.length === 0) return { rows: [], columns: [], devices: [] };
+  const headers = rows[0].map(h => sanitizeUnicode(h.trim()));
+  const dataRows = rows.slice(1).filter(r => r.length && r.some(v => v.length > 0));
+  const dataObjects = dataRows.map(r => {
+    const obj: any = {};
+    headers.forEach((header, idx) => {
+      obj[header] = sanitizeUnicode((r[idx] || '').trim());
+    });
+    return obj;
   });
   const deviceColumn = headers.find(h => h.toLowerCase().includes('door') || h.toLowerCase().includes('device'));
-  const devices = deviceColumn ? Array.from(new Set(rows.map(r => r[deviceColumn]))) : [];
-  return { rows, columns: headers, devices };
+  const devices = deviceColumn ? Array.from(new Set(dataObjects.map(r => r[deviceColumn]))) : [];
+  return { rows: dataObjects, columns: headers, devices };
 };
 
 const parseJSON = (content: string): ParsedData => {

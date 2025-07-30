@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@apollo/server": "^5.0.0",
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@headlessui/react": "^2.2.4",
     "@heroicons/react": "^2.2.0",
@@ -13,12 +12,6 @@
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.10.0",
     "bootstrap": "^5.3.7",
-    "dataloader": "^2.2.2",
-    "express": "^4.18.2",
-    "graphql": "^16.8.1",
-    "graphql-depth-limit": "^1.1.0",
-    "graphql-subscriptions": "^2.0.0",
-    "graphql-ws": "^5.10.0",
     "lucide-react": "^0.525.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -69,8 +62,7 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:a11y": "pa11y http://localhost:8050",
     "cypress:open": "cypress open",
-    "cypress:run": "cypress run",
-    "graphql": "node graphql/index.js"
+    "cypress:run": "cypress run"
   },
   "eslintConfig": {
     "extends": [
@@ -99,6 +91,9 @@
         "lines": 80,
         "statements": 80
       }
-    }
+    },
+    "transformIgnorePatterns": [
+      "node_modules/(?!axios)"
+    ]
   }
 }
