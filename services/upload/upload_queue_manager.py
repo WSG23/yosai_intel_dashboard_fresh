@@ -1,3 +1,7 @@
+"""Background task queue for file uploads."""
+
+from __future__ import annotations
+
 import asyncio
 import heapq
 import logging

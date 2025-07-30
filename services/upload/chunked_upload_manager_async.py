@@ -1,3 +1,7 @@
+"""Asynchronous manager for streaming large uploads in chunks."""
+
+from __future__ import annotations
+
 import asyncio
 import json
 import logging

@@ -1,3 +1,7 @@
+"""Process uploaded files and persist results to storage."""
+
+from __future__ import annotations
+
 import logging
 from typing import Any, Callable, Dict, List
 

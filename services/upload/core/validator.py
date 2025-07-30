@@ -1,3 +1,7 @@
+"""Client-side validation rules executed on the server."""
+
+from __future__ import annotations
+
 import base64
 import json
 from typing import Any, Callable, Iterable, List, Mapping

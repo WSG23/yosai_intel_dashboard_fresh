@@ -1,3 +1,7 @@
+"""Simple dataclasses representing results of the upload workflow."""
+
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any, Dict, List
 

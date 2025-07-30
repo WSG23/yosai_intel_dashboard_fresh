@@ -1,3 +1,8 @@
+"""Simple progress and queue managers used by the upload page."""
+
+from __future__ import annotations
+
+
 class ChunkedUploadManager:
     """Track progress for chunked file uploads."""
 

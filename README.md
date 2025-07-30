@@ -260,6 +260,12 @@ docker-compose \
   -f docker-compose.dev.yml up --build
 ```
 
+To build individual images without starting the stack run:
+```bash
+docker build -t yosai-dashboard -f Dockerfile .
+docker build -t yosai-gateway -f Dockerfile.gateway .
+```
+
 web UI on `http://localhost:8080`, pgAdmin on `http://localhost:5050`, and the API gateway on `http://localhost:8081`.
 
 ### Go API Gateway
@@ -492,6 +498,12 @@ mypy .
 # Check code quality
 black . --check
 flake8 .
+```
+
+You can also use the Makefile shortcuts:
+```bash
+make test  # run pytest and coverage
+make lint  # run flake8 and type checks
 ```
 
 The `tests/` directory contains the integration and unit tests for the

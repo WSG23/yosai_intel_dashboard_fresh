@@ -1,17 +1,19 @@
 from __future__ import annotations
 
+"""Coordinate upload processing, validation and storage steps."""
+
 import logging
 from typing import Any, Callable, Dict, List, Tuple
 
 import pandas as pd
 
+from components.upload.ui_builder import UploadUIBuilder
 from core.protocols import FileProcessorProtocol
 from services.async_file_processor import AsyncFileProcessor
 from services.data_enhancer.mapping_utils import get_ai_column_suggestions
 from services.upload.core.file_processor_service import FileProcessor
 from services.upload.core.file_validator import FileValidator
 from services.upload.core.learning_coordinator import LearningCoordinator
-from components.upload.ui_builder import UploadUIBuilder
 from services.upload.protocols import (
     DeviceLearningServiceProtocol,
     UploadProcessingServiceProtocol,
