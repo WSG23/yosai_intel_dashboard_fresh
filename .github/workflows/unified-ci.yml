@@ -49,14 +49,10 @@ jobs:
         if: matrix.lang == 'python'
         run: |
           pip install -r requirements.lock
-          pip install black flake8 mypy bandit
+          pip install pre-commit
       - name: Python linters
         if: matrix.lang == 'python'
-        run: |
-          black --check . --line-length 88 --verbose
-          flake8 yosai_intel_dashboard -v
-          mypy .
-          bandit -r . --severity-level high
+        run: pre-commit run --all-files --show-diff-on-failure
       - name: Validate directory structure
         if: matrix.lang == 'python'
         run: python scripts/validate_structure.py

@@ -1,7 +1,13 @@
 export default [
   {
-    files: ["**/*.{js,jsx}"],
     ignores: ["node_modules/**"],
+    rules: {
+      semi: "error",
+      quotes: ["error", "single"],
+    },
+  },
+  {
+    files: ["**/*.{js,jsx}"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
@@ -27,7 +33,6 @@ export default [
   },
   {
     files: ["**/*.{ts,tsx}"],
-    ignores: ["node_modules/**"],
     languageOptions: {
       parser: (await import("@typescript-eslint/parser")).default,
       parserOptions: {
