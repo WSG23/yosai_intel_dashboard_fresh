@@ -63,10 +63,8 @@ def ensure_checkpoint(cur: DictCursor) -> None:
     )
     execute_command(
         cur,
-        (
-            f"INSERT INTO {CHECKPOINT_TABLE} (last_ts) VALUES ('1970-01-01') "
-            "ON CONFLICT DO NOTHING"
-        ),
+        f"INSERT INTO {CHECKPOINT_TABLE} (last_ts) VALUES (%s) ON CONFLICT DO NOTHING",
+        ("1970-01-01",),
     )
 
 

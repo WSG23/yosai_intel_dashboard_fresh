@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Dict, List
 
 import pytest
@@ -15,9 +17,13 @@ class DummyCursor:
         self.checkpoints: Dict[str, int] = {}
         self.rows: List[dict[str, Any]] = []
         self.result: List[Any] = []
+        self.last_query: str | None = None
+        self.last_params: tuple | None = None
 
     def execute(self, query: str, params: tuple | None = None) -> None:
         params = params or ()
+        self.last_query = query
+        self.last_params = params
         q = query.lower().strip()
         if q.startswith("select last_id"):
             table = params[0]
@@ -61,3 +67,11 @@ def test_validate_chunk_failure() -> None:
     checksum = rows_checksum(cur.rows)
     with pytest.raises(ValueError):
         validate_chunk(cur, "tbl", 0, 2, checksum, 2)
+
+
+def test_update_checkpoint_uses_parameters() -> None:
+    cur = DummyCursor()
+    malicious = "tbl'; DROP TABLE x; --"
+    update_checkpoint(cur, malicious, 5)
+    assert malicious not in (cur.last_query or "")
+    assert cur.last_params == (malicious, 5)
