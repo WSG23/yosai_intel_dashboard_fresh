@@ -65,6 +65,11 @@ def test_process_csv_pipeline(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(DataProcessor, "_enrich_devices", lambda self, d: d)
     monkeypatch.setattr(DataProcessor, "load_file", lambda self, p: pd.read_csv(p))
     monkeypatch.setattr(DataProcessor, "_schema_validate", lambda self, d: d)
+    monkeypatch.setattr(
+        DataProcessor,
+        "_infer_boolean_flags",
+        lambda self, d: d.assign(is_entry=False, is_exit=False),
+    )
 
     proc = DataProcessor()
     out = proc.process(str(csv_path))
@@ -112,6 +117,11 @@ def test_process_excel_pipeline(tmp_path: Path, monkeypatch):
 
     monkeypatch.setattr(DataProcessor, "_enrich_devices", lambda self, d: d)
     monkeypatch.setattr(DataProcessor, "_schema_validate", lambda self, d: d)
+    monkeypatch.setattr(
+        DataProcessor,
+        "_infer_boolean_flags",
+        lambda self, d: d.assign(is_entry=False, is_exit=False),
+    )
 
     proc = DataProcessor()
     out = proc.process(str(xl_path))

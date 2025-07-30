@@ -11,6 +11,7 @@ spec.loader.exec_module(mapping_utils)
 apply_fuzzy_column_matching = mapping_utils.apply_fuzzy_column_matching
 apply_manual_mapping = mapping_utils.apply_manual_mapping
 get_mapping_suggestions = mapping_utils.get_mapping_suggestions
+get_ai_column_suggestions = mapping_utils.get_ai_column_suggestions
 
 
 def test_apply_fuzzy_column_matching():
@@ -50,3 +51,13 @@ def test_get_mapping_suggestions():
     info = get_mapping_suggestions(df)
     assert set(info["required_columns"]) == {"person_id", "door_id", "access_result", "timestamp"}
     assert info["missing_mappings"] == []
+
+
+def test_get_ai_column_suggestions():
+    cols = ["PersonName", "DoorLocation", "TimeStamp", "ResultStatus", "BadgeID"]
+    suggestions = get_ai_column_suggestions(cols)
+    assert suggestions["PersonName"]["field"] == "person_id"
+    assert suggestions["DoorLocation"]["field"] == "door_id"
+    assert suggestions["TimeStamp"]["field"] == "timestamp"
+    assert suggestions["ResultStatus"]["field"] == "access_result"
+    assert suggestions["BadgeID"]["field"] == "token_id"

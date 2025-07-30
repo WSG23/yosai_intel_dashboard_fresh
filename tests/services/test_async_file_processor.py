@@ -119,3 +119,15 @@ def test_process_excel_file(tmp_path: Path):
     assert result.equals(df)
     assert progress and progress[-1] == 100
     clear_task.cache_clear() if hasattr(clear_task, "cache_clear") else None
+
+
+def test_read_uploaded_file_csv(tmp_path: Path):
+    df = pd.DataFrame({"x": [1, 2], "y": ["a", "b"]})
+    csv_path = tmp_path / "t.csv"
+    df.to_csv(csv_path, index=False)
+    contents = base64.b64encode(csv_path.read_bytes()).decode()
+    data_uri = "data:text/csv;base64," + contents
+
+    proc = AsyncFileProcessor()
+    loaded, _ = asyncio.run(proc.read_uploaded_file(data_uri, "t.csv"))
+    assert loaded.equals(df)
