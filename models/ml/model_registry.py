@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import boto3
 import mlflow
 import requests
+import pandas as pd
 from packaging.version import Version
 from sqlalchemy import (
     Boolean,
@@ -67,6 +68,8 @@ class ModelRegistry:
         if mlflow_uri:
             mlflow.set_tracking_uri(mlflow_uri)
         self.metric_thresholds = metric_thresholds or {}
+        self._baseline_features: Dict[str, pd.DataFrame] = {}
+        self._latest_features: Dict[str, pd.DataFrame] = {}
 
     # --------------------------------------------------------------
     def _metrics_improved(self, new: Dict[str, float], old: Dict[str, float]) -> bool:
@@ -222,5 +225,26 @@ class ModelRegistry:
         else:
             raise ValueError(f"Unsupported storage URI scheme: {scheme}")
 
+    # --------------------------------------------------------------
+    def log_features(self, name: str, features: pd.DataFrame) -> None:
+        """Store the latest feature values for drift monitoring."""
+        if name not in self._baseline_features:
+            self._baseline_features[name] = features
+        self._latest_features[name] = features
 
-__all__ = ["ModelRegistry", "ModelRecord", "Base"]
+    def get_drift_metrics(self, name: str, bins: int = 10) -> Dict[str, float]:
+        """Return Population Stability Index metrics for *name*."""
+        base = self._baseline_features.get(name)
+        current = self._latest_features.get(name)
+        if base is None or current is None:
+            return {}
+        from services.monitoring.drift import compute_psi
+
+        return compute_psi(base, current, bins=bins)
+
+
+__all__ = [
+    "ModelRegistry",
+    "ModelRecord",
+    "Base",
+]

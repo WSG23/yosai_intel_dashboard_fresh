@@ -402,7 +402,21 @@ async def predict(
         result = model_obj.predict(req.data)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+    try:
+        df = pd.DataFrame(req.data)
+        app.state.model_registry.log_features(name, df)
+    except Exception:
+        pass
     return {"predictions": result}
+
+
+@models_router.get("/{name}/drift")
+@rate_limit_decorator()
+async def get_drift(name: str, _: None = Depends(verify_token)):
+    metrics = app.state.model_registry.get_drift_metrics(name)
+    if not metrics:
+        raise HTTPException(status_code=404, detail="no drift data")
+    return metrics
 
 
 app.include_router(models_router)
