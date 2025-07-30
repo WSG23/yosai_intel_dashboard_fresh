@@ -3,7 +3,7 @@ import signal
 from typing import Any
 
 import structlog
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from opentelemetry import trace
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 from opentelemetry.sdk.resources import Resource
@@ -18,6 +18,8 @@ from prometheus_client import (
 )
 
 from .config import ServiceConfig, load_config
+from error_handling import http_error
+from shared.errors.types import ErrorCode
 
 
 class BaseService:
@@ -156,10 +158,10 @@ class BaseService:
         async def _health_ready() -> dict[str, str]:
             if self.app.state.ready:
                 return {"status": "ready"}
-            raise HTTPException(status_code=503, detail="not ready")
+            raise http_error(ErrorCode.UNAVAILABLE, "not ready", 503)
 
         @self.app.get("/health/startup")
         async def _health_startup() -> dict[str, str]:
             if self.app.state.startup_complete:
                 return {"status": "complete"}
-            raise HTTPException(status_code=503, detail="starting")
+            raise http_error(ErrorCode.UNAVAILABLE, "starting", 503)
