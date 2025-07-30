@@ -5,7 +5,7 @@ import json
 import os
 import pathlib
 
-from fastapi import Header, HTTPException, Request, status
+from fastapi import Header, Request, status
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -18,6 +18,7 @@ from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
 from core.security import RateLimiter
 from error_handling.middleware import ErrorHandlingMiddleware
 from services.security import verify_service_jwt
+from error_handling import http_error
 from services.streaming.service import StreamingService
 from shared.errors.types import ErrorCode
 from tracing import trace_async_operation
@@ -62,15 +63,17 @@ async def rate_limit(request: Request, call_next):
 
 def verify_token(authorization: str = Header("")) -> None:
     if not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
+        raise http_error(
+            ErrorCode.UNAUTHORIZED,
+            "unauthorized",
+            status.HTTP_401_UNAUTHORIZED,
         )
     token = authorization.split(" ", 1)[1]
     if not verify_service_jwt(token):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
+        raise http_error(
+            ErrorCode.UNAUTHORIZED,
+            "unauthorized",
+            status.HTTP_401_UNAUTHORIZED,
         )
 
 

@@ -5,10 +5,12 @@ from __future__ import annotations
 import asyncio
 from typing import Awaitable, Callable, Dict
 
-from fastapi import APIRouter, FastAPI, HTTPException, Request
+from fastapi import APIRouter, FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
+from error_handling import http_error
+from shared.errors.types import ErrorCode
 
 HealthCheck = Callable[[FastAPI], Awaitable[bool] | bool]
 
@@ -32,7 +34,7 @@ async def health_live(request: Request) -> JSONResponse:
 async def health_startup(request: Request) -> JSONResponse:
     if getattr(request.app.state, "startup_complete", False):
         return JSONResponse({"status": "complete"})
-    raise HTTPException(status_code=503, detail="starting")
+    raise http_error(ErrorCode.UNAVAILABLE, "starting", 503)
 
 
 @router.get("/health/ready")
@@ -42,7 +44,7 @@ async def health_ready(request: Request) -> JSONResponse:
     healthy = ready and all(checks.values())
     if healthy:
         return JSONResponse({"status": "ready", "dependencies": checks})
-    raise HTTPException(status_code=503, detail="not ready")
+    raise http_error(ErrorCode.UNAVAILABLE, "not ready", 503)
 
 
 class DependencyHealthMiddleware(BaseHTTPMiddleware):

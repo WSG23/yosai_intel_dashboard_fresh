@@ -17,7 +17,6 @@ from fastapi import (
     File,
     Form,
     Header,
-    HTTPException,
     Query,
     Request,
     UploadFile,
@@ -46,6 +45,7 @@ from services.common.secrets import get_secret
 from shared.errors.types import ErrorCode
 from yosai_framework import ServiceBuilder
 from yosai_framework.errors import ServiceError
+from error_handling import http_error
 from yosai_framework.service import BaseService
 
 SERVICE_NAME = "analytics-microservice"
@@ -96,28 +96,32 @@ def _jwt_secret() -> str:
 def verify_token(authorization: str = Header("")) -> None:
     """Validate Authorization header using JWT_SECRET."""
     if not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
+        raise http_error(
+            ErrorCode.UNAUTHORIZED,
+            "unauthorized",
+            status.HTTP_401_UNAUTHORIZED,
         )
     token = authorization.split(" ", 1)[1]
     try:
         claims = jwt.decode(token, _jwt_secret(), algorithms=["HS256"])
     except Exception as exc:  # noqa: BLE001
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
+        raise http_error(
+            ErrorCode.UNAUTHORIZED,
+            "unauthorized",
+            status.HTTP_401_UNAUTHORIZED,
         ) from exc
     exp = claims.get("exp")
     if exp is not None and exp < time.time():
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
+        raise http_error(
+            ErrorCode.UNAUTHORIZED,
+            "unauthorized",
+            status.HTTP_401_UNAUTHORIZED,
         )
     if not claims.get("iss"):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
+        raise http_error(
+            ErrorCode.UNAUTHORIZED,
+            "unauthorized",
+            status.HTTP_401_UNAUTHORIZED,
         )
 
 
@@ -204,9 +208,10 @@ async def health_startup() -> dict[str, str]:
     """Startup probe."""
     if app.state.startup_complete:
         return {"status": "complete"}
-    raise HTTPException(
-        status_code=503,
-        detail=ServiceError(ErrorCode.UNAVAILABLE, "starting").to_dict(),
+    raise http_error(
+        ErrorCode.UNAVAILABLE,
+        "starting",
+        503,
     )
 
 
@@ -215,9 +220,10 @@ async def health_ready() -> dict[str, str]:
     """Readiness probe."""
     if app.state.ready:
         return {"status": "ready"}
-    raise HTTPException(
-        status_code=503,
-        detail=ServiceError(ErrorCode.UNAVAILABLE, "not ready").to_dict(),
+    raise http_error(
+        ErrorCode.UNAVAILABLE,
+        "not ready",
+        503,
     )
 
 
@@ -272,7 +278,7 @@ async def threat_assessment(
         else:
             payload = await request.json()
     except Exception as exc:  # noqa: BLE001
-        raise HTTPException(status_code=400, detail="invalid payload") from exc
+        raise http_error(ErrorCode.INVALID_INPUT, "invalid payload", 400) from exc
 
     if isinstance(payload, list):
         df = pd.DataFrame(payload)
@@ -333,7 +339,7 @@ async def register_model(
         except Exception:  # pragma: no cover - invalid model file
             pass
     except Exception as exc:  # pragma: no cover - registry failure
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
     return {"name": name, "version": record.version}
 
 
@@ -342,7 +348,7 @@ async def register_model(
 async def list_versions(name: str, _: None = Depends(verify_token)):
     records = app.state.model_registry.list_models(name)
     if not records:
-        raise HTTPException(status_code=404, detail="model not found")
+        raise http_error(ErrorCode.NOT_FOUND, "model not found", 404)
     return {
         "name": name,
         "versions": [r.version for r in records],
@@ -356,11 +362,11 @@ async def rollback(
 ):
     records = app.state.model_registry.list_models(name)
     if not records or version not in [r.version for r in records]:
-        raise HTTPException(status_code=404, detail="version not found")
+        raise http_error(ErrorCode.NOT_FOUND, "version not found", 404)
     try:
         app.state.model_registry.set_active_version(name, version)
     except Exception as exc:  # pragma: no cover - registry failure
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
 
     preload_active_models()
     return {"name": name, "active_version": version}
@@ -375,7 +381,7 @@ async def predict(
 ):
     record = app.state.model_registry.get_model(name, active_only=True)
     if record is None:
-        raise HTTPException(status_code=404, detail="no active version")
+        raise http_error(ErrorCode.NOT_FOUND, "no active version", 404)
     local_dir = app.state.model_dir / name / record.version
     local_dir.mkdir(parents=True, exist_ok=True)
     local_path = local_dir / os.path.basename(record.storage_uri)
@@ -385,7 +391,7 @@ async def predict(
                 record.storage_uri, str(local_path)
             )
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=str(exc)) from exc
+            raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
 
     model_obj = app.state.models.get(name)
     if model_obj is None:
@@ -393,11 +399,11 @@ async def predict(
             model_obj = joblib.load(local_path)
             app.state.models[name] = model_obj
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=str(exc)) from exc
+            raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
     try:
         result = model_obj.predict(req.data)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
     try:
         df = pd.DataFrame(req.data)
         app.state.model_registry.log_features(name, df)
@@ -411,7 +417,7 @@ async def predict(
 async def get_drift(name: str, _: None = Depends(verify_token)):
     metrics = app.state.model_registry.get_drift_metrics(name)
     if not metrics:
-        raise HTTPException(status_code=404, detail="no drift data")
+        raise http_error(ErrorCode.NOT_FOUND, "no drift data", 404)
     return metrics
 
 

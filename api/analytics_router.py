@@ -1,11 +1,13 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from error_handling import http_error
 
 from config import get_cache_config
 from core.cache_manager import CacheConfig, InMemoryCacheManager
+from shared.errors.types import ErrorCode
 from services.cached_analytics import CachedAnalyticsService
 from services.security import require_permission
 
@@ -59,4 +61,4 @@ async def get_chart_data(
         return JSONResponse(
             content={"type": "timeline", "data": data.get("hourly_distribution", {})}
         )
-    raise HTTPException(status_code=400, detail="Unknown chart type")
+    raise http_error(ErrorCode.INVALID_INPUT, "Unknown chart type", 400)
