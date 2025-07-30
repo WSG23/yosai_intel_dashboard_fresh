@@ -17,8 +17,9 @@ from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
 
 from core.security import RateLimiter
 from error_handling.middleware import ErrorHandlingMiddleware
-from services.security import verify_service_jwt
+from services.auth import verify_jwt_token
 from services.streaming.service import StreamingService
+from config.config_loader import load_service_config
 from shared.errors.types import ErrorCode
 from tracing import trace_async_operation
 from yosai_framework.errors import ServiceError
@@ -60,18 +61,14 @@ async def rate_limit(request: Request, call_next):
     return await call_next(request)
 
 
-def verify_token(authorization: str = Header("")) -> None:
+def verify_token(authorization: str = Header("")) -> dict:
     if not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
         )
     token = authorization.split(" ", 1)[1]
-    if not verify_service_jwt(token):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
-        )
+    return verify_jwt_token(token)
 
 
 async def _consume_loop() -> None:
@@ -83,6 +80,8 @@ async def _consume_loop() -> None:
 
 @app.on_event("startup")
 async def startup() -> None:
+    # Load environment driven settings
+    load_service_config()
     service.initialize()
     asyncio.create_task(
         trace_async_operation("consume_loop", "ingest", _consume_loop())

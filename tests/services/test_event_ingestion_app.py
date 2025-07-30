@@ -3,6 +3,7 @@ import importlib
 import pathlib
 import sys
 import types
+from jose import jwt
 
 import pytest
 from fastapi.testclient import TestClient
@@ -28,6 +29,9 @@ def load_module():
 
     prom_stub.Instrumentator = lambda: DummyInstr()
     sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
+    auth_stub = types.ModuleType("services.auth")
+    auth_stub.verify_jwt_token = lambda token: jwt.decode(token, "secret", algorithms=["HS256"])
+    sys.modules.setdefault("services.auth", auth_stub)
     sys.path.insert(0, str(SERVICES_PATH / "event-ingestion"))
     sys.modules.get("services").__path__ = [str(SERVICES_PATH)]
     return importlib.import_module("app")
@@ -96,3 +100,10 @@ def test_error_handling_middleware():
     resp = client.get("/boom")
     assert resp.status_code == 500
     assert resp.json() == {"code": "internal", "message": "fail"}
+
+
+def test_verify_jwt_token_util():
+    from services.auth import verify_jwt_token
+    token = jwt.encode({"iss": "svc"}, "secret", algorithm="HS256")
+    claims = verify_jwt_token(token)
+    assert claims["iss"] == "svc"
