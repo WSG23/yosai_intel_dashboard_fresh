@@ -103,6 +103,11 @@ export LIGHTWEIGHT_SERVICES=1
 pytest --cov --cov-fail-under=80
 ```
 
+Before invoking the lint task you must ensure the Node packages are installed:
+```bash
+npm install
+```
+
 Static analysis and linting checks can be run as well:
 ```bash
 mypy .
