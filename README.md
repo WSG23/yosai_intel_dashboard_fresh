@@ -455,6 +455,10 @@ Install dependencies before running the tests:
 # Option 2: install packages manually
 pip install -r requirements.txt -r requirements-test.txt
 ```
+Use the provided environment template for tests:
+```bash
+cp .env.test .env
+```
 For minimal CI environments you can run `./scripts/install_test_deps.sh` which
 only installs the Python dependencies required for the tests.
 ### Test Requirements
