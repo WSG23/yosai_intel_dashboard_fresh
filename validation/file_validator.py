@@ -4,6 +4,8 @@ import base64
 import csv
 import io
 import logging
+
+from unicode_toolkit import safe_encode_text
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Tuple
 
@@ -119,7 +121,11 @@ class FileValidator(CompositeValidator):
             try:
                 return self.validator.validate(filename, content)
             except Exception as exc:  # pragma: no cover - delegate errors
-                logger.error("Validation failed for %s: %s", filename, exc)
+                logger.error(
+                    "Validation failed for %s: %s",
+                    safe_encode_text(filename),
+                    safe_encode_text(exc),
+                )
                 return False, str(exc)
         return True, ""
 

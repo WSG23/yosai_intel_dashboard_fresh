@@ -3,6 +3,8 @@
 import asyncio
 import json
 import logging
+
+from unicode_toolkit import safe_encode_text
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
@@ -128,7 +130,11 @@ class UploadedDataStore(UploadStorageProtocol):
                         }
                         modified = True
                     except Exception as exc:  # pragma: no cover - best effort
-                        logger.error(f"Error converting {pkl_path}: {exc}")
+                        logger.error(
+                            "Error converting %s: %s",
+                            safe_encode_text(str(pkl_path)),
+                            safe_encode_text(exc),
+                        )
                         continue
                 else:
                     # Ensure path metadata exists for already-converted files
@@ -138,7 +144,10 @@ class UploadedDataStore(UploadStorageProtocol):
                 with open(self._info_path(), "w", encoding="utf-8") as f:
                     json.dump(self._file_info_store, f, indent=2)
         except Exception as e:  # pragma: no cover - best effort
-            logger.error(f"Error loading uploaded data info: {e}")
+            logger.error(
+                "Error loading uploaded data info: %s",
+                safe_encode_text(e),
+            )
 
     def _save_to_disk(self, filename: str, df: pd.DataFrame) -> None:
         try:
@@ -156,7 +165,10 @@ class UploadedDataStore(UploadStorageProtocol):
                 with open(self._info_path(), "w", encoding="utf-8") as f:
                     json.dump(self._file_info_store, f, indent=2)
         except Exception as e:  # pragma: no cover - best effort
-            logger.error(f"Error saving uploaded data: {e}")
+            logger.error(
+                "Error saving uploaded data: %s",
+                safe_encode_text(e),
+            )
 
     # -- Public API ---------------------------------------------------------
     def add_file(self, filename: str, df: pd.DataFrame) -> None:
@@ -196,7 +208,11 @@ class UploadedDataStore(UploadStorageProtocol):
                 with open(path, "r", encoding="utf-8", errors="replace") as fh:
                     return json.load(fh)
             except Exception as exc:  # pragma: no cover - best effort
-                logger.error(f"Error loading mapping {filename}: {exc}")
+                logger.error(
+                    "Error loading mapping %s: %s",
+                    safe_encode_text(filename),
+                    safe_encode_text(exc),
+                )
         return {}
 
     def save_mapping(self, filename: str, mapping: Dict[str, Any]) -> None:
@@ -206,7 +222,11 @@ class UploadedDataStore(UploadStorageProtocol):
             with open(path, "w", encoding="utf-8") as fh:
                 json.dump(mapping, fh, indent=2)
         except Exception as exc:  # pragma: no cover - best effort
-            logger.error(f"Error saving mapping {filename}: {exc}")
+            logger.error(
+                "Error saving mapping %s: %s",
+                safe_encode_text(filename),
+                safe_encode_text(exc),
+            )
 
     def get_all_data(self) -> Dict[str, pd.DataFrame]:
         return {fname: self.load_dataframe(fname) for fname in self.get_filenames()}
@@ -245,7 +265,10 @@ class UploadedDataStore(UploadStorageProtocol):
                 if self._info_path().exists():
                     self._info_path().unlink()
             except Exception as e:  # pragma: no cover - best effort
-                logger.error(f"Error clearing uploaded data: {e}")
+                logger.error(
+                    "Error clearing uploaded data: %s",
+                    safe_encode_text(e),
+                )
         try:
 
             try:

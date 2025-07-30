@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from unicode_toolkit import safe_encode_text
 from typing import Any, Dict, List, Tuple
 
 import pandas as pd
@@ -74,7 +75,11 @@ class DataLoader:
         for filename, df in uploaded_data.items():
             original_rows = len(df)
             total_original_rows += original_rows
-            logger.info("   %s: %s rows", filename, f"{original_rows:,}")
+            logger.info(
+                "   %s: %s rows",
+                safe_encode_text(filename),
+                f"{original_rows:,}",
+            )
 
             cleaned_df = self.upload_processor.clean_uploaded_dataframe(df)
             all_dfs.append(cleaned_df)

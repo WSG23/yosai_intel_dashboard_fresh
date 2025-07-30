@@ -1,6 +1,8 @@
 """Enhanced CSV processing service with optional Polars optimization"""
 
 import logging
+
+from unicode_toolkit import safe_encode_text
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -50,7 +52,11 @@ class CSVProcessorService:
                 return self._process_with_polars(csv_data, filename, session_id)
             return self._process_with_pandas(csv_data, filename, session_id)
         except Exception as exc:  # pragma: no cover - defensive
-            logger.error("CSV processing failed for %s: %s", filename, exc)
+            logger.error(
+                "CSV processing failed for %s: %s",
+                safe_encode_text(filename),
+                safe_encode_text(exc),
+            )
             return {
                 "success": False,
                 "error": f"Failed to process CSV: {exc}",
