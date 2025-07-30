@@ -1,3 +1,5 @@
+"""Manage chunked file uploads with retry logic."""
+
 import json
 import logging
 import time

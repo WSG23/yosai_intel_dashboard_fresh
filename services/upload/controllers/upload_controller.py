@@ -1,3 +1,5 @@
+"""Dash controller for the unified upload page."""
+
 import base64
 import io
 import json

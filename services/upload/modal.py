@@ -1,3 +1,5 @@
+"""Modal dialog helpers for the upload page."""
+
 import logging
 from typing import Any, Tuple
 

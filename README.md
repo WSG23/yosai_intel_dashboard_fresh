@@ -330,6 +330,17 @@ make deprecation-docs
 make clean
 ```
 
+### Running tests, linting and Docker builds
+
+Use the Makefile targets (or `tools/ops_cli.py`) to execute the test suite,
+run style checks and build Docker images.
+
+```bash
+make test        # run pytest
+make lint        # run flake8
+make build       # docker compose build
+```
+
 Updates to component lifecycle should be recorded in `deprecation.yml`. Run
 `make deprecation-docs` whenever this file changes.
 

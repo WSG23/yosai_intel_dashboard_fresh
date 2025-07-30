@@ -1,3 +1,5 @@
+"""Handle parsing and storage of uploaded files."""
+
 import logging
 from typing import Any, Callable, Dict, List
 

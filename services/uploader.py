@@ -1,3 +1,5 @@
+"""Utility class wrapping :class:`UploadedDataStore`."""
+
 from __future__ import annotations
 
 from typing import Dict

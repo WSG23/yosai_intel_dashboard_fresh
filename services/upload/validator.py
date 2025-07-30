@@ -1,3 +1,5 @@
+"""Client-side style validations for uploads."""
+
 import base64
 import json
 from typing import Any, Callable, Iterable, List, Mapping
