@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from components.upload.ui_builder import UploadUIBuilder
+from components.ui_builder import UploadUIBuilder
 
 pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 

@@ -6,7 +6,7 @@ from core.callback_events import CallbackEvent
 from core.callbacks import UnifiedCallbackManager
 from core.protocols import UnicodeProcessorProtocol
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from services.data_processing.file_processor import FileProcessor
+from utils.pandas_readers import read_csv
 
 from .base import BaseReader
 
@@ -27,7 +27,7 @@ class CSVReader(BaseReader):
         if not str(file_path).lower().endswith(".csv"):
             raise CSVReader.CannotParse("extension mismatch")
         try:
-            df = FileProcessor.read_large_csv(file_path, **hint)
+            df = read_csv(file_path, **hint)
         except Exception as exc:
             raise CSVReader.CannotParse(str(exc)) from exc
 

@@ -1,4 +1,4 @@
-from services.upload.core.learning_coordinator import LearningCoordinator
+from services.upload.learning_coordinator import LearningCoordinator
 from tests.fakes import FakeDeviceLearningService
 from tests.utils.builders import DataFrameBuilder
 

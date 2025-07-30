@@ -10,10 +10,10 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
-      - run: pip install -r requirements-dev.txt
-      - run: black --check .
-      - run: isort --profile=black --check .
-      - run: flake8 yosai_intel_dashboard
+      - run: |
+          pip install -r requirements-dev.txt
+          pip install pre-commit
+      - run: pre-commit run --all-files --show-diff-on-failure
       - uses: actions/setup-node@v3
         with:
           node-version: '18'

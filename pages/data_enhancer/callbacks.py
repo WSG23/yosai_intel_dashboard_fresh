@@ -112,3 +112,4 @@ def _register(cb: TrulyUnifiedCallbacks) -> None:
             raise PreventUpdate
         df = pd.read_json(data, orient="split")
         return dcc.send_data_frame(df.to_csv, "enhanced.csv", index=False)
+

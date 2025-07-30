@@ -46,6 +46,11 @@ class DataProcessor:
         self.device_registry: Dict[str, Dict] = device_registry or {}
         self.pipeline_metadata: Dict[str, Dict] = {}
         self.unified_callbacks = UnifiedCallbackManager()
+        import re
+
+        self._person_id_re = re.compile(self.config.person_id_pattern)
+        self._badge_id_re = re.compile(self.config.badge_id_pattern)
+        self._device_lookup_cache: Dict[str, Dict] = {}
 
     def _normalize_timestamps(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -69,16 +74,14 @@ class DataProcessor:
         Validate and standardize 'person_id' and 'badge_id' using regex from config.
         Flags invalid entries and sets them to None.
         """
-        import re
-
         df = df.copy()
-        pid_re = re.compile(self.config.person_id_pattern)
-        bid_re = re.compile(self.config.badge_id_pattern)
-        df["person_id_valid"] = (
-            df["person_id"].astype(str).apply(lambda x: bool(pid_re.fullmatch(x)))
+        person_series = df["person_id"].astype(str)
+        badge_series = df["badge_id"].astype(str)
+        df["person_id_valid"] = person_series.str.fullmatch(self._person_id_re).fillna(
+            False
         )
-        df["badge_id_valid"] = (
-            df["badge_id"].astype(str).apply(lambda x: bool(bid_re.fullmatch(x)))
+        df["badge_id_valid"] = badge_series.str.fullmatch(self._badge_id_re).fillna(
+            False
         )
         df.loc[~df["person_id_valid"], "person_id"] = None
         df.loc[~df["badge_id_valid"], "badge_id"] = None
@@ -104,21 +107,27 @@ class DataProcessor:
 
         df = df.copy()
         registry = self.device_registry
+        cache = self._device_lookup_cache
 
         def lookup(name: str) -> Dict:
+            if name in cache:
+                return cache[name]
             if name in registry:
-                return registry[name]
+                cache[name] = registry[name]
+                return cache[name]
             match, score, _ = process.extractOne(
                 name, registry.keys(), score_cutoff=self.config.device_match_threshold
             )
             if match:
-                return registry[match]
-            self.unified_callbacks.trigger(
-                CallbackEvent.SYSTEM_WARNING,
-                "device_enrichment",
-                {"warning": f"Unmatched device '{name}'", "value": name},
-            )
-            return {}
+                cache[name] = registry[match]
+            else:
+                self.unified_callbacks.trigger(
+                    CallbackEvent.SYSTEM_WARNING,
+                    "device_enrichment",
+                    {"warning": f"Unmatched device '{name}'", "value": name},
+                )
+                cache[name] = {}
+            return cache[name]
 
         try:
             enriched = df["device_name"].apply(lookup).apply(pd.Series)
@@ -177,22 +186,12 @@ class DataProcessor:
         Auto-fill missing is_entry/is_exit based on 'device_name' keywords.
         """
         df = df.copy()
-        df["is_entry"] = df.apply(
-            lambda r: (
-                True
-                if pd.isna(r.get("is_entry"))
-                and "entrance" in str(r["device_name"]).lower()
-                else r.get("is_entry")
-            ),
-            axis=1,
-        )
-        df["is_exit"] = df.apply(
-            lambda r: (
-                True
-                if pd.isna(r.get("is_exit")) and "exit" in str(r["device_name"]).lower()
-                else r.get("is_exit")
-            ),
-            axis=1,
+        lower_names = df["device_name"].astype(str).str.lower()
+        df.loc[
+            df["is_entry"].isna() & lower_names.str.contains("entrance"), "is_entry"
+        ] = True
+        df.loc[df["is_exit"].isna() & lower_names.str.contains("exit"), "is_exit"] = (
+            True
         )
         return df
 

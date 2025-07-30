@@ -260,6 +260,10 @@ docker-compose \
   -f docker-compose.dev.yml up --build
 ```
 
+`start.sh` reads variables from `.env` before launching the server. Ensure the
+file exists or pass the required values via `--env-file` when running the
+container.
+
 web UI on `http://localhost:8080`, pgAdmin on `http://localhost:5050`, and the API gateway on `http://localhost:8081`.
 
 ### Go API Gateway
@@ -400,6 +404,9 @@ Using Docker Compose to start the microservices stack:
 ```bash
 docker-compose -f docker-compose.prod.yml up -d
 ```
+The container entrypoint runs `start.sh`, which sources the `.env` file before
+launching Gunicorn. Make sure the file exists or supply one via Docker's
+`--env-file` option.
 Whenever you modify the code, rebuild the Docker image with `docker-compose build` (or `docker-compose up --build`) so the running container picks up your changes.
 Docker Compose expects the database password and Flask secret key to be
 provided via Docker secrets or environment variables. Create
@@ -1098,6 +1105,7 @@ See the [data model diagram](docs/data_model.md) for an overview of key entities
 The running application exposes Swagger-based API docs at `http://<host>:<port>/api/docs`.
 - Performance & log monitoring: [docs/performance_monitoring.md](docs/performance_monitoring.md)
 - Large file processing: [docs/performance_file_processor.md](docs/performance_file_processor.md)
+- Profiling the data processor: [docs/profile_data_processor.md](docs/profile_data_processor.md)
 - Upload progress SSE: `/upload/progress/<task_id>` streams `data: <progress>` events roughly 60 times per second.
 - Callback design: [docs/callback_architecture.md](docs/callback_architecture.md)
 - State stores: [docs/state_management.md](docs/state_management.md)

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import json
-
 import pandas as pd
 
 from core.callback_events import CallbackEvent
@@ -10,6 +8,7 @@ from core.protocols import UnicodeProcessorProtocol
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 from .base import BaseReader
+from utils.pandas_readers import read_json as util_read_json
 
 
 class JSONReader(BaseReader):
@@ -28,13 +27,7 @@ class JSONReader(BaseReader):
         if not str(file_path).lower().endswith(".json"):
             raise JSONReader.CannotParse("extension mismatch")
         try:
-            with open(file_path, "r", encoding="utf-8", errors="replace") as fh:
-                text = fh.read()
-            try:
-                data = json.loads(text)
-                df = pd.json_normalize(data)
-            except json.JSONDecodeError:
-                df = pd.read_json(text, lines=True)
+            df = util_read_json(file_path)
         except Exception as exc:
             raise JSONReader.CannotParse(str(exc)) from exc
 
