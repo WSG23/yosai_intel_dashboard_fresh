@@ -1,14 +1,29 @@
 #!/usr/bin/env python3
 """Generate strong random secret values for development.
 
-Outputs SECRET_KEY and DB_PASSWORD lines using `secrets.token_urlsafe`.
+Writes the values to an env file rather than printing them to stdout.
 """
+from __future__ import annotations
+
+import argparse
+import logging
 import secrets
 
 
 def main() -> None:
-    print(f"SECRET_KEY={secrets.token_urlsafe(32)}")
-    print(f"DB_PASSWORD={secrets.token_urlsafe(32)}")
+    parser = argparse.ArgumentParser(description="Generate development secrets")
+    parser.add_argument(
+        "--output", default="dev_secrets.env", help="file to write secrets"
+    )
+    args = parser.parse_args()
+
+    secret_key = secrets.token_urlsafe(32)
+    db_password = secrets.token_urlsafe(32)
+    with open(args.output, "w") as fh:
+        fh.write(f"SECRET_KEY={secret_key}\n")
+        fh.write(f"DB_PASSWORD={db_password}\n")
+    logging.basicConfig(level=logging.INFO)
+    logging.info("generated secrets written to %s", args.output)
 
 
 if __name__ == "__main__":

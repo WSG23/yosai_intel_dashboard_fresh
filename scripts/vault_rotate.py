@@ -1,13 +1,14 @@
 """Rotate critical secrets stored in Vault."""
+
 from __future__ import annotations
 
+import logging
 import os
 import secrets
 from typing import Iterable
 
-import requests
-
 import hvac
+import requests
 
 DB_PATH = "secret/data/db"
 JWT_PATH = "secret/data/jwt"
@@ -28,18 +29,17 @@ def _notify_services(urls: Iterable[str]) -> None:
         try:
             requests.post(url, timeout=5)
         except Exception as exc:  # pragma: no cover - best effort
-            print(f"warning: failed to notify {url}: {exc}")
+            logging.warning("failed to notify %s: %s", url, exc)
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO)
     addr = os.environ["VAULT_ADDR"]
     token = os.environ["VAULT_TOKEN"]
     client = hvac.Client(url=addr, token=token)
-    db = rotate_field(client, DB_PATH, "password")
-    jwt = rotate_field(client, JWT_PATH, "secret")
-    print("rotated DB and JWT secrets")
-    print("DB_PASSWORD=", db)
-    print("JWT_SECRET=", jwt)
+    rotate_field(client, DB_PATH, "password")
+    rotate_field(client, JWT_PATH, "secret")
+    logging.info("rotated DB and JWT secrets in Vault")
 
     urls = os.getenv("SECRET_INVALIDATE_URLS")
     if urls:

@@ -7,6 +7,7 @@ the manifest with ``kubectl`` if the cluster is reachable.
 """
 from __future__ import annotations
 
+import logging
 import secrets
 import subprocess
 from pathlib import Path
@@ -55,7 +56,7 @@ def cluster_reachable() -> bool:
 def apply_config(file_path: Path = SECRETS_FILE) -> None:
     """Apply the secret manifest using kubectl if possible."""
     if not cluster_reachable():
-        print("kubectl not configured or cluster unreachable; skipping apply")
+        logging.warning("kubectl not configured or cluster unreachable; skipping apply")
         return
     subprocess.run(["kubectl", "apply", "-f", str(file_path)], check=True)
 
@@ -73,10 +74,11 @@ def restart_deployment(
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO)
     updates = update_secrets()
-    print("Secrets rotated:")
-    for key, value in updates.items():
-        print(f"- {key}: {value}")
+    logging.info("Secrets rotated and written to %s", SECRETS_FILE)
+    for key in updates:
+        logging.info("rotated %s", key)
     apply_config()
     restart_deployment()
 
