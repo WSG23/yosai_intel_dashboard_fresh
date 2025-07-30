@@ -1,7 +1,8 @@
+"""Handle parsing and storage of uploaded files."""
+
 import logging
 from typing import Any, Callable, Dict, List
 
-import pandas as pd
 
 from core.protocols import FileProcessorProtocol
 from services.upload.protocols import UploadDataServiceProtocol, UploadStorageProtocol

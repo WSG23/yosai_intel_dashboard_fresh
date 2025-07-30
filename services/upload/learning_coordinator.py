@@ -1,3 +1,5 @@
+"""Coordinate device learning requests triggered by uploads."""
+
 import logging
 from typing import Dict
 

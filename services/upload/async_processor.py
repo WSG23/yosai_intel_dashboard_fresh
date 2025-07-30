@@ -1,3 +1,5 @@
+"""Async helpers for reading uploaded files."""
+
 import asyncio
 from pathlib import Path
 from typing import Any

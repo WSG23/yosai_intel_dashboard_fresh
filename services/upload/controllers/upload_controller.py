@@ -1,12 +1,13 @@
+"""Dash controller for the unified upload page."""
+
 import base64
 import io
 import json
 import logging
 from typing import Any, List, Tuple
 
-import dash_bootstrap_components as dbc
 import pandas as pd
-from dash import Input, Output, State, dash_table, html
+from dash import Input, Output, dash_table
 from dash.exceptions import PreventUpdate
 
 logger = logging.getLogger(__name__)

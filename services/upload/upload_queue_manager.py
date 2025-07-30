@@ -1,3 +1,5 @@
+"""Priority queue for background upload processing."""
+
 import asyncio
 import heapq
 import logging

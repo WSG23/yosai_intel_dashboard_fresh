@@ -1,3 +1,6 @@
+"""Lightweight progress trackers for file uploads."""
+
+
 class ChunkedUploadManager:
     """Track progress for chunked file uploads."""
 

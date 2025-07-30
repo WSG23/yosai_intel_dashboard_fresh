@@ -1,3 +1,5 @@
+"""Utility functions for upload related callbacks."""
+
 import json
 import logging
 from datetime import datetime

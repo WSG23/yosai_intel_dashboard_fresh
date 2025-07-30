@@ -1,3 +1,5 @@
+"""High-level coordination for handling uploaded files."""
+
 from __future__ import annotations
 
 import logging
