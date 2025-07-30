@@ -7,7 +7,6 @@ from typing import Any, Dict
 
 import yaml
 
-from core.unicode import UnicodeSQLProcessor
 
 
 class BaseConfigLoader:
@@ -64,6 +63,8 @@ class BaseConfigLoader:
     def _sanitize(self, obj: Any) -> Any:
         if isinstance(obj, str):
             try:
+                from core.unicode import UnicodeSQLProcessor
+
                 return UnicodeSQLProcessor.encode_query(obj)
             except Exception:
                 return obj

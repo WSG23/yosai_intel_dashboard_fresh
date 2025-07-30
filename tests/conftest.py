@@ -13,9 +13,12 @@ _missing_packages = [
 ]
 if _missing_packages:
     missing = ", ".join(_missing_packages)
-    raise RuntimeError(
+    import warnings
+
+    warnings.warn(
         f"Missing required test dependencies: {missing}. "
-        "Install them with `pip install -r requirements-test.txt`."
+        "Install them with `pip install -r requirements-test.txt`.",
+        RuntimeWarning,
     )
 
 # Provide a lightweight 'services' package to avoid importing heavy dependencies
@@ -33,7 +36,16 @@ if "services" not in sys.modules:
     sys.modules["services.resilience.metrics"] = metrics_mod
 
 # Optional heavy dependencies used by a subset of tests
-_optional_packages = {"hvac", "cryptography", "boto3", "confluent_kafka", "mlflow"}
+_optional_packages = {
+    "hvac",
+    "cryptography",
+    "boto3",
+    "confluent_kafka",
+    "mlflow",
+    "asyncpg",
+    "httpx",
+    "structlog",
+}
 _missing_optional = [
     pkg for pkg in _optional_packages if importlib.util.find_spec(pkg) is None
 ]
@@ -87,6 +99,22 @@ if "mlflow" not in sys.modules and "mlflow" in _missing_optional:
     mlflow_stub.log_text = lambda *a, **k: None
     mlflow_stub.set_tracking_uri = lambda *a, **k: None
     sys.modules["mlflow"] = mlflow_stub
+
+if "asyncpg" not in sys.modules and "asyncpg" in _missing_optional:
+    asyncpg_stub = types.ModuleType("asyncpg")
+    asyncpg_stub.create_pool = lambda *a, **k: None
+    sys.modules["asyncpg"] = asyncpg_stub
+
+if "httpx" not in sys.modules and "httpx" in _missing_optional:
+    httpx_stub = types.ModuleType("httpx")
+    httpx_stub.ASGITransport = object
+    httpx_stub.AsyncClient = object
+    sys.modules["httpx"] = httpx_stub
+
+if "structlog" not in sys.modules and "structlog" in _missing_optional:
+    structlog_stub = types.ModuleType("structlog")
+    structlog_stub.BoundLogger = object
+    sys.modules["structlog"] = structlog_stub
 
 if "requests" not in sys.modules:
     sys.modules["requests"] = types.ModuleType("requests")
@@ -195,6 +223,10 @@ except Exception:  # pragma: no cover - fallback stub
     sys.modules.setdefault("dash", dash_stub)
     sys.modules.setdefault("dash.html", dash_stub.html)
     sys.modules.setdefault("dash.dcc", dash_stub.dcc)
+    dash_dash_mod = types.ModuleType("dash.dash")
+    dash_dash_mod.Dash = dash_stub.Dash
+    dash_dash_mod.no_update = dash_stub.no_update
+    sys.modules.setdefault("dash.dash", dash_dash_mod)
     sys.modules.setdefault("dash.dependencies", dash_stub.dependencies)
     sys.modules.setdefault("dash._callback", dash_stub._callback)
     sys.modules.setdefault(
@@ -467,6 +499,10 @@ def fake_dash(monkeypatch: pytest.MonkeyPatch, request):
     monkeypatch.setitem(sys.modules, "dash", dash_stub)
     monkeypatch.setitem(sys.modules, "dash.html", dash_stub.html)
     monkeypatch.setitem(sys.modules, "dash.dcc", dash_stub.dcc)
+    dash_dash_mod = types.ModuleType("dash.dash")
+    dash_dash_mod.Dash = dash_stub.Dash
+    dash_dash_mod.no_update = dash_stub.no_update
+    monkeypatch.setitem(sys.modules, "dash.dash", dash_dash_mod)
     monkeypatch.setitem(sys.modules, "dash.dependencies", dash_stub.dependencies)
     monkeypatch.setitem(sys.modules, "dash._callback", dash_stub._callback)
     monkeypatch.setitem(

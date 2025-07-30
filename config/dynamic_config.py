@@ -4,8 +4,6 @@ import logging
 import os
 from typing import Any, Dict
 
-from utils.config_resolvers import resolve_max_upload_size_mb
-
 from .app_config import UploadConfig
 from .base_loader import BaseConfigLoader
 from .constants import (
@@ -19,8 +17,6 @@ from .constants import (
     UploadLimits,
 )
 from .environment import select_config_file
-from .utils import get_ai_confidence_threshold as _get_ai_confidence_threshold
-from .utils import get_upload_chunk_size as _get_upload_chunk_size
 
 logger = logging.getLogger(__name__)
 
@@ -262,10 +258,14 @@ class DynamicConfigManager(BaseConfigLoader):
         }
 
     def get_ai_confidence_threshold(self) -> int:
-        return _get_ai_confidence_threshold(self)
+        from utils.config_resolvers import resolve_ai_confidence_threshold
+
+        return resolve_ai_confidence_threshold(self)
 
     def get_max_upload_size_mb(self) -> int:
         """Get maximum upload size in MB."""
+        from utils.config_resolvers import resolve_max_upload_size_mb
+
         return resolve_max_upload_size_mb(self)
 
     def get_max_upload_size_bytes(self) -> int:
@@ -277,7 +277,9 @@ class DynamicConfigManager(BaseConfigLoader):
         return self.get_max_upload_size_mb() >= 50
 
     def get_upload_chunk_size(self) -> int:
-        return _get_upload_chunk_size(self)
+        from utils.config_resolvers import resolve_upload_chunk_size
+
+        return resolve_upload_chunk_size(self)
 
     def get_max_parallel_uploads(self) -> int:
         return getattr(self.uploads, "MAX_PARALLEL_UPLOADS", 4)
