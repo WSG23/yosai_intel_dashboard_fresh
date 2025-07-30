@@ -21,8 +21,8 @@ def register_upload_services(container: ServiceContainer) -> None:
     from services.device_learning_service import DeviceLearningService
     from services.door_mapping_service import DoorMappingService
     from services.interfaces import DoorMappingServiceProtocol
-    from services.upload.core.processor import UploadProcessingService
-    from services.upload.core.validator import ClientSideValidator
+    from services.upload.processor import UploadProcessingService
+    from services.upload.validator import ClientSideValidator
     from services.uploader import Uploader
     from utils.upload_store import UploadedDataStore
 

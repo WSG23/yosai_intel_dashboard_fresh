@@ -2,8 +2,8 @@ import inspect
 
 from core.protocols import FileProcessorProtocol
 from services.data_processing.async_file_processor import AsyncFileProcessor
-from services.upload.core.processor import UploadProcessingService
-from services.upload.core.validator import ClientSideValidator
+from services.upload.processor import UploadProcessingService
+from services.upload.validator import ClientSideValidator
 from services.upload.protocols import (
     UploadProcessingServiceProtocol,
     UploadStorageProtocol,

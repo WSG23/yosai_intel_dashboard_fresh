@@ -1,6 +1,6 @@
 import pandas as pd
 
-from services.upload.core.file_processor_service import FileProcessor
+from services.upload.file_processor_service import FileProcessor
 from tests.fakes import FakeFileProcessor, FakeUploadDataService, FakeUploadStore
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 

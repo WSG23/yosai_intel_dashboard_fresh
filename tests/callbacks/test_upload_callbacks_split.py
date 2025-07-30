@@ -3,7 +3,7 @@ import types
 import pytest
 from dash import no_update
 
-from services.upload.core.processor import UploadProcessingService
+from services.upload.processor import UploadProcessingService
 from tests.fakes import (
     FakeDeviceLearningService,
     FakeUploadDataService,
