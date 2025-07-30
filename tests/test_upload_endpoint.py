@@ -33,7 +33,9 @@ class DummyUploadService:
 def _create_app(monkeypatch):
     # Provide minimal stubs to avoid heavy imports during module load
     fake_reg = types.ModuleType("config.service_registration")
-    fake_reg.register_upload_services = lambda c: None
+    fake_reg.register_upload_services = lambda c: c.register_singleton(
+        "uploader", object()
+    )
     monkeypatch.setitem(sys.modules, "config.service_registration", fake_reg)
 
     cont = ServiceContainer()
@@ -86,7 +88,9 @@ class FailingUploadService:
 
 def test_upload_returns_error_on_exception(monkeypatch):
     fake_reg = types.ModuleType("config.service_registration")
-    fake_reg.register_upload_services = lambda c: None
+    fake_reg.register_upload_services = lambda c: c.register_singleton(
+        "uploader", object()
+    )
     monkeypatch.setitem(sys.modules, "config.service_registration", fake_reg)
 
     cont = ServiceContainer()
@@ -136,7 +140,9 @@ class DummyFileProcessor:
 
 def _create_validator_app(monkeypatch):
     fake_reg = types.ModuleType("config.service_registration")
-    fake_reg.register_upload_services = lambda c: None
+    fake_reg.register_upload_services = lambda c: c.register_singleton(
+        "uploader", object()
+    )
     monkeypatch.setitem(sys.modules, "config.service_registration", fake_reg)
 
     cont = ServiceContainer()

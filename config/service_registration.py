@@ -23,9 +23,11 @@ def register_upload_services(container: ServiceContainer) -> None:
     from services.interfaces import DoorMappingServiceProtocol
     from services.upload.core.processor import UploadProcessingService
     from services.upload.core.validator import ClientSideValidator
+    from services.uploader import Uploader
     from utils.upload_store import UploadedDataStore
 
     upload_store = UploadedDataStore(dynamic_config.upload.folder)
+    container.register_singleton("uploader", Uploader(upload_store))
     door_mapping_service = DoorMappingService(DynamicConfigurationService())
     container.register_singleton(
         "door_mapping_service",
