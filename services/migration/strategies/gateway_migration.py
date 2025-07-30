@@ -21,7 +21,9 @@ class GatewayMigration(MigrationStrategy):
         assert self.target_pool is not None
         while True:
             rows: List[asyncpg.Record] = await source_pool.fetch(
-                f"SELECT * FROM {self.TABLE} OFFSET {start} LIMIT {self.CHUNK_SIZE}"
+                f"SELECT * FROM {self.TABLE} OFFSET $1 LIMIT $2",
+                start,
+                self.CHUNK_SIZE,
             )
             if not rows:
                 break

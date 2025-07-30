@@ -119,12 +119,12 @@ class TimescaleDBManager:
         compression_days = int(os.getenv("TIMESCALE_COMPRESSION_DAYS", "30"))
         retention_days = int(os.getenv("TIMESCALE_RETENTION_DAYS", "365"))
         await conn.execute(
-            "SELECT add_compression_policy('access_events',"
-            f" INTERVAL '{compression_days} days', if_not_exists => TRUE)"
+            "SELECT add_compression_policy('access_events', INTERVAL $1 || ' days', if_not_exists => TRUE)",
+            compression_days,
         )
         await conn.execute(
-            "SELECT add_retention_policy('access_events',"
-            f" INTERVAL '{retention_days} days', if_not_exists => TRUE)"
+            "SELECT add_retention_policy('access_events', INTERVAL $1 || ' days', if_not_exists => TRUE)",
+            retention_days,
         )
 
     # ------------------------------------------------------------------
