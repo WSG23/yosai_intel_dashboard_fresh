@@ -47,8 +47,27 @@ def _stub_analytics_deps() -> None:
         max_pool_size = 1
         connection_timeout = 1
 
+    class DatabaseSettings:
+        def __init__(self):
+            self.initial_pool_size = 1
+            self.max_pool_size = 1
+            self.connection_timeout = 1
+
+        def get_connection_string(self) -> str:  # pragma: no cover - stub
+            return "postgresql://"
+
     config_stub.get_database_config = lambda: _Cfg()
+    dynamic_config_stub = types.ModuleType("config.dynamic_config")
+    dynamic_config_stub.get_db_pool_size = lambda: 1
+    dynamic_config_stub.get_db_connection_timeout = lambda: 1
+    dynamic_config_stub.dynamic_config = types.SimpleNamespace(
+        get_db_pool_size=lambda: 1,
+        get_db_connection_timeout=lambda: 1,
+    )
+    config_stub.dynamic_config = dynamic_config_stub.dynamic_config
+    config_stub.DatabaseSettings = DatabaseSettings
     sys.modules["config"] = config_stub
+    sys.modules["config.dynamic_config"] = dynamic_config_stub
 
     validate_stub = types.ModuleType("config.validate")
     validate_stub.validate_required_env = lambda vars: None
@@ -123,6 +142,7 @@ def _stub_ingestion_deps() -> None:
 
     tracing_stub = types.ModuleType("tracing")
     tracing_stub.trace_async_operation = lambda *a, **k: a[2] if len(a) > 2 else None
+    tracing_stub.propagate_context = lambda headers: None
     sys.modules["tracing"] = tracing_stub
 
 

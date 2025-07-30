@@ -24,19 +24,12 @@ on `TrulyUnifiedCallbacks`,
 All modules must migrate to this API before upgrading. The legacy wrappers are
 no longer shipped with the project.
 
-## Cleanup Utility Example
+## Cleaning Up Old Imports
 
-The repository provides `legacy_callback_migrator.py` which rewrites any
-remaining references to `callback_controller` and verifies that the unified
-callback system works correctly. Run it from the project root:
-
-```bash
-python legacy_callback_migrator.py --dry-run
-```
-
-Omit `--dry-run` to apply the changes. The script scans for deprecated imports,
-adds the required `TrulyUnifiedCallbacks` import if missing and performs a
-simple runtime validation of the new system.
+Search the codebase for `callback_controller` and update any remaining
+references to use the unified API. Make sure to import `TrulyUnifiedCallbacks`
+where required and remove any deprecated wrappers. Running the tests after
+each change helps ensure the callbacks behave as expected.
 
 ## Best Practices for Migration
 
@@ -50,5 +43,5 @@ simple runtime validation of the new system.
 - **Enable Unicode safety** with `unicode_safe=True` or by using
   `UnicodeAwareTrulyUnifiedCallbacks`. Surrogate pairs and non‑printable
   characters are sanitized automatically to avoid UTF‑8 errors.
-- **Remove legacy imports** after migration and verify that tests pass. The
-  `legacy_callback_migrator.py` script can assist with large refactors.
+- **Remove legacy imports** after migration and verify that tests pass. Use a
+  search-and-replace workflow to update modules in bulk when refactoring.
