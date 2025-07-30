@@ -13,7 +13,7 @@ else:
     from .ab_testing import ModelABTester
     from .ai_mapping_store import ai_mapping_store
     from .analytics.calculator import Calculator
-    from .analytics.data_loader import DataLoader
+    from .analytics.data.loader import DataLoader
     from .analytics.generator import AnalyticsGenerator
     from .analytics.processor import AnalyticsProcessor
     from .analytics.publisher import Publisher

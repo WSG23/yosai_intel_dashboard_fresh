@@ -37,7 +37,7 @@ from core.protocols import (
     StorageProtocol,
 )
 from services.analytics.calculator import Calculator, create_calculator
-from services.analytics.data_loader import DataLoader, create_loader
+from services.analytics.data.loader import DataLoader
 from services.analytics.orchestrator import AnalyticsOrchestrator
 from services.analytics.protocols import DataProcessorProtocol
 from services.analytics.publisher import Publisher, create_publisher
@@ -531,7 +531,6 @@ def get_analytics_service(
                 _analytics_service = AnalyticsService(
                     config=config_provider,
                     model_registry=model_registry,
-                    loader=create_loader(),
                     calculator=create_calculator(),
                     publisher=create_publisher(),
                     report_generator=SummaryReportGenerator(),
@@ -547,7 +546,6 @@ def create_analytics_service(
     return AnalyticsService(
         config=config_provider,
         model_registry=model_registry,
-        loader=create_loader(),
         calculator=create_calculator(),
         publisher=create_publisher(),
         report_generator=SummaryReportGenerator(),
