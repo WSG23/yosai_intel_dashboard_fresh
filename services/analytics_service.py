@@ -43,6 +43,11 @@ from services.analytics.protocols import DataProcessorProtocol
 from services.analytics.publisher import Publisher, create_publisher
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.analytics_summary import generate_sample_analytics
+from services.analytics.helpers import (
+    DataSourceRouter,
+    initialize_core_components,
+    initialize_orchestrator_components,
+)
 from services.controllers.upload_controller import UploadProcessingController
 from services.data_processing.processor import Processor
 from services.database_retriever import DatabaseAnalyticsRetriever
@@ -102,43 +107,6 @@ LARGE_DATA_THRESHOLD = dynamic_config.analytics.large_data_threshold
 """Row count above which data is considered large."""
 
 
-class DataSourceRouter:
-    """Helper to route analytics requests based on source."""
-
-    def __init__(self, orchestrator: AnalyticsOrchestrator) -> None:
-        self.orchestrator = orchestrator
-
-    def get_analytics(self, source: str) -> Dict[str, Any]:
-        """Return analytics data for ``source``."""
-        try:
-            uploaded_data = self.orchestrator.loader.load_uploaded_data()
-            if uploaded_data and source in ["uploaded", "sample"]:
-                logger.info("Forcing uploaded data usage (source was: %s)", source)
-                return self.orchestrator.process_uploaded_data_directly(uploaded_data)
-        except (
-            ImportError,
-            FileNotFoundError,
-            OSError,
-            RuntimeError,
-            ValueError,
-            pd.errors.ParserError,
-        ) as exc:
-            logger.error(
-                "Uploaded data check failed (%s): %s",
-                type(exc).__name__,
-                exc,
-                exc_info=True,
-            )
-
-        if source == "sample":
-            return generate_sample_analytics()
-        if source == "uploaded":
-            return {"status": "no_data", "message": "No uploaded files available"}
-        if source == "database":
-            return self.orchestrator.get_database_analytics()
-        return {"status": "error", "message": f"Unknown source: {source}"}
-
-
 @injectable
 class AnalyticsService(AnalyticsServiceProtocol):
     """Analytics service implementing ``AnalyticsServiceProtocol``."""
@@ -162,47 +130,26 @@ class AnalyticsService(AnalyticsServiceProtocol):
         upload_controller: UploadProcessingController | None = None,
         upload_processor: UploadAnalyticsProcessor | None = None,
     ) -> None:
-        self.database = database
-        self.data_processor = data_processor or Processor(validator=SecurityValidator())
-        self.config = config
-        self.event_bus = event_bus
-        self.storage = storage
-        self.upload_data_service = upload_data_service or get_upload_data_service()
-        self.model_registry = model_registry
-        self.validation_service = SecurityValidator()
-        if data_processor is None:
-            self.processor = Processor(validator=self.validation_service)
-            self.data_processor = self.processor
-        else:
-            self.processor = data_processor
-            self.data_processor = data_processor
-        # Legacy attribute aliases
-        self.data_loading_service = self.processor
-        from services.data_processing.file_handler import FileHandler
-
-        self.file_handler = FileHandler()
-
-        if upload_processor is None:
-            upload_processor = UploadAnalyticsProcessor(
-                self.validation_service, self.processor
-            )
-        if upload_controller is None:
-            self.upload_controller = UploadProcessingController(
-                self.validation_service,
-                self.processor,
-                self.upload_data_service,
-                upload_processor,
-            )
-        else:
-            self.upload_controller = upload_controller
-        self.upload_processor = upload_processor
-        self.report_generator = report_generator or SummaryReportGenerator()
-        self._setup_database(db_retriever)
-        loader = loader or DataLoader(self.upload_controller, self.processor)
-        calculator = calculator or Calculator(self.report_generator)
-        publisher = publisher or Publisher(self.event_bus)
-        self._create_orchestrator(loader, calculator, publisher)
-        self.router = DataSourceRouter(self.orchestrator)
+        initialize_core_components(
+            self,
+            database,
+            data_processor,
+            config,
+            event_bus,
+            storage,
+            upload_data_service,
+            model_registry,
+            upload_controller=upload_controller,
+            upload_processor=upload_processor,
+            report_generator=report_generator,
+        )
+        initialize_orchestrator_components(
+            self,
+            loader=loader,
+            calculator=calculator,
+            publisher=publisher,
+            db_retriever=db_retriever,
+        )
 
     def _setup_database(
         self, db_retriever: DatabaseAnalyticsRetriever | None = None
