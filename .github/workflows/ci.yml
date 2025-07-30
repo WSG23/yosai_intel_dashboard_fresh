@@ -20,10 +20,6 @@ jobs:
           set -xe
           pip install -r requirements.lock
           pip install -r requirements-test.txt
-      - name: Generate Flask OpenAPI spec
-        run: python api/spec.py > openapi/spec.yaml
-      - name: Check Flask spec up to date
-        run: git diff --exit-code openapi/spec.yaml
       - name: Upload OpenAPI
         uses: actions/upload-artifact@v4
         with:

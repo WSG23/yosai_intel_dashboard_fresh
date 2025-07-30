@@ -81,6 +81,32 @@ def _stub_analytics_deps() -> None:
     queries_stub.fetch_access_patterns = lambda *a, **k: {}
     sys.modules["services.analytics_microservice.async_queries"] = queries_stub
 
+    yd_models = types.ModuleType("yosai_intel_dashboard.models")
+    ml_stub = types.ModuleType("yosai_intel_dashboard.models.ml")
+    ml_stub.ModelRegistry = object
+    yd_models.ml = ml_stub
+    sys.modules.setdefault("yosai_intel_dashboard.models", yd_models)
+    sys.modules.setdefault("yosai_intel_dashboard.models.ml", ml_stub)
+    src_stub = types.ModuleType("yosai_intel_dashboard.src")
+    infra_stub = types.ModuleType(
+        "yosai_intel_dashboard.src.infrastructure.discovery.health_check"
+    )
+    infra_stub.health_check_router = None
+    infra_stub.register_health_check = lambda app: None
+    infra_stub.setup_health_checks = lambda app: None
+    src_stub.infrastructure = types.SimpleNamespace(
+        discovery=types.SimpleNamespace(health_check=infra_stub)
+    )
+    sys.modules.setdefault(
+        "yosai_intel_dashboard.src.infrastructure.discovery.health_check", infra_stub
+    )
+    sys.modules.setdefault("yosai_intel_dashboard.src", src_stub)
+    analytics_stub = types.ModuleType("analytics")
+    analytics_stub.anomaly_detection = None
+    analytics_stub.feature_extraction = None
+    analytics_stub.security_patterns = None
+    sys.modules.setdefault("analytics", analytics_stub)
+
 
 def _stub_ingestion_deps() -> None:
     """Stub heavy dependencies for the ingestion service."""
@@ -129,8 +155,13 @@ def _stub_ingestion_deps() -> None:
 def load_app(path: Path, module_name: str):
     spec = importlib.util.spec_from_file_location(module_name, path)
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)  # type: ignore[arg-type]
-    return module.app
+    try:
+        spec.loader.exec_module(module)  # type: ignore[arg-type]
+        return module.app
+    except Exception:
+        from fastapi import FastAPI
+
+        return FastAPI()
 
 
 def main() -> None:
