@@ -45,6 +45,20 @@ cluster, the updated manifest is applied automatically. After the pods
 restart, remove the previous credentials from your secret store or
 database to prevent reuse.
 
+### Retrieving Rotated Secrets
+
+`scripts/vault_rotate.py` updates the values stored in Vault without
+printing them to the terminal. Fetch the new credentials using the Vault
+CLI or another authenticated client:
+
+```bash
+vault kv get -field=password secret/data/db
+vault kv get -field=secret secret/data/jwt
+```
+
+Share the retrieved secrets only over secure channels and update any
+dependent services accordingly.
+
 ## Docker and Cloud Secret Usage
 
 Secrets can be supplied as Docker secrets when running with Docker
