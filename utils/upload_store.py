@@ -13,7 +13,7 @@ import pandas as pd
 
 from config.app_config import UploadConfig
 from core.cache_manager import CacheConfig, InMemoryCacheManager
-from file_conversion.file_converter import FileConverter
+from core.unicode import sanitize_dataframe
 from services.upload.protocols import UploadStorageProtocol
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
@@ -108,8 +108,10 @@ class UploadedDataStore(UploadStorageProtocol):
                 fpath = self._get_file_path(fname)
                 pkl_path = fpath.with_suffix(".pkl")
                 if pkl_path.exists():
-                    success, df = FileConverter.pkl_to_parquet(pkl_path, fpath)
-                    if success:
+                    try:
+                        df = pd.read_pickle(pkl_path)
+                        df = sanitize_dataframe(df)
+                        df.to_parquet(fpath, index=False)
                         try:
                             pkl_path.unlink()
                         except Exception:  # pragma: no cover - best effort
@@ -125,7 +127,8 @@ class UploadedDataStore(UploadStorageProtocol):
                             ),
                         }
                         modified = True
-                    else:
+                    except Exception as exc:  # pragma: no cover - best effort
+                        logger.error(f"Error converting {pkl_path}: {exc}")
                         continue
                 else:
                     # Ensure path metadata exists for already-converted files

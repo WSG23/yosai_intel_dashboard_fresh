@@ -1198,15 +1198,9 @@ result = service.process_upload(df, "sample.csv")
 print(result.columns.data.head())
 ```
 ## <span aria-hidden="true">📜</span> Data Migration
-Use the storage utilities to convert legacy pickle files to Parquet and load them:
-```python
-from file_conversion.migrate_existing_files import main
-main()
-```
-This creates `converted_data/Demo3_data_copy.csv.parquet` and prints the first rows.
-
 Legacy `.pkl` files placed in `temp/uploaded_data` are automatically converted
-to Parquet the next time the application starts.
+to Parquet on startup. Converted files live in `temp/uploaded_data` alongside
+their metadata and are lazily loaded when needed.
 
 Uploaded files are now **lazy loaded**. Only the `file_info.json` metadata is
 read at startup; Parquet files are opened on demand when analytics or previews
