@@ -1,7 +1,9 @@
 import types
 import base64
 import pandas as pd
+import sys
 from dash import no_update
+sys.modules.setdefault("dash.dash", sys.modules.get("dash"))
 
 from services.upload.upload_core_helpers import (
     process_uploaded_files_helper,

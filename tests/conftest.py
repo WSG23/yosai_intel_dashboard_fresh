@@ -91,6 +91,118 @@ if "mlflow" not in sys.modules and "mlflow" in _missing_optional:
 if "requests" not in sys.modules:
     sys.modules["requests"] = types.ModuleType("requests")
 
+# ---------------------------------------------------------------------------
+# Lightweight configuration stubs
+# ---------------------------------------------------------------------------
+if "config" not in sys.modules:
+    config_pkg = types.ModuleType("config")
+    config_pkg.__path__ = [str(Path(__file__).resolve().parent / "stubs" / "config")]
+    sys.modules["config"] = config_pkg
+
+    class Config:
+        pass
+
+    class DatabaseSettings:
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+    class CacheConfig:
+        ttl: int = 300
+
+    class DummyDynamicConfig:
+        def get_max_upload_size_mb(self):
+            return 10
+
+        def get_max_upload_size_bytes(self):
+            return 10 * 1024 * 1024
+
+        def validate_large_file_support(self):
+            return True
+
+        def get_upload_chunk_size(self):
+            return 1000
+
+        def get_max_parallel_uploads(self):
+            return 1
+
+        def get_validator_rules(self):
+            return {}
+
+        def get_ai_confidence_threshold(self):
+            return 0.5
+
+        def get_db_pool_size(self):
+            return 10
+
+    dynamic_config = DummyDynamicConfig()
+
+    base_mod = types.ModuleType("config.base")
+    base_mod.Config = Config
+    base_mod.DatabaseSettings = DatabaseSettings
+    base_mod.CacheConfig = CacheConfig
+    base_mod.dynamic_config = dynamic_config
+
+    def get_analytics_config():
+        return types.SimpleNamespace(max_display_rows=100)
+
+    config_mod = types.ModuleType("config.config")
+    config_mod.get_config = lambda: types.SimpleNamespace(
+        get_app_config=lambda: types.SimpleNamespace(environment="dev"),
+        get_security_config=lambda: types.SimpleNamespace(csrf_enabled=False),
+        get_analytics_config=get_analytics_config,
+    )
+    config_mod.get_analytics_config = get_analytics_config
+
+    utils_mod = types.ModuleType("config.utils")
+    utils_mod.get_ai_confidence_threshold = lambda cfg=None: 0.5
+    utils_mod.get_upload_chunk_size = lambda cfg=None: 1000
+
+    constants_mod = importlib.import_module("tests.stubs.config.constants")
+
+    sys.modules.update(
+        {
+            "config.base": base_mod,
+            "config.config": config_mod,
+            "config.dynamic_config": types.ModuleType("config.dynamic_config"),
+            "config.utils": utils_mod,
+            "config.constants": constants_mod,
+        }
+    )
+    sys.modules["config.dynamic_config"].dynamic_config = dynamic_config
+
+    config_pkg.base = base_mod
+    config_pkg.config = config_mod
+    config_pkg.dynamic_config = sys.modules["config.dynamic_config"]
+    config_pkg.utils = utils_mod
+    config_pkg.constants = constants_mod
+    config_pkg.Config = Config
+    config_pkg.DatabaseSettings = DatabaseSettings
+    config_pkg.CacheConfig = CacheConfig
+
+    def get_cache_config():
+        return CacheConfig()
+
+    config_pkg.get_cache_config = get_cache_config
+
+if "asyncpg" not in sys.modules:
+    sys.modules["asyncpg"] = types.ModuleType("asyncpg")
+
+if "config.database_exceptions" not in sys.modules:
+    db_exc_mod = types.ModuleType("config.database_exceptions")
+    class UnicodeEncodingError(Exception):
+        pass
+    db_exc_mod.UnicodeEncodingError = UnicodeEncodingError
+    sys.modules["config.database_exceptions"] = db_exc_mod
+
+if "config.app_config" not in sys.modules:
+    app_cfg_mod = types.ModuleType("config.app_config")
+    class UploadConfig:
+        max_upload_mb = 10
+        folder = "/tmp"
+    app_cfg_mod.UploadConfig = UploadConfig
+    sys.modules["config.app_config"] = app_cfg_mod
+
 if "mapping.models" not in sys.modules:
     mapping_models_stub = types.ModuleType("mapping.models")
 

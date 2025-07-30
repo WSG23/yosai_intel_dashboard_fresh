@@ -1,6 +1,59 @@
 import types
 import importlib.util
 from pathlib import Path
+import sys
+
+# Stub heavy modules required by helpers
+mods = {
+    "services.analytics.upload_analytics": types.ModuleType("services.analytics.upload_analytics"),
+    "services.controllers.upload_controller": types.ModuleType("services.controllers.upload_controller"),
+    "services.chunked_analysis": types.ModuleType("services.chunked_analysis"),
+    "services.database_retriever": types.ModuleType("services.database_retriever"),
+    "services.analytics.calculator": types.ModuleType("services.analytics.calculator"),
+    "services.analytics.data.loader": types.ModuleType("services.analytics.data.loader"),
+    "services.analytics.publisher": types.ModuleType("services.analytics.publisher"),
+}
+analytics_pkg = types.ModuleType("services.analytics")
+analytics_pkg.__path__ = []
+sys.modules.setdefault("services.analytics", analytics_pkg)
+
+protocols_mod = types.ModuleType("services.analytics.protocols")
+class DataProcessorProtocol: ...
+protocols_mod.DataProcessorProtocol = DataProcessorProtocol
+sys.modules.setdefault("services.analytics.protocols", protocols_mod)
+
+orchestrator_mod = types.ModuleType("services.analytics.orchestrator")
+class AnalyticsOrchestrator:
+    def __init__(self, *a, **k): ...
+orchestrator_mod.AnalyticsOrchestrator = AnalyticsOrchestrator
+sys.modules.setdefault("services.analytics.orchestrator", orchestrator_mod)
+analytics_pkg.protocols = protocols_mod
+analytics_pkg.orchestrator = orchestrator_mod
+if "UploadAnalyticsProcessor" not in mods["services.analytics.upload_analytics"].__dict__:
+    class UploadAnalyticsProcessor:
+        def __init__(self, *a, **k): ...
+    mods["services.analytics.upload_analytics"].UploadAnalyticsProcessor = UploadAnalyticsProcessor
+
+if "UploadProcessingController" not in mods["services.controllers.upload_controller"].__dict__:
+    class UploadProcessingController:
+        def __init__(self, *a, **k): ...
+    mods["services.controllers.upload_controller"].UploadProcessingController = UploadProcessingController
+
+class Calculator: ...
+class DataLoader:
+    def __init__(self, *a, **k): ...
+class Publisher:
+    def __init__(self, *a, **k): ...
+class DatabaseAnalyticsRetriever: ...
+mods["services.analytics.calculator"].Calculator = Calculator
+mods["services.analytics.data.loader"].DataLoader = DataLoader
+mods["services.analytics.publisher"].Publisher = Publisher
+mods["services.database_retriever"].DatabaseAnalyticsRetriever = DatabaseAnalyticsRetriever
+mods["services.analytics.calculator"].create_calculator = lambda: Calculator()
+sys.modules.setdefault("dash.dash", sys.modules.get("dash"))
+
+for name, mod in mods.items():
+    sys.modules.setdefault(name, mod)
 
 spec = importlib.util.spec_from_file_location(
     "analytics_helpers", Path("services/analytics/helpers.py")

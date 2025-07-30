@@ -10,24 +10,18 @@ from core.protocols import (
     EventBusProtocol,
     StorageProtocol,
 )
-from services.analytics.calculator import Calculator
-from services.analytics.data.loader import DataLoader
-from services.analytics.orchestrator import AnalyticsOrchestrator
 from services.analytics.protocols import DataProcessorProtocol
-from services.analytics.publisher import Publisher
-from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.analytics_summary import generate_sample_analytics
-from services.controllers.upload_controller import UploadProcessingController
-from services.data_processing.processor import Processor
-from services.database_retriever import DatabaseAnalyticsRetriever
-from services.interfaces import get_upload_data_service
-from services.summary_report_generator import SummaryReportGenerator
 from services.upload_data_service import UploadDataService
 from validation.security_validator import SecurityValidator
+from typing import Any
 
 if TYPE_CHECKING:  # pragma: no cover - for type checking only
     from yosai_intel_dashboard.models.ml import ModelRegistry
     from .analytics_service import AnalyticsService
+    from services.analytics.orchestrator import AnalyticsOrchestrator
+else:  # pragma: no cover - during runtime
+    AnalyticsOrchestrator = Any
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +78,12 @@ def initialize_core_components(
 ) -> None:
     """Initialize basic service dependencies."""
 
+    from services.data_processing.processor import Processor
+    from services.controllers.upload_controller import UploadProcessingController
+    from services.analytics.upload_analytics import UploadAnalyticsProcessor
+    from services.summary_report_generator import SummaryReportGenerator
+    from services.interfaces import get_upload_data_service
+
     service.database = database
     service.data_processor = data_processor or Processor(validator=SecurityValidator())
     service.config = config
@@ -120,12 +120,17 @@ def initialize_core_components(
 
 def initialize_orchestrator_components(
     service: "AnalyticsService",
-    loader: DataLoader | None = None,
-    calculator: Calculator | None = None,
-    publisher: Publisher | None = None,
-    db_retriever: DatabaseAnalyticsRetriever | None = None,
+    loader: "DataLoader | None" = None,
+    calculator: "Calculator | None" = None,
+    publisher: "Publisher | None" = None,
+    db_retriever: "DatabaseAnalyticsRetriever | None" = None,
 ) -> None:
     """Initialize orchestrator helpers for the service."""
+
+    from services.analytics.data.loader import DataLoader
+    from services.analytics.calculator import Calculator
+    from services.analytics.publisher import Publisher
+    from services.database_retriever import DatabaseAnalyticsRetriever
 
     service._setup_database(db_retriever)
     loader = loader or DataLoader(service.upload_controller, service.processor)
