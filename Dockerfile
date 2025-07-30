@@ -1,28 +1,38 @@
-FROM python:3.11-slim
-
+FROM python:3.11-slim as builder
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements early and install them
-# Doing this before copying the rest of the source ensures
-# all dependencies are available at runtime and leverages Docker cache.
+# Install Python dependencies in a virtual environment
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m venv /opt/venv \
+    && /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
 
-# Copy application
+# Copy application source
 COPY . .
 
-# Expose port
+FROM python:3.11-slim
+WORKDIR /app
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy virtual env and application from builder stage
+COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /app /app
+
+# Create non-root user
+RUN groupadd --system app && useradd --system --gid app app
+USER app
+
+ENV YOSAI_ENV=production
 EXPOSE 8050
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8050/ || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 CMD curl -f http://localhost:8050/ || exit 1
 
-# Run application
-CMD ["python", "start_api.py"]
+COPY start.sh ./start.sh
+RUN chmod +x start.sh
+
+CMD ["./start.sh"]
