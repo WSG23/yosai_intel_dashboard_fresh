@@ -14,4 +14,8 @@ removed. Use the following tools for diagnostics:
 - Run `python -m tools.debug` for a unified CLI covering asset and callback diagnostics.
 - The old `debug_cache_error.py` and `debug_mde.py` helpers have been removed.
 
+These helpers use your configured environment for secrets. Set `SECRET_KEY` in
+your shell or secret manager before running them. The utilities no longer
+inject a default value.
+
 Test stubs under `tests/utils/` and `tests/stubs/utils/` also provide simplified assets for debugging in the test suite.

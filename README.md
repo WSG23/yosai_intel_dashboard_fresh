@@ -769,9 +769,9 @@ defined in `gunicorn.conf.py`.
 
 
 The secret key is not included in the default YAML files. **You must**
-set `SECRET_KEY` in your environment or a `.env` file before starting
-the application. The API now raises a `RuntimeError` if the variable is
-missing.
+provide `SECRET_KEY` via an environment variable, Docker secret or your
+secret manager (e.g. Vault) before starting the application. The API
+raises a `RuntimeError` if the variable is missing.
 
 When `YOSAI_ENV=production` the application will refuse to start unless both
 `DB_PASSWORD` and `SECRET_KEY` are provided via environment variables or Docker
