@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-import time
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -23,7 +22,7 @@ from fastapi import (
     UploadFile,
     status,
 )
-from jose import jwt
+from services.auth import verify_jwt_token
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
@@ -93,32 +92,15 @@ def _jwt_secret() -> str:
     return get_secret(_SECRET_PATH)
 
 
-def verify_token(authorization: str = Header("")) -> None:
-    """Validate Authorization header using JWT_SECRET."""
+def verify_token(authorization: str = Header("")) -> dict:
+    """Validate Authorization header and return JWT claims."""
     if not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
         )
     token = authorization.split(" ", 1)[1]
-    try:
-        claims = jwt.decode(token, _jwt_secret(), algorithms=["HS256"])
-    except Exception as exc:  # noqa: BLE001
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
-        ) from exc
-    exp = claims.get("exp")
-    if exp is not None and exp < time.time():
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
-        )
-    if not claims.get("iss"):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ServiceError(ErrorCode.UNAUTHORIZED, "unauthorized").to_dict(),
-        )
+    return verify_jwt_token(token)
 
 
 def preload_active_models() -> None:

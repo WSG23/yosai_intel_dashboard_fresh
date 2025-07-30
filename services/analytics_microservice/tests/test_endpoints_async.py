@@ -188,6 +188,10 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     secrets_stub.get_secret = lambda path: "secret"
     sys.modules["services.common.secrets"] = secrets_stub
 
+    auth_stub = types.ModuleType("services.auth")
+    auth_stub.verify_jwt_token = lambda token: jwt.decode(token, jwt_secret, algorithms=["HS256"])
+    sys.modules["services.auth"] = auth_stub
+
     # Stub ModelRegistry used by the microservice
     registry_mod = types.ModuleType("models.ml.model_registry")
 
@@ -254,6 +258,9 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     ml_pkg.ModelRegistry = DummyRegistry
     ml_pkg.ModelRecord = DummyRecord
     sys.modules["models.ml"] = ml_pkg
+    models_stub = types.ModuleType("models")
+    models_stub.ml = ml_pkg
+    sys.modules["models"] = models_stub
 
     # Stub analytics modules used by threat_assessment endpoint
     fe_stub = types.ModuleType("analytics.feature_extraction")
@@ -348,6 +355,7 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     val_stub.UnicodeValidator = DummyValidator
     sys.modules["validation.unicode_validator"] = val_stub
 
+    sys.modules.setdefault("tracing", types.ModuleType("tracing"))
     sys.modules.setdefault("hvac", types.ModuleType("hvac"))
 
     os.environ["JWT_SECRET"] = jwt_secret
@@ -385,11 +393,13 @@ async def test_health_endpoints():
 @pytest.mark.asyncio
 async def test_dashboard_summary_endpoint():
     module, queries_stub, db_stub = load_app()
+    from services.auth import verify_jwt_token
     token = jwt.encode(
         {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
         "secret",
         algorithm="HS256",
     )
+    assert verify_jwt_token(token)["iss"] == "gateway"
     headers = {"Authorization": f"Bearer {token}"}
 
     transport = httpx.ASGITransport(app=module.app)
@@ -418,12 +428,14 @@ async def test_unauthorized_request():
 @pytest.mark.asyncio
 async def test_internal_error_response():
     module, queries_stub, _ = load_app()
+    from services.auth import verify_jwt_token
     queries_stub.fetch_dashboard_summary.side_effect = RuntimeError("boom")
     token = jwt.encode(
         {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
         "secret",
         algorithm="HS256",
     )
+    assert verify_jwt_token(token)["iss"] == "gateway"
     headers = {"Authorization": f"Bearer {token}"}
 
     transport = httpx.ASGITransport(app=module.app)
@@ -441,6 +453,7 @@ async def test_model_registry_endpoints(tmp_path):
     module, _, _ = load_app()
     module.app.state.model_dir = tmp_path
     from yosai_intel_dashboard.models.ml import ModelRegistry
+    from services.auth import verify_jwt_token
 
     module.app.state.model_registry = ModelRegistry()
     token = jwt.encode(
@@ -448,6 +461,7 @@ async def test_model_registry_endpoints(tmp_path):
         "secret",
         algorithm="HS256",
     )
+    assert verify_jwt_token(token)["iss"] == "gateway"
     headers = {"Authorization": f"Bearer {token}"}
 
     transport = httpx.ASGITransport(app=module.app)
@@ -477,6 +491,7 @@ async def test_model_registry_endpoints(tmp_path):
 async def test_predict_endpoint(tmp_path):
     module, _, _ = load_app()
     module.app.state.model_dir = tmp_path
+    from services.auth import verify_jwt_token
 
     model = Dummy()
     path = tmp_path / "demo" / "1" / "model.joblib"
@@ -495,6 +510,7 @@ async def test_predict_endpoint(tmp_path):
         "secret",
         algorithm="HS256",
     )
+    assert verify_jwt_token(token)["iss"] == "gateway"
     headers = {"Authorization": f"Bearer {token}"}
 
     transport = httpx.ASGITransport(app=module.app)
