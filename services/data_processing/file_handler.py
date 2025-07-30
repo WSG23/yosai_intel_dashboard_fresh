@@ -22,7 +22,7 @@ from services.data_processing.core.exceptions import (
     FileProcessingError,
     FileValidationError,
 )
-from upload_types import ValidationResult
+from services.upload.upload_types import ValidationResult
 from utils.file_utils import safe_decode_with_unicode_handling
 from validation.security_validator import SecurityValidator
 

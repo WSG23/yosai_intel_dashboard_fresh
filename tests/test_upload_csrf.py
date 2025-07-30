@@ -35,7 +35,7 @@ def _create_app(monkeypatch):
     container.register_singleton("upload_processor", DummyUploadService())
     monkeypatch.setattr("core.container.container", container, raising=False)
 
-    import upload_endpoint
+    from services import upload_endpoint
 
     importlib.reload(upload_endpoint)
 

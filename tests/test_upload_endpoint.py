@@ -44,7 +44,7 @@ def _create_app(monkeypatch):
     container_mod.container = cont
     monkeypatch.setitem(sys.modules, "core.container", container_mod)
 
-    upload_ep = importlib.import_module("upload_endpoint")
+    upload_ep = importlib.import_module("services.upload_endpoint")
 
     app = Flask(__name__)
     app.register_blueprint(upload_ep.upload_bp)
@@ -99,7 +99,7 @@ def test_upload_returns_error_on_exception(monkeypatch):
 
     import importlib
 
-    upload_ep = importlib.import_module("upload_endpoint")
+    upload_ep = importlib.import_module("services.upload_endpoint")
 
     app = Flask(__name__)
     app.register_blueprint(upload_ep.upload_bp)
@@ -146,7 +146,7 @@ def _create_validator_app(monkeypatch):
     container_mod.container = cont
     monkeypatch.setitem(sys.modules, "core.container", container_mod)
 
-    upload_ep = importlib.import_module("upload_endpoint")
+    upload_ep = importlib.import_module("services.upload_endpoint")
 
     app = Flask(__name__)
     app.register_blueprint(upload_ep.upload_bp)

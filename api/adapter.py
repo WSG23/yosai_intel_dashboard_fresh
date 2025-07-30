@@ -21,11 +21,11 @@ from api.analytics_router import router as analytics_router
 from settings_endpoint import settings_bp
 
 from config.constants import API_PORT
-from device_endpoint import device_bp
-from mappings_endpoint import mappings_bp
+from services.device_endpoint import device_bp
+from services.mappings_endpoint import mappings_bp
 from middleware.performance import TimingMiddleware
-from token_endpoint import token_bp
-from upload_endpoint import upload_bp
+from services.token_endpoint import token_bp
+from services.upload_endpoint import upload_bp
 
 
 def create_api_app() -> "FastAPI":

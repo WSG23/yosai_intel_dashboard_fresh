@@ -9,7 +9,7 @@ from tests.fakes import (
     FakeUploadDataService,
     FakeUploadStore,
 )
-from upload_core import UploadCore
+from services.upload.upload_core import UploadCore
 
 
 def _create_core(monkeypatch=None):
@@ -42,7 +42,7 @@ def test_schedule_upload_task(monkeypatch):
             coro.close()
         return "tid42"
 
-    monkeypatch.setattr("upload_core.create_task", fake_create_task)
+    monkeypatch.setattr("services.upload.upload_core.create_task", fake_create_task)
     tid = cb.schedule_upload_task("content", "f.csv")
     assert tid == "tid42"
     assert recorded["called"]
@@ -56,7 +56,7 @@ def test_schedule_upload_task_returns_non_empty(monkeypatch):
             coro.close()
         return "tid99"
 
-    monkeypatch.setattr("upload_core.create_task", fake_create_task)
+    monkeypatch.setattr("services.upload.upload_core.create_task", fake_create_task)
     tid = cb.schedule_upload_task("data", "name.csv")
     assert isinstance(tid, str) and tid
 
@@ -69,7 +69,7 @@ def test_schedule_upload_task_triggers_event(monkeypatch):
             coro.close()
         return "tid77"
 
-    monkeypatch.setattr("upload_core.create_task", fake_create)
+    monkeypatch.setattr("services.upload.upload_core.create_task", fake_create)
     tid = cb.schedule_upload_task("data", "name.csv")
     assert tid == "tid77"
     assert isinstance(tid, str)
@@ -83,7 +83,7 @@ def test_schedule_upload_task_error(monkeypatch):
             coro.close()
         raise RuntimeError("fail")
 
-    monkeypatch.setattr("upload_core.create_task", boom)
+    monkeypatch.setattr("services.upload.upload_core.create_task", boom)
     with pytest.raises(RuntimeError):
         cb.schedule_upload_task("data", "name.csv")
 

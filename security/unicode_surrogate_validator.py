@@ -8,7 +8,7 @@ from typing import Any
 
 from core.exceptions import ValidationError
 from core.unicode import contains_surrogates
-from security_callback_controller import SecurityEvent, emit_security_event
+from services.security_callback_controller import SecurityEvent, emit_security_event
 
 
 @dataclass

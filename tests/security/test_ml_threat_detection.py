@@ -1,7 +1,7 @@
 import pytest
 
 import security.ml_threat_detection as mlt
-from security_callback_controller import SecurityEvent
+from services.security_callback_controller import SecurityEvent
 
 
 @pytest.mark.asyncio
