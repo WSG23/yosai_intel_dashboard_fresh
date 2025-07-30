@@ -8,6 +8,7 @@ from typing import Iterable
 from core.app_factory import create_app
 from utils.assets_debug import check_navbar_assets, debug_dash_asset_serving
 from utils.assets_utils import get_nav_icon
+from core.env_validation import validate_env
 
 DEFAULT_ICONS = [
     "analytics",
@@ -25,7 +26,7 @@ def debug_navbar_icons(icon_names: Iterable[str] | None = None) -> None:
     icons = list(icon_names or DEFAULT_ICONS)
 
     os.environ.setdefault("YOSAI_ENV", "development")
-    os.environ.setdefault("SECRET_KEY", "debug")
+    validate_env(["SECRET_KEY"])
 
     app = create_app(mode="simple")
     results = check_navbar_assets(icons, warn=False)
