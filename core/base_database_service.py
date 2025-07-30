@@ -12,6 +12,7 @@ class BaseDatabaseService:
     """Simplified database connector supporting multiple backends."""
 
     def __init__(self, config: Optional[DatabaseSettings] = None) -> None:
+        """Create a connection using the provided ``DatabaseSettings``."""
         self.config = config or DatabaseSettings()
         self.log = logging.getLogger(self.__class__.__name__)
         self.connection = self._create_connection()

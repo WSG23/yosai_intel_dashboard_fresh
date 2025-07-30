@@ -21,6 +21,7 @@ class UploadDataService(UploadDataServiceProtocol):
     """Concrete service providing access to uploaded data via a store."""
 
     def __init__(self, store: UploadedDataStore = uploaded_data_store) -> None:
+        """Initialize the service with the given ``UploadedDataStore``."""
         self.store = store
 
     @override
@@ -57,6 +58,7 @@ def _resolve_service(
     service: UploadDataServiceProtocol | None,
     container: ServiceContainer | None,
 ) -> UploadDataServiceProtocol:
+    """Return a service instance from ``service`` or the DI ``container``."""
     if service is not None:
         return service
     return get_upload_data_service(container)
@@ -66,6 +68,7 @@ def get_uploaded_data(
     service: UploadDataServiceProtocol | None = None,
     container: ServiceContainer | None = None,
 ) -> Dict[str, pd.DataFrame]:
+    """Return all uploaded dataframes using the resolved service."""
     svc = _resolve_service(service, container)
     return svc.get_uploaded_data()
 
@@ -74,6 +77,7 @@ def get_uploaded_filenames(
     service: UploadDataServiceProtocol | None = None,
     container: ServiceContainer | None = None,
 ) -> List[str]:
+    """Return list of uploaded filenames using the resolved service."""
     svc = _resolve_service(service, container)
     return svc.get_uploaded_filenames()
 
@@ -82,6 +86,7 @@ def clear_uploaded_data(
     service: UploadDataServiceProtocol | None = None,
     container: ServiceContainer | None = None,
 ) -> None:
+    """Delete all uploaded data using the resolved service."""
     svc = _resolve_service(service, container)
     svc.clear_uploaded_data()
 
@@ -90,6 +95,7 @@ def get_file_info(
     service: UploadDataServiceProtocol | None = None,
     container: ServiceContainer | None = None,
 ) -> Dict[str, Dict[str, Any]]:
+    """Return metadata for uploaded files using the resolved service."""
     svc = _resolve_service(service, container)
     return svc.get_file_info()
 
@@ -99,6 +105,7 @@ def load_dataframe(
     service: UploadDataServiceProtocol | None = None,
     container: ServiceContainer | None = None,
 ) -> pd.DataFrame:
+    """Load the uploaded DataFrame ``filename`` using the resolved service."""
     svc = _resolve_service(service, container)
     return svc.load_dataframe(filename)
 
@@ -108,6 +115,7 @@ def load_mapping(
     service: UploadDataServiceProtocol | None = None,
     container: ServiceContainer | None = None,
 ) -> Dict[str, Any]:
+    """Load the mapping information for ``filename`` using the resolved service."""
     svc = _resolve_service(service, container)
     return svc.load_mapping(filename)
 
@@ -118,6 +126,7 @@ def save_mapping(
     service: UploadDataServiceProtocol | None = None,
     container: ServiceContainer | None = None,
 ) -> None:
+    """Persist ``mapping`` for ``filename`` using the resolved service."""
     svc = _resolve_service(service, container)
     svc.save_mapping(filename, mapping)
 

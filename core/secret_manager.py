@@ -24,6 +24,7 @@ class SecretsManager:
     """Retrieve and rotate secrets from environment or Docker files."""
 
     def __init__(self, docker_dir: str | Path = "/run/secrets") -> None:
+        """Initialize the manager with the directory holding Docker secrets."""
         self.docker_dir = Path(docker_dir)
 
     def _get_from_file(self, key: str) -> Optional[str]:

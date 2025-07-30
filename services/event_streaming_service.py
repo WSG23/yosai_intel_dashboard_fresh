@@ -19,6 +19,7 @@ class EventStreamingService:
     """Service managing Kafka producer/consumer threads."""
 
     def __init__(self, config: Optional[KafkaConfig] = None) -> None:
+        """Create the service using ``config`` or environment settings."""
         self.service = BaseService("event-streaming", "")
         self.config = config or from_environment()
         self.producer: KafkaProducer | None = None
@@ -28,6 +29,7 @@ class EventStreamingService:
         self.topic = "access-events"
 
     def initialize(self) -> None:
+        """Start producer and consumer threads."""
         self.service.start()
         self.producer = KafkaProducer(
             bootstrap_servers=self.config.brokers,
@@ -45,6 +47,7 @@ class EventStreamingService:
         self._worker.start()
 
     def _consume_loop(self) -> None:
+        """Continuously consume messages until the service is stopped."""
         assert self.consumer is not None
         for message in self.consumer:
             if self._stop.is_set():
@@ -59,11 +62,13 @@ class EventStreamingService:
         logger.info("Received message: %s", data)
 
     def publish_access_event(self, payload: dict) -> None:
+        """Send a single access event payload to the configured topic."""
         if not self.producer:
             raise RuntimeError("Service not initialized")
         self.producer.send(self.topic, payload)
 
     def close(self) -> None:
+        """Stop all threads and close Kafka connections."""
         self._stop.set()
         if self.consumer is not None:
             try:
