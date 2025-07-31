@@ -152,6 +152,10 @@ __all__ = [
     "get_door_mapping_service",
     "get_device_learning_service",
     "get_upload_data_service",
+    "AnalyticsDataLoaderProtocol",
+    "DatabaseAnalyticsRetrieverProtocol",
+    "get_analytics_data_loader",
+    "get_database_analytics_retriever",
 ]
 
 
@@ -190,3 +194,60 @@ class DeviceLearningServiceProtocol(Protocol):
     def get_user_device_mappings(self, filename: str) -> Dict[str, Any]: ...
     def save_device_mappings(self, mappings: Dict[str, Any]) -> bool: ...
     def learn_from_data(self, df: pd.DataFrame) -> Dict[str, Any]: ...
+
+
+@runtime_checkable
+class AnalyticsDataLoaderProtocol(Protocol):
+    """Interface for analytics data loaders."""
+
+    def load_uploaded_data(self) -> Dict[str, pd.DataFrame]: ...
+
+    def clean_uploaded_dataframe(self, df: pd.DataFrame) -> pd.DataFrame: ...
+
+    def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]: ...
+
+    def analyze_with_chunking(
+        self, df: pd.DataFrame, analysis_types: List[str]
+    ) -> Dict[str, Any]: ...
+
+    def diagnose_data_flow(self, df: pd.DataFrame) -> Dict[str, Any]: ...
+
+    def get_real_uploaded_data(self) -> Dict[str, Any]: ...
+
+    def get_analytics_with_fixed_processor(self) -> Dict[str, Any]: ...
+
+    def load_patterns_dataframe(
+        self, data_source: str | None
+    ) -> tuple[pd.DataFrame, int]: ...
+
+
+@runtime_checkable
+class DatabaseAnalyticsRetrieverProtocol(Protocol):
+    """Interface for retrieving analytics from a database."""
+
+    def get_analytics(self) -> Dict[str, Any]: ...
+
+
+def get_analytics_data_loader(
+    controller: "UploadProcessingController",  # type: ignore[str-format]
+    processor: "Processor",
+    container: ServiceContainer | None = None,
+) -> AnalyticsDataLoaderProtocol:
+    c = _get_container(container)
+    if c and c.has("data_loader"):
+        return c.get("data_loader")
+    from services.analytics.data.loader import DataLoader
+
+    return DataLoader(controller, processor)
+
+
+def get_database_analytics_retriever(
+    helper: "DatabaseAnalyticsHelper",
+    container: ServiceContainer | None = None,
+) -> DatabaseAnalyticsRetrieverProtocol:
+    c = _get_container(container)
+    if c and c.has("database_analytics_retriever"):
+        return c.get("database_analytics_retriever")
+    from services.database_retriever import DatabaseAnalyticsRetriever
+
+    return DatabaseAnalyticsRetriever(helper)

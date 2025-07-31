@@ -21,15 +21,19 @@ else:
     from .async_file_processor import AsyncFileProcessor
     from .chunked_analysis import analyze_with_chunking
     from .controllers.upload_controller import UploadProcessingController
+    from .data_loading_service import DataLoadingService
     from .data_processing.file_handler import FileHandler
     from .data_processing.processor import Processor
+    from .data_processing_service import DataProcessingService
     from .database_retriever import DatabaseAnalyticsRetriever
     from .db_analytics_helper import DatabaseAnalyticsHelper
     from .event_publisher import publish_event
     from .explainability_service import ExplainabilityService
     from .helpers.database_initializer import initialize_database
     from .microservices_architect import MicroservicesArchitect, ServiceBoundary
+    from .publishing_service import PublishingService
     from .registry import get_service
+    from .report_generation_service import ReportGenerationService
     from .result_formatting import (
         apply_regular_analysis,
         calculate_temporal_stats_safe,
@@ -37,10 +41,6 @@ else:
         regular_analysis,
     )
     from .summary_report_generator import SummaryReportGenerator
-    from .data_loading_service import DataLoadingService
-    from .data_processing_service import DataProcessingService
-    from .report_generation_service import ReportGenerationService
-    from .publishing_service import PublishingService
     from .summary_reporter import SummaryReporter
 
     logger = logging.getLogger(__name__)

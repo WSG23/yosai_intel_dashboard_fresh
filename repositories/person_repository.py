@@ -3,9 +3,8 @@
 from dataclasses import dataclass
 from typing import List, Optional, Protocol
 
-from yosai_intel_dashboard.models.entities import Person
-
 from utils.result_types import Result, failure, success
+from yosai_intel_dashboard.models.entities import Person
 
 
 class PersonRepositoryProtocol(Protocol):

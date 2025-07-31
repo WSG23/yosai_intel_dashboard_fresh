@@ -9,6 +9,7 @@ from fastapi import APIRouter, FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
+
 from error_handling import http_error
 from shared.errors.types import ErrorCode
 

@@ -5,7 +5,6 @@ All deprecated individual validators have been removed and consolidated.
 """
 
 from core.exceptions import ValidationError
-from validation import UnicodeValidator
 
 from .attack_detection import AttackDetection
 from .secrets_validator import SecretsValidator, register_health_endpoint

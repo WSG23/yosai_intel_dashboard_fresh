@@ -2,10 +2,10 @@ from __future__ import annotations
 
 """Callbacks for the data enhancer feature."""
 
-from dash import Input, Output, State, dash_table, dcc, html
-from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 import pandas as pd
+from dash import Input, Output, State, dash_table, dcc, html
+from dash.exceptions import PreventUpdate
 
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from services.data_enhancer.processor import DataEnhancerProcessor

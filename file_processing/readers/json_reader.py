@@ -6,9 +6,9 @@ from core.callback_events import CallbackEvent
 from core.callbacks import UnifiedCallbackManager
 from core.protocols import UnicodeProcessorProtocol
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from utils.pandas_readers import read_json as util_read_json
 
 from .base import BaseReader
-from utils.pandas_readers import read_json as util_read_json
 
 
 class JSONReader(BaseReader):

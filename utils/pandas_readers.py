@@ -2,22 +2,23 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
-import json
 import pandas as pd
 
-from services.upload.utils.file_parser import UnicodeFileProcessor
+from file_processing import sanitize_dataframe_unicode
 
 
-def _sanitize(df: pd.DataFrame, processor: UnicodeFileProcessor | None) -> pd.DataFrame:
-    proc = processor or UnicodeFileProcessor()
-    return proc.sanitize_dataframe_unicode(df)
+def _sanitize(df: pd.DataFrame, processor: Any | None) -> pd.DataFrame:
+    if processor is not None and hasattr(processor, "sanitize_dataframe_unicode"):
+        return processor.sanitize_dataframe_unicode(df)
+    return sanitize_dataframe_unicode(df)
 
 
 def read_csv(
-    path: str | Path, *, processor: UnicodeFileProcessor | None = None, **kwargs: Any
+    path: str | Path, *, processor: Any | None = None, **kwargs: Any
 ) -> pd.DataFrame:
     """Read a CSV file and sanitize Unicode."""
     df = pd.read_csv(path, **kwargs)
@@ -25,7 +26,7 @@ def read_csv(
 
 
 def read_excel(
-    path: str | Path, *, processor: UnicodeFileProcessor | None = None, **kwargs: Any
+    path: str | Path, *, processor: Any | None = None, **kwargs: Any
 ) -> pd.DataFrame:
     """Read an Excel file and sanitize Unicode."""
     df = pd.read_excel(path, **kwargs)
@@ -35,7 +36,7 @@ def read_excel(
 def read_json(
     path: str | Path,
     *,
-    processor: UnicodeFileProcessor | None = None,
+    processor: Any | None = None,
     **kwargs: Any,
 ) -> pd.DataFrame:
     """Read a JSON file and sanitize Unicode."""
@@ -50,7 +51,7 @@ def read_json(
 
 
 def read_parquet(
-    path: str | Path, *, processor: UnicodeFileProcessor | None = None, **kwargs: Any
+    path: str | Path, *, processor: Any | None = None, **kwargs: Any
 ) -> pd.DataFrame:
     """Read a parquet file and sanitize Unicode."""
     df = pd.read_parquet(path, **kwargs)
@@ -58,7 +59,7 @@ def read_parquet(
 
 
 def read_fwf(
-    path: str | Path, *, processor: UnicodeFileProcessor | None = None, **kwargs: Any
+    path: str | Path, *, processor: Any | None = None, **kwargs: Any
 ) -> pd.DataFrame:
     """Read a fixed-width file and sanitize Unicode."""
     df = pd.read_fwf(path, **kwargs)

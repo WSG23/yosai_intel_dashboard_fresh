@@ -2,6 +2,7 @@ import logging
 from typing import IO, Any, List, Tuple, Union
 
 import pandas as pd
+from config.constants import DataProcessingLimits
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,7 @@ class StreamProcessor:
     def process_large_csv(
         file_like: Union[str, IO[str]],
         *,
-        chunk_size: int = 10000,
+        chunk_size: int = DataProcessingLimits.SMALL_DATA_CHUNK_ROWS,
         **read_kwargs: Any,
     ) -> Tuple[pd.DataFrame, List[str]]:
         """Read ``file_like`` CSV in ``chunk_size`` pieces.

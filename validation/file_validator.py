@@ -103,7 +103,7 @@ class FileValidator(CompositeValidator):
             return b""
 
     def validate_file_upload(self, filename: str, content: bytes) -> dict:
-        result = self.validate((filename, content))
+        result = super().validate((filename, content))
         if not result.valid:
             return {"valid": False, "issues": result.issues or []}
         size_mb = len(content) / (1024 * 1024)

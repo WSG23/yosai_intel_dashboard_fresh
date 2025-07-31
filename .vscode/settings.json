@@ -1,10 +1,15 @@
 {
-  "python.formatting.provider": "black",
-  "python.formatting.blackArgs": ["--line-length=88"],
-  "python.linting.enabled": true,
-  "python.linting.flake8Enabled": true,
-  "editor.rulers": [88],
-  "editor.formatOnSave": true
-  ,"python.analysis.extraPaths": ["./tests/stubs"]
-  ,"python.analysis.stubPath": "./tests/stubs"
+    "python.formatting.provider": "black",
+    "python.formatting.blackArgs": ["--line-length=88"],
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": true,
+    "editor.rulers": [88],
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+    },
+    "python.sortImports.args": ["--profile=black"],
+    "python.analysis.extraPaths": ["./tests/stubs"],
+    "python.analysis.stubPath": "./tests/stubs"
 }
+

@@ -149,9 +149,7 @@ def load_app(jwt_secret: str = "secret") -> tuple:
 
     analytics_stub.AnalyticsService = DummyAnalyticsService
     analytics_stub.get_analytics_service = lambda *a, **k: dummy_service
-    sys.modules[
-        "services.analytics_microservice.analytics_service"
-    ] = analytics_stub
+    sys.modules["services.analytics_microservice.analytics_service"] = analytics_stub
 
     queries_stub = types.ModuleType("services.analytics_microservice.async_queries")
     queries_stub.fetch_dashboard_summary = AsyncMock(return_value={"status": "ok"})
@@ -216,7 +214,9 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     sys.modules["services.common.secrets"] = secrets_stub
 
     auth_stub = types.ModuleType("services.auth")
-    auth_stub.verify_jwt_token = lambda token: jwt.decode(token, jwt_secret, algorithms=["HS256"])
+    auth_stub.verify_jwt_token = lambda token: jwt.decode(
+        token, jwt_secret, algorithms=["HS256"]
+    )
     sys.modules["services.auth"] = auth_stub
 
     # Stub ModelRegistry used by the microservice
@@ -456,6 +456,7 @@ async def test_unauthorized_request():
 async def test_internal_error_response():
     module, queries_stub, _ = load_app()
     from services.auth import verify_jwt_token
+
     queries_stub.fetch_dashboard_summary.side_effect = RuntimeError("boom")
     token = jwt.encode(
         {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
@@ -480,6 +481,7 @@ async def test_model_registry_endpoints(tmp_path):
     module, _, svc = load_app()
     svc.model_dir = tmp_path
     from yosai_intel_dashboard.models.ml import ModelRegistry
+
     svc.model_registry = ModelRegistry()
 
     token = jwt.encode(
@@ -517,7 +519,6 @@ async def test_model_registry_endpoints(tmp_path):
 async def test_predict_endpoint(tmp_path):
     module, _, svc = load_app()
     svc.model_dir = tmp_path
-
 
     model = Dummy()
     path = tmp_path / "demo" / "1" / "model.joblib"

@@ -1,27 +1,26 @@
-from pathlib import Path
+from __future__ import annotations
 
+from config.dynamic_config import dynamic_config
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-from validation.security_validator import SecurityValidator
+from validation.upload_utils import decode_and_validate_upload
 
 
-def test_validate_file_upload_dataframe():
+def test_decode_and_validate_upload_valid():
     df = DataFrameBuilder().add_column("a", [1]).build()
-    v = SecurityValidator(max_size_mb=1)
-    res = v.validate_file_upload(df)
-    assert res.valid
-
-
-def test_validate_file_upload_base64(tmp_path):
-    df = DataFrameBuilder().add_column("a", [1]).add_column("b", [2]).build()
     uri = UploadFileBuilder().with_dataframe(df).as_base64()
-    v = SecurityValidator(max_size_mb=1)
-    res = v.validate_file_upload(uri)
-    assert res.valid
+    result = decode_and_validate_upload(uri, "data.csv")
+    assert result["valid"]
+    assert result["decoded"]
 
 
-def test_validate_file_upload_path(tmp_path):
-    df = DataFrameBuilder().add_column("a", [1]).add_column("b", [2]).build()
-    path = UploadFileBuilder().with_dataframe(df).write_csv(tmp_path / "file.csv")
-    v = SecurityValidator(max_size_mb=1)
-    res = v.validate_file_upload(path)
-    assert res.valid
+def test_decode_and_validate_upload_invalid_data_uri():
+    result = decode_and_validate_upload("not_base64", "bad.csv")
+    assert not result["valid"]
+
+
+def test_decode_and_validate_upload_size_limit(monkeypatch):
+    df = DataFrameBuilder().add_column("a", [1]).build()
+    uri = UploadFileBuilder().with_dataframe(df).as_base64()
+    monkeypatch.setattr(dynamic_config.security, "max_upload_mb", 0)
+    result = decode_and_validate_upload(uri, "data.csv")
+    assert not result["valid"]
