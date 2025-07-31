@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Dict
+from typing import Any, Callable, Dict
 
 from .app_config import UploadConfig
 from .base_loader import BaseConfigLoader
 from .constants import (
-    DEFAULT_CHUNK_SIZE,
     AnalyticsConstants,
     CSSConstants,
     DatabaseConstants,
@@ -17,6 +16,11 @@ from .constants import (
     UploadLimits,
 )
 from .environment import select_config_file
+from utils.config_resolvers import (
+    resolve_ai_confidence_threshold,
+    resolve_max_upload_size_mb,
+    resolve_upload_chunk_size,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +28,22 @@ logger = logging.getLogger(__name__)
 class DynamicConfigManager(BaseConfigLoader):
     """Loads constants and applies environment overrides."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        ai_confidence_resolver: Callable[[Any], float] = (
+            resolve_ai_confidence_threshold
+        ),
+        max_upload_size_resolver: Callable[[Any], int] = (
+            resolve_max_upload_size_mb
+        ),
+        upload_chunk_size_resolver: Callable[[Any], int] = (
+            resolve_upload_chunk_size
+        ),
+    ) -> None:
+        self._ai_confidence_resolver = ai_confidence_resolver
+        self._max_upload_size_resolver = max_upload_size_resolver
+        self._upload_chunk_size_resolver = upload_chunk_size_resolver
         self.security = SecurityConstants()
         self.performance = PerformanceConstants()
         self.css = CSSConstants()
@@ -258,15 +277,11 @@ class DynamicConfigManager(BaseConfigLoader):
         }
 
     def get_ai_confidence_threshold(self) -> int:
-        from utils.config_resolvers import resolve_ai_confidence_threshold
-
-        return resolve_ai_confidence_threshold(self)
+        return self._ai_confidence_resolver(self)
 
     def get_max_upload_size_mb(self) -> int:
         """Get maximum upload size in MB."""
-        from utils.config_resolvers import resolve_max_upload_size_mb
-
-        return resolve_max_upload_size_mb(self)
+        return self._max_upload_size_resolver(self)
 
     def get_max_upload_size_bytes(self) -> int:
         """Get maximum upload size in bytes."""
@@ -277,9 +292,7 @@ class DynamicConfigManager(BaseConfigLoader):
         return self.get_max_upload_size_mb() >= 50
 
     def get_upload_chunk_size(self) -> int:
-        from utils.config_resolvers import resolve_upload_chunk_size
-
-        return resolve_upload_chunk_size(self)
+        return self._upload_chunk_size_resolver(self)
 
     def get_max_parallel_uploads(self) -> int:
         return getattr(self.uploads, "MAX_PARALLEL_UPLOADS", 4)
