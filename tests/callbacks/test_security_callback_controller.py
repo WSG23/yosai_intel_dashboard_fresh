@@ -4,9 +4,9 @@ import pytest
 from analytics.security_patterns import (
     SecurityEvent,
     SecurityPatternsAnalyzer,
-    security_callback_controller,
     setup_isolated_security_testing,
 )
+from security.events import security_unified_callbacks
 
 
 def create_df_with_critical_threat():
@@ -41,7 +41,7 @@ def create_df_with_critical_threat():
 
 
 def test_callback_registration_and_fire():
-    controller = security_callback_controller
+    controller = security_unified_callbacks
     controller.clear_all_callbacks()
 
     results = []
@@ -57,7 +57,7 @@ def test_callback_registration_and_fire():
 
 
 def test_analyzer_triggers_callbacks():
-    controller = security_callback_controller
+    controller = security_unified_callbacks
     controller.clear_all_callbacks()
     events = []
 

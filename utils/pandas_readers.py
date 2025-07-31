@@ -8,7 +8,7 @@ from typing import Any
 
 import pandas as pd
 
-from file_processing import sanitize_dataframe_unicode
+from yosai_intel_dashboard.src.file_processing import sanitize_dataframe_unicode
 
 
 def _sanitize(df: pd.DataFrame, processor: Any | None) -> pd.DataFrame:

@@ -28,7 +28,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    from file_processing.data_processor import DataProcessor
+    from yosai_intel_dashboard.src.file_processing.data_processor import DataProcessor
 
     processor = DataProcessor()
     if args.tool == "pyinstrument":

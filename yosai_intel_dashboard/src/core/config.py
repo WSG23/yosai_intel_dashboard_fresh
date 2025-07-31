@@ -18,7 +18,11 @@ if TYPE_CHECKING:  # pragma: no cover - only for type hints
 
 def _dynamic_config() -> "DynamicConfigManager":
     """Return the :class:`DynamicConfigManager` from the DI container."""
-    return container.get("dynamic_config")
+    if container.has("dynamic_config"):
+        return container.get("dynamic_config")
+    from config.dynamic_config import dynamic_config
+
+    return dynamic_config
 
 
 def get_ai_confidence_threshold() -> float:
@@ -61,6 +65,23 @@ def get_db_pool_size() -> int:
     return _dynamic_config().get_db_pool_size()
 
 
+# ---------------------------------------------------------------------------
+# Default resolver callables
+def ai_confidence_threshold_resolver() -> float:
+    """Default resolver used by :mod:`utils.config_resolvers`."""
+    return get_ai_confidence_threshold()
+
+
+def max_upload_size_resolver() -> int:
+    """Default resolver used by :mod:`utils.config_resolvers`."""
+    return get_max_upload_size_mb()
+
+
+def upload_chunk_size_resolver() -> int:
+    """Default resolver used by :mod:`utils.config_resolvers`."""
+    return get_upload_chunk_size()
+
+
 def get_max_display_rows(
     config: ConfigurationProtocol | None = None,
 ) -> int:
@@ -83,4 +104,7 @@ __all__ = [
     "validate_large_file_support",
     "get_db_pool_size",
     "get_max_display_rows",
+    "ai_confidence_threshold_resolver",
+    "max_upload_size_resolver",
+    "upload_chunk_size_resolver",
 ]

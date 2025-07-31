@@ -14,9 +14,9 @@ import pandas as pd
 from config.constants import DEFAULT_CHUNK_SIZE
 from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
-from file_processing import create_file_preview as _create_preview
-from file_processing import read_large_csv as _read_large_csv
-from file_processing import (
+from yosai_intel_dashboard.src.file_processing import (
+    create_file_preview as _create_preview,
+    read_large_csv as _read_large_csv,
     safe_decode_content,
     sanitize_dataframe_unicode,
 )
@@ -179,7 +179,7 @@ def process_uploaded_file(
 def create_file_preview(
     df: pd.DataFrame, max_rows: int | None = None
 ) -> Dict[str, Any]:
-    """Proxy for :func:`file_processing.create_file_preview`."""
+    """Proxy for :func:`yosai_intel_dashboard.src.file_processing.create_file_preview`."""
     return _create_preview(df, max_rows=max_rows)
 
 

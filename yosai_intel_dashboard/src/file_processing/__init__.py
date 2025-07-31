@@ -1,4 +1,4 @@
-from yosai_intel_dashboard.src.file_processing import (
+from .utils import (
     create_file_preview,
     read_large_csv,
     safe_decode_content,

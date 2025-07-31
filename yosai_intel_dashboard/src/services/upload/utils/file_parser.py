@@ -107,7 +107,7 @@ def process_uploaded_file(
 def create_file_preview(
     df: pd.DataFrame, max_rows: int | None = None
 ) -> Dict[str, Any]:
-    """Proxy for :func:`file_processing.create_file_preview`."""
+    """Proxy for :func:`yosai_intel_dashboard.src.file_processing.create_file_preview`."""
     return _create_preview(df, max_rows=max_rows)
 
 
