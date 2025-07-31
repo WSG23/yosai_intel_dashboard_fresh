@@ -12,7 +12,7 @@ MODULE_PATH = (
 
 # Provide minimal stubs for core dependencies before loading the module
 callbacks_stub = types.SimpleNamespace(
-    UnifiedCallbackManager=lambda: types.SimpleNamespace(trigger=lambda *a, **k: None)
+    TrulyUnifiedCallbacks=lambda: types.SimpleNamespace(trigger=lambda *a, **k: None)
 )
 truly_stub = types.SimpleNamespace(TrulyUnifiedCallbacks=object)
 cb_events_stub = types.SimpleNamespace(

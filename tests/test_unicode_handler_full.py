@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 from core.callback_events import CallbackEvent
-from core.callbacks import UnifiedCallbackManager as CallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks as CallbackManager
 from core.unicode import (
     ChunkedUnicodeProcessor,
     UnicodeProcessor,
@@ -16,24 +16,7 @@ from core.unicode import (
 )
 
 
-class CallbackController(CallbackManager):
-    def fire_event(self, event: CallbackEvent, source_id: str, data=None):
-        ctx = type(
-            "Ctx", (), {"event_type": event, "source_id": source_id, "data": data or {}}
-        )
-        self.trigger(event, ctx)
-
-    def register_error_handler(self, handler):
-        self._handler = handler
-
-    def trigger(self, event: CallbackEvent, *args, **kwargs):
-        try:
-            return super().trigger(event, *args, **kwargs)
-        except Exception as exc:
-            if hasattr(self, "_handler"):
-                self._handler(exc, args[0])
-            else:
-                raise
+CallbackController = CallbackManager
 
 
 def callback_handler(event: CallbackEvent):

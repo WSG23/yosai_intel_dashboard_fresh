@@ -17,7 +17,7 @@ manager.run_full_pipeline(raw_data)
 
 `run_full_pipeline` will hand off the provided data to each service in turn and
 finally emit a `pipeline_complete` event using
-`UnifiedCallbackManager`.
+`TrulyUnifiedCallbacks`.
 
 ## Removing Legacy Details
 

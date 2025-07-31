@@ -1182,7 +1182,7 @@ safe_query = SQLProcessor.encode_query(query)
 
 ### Firing events
 ```python
-from core.callbacks import UnifiedCallbackManager as CallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks as CallbackManager
 from core.callback_events import CallbackEvent
 
 manager = CallbackManager()

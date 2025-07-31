@@ -15,7 +15,7 @@ import types as _types
 
 MODULE_PATH = _Path(__file__).resolve().parents[2] / "file_processing" / "data_processor.py"
 
-callbacks_stub = _types.SimpleNamespace(UnifiedCallbackManager=lambda: _types.SimpleNamespace(trigger=lambda *a, **k: None))
+callbacks_stub = _types.SimpleNamespace(TrulyUnifiedCallbacks=lambda: _types.SimpleNamespace(trigger=lambda *a, **k: None))
 truly_stub = _types.SimpleNamespace(TrulyUnifiedCallbacks=object)
 cb_events_stub = _types.SimpleNamespace(CallbackEvent=_types.SimpleNamespace(SYSTEM_WARNING=1, SYSTEM_ERROR=2))
 container_stub = _types.ModuleType("core.container")

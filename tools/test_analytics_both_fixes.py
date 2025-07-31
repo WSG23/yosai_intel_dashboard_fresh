@@ -18,7 +18,7 @@ def apply_both_fixes():
 
     # Step 1: Callback fix
     try:
-        from core.callbacks import UnifiedCallbackManager as CallbackManager
+        from core.truly_unified_callbacks import TrulyUnifiedCallbacks as CallbackManager
 
         if hasattr(CallbackManager, "handle_register") and not hasattr(
             CallbackManager, "register_handler"
