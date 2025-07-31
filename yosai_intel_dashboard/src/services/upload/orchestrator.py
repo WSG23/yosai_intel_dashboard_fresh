@@ -6,12 +6,12 @@ from typing import Any, Callable, Dict, List, Tuple
 import pandas as pd
 
 from yosai_intel_dashboard.src.components.ui_builder import UploadUIBuilder
-from core.protocols import FileProcessorProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
 from services.async_file_processor import AsyncFileProcessor
 from services.data_enhancer.mapping_utils import get_ai_column_suggestions
-from services.upload.file_processor_service import FileProcessor
-from services.upload.learning_coordinator import LearningCoordinator
-from services.upload.protocols import (
+from yosai_intel_dashboard.src.services.upload.file_processor_service import FileProcessor
+from yosai_intel_dashboard.src.services.upload.learning_coordinator import LearningCoordinator
+from yosai_intel_dashboard.src.services.upload.protocols import (
     DeviceLearningServiceProtocol,
     UploadProcessingServiceProtocol,
     UploadStorageProtocol,

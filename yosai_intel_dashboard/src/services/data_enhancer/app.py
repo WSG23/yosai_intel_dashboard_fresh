@@ -19,7 +19,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import dcc, html
 
-from config.constants import DEFAULT_CHUNK_SIZE
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
 from core.unicode import clean_unicode_surrogates
 
 from .config import (
@@ -32,7 +32,7 @@ from .config import (
 )
 
 if CONTAINER_AVAILABLE:
-    from core.service_container import ServiceContainer
+    from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 

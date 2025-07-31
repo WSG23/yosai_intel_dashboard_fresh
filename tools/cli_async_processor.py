@@ -47,7 +47,7 @@ async def process_file_with_service(
         logger.info(f"Processing file with AsyncFileProcessor: {file_path}")
 
         # Import and create AsyncFileProcessor
-        from services.data_processing.async_file_processor import AsyncFileProcessor
+        from yosai_intel_dashboard.src.services.data_processing.async_file_processor import AsyncFileProcessor
 
         processor = AsyncFileProcessor()
 

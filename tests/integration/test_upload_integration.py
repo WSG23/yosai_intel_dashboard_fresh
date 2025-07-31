@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from config.connection_retry import ConnectionRetryManager, RetryConfig
+from yosai_intel_dashboard.src.infrastructure.config.connection_retry import ConnectionRetryManager, RetryConfig
 import importlib.util
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 from pathlib import Path as _Path

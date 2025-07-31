@@ -5,8 +5,8 @@ from __future__ import annotations
 from dash import Input, Output
 from dash.exceptions import PreventUpdate
 
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from services.upload.controllers.upload_controller import UnifiedUploadController
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.services.upload.controllers.upload_controller import UnifiedUploadController
 
 
 def register_callbacks(app, container) -> None:

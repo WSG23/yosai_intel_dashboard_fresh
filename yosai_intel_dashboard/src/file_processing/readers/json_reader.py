@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import pandas as pd
 
-from core.callback_events import CallbackEvent
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from core.protocols import UnicodeProcessorProtocol
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.core.interfaces.protocols import UnicodeProcessorProtocol
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 from yosai_intel_dashboard.src.utils.pandas_readers import read_json as util_read_json
 
 from .base import BaseReader

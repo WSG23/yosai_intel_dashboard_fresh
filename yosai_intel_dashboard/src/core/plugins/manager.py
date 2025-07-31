@@ -9,14 +9,14 @@ import time
 from typing import Any, Dict, List
 
 from config import ConfigManager
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 from core.protocols.plugin import (
     CallbackPluginProtocol,
     PluginPriority,
     PluginProtocol,
     PluginStatus,
 )
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 from .dependency_resolver import PluginDependencyResolver
 

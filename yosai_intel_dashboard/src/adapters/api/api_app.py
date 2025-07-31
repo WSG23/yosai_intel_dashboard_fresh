@@ -1,6 +1,6 @@
 from api.adapter import create_api_app
 
-from config.constants import API_PORT
+from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
 
 app = create_api_app()
 

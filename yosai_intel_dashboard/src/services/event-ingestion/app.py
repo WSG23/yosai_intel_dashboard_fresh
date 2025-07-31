@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from config.config_loader import load_service_config
+from yosai_intel_dashboard.src.infrastructure.config.config_loader import load_service_config
 from core.security import RateLimiter
 from yosai_intel_dashboard.src.error_handling import http_error
 from yosai_intel_dashboard.src.error_handling.middleware import ErrorHandlingMiddleware

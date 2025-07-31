@@ -1,4 +1,4 @@
-from services.upload.protocols import UploadAnalyticsProtocol
+from yosai_intel_dashboard.src.services.upload.protocols import UploadAnalyticsProtocol
 
 
 class UploadAnalyticsProcessor(UploadAnalyticsProtocol):

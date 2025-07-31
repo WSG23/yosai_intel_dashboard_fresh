@@ -20,7 +20,7 @@ from typing import (
 
 import pandas as pd
 
-from core.callback_events import CallbackEvent
+from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
 
 
 @runtime_checkable
@@ -464,7 +464,7 @@ class UnicodeProcessorProtocol(Protocol):
         ...
 
 
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 
 def _get_container(

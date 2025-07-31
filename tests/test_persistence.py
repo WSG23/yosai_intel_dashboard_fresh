@@ -1,4 +1,4 @@
-from services.analytics.storage.persistence import PersistenceManager
+from yosai_intel_dashboard.src.services.analytics.storage.persistence import PersistenceManager
 
 
 class DummyDB:

@@ -19,7 +19,7 @@ from core.json_serialization_plugin import (
     JsonSerializationService,
 )
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 # Legacy DI tests were skipped previously. Run them now.
 # pytest.skip("legacy DI tests skipped", allow_module_level=True)

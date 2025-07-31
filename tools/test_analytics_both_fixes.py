@@ -18,7 +18,7 @@ def apply_both_fixes():
 
     # Step 1: Callback fix
     try:
-        from core.truly_unified_callbacks import TrulyUnifiedCallbacks as CallbackManager
+        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks as CallbackManager
 
         if hasattr(CallbackManager, "handle_register") and not hasattr(
             CallbackManager, "register_handler"
@@ -80,7 +80,7 @@ async def test_analytics_comprehensive():
 
         import pandas as pd
 
-        from services.analytics_service import AnalyticsService
+        from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
 
         # Load the Enhanced Security Demo data
         parquet_path = Path("temp/uploaded_data/Enhanced_Security_Demo.csv.parquet")

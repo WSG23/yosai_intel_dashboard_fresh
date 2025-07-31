@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional, Set
 from core.rbac import require_role
 from database.secure_exec import execute_command, execute_query
 from plugins.common_callbacks import csv_pre_process_callback
-from services.data_processing.file_processor import FileProcessor
+from yosai_intel_dashboard.src.services.data_processing.file_processor import FileProcessor
 
 logger = logging.getLogger(__name__)
 

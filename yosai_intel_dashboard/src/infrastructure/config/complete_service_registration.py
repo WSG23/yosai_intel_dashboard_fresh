@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from startup import service_registration
 
 

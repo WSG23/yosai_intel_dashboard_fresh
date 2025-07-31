@@ -1,10 +1,10 @@
 from types import SimpleNamespace
 
-from core.protocols import ConfigurationProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
 from core.interfaces import ConfigProviderProtocol
 
 try:
-    from core.protocols import ConfigurationServiceProtocol
+    from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationServiceProtocol
 except Exception:  # pragma: no cover - optional deps
     from typing import Protocol
 
@@ -73,7 +73,7 @@ class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol, Con
         return self.get_max_upload_size_mb() >= 50
 
     def get_upload_chunk_size(self) -> int:
-        from config.utils import get_upload_chunk_size
+        from yosai_intel_dashboard.src.infrastructure.config.utils import get_upload_chunk_size
 
         return get_upload_chunk_size()
 
@@ -88,7 +88,7 @@ class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol, Con
         return get_validator_rules()
 
     def get_ai_confidence_threshold(self) -> int:
-        from config.utils import get_ai_confidence_threshold
+        from yosai_intel_dashboard.src.infrastructure.config.utils import get_ai_confidence_threshold
 
         return get_ai_confidence_threshold()
 

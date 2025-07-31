@@ -68,7 +68,7 @@ class UnicodeSecurityValidator:
 security_validator.UnicodeSecurityValidator = UnicodeSecurityValidator
 sys.modules["security.unicode_security_validator"] = security_validator
 
-from config.unicode_handler import UnicodeHandler  # noqa: E402
+from yosai_intel_dashboard.src.infrastructure.config.unicode_handler import UnicodeHandler  # noqa: E402
 
 
 def test_sanitize_removes_surrogates_and_normalizes():

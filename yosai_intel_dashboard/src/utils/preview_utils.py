@@ -4,9 +4,9 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 from core.config import get_max_display_rows
-from core.protocols import ConfigurationProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
 from core.unicode import sanitize_for_utf8
 
 logger = logging.getLogger(__name__)

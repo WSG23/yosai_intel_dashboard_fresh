@@ -1,4 +1,4 @@
-from config.dynamic_config import DynamicConfigManager
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import DynamicConfigManager
 
 
 def test_invalid_yaml_types(tmp_path, monkeypatch):

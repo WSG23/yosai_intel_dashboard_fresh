@@ -34,7 +34,7 @@ class DeviceServiceProtocol(Protocol):
 
 
 if TYPE_CHECKING:
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 
 logger = logging.getLogger(__name__)
 

@@ -11,8 +11,8 @@ except ImportError:  # pragma: no cover - for Python <3.12
 
 import pandas as pd
 
-from core.service_container import ServiceContainer
-from services.interfaces import (
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
+from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
     get_upload_data_service,
     UploadDataServiceProtocol,
 )

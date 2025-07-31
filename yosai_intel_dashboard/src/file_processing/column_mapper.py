@@ -5,8 +5,8 @@ from typing import Dict, Iterable, List, Optional
 import pandas as pd
 from rapidfuzz import process
 
-from core.callback_events import CallbackEvent
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 
 REQUIRED_COLUMNS = ["person_id", "door_id", "access_result", "timestamp"]
 OPTIONAL_COLUMNS = ["device_name", "location"]

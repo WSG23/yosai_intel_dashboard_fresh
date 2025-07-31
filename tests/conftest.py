@@ -296,7 +296,7 @@ class FakeUnicodeProcessor:
 
 
 try:
-    from services.upload.protocols import UploadStorageProtocol
+    from yosai_intel_dashboard.src.services.upload.protocols import UploadStorageProtocol
 except Exception:  # pragma: no cover - optional dep fallback
     from typing import Protocol
 
@@ -307,7 +307,7 @@ except Exception:  # pragma: no cover - optional dep fallback
 
 
 try:
-    from core.protocols import ConfigurationProtocol
+    from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
 except Exception:  # pragma: no cover - optional dep fallback
 
     class ConfigurationProtocol(Protocol):

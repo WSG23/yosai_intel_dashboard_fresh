@@ -12,7 +12,7 @@ def create_theme_app():
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
     # Import and create unified callback coordinator
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 
     coordinator = TrulyUnifiedCallbacks(app)
 

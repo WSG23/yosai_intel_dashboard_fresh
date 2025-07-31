@@ -11,7 +11,7 @@ from uuid import uuid4
 from flask import g, request
 from flask_login import current_user
 
-from core.protocols import DatabaseProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import DatabaseProtocol
 from core.unicode import safe_unicode_encode
 from database.secure_exec import execute_command
 

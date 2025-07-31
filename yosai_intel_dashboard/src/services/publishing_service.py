@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from core.protocols import EventBusProtocol
-from services.analytics.protocols import PublishingProtocol
-from services.analytics.publisher import Publisher
+from yosai_intel_dashboard.src.core.interfaces.protocols import EventBusProtocol
+from yosai_intel_dashboard.src.services.analytics.protocols import PublishingProtocol
+from yosai_intel_dashboard.src.services.analytics.publisher import Publisher
 
 
 class PublishingService(PublishingProtocol):

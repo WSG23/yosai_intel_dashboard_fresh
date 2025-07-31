@@ -32,8 +32,8 @@ sys.modules["scipy"].stats = sys.modules["scipy.stats"]
 from config import create_config_manager
 from core.events import EventBus
 from core.plugins.auto_config import setup_plugins
-from core.service_container import ServiceContainer
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")

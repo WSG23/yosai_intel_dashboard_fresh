@@ -4,7 +4,7 @@ from typing import Any, Callable, Optional, Union
 
 import pandas as pd
 
-from core.protocols import UnicodeProcessorProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import UnicodeProcessorProtocol
 
 
 class FakeUnicodeProcessor(UnicodeProcessorProtocol):

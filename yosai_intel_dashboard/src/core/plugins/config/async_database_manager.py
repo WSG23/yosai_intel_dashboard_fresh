@@ -7,7 +7,7 @@ from typing import Any, Optional
 
 import asyncpg
 
-from config.constants import DEFAULT_DB_HOST, DEFAULT_DB_PORT
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_DB_HOST, DEFAULT_DB_PORT
 
 logger = logging.getLogger(__name__)
 

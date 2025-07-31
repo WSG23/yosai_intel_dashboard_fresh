@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.protocols import EventBusProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import EventBusProtocol
 
 
 class Subscriber:

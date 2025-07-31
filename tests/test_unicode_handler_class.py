@@ -1,6 +1,6 @@
 import pytest
 
-from config.unicode_handler import UnicodeHandler
+from yosai_intel_dashboard.src.infrastructure.config.unicode_handler import UnicodeHandler
 
 
 def test_handler_encodes_query_surrogates():

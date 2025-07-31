@@ -13,11 +13,11 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from config.constants import DEFAULT_CHUNK_SIZE, UPLOAD_ALLOWED_EXTENSIONS
-from core.protocols import ConfigurationServiceProtocol
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE, UPLOAD_ALLOWED_EXTENSIONS
+from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationServiceProtocol
 from core.unicode import UnicodeProcessor as UnicodeHelper
 from core.unicode import process_large_csv_content
-from services.data_processing.base_file_processor import BaseFileProcessor
+from yosai_intel_dashboard.src.services.data_processing.base_file_processor import BaseFileProcessor
 from yosai_intel_dashboard.src.utils.file_utils import safe_decode_with_unicode_handling
 from yosai_intel_dashboard.src.utils.memory_utils import memory_safe
 from yosai_intel_dashboard.src.utils.protocols import SafeDecoderProtocol

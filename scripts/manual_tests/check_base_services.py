@@ -24,11 +24,11 @@ sys.path.insert(0, safe_str(PROJECT_ROOT))
 try:
     print("🔍 Testing base code imports...")
 
-    from services.upload.service_registration import register_upload_services
+    from yosai_intel_dashboard.src.services.upload.service_registration import register_upload_services
 
     print("✅ Service registration imported")
 
-    from core.service_container import ServiceContainer
+    from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
     print("✅ Service container imported")
 

@@ -5,11 +5,11 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 import pandas as pd
 
-from core.callback_events import CallbackEvent
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 from core.container import get_unicode_processor
-from core.protocols import UnicodeProcessorProtocol
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.core.interfaces.protocols import UnicodeProcessorProtocol
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 
 
 class UnsupportedFormatError(Exception):

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from config.secrets_validator import DockerSecretSource, SecretsValidator
+from yosai_intel_dashboard.src.infrastructure.config.secrets_validator import DockerSecretSource, SecretsValidator
 
 
 def test_docker_secret_source(tmp_path):

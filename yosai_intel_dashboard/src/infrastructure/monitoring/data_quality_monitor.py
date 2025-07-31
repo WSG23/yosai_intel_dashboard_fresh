@@ -26,11 +26,11 @@ except Exception:  # pragma: no cover - metrics optional for tests
     compatibility_failures = _DummyCounter()
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
-    from config.base import DataQualityThresholds
+    from yosai_intel_dashboard.src.infrastructure.config.base import DataQualityThresholds
 
 else:  # pragma: no cover - runtime import for tests
     try:
-        from config.base import DataQualityThresholds
+        from yosai_intel_dashboard.src.infrastructure.config.base import DataQualityThresholds
     except Exception:  # pragma: no cover - minimal fallback
 
         class DataQualityThresholds:
@@ -75,13 +75,13 @@ class DataQualityMonitor:
         cfg = get_monitoring_config()
         dq_cfg = getattr(cfg, "data_quality", None)
         if isinstance(dq_cfg, dict):
-            from config.base import DataQualityThresholds
+            from yosai_intel_dashboard.src.infrastructure.config.base import DataQualityThresholds
 
             self.thresholds = DataQualityThresholds(**dq_cfg)
         elif dq_cfg is not None:
             self.thresholds = dq_cfg
         else:
-            from config.base import DataQualityThresholds
+            from yosai_intel_dashboard.src.infrastructure.config.base import DataQualityThresholds
 
             self.thresholds = thresholds or DataQualityThresholds()
 

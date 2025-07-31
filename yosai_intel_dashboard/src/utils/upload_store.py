@@ -11,10 +11,10 @@ from typing import Any, Dict, List, Optional, Protocol
 
 import pandas as pd
 
-from config.app_config import UploadConfig
+from yosai_intel_dashboard.src.infrastructure.config.app_config import UploadConfig
 from core.cache_manager import CacheConfig, InMemoryCacheManager
 from core.unicode import sanitize_dataframe
-from services.upload.protocols import UploadStorageProtocol
+from yosai_intel_dashboard.src.services.upload.protocols import UploadStorageProtocol
 from unicode_toolkit import safe_encode_text
 
 _cache_manager = InMemoryCacheManager(CacheConfig())

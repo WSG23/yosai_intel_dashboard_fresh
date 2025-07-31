@@ -22,7 +22,7 @@ if "chardet" not in sys.modules:
     sys.modules["chardet"] = types.ModuleType("chardet")
 import pandas as pd
 
-from services.analytics_service import AnalyticsService
+from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
 from tests.fake_configuration import FakeConfiguration
 
 

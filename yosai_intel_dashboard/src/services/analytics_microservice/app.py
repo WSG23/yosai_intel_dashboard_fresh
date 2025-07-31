@@ -27,8 +27,8 @@ from pydantic import BaseModel
 
 from analytics import anomaly_detection, feature_extraction, security_patterns
 from config import get_database_config
-from config.constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
-from config.config_loader import load_service_config
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
+from yosai_intel_dashboard.src.infrastructure.config.config_loader import load_service_config
 from core.security import RateLimiter
 from yosai_intel_dashboard.src.error_handling import http_error
 from services.analytics_microservice import async_queries

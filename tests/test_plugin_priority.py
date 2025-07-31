@@ -5,7 +5,7 @@ import sys
 from config import create_config_manager
 from core.plugins.manager import ThreadSafePluginManager as PluginManager
 from core.protocols.plugin import PluginPriority
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 
 def test_priority_order(tmp_path):

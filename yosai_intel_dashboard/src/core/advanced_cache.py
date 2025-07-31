@@ -11,8 +11,8 @@ from typing import Any, Awaitable, Callable, Dict, Optional
 
 import redis.asyncio as redis
 
-# from config.config import get_cache_config  # Moved to lazy import
-from config.cache_config import CacheConfig
+# from yosai_intel_dashboard.src.infrastructure.config.config import get_cache_config  # Moved to lazy import
+from yosai_intel_dashboard.src.infrastructure.config.cache_config import CacheConfig
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +165,7 @@ def cache_with_lock(
 
 async def create_advanced_cache_manager() -> AdvancedCacheManager:
     """Initialize :class:`AdvancedCacheManager` using application config."""
-    from config.config import get_cache_config  # Lazy import
+    from yosai_intel_dashboard.src.infrastructure.config.config import get_cache_config  # Lazy import
 
     cfg = get_cache_config()
     manager = AdvancedCacheManager(cfg)

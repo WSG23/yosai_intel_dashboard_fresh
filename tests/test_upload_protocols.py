@@ -1,14 +1,14 @@
 import inspect
 
-from core.protocols import FileProcessorProtocol
-from services.data_processing.async_file_processor import AsyncFileProcessor
-from services.upload.processor import UploadProcessingService
-from services.upload.protocols import (
+from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
+from yosai_intel_dashboard.src.services.data_processing.async_file_processor import AsyncFileProcessor
+from yosai_intel_dashboard.src.services.upload.processor import UploadProcessingService
+from yosai_intel_dashboard.src.services.upload.protocols import (
     UploadProcessingServiceProtocol,
     UploadStorageProtocol,
     UploadValidatorProtocol,
 )
-from services.upload.validator import ClientSideValidator
+from yosai_intel_dashboard.src.services.upload.validator import ClientSideValidator
 from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 
 

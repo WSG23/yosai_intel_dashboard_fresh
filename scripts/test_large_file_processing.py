@@ -1,7 +1,7 @@
 def test_large_file_processing():
     import pandas as pd
 
-    from services.analytics_service import AnalyticsService
+    from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
 
     # Create a test dataframe similar to your data
     test_df = pd.DataFrame(

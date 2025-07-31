@@ -8,7 +8,7 @@ from typing import Any, Dict, Iterator, Optional, Tuple
 
 import pandas as pd
 
-from config.constants import DEFAULT_CHUNK_SIZE
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
 from core.interfaces import ConfigProviderProtocol
 from core.performance import get_performance_monitor
 from monitoring.data_quality_monitor import (
@@ -16,7 +16,7 @@ from monitoring.data_quality_monitor import (
     get_data_quality_monitor,
 )
 from services.streaming import StreamingService
-from services.interfaces import MappingServiceProtocol, get_mapping_service
+from yosai_intel_dashboard.src.core.interfaces.service_protocols import MappingServiceProtocol, get_mapping_service
 from unicode_toolkit import safe_encode_text
 from validation.security_validator import SecurityValidator
 

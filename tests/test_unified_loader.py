@@ -31,7 +31,7 @@ security:
     monkeypatch.setenv("SECRET_KEY", env_secret)
 
     _stub_optional_modules()
-    from config.unified_loader import UnifiedLoader
+    from yosai_intel_dashboard.src.infrastructure.config.unified_loader import UnifiedLoader
 
     loader = UnifiedLoader(str(path))
     cfg = loader.load()

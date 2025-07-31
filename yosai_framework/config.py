@@ -6,7 +6,7 @@ from typing import Any, Dict
 import jsonschema
 import yaml
 
-from config.validator import YosaiConfig, validate_config
+from yosai_intel_dashboard.src.infrastructure.config.validator import YosaiConfig, validate_config
 
 SCHEMA_PATH = Path(__file__).resolve().parents[1] / "config" / "service.schema.yaml"
 

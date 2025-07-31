@@ -19,7 +19,7 @@ from typing import Any, Callable, Iterable, Optional, Union
 
 import pandas as pd  # type: ignore[import]
 
-from config.database_exceptions import UnicodeEncodingError
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import UnicodeEncodingError
 from security.unicode_security_validator import (
     UnicodeSecurityConfig,
     UnicodeSecurityValidator,

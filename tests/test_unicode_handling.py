@@ -1,6 +1,6 @@
 import pytest
 
-from config.database_exceptions import UnicodeEncodingError
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import UnicodeEncodingError
 from core.unicode import UnicodeSQLProcessor
 
 

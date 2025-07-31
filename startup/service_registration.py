@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-from core.protocols import (
+from yosai_intel_dashboard.src.core.interfaces.protocols import (
     ConfigurationProtocol,
     DatabaseProtocol,
     EventBusProtocol,
@@ -11,7 +11,7 @@ from core.protocols import (
     SecurityServiceProtocol,
     StorageProtocol,
 )
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from services.metadata_enhancement_engine import register_metadata_services
 
 
@@ -24,8 +24,8 @@ def register_all_application_services(container: ServiceContainer) -> None:
     register_metadata_services(container)
     register_security_services(container)
     register_export_services(container)
-    from config.dynamic_config import dynamic_config
-    from services.upload.service_registration import register_upload_services
+    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
+    from yosai_intel_dashboard.src.services.upload.service_registration import register_upload_services
 
     register_upload_services(container, config=dynamic_config)
 
@@ -43,8 +43,8 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigValidator,
         create_config_manager,
     )
-    from config.database_manager import DatabaseManager, DatabaseSettings
-    from config.dynamic_config import dynamic_config
+    from yosai_intel_dashboard.src.infrastructure.config.database_manager import DatabaseManager, DatabaseSettings
+    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
     from core.interfaces import ConfigProviderProtocol
     from core.logging import LoggingService
     from services.configuration_service import (
@@ -102,7 +102,7 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         protocol=StorageProtocol,
     )
 
-    from config.cache_manager import get_cache_manager
+    from yosai_intel_dashboard.src.infrastructure.config.cache_manager import get_cache_manager
 
     container.register_singleton(
         "cache_manager",
@@ -112,7 +112,7 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
 
 def register_analytics_services(container: ServiceContainer) -> None:
     """Register analytics components and service."""
-    from core.protocols import (
+    from yosai_intel_dashboard.src.core.interfaces.protocols import (
         AnalyticsServiceProtocol,
         ConfigProviderProtocol,
         DatabaseProtocol,
@@ -120,8 +120,8 @@ def register_analytics_services(container: ServiceContainer) -> None:
         StorageProtocol,
     )
     from mapping.factories.service_factory import create_mapping_service
-    from services.analytics.calculator import create_calculator
-    from services.analytics.protocols import (
+    from yosai_intel_dashboard.src.services.analytics.calculator import create_calculator
+    from yosai_intel_dashboard.src.services.analytics.protocols import (
         CalculatorProtocol,
         DataLoadingProtocol,
         DataProcessorProtocol,
@@ -129,14 +129,14 @@ def register_analytics_services(container: ServiceContainer) -> None:
         ReportGeneratorProtocol,
         UploadAnalyticsProtocol,
     )
-    from services.analytics.upload_analytics import UploadAnalyticsProcessor
-    from services.analytics_service import AnalyticsService
+    from yosai_intel_dashboard.src.services.analytics.upload_analytics import UploadAnalyticsProcessor
+    from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
     from services.controllers.upload_controller import UploadProcessingController
     from services.controllers.protocols import UploadProcessingControllerProtocol
     from services.data_loading_service import DataLoadingService
-    from services.data_processing.processor import Processor
+    from yosai_intel_dashboard.src.services.data_processing.processor import Processor
     from services.data_processing_service import DataProcessingService
-    from services.interfaces import (
+    from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
         MappingServiceProtocol,
         UploadDataServiceProtocol,
         get_database_analytics_retriever,
@@ -248,7 +248,7 @@ def register_security_services(container: ServiceContainer) -> None:
 
 
 def register_export_services(container: ServiceContainer) -> None:
-    from core.protocols import ExportServiceProtocol
+    from yosai_intel_dashboard.src.core.interfaces.protocols import ExportServiceProtocol
     from services.export_service import ExportService
 
     container.register_transient(

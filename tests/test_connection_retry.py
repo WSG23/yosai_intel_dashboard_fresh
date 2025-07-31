@@ -2,8 +2,8 @@ import time
 
 import pytest
 
-from config.connection_retry import ConnectionRetryManager, RetryConfig
-from config.database_exceptions import ConnectionRetryExhausted
+from yosai_intel_dashboard.src.infrastructure.config.connection_retry import ConnectionRetryManager, RetryConfig
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import ConnectionRetryExhausted
 
 
 def test_retry_success(monkeypatch):

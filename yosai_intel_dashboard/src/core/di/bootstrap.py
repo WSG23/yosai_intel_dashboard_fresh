@@ -1,7 +1,7 @@
 """Container bootstrap utilities."""
 from __future__ import annotations
 
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from startup.service_registration import register_all_application_services
 from startup.registry_startup import register_optional_services
 

@@ -6,7 +6,7 @@ import threading
 import time
 from typing import Any, Dict
 
-from core.protocols import EventBusProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import EventBusProtocol
 from services.analytics_summary import generate_sample_analytics
 
 

@@ -8,7 +8,7 @@ import json
 import sys
 from pathlib import Path
 
-from config.app_config import UploadConfig
+from yosai_intel_dashboard.src.infrastructure.config.app_config import UploadConfig
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -22,8 +22,8 @@ async def test_analytics_with_mappings(verbose: bool = False) -> dict:
         # Process the parquet file using pandas directly
         import pandas as pd
 
-        from services.analytics.upload_analytics import UploadAnalyticsProcessor
-        from services.analytics_service import AnalyticsService
+        from yosai_intel_dashboard.src.services.analytics.upload_analytics import UploadAnalyticsProcessor
+        from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
         from services.device_learning_service import DeviceLearningService
 
         parquet_path = (

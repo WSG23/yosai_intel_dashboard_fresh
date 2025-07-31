@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import AsyncIterator, List
 
 import asyncpg
-from config.constants import DataProcessingLimits
+from yosai_intel_dashboard.src.infrastructure.config.constants import DataProcessingLimits
 
 from ..framework import MigrationStrategy
 

@@ -87,7 +87,7 @@ if "flask_apispec" not in sys.modules:
     )
 
 from error_handling import ErrorHandler
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from yosai_intel_dashboard.src.services import mappings_endpoint
 
 # Ensure dash stubs are available for service imports

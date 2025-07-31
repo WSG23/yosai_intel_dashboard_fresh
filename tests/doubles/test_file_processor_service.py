@@ -4,7 +4,7 @@ from typing import Callable, Optional, Tuple
 
 import pandas as pd
 
-from core.protocols import FileProcessorProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
 
 
 class FileProcessorServiceStub(FileProcessorProtocol):

@@ -8,21 +8,21 @@ from typing import Any, Optional, Tuple
 
 import pandas as pd
 
-from config.constants import DEFAULT_CHUNK_SIZE
-from config.dynamic_config import dynamic_config
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
-from core.protocols import ConfigurationProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
 from core.unicode import (
     process_large_csv_content,
     sanitize_dataframe,
     sanitize_for_utf8,
 )
 from services.common.config_utils import common_init, create_config_methods
-from services.data_processing.core.exceptions import (
+from yosai_intel_dashboard.src.services.data_processing.core.exceptions import (
     FileProcessingError,
     FileValidationError,
 )
-from services.upload.upload_types import ValidationResult
+from yosai_intel_dashboard.src.services.upload.upload_types import ValidationResult
 from yosai_intel_dashboard.src.utils.file_utils import safe_decode_with_unicode_handling
 from validation.security_validator import SecurityValidator
 

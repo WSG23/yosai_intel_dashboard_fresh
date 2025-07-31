@@ -9,7 +9,7 @@ import dask
 import pandas as pd
 from dask.distributed import Client, LocalCluster
 
-from config.config import get_analytics_config
+from yosai_intel_dashboard.src.infrastructure.config.config import get_analytics_config
 from validation.data_validator import DataValidator
 from validation.security_validator import SecurityValidator
 

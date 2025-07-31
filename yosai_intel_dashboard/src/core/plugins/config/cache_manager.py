@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 import dill
 import redis
 
-from config.constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
 
 from .interfaces import ICacheManager
 

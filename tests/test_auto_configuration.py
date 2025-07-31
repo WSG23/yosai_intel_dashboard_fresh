@@ -12,7 +12,7 @@ from core.plugins.auto_config import setup_plugins
 from core.plugins.callback_unifier import CallbackUnifier
 from core.plugins.decorators import safe_callback
 from core.protocols.plugin import PluginMetadata
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 pytestmark = pytest.mark.usefixtures("fake_dash")
 

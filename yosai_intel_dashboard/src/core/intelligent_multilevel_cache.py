@@ -13,7 +13,7 @@ from typing import Any, Awaitable, Callable, Dict, Optional
 
 import redis.asyncio as redis
 
-from config.base import CacheConfig
+from yosai_intel_dashboard.src.infrastructure.config.base import CacheConfig
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +181,7 @@ class IntelligentMultiLevelCache:
 
 async def create_intelligent_cache_manager() -> IntelligentMultiLevelCache:
     """Initialize cache manager from configuration."""
-    from config.config import get_cache_config
+    from yosai_intel_dashboard.src.infrastructure.config.config import get_cache_config
 
     cfg = get_cache_config()
     manager = IntelligentMultiLevelCache(cfg)

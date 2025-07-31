@@ -19,7 +19,7 @@ import sys
 from config import create_config_manager
 from core.plugins.auto_config import PluginAutoConfiguration
 from core.plugins.unified_registry import UnifiedPluginRegistry
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 pytestmark = pytest.mark.usefixtures("fake_dash")
 from core.protocols.plugin import PluginMetadata

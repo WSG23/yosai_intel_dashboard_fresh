@@ -6,7 +6,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
-from services.interfaces import (
+from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
     UploadDataServiceProtocol,
     get_upload_data_service,
 )

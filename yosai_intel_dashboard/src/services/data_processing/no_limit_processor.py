@@ -9,7 +9,7 @@ from typing import Iterable, List
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
 from unicode_toolkit import safe_encode_text
 

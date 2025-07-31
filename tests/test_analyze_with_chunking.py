@@ -1,6 +1,6 @@
 import pandas as pd
 
-from services.analytics_service import AnalyticsService
+from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
 
 
 def test_analyze_with_chunking_large_df():

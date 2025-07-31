@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import AsyncIterator, List
 
 import asyncpg
-from config.constants import MIGRATION_CHUNK_SIZE
+from yosai_intel_dashboard.src.infrastructure.config.constants import MIGRATION_CHUNK_SIZE
 
 from ..framework import MigrationStrategy
 

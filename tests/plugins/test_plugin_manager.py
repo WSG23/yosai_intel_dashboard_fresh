@@ -10,7 +10,7 @@ from typing import Any, Dict, Protocol
 import pytest
 
 from config import create_config_manager
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 
 def _install_protocol_stubs(monkeypatch: "pytest.MonkeyPatch") -> None:

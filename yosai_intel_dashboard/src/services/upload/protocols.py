@@ -17,8 +17,8 @@ from typing import (
 
 import pandas as pd
 
-from core.protocols import FileProcessorProtocol
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from services.protocols.device_learning import DeviceLearningServiceProtocol
 
 
@@ -222,7 +222,7 @@ def get_device_learning_service(
     c = _get_container(container)
     if c and c.has("device_learning_service"):
         return c.get("device_learning_service")
-    from services.interfaces import get_device_learning_service as _get
+    from yosai_intel_dashboard.src.core.interfaces.service_protocols import get_device_learning_service as _get
 
     return _get()
 

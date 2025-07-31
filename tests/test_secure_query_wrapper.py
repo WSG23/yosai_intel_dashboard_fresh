@@ -1,6 +1,6 @@
 import pytest
 
-from config.database_exceptions import UnicodeEncodingError
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import UnicodeEncodingError
 from security.secure_query_wrapper import (
     execute_secure_command,
     execute_secure_sql,

@@ -10,7 +10,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
-from config.dynamic_config import diagnose_upload_config, dynamic_config
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import diagnose_upload_config, dynamic_config
 
 
 def main(argv: list[str] | None = None) -> int:

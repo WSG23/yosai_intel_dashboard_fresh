@@ -6,7 +6,7 @@ import threading
 import time
 from typing import Any, Callable, Dict, List, Tuple
 
-from config.database_exceptions import ConnectionValidationFailed
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import ConnectionValidationFailed
 from database.types import DatabaseConnection
 
 

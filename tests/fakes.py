@@ -5,8 +5,8 @@ from typing import Any, Callable, Dict, List
 import pandas as pd
 
 try:
-    from core.protocols import FileProcessorProtocol
-    from services.upload.protocols import UploadStorageProtocol
+    from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
+    from yosai_intel_dashboard.src.services.upload.protocols import UploadStorageProtocol
 except Exception:  # pragma: no cover - fallback stubs for optional deps
     from typing import Protocol
 
@@ -33,7 +33,7 @@ except Exception:  # pragma: no cover - fallback stubs for optional deps
 
 
 try:
-    from services.interfaces import (
+    from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
         DeviceLearningServiceProtocol,
         UploadDataServiceProtocol,
     )
@@ -64,7 +64,7 @@ except Exception:  # pragma: no cover - fallback stubs
 
 
 try:
-    from core.protocols import ConfigurationServiceProtocol
+    from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationServiceProtocol
 except Exception:  # pragma: no cover - fallback stub
     from typing import Protocol
 
@@ -74,7 +74,7 @@ except Exception:  # pragma: no cover - fallback stub
 
 
 try:
-    from core.protocols import UnicodeProcessorProtocol
+    from yosai_intel_dashboard.src.core.interfaces.protocols import UnicodeProcessorProtocol
 except Exception:  # pragma: no cover - fallback stub
     from typing import Protocol
 

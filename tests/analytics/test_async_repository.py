@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from services.analytics.async_repository import AsyncEventRepository
+from yosai_intel_dashboard.src.services.analytics.async_repository import AsyncEventRepository
 
 
 class DummySession:

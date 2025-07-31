@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """Convenience wrapper for the async file processor."""
 
-from services.data_processing.async_file_processor import (
+from yosai_intel_dashboard.src.services.data_processing.async_file_processor import (
     AsyncFileProcessor as _AsyncFileProcessor,
 )
 

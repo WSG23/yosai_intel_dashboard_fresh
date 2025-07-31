@@ -42,7 +42,7 @@ async def test_mapping_service(
 
         # Step 1: Process file with AsyncFileProcessor
         logger.info("=== STEP 1: File Processing ===")
-        from services.data_processing.async_file_processor import AsyncFileProcessor
+        from yosai_intel_dashboard.src.services.data_processing.async_file_processor import AsyncFileProcessor
 
         processor = AsyncFileProcessor()
 
