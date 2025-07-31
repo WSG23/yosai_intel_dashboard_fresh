@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import os
+
 import pandas as pd
 
 from config import create_config_manager
@@ -6,7 +9,7 @@ from tests.fake_configuration import FakeConfiguration
 
 fake_cfg = FakeConfiguration()
 from config.constants import MAX_DISPLAY_ROWS
-from services.data_processing.file_processor import create_file_preview
+from file_processing import create_file_preview
 
 
 def test_dynamic_config_default_display_rows():
@@ -22,6 +25,9 @@ database:
   name: test.db
 security:
   secret_key: {secret}
+cache:
+  ttl: 1
+  jwks_ttl: 1
 analytics:
   max_display_rows: 123
 """

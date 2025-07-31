@@ -1,6 +1,9 @@
 """Data processing utilities."""
 
-from .async_file_processor import AsyncFileProcessor
+try:  # pragma: no cover - optional dependency
+    from .async_file_processor import AsyncFileProcessor
+except Exception:  # pragma: no cover - best effort
+    AsyncFileProcessor = None  # type: ignore
 from .base_file_processor import BaseFileProcessor
 from .file_handler import FileHandler, process_file_simple
 

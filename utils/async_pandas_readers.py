@@ -6,20 +6,19 @@ from typing import Any
 
 import pandas as pd
 
-from services.upload.utils.file_parser import UnicodeFileProcessor
 from .pandas_readers import (
     read_csv,
     read_excel,
+    read_fwf,
     read_json,
     read_parquet,
-    read_fwf,
 )
 
 
 async def async_read_csv(
     path: str | Path,
     *,
-    processor: UnicodeFileProcessor | None = None,
+    processor: Any | None = None,
     **kwargs: Any,
 ) -> pd.DataFrame:
     """Asynchronously read a CSV file and sanitize Unicode."""
@@ -29,7 +28,7 @@ async def async_read_csv(
 async def async_read_excel(
     path: str | Path,
     *,
-    processor: UnicodeFileProcessor | None = None,
+    processor: Any | None = None,
     **kwargs: Any,
 ) -> pd.DataFrame:
     """Asynchronously read an Excel file and sanitize Unicode."""
@@ -39,7 +38,7 @@ async def async_read_excel(
 async def async_read_json(
     path: str | Path,
     *,
-    processor: UnicodeFileProcessor | None = None,
+    processor: Any | None = None,
     **kwargs: Any,
 ) -> pd.DataFrame:
     """Asynchronously read a JSON file and sanitize Unicode."""
@@ -49,7 +48,7 @@ async def async_read_json(
 async def async_read_parquet(
     path: str | Path,
     *,
-    processor: UnicodeFileProcessor | None = None,
+    processor: Any | None = None,
     **kwargs: Any,
 ) -> pd.DataFrame:
     """Asynchronously read a Parquet file and sanitize Unicode."""
@@ -59,7 +58,7 @@ async def async_read_parquet(
 async def async_read_fwf(
     path: str | Path,
     *,
-    processor: UnicodeFileProcessor | None = None,
+    processor: Any | None = None,
     **kwargs: Any,
 ) -> pd.DataFrame:
     """Asynchronously read a fixed-width file and sanitize Unicode."""
