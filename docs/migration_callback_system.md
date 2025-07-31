@@ -26,6 +26,7 @@ no longer shipped with the project.
 
 ## Cleaning Up Old Imports
 
+The deprecated `core.callback_controller` module has been removed.
 Search the codebase for `callback_controller` and update any remaining
 references to use the unified API. Make sure to import `TrulyUnifiedCallbacks`
 where required and remove any deprecated wrappers. Running the tests after

@@ -31,7 +31,6 @@ Total callbacks found: 49
 Callback distribution:
   - upload_validator.py: 1 callbacks
   - core/dash_profile.py: 1 callbacks
-  - core/callback_controller.py: 1 callbacks
   - core/config.py: 1 callbacks
   - core/truly_unified_callbacks.py: 1 callbacks
   - Pattern 'on[A-Z]\w+\s*=' appears in 19 files - consider consolidation
