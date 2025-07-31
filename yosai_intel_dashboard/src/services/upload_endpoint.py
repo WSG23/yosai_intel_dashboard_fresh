@@ -7,8 +7,9 @@ from flask_wtf.csrf import validate_csrf
 from pydantic import BaseModel
 
 from error_handling import ErrorCategory, ErrorHandler, api_error_response
+
 from services.data_processing.file_handler import FileHandler
-from utils.pydantic_decorators import validate_input, validate_output
+from yosai_intel_dashboard.src.utils.pydantic_decorators import validate_input, validate_output
 
 
 class UploadRequestSchema(BaseModel):

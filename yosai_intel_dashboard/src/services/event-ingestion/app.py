@@ -13,8 +13,8 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from config.config_loader import load_service_config
 from core.security import RateLimiter
-from error_handling import http_error
-from error_handling.middleware import ErrorHandlingMiddleware
+from yosai_intel_dashboard.src.error_handling import http_error
+from yosai_intel_dashboard.src.error_handling.middleware import ErrorHandlingMiddleware
 from services.security import verify_service_jwt
 from services.streaming.service import StreamingService
 from shared.errors.types import ErrorCode

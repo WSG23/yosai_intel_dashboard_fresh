@@ -17,7 +17,7 @@ from prometheus_client import (
     start_http_server,
 )
 
-from error_handling import http_error
+from yosai_intel_dashboard.src.error_handling import http_error
 from shared.errors.types import ErrorCode
 
 from .config import ServiceConfig, load_config

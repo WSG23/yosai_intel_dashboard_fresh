@@ -398,6 +398,8 @@ following steps:
    pip install --force-reinstall "Flask>=2.2.5"
    ```
    See [docs/troubleshooting.md](docs/troubleshooting.md) for details.
+8. Run `diagnose-upload-config` to print current upload limits if uploads fail.
+   Use `--verbose` for extra details.
 
 ### Production Deployment
 
@@ -1201,7 +1203,7 @@ summary = get_performance_monitor().get_metrics_summary()
 ### Standardizing column names
 ```python
 import pandas as pd
-from utils.mapping_helpers import standardize_column_names
+from yosai_intel_dashboard.src.utils.mapping_helpers import standardize_column_names
 
 df = pd.DataFrame({"A B": [1], "C-D": [2]})
 clean_df = standardize_column_names(df)

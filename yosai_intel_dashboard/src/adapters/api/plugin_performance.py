@@ -11,7 +11,7 @@ from app import app
 from config import get_cache_config
 from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
 from core.plugins.performance_manager import EnhancedThreadSafePluginManager
-from error_handling import ErrorCategory, ErrorHandler
+from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler
 from shared.errors.types import ErrorCode
 from validation.security_validator import SecurityValidator
 from yosai_framework.errors import CODE_TO_STATUS

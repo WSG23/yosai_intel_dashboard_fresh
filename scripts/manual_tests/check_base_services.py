@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Test base code service loading"""
+"""Manual script to check base code service loading"""
 
 
 def safe_str(obj):

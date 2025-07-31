@@ -9,7 +9,7 @@ from services.upload.protocols import (
     UploadValidatorProtocol,
 )
 from services.upload.validator import ClientSideValidator
-from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 
 
 def test_processing_service_implements_protocol() -> None:

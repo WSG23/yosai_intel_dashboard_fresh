@@ -6,7 +6,7 @@ from typing import Any, Type
 from flask import jsonify, request
 from pydantic import BaseModel, ValidationError
 
-from error_handling import ErrorCategory, ErrorHandler
+from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler
 from shared.errors.types import ErrorCode
 from yosai_framework.errors import CODE_TO_STATUS
 

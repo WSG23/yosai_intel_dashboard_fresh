@@ -4,9 +4,9 @@ from flask import Blueprint, jsonify
 from flask_apispec import doc
 from pydantic import BaseModel
 
-from error_handling import ErrorCategory, ErrorHandler, api_error_response
+from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler, api_error_response
 from services.security import refresh_access_token
-from utils.pydantic_decorators import validate_input, validate_output
+from yosai_intel_dashboard.src.utils.pydantic_decorators import validate_input, validate_output
 
 
 class RefreshRequest(BaseModel):

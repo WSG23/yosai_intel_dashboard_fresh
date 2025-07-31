@@ -1,6 +1,6 @@
 import pandas as pd
 
-from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 
 
 def test_memory_cleanup_after_save(tmp_path):

@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
-from utils.result_types import Result, failure, success
+from yosai_intel_dashboard.src.utils.result_types import Result, failure, success
 
 from .enums import DoorType
 from .events import AccessEvent

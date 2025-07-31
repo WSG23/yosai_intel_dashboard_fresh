@@ -1,7 +1,7 @@
 import pytest
 from flask import Flask, Response
 
-from utils.assets_utils import ensure_icon_cache_headers
+from yosai_intel_dashboard.src.utils.assets_utils import ensure_icon_cache_headers
 
 
 def _make_app():

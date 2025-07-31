@@ -25,7 +25,7 @@ from unittest.mock import MagicMock
 import pandas as pd
 
 from services.upload_data_service import UploadDataService
-from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 
 
 def test_store_and_retrieve(tmp_path):

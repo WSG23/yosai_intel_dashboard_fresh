@@ -1,4 +1,4 @@
-from error_handling.api_errors import http_error
+from yosai_intel_dashboard.src.error_handling.api_errors import http_error
 from shared.errors.types import ErrorCode
 
 

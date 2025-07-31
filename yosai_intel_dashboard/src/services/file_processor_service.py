@@ -18,9 +18,9 @@ from core.protocols import ConfigurationServiceProtocol
 from core.unicode import UnicodeProcessor as UnicodeHelper
 from core.unicode import process_large_csv_content
 from services.data_processing.base_file_processor import BaseFileProcessor
-from utils.file_utils import safe_decode_with_unicode_handling
-from utils.memory_utils import memory_safe
-from utils.protocols import SafeDecoderProtocol
+from yosai_intel_dashboard.src.utils.file_utils import safe_decode_with_unicode_handling
+from yosai_intel_dashboard.src.utils.memory_utils import memory_safe
+from yosai_intel_dashboard.src.utils.protocols import SafeDecoderProtocol
 from validation.file_validator import FileValidator
 from yosai_framework.service import BaseService
 

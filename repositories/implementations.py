@@ -8,7 +8,7 @@ import logging
 from datetime import datetime
 from typing import List, Optional
 
-from utils.unicode_handler import UnicodeHandler
+from yosai_intel_dashboard.src.utils.unicode_handler import UnicodeHandler
 from yosai_intel_dashboard.models.entities import AccessEvent, Door, Person
 from yosai_intel_dashboard.models.enums import AccessResult, BadgeStatus, DoorType
 

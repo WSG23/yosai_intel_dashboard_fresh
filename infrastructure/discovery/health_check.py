@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from error_handling import http_error
+from yosai_intel_dashboard.src.error_handling import http_error
 from shared.errors.types import ErrorCode
 
 HealthCheck = Callable[[FastAPI], Awaitable[bool] | bool]

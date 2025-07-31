@@ -139,7 +139,7 @@ def get_upload_data_service(
     if c and c.has("upload_data_service"):
         return c.get("upload_data_service")
     from services.upload_data_service import UploadDataService as UploadDataSvc
-    from utils.upload_store import uploaded_data_store
+    from yosai_intel_dashboard.src.utils.upload_store import uploaded_data_store
 
     return UploadDataSvc(uploaded_data_store)
 

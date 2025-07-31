@@ -1,3 +1,5 @@
+"""Manual script to exercise selected API endpoints"""
+
 import json
 import os
 

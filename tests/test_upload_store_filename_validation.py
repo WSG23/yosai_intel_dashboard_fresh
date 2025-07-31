@@ -1,7 +1,7 @@
 import pytest
 
 from tests.utils.builders import DataFrameBuilder
-from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 
 
 def test_unsafe_filenames_rejected(tmp_path):
