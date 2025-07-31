@@ -1,4 +1,4 @@
-from services.analytics.storage.cache import _cache_manager, cached
+from yosai_intel_dashboard.src.services.analytics.storage.cache import _cache_manager, cached
 
 
 @cached(ttl=1)

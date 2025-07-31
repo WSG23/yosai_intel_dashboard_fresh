@@ -1,7 +1,7 @@
 import pandas as pd
 
 from config import get_config
-from services.data_processing.file_processor import create_file_preview
+from yosai_intel_dashboard.src.services.data_processing.file_processor import create_file_preview
 
 
 def test_create_file_preview_respects_limit(monkeypatch):

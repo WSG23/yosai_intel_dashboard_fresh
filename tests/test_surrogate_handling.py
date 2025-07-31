@@ -2,7 +2,7 @@ import json
 
 import pandas as pd
 
-from services.data_processing.common import process_dataframe
+from yosai_intel_dashboard.src.services.data_processing.common import process_dataframe
 
 
 def test_process_dataframe_csv_with_surrogate(tmp_path):

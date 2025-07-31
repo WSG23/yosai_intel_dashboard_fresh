@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from services.registry import get_service
+from yosai_intel_dashboard.src.services.registry import get_service
 
 __all__ = [
     "get_database_manager",

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from services.upload.protocols import UploadValidatorProtocol
+from yosai_intel_dashboard.src.services.upload.protocols import UploadValidatorProtocol
 from validation.file_validator import FileValidator
 
 

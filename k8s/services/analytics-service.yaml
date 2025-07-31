@@ -44,7 +44,7 @@ spec:
             runAsNonRoot: true
             runAsUser: 1000
             readOnlyRootFilesystem: true
-          command: ["python", "-m", "uvicorn", "services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
+          command: ["python", "-m", "uvicorn", "yosai_intel_dashboard.src.services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
           ports:
             - containerPort: 8001
           envFrom:

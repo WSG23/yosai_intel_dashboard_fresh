@@ -11,7 +11,7 @@ from core.protocols import (
     UnicodeProcessorProtocol,
 )
 from core.service_container import ServiceContainer
-from services.upload.protocols import (
+from yosai_intel_dashboard.src.services.upload.protocols import (
     FileProcessorProtocol,
     UploadStorageProtocol,
 )

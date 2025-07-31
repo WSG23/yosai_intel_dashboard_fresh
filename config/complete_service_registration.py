@@ -13,7 +13,7 @@ from core.protocols import (
     StorageProtocol,
 )
 from core.service_container import ServiceContainer
-from services.metadata_enhancement_engine import register_metadata_services
+from yosai_intel_dashboard.src.services.metadata_enhancement_engine import register_metadata_services
 
 
 def register_all_application_services(container: ServiceContainer) -> None:
@@ -25,7 +25,7 @@ def register_all_application_services(container: ServiceContainer) -> None:
     register_metadata_services(container)
     register_security_services(container)
     register_export_services(container)
-    from services.upload.service_registration import register_upload_services
+    from yosai_intel_dashboard.src.services.upload.service_registration import register_upload_services
 
     register_upload_services(container)
 
@@ -45,7 +45,7 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
     )
     from config.database_manager import DatabaseManager, DatabaseSettings
     from core.logging import LoggingService
-    from services.configuration_service import (
+    from yosai_intel_dashboard.src.services.configuration_service import (
         ConfigurationServiceProtocol,
         DynamicConfigurationService,
     )
@@ -104,19 +104,19 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
 def register_analytics_services(container: ServiceContainer) -> None:
     """Register analytics components and service."""
     from core.protocols import AnalyticsServiceProtocol
-    from services.analytics.protocols import (
+    from yosai_intel_dashboard.src.services.analytics.protocols import (
         DataLoadingProtocol,
         DataProcessorProtocol,
         ReportGeneratorProtocol,
         PublishingProtocol,
     )
-    from services.analytics_service import create_analytics_service
-    from services.data_loading_service import DataLoadingService
-    from services.data_processing_service import DataProcessingService
-    from services.report_generation_service import ReportGenerationService
-    from services.publishing_service import PublishingService
-    from services.controllers.upload_controller import UnifiedUploadController
-    from services.data_processing.processor import Processor
+    from yosai_intel_dashboard.src.services.analytics_service import create_analytics_service
+    from yosai_intel_dashboard.src.services.data_loading_service import DataLoadingService
+    from yosai_intel_dashboard.src.services.data_processing_service import DataProcessingService
+    from yosai_intel_dashboard.src.services.report_generation_service import ReportGenerationService
+    from yosai_intel_dashboard.src.services.publishing_service import PublishingService
+    from yosai_intel_dashboard.src.services.controllers.upload_controller import UnifiedUploadController
+    from yosai_intel_dashboard.src.services.data_processing.processor import Processor
     from validation.security_validator import SecurityValidator
 
     container.register_singleton(
@@ -169,7 +169,7 @@ def register_security_services(container: ServiceContainer) -> None:
 
 def register_export_services(container: ServiceContainer) -> None:
     from core.protocols import ExportServiceProtocol
-    from services.export_service import ExportService
+    from yosai_intel_dashboard.src.services.export_service import ExportService
 
     container.register_transient(
         "export_service",
@@ -181,7 +181,7 @@ def register_export_services(container: ServiceContainer) -> None:
 def register_learning_services(container: ServiceContainer) -> None:
     """Register device learning service with the container."""
 
-    from services.device_learning_service import create_device_learning_service
+    from yosai_intel_dashboard.src.services.device_learning_service import create_device_learning_service
 
     container.register_singleton(
         "device_learning_service",

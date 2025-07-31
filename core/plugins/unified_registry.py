@@ -10,7 +10,7 @@ from core.callbacks import UnifiedCallbackManager
 from core.plugins.manager import ThreadSafePluginManager
 from core.protocols.plugin import PluginProtocol
 from core.service_container import ServiceContainer
-from services.registry import registry as service_registry
+from yosai_intel_dashboard.src.services.registry import registry as service_registry
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
     from core.truly_unified_callbacks import TrulyUnifiedCallbacks

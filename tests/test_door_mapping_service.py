@@ -24,9 +24,9 @@ sys.modules.setdefault(
 sys.modules["services.ai_device_generator"].AIDeviceGenerator = _DummyAIGen
 sys.modules["services.ai_device_generator"].DeviceAttributes = _DummyAttrs
 
-from services.ai_device_generator import AIDeviceGenerator, DeviceAttributes
-from services.configuration_service import DynamicConfigurationService
-from services.door_mapping_service import DoorMappingService
+from yosai_intel_dashboard.src.services.ai_device_generator import AIDeviceGenerator, DeviceAttributes
+from yosai_intel_dashboard.src.services.configuration_service import DynamicConfigurationService
+from yosai_intel_dashboard.src.services.door_mapping_service import DoorMappingService
 
 
 def test_standardized_output(monkeypatch):

@@ -174,7 +174,7 @@ jobs:
             context: .
             dockerfile: Dockerfile
           - name: event-ingestion
-            context: ./services/event-ingestion/
+            context: ./yosai_intel_dashboard/src/services/event-ingestion/
             dockerfile: Dockerfile
     steps:
       - uses: actions/checkout@v3

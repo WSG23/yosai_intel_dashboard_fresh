@@ -1,6 +1,6 @@
 import asyncio
 
-from services.upload.async_processor import AsyncUploadProcessor
+from yosai_intel_dashboard.src.services.upload.async_processor import AsyncUploadProcessor
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 

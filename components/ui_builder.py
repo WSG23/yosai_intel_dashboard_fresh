@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 
 from components.file_preview import create_file_preview_ui
-from services.upload.utils.file_parser import create_file_preview
+from yosai_intel_dashboard.src.services.upload.utils.file_parser import create_file_preview
 
 logger = logging.getLogger(__name__)
 

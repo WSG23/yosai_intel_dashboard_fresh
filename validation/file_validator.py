@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Tuple
 
 if TYPE_CHECKING:  # pragma: no cover - optional dependency
-    from services.upload.protocols import UploadValidatorProtocol
+    from yosai_intel_dashboard.src.services.upload.protocols import UploadValidatorProtocol
 else:
     UploadValidatorProtocol = Any
 

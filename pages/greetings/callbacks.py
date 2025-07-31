@@ -2,7 +2,7 @@ from dash import Input, Output
 from dash.exceptions import PreventUpdate
 
 from simple_di import inject
-from services.greeting import GreetingService
+from yosai_intel_dashboard.src.services.greeting import GreetingService
 
 
 def register_callbacks(app, container) -> None:

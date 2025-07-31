@@ -10,10 +10,10 @@ import pytest
 from yosai_intel_dashboard.models.compliance import ConsentType, DataSensitivityLevel
 
 from core.audit_logger import ComplianceAuditLogger
-from services.compliance.consent_service import ConsentService
-from services.compliance.data_retention_service import DataRetentionService
-from services.compliance.dpia_service import DPIAService, DPIATrigger, RiskLevel
-from services.compliance.dsar_service import DSARRequestType, DSARService, DSARStatus
+from yosai_intel_dashboard.src.services.compliance.consent_service import ConsentService
+from yosai_intel_dashboard.src.services.compliance.data_retention_service import DataRetentionService
+from yosai_intel_dashboard.src.services.compliance.dpia_service import DPIAService, DPIATrigger, RiskLevel
+from yosai_intel_dashboard.src.services.compliance.dsar_service import DSARRequestType, DSARService, DSARStatus
 
 
 class TestConsentService:
@@ -515,7 +515,7 @@ class ComplianceUsageExamples:
     def example_biometric_processing_with_consent_check(self):
         """Example: Biometric processing with consent verification"""
         example_code = '''
-        from services.compliance.consent_service import ConsentService
+        from yosai_intel_dashboard.src.services.compliance.consent_service import ConsentService
         from yosai_intel_dashboard.models.compliance import ConsentType
         from core.audit_logger import ComplianceAuditLogger
         

@@ -40,7 +40,7 @@ jobs:
           python-version: '3.11'
       - run: pip install -r requirements.lock
       - run: pip install -r requirements-test.txt
-      - run: pytest --cov=services.analytics_microservice --cov=services.event-ingestion --cov-report=xml -q --cov-fail-under=80
+      - run: pytest --cov=yosai_intel_dashboard.src.services.analytics_microservice --cov=yosai_intel_dashboard.src.services.event-ingestion --cov-report=xml -q --cov-fail-under=80
       - uses: actions/upload-artifact@v4
         with:
           name: python-microservices-coverage
@@ -107,7 +107,7 @@ jobs:
             context: .
             dockerfile: Dockerfile
           - name: event-ingestion
-            context: ./services/event-ingestion/
+            context: ./yosai_intel_dashboard/src/services/event-ingestion/
             dockerfile: Dockerfile
     steps:
       - uses: actions/checkout@v3

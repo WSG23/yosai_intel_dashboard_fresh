@@ -1,6 +1,6 @@
 import pytest
 from simple_di import ServiceContainer
-from services.greeting import GreetingService
+from yosai_intel_dashboard.src.services.greeting import GreetingService
 from pages.greetings.callbacks import register_callbacks
 
 pytestmark = pytest.mark.usefixtures("fake_dash")

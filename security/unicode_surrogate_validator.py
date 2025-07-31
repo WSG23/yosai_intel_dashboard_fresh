@@ -8,7 +8,7 @@ from typing import Any
 
 from core.exceptions import ValidationError
 from core.unicode import contains_surrogates
-from services.security_callback_controller import SecurityEvent, emit_security_event
+from yosai_intel_dashboard.src.services.security_callback_controller import SecurityEvent, emit_security_event
 
 
 @dataclass

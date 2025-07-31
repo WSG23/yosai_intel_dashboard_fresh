@@ -8,7 +8,7 @@ from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, List
 
 from core.security import SecurityLevel, security_auditor
-from services.security_callback_controller import SecurityEvent, emit_security_event
+from yosai_intel_dashboard.src.services.security_callback_controller import SecurityEvent, emit_security_event
 
 logger = logging.getLogger(__name__)
 

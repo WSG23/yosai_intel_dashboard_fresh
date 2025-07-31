@@ -15,9 +15,9 @@ from core.container import Container
 from core.rbac import require_role
 from database.secure_exec import execute_query
 from error_handling import ErrorCategory, ErrorHandler
-from services.compliance.consent_service import ConsentService
-from services.compliance.dsar_service import DSARService
-from services.security import require_role
+from yosai_intel_dashboard.src.services.compliance.consent_service import ConsentService
+from yosai_intel_dashboard.src.services.compliance.dsar_service import DSARService
+from yosai_intel_dashboard.src.services.security import require_role
 from shared.errors.types import ErrorCode
 from validation.security_validator import SecurityValidator
 from yosai_framework.errors import CODE_TO_STATUS

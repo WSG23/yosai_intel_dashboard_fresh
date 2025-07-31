@@ -1,4 +1,4 @@
-from services.analytics.storage.repository import AnalyticsRepository
+from yosai_intel_dashboard.src.services.analytics.storage.repository import AnalyticsRepository
 
 
 class DummyHelper:

@@ -1,7 +1,7 @@
 """Service registration for dependency injection container."""
 
 from core.service_container import ServiceContainer
-from services.upload.protocols import (
+from yosai_intel_dashboard.src.services.upload.protocols import (
     DeviceLearningServiceProtocol,
     FileProcessorProtocol,
     UploadControllerProtocol,
@@ -16,14 +16,14 @@ def register_upload_services(container: ServiceContainer) -> None:
     """Register upload-related services with the container."""
 
     from config.dynamic_config import dynamic_config
-    from services.configuration_service import DynamicConfigurationService
-    from services.data_processing.async_file_processor import AsyncFileProcessor
-    from services.device_learning_service import DeviceLearningService
-    from services.door_mapping_service import DoorMappingService
-    from services.interfaces import DoorMappingServiceProtocol
-    from services.upload.processor import UploadProcessingService
-    from services.upload.validator import ClientSideValidator
-    from services.uploader import Uploader
+    from yosai_intel_dashboard.src.services.configuration_service import DynamicConfigurationService
+    from yosai_intel_dashboard.src.services.data_processing.async_file_processor import AsyncFileProcessor
+    from yosai_intel_dashboard.src.services.device_learning_service import DeviceLearningService
+    from yosai_intel_dashboard.src.services.door_mapping_service import DoorMappingService
+    from yosai_intel_dashboard.src.services.interfaces import DoorMappingServiceProtocol
+    from yosai_intel_dashboard.src.services.upload.processor import UploadProcessingService
+    from yosai_intel_dashboard.src.services.upload.validator import ClientSideValidator
+    from yosai_intel_dashboard.src.services.uploader import Uploader
     from utils.upload_store import UploadedDataStore
 
     upload_store = UploadedDataStore(dynamic_config.upload.folder)
@@ -38,7 +38,7 @@ def register_upload_services(container: ServiceContainer) -> None:
         "upload_storage", upload_store, protocol=UploadStorageProtocol
     )
 
-    from services.upload_data_service import UploadDataService
+    from yosai_intel_dashboard.src.services.upload_data_service import UploadDataService
 
     data_service = UploadDataService(upload_store)
     container.register_singleton(

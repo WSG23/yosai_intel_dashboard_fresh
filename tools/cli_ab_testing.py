@@ -6,7 +6,7 @@ from typing import Dict
 
 from yosai_intel_dashboard.models.ml import ModelRegistry
 
-from services.ab_testing import ModelABTester
+from yosai_intel_dashboard.src.services.ab_testing import ModelABTester
 
 
 def parse_weights(value: str) -> Dict[str, float]:

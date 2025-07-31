@@ -22,7 +22,7 @@ if "chardet" not in sys.modules:
     sys.modules["chardet"] = types.ModuleType("chardet")
 import pandas as pd
 
-from services.analytics_service import AnalyticsService
+from yosai_intel_dashboard.src.services.analytics_service import AnalyticsService
 from tests.fake_configuration import FakeConfiguration
 
 
@@ -96,7 +96,7 @@ def test_get_real_uploaded_data_no_files(monkeypatch):
 def test_service_receives_config(monkeypatch):
     """Provided config should be stored on the service instance."""
 
-    import services.analytics_service as mod
+    import yosai_intel_dashboard.src.services.analytics_service as mod
 
     # ensure a fresh global instance
     mod._analytics_service = None

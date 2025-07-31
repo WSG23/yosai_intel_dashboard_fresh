@@ -202,7 +202,7 @@ class DSARService:
             user_data = {}
 
             # Get user profile data
-            from services.optimized_queries import OptimizedQueryService
+            from yosai_intel_dashboard.src.services.optimized_queries import OptimizedQueryService
 
             query_service = OptimizedQueryService(self.db)
             users = query_service.batch_get_users([user_id])

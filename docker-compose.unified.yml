@@ -22,7 +22,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["python", "-m", "uvicorn", "services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
+    command: ["python", "-m", "uvicorn", "yosai_intel_dashboard.src.services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
     environment:
       <<: *yosai-env
       YOSAI_SERVICE_NAME: analytics-service
@@ -31,7 +31,7 @@ services:
 
   event-ingestion:
     build:
-      context: ./services/event-ingestion/
+      context: ./yosai_intel_dashboard/src/services/event-ingestion/
       dockerfile: Dockerfile
     environment:
       <<: *yosai-env
@@ -42,7 +42,7 @@ services:
 
   event-processing:
     build:
-      context: ./services/event_processing
+      context: ./yosai_intel_dashboard/src/services/event_processing
       dockerfile: Dockerfile
     environment:
       <<: *yosai-env

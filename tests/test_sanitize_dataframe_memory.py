@@ -2,7 +2,7 @@ import pandas as pd
 import psutil
 import pytest
 
-from services.data_processing.file_processor import UnicodeFileProcessor
+from yosai_intel_dashboard.src.services.data_processing.file_processor import UnicodeFileProcessor
 
 
 @pytest.mark.slow

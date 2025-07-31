@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from services.data_processing.file_processor import FileProcessor
+from yosai_intel_dashboard.src.services.data_processing.file_processor import FileProcessor
 
 # Optional Polars import with pandas fallback
 try:

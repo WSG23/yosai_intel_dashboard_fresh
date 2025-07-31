@@ -20,7 +20,7 @@ async def run_real_analytics():
 
         import pandas as pd
 
-        from services.analytics_service import AnalyticsService
+        from yosai_intel_dashboard.src.services.analytics_service import AnalyticsService
 
         # Load the Enhanced Security Demo data
         parquet_path = (

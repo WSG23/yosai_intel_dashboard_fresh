@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 import pandas as pd
 
 from core.protocols import UnicodeProcessorProtocol
-from services.upload.protocols import UploadStorageProtocol
+from yosai_intel_dashboard.src.services.upload.protocols import UploadStorageProtocol
 
 
 class SimpleUnicodeProcessor(UnicodeProcessorProtocol):

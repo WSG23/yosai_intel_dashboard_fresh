@@ -13,8 +13,8 @@ from core.audit_logger import create_audit_logger
 from core.container import Container
 from core.protocols import DatabaseProtocol
 from database.secure_exec import execute_command, execute_query
-from services.compliance.consent_service import create_consent_service
-from services.compliance.dsar_service import create_dsar_service
+from yosai_intel_dashboard.src.services.compliance.consent_service import create_consent_service
+from yosai_intel_dashboard.src.services.compliance.dsar_service import create_dsar_service
 
 logger = logging.getLogger(__name__)
 

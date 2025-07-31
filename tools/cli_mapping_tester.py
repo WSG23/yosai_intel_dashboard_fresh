@@ -42,7 +42,7 @@ async def test_mapping_service(
 
         # Step 1: Process file with AsyncFileProcessor
         logger.info("=== STEP 1: File Processing ===")
-        from services.data_processing.async_file_processor import AsyncFileProcessor
+        from yosai_intel_dashboard.src.services.data_processing.async_file_processor import AsyncFileProcessor
 
         processor = AsyncFileProcessor()
 
@@ -72,7 +72,7 @@ async def test_mapping_service(
         # Step 2: Test AI Column Suggestions
         logger.info("=== STEP 2: AI Column Suggestions ===")
         try:
-            from services.data_enhancer.mapping_utils import get_ai_column_suggestions
+            from yosai_intel_dashboard.src.services.data_enhancer.mapping_utils import get_ai_column_suggestions
 
             # Test AI suggestions for the columns
             suggestions = get_ai_column_suggestions(df)
@@ -93,7 +93,7 @@ async def test_mapping_service(
         # Step 3: Test Device Learning Service
         logger.info("=== STEP 3: Device Learning Service ===")
         try:
-            from services.device_learning_service import DeviceLearningService
+            from yosai_intel_dashboard.src.services.device_learning_service import DeviceLearningService
 
             device_service = DeviceLearningService()
 

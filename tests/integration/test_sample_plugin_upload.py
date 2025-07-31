@@ -131,7 +131,7 @@ def test_plugin_upload_event_sse_ws(
     cfg = create_config_manager()
     cfg.config.plugin_settings["sample_plugin"] = {"enabled": True}
 
-    from services.websocket_server import AnalyticsWebSocketServer
+    from yosai_intel_dashboard.src.services.websocket_server import AnalyticsWebSocketServer
 
     ws_server = AnalyticsWebSocketServer(
         event_bus=event_bus, host="127.0.0.1", port=8765

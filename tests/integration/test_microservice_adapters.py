@@ -18,7 +18,7 @@ app_spec = importlib.util.spec_from_file_location(
 app_module = importlib.util.module_from_spec(app_spec)
 app_spec.loader.exec_module(app_module)
 
-from services.migration import adapter as migration_adapter
+from yosai_intel_dashboard.src.services.migration import adapter as migration_adapter
 
 
 class DummyAnalytics:

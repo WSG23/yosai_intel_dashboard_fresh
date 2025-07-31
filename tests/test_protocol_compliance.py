@@ -12,7 +12,7 @@ from core.protocols import (
     StorageProtocol,
 )
 from core.service_container import ServiceContainer
-from services.analytics_service import AnalyticsService
+from yosai_intel_dashboard.src.services.analytics_service import AnalyticsService
 
 
 @runtime_checkable
@@ -173,7 +173,7 @@ class TestProtocolCompliance:
         assert_type(cfg, ConfigurationProtocol)
 
     def test_analytics_service_compliance(self):
-        from services.analytics_service import AnalyticsService
+        from yosai_intel_dashboard.src.services.analytics_service import AnalyticsService
 
         class ConcreteAnalyticsService(AnalyticsService):
             def analyze_access_patterns(self, days: int) -> Dict[str, Any]:
@@ -244,7 +244,7 @@ class TestProtocolCompliance:
             container.get("security_validator", SecurityServiceProtocol),
             SecurityServiceProtocol,
         )
-        from services.analytics.protocols import (
+        from yosai_intel_dashboard.src.services.analytics.protocols import (
             DataLoadingProtocol,
             DataProcessorProtocol,
             ReportGeneratorProtocol,

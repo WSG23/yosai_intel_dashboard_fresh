@@ -8,7 +8,7 @@ from typing import Any
 import json
 import pandas as pd
 
-from services.upload.utils.file_parser import UnicodeFileProcessor
+from yosai_intel_dashboard.src.services.upload.utils.file_parser import UnicodeFileProcessor
 
 
 def _sanitize(df: pd.DataFrame, processor: UnicodeFileProcessor | None) -> pd.DataFrame:

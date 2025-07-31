@@ -95,10 +95,10 @@ def _stub_analytics_deps() -> None:
     sys.modules.setdefault("redis", redis_stub)
     sys.modules.setdefault("redis.asyncio", redis_async)
 
-    queries_stub = types.ModuleType("services.analytics_microservice.async_queries")
+    queries_stub = types.ModuleType("yosai_intel_dashboard.src.services.analytics_microservice.async_queries")
     queries_stub.fetch_dashboard_summary = lambda *a, **k: {}
     queries_stub.fetch_access_patterns = lambda *a, **k: {}
-    sys.modules["services.analytics_microservice.async_queries"] = queries_stub
+    sys.modules["yosai_intel_dashboard.src.services.analytics_microservice.async_queries"] = queries_stub
 
     yd_models = types.ModuleType("yosai_intel_dashboard.models")
     ml_stub = types.ModuleType("yosai_intel_dashboard.models.ml")
@@ -187,7 +187,7 @@ def load_app(path: Path, module_name: str):
 def main() -> None:
     if "JWT_SECRET" not in os.environ:
         try:
-            from services.common.secrets import get_secret
+            from yosai_intel_dashboard.src.services.common.secrets import get_secret
 
             os.environ["JWT_SECRET"] = get_secret("secret/data/jwt#secret")
         except Exception as exc:  # noqa: BLE001

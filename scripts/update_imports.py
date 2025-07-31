@@ -16,6 +16,8 @@ ROOT = Path(__file__).resolve().parents[1]
 PATTERNS = {
     r"\bfrom\s+models(\.|\s)": "from models\\1",
     r"\bimport\s+models(\.|$)": "import models\\1",
+    r"\bfrom\s+services(\.|\s)": "from yosai_intel_dashboard.src.services\\1",
+    r"\bimport\s+services(\.|$)": "import yosai_intel_dashboard.src.services\\1",
 }
 
 

@@ -16,9 +16,9 @@ REQUIRED_DIRS = [
     "config",
     "security",
     "monitoring",
-    "services/analytics",
-    "services/events",
-    "services/ml",
+    "yosai_intel_dashboard/src/services/analytics",
+    "yosai_intel_dashboard/src/services/events",
+    "yosai_intel_dashboard/src/services/ml",
 ]
 
 

@@ -8,7 +8,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from services.data_enhancer.processor import DataEnhancerProcessor
+from yosai_intel_dashboard.src.services.data_enhancer.processor import DataEnhancerProcessor
 
 
 def register_callbacks(app, container) -> None:

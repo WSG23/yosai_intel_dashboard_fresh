@@ -111,10 +111,10 @@ def create_flask_app() -> Flask:
     """Create a Flask app with all blueprints registered."""
     from api.settings_endpoint import settings_bp
 
-    from services.device_endpoint import device_bp
-    from services.mappings_endpoint import mappings_bp
-    from services.token_endpoint import token_bp
-    from services.upload_endpoint import upload_bp
+    from yosai_intel_dashboard.src.services.device_endpoint import device_bp
+    from yosai_intel_dashboard.src.services.mappings_endpoint import mappings_bp
+    from yosai_intel_dashboard.src.services.token_endpoint import token_bp
+    from yosai_intel_dashboard.src.services.upload_endpoint import upload_bp
 
     if not os.environ.get("SPEC_STUBS"):
         import api.plugin_performance as plugin_perf

@@ -15,7 +15,7 @@ import pandas as pd
 from config.app_config import UploadConfig
 from core.cache_manager import CacheConfig, InMemoryCacheManager
 from core.unicode import sanitize_dataframe
-from services.upload.protocols import UploadStorageProtocol
+from yosai_intel_dashboard.src.services.upload.protocols import UploadStorageProtocol
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 

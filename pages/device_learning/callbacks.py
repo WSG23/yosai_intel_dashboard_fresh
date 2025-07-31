@@ -8,7 +8,7 @@ from dash.dependencies import Input, Output
 import pandas as pd
 
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from services.interfaces import get_device_learning_service
+from yosai_intel_dashboard.src.services.interfaces import get_device_learning_service
 
 
 def register_callbacks(app, container) -> None:

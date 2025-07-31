@@ -21,7 +21,7 @@ sys.modules.setdefault("config.service_registration", service_reg_stub)
 services_mod = sys.modules.setdefault("services", types.ModuleType("services"))
 services_mod.__path__ = [str((__file__)).rsplit("/tests/", 1)[0] + "/services"]
 
-from services.device_endpoint import (
+from yosai_intel_dashboard.src.services.device_endpoint import (
     build_ai_device_mappings,
     build_device_mappings,
     build_user_device_mappings,
@@ -84,7 +84,7 @@ def test_build_device_mappings_ai(monkeypatch):
     df = pd.DataFrame({})
     dsvc = DummyDeviceService()
     ai_map = {"dev": {"device_type": "door", "confidence": 0.7}}
-    from services.ai_mapping_store import ai_mapping_store
+    from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
 
     monkeypatch.setattr(ai_mapping_store, "clear", lambda: None)
     monkeypatch.setattr(ai_mapping_store, "all", lambda: ai_map)
@@ -111,7 +111,7 @@ def test_build_user_device_mappings_helper():
 def test_build_ai_device_mappings_helper(monkeypatch):
     df = pd.DataFrame({})
     ai_map = {"dev": {"device_type": "door", "confidence": 0.7}}
-    from services.ai_mapping_store import ai_mapping_store
+    from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
 
     monkeypatch.setattr(ai_mapping_store, "clear", lambda: None)
     monkeypatch.setattr(ai_mapping_store, "all", lambda: ai_map)

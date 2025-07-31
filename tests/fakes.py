@@ -6,7 +6,7 @@ import pandas as pd
 
 try:
     from core.protocols import FileProcessorProtocol
-    from services.upload.protocols import UploadStorageProtocol
+    from yosai_intel_dashboard.src.services.upload.protocols import UploadStorageProtocol
 except Exception:  # pragma: no cover - fallback stubs for optional deps
     from typing import Protocol
 
@@ -33,7 +33,7 @@ except Exception:  # pragma: no cover - fallback stubs for optional deps
 
 
 try:
-    from services.interfaces import (
+    from yosai_intel_dashboard.src.services.interfaces import (
         DeviceLearningServiceProtocol,
         UploadDataServiceProtocol,
     )

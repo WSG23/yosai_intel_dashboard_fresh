@@ -19,7 +19,7 @@ sys.path.insert(0, str(project_root))
 from config import create_config_manager
 from config.service_registration import register_upload_services
 from core.service_container import ServiceContainer
-from services.file_processor_service import FileProcessorService
+from yosai_intel_dashboard.src.services.file_processor_service import FileProcessorService
 
 
 def setup_logging(verbose: bool = False) -> None:

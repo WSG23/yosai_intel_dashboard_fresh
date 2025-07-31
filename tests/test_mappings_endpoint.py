@@ -78,7 +78,7 @@ sys.modules.setdefault("config.dynamic_config", config_pkg)
 if "flask_apispec" not in sys.modules:
     sys.modules["flask_apispec"] = types.SimpleNamespace(doc=lambda *a, **k: (lambda f: f))
 
-from services import mappings_endpoint
+from yosai_intel_dashboard.src.services import mappings_endpoint
 from core.service_container import ServiceContainer
 
 # Ensure dash stubs are available for service imports

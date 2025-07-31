@@ -14,9 +14,9 @@ from yosai_intel_dashboard.models.compliance import ConsentType, DataSensitivity
 from core.audit_logger import ComplianceAuditLogger
 from core.protocols import DatabaseProtocol
 from database.secure_exec import execute_query
-from services.compliance.consent_service import ConsentService
-from services.compliance.data_retention_service import DataRetentionService
-from services.data_processing.file_processor import FileProcessor
+from yosai_intel_dashboard.src.services.compliance.consent_service import ConsentService
+from yosai_intel_dashboard.src.services.compliance.data_retention_service import DataRetentionService
+from yosai_intel_dashboard.src.services.data_processing.file_processor import FileProcessor
 
 logger = logging.getLogger(__name__)
 

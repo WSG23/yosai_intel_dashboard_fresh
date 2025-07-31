@@ -13,7 +13,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["python", "-m", "uvicorn", "services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
+    command: ["python", "-m", "uvicorn", "yosai_intel_dashboard.src.services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
     environment:
       YOSAI_ENV: production
       SERVICE_REGISTRY_URL: http://service-registry:8500

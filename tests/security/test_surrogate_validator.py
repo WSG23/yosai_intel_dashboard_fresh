@@ -1,7 +1,7 @@
 import pytest
 
-import services.security_callback_controller as security_callback_controller
-from services.security_callback_controller import SecurityEvent
+import yosai_intel_dashboard.src.services.security_callback_controller as security_callback_controller
+from yosai_intel_dashboard.src.services.security_callback_controller import SecurityEvent
 
 
 @pytest.fixture

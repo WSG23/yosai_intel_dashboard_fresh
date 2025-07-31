@@ -88,8 +88,8 @@ def stub_config_and_core():
 
 stub_config_and_core()
 
-from services.database_retriever import DatabaseAnalyticsRetriever
-from services.db_analytics_helper import DatabaseAnalyticsHelper
+from yosai_intel_dashboard.src.services.database_retriever import DatabaseAnalyticsRetriever
+from yosai_intel_dashboard.src.services.db_analytics_helper import DatabaseAnalyticsHelper
 
 module_path = (
     Path(__file__).resolve().parents[2] / "services" / "database_analytics_service.py"

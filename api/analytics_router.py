@@ -8,8 +8,8 @@ from error_handling import http_error
 from config import get_cache_config
 from core.cache_manager import CacheConfig, InMemoryCacheManager
 from shared.errors.types import ErrorCode
-from services.cached_analytics import CachedAnalyticsService
-from services.security import require_permission
+from yosai_intel_dashboard.src.services.cached_analytics import CachedAnalyticsService
+from yosai_intel_dashboard.src.services.security import require_permission
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
 

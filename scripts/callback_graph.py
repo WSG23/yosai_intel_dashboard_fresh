@@ -9,7 +9,7 @@ from dash import Dash
 from graphviz import Digraph
 
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from services.upload.callbacks import UploadCallbacks
+from yosai_intel_dashboard.src.services.upload.callbacks import UploadCallbacks
 
 
 def load_callbacks() -> TrulyUnifiedCallbacks:

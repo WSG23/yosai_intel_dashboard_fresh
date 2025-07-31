@@ -296,7 +296,7 @@ class FakeUnicodeProcessor:
 
 
 try:
-    from services.upload.protocols import UploadStorageProtocol
+    from yosai_intel_dashboard.src.services.upload.protocols import UploadStorageProtocol
 except Exception:  # pragma: no cover - optional dep fallback
     from typing import Protocol
 
@@ -379,7 +379,7 @@ def fake_unicode_processor() -> FakeUnicodeProcessor:
 def upload_data_service(tmp_path: Path):
     """Provide a fresh ``UploadDataService`` backed by a temp store."""
 
-    from services.upload_data_service import UploadDataService
+    from yosai_intel_dashboard.src.services.upload_data_service import UploadDataService
     from utils.upload_store import UploadedDataStore
 
     store = UploadedDataStore(storage_dir=tmp_path)

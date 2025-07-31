@@ -4,7 +4,7 @@ Test suite for AI device generator module.
 
 import pytest
 
-from services.ai_device_generator import AIDeviceGenerator, DeviceAttributes
+from yosai_intel_dashboard.src.services.ai_device_generator import AIDeviceGenerator, DeviceAttributes
 
 
 class TestAIDeviceGenerator:

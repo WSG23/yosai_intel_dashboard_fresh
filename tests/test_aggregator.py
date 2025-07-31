@@ -14,7 +14,7 @@ services_stub = types.ModuleType("services")
 services_stub.__path__ = [str(Path(__file__).resolve().parents[1] / "services")]
 sys.modules["services"] = services_stub
 
-from services.analytics.processing.aggregator import Aggregator  # noqa: E402
+from yosai_intel_dashboard.src.services.analytics.processing.aggregator import Aggregator  # noqa: E402
 
 
 def test_aggregate():

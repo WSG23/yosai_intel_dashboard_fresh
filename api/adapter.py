@@ -9,7 +9,7 @@ from flask_wtf.csrf import CSRFProtect, generate_csrf
 from config import get_security_config
 from core.rbac import RBACService, create_rbac_service
 from core.secrets_validator import validate_all_secrets
-from services.security import require_token
+from yosai_intel_dashboard.src.services.security import require_token
 from yosai_framework.service import BaseService
 
 csrf = CSRFProtect()
@@ -21,11 +21,11 @@ from api.analytics_router import router as analytics_router
 from settings_endpoint import settings_bp
 
 from config.constants import API_PORT
-from services.device_endpoint import device_bp
-from services.mappings_endpoint import mappings_bp
+from yosai_intel_dashboard.src.services.device_endpoint import device_bp
+from yosai_intel_dashboard.src.services.mappings_endpoint import mappings_bp
 from middleware.performance import TimingMiddleware
-from services.token_endpoint import token_bp
-from services.upload_endpoint import upload_bp
+from yosai_intel_dashboard.src.services.token_endpoint import token_bp
+from yosai_intel_dashboard.src.services.upload_endpoint import upload_bp
 
 
 def create_api_app() -> "FastAPI":

@@ -2,7 +2,7 @@ import json
 
 from fastapi.testclient import TestClient
 
-from services.analytics.async_api import app, event_bus
+from yosai_intel_dashboard.src.services.analytics.async_api import app, event_bus
 
 
 def test_health_endpoint():
@@ -31,7 +31,7 @@ def test_generate_report_json(monkeypatch):
         def generate_report(self, report_type, params):
             return {"report_type": report_type, "params": params}
 
-    import services.analytics.async_api as mod
+    import yosai_intel_dashboard.src.services.analytics.async_api as mod
 
     monkeypatch.setattr(mod, "get_analytics_service", lambda: DummySvc())
     client = TestClient(app)
@@ -51,7 +51,7 @@ def test_generate_report_file(monkeypatch):
         def generate_report(self, report_type, params):
             return {"report_type": report_type}
 
-    import services.analytics.async_api as mod
+    import yosai_intel_dashboard.src.services.analytics.async_api as mod
 
     monkeypatch.setattr(mod, "get_analytics_service", lambda: DummySvc())
     client = TestClient(app)
