@@ -26,6 +26,8 @@ created on application startup.
 3. Use the functions in `async_queries.py` (or your own async SQL
    helpers) with the acquired pool.
 4. Ensure that any cleanup code calls `close_pool()` on shutdown.
+5. Batches default to `MIGRATION_CHUNK_SIZE` rows as defined in
+   `config/constants.py`.
 
 The async pool ensures non‑blocking database access and allows the
 web server to handle more concurrent requests.

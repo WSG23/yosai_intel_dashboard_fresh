@@ -8,7 +8,7 @@ from typing import Optional
 import pandas as pd
 
 from config.connection_retry import ConnectionRetryManager, RetryConfig
-from config.constants import DEFAULT_CHUNK_SIZE
+from config.constants import DEFAULT_CHUNK_SIZE, DataProcessingLimits
 from config.protocols import ConnectionRetryManagerProtocol, RetryConfigProtocol
 from utils.upload_store import UploadedDataStore
 
@@ -43,7 +43,7 @@ class ChunkedUploadManager:
         self.metadata_dir.mkdir(parents=True, exist_ok=True)
         self.initial_chunk_size = initial_chunk_size
         self.min_chunk_size = 1000
-        self.max_chunk_size = 100_000
+        self.max_chunk_size = DataProcessingLimits.MAX_CHUNK_SIZE
         self.retry_config = RetryConfig(max_attempts=3, base_delay=0.2, jitter=False)
         self._retry_manager_cls = retry_manager_cls
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import AsyncIterator, List
 
 import asyncpg
+from config.constants import DataProcessingLimits
 
 from ..framework import MigrationStrategy
 
@@ -11,7 +12,7 @@ class EventsMigration(MigrationStrategy):
     """Migrate access events table. Supports TimescaleDB targets."""
 
     TABLE = "access_events"
-    CHUNK_SIZE = 10000
+    CHUNK_SIZE = DataProcessingLimits.DEFAULT_QUERY_LIMIT
 
     def __init__(self, target_dsn: str) -> None:
         super().__init__(self.TABLE, target_dsn)
