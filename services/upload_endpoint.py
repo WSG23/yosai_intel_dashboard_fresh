@@ -6,7 +6,7 @@ from flask_apispec import doc
 from flask_wtf.csrf import validate_csrf
 from pydantic import BaseModel
 
-from config.service_registration import register_upload_services
+from services.upload.service_registration import register_upload_services
 
 # Use the shared DI container configured at application startup
 from core.container import container

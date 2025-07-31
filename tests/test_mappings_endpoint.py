@@ -52,7 +52,7 @@ utils_pkg.pydantic_decorators = pyd_module
 sys.modules.setdefault("utils", utils_pkg)
 sys.modules["utils.pydantic_decorators"] = pyd_module
 
-service_reg_stub = types.ModuleType("config.service_registration")
+service_reg_stub = types.ModuleType("services.upload.service_registration")
 service_reg_stub.register_upload_services = lambda c: None
 config_pkg = types.ModuleType("config")
 config_pkg.__path__ = []
@@ -72,7 +72,7 @@ config_pkg.dynamic_config = types.SimpleNamespace(
     performance=types.SimpleNamespace(memory_usage_threshold_mb=1024)
 )
 sys.modules.setdefault("config", config_pkg)
-sys.modules.setdefault("config.service_registration", service_reg_stub)
+sys.modules.setdefault("services.upload.service_registration", service_reg_stub)
 sys.modules.setdefault("config.dynamic_config", config_pkg)
 
 if "flask_apispec" not in sys.modules:
