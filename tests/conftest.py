@@ -332,8 +332,8 @@ except Exception:  # pragma: no cover - optional dep fallback
 
 
 try:  # Optional real models may not be available in minimal environments
-    from yosai_intel_dashboard.models.entities import AccessEvent, Door, Person
-    from yosai_intel_dashboard.models.enums import AccessResult, DoorType
+    from yosai_intel_dashboard.src.core.domain.entities import AccessEvent, Door, Person
+    from yosai_intel_dashboard.src.core.domain.value_objects import AccessResult, DoorType
 except Exception:  # pragma: no cover - fallback stubs
     AccessEvent = Door = Person = object
     AccessResult = DoorType = object

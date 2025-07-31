@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from yosai_intel_dashboard.models.entities import AccessEvent, Door, Person
+from yosai_intel_dashboard.src.core.domain.entities import AccessEvent, Door, Person
 
 
 class IPersonRepository(ABC):

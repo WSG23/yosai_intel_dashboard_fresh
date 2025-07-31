@@ -9,8 +9,8 @@ from datetime import datetime
 from typing import List, Optional
 
 from yosai_intel_dashboard.src.utils.unicode_handler import UnicodeHandler
-from yosai_intel_dashboard.models.entities import AccessEvent, Door, Person
-from yosai_intel_dashboard.models.enums import AccessResult, BadgeStatus, DoorType
+from yosai_intel_dashboard.src.core.domain.entities import AccessEvent, Door, Person
+from yosai_intel_dashboard.src.core.domain.value_objects import AccessResult, BadgeStatus, DoorType
 
 logger = logging.getLogger(__name__)
 from database.types import DatabaseConnection

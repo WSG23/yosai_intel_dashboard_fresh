@@ -13,7 +13,7 @@ from .async_utils import (
 )
 from .base_database_service import BaseDatabaseService
 from .base_model import BaseModel
-from .cache_manager import (
+from ..infrastructure.cache.cache_manager import (
     CacheConfig,
     InMemoryCacheManager,
     RedisCacheManager,
@@ -31,10 +31,10 @@ from .intelligent_multilevel_cache import (
     create_intelligent_cache_manager,
 )
 from .memory_manager import MemoryManager
-from .truly_unified_callbacks import TrulyUnifiedCallbacks
+from ..infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 
 if TYPE_CHECKING:  # pragma: no cover - type hints only
-    from .truly_unified_callbacks import (
+    from ..infrastructure.callbacks.unified_callbacks import (
         TrulyUnifiedCallbacks as TrulyUnifiedCallbacksType,
     )
 else:  # pragma: no cover - fallback at runtime
