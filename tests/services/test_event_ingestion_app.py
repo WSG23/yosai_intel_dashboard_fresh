@@ -3,6 +3,7 @@ import importlib
 import pathlib
 import sys
 import types
+from jose import jwt
 
 import pytest
 from fastapi import Depends, FastAPI, HTTPException
@@ -98,6 +99,7 @@ def load_module():
     security_stub = types.ModuleType("services.security")
     security_stub.verify_service_jwt = lambda token: {"sub": "svc"}
     sys.modules.setdefault("services.security", security_stub)
+
 
     sys.path.insert(0, str(SERVICES_PATH / "event-ingestion"))
     sys.modules.get("services").__path__ = [str(SERVICES_PATH)]
@@ -284,3 +286,4 @@ async def test_successful_ingestion_behavior(monkeypatch):
         await module._consume_loop()
 
     assert seen == messages
+

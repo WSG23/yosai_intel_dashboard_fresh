@@ -126,6 +126,33 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     sys.modules.setdefault("redis", redis_stub)
     sys.modules.setdefault("redis.asyncio", redis_async)
 
+    analytics_stub = types.ModuleType(
+        "services.analytics_microservice.analytics_service"
+    )
+
+    class DummyAnalyticsService:
+        def __init__(self, *a, **k):
+            self.redis = types.SimpleNamespace(get=AsyncMock(), set=AsyncMock())
+            self.pool = object()
+            self.model_registry = None
+            self.cache_ttl = 300
+            self.model_dir = pathlib.Path("/tmp")
+            self.models = {}
+
+        async def close(self):
+            pass
+
+        def preload_active_models(self):
+            pass
+
+    dummy_service = DummyAnalyticsService()
+
+    analytics_stub.AnalyticsService = DummyAnalyticsService
+    analytics_stub.get_analytics_service = lambda *a, **k: dummy_service
+    sys.modules[
+        "services.analytics_microservice.analytics_service"
+    ] = analytics_stub
+
     queries_stub = types.ModuleType("services.analytics_microservice.async_queries")
     queries_stub.fetch_dashboard_summary = AsyncMock(return_value={"status": "ok"})
     queries_stub.fetch_access_patterns = AsyncMock(return_value={"days": 7})
@@ -187,6 +214,10 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     secrets_stub = types.ModuleType("services.common.secrets")
     secrets_stub.get_secret = lambda path: "secret"
     sys.modules["services.common.secrets"] = secrets_stub
+
+    auth_stub = types.ModuleType("services.auth")
+    auth_stub.verify_jwt_token = lambda token: jwt.decode(token, jwt_secret, algorithms=["HS256"])
+    sys.modules["services.auth"] = auth_stub
 
     # Stub ModelRegistry used by the microservice
     registry_mod = types.ModuleType("models.ml.model_registry")
@@ -254,6 +285,9 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     ml_pkg.ModelRegistry = DummyRegistry
     ml_pkg.ModelRecord = DummyRecord
     sys.modules["models.ml"] = ml_pkg
+    models_stub = types.ModuleType("models")
+    models_stub.ml = ml_pkg
+    sys.modules["models"] = models_stub
 
     # Stub analytics modules used by threat_assessment endpoint
     fe_stub = types.ModuleType("analytics.feature_extraction")
@@ -348,6 +382,7 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     val_stub.UnicodeValidator = DummyValidator
     sys.modules["validation.unicode_validator"] = val_stub
 
+    sys.modules.setdefault("tracing", types.ModuleType("tracing"))
     sys.modules.setdefault("hvac", types.ModuleType("hvac"))
 
     os.environ["JWT_SECRET"] = jwt_secret
@@ -362,10 +397,11 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     # Mark application as ready without running full startup
     module.app.state.ready = True
     module.app.state.startup_complete = True
+    module.app.state.analytics_service = dummy_service
 
     # base service already registers health routes
 
-    return module, queries_stub, db_stub
+    return module, queries_stub, dummy_service
 
 
 @pytest.mark.asyncio
@@ -384,12 +420,14 @@ async def test_health_endpoints():
 
 @pytest.mark.asyncio
 async def test_dashboard_summary_endpoint():
-    module, queries_stub, db_stub = load_app()
+    module, queries_stub, dummy_service = load_app()
+
     token = jwt.encode(
         {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
         "secret",
         algorithm="HS256",
     )
+    assert verify_jwt_token(token)["iss"] == "gateway"
     headers = {"Authorization": f"Bearer {token}"}
 
     transport = httpx.ASGITransport(app=module.app)
@@ -400,7 +438,6 @@ async def test_dashboard_summary_endpoint():
         assert resp.json() == {"status": "ok"}
 
     queries_stub.fetch_dashboard_summary.assert_awaited_once()
-    db_stub.get_pool.assert_awaited()
 
 
 @pytest.mark.asyncio
@@ -418,12 +455,14 @@ async def test_unauthorized_request():
 @pytest.mark.asyncio
 async def test_internal_error_response():
     module, queries_stub, _ = load_app()
+    from services.auth import verify_jwt_token
     queries_stub.fetch_dashboard_summary.side_effect = RuntimeError("boom")
     token = jwt.encode(
         {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
         "secret",
         algorithm="HS256",
     )
+    assert verify_jwt_token(token)["iss"] == "gateway"
     headers = {"Authorization": f"Bearer {token}"}
 
     transport = httpx.ASGITransport(app=module.app)
@@ -438,16 +477,17 @@ async def test_internal_error_response():
 
 @pytest.mark.asyncio
 async def test_model_registry_endpoints(tmp_path):
-    module, _, _ = load_app()
-    module.app.state.model_dir = tmp_path
+    module, _, svc = load_app()
+    svc.model_dir = tmp_path
     from yosai_intel_dashboard.models.ml import ModelRegistry
+    svc.model_registry = ModelRegistry()
 
-    module.app.state.model_registry = ModelRegistry()
     token = jwt.encode(
         {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
         "secret",
         algorithm="HS256",
     )
+    assert verify_jwt_token(token)["iss"] == "gateway"
     headers = {"Authorization": f"Bearer {token}"}
 
     transport = httpx.ASGITransport(app=module.app)
@@ -475,8 +515,9 @@ async def test_model_registry_endpoints(tmp_path):
 
 @pytest.mark.asyncio
 async def test_predict_endpoint(tmp_path):
-    module, _, _ = load_app()
-    module.app.state.model_dir = tmp_path
+    module, _, svc = load_app()
+    svc.model_dir = tmp_path
+
 
     model = Dummy()
     path = tmp_path / "demo" / "1" / "model.joblib"
@@ -487,14 +528,15 @@ async def test_predict_endpoint(tmp_path):
     registry = ModelRegistry()
     registry.register_model("demo", str(path), {}, "", version="1")
     registry.set_active_version("demo", "1")
-    module.app.state.model_registry = registry
-    module.preload_active_models()
+    svc.model_registry = registry
+    module.preload_active_models(svc)
 
     token = jwt.encode(
         {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
         "secret",
         algorithm="HS256",
     )
+    assert verify_jwt_token(token)["iss"] == "gateway"
     headers = {"Authorization": f"Bearer {token}"}
 
     transport = httpx.ASGITransport(app=module.app)

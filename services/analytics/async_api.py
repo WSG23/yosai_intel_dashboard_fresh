@@ -10,7 +10,6 @@ from typing import Any, AsyncIterator, Optional
 from fastapi import (
     Depends,
     FastAPI,
-    HTTPException,
     Query,
     WebSocket,
     WebSocketDisconnect,
@@ -33,6 +32,7 @@ from services.common.async_db import get_pool
 from services.security import require_permission
 from services.summary_report_generator import SummaryReportGenerator
 from services.websocket_server import AnalyticsWebSocketServer
+from error_handling import http_error
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +152,7 @@ async def get_chart_data(
         return JSONResponse(
             content={"type": "timeline", "data": data.get("hourly_distribution", {})}
         )
-    raise HTTPException(status_code=400, detail="Unknown chart type")
+    raise http_error(ErrorCode.INVALID_INPUT, "Unknown chart type", 400)
 
 
 @app.get("/api/v1/export/analytics/json")
@@ -195,7 +195,7 @@ async def generate_report(
     """Generate an analytics report asynchronously."""
     service = get_analytics_service()
     if service is None:
-        raise HTTPException(status_code=503, detail="analytics service unavailable")
+        raise http_error(ErrorCode.UNAVAILABLE, "analytics service unavailable", 503)
 
     report = await asyncio.to_thread(
         service.generate_report,
