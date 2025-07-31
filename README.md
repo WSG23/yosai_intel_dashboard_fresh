@@ -398,6 +398,8 @@ following steps:
    pip install --force-reinstall "Flask>=2.2.5"
    ```
    See [docs/troubleshooting.md](docs/troubleshooting.md) for details.
+8. Run `diagnose-upload-config` to print current upload limits if uploads fail.
+   Use `--verbose` for extra details.
 
 ### Production Deployment
 
