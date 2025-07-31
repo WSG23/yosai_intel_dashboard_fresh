@@ -527,9 +527,9 @@ def fake_dash(monkeypatch: pytest.MonkeyPatch, request):
             monkeypatch.setattr(request.module, name, val, raising=False)
 
     for mod_name in (
-        "components.column_verification",
-        "components.device_verification",
-        "components.simple_device_mapping",
+        "yosai_intel_dashboard.src.components.column_verification",
+        "yosai_intel_dashboard.src.components.device_verification",
+        "yosai_intel_dashboard.src.components.simple_device_mapping",
     ):
         if mod_name in sys.modules:
             mod = sys.modules[mod_name]

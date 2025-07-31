@@ -71,7 +71,7 @@ def build_ai_device_mappings(df: pd.DataFrame, filename: str, upload_service) ->
     learned_applied = upload_service.auto_apply_learned_mappings(df, filename)
 
     if not learned_applied:
-        from components import simple_device_mapping as sdm
+        from yosai_intel_dashboard.src.components import simple_device_mapping as sdm
 
         sdm.generate_ai_device_defaults(df, "auto")
 

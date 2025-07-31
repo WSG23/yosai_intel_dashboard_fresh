@@ -3,7 +3,7 @@
 import logging
 from typing import Any, Dict, List, Optional
 
-from components.plugin_adapter import ComponentPluginAdapter
+from yosai_intel_dashboard.src.components.plugin_adapter import ComponentPluginAdapter
 
 logger = logging.getLogger(__name__)
 

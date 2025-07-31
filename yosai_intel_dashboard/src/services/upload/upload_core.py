@@ -185,7 +185,7 @@ class UploadCore:
             self.task_queue.clear_task(task_id)
             if not isinstance(result, Exception):
                 try:
-                    from components.simple_device_mapping import (
+                    from yosai_intel_dashboard.src.components.simple_device_mapping import (
                         generate_ai_device_defaults,
                     )
 

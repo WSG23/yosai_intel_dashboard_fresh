@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from components.ui_builder import UploadUIBuilder
+from yosai_intel_dashboard.src.components.ui_builder import UploadUIBuilder
 from core.interfaces import ConfigProviderProtocol
 from core.protocols import FileProcessorProtocol
 from core.service_container import (

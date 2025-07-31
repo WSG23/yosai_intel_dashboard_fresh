@@ -24,12 +24,18 @@ import types
 def _create_upload_app(monkeypatch):
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     coord = TrulyUnifiedCallbacks(app)
-    dummy_mod = types.ModuleType("components.analytics.real_time_dashboard")
+    dummy_mod = types.ModuleType(
+        "yosai_intel_dashboard.src.components.analytics.real_time_dashboard"
+    )
     dummy_mod.RealTimeAnalytics = object
     monkeypatch.setitem(
-        sys.modules, "components.analytics.real_time_dashboard", dummy_mod
+        sys.modules,
+        "yosai_intel_dashboard.src.components.analytics.real_time_dashboard",
+        dummy_mod,
     )
-    from components.file_upload_component import FileUploadComponent
+    from yosai_intel_dashboard.src.components.file_upload_component import (
+        FileUploadComponent,
+    )
 
     comp = FileUploadComponent()
     comp.register_callbacks(coord)

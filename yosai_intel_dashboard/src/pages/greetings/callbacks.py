@@ -19,8 +19,8 @@ except Exception:  # pragma: no cover - lightweight fallback
             return decorator
 
         register_handler = callback
-from services.greeting import GreetingService
-from simple_di import inject
+from yosai_intel_dashboard.src.services.greeting import GreetingService
+from yosai_intel_dashboard.src.simple_di import inject
 
 
 def register_callbacks(app, container) -> None:

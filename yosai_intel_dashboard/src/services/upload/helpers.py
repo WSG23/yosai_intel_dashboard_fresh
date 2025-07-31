@@ -28,7 +28,9 @@ def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Di
             "user_verified": True,
         }
 
-        from components.plugin_adapter import ComponentPluginAdapter
+        from yosai_intel_dashboard.src.components.plugin_adapter import (
+            ComponentPluginAdapter,
+        )
 
         if ComponentPluginAdapter().save_verified_mappings(filename, mappings, {}):
             logger.info("✅ AI training data saved via plugin")

@@ -13,8 +13,8 @@ class DomainBoundaryValidator:
         "services/": {"cannot_import_from": ["components."]},
     }
     IGNORED_IMPORTS = {
-        "components.plugin_adapter",
-        "components.file_preview",
+        "yosai_intel_dashboard.src.components.plugin_adapter",
+        "yosai_intel_dashboard.src.components.file_preview",
     }
 
     def validate_file(self, path: Path) -> Dict[str, List[str]]:
