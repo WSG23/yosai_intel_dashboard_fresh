@@ -24,7 +24,10 @@ container_stub.get_unicode_processor = lambda: types.SimpleNamespace(
     sanitize_dataframe=lambda df: df
 )
 
-sys.modules.setdefault("core.truly_unified_callbacks", truly_stub)
+sys.modules.setdefault(
+    "yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks",
+    truly_stub,
+)
 format_stub = types.ModuleType("file_processing.format_detector")
 
 
