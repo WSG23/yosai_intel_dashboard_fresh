@@ -90,44 +90,64 @@ register_service = registry.register_service
 get_service = registry.get_service
 
 
-# Register built-in optional services
-register_service(
-    "FileProcessor",
-    "services.data_processing.file_handler:FileHandler",
-)
-register_service(
-    "FileHandler",
-    "services.data_processing.file_handler:FileHandler",
-)
-register_service(
-    "SecurityValidator",
-    "validation.security_validator:SecurityValidator",
-)
-register_service(
-    "UploadAnalyticsProcessor",
-    "services.analytics.upload_analytics:UploadAnalyticsProcessor",
-)
 
-register_service(
-    "AsyncFileProcessor", "services.async_file_processor:AsyncFileProcessor"
-)
+# Built-in optional services registration -------------------------------------------------
+def register_builtin_services() -> None:
+    """Register optional services provided by the main application."""
 
-register_service(
-    "get_analytics_service", "services.analytics_service:get_analytics_service"
-)
-register_service(
-    "create_analytics_service", "services.analytics_service:create_analytics_service"
-)
-register_service("AnalyticsService", "services.analytics_service:AnalyticsService")
+    register_service(
+        "FileProcessor",
+        "services.data_processing.file_handler:FileHandler",
+    )
+    register_service(
+        "FileHandler",
+        "services.data_processing.file_handler:FileHandler",
+    )
+    register_service(
+        "SecurityValidator",
+        "validation.security_validator:SecurityValidator",
+    )
+    register_service(
+        "UploadAnalyticsProcessor",
+        "services.analytics.upload_analytics:UploadAnalyticsProcessor",
+    )
 
-# Optional model and database classes
-register_service("BaseModel", "models.base:BaseModel")
-register_service("AccessEventModel", "models.base:AccessEventModel")
-register_service("AnomalyDetectionModel", "models.base:AnomalyDetectionModel")
-register_service("ModelFactory", "models.base:ModelFactory")
-register_service("DatabaseManager", "config.database_manager:DatabaseManager")
-register_service("DatabaseConnection", "config.database_manager:DatabaseConnection")
-register_service("MockConnection", "config.database_manager:MockConnection")
-register_service(
-    "EnhancedPostgreSQLManager", "config.database_manager:EnhancedPostgreSQLManager"
-)
+    register_service(
+        "AsyncFileProcessor", "services.async_file_processor:AsyncFileProcessor"
+    )
+
+    register_service(
+        "get_analytics_service",
+        "services.analytics_service:get_analytics_service",
+    )
+    register_service(
+        "create_analytics_service",
+        "services.analytics_service:create_analytics_service",
+    )
+    register_service(
+        "AnalyticsService",
+        "services.analytics_service:AnalyticsService",
+    )
+
+    # Optional model and database classes
+    register_service("BaseModel", "models.base:BaseModel")
+    register_service("AccessEventModel", "models.base:AccessEventModel")
+    register_service("AnomalyDetectionModel", "models.base:AnomalyDetectionModel")
+    register_service("ModelFactory", "models.base:ModelFactory")
+    register_service("DatabaseManager", "config.database_manager:DatabaseManager")
+    register_service("DatabaseConnection", "config.database_manager:DatabaseConnection")
+    register_service("MockConnection", "config.database_manager:MockConnection")
+    register_service(
+        "EnhancedPostgreSQLManager",
+        "config.database_manager:EnhancedPostgreSQLManager",
+    )
+
+
+__all__ = [
+    "ServiceRegistry",
+    "ServiceDiscovery",
+    "registry",
+    "register_service",
+    "get_service",
+    "register_builtin_services",
+]
