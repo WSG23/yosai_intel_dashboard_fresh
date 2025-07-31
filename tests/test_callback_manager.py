@@ -1,11 +1,11 @@
 import threading
 
 from core.callback_events import CallbackEvent
-from core.callbacks import UnifiedCallbackManager as CallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 
 def test_thread_safe_registration_and_trigger():
-    manager = CallbackManager()
+    manager = TrulyUnifiedCallbacks()
     event = CallbackEvent.ANALYSIS_START
     results = []
 
@@ -24,7 +24,7 @@ def test_thread_safe_registration_and_trigger():
 
 
 def test_error_isolation_and_metrics():
-    manager = CallbackManager()
+    manager = TrulyUnifiedCallbacks()
     event = CallbackEvent.SYSTEM_ERROR
     order = []
 

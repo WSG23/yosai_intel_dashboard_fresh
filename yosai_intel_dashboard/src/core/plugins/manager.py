@@ -10,6 +10,7 @@ from typing import Any, Dict, List
 
 from config import ConfigManager
 from core.callbacks import UnifiedCallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.protocols.plugin import (
     CallbackPluginProtocol,
     PluginPriority,
@@ -339,7 +340,7 @@ class ThreadSafePluginManager(PluginManager):
 
     # ------------------------------------------------------------------
     def register_plugin_callbacks(
-        self, app: Any, manager: CallbackManager
+        self, app: Any, manager: TrulyUnifiedCallbacks
     ) -> List[Any]:  # type: ignore[override]
         with self._lock:
             return super().register_plugin_callbacks(app, manager)

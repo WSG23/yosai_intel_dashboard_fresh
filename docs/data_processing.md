@@ -19,7 +19,7 @@ services/
 - **`DataEnhancer`** – Applies normalisation and adds computed columns.
 - **`Processor`** – High level wrapper that uses `FileValidator` and `DataEnhancer` to produce a clean dataframe.
 - **`AnalyticsEngine`** – Generates statistics from the processed dataframe.
-- **``core.callbacks.UnifiedCallbackManager``** – Emits events throughout the pipeline so plugins can react.
+- **``core.truly_unified_callbacks.TrulyUnifiedCallbacks``** – Emits events throughout the pipeline so plugins can react.
 
 ## Relationships
 
@@ -35,9 +35,13 @@ This separation makes the pipeline extensible and easier to test as new data sou
 
 Example event:
 ```python
-from core.callbacks import UnifiedCallbackManager as CallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.callback_events import CallbackEvent
 
-manager = CallbackManager()
-manager.trigger(CallbackEvent.FILE_UPLOAD_COMPLETE, "uploader", {"rows": len(df)})
+manager = TrulyUnifiedCallbacks()
+manager.trigger_event(
+    CallbackEvent.FILE_UPLOAD_COMPLETE,
+    "uploader",
+    {"rows": len(df)},
+)
 ```

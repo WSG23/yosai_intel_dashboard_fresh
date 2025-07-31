@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 from core.callback_events import CallbackEvent
-from core.callbacks import UnifiedCallbackManager as CallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.unicode import (
     ChunkedUnicodeProcessor,
     UnicodeProcessor,
@@ -16,7 +16,7 @@ from core.unicode import (
 )
 
 
-class CallbackController(CallbackManager):
+class CallbackController(TrulyUnifiedCallbacks):
     def fire_event(self, event: CallbackEvent, source_id: str, data=None):
         ctx = type(
             "Ctx", (), {"event_type": event, "source_id": source_id, "data": data or {}}

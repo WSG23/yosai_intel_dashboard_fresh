@@ -45,13 +45,13 @@ def submit_query(n):
 
 ## Handling Events
 
-`CallbackManager` delivers application events outside of Dash callbacks.
+`TrulyUnifiedCallbacks` delivers application events outside of Dash callbacks.
 
 ```python
-from core.callbacks import UnifiedCallbackManager as CallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.callback_events import CallbackEvent
 
-events = CallbackManager()
+events = TrulyUnifiedCallbacks()
 
 def on_complete(info: dict) -> None:
     print("Analysis done", info)
@@ -69,9 +69,9 @@ orchestrate multiple steps.
 
 
 ```python
-from core.callbacks import UnifiedCallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
-ops = UnifiedCallbackManager()
+ops = TrulyUnifiedCallbacks()
 ops.register_operation("refresh", load_data)
 ops.register_operation("refresh", update_summary)
 

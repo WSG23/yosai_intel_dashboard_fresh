@@ -1,9 +1,9 @@
 from core.callback_events import CallbackEvent
-from core.callbacks import UnifiedCallbackManager as CallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 
 def test_priority_and_async_trigger():
-    manager = CallbackManager()
+    manager = TrulyUnifiedCallbacks()
     events = []
 
     async def async_cb():

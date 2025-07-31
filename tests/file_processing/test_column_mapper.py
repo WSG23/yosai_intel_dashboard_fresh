@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 
 from core.callback_events import CallbackEvent
-from core.callbacks import UnifiedCallbackManager as CallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from file_processing.column_mapper import map_columns
 
 
@@ -17,7 +17,7 @@ def test_exact_mapping(tmp_path: Path):
 def test_fuzzy_mapping(tmp_path: Path):
     df = pd.DataFrame({"pers": [1], "dor": ["d"]})
     mapping = {"person_id": [], "door_id": []}
-    controller = CallbackManager()
+    controller = TrulyUnifiedCallbacks()
     events = []
 
     def track(source, data):
