@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Protocol, runtime_checkable
 
+from mapping.core.interfaces import ProcessorInterface, StorageInterface
+from mapping.core.models import MappingData
+
 import pandas as pd
 
 from core.service_container import ServiceContainer
@@ -130,8 +133,8 @@ def get_device_learning_service(
 
 def get_upload_data_service(
     container: ServiceContainer | None = None,
-) -> UploadDataService:
-    """Return the registered :class:`UploadDataService` instance."""
+) -> UploadDataServiceProtocol:
+    """Return the registered :class:`UploadDataServiceProtocol` instance."""
     c = _get_container(container)
     if c and c.has("upload_data_service"):
         return c.get("upload_data_service")
@@ -141,17 +144,32 @@ def get_upload_data_service(
     return UploadDataSvc(uploaded_data_store)
 
 
+def get_mapping_service(
+    container: ServiceContainer | None = None,
+) -> "MappingServiceProtocol":
+    """Return the registered :class:`MappingServiceProtocol` instance."""
+    c = _get_container(container)
+    if c and c.has("mapping_service"):
+        return c.get("mapping_service")
+    from mapping.factories.service_factory import create_mapping_service
+
+    return create_mapping_service(container=c)
+
+
 __all__ = [
     "UploadValidatorProtocol",
     "ExportServiceProtocol",
     "DoorMappingServiceProtocol",
     "DeviceLearningServiceProtocol",
-    "UploadDataService",
+    "UploadDataStoreProtocol",
+    "UploadDataServiceProtocol",
+    "MappingServiceProtocol",
     "get_upload_validator",
     "get_export_service",
     "get_door_mapping_service",
     "get_device_learning_service",
     "get_upload_data_service",
+    "get_mapping_service",
     "AnalyticsDataLoaderProtocol",
     "DatabaseAnalyticsRetrieverProtocol",
     "get_analytics_data_loader",
@@ -160,8 +178,8 @@ __all__ = [
 
 
 @runtime_checkable
-class UploadDataServiceProtocol(Protocol):
-    """Interface for upload data services."""
+class UploadDataStoreProtocol(Protocol):
+    """Interface for simple upload data stores."""
 
     def get_upload_data(self) -> Dict[str, Any]: ...
     def store_upload_data(self, data: Dict[str, Any]) -> bool: ...
@@ -169,7 +187,7 @@ class UploadDataServiceProtocol(Protocol):
 
 
 @runtime_checkable
-class UploadDataService(Protocol):
+class UploadDataServiceProtocol(Protocol):
     """Interface for accessing uploaded dataframes."""
 
     def get_uploaded_data(self) -> Dict[str, pd.DataFrame]: ...
@@ -185,6 +203,18 @@ class UploadDataService(Protocol):
     def load_mapping(self, filename: str) -> Dict[str, Any]: ...
 
     def save_mapping(self, filename: str, mapping: Dict[str, Any]) -> None: ...
+
+
+@runtime_checkable
+class MappingServiceProtocol(Protocol):
+    """Interface for mapping services."""
+
+    column_proc: ProcessorInterface
+    device_proc: ProcessorInterface
+
+    def process_upload(
+        self, df: pd.DataFrame, filename: str, *, model_key: str | None = None
+    ) -> MappingData: ...
 
 
 @runtime_checkable

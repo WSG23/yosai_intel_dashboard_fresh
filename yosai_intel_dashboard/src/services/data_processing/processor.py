@@ -4,7 +4,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterator, Optional, Tuple
+from typing import Any, Dict, Iterator, Optional, Tuple
 
 import pandas as pd
 
@@ -16,11 +16,9 @@ from monitoring.data_quality_monitor import (
     get_data_quality_monitor,
 )
 from services.streaming import StreamingService
+from services.interfaces import MappingServiceProtocol, get_mapping_service
 from unicode_toolkit import safe_encode_text
 from validation.security_validator import SecurityValidator
-
-if TYPE_CHECKING:  # pragma: no cover - used for type hints only
-    from mapping.service import MappingService
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +31,7 @@ class Processor:
         base_data_path: str = "data",
         validator: Optional[SecurityValidator] = None,
         streaming_service: Optional[StreamingService] = None,
-        mapping_service: MappingService | None = None,
+        mapping_service: MappingServiceProtocol | None = None,
         *,
         config: ConfigProviderProtocol | None = None,
     ) -> None:
@@ -42,11 +40,7 @@ class Processor:
         self.session_storage = self.base_path.parent / "session_storage"
         self.validator = validator or SecurityValidator()
         self.streaming_service = streaming_service
-        if mapping_service is None:
-            from mapping.factories.service_factory import create_mapping_service
-
-            mapping_service = create_mapping_service()
-        self.mapping_service = mapping_service
+        self.mapping_service = mapping_service or get_mapping_service()
         self.config = config
 
     # ------------------------------------------------------------------
