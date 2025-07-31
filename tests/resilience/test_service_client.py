@@ -7,7 +7,12 @@ import types
 import aiohttp
 import pytest
 
-services_path = pathlib.Path(__file__).resolve().parents[2] / "services"
+services_path = (
+    pathlib.Path(__file__).resolve().parents[2]
+    / "yosai_intel_dashboard"
+    / "src"
+    / "services"
+)
 stub_pkg = types.ModuleType("services")
 stub_pkg.__path__ = [str(services_path)]
 sys.modules.setdefault("services", stub_pkg)
@@ -18,28 +23,39 @@ stub_tracing = types.ModuleType("tracing")
 stub_tracing.propagate_context = lambda headers: None
 sys.modules.setdefault("tracing", stub_tracing)
 
-metrics_path = services_path / "resilience" / "metrics.py"
-metrics_spec = importlib.util.spec_from_file_location(
-    "services.resilience.metrics", metrics_path
-)
-metrics_module = importlib.util.module_from_spec(metrics_spec)
-metrics_spec.loader.exec_module(metrics_module)  # type: ignore
+pkg_root = pathlib.Path(__file__).resolve().parents[2] / "yosai_intel_dashboard"
+yid_pkg = types.ModuleType("yosai_intel_dashboard")
+yid_pkg.__path__ = [str(pkg_root)]
+sys.modules.setdefault("yosai_intel_dashboard", yid_pkg)
+yid_src_pkg = types.ModuleType("yosai_intel_dashboard.src")
+yid_src_pkg.__path__ = [str(pkg_root / "src")]
+sys.modules.setdefault("yosai_intel_dashboard.src", yid_src_pkg)
+
+metrics_module = types.ModuleType("services.resilience.metrics")
+
+class DummyCounter:
+    def labels(self, *args, **kwargs):
+        return self
+
+    def inc(self):
+        pass
+
+metrics_module.circuit_breaker_state = DummyCounter()
 sys.modules["services.resilience.metrics"] = metrics_module
 
-cb_path = services_path / "resilience" / "circuit_breaker.py"
-cb_spec = importlib.util.spec_from_file_location(
-    "services.resilience.circuit_breaker", cb_path
+cb_module = types.ModuleType("services.resilience.circuit_breaker")
+from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerOpen,
+    circuit_breaker,
 )
-cb_module = importlib.util.module_from_spec(cb_spec)
-cb_spec.loader.exec_module(cb_module)  # type: ignore
+
+cb_module.CircuitBreaker = CircuitBreaker
+cb_module.CircuitBreakerOpen = CircuitBreakerOpen
+cb_module.circuit_breaker = circuit_breaker
 sys.modules["services.resilience.circuit_breaker"] = cb_module
 
-module_path = (
-    pathlib.Path(__file__).resolve().parents[2] / "adapters" / "service_client.py"
-)
-spec = importlib.util.spec_from_file_location("service_client", module_path)
-service_client = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(service_client)  # type: ignore
+import infrastructure.communication.service_client as service_client
 
 ServiceClient = service_client.ServiceClient
 K8sResolver = service_client.K8sResolver

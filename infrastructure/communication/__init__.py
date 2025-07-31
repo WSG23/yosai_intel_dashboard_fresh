@@ -1,22 +1,10 @@
-from services.resilience.circuit_breaker import CircuitBreaker
+from services.resilience.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
 
-from .message_queue import AsyncQueueClient
-from .protocols import MessageBus, ServiceClient
-from .rest_client import (
-    AsyncRestClient,
-    CircuitBreakerOpen,
-    RestClient,
-    RetryPolicy,
-    create_service_client,
-)
+from .service_client import K8sResolver, ServiceClient
 
 __all__ = [
-    "MessageBus",
+    "K8sResolver",
     "ServiceClient",
-    "AsyncRestClient",
-    "AsyncQueueClient",
-    "RetryPolicy",
-    "create_service_client",
     "CircuitBreaker",
     "CircuitBreakerOpen",
 ]
