@@ -95,7 +95,7 @@ class CallbackContext:
         self.data = data or {}
 
 
-class CallbackManager:
+class TrulyUnifiedCallbacks:
     def __init__(self):
         self.callbacks = []
 
@@ -126,7 +126,7 @@ def test_resumable_upload_and_error_callback(
     queue = UploadQueueManager(max_concurrent=1)
     queue.add_files([data_file])
 
-    cb_manager = CallbackManager()
+    cb_manager = TrulyUnifiedCallbacks()
     errors: list[str] = []
     cb_manager.register_callback(
         CallbackEvent.ANALYSIS_ERROR,

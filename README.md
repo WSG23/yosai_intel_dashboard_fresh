@@ -1182,11 +1182,15 @@ safe_query = SQLProcessor.encode_query(query)
 
 ### Firing events
 ```python
-from core.callbacks import UnifiedCallbackManager as CallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.callback_events import CallbackEvent
 
-manager = CallbackManager()
-manager.trigger(CallbackEvent.ANALYSIS_COMPLETE, "analytics", {"rows": 42})
+callbacks = TrulyUnifiedCallbacks()
+callbacks.trigger_event(
+    CallbackEvent.ANALYSIS_COMPLETE,
+    "analytics",
+    {"rows": 42},
+)
 ```
 
 Performance metrics can be retrieved via:
