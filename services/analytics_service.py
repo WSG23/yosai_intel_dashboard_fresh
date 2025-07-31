@@ -35,18 +35,22 @@ from core.protocols import (
     EventBusProtocol,
     StorageProtocol,
 )
-from services.analytics.calculator import Calculator, create_calculator
-from services.analytics.data.loader import DataLoader
+from services.analytics.calculator import Calculator
 from services.analytics.orchestrator import AnalyticsOrchestrator
 from services.analytics.protocols import DataProcessorProtocol
-from services.analytics.publisher import Publisher, create_publisher
+from services.analytics.publisher import Publisher
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.analytics_summary import generate_sample_analytics
 from services.controllers.upload_controller import UploadProcessingController
 from services.data_processing.processor import Processor
-from services.database_retriever import DatabaseAnalyticsRetriever
 from services.helpers.database_initializer import initialize_database
-from services.interfaces import get_upload_data_service
+from services.interfaces import (
+    get_upload_data_service,
+    get_analytics_data_loader,
+    get_database_analytics_retriever,
+    AnalyticsDataLoaderProtocol,
+    DatabaseAnalyticsRetrieverProtocol,
+)
 from services.summary_report_generator import SummaryReportGenerator
 from services.upload_data_service import UploadDataService
 from validation.security_validator import SecurityValidator
@@ -154,11 +158,11 @@ class AnalyticsService(AnalyticsServiceProtocol):
         upload_data_service: UploadDataService | None = None,
         model_registry: ModelRegistry | None = None,
         *,
-        loader: DataLoader | None = None,
+        loader: AnalyticsDataLoaderProtocol | None = None,
         calculator: Calculator | None = None,
         publisher: Publisher | None = None,
         report_generator: SummaryReportGenerator | None = None,
-        db_retriever: DatabaseAnalyticsRetriever | None = None,
+        db_retriever: DatabaseAnalyticsRetrieverProtocol | None = None,
         upload_controller: UploadProcessingController | None = None,
         upload_processor: UploadAnalyticsProcessor | None = None,
     ) -> None:
@@ -198,33 +202,31 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self.upload_processor = upload_processor
         self.report_generator = report_generator or SummaryReportGenerator()
         self._setup_database(db_retriever)
-        loader = loader or DataLoader(self.upload_controller, self.processor)
+        loader = loader or get_analytics_data_loader(
+            self.upload_controller, self.processor
+        )
         calculator = calculator or Calculator(self.report_generator)
         publisher = publisher or Publisher(self.event_bus)
         self._create_orchestrator(loader, calculator, publisher)
         self.router = DataSourceRouter(self.orchestrator)
 
     def _setup_database(
-        self, db_retriever: DatabaseAnalyticsRetriever | None = None
+        self, db_retriever: DatabaseAnalyticsRetrieverProtocol | None = None
     ) -> None:
         """Initialize database helpers and retriever."""
         (
             self.database_manager,
             self.db_helper,
             self.summary_reporter,
-        ) = initialize_database(
-            self.database,
-            settings_provider=(
-                self.config.get_database_config if self.config else None
-            ),
-        )
-        self.database_retriever = db_retriever or DatabaseAnalyticsRetriever(
+        ) = initialize_database(self.database)
+        self.database_retriever = db_retriever or get_database_analytics_retriever(
+
             self.db_helper
         )
 
     def _create_orchestrator(
         self,
-        loader: DataLoader,
+        loader: AnalyticsDataLoaderProtocol,
         calculator: Calculator,
         publisher: Publisher,
     ) -> None:
@@ -536,9 +538,6 @@ def get_analytics_service(
                 _analytics_service = AnalyticsService(
                     config=config_provider,
                     model_registry=model_registry,
-                    calculator=create_calculator(),
-                    publisher=create_publisher(),
-                    report_generator=SummaryReportGenerator(),
                 )
     return _analytics_service
 
@@ -551,9 +550,6 @@ def create_analytics_service(
     return AnalyticsService(
         config=config_provider,
         model_registry=model_registry,
-        calculator=create_calculator(),
-        publisher=create_publisher(),
-        report_generator=SummaryReportGenerator(),
     )
 
 
