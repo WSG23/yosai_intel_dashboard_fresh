@@ -9,8 +9,8 @@ namespace.
 ## Registering Callbacks
 
 ```python
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from core.callback_events import CallbackEvent
+from yosai_intel_dashboard.src.infrastructure.callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
 
 callbacks = TrulyUnifiedCallbacks(app)
 
@@ -48,8 +48,8 @@ def submit_query(n):
 `TrulyUnifiedCallbacks` delivers application events outside of Dash callbacks.
 
 ```python
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from core.callback_events import CallbackEvent
+from yosai_intel_dashboard.src.infrastructure.callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
 
 events = TrulyUnifiedCallbacks()
 
@@ -67,7 +67,7 @@ manually chaining functions.
 
 
 ```python
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks import TrulyUnifiedCallbacks
 
 ops = TrulyUnifiedCallbacks()
 ops.register_operation("refresh", load_data)
@@ -93,7 +93,7 @@ A single startup task should orchestrate all callback registration steps to prev
 2. Register Dash and event callbacks through one `TrulyUnifiedCallbacks` instance.
 3. Deduplicate IDs using `GlobalCallbackRegistry` and expose conflict details.
 4. Provide a unified decorator so modules never call `app.callback` directly.
-5. Import `TrulyUnifiedCallbacks` from `core.truly_unified_callbacks` in new
+5. Import `TrulyUnifiedCallbacks` from `yosai_intel_dashboard.src.infrastructure.callbacks` in new
    code. Avoid deprecated aliases like `MasterCallbackSystem`.
 
 Running this task at initialization ensures consistent behavior and avoids code conflicts across the application.

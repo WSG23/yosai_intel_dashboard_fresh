@@ -12,7 +12,7 @@ features. The function expects a `TrulyUnifiedCallbacks` instance:
 
 ```python
 from yosai_intel_dashboard.src.components.column_verification import register_callbacks
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks import TrulyUnifiedCallbacks
 
 callbacks = TrulyUnifiedCallbacks(app)
 register_callbacks(callbacks)
