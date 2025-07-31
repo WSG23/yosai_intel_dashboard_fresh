@@ -2,6 +2,7 @@ import logging
 from typing import Any, Optional, Tuple
 
 from config.database_exceptions import DatabaseError
+from config.database_manager import DatabaseManager, DatabaseSettings
 from services.db_analytics_helper import DatabaseAnalyticsHelper
 from services.summary_reporter import SummaryReporter
 
@@ -10,6 +11,9 @@ logger = logging.getLogger(__name__)
 
 def initialize_database(
     database: Any | None,
+    *,
+    settings: DatabaseSettings | None = None,
+    settings_provider: callable | None = None,
 ) -> Tuple[Optional[Any], DatabaseAnalyticsHelper, SummaryReporter]:
     """Return initialized database manager and helpers."""
     try:
@@ -21,22 +25,13 @@ def initialize_database(
                 SummaryReporter(database),
             )
 
-        from config import get_database_config
-        from config.database_manager import (
-            DatabaseManager,
-        )
-        from config.database_manager import DatabaseSettings as ManagerConfig
+        if settings is None:
+            if settings_provider is not None:
+                settings = settings_provider()
+            else:
+                settings = DatabaseSettings()
 
-        cfg = get_database_config()
-        manager_cfg = ManagerConfig(
-            type=cfg.type,
-            host=cfg.host,
-            port=cfg.port,
-            name=cfg.name,
-            user=cfg.user,
-            password=cfg.password,
-        )
-        database_manager = DatabaseManager(manager_cfg)
+        database_manager = DatabaseManager(settings)
         logger.info("Database manager initialized")
         return (
             database_manager,
