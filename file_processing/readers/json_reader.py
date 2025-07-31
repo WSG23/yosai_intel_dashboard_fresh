@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 
 from core.callback_events import CallbackEvent
-from core.callbacks import UnifiedCallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.protocols import UnicodeProcessorProtocol
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from utils.pandas_readers import read_json as util_read_json
@@ -20,7 +20,7 @@ class JSONReader(BaseReader):
         self, *, unicode_processor: UnicodeProcessorProtocol | None = None
     ) -> None:
         super().__init__(unicode_processor=unicode_processor)
-        self.unified_callbacks = UnifiedCallbackManager()
+        self.unified_callbacks = TrulyUnifiedCallbacks()
 
     def read(self, file_path: str, hint: dict | None = None) -> pd.DataFrame:
         hint = hint or {}

@@ -2,10 +2,9 @@
 
 This release finalizes the move to the unified callback framework. The
 The legacy coordinator classes have been removed. Modules should now rely solely
-on `TrulyUnifiedCallbacks`,
-`CallbackManager` for event hooks and, when multiple steps need to be executed,
-`UnifiedCallbackManager` (the alias of `TrulyUnifiedCallbacks` exported from
-`core.callbacks`).
+on `TrulyUnifiedCallbacks` for all callback registration and execution. Event
+hooks can still be triggered via `CallbackManager` but all multi-step
+operations should directly use ``TrulyUnifiedCallbacks``.
 
 ## Migrating
 
@@ -13,12 +12,11 @@ on `TrulyUnifiedCallbacks`,
 2. Import `CallbackManager` and `CallbackEvent` from `core` and register event
    hooks using `CallbackManager.register_callback`.
 3. Trigger events via `CallbackManager.trigger` or `trigger_async`.
-4. Organize multi-step operations using `UnifiedCallbackManager` imported from
-   `core.callbacks` (alias of `TrulyUnifiedCallbacks`) and call `execute_group`
+4. Organize multi-step operations using `TrulyUnifiedCallbacks.execute_group`
    within Dash callbacks.
 5. `trigger_async` now executes callbacks concurrently. Use
-   `UnifiedCallbackManager.execute_group_async` to run operations in parallel
-   when they are IO bound.
+   `TrulyUnifiedCallbacks.execute_group_async` to run operations in parallel when
+   they are IO bound.
 
 
 All modules must migrate to this API before upgrading. The legacy wrappers are

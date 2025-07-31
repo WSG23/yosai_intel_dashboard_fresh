@@ -7,7 +7,7 @@ from typing import Dict, Optional
 import pandas as pd
 
 from core.callback_events import CallbackEvent
-from core.callbacks import UnifiedCallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.error_handling import (
     ErrorCategory,
     ErrorSeverity,
@@ -50,7 +50,7 @@ class DataProcessor:
         self.config = config or DataProcessorConfig()
         self.device_registry: Dict[str, Dict] = device_registry or {}
         self.pipeline_metadata: Dict[str, Dict] = {}
-        self.unified_callbacks = UnifiedCallbackManager()
+        self.unified_callbacks = TrulyUnifiedCallbacks()
         import re
 
         self._person_id_re = re.compile(self.config.person_id_pattern)

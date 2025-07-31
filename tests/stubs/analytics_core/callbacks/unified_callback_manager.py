@@ -1,4 +1,4 @@
-class UnifiedCallbackManager:
+class TrulyUnifiedCallbacks:
     def trigger(self, *args, **kwargs):
         pass
 
@@ -6,4 +6,4 @@ class UnifiedCallbackManager:
         return []
 
 
-CallbackManager = UnifiedCallbackManager
+CallbackManager = TrulyUnifiedCallbacks
