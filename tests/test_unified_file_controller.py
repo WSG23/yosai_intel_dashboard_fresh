@@ -20,12 +20,6 @@ class CallbackEvent(Enum):
 callback_events_stub.CallbackEvent = CallbackEvent
 sys.modules.setdefault("core.callback_events", callback_events_stub)
 
-tuc_stub = types.ModuleType("core.truly_unified_callbacks")
-tuc_stub.TrulyUnifiedCallbacks = DummyManager
-sys.modules.setdefault("core.truly_unified_callbacks", tuc_stub)
-
-from yosai_intel_dashboard.src.services.unified_file_controller import register_callbacks
-
 
 class DummyManager:
     def __init__(self) -> None:
@@ -38,6 +32,16 @@ class DummyManager:
         return [cb(*args, **kwargs) for cb in self.events.get(event, [])]
 
 
+tuc_stub = types.ModuleType(
+    "yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks"
+)
+tuc_stub.TrulyUnifiedCallbacks = DummyManager
+sys.modules.setdefault(
+    "yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks",
+    tuc_stub,
+)
+
+from yosai_intel_dashboard.src.services.unified_file_controller import register_callbacks
 def test_register_callbacks_processes_upload(tmp_path):
     manager = DummyManager()
     store = UploadedDataStore(storage_dir=tmp_path)

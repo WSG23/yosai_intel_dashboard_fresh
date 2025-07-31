@@ -96,7 +96,10 @@ def test_create_app(monkeypatch):
         def __init__(self, app):
             captured["manager"] = app
 
-    monkeypatch.setattr("core.truly_unified_callbacks.TrulyUnifiedCallbacks", DummyMCS)
+    monkeypatch.setattr(
+        "yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks.TrulyUnifiedCallbacks",
+        DummyMCS,
+    )
     monkeypatch.setattr(app, "debug_dash_asset_serving", lambda a: True)
 
     app_obj = app._create_app()

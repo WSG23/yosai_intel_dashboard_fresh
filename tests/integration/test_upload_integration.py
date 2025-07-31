@@ -26,7 +26,10 @@ cb_events_stub = _types.SimpleNamespace(CallbackEvent=_types.SimpleNamespace(SYS
 container_stub = _types.ModuleType("core.container")
 container_stub.get_unicode_processor = lambda: _types.SimpleNamespace(sanitize_dataframe=lambda df: df)
 
-_sys.modules.setdefault("core.truly_unified_callbacks", truly_stub)
+_sys.modules.setdefault(
+    "yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks",
+    truly_stub,
+)
 format_stub = _types.ModuleType("file_processing.format_detector")
 class FormatDetector:
     def __init__(self, *a, **k): ...
