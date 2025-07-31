@@ -4,8 +4,9 @@ import pandas as pd
 
 from core.di_decorators import inject, injectable
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
-from services.data_processing.processor import Processor
-from services.upload_data_service import UploadDataService
+from services.protocols.processor import ProcessorProtocol
+from services.upload.protocols import UploadAnalyticsProtocol
+from services.interfaces import UploadDataServiceProtocol
 from validation.security_validator import SecurityValidator
 
 
@@ -17,9 +18,9 @@ class UploadProcessingController:
     def __init__(
         self,
         validator: SecurityValidator,
-        processor: Processor,
-        upload_data_service: UploadDataService,
-        upload_processor: UploadAnalyticsProcessor,
+        processor: ProcessorProtocol,
+        upload_data_service: UploadDataServiceProtocol,
+        upload_processor: UploadAnalyticsProtocol,
     ) -> None:
         self.validator = validator
         self.processor = processor
