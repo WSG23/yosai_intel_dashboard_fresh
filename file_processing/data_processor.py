@@ -160,7 +160,9 @@ class DataProcessor:
             "denied": 0,
         }
 
-        normalized = df["access_result"].astype(str).str.strip().str.lower().str.rstrip(".")
+        normalized = (
+            df["access_result"].astype(str).str.strip().str.lower().str.rstrip(".")
+        )
         df["access_result_code"] = normalized.map(mapping)
         unknown = df[df["access_result_code"].isna()]["access_result"].unique()
         for val in unknown:

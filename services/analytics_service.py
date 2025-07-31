@@ -24,7 +24,6 @@ except ImportError:  # pragma: no cover - for Python <3.12
     from typing_extensions import override
 
 import pandas as pd
-from yosai_intel_dashboard.models.ml import ModelRegistry
 
 from config.dynamic_config import dynamic_config
 from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
@@ -51,6 +50,7 @@ from services.interfaces import get_upload_data_service
 from services.summary_report_generator import SummaryReportGenerator
 from services.upload_data_service import UploadDataService
 from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.models.ml import ModelRegistry
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 

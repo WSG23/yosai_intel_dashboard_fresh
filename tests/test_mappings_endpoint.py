@@ -56,6 +56,8 @@ service_reg_stub = types.ModuleType("config.service_registration")
 service_reg_stub.register_upload_services = lambda c: None
 config_pkg = types.ModuleType("config")
 config_pkg.__path__ = []
+
+
 class DatabaseSettings:
     def __init__(self, type: str = "sqlite", **kwargs: object) -> None:
         self.type = type
@@ -65,6 +67,7 @@ class DatabaseSettings:
         self.user = ""
         self.password = ""
         self.connection_timeout = 1
+
 
 config_pkg.service_registration = service_reg_stub
 config_pkg.DatabaseSettings = DatabaseSettings
@@ -76,10 +79,12 @@ sys.modules.setdefault("config.service_registration", service_reg_stub)
 sys.modules.setdefault("config.dynamic_config", config_pkg)
 
 if "flask_apispec" not in sys.modules:
-    sys.modules["flask_apispec"] = types.SimpleNamespace(doc=lambda *a, **k: (lambda f: f))
+    sys.modules["flask_apispec"] = types.SimpleNamespace(
+        doc=lambda *a, **k: (lambda f: f)
+    )
 
-from services import mappings_endpoint
 from core.service_container import ServiceContainer
+from services import mappings_endpoint
 
 # Ensure dash stubs are available for service imports
 if "dash" not in sys.modules:
@@ -170,6 +175,7 @@ def _create_app(monkeypatch):
 
     monkeypatch.setattr(sc, "ServiceContainer", lambda: container)
     import core.container as cc
+
     monkeypatch.setattr(cc, "container", container, raising=False)
     monkeypatch.setattr(mappings_endpoint, "container", container, raising=False)
 

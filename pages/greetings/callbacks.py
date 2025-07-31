@@ -1,8 +1,8 @@
 from dash import Input, Output
 from dash.exceptions import PreventUpdate
 
-from simple_di import inject
 from services.greeting import GreetingService
+from simple_di import inject
 
 
 def register_callbacks(app, container) -> None:

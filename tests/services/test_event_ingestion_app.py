@@ -3,11 +3,11 @@ import importlib
 import pathlib
 import sys
 import types
-from jose import jwt
 
+import httpx
 import pytest
 from fastapi import Depends, FastAPI, HTTPException
-import httpx
+from jose import jwt
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
 
@@ -38,9 +38,9 @@ def load_module():
     )
     health_stub.register_health_check = lambda *a, **k: None
     health_stub.setup_health_checks = lambda app: None
-    sys.modules[
-        "yosai_intel_dashboard.src.infrastructure.discovery.health_check"
-    ] = health_stub
+    sys.modules["yosai_intel_dashboard.src.infrastructure.discovery.health_check"] = (
+        health_stub
+    )
 
     tracing_stub = types.ModuleType("tracing")
     tracing_stub.trace_async_operation = lambda *a, **k: a[-1]
@@ -48,22 +48,26 @@ def load_module():
 
     err_pkg = types.ModuleType("error_handling")
     err_mw = types.ModuleType("error_handling.middleware")
-    from starlette.middleware.base import BaseHTTPMiddleware
     from fastapi.responses import JSONResponse
+    from starlette.middleware.base import BaseHTTPMiddleware
 
     class DummyMW(BaseHTTPMiddleware):
         async def dispatch(self, request, call_next):
             try:
                 return await call_next(request)
             except Exception as exc:  # noqa: BLE001
-                return JSONResponse({"code": "internal", "message": str(exc)}, status_code=500)
+                return JSONResponse(
+                    {"code": "internal", "message": str(exc)}, status_code=500
+                )
 
     err_mw.ErrorHandlingMiddleware = DummyMW
     err_pkg.middleware = err_mw
     err_pkg.api_error_response = types.SimpleNamespace()
     sys.modules.setdefault("error_handling", err_pkg)
     sys.modules.setdefault("error_handling.middleware", err_mw)
-    sys.modules.setdefault("error_handling.api_error_response", err_pkg.api_error_response)
+    sys.modules.setdefault(
+        "error_handling.api_error_response", err_pkg.api_error_response
+    )
 
     streaming_stub = types.ModuleType("services.streaming.service")
 
@@ -99,7 +103,6 @@ def load_module():
     security_stub = types.ModuleType("services.security")
     security_stub.verify_service_jwt = lambda token: {"sub": "svc"}
     sys.modules.setdefault("services.security", security_stub)
-
 
     sys.path.insert(0, str(SERVICES_PATH / "event-ingestion"))
     sys.modules.get("services").__path__ = [str(SERVICES_PATH)]
@@ -205,7 +208,9 @@ async def test_health_endpoint(monkeypatch):
         health_check=lambda: {"status": "ok"},
     )
     module.service = fake_service
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=module.app), base_url="http://test") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=module.app), base_url="http://test"
+    ) as client:
         resp = await client.get("/health")
     assert resp.status_code == 200
     assert resp.json() == {"status": "ok"}
@@ -219,7 +224,9 @@ async def test_error_handling_middleware():
     async def _boom():
         raise RuntimeError("fail")
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=module.app), base_url="http://test") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=module.app), base_url="http://test"
+    ) as client:
         resp = await client.get("/boom")
     assert resp.status_code == 500
     assert resp.json() == {"code": "internal", "message": "fail"}
@@ -229,7 +236,9 @@ async def test_error_handling_middleware():
 async def test_health_ready_endpoint():
     module = load_module()
     module.app.state.ready = True
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=module.app), base_url="http://test") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=module.app), base_url="http://test"
+    ) as client:
         resp = await client.get("/health/ready")
         assert resp.status_code == 200
         assert resp.json() == {"status": "ready"}
@@ -243,7 +252,9 @@ async def test_jwt_validation_failures(monkeypatch):
     async def _secure():
         return {"ok": True}
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=module.app), base_url="http://test") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=module.app), base_url="http://test"
+    ) as client:
         resp = await client.get("/secure")
         assert resp.status_code == 401
 
@@ -286,4 +297,3 @@ async def test_successful_ingestion_behavior(monkeypatch):
         await module._consume_loop()
 
     assert seen == messages
-

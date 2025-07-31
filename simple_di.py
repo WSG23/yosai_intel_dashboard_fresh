@@ -25,7 +25,9 @@ class ServiceContainer:
         return self._type_map.get(typ)
 
 
-def inject(container: ServiceContainer) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def inject(
+    container: ServiceContainer,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator injecting arguments resolved from *container* by type."""
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:

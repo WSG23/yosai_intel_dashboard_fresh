@@ -1,7 +1,7 @@
 import asyncio
+import enum
 import importlib
 import sys
-import enum
 from datetime import datetime
 
 import pytest
@@ -90,8 +90,8 @@ if "yosai_intel_dashboard.models.entities" not in sys.modules:
     enums_stub.BadgeStatus = BadgeStatus
     enums_stub.DoorType = DoorType
 
-from repositories.implementations import PersonRepository, AccessEventRepository
-from yosai_intel_dashboard.models.entities import Person, AccessEvent
+from repositories.implementations import AccessEventRepository, PersonRepository
+from yosai_intel_dashboard.models.entities import AccessEvent, Person
 from yosai_intel_dashboard.models.enums import AccessResult, BadgeStatus
 
 

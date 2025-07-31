@@ -1,9 +1,15 @@
 import importlib.util
 from pathlib import Path
+
 import pandas as pd
 import pytest
 
-SPEC_PATH = Path(__file__).resolve().parents[2] / "services" / "data_enhancer" / "mapping_utils.py"
+SPEC_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "services"
+    / "data_enhancer"
+    / "mapping_utils.py"
+)
 spec = importlib.util.spec_from_file_location("mapping_utils", SPEC_PATH)
 mapping_utils = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
@@ -47,9 +53,16 @@ def test_apply_manual_mapping_error():
 
 
 def test_get_mapping_suggestions():
-    df = pd.DataFrame({"UserID": ["u1"], "Door": ["d"], "Status": ["ok"], "Date": ["2023"]})
+    df = pd.DataFrame(
+        {"UserID": ["u1"], "Door": ["d"], "Status": ["ok"], "Date": ["2023"]}
+    )
     info = get_mapping_suggestions(df)
-    assert set(info["required_columns"]) == {"person_id", "door_id", "access_result", "timestamp"}
+    assert set(info["required_columns"]) == {
+        "person_id",
+        "door_id",
+        "access_result",
+        "timestamp",
+    }
     assert info["missing_mappings"] == []
 
 

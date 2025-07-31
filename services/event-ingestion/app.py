@@ -10,22 +10,21 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
-from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
-    register_health_check,
-    setup_health_checks,
-)
 
+from config.config_loader import load_service_config
 from core.security import RateLimiter
+from error_handling import http_error
 from error_handling.middleware import ErrorHandlingMiddleware
 from services.security import verify_service_jwt
-from error_handling import http_error
-
 from services.streaming.service import StreamingService
-from config.config_loader import load_service_config
 from shared.errors.types import ErrorCode
 from tracing import trace_async_operation
 from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
+from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
+    register_health_check,
+    setup_health_checks,
+)
 
 SERVICE_NAME = "event-ingestion-service"
 os.environ.setdefault("YOSAI_SERVICE_NAME", SERVICE_NAME)
@@ -77,7 +76,6 @@ def verify_token(authorization: str = Header("")) -> dict:
             "unauthorized",
             status.HTTP_401_UNAUTHORIZED,
         )
-
 
 
 async def _consume_loop() -> None:

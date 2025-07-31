@@ -107,16 +107,16 @@ def register_analytics_services(container: ServiceContainer) -> None:
     from services.analytics.protocols import (
         DataLoadingProtocol,
         DataProcessorProtocol,
-        ReportGeneratorProtocol,
         PublishingProtocol,
+        ReportGeneratorProtocol,
     )
     from services.analytics_service import create_analytics_service
-    from services.data_loading_service import DataLoadingService
-    from services.data_processing_service import DataProcessingService
-    from services.report_generation_service import ReportGenerationService
-    from services.publishing_service import PublishingService
     from services.controllers.upload_controller import UnifiedUploadController
+    from services.data_loading_service import DataLoadingService
     from services.data_processing.processor import Processor
+    from services.data_processing_service import DataProcessingService
+    from services.publishing_service import PublishingService
+    from services.report_generation_service import ReportGenerationService
     from validation.security_validator import SecurityValidator
 
     container.register_singleton(

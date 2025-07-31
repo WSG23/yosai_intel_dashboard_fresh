@@ -1,7 +1,8 @@
 import types
 
-import app
 import pytest
+
+import app
 
 
 class DummyAppConfig:

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
-import json
 import pandas as pd
 
 from services.upload.utils.file_parser import UnicodeFileProcessor
