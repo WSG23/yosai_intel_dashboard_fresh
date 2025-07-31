@@ -1116,73 +1116,46 @@ def handle_enhanced_column_mapping(n_clicks):
     return controls, ai_status
 
 
-@callbacks.callback(
-    [
-        Output("device-mapping-controls", "children"),
-        Output("ai-device-status", "children"),
-        Output("building-types-summary", "children"),
-    ],
-    [Input("ai-device-btn", "n_clicks")],
-    callback_id="handle_enhanced_device_mapping",
-    component_name="data_enhancer",
-)
-def handle_enhanced_device_mapping(n_clicks):
-    """Handle enhanced AI device mapping with multi-building support"""
-    if session_data["uploaded_df"] is None:
-        return "", dbc.Alert("Please upload a file first", color="warning"), ""
+def get_device_suggestions(df: pd.DataFrame) -> Tuple[Dict[str, Dict], Any]:
+    """Return device suggestions and status component."""
+    try:
+        suggestions = MultiBuildingDataEnhancer.get_enhanced_device_suggestions(df)
+        status_msg = f"Enhanced AI device suggestions generated for {len(suggestions)} devices"
+        if not AI_DOOR_SERVICE_AVAILABLE:
+            status_msg += " (Using enhanced fallback service)"
+        ai_status = dbc.Alert(status_msg, color="info")
+    except Exception as e:  # pragma: no cover - best effort
+        suggestions = {}
+        ai_status = dbc.Alert(f"AI device service error: {str(e)}", color="warning")
+    return suggestions, ai_status
 
-    df = session_data["uploaded_df"]
 
-    if "door_id" not in df.columns:
-        return (
-            "",
-            dbc.Alert("No 'door_id' column found for device mapping", color="warning"),
-            "",
-        )
-
-    if n_clicks:
-        try:
-            suggestions = MultiBuildingDataEnhancer.get_enhanced_device_suggestions(df)
-            status_msg = f"Enhanced AI device suggestions generated for {len(suggestions)} devices"
-            if not AI_DOOR_SERVICE_AVAILABLE:
-                status_msg += " (Using enhanced fallback service)"
-            ai_status = dbc.Alert(status_msg, color="info")
-
-            # Store suggestions
-            session_data["device_mappings"] = suggestions
-
-        except Exception as e:
-            suggestions = {}
-            ai_status = dbc.Alert(f"AI device service error: {str(e)}", color="warning")
-    else:
-        suggestions = session_data.get("device_mappings", {})
-        ai_status = ""
-
-    # Create building types summary
-    building_types = {}
+def summarize_buildings(suggestions: Dict[str, Dict]) -> List[Any]:
+    """Create badge summary of building types."""
+    building_types: Dict[str, int] = {}
     for device_data in suggestions.values():
         building_type = device_data.get("building_type", "unknown")
         building_types[building_type] = building_types.get(building_type, 0) + 1
 
-    building_summary = []
+    summary: List[Any] = []
     for building_type, count in building_types.items():
         badge_color = "primary" if building_type == "main" else "secondary"
-        building_summary.append(
+        summary.append(
             dbc.Badge(
                 f"{building_type.title()}: {count}",
                 color=badge_color,
                 className="me-2 mb-1",
             )
         )
+    return summary
 
-    # Create enhanced device mapping controls
-    unique_doors = df["door_id"].unique()[:15]  # Increased limit
-    controls = []
 
+def generate_device_controls(df: pd.DataFrame, suggestions: Dict[str, Dict]) -> List[Any]:
+    """Generate UI controls for device mapping."""
+    unique_doors = df["door_id"].unique()[:15]
+    controls: List[Any] = []
     for door_id in unique_doors:
         door_data = suggestions.get(str(door_id), {})
-
-        # Enhanced door card with building context
         door_card = dbc.Card(
             [
                 dbc.CardHeader(
@@ -1203,9 +1176,7 @@ def handle_enhanced_device_mapping(n_clicks):
                                         dbc.Label("Building Name:"),
                                         dbc.Input(
                                             id=f"building-{door_id}",
-                                            value=door_data.get(
-                                                "building", "Main Building"
-                                            ),
+                                            value=door_data.get("building", "Main Building"),
                                             placeholder="Building name",
                                         ),
                                     ],
@@ -1217,32 +1188,15 @@ def handle_enhanced_device_mapping(n_clicks):
                                         dcc.Dropdown(
                                             id=f"building-type-{door_id}",
                                             options=[
-                                                {
-                                                    "label": "Main Building",
-                                                    "value": "main",
-                                                },
-                                                {
-                                                    "label": "North Wing",
-                                                    "value": "north",
-                                                },
-                                                {
-                                                    "label": "South Wing",
-                                                    "value": "south",
-                                                },
+                                                {"label": "Main Building", "value": "main"},
+                                                {"label": "North Wing", "value": "north"},
+                                                {"label": "South Wing", "value": "south"},
                                                 {"label": "East Wing", "value": "east"},
                                                 {"label": "West Wing", "value": "west"},
-                                                {
-                                                    "label": "Annex Building",
-                                                    "value": "annex",
-                                                },
-                                                {
-                                                    "label": "Tower Building",
-                                                    "value": "tower",
-                                                },
+                                                {"label": "Annex Building", "value": "annex"},
+                                                {"label": "Tower Building", "value": "tower"},
                                             ],
-                                            value=door_data.get(
-                                                "building_type", "main"
-                                            ),
+                                            value=door_data.get("building_type", "main"),
                                         ),
                                     ],
                                     width=6,
@@ -1289,14 +1243,8 @@ def handle_enhanced_device_mapping(n_clicks):
                                         dbc.Checklist(
                                             id=f"access-{door_id}",
                                             options=[
-                                                {
-                                                    "label": "Entry Point",
-                                                    "value": "is_entry",
-                                                },
-                                                {
-                                                    "label": "Exit Point",
-                                                    "value": "is_exit",
-                                                },
+                                                {"label": "Entry Point", "value": "is_entry"},
+                                                {"label": "Exit Point", "value": "is_exit"},
                                             ],
                                             value=[
                                                 k
@@ -1314,29 +1262,15 @@ def handle_enhanced_device_mapping(n_clicks):
                                         dbc.Checklist(
                                             id=f"special-{door_id}",
                                             options=[
-                                                {
-                                                    "label": "Elevator",
-                                                    "value": "is_elevator",
-                                                },
-                                                {
-                                                    "label": "Stairwell",
-                                                    "value": "is_stairwell",
-                                                },
-                                                {
-                                                    "label": "Fire Exit",
-                                                    "value": "is_fire_escape",
-                                                },
-                                                {
-                                                    "label": "Restricted",
-                                                    "value": "is_restricted",
-                                                },
+                                                {"label": "Elevator", "value": "is_elevator"},
+                                                {"label": "Stairwell", "value": "is_stairwell"},
+                                                {"label": "Fire Exit", "value": "is_fire_escape"},
+                                                {"label": "Restricted", "value": "is_restricted"},
                                             ],
                                             value=[
                                                 k
                                                 for k, v in door_data.items()
-                                                if k.startswith("is_")
-                                                and k not in ["is_entry", "is_exit"]
-                                                and v
+                                                if k.startswith("is_") and k not in ["is_entry", "is_exit"] and v
                                             ],
                                             inline=True,
                                         ),
@@ -1350,8 +1284,43 @@ def handle_enhanced_device_mapping(n_clicks):
             ],
             className="mb-3",
         )
-
         controls.append(door_card)
+    return controls
+
+
+@callbacks.callback(
+    [
+        Output("device-mapping-controls", "children"),
+        Output("ai-device-status", "children"),
+        Output("building-types-summary", "children"),
+    ],
+    [Input("ai-device-btn", "n_clicks")],
+    callback_id="handle_enhanced_device_mapping",
+    component_name="data_enhancer",
+)
+def handle_enhanced_device_mapping(n_clicks):
+    """Handle enhanced AI device mapping with multi-building support"""
+    if session_data["uploaded_df"] is None:
+        return "", dbc.Alert("Please upload a file first", color="warning"), ""
+
+    df = session_data["uploaded_df"]
+
+    if "door_id" not in df.columns:
+        return (
+            "",
+            dbc.Alert("No 'door_id' column found for device mapping", color="warning"),
+            "",
+        )
+
+    if n_clicks:
+        suggestions, ai_status = get_device_suggestions(df)
+        session_data["device_mappings"] = suggestions
+    else:
+        suggestions = session_data.get("device_mappings", {})
+        ai_status = ""
+
+    building_summary = summarize_buildings(suggestions)
+    controls = generate_device_controls(df, suggestions)
 
     return controls, ai_status, building_summary
 

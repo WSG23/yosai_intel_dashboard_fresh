@@ -19,6 +19,7 @@ from core.performance_file_processor import PerformanceFileProcessor
 from core.unicode import UnicodeProcessor as UnicodeHelper
 from core.unicode import safe_format_number, safe_unicode_decode
 from unicode_toolkit import safe_encode_text
+from validation.security_validator import SecurityValidator
 
 from .file_handler import process_file_simple
 
@@ -124,77 +125,95 @@ class UnicodeFileProcessor:
         return result["data"], result["error"]
 
 
+def decode_contents(contents: str) -> Tuple[bytes | None, str | None]:
+    """Decode a base64 data URI."""
+    import base64
+
+    if "," not in contents:
+        return None, "Invalid data URI"
+    try:
+        _, content_string = contents.split(",", 1)
+        decoded = base64.b64decode(content_string, validate=True)
+        if not decoded:
+            return None, "Empty file contents"
+        return decoded, None
+    except (base64.binascii.Error, ValueError) as exc:
+        return None, f"Invalid base64 data: {exc}"
+
+
+def validate_metadata(filename: str, decoded: bytes) -> Tuple[str | None, str | None]:
+    """Validate filename and size using :class:`SecurityValidator`."""
+    validator = SecurityValidator()
+    meta = validator.validate_file_meta(filename, len(decoded))
+    if not meta["valid"]:
+        return None, "; ".join(meta["issues"])
+    return meta["filename"], None
+
+
+def dataframe_from_bytes(
+    decoded: bytes, filename: str, *, config: Any = dynamic_config
+) -> Tuple[pd.DataFrame | None, str | None]:
+    """Create a DataFrame from ``decoded`` bytes based on ``filename``."""
+    text_content = UnicodeFileProcessor.safe_decode_content(decoded)
+    chunk_size = getattr(config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE)
+    monitor = get_performance_monitor()
+
+    if filename.endswith(".csv"):
+        reader = pd.read_csv(io.StringIO(text_content), chunksize=chunk_size)
+        chunks = []
+        for chunk in reader:
+            monitor.throttle_if_needed()
+            chunks.append(chunk)
+        df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+    elif filename.endswith((".xlsx", ".xls")):
+        df = pd.read_excel(io.BytesIO(decoded))
+    else:
+        return None, f"Unsupported file type: {filename}"
+
+    df = UnicodeFileProcessor.sanitize_dataframe_unicode(df)
+    return df, None
+
+
 def process_uploaded_file(
     contents: str,
     filename: str,
     *,
     config: Any = dynamic_config,
 ) -> Dict[str, Any]:
-    """
-    Process uploaded file content safely
-    Returns: Dict with 'data', 'filename', 'status', 'error'
-    """
+    """Process uploaded file content safely."""
     try:
-        # Decode base64 content
-        import base64
-
-        if "," not in contents:
+        decoded, err = decode_contents(contents)
+        if decoded is None:
+            logger.error("Base64 decode failed for %s: %s", filename, err)
             return {
                 "success": False,
-                "error": "Invalid data URI",
+                "error": err,
                 "data": None,
                 "filename": filename,
             }
 
-        _, content_string = contents.split(",", 1)
-        decoded = base64.b64decode(content_string, validate=True)
-
-        validator = SecurityValidator()
-        meta = validator.validate_file_meta(filename, len(decoded))
-        if not meta["valid"]:
+        sanitized, err = validate_metadata(filename, decoded)
+        if sanitized is None:
             return {
                 "success": False,
-                "error": "; ".join(meta["issues"]),
-                "data": None,
-                "filename": filename,
-            }
-        filename = meta["filename"]
-
-        # Safe Unicode processing
-        text_content = UnicodeFileProcessor.safe_decode_content(decoded)
-
-        chunk_size = getattr(config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE)
-        monitor = get_performance_monitor()
-
-        # Process based on file type
-        if filename.endswith(".csv"):
-            reader = pd.read_csv(io.StringIO(text_content), chunksize=chunk_size)
-            chunks = []
-            for chunk in reader:
-                monitor.throttle_if_needed()
-                chunks.append(chunk)
-            df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
-        elif filename.endswith((".xlsx", ".xls")):
-            df = pd.read_excel(io.BytesIO(decoded))
-        else:
-            return {
-                "success": False,
-                "error": f"Unsupported file type: {filename}",
+                "error": err,
                 "data": None,
                 "filename": filename,
             }
 
-        # Sanitize Unicode in DataFrame
-        df = UnicodeFileProcessor.sanitize_dataframe_unicode(df)
+        df, err = dataframe_from_bytes(decoded, sanitized, config=config)
+        if df is None:
+            return {
+                "success": False,
+                "error": err,
+                "data": None,
+                "filename": sanitized,
+            }
 
-        return {"success": True, "data": df, "filename": filename, "error": None}
+        return {"success": True, "data": df, "filename": sanitized, "error": None}
 
-    except Exception as e:
-        logger.error(
-            "File processing error for %s: %s",
-            safe_encode_text(filename),
-            e,
-        )
+    except Exception as e:  # pragma: no cover - best effort
+        logger.error("File processing error for %s: %s", safe_encode_text(filename), e)
         return {"success": False, "error": str(e), "data": None, "filename": filename}
 
 
@@ -238,6 +257,9 @@ __all__ = [
     "UnicodeFileProcessor",
     "FileProcessor",
     "process_file_simple",
+    "decode_contents",
+    "validate_metadata",
+    "dataframe_from_bytes",
     "process_uploaded_file",
     "create_file_preview",
 ]
