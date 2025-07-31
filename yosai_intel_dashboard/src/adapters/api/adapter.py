@@ -22,10 +22,11 @@ from settings_endpoint import settings_bp
 
 from config.constants import API_PORT
 from middleware.performance import TimingMiddleware
-from services.device_endpoint import device_bp
-from services.mappings_endpoint import mappings_bp
-from services.token_endpoint import token_bp
-from services.upload_endpoint import upload_bp
+from core.container import container
+from services.device_endpoint import create_device_blueprint
+from services.mappings_endpoint import create_mappings_blueprint
+from services.token_endpoint import create_token_blueprint
+from services.upload_endpoint import create_upload_blueprint
 
 
 def create_api_app() -> "FastAPI":
@@ -63,6 +64,25 @@ def create_api_app() -> "FastAPI":
     service.app.add_event_handler("startup", init_cache_manager)
 
     # Core upload and mapping endpoints
+    err_handler = container.get("error_handler") if container.has("error_handler") else None
+    upload_bp = create_upload_blueprint(
+        container.get("file_processor"),
+        file_handler=container.get("file_handler") if container.has("file_handler") else None,
+        handler=err_handler,
+    )
+    device_bp = create_device_blueprint(
+        container.get("device_learning_service"),
+        container.get("upload_processor"),
+        handler=err_handler,
+    )
+    mappings_bp = create_mappings_blueprint(
+        container.get("upload_processor"),
+        container.get("device_learning_service"),
+        container.get("consolidated_learning_service"),
+        handler=err_handler,
+    )
+    token_bp = create_token_blueprint(handler=err_handler)
+
     app.register_blueprint(upload_bp)
     app.register_blueprint(device_bp)
     app.register_blueprint(mappings_bp)

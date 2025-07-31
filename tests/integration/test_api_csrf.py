@@ -2,6 +2,10 @@ import importlib
 import os
 import sys
 import types
+from pathlib import Path
+
+sys.modules.setdefault("yosai_intel_dashboard", types.ModuleType("yosai_intel_dashboard"))
+sys.modules["yosai_intel_dashboard"].__path__ = [str(Path(__file__).resolve().parents[1] / "yosai_intel_dashboard")]
 
 import pytest
 from fastapi.testclient import TestClient
@@ -29,8 +33,7 @@ def _create_app(monkeypatch):
         sys.modules, "core.container", types.SimpleNamespace(container=container)
     )
 
-    upload_endpoint = importlib.import_module("services.upload_endpoint")
-    monkeypatch.setattr(upload_endpoint, "container", container, raising=False)
+    import yosai_intel_dashboard.src.services.upload_endpoint  # ensure module available
 
     adapter = importlib.import_module("api.adapter")
     return adapter.create_api_app()

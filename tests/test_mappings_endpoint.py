@@ -3,6 +3,9 @@ import sys
 import types
 from pathlib import Path
 
+sys.modules.setdefault("yosai_intel_dashboard", types.ModuleType("yosai_intel_dashboard"))
+sys.modules["yosai_intel_dashboard"].__path__ = [str(Path(__file__).resolve().parents[1] / "yosai_intel_dashboard")]
+
 import pandas as pd
 from flask import Flask
 
@@ -83,8 +86,9 @@ if "flask_apispec" not in sys.modules:
         doc=lambda *a, **k: (lambda f: f)
     )
 
+from error_handling import ErrorHandler
 from core.service_container import ServiceContainer
-from services import mappings_endpoint
+from yosai_intel_dashboard.src.services import mappings_endpoint
 
 # Ensure dash stubs are available for service imports
 if "dash" not in sys.modules:
@@ -159,25 +163,19 @@ class DummyDeviceLearningService(FakeDeviceLearningService):
 
 def _create_app(monkeypatch):
     app = Flask(__name__)
-    app.register_blueprint(mappings_endpoint.mappings_bp)
 
     store = StoreWithSave()
     device_service = DummyDeviceLearningService()
     column_service = DummyColumnService()
     upload_processor = DummyUploadProcessor(store)
 
-    container = ServiceContainer()
-    container.register_singleton("upload_processor", upload_processor)
-    container.register_singleton("device_learning_service", device_service)
-    container.register_singleton("consolidated_learning_service", column_service)
-
-    import core.service_container as sc
-
-    monkeypatch.setattr(sc, "ServiceContainer", lambda: container)
-    import core.container as cc
-
-    monkeypatch.setattr(cc, "container", container, raising=False)
-    monkeypatch.setattr(mappings_endpoint, "container", container, raising=False)
+    bp = mappings_endpoint.create_mappings_blueprint(
+        upload_processor,
+        device_service,
+        column_service,
+        handler=ErrorHandler(),
+    )
+    app.register_blueprint(bp)
 
     return app, store, device_service, column_service
 

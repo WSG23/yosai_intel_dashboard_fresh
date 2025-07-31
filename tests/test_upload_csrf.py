@@ -1,6 +1,8 @@
 import importlib
 import os
 import sys
+from pathlib import Path
+import types
 
 # Provide stubs when optional dependencies are missing
 if "flask_wtf" not in sys.modules:
@@ -14,10 +16,13 @@ if "flask_cors" not in sys.modules:
 if "services" not in sys.modules:
     sys.modules["services"] = importlib.import_module("tests.stubs.services")
 
+sys.modules.setdefault("yosai_intel_dashboard", types.ModuleType("yosai_intel_dashboard"))
+sys.modules["yosai_intel_dashboard"].__path__ = [str(Path(__file__).resolve().parents[1] / "yosai_intel_dashboard")]
+
 import werkzeug
 from flask import Flask, jsonify
 
-from core.service_container import ServiceContainer
+from error_handling import ErrorHandler
 from tests.stubs.flask_wtf import CSRFProtect, generate_csrf
 
 
@@ -31,13 +36,7 @@ class DummyUploadService:
 
 
 def _create_app(monkeypatch):
-    container = ServiceContainer()
-    container.register_singleton("upload_processor", DummyUploadService())
-    monkeypatch.setattr("core.container.container", container, raising=False)
-
-    from services import upload_endpoint
-
-    importlib.reload(upload_endpoint)
+    from yosai_intel_dashboard.src.services import upload_endpoint
 
     app = Flask(__name__)
     # Use a throwaway value instead of a real secret
@@ -45,7 +44,8 @@ def _create_app(monkeypatch):
     CSRFProtect(app)
     if not hasattr(werkzeug, "__version__"):
         werkzeug.__version__ = "3"
-    app.register_blueprint(upload_endpoint.upload_bp)
+    bp = upload_endpoint.create_upload_blueprint(DummyUploadService(), handler=ErrorHandler())
+    app.register_blueprint(bp)
 
     @app.route("/v1/csrf-token")
     def csrf_token():

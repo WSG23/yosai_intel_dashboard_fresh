@@ -6,7 +6,13 @@ import types
 
 import pandas as pd
 from flask import Flask
+from pathlib import Path
+import types
 
+sys.modules.setdefault("yosai_intel_dashboard", types.ModuleType("yosai_intel_dashboard"))
+sys.modules["yosai_intel_dashboard"].__path__ = [str(Path(__file__).resolve().parents[1] / "yosai_intel_dashboard")]
+
+from error_handling import ErrorHandler
 from core.service_container import ServiceContainer
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
@@ -38,19 +44,11 @@ def _create_app(monkeypatch):
     )
     monkeypatch.setitem(sys.modules, "services.upload.service_registration", fake_reg)
 
-    cont = ServiceContainer()
     service = DummyUploadService()
-    cont.register_singleton("upload_processor", service)
-
-    container_mod = types.ModuleType("core.container")
-    container_mod.container = cont
-    monkeypatch.setitem(sys.modules, "core.container", container_mod)
-
-    upload_ep = importlib.import_module("services.upload_endpoint")
-
+    upload_ep = importlib.import_module("yosai_intel_dashboard.src.services.upload_endpoint")
     app = Flask(__name__)
-    app.register_blueprint(upload_ep.upload_bp)
-    monkeypatch.setattr(upload_ep, "container", cont, raising=False)
+    bp = upload_ep.create_upload_blueprint(service, handler=ErrorHandler())
+    app.register_blueprint(bp)
     return app, service
 
 
@@ -88,26 +86,15 @@ class FailingUploadService:
 
 def test_upload_returns_error_on_exception(monkeypatch):
     fake_reg = types.ModuleType("services.upload.service_registration")
-    fake_reg.register_upload_services = lambda c: c.register_singleton(
-        "uploader", object()
-    )
+    fake_reg.register_upload_services = lambda c: None
     monkeypatch.setitem(sys.modules, "services.upload.service_registration", fake_reg)
 
-    cont = ServiceContainer()
     service = FailingUploadService()
-    cont.register_singleton("upload_processor", service)
-
-    container_mod = types.ModuleType("core.container")
-    container_mod.container = cont
-    monkeypatch.setitem(sys.modules, "core.container", container_mod)
-
-    import importlib
-
-    upload_ep = importlib.import_module("services.upload_endpoint")
+    upload_ep = importlib.import_module("yosai_intel_dashboard.src.services.upload_endpoint")
 
     app = Flask(__name__)
-    app.register_blueprint(upload_ep.upload_bp)
-    monkeypatch.setattr(upload_ep, "container", cont, raising=False)
+    bp = upload_ep.create_upload_blueprint(service, handler=ErrorHandler())
+    app.register_blueprint(bp)
 
     client = app.test_client()
     resp = client.post(
@@ -140,23 +127,14 @@ class DummyFileProcessor:
 
 def _create_validator_app(monkeypatch):
     fake_reg = types.ModuleType("services.upload.service_registration")
-    fake_reg.register_upload_services = lambda c: c.register_singleton(
-        "uploader", object()
-    )
+    fake_reg.register_upload_services = lambda c: None
     monkeypatch.setitem(sys.modules, "services.upload.service_registration", fake_reg)
 
-    cont = ServiceContainer()
-    cont.register_singleton("file_processor", DummyFileProcessor())
-
-    container_mod = types.ModuleType("core.container")
-    container_mod.container = cont
-    monkeypatch.setitem(sys.modules, "core.container", container_mod)
-
-    upload_ep = importlib.import_module("services.upload_endpoint")
+    upload_ep = importlib.import_module("yosai_intel_dashboard.src.services.upload_endpoint")
 
     app = Flask(__name__)
-    app.register_blueprint(upload_ep.upload_bp)
-    monkeypatch.setattr(upload_ep, "container", cont, raising=False)
+    bp = upload_ep.create_upload_blueprint(DummyFileProcessor(), handler=ErrorHandler())
+    app.register_blueprint(bp)
     return app
 
 

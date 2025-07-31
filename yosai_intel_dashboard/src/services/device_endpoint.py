@@ -5,19 +5,8 @@ from flask import Blueprint, jsonify, request
 from flask_apispec import doc
 from pydantic import BaseModel
 
-from services.upload.service_registration import register_upload_services
-
-# Use the shared DI container for dependency resolution
-from core.container import container
 from error_handling import ErrorCategory, ErrorHandler, api_error_response
 from utils.pydantic_decorators import validate_input, validate_output
-
-if not container.has("upload_processor"):
-    register_upload_services(container)
-
-device_bp = Blueprint("device", __name__)
-
-handler = ErrorHandler()
 
 
 class DeviceSuggestSchema(BaseModel):
@@ -102,39 +91,51 @@ def build_device_mappings(
     return build_ai_device_mappings(df, filename, upload_service)
 
 
-@device_bp.route("/v1/ai/suggest-devices", methods=["POST"])
-@doc(
-    description="Suggest device mappings",
-    tags=["device"],
-    responses={200: "Success", 404: "File not found", 500: "Server Error"},
-)
-@validate_input(DeviceSuggestSchema)
-@validate_output(DeviceResponseSchema)
-def suggest_devices(payload: DeviceSuggestSchema):
-    """Get device suggestions using DeviceLearningService"""
-    try:
-        filename = payload.filename
-        column_mappings = payload.column_mappings or {}
+def create_device_blueprint(
+    device_service,
+    upload_service,
+    *,
+    handler: ErrorHandler | None = None,
+) -> Blueprint:
+    """Return a blueprint for device mapping suggestions."""
 
-        device_service = container.get("device_learning_service")
-        upload_service = container.get("upload_processor")
+    device_bp = Blueprint("device", __name__)
+    err_handler = handler or ErrorHandler()
 
-        df = load_stored_data(filename, upload_service)
-        if df is None:
-            return api_error_response(
-                FileNotFoundError("File data not found"),
-                ErrorCategory.NOT_FOUND,
-                handler=handler,
+    @device_bp.route("/v1/ai/suggest-devices", methods=["POST"])
+    @doc(
+        description="Suggest device mappings",
+        tags=["device"],
+        responses={200: "Success", 404: "File not found", 500: "Server Error"},
+    )
+    @validate_input(DeviceSuggestSchema)
+    @validate_output(DeviceResponseSchema)
+    def suggest_devices(payload: DeviceSuggestSchema):
+        """Get device suggestions using DeviceLearningService."""
+        try:
+            filename = payload.filename
+            column_mappings = payload.column_mappings or {}
+
+            df = load_stored_data(filename, upload_service)
+            if df is None:
+                return api_error_response(
+                    FileNotFoundError("File data not found"),
+                    ErrorCategory.NOT_FOUND,
+                    handler=err_handler,
+                )
+
+            device_column = determine_device_column(column_mappings, df)
+            devices = (
+                df[device_column].dropna().unique().tolist() if device_column else []
             )
 
-        device_column = determine_device_column(column_mappings, df)
-        devices = df[device_column].dropna().unique().tolist() if device_column else []
+            device_mappings = build_device_mappings(
+                filename, df, device_service, upload_service
+            )
 
-        device_mappings = build_device_mappings(
-            filename, df, device_service, upload_service
-        )
+            return {"devices": devices, "device_mappings": device_mappings}, 200
 
-        return {"devices": devices, "device_mappings": device_mappings}, 200
+        except Exception as e:  # pragma: no cover - defensive
+            return api_error_response(e, ErrorCategory.INTERNAL, handler=err_handler)
 
-    except Exception as e:
-        return api_error_response(e, ErrorCategory.INTERNAL, handler=handler)
+    return device_bp
