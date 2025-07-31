@@ -21,12 +21,6 @@ def _install_core_stub(monkeypatch):
     plugin_pkg.PluginMetadata = PluginMetadata
     protocols_pkg.plugin = plugin_pkg
     core_pkg.protocols = protocols_pkg
-    # Minimal core.config stub for utils.config_resolvers
-    config_pkg = types.ModuleType("core.config")
-    config_pkg.get_ai_confidence_threshold = lambda: 0.5
-    config_pkg.get_max_upload_size_mb = lambda: 10
-    config_pkg.get_upload_chunk_size = lambda: 100
-    monkeypatch.setitem(sys.modules, "core.config", config_pkg)
     monkeypatch.setitem(sys.modules, "core", core_pkg)
     monkeypatch.setitem(sys.modules, "core.protocols", protocols_pkg)
     monkeypatch.setitem(sys.modules, "core.protocols.plugin", plugin_pkg)
