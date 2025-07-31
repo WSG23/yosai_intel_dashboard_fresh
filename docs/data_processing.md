@@ -19,7 +19,7 @@ services/
 - **`DataEnhancer`** – Applies normalisation and adds computed columns.
 - **`Processor`** – High level wrapper that uses `FileValidator` and `DataEnhancer` to produce a clean dataframe.
 - **`AnalyticsEngine`** – Generates statistics from the processed dataframe.
-- **``core.truly_unified_callbacks.TrulyUnifiedCallbacks``** – Emits events throughout the pipeline so plugins can react.
+- **``yosai_intel_dashboard.src.infrastructure.callbacks.TrulyUnifiedCallbacks``** – Emits events throughout the pipeline so plugins can react.
 
 ## Relationships
 
@@ -35,8 +35,8 @@ This separation makes the pipeline extensible and easier to test as new data sou
 
 Example event:
 ```python
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from core.callback_events import CallbackEvent
+from yosai_intel_dashboard.src.infrastructure.callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
 
 manager = TrulyUnifiedCallbacks()
 manager.trigger_event(

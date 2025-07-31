@@ -1184,8 +1184,8 @@ safe_query = SQLProcessor.encode_query(query)
 
 ### Firing events
 ```python
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from core.callback_events import CallbackEvent
+from yosai_intel_dashboard.src.infrastructure.callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
 
 callbacks = TrulyUnifiedCallbacks()
 callbacks.trigger_event(
