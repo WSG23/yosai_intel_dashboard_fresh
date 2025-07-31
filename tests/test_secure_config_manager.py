@@ -98,6 +98,7 @@ database:
 
 def test_aws_secret_resolution(monkeypatch, tmp_path):
     aws_secret = os.urandom(16).hex()
+
     class DummyAWS:
         def __init__(self, region_name=None):  # noqa: D401 - stub
             pass

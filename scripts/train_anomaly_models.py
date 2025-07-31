@@ -19,14 +19,14 @@ from typing import Any
 import joblib
 import pandas as pd
 from sklearn.ensemble import IsolationForest
+
+from analytics.anomaly_detection.data_prep import prepare_anomaly_data
 from yosai_intel_dashboard.models.anomaly_models import (
     autoencoder_reconstruction_error,
     train_autoencoder_model,
     train_dbscan_model,
 )
 from yosai_intel_dashboard.models.ml import ModelRegistry
-
-from analytics.anomaly_detection.data_prep import prepare_anomaly_data
 
 LOG = logging.getLogger(__name__)
 

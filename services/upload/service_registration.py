@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from components.ui_builder import UploadUIBuilder
 from config.dynamic_config import dynamic_config
 from core.protocols import FileProcessorProtocol
 from core.service_container import (
@@ -20,14 +21,13 @@ from services.upload.controllers.upload_controller import UnifiedUploadControlle
 from services.upload.file_processor_service import FileProcessor
 from services.upload.learning_coordinator import LearningCoordinator
 from services.upload.processor import UploadProcessingService
-from components.ui_builder import UploadUIBuilder
-from services.upload.validator import ClientSideValidator
 from services.upload.protocols import (
     UploadControllerProtocol,
     UploadProcessingServiceProtocol,
     UploadStorageProtocol,
     UploadValidatorProtocol,
 )
+from services.upload.validator import ClientSideValidator
 from services.upload_data_service import UploadDataService
 from utils.upload_store import UploadedDataStore
 from validation.file_validator import FileValidator

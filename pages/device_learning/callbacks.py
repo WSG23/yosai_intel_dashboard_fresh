@@ -2,10 +2,10 @@ from __future__ import annotations
 
 """Device learning feature callbacks."""
 
+import pandas as pd
 from dash import html
 from dash._callback_context import callback_context
 from dash.dependencies import Input, Output
-import pandas as pd
 
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from services.interfaces import get_device_learning_service

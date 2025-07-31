@@ -1,7 +1,8 @@
 import pytest
-from simple_di import ServiceContainer
-from services.greeting import GreetingService
 from pages.greetings.callbacks import register_callbacks
+
+from services.greeting import GreetingService
+from simple_di import ServiceContainer
 
 pytestmark = pytest.mark.usefixtures("fake_dash")
 
@@ -20,6 +21,7 @@ def test_register_callbacks_injects_service(monkeypatch):
         def decorator(func):
             captured["func"] = func
             return func
+
         return decorator
 
     monkeypatch.setattr(app, "callback", fake_callback)
@@ -40,6 +42,7 @@ def test_app_factory_builds_container(monkeypatch):
         def decorator(func):
             captured["func"] = func
             return func
+
         return decorator
 
     monkeypatch.setattr(app_module.Dash, "callback", fake_callback, raising=False)

@@ -13,7 +13,9 @@ from services.data_processing.processor import Processor
 class DataLoadingService(DataLoadingProtocol):
     """Service providing data loading utilities for analytics."""
 
-    def __init__(self, controller: UploadProcessingController, processor: Processor) -> None:
+    def __init__(
+        self, controller: UploadProcessingController, processor: Processor
+    ) -> None:
         self._loader = DataLoader(controller, processor)
 
     def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
@@ -25,7 +27,9 @@ class DataLoadingService(DataLoadingProtocol):
     def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         return self._loader.summarize_dataframe(df)
 
-    def analyze_with_chunking(self, df: pd.DataFrame, analysis_types: List[str]) -> Dict[str, Any]:
+    def analyze_with_chunking(
+        self, df: pd.DataFrame, analysis_types: List[str]
+    ) -> Dict[str, Any]:
         return self._loader.analyze_with_chunking(df, analysis_types)
 
     def diagnose_data_flow(self, df: pd.DataFrame) -> Dict[str, Any]:
@@ -37,7 +41,9 @@ class DataLoadingService(DataLoadingProtocol):
     def get_analytics_with_fixed_processor(self) -> Dict[str, Any]:
         return self._loader.get_analytics_with_fixed_processor()
 
-    def load_patterns_dataframe(self, data_source: str | None) -> Tuple[pd.DataFrame, int]:
+    def load_patterns_dataframe(
+        self, data_source: str | None
+    ) -> Tuple[pd.DataFrame, int]:
         return self._loader.load_patterns_dataframe(data_source)
 
 

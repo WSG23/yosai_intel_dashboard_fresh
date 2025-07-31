@@ -3,7 +3,6 @@
 from importlib import import_module
 from typing import Iterable
 
-
 FEATURES: Iterable[str] = ["greetings", "upload", "device_learning", "data_enhancer"]
 
 

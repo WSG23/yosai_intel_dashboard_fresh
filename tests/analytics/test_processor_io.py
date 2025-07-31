@@ -1,16 +1,13 @@
 import asyncio
 import base64
-import json
-
-import pandas as pd
-import pytest
-
 import importlib.util
+import json
 import sys
 import types
 from pathlib import Path
 
-
+import pandas as pd
+import pytest
 
 # Dynamically import AsyncFileProcessor to avoid heavy service deps
 services_root = Path(__file__).resolve().parents[2] / "services"
@@ -37,6 +34,7 @@ dynamic = types.SimpleNamespace(
     analytics=types.SimpleNamespace(chunk_size=2, max_memory_mb=256)
 )
 
+
 class DatabaseSettings:
     def __init__(self):
         self.type = "sqlite"
@@ -47,6 +45,7 @@ class DatabaseSettings:
         self.password = ""
         self.connection_timeout = 1
 
+
 config_pkg.DatabaseSettings = DatabaseSettings
 
 config_dynamic_pkg = types.ModuleType("config.dynamic_config")
@@ -55,8 +54,14 @@ sys.modules.setdefault("config", config_pkg)
 sys.modules.setdefault("config.dynamic_config", config_dynamic_pkg)
 
 protocols_pkg = types.ModuleType("core.protocols")
+
+
 class FileProcessorProtocol: ...
+
+
 class ConfigurationProtocol: ...
+
+
 protocols_pkg.FileProcessorProtocol = FileProcessorProtocol
 protocols_pkg.ConfigurationProtocol = ConfigurationProtocol
 sys.modules.setdefault("core.protocols", protocols_pkg)
@@ -69,7 +74,9 @@ sys.modules.setdefault("core", core_pkg)
 sys.modules.setdefault("core.config", config_mod)
 
 perf_mod = types.ModuleType("core.performance")
-perf_mod.get_performance_monitor = lambda: types.SimpleNamespace(throttle_if_needed=lambda: None)
+perf_mod.get_performance_monitor = lambda: types.SimpleNamespace(
+    throttle_if_needed=lambda: None
+)
 sys.modules.setdefault("core.performance", perf_mod)
 
 perf_fp_mod = types.ModuleType("core.performance_file_processor")
@@ -156,12 +163,14 @@ def test_data_processor_io(tmp_path):
 
 
 def test_mapping_processor_io(tmp_path):
-    df = pd.DataFrame({
-        "Timestamp": ["2023-01-01T00:00:00Z"],
-        "Person ID": ["p1"],
-        "Device name": ["D1"],
-        "Access result": ["Granted"],
-    })
+    df = pd.DataFrame(
+        {
+            "Timestamp": ["2023-01-01T00:00:00Z"],
+            "Person ID": ["p1"],
+            "Device name": ["D1"],
+            "Access result": ["Granted"],
+        }
+    )
     proc = ColumnProcessor()
     result = proc.process(df, "file.csv")
 

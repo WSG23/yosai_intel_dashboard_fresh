@@ -3,10 +3,8 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from config.dynamic_config import DynamicConfigManager, dynamic_config
-from config.utils import (
-    get_ai_confidence_threshold as _get_ai_confidence_threshold,
-    get_upload_chunk_size as _get_upload_chunk_size,
-)
+from config.utils import get_ai_confidence_threshold as _get_ai_confidence_threshold
+from config.utils import get_upload_chunk_size as _get_upload_chunk_size
 from core.protocols import ConfigurationServiceProtocol
 
 

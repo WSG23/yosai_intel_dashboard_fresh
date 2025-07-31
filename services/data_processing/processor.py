@@ -11,12 +11,12 @@ import pandas as pd
 from config.constants import DEFAULT_CHUNK_SIZE
 from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
-from unicode_toolkit import safe_encode_text
 from monitoring.data_quality_monitor import (
     DataQualityMetrics,
     get_data_quality_monitor,
 )
 from services.streaming import StreamingService
+from unicode_toolkit import safe_encode_text
 from validation.security_validator import SecurityValidator
 
 if TYPE_CHECKING:  # pragma: no cover - used for type hints only
