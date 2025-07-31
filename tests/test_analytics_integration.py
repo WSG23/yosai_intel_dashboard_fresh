@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from services import create_analytics_service, get_analytics_service
-from yosai_intel_dashboard.models.base import ModelFactory
+from yosai_intel_dashboard.src.core.domain.entities import ModelFactory
 
 
 def test_analytics_service_creation():

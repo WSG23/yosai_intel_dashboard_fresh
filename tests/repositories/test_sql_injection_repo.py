@@ -31,7 +31,7 @@ if "utils.unicode_handler" not in sys.modules:
     sys.modules["utils.unicode_handler"] = unicode_mod
 
 # Map project modules into the expected namespace if they aren't installed
-if "yosai_intel_dashboard.models.entities" not in sys.modules:
+if "yosai_intel_dashboard.src.core.domain.entities" not in sys.modules:
     sys.modules.setdefault(
         "yosai_intel_dashboard",
         importlib.util.module_from_spec(
@@ -39,16 +39,16 @@ if "yosai_intel_dashboard.models.entities" not in sys.modules:
         ),
     )
     entities_stub = importlib.util.module_from_spec(
-        importlib.machinery.ModuleSpec("yosai_intel_dashboard.models.entities", None)
+        importlib.machinery.ModuleSpec("yosai_intel_dashboard.src.core.domain.entities", None)
     )
     enums_stub = importlib.util.module_from_spec(
-        importlib.machinery.ModuleSpec("yosai_intel_dashboard.models.enums", None)
+        importlib.machinery.ModuleSpec("yosai_intel_dashboard.src.core.domain.value_objects", None)
     )
     sys.modules["yosai_intel_dashboard.models"] = importlib.util.module_from_spec(
         importlib.machinery.ModuleSpec("yosai_intel_dashboard.models", None)
     )
-    sys.modules["yosai_intel_dashboard.models.entities"] = entities_stub
-    sys.modules["yosai_intel_dashboard.models.enums"] = enums_stub
+    sys.modules["yosai_intel_dashboard.src.core.domain.entities"] = entities_stub
+    sys.modules["yosai_intel_dashboard.src.core.domain.value_objects"] = enums_stub
 
     class AccessResult(enum.Enum):
         GRANTED = "granted"
@@ -91,8 +91,8 @@ if "yosai_intel_dashboard.models.entities" not in sys.modules:
     enums_stub.DoorType = DoorType
 
 from repositories.implementations import AccessEventRepository, PersonRepository
-from yosai_intel_dashboard.models.entities import AccessEvent, Person
-from yosai_intel_dashboard.models.enums import AccessResult, BadgeStatus
+from yosai_intel_dashboard.src.core.domain.entities import AccessEvent, Person
+from yosai_intel_dashboard.src.core.domain.value_objects import AccessResult, BadgeStatus
 
 
 class RecordingConn:
