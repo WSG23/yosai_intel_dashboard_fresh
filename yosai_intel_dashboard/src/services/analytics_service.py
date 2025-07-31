@@ -30,17 +30,15 @@ except ImportError:  # pragma: no cover - for Python <3.12
     from typing_extensions import override
 
 import pandas as pd
-
-from config.dynamic_config import dynamic_config
 from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
 from core.di_decorators import inject, injectable
 from core.protocols import (
     AnalyticsServiceProtocol,
-    ConfigurationProtocol,
     DatabaseProtocol,
     EventBusProtocol,
     StorageProtocol,
 )
+from core.interfaces import ConfigProviderProtocol
 from services.analytics.calculator import Calculator
 from services.analytics.orchestrator import AnalyticsOrchestrator
 from services.analytics.protocols import DataProcessorProtocol
@@ -65,14 +63,6 @@ from yosai_intel_dashboard.models.ml import ModelRegistry
 _cache_manager = InMemoryCacheManager(CacheConfig())
 
 
-class ConfigProviderProtocol(Protocol):
-    """Provide configuration values to services."""
-
-    def get_database_config(self) -> Any:
-        """Return the database configuration."""
-        ...
-
-
 class AnalyticsProviderProtocol(Protocol):
     """Basic analytics provider interface."""
 
@@ -87,29 +77,7 @@ class AnalyticsProviderProtocol(Protocol):
         ...
 
 
-def ensure_analytics_config():
-    """Emergency fix to ensure analytics configuration exists."""
-    try:
-        from config.dynamic_config import dynamic_config
-
-        if not hasattr(dynamic_config, "analytics"):
-            from config.constants import AnalyticsConstants
-
-            dynamic_config.analytics = AnalyticsConstants()
-    except (ImportError, AttributeError) as exc:
-        logger.error(f"Failed to ensure analytics configuration: {exc}")
-
-
 logger = logging.getLogger(__name__)
-
-ensure_analytics_config()
-
-# Thresholds used for row count sanity checks
-ROW_LIMIT_WARNING = dynamic_config.analytics.row_limit_warning
-"""Warning threshold when exactly 150 rows are returned."""
-
-LARGE_DATA_THRESHOLD = dynamic_config.analytics.large_data_threshold
-"""Row count above which data is considered large."""
 
 
 class DataSourceRouter:
@@ -147,7 +115,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self,
         database: DatabaseProtocol | None = None,
         data_processor: DataProcessorProtocol | None = None,
-        config: ConfigurationProtocol | None = None,
+        config: ConfigProviderProtocol | None = None,
         event_bus: EventBusProtocol | None = None,
         storage: StorageProtocol | None = None,
         upload_data_service: UploadDataService | None = None,
@@ -482,7 +450,9 @@ class AnalyticsService(AnalyticsServiceProtocol):
         record = self.model_registry.get_model(name, active_only=True)
         if record is None:
             return None
-        dest = Path(destination_dir or dynamic_config.analytics.ml_models_path)
+        models_path = getattr(self.config, "analytics", None)
+        models_path = getattr(models_path, "ml_models_path", "models/ml")
+        dest = Path(destination_dir or models_path)
         dest = dest / name / record.version
         dest.mkdir(parents=True, exist_ok=True)
         local_path = dest / os.path.basename(record.storage_uri)

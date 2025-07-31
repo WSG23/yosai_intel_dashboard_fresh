@@ -51,6 +51,9 @@ async_module = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
 spec.loader.exec_module(async_module)
 AsyncFileProcessor = async_module.AsyncFileProcessor
+cfg = types.SimpleNamespace(
+    analytics=types.SimpleNamespace(chunk_size=2, max_memory_mb=1024)
+)
 
 
 def test_async_file_processor_progress(tmp_path):
@@ -58,7 +61,7 @@ def test_async_file_processor_progress(tmp_path):
     path = tmp_path / "data.csv"
     df.to_csv(path, index=False)
 
-    processor = AsyncFileProcessor(chunk_size=2)
+    processor = AsyncFileProcessor(chunk_size=2, config=cfg)
 
     async def job(progress):
         return await processor.load_csv(path, progress_callback=progress)
@@ -85,7 +88,7 @@ def test_read_uploaded_file_outside_loop(tmp_path):
     df = DataFrameBuilder().add_column("a", range(2)).build()
     content = UploadFileBuilder().with_dataframe(df).as_base64()
 
-    processor = AsyncFileProcessor()
+    processor = AsyncFileProcessor(config=cfg)
     loaded, err = asyncio.run(processor.read_uploaded_file(content, "sample.csv"))
 
     assert err == ""
@@ -97,7 +100,7 @@ async def test_read_uploaded_file_inside_loop(tmp_path):
     df = DataFrameBuilder().add_column("a", range(2)).build()
     content = UploadFileBuilder().with_dataframe(df).as_base64()
 
-    processor = AsyncFileProcessor()
+    processor = AsyncFileProcessor(config=cfg)
     loaded, err = await processor.read_uploaded_file(content, "sample.csv")
 
     assert err == ""
@@ -108,7 +111,7 @@ def test_process_file_async(tmp_path):
     df = DataFrameBuilder().add_column("a", range(3)).build()
     content = UploadFileBuilder().with_dataframe(df).as_base64()
 
-    processor = AsyncFileProcessor()
+    processor = AsyncFileProcessor(config=cfg)
     job_id = processor.process_file_async(content, "sample.csv")
 
     last = 0

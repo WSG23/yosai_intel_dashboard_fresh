@@ -36,3 +36,22 @@ class AnalyticsProviderProtocol(Protocol):
     def get_metrics(self) -> Dict[str, Any]:
         """Return computed analytics metrics."""
         ...
+
+
+class ConfigProviderProtocol(Protocol):
+    """Provide direct access to configuration objects."""
+
+    @property
+    @abstractmethod
+    def analytics(self) -> Any:
+        """Return analytics configuration object."""
+
+    @property
+    @abstractmethod
+    def database(self) -> Any:
+        """Return database configuration object."""
+
+    @property
+    @abstractmethod
+    def security(self) -> Any:
+        """Return security configuration object."""

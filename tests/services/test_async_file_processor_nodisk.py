@@ -52,6 +52,7 @@ async_mod = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
 spec.loader.exec_module(async_mod)
 AsyncFileProcessor = async_mod.AsyncFileProcessor
+cfg = config_mod.dynamic_config
 
 
 def _setup_temp_patches(monkeypatch, stored_data):
@@ -96,7 +97,7 @@ def test_process_file_csv_no_disk(monkeypatch):
 
     monkeypatch.setattr(pd, "read_csv", fake_read_csv)
 
-    proc = AsyncFileProcessor()
+    proc = AsyncFileProcessor(config=cfg)
     progress = []
     result = asyncio.run(
         proc.process_file(
@@ -127,7 +128,7 @@ def test_process_file_excel_no_disk(monkeypatch):
 
     monkeypatch.setattr(pd, "read_excel", fake_read_excel)
 
-    proc = AsyncFileProcessor()
+    proc = AsyncFileProcessor(config=cfg)
     progress = []
     result = asyncio.run(
         proc.process_file(
@@ -155,7 +156,7 @@ def test_process_file_json_no_disk(monkeypatch):
 
     monkeypatch.setattr(pd, "read_json", fake_read_json)
 
-    proc = AsyncFileProcessor()
+    proc = AsyncFileProcessor(config=cfg)
     progress = []
     result = asyncio.run(
         proc.process_file(

@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, Generator, Optional
 
-from config.dynamic_config import dynamic_config
+from core.interfaces import ConfigProviderProtocol
 from yosai_framework.service import BaseService
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ class StreamingService(BaseService):
 
     def __init__(self, config: Optional[Any] = None) -> None:
         super().__init__("streaming", "")
-        self.config = config or getattr(dynamic_config, "streaming", None)
+        self.config = getattr(config, "streaming", config)
         self.producer = None
         self.consumer = None
         self._client = None
