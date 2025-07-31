@@ -1,8 +1,8 @@
 import pytest
-from pages.greetings.callbacks import register_callbacks
+from yosai_intel_dashboard.src.pages.greetings.callbacks import register_callbacks
 
-from services.greeting import GreetingService
-from simple_di import ServiceContainer
+from yosai_intel_dashboard.src.services.greeting import GreetingService
+from yosai_intel_dashboard.src.simple_di import ServiceContainer
 
 pytestmark = pytest.mark.usefixtures("fake_dash")
 

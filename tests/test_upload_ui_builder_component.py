@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from components.ui_builder import UploadUIBuilder
+from yosai_intel_dashboard.src.components.ui_builder import UploadUIBuilder
 
 pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 

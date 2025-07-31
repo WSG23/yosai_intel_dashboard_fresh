@@ -90,12 +90,16 @@ def test_build_device_mappings_ai(monkeypatch):
     monkeypatch.setattr(ai_mapping_store, "all", lambda: ai_map)
     usvc = DummyUploadService({})
     monkeypatch.setattr(usvc, "auto_apply_learned_mappings", lambda df, fn: False)
-    sdm_stub = types.ModuleType("components.simple_device_mapping")
+    sdm_stub = types.ModuleType(
+        "yosai_intel_dashboard.src.components.simple_device_mapping"
+    )
     sdm_stub.generate_ai_device_defaults = lambda df, profile="auto": None
-    components_pkg = types.ModuleType("components")
+    components_pkg = types.ModuleType("yosai_intel_dashboard.src.components")
     components_pkg.simple_device_mapping = sdm_stub
-    sys.modules["components"] = components_pkg
-    sys.modules["components.simple_device_mapping"] = sdm_stub
+    sys.modules["yosai_intel_dashboard.src.components"] = components_pkg
+    sys.modules[
+        "yosai_intel_dashboard.src.components.simple_device_mapping"
+    ] = sdm_stub
     mapping = build_device_mappings("f.csv", df, dsvc, usvc)
     assert mapping["dev"]["source"] == "ai_suggested"
 
@@ -117,11 +121,15 @@ def test_build_ai_device_mappings_helper(monkeypatch):
     monkeypatch.setattr(ai_mapping_store, "all", lambda: ai_map)
     usvc = DummyUploadService({})
     monkeypatch.setattr(usvc, "auto_apply_learned_mappings", lambda df, fn: False)
-    sdm_stub = types.ModuleType("components.simple_device_mapping")
+    sdm_stub = types.ModuleType(
+        "yosai_intel_dashboard.src.components.simple_device_mapping"
+    )
     sdm_stub.generate_ai_device_defaults = lambda df, profile="auto": None
-    components_pkg = types.ModuleType("components")
+    components_pkg = types.ModuleType("yosai_intel_dashboard.src.components")
     components_pkg.simple_device_mapping = sdm_stub
-    sys.modules["components"] = components_pkg
-    sys.modules["components.simple_device_mapping"] = sdm_stub
+    sys.modules["yosai_intel_dashboard.src.components"] = components_pkg
+    sys.modules[
+        "yosai_intel_dashboard.src.components.simple_device_mapping"
+    ] = sdm_stub
     mapping = build_ai_device_mappings(df, "f.csv", usvc)
     assert mapping["dev"]["source"] == "ai_suggested"

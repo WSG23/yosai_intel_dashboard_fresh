@@ -11,7 +11,7 @@ Call `register_callbacks` during application startup to enable the interactive
 features. The function expects a `TrulyUnifiedCallbacks` instance:
 
 ```python
-from components.column_verification import register_callbacks
+from yosai_intel_dashboard.src.components.column_verification import register_callbacks
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 callbacks = TrulyUnifiedCallbacks(app)

@@ -21,7 +21,9 @@ class AIColumnMapperAdapter:
     ) -> None:
 
         if adapter is None:
-            from components.plugin_adapter import ComponentPluginAdapter
+            from yosai_intel_dashboard.src.components.plugin_adapter import (
+                ComponentPluginAdapter,
+            )
 
             adapter = ComponentPluginAdapter()
         if container is None:

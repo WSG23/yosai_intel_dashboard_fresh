@@ -85,7 +85,9 @@ except Exception:  # pragma: no cover - fallback stub
 
 
 try:
-    from components.column_verification import ColumnVerifierProtocol
+    from yosai_intel_dashboard.src.components.column_verification import (
+        ColumnVerifierProtocol,
+    )
 except Exception:  # pragma: no cover - fallback stub to avoid heavy imports
     from typing import Protocol
 

@@ -125,7 +125,7 @@ def test_finalize_upload_results_done(monkeypatch):
         cb.task_queue, "clear_task", lambda tid: called.setdefault("tid", tid)
     )
     monkeypatch.setattr(
-        "components.simple_device_mapping.generate_ai_device_defaults",
+        "yosai_intel_dashboard.src.components.simple_device_mapping.generate_ai_device_defaults",
         lambda df, profile="auto": called.setdefault("gen", True),
     )
     out = cb.finalize_upload_results(1, "tid")

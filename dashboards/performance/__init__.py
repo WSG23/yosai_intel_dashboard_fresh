@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import html
 
-from components.analytics import (
+from yosai_intel_dashboard.src.components.analytics import (
     create_anomaly_trend_graph,
     create_baseline_table,
     create_mitre_attack_table,

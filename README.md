@@ -103,7 +103,7 @@ python -m tools.debug assets
 You can override the default links and icons when creating the navbar:
 
 ```python
-from components.ui.navbar import create_navbar_layout
+from yosai_intel_dashboard.src.components.ui.navbar import create_navbar_layout
 
 links = [('/admin', 'Admin'), ('/reports', 'Reports')]
 icons = ['fa-user-shield', 'fa-file-alt']

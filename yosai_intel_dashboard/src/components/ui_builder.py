@@ -7,7 +7,7 @@ import dash.html as html
 import dash_bootstrap_components as dbc
 import pandas as pd
 
-from components.file_preview import create_file_preview_ui
+from .file_preview import create_file_preview_ui
 from file_processing import create_file_preview
 
 logger = logging.getLogger(__name__)
