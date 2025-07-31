@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+
 def _default_ai_confidence_threshold() -> float:
     try:
         from core.config import get_ai_confidence_threshold

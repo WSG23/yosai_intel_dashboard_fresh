@@ -24,7 +24,7 @@ sys.path.insert(0, safe_str(PROJECT_ROOT))
 try:
     print("🔍 Testing base code imports...")
 
-    from config.service_registration import register_upload_services
+    from services.upload.service_registration import register_upload_services
 
     print("✅ Service registration imported")
 

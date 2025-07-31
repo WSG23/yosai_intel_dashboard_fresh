@@ -26,6 +26,7 @@ from dash.dependencies import Input, Output, State
 
 from .callback_events import CallbackEvent
 from .callback_registry import CallbackRegistry, ComponentCallbackManager
+from .dash_callback_middleware import wrap_callback
 from .error_handling import ErrorSeverity, error_handler, with_retry
 
 logger = logging.getLogger(__name__)
@@ -64,7 +65,9 @@ class DashCallbackRegistration:
 
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
-    from .plugins.callback_unifier import CallbackUnifier
+    from validation.security_validator import SecurityValidator
+
+    from .plugins.callback_unifier import CallbackUnifier  # noqa: F401
 
 
 class TrulyUnifiedCallbacks:
@@ -157,12 +160,13 @@ class TrulyUnifiedCallbacks:
                     if key in self._output_map and not allow_dup_output:
                         logger.warning(f"Output '{key}' conflict - allowing duplicate")
 
+                wrapped_callback = wrap_callback(func, outputs_tuple, self.security)
                 wrapped = self.app.callback(
                     outputs,
                     inputs_arg if inputs_arg is not None else inputs_tuple,
                     states_arg if states_arg is not None else states_tuple,
                     **kwargs,
-                )(func)
+                )(wrapped_callback)
 
                 reg = DashCallbackRegistration(
                     callback_id=callback_id,
@@ -527,7 +531,7 @@ class TrulyUnifiedCallbacks:
             manager.register_all()
 
     # Compatibility wrappers -------------------------------------------
-    register_callback = register_event
+    register_callback = register_event  # noqa: F811
     unregister_callback = unregister_event
     trigger = trigger_event
     trigger_async = trigger_event_async

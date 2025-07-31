@@ -10,12 +10,12 @@ core_container_stub.container = types.SimpleNamespace(
     get=lambda name: None,
     register_singleton=lambda *args, **kwargs: None,
 )
-service_reg_stub = types.ModuleType("config.service_registration")
+service_reg_stub = types.ModuleType("services.upload.service_registration")
 service_reg_stub.register_upload_services = lambda c: c.register_singleton(
     "uploader", object()
 )
 sys.modules.setdefault("core.container", core_container_stub)
-sys.modules.setdefault("config.service_registration", service_reg_stub)
+sys.modules.setdefault("services.upload.service_registration", service_reg_stub)
 
 # Allow importing submodules from the real "services" package
 services_mod = sys.modules.setdefault("services", types.ModuleType("services"))

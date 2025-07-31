@@ -61,6 +61,7 @@ data/learned_mappings.json
 !docs/event_ingestion_openapi.json
 !package.json
 !package-lock.json
+!yosai_intel_dashboard/src/adapters/ui/tsconfig.json
 !dashboards/grafana/*.json
 !dashboards/performance/*.json
 !config/schema.json

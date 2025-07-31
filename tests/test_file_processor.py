@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Test file processor without UI dependencies"""
+from __future__ import annotations
+
 import io
 
 import pandas as pd
 import pytest
 
+from file_processing import create_file_preview
 from services.data_processing.file_processor import (
     UnicodeFileProcessor,
-    create_file_preview,
     process_uploaded_file,
 )
 
@@ -24,7 +26,7 @@ def test_unicode_processor_isolation():
     # Test DataFrame sanitization
     df = pd.DataFrame({"col": ["normal", "bad\ud800\udc00text"]})
     clean_df = processor.sanitize_dataframe_unicode(df)
-    assert clean_df["col"].iloc[1] == "bad\ud800\udc00text"
+    assert clean_df["col"].iloc[1] == "bad\U00010000text"
 
 
 def test_preview_without_ui():

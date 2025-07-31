@@ -61,9 +61,9 @@
     "eslint-config-prettier": "^9.1.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --coverage --watchAll=false",
+    "start": "cd yosai_intel_dashboard/src/adapters/ui && react-scripts start",
+    "build": "cd yosai_intel_dashboard/src/adapters/ui && react-scripts build",
+    "test": "cd yosai_intel_dashboard/src/adapters/ui && react-scripts test --coverage --watchAll=false",
     "eject": "react-scripts eject",
     "build-css": "sh scripts/build_css.sh",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",

@@ -8,6 +8,11 @@ import pandas as pd
 
 from core.callback_events import CallbackEvent
 from core.callbacks import UnifiedCallbackManager
+from core.error_handling import (
+    ErrorCategory,
+    ErrorSeverity,
+    with_error_handling,
+)
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 from .format_detector import FormatDetector, UnsupportedFormatError
@@ -160,7 +165,9 @@ class DataProcessor:
             "denied": 0,
         }
 
-        normalized = df["access_result"].astype(str).str.strip().str.lower().str.rstrip(".")
+        normalized = (
+            df["access_result"].astype(str).str.strip().str.lower().str.rstrip(".")
+        )
         df["access_result_code"] = normalized.map(mapping)
         unknown = df[df["access_result_code"].isna()]["access_result"].unique()
         for val in unknown:
@@ -251,49 +258,43 @@ class DataProcessor:
             )
             raise
 
+    @with_error_handling(
+        category=ErrorCategory.FILE_PROCESSING,
+        severity=ErrorSeverity.MEDIUM,
+    )
     def _apply_timestamp_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Normalize timestamps with error handling."""
-        try:
-            return self._normalize_timestamps(df)
-        except Exception as exc:  # pragma: no cover - log and continue
-            self.unified_callbacks.trigger(
-                CallbackEvent.SYSTEM_WARNING,
-                "timestamp_normalization",
-                {"error": str(exc)},
-            )
-            return df
+        """Normalize timestamps with unified error handling."""
+        return self._normalize_timestamps(df)
 
+    @with_error_handling(
+        category=ErrorCategory.FILE_PROCESSING,
+        severity=ErrorSeverity.MEDIUM,
+    )
     def _apply_id_standardization(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Standardize IDs with error handling."""
-        try:
-            return self._standardize_ids(df)
-        except Exception as exc:  # pragma: no cover - log and continue
-            self.unified_callbacks.trigger(
-                CallbackEvent.SYSTEM_WARNING,
-                "id_standardization",
-                {"error": str(exc)},
-            )
-            return df
+        """Standardize IDs with unified error handling."""
+        return self._standardize_ids(df)
 
+    @with_error_handling(
+        category=ErrorCategory.FILE_PROCESSING,
+        severity=ErrorSeverity.MEDIUM,
+    )
     def _apply_device_enrichment(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Enrich device information with error handling."""
-        try:
-            return self._enrich_devices(df)
-        except Exception as exc:  # pragma: no cover - log and continue
-            self.unified_callbacks.trigger(
-                CallbackEvent.SYSTEM_ERROR,
-                "device_enrichment",
-                {"error": str(exc)},
-            )
-            return df
+        """Enrich device information with unified error handling."""
+        return self._enrich_devices(df)
 
     # Main processing pipeline
     def process(self, file_path: str) -> pd.DataFrame:
         df = self.load_file(file_path)
 
-        df = self._apply_timestamp_normalization(df)
-        df = self._apply_id_standardization(df)
-        df = self._apply_device_enrichment(df)
+        result = self._apply_timestamp_normalization(df)
+        if result is not None:
+            df = result
+        result = self._apply_id_standardization(df)
+        if result is not None:
+            df = result
+        result = self._apply_device_enrichment(df)
+        if result is not None:
+            df = result
 
         df = self._enum_access_result(df)
         df = self._hash_event_fingerprint(df)

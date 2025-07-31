@@ -68,9 +68,9 @@ if os.environ.get("SPEC_STUBS"):
     container_stub = types.SimpleNamespace(
         has=lambda name: True, get=lambda name, *a, **k: None
     )
-    service_registration_stub = types.ModuleType("config.service_registration")
+    service_registration_stub = types.ModuleType("services.upload.service_registration")
     service_registration_stub.register_upload_services = lambda container: None
-    sys.modules.setdefault("config.service_registration", service_registration_stub)
+    sys.modules.setdefault("services.upload.service_registration", service_registration_stub)
 
     core_container_stub = types.ModuleType("core.container")
     core_container_stub.container = container_stub

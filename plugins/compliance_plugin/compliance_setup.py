@@ -7,7 +7,6 @@ import logging
 from typing import Any, Dict
 
 from controllers.compliance_controller import register_compliance_routes
-from yosai_intel_dashboard.models.compliance import CREATE_COMPLIANCE_TABLES_SQL
 
 from core.audit_logger import create_audit_logger
 from core.container import Container
@@ -15,6 +14,7 @@ from core.protocols import DatabaseProtocol
 from database.secure_exec import execute_command, execute_query
 from services.compliance.consent_service import create_consent_service
 from services.compliance.dsar_service import create_dsar_service
+from yosai_intel_dashboard.models.compliance import CREATE_COMPLIANCE_TABLES_SQL
 
 logger = logging.getLogger(__name__)
 
@@ -167,9 +167,9 @@ def consent_required(consent_type: str, jurisdiction: str = "EU"):
         def wrapper(*args, **kwargs):
             from flask import jsonify
             from flask_login import current_user
-            from yosai_intel_dashboard.models.compliance import ConsentType
 
             from core.container import Container
+            from yosai_intel_dashboard.models.compliance import ConsentType
 
             try:
                 container = Container()

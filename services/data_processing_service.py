@@ -18,13 +18,17 @@ class DataProcessingService(DataProcessorProtocol):
     def clean_data(self, data: pd.DataFrame, rules: dict | None = None) -> pd.DataFrame:
         return self._processor.clean_data(data, rules)
 
-    def aggregate_data(self, data: pd.DataFrame, groupby: list[str], metrics: list[str]) -> pd.DataFrame:
+    def aggregate_data(
+        self, data: pd.DataFrame, groupby: list[str], metrics: list[str]
+    ) -> pd.DataFrame:
         return self._processor.aggregate_data(data, groupby, metrics)
 
     def validate_data_quality(self, data: pd.DataFrame) -> dict:
         return self._processor.validate_data_quality(data)
 
-    def enrich_data(self, data: pd.DataFrame, enrichment_sources: list[str]) -> pd.DataFrame:
+    def enrich_data(
+        self, data: pd.DataFrame, enrichment_sources: list[str]
+    ) -> pd.DataFrame:
         return self._processor.enrich_data(data, enrichment_sources)
 
     # compatibility helper used by some tests

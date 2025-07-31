@@ -16,7 +16,9 @@ class ReportGenerationService(ReportGeneratorProtocol):
     def __init__(self, generator: SummaryReportGenerator | None = None) -> None:
         self._generator = generator or SummaryReportGenerator()
 
-    def generate_summary_report(self, data: pd.DataFrame, template: str = "default") -> Dict[str, Any]:
+    def generate_summary_report(
+        self, data: pd.DataFrame, template: str = "default"
+    ) -> Dict[str, Any]:
         return self._generator.analyze_patterns(data)
 
     def generate_detailed_report(self, data: pd.DataFrame, format: str = "html") -> str:
@@ -25,11 +27,15 @@ class ReportGenerationService(ReportGeneratorProtocol):
             return json.dumps(summary)
         return str(summary)
 
-    def generate_trend_analysis(self, data: pd.DataFrame, time_column: str) -> Dict[str, Any]:
+    def generate_trend_analysis(
+        self, data: pd.DataFrame, time_column: str
+    ) -> Dict[str, Any]:
         counts = data[time_column].value_counts().sort_index()
         return {"trend": counts.to_dict()}
 
-    def export_report(self, report_data: Dict[str, Any], format: str, filename: str) -> str:
+    def export_report(
+        self, report_data: Dict[str, Any], format: str, filename: str
+    ) -> str:
         path = Path(filename)
         if format == "json":
             path.write_text(json.dumps(report_data))

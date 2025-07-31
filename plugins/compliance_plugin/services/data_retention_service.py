@@ -9,11 +9,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Protocol
 from uuid import uuid4
 
-from yosai_intel_dashboard.models.compliance import DataSensitivityLevel
-
 from core.audit_logger import ComplianceAuditLogger
 from core.protocols import DatabaseProtocol
 from database.secure_exec import execute_command, execute_query
+from yosai_intel_dashboard.models.compliance import DataSensitivityLevel
 
 logger = logging.getLogger(__name__)
 

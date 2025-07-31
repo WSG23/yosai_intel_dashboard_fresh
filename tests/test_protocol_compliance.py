@@ -247,8 +247,8 @@ class TestProtocolCompliance:
         from services.analytics.protocols import (
             DataLoadingProtocol,
             DataProcessorProtocol,
-            ReportGeneratorProtocol,
             PublishingProtocol,
+            ReportGeneratorProtocol,
         )
 
         assert isinstance(

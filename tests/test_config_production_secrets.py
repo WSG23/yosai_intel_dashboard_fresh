@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 from config import create_config_manager

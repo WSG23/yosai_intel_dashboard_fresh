@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import AsyncIterator, List
 
 import asyncpg
+from config.constants import MIGRATION_CHUNK_SIZE
 
 from ..framework import MigrationStrategy
 
@@ -11,7 +12,7 @@ class GatewayMigration(MigrationStrategy):
     """Migrate gateway related tables."""
 
     TABLE = "gateway_logs"
-    CHUNK_SIZE = 1000
+    CHUNK_SIZE = MIGRATION_CHUNK_SIZE
 
     def __init__(self, target_dsn: str) -> None:
         super().__init__(self.TABLE, target_dsn)

@@ -90,7 +90,9 @@ class DataLoadingProtocol(Protocol):
         ...
 
     @abstractmethod
-    def load_patterns_dataframe(self, data_source: str | None) -> tuple[pd.DataFrame, int]:
+    def load_patterns_dataframe(
+        self, data_source: str | None
+    ) -> tuple[pd.DataFrame, int]:
         """Return dataframe and original row count for pattern analysis."""
         ...
 

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import html
-import re
 import os
+import re
 from typing import Iterable
 
-from core.exceptions import ValidationError
 from config.dynamic_config import dynamic_config
+from core.exceptions import ValidationError
 
 from .core import ValidationResult
 from .file_validator import FileValidator
