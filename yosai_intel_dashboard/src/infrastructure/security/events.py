@@ -3,12 +3,12 @@
 from typing import Any
 
 from core.callback_events import CallbackEvent
-from core.callbacks import UnifiedCallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 SecurityEvent = CallbackEvent
 
 # Default callback implementation now uses the unified manager
-security_unified_callbacks: UnifiedCallbackManager = UnifiedCallbackManager()
+security_unified_callbacks: TrulyUnifiedCallbacks = TrulyUnifiedCallbacks()
 
 
 def emit_security_event(event: SecurityEvent, data: dict | None = None) -> None:

@@ -61,11 +61,9 @@ events.register_callback(CallbackEvent.ANALYSIS_COMPLETE, on_complete)
 
 ## Grouped Operations
 
-`UnifiedCallbackManager` (an alias of `TrulyUnifiedCallbacks` exposed from
-`core.callbacks`) can execute a series of operations sequentially. New code
-should import `TrulyUnifiedCallbacks` directly, but the alias remains for
-backwards compatibility. This is useful when a Dash callback needs to
-orchestrate multiple steps.
+`TrulyUnifiedCallbacks` can execute a series of operations sequentially. This is
+useful when a Dash callback needs to orchestrate multiple steps without
+manually chaining functions.
 
 
 ```python

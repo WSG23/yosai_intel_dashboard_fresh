@@ -6,7 +6,7 @@ from flask import Response, request
 
 from config.dynamic_config import dynamic_config
 from core.callback_events import CallbackEvent
-from core.callbacks import UnifiedCallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.exceptions import ValidationError
 from validation.security_validator import SecurityValidator
 
@@ -46,7 +46,7 @@ class ValidationMiddleware:
         self.orchestrator = ValidationOrchestrator([_Adapter()])
         self.max_body_size = dynamic_config.security.max_upload_mb * 1024 * 1024
 
-    def handle_registers(self, manager: UnifiedCallbackManager) -> None:
+    def handle_registers(self, manager: TrulyUnifiedCallbacks) -> None:
         """Register validation hooks with the callback manager."""
         manager.handle_register(CallbackEvent.BEFORE_REQUEST, self.validate_request)
         manager.handle_register(CallbackEvent.AFTER_REQUEST, self.sanitize_response)
