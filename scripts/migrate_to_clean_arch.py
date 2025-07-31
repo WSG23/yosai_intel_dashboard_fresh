@@ -23,6 +23,8 @@ MOVE_MAP = {
     "security": "infrastructure/security",
     "api": "adapters/api",
     "plugins": "adapters/api/plugins",
+    "mapping": "mapping",
+    "database": "database",
 }
 
 
