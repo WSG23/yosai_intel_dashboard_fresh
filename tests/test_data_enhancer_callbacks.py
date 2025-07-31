@@ -86,9 +86,12 @@ def test_register_callbacks(fake_dash, monkeypatch):
 
             return decorator
 
-    monkeypatch.setattr(
-        "services.data_enhancer.callbacks.TrulyUnifiedCallbacks", DummyCoord
-    )
+    core_stub = types.ModuleType("core")
+    tu_mod = types.ModuleType("core.truly_unified_callbacks")
+    tu_mod.TrulyUnifiedCallbacks = DummyCoord
+    core_stub.truly_unified_callbacks = tu_mod
+    sys.modules["core"] = core_stub
+    sys.modules["core.truly_unified_callbacks"] = tu_mod
 
     from services.data_enhancer.callbacks import register_callbacks
 
