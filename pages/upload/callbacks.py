@@ -5,13 +5,13 @@ from __future__ import annotations
 from dash import Input, Output
 from dash.exceptions import PreventUpdate
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from services.upload.controllers.upload_controller import UnifiedUploadController
+from services.upload.protocols import UploadControllerProtocol
 
 
 def register_callbacks(app, container) -> None:
     """Register upload callbacks using the provided Dash *app*."""
     callbacks = TrulyUnifiedCallbacks(app)
-    controller = UnifiedUploadController()
+    controller: UploadControllerProtocol = container.get("upload_controller")
 
     @callbacks.register_handler(
         [Output("to-column-map-btn", "disabled"), Output("uploaded-df-store", "data")],

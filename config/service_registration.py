@@ -10,6 +10,7 @@ from services.upload.protocols import (
     UploadStorageProtocol,
     UploadValidatorProtocol,
 )
+from services.upload.controllers.upload_controller import UnifiedUploadController
 
 
 def register_upload_services(container: ServiceContainer) -> None:
@@ -74,4 +75,10 @@ def register_upload_services(container: ServiceContainer) -> None:
         "upload_processor",
         upload_processor,
         protocol=UploadProcessingServiceProtocol,
+    )
+
+    container.register_transient(
+        "upload_controller",
+        UnifiedUploadController,
+        protocol=UploadControllerProtocol,
     )
