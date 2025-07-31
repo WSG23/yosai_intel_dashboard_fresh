@@ -6,10 +6,14 @@ import types
 import pandas as pd
 import pytest
 
-MODULE_PATH = Path(__file__).resolve().parents[2] / "file_processing" / "data_processor.py"
+MODULE_PATH = (
+    Path(__file__).resolve().parents[2] / "file_processing" / "data_processor.py"
+)
 
 # Provide minimal stubs for core dependencies before loading the module
-callbacks_stub = types.SimpleNamespace(UnifiedCallbackManager=lambda: types.SimpleNamespace(trigger=lambda *a, **k: None))
+callbacks_stub = types.SimpleNamespace(
+    TrulyUnifiedCallbacks=lambda: types.SimpleNamespace(trigger=lambda *a, **k: None)
+)
 truly_stub = types.SimpleNamespace(TrulyUnifiedCallbacks=object)
 cb_events_stub = types.SimpleNamespace(
     CallbackEvent=types.SimpleNamespace(SYSTEM_WARNING=1, SYSTEM_ERROR=2)
@@ -22,12 +26,18 @@ container_stub.get_unicode_processor = lambda: types.SimpleNamespace(
 sys.modules.setdefault("core.callbacks", callbacks_stub)
 sys.modules.setdefault("core.truly_unified_callbacks", truly_stub)
 format_stub = types.ModuleType("file_processing.format_detector")
+
+
 class FormatDetector:
     def __init__(self, *a, **k): ...
     def detect_and_load(self, path, hint=None):
         return pd.read_csv(path), {}
+
+
 class UnsupportedFormatError(Exception):
     pass
+
+
 format_stub.FormatDetector = FormatDetector
 format_stub.UnsupportedFormatError = UnsupportedFormatError
 sys.modules.setdefault("file_processing.format_detector", format_stub)
@@ -41,12 +51,15 @@ sys.modules.setdefault("core.container", container_stub)
 pkg = types.ModuleType("file_processing")
 pkg.__path__ = [str(MODULE_PATH.parent)]
 sys.modules.setdefault("file_processing", pkg)
-spec = importlib.util.spec_from_file_location("file_processing.data_processor", MODULE_PATH)
+spec = importlib.util.spec_from_file_location(
+    "file_processing.data_processor", MODULE_PATH
+)
 dp_mod = importlib.util.module_from_spec(spec)
 sys.modules["file_processing.data_processor"] = dp_mod
 assert spec.loader is not None
 spec.loader.exec_module(dp_mod)
 DataProcessor = dp_mod.DataProcessor
+
 
 def test_process_csv_pipeline(tmp_path: Path, monkeypatch):
     df = pd.DataFrame(

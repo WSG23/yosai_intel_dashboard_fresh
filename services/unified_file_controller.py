@@ -6,13 +6,13 @@ from pathlib import Path
 from typing import Callable, Optional, Sequence
 
 from core.callback_events import CallbackEvent
-from core.callbacks import UnifiedCallbackManager
+from core.callbacks import TrulyUnifiedCallbacks
 from core.unicode import UnicodeProcessor
 from utils.upload_store import UploadedDataStore
 from services.data_processing.file_handler import FileHandler
 
 _logger = logging.getLogger(__name__)
-callback_manager = UnifiedCallbackManager()
+callback_manager = TrulyUnifiedCallbacks()
 
 # Simple in-memory metrics
 _metrics = {
@@ -71,7 +71,6 @@ def process_file_upload(
         "columns": list(df.columns),
         "saved_as": f"{base}.parquet",
     }
-
 
 
 def get_processing_metrics() -> dict:

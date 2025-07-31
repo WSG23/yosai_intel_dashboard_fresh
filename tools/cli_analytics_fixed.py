@@ -14,7 +14,7 @@ sys.path.insert(0, str(project_root))
 
 # Apply callback patch first
 try:
-    from core.callbacks import UnifiedCallbackManager as CallbackManager
+    from core.callbacks import TrulyUnifiedCallbacks as CallbackManager
 
     if hasattr(CallbackManager, "handle_register") and not hasattr(
         CallbackManager, "register_handler"

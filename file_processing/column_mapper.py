@@ -6,7 +6,7 @@ import pandas as pd
 from rapidfuzz import process
 
 from core.callback_events import CallbackEvent
-from core.callbacks import UnifiedCallbackManager
+from core.callbacks import TrulyUnifiedCallbacks
 
 REQUIRED_COLUMNS = ["person_id", "door_id", "access_result", "timestamp"]
 OPTIONAL_COLUMNS = ["device_name", "location"]
@@ -17,10 +17,10 @@ def map_columns(
     canonical_names: Dict[str, Iterable[str]],
     *,
     fuzzy_threshold: int = 80,
-    controller: Optional[UnifiedCallbackManager] = None,
+    controller: Optional[TrulyUnifiedCallbacks] = None,
 ) -> pd.DataFrame:
     """Rename columns in ``df`` using provided mapping rules."""
-    controller = controller or UnifiedCallbackManager()
+    controller = controller or TrulyUnifiedCallbacks()
     df_out = df.copy()
     reverse: Dict[str, str] = {}
     for canon, aliases in canonical_names.items():

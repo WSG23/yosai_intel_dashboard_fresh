@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 
 from core.callback_events import CallbackEvent
-from core.callbacks import UnifiedCallbackManager as CallbackManager
+from core.callbacks import TrulyUnifiedCallbacks as CallbackManager
 from file_processing.column_mapper import map_columns
 
 

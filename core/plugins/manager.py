@@ -9,7 +9,7 @@ import time
 from typing import Any, Dict, List
 
 from config import ConfigManager
-from core.callbacks import UnifiedCallbackManager
+from core.callbacks import TrulyUnifiedCallbacks
 from core.protocols.plugin import (
     CallbackPluginProtocol,
     PluginPriority,
@@ -199,7 +199,7 @@ class PluginManager:
             return False
 
     def register_plugin_callbacks(
-        self, app: Any, manager: UnifiedCallbackManager
+        self, app: Any, manager: TrulyUnifiedCallbacks
     ) -> List[Any]:
         """Register callbacks for all loaded plugins"""
         results = []

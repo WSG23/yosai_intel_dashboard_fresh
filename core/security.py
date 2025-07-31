@@ -331,7 +331,7 @@ def rate_limit_decorator(max_requests: int = 100, window_minutes: int = 1):
 def initialize_validation_callbacks() -> None:
     """Set up request validation callbacks on import."""
     try:
-        from core.callbacks import UnifiedCallbackManager
+        from core.callbacks import TrulyUnifiedCallbacks
         from security.validation_middleware import ValidationMiddleware
     except Exception:
         # Optional components may be missing in minimal environments
@@ -339,7 +339,7 @@ def initialize_validation_callbacks() -> None:
 
     try:
         middleware = ValidationMiddleware()
-        manager = UnifiedCallbackManager()
+        manager = TrulyUnifiedCallbacks()
         middleware.handle_registers(manager)
     except Exception as exc:  # pragma: no cover - log and continue
         logging.getLogger(__name__).warning(

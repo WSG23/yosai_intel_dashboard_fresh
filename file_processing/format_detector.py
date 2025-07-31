@@ -6,10 +6,9 @@ from typing import Dict, Iterable, List, Optional, Tuple
 import pandas as pd
 
 from core.callback_events import CallbackEvent
-from core.callbacks import UnifiedCallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.container import get_unicode_processor
 from core.protocols import UnicodeProcessorProtocol
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
 
 class UnsupportedFormatError(Exception):
@@ -26,7 +25,7 @@ class FormatDetector:
         unicode_processor: UnicodeProcessorProtocol | None = None,
     ) -> None:
         self.readers: List = list(readers) if readers else []
-        self.unified_callbacks = UnifiedCallbackManager()
+        self.unified_callbacks = TrulyUnifiedCallbacks()
         self.unicode_processor = unicode_processor or get_unicode_processor()
 
     def detect_and_load(
