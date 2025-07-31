@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from services.registry import get_service
+from core.container import container
 
 __all__ = [
     "get_database_manager",
@@ -13,8 +13,10 @@ __all__ = [
 
 
 def _get_service(name: str):
-    """Safely retrieve optional services from registry."""
-    return get_service(name)
+    """Safely retrieve optional services from the container."""
+    if container.has(name):
+        return container.get(name)
+    return None
 
 
 def get_database_manager():

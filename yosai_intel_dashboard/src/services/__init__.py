@@ -32,7 +32,7 @@ else:
     from .helpers.database_initializer import initialize_database
     from .microservices_architect import MicroservicesArchitect, ServiceBoundary
     from .publishing_service import PublishingService
-    from .registry import get_service
+    from core.container import container
     from .report_generation_service import ReportGenerationService
     from .result_formatting import (
         apply_regular_analysis,
@@ -61,16 +61,18 @@ else:
     else:  # pragma: no cover - optional dependency
         compliance_pkg = None
 
-    # Resolve optional services from the registry
-    FileHandlerService = get_service("FileHandler")
+    # Resolve optional services from the container
+    FileHandlerService = container.get("FileHandler") if container.has("FileHandler") else None
     FILE_HANDLER_AVAILABLE = FileHandlerService is not None
 
-    create_analytics_service = get_service("create_analytics_service")
-    AnalyticsService = get_service("AnalyticsService")
+    create_analytics_service = (
+        container.get("create_analytics_service") if container.has("create_analytics_service") else None
+    )
+    AnalyticsService = container.get("AnalyticsService") if container.has("AnalyticsService") else None
 
     def get_analytics_service():
         """Return a shared :class:`AnalyticsService` instance if available."""
-        getter = get_service("get_analytics_service")
+        getter = container.get("get_analytics_service") if container.has("get_analytics_service") else None
         if getter is None:
             return None
         try:

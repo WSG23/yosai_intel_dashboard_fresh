@@ -3,7 +3,7 @@
 Simplified Models Package
 """
 
-from services import registry
+from core.container import container
 
 from .entities import Door, Facility, Person
 
@@ -28,8 +28,8 @@ def __getattr__(name: str):
     """Dynamically resolve optional model services.
 
     The services for ``BaseModel``, ``AccessEventModel``, ``AnomalyDetectionModel``
-    and ``ModelFactory`` are optional and retrieved from the ``services``
-    registry when first accessed. The resolved value is cached in ``globals`` to
+    and ``ModelFactory`` are optional and retrieved from the dependency injection
+    container when first accessed. The resolved value is cached in ``globals`` to
     avoid repeated lookups.
     """
     if name in {
@@ -38,7 +38,10 @@ def __getattr__(name: str):
         "AnomalyDetectionModel",
         "ModelFactory",
     }:
-        service = registry.get_service(name)
+        if container.has(name):
+            service = container.get(name)
+        else:
+            service = None
         globals()[name] = service
         if name == "BaseModel":
             globals()["BASE_MODELS_AVAILABLE"] = service is not None
