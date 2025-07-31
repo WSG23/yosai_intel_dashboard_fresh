@@ -4,7 +4,7 @@ from typing import Any
 import pandas as pd
 
 from core.config import get_max_display_rows
-from services.upload.utils.file_parser import UnicodeFileProcessor
+from yosai_intel_dashboard.src.services.upload.utils.file_parser import UnicodeFileProcessor
 from yosai_intel_dashboard.src.utils.async_pandas_readers import (
     async_read_csv,
     async_read_excel,

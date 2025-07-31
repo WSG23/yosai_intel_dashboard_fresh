@@ -55,7 +55,7 @@ def test_processor_evaluates_quality(monkeypatch):
         module.Processor = Processor
         sys.modules["services.data_processing.processor"] = module
 
-    from services.data_processing.processor import Processor
+    from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 
     proc = Processor()
     df = pd.DataFrame(

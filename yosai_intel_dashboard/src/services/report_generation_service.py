@@ -6,7 +6,7 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from services.analytics.protocols import ReportGeneratorProtocol
+from yosai_intel_dashboard.src.services.analytics.protocols import ReportGeneratorProtocol
 from services.summary_report_generator import SummaryReportGenerator
 
 

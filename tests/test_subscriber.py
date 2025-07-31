@@ -1,4 +1,4 @@
-from services.analytics.events.subscriber import Subscriber
+from yosai_intel_dashboard.src.services.analytics.events.subscriber import Subscriber
 
 
 class DummyBus:

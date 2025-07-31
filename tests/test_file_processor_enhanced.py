@@ -10,7 +10,7 @@ from services.data_enhancer.mapping_utils import (
     apply_fuzzy_column_matching,
     get_mapping_suggestions,
 )
-from services.data_processing.file_processor import process_uploaded_file
+from yosai_intel_dashboard.src.services.data_processing.file_processor import process_uploaded_file
 from validation.security_validator import SecurityValidator
 
 

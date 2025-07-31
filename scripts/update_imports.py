@@ -14,8 +14,34 @@ ROOT = Path(__file__).resolve().parents[1]
 # repository root, so rewriting them would break imports.  As new
 # packages are migrated they can be added back to this mapping.
 PATTERNS = {
-    r"\bfrom\s+models(\.|\s)": "from models\\1",
-    r"\bimport\s+models(\.|$)": "import models\\1",
+    # Core domain imports
+    r"\bfrom\s+models\.base\s+import": "from yosai_intel_dashboard.src.core.domain.entities.base import",
+    r"\bfrom\s+models\.entities\s+import": "from yosai_intel_dashboard.src.core.domain.entities.entities import",
+    r"\bfrom\s+models\.events\s+import": "from yosai_intel_dashboard.src.core.domain.entities.events import",
+    r"\bfrom\s+models\.enums\s+import": "from yosai_intel_dashboard.src.core.domain.value_objects.enums import",
+
+    # Callback system imports
+    r"\bfrom\s+core\.callbacks\s+import\s+UnifiedCallbackManager": "from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks",
+    r"\bfrom\s+core\.callback_controller\s+import\s+CallbackController": "from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks",
+    r"\bfrom\s+core\.truly_unified_callbacks\s+import\s+TrulyUnifiedCallbacks": "from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks",
+    r"\bfrom\s+core\.callback_events\s+import\s+CallbackEvent": "from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent",
+    r"\bfrom\s+services\.security_callback_controller\s+import": "from yosai_intel_dashboard.src.infrastructure.callbacks.security_controller import",
+
+    # Service imports
+    r"\bfrom\s+services\.analytics_service\s+import": "from yosai_intel_dashboard.src.services.analytics.analytics_service import",
+    r"\bfrom\s+services\.analytics\.": "from yosai_intel_dashboard.src.services.analytics.",
+    r"\bfrom\s+services\.upload\.": "from yosai_intel_dashboard.src.services.upload.",
+    r"\bfrom\s+services\.data_processing\.": "from yosai_intel_dashboard.src.services.data_processing.",
+
+    # Infrastructure imports
+    r"\bfrom\s+config\.": "from yosai_intel_dashboard.src.infrastructure.config.",
+    r"\bfrom\s+core\.service_container\s+import": "from yosai_intel_dashboard.src.infrastructure.di.service_container import",
+    r"\bfrom\s+core\.protocols\s+import": "from yosai_intel_dashboard.src.core.interfaces.protocols import",
+    r"\bfrom\s+services\.interfaces\s+import": "from yosai_intel_dashboard.src.core.interfaces.service_protocols import",
+
+    # UI imports
+    r"\bfrom\s+components\.": "from yosai_intel_dashboard.src.adapters.ui.components.",
+    r"\bfrom\s+pages\.": "from yosai_intel_dashboard.src.adapters.ui.pages.",
 }
 
 

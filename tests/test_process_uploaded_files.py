@@ -2,7 +2,7 @@ import asyncio
 
 from services.device_learning_service import DeviceLearningService
 from services.upload import UploadProcessingService
-from services.upload.upload_core import UploadCore
+from yosai_intel_dashboard.src.services.upload.upload_core import UploadCore
 from tests.fakes import FakeUploadDataService
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore

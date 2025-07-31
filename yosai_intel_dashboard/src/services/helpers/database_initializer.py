@@ -1,8 +1,8 @@
 import logging
 from typing import Any, Optional, Tuple
 
-from config.database_exceptions import DatabaseError
-from config.database_manager import DatabaseManager, DatabaseSettings
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import DatabaseError
+from yosai_intel_dashboard.src.infrastructure.config.database_manager import DatabaseManager, DatabaseSettings
 from services.db_analytics_helper import DatabaseAnalyticsHelper
 from services.summary_reporter import SummaryReporter
 

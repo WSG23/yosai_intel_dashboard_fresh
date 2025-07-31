@@ -25,7 +25,7 @@ def debug_callback_registration_flow(target_class: Any | None = None) -> None:
 
     if target_class is None:
         try:
-            from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+            from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 
             target_class = TrulyUnifiedCallbacks
         except Exception:  # pragma: no cover - best effort

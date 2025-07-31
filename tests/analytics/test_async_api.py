@@ -2,7 +2,7 @@ import json
 
 from fastapi.testclient import TestClient
 
-from services.analytics.async_api import app, event_bus
+from yosai_intel_dashboard.src.services.analytics.async_api import app, event_bus
 
 
 def test_health_endpoint():

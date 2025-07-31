@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from services.analytics.async_service import AsyncAnalyticsService
+from yosai_intel_dashboard.src.services.analytics.async_service import AsyncAnalyticsService
 
 
 class _DummyContext:

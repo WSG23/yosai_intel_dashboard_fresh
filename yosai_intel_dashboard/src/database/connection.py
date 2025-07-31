@@ -5,7 +5,7 @@ from typing import Optional, Protocol
 import pandas as pd
 from opentelemetry import trace
 
-from config.database_manager import DatabaseManager, MockConnection
+from yosai_intel_dashboard.src.infrastructure.config.database_manager import DatabaseManager, MockConnection
 from database.metrics import queries_total, query_errors_total
 
 

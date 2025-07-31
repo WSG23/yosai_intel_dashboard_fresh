@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from core.protocols import ConfigurationServiceProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationServiceProtocol
 
 # ADD after existing imports
 from services.ai_device_generator import AIDeviceGenerator

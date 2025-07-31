@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, Protocol, assert_type, runtime_che
 import pandas as pd
 import pytest
 
-from core.protocols import (
+from yosai_intel_dashboard.src.core.interfaces.protocols import (
     AnalyticsServiceProtocol,
     ConfigurationProtocol,
     DatabaseProtocol,
@@ -13,8 +13,8 @@ from core.protocols import (
     SecurityServiceProtocol,
     StorageProtocol,
 )
-from core.service_container import ServiceContainer
-from services.analytics_service import AnalyticsService
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
+from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
 
 
 @runtime_checkable
@@ -175,7 +175,7 @@ class TestProtocolCompliance:
         assert_type(cfg, ConfigurationProtocol)
 
     def test_analytics_service_compliance(self):
-        from services.analytics_service import AnalyticsService
+        from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
 
         class ConcreteAnalyticsService(AnalyticsService):
             def analyze_access_patterns(self, days: int) -> Dict[str, Any]:
@@ -246,7 +246,7 @@ class TestProtocolCompliance:
             container.get("security_validator", SecurityServiceProtocol),
             SecurityServiceProtocol,
         )
-        from services.analytics.protocols import (
+        from yosai_intel_dashboard.src.services.analytics.protocols import (
             DataLoadingProtocol,
             DataProcessorProtocol,
             PublishingProtocol,

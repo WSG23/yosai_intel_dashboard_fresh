@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from config import create_config_manager
 from core.plugins.manager import ThreadSafePluginManager
 from core.protocols.plugin import PluginMetadata
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 
 class ConcurrencyPlugin:

@@ -1,6 +1,6 @@
 import base64
 
-from services.data_processing.common import process_dataframe
+from yosai_intel_dashboard.src.services.data_processing.common import process_dataframe
 
 
 def safe_decode_file(contents: str):

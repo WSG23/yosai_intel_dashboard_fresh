@@ -36,7 +36,7 @@ sys.modules["opentelemetry.sdk.trace.export"].BatchSpanProcessor = object
 sys.modules.setdefault("structlog", types.ModuleType("structlog"))
 sys.modules["structlog"].BoundLogger = object
 
-from services.analytics.data.loader import DataLoader  # noqa: E402
+from yosai_intel_dashboard.src.services.analytics.data.loader import DataLoader  # noqa: E402
 
 
 class DummyUploadProc:

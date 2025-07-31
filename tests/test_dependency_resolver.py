@@ -8,7 +8,7 @@ from config import create_config_manager
 from core.plugins.dependency_resolver import PluginDependencyResolver
 from core.plugins.manager import PluginManager
 from core.protocols.plugin import PluginMetadata
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 
 class DummyPlugin:

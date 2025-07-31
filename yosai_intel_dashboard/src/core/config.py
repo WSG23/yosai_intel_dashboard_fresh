@@ -2,25 +2,25 @@ from __future__ import annotations
 
 """Simple configuration helpers used across the project."""
 
-from config.config import get_analytics_config
+from yosai_intel_dashboard.src.infrastructure.config.config import get_analytics_config
 from typing import TYPE_CHECKING
 
-from config.utils import (
+from yosai_intel_dashboard.src.infrastructure.config.utils import (
     get_ai_confidence_threshold as _get_ai_confidence_threshold,
     get_upload_chunk_size as _get_upload_chunk_size,
 )
 from core.container import container
-from core.protocols import ConfigurationProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
-    from config.dynamic_config import DynamicConfigManager
+    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import DynamicConfigManager
 
 
 def _dynamic_config() -> "DynamicConfigManager":
     """Return the :class:`DynamicConfigManager` from the DI container."""
     if container.has("dynamic_config"):
         return container.get("dynamic_config")
-    from config.dynamic_config import dynamic_config
+    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 
     return dynamic_config
 

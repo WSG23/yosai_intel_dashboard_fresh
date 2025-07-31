@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 from yosai_intel_dashboard.src.file_processing import create_file_preview
 
 

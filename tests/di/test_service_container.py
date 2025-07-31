@@ -1,6 +1,6 @@
 import pytest
 
-from core.service_container import (
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
     CircularDependencyError,
     DependencyInjectionError,
     ServiceContainer,

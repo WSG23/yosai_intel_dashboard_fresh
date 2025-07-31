@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Optional, cast
 from dash import Dash
 
 from config import ConfigManager, create_config_manager
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 from .unified_registry import UnifiedPluginRegistry
 

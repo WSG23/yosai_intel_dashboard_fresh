@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from config.config_loader import ServiceSettings, load_service_config
+from yosai_intel_dashboard.src.infrastructure.config.config_loader import ServiceSettings, load_service_config
 
 
 def test_load_service_config_defaults(monkeypatch):

@@ -1,4 +1,4 @@
-from config.database_manager import DatabaseSettings, EnhancedPostgreSQLManager
+from yosai_intel_dashboard.src.infrastructure.config.database_manager import DatabaseSettings, EnhancedPostgreSQLManager
 
 
 def test_query_metrics_collected_for_multiple_queries():

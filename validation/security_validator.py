@@ -5,7 +5,7 @@ import os
 import re
 from typing import Iterable
 
-from config.dynamic_config import dynamic_config
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 from core.exceptions import ValidationError
 
 from .core import ValidationResult

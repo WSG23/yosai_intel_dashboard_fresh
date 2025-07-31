@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pandas as pd
 
-from services.analytics.data_processor import DataProcessor
-from services.analytics.protocols import DataProcessorProtocol
+from yosai_intel_dashboard.src.services.analytics.data_processor import DataProcessor
+from yosai_intel_dashboard.src.services.analytics.protocols import DataProcessorProtocol
 
 
 class DataProcessingService(DataProcessorProtocol):

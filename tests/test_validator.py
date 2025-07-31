@@ -15,7 +15,7 @@ sys.modules["services"] = services_stub
 
 import pandas as pd
 
-from services.analytics.data.validator import Validator  # noqa: E402
+from yosai_intel_dashboard.src.services.analytics.data.validator import Validator  # noqa: E402
 
 
 def test_validate_methods():

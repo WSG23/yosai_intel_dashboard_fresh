@@ -1,5 +1,5 @@
-from core.callback_events import CallbackEvent
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 
 
 def test_priority_and_async_trigger():

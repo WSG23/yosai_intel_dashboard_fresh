@@ -3,7 +3,7 @@ from typing import Dict
 
 import pandas as pd
 
-from services.upload.protocols import DeviceLearningServiceProtocol
+from yosai_intel_dashboard.src.services.upload.protocols import DeviceLearningServiceProtocol
 
 logger = logging.getLogger(__name__)
 

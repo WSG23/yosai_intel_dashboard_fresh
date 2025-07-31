@@ -4,9 +4,9 @@ from typing import Callable, Optional, Protocol
 
 from flask import Response, request
 
-from config.dynamic_config import dynamic_config
-from core.callback_events import CallbackEvent
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
+from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 from core.exceptions import ValidationError
 from validation.security_validator import SecurityValidator
 

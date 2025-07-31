@@ -1,4 +1,4 @@
-from config.database_manager import MockConnection
+from yosai_intel_dashboard.src.infrastructure.config.database_manager import MockConnection
 from database.intelligent_connection_pool import IntelligentConnectionPool
 
 

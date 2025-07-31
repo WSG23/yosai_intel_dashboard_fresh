@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Tuple
 
-from config.database_manager import DatabaseSettings
+from yosai_intel_dashboard.src.infrastructure.config.database_manager import DatabaseSettings
 
 from services.helpers.database_initializer import initialize_database
 

@@ -9,9 +9,9 @@ from typing import Awaitable, Callable, Optional, TypeVar
 
 import pandas as pd
 
-from config.connection_retry import RetryConfig
-from config.constants import DEFAULT_CHUNK_SIZE, DataProcessingLimits
-from config.database_exceptions import ConnectionRetryExhausted
+from yosai_intel_dashboard.src.infrastructure.config.connection_retry import RetryConfig
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE, DataProcessingLimits
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import ConnectionRetryExhausted
 from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 
 logger = logging.getLogger(__name__)

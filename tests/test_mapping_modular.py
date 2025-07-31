@@ -1,6 +1,6 @@
 import pandas as pd
 
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from mapping.models import MappingModel
 from mapping.processors.ai_processor import AIColumnMapperAdapter
 from mapping.processors.column_processor import ColumnProcessor

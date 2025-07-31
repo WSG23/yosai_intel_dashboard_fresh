@@ -23,7 +23,7 @@ from starlette.types import ASGIApp
 from core.cache_manager import CacheConfig, InMemoryCacheManager
 from core.events import EventBus
 from yosai_intel_dashboard.src.error_handling import http_error
-from services.analytics_service import get_analytics_service
+from yosai_intel_dashboard.src.services.analytics.analytics_service import get_analytics_service
 from services.cached_analytics import CachedAnalyticsService
 from services.common.async_db import get_pool
 from services.security import require_permission

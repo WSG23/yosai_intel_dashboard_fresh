@@ -34,29 +34,29 @@ import pandas as pd
 from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
 from core.di_decorators import inject, injectable
 from core.interfaces import ConfigProviderProtocol
-from core.protocols import (
+from yosai_intel_dashboard.src.core.interfaces.protocols import (
     AnalyticsServiceProtocol,
     DatabaseProtocol,
     EventBusProtocol,
     StorageProtocol,
 )
-from services.analytics.calculator import Calculator
-from services.analytics.orchestrator import AnalyticsOrchestrator
-from services.analytics.protocols import (
+from yosai_intel_dashboard.src.services.analytics.calculator import Calculator
+from yosai_intel_dashboard.src.services.analytics.orchestrator import AnalyticsOrchestrator
+from yosai_intel_dashboard.src.services.analytics.protocols import (
     CalculatorProtocol,
     DataProcessorProtocol,
     PublishingProtocol,
     ReportGeneratorProtocol,
     UploadAnalyticsProtocol,
 )
-from services.analytics.publisher import Publisher
-from services.analytics.upload_analytics import UploadAnalyticsProcessor
+from yosai_intel_dashboard.src.services.analytics.publisher import Publisher
+from yosai_intel_dashboard.src.services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.analytics_summary import generate_sample_analytics
 from services.controllers.protocols import UploadProcessingControllerProtocol
 from services.controllers.upload_controller import UploadProcessingController
-from services.data_processing.processor import Processor
+from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 from services.helpers.database_initializer import initialize_database
-from services.interfaces import (
+from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
     AnalyticsDataLoaderProtocol,
     DatabaseAnalyticsRetrieverProtocol,
     get_analytics_data_loader,
@@ -148,7 +148,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
         self.processor = data_processor
         # Legacy attribute aliases
         self.data_loading_service = self.processor
-        from services.data_processing.file_handler import FileHandler
+        from yosai_intel_dashboard.src.services.data_processing.file_handler import FileHandler
 
         self.file_handler = FileHandler()
 

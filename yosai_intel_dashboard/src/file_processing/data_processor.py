@@ -6,14 +6,14 @@ from typing import Dict, Optional
 
 import pandas as pd
 
-from core.callback_events import CallbackEvent
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 from core.error_handling import (
     ErrorCategory,
     ErrorSeverity,
     with_error_handling,
 )
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 
 from .format_detector import FormatDetector, UnsupportedFormatError
 from .readers import ArchiveReader, CSVReader, ExcelReader, FWFReader, JSONReader
@@ -79,7 +79,7 @@ class DataProcessor:
 
     def _standardize_ids(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Validate and standardize 'person_id' and 'badge_id' using regex from config.
+        Validate and standardize 'person_id' and 'badge_id' using regex from yosai_intel_dashboard.src.infrastructure.config.
         Flags invalid entries and sets them to None.
         """
         df = df.copy()

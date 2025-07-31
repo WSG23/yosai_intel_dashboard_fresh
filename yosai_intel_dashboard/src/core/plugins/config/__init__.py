@@ -2,7 +2,7 @@
 
 # Re-export from unified configuration for compatibility
 from config import ConfigManager, get_config
-from config.database_manager import DatabaseManager
+from yosai_intel_dashboard.src.infrastructure.config.database_manager import DatabaseManager
 
 
 def get_service_locator() -> ConfigManager:

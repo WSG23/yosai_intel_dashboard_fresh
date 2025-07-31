@@ -7,8 +7,8 @@ from dash import html
 from dash._callback_context import callback_context
 from dash.dependencies import Input, Output
 
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from services.interfaces import get_device_learning_service
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.core.interfaces.service_protocols import get_device_learning_service
 
 
 def register_callbacks(app, container) -> None:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from config.dynamic_config import dynamic_config
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 from validation.upload_utils import decode_and_validate_upload
 

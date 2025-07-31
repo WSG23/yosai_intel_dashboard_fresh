@@ -1,6 +1,6 @@
 from config import create_config_manager
 from core.container import Container
-from services.analytics_service import AnalyticsService
+from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
 
 
 def test_container_initializes_without_circular_dependencies():

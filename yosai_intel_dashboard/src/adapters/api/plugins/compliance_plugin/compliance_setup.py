@@ -10,7 +10,7 @@ from controllers.compliance_controller import register_compliance_routes
 
 from core.audit_logger import create_audit_logger
 from core.container import Container
-from core.protocols import DatabaseProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import DatabaseProtocol
 from database.secure_exec import execute_command, execute_query
 from services.compliance.consent_service import create_consent_service
 from services.compliance.dsar_service import create_dsar_service

@@ -8,7 +8,7 @@ import json
 import sys
 from pathlib import Path
 
-from config.app_config import UploadConfig
+from yosai_intel_dashboard.src.infrastructure.config.app_config import UploadConfig
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -20,7 +20,7 @@ async def run_real_analytics():
 
         import pandas as pd
 
-        from services.analytics_service import AnalyticsService
+        from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
 
         # Load the Enhanced Security Demo data
         parquet_path = (

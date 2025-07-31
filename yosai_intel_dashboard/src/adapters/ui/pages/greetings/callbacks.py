@@ -2,7 +2,7 @@ from dash import Input, Output
 from dash.exceptions import PreventUpdate
 
 try:  # pragma: no cover - allow tests without full core package
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 except Exception:  # pragma: no cover - lightweight fallback
     class TrulyUnifiedCallbacks:  # type: ignore[too-few-public-methods]
         """Minimal stub used when core package isn't available."""

@@ -6,14 +6,14 @@ from typing import TYPE_CHECKING, Any, List, Optional
 from dash import Dash
 
 from config import ConfigManager
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 from core.plugins.manager import ThreadSafePluginManager
 from core.protocols.plugin import PluginProtocol
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from services.registry import registry as service_registry
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
-    from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class UnifiedPluginRegistry:
         self.callback_manager = callback_manager or TrulyUnifiedCallbacks()
 
         # Import lazily to avoid circular dependency during module import
-        from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 
         self.coordinator = TrulyUnifiedCallbacks(app)
         self.plugin_manager = ThreadSafePluginManager(

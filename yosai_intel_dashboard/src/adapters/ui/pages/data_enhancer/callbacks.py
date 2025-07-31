@@ -7,7 +7,7 @@ import pandas as pd
 from dash import Input, Output, State, dash_table, dcc, html
 from dash.exceptions import PreventUpdate
 
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 from services.data_enhancer.processor import DataEnhancerProcessor
 
 

@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 from core.container import get_unicode_processor
-from core.protocols import UnicodeProcessorProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import UnicodeProcessorProtocol
 from core.unicode import UnicodeProcessor as UnicodeHelper
 from core.unicode import contains_surrogates
 from security.events import SecurityEvent, emit_security_event

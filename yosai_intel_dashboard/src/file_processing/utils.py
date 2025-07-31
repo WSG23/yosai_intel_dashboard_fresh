@@ -8,8 +8,8 @@ from typing import Any, Dict, Iterable
 import chardet
 import pandas as pd
 
-from config.constants import DEFAULT_CHUNK_SIZE
-from config.dynamic_config import dynamic_config
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 from core.config import get_max_display_rows
 from core.performance_file_processor import PerformanceFileProcessor
 from core.unicode import (

@@ -1,8 +1,8 @@
 import pytest
 
 from config import DatabaseSettings
-from config.connection_pool import DatabaseConnectionPool
-from config.database_manager import MockConnection
+from yosai_intel_dashboard.src.infrastructure.config.connection_pool import DatabaseConnectionPool
+from yosai_intel_dashboard.src.infrastructure.config.database_manager import MockConnection
 from tests.fake_configuration import FakeConfiguration
 
 

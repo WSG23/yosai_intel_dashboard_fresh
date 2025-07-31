@@ -3,8 +3,8 @@ from typing import Any, Callable, Dict, List
 
 import pandas as pd
 
-from core.protocols import FileProcessorProtocol
-from services.upload.protocols import UploadDataServiceProtocol, UploadStorageProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
+from yosai_intel_dashboard.src.services.upload.protocols import UploadDataServiceProtocol, UploadStorageProtocol
 
 logger = logging.getLogger(__name__)
 

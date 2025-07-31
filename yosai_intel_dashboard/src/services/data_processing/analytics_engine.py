@@ -20,7 +20,7 @@ except Exception:  # pragma: no cover - optional AI suggestions
         return {}
 
 
-from services.interfaces import get_upload_data_service
+from yosai_intel_dashboard.src.core.interfaces.service_protocols import get_upload_data_service
 from yosai_intel_dashboard.src.utils.preview_utils import serialize_dataframe_preview
 from validation.unicode_validator import UnicodeValidator
 

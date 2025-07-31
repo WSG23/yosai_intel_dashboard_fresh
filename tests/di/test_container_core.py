@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import pytest
 
 from core.container import Container
-from core.service_container import DependencyInjectionError
+from yosai_intel_dashboard.src.infrastructure.di.service_container import DependencyInjectionError
 
 
 def test_container_initialization():

@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from error_handling import ErrorCategory, ErrorHandler, api_error_response
 
-from services.data_processing.file_handler import FileHandler
+from yosai_intel_dashboard.src.services.data_processing.file_handler import FileHandler
 from yosai_intel_dashboard.src.utils.pydantic_decorators import validate_input, validate_output
 
 

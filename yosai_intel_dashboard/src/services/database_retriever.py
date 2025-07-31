@@ -7,7 +7,7 @@ from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_loc
 _cache_manager = InMemoryCacheManager(CacheConfig())
 
 from .db_analytics_helper import DatabaseAnalyticsHelper
-from services.interfaces import DatabaseAnalyticsRetrieverProtocol
+from yosai_intel_dashboard.src.core.interfaces.service_protocols import DatabaseAnalyticsRetrieverProtocol
 
 
 class DatabaseAnalyticsRetriever(DatabaseAnalyticsRetrieverProtocol):

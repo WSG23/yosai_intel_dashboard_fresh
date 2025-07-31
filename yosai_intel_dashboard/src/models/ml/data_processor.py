@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional
 
 import pandas as pd
 
-from config.constants import DEFAULT_CHUNK_SIZE
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
 from yosai_intel_dashboard.src.utils.memory_utils import check_memory_limit
 
 try:
@@ -168,7 +168,7 @@ class DataProcessor:
     # ------------------------------------------------------------------
     def _cleanse(self, df: pd.DataFrame) -> pd.DataFrame:
         # Unicode sanitization via existing helper
-        from services.data_processing.file_processor import UnicodeFileProcessor as _UFP
+        from yosai_intel_dashboard.src.services.data_processing.file_processor import UnicodeFileProcessor as _UFP
 
         cleaned = _UFP.sanitize_dataframe_unicode(df, chunk_size=self.config.chunk_size)
         return (

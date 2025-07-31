@@ -26,7 +26,7 @@ from typing import (
 import pandas as pd
 import psutil
 
-from config.dynamic_config import dynamic_config
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 
 if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
     from monitoring.model_performance_monitor import ModelMetrics

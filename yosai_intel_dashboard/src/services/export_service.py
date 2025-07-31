@@ -6,7 +6,7 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from core.protocols import ExportServiceProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import ExportServiceProtocol
 
 
 class ExportService(ExportServiceProtocol):

@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Import Flask app directly from adapter
 from api.adapter import create_api_app
 
-from config.constants import API_PORT
+from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
 from core.di.bootstrap import bootstrap_container
 
 

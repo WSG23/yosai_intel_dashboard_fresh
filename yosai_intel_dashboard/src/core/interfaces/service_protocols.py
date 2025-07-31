@@ -7,7 +7,7 @@ from mapping.core.models import MappingData
 
 import pandas as pd
 
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 
 @runtime_checkable
@@ -92,7 +92,7 @@ def get_upload_validator(
     c = _get_container(container)
     if c and c.has("upload_validator"):
         return c.get("upload_validator")
-    from services.upload.validator import ClientSideValidator
+    from yosai_intel_dashboard.src.services.upload.validator import ClientSideValidator
 
     return ClientSideValidator()
 
@@ -266,7 +266,7 @@ def get_analytics_data_loader(
     c = _get_container(container)
     if c and c.has("data_loader"):
         return c.get("data_loader")
-    from services.analytics.data.loader import DataLoader
+    from yosai_intel_dashboard.src.services.analytics.data.loader import DataLoader
 
     return DataLoader(controller, processor)
 

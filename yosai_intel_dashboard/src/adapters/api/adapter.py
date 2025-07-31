@@ -20,7 +20,7 @@ from api.analytics_router import (
 from api.analytics_router import router as analytics_router
 from settings_endpoint import settings_bp
 
-from config.constants import API_PORT
+from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
 from middleware.performance import TimingMiddleware
 from core.container import container
 from services.device_endpoint import create_device_blueprint

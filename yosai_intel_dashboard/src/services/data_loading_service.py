@@ -4,11 +4,11 @@ from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
-from services.analytics.data.loader import DataLoader
-from services.analytics.protocols import DataLoadingProtocol
-from services.interfaces import AnalyticsDataLoaderProtocol
+from yosai_intel_dashboard.src.services.analytics.data.loader import DataLoader
+from yosai_intel_dashboard.src.services.analytics.protocols import DataLoadingProtocol
+from yosai_intel_dashboard.src.core.interfaces.service_protocols import AnalyticsDataLoaderProtocol
 from services.controllers.upload_controller import UploadProcessingController
-from services.data_processing.processor import Processor
+from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 
 
 class DataLoadingService(DataLoadingProtocol, AnalyticsDataLoaderProtocol):

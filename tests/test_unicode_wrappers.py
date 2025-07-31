@@ -3,7 +3,7 @@ import time
 import pandas as pd
 import pytest
 
-from config.database_exceptions import UnicodeEncodingError
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import UnicodeEncodingError
 from core.unicode import UnicodeProcessor as UtilsProcessor  # Alias check
 from core.unicode import (
     UnicodeSQLProcessor,

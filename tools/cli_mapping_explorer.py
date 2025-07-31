@@ -31,7 +31,7 @@ async def explore_mapping_services(file_path: str, verbose: bool = False) -> dic
         # Process file first
         import base64
 
-        from services.data_processing.async_file_processor import AsyncFileProcessor
+        from yosai_intel_dashboard.src.services.data_processing.async_file_processor import AsyncFileProcessor
 
         path = Path(file_path)
         filename = path.name

@@ -2,7 +2,7 @@ import logging
 from typing import IO, Any, List, Tuple, Union
 
 import pandas as pd
-from config.constants import DataProcessingLimits
+from yosai_intel_dashboard.src.infrastructure.config.constants import DataProcessingLimits
 
 logger = logging.getLogger(__name__)
 

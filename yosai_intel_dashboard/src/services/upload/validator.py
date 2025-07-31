@@ -2,7 +2,7 @@ import base64
 import json
 from typing import Any, Callable, Iterable, List, Mapping
 
-from services.upload.protocols import UploadValidatorProtocol
+from yosai_intel_dashboard.src.services.upload.protocols import UploadValidatorProtocol
 
 
 class ClientSideValidator(UploadValidatorProtocol):

@@ -5,12 +5,12 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from core.protocols import (
+from yosai_intel_dashboard.src.core.interfaces.protocols import (
     ConfigurationProtocol,
     UnicodeProcessorProtocol,
 )
-from core.service_container import ServiceContainer
-from services.upload.protocols import (
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
+from yosai_intel_dashboard.src.services.upload.protocols import (
     FileProcessorProtocol,
     UploadStorageProtocol,
 )

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from yosai_intel_dashboard.src.components.ui_builder import UploadUIBuilder
 from core.interfaces import ConfigProviderProtocol
-from core.protocols import FileProcessorProtocol
-from core.service_container import (
+from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
     CircularDependencyError,
     DependencyInjectionError,
     ServiceContainer,
@@ -13,21 +13,21 @@ from core.service_container import (
 )
 from services.async_file_processor import AsyncFileProcessor
 from services.device_learning_service import DeviceLearningService
-from services.interfaces import (
+from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
     DeviceLearningServiceProtocol,
     UploadDataServiceProtocol,
 )
-from services.upload.controllers.upload_controller import UnifiedUploadController
-from services.upload.file_processor_service import FileProcessor
-from services.upload.learning_coordinator import LearningCoordinator
-from services.upload.processor import UploadProcessingService
-from services.upload.protocols import (
+from yosai_intel_dashboard.src.services.upload.controllers.upload_controller import UnifiedUploadController
+from yosai_intel_dashboard.src.services.upload.file_processor_service import FileProcessor
+from yosai_intel_dashboard.src.services.upload.learning_coordinator import LearningCoordinator
+from yosai_intel_dashboard.src.services.upload.processor import UploadProcessingService
+from yosai_intel_dashboard.src.services.upload.protocols import (
     UploadControllerProtocol,
     UploadProcessingServiceProtocol,
     UploadStorageProtocol,
     UploadValidatorProtocol,
 )
-from services.upload.validator import ClientSideValidator
+from yosai_intel_dashboard.src.services.upload.validator import ClientSideValidator
 from services.upload_data_service import UploadDataService
 from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 from validation.file_validator import FileValidator

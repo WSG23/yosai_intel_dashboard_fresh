@@ -17,8 +17,8 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from config import create_config_manager
-from services.upload.service_registration import register_upload_services
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.services.upload.service_registration import register_upload_services
+from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from services.file_processor_service import FileProcessorService
 
 

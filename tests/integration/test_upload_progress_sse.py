@@ -5,7 +5,7 @@ import dash_bootstrap_components as dbc
 import pytest
 from dash import dcc, html
 
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")

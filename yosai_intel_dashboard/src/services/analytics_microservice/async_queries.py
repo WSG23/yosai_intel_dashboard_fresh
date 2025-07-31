@@ -6,10 +6,10 @@ from typing import Any, Dict
 
 import asyncpg
 
-from services.analytics.common_queries import (
+from yosai_intel_dashboard.src.services.analytics.common_queries import (
     fetch_access_patterns as _fetch_access_patterns,
 )
-from services.analytics.common_queries import (
+from yosai_intel_dashboard.src.services.analytics.common_queries import (
     fetch_dashboard_summary as _fetch_dashboard_summary,
 )
 

@@ -14,7 +14,7 @@ except Exception:  # pragma: no cover - optional dependency
 
 try:
     from services.door_mapping_service import DoorMappingService
-    from services.interfaces import get_door_mapping_service
+    from yosai_intel_dashboard.src.core.interfaces.service_protocols import get_door_mapping_service
 
     AI_DOOR_SERVICE_AVAILABLE = True
     logger.info("✅ AI Door Service loaded successfully")
@@ -25,7 +25,7 @@ except Exception as e:  # pragma: no cover - optional dependency
     logger.warning(f"⚠️ AI Door Service not available - using fallback: {e}")
 
 try:
-    from core.service_container import ServiceContainer
+    from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
     CONTAINER_AVAILABLE = True
     logger.info("✅ Service Container available")

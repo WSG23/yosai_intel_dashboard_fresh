@@ -484,7 +484,7 @@ class TrulyUnifiedCallbacks:
 
         if controller is None:
             try:
-                from services.upload.controllers.upload_controller import (
+                from yosai_intel_dashboard.src.services.upload.controllers.upload_controller import (
                     UnifiedUploadController,
                 )
             except Exception as exc:  # pragma: no cover - import errors logged

@@ -9,7 +9,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import Input, Output, State, callback_context, dash_table, dcc, html
 
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 
 from .app import EnhancedFileProcessor, MultiBuildingDataEnhancer
 from .config import (

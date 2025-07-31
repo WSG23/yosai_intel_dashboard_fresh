@@ -18,7 +18,7 @@ sys.modules["config.config_manager"] = _cfg_module
 spec.loader.exec_module(_cfg_module)  # type: ignore
 create_config_manager = _cfg_module.create_config_manager
 
-from config.config_validator import ConfigValidator
+from yosai_intel_dashboard.src.infrastructure.config.config_validator import ConfigValidator
 from core.exceptions import ConfigurationError
 
 
@@ -87,7 +87,7 @@ security:
 
 
 def test_upload_limit_error():
-    from config.base import Config
+    from yosai_intel_dashboard.src.infrastructure.config.base import Config
 
     cfg = Config()
     cfg.security.max_upload_mb = 0
@@ -97,7 +97,7 @@ def test_upload_limit_error():
 
 
 def test_upload_limit_warning():
-    from config.base import Config
+    from yosai_intel_dashboard.src.infrastructure.config.base import Config
 
     cfg = Config()
     cfg.security.max_upload_mb = 2000
