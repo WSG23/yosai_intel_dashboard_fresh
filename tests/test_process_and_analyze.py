@@ -1,7 +1,10 @@
-from services.analytics.upload_analytics import UploadAnalyticsProcessor
+from __future__ import annotations
+
 from services.data_processing.file_processor import FileProcessor
 from services.data_processing.processor import Processor
+from services.upload_processing import UploadAnalyticsProcessor
 from tests.builders import TestDataBuilder
+from tests.fake_configuration import FakeConfiguration
 from validation.security_validator import SecurityValidator
 
 
@@ -14,7 +17,8 @@ def _create_components():
 
     fp = FileProcessor()
     vs = SecurityValidator()
-    processor = Processor(validator=vs)
+    cfg = FakeConfiguration()
+    processor = Processor(validator=vs, config_service=cfg)
 
     ua = UploadAnalyticsProcessor(vs, processor)
     return fp, ua

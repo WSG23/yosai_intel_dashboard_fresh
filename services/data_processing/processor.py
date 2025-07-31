@@ -8,13 +8,13 @@ from typing import TYPE_CHECKING, Any, Dict, Iterator, Optional, Tuple
 
 import pandas as pd
 
-from config.constants import DEFAULT_CHUNK_SIZE
-from config.dynamic_config import dynamic_config
 from core.performance import get_performance_monitor
+from core.protocols import ConfigurationServiceProtocol
 from monitoring.data_quality_monitor import (
     DataQualityMetrics,
     get_data_quality_monitor,
 )
+from services.configuration_service import DynamicConfigurationService
 from services.streaming import StreamingService
 from unicode_toolkit import safe_encode_text
 from validation.security_validator import SecurityValidator
@@ -34,6 +34,8 @@ class Processor:
         validator: Optional[SecurityValidator] = None,
         streaming_service: Optional[StreamingService] = None,
         mapping_service: MappingService | None = None,
+        *,
+        config_service: ConfigurationServiceProtocol | None = None,
     ) -> None:
         self.base_path = Path(base_data_path)
         self.mappings_file = self.base_path / "learned_mappings.json"
@@ -45,13 +47,14 @@ class Processor:
 
             mapping_service = create_mapping_service()
         self.mapping_service = mapping_service
+        self.config_service = config_service or DynamicConfigurationService()
 
     # ------------------------------------------------------------------
     # Streaming helpers (from DataLoadingService)
     # ------------------------------------------------------------------
     def load_dataframe(self, source: Any) -> pd.DataFrame:
         """Load ``source`` into a validated and mapped dataframe."""
-        chunk_size = getattr(dynamic_config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE)
+        chunk_size = self.config_service.get_upload_chunk_size()
         monitor = get_performance_monitor()
 
         if isinstance(source, (str, Path)) or hasattr(source, "read"):
@@ -67,12 +70,13 @@ class Processor:
         return self.mapping_service.column_proc.process(df, "load").data
 
     def stream_file(
-        self, source: Any, chunksize: int = DEFAULT_CHUNK_SIZE
+        self, source: Any, chunksize: int | None = None
     ) -> Iterator[pd.DataFrame]:
         """Yield cleaned chunks from ``source``."""
         monitor = get_performance_monitor()
+        chunk_size = chunksize or self.config_service.get_upload_chunk_size()
         if isinstance(source, (str, Path)) or hasattr(source, "read"):
-            for chunk in pd.read_csv(source, chunksize=chunksize, encoding="utf-8"):
+            for chunk in pd.read_csv(source, chunksize=chunk_size, encoding="utf-8"):
                 monitor.throttle_if_needed()
                 chunk = self.validator.validate(chunk)
                 yield self.mapping_service.column_proc.process(chunk, "stream").data

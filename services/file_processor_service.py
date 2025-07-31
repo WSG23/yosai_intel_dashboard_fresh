@@ -13,7 +13,7 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from config.constants import DEFAULT_CHUNK_SIZE, UPLOAD_ALLOWED_EXTENSIONS
+from config.constants import UPLOAD_ALLOWED_EXTENSIONS
 from core.protocols import ConfigurationServiceProtocol
 from core.unicode import UnicodeProcessor as UnicodeHelper
 from core.unicode import process_large_csv_content
@@ -49,10 +49,11 @@ class FileProcessorService(BaseService, BaseFileProcessor):
         decoder: SafeDecoderProtocol = safe_decode_with_unicode_handling,
         validator: FileValidator | None = None,
         *,
-        chunk_size: int = DEFAULT_CHUNK_SIZE,
+        chunk_size: int | None = None,
     ) -> None:
         BaseService.__init__(self, "file-processor", "")
-        BaseFileProcessor.__init__(self, chunk_size=chunk_size, decoder=decoder)
+        chunk = chunk_size or config.get_upload_chunk_size()
+        BaseFileProcessor.__init__(self, chunk_size=chunk, decoder=decoder)
         self.start()
         self.config = config
         self.max_file_size_mb = config.get_max_upload_size_mb()

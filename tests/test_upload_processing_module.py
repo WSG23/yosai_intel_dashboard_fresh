@@ -1,5 +1,8 @@
-from services.analytics.upload_analytics import UploadAnalyticsProcessor
+from __future__ import annotations
+
 from services.data_processing.processor import Processor
+from services.upload_processing import UploadAnalyticsProcessor
+from tests.fake_configuration import FakeConfiguration
 from tests.utils.builders import DataFrameBuilder
 from validation.security_validator import SecurityValidator
 
@@ -12,7 +15,8 @@ def _make_processor():
     cache.init_app(Flask(__name__))
 
     vs = SecurityValidator()
-    processor = Processor(validator=vs)
+    cfg = FakeConfiguration()
+    processor = Processor(validator=vs, config_service=cfg)
 
     return UploadAnalyticsProcessor(vs, processor)
 
