@@ -7,13 +7,13 @@ from unittest.mock import MagicMock, Mock, patch
 from uuid import uuid4
 
 import pytest
-from yosai_intel_dashboard.models.compliance import ConsentType, DataSensitivityLevel
 
 from core.audit_logger import ComplianceAuditLogger
 from services.compliance.consent_service import ConsentService
 from services.compliance.data_retention_service import DataRetentionService
 from services.compliance.dpia_service import DPIAService, DPIATrigger, RiskLevel
 from services.compliance.dsar_service import DSARRequestType, DSARService, DSARStatus
+from yosai_intel_dashboard.models.compliance import ConsentType, DataSensitivityLevel
 
 
 class TestConsentService:

@@ -9,5 +9,12 @@ def create_file_preview_ui(info: Dict[str, Any]) -> html.Div:
     rows = info.get("preview_data", [])
     columns = info.get("columns", [])
     table_header = [html.Thead(html.Tr([html.Th(col) for col in columns]))]
-    table_body = [html.Tbody([html.Tr([html.Td(str(row.get(col, ""))) for col in columns]) for row in rows])]
+    table_body = [
+        html.Tbody(
+            [
+                html.Tr([html.Td(str(row.get(col, ""))) for col in columns])
+                for row in rows
+            ]
+        )
+    ]
     return dbc.Table(table_header + table_body, bordered=True, striped=True, hover=True)

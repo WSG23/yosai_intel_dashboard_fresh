@@ -21,36 +21,36 @@ from fastapi import (
     UploadFile,
     status,
 )
-from services.auth import verify_jwt_token
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
-from yosai_intel_dashboard.models.ml import ModelRegistry
-from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
-    register_health_check,
-    setup_health_checks,
-)
 
 from analytics import anomaly_detection, feature_extraction, security_patterns
 from config import get_database_config
 from config.config_loader import load_service_config
 from core.security import RateLimiter
+from error_handling import http_error
 from services.analytics_microservice import async_queries
-from services.analytics_microservice.unicode_middleware import (
-    UnicodeSanitizationMiddleware,
-)
-from services.common import async_db
-from services.common.async_db import close_pool, create_pool
 from services.analytics_microservice.analytics_service import (
     AnalyticsService,
     get_analytics_service,
 )
+from services.analytics_microservice.unicode_middleware import (
+    UnicodeSanitizationMiddleware,
+)
+from services.auth import verify_jwt_token
+from services.common import async_db
+from services.common.async_db import close_pool, create_pool
 from services.common.secrets import get_secret
 from shared.errors.types import ErrorCode
 from yosai_framework import ServiceBuilder
 from yosai_framework.errors import ServiceError
-from error_handling import http_error
 from yosai_framework.service import BaseService
+from yosai_intel_dashboard.models.ml import ModelRegistry
+from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
+    register_health_check,
+    setup_health_checks,
+)
 
 SERVICE_NAME = "analytics-microservice"
 service = (
@@ -417,9 +417,7 @@ async def predict(
     local_path = local_dir / os.path.basename(record.storage_uri)
     if not local_path.exists():
         try:
-            svc.model_registry.download_artifact(
-                record.storage_uri, str(local_path)
-            )
+            svc.model_registry.download_artifact(record.storage_uri, str(local_path))
         except Exception as exc:
             raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
 

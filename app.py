@@ -2,9 +2,9 @@
 
 from dash import Dash, html
 
-from simple_di import ServiceContainer
-from services.greeting import GreetingService
 from pages import greetings, register_callbacks
+from services.greeting import GreetingService
+from simple_di import ServiceContainer
 
 
 def create_app() -> Dash:

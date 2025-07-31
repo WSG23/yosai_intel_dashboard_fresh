@@ -12,10 +12,8 @@ from validation.security_validator import SecurityValidator
 
 from .ai import AISuggestionService, analyze_device_name_with_ai
 from .controllers.upload_controller import UnifiedUploadController as UploadController
-from .processor import UploadProcessingService
 from .helpers import save_ai_training_data
-from .upload_core import UploadCore
-from .upload_types import ValidationResult, UploadResult
+from .processor import UploadProcessingService
 from .protocols import (
     DeviceLearningServiceProtocol,
     UploadControllerProtocol,
@@ -24,6 +22,8 @@ from .protocols import (
     UploadValidatorProtocol,
     get_device_learning_service,
 )
+from .upload_core import UploadCore
+from .upload_types import UploadResult, ValidationResult
 
 __all__ = [
     "UploadProcessingServiceProtocol",

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 from .app import create_standalone_app
@@ -31,4 +33,7 @@ def run_data_enhancer() -> None:
     print("=" * 70)
 
     app = create_standalone_app()
+    from .callbacks import register_callbacks
+
+    register_callbacks(app, getattr(app, "_service_container", None))
     app.run_server(debug=True, host="0.0.0.0", port=5003)

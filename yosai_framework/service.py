@@ -17,9 +17,10 @@ from prometheus_client import (
     start_http_server,
 )
 
-from .config import ServiceConfig, load_config
 from error_handling import http_error
 from shared.errors.types import ErrorCode
+
+from .config import ServiceConfig, load_config
 
 
 class BaseService:
