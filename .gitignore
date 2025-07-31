@@ -128,3 +128,4 @@ app.log
 
 !load-tests/thresholds.json
 archive/
+!yosai_intel_dashboard/src/infrastructure/cache/
