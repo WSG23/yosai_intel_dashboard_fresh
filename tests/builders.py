@@ -5,7 +5,6 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from config.complete_service_registration import register_all_services
 from core.protocols import (
     ConfigurationProtocol,
     UnicodeProcessorProtocol,
@@ -15,6 +14,7 @@ from services.upload.protocols import (
     FileProcessorProtocol,
     UploadStorageProtocol,
 )
+from startup.service_registration import register_all_services
 from tests.fakes import (
     FakeConfigurationService,
     FakeFileProcessor,
