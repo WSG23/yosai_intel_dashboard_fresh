@@ -126,6 +126,8 @@ def register_analytics_services(container: ServiceContainer) -> None:
     from services.publishing_service import PublishingService
     from services.controllers.upload_controller import UnifiedUploadController
     from services.data_processing.processor import Processor
+    from services.interfaces import MappingServiceProtocol
+    from mapping.factories.service_factory import create_mapping_service
     from validation.security_validator import SecurityValidator
 
     container.register_singleton(
@@ -139,12 +141,20 @@ def register_analytics_services(container: ServiceContainer) -> None:
         UnifiedUploadController,
     )
     container.register_singleton(
+        "mapping_service",
+        create_mapping_service(container=container),
+        protocol=MappingServiceProtocol,
+    )
+    container.register_singleton(
         "data_loader",
         DataLoadingService,
         protocol=DataLoadingProtocol,
         factory=lambda c: DataLoadingService(
             c.get("upload_controller"),
-            Processor(validator=SecurityValidator()),
+            Processor(
+                validator=SecurityValidator(),
+                mapping_service=c.get("mapping_service", MappingServiceProtocol),
+            ),
         ),
     )
     container.register_singleton(

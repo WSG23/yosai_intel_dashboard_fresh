@@ -6,14 +6,24 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
+from services.interfaces import (
+    UploadDataServiceProtocol,
+    get_upload_data_service,
+)
+
 logger = logging.getLogger(__name__)
 
 
 class SummaryReporter:
     """Provide reporting helpers for analytics service."""
 
-    def __init__(self, database_manager: Any):
+    def __init__(
+        self,
+        database_manager: Any,
+        upload_service: UploadDataServiceProtocol | None = None,
+    ) -> None:
         self.database_manager = database_manager
+        self.upload_service = upload_service or get_upload_data_service()
 
     def health_check(self) -> Dict[str, Any]:
         """Check service health."""
@@ -32,13 +42,10 @@ class SummaryReporter:
             health["database"] = "not_configured"
 
         try:
-            from services.interfaces import get_upload_data_service
-            from services.upload_data_service import get_uploaded_filenames
-
             health["uploaded_files"] = len(
-                get_uploaded_filenames(get_upload_data_service())
+                self.upload_service.get_uploaded_filenames()
             )
-        except ImportError:
+        except Exception:
             health["uploaded_files"] = "not_available"
         return health
 
@@ -46,10 +53,7 @@ class SummaryReporter:
         """Return available data source options."""
         options = [{"label": "Sample Data", "value": "sample"}]
         try:
-            from services.interfaces import get_upload_data_service
-            from services.upload_data_service import get_uploaded_filenames
-
-            uploaded_files = get_uploaded_filenames(get_upload_data_service())
+            uploaded_files = self.upload_service.get_uploaded_filenames()
             if uploaded_files:
                 options.append(
                     {
@@ -57,7 +61,7 @@ class SummaryReporter:
                         "value": "uploaded",
                     }
                 )
-        except ImportError:
+        except Exception:
             pass
         if self.database_manager and self.database_manager.health_check():
             options.append({"label": "Database", "value": "database"})
@@ -82,13 +86,10 @@ class SummaryReporter:
             "service_health": self.health_check(),
         }
         try:
-            from services.interfaces import get_upload_data_service
-            from services.upload_data_service import get_uploaded_filenames
-
             status["uploaded_files"] = len(
-                get_uploaded_filenames(get_upload_data_service())
+                self.upload_service.get_uploaded_filenames()
             )
-        except ImportError:
+        except Exception:
             status["uploaded_files"] = 0
         return status
 

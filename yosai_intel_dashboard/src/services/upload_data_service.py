@@ -12,8 +12,10 @@ except ImportError:  # pragma: no cover - for Python <3.12
 import pandas as pd
 
 from core.service_container import ServiceContainer
-from services.interfaces import get_upload_data_service
-from services.protocols.upload_data import UploadDataServiceProtocol
+from services.interfaces import (
+    get_upload_data_service,
+    UploadDataServiceProtocol,
+)
 from utils.upload_store import UploadedDataStore, uploaded_data_store
 
 logger = logging.getLogger(__name__)
