@@ -130,6 +130,8 @@ __all__ = [
     "CSSConstants",
     "execute_secure_query",
     "UnicodeHandler",
+    "DatabaseManagerProtocol",
+    "EnhancedPostgreSQLManagerProtocol",
 ]
 
 
