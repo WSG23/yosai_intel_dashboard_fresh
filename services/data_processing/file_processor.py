@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""
-File processing service - Core data processing without UI dependencies
-Handles Unicode surrogate characters safely
-"""
+from __future__ import annotations
+
+"""File processing service - Core data processing without UI dependencies
+Handles Unicode surrogate characters safely"""
 import io
 import logging
 from pathlib import Path
@@ -19,6 +19,8 @@ from core.performance_file_processor import PerformanceFileProcessor
 from core.unicode import UnicodeProcessor as UnicodeHelper
 from core.unicode import safe_format_number, safe_unicode_decode
 from unicode_toolkit import safe_encode_text
+from validation.security_validator import SecurityValidator
+from validation.upload_utils import decode_and_validate_upload
 
 from .file_handler import process_file_simple
 
@@ -135,30 +137,17 @@ def process_uploaded_file(
     Returns: Dict with 'data', 'filename', 'status', 'error'
     """
     try:
-        # Decode base64 content
-        import base64
-
-        if "," not in contents:
-            return {
-                "success": False,
-                "error": "Invalid data URI",
-                "data": None,
-                "filename": filename,
-            }
-
-        _, content_string = contents.split(",", 1)
-        decoded = base64.b64decode(content_string, validate=True)
-
         validator = SecurityValidator()
-        meta = validator.validate_file_meta(filename, len(decoded))
-        if not meta["valid"]:
+        info = decode_and_validate_upload(contents, filename, validator)
+        if not info["valid"]:
             return {
                 "success": False,
-                "error": "; ".join(meta["issues"]),
+                "error": "; ".join(info.get("issues", [])),
                 "data": None,
-                "filename": filename,
+                "filename": info.get("filename", filename),
             }
-        filename = meta["filename"]
+        decoded = info["decoded"]
+        filename = info["filename"]
 
         # Safe Unicode processing
         text_content = UnicodeFileProcessor.safe_decode_content(decoded)

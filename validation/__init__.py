@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Unified validation package."""
 
 from .core import ValidationResult, Validator
