@@ -1,3 +1,5 @@
+"""Manual script to verify API endpoints are reachable"""
+
 import json
 
 import requests

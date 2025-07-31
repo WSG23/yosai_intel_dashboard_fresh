@@ -39,7 +39,7 @@ Callback distribution:
 
 ## Unicode Handling
 Found 702 potential encoding issues
-  - test_base_services.py:6 - Potential encoding issue: str(PROJECT_ROOT))
+  - scripts/manual_tests/check_base_services.py:6 - Potential encoding issue: str(PROJECT_ROOT))
   - mde.py (removed):12 - Potential encoding issue: str(PROJECT_ROOT))
   - mde.py (removed):262 - Potential encoding issue: str(e)}", color="danger")
   - mde.py (removed):389 - Potential encoding issue: str(e)}", color="warning")
