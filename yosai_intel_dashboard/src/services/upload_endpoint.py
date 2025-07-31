@@ -6,20 +6,10 @@ from flask_apispec import doc
 from flask_wtf.csrf import validate_csrf
 from pydantic import BaseModel
 
-from services.upload.service_registration import register_upload_services
+from error_handling import ErrorCategory, ErrorHandler, api_error_response
 
-# Use the shared DI container configured at application startup
-from core.container import container
-from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler, api_error_response
 from services.data_processing.file_handler import FileHandler
 from yosai_intel_dashboard.src.utils.pydantic_decorators import validate_input, validate_output
-
-if not container.has("upload_processor"):
-    register_upload_services(container)
-
-upload_bp = Blueprint("upload", __name__)
-
-handler = ErrorHandler()
 
 
 class UploadRequestSchema(BaseModel):
@@ -35,93 +25,102 @@ class StatusSchema(BaseModel):
     status: dict
 
 
-@upload_bp.route("/v1/upload", methods=["POST"])
-@doc(
-    description="Upload a file",
-    tags=["upload"],
-    responses={202: "Accepted", 400: "Invalid CSRF token", 500: "Server Error"},
-)
-@validate_input(UploadRequestSchema)
-@validate_output(UploadResponseSchema)
-def upload_files(payload: UploadRequestSchema):
-    """Handle file upload and return expected structure for React frontend"""
-    try:
-        token = (
-            request.headers.get("X-CSRFToken")
-            or request.headers.get("X-CSRF-Token")
-            or request.form.get("csrf_token")
-        )
+def create_upload_blueprint(
+    file_processor,
+    *,
+    file_handler=None,
+    handler: ErrorHandler | None = None,
+) -> Blueprint:
+    """Return a blueprint handling file uploads."""
+
+    upload_bp = Blueprint("upload", __name__)
+    err_handler = handler or ErrorHandler()
+
+    @upload_bp.route("/v1/upload", methods=["POST"])
+    @doc(
+        description="Upload a file",
+        tags=["upload"],
+        responses={202: "Accepted", 400: "Invalid CSRF token", 500: "Server Error"},
+    )
+    @validate_input(UploadRequestSchema)
+    @validate_output(UploadResponseSchema)
+    def upload_files(payload: UploadRequestSchema):
+        """Handle file upload and return expected structure for React frontend"""
         try:
-            validate_csrf(token)
-        except Exception:
-            return api_error_response(
-                ValueError("Invalid CSRF token"),
-                ErrorCategory.INVALID_INPUT,
-                handler=handler,
+            token = (
+                request.headers.get("X-CSRFToken")
+                or request.headers.get("X-CSRF-Token")
+                or request.form.get("csrf_token")
             )
-
-        contents = []
-        filenames = []
-        file_processor = container.get("file_processor")
-        validator = getattr(file_processor, "validator", None)
-        if validator is None:
             try:
-                validator = container.get("file_handler")
+                validate_csrf(token)
             except Exception:
-                validator = FileHandler().validator
+                return api_error_response(
+                    ValueError("Invalid CSRF token"),
+                    ErrorCategory.INVALID_INPUT,
+                    handler=err_handler,
+                )
 
-        # Support both multipart/form-data and raw JSON payloads
-        if request.files:
-            for file in request.files.values():
-                if not file.filename:
-                    continue
-                file_bytes = file.read()
-                try:
-                    validator.validate_file_upload(file.filename, file_bytes)
-                except Exception as exc:
-                    return api_error_response(
-                        exc,
-                        ErrorCategory.INVALID_INPUT,
-                        handler=handler,
-                    )
-                b64 = base64.b64encode(file_bytes).decode("utf-8", errors="replace")
-                mime = file.mimetype or "application/octet-stream"
-                contents.append(f"data:{mime};base64,{b64}")
-                filenames.append(file.filename)
-        else:
-            contents = payload.contents or []
-            filenames = payload.filenames or []
+            contents = []
+            filenames = []
+            validator = getattr(file_processor, "validator", None)
+            if validator is None:
+                if file_handler is not None:
+                    validator = getattr(file_handler, "validator", None)
+                if validator is None:
+                    validator = FileHandler().validator
 
-        if not contents or not filenames:
-            return api_error_response(
-                ValueError("No file provided"),
-                ErrorCategory.INVALID_INPUT,
-                handler=handler,
-            )
+            if request.files:
+                for file in request.files.values():
+                    if not file.filename:
+                        continue
+                    file_bytes = file.read()
+                    try:
+                        validator.validate_file_upload(file.filename, file_bytes)
+                    except Exception as exc:
+                        return api_error_response(
+                            exc,
+                            ErrorCategory.INVALID_INPUT,
+                            handler=err_handler,
+                        )
+                    b64 = base64.b64encode(file_bytes).decode("utf-8", errors="replace")
+                    mime = file.mimetype or "application/octet-stream"
+                    contents.append(f"data:{mime};base64,{b64}")
+                    filenames.append(file.filename)
+            else:
+                contents = payload.contents or []
+                filenames = payload.filenames or []
 
-        job_id = file_processor.process_file_async(contents[0], filenames[0])
+            if not contents or not filenames:
+                return api_error_response(
+                    ValueError("No file provided"),
+                    ErrorCategory.INVALID_INPUT,
+                    handler=err_handler,
+                )
 
-        return {"job_id": job_id}, 202
+            job_id = file_processor.process_file_async(contents[0], filenames[0])
 
-    except Exception as e:
-        return api_error_response(e, ErrorCategory.INTERNAL, handler=handler)
+            return {"job_id": job_id}, 202
 
+        except Exception as e:  # pragma: no cover - defensive
+            return api_error_response(e, ErrorCategory.INTERNAL, handler=err_handler)
 
-@upload_bp.route("/v1/upload/status/<job_id>", methods=["GET"])
-@doc(
-    params={
-        "job_id": {
-            "description": "Upload job id",
-            "in": "path",
-            "schema": {"type": "string"},
-        }
-    },
-    tags=["upload"],
-    responses={200: "Success"},
-)
-@validate_output(StatusSchema)
-def upload_status(job_id: str):
-    """Return background processing status for ``job_id``."""
-    file_processor = container.get("file_processor")
-    status = file_processor.get_job_status(job_id)
-    return status
+    @upload_bp.route("/v1/upload/status/<job_id>", methods=["GET"])
+    @doc(
+        params={
+            "job_id": {
+                "description": "Upload job id",
+                "in": "path",
+                "schema": {"type": "string"},
+            }
+        },
+        tags=["upload"],
+        responses={200: "Success"},
+    )
+    @validate_output(StatusSchema)
+    def upload_status(job_id: str):
+        """Return background processing status for ``job_id``."""
+        status = file_processor.get_job_status(job_id)
+        return status
+
+    return upload_bp

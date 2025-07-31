@@ -77,6 +77,8 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         LoggingService,
         protocol=LoggingProtocol,
     )
+    from error_handling import ErrorHandler
+    container.register_singleton("error_handler", ErrorHandler)
     container.register_singleton(
         "database_manager",
         DatabaseManager,

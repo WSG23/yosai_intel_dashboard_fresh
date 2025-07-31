@@ -1,5 +1,9 @@
 import sys
 import types
+from pathlib import Path
+
+sys.modules.setdefault("yosai_intel_dashboard", types.ModuleType("yosai_intel_dashboard"))
+sys.modules["yosai_intel_dashboard"].__path__ = [str(Path(__file__).resolve().parents[1] / "yosai_intel_dashboard")]
 
 import pandas as pd
 
@@ -21,7 +25,7 @@ sys.modules.setdefault("services.upload.service_registration", service_reg_stub)
 services_mod = sys.modules.setdefault("services", types.ModuleType("services"))
 services_mod.__path__ = [str((__file__)).rsplit("/tests/", 1)[0] + "/services"]
 
-from services.device_endpoint import (
+from yosai_intel_dashboard.src.services.device_endpoint import (
     build_ai_device_mappings,
     build_device_mappings,
     build_user_device_mappings,
