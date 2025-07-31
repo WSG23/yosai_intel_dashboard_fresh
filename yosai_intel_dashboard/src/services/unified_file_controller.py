@@ -12,7 +12,6 @@ from services.data_processing.file_handler import FileHandler
 from utils.upload_store import UploadedDataStore
 
 _logger = logging.getLogger(__name__)
-callback_manager = TrulyUnifiedCallbacks()
 
 # Simple in-memory metrics
 _metrics = {
@@ -27,6 +26,7 @@ def process_file_upload(
     contents: str,
     filename: str,
     *,
+    callback_manager: TrulyUnifiedCallbacks,
     storage: Optional[UploadedDataStore] = None,
 ) -> dict:
     """Validate ``contents``, sanitize with :class:`UnicodeProcessor` and save.
@@ -78,7 +78,27 @@ def get_processing_metrics() -> dict:
     return dict(_metrics)
 
 
+def register_callbacks(callbacks: TrulyUnifiedCallbacks) -> None:
+    """Register event callbacks for file uploads using *callbacks* manager."""
+
+    def _handle_upload(
+        contents: str,
+        filename: str,
+        *,
+        storage: Optional[UploadedDataStore] = None,
+    ) -> dict:
+        return process_file_upload(
+            contents,
+            filename,
+            callback_manager=callbacks,
+            storage=storage,
+        )
+
+    callbacks.register_event(CallbackEvent.FILE_UPLOAD_COMPLETE, _handle_upload)
+
+
 __all__ = [
     "process_file_upload",
     "get_processing_metrics",
+    "register_callbacks",
 ]
