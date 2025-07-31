@@ -33,6 +33,7 @@ from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
 
 from analytics import anomaly_detection, feature_extraction, security_patterns
 from config import get_database_config
+from config.constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
 from config.config_loader import load_service_config
 from core.security import RateLimiter
 from services.analytics_microservice import async_queries
@@ -182,7 +183,10 @@ async def _startup() -> None:
         timeout=cfg.connection_timeout,
     )
 
-    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    redis_url = os.getenv(
+        "REDIS_URL",
+        f"redis://{DEFAULT_CACHE_HOST}:{DEFAULT_CACHE_PORT}/0",
+    )
     redis = aioredis.from_url(redis_url, decode_responses=True)
     cache_ttl = int(os.getenv("CACHE_TTL", "300"))
 
