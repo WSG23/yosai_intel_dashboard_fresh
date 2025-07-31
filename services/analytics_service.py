@@ -18,6 +18,12 @@ from typing import Any, Dict, List, NamedTuple, Protocol
 
 import requests
 
+from core.error_handling import (
+    ErrorCategory,
+    ErrorSeverity,
+    with_error_handling,
+)
+
 try:
     from typing import override
 except ImportError:  # pragma: no cover - for Python <3.12
@@ -112,27 +118,16 @@ class DataSourceRouter:
     def __init__(self, orchestrator: AnalyticsOrchestrator) -> None:
         self.orchestrator = orchestrator
 
+    @with_error_handling(
+        category=ErrorCategory.ANALYTICS,
+        severity=ErrorSeverity.MEDIUM,
+    )
     def get_analytics(self, source: str) -> Dict[str, Any]:
         """Return analytics data for ``source``."""
-        try:
-            uploaded_data = self.orchestrator.loader.load_uploaded_data()
-            if uploaded_data and source in ["uploaded", "sample"]:
-                logger.info("Forcing uploaded data usage (source was: %s)", source)
-                return self.orchestrator.process_uploaded_data_directly(uploaded_data)
-        except (
-            ImportError,
-            FileNotFoundError,
-            OSError,
-            RuntimeError,
-            ValueError,
-            pd.errors.ParserError,
-        ) as exc:
-            logger.error(
-                "Uploaded data check failed (%s): %s",
-                type(exc).__name__,
-                exc,
-                exc_info=True,
-            )
+        uploaded_data = self.orchestrator.loader.load_uploaded_data()
+        if uploaded_data and source in ["uploaded", "sample"]:
+            logger.info("Forcing uploaded data usage (source was: %s)", source)
+            return self.orchestrator.process_uploaded_data_directly(uploaded_data)
 
         if source == "sample":
             return generate_sample_analytics()
