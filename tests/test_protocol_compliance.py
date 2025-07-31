@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Callable, Dict, List, Protocol, assert_type, runtime_checkable
 
 import pandas as pd
@@ -205,7 +207,7 @@ class TestProtocolCompliance:
         assert_type(service, SecurityServiceProtocol)
 
     def test_all_registered_services_implement_protocols(self):
-        from config.complete_service_registration import register_all_services
+        from startup.service_registration import register_all_services
 
         container = ServiceContainer()
         register_all_services(container)
