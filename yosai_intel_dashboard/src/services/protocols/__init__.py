@@ -1,9 +1,12 @@
+from services.controllers.protocols import UploadProcessingControllerProtocol
+
 from .device_learning import DeviceLearningServiceProtocol
-from .upload_data import UploadDataServiceProtocol
 from .processor import ProcessorProtocol
+from .upload_data import UploadDataServiceProtocol
 
 __all__ = [
     "DeviceLearningServiceProtocol",
     "UploadDataServiceProtocol",
     "ProcessorProtocol",
+    "UploadProcessingControllerProtocol",
 ]

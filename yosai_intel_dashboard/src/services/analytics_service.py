@@ -30,33 +30,41 @@ except ImportError:  # pragma: no cover - for Python <3.12
     from typing_extensions import override
 
 import pandas as pd
+
 from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
 from core.di_decorators import inject, injectable
+from core.interfaces import ConfigProviderProtocol
 from core.protocols import (
     AnalyticsServiceProtocol,
     DatabaseProtocol,
     EventBusProtocol,
     StorageProtocol,
 )
-from core.interfaces import ConfigProviderProtocol
 from services.analytics.calculator import Calculator
 from services.analytics.orchestrator import AnalyticsOrchestrator
-from services.analytics.protocols import DataProcessorProtocol
+from services.analytics.protocols import (
+    CalculatorProtocol,
+    DataProcessorProtocol,
+    PublishingProtocol,
+    ReportGeneratorProtocol,
+    UploadAnalyticsProtocol,
+)
 from services.analytics.publisher import Publisher
 from services.analytics.upload_analytics import UploadAnalyticsProcessor
 from services.analytics_summary import generate_sample_analytics
+from services.controllers.protocols import UploadProcessingControllerProtocol
 from services.controllers.upload_controller import UploadProcessingController
 from services.data_processing.processor import Processor
 from services.helpers.database_initializer import initialize_database
 from services.interfaces import (
-    get_upload_data_service,
-    get_analytics_data_loader,
-    get_database_analytics_retriever,
     AnalyticsDataLoaderProtocol,
     DatabaseAnalyticsRetrieverProtocol,
+    get_analytics_data_loader,
+    get_database_analytics_retriever,
+    get_upload_data_service,
 )
+from services.protocols import UploadDataServiceProtocol
 from services.summary_report_generator import SummaryReportGenerator
-from services.upload_data_service import UploadDataService
 from validation.security_validator import SecurityValidator
 from yosai_intel_dashboard.models.ml import ModelRegistry
 
@@ -118,59 +126,40 @@ class AnalyticsService(AnalyticsServiceProtocol):
         config: ConfigProviderProtocol | None = None,
         event_bus: EventBusProtocol | None = None,
         storage: StorageProtocol | None = None,
-        upload_data_service: UploadDataService | None = None,
+        upload_data_service: UploadDataServiceProtocol | None = None,
         model_registry: ModelRegistry | None = None,
         *,
         loader: AnalyticsDataLoaderProtocol | None = None,
-        calculator: Calculator | None = None,
-        publisher: Publisher | None = None,
-        report_generator: SummaryReportGenerator | None = None,
+        calculator: CalculatorProtocol | None = None,
+        publisher: PublishingProtocol | None = None,
+        report_generator: ReportGeneratorProtocol | None = None,
         db_retriever: DatabaseAnalyticsRetrieverProtocol | None = None,
-        upload_controller: UploadProcessingController | None = None,
-        upload_processor: UploadAnalyticsProcessor | None = None,
+        upload_controller: UploadProcessingControllerProtocol | None = None,
+        upload_processor: UploadAnalyticsProtocol | None = None,
     ) -> None:
         self.database = database
-        self.data_processor = data_processor or Processor(validator=SecurityValidator())
+        self.data_processor = data_processor
         self.config = config
         self.event_bus = event_bus
         self.storage = storage
-        self.upload_data_service = upload_data_service or get_upload_data_service()
+        self.upload_data_service = upload_data_service
         self.model_registry = model_registry
         self.validation_service = SecurityValidator()
-        if data_processor is None:
-            self.processor = Processor(validator=self.validation_service)
-            self.data_processor = self.processor
-        else:
-            self.processor = data_processor
-            self.data_processor = data_processor
+        self.processor = data_processor
         # Legacy attribute aliases
         self.data_loading_service = self.processor
         from services.data_processing.file_handler import FileHandler
 
         self.file_handler = FileHandler()
 
-        if upload_processor is None:
-            upload_processor = UploadAnalyticsProcessor(
-                self.validation_service, self.processor
-            )
-        if upload_controller is None:
-            self.upload_controller = UploadProcessingController(
-                self.validation_service,
-                self.processor,
-                self.upload_data_service,
-                upload_processor,
-            )
-        else:
-            self.upload_controller = upload_controller
         self.upload_processor = upload_processor
-        self.report_generator = report_generator or SummaryReportGenerator()
+        self.upload_controller = upload_controller
+        self.report_generator = report_generator
         self._setup_database(db_retriever)
-        loader = loader or get_analytics_data_loader(
-            self.upload_controller, self.processor
-        )
-        calculator = calculator or Calculator(self.report_generator)
-        publisher = publisher or Publisher(self.event_bus)
-        self._create_orchestrator(loader, calculator, publisher)
+        self.data_loader = loader
+        self.calculator = calculator
+        self.publisher = publisher
+        self._create_orchestrator(self.data_loader, self.calculator, self.publisher)
         self.router = DataSourceRouter(self.orchestrator)
 
     def _setup_database(
@@ -183,15 +172,14 @@ class AnalyticsService(AnalyticsServiceProtocol):
             self.summary_reporter,
         ) = initialize_database(self.database)
         self.database_retriever = db_retriever or get_database_analytics_retriever(
-
             self.db_helper
         )
 
     def _create_orchestrator(
         self,
         loader: AnalyticsDataLoaderProtocol,
-        calculator: Calculator,
-        publisher: Publisher,
+        calculator: CalculatorProtocol,
+        publisher: PublishingProtocol,
     ) -> None:
         """Set up loader, calculator, publisher and orchestrator."""
         self.data_loader = loader
@@ -500,8 +488,8 @@ def get_analytics_service(
     if _analytics_service is None:
         with _analytics_service_lock:
             if _analytics_service is None:
-                _analytics_service = AnalyticsService(
-                    config=config_provider,
+                _analytics_service = create_analytics_service(
+                    config_provider=config_provider,
                     model_registry=model_registry,
                 )
     return _analytics_service
@@ -511,10 +499,33 @@ def create_analytics_service(
     config_provider: ConfigProviderProtocol | None = None,
     model_registry: ModelRegistry | None = None,
 ) -> AnalyticsService:
-    """Create new analytics service instance"""
+    """Create new analytics service instance with default dependencies."""
+
+    validation = SecurityValidator()
+    processor = Processor(validator=validation)
+    upload_service = get_upload_data_service()
+    upload_processor = UploadAnalyticsProcessor(validation, processor)
+    upload_controller = UploadProcessingController(
+        validation,
+        processor,
+        upload_service,
+        upload_processor,
+    )
+    loader = get_analytics_data_loader(upload_controller, processor)
+    report_generator = SummaryReportGenerator()
+    calculator = Calculator(report_generator)
+    publisher = Publisher(None)
     return AnalyticsService(
+        data_processor=processor,
         config=config_provider,
+        upload_data_service=upload_service,
         model_registry=model_registry,
+        loader=loader,
+        calculator=calculator,
+        publisher=publisher,
+        report_generator=report_generator,
+        upload_controller=upload_controller,
+        upload_processor=upload_processor,
     )
 
 

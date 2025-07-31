@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 
 from core.protocols import (
     ConfigurationProtocol,
@@ -25,8 +24,8 @@ def register_all_application_services(container: ServiceContainer) -> None:
     register_metadata_services(container)
     register_security_services(container)
     register_export_services(container)
-    from services.upload.service_registration import register_upload_services
     from config.dynamic_config import dynamic_config
+    from services.upload.service_registration import register_upload_services
 
     register_upload_services(container, config=dynamic_config)
 
@@ -44,9 +43,9 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigValidator,
         create_config_manager,
     )
-    from core.interfaces import ConfigProviderProtocol
-    from config.dynamic_config import dynamic_config
     from config.database_manager import DatabaseManager, DatabaseSettings
+    from config.dynamic_config import dynamic_config
+    from core.interfaces import ConfigProviderProtocol
     from core.logging import LoggingService
     from services.configuration_service import (
         ConfigurationServiceProtocol,
@@ -113,30 +112,38 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
 
 def register_analytics_services(container: ServiceContainer) -> None:
     """Register analytics components and service."""
-    from core.protocols import AnalyticsServiceProtocol
+    from core.protocols import (
+        AnalyticsServiceProtocol,
+        ConfigProviderProtocol,
+        DatabaseProtocol,
+        EventBusProtocol,
+        StorageProtocol,
+    )
+    from mapping.factories.service_factory import create_mapping_service
+    from services.analytics.calculator import create_calculator
     from services.analytics.protocols import (
+        CalculatorProtocol,
         DataLoadingProtocol,
         DataProcessorProtocol,
-        ReportGeneratorProtocol,
         PublishingProtocol,
+        ReportGeneratorProtocol,
+        UploadAnalyticsProtocol,
     )
-    from config.dynamic_config import dynamic_config
-    from services.analytics_service import create_analytics_service
-    from services.data_loading_service import DataLoadingService
-    from services.data_processing_service import DataProcessingService
-    from services.report_generation_service import ReportGenerationService
-    from services.publishing_service import PublishingService
-    from services.controllers.upload_controller import UploadProcessingController
     from services.analytics.upload_analytics import UploadAnalyticsProcessor
+    from services.analytics_service import AnalyticsService
+    from services.controllers.upload_controller import UploadProcessingController
+    from services.controllers.protocols import UploadProcessingControllerProtocol
+    from services.data_loading_service import DataLoadingService
     from services.data_processing.processor import Processor
+    from services.data_processing_service import DataProcessingService
     from services.interfaces import (
         MappingServiceProtocol,
         UploadDataServiceProtocol,
+        get_database_analytics_retriever,
     )
     from services.protocols.processor import ProcessorProtocol
-    from services.upload.protocols import UploadAnalyticsProtocol
-    from mapping.factories.service_factory import create_mapping_service
-    from validation.security_validator import SecurityValidator
+    from services.publishing_service import PublishingService
+    from services.report_generation_service import ReportGenerationService
 
     container.register_singleton(
         "data_processing_service",
@@ -193,6 +200,11 @@ def register_analytics_services(container: ServiceContainer) -> None:
         factory=lambda c: ReportGenerationService(),
     )
     container.register_singleton(
+        "calculator",
+        create_calculator(),
+        protocol=CalculatorProtocol,
+    )
+    container.register_singleton(
         "publisher",
         PublishingService,
         protocol=PublishingProtocol,
@@ -200,8 +212,28 @@ def register_analytics_services(container: ServiceContainer) -> None:
     )
     container.register_singleton(
         "analytics_service",
-        create_analytics_service(config_provider=dynamic_config),
+        AnalyticsService,
         protocol=AnalyticsServiceProtocol,
+        factory=lambda c: AnalyticsService(
+            database=c.get("database_manager", DatabaseProtocol),
+            data_processor=c.get("data_processing_service", DataProcessorProtocol),
+            config=c.get("dynamic_config", ConfigProviderProtocol),
+            event_bus=c.get("event_bus", EventBusProtocol),
+            storage=c.get("file_storage", StorageProtocol),
+            upload_data_service=c.get("upload_data_service", UploadDataServiceProtocol),
+            model_registry=None,
+            loader=c.get("data_loader", DataLoadingProtocol),
+            calculator=c.get("calculator", CalculatorProtocol),
+            publisher=c.get("publisher", PublishingProtocol),
+            report_generator=c.get("report_generator", ReportGeneratorProtocol),
+            db_retriever=get_database_analytics_retriever(c.get("database_manager")),
+            upload_controller=c.get(
+                "upload_processing_controller", UploadProcessingControllerProtocol
+            ),
+            upload_processor=c.get(
+                "upload_analytics_processor", UploadAnalyticsProtocol
+            ),
+        ),
     )
 
 
