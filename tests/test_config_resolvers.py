@@ -1,14 +1,7 @@
 import importlib.util
-import sys
 from pathlib import Path
-from types import ModuleType, SimpleNamespace
+from types import SimpleNamespace
 
-# Create stub core.config module to avoid heavy dependencies
-stub = ModuleType("core.config")
-stub.get_ai_confidence_threshold = lambda: 0.75
-stub.get_max_upload_size_mb = lambda: 10
-stub.get_upload_chunk_size = lambda: 128
-sys.modules["core.config"] = stub
 
 spec = importlib.util.spec_from_file_location(
     "utils.config_resolvers",
@@ -40,7 +33,12 @@ def test_resolve_ai_confidence_threshold_alt_attr():
 
 
 def test_resolve_ai_confidence_threshold_default():
-    assert config_resolvers.resolve_ai_confidence_threshold(None) == 0.75
+    assert (
+        config_resolvers.resolve_ai_confidence_threshold(
+            None, default_resolver=lambda: 0.75
+        )
+        == 0.75
+    )
 
 
 def test_resolve_max_upload_size_mb_all_attrs():
@@ -56,7 +54,12 @@ def test_resolve_max_upload_size_mb_alt_attrs():
 
 
 def test_resolve_max_upload_size_mb_default():
-    assert config_resolvers.resolve_max_upload_size_mb(None) == 10
+    assert (
+        config_resolvers.resolve_max_upload_size_mb(
+            None, default_resolver=lambda: 10
+        )
+        == 10
+    )
 
 
 def test_resolve_upload_chunk_size_attrs():
@@ -70,4 +73,9 @@ def test_resolve_upload_chunk_size_alt_attr():
 
 
 def test_resolve_upload_chunk_size_default():
-    assert config_resolvers.resolve_upload_chunk_size(None) == 128
+    assert (
+        config_resolvers.resolve_upload_chunk_size(
+            None, default_resolver=lambda: 128
+        )
+        == 128
+    )
