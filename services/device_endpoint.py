@@ -6,6 +6,7 @@ from flask_apispec import doc
 from pydantic import BaseModel
 
 from config.service_registration import register_upload_services
+from typing import Any, Tuple, Dict
 
 # Use the shared DI container for dependency resolution
 from core.container import container
@@ -91,9 +92,9 @@ def build_ai_device_mappings(df: pd.DataFrame, filename: str, upload_service) ->
 def build_device_mappings(
     filename: str,
     df: pd.DataFrame,
-    device_service,
-    upload_service,
-) -> dict:
+    device_service: Any,
+    upload_service: Any,
+) -> dict[str, dict]:
     """Construct the device mapping dictionary for *df* and *filename*."""
     user_mappings = device_service.get_user_device_mappings(filename)
     if user_mappings:
@@ -110,7 +111,7 @@ def build_device_mappings(
 )
 @validate_input(DeviceSuggestSchema)
 @validate_output(DeviceResponseSchema)
-def suggest_devices(payload: DeviceSuggestSchema):
+def suggest_devices(payload: DeviceSuggestSchema) -> Tuple[Dict[str, Any], int]:
     """Get device suggestions using DeviceLearningService"""
     try:
         filename = payload.filename

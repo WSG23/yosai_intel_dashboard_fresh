@@ -77,7 +77,7 @@ class AnalyticsProviderProtocol(Protocol):
         ...
 
 
-def ensure_analytics_config():
+def ensure_analytics_config() -> None:
     """Emergency fix to ensure analytics configuration exists."""
     try:
         from config.dynamic_config import dynamic_config

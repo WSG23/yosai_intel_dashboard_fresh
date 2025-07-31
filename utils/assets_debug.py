@@ -76,7 +76,9 @@ def log_asset_info(icon: str) -> None:
     logger.info(f"Icon path {path} exists={path.is_file()}")
 
 
-def navbar_icon(filename: str, alt: str, fallback_text: str, *, warn: bool = True):
+def navbar_icon(
+    filename: str, alt: str, fallback_text: str, *, warn: bool = True
+) -> html.Img | html.Span:
     """Return an ``Img`` component or fallback text for missing icons.
 
     Set ``warn=False`` to suppress the warning log when the icon is missing.

@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
+from .analytics.protocols import AnalyticsServiceProtocol
+
 if os.getenv("LIGHTWEIGHT_SERVICES"):
     __all__ = []
 else:
@@ -68,7 +70,7 @@ else:
     create_analytics_service = get_service("create_analytics_service")
     AnalyticsService = get_service("AnalyticsService")
 
-    def get_analytics_service():
+    def get_analytics_service() -> AnalyticsServiceProtocol | None:
         """Return a shared :class:`AnalyticsService` instance if available."""
         getter = get_service("get_analytics_service")
         if getter is None:

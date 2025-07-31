@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 
+from dash import Dash
 from flask import request, url_for
 
 from utils.assets_debug import check_navbar_assets
@@ -13,7 +14,7 @@ def get_nav_icon(app, name: str) -> str | None:
     return None
 
 
-def ensure_icon_cache_headers(app):
+def ensure_icon_cache_headers(app: Dash) -> Dash:
     """Add cache headers for icon assets to prevent loading issues.
 
     This registers an ``after_request`` hook on ``app.server`` that sets
@@ -177,7 +178,7 @@ def ensure_all_navbar_assets(app=None) -> None:
     logging.getLogger(__name__).info("Asset directory ensured")
 
 
-def fix_flask_mime_types(app):
+def fix_flask_mime_types(app: Dash) -> Dash:
     """Fix CSS MIME type issues"""
 
     @app.server.after_request

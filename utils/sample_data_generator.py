@@ -10,7 +10,7 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def generate_sample_access_data(num_records=1000):
+def generate_sample_access_data(num_records: int = 1000) -> pd.DataFrame:
     """Generate sample access control data for testing"""
 
     # Sample data parameters
@@ -111,7 +111,7 @@ def generate_sample_access_data(num_records=1000):
     return df
 
 
-def save_sample_data():
+def save_sample_data() -> None:
     # Generate different sized datasets
     datasets = {
         "sample_small.csv": 100,
@@ -159,7 +159,7 @@ Run this after setting up the project structure
 """
 
 
-def test_file_upload():
+def test_file_upload() -> bool:
     """Test file upload functionality"""
 
     # Generate test data using function defined above

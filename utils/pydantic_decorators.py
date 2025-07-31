@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import Any, Type
+from typing import Any, Type, Callable, TypeVar
 
 from flask import jsonify, request
 from pydantic import BaseModel, ValidationError
@@ -12,13 +12,15 @@ from yosai_framework.errors import CODE_TO_STATUS
 
 handler = ErrorHandler()
 
+F = TypeVar("F", bound=Callable[..., Any])
 
-def validate_input(model: Type[BaseModel]):
+
+def validate_input(model: Type[BaseModel]) -> Callable[[F], F]:
     """Validate request JSON against ``model`` and pass instance as ``payload``."""
 
-    def decorator(func):
+    def decorator(func: F) -> F:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             data = request.get_json(silent=True) or {}
             try:
                 validated = model.model_validate(data)
@@ -33,12 +35,12 @@ def validate_input(model: Type[BaseModel]):
     return decorator
 
 
-def validate_output(model: Type[BaseModel]):
+def validate_output(model: Type[BaseModel]) -> Callable[[F], F]:
     """Validate and jsonify endpoint output using ``model``."""
 
-    def decorator(func):
+    def decorator(func: F) -> F:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             result = func(*args, **kwargs)
             if isinstance(result, tuple):
                 body, status = result[0], result[1]

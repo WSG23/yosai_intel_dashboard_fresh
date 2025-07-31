@@ -26,8 +26,8 @@ class TaskQueue(TaskQueueProtocol):
     def create_task(
         self,
         func: Callable[[Callable[[int], None]], Awaitable[Any]] | Awaitable[Any],
-        """Schedule an async task and return its identifier."""
     ) -> str:
+        """Schedule an async task and return its identifier."""
         task_id = str(uuid.uuid4())
         ctx = ot_context.get_current()
         with self._lock:
@@ -78,9 +78,9 @@ _default_queue = TaskQueue()
 
 
 def create_task(
-    """Add a task to the default queue."""
     func: Callable[[Callable[[int], None]], Awaitable[Any]] | Awaitable[Any],
 ) -> str:
+    """Add a task to the default queue."""
     return _default_queue.create_task(func)
 
 

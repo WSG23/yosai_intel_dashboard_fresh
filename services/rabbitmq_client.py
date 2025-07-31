@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 import pika
 
@@ -22,11 +22,11 @@ class RabbitMQClient:
     def declare_queue(
         self,
         name: str,
-        """Declare a durable queue, optionally with DLQ and priority."""
         *,
         dead_letter: str | None = None,
         max_priority: int | None = None,
     ) -> None:
+        """Declare a durable queue, optionally with DLQ and priority."""
         args: dict[str, Any] = {}
         if dead_letter:
             args["x-dead-letter-exchange"] = ""
@@ -40,12 +40,12 @@ class RabbitMQClient:
         queue: str,
         task_type: str,
         payload: Any,
-        """Publish a task message and return its generated id."""
         *,
         priority: int = 0,
         delay_ms: int = 0,
         max_retries: int = 3,
     ) -> str:
+        """Publish a task message and return its generated id."""
         task = {
             "id": str(uuid.uuid4()),
             "type": task_type,
