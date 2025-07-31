@@ -1,15 +1,16 @@
-"""Compatibility wrapper for application service registration."""
+"""Comprehensive service registration for the DI container."""
 
 from __future__ import annotations
 
-from startup.service_registration import (
-    register_all_application_services,
-    register_all_services,
-    register_core_infrastructure,
-    register_analytics_services,
-    register_security_services,
-    register_export_services,
-    register_learning_services,
+import logging
+
+from core.protocols import (
+    ConfigurationProtocol,
+    DatabaseProtocol,
+    EventBusProtocol,
+    LoggingProtocol,
+    SecurityServiceProtocol,
+    StorageProtocol,
 )
 from core.service_container import ServiceContainer
 from services.metadata_enhancement_engine import register_metadata_services
@@ -106,16 +107,16 @@ def register_analytics_services(container: ServiceContainer) -> None:
     from services.analytics.protocols import (
         DataLoadingProtocol,
         DataProcessorProtocol,
-        PublishingProtocol,
         ReportGeneratorProtocol,
+        PublishingProtocol,
     )
     from services.analytics_service import create_analytics_service
-    from services.controllers.upload_controller import UnifiedUploadController
     from services.data_loading_service import DataLoadingService
-    from services.data_processing.processor import Processor
     from services.data_processing_service import DataProcessingService
-    from services.publishing_service import PublishingService
     from services.report_generation_service import ReportGenerationService
+    from services.publishing_service import PublishingService
+    from services.controllers.upload_controller import UnifiedUploadController
+    from services.data_processing.processor import Processor
     from validation.security_validator import SecurityValidator
 
     container.register_singleton(
@@ -182,13 +183,7 @@ def register_learning_services(container: ServiceContainer) -> None:
 
     from services.device_learning_service import create_device_learning_service
 
-
-__all__ = [
-    "register_all_application_services",
-    "register_all_services",
-    "register_core_infrastructure",
-    "register_analytics_services",
-    "register_security_services",
-    "register_export_services",
-    "register_learning_services",
-]
+    container.register_singleton(
+        "device_learning_service",
+        create_device_learning_service(),
+    )

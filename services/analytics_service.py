@@ -212,7 +212,12 @@ class AnalyticsService(AnalyticsServiceProtocol):
             self.database_manager,
             self.db_helper,
             self.summary_reporter,
-        ) = initialize_database(self.database)
+        ) = initialize_database(
+            self.database,
+            settings_provider=(
+                self.config.get_database_config if self.config else None
+            ),
+        )
         self.database_retriever = db_retriever or DatabaseAnalyticsRetriever(
             self.db_helper
         )

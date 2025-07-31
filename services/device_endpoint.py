@@ -5,7 +5,7 @@ from flask import Blueprint, jsonify, request
 from flask_apispec import doc
 from pydantic import BaseModel
 
-from config.service_registration import register_upload_services
+from services.upload.service_registration import register_upload_services
 
 # Use the shared DI container for dependency resolution
 from core.container import container
