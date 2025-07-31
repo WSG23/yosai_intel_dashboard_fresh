@@ -6,13 +6,13 @@ from pathlib import Path
 from typing import Callable, Optional, Sequence
 
 from core.callback_events import CallbackEvent
-from core.callbacks import UnifiedCallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.unicode import UnicodeProcessor
 from services.data_processing.file_handler import FileHandler
 from utils.upload_store import UploadedDataStore
 
 _logger = logging.getLogger(__name__)
-callback_manager = UnifiedCallbackManager()
+callback_manager = TrulyUnifiedCallbacks()
 
 # Simple in-memory metrics
 _metrics = {

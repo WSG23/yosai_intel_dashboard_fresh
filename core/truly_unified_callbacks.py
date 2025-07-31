@@ -98,6 +98,8 @@ class TrulyUnifiedCallbacks:
         self._event_metrics: Dict[CallbackEvent, Dict[str, float | int]] = defaultdict(
             lambda: {"calls": 0, "exceptions": 0, "total_time": 0.0}
         )
+        self._error_handler: Callable[[Exception, Any], None] | None = None
+        self._event_history: List[tuple[CallbackEvent, Any]] = []
 
     # ------------------------------------------------------------------
     def callback(self, *args: Any, **kwargs: Any):
@@ -310,6 +312,8 @@ class TrulyUnifiedCallbacks:
         """Synchronously trigger callbacks registered for *event*."""
         results: List[Any] = []
         callbacks = list(self._event_callbacks.get(event, []))
+        with self._lock:
+            self._event_history.append((event, args[0] if args else None))
         for cb in callbacks:
             wrapped = with_retry(max_attempts=cb.retries + 1)(cb.func)
             start = time.perf_counter()
@@ -328,6 +332,8 @@ class TrulyUnifiedCallbacks:
                     severity=ErrorSeverity.HIGH,
                     context={"event": event.name, "callback": cb.func.__name__},
                 )
+                if self._error_handler is not None:
+                    self._error_handler(exc, args[0] if args else None)
                 metric = self._event_metrics[event]
                 metric["calls"] += 1
                 metric["exceptions"] += 1
@@ -366,9 +372,13 @@ class TrulyUnifiedCallbacks:
                 metric = self._event_metrics[event]
                 metric["calls"] += 1
                 metric["exceptions"] += 1
+                if self._error_handler is not None:
+                    self._error_handler(exc, args[0] if args else None)
                 return None
 
         callbacks = list(self._event_callbacks.get(event, []))
+        with self._lock:
+            self._event_history.append((event, args[0] if args else None))
         tasks = [asyncio.create_task(_run(cb)) for cb in callbacks]
         return await asyncio.gather(*tasks) if tasks else []
 
@@ -529,6 +539,47 @@ class TrulyUnifiedCallbacks:
             manager = manager_cls(registry)
             self._namespaces.setdefault(manager.component_name, [])
             manager.register_all()
+
+    # ------------------------------------------------------------------
+    def register_error_handler(
+        self, handler: Callable[[Exception, Any], None]
+    ) -> None:
+        """Set a custom error handler for event callbacks."""
+        with self._lock:
+            self._error_handler = handler
+
+    # ------------------------------------------------------------------
+    def fire_event(
+        self, event: CallbackEvent, source_or_data: Any, data: Any | None = None
+    ) -> List[Any]:
+        """Convenience wrapper to trigger *event* with optional context."""
+        if data is None and not isinstance(source_or_data, str):
+            return self.trigger_event(event, source_or_data)
+
+        ctx = type(
+            "EventCtx",
+            (),
+            {"event_type": event, "source_id": source_or_data, "data": data or {}}
+        )
+        return self.trigger_event(event, ctx)
+
+    # ------------------------------------------------------------------
+    @property
+    def history(self) -> List[tuple[CallbackEvent, Any]]:
+        with self._lock:
+            return list(self._event_history)
+
+    def clear_all_callbacks(self) -> None:
+        """Remove all registered callbacks and metrics."""
+        with self._lock:
+            self._event_callbacks.clear()
+            self._dash_callbacks.clear()
+            self._output_map.clear()
+            self._namespaces.clear()
+            self._groups.clear()
+            self._registered_components.clear()
+            self._event_metrics.clear()
+            self._event_history.clear()
 
     # Compatibility wrappers -------------------------------------------
     register_callback = register_event  # noqa: F811

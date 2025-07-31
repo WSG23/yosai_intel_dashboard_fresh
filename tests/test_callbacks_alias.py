@@ -4,9 +4,9 @@ import dash
 if not hasattr(dash, "no_update"):
     dash.no_update = None
 
-from core.callbacks import UnifiedCallbackManager
-from core.truly_unified_callbacks import TrulyUnifiedCallbacks
+import importlib
 
 
-def test_unified_callback_manager_alias():
-    assert UnifiedCallbackManager is TrulyUnifiedCallbacks
+def test_unified_callback_manager_removed():
+    callbacks = importlib.import_module("core.callbacks")
+    assert not hasattr(callbacks, "UnifiedCallbackManager")

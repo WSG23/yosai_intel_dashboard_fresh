@@ -48,7 +48,7 @@ def submit_query(n):
 `CallbackManager` delivers application events outside of Dash callbacks.
 
 ```python
-from core.callbacks import UnifiedCallbackManager as CallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks as CallbackManager
 from core.callback_events import CallbackEvent
 
 events = CallbackManager()
@@ -61,17 +61,15 @@ events.register_callback(CallbackEvent.ANALYSIS_COMPLETE, on_complete)
 
 ## Grouped Operations
 
-`UnifiedCallbackManager` (an alias of `TrulyUnifiedCallbacks` exposed from
-`core.callbacks`) can execute a series of operations sequentially. New code
-should import `TrulyUnifiedCallbacks` directly, but the alias remains for
-backwards compatibility. This is useful when a Dash callback needs to
+`TrulyUnifiedCallbacks` can execute a series of operations sequentially.
+This is useful when a Dash callback needs to
 orchestrate multiple steps.
 
 
 ```python
-from core.callbacks import UnifiedCallbackManager
+from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 
-ops = UnifiedCallbackManager()
+ops = TrulyUnifiedCallbacks()
 ops.register_operation("refresh", load_data)
 ops.register_operation("refresh", update_summary)
 
