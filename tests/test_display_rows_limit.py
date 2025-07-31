@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 
 from config.dynamic_config import dynamic_config
-from file_processing import create_file_preview
+from yosai_intel_dashboard.src.file_processing import create_file_preview
 
 
 def test_create_file_preview_respects_limit(monkeypatch):

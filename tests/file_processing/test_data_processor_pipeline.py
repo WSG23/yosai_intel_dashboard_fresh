@@ -7,7 +7,11 @@ import pandas as pd
 import pytest
 
 MODULE_PATH = (
-    Path(__file__).resolve().parents[2] / "file_processing" / "data_processor.py"
+    Path(__file__).resolve().parents[2]
+    / "yosai_intel_dashboard"
+    / "src"
+    / "file_processing"
+    / "data_processor.py"
 )
 
 # Provide minimal stubs for core dependencies before loading the module

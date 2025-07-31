@@ -4,7 +4,7 @@ import pandas as pd
 
 from core.callback_events import CallbackEvent
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from file_processing.column_mapper import map_columns
+from yosai_intel_dashboard.src.file_processing.column_mapper import map_columns
 
 
 def test_exact_mapping(tmp_path: Path):
