@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
-"""
-File processing service - Core data processing without UI dependencies
-Handles Unicode surrogate characters safely
-"""
 from __future__ import annotations
 
+"""File processing service - Core data processing without UI dependencies
+Handles Unicode surrogate characters safely"""
+
 import io
-import json
 import logging
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Tuple
+
 
 import pandas as pd
 
@@ -19,14 +17,11 @@ from core.performance import get_performance_monitor
 from core.protocols import ConfigurationProtocol
 
 # Core processing imports only - NO UI COMPONENTS
-from core.unicode import safe_format_number
-from file_processing import create_file_preview as _create_preview
-from file_processing import (
-    safe_decode_content,
-    sanitize_dataframe_unicode,
-)
-
+from core.unicode import safe_format_number, safe_unicode_decode, sanitize_for_utf8
 from unicode_toolkit import safe_encode_text
+from validation.security_validator import SecurityValidator
+from validation.upload_utils import decode_and_validate_upload
+
 
 logger = logging.getLogger(__name__)
 
@@ -55,23 +50,6 @@ class UnicodeFileProcessor:
         return result["data"], result["error"]
 
 
-def _safe_b64decode(contents: str) -> Tuple[Optional[bytes], Optional[str]]:
-    """Return decoded bytes or an error message."""
-    import base64
-
-    if "," not in contents:
-        return None, "Invalid data URI"
-
-    try:
-        _, content_string = contents.split(",", 1)
-        decoded = base64.b64decode(content_string, validate=True)
-        if not decoded:
-            return None, "Empty file contents"
-        return decoded, None
-    except (base64.binascii.Error, ValueError) as exc:
-        return None, f"Invalid base64 data: {exc}"
-
-
 def process_uploaded_file(
     contents: str,
     filename: str,
@@ -83,15 +61,22 @@ def process_uploaded_file(
     Returns: Dict with 'data', 'filename', 'status', 'error'
     """
     try:
-        decoded, decode_err = _safe_b64decode(contents)
-        if decoded is None:
-            logger.error("Base64 decode failed for %s: %s", filename, decode_err)
+        validator = SecurityValidator()
+        info = decode_and_validate_upload(contents, filename, validator)
+        if not info["valid"]:
+            logger.error(
+                "Base64 validation failed for %s: %s",
+                filename,
+                ", ".join(info.get("issues", [])),
+            )
             return {
                 "status": "error",
-                "error": decode_err,
+                "error": "; ".join(info.get("issues", [])),
                 "data": None,
-                "filename": filename,
+                "filename": info.get("filename", filename),
             }
+        decoded = info["decoded"]
+        filename = info["filename"]
         # Safe Unicode processing
         text_content = UnicodeFileProcessor.safe_decode_content(decoded)
 
