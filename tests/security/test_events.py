@@ -1,7 +1,7 @@
 import pytest
 
 from security import events
-from services.security_callback_controller import SecurityEvent
+from security.events import SecurityEvent
 
 
 def test_threat_detected_dispatch(monkeypatch):
