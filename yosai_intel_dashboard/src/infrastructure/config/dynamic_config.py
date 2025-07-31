@@ -327,26 +327,25 @@ class ConfigHelper:
         return dynamic_config.get_upload_chunk_size()
 
 
-def diagnose_upload_config():
+def diagnose_upload_config() -> None:
     """Diagnostic function to check upload configuration"""
     import os
 
-    print("=== Upload Configuration Diagnosis ===")
-    print(f"Environment MAX_UPLOAD_MB: {os.getenv('MAX_UPLOAD_MB', 'Not Set')}")
-    print(f"Dynamic Config max_upload_mb: {dynamic_config.security.max_upload_mb}MB")
-    print(f"Upload folder: {dynamic_config.upload.folder}")
-    print(f"Max file size: {dynamic_config.upload.max_file_size_mb}MB")
-    print(f"Calculated max bytes: {dynamic_config.get_max_upload_size_bytes():,}")
-    print(f"Supports 50MB+ files: {dynamic_config.validate_large_file_support()}")
+    logger.info("=== Upload Configuration Diagnosis ===")
+    logger.info("Environment MAX_UPLOAD_MB: %s", os.getenv("MAX_UPLOAD_MB", "Not Set"))
+    logger.info("Dynamic Config max_upload_mb: %sMB", dynamic_config.security.max_upload_mb)
+    logger.info("Upload folder: %s", dynamic_config.upload.folder)
+    logger.info("Max file size: %sMB", dynamic_config.upload.max_file_size_mb)
+    logger.info("Calculated max bytes: %s", f"{dynamic_config.get_max_upload_size_bytes():,}")
+    logger.info("Supports 50MB+ files: %s", dynamic_config.validate_large_file_support())
 
-    # Check if environment is overriding to small value
     env_value = os.getenv("MAX_UPLOAD_MB")
     if env_value and int(env_value) < 50:
-        print(
-            "\u26a0\ufe0f  WARNING: Environment variable MAX_UPLOAD_MB="
-            f"{env_value} is too small!"
+        logger.warning(
+            "\u26a0\ufe0f  WARNING: Environment variable MAX_UPLOAD_MB=%s is too small!",
+            env_value,
         )
-        print("   Run: unset MAX_UPLOAD_MB")
+        logger.info("   Run: unset MAX_UPLOAD_MB")
 
 
 if __name__ == "__main__":

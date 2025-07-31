@@ -5,12 +5,15 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
 import aiohttp
 import pandas as pd
 from kafka import KafkaProducer
+
+logger = logging.getLogger(__name__)
 
 from core.service_container import ServiceContainer
 from services.feature_flags import feature_flags
@@ -58,7 +61,7 @@ class EventServiceAdapter(ServiceAdapter):
                 key_serializer=lambda k: k.encode("utf-8") if k else None,
             )
         except Exception as exc:  # pragma: no cover - runtime setup
-            print(f"Kafka initialization failed, using HTTP fallback: {exc}")
+            logger.warning("Kafka initialization failed, using HTTP fallback: %s", exc)
             self.kafka_producer = None
 
     async def call(self, method: str, **kwargs: Any) -> Any:
@@ -85,9 +88,9 @@ class EventServiceAdapter(ServiceAdapter):
                         "method": "kafka",
                     }
             except CircuitBreakerOpen:
-                print("Event service circuit open, skipping Kafka")
+                logger.warning("Event service circuit open, skipping Kafka")
             except Exception as exc:  # pragma: no cover - network failures
-                print(f"Kafka send failed, falling back to HTTP: {exc}")
+                logger.warning("Kafka send failed, falling back to HTTP: %s", exc)
 
         try:
             async with self.circuit_breaker:
