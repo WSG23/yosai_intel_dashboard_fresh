@@ -1,4 +1,4 @@
-from utils import sanitize_unicode_input
+from yosai_intel_dashboard.src.utils import sanitize_unicode_input
 
 
 def test_utils_exposes_sanitize_unicode_input():

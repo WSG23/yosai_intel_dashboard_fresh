@@ -16,8 +16,8 @@ from monitoring.model_performance_monitor import (
     ModelMetrics,
     get_model_performance_monitor,
 )
-from utils.hashing import hash_dataframe
-from utils.sklearn_compat import optional_import
+from yosai_intel_dashboard.src.utils.hashing import hash_dataframe
+from yosai_intel_dashboard.src.utils.sklearn_compat import optional_import
 
 from .model_registry import ModelRegistry
 

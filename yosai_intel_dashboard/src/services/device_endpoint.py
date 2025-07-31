@@ -9,8 +9,8 @@ from services.upload.service_registration import register_upload_services
 
 # Use the shared DI container for dependency resolution
 from core.container import container
-from error_handling import ErrorCategory, ErrorHandler, api_error_response
-from utils.pydantic_decorators import validate_input, validate_output
+from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler, api_error_response
+from yosai_intel_dashboard.src.utils.pydantic_decorators import validate_input, validate_output
 
 if not container.has("upload_processor"):
     register_upload_services(container)

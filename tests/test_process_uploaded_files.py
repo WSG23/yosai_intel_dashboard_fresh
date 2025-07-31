@@ -5,7 +5,7 @@ from services.upload import UploadProcessingService
 from services.upload.upload_core import UploadCore
 from tests.fakes import FakeUploadDataService
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 
 
 def test_multi_part_upload_row_count(async_runner):

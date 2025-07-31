@@ -5,7 +5,7 @@ import pytest
 
 from services.upload.chunked_upload_manager_async import ChunkedUploadManager
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 
 
 def _create_csv(path, rows=30):

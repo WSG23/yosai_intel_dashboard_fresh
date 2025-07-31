@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional
 import pandas as pd
 
 from config.constants import DEFAULT_CHUNK_SIZE
-from utils.memory_utils import check_memory_limit
+from yosai_intel_dashboard.src.utils.memory_utils import check_memory_limit
 
 try:
     from confluent_kafka import Consumer, Producer

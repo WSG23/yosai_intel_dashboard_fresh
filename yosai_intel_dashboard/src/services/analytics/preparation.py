@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from utils.mapping_helpers import map_and_clean
+from yosai_intel_dashboard.src.utils.mapping_helpers import map_and_clean
 from validation.security_validator import SecurityValidator
 
 

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from utils.mapping_helpers import map_and_clean, standardize_column_names
+from yosai_intel_dashboard.src.utils.mapping_helpers import map_and_clean, standardize_column_names
 
 
 def test_map_and_clean_basic():

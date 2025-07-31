@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional
 from flask import Blueprint, jsonify, request
 from flask_apispec import doc
 
-from error_handling import ErrorCategory, ErrorHandler, api_error_response
+from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler, api_error_response
 
 logger = logging.getLogger(__name__)
 

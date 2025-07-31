@@ -6,7 +6,7 @@ from core.callback_events import CallbackEvent
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.protocols import UnicodeProcessorProtocol
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
-from utils.pandas_readers import read_csv
+from yosai_intel_dashboard.src.utils.pandas_readers import read_csv
 
 from .base import BaseReader
 

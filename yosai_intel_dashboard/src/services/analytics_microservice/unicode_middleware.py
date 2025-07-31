@@ -9,7 +9,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from utils.unicode_handler import UnicodeHandler
+from yosai_intel_dashboard.src.utils.unicode_handler import UnicodeHandler
 
 logger = logging.getLogger(__name__)
 

@@ -6,8 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from utils.io_helpers import read_json, write_json
-from utils.unicode_handler import UnicodeHandler
+from yosai_intel_dashboard.src.utils.io_helpers import read_json, write_json
+from yosai_intel_dashboard.src.utils.unicode_handler import UnicodeHandler
 
 logger = logging.getLogger(__name__)
 

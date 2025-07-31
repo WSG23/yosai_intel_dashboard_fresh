@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from utils.config_resolvers import (
+from yosai_intel_dashboard.src.utils.config_resolvers import (
     resolve_ai_confidence_threshold,
     resolve_upload_chunk_size,
 )

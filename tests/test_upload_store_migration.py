@@ -1,5 +1,5 @@
 from tests.utils.builders import DataFrameBuilder
-from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 
 
 def test_pkl_migration(tmp_path):

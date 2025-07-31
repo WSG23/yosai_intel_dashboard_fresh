@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from utils.sklearn_compat import optional_import
+from yosai_intel_dashboard.src.utils.sklearn_compat import optional_import
 
 DBSCAN = optional_import("sklearn.cluster.DBSCAN")
 MLPRegressor = optional_import("sklearn.neural_network.MLPRegressor")

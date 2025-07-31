@@ -3,7 +3,7 @@ from pathlib import Path
 
 from flask import request, url_for
 
-from utils.assets_debug import check_navbar_assets
+from yosai_intel_dashboard.src.utils.assets_debug import check_navbar_assets
 
 ASSET_ICON_DIR = Path(__file__).resolve().parent.parent / "assets" / "navbar_icons"
 
@@ -35,7 +35,7 @@ def ensure_icon_cache_headers(app):
     Examples
     --------
     >>> from dash import Dash
-    >>> from utils.assets_utils import ensure_icon_cache_headers
+    >>> from yosai_intel_dashboard.src.utils.assets_utils import ensure_icon_cache_headers
     >>> dash_app = Dash(__name__)
     >>> ensure_icon_cache_headers(dash_app)
     >>> # ``dash_app.server`` will now add caching headers for icon responses

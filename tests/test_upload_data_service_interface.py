@@ -8,7 +8,7 @@ from services.upload_data_service import (
     get_uploaded_filenames,
     load_dataframe,
 )
-from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 
 
 def test_service_helpers(tmp_path):

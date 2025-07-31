@@ -23,7 +23,7 @@ from services.data_processing.core.exceptions import (
     FileValidationError,
 )
 from services.upload.upload_types import ValidationResult
-from utils.file_utils import safe_decode_with_unicode_handling
+from yosai_intel_dashboard.src.utils.file_utils import safe_decode_with_unicode_handling
 from validation.security_validator import SecurityValidator
 
 

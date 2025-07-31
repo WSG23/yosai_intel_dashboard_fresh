@@ -7,8 +7,8 @@ import pandas as pd
 
 from config.constants import DEFAULT_CHUNK_SIZE
 from core.unicode import UnicodeProcessor as UnicodeHelper
-from utils.file_utils import safe_decode_with_unicode_handling
-from utils.memory_utils import check_memory_limit
+from yosai_intel_dashboard.src.utils.file_utils import safe_decode_with_unicode_handling
+from yosai_intel_dashboard.src.utils.memory_utils import check_memory_limit
 
 logger = logging.getLogger(__name__)
 

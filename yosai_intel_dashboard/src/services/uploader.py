@@ -4,7 +4,7 @@ from typing import Dict
 
 import pandas as pd
 
-from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 
 
 class Uploader:

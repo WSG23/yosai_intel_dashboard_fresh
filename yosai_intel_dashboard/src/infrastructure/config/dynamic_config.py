@@ -16,7 +16,7 @@ from .constants import (
     UploadLimits,
 )
 from .environment import select_config_file
-from utils.config_resolvers import (
+from yosai_intel_dashboard.src.utils.config_resolvers import (
     resolve_ai_confidence_threshold,
     resolve_max_upload_size_mb,
     resolve_upload_chunk_size,

@@ -16,7 +16,7 @@ from services.interfaces import (
     get_upload_data_service,
     UploadDataServiceProtocol,
 )
-from utils.upload_store import UploadedDataStore, uploaded_data_store
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore, uploaded_data_store
 
 logger = logging.getLogger(__name__)
 
