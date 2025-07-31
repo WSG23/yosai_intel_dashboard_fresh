@@ -12,7 +12,7 @@ import pandas as pd
 from config.connection_retry import RetryConfig
 from config.constants import DEFAULT_CHUNK_SIZE, DataProcessingLimits
 from config.database_exceptions import ConnectionRetryExhausted
-from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 
 logger = logging.getLogger(__name__)
 

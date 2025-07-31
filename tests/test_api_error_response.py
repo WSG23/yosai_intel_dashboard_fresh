@@ -1,7 +1,7 @@
 import pytest
 from flask import Flask
 
-from error_handling import ErrorCategory, api_error_response
+from yosai_intel_dashboard.src.error_handling import ErrorCategory, api_error_response
 
 
 def test_api_error_response_generates_json_and_status():

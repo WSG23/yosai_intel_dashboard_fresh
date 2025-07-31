@@ -9,7 +9,7 @@ from core.callback_events import CallbackEvent
 from core.truly_unified_callbacks import TrulyUnifiedCallbacks
 from core.unicode import UnicodeProcessor
 from services.data_processing.file_handler import FileHandler
-from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 
 _logger = logging.getLogger(__name__)
 callback_manager = TrulyUnifiedCallbacks()

@@ -21,7 +21,7 @@ except Exception:  # pragma: no cover - optional AI suggestions
 
 
 from services.interfaces import get_upload_data_service
-from utils.preview_utils import serialize_dataframe_preview
+from yosai_intel_dashboard.src.utils.preview_utils import serialize_dataframe_preview
 from validation.unicode_validator import UnicodeValidator
 
 logger = logging.getLogger(__name__)

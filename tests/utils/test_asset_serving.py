@@ -1,7 +1,7 @@
 import os
 
 from core.app_factory import create_app
-from utils import debug_dash_asset_serving
+from yosai_intel_dashboard.src.utils import debug_dash_asset_serving
 
 
 def test_debug_dash_asset_serving(monkeypatch):

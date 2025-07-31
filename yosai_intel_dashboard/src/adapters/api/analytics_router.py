@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from config import get_cache_config
 from core.cache_manager import CacheConfig, InMemoryCacheManager
-from error_handling import http_error
+from yosai_intel_dashboard.src.error_handling import http_error
 from services.cached_analytics import CachedAnalyticsService
 from services.security import require_permission
 from shared.errors.types import ErrorCode

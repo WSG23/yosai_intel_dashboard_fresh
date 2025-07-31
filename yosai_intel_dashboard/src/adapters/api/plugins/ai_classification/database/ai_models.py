@@ -7,7 +7,7 @@ from typing import List, Optional, Tuple
 
 import joblib
 
-from utils.sklearn_compat import optional_import
+from yosai_intel_dashboard.src.utils.sklearn_compat import optional_import
 
 TfidfVectorizer = optional_import("sklearn.feature_extraction.text.TfidfVectorizer")
 LogisticRegression = optional_import("sklearn.linear_model.LogisticRegression")

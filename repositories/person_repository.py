@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import List, Optional, Protocol
 
-from utils.result_types import Result, failure, success
+from yosai_intel_dashboard.src.utils.result_types import Result, failure, success
 from yosai_intel_dashboard.models.entities import Person
 
 

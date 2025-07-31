@@ -30,7 +30,7 @@ from config import get_database_config
 from config.constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
 from config.config_loader import load_service_config
 from core.security import RateLimiter
-from error_handling import http_error
+from yosai_intel_dashboard.src.error_handling import http_error
 from services.analytics_microservice import async_queries
 from services.analytics_microservice.analytics_service import (
     AnalyticsService,

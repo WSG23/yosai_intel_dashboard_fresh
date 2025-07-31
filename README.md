@@ -1203,7 +1203,7 @@ summary = get_performance_monitor().get_metrics_summary()
 ### Standardizing column names
 ```python
 import pandas as pd
-from utils.mapping_helpers import standardize_column_names
+from yosai_intel_dashboard.src.utils.mapping_helpers import standardize_column_names
 
 df = pd.DataFrame({"A B": [1], "C-D": [2]})
 clean_df = standardize_column_names(df)

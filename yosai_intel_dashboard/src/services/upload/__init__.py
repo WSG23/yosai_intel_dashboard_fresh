@@ -7,7 +7,7 @@ Other packages should import from here rather than submodules.
 from core.protocols import FileProcessorProtocol
 from core.unicode import safe_encode_text
 from unicode_toolkit import decode_upload_content
-from utils.upload_store import UploadedDataStore as UploadStorage
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore as UploadStorage
 from validation.security_validator import SecurityValidator
 
 from .ai import AISuggestionService, analyze_device_name_with_ai

@@ -29,7 +29,7 @@ from services.upload.protocols import (
 )
 from services.upload.validator import ClientSideValidator
 from services.upload_data_service import UploadDataService
-from utils.upload_store import UploadedDataStore
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 from validation.file_validator import FileValidator
 
 

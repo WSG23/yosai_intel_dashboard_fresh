@@ -18,7 +18,7 @@ from core.protocols import FileProcessorProtocol
 from core.interfaces import ConfigProviderProtocol
 from services.rabbitmq_client import RabbitMQClient
 from services.task_queue import create_task, get_status
-from utils.memory_utils import check_memory_limit
+from yosai_intel_dashboard.src.utils.memory_utils import check_memory_limit
 
 from .file_processor import UnicodeFileProcessor
 

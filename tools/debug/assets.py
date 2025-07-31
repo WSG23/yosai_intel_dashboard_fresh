@@ -7,8 +7,8 @@ from typing import Iterable
 
 from core.app_factory import create_app
 from core.env_validation import validate_env
-from utils.assets_debug import check_navbar_assets, debug_dash_asset_serving
-from utils.assets_utils import get_nav_icon
+from yosai_intel_dashboard.src.utils.assets_debug import check_navbar_assets, debug_dash_asset_serving
+from yosai_intel_dashboard.src.utils.assets_utils import get_nav_icon
 
 DEFAULT_ICONS = [
     "analytics",

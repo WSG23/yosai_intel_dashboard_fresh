@@ -8,7 +8,7 @@ from flask_apispec import doc, marshal_with, use_kwargs
 from marshmallow import Schema, fields
 
 from app import app
-from error_handling import ErrorCategory, ErrorHandler
+from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler
 from services.analytics_service import calculate_risk_score
 from shared.errors.types import ErrorCode
 from validation.security_validator import SecurityValidator

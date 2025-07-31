@@ -380,7 +380,7 @@ def upload_data_service(tmp_path: Path):
     """Provide a fresh ``UploadDataService`` backed by a temp store."""
 
     from services.upload_data_service import UploadDataService
-    from utils.upload_store import UploadedDataStore
+    from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 
     store = UploadedDataStore(storage_dir=tmp_path)
     service = UploadDataService(store)
