@@ -14,9 +14,8 @@ sys.modules.setdefault("services", services_pkg)
 sys.modules.setdefault("services.resilience", resilience_pkg)
 sys.modules.setdefault("services.resilience.metrics", metrics_mod)
 
-from yosai_intel_dashboard.models.ml.base_model import BaseModel, ModelMetadata
-
 from monitoring import model_performance_monitor as mpm
+from yosai_intel_dashboard.models.ml.base_model import BaseModel, ModelMetadata
 
 
 class DummyModel(BaseModel):

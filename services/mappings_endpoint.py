@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 from flask_apispec import doc
 from pydantic import BaseModel
 
-from config.service_registration import register_upload_services
+from services.upload.service_registration import register_upload_services
 
 # Shared container ensures services are available across blueprints
 from core.container import container

@@ -6,8 +6,8 @@ from typing import Any
 import asyncpg
 import redis.asyncio as aioredis
 
-from yosai_intel_dashboard.models.ml import ModelRegistry
 from services.common.async_db import close_pool
+from yosai_intel_dashboard.models.ml import ModelRegistry
 
 
 class AnalyticsService:
@@ -67,4 +67,3 @@ class AnalyticsService:
 
 async def get_analytics_service(request) -> AnalyticsService:
     return request.app.state.analytics_service
-

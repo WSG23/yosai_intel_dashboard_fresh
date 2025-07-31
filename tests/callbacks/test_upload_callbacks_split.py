@@ -4,12 +4,12 @@ import pytest
 from dash import no_update
 
 from services.upload.processor import UploadProcessingService
+from services.upload.upload_core import UploadCore
 from tests.fakes import (
     FakeDeviceLearningService,
     FakeUploadDataService,
     FakeUploadStore,
 )
-from services.upload.upload_core import UploadCore
 
 
 def _create_core(monkeypatch=None):

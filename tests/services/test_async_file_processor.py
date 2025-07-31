@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import importlib.util
 import sys
@@ -5,43 +6,48 @@ import types
 from pathlib import Path
 
 import pandas as pd
-import asyncio
 import pytest
-otel = types.ModuleType("opentelemetry");
-context_mod = types.ModuleType("opentelemetry.context");
-otel.context = context_mod;
-config_mod = types.ModuleType("config");
-config_base = types.ModuleType("config.base");
-core_protocols = types.ModuleType("core.protocols");
-core_protocols.FileProcessorProtocol = object;
-sys.modules.setdefault("core.protocols", core_protocols);
-rabbit_stub = types.ModuleType("services.rabbitmq_client");
-rabbit_stub.RabbitMQClient = lambda *a, **k: None;
-sys.modules.setdefault("services.rabbitmq_client", rabbit_stub);
-taskq_stub = types.ModuleType("services.task_queue");
-taskq_stub.create_task = lambda *a, **k: "id";
-taskq_stub.get_status = lambda *a, **k: {"progress": 0};
-sys.modules.setdefault("services.task_queue", taskq_stub);
-mem_stub = types.ModuleType("utils.memory_utils");
-mem_stub.check_memory_limit = lambda *a, **k: None;
-sys.modules.setdefault("utils.memory_utils", mem_stub);
-fp_stub = types.ModuleType("services.data_processing.file_processor");
-fp_stub.UnicodeFileProcessor = types.SimpleNamespace(sanitize_dataframe_unicode=lambda df: df, read_large_csv=lambda path, **k: pd.read_csv(path, **k));
+
+otel = types.ModuleType("opentelemetry")
+context_mod = types.ModuleType("opentelemetry.context")
+otel.context = context_mod
+config_mod = types.ModuleType("config")
+config_base = types.ModuleType("config.base")
+core_protocols = types.ModuleType("core.protocols")
+core_protocols.FileProcessorProtocol = object
+sys.modules.setdefault("core.protocols", core_protocols)
+rabbit_stub = types.ModuleType("services.rabbitmq_client")
+rabbit_stub.RabbitMQClient = lambda *a, **k: None
+sys.modules.setdefault("services.rabbitmq_client", rabbit_stub)
+taskq_stub = types.ModuleType("services.task_queue")
+taskq_stub.create_task = lambda *a, **k: "id"
+taskq_stub.get_status = lambda *a, **k: {"progress": 0}
+sys.modules.setdefault("services.task_queue", taskq_stub)
+mem_stub = types.ModuleType("utils.memory_utils")
+mem_stub.check_memory_limit = lambda *a, **k: None
+sys.modules.setdefault("utils.memory_utils", mem_stub)
+fp_stub = types.ModuleType("services.data_processing.file_processor")
+fp_stub.UnicodeFileProcessor = types.SimpleNamespace(
+    sanitize_dataframe_unicode=lambda df: df,
+    read_large_csv=lambda path, **k: pd.read_csv(path, **k),
+)
 sys.modules.setdefault("services.data_processing.file_processor", fp_stub)
-prom = types.ModuleType("prometheus_client");
+prom = types.ModuleType("prometheus_client")
 sys.modules.setdefault("prometheus_client", prom)
-config_base.CacheConfig = object;
+config_base.CacheConfig = object
 sys.modules.setdefault("config.base", config_base)
-dyn = types.SimpleNamespace(analytics=types.SimpleNamespace(chunk_size=2, max_memory_mb=1024));
-config_mod.dynamic_config = dyn;
-config_mod.DatabaseSettings = lambda *a, **k: None;
-sys.modules.setdefault("config", config_mod);
+dyn = types.SimpleNamespace(
+    analytics=types.SimpleNamespace(chunk_size=2, max_memory_mb=1024)
+)
+config_mod.dynamic_config = dyn
+config_mod.DatabaseSettings = lambda *a, **k: None
+sys.modules.setdefault("config", config_mod)
 sys.modules.setdefault("config.dynamic_config", config_mod)
-sys.modules.setdefault("opentelemetry", otel);
-sys.modules.setdefault("opentelemetry.context", context_mod);
-tracing_stub = types.ModuleType("tracing");
-tracing_stub.propagate_context = lambda *a, **k: None;
-tracing_stub.trace_async_operation = lambda name, coro: coro;
+sys.modules.setdefault("opentelemetry", otel)
+sys.modules.setdefault("opentelemetry.context", context_mod)
+tracing_stub = types.ModuleType("tracing")
+tracing_stub.propagate_context = lambda *a, **k: None
+tracing_stub.trace_async_operation = lambda name, coro: coro
 sys.modules.setdefault("tracing", tracing_stub)
 
 services_root = Path(__file__).resolve().parents[2] / "services"
@@ -95,6 +101,7 @@ def test_read_csv_chunks_and_load(tmp_path: Path):
 
     loaded = asyncio.run(proc.load_csv(csv_path))
     assert loaded.equals(df)
+
 
 def test_process_excel_file(tmp_path: Path):
     df = pd.DataFrame({"a": [5, 6], "b": ["m", "n"]})

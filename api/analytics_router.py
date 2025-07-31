@@ -3,13 +3,13 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from error_handling import http_error
 
 from config import get_cache_config
 from core.cache_manager import CacheConfig, InMemoryCacheManager
-from shared.errors.types import ErrorCode
+from error_handling import http_error
 from services.cached_analytics import CachedAnalyticsService
 from services.security import require_permission
+from shared.errors.types import ErrorCode
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
 

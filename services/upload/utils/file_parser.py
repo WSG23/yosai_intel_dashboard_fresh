@@ -6,7 +6,6 @@ Handles Unicode surrogate characters safely
 import io
 import json
 import logging
-from unicode_toolkit import safe_encode_text
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -21,6 +20,7 @@ from core.protocols import ConfigurationProtocol
 
 # Core processing imports only - NO UI COMPONENTS
 from core.unicode import safe_format_number, safe_unicode_decode, sanitize_for_utf8
+from unicode_toolkit import safe_encode_text
 
 logger = logging.getLogger(__name__)
 

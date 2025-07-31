@@ -7,12 +7,13 @@ from typing import Any
 import pandas as pd
 
 from services.upload.utils.file_parser import UnicodeFileProcessor
+
 from .pandas_readers import (
     read_csv,
     read_excel,
+    read_fwf,
     read_json,
     read_parquet,
-    read_fwf,
 )
 
 

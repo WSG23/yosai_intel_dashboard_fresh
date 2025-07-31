@@ -24,7 +24,6 @@ except ImportError:  # pragma: no cover - for Python <3.12
     from typing_extensions import override
 
 import pandas as pd
-from yosai_intel_dashboard.models.ml import ModelRegistry
 
 from config.dynamic_config import dynamic_config
 from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
@@ -55,6 +54,7 @@ from services.interfaces import (
 from services.summary_report_generator import SummaryReportGenerator
 from services.upload_data_service import UploadDataService
 from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.models.ml import ModelRegistry
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 
@@ -220,6 +220,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
             self.summary_reporter,
         ) = initialize_database(self.database)
         self.database_retriever = db_retriever or get_database_analytics_retriever(
+
             self.db_helper
         )
 

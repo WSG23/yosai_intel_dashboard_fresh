@@ -8,7 +8,6 @@ from typing import Any, Dict
 import yaml
 
 
-
 class BaseConfigLoader:
     """Generic loader for YAML or JSON configuration files."""
 

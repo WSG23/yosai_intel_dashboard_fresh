@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional, Set
 from uuid import uuid4
 
 import pandas as pd
-from yosai_intel_dashboard.models.compliance import ConsentType, DataSensitivityLevel
 
 from core.audit_logger import ComplianceAuditLogger
 from core.protocols import DatabaseProtocol
@@ -17,6 +16,7 @@ from database.secure_exec import execute_query
 from services.compliance.consent_service import ConsentService
 from services.compliance.data_retention_service import DataRetentionService
 from services.data_processing.file_processor import FileProcessor
+from yosai_intel_dashboard.models.compliance import ConsentType, DataSensitivityLevel
 
 logger = logging.getLogger(__name__)
 

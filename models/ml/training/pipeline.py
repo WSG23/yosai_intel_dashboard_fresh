@@ -9,10 +9,10 @@ from typing import Any, Dict, Iterable, Tuple
 
 import numpy as np
 import pandas as pd
-from yosai_intel_dashboard.models.ml import ModelRegistry
 
 from utils.hashing import hash_dataframe
 from utils.sklearn_compat import optional_import
+from yosai_intel_dashboard.models.ml import ModelRegistry
 
 # Optional heavy dependencies
 KFold = optional_import("sklearn.model_selection.KFold")

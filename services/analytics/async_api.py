@@ -19,20 +19,20 @@ from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.types import ASGIApp
-from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
-    register_health_check,
-    setup_health_checks,
-)
 
 from core.cache_manager import CacheConfig, InMemoryCacheManager
 from core.events import EventBus
+from error_handling import http_error
 from services.analytics_service import get_analytics_service
 from services.cached_analytics import CachedAnalyticsService
 from services.common.async_db import get_pool
 from services.security import require_permission
 from services.summary_report_generator import SummaryReportGenerator
 from services.websocket_server import AnalyticsWebSocketServer
-from error_handling import http_error
+from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
+    register_health_check,
+    setup_health_checks,
+)
 
 logger = logging.getLogger(__name__)
 

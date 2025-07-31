@@ -7,7 +7,6 @@ import asyncio
 import hashlib
 import json
 import logging
-from unicode_toolkit import safe_encode_text
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -15,6 +14,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 from core.cache_manager import CacheConfig, InMemoryCacheManager
+from unicode_toolkit import safe_encode_text
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 

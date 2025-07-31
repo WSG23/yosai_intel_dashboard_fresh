@@ -3,7 +3,6 @@
 import hashlib
 import json
 import logging
-from unicode_toolkit import safe_encode_text
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional, Protocol, runtime_checkable
@@ -12,6 +11,7 @@ import pandas as pd
 
 from services.learning.src.api.consolidated_service import get_learning_service
 from services.protocols.device_learning import DeviceLearningServiceProtocol
+from unicode_toolkit import safe_encode_text
 
 
 @runtime_checkable
@@ -375,5 +375,3 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
 def create_device_learning_service() -> DeviceLearningService:
     """Factory function for :class:`DeviceLearningService`."""
     return DeviceLearningService()
-
-

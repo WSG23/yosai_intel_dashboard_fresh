@@ -20,6 +20,7 @@ class RefreshRequest(BaseModel):
 
 class AccessTokenResponse(BaseModel):
     """Response schema containing a new access token."""
+
     access_token: str
 
 
