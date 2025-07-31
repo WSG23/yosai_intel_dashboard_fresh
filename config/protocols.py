@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, Optional, Protocol, TypeVar
 
+from database.types import DatabaseConnection
+
 T = TypeVar("T")
 
 
@@ -45,10 +47,32 @@ class ConfigTransformerProtocol(Protocol):
         ...
 
 
+class DatabaseManagerProtocol(Protocol):
+    """Minimal interface for database manager services."""
+
+    def get_connection(self) -> DatabaseConnection: ...
+
+    def health_check(self) -> bool: ...
+
+    def close(self) -> None: ...
+
+
+class EnhancedPostgreSQLManagerProtocol(DatabaseManagerProtocol, Protocol):
+    """Specialized interface for enhanced PostgreSQL managers."""
+
+    def execute_query_with_retry(
+        self, query: str, params: Optional[Dict] | None = None
+    ) -> Any: ...
+
+    def health_check_with_retry(self) -> bool: ...
+
+
 __all__ = [
     "RetryConfigProtocol",
     "ConnectionRetryManagerProtocol",
     "ConfigLoaderProtocol",
     "ConfigValidatorProtocol",
     "ConfigTransformerProtocol",
+    "DatabaseManagerProtocol",
+    "EnhancedPostgreSQLManagerProtocol",
 ]

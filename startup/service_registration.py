@@ -43,8 +43,18 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigValidator,
         create_config_manager,
     )
-    from config.database_manager import DatabaseManager, DatabaseSettings
+    from config.database_manager import (
+        DatabaseManager,
+        DatabaseSettings,
+        MockConnection,
+        EnhancedPostgreSQLManager,
+    )
     from core.logging import LoggingService
+    from config.protocols import (
+        DatabaseManagerProtocol,
+        EnhancedPostgreSQLManagerProtocol,
+    )
+    from database.types import DatabaseConnection
     from services.configuration_service import (
         ConfigurationServiceProtocol,
         DynamicConfigurationService,
@@ -72,8 +82,26 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
     container.register_singleton(
         "database_manager",
         DatabaseManager,
-        protocol=DatabaseProtocol,
+        protocol=DatabaseManagerProtocol,
         factory=lambda c: DatabaseManager(DatabaseSettings()),
+    )
+    container.register_transient(
+        "database_connection",
+        object,
+        protocol=DatabaseConnection,
+        factory=lambda c: c.get("database_manager").get_connection(),
+    )
+    container.register_transient(
+        "mock_connection",
+        MockConnection,
+        protocol=DatabaseConnection,
+        factory=lambda c: MockConnection(),
+    )
+    container.register_singleton(
+        "enhanced_postgresql_manager",
+        EnhancedPostgreSQLManager,
+        protocol=EnhancedPostgreSQLManagerProtocol,
+        factory=lambda c: EnhancedPostgreSQLManager(DatabaseSettings()),
     )
 
     from core.events import EventBus
