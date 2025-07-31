@@ -8,7 +8,7 @@ from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, List
 
 from core.security import SecurityLevel, security_auditor
-from services.security_callback_controller import SecurityEvent, emit_security_event
+from security.events import SecurityEvent, emit_security_event
 
 logger = logging.getLogger(__name__)
 

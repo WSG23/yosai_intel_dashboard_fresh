@@ -13,7 +13,7 @@ start_api.py
                  └─ services.analytics.upload_analytics
                      └─ services.chunked_analysis
                         └─ validation.security_validator
-                             └─ security_callback_controller
+                             └─ security.events.security_unified_callbacks
                                  └─ core.callback_events
 ```
 
@@ -22,9 +22,10 @@ Key points:
 * Configuration no longer resolves optional services at import time.  Functions
   such as `config.service_integration.get_database_manager()` retrieve services
   from the registry when called, preventing early imports.
-* `security_callback_controller` imports `CallbackEvent` from the lightweight
-  `core.callback_events` module.  This removes a link in the chain that used to
-  pull in the entire callback controller during start-up.
+* The `security.events` module exposes `security_unified_callbacks` and
+  `CallbackEvent` from the lightweight `core.callback_events` module. This
+  removes a link in the chain that previously pulled in the entire callback
+  controller during start-up.
 * All modules that require callback event constants should import them from
   `core.callback_events` to keep dependencies minimal.
 
