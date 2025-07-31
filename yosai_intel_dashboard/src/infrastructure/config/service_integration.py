@@ -4,6 +4,13 @@ from __future__ import annotations
 
 from core.container import container
 
+# Lazy import to avoid circular dependencies during module import
+def get_service_registry():
+    """Return the global optional service registry."""
+    from yosai_intel_dashboard.src.services.registry import registry
+
+    return registry
+
 __all__ = [
     "get_database_manager",
     "get_database_connection",
