@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Dict, Iterator, Optional, Tuple
 import pandas as pd
 
 from config.constants import DEFAULT_CHUNK_SIZE
-from config.dynamic_config import dynamic_config
+from core.interfaces import ConfigProviderProtocol
 from core.performance import get_performance_monitor
 from monitoring.data_quality_monitor import (
     DataQualityMetrics,
@@ -34,6 +34,8 @@ class Processor:
         validator: Optional[SecurityValidator] = None,
         streaming_service: Optional[StreamingService] = None,
         mapping_service: MappingService | None = None,
+        *,
+        config: ConfigProviderProtocol | None = None,
     ) -> None:
         self.base_path = Path(base_data_path)
         self.mappings_file = self.base_path / "learned_mappings.json"
@@ -45,13 +47,15 @@ class Processor:
 
             mapping_service = create_mapping_service()
         self.mapping_service = mapping_service
+        self.config = config
 
     # ------------------------------------------------------------------
     # Streaming helpers (from DataLoadingService)
     # ------------------------------------------------------------------
     def load_dataframe(self, source: Any) -> pd.DataFrame:
         """Load ``source`` into a validated and mapped dataframe."""
-        chunk_size = getattr(dynamic_config.analytics, "chunk_size", DEFAULT_CHUNK_SIZE)
+        analytics_cfg = getattr(self.config, "analytics", None) if self.config else None
+        chunk_size = getattr(analytics_cfg, "chunk_size", DEFAULT_CHUNK_SIZE)
         monitor = get_performance_monitor()
 
         if isinstance(source, (str, Path)) or hasattr(source, "read"):

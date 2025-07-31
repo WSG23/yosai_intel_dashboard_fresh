@@ -81,6 +81,7 @@ async_mod = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
 spec.loader.exec_module(async_mod)
 AsyncFileProcessor = async_mod.AsyncFileProcessor
+cfg = dyn
 
 
 def test_read_csv_chunks_and_load(tmp_path: Path):
@@ -88,7 +89,7 @@ def test_read_csv_chunks_and_load(tmp_path: Path):
     csv_path = tmp_path / "sample.csv"
     df.to_csv(csv_path, index=False)
 
-    proc = AsyncFileProcessor(chunk_size=2)
+    proc = AsyncFileProcessor(chunk_size=2, config=cfg)
 
     async def gather():
         chunks = []
@@ -113,7 +114,7 @@ def test_process_excel_file(tmp_path: Path):
         + contents
     )
 
-    proc = AsyncFileProcessor()
+    proc = AsyncFileProcessor(config=cfg)
     progress = []
     result = asyncio.run(
         proc.process_file(
@@ -135,6 +136,6 @@ def test_read_uploaded_file_csv(tmp_path: Path):
     contents = base64.b64encode(csv_path.read_bytes()).decode()
     data_uri = "data:text/csv;base64," + contents
 
-    proc = AsyncFileProcessor()
+    proc = AsyncFileProcessor(config=cfg)
     loaded, _ = asyncio.run(proc.read_uploaded_file(data_uri, "t.csv"))
     assert loaded.equals(df)

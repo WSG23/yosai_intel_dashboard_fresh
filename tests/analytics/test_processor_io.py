@@ -136,7 +136,7 @@ async def test_async_file_processor_io(tmp_path):
     df.to_csv(csv_path, index=False)
     content = "data:text/csv;base64," + base64.b64encode(csv_path.read_bytes()).decode()
 
-    processor = AsyncFileProcessor(chunk_size=1)
+    processor = AsyncFileProcessor(chunk_size=1, config=dynamic)
     result = await processor.process_file(content, "input.csv")
 
     json_data = result.to_json(orient="records")

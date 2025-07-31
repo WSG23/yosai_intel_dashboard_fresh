@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from components.ui_builder import UploadUIBuilder
-from config.dynamic_config import dynamic_config
+from core.interfaces import ConfigProviderProtocol
 from core.protocols import FileProcessorProtocol
 from core.service_container import (
     CircularDependencyError,
@@ -33,10 +33,14 @@ from utils.upload_store import UploadedDataStore
 from validation.file_validator import FileValidator
 
 
-def register_upload_services(container: ServiceContainer) -> None:
+def register_upload_services(
+    container: ServiceContainer, *, config: ConfigProviderProtocol | None = None
+) -> None:
     """Register upload related services with the container."""
 
-    upload_store = UploadedDataStore(dynamic_config.upload.folder)
+    upload_cfg = getattr(config, "upload", None) if config else None
+    folder = getattr(upload_cfg, "folder", "uploads")
+    upload_store = UploadedDataStore(folder)
     container.register_singleton(
         "upload_storage",
         upload_store,

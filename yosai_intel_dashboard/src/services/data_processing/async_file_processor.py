@@ -14,8 +14,8 @@ from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
 from core.protocols import FileProcessorProtocol
+from core.interfaces import ConfigProviderProtocol
 from services.rabbitmq_client import RabbitMQClient
 from services.task_queue import create_task, get_status
 from utils.memory_utils import check_memory_limit
@@ -27,10 +27,16 @@ class AsyncFileProcessor(FileProcessorProtocol):
     """Read CSV files asynchronously in chunks with progress reporting."""
 
     def __init__(
-        self, chunk_size: int | None = None, *, task_queue_url: str | None = None
+        self,
+        chunk_size: int | None = None,
+        *,
+        task_queue_url: str | None = None,
+        config: ConfigProviderProtocol | None = None,
     ) -> None:
-        self.chunk_size = chunk_size or dynamic_config.analytics.chunk_size
-        self.max_memory_mb = dynamic_config.analytics.max_memory_mb
+        analytics_cfg = getattr(config, "analytics", None) if config else None
+        self.chunk_size = chunk_size or getattr(analytics_cfg, "chunk_size", 50000)
+        self.max_memory_mb = getattr(analytics_cfg, "max_memory_mb", 1024)
+        self.config = config
         self.logger = logging.getLogger(__name__)
         self._queue: RabbitMQClient | None = None
         if task_queue_url:

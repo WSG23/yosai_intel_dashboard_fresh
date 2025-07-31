@@ -26,8 +26,9 @@ def register_all_application_services(container: ServiceContainer) -> None:
     register_security_services(container)
     register_export_services(container)
     from services.upload.service_registration import register_upload_services
+    from config.dynamic_config import dynamic_config
 
-    register_upload_services(container)
+    register_upload_services(container, config=dynamic_config)
 
 
 def register_all_services(container: ServiceContainer) -> None:
@@ -43,6 +44,8 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigValidator,
         create_config_manager,
     )
+    from core.interfaces import ConfigProviderProtocol
+    from config.dynamic_config import dynamic_config
     from config.database_manager import DatabaseManager, DatabaseSettings
     from core.logging import LoggingService
     from services.configuration_service import (
@@ -58,6 +61,11 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigManager,
         protocol=ConfigurationProtocol,
         factory=lambda c: create_config_manager(container=c),
+    )
+    container.register_singleton(
+        "dynamic_config",
+        dynamic_config,
+        protocol=ConfigProviderProtocol,
     )
     container.register_singleton(
         "configuration_service",
@@ -110,6 +118,7 @@ def register_analytics_services(container: ServiceContainer) -> None:
         ReportGeneratorProtocol,
         PublishingProtocol,
     )
+    from config.dynamic_config import dynamic_config
     from services.analytics_service import create_analytics_service
     from services.data_loading_service import DataLoadingService
     from services.data_processing_service import DataProcessingService
@@ -152,7 +161,7 @@ def register_analytics_services(container: ServiceContainer) -> None:
     )
     container.register_singleton(
         "analytics_service",
-        create_analytics_service(),
+        create_analytics_service(config_provider=dynamic_config),
         protocol=AnalyticsServiceProtocol,
     )
 

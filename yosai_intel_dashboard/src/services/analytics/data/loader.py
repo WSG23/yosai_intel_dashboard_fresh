@@ -5,25 +5,27 @@ from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
-from config.dynamic_config import dynamic_config
 from services.controllers.upload_controller import UploadProcessingController
 from services.data_processing.processor import Processor
+from core.interfaces import ConfigProviderProtocol
 
 logger = logging.getLogger(__name__)
 
-ROW_LIMIT_WARNING = dynamic_config.analytics.row_limit_warning
-LARGE_DATA_THRESHOLD = dynamic_config.analytics.large_data_threshold
 
 
 class DataLoader:
     """Load and prepare data for analytics operations."""
 
     def __init__(
-        self, controller: UploadProcessingController, processor: Processor
+        self,
+        controller: UploadProcessingController,
+        processor: Processor,
+        config: ConfigProviderProtocol | None = None,
     ) -> None:
         self.controller = controller
         self.processor = processor
         self.upload_processor = controller.upload_processor
+        self.config = config
 
     # ------------------------------------------------------------------
     # Delegated helpers
@@ -58,6 +60,9 @@ class DataLoader:
         self, data_source: str | None
     ) -> Tuple[pd.DataFrame, int]:
         """Return dataframe and original row count for pattern analysis."""
+        analytics_cfg = getattr(self.config, "analytics", None) if self.config else None
+        row_warning = getattr(analytics_cfg, "row_limit_warning", 150)
+        large_threshold = getattr(analytics_cfg, "large_data_threshold", 1000)
         if data_source == "database":
             df, _meta = self.processor.get_processed_database()
             uploaded_data = {"database": df} if not df.empty else {}
@@ -94,14 +99,14 @@ class DataLoader:
                 f"{final_rows:,}",
             )
 
-        if final_rows == ROW_LIMIT_WARNING and total_original_rows > ROW_LIMIT_WARNING:
+        if final_rows == row_warning and total_original_rows > row_warning:
             logger.error(
                 "\U0001f6a8 FOUND %s ROW LIMIT in unique patterns analysis!",
-                ROW_LIMIT_WARNING,
+                row_warning,
             )
             logger.error("   Original rows: %s", f"{total_original_rows:,}")
             logger.error("   Final rows: %s", f"{final_rows:,}")
-        elif final_rows > LARGE_DATA_THRESHOLD:
+        elif final_rows > large_threshold:
             logger.info("\u2705 Processing large dataset: %s rows", f"{final_rows:,}")
 
         return combined_df, total_original_rows
