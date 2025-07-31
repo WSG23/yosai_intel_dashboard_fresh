@@ -44,7 +44,7 @@ def callback_handler(event: CallbackEvent):
     return decorator
 
 
-_GLOBAL = CallbackController()
+_GLOBAL = TrulyUnifiedCallbacks()
 fire_event = _GLOBAL.fire_event
 from yosai_intel_dashboard.src.services.data_processing.file_processor import FileProcessor as RobustFileProcessor
 from yosai_intel_dashboard.src.services.data_processing.file_processor import (
@@ -158,7 +158,7 @@ class TestChunkedUnicodeProcessor:
 
 class TestCallbackController:
     def test_callback_registration_and_firing(self):
-        controller = CallbackController()
+        controller = TrulyUnifiedCallbacks()
         controller._callbacks.clear()
         called = {}
 
@@ -172,7 +172,7 @@ class TestCallbackController:
         assert called["s"] == "src"
 
     def test_callback_unregistration(self):
-        controller = CallbackController()
+        controller = TrulyUnifiedCallbacks()
         controller._callbacks.clear()
         hits = []
 
@@ -186,7 +186,7 @@ class TestCallbackController:
         assert len(hits) == 1
 
     def test_multiple_callbacks_same_event(self):
-        controller = CallbackController()
+        controller = TrulyUnifiedCallbacks()
         controller._callbacks.clear()
         results = []
 
@@ -202,7 +202,7 @@ class TestCallbackController:
         assert results == ["cb1", "cb2"]
 
     def test_callback_error_handling(self):
-        controller = CallbackController()
+        controller = TrulyUnifiedCallbacks()
         controller._callbacks.clear()
         seen = []
 
@@ -222,7 +222,7 @@ class TestCallbackController:
         assert "boom" in seen and "ok" in seen
 
     def test_callback_decorator(self):
-        controller = CallbackController()
+        controller = TrulyUnifiedCallbacks()
         controller._callbacks.clear()
         executed = []
 
@@ -306,7 +306,7 @@ class TestRobustFileProcessor:
         def track(ctx):
             events.append(ctx.event_type)
 
-        controller = CallbackController()
+        controller = TrulyUnifiedCallbacks()
         controller._callbacks.clear()
         controller.register_callback(CallbackEvent.FILE_PROCESSING_START, track)
         controller.register_callback(CallbackEvent.FILE_PROCESSING_COMPLETE, track)
@@ -351,7 +351,7 @@ class TestIntegration:
         def tracker(ctx):
             events.append(ctx.event_type)
 
-        controller = CallbackController()
+        controller = TrulyUnifiedCallbacks()
         controller._callbacks.clear()
         controller.register_callback(CallbackEvent.FILE_PROCESSING_START, tracker)
         controller.register_callback(CallbackEvent.FILE_PROCESSING_COMPLETE, tracker)
