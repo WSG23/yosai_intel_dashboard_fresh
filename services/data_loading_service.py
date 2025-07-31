@@ -6,11 +6,12 @@ import pandas as pd
 
 from services.analytics.data.loader import DataLoader
 from services.analytics.protocols import DataLoadingProtocol
+from services.interfaces import AnalyticsDataLoaderProtocol
 from services.controllers.upload_controller import UploadProcessingController
 from services.data_processing.processor import Processor
 
 
-class DataLoadingService(DataLoadingProtocol):
+class DataLoadingService(DataLoadingProtocol, AnalyticsDataLoaderProtocol):
     """Service providing data loading utilities for analytics."""
 
     def __init__(self, controller: UploadProcessingController, processor: Processor) -> None:

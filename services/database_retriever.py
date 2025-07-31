@@ -7,9 +7,10 @@ from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_loc
 _cache_manager = InMemoryCacheManager(CacheConfig())
 
 from .db_analytics_helper import DatabaseAnalyticsHelper
+from services.interfaces import DatabaseAnalyticsRetrieverProtocol
 
 
-class DatabaseAnalyticsRetriever:
+class DatabaseAnalyticsRetriever(DatabaseAnalyticsRetrieverProtocol):
     """Wrapper providing cached analytics retrieval from a database."""
 
     def __init__(self, helper: DatabaseAnalyticsHelper) -> None:

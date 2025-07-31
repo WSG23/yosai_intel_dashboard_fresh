@@ -110,6 +110,10 @@ def register_analytics_services(container: ServiceContainer) -> None:
         ReportGeneratorProtocol,
         PublishingProtocol,
     )
+    from services.interfaces import (
+        AnalyticsDataLoaderProtocol,
+        DatabaseAnalyticsRetrieverProtocol,
+    )
     from services.analytics_service import create_analytics_service
     from services.data_loading_service import DataLoadingService
     from services.data_processing_service import DataProcessingService
@@ -132,7 +136,7 @@ def register_analytics_services(container: ServiceContainer) -> None:
     container.register_singleton(
         "data_loader",
         DataLoadingService,
-        protocol=DataLoadingProtocol,
+        protocol=AnalyticsDataLoaderProtocol,
         factory=lambda c: DataLoadingService(
             c.get("upload_controller"),
             Processor(validator=SecurityValidator()),
@@ -149,6 +153,17 @@ def register_analytics_services(container: ServiceContainer) -> None:
         PublishingService,
         protocol=PublishingProtocol,
         factory=lambda c: PublishingService(c.get("event_bus")),
+    )
+    from services.database_retriever import DatabaseAnalyticsRetriever
+    from services.db_analytics_helper import DatabaseAnalyticsHelper
+
+    container.register_singleton(
+        "database_analytics_retriever",
+        DatabaseAnalyticsRetriever,
+        protocol=DatabaseAnalyticsRetrieverProtocol,
+        factory=lambda c: DatabaseAnalyticsRetriever(
+            DatabaseAnalyticsHelper(c.get("database_manager"))
+        ),
     )
     container.register_singleton(
         "analytics_service",
