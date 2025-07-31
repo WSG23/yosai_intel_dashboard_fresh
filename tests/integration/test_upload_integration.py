@@ -13,7 +13,13 @@ import importlib.util as _importlib
 import sys as _sys
 import types as _types
 
-MODULE_PATH = _Path(__file__).resolve().parents[2] / "file_processing" / "data_processor.py"
+MODULE_PATH = (
+    _Path(__file__).resolve().parents[2]
+    / "yosai_intel_dashboard"
+    / "src"
+    / "file_processing"
+    / "data_processor.py"
+)
 
 truly_stub = _types.SimpleNamespace(TrulyUnifiedCallbacks=object)
 cb_events_stub = _types.SimpleNamespace(CallbackEvent=_types.SimpleNamespace(SYSTEM_WARNING=1, SYSTEM_ERROR=2))

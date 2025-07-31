@@ -3,7 +3,11 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from file_processing.readers import CSVReader, ExcelReader, JSONReader
+from yosai_intel_dashboard.src.file_processing.readers import (
+    CSVReader,
+    ExcelReader,
+    JSONReader,
+)
 
 
 @pytest.mark.parametrize(

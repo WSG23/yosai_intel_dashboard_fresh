@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from file_processing.data_processor import DataProcessor
+from yosai_intel_dashboard.src.file_processing.data_processor import DataProcessor
 
 
 def test_load_file_updates_metadata(tmp_path: Path):

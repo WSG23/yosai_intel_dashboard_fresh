@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from file_processing import exporter
+from yosai_intel_dashboard.src.file_processing import exporter
 
 
 def test_sanitize_path(tmp_path):

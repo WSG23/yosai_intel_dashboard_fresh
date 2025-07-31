@@ -5,7 +5,11 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from file_processing.exporter import ExportError, export_to_csv, export_to_json
+from yosai_intel_dashboard.src.file_processing.exporter import (
+    ExportError,
+    export_to_csv,
+    export_to_json,
+)
 
 
 def test_export_csv(tmp_path: Path):
