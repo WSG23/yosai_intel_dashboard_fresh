@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
-from mapping.core.interfaces import StorageInterface
+from yosai_intel_dashboard.src.mapping.core.interfaces import StorageInterface
 
 
 class JsonStorage(StorageInterface):

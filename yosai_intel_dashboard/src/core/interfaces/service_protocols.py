@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Protocol, runtime_checkable
 
-from mapping.core.interfaces import ProcessorInterface, StorageInterface
-from mapping.core.models import MappingData
+from yosai_intel_dashboard.src.mapping.core.interfaces import (
+    ProcessorInterface,
+    StorageInterface,
+)
+from yosai_intel_dashboard.src.mapping.core.models import MappingData
 
 import pandas as pd
 
@@ -151,7 +154,9 @@ def get_mapping_service(
     c = _get_container(container)
     if c and c.has("mapping_service"):
         return c.get("mapping_service")
-    from mapping.factories.service_factory import create_mapping_service
+    from yosai_intel_dashboard.src.mapping.factories.service_factory import (
+        create_mapping_service,
+    )
 
     return create_mapping_service(container=c)
 

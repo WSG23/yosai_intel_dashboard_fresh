@@ -18,7 +18,7 @@ from typing import (
     get_type_hints,
 )
 
-from .base_model import BaseModel
+from yosai_intel_dashboard.src.core.base_model import BaseModel
 
 T = TypeVar("T")
 

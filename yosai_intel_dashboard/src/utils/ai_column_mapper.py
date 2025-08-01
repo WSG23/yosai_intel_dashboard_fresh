@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 
 from yosai_intel_dashboard.src.components.plugin_adapter import ComponentPluginAdapter
-from mapping.models import ColumnRules, load_rules
+from yosai_intel_dashboard.src.mapping.models import ColumnRules, load_rules
 
 # ---------------------------------------------------------------------------
 # Header variant dictionaries

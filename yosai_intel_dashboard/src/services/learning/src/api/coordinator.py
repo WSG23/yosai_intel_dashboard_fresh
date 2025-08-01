@@ -6,7 +6,10 @@ from typing import Any, Dict, Optional
 
 import pandas as pd
 
-from mapping.core.interfaces import LearningInterface, StorageInterface
+from yosai_intel_dashboard.src.mapping.core.interfaces import (
+    LearningInterface,
+    StorageInterface,
+)
 from yosai_intel_dashboard.src.services.learning.src.ml.fingerprint_service import FingerprintService
 
 logger = logging.getLogger(__name__)

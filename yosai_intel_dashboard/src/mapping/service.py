@@ -4,8 +4,11 @@ import logging
 
 import pandas as pd
 
-from mapping.core.interfaces import ProcessorInterface, StorageInterface
-from mapping.core.models import MappingData
+from yosai_intel_dashboard.src.mapping.core.interfaces import (
+    ProcessorInterface,
+    StorageInterface,
+)
+from yosai_intel_dashboard.src.mapping.core.models import MappingData
 
 logger = logging.getLogger(__name__)
 

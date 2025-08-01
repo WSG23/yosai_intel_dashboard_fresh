@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 import pandas as pd
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
-    from mapping.models import ColumnRules
+    from yosai_intel_dashboard.src.mapping.models import ColumnRules
 else:  # pragma: no cover - fallback at runtime
     ColumnRules = Any  # type: ignore[misc]
 
@@ -58,7 +58,7 @@ def standardize_column_names(
     """Return a new DataFrame with normalized column names."""
 
     if rules is None:
-        from mapping.models import load_rules
+        from yosai_intel_dashboard.src.mapping.models import load_rules
 
         rules = load_rules()
     df_out = df.copy()

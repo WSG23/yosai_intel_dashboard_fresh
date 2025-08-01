@@ -3,16 +3,22 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from yosai_intel_dashboard.src.core.container import container as default_container
-from mapping.models import (
+from yosai_intel_dashboard.src.mapping.models import (
     HeuristicMappingModel,
     MappingModel,
     load_model_from_config,
 )
-from mapping.processors.ai_processor import AIColumnMapperAdapter
-from mapping.processors.column_processor import ColumnProcessor
-from mapping.processors.device_processor import DeviceProcessor
-from mapping.service import MappingService
-from mapping.storage.base import JsonStorage, MemoryStorage
+from yosai_intel_dashboard.src.mapping.processors.ai_processor import (
+    AIColumnMapperAdapter,
+)
+from yosai_intel_dashboard.src.mapping.processors.column_processor import (
+    ColumnProcessor,
+)
+from yosai_intel_dashboard.src.mapping.processors.device_processor import (
+    DeviceProcessor,
+)
+from yosai_intel_dashboard.src.mapping.service import MappingService
+from yosai_intel_dashboard.src.mapping.storage.base import JsonStorage, MemoryStorage
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
     from yosai_intel_dashboard.src.services.learning.src.api.coordinator import LearningCoordinator
