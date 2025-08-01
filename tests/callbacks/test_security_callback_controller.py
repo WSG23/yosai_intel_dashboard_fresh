@@ -49,8 +49,8 @@ def test_callback_registration_and_fire():
     def cb(data):
         results.append(data)
 
-    controller.register_callback(SecurityEvent.THREAT_DETECTED, cb)
-    controller.fire_event(SecurityEvent.THREAT_DETECTED, {"msg": "alert"})
+    controller.register_event(SecurityEvent.THREAT_DETECTED, cb)
+    controller.trigger_event(SecurityEvent.THREAT_DETECTED, {"msg": "alert"})
 
     assert results == [{"msg": "alert"}]
     assert controller.history == [(SecurityEvent.THREAT_DETECTED, {"msg": "alert"})]
@@ -61,11 +61,11 @@ def test_analyzer_triggers_callbacks():
     controller.clear_all_callbacks()
     events = []
 
-    controller.register_callback(
+    controller.register_event(
         SecurityEvent.THREAT_DETECTED,
         lambda d: events.append(("threat", d)),
     )
-    controller.register_callback(
+    controller.register_event(
         SecurityEvent.ANALYSIS_COMPLETE,
         lambda d: events.append(("complete", d)),
     )

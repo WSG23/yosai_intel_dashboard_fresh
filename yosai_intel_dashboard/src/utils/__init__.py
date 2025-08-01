@@ -4,7 +4,9 @@ import importlib
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
-    from mapping.processors.ai_processor import AIColumnMapperAdapter
+    from yosai_intel_dashboard.src.mapping.processors.ai_processor import (
+        AIColumnMapperAdapter,
+    )
 else:  # pragma: no cover - fallback at runtime
     AIColumnMapperAdapter = Any  # type: ignore[misc]
 
@@ -78,7 +80,7 @@ __all__ = [
 
 _LAZY_EXPORTS = {
     "AIColumnMapperAdapter": (
-        "mapping.processors.ai_processor",
+        "yosai_intel_dashboard.src.mapping.processors.ai_processor",
         "AIColumnMapperAdapter",
     ),
 }

@@ -10,7 +10,6 @@ from typing import Any, Dict, Tuple
 import pandas as pd
 import yaml
 
-from yosai_intel_dashboard.src.core.performance import MetricType, get_performance_monitor
 
 
 class MappingModel(ABC):
@@ -19,6 +18,10 @@ class MappingModel(ABC):
     CACHE_SIZE = 128
 
     def __init__(self) -> None:
+        from yosai_intel_dashboard.src.core.performance import (
+            get_performance_monitor,
+        )
+
         self._cache: "OrderedDict[Tuple[str, str], Dict[str, Dict[str, Any]]]" = (
             OrderedDict()
         )
@@ -43,6 +46,8 @@ class MappingModel(ABC):
         start = time.time()
         result = self.suggest(df, filename)
         duration = time.time() - start
+        from yosai_intel_dashboard.src.core.performance import MetricType
+
         self.monitor.record_metric(
             "mapping.suggest.latency", duration, MetricType.FILE_PROCESSING
         )

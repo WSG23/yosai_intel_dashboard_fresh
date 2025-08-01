@@ -21,6 +21,7 @@ from typing import (
 # Use the common BaseModel shared across the core package
 from ...core.base_model import BaseModel
 
+
 T = TypeVar("T")
 
 

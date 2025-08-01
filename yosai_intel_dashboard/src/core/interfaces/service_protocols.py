@@ -154,7 +154,9 @@ def get_mapping_service(
     c = _get_container(container)
     if c and c.has("mapping_service"):
         return c.get("mapping_service")
-    from mapping.factories.service_factory import create_mapping_service
+    from yosai_intel_dashboard.src.mapping.factories.service_factory import (
+        create_mapping_service,
+    )
 
     return create_mapping_service(container=c)
 

@@ -19,8 +19,8 @@ These interfaces can be found under `services/interfaces.py` and `services/secur
 `ServiceContainer` in `core.service_container` manages service lifetimes and resolves dependencies based on the protocols. Services register themselves as singletons or transients. Test suites create a fresh container and register stubs or mocks as needed:
 
 ```python
-from core.service_container import ServiceContainer
-from services.interfaces import UploadValidatorProtocol
+from yosai_intel_dashboard.src.simple_di import ServiceContainer
+from yosai_intel_dashboard.src.services.interfaces import UploadValidatorProtocol
 
 class DummyValidator(UploadValidatorProtocol):
     def validate(self, filename: str, content: str) -> tuple[bool, str]:
@@ -60,7 +60,7 @@ Each protocol can be satisfied by lightweight fakes during testing.
 function is executed on first resolution and the instance is cached:
 
 ```python
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.simple_di import ServiceContainer
 
 container = ServiceContainer()
 container.register_singleton("logger", DummyLogger())
@@ -86,7 +86,7 @@ These builders keep test setup short and expressive.
 Tests typically create a fresh container with fakes registered:
 
 ```python
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.simple_di import ServiceContainer
 from tests.fakes import FakeUploadStore, FakeDeviceLearningService
 
 @pytest.fixture
@@ -122,7 +122,7 @@ sys.modules["services.analytics_service"] = analytics_stub
 Using the container removes the need for module manipulation:
 
 ```python
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.simple_di import ServiceContainer
 
 container = ServiceContainer()
 container.register_singleton("analytics_service", DummyAnalytics())

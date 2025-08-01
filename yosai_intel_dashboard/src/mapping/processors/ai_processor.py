@@ -6,7 +6,10 @@ import pandas as pd
 
 from yosai_intel_dashboard.src.core.container import container as default_container
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
-from mapping.models import HeuristicMappingModel, MappingModel
+from yosai_intel_dashboard.src.mapping.models import (
+    HeuristicMappingModel,
+    MappingModel,
+)
 
 
 class AIColumnMapperAdapter:

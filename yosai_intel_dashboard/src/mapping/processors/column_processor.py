@@ -11,6 +11,7 @@ from mapping.helpers import map_and_clean
 from mapping.processors.ai_processor import AIColumnMapperAdapter
 
 
+
 class ColumnProcessor(ProcessorInterface):
     """Handle column mapping and cleanup for uploaded data."""
 

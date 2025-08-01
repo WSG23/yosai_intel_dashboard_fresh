@@ -20,7 +20,7 @@ if monitor.detect_drift(metrics):
 # :meth:`PerformanceMonitor.detect_model_drift`:
 
 ```python
-from core.performance import get_performance_monitor
+from yosai_intel_dashboard.src.core.performance import get_performance_monitor
 
 pm = get_performance_monitor()
 baseline = {"accuracy": 0.95, "precision": 0.92, "recall": 0.90}
