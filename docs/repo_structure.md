@@ -36,16 +36,16 @@ The `scripts/migrate_to_clean_arch.py` helper moves legacy modules into the
 
 | Directory | Destination | Status |
 |-----------|-------------|--------|
-| `core/` | `models` | Pending |
-| `models/` | `models` | Pending |
-| `services/` | `services` | Pending |
-| `config/` | `config` | Pending |
-| `monitoring/` | `monitoring` | Pending |
-| `security/` | `security` | Pending |
-| `api/` | `api` | Pending |
-| `plugins/` | `api/plugins` | Pending |
+| `core/` | `models` | Completed |
+| `models/` | `models` | Completed |
+| `services/` | `services` | Completed |
+| `config/` | `config` | Completed |
+| `monitoring/` | `monitoring` | Completed |
+| `security/` | `security` | Completed |
+| `api/` | `api` | Completed |
+| `plugins/` | `api/plugins` | Completed |
 
-_Migrated 0 of 8 directories (0%)_
+_Migrated 8 of 8 directories (100%)_
 
 
 ## Migration Steps

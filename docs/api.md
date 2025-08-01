@@ -119,12 +119,12 @@ Represents a single access control event.
 
 ## Service Container
 
-`ServiceContainer` in `core.service_container` offers a more capable
+`ServiceContainer` in `yosai_intel_dashboard.src.simple_di` offers a more capable
 dependency injection mechanism. It resolves services by name and caches
 instances created by registered factories.
 
 ```python
-from core.service_container import ServiceContainer
+from yosai_intel_dashboard.src.simple_di import ServiceContainer
 
 container = ServiceContainer()
 container.register_factory("db", DatabaseManager)

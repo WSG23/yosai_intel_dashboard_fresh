@@ -34,7 +34,7 @@ You can change the search location by passing a different package name to `Plugi
    from dash import Input, Output
    from dash.exceptions import PreventUpdate
 
-   from core.protocols.plugin import CallbackPluginProtocol, PluginMetadata
+   from yosai_intel_dashboard.src.core.protocols.plugin import CallbackPluginProtocol, PluginMetadata
 
 
    @dataclass
@@ -103,7 +103,7 @@ You can change the search location by passing a different package name to `Plugi
 4. **Initialize plugins** during app start up:
 
    ```python
-   from core.plugins.auto_config import setup_plugins
+   from yosai_intel_dashboard.src.core.plugins.auto_config import setup_plugins
 
    app = Dash(__name__)
    registry = setup_plugins(app)

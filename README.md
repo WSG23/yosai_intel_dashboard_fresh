@@ -57,26 +57,16 @@ The dashboard is extensible through a lightweight plugin system. Plugins live in
 
 ```
 yosai_intel_dashboard/
-├── start_api.py               # Start the API for development
-├── config/                    # Configuration management
-│   ├── config.py              # Unified configuration loader
-│   ├── database_manager.py    # Database connections and pooling
-│   └── cache_manager.py       # Simple cache interface
-├── models/                    # Data models and business entities
-│   ├── base.py               # Base model classes
-│   ├── entities.py           # Core entities (Person, Door, Facility)
-│   ├── events.py             # Event models (AccessEvent, Anomaly)
-│   ├── enums.py              # Enumerated types
-│   └── access_events.py      # Access event operations
-├── services/                  # Business logic layer
-│   └── analytics_service.py  # Analytics and data processing
-├── components/               # UI components
-│   ├── analytics/            # Analytics-specific components
-│   ├── ui/                   # Shared UI components
-│   └── map_panel.py          # Map visualization
-├── utils/                    # Utility functions
-└── assets/                   # Static assets and CSS
-    └── css/                  # Modular CSS architecture
+├── start_api.py               # Development entrypoint
+├── src/
+│   ├── app.py                # Dash application factory
+│   ├── adapters/             # External service adapters
+│   ├── core/                 # Shared utilities and DI container
+│   ├── infrastructure/       # Platform integrations
+│   ├── models/               # Business entities
+│   ├── services/             # Business logic layer
+│   └── utils/                # Helper functions
+└── tests/                    # Unit and integration tests
 ```
 
 ### Navbar Icons
@@ -671,8 +661,8 @@ caches during start-up. This avoids expensive database queries on the first
 request.
 
 ```python
-from core.cache_warmer import IntelligentCacheWarmer
-from core.hierarchical_cache_manager import HierarchicalCacheManager
+from yosai_intel_dashboard.src.core.cache_warmer import IntelligentCacheWarmer
+from yosai_intel_dashboard.src.core.hierarchical_cache_manager import HierarchicalCacheManager
 
 cache = HierarchicalCacheManager()
 warmer = IntelligentCacheWarmer(cache, loader=load_from_db)
@@ -742,10 +732,10 @@ resolved from anywhere:
 
 
 ```python
-from core.container import Container
+from yosai_intel_dashboard.src.simple_di import ServiceContainer
 from config import create_config_manager
 
-container = Container()
+container = ServiceContainer()
 container.register("config", create_config_manager())
 
 config = container.get("config")
@@ -894,10 +884,10 @@ previous `config_manager.py` have been removed. Create a container and access
 the new unified configuration through it instead:
 
 ```python
-from core.container import Container
+from yosai_intel_dashboard.src.simple_di import ServiceContainer
 from config import create_config_manager
 
-container = Container()
+container = ServiceContainer()
 container.register("config", create_config_manager())
 
 config = container.get("config")
@@ -938,7 +928,7 @@ Use `EnhancedThreadSafePluginManager` to track plugin load times and
 resource usage:
 
 ```python
-from core.plugins.performance_manager import EnhancedThreadSafePluginManager
+from yosai_intel_dashboard.src.core.plugins.performance_manager import EnhancedThreadSafePluginManager
 manager = EnhancedThreadSafePluginManager(container, config)
 data = manager.get_plugin_performance_metrics()
 ```
@@ -975,10 +965,10 @@ manager.execute_query_with_retry("SELECT 1")
   Register an instance with the container to access analytics operations:
 
   ```python
-   from core.container import Container
-   from services.analytics_service import create_analytics_service
+    from yosai_intel_dashboard.src.simple_di import ServiceContainer
+    from yosai_intel_dashboard.src.services.analytics_service import create_analytics_service
 
-  container = Container()
+   container = ServiceContainer()
   container.register("analytics", create_analytics_service())
 
   analytics = container.get("analytics")
@@ -1197,7 +1187,7 @@ callbacks.trigger_event(
 
 Performance metrics can be retrieved via:
 ```python
-from core.performance import get_performance_monitor
+from yosai_intel_dashboard.src.core.performance import get_performance_monitor
 summary = get_performance_monitor().get_metrics_summary()
 ```
 ### Standardizing column names

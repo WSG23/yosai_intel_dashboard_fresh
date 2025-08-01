@@ -6,7 +6,7 @@ code. The utilities live under `core.async_utils`.
 ## AsyncContextManager
 
 ```python
-from core.async_utils import AsyncContextManager
+from yosai_intel_dashboard.src.core.async_utils import AsyncContextManager
 
 async def acquire():
     ...
@@ -21,7 +21,7 @@ async with AsyncContextManager(acquire, release) as resource:
 ## async_retry
 
 ```python
-from core.async_utils import async_retry
+from yosai_intel_dashboard.src.core.async_utils import async_retry
 
 @async_retry(max_attempts=5, base_delay=1)
 async def unreliable_call():
@@ -33,7 +33,7 @@ async def unreliable_call():
 ## CircuitBreaker
 
 ```python
-from core.async_utils import CircuitBreaker
+from yosai_intel_dashboard.src.core.async_utils import CircuitBreaker
 
 cb = CircuitBreaker(5, 60)
 
@@ -48,7 +48,7 @@ The behaviour matches the previous implementation in
 ## async_batch
 
 ```python
-from core.async_utils import async_batch
+from yosai_intel_dashboard.src.core.async_utils import async_batch
 
 async for chunk in async_batch(items, size=100):
     ...

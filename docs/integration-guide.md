@@ -13,8 +13,8 @@ into your existing Yōsai Intel application
 from flask import Flask
 from flask_login import login_required
 from config import create_config_manager
-from core.error_handlers import register_error_handlers
-from core.container import Container
+from yosai_intel_dashboard.src.core.error_handlers import register_error_handlers
+from yosai_intel_dashboard.src.simple_di import ServiceContainer
 from database.connection import create_database_connection
 
 # Import all compliance components
@@ -178,7 +178,7 @@ def upgrade_existing_people_table():
 # Update your existing services to include compliance:
 
 from flask_login import current_user
-from core.container import Container
+from yosai_intel_dashboard.src.simple_di import ServiceContainer
 
 class EnhancedAnalyticsService:
     """
@@ -498,8 +498,8 @@ def run_compliance_tests():
     }
     
     try:
-        from core.container import Container
-        container = Container()
+        from yosai_intel_dashboard.src.simple_di import ServiceContainer
+        container = ServiceContainer()
         
         # Test 1: Database schema
         db = container.get('database')
