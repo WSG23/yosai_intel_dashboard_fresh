@@ -6,7 +6,7 @@ from typing import Dict
 
 from flask import Flask, session
 
-from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
+from yosai_intel_dashboard.src.core.protocols import ConfigurationProtocol
 
 # Ensure project root is on path
 sys.path.append(str(Path(__file__).resolve().parents[2]))

@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
+from yosai_intel_dashboard.src.core.protocols import ConfigurationProtocol
 from core.interfaces import ConfigProviderProtocol
 
 try:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
+from yosai_intel_dashboard.src.core.protocols import ConfigurationProtocol
 
 
 class TestConfiguration(ConfigurationProtocol):
