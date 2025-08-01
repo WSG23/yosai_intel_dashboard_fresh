@@ -8,7 +8,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Tuple
 
 if TYPE_CHECKING:  # pragma: no cover - optional dependency
-    from yosai_intel_dashboard.src.services.upload.protocols import UploadValidatorProtocol
+    from yosai_intel_dashboard.src.services.upload.protocols import (
+        UploadValidatorProtocol,
+    )
 else:
     UploadValidatorProtocol = Any
 
@@ -71,13 +73,17 @@ class FileValidator(CompositeValidator):
         validator: UploadValidatorProtocol | None = None,
     ) -> None:
         if max_size_mb is None:
-            from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
+            from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+                dynamic_config,
+            )
 
             size_mb = getattr(dynamic_config.security, "max_upload_mb", 10)
         else:
             size_mb = max_size_mb
         size = size_mb * 1024 * 1024
-        from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
+        from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+            dynamic_config,
+        )
 
         default_types = getattr(dynamic_config, "upload", None)
         if default_types and hasattr(default_types, "allowed_file_types"):
