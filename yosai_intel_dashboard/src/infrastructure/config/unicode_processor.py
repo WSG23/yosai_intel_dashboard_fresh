@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
 from security.events import SecurityEvent, emit_security_event
-from yosai_intel_dashboard.src.core.container import get_unicode_processor
 from yosai_intel_dashboard.src.core.interfaces.protocols import UnicodeProcessorProtocol
 
 if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
@@ -53,6 +52,8 @@ class QueryUnicodeHandler:
         processor: UnicodeProcessorProtocol | None = None,
         on_surrogate: Callable[[str], None] | None = None,
     ) -> str:
+        from yosai_intel_dashboard.src.core.container import get_unicode_processor
+
         processor = processor or get_unicode_processor()
         from yosai_intel_dashboard.src.core.unicode import contains_surrogates
 
@@ -68,6 +69,8 @@ class QueryUnicodeHandler:
         processor: UnicodeProcessorProtocol | None = None,
         on_surrogate: Callable[[str], None] | None = None,
     ) -> Any:
+        from yosai_intel_dashboard.src.core.container import get_unicode_processor
+
         processor = processor or get_unicode_processor()
 
         def _cb(text: str) -> None:
@@ -90,6 +93,8 @@ class FileUnicodeHandler:
         processor: UnicodeProcessorProtocol | None = None,
         on_surrogate: Callable[[str], None] | None = None,
     ) -> str:
+        from yosai_intel_dashboard.src.core.container import get_unicode_processor
+
         processor = processor or get_unicode_processor()
         text = (
             processor.safe_decode_text(content)
@@ -112,6 +117,8 @@ class FileUnicodeHandler:
         processor: UnicodeProcessorProtocol | None = None,
         on_surrogate: Callable[[str], None] | None = None,
     ) -> str:
+        from yosai_intel_dashboard.src.core.container import get_unicode_processor
+
         processor = processor or get_unicode_processor()
         text = str(name)
         from yosai_intel_dashboard.src.core.unicode import contains_surrogates
@@ -130,6 +137,8 @@ class UnicodeSecurityValidator:
 
     @staticmethod
     def validate_input(text: Any) -> str:
+        from yosai_intel_dashboard.src.core.container import get_unicode_processor
+
         processor = get_unicode_processor()
         cleaned = processor.safe_encode_text(text)
         from yosai_intel_dashboard.src.core.unicode import contains_surrogates
