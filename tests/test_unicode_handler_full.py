@@ -16,36 +16,37 @@ from core.unicode import (
 )
 
 
-class CallbackController(TrulyUnifiedCallbacks):
-    def fire_event(self, event: CallbackEvent, source_id: str, data=None):
-        ctx = type(
-            "Ctx", (), {"event_type": event, "source_id": source_id, "data": data or {}}
-        )
-        self.trigger(event, ctx)
+
+class TestUnifiedCallbacks(TrulyUnifiedCallbacks):
+    """Custom callbacks with simple error forwarding for tests."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._error_handler = None
 
     def register_error_handler(self, handler):
-        self._handler = handler
+        self._error_handler = handler
 
-    def trigger(self, event: CallbackEvent, *args, **kwargs):
+    def trigger_event(self, event: CallbackEvent, *args, **kwargs):
         try:
-            return super().trigger(event, *args, **kwargs)
-        except Exception as exc:
-            if hasattr(self, "_handler"):
-                self._handler(exc, args[0])
+            return super().trigger_event(event, *args, **kwargs)
+        except Exception as exc:  # pragma: no cover - test helper
+            if self._error_handler:
+                self._error_handler(exc, args[0] if args else None)
             else:
                 raise
 
 
 def callback_handler(event: CallbackEvent):
     def decorator(func):
-        _GLOBAL.register_callback(event, func)
+        _GLOBAL.register_event(event, func)
         return func
 
     return decorator
 
 
 _GLOBAL = TrulyUnifiedCallbacks()
-fire_event = _GLOBAL.fire_event
+fire_event = _GLOBAL.trigger_event
 from yosai_intel_dashboard.src.services.data_processing.file_processor import FileProcessor as RobustFileProcessor
 from yosai_intel_dashboard.src.services.data_processing.file_processor import (
     process_file_simple,
@@ -156,7 +157,7 @@ class TestChunkedUnicodeProcessor:
         assert result == "Test\U0001f600Content" * 500
 
 
-class TestCallbackController:
+class TestUnifiedCallbackController:
     def test_callback_registration_and_firing(self):
         controller = TrulyUnifiedCallbacks()
         controller._callbacks.clear()
@@ -166,8 +167,8 @@ class TestCallbackController:
             called["e"] = ctx.event_type
             called["s"] = ctx.source_id
 
-        controller.register_callback(CallbackEvent.FILE_UPLOAD_START, cb)
-        controller.fire_event(CallbackEvent.FILE_UPLOAD_START, "src", {"f": 1})
+        controller.register_event(CallbackEvent.FILE_UPLOAD_START, cb)
+        controller.trigger_event(CallbackEvent.FILE_UPLOAD_START, "src", {"f": 1})
         assert called["e"] == CallbackEvent.FILE_UPLOAD_START
         assert called["s"] == "src"
 
@@ -179,10 +180,10 @@ class TestCallbackController:
         def cb(ctx):
             hits.append(ctx.event_type)
 
-        controller.register_callback(CallbackEvent.ANALYSIS_START, cb)
-        controller.fire_event(CallbackEvent.ANALYSIS_START, "t", {})
-        assert controller.unregister_callback(CallbackEvent.ANALYSIS_START, cb)
-        controller.fire_event(CallbackEvent.ANALYSIS_START, "t", {})
+        controller.register_event(CallbackEvent.ANALYSIS_START, cb)
+        controller.trigger_event(CallbackEvent.ANALYSIS_START, "t", {})
+        assert controller.unregister_event(CallbackEvent.ANALYSIS_START, cb)
+        controller.trigger_event(CallbackEvent.ANALYSIS_START, "t", {})
         assert len(hits) == 1
 
     def test_multiple_callbacks_same_event(self):
@@ -196,13 +197,13 @@ class TestCallbackController:
         def cb2(ctx):
             results.append("cb2")
 
-        controller.register_callback(CallbackEvent.USER_ACTION, cb1)
-        controller.register_callback(CallbackEvent.USER_ACTION, cb2)
-        controller.fire_event(CallbackEvent.USER_ACTION, "x", {})
+        controller.register_event(CallbackEvent.USER_ACTION, cb1)
+        controller.register_event(CallbackEvent.USER_ACTION, cb2)
+        controller.trigger_event(CallbackEvent.USER_ACTION, "x", {})
         assert results == ["cb1", "cb2"]
 
     def test_callback_error_handling(self):
-        controller = TrulyUnifiedCallbacks()
+        controller = TestUnifiedCallbacks()
         controller._callbacks.clear()
         seen = []
 
@@ -216,9 +217,9 @@ class TestCallbackController:
             seen.append("ok")
 
         controller.register_error_handler(err_handler)
-        controller.register_callback(CallbackEvent.SYSTEM_ERROR, fail)
-        controller.register_callback(CallbackEvent.SYSTEM_ERROR, ok)
-        controller.fire_event(CallbackEvent.SYSTEM_ERROR, "src", {})
+        controller.register_event(CallbackEvent.SYSTEM_ERROR, fail)
+        controller.register_event(CallbackEvent.SYSTEM_ERROR, ok)
+        controller.trigger_event(CallbackEvent.SYSTEM_ERROR, "src", {})
         assert "boom" in seen and "ok" in seen
 
     def test_callback_decorator(self):
@@ -230,7 +231,7 @@ class TestCallbackController:
         def decorated(ctx):
             executed.append(ctx.source_id)
 
-        controller.fire_event(CallbackEvent.DATA_QUALITY_CHECK, "decor", {})
+        controller.trigger_event(CallbackEvent.DATA_QUALITY_CHECK, "decor", {})
         assert "decor" in executed
 
 
@@ -308,8 +309,8 @@ class TestRobustFileProcessor:
 
         controller = TrulyUnifiedCallbacks()
         controller._callbacks.clear()
-        controller.register_callback(CallbackEvent.FILE_PROCESSING_START, track)
-        controller.register_callback(CallbackEvent.FILE_PROCESSING_COMPLETE, track)
+        controller.register_event(CallbackEvent.FILE_PROCESSING_START, track)
+        controller.register_event(CallbackEvent.FILE_PROCESSING_COMPLETE, track)
         csv = "name,age\nJohn,30".encode("utf-8")
         proc = RobustFileProcessor(controller)
         df, err = proc.process_file(csv, "cb.csv", "src")
@@ -353,8 +354,8 @@ class TestIntegration:
 
         controller = TrulyUnifiedCallbacks()
         controller._callbacks.clear()
-        controller.register_callback(CallbackEvent.FILE_PROCESSING_START, tracker)
-        controller.register_callback(CallbackEvent.FILE_PROCESSING_COMPLETE, tracker)
+        controller.register_event(CallbackEvent.FILE_PROCESSING_START, tracker)
+        controller.register_event(CallbackEvent.FILE_PROCESSING_COMPLETE, tracker)
         proc = RobustFileProcessor(controller)
         df, err = proc.process_file(content, "complex.csv")
         assert err is None and len(df) == 2
