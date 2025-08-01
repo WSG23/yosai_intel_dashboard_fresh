@@ -6,8 +6,16 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
+try:
+    from .analytics_service import AnalyticsService
+except Exception:  # pragma: no cover - optional dependency fallback
+    class AnalyticsService:
+        """Fallback stub when analytics service is unavailable."""
+
+        pass
+
 if os.getenv("LIGHTWEIGHT_SERVICES"):
-    __all__ = []
+    __all__ = ["AnalyticsService"]
 else:
 
     from .ab_testing import ModelABTester
