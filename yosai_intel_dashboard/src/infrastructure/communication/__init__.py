@@ -1,4 +1,6 @@
-from yosai_intel_dashboard.src.services.resilience.circuit_breaker import CircuitBreaker
+from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
+    CircuitBreaker,
+)
 
 from .message_queue import AsyncQueueClient
 from .protocols import MessageBus, ServiceClient
