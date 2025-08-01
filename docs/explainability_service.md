@@ -17,7 +17,7 @@ the service generates explanations on demand.
 ## Example
 
 ```python
-from services.explainability_service import ExplainabilityService
+from yosai_intel_dashboard.src.services.explainability_service import ExplainabilityService
 from sklearn.linear_model import LogisticRegression
 import pandas as pd
 

@@ -52,10 +52,10 @@ needed:
 
 ```python
 from config import create_config_manager
-from core.container import Container
-from services.analytics_service import create_analytics_service
+from yosai_intel_dashboard.src.simple_di import ServiceContainer
+from yosai_intel_dashboard.src.services.analytics_service import create_analytics_service
 
-container = Container()
+container = ServiceContainer()
 container.register("config", create_config_manager())
 container.register("analytics", create_analytics_service())
 

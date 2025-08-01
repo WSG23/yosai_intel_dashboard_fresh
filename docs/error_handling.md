@@ -15,7 +15,7 @@ Flask applications can expose unified JSON errors by calling
 
 ```python
 from flask import Flask
-from core.error_handlers import register_error_handlers
+from yosai_intel_dashboard.src.core.error_handlers import register_error_handlers
 
 app = Flask(__name__)
 register_error_handlers(app)
@@ -32,7 +32,7 @@ logs the exception, stores it in the global `ErrorHandler` history and returns
 `None` (or re-raises if `reraise=True`):
 
 ```python
-from core.error_handling import (
+from yosai_intel_dashboard.src.core.error_handling import (
     ErrorCategory,
     ErrorSeverity,
     with_error_handling,
@@ -51,7 +51,7 @@ External API calls should use the `CircuitBreaker` utility combined with
 `with_retry` to avoid repeated failures:
 
 ```python
-from core.error_handling import CircuitBreaker, with_retry
+from yosai_intel_dashboard.src.core.error_handling import CircuitBreaker, with_retry
 
 breaker = CircuitBreaker(name='external_api')
 

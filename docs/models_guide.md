@@ -34,14 +34,14 @@ CONTAINS:
 HOW OTHER MODULES USE IT:
 ```python
 # In analytics page - checking access results
-from models.enums import AccessResult, AnomalyType
+from yosai_intel_dashboard.src.models.enums import AccessResult, AnomalyType
 
 def analyze_failed_access(data):
     denied_events = data[data['access_result'] == AccessResult.DENIED.value]
     return f"Found {len(denied_events)} denied access attempts"
 
 # In dashboard components - showing severity colors
-from models.enums import SeverityLevel
+from yosai_intel_dashboard.src.models.enums import SeverityLevel
 
 def get_alert_color(severity_text):
     if severity_text == SeverityLevel.CRITICAL.value:
@@ -51,7 +51,7 @@ def get_alert_color(severity_text):
     return "yellow"
 
 # In incident response - updating ticket status
-from models.enums import TicketStatus
+from yosai_intel_dashboard.src.models.enums import TicketStatus
 
 def resolve_ticket(ticket_id, resolution_type):
     if resolution_type == "harmful":
@@ -75,7 +75,7 @@ CONTAINS:
 HOW OTHER MODULES USE IT:
 ```python
 # In user management - creating new employees
-from models.entities import Person
+from yosai_intel_dashboard.src.models.entities import Person
 
 def add_new_employee(emp_data):
     new_person = Person(
@@ -89,8 +89,8 @@ def add_new_employee(emp_data):
     return new_person
 
 # In map panel - showing door information
-from models.entities import Door
-from models.enums import DoorType
+from yosai_intel_dashboard.src.models.entities import Door
+from yosai_intel_dashboard.src.models.enums import DoorType
 
 def create_door_for_map(door_data):
     door = Door(
@@ -107,7 +107,7 @@ def create_door_for_map(door_data):
     }
 
 # In analytics - calculating facility statistics
-from models.entities import Facility
+from yosai_intel_dashboard.src.models.entities import Facility
 
 def get_facility_stats(facility_id):
     facility = Facility(
@@ -134,8 +134,8 @@ CONTAINS:
 HOW OTHER MODULES USE IT:
 ```python
 # In file upload processing - converting CSV to structured events
-from models.events import AccessEvent
-from models.enums import AccessResult, BadgeStatus
+from yosai_intel_dashboard.src.models.events import AccessEvent
+from yosai_intel_dashboard.src.models.enums import AccessResult, BadgeStatus
 
 def process_access_log_csv(csv_data):
     events = []
@@ -152,7 +152,7 @@ def process_access_log_csv(csv_data):
     return events
 
 # In anomaly detection - creating anomaly records
-from models.events import AnomalyDetection
+from yosai_intel_dashboard.src.models.events import AnomalyDetection
 from models.enums import AnomalyType, SeverityLevel
 
 def flag_odd_time_access(access_event):

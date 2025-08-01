@@ -13,7 +13,7 @@ Guidelines for writing asynchronous code across the dashboard.
 Several helpers simplify coroutine execution:
 
 ```python
-from core.async_utils import gather_n, run_sync
+from yosai_intel_dashboard.src.core.async_utils import gather_n, run_sync
 
 # Run a blocking function in a thread
 result = await run_sync(blocking_func, *args)
@@ -29,7 +29,7 @@ Refer to the module docstrings for full details.
 Decorate coroutines with `with_async_error_handling` to ensure exceptions are logged:
 
 ```python
-from core.error_handling import with_async_error_handling
+from yosai_intel_dashboard.src.core.error_handling import with_async_error_handling
 
 @with_async_error_handling()
 async def fetch_data(client):
