@@ -1,7 +1,12 @@
 """Utility helpers for Yōsai Intel Dashboard."""
 
 import importlib
-from mapping.processors.ai_processor import AIColumnMapperAdapter
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # pragma: no cover - for type hints only
+    from mapping.processors.ai_processor import AIColumnMapperAdapter
+else:  # pragma: no cover - fallback at runtime
+    AIColumnMapperAdapter = Any  # type: ignore[misc]
 
 from .assets_debug import (
     check_navbar_assets,
@@ -71,9 +76,22 @@ __all__ = [
     "resolve_upload_chunk_size",
 ]
 
+_LAZY_EXPORTS = {
+    "AIColumnMapperAdapter": (
+        "mapping.processors.ai_processor",
+        "AIColumnMapperAdapter",
+    ),
+}
+
 
 def __getattr__(name: str):
-    """Lazily load attributes from ``yosai_intel_dashboard.src.core.unicode``."""
+    """Lazily load selected attributes to avoid heavy imports."""
+    if name in _LAZY_EXPORTS:
+        module_name, attr_name = _LAZY_EXPORTS[name]
+        module = importlib.import_module(module_name)
+        attr = getattr(module, attr_name)
+        globals()[name] = attr
+        return attr
     module = importlib.import_module("yosai_intel_dashboard.src.core.unicode")
     if hasattr(module, name):
         attr = getattr(module, name)

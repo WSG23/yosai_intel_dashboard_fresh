@@ -1,11 +1,16 @@
 """Utility functions for mapping uploaded data columns."""
 
+from __future__ import annotations
+
 import re
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import pandas as pd
 
-from mapping.models import ColumnRules, load_rules
+if TYPE_CHECKING:  # pragma: no cover - for type hints only
+    from mapping.models import ColumnRules
+else:  # pragma: no cover - fallback at runtime
+    ColumnRules = Any  # type: ignore[misc]
 
 # Standard column mapping used across the project
 STANDARD_COLUMN_MAPPING: Dict[str, str] = {
@@ -52,7 +57,10 @@ def standardize_column_names(
 ) -> pd.DataFrame:
     """Return a new DataFrame with normalized column names."""
 
-    rules = rules or load_rules()
+    if rules is None:
+        from mapping.models import load_rules
+
+        rules = load_rules()
     df_out = df.copy()
 
     mappings: Dict[str, list[str]] = {**rules.english}

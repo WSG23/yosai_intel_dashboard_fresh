@@ -1,13 +1,19 @@
+from __future__ import annotations
+
 import json
 import logging
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 import pandas as pd
 
-from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 from yosai_intel_dashboard.src.core.config import get_max_display_rows
 from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
 from yosai_intel_dashboard.src.core.unicode import sanitize_for_utf8
+
+if TYPE_CHECKING:  # pragma: no cover - type hints only
+    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+        dynamic_config,
+    )
 
 logger = logging.getLogger(__name__)
 
