@@ -6,7 +6,7 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
+from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
 from database.secure_exec import execute_query
 
 _cache_manager = InMemoryCacheManager(CacheConfig())

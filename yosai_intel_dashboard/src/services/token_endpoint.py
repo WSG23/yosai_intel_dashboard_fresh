@@ -5,7 +5,7 @@ from flask_apispec import doc
 from pydantic import BaseModel
 
 from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler, api_error_response
-from services.security import refresh_access_token
+from yosai_intel_dashboard.src.services.security import refresh_access_token
 from yosai_intel_dashboard.src.utils.pydantic_decorators import validate_input, validate_output
 
 

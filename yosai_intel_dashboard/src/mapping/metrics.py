@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from core.performance import get_performance_monitor
+from yosai_intel_dashboard.src.core.performance import get_performance_monitor
 
 
 def get_mapping_accuracy_summary() -> Dict[str, Any]:

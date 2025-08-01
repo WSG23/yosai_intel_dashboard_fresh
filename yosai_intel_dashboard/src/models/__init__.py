@@ -3,7 +3,7 @@
 Simplified Models Package
 """
 
-from core.container import container
+from yosai_intel_dashboard.src.core.container import container
 
 from .entities import Door, Facility, Person
 

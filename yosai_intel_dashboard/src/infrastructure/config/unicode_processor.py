@@ -7,10 +7,10 @@ import unicodedata
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
-from core.container import get_unicode_processor
+from yosai_intel_dashboard.src.core.container import get_unicode_processor
 from yosai_intel_dashboard.src.core.interfaces.protocols import UnicodeProcessorProtocol
-from core.unicode import UnicodeProcessor as UnicodeHelper
-from core.unicode import contains_surrogates
+from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor as UnicodeHelper
+from yosai_intel_dashboard.src.core.unicode import contains_surrogates
 from security.events import SecurityEvent, emit_security_event
 
 logger = logging.getLogger(__name__)

@@ -13,7 +13,7 @@ from botocore.exceptions import ClientError
 from cryptography.fernet import Fernet
 from pydantic import BaseModel
 
-from core.exceptions import ConfigurationError
+from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
 
 from .config_manager import ConfigManager
 

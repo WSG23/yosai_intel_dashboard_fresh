@@ -5,7 +5,7 @@ from typing import Any, Optional
 from flask import Flask, jsonify
 from werkzeug.exceptions import HTTPException
 
-from core.exceptions import YosaiBaseException
+from yosai_intel_dashboard.src.core.exceptions import YosaiBaseException
 from shared.errors.types import ErrorCode
 
 from ...core.error_handling import ErrorCategory, ErrorSeverity, error_handler

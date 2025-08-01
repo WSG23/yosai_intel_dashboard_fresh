@@ -10,9 +10,9 @@ import pandas as pd
 
 from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
-from core.config import get_max_display_rows
-from core.performance_file_processor import PerformanceFileProcessor
-from core.unicode import (
+from yosai_intel_dashboard.src.core.config import get_max_display_rows
+from yosai_intel_dashboard.src.core.performance_file_processor import PerformanceFileProcessor
+from yosai_intel_dashboard.src.core.unicode import (
     UnicodeProcessor,
     safe_format_number,
     safe_unicode_decode,

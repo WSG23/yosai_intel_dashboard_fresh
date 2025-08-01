@@ -103,7 +103,7 @@ def get_export_service(
     c = _get_container(container)
     if c and c.has("export_service"):
         return c.get("export_service")
-    import services.export_service as svc
+    import yosai_intel_dashboard.src.services.export_service as svc
 
     return svc
 
@@ -114,7 +114,7 @@ def get_door_mapping_service(
     c = _get_container(container)
     if c and c.has("door_mapping_service"):
         return c.get("door_mapping_service")
-    from services.door_mapping_service import door_mapping_service
+    from yosai_intel_dashboard.src.services.door_mapping_service import door_mapping_service
 
     return door_mapping_service
 
@@ -126,7 +126,7 @@ def get_device_learning_service(
     c = _get_container(container)
     if c and c.has("device_learning_service"):
         return c.get("device_learning_service")
-    from services.device_learning_service import create_device_learning_service
+    from yosai_intel_dashboard.src.services.device_learning_service import create_device_learning_service
 
     return create_device_learning_service()
 
@@ -138,7 +138,7 @@ def get_upload_data_service(
     c = _get_container(container)
     if c and c.has("upload_data_service"):
         return c.get("upload_data_service")
-    from services.upload_data_service import UploadDataService as UploadDataSvc
+    from yosai_intel_dashboard.src.services.upload_data_service import UploadDataService as UploadDataSvc
     from yosai_intel_dashboard.src.utils.upload_store import uploaded_data_store
 
     return UploadDataSvc(uploaded_data_store)
@@ -278,6 +278,6 @@ def get_database_analytics_retriever(
     c = _get_container(container)
     if c and c.has("database_analytics_retriever"):
         return c.get("database_analytics_retriever")
-    from services.database_retriever import DatabaseAnalyticsRetriever
+    from yosai_intel_dashboard.src.services.database_retriever import DatabaseAnalyticsRetriever
 
     return DatabaseAnalyticsRetriever(helper)

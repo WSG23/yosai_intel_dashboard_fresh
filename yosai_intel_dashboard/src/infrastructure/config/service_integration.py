@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from core.container import container
+from yosai_intel_dashboard.src.core.container import container
 
 # Lazy import to avoid circular dependencies during module import
 def get_service_registry():

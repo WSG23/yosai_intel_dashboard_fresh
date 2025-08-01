@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from core.unicode import UnicodeSQLProcessor
+from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
 from database.query_optimizer import DatabaseQueryOptimizer
 from database.secure_exec import execute_command, execute_query
 from database.types import DatabaseConnection

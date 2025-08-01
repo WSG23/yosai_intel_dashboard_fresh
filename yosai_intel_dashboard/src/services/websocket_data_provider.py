@@ -7,7 +7,7 @@ import time
 from typing import Any, Dict
 
 from yosai_intel_dashboard.src.core.interfaces.protocols import EventBusProtocol
-from services.analytics_summary import generate_sample_analytics
+from yosai_intel_dashboard.src.services.analytics_summary import generate_sample_analytics
 
 
 class WebSocketDataProvider:

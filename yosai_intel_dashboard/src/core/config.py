@@ -9,7 +9,7 @@ from yosai_intel_dashboard.src.infrastructure.config.utils import (
     get_ai_confidence_threshold as _get_ai_confidence_threshold,
     get_upload_chunk_size as _get_upload_chunk_size,
 )
-from core.container import container
+from yosai_intel_dashboard.src.core.container import container
 from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints

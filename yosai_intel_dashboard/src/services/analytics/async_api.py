@@ -20,15 +20,15 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.types import ASGIApp
 
-from core.cache_manager import CacheConfig, InMemoryCacheManager
-from core.events import EventBus
+from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager
+from yosai_intel_dashboard.src.core.events import EventBus
 from yosai_intel_dashboard.src.error_handling import http_error
 from yosai_intel_dashboard.src.services.analytics.analytics_service import get_analytics_service
-from services.cached_analytics import CachedAnalyticsService
-from services.common.async_db import get_pool
-from services.security import require_permission
-from services.summary_report_generator import SummaryReportGenerator
-from services.websocket_server import AnalyticsWebSocketServer
+from yosai_intel_dashboard.src.services.cached_analytics import CachedAnalyticsService
+from yosai_intel_dashboard.src.services.common.async_db import get_pool
+from yosai_intel_dashboard.src.services.security import require_permission
+from yosai_intel_dashboard.src.services.summary_report_generator import SummaryReportGenerator
+from yosai_intel_dashboard.src.services.websocket_server import AnalyticsWebSocketServer
 from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,

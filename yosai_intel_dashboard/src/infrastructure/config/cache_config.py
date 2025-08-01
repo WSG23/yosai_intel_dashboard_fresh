@@ -3,7 +3,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Optional
 
-from core.exceptions import ConfigurationError
+from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
 
 
 @dataclass

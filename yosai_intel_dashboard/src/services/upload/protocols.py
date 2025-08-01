@@ -19,7 +19,7 @@ import pandas as pd
 
 from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
-from services.protocols.device_learning import DeviceLearningServiceProtocol
+from yosai_intel_dashboard.src.services.protocols.device_learning import DeviceLearningServiceProtocol
 
 
 @runtime_checkable

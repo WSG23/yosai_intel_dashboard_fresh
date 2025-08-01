@@ -6,8 +6,8 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from core.exceptions import ValidationError
-from core.unicode import contains_surrogates
+from yosai_intel_dashboard.src.core.exceptions import ValidationError
+from yosai_intel_dashboard.src.core.unicode import contains_surrogates
 from security.events import SecurityEvent, emit_security_event
 
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from core.container import container as default_container
+from yosai_intel_dashboard.src.core.container import container as default_container
 from mapping.models import (
     HeuristicMappingModel,
     MappingModel,
@@ -15,13 +15,13 @@ from mapping.service import MappingService
 from mapping.storage.base import JsonStorage, MemoryStorage
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
-    from services.learning.src.api.coordinator import LearningCoordinator
+    from yosai_intel_dashboard.src.services.learning.src.api.coordinator import LearningCoordinator
 
 
 def create_learning_service(
     path: str | None = None, in_memory: bool = False
 ) -> "LearningCoordinator":
-    from services.learning.src.api.coordinator import LearningCoordinator
+    from yosai_intel_dashboard.src.services.learning.src.api.coordinator import LearningCoordinator
 
     storage = (
         MemoryStorage()

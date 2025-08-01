@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from core.plugins.base import BasePlugin
+from yosai_intel_dashboard.src.core.plugins.base import BasePlugin
 from plugins.common_callbacks import csv_pre_process_callback
 
 from .api import ComplianceAPI

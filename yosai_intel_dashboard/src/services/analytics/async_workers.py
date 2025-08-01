@@ -6,7 +6,7 @@ import asyncio
 import logging
 from typing import Awaitable, Callable, Optional
 
-from core.advanced_cache import AdvancedCacheManager, create_advanced_cache_manager
+from yosai_intel_dashboard.src.core.advanced_cache import AdvancedCacheManager, create_advanced_cache_manager
 
 # Optional async queue integrations
 try:

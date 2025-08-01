@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """Analytics domain specific exceptions."""
 
-from core.exceptions import YosaiBaseException
+from yosai_intel_dashboard.src.core.exceptions import YosaiBaseException
 
 
 class AnalyticsError(YosaiBaseException):

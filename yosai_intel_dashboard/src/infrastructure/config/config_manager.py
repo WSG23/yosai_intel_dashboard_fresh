@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 
 from pydantic import ValidationError
 
-from core.exceptions import ConfigurationError
+from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
 from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
 
 from .base import CacheConfig, Config

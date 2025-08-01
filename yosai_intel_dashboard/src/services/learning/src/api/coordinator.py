@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 import pandas as pd
 
 from mapping.core.interfaces import LearningInterface, StorageInterface
-from services.learning.src.ml.fingerprint_service import FingerprintService
+from yosai_intel_dashboard.src.services.learning.src.ml.fingerprint_service import FingerprintService
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ class LearningCoordinator(LearningInterface):
     # ------------------------------------------------------------------
     def apply_to_global_store(self, df: pd.DataFrame, filename: str) -> bool:
         try:
-            from services.ai_mapping_store import ai_mapping_store
+            from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
         except Exception:  # pragma: no cover - optional dependency
             return False
         learned = self.get_learned_mappings(df, filename)

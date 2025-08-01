@@ -9,8 +9,8 @@ from typing import Any, Dict, Optional
 
 import psutil
 
-from core.base_model import BaseModel
-from core.performance import MetricType, get_performance_monitor
+from yosai_intel_dashboard.src.core.base_model import BaseModel
+from yosai_intel_dashboard.src.core.performance import MetricType, get_performance_monitor
 
 
 @dataclass

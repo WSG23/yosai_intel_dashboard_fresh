@@ -5,7 +5,7 @@ Other packages should import from here rather than submodules.
 """
 
 from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
-from core.unicode import safe_encode_text
+from yosai_intel_dashboard.src.core.unicode import safe_encode_text
 from unicode_toolkit import decode_upload_content
 from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore as UploadStorage
 from validation.security_validator import SecurityValidator

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from yosai_intel_dashboard.src.core.interfaces.protocols import EventBusProtocol
-from services.event_publisher import publish_event
+from yosai_intel_dashboard.src.services.event_publisher import publish_event
 
 
 class Publisher:

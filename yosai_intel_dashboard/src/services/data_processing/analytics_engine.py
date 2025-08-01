@@ -8,7 +8,7 @@ import pandas as pd
 from services import get_analytics_service  # type: ignore
 
 try:
-    from services.ai_suggestions import generate_column_suggestions
+    from yosai_intel_dashboard.src.services.ai_suggestions import generate_column_suggestions
 
     AI_SUGGESTIONS_AVAILABLE = True
 except Exception:  # pragma: no cover - optional AI suggestions
@@ -36,7 +36,7 @@ def get_data_source_options_safe() -> List[Dict[str, str]]:
     """Return dropdown options for available data sources."""
     options: List[Dict[str, str]] = []
     try:
-        from services.upload_data_service import get_uploaded_data  # lazy import
+        from yosai_intel_dashboard.src.services.upload_data_service import get_uploaded_data  # lazy import
 
         uploaded_files = get_uploaded_data(get_upload_data_service())
         for filename in uploaded_files.keys():
@@ -71,7 +71,7 @@ def get_data_source_options_safe() -> List[Dict[str, str]]:
 def get_latest_uploaded_source_value() -> Optional[str]:
     """Return the dropdown value for the most recently uploaded file."""
     try:
-        from services.upload_data_service import get_uploaded_filenames  # lazy import
+        from yosai_intel_dashboard.src.services.upload_data_service import get_uploaded_filenames  # lazy import
 
         filenames = get_uploaded_filenames(get_upload_data_service())
         if filenames:
@@ -154,7 +154,7 @@ def process_suggests_analysis(data_source: str) -> Dict[str, Any]:
             else:
                 filename = None
 
-            from services.upload_data_service import get_uploaded_data  # lazy import
+            from yosai_intel_dashboard.src.services.upload_data_service import get_uploaded_data  # lazy import
 
             uploaded_files = get_uploaded_data()
             if not uploaded_files:
@@ -236,7 +236,7 @@ def process_quality_analysis(data_source: str) -> Dict[str, Any]:
             else:
                 filename = None
 
-            from services.upload_data_service import get_uploaded_data  # lazy import
+            from yosai_intel_dashboard.src.services.upload_data_service import get_uploaded_data  # lazy import
 
             uploaded_files = get_uploaded_data()
             if not uploaded_files:
@@ -285,7 +285,7 @@ def analyze_data_with_service(data_source: str, analysis_type: str) -> Dict[str,
             return {"error": "Analytics service not available"}
 
         if data_source.startswith("upload:") or data_source == "service:uploaded":
-            from services.upload_data_service import get_uploaded_data  # lazy import
+            from yosai_intel_dashboard.src.services.upload_data_service import get_uploaded_data  # lazy import
 
             uploaded_files = get_uploaded_data()
             if not uploaded_files:

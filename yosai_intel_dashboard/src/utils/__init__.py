@@ -1,6 +1,6 @@
 """Utility helpers for Yōsai Intel Dashboard."""
 
-from core.unicode import (
+from yosai_intel_dashboard.src.core.unicode import (
     ChunkedUnicodeProcessor,
     EnhancedUnicodeProcessor,
     SurrogateHandlingConfig,

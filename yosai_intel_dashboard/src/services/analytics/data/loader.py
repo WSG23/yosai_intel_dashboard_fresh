@@ -5,9 +5,9 @@ from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
-from services.controllers.upload_controller import UploadProcessingController
+from yosai_intel_dashboard.src.services.controllers.upload_controller import UploadProcessingController
 from yosai_intel_dashboard.src.services.data_processing.processor import Processor
-from core.interfaces import ConfigProviderProtocol
+from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
 
 logger = logging.getLogger(__name__)
 

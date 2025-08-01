@@ -3,12 +3,12 @@ import re
 from collections import Counter
 from typing import TYPE_CHECKING, Dict, List, Optional, cast
 
-from core.flask_protocol import FlaskProtocol
+from yosai_intel_dashboard.src.core.flask_protocol import FlaskProtocol
 
 if TYPE_CHECKING:  # pragma: no cover - optional Flask dependency
     from flask import Flask
 
-from core.secret_manager import SecretsManager
+from yosai_intel_dashboard.src.core.secret_manager import SecretsManager
 
 
 class SecretsValidator:

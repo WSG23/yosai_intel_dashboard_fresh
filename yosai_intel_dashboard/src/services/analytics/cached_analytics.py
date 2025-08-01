@@ -5,9 +5,9 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Dict
 
-from core.cache_manager import CacheManager
+from yosai_intel_dashboard.src.core.cache_manager import CacheManager
 from yosai_intel_dashboard.src.core.interfaces.protocols import EventBusProtocol
-from services.analytics_summary import generate_sample_analytics
+from yosai_intel_dashboard.src.services.analytics_summary import generate_sample_analytics
 
 
 class CachedAnalyticsService:

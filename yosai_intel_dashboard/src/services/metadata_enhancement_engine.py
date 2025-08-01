@@ -38,7 +38,7 @@ except ImportError:  # pragma: no cover - for Python <3.12
 
 import pandas as pd
 
-from core.di_decorators import inject, injectable
+from yosai_intel_dashboard.src.core.di_decorators import inject, injectable
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from yosai_intel_dashboard.src.services.analytics.protocols import AnalyticsServiceProtocol
 from yosai_intel_dashboard.src.services.upload.protocols import UploadDataServiceProtocol

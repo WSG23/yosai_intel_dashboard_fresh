@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
+from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 

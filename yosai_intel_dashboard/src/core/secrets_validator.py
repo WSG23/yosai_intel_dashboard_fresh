@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Dict, Optional
 
-from core.exceptions import ConfigurationError
+from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
 
 from .secret_manager import SecretsManager
 

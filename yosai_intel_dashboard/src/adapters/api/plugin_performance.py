@@ -8,9 +8,9 @@ from flask_apispec import doc, marshal_with, use_kwargs
 from marshmallow import Schema, fields
 
 from app import app
-from config import get_cache_config
-from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
-from core.plugins.performance_manager import EnhancedThreadSafePluginManager
+from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
+from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
+from yosai_intel_dashboard.src.core.plugins.performance_manager import EnhancedThreadSafePluginManager
 from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler
 from shared.errors.types import ErrorCode
 from validation.security_validator import SecurityValidator

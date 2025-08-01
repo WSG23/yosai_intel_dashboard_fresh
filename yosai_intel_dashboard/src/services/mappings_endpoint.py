@@ -4,7 +4,7 @@ from flask import Blueprint
 from flask_apispec import doc
 from pydantic import BaseModel
 
-from core.unicode import clean_unicode_surrogates
+from yosai_intel_dashboard.src.core.unicode import clean_unicode_surrogates
 from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler, api_error_response
 from yosai_intel_dashboard.src.utils.pydantic_decorators import validate_input, validate_output
 

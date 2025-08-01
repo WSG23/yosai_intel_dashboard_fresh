@@ -10,7 +10,7 @@ from typing import Any, Dict, Tuple
 import pandas as pd
 import yaml
 
-from core.performance import MetricType, get_performance_monitor
+from yosai_intel_dashboard.src.core.performance import MetricType, get_performance_monitor
 
 
 class MappingModel(ABC):

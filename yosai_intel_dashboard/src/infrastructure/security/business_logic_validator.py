@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from core.exceptions import ValidationError
+from yosai_intel_dashboard.src.core.exceptions import ValidationError
 
 
 class BusinessLogicValidator:

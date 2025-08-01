@@ -15,11 +15,11 @@ import pandas as pd
 from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationServiceProtocol
 
 # ADD after existing imports
-from services.ai_device_generator import AIDeviceGenerator
-from services.common import ModelRegistry
-from services.common.config_utils import common_init, create_config_methods
-from services.configuration_service import DynamicConfigurationService
-from services.learning.src.api.consolidated_service import get_learning_service
+from yosai_intel_dashboard.src.services.ai_device_generator import AIDeviceGenerator
+from yosai_intel_dashboard.src.services.common import ModelRegistry
+from yosai_intel_dashboard.src.services.common.config_utils import common_init, create_config_methods
+from yosai_intel_dashboard.src.services.configuration_service import DynamicConfigurationService
+from yosai_intel_dashboard.src.services.learning.src.api.consolidated_service import get_learning_service
 
 logger = logging.getLogger(__name__)
 

@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING, Any, List, Optional
 
 from dash import Dash
 
-from config import ConfigManager
+from yosai_intel_dashboard.src.infrastructure.config import ConfigManager
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
-from core.plugins.manager import ThreadSafePluginManager
-from core.protocols.plugin import PluginProtocol
+from yosai_intel_dashboard.src.core.plugins.manager import ThreadSafePluginManager
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginProtocol
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
-from services.registry import registry as service_registry
+from yosai_intel_dashboard.src.services.registry import registry as service_registry
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
     from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks

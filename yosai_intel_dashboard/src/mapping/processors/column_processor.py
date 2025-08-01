@@ -4,7 +4,7 @@ from typing import Any
 
 import pandas as pd
 
-from core.container import container as default_container
+from yosai_intel_dashboard.src.core.container import container as default_container
 from mapping.core.interfaces import ProcessorInterface
 from mapping.core.models import ProcessingResult
 from mapping.helpers import map_and_clean

@@ -7,7 +7,7 @@ import pandas as pd
 from yosai_intel_dashboard.src.services.analytics.data.loader import DataLoader
 from yosai_intel_dashboard.src.services.analytics.protocols import DataLoadingProtocol
 from yosai_intel_dashboard.src.core.interfaces.service_protocols import AnalyticsDataLoaderProtocol
-from services.controllers.upload_controller import UploadProcessingController
+from yosai_intel_dashboard.src.services.controllers.upload_controller import UploadProcessingController
 from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 
 

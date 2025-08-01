@@ -7,7 +7,7 @@ from typing import Any, Dict
 import pandas as pd
 
 from yosai_intel_dashboard.src.services.analytics.protocols import ReportGeneratorProtocol
-from services.summary_report_generator import SummaryReportGenerator
+from yosai_intel_dashboard.src.services.summary_report_generator import SummaryReportGenerator
 
 
 class ReportGenerationService(ReportGeneratorProtocol):

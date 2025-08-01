@@ -6,9 +6,9 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from services.analytics_summary import summarize_dataframe
-from services.chunked_analysis import analyze_with_chunking
-from services.upload_processing import (
+from yosai_intel_dashboard.src.services.analytics_summary import summarize_dataframe
+from yosai_intel_dashboard.src.services.chunked_analysis import analyze_with_chunking
+from yosai_intel_dashboard.src.services.upload_processing import (
     UploadAnalyticsProcessor as _UploadAnalyticsProcessor,
 )
 from validation.data_validator import DataValidator, DataValidatorProtocol

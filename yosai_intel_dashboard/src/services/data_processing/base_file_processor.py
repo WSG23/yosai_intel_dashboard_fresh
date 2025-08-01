@@ -6,7 +6,7 @@ from typing import IO, Callable, Iterable, List, Union
 import pandas as pd
 
 from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
-from core.unicode import UnicodeProcessor as UnicodeHelper
+from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor as UnicodeHelper
 from yosai_intel_dashboard.src.utils.file_utils import safe_decode_with_unicode_handling
 from yosai_intel_dashboard.src.utils.memory_utils import check_memory_limit
 
@@ -73,7 +73,7 @@ class BaseFileProcessor:
                     return text
             except Exception:
                 continue
-        from core.unicode import safe_unicode_decode
+        from yosai_intel_dashboard.src.core.unicode import safe_unicode_decode
 
         logger.warning("All encodings failed, using replacement characters")
         return safe_unicode_decode(content, "utf-8")

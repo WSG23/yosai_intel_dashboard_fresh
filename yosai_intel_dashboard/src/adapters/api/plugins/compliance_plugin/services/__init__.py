@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from core.container import Container
+from yosai_intel_dashboard.src.core.container import Container
 
 logger = logging.getLogger(__name__)
 

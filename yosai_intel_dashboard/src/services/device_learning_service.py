@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Protocol, runtime_checkab
 
 import pandas as pd
 
-from services.learning.src.api.consolidated_service import get_learning_service
-from services.protocols.device_learning import DeviceLearningServiceProtocol
+from yosai_intel_dashboard.src.services.learning.src.api.consolidated_service import get_learning_service
+from yosai_intel_dashboard.src.services.protocols.device_learning import DeviceLearningServiceProtocol
 from unicode_toolkit import safe_encode_text
 
 
@@ -186,7 +186,7 @@ class DeviceLearningService(DeviceLearningServiceProtocol):
         logger.info("🔍 DEBUG - filename: %s", safe_encode_text(filename))
 
         try:
-            from services.ai_mapping_store import ai_mapping_store
+            from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
 
             learned_mappings = self.get_learned_mappings(df, filename)
             logger.info(

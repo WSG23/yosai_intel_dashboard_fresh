@@ -8,8 +8,8 @@ import time
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
-from core.base_model import BaseModel
-from core.protocols.plugin import PluginProtocol
+from yosai_intel_dashboard.src.core.base_model import BaseModel
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginProtocol
 
 from .manager import ThreadSafePluginManager
 

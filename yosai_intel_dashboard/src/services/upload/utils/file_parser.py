@@ -13,11 +13,11 @@ import pandas as pd
 
 from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
-from core.performance import get_performance_monitor
+from yosai_intel_dashboard.src.core.performance import get_performance_monitor
 from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
 
 # Core processing imports only - NO UI COMPONENTS
-from core.unicode import safe_format_number, safe_unicode_decode, sanitize_for_utf8
+from yosai_intel_dashboard.src.core.unicode import safe_format_number, safe_unicode_decode, sanitize_for_utf8
 from yosai_intel_dashboard.src.services.data_processing.file_processor import (
     decode_contents,
     validate_metadata,

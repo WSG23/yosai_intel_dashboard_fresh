@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from core.async_utils.async_circuit_breaker import (
+from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
     circuit_breaker,

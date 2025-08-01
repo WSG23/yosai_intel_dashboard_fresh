@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Optional, cast
 if TYPE_CHECKING:  # pragma: no cover - imported for type checking only
     from dash import Dash
 
-from core.plugins.auto_config import PluginAutoConfiguration
+from yosai_intel_dashboard.src.core.plugins.auto_config import PluginAutoConfiguration
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 

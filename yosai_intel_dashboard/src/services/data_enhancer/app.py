@@ -20,7 +20,7 @@ import pandas as pd
 from dash import dcc, html
 
 from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
-from core.unicode import clean_unicode_surrogates
+from yosai_intel_dashboard.src.core.unicode import clean_unicode_surrogates
 
 from .config import (
     AI_COLUMN_SERVICE_AVAILABLE,
@@ -170,7 +170,7 @@ class MultiBuildingDataEnhancer:
         # Try existing service first
         if AI_COLUMN_SERVICE_AVAILABLE:
             try:
-                from services.data_enhancer.mapping_utils import (
+                from yosai_intel_dashboard.src.services.data_enhancer.mapping_utils import (
                     get_ai_column_suggestions,
                 )
 

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
 
-from core.performance import MetricType, get_performance_monitor
+from yosai_intel_dashboard.src.core.performance import MetricType, get_performance_monitor
 from monitoring.prometheus.model_metrics import (
     start_model_metrics_server,
     update_model_metrics,

@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from core.performance import MetricType, get_performance_monitor
+from yosai_intel_dashboard.src.core.performance import MetricType, get_performance_monitor
 
 
 @dataclass

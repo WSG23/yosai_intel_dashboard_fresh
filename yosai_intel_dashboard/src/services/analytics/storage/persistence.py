@@ -6,7 +6,7 @@ from typing import Any, Callable, Tuple
 
 from yosai_intel_dashboard.src.infrastructure.config.database_manager import DatabaseSettings
 
-from services.helpers.database_initializer import initialize_database
+from yosai_intel_dashboard.src.services.helpers.database_initializer import initialize_database
 
 
 class PersistenceManager:

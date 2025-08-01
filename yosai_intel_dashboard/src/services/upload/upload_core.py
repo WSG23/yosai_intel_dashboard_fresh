@@ -11,12 +11,12 @@ import dash_bootstrap_components as dbc
 from dash import html, no_update
 
 from yosai_intel_dashboard.src.core.interfaces.service_protocols import get_device_learning_service
-from services.rabbitmq_client import RabbitMQClient
-from services.task_queue import (
+from yosai_intel_dashboard.src.services.rabbitmq_client import RabbitMQClient
+from yosai_intel_dashboard.src.services.task_queue import (
     TaskQueue,
     TaskQueueProtocol,
 )
-from services.upload import (
+from yosai_intel_dashboard.src.services.upload import (
     AISuggestionService,
     ChunkedUploadManager,
     ClientSideValidator,
@@ -256,7 +256,7 @@ class UploadCore:
                 raise ValueError(f"DataFrame for '{filename}' is empty")
 
             learning_service.save_user_device_mappings(df, filename, user_mappings)
-            from services.ai_mapping_store import ai_mapping_store
+            from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
 
             ai_mapping_store.update(user_mappings)
 

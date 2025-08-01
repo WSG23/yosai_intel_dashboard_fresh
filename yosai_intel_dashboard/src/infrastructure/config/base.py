@@ -7,7 +7,7 @@ import warnings
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from core.exceptions import ConfigurationError
+from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
 
 from .app_config import UploadConfig
 from .cache_config import CacheConfig

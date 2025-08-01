@@ -6,7 +6,7 @@ from typing import Any
 
 import pandas as pd
 
-from core.unicode import sanitize_dataframe, sanitize_unicode_input
+from yosai_intel_dashboard.src.core.unicode import sanitize_dataframe, sanitize_unicode_input
 
 
 class UnicodeSecurityHandler:

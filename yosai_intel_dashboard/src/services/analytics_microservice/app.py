@@ -26,23 +26,23 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 
 from analytics import anomaly_detection, feature_extraction, security_patterns
-from config import get_database_config
+from yosai_intel_dashboard.src.infrastructure.config import get_database_config
 from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
 from yosai_intel_dashboard.src.infrastructure.config.config_loader import load_service_config
-from core.security import RateLimiter
+from yosai_intel_dashboard.src.core.security import RateLimiter
 from yosai_intel_dashboard.src.error_handling import http_error
-from services.analytics_microservice import async_queries
-from services.analytics_microservice.analytics_service import (
+from yosai_intel_dashboard.src.services.analytics_microservice import async_queries
+from yosai_intel_dashboard.src.services.analytics_microservice.analytics_service import (
     AnalyticsService,
     get_analytics_service,
 )
-from services.analytics_microservice.unicode_middleware import (
+from yosai_intel_dashboard.src.services.analytics_microservice.unicode_middleware import (
     UnicodeSanitizationMiddleware,
 )
-from services.auth import verify_jwt_token
-from services.common import async_db
-from services.common.async_db import close_pool, create_pool
-from services.common.secrets import get_secret
+from yosai_intel_dashboard.src.services.auth import verify_jwt_token
+from yosai_intel_dashboard.src.services.common import async_db
+from yosai_intel_dashboard.src.services.common.async_db import close_pool, create_pool
+from yosai_intel_dashboard.src.services.common.secrets import get_secret
 from shared.errors.types import ErrorCode
 from yosai_framework import ServiceBuilder
 from yosai_framework.errors import ServiceError

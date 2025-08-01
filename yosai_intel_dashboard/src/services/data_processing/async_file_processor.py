@@ -15,9 +15,9 @@ from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Tuple
 import pandas as pd
 
 from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
-from core.interfaces import ConfigProviderProtocol
-from services.rabbitmq_client import RabbitMQClient
-from services.task_queue import create_task, get_status
+from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
+from yosai_intel_dashboard.src.services.rabbitmq_client import RabbitMQClient
+from yosai_intel_dashboard.src.services.task_queue import create_task, get_status
 from yosai_intel_dashboard.src.utils.memory_utils import check_memory_limit
 
 from .file_processor import UnicodeFileProcessor

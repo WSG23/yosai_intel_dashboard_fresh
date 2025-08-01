@@ -11,7 +11,7 @@ import pandas as pd
 
 from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
-from core.performance import get_performance_monitor
+from yosai_intel_dashboard.src.core.performance import get_performance_monitor
 from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
 from yosai_intel_dashboard.src.utils.file_utils import safe_decode_with_unicode_handling
 

@@ -6,8 +6,8 @@ from typing import Any, Dict, Protocol
 
 import asyncpg
 
-from core.cache_manager import CacheConfig, RedisCacheManager
-from core.error_handling import with_async_error_handling
+from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, RedisCacheManager
+from yosai_intel_dashboard.src.core.error_handling import with_async_error_handling
 
 from .common_queries import fetch_access_patterns, fetch_dashboard_summary
 

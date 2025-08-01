@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional
 
 from flask import g, request
 
-from core.error_handling import ErrorSeverity, error_handler, handle_errors
+from yosai_intel_dashboard.src.core.error_handling import ErrorSeverity, error_handler, handle_errors
 
 logger = logging.getLogger(__name__)
 

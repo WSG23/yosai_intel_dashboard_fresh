@@ -32,7 +32,7 @@ else:
     from .helpers.database_initializer import initialize_database
     from .microservices_architect import MicroservicesArchitect, ServiceBoundary
     from .publishing_service import PublishingService
-    from core.container import container
+    from yosai_intel_dashboard.src.core.container import container
     from .report_generation_service import ReportGenerationService
     from .result_formatting import (
         apply_regular_analysis,

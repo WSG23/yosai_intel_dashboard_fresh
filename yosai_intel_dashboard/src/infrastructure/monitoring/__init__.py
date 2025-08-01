@@ -27,7 +27,7 @@ __all__ = [
 
 def __getattr__(name: str):
     if name == "PerformanceMonitor":
-        from core.performance import PerformanceMonitor
+        from yosai_intel_dashboard.src.core.performance import PerformanceMonitor
 
         return PerformanceMonitor
     if name in {

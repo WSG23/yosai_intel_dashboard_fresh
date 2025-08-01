@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List
 
 import jsonschema
 
-from core.exceptions import ConfigurationError
+from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
 
 from .protocols import ConfigValidatorProtocol
 

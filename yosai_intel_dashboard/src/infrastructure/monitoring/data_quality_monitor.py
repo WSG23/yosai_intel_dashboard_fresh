@@ -42,7 +42,7 @@ else:  # pragma: no cover - runtime import for tests
 
 
 try:  # pragma: no cover - optional dependency
-    from config import get_monitoring_config
+    from yosai_intel_dashboard.src.infrastructure.config import get_monitoring_config
 except Exception:  # pragma: no cover - minimal fallback for tests
 
     def get_monitoring_config() -> dict:
@@ -51,8 +51,8 @@ except Exception:  # pragma: no cover - minimal fallback for tests
 
 # Local imports are deferred to avoid heavy dependencies during module import
 if TYPE_CHECKING:  # pragma: no cover - type hints only
-    from core.monitoring.user_experience_metrics import AlertConfig, AlertDispatcher
-    from core.performance import MetricType
+    from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import AlertConfig, AlertDispatcher
+    from yosai_intel_dashboard.src.core.performance import MetricType
 
 
 @dataclass
@@ -87,7 +87,7 @@ class DataQualityMonitor:
 
         alert_cfg = getattr(cfg, "alerting", {})
         if isinstance(alert_cfg, dict):
-            from core.monitoring.user_experience_metrics import AlertConfig
+            from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import AlertConfig
 
             ac = AlertConfig(
                 slack_webhook=alert_cfg.get("slack_webhook"),
@@ -95,14 +95,14 @@ class DataQualityMonitor:
                 webhook_url=alert_cfg.get("webhook_url"),
             )
         else:
-            from core.monitoring.user_experience_metrics import AlertConfig
+            from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import AlertConfig
 
             ac = AlertConfig(
                 slack_webhook=getattr(alert_cfg, "slack_webhook", None),
                 email=getattr(alert_cfg, "email", None),
                 webhook_url=getattr(alert_cfg, "webhook_url", None),
             )
-        from core.monitoring.user_experience_metrics import AlertDispatcher
+        from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import AlertDispatcher
 
         self.dispatcher = dispatcher or AlertDispatcher(ac)
         self._avro_failures = 0
@@ -111,7 +111,7 @@ class DataQualityMonitor:
     # ------------------------------------------------------------------
     def emit(self, metrics: DataQualityMetrics) -> None:
         """Record metrics and send alerts if thresholds are exceeded."""
-        from core.performance import MetricType, get_performance_monitor
+        from yosai_intel_dashboard.src.core.performance import MetricType, get_performance_monitor
 
         monitor = get_performance_monitor()
         monitor.record_metric(

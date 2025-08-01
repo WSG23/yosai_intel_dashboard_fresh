@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from typing import Any, Callable
 
-from core.container import get_unicode_processor
+from yosai_intel_dashboard.src.core.container import get_unicode_processor
 from yosai_intel_dashboard.src.core.interfaces.protocols import UnicodeProcessorProtocol
 
 from .unicode_processor import (

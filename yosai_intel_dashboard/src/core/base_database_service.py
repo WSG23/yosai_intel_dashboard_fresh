@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from config import DatabaseSettings
+from yosai_intel_dashboard.src.infrastructure.config import DatabaseSettings
 
 
 class BaseDatabaseService:

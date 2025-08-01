@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from core.exceptions import SecurityError
+from yosai_intel_dashboard.src.core.exceptions import SecurityError
 
 
 class SecurityThreatLevel(Enum):

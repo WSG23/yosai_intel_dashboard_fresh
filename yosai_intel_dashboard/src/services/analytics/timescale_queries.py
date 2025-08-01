@@ -10,7 +10,7 @@ from cachetools import LRUCache
 from sqlalchemy import text
 from sqlalchemy.sql import TextClause
 
-from core.query_optimizer import monitor_query_performance
+from yosai_intel_dashboard.src.core.query_optimizer import monitor_query_performance
 
 # Cache for compiled query plans
 _QUERY_PLAN_CACHE: LRUCache[Tuple[Any, ...], TextClause] = LRUCache(maxsize=64)

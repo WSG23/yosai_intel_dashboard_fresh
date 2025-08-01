@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 
-from core.protocols.plugin import PluginMetadata
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata
 
 from .config import AIClassificationConfig, get_ai_config
 from .database.csv_storage import CSVStorageRepository

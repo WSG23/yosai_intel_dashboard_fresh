@@ -238,7 +238,7 @@ class ModelRegistry:
         current = self._latest_features.get(name)
         if base is None or current is None:
             return {}
-        from services.monitoring.drift import compute_psi
+        from yosai_intel_dashboard.src.services.monitoring.drift import compute_psi
 
         return compute_psi(base, current, bins=bins)
 

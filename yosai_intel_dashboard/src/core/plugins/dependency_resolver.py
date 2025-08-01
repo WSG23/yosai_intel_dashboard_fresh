@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import DefaultDict, Dict, List, Set
 
-from core.protocols.plugin import PluginProtocol
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginProtocol
 
 
 class CircularDependencyError(ValueError):
