@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from core.app_factory import create_app
 from core.env_validation import validate_required_env
+from yosai_intel_dashboard.src.core.app_factory import create_app
 
 validate_required_env()
 
