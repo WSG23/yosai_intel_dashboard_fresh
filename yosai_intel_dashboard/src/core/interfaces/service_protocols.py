@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Protocol, runtime_checkable
 
-from mapping.core.interfaces import ProcessorInterface, StorageInterface
-from mapping.core.models import MappingData
+from yosai_intel_dashboard.src.mapping.core.interfaces import (
+    ProcessorInterface,
+    StorageInterface,
+)
+from yosai_intel_dashboard.src.mapping.core.models import MappingData
 
 import pandas as pd
 

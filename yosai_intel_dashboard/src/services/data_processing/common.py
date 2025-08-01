@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 import pandas as pd
 
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
-from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
+from yosai_intel_dashboard.src.core.protocols import ConfigurationProtocol
 
 from .dataframe_utils import process_dataframe as _process_dataframe
 

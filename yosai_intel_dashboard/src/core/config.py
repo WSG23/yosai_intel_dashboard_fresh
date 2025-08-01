@@ -10,7 +10,7 @@ from yosai_intel_dashboard.src.infrastructure.config.utils import (
     get_upload_chunk_size as _get_upload_chunk_size,
 )
 from yosai_intel_dashboard.src.core.container import container
-from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
+from yosai_intel_dashboard.src.core.protocols import ConfigurationProtocol
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
     from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import DynamicConfigManager

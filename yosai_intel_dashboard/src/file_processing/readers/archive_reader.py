@@ -10,7 +10,7 @@ import pandas as pd
 
 from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
-from yosai_intel_dashboard.src.core.interfaces.protocols import UnicodeProcessorProtocol
+from yosai_intel_dashboard.src.core.protocols import UnicodeProcessorProtocol
 from ..format_detector import FormatDetector
 
 from .base import BaseReader

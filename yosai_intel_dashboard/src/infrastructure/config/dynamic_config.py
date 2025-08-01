@@ -16,11 +16,51 @@ from .constants import (
     UploadLimits,
 )
 from .environment import select_config_file
-from yosai_intel_dashboard.src.utils.config_resolvers import (
-    resolve_ai_confidence_threshold,
-    resolve_max_upload_size_mb,
-    resolve_upload_chunk_size,
-)
+
+# Inline minimal resolver functions to avoid importing the heavy ``utils``
+# package during initialization, which previously caused circular imports.
+def _resolve_ai_confidence_threshold(cfg: Any | None = None, *, default_resolver: Callable[[], float] | None = None) -> float:
+    if cfg is not None:
+        if hasattr(cfg, "performance") and hasattr(cfg.performance, "ai_confidence_threshold"):
+            return cfg.performance.ai_confidence_threshold
+        if hasattr(cfg, "ai_threshold"):
+            return cfg.ai_threshold
+    if default_resolver is not None:
+        try:
+            return default_resolver()
+        except Exception:
+            pass
+    return 0.0
+
+
+def _resolve_max_upload_size_mb(cfg: Any | None = None, *, default_resolver: Callable[[], int] | None = None) -> int:
+    if cfg is not None:
+        if hasattr(cfg, "upload") and hasattr(cfg.upload, "max_file_size_mb"):
+            return cfg.upload.max_file_size_mb
+        if hasattr(cfg, "max_size_mb"):
+            return cfg.max_size_mb
+        if hasattr(cfg, "security") and hasattr(cfg.security, "max_upload_mb"):
+            return cfg.security.max_upload_mb
+    if default_resolver is not None:
+        try:
+            return default_resolver()
+        except Exception:
+            pass
+    return 0
+
+
+def _resolve_upload_chunk_size(cfg: Any | None = None, *, default_resolver: Callable[[], int] | None = None) -> int:
+    if cfg is not None:
+        if hasattr(cfg, "uploads") and hasattr(cfg.uploads, "DEFAULT_CHUNK_SIZE"):
+            return cfg.uploads.DEFAULT_CHUNK_SIZE
+        if hasattr(cfg, "chunk_size"):
+            return cfg.chunk_size
+    if default_resolver is not None:
+        try:
+            return default_resolver()
+        except Exception:
+            pass
+    return 0
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +71,9 @@ class DynamicConfigManager(BaseConfigLoader):
     def __init__(
         self,
         *,
-        ai_confidence_resolver: Callable[..., float] = resolve_ai_confidence_threshold,
-        max_upload_size_resolver: Callable[..., int] = resolve_max_upload_size_mb,
-        upload_chunk_size_resolver: Callable[..., int] = resolve_upload_chunk_size,
+        ai_confidence_resolver: Callable[..., float] = _resolve_ai_confidence_threshold,
+        max_upload_size_resolver: Callable[..., int] = _resolve_max_upload_size_mb,
+        upload_chunk_size_resolver: Callable[..., int] = _resolve_upload_chunk_size,
         default_ai_confidence_resolver: Callable[[], float] | None = None,
         default_max_upload_size_resolver: Callable[[], int] | None = None,
         default_upload_chunk_size_resolver: Callable[[], int] | None = None,

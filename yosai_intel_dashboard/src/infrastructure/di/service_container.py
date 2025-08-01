@@ -18,7 +18,8 @@ from typing import (
     get_type_hints,
 )
 
-from .base_model import BaseModel
+# Use the common BaseModel shared across the core package
+from ...core.base_model import BaseModel
 
 T = TypeVar("T")
 

@@ -8,17 +8,7 @@ from .protocols import (
     AnalyticsProviderProtocol,
     ConfigProviderProtocol,
 )
-from .service_protocols import (
-    UploadValidatorProtocol,
-    ExportServiceProtocol,
-    DoorMappingServiceProtocol,
-    DeviceLearningServiceProtocol,
-    UploadDataStoreProtocol,
-    UploadDataServiceProtocol,
-    MappingServiceProtocol,
-    AnalyticsDataLoaderProtocol,
-    DatabaseAnalyticsRetrieverProtocol,
-)
+# Service protocol imports are deferred to avoid heavy dependencies
 
 if TYPE_CHECKING:  # pragma: no cover - only for static typing
     from yosai_intel_dashboard.src.core.protocols import UnicodeProcessorProtocol
@@ -43,6 +33,7 @@ __all__ = [
 
 
 _LAZY_MODULE = "yosai_intel_dashboard.src.core.protocols"
+_SERVICE_MODULE = "yosai_intel_dashboard.src.core.interfaces.service_protocols"
 
 
 def __getattr__(name: str) -> Any:
@@ -52,4 +43,19 @@ def __getattr__(name: str) -> Any:
             value = getattr(module, name)
             globals()[name] = value
             return value
+    if name in {
+        "UploadValidatorProtocol",
+        "ExportServiceProtocol",
+        "DoorMappingServiceProtocol",
+        "DeviceLearningServiceProtocol",
+        "UploadDataStoreProtocol",
+        "UploadDataServiceProtocol",
+        "MappingServiceProtocol",
+        "AnalyticsDataLoaderProtocol",
+        "DatabaseAnalyticsRetrieverProtocol",
+    }:
+        module = import_module(_SERVICE_MODULE)
+        value = getattr(module, name)
+        globals()[name] = value
+        return value
     raise AttributeError(name)
