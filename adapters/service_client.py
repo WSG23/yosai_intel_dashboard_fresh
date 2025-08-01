@@ -13,7 +13,10 @@ from tenacity import (
     wait_exponential,
 )
 
-from services.resilience.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
+from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerOpen,
+)
 from tracing import propagate_context
 
 

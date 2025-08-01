@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from yosai_intel_dashboard.src.services.feature_flags import feature_flags
 from yosai_intel_dashboard.src.core.interfaces.service_protocols import AnalyticsServiceProtocol
-from yosai_intel_dashboard.src.services.resilience.circuit_breaker import (
+from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
 )
