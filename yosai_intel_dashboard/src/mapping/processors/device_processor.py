@@ -4,8 +4,8 @@ from typing import Any
 
 import pandas as pd
 
-from mapping.core.interfaces import ProcessorInterface
-from mapping.core.models import ProcessingResult
+from yosai_intel_dashboard.src.mapping.core.interfaces import ProcessorInterface
+from yosai_intel_dashboard.src.mapping.core.models import ProcessingResult
 
 
 class DeviceProcessor(ProcessorInterface):

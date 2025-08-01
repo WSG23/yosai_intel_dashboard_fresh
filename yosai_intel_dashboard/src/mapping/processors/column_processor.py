@@ -5,10 +5,12 @@ from typing import Any
 import pandas as pd
 
 from yosai_intel_dashboard.src.core.container import container as default_container
-from mapping.core.interfaces import ProcessorInterface
-from mapping.core.models import ProcessingResult
-from mapping.helpers import map_and_clean
-from mapping.processors.ai_processor import AIColumnMapperAdapter
+from yosai_intel_dashboard.src.mapping.core.interfaces import ProcessorInterface
+from yosai_intel_dashboard.src.mapping.core.models import ProcessingResult
+from yosai_intel_dashboard.src.mapping.helpers import map_and_clean
+from yosai_intel_dashboard.src.mapping.processors.ai_processor import (
+    AIColumnMapperAdapter,
+)
 
 
 class ColumnProcessor(ProcessorInterface):

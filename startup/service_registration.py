@@ -119,7 +119,9 @@ def register_analytics_services(container: ServiceContainer) -> None:
         EventBusProtocol,
         StorageProtocol,
     )
-    from mapping.factories.service_factory import create_mapping_service
+    from yosai_intel_dashboard.src.mapping.factories.service_factory import (
+        create_mapping_service,
+    )
     from yosai_intel_dashboard.src.services.analytics.calculator import create_calculator
     from yosai_intel_dashboard.src.services.analytics.protocols import (
         CalculatorProtocol,
