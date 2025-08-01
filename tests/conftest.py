@@ -307,7 +307,7 @@ except Exception:  # pragma: no cover - optional dep fallback
 
 
 try:
-    from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationProtocol
+    from yosai_intel_dashboard.src.core.protocols import ConfigurationProtocol
 except Exception:  # pragma: no cover - optional dep fallback
 
     class ConfigurationProtocol(Protocol):
