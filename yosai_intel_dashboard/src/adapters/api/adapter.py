@@ -6,10 +6,10 @@ from flask import Flask, Response, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 
-from config import get_security_config
-from core.rbac import RBACService, create_rbac_service
-from core.secrets_validator import validate_all_secrets
-from services.security import require_token
+from yosai_intel_dashboard.src.infrastructure.config import get_security_config
+from yosai_intel_dashboard.src.core.rbac import RBACService, create_rbac_service
+from yosai_intel_dashboard.src.core.secrets_validator import validate_all_secrets
+from yosai_intel_dashboard.src.services.security import require_token
 from yosai_framework.service import BaseService
 
 csrf = CSRFProtect()
@@ -22,11 +22,11 @@ from settings_endpoint import settings_bp
 
 from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
 from middleware.performance import TimingMiddleware
-from core.container import container
-from services.device_endpoint import create_device_blueprint
-from services.mappings_endpoint import create_mappings_blueprint
-from services.token_endpoint import create_token_blueprint
-from services.upload_endpoint import create_upload_blueprint
+from yosai_intel_dashboard.src.core.container import container
+from yosai_intel_dashboard.src.services.device_endpoint import create_device_blueprint
+from yosai_intel_dashboard.src.services.mappings_endpoint import create_mappings_blueprint
+from yosai_intel_dashboard.src.services.token_endpoint import create_token_blueprint
+from yosai_intel_dashboard.src.services.upload_endpoint import create_upload_blueprint
 
 
 def create_api_app() -> "FastAPI":

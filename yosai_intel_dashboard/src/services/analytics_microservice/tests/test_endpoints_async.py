@@ -455,7 +455,7 @@ async def test_unauthorized_request():
 @pytest.mark.asyncio
 async def test_internal_error_response():
     module, queries_stub, _ = load_app()
-    from services.auth import verify_jwt_token
+    from yosai_intel_dashboard.src.services.auth import verify_jwt_token
 
     queries_stub.fetch_dashboard_summary.side_effect = RuntimeError("boom")
     token = jwt.encode(

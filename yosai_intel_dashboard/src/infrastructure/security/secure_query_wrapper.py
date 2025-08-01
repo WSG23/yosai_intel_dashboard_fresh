@@ -16,7 +16,7 @@ def execute_secure_sql(
     """Safely execute a read query using parameterization."""
     if not isinstance(query, str):
         raise TypeError("query must be a string")
-    from core.unicode import UnicodeSQLProcessor, clean_unicode_surrogates
+    from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor, clean_unicode_surrogates
 
     sanitized_query = UnicodeSQLProcessor.encode_query(query)
     sanitized_params = None
@@ -39,7 +39,7 @@ def execute_secure_command(
     """Safely execute an INSERT/UPDATE/DELETE using parameterization."""
     if not isinstance(command, str):
         raise TypeError("command must be a string")
-    from core.unicode import UnicodeSQLProcessor, clean_unicode_surrogates
+    from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor, clean_unicode_surrogates
 
     sanitized_cmd = UnicodeSQLProcessor.encode_query(command)
     sanitized_params = None

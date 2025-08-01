@@ -9,9 +9,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Protocol
 from uuid import uuid4
 
-from core.audit_logger import ComplianceAuditLogger
+from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
 from yosai_intel_dashboard.src.core.interfaces.protocols import DatabaseProtocol
-from core.unicode import safe_unicode_encode
+from yosai_intel_dashboard.src.core.unicode import safe_unicode_encode
 from database.secure_exec import execute_command, execute_query
 from yosai_intel_dashboard.models.compliance import (
     DSARRequest,
@@ -201,7 +201,7 @@ class DSARService:
             user_data = {}
 
             # Get user profile data
-            from services.optimized_queries import OptimizedQueryService
+            from yosai_intel_dashboard.src.services.optimized_queries import OptimizedQueryService
 
             query_service = OptimizedQueryService(self.db)
             users = query_service.batch_get_users([user_id])

@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Union
 import pandas as pd
 
 from yosai_intel_dashboard.src.infrastructure.config.constants import DataProcessingLimits
-from core.query_optimizer import monitor_query_performance
+from yosai_intel_dashboard.src.core.query_optimizer import monitor_query_performance
 from database.secure_exec import execute_command, execute_query
 from validation.security_validator import SecurityValidator
 

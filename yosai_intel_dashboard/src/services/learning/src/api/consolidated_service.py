@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from core.cache_manager import CacheConfig, InMemoryCacheManager
+from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager
 from unicode_toolkit import safe_encode_text
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
@@ -108,7 +108,7 @@ class ConsolidatedLearningService:
     def apply_to_global_store(self, df: pd.DataFrame, filename: str) -> bool:
         """Apply learned mappings to global device mapping store."""
         try:
-            from services.ai_mapping_store import ai_mapping_store
+            from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
         except ImportError:
             self.logger.warning("Could not import global device mappings store")
             return False

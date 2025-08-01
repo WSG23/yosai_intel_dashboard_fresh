@@ -12,8 +12,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from config import get_database_config
-from services.timescale.models import AccessEvent, Base
+from yosai_intel_dashboard.src.infrastructure.config import get_database_config
+from yosai_intel_dashboard.src.services.timescale.models import AccessEvent, Base
 
 # ---------------------------------------------------------------------------
 # Engine and session factory

@@ -24,7 +24,7 @@ from flask_login import (
 )
 from jose import jwt
 
-from config import get_cache_config, get_security_config
+from yosai_intel_dashboard.src.infrastructure.config import get_cache_config, get_security_config
 
 from .secret_manager import SecretsManager
 

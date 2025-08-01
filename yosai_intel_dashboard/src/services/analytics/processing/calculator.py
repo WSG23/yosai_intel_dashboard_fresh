@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
-from services.summary_report_generator import SummaryReportGenerator
+from yosai_intel_dashboard.src.services.summary_report_generator import SummaryReportGenerator
 
 
 class Calculator:

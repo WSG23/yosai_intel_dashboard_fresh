@@ -11,7 +11,7 @@ class AISuggestionService:
 
     def analyze_device_name_with_ai(self, device_name: str) -> Dict[str, Any]:
         try:
-            from services.ai_mapping_store import ai_mapping_store
+            from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
 
             # Check for any cached mapping first
             mapping = ai_mapping_store.get(device_name)
@@ -24,7 +24,7 @@ class AISuggestionService:
                 return mapping
 
             logger.info("🤖 Generating AI analysis for '%s'", device_name)
-            from services.ai_device_generator import AIDeviceGenerator
+            from yosai_intel_dashboard.src.services.ai_device_generator import AIDeviceGenerator
 
             ai_generator = AIDeviceGenerator()
             result = ai_generator.generate_device_attributes(device_name)

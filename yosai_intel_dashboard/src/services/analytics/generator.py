@@ -7,8 +7,8 @@ from typing import Any, Dict
 import numpy as np
 import pandas as pd
 
-from config import get_cache_config
-from core.cache_manager import (
+from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
+from yosai_intel_dashboard.src.core.cache_manager import (
     CacheConfig,
     InMemoryCacheManager,
     cache_with_lock,

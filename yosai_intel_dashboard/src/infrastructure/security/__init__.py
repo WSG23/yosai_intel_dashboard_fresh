@@ -4,7 +4,7 @@ This package provides unified security validation through SecurityValidator.
 All deprecated individual validators have been removed and consolidated.
 """
 
-from core.exceptions import ValidationError
+from yosai_intel_dashboard.src.core.exceptions import ValidationError
 
 from .attack_detection import AttackDetection
 from .secrets_validator import SecretsValidator, register_health_endpoint

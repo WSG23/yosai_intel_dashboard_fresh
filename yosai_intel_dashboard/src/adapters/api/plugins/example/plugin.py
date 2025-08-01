@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from dash import Input, Output
 from dash.exceptions import PreventUpdate
 
-from core.protocols.plugin import CallbackPluginProtocol, PluginMetadata
+from yosai_intel_dashboard.src.core.protocols.plugin import CallbackPluginProtocol, PluginMetadata
 
 
 @dataclass

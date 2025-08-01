@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, Generator, Optional
 
-from core.interfaces import ConfigProviderProtocol
+from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
 from yosai_framework.service import BaseService
 
 logger = logging.getLogger(__name__)

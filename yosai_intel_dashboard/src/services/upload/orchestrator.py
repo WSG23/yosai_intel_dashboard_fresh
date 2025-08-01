@@ -7,8 +7,8 @@ import pandas as pd
 
 from yosai_intel_dashboard.src.components.ui_builder import UploadUIBuilder
 from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
-from services.async_file_processor import AsyncFileProcessor
-from services.data_enhancer.mapping_utils import get_ai_column_suggestions
+from yosai_intel_dashboard.src.services.async_file_processor import AsyncFileProcessor
+from yosai_intel_dashboard.src.services.data_enhancer.mapping_utils import get_ai_column_suggestions
 from yosai_intel_dashboard.src.services.upload.file_processor_service import FileProcessor
 from yosai_intel_dashboard.src.services.upload.learning_coordinator import LearningCoordinator
 from yosai_intel_dashboard.src.services.upload.protocols import (
@@ -17,7 +17,7 @@ from yosai_intel_dashboard.src.services.upload.protocols import (
     UploadStorageProtocol,
     UploadValidatorProtocol,
 )
-from services.upload_data_service import UploadDataService, UploadDataServiceProtocol
+from yosai_intel_dashboard.src.services.upload_data_service import UploadDataService, UploadDataServiceProtocol
 from validation.file_validator import FileValidator
 
 logger = logging.getLogger(__name__)
@@ -147,7 +147,7 @@ class UploadOrchestrator(UploadProcessingServiceProtocol):
     ) -> None:
         user = self.learner.user_mappings(fname)
         if user:
-            from services.ai_mapping_store import ai_mapping_store
+            from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
 
             ai_mapping_store.clear()
             for dev, mapping in user.items():
@@ -156,7 +156,7 @@ class UploadOrchestrator(UploadProcessingServiceProtocol):
             result["device_mappings"][fname] = user
             logger.info("✅ Loaded %s saved mappings - AI SKIPPED", len(user))
         else:
-            from services.ai_mapping_store import ai_mapping_store
+            from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
 
             ai_mapping_store.clear()
             self.learner.auto_apply(df, fname)

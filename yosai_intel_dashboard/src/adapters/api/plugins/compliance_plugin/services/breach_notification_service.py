@@ -9,9 +9,9 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Protocol
 from uuid import uuid4
 
-from core.audit_logger import ComplianceAuditLogger
+from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
 from yosai_intel_dashboard.src.core.interfaces.protocols import DatabaseProtocol
-from core.unicode import safe_unicode_encode
+from yosai_intel_dashboard.src.core.unicode import safe_unicode_encode
 from database.secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)

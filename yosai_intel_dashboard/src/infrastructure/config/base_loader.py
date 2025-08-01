@@ -62,7 +62,7 @@ class BaseConfigLoader:
     def _sanitize(self, obj: Any) -> Any:
         if isinstance(obj, str):
             try:
-                from core.unicode import UnicodeSQLProcessor
+                from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
 
                 return UnicodeSQLProcessor.encode_query(obj)
             except Exception:

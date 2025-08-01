@@ -4,7 +4,7 @@ import asyncio
 import time
 from typing import Any, Awaitable, Callable, Optional
 
-from services.resilience.metrics import circuit_breaker_state
+from yosai_intel_dashboard.src.services.resilience.metrics import circuit_breaker_state
 
 
 class CircuitBreakerOpen(Exception):

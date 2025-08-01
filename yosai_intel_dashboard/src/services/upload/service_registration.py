@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from yosai_intel_dashboard.src.components.ui_builder import UploadUIBuilder
-from core.interfaces import ConfigProviderProtocol
+from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
 from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
 from yosai_intel_dashboard.src.infrastructure.di.service_container import (
     CircularDependencyError,
@@ -11,8 +11,8 @@ from yosai_intel_dashboard.src.infrastructure.di.service_container import (
     ServiceContainer,
     ServiceLifetime,
 )
-from services.async_file_processor import AsyncFileProcessor
-from services.device_learning_service import DeviceLearningService
+from yosai_intel_dashboard.src.services.async_file_processor import AsyncFileProcessor
+from yosai_intel_dashboard.src.services.device_learning_service import DeviceLearningService
 from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
     DeviceLearningServiceProtocol,
     UploadDataServiceProtocol,
@@ -28,7 +28,7 @@ from yosai_intel_dashboard.src.services.upload.protocols import (
     UploadValidatorProtocol,
 )
 from yosai_intel_dashboard.src.services.upload.validator import ClientSideValidator
-from services.upload_data_service import UploadDataService
+from yosai_intel_dashboard.src.services.upload_data_service import UploadDataService
 from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 from validation.file_validator import FileValidator
 

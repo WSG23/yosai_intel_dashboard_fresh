@@ -6,7 +6,7 @@ from typing import Optional, Set
 
 from websockets import WebSocketServerProtocol, serve
 
-from core.events import EventBus
+from yosai_intel_dashboard.src.core.events import EventBus
 
 logger = logging.getLogger(__name__)
 

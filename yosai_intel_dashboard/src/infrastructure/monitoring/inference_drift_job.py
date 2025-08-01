@@ -6,9 +6,9 @@ import threading
 from statistics import mean
 from typing import Optional
 
-from config import get_monitoring_config
-from core.monitoring.user_experience_metrics import AlertConfig, AlertDispatcher
-from core.performance import get_performance_monitor
+from yosai_intel_dashboard.src.infrastructure.config import get_monitoring_config
+from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import AlertConfig, AlertDispatcher
+from yosai_intel_dashboard.src.core.performance import get_performance_monitor
 from monitoring.model_performance_monitor import ModelMetrics
 from yosai_intel_dashboard.models.ml.model_registry import ModelRegistry
 

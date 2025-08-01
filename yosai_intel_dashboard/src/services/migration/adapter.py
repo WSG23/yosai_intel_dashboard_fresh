@@ -16,9 +16,9 @@ from kafka import KafkaProducer
 logger = logging.getLogger(__name__)
 
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
-from services.feature_flags import feature_flags
+from yosai_intel_dashboard.src.services.feature_flags import feature_flags
 from yosai_intel_dashboard.src.core.interfaces.service_protocols import AnalyticsServiceProtocol
-from services.resilience.circuit_breaker import (
+from yosai_intel_dashboard.src.services.resilience.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
 )
@@ -248,8 +248,8 @@ def register_migration_services(container: MigrationContainer) -> None:
 
     if container._migration_flags["use_timescaledb"]:
         try:
-            from services.timescale import models as timescale_models  # noqa:F401
-            from services.timescale.manager import TimescaleDBManager
+            from yosai_intel_dashboard.src.services.timescale import models as timescale_models  # noqa:F401
+            from yosai_intel_dashboard.src.services.timescale.manager import TimescaleDBManager
         except Exception:  # pragma: no cover - optional dependency
             pass
         else:

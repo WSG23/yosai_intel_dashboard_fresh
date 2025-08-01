@@ -64,7 +64,7 @@ class SecretsManager:
 
 def validate_secrets(manager: Optional[SecretsManager] = None) -> dict[str, Any]:
     """Return summary of required secrets presence using the provided manager."""
-    from config import get_config
+    from yosai_intel_dashboard.src.infrastructure.config import get_config
 
     manager = manager or SecretsManager()
     config = get_config()

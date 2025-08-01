@@ -4,7 +4,7 @@ import inspect
 from functools import wraps
 from typing import Any, Callable, Optional, Type
 
-from core.container import container as _global_container
+from yosai_intel_dashboard.src.core.container import container as _global_container
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer, ServiceLifetime
 
 # ---------------------------------------------------------------------------

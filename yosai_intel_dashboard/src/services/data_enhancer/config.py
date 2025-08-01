@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 try:
-    from services.data_enhancer.mapping_utils import get_ai_column_suggestions
+    from yosai_intel_dashboard.src.services.data_enhancer.mapping_utils import get_ai_column_suggestions
 
     AI_COLUMN_SERVICE_AVAILABLE = True
     logger.info("✅ AI Column Service loaded successfully")
@@ -13,7 +13,7 @@ except Exception:  # pragma: no cover - optional dependency
     logger.warning("⚠️ AI Column Service not available - using fallback")
 
 try:
-    from services.door_mapping_service import DoorMappingService
+    from yosai_intel_dashboard.src.services.door_mapping_service import DoorMappingService
     from yosai_intel_dashboard.src.core.interfaces.service_protocols import get_door_mapping_service
 
     AI_DOOR_SERVICE_AVAILABLE = True
@@ -35,7 +35,7 @@ except Exception:  # pragma: no cover - optional dependency
     logger.warning("⚠️ Service Container not available")
 
 try:
-    from services.configuration_service import DynamicConfigurationService
+    from yosai_intel_dashboard.src.services.configuration_service import DynamicConfigurationService
 
     CONFIG_SERVICE_AVAILABLE = True
     logger.info("✅ Configuration Service available")

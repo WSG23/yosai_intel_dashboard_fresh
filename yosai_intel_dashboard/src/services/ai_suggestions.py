@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, Sequence
 
-from services.data_enhancer.mapping_utils import get_ai_column_suggestions
+from yosai_intel_dashboard.src.services.data_enhancer.mapping_utils import get_ai_column_suggestions
 
 logger = logging.getLogger(__name__)
 

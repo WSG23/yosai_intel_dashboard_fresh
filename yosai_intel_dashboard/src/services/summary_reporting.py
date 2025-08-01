@@ -34,7 +34,7 @@ class SummaryReporter:
 
         try:
             from yosai_intel_dashboard.src.core.interfaces.service_protocols import get_upload_data_service
-            from services.upload_data_service import get_uploaded_filenames
+            from yosai_intel_dashboard.src.services.upload_data_service import get_uploaded_filenames
 
             health["uploaded_files"] = len(
                 get_uploaded_filenames(get_upload_data_service())
@@ -48,7 +48,7 @@ class SummaryReporter:
         options = [{"label": "Sample Data", "value": "sample"}]
         try:
             from yosai_intel_dashboard.src.core.interfaces.service_protocols import get_upload_data_service
-            from services.upload_data_service import get_uploaded_filenames
+            from yosai_intel_dashboard.src.services.upload_data_service import get_uploaded_filenames
 
             uploaded_files = get_uploaded_filenames(get_upload_data_service())
             if uploaded_files:
@@ -84,7 +84,7 @@ class SummaryReporter:
         }
         try:
             from yosai_intel_dashboard.src.core.interfaces.service_protocols import get_upload_data_service
-            from services.upload_data_service import get_uploaded_filenames
+            from yosai_intel_dashboard.src.services.upload_data_service import get_uploaded_filenames
 
             status["uploaded_files"] = len(
                 get_uploaded_filenames(get_upload_data_service())

@@ -9,7 +9,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Protocol
 from uuid import uuid4
 
-from core.audit_logger import ComplianceAuditLogger
+from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
 from yosai_intel_dashboard.src.core.interfaces.protocols import DatabaseProtocol
 from database.secure_exec import execute_command, execute_query
 

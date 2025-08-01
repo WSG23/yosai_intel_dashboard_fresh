@@ -8,9 +8,9 @@ import threading
 import time
 from typing import Any, Dict, List
 
-from config import ConfigManager
+from yosai_intel_dashboard.src.infrastructure.config import ConfigManager
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
-from core.protocols.plugin import (
+from yosai_intel_dashboard.src.core.protocols.plugin import (
     CallbackPluginProtocol,
     PluginPriority,
     PluginProtocol,

@@ -3,8 +3,8 @@ from typing import Any, Optional, Tuple
 
 from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import DatabaseError
 from yosai_intel_dashboard.src.infrastructure.config.database_manager import DatabaseManager, DatabaseSettings
-from services.db_analytics_helper import DatabaseAnalyticsHelper
-from services.summary_reporter import SummaryReporter
+from yosai_intel_dashboard.src.services.db_analytics_helper import DatabaseAnalyticsHelper
+from yosai_intel_dashboard.src.services.summary_reporter import SummaryReporter
 
 logger = logging.getLogger(__name__)
 

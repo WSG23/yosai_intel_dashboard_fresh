@@ -1,4 +1,4 @@
-from services.controllers.protocols import UploadProcessingControllerProtocol
+from yosai_intel_dashboard.src.services.controllers.protocols import UploadProcessingControllerProtocol
 
 from .device_learning import DeviceLearningServiceProtocol
 from .processor import ProcessorProtocol

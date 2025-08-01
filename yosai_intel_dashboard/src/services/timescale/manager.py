@@ -7,9 +7,9 @@ import time
 
 import asyncpg
 
-from core.error_handling import ErrorCategory, with_async_error_handling
+from yosai_intel_dashboard.src.core.error_handling import ErrorCategory, with_async_error_handling
 from database.metrics import queries_total, query_errors_total
-from services.common.secrets import get_secret
+from yosai_intel_dashboard.src.services.common.secrets import get_secret
 
 logger = logging.getLogger(__name__)
 

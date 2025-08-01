@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
-from core.unicode import UnicodeSQLProcessor
+from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
 from database.secure_exec import execute_secure_query as _exec_secure_query
 
 __all__ = ["execute_secure_query"]

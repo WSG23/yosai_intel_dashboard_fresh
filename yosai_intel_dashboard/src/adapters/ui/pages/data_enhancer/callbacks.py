@@ -8,7 +8,7 @@ from dash import Input, Output, State, dash_table, dcc, html
 from dash.exceptions import PreventUpdate
 
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
-from services.data_enhancer.processor import DataEnhancerProcessor
+from yosai_intel_dashboard.src.services.data_enhancer.processor import DataEnhancerProcessor
 
 
 def register_callbacks(app, container) -> None:

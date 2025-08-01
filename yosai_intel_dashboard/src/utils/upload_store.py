@@ -12,8 +12,8 @@ from typing import Any, Dict, List, Optional, Protocol
 import pandas as pd
 
 from yosai_intel_dashboard.src.infrastructure.config.app_config import UploadConfig
-from core.cache_manager import CacheConfig, InMemoryCacheManager
-from core.unicode import sanitize_dataframe
+from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager
+from yosai_intel_dashboard.src.core.unicode import sanitize_dataframe
 from yosai_intel_dashboard.src.services.upload.protocols import UploadStorageProtocol
 from unicode_toolkit import safe_encode_text
 

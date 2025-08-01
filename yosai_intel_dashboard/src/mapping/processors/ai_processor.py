@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from core.container import container as default_container
+from yosai_intel_dashboard.src.core.container import container as default_container
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from mapping.models import HeuristicMappingModel, MappingModel
 

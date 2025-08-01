@@ -6,7 +6,7 @@ from typing import Any
 import asyncpg
 import redis.asyncio as aioredis
 
-from services.common.async_db import close_pool
+from yosai_intel_dashboard.src.services.common.async_db import close_pool
 from yosai_intel_dashboard.models.ml import ModelRegistry
 
 

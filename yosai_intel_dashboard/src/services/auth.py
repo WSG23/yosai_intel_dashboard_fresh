@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from services.security.jwt_service import verify_service_jwt
+from yosai_intel_dashboard.src.services.security.jwt_service import verify_service_jwt
 
 
 def verify_jwt_token(token: str) -> dict:

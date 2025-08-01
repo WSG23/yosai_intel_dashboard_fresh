@@ -13,8 +13,8 @@ from typing import Any, Dict, Optional, cast
 
 import pandas as pd
 
-from core.protocols.plugin import PluginMetadata
-from core.serialization import SafeJSONSerializer
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata
+from yosai_intel_dashboard.src.core.serialization import SafeJSONSerializer
 
 from .base_model import BaseModel
 

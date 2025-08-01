@@ -7,7 +7,7 @@ from flask import Response, request
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
-from core.exceptions import ValidationError
+from yosai_intel_dashboard.src.core.exceptions import ValidationError
 from validation.security_validator import SecurityValidator
 
 
@@ -73,7 +73,7 @@ class ValidationMiddleware:
             ):
                 return None
             try:
-                from core.unicode import safe_unicode_decode, sanitize_for_utf8
+                from yosai_intel_dashboard.src.core.unicode import safe_unicode_decode, sanitize_for_utf8
 
                 raw_text = safe_unicode_decode(request.data, "utf-8")
                 sanitized = sanitize_for_utf8(raw_text)

@@ -13,7 +13,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
-from core.base_model import BaseModel
+from yosai_intel_dashboard.src.core.base_model import BaseModel
 
 # Import the high-level ``SecurityValidator`` used across the application.
 # This module keeps no internal validation logic and instead delegates to

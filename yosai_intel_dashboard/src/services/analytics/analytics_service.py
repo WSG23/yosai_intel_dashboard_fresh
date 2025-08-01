@@ -18,7 +18,7 @@ from typing import Any, Dict, List, NamedTuple, Protocol
 
 import requests
 
-from core.error_handling import (
+from yosai_intel_dashboard.src.core.error_handling import (
     ErrorCategory,
     ErrorSeverity,
     with_error_handling,
@@ -31,9 +31,9 @@ except ImportError:  # pragma: no cover - for Python <3.12
 
 import pandas as pd
 
-from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
-from core.di_decorators import inject, injectable
-from core.interfaces import ConfigProviderProtocol
+from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
+from yosai_intel_dashboard.src.core.di_decorators import inject, injectable
+from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
 from yosai_intel_dashboard.src.core.interfaces.protocols import (
     AnalyticsServiceProtocol,
     DatabaseProtocol,
@@ -51,11 +51,11 @@ from yosai_intel_dashboard.src.services.analytics.protocols import (
 )
 from yosai_intel_dashboard.src.services.analytics.publisher import Publisher
 from yosai_intel_dashboard.src.services.analytics.upload_analytics import UploadAnalyticsProcessor
-from services.analytics_summary import generate_sample_analytics
-from services.controllers.protocols import UploadProcessingControllerProtocol
-from services.controllers.upload_controller import UploadProcessingController
+from yosai_intel_dashboard.src.services.analytics_summary import generate_sample_analytics
+from yosai_intel_dashboard.src.services.controllers.protocols import UploadProcessingControllerProtocol
+from yosai_intel_dashboard.src.services.controllers.upload_controller import UploadProcessingController
 from yosai_intel_dashboard.src.services.data_processing.processor import Processor
-from services.helpers.database_initializer import initialize_database
+from yosai_intel_dashboard.src.services.helpers.database_initializer import initialize_database
 from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
     AnalyticsDataLoaderProtocol,
     DatabaseAnalyticsRetrieverProtocol,
@@ -63,8 +63,8 @@ from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
     get_database_analytics_retriever,
     get_upload_data_service,
 )
-from services.protocols import UploadDataServiceProtocol
-from services.summary_report_generator import SummaryReportGenerator
+from yosai_intel_dashboard.src.services.protocols import UploadDataServiceProtocol
+from yosai_intel_dashboard.src.services.summary_report_generator import SummaryReportGenerator
 from validation.security_validator import SecurityValidator
 from yosai_intel_dashboard.models.ml import ModelRegistry
 

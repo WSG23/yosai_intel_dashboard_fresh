@@ -7,7 +7,7 @@ from typing import Callable, Optional, Sequence
 
 from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
-from core.unicode import UnicodeProcessor
+from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor
 from yosai_intel_dashboard.src.services.data_processing.file_handler import FileHandler
 from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 

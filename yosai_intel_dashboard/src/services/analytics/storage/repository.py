@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from services.db_analytics_helper import DatabaseAnalyticsHelper
+from yosai_intel_dashboard.src.services.db_analytics_helper import DatabaseAnalyticsHelper
 
 
 class AnalyticsRepository:

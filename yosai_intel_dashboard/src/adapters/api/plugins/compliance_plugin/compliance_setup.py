@@ -8,12 +8,12 @@ from typing import Any, Dict
 
 from controllers.compliance_controller import register_compliance_routes
 
-from core.audit_logger import create_audit_logger
-from core.container import Container
+from yosai_intel_dashboard.src.core.audit_logger import create_audit_logger
+from yosai_intel_dashboard.src.core.container import Container
 from yosai_intel_dashboard.src.core.interfaces.protocols import DatabaseProtocol
 from database.secure_exec import execute_command, execute_query
-from services.compliance.consent_service import create_consent_service
-from services.compliance.dsar_service import create_dsar_service
+from yosai_intel_dashboard.src.services.compliance.consent_service import create_consent_service
+from yosai_intel_dashboard.src.services.compliance.dsar_service import create_dsar_service
 from yosai_intel_dashboard.models.compliance import CREATE_COMPLIANCE_TABLES_SQL
 
 logger = logging.getLogger(__name__)
@@ -101,7 +101,7 @@ def audit_decorator(action_type: str, resource_type: str):
         def wrapper(*args, **kwargs):
             from flask_login import current_user
 
-            from core.container import Container
+            from yosai_intel_dashboard.src.core.container import Container
 
             try:
                 # Execute the function first
@@ -168,7 +168,7 @@ def consent_required(consent_type: str, jurisdiction: str = "EU"):
             from flask import jsonify
             from flask_login import current_user
 
-            from core.container import Container
+            from yosai_intel_dashboard.src.core.container import Container
             from yosai_intel_dashboard.models.compliance import ConsentType
 
             try:
@@ -226,8 +226,8 @@ def create_compliance_enabled_app(config_name: str = None):
     """
     from flask import Flask
 
-    from config import create_config_manager
-    from core.container import Container
+    from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
+    from yosai_intel_dashboard.src.core.container import Container
     from database.connection import create_database_connection
 
     # Create Flask app
@@ -285,7 +285,7 @@ def setup_data_retention_scheduler():
         try:
             from datetime import datetime, timezone
 
-            from core.container import Container
+            from yosai_intel_dashboard.src.core.container import Container
 
             container = Container()
             db = container.get("database")

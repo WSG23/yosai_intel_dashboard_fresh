@@ -8,7 +8,7 @@ import pandas as pd
 
 from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
-from core.error_handling import (
+from yosai_intel_dashboard.src.core.error_handling import (
     ErrorCategory,
     ErrorSeverity,
     with_error_handling,
@@ -217,7 +217,7 @@ class DataProcessor:
         Validate DataFrame against a Pandera schema (core/schemas.py),
         log all violations as warnings, then return df unchanged.
         """
-        from core.schemas import AccessLogSchema
+        from yosai_intel_dashboard.src.core.schemas import AccessLogSchema
 
         try:
             AccessLogSchema.validate(df, lazy=True)

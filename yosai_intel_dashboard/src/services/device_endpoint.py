@@ -54,7 +54,7 @@ def build_user_device_mappings(user_mappings: dict) -> dict:
 def build_ai_device_mappings(df: pd.DataFrame, filename: str, upload_service) -> dict:
     """Generate mappings for AI-suggested devices."""
 
-    from services.ai_mapping_store import ai_mapping_store
+    from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
 
     ai_mapping_store.clear()
     learned_applied = upload_service.auto_apply_learned_mappings(df, filename)

@@ -8,11 +8,11 @@ from uuid import uuid4
 
 import pytest
 
-from core.audit_logger import ComplianceAuditLogger
-from services.compliance.consent_service import ConsentService
-from services.compliance.data_retention_service import DataRetentionService
-from services.compliance.dpia_service import DPIAService, DPIATrigger, RiskLevel
-from services.compliance.dsar_service import DSARRequestType, DSARService, DSARStatus
+from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
+from yosai_intel_dashboard.src.services.compliance.consent_service import ConsentService
+from yosai_intel_dashboard.src.services.compliance.data_retention_service import DataRetentionService
+from yosai_intel_dashboard.src.services.compliance.dpia_service import DPIAService, DPIATrigger, RiskLevel
+from yosai_intel_dashboard.src.services.compliance.dsar_service import DSARRequestType, DSARService, DSARStatus
 from yosai_intel_dashboard.models.compliance import ConsentType, DataSensitivityLevel
 
 
@@ -471,7 +471,7 @@ class ComplianceUsageExamples:
         example_code = """
         from flask import request, jsonify
         from flask_login import current_user
-        from core.container import Container
+        from yosai_intel_dashboard.src.core.container import Container
         from yosai_intel_dashboard.models.compliance import ConsentType
         
         @app.route('/api/users/register', methods=['POST'])
@@ -515,9 +515,9 @@ class ComplianceUsageExamples:
     def example_biometric_processing_with_consent_check(self):
         """Example: Biometric processing with consent verification"""
         example_code = '''
-        from services.compliance.consent_service import ConsentService
+        from yosai_intel_dashboard.src.services.compliance.consent_service import ConsentService
         from yosai_intel_dashboard.models.compliance import ConsentType
-        from core.audit_logger import ComplianceAuditLogger
+        from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
         
         def process_facial_recognition(user_id: str, image_data: bytes):
             """Process facial recognition with consent verification"""
@@ -566,7 +566,7 @@ class ComplianceUsageExamples:
         import schedule
         import time
         from threading import Thread
-        from core.container import Container
+        from yosai_intel_dashboard.src.core.container import Container
         
         def setup_automated_retention():
             """Setup automated data retention processing"""
