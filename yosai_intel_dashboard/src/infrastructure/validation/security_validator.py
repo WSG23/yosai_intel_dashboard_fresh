@@ -6,9 +6,7 @@ import re
 from typing import Iterable
 
 from core.exceptions import ValidationError
-from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
-    dynamic_config,
-)
+# Import dynamically inside methods to avoid circular imports during module init
 
 from .core import ValidationResult
 from .file_validator import FileValidator
@@ -56,6 +54,11 @@ class SecurityValidator(CompositeValidator):
         except ValidationError:
             issues.append("Invalid filename")
             sanitized = os.path.basename(filename)
+
+        # Import here to avoid circular dependencies during initialization
+        from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+            dynamic_config,
+        )
 
         max_bytes = dynamic_config.security.max_upload_mb * 1024 * 1024
         if size_bytes > max_bytes:

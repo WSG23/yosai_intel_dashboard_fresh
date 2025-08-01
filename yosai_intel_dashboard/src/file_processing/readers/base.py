@@ -5,7 +5,7 @@ from typing import Dict, Optional
 import pandas as pd
 
 from yosai_intel_dashboard.src.core.container import get_unicode_processor
-from yosai_intel_dashboard.src.core.interfaces.protocols import UnicodeProcessorProtocol
+from yosai_intel_dashboard.src.core.protocols import UnicodeProcessorProtocol
 
 
 class BaseReader:
