@@ -24,7 +24,7 @@ from typing import (
 from dash import Dash
 from dash.dependencies import Input, Output, State
 
-from .callback_events import CallbackEvent
+from .events import CallbackEvent
 from .callback_registry import CallbackRegistry, ComponentCallbackManager
 from ...core.dash_callback_middleware import wrap_callback
 from ...core.error_handling import ErrorSeverity, error_handler, with_retry
