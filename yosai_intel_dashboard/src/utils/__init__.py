@@ -1,27 +1,6 @@
 """Utility helpers for Yōsai Intel Dashboard."""
 
-from yosai_intel_dashboard.src.core.unicode import (
-    ChunkedUnicodeProcessor,
-    EnhancedUnicodeProcessor,
-    SurrogateHandlingConfig,
-    SurrogateHandlingStrategy,
-    UnicodeProcessor,
-    UnicodeSecurityProcessor,
-    UnicodeSQLProcessor,
-    UnicodeTextProcessor,
-    clean_unicode_text,
-    contains_surrogates,
-    object_count,
-    process_large_csv_content,
-    safe_decode_bytes,
-    safe_encode_text,
-    safe_format_number,
-    sanitize_dataframe,
-    sanitize_unicode_input,
-    secure_unicode_sanitization,
-    utf8_safe_decode,
-    utf8_safe_encode,
-)
+import importlib
 from mapping.processors.ai_processor import AIColumnMapperAdapter
 
 from .assets_debug import (
@@ -91,3 +70,13 @@ __all__ = [
     "resolve_max_upload_size_mb",
     "resolve_upload_chunk_size",
 ]
+
+
+def __getattr__(name: str):
+    """Lazily load attributes from ``yosai_intel_dashboard.src.core.unicode``."""
+    module = importlib.import_module("yosai_intel_dashboard.src.core.unicode")
+    if hasattr(module, name):
+        attr = getattr(module, name)
+        globals()[name] = attr
+        return attr
+    raise AttributeError(name)
