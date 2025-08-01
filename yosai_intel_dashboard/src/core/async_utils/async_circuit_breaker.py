@@ -4,7 +4,14 @@ import asyncio
 import time
 from typing import Any, Awaitable, Callable, Optional
 
-from yosai_intel_dashboard.src.services.resilience.metrics import circuit_breaker_state
+
+def _metrics():
+    """Return Prometheus metrics lazily to avoid import costs."""
+    from yosai_intel_dashboard.src.services.resilience.metrics import (
+        circuit_breaker_state,
+    )
+
+    return circuit_breaker_state
 
 
 class CircuitBreakerOpen(Exception):
@@ -40,7 +47,7 @@ class CircuitBreaker:
         async with self._lock:
             self._failures = 0
             if self._state != "closed":
-                circuit_breaker_state.labels(self._name, "closed").inc()
+                _metrics().labels(self._name, "closed").inc()
             self._state = "closed"
             self._opened_at = None
 
@@ -49,7 +56,7 @@ class CircuitBreaker:
         async with self._lock:
             self._failures += 1
             if self._failures >= self.failure_threshold and self._state != "open":
-                circuit_breaker_state.labels(self._name, "open").inc()
+                _metrics().labels(self._name, "open").inc()
                 self._state = "open"
                 self._opened_at = time.time()
 
@@ -61,7 +68,7 @@ class CircuitBreaker:
                     self._opened_at
                     and time.time() - self._opened_at >= self.recovery_timeout
                 ):
-                    circuit_breaker_state.labels(self._name, "half_open").inc()
+                    _metrics().labels(self._name, "half_open").inc()
                     self._state = "half_open"
                     return True
                 return False
