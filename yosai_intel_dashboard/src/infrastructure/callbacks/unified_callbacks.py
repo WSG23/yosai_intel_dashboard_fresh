@@ -24,10 +24,8 @@ from typing import (
 from dash import Dash
 from dash.dependencies import Input, Output, State
 
-from .callback_events import CallbackEvent
+from .events import CallbackEvent
 from .callback_registry import CallbackRegistry, ComponentCallbackManager
-from ...core.dash_callback_middleware import wrap_callback
-from ...core.error_handling import ErrorSeverity, error_handler, with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +157,8 @@ class TrulyUnifiedCallbacks:
                     )
                     if key in self._output_map and not allow_dup_output:
                         logger.warning(f"Output '{key}' conflict - allowing duplicate")
+
+                from ...core.dash_callback_middleware import wrap_callback
 
                 wrapped_callback = wrap_callback(func, outputs_tuple, self.security)
                 wrapped = self.app.callback(
@@ -308,6 +308,8 @@ class TrulyUnifiedCallbacks:
         self, event: CallbackEvent, *args: Any, **kwargs: Any
     ) -> List[Any]:
         """Synchronously trigger callbacks registered for *event*."""
+        from ...core.error_handling import ErrorSeverity, error_handler, with_retry
+
         results: List[Any] = []
         callbacks = list(self._event_callbacks.get(event, []))
         for cb in callbacks:
@@ -341,6 +343,8 @@ class TrulyUnifiedCallbacks:
 
         Callbacks are executed concurrently using ``asyncio`` when possible.
         """
+
+        from ...core.error_handling import ErrorSeverity, error_handler, with_retry
 
         async def _run(cb: EventCallback) -> Any:
             wrapped = with_retry(max_attempts=cb.retries + 1)(cb.func)
@@ -403,6 +407,8 @@ class TrulyUnifiedCallbacks:
 
     def execute_group(self, group: str, *args: Any, **kwargs: Any) -> List[Any]:
         """Execute all operations in a group sequentially."""
+        from ...core.error_handling import ErrorSeverity, error_handler, with_retry
+
         results: List[Any] = []
         with self._lock:
             operations = list(self._groups.get(group, []))
@@ -428,6 +434,7 @@ class TrulyUnifiedCallbacks:
         self, group: str, *args: Any, **kwargs: Any
     ) -> List[Any]:
         """Execute all operations in a group concurrently."""
+        from ...core.error_handling import ErrorSeverity, error_handler, with_retry
 
         async def _run(op: Operation) -> Any:
             wrapped = with_retry(max_attempts=op.retries + 1)(op.func)
