@@ -5,8 +5,10 @@ import os
 import re
 from typing import Iterable
 
-from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 from core.exceptions import ValidationError
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+    dynamic_config,
+)
 
 from .core import ValidationResult
 from .file_validator import FileValidator

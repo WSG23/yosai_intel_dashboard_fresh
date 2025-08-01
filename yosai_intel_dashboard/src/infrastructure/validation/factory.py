@@ -12,7 +12,9 @@ def create_security_validator(
     config: Mapping[str, bool] | None = None,
 ) -> SecurityValidator:
     if config is None:
-        from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
+        from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+            dynamic_config,
+        )
 
         cfg = dynamic_config.uploads.VALIDATOR_RULES
     else:
