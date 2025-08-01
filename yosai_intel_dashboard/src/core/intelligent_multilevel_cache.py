@@ -13,7 +13,7 @@ from typing import Any, Awaitable, Callable, Dict, Optional
 
 import redis.asyncio as redis
 
-from yosai_intel_dashboard.src.infrastructure.config.base import CacheConfig
+from yosai_intel_dashboard.src.infrastructure.cache.cache_manager import CacheConfig
 
 logger = logging.getLogger(__name__)
 
