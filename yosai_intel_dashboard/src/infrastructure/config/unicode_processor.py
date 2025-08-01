@@ -8,9 +8,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
 from security.events import SecurityEvent, emit_security_event
-from yosai_intel_dashboard.src.core.interfaces.protocols import UnicodeProcessorProtocol
 
 if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
+    from yosai_intel_dashboard.src.core.interfaces.protocols import UnicodeProcessorProtocol
     from yosai_intel_dashboard.src.core.unicode import (  # noqa: F401
         UnicodeProcessor as _UnicodeProcessor,
     )

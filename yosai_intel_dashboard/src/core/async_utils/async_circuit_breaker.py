@@ -5,13 +5,19 @@ import time
 from typing import Any, Awaitable, Callable, Optional
 
 
+_circuit_breaker_state = None
+
+
 def _get_circuit_breaker_state():
     """Return Prometheus metric for circuit breaker state lazily."""
-    from yosai_intel_dashboard.src.services.resilience.metrics import (
-        circuit_breaker_state,
-    )
+    global _circuit_breaker_state
+    if _circuit_breaker_state is None:
+        from yosai_intel_dashboard.src.services.resilience.metrics import (
+            circuit_breaker_state,
+        )
 
-    return circuit_breaker_state
+        _circuit_breaker_state = circuit_breaker_state
+    return _circuit_breaker_state
 
 
 class CircuitBreakerOpen(Exception):
