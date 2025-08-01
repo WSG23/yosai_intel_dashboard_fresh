@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterable
+from typing import Any, Iterable, TYPE_CHECKING
 
-from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
+if TYPE_CHECKING:  # pragma: no cover - for type hints only
+    from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
 from database.secure_exec import execute_secure_query as _exec_secure_query
 
 __all__ = ["execute_secure_query"]
@@ -14,6 +15,8 @@ def execute_secure_query(
     conn: Any, query: str, params: Iterable[Any] | None = None
 ) -> Any:
     """Encode ``query`` and ``params`` safely then execute using ``conn``."""
+    from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
+
     sanitized_query = UnicodeSQLProcessor.encode_query(query)
     sanitized_params = None
     if params is not None:
