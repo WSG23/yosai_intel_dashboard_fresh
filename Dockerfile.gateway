@@ -1,14 +1,17 @@
 # syntax=docker/dockerfile:1
 FROM golang:1.22 AS build
 WORKDIR /src
+
 COPY gateway/go.mod gateway/go.sum ./
-RUN go mod download
-RUN go mod download github.com/riferrei/srclient@v0.7.3
-COPY gateway .
+RUN go mod download && go mod download github.com/riferrei/srclient@v0.7.3
+
+COPY gateway/ ./gateway/
 RUN CGO_ENABLED=0 GOOS=linux go build -o /gateway ./gateway/cmd/gateway
 
 FROM alpine:3.18
 WORKDIR /app
+RUN apk add --no-cache curl
 COPY --from=build /gateway /usr/local/bin/gateway
 EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8080/health || exit 1
 ENTRYPOINT ["/usr/local/bin/gateway"]
