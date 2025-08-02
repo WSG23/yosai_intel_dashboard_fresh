@@ -1,5 +1,6 @@
 import logging
 import os
+import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -7,6 +8,7 @@ logger = logging.getLogger(__name__)
 def setup_dev_mode():
     """Validate required secrets in development mode."""
     if os.getenv("YOSAI_ENV", "development") == "development":
+        warnings.simplefilter("default", DeprecationWarning)
         required = [
             "AUTH0_CLIENT_ID",
             "AUTH0_CLIENT_SECRET",

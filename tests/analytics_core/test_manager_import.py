@@ -2,7 +2,7 @@ import pytest
 
 # These tests rely on the external 'analytics' package
 pytest.importorskip("analytics")
-from analytics.core import create_manager
+from services.analytics.core import create_manager
 
 
 def test_create_manager() -> None:

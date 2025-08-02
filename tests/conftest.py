@@ -119,8 +119,8 @@ if "structlog" not in sys.modules and "structlog" in _missing_optional:
 if "requests" not in sys.modules:
     sys.modules["requests"] = types.ModuleType("requests")
 
-if "mapping.models" not in sys.modules:
-    mapping_models_stub = types.ModuleType("mapping.models")
+if "services.mapping.models" not in sys.modules:
+    mapping_models_stub = types.ModuleType("services.mapping.models")
 
     class MappingModel:
         pass
@@ -151,9 +151,9 @@ if "mapping.models" not in sys.modules:
     mapping_pkg.__path__ = []
     mapping_pkg.models = mapping_models_stub
 
-    processors_pkg = types.ModuleType("mapping.processors")
+    processors_pkg = types.ModuleType("services.mapping.processors")
     processors_pkg.__path__ = []
-    ai_module = types.ModuleType("mapping.processors.ai_processor")
+    ai_module = types.ModuleType("services.mapping.processors.ai_processor")
 
     class AIColumnMapperAdapter:
         def __init__(self, *a, **k): ...
@@ -167,10 +167,10 @@ if "mapping.models" not in sys.modules:
     ai_module.AIColumnMapperAdapter = AIColumnMapperAdapter
     processors_pkg.ai_processor = ai_module
 
-    sys.modules["mapping.models"] = mapping_models_stub
+    sys.modules["services.mapping.models"] = mapping_models_stub
     sys.modules["mapping"] = mapping_pkg
-    sys.modules["mapping.processors"] = processors_pkg
-    sys.modules["mapping.processors.ai_processor"] = ai_module
+    sys.modules["services.mapping.processors"] = processors_pkg
+    sys.modules["services.mapping.processors.ai_processor"] = ai_module
     mapping_pkg.processors = processors_pkg
 
 if "confluent_kafka" not in sys.modules and "confluent_kafka" in _missing_optional:

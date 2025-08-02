@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from analytics.user_behavior import UserBehaviorAnalyzer
+from services.analytics.user_behavior import UserBehaviorAnalyzer
 
 
 def create_analyzer(df):

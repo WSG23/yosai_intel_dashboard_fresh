@@ -12,7 +12,7 @@ spec = importlib.util.spec_from_file_location(
 ai_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ai_module)
 AIColumnMapperAdapter = ai_module.AIColumnMapperAdapter
-from mapping.metrics import get_mapping_accuracy_summary
+from services.mapping.metrics import get_mapping_accuracy_summary
 
 
 class DummyAdapter:

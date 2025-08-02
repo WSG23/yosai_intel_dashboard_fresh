@@ -8,7 +8,10 @@ from dataclasses import is_dataclass
 from typing import Any, Dict, Optional
 
 import boto3
-import hvac
+try:  # pragma: no cover - optional dependency for tests
+    import hvac  # type: ignore
+except Exception:  # pragma: no cover
+    hvac = None
 from botocore.exceptions import ClientError
 from cryptography.fernet import Fernet
 from pydantic import BaseModel
@@ -38,7 +41,7 @@ class SecureConfigManager(ConfigManager):
         self.aws_region = aws_region or os.getenv("AWS_REGION")
 
         self.client = None
-        if self.vault_addr and self.vault_token:
+        if hvac and self.vault_addr and self.vault_token:
             try:
                 self.client = hvac.Client(url=self.vault_addr, token=self.vault_token)
             except Exception as exc:  # pragma: no cover - defensive

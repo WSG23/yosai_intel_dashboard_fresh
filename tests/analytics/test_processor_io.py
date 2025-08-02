@@ -120,7 +120,7 @@ spec.loader.exec_module(dp_module)
 DataProcessor = dp_module.DataProcessor
 
 spec = importlib.util.spec_from_file_location(
-    "mapping.processors.column_processor",
+    "services.mapping.processors.column_processor",
     mapping_root / "processors" / "column_processor.py",
 )
 column_module = importlib.util.module_from_spec(spec)

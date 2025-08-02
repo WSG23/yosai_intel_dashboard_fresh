@@ -4,7 +4,7 @@ from datetime import datetime
 import pandas as pd
 
 import services.upload.helpers as upload_helpers
-from analytics.db_interface import AnalyticsDataAccessor
+from services.analytics.db_interface import AnalyticsDataAccessor
 from services.learning.src.api.consolidated_service import ConsolidatedLearningService
 from services.upload import save_ai_training_data
 

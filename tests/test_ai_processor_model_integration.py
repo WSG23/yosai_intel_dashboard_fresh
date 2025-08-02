@@ -5,7 +5,7 @@ import sys
 import pandas as pd
 
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
-from mapping.models import RuleBasedModel
+from services.mapping.models import RuleBasedModel
 
 # Insert stub before importing the adapter
 stub = importlib.util.module_from_spec(
@@ -14,7 +14,7 @@ stub = importlib.util.module_from_spec(
 stub.ComponentPluginAdapter = object
 sys.modules.setdefault("components.plugin_adapter", stub)
 
-from mapping.processors.ai_processor import AIColumnMapperAdapter
+from services.mapping.processors.ai_processor import AIColumnMapperAdapter
 
 
 def test_ai_processor_uses_mapping_model():

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from analytics.chunked_analytics_controller import ChunkedAnalyticsController
+from services.analytics.chunked_analytics_controller import ChunkedAnalyticsController
 
 
 def test_process_chunk_flexible_detection():

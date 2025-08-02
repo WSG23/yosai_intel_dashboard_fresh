@@ -1,4 +1,4 @@
-from analytics.core import create_manager
+from services.analytics.core import create_manager
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 
