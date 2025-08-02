@@ -212,7 +212,7 @@ export const DeviceMappingModal: React.FC<Props> = ({
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <Select
+                          <Select<string>
                             multiple
                             value={mapping.specialAreas}
                             onChange={(value) => updateMapping(index, { specialAreas: value as string[] })}

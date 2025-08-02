@@ -171,7 +171,7 @@ export const ColumnMappingModal: React.FC<Props> = ({
                       <td className="py-3 px-4">
                         <Select
                           value={mapping.mappedTo}
-                          onChange={(value) => handleMappingChange(index, value)}
+                          onChange={(value) => handleMappingChange(index, value as string)}
                           options={STANDARD_FIELDS}
                           aria-label={`Map column ${mapping.originalColumn}`}
                           className={mapping.confidence < 0.5 ? 'border-yellow-500' : ''}

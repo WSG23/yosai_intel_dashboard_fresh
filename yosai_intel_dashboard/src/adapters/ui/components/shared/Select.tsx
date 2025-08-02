@@ -1,16 +1,28 @@
 import React from 'react';
 
-interface Option { value: string; label: string; }
-interface Props extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  value: string | string[];
-  onChange: (value: any) => void;
-  options: Option[];
+export interface Option<T extends string> {
+  value: T;
+  label: string;
+}
+
+interface Props<T extends string> extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  value: T | T[];
+  onChange: (value: T | T[]) => void;
+  options: Option<T>[];
   multiple?: boolean;
   placeholder?: string;
   className?: string;
 }
 
-export const Select: React.FC<Props> = ({ value, onChange, options, multiple = false, placeholder, className='', ...rest }) => {
+export const Select = <T extends string>({
+  value,
+  onChange,
+  options,
+  multiple = false,
+  placeholder,
+  className = '',
+  ...rest
+}: Props<T>) => {
   return (
     <select
       multiple={multiple}
@@ -18,10 +30,10 @@ export const Select: React.FC<Props> = ({ value, onChange, options, multiple = f
       {...rest}
       onChange={(e) => {
         if (multiple) {
-          const selected = Array.from(e.target.selectedOptions).map(o => o.value);
+          const selected = Array.from(e.target.selectedOptions).map(o => o.value as T);
           onChange(selected);
         } else {
-          onChange(e.target.value);
+          onChange(e.target.value as T);
         }
       }}
       className={`border rounded-md px-2 py-1 ${className}`}
@@ -33,3 +45,4 @@ export const Select: React.FC<Props> = ({ value, onChange, options, multiple = f
     </select>
   );
 };
+
