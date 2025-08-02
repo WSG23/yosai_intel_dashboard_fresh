@@ -1,0 +1,130 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.lock
+      - name: Build project
+        run: |
+          make build
+      - name: Run unit tests
+        run: |
+          ./scripts/run_tests_and_smoke.sh
+
+  trivy-scan:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Scan with Trivy
+        uses: aquasecurity/trivy-action@0.11.2
+        with:
+          scan-type: fs
+          format: sarif
+          output: trivy-results.sarif
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trivy-results
+          path: trivy-results.sarif
+
+  snyk-scan:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: snyk/actions/setup@v1
+      - name: Scan with Snyk
+        run: snyk test --severity-threshold=high --json > snyk-results.json
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snyk-results
+          path: snyk-results.json
+
+  release:
+    needs: [trivy-scan, snyk-scan]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - run: npm ci
+      - name: Semantic release
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          semantic_version: 21
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-dev:
+    needs: release
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - uses: actions/checkout@v3
+      - name: Fetch secrets via ESO
+        run: |
+          kubectl apply -f k8s/external-secrets/dev.yaml
+          kubectl wait --for=condition=available externalsecret/dev-secrets --timeout=60s
+      - name: Deploy to dev with Helm
+        run: |
+          helm upgrade --install dashboard helm/chart -f helm/values-dev.yaml --set image.tag=${{ github.sha }}
+      - name: Run smoke tests
+        run: |
+          python scripts/manual_tests/check_endpoints.py || (helm rollback dashboard && exit 1)
+
+  deploy-staging:
+    needs: deploy-dev
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v3
+      - name: Fetch secrets via ESO
+        run: |
+          kubectl apply -f k8s/external-secrets/staging.yaml
+          kubectl wait --for=condition=available externalsecret/staging-secrets --timeout=60s
+      - name: Deploy to staging with Helm
+        run: |
+          helm upgrade --install dashboard helm/chart -f helm/values-staging.yaml --set image.tag=${{ github.sha }}
+      - name: Run smoke tests
+        run: |
+          python scripts/manual_tests/check_endpoints.py || (helm rollback dashboard && exit 1)
+
+  deploy-prod:
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v3
+      - name: Fetch secrets via ESO
+        run: |
+          kubectl apply -f k8s/external-secrets/prod.yaml
+          kubectl wait --for=condition=available externalsecret/prod-secrets --timeout=60s
+      - name: Deploy to prod with ArgoCD
+        run: |
+          argocd app sync dashboard-prod
+      - name: Run smoke tests
+        run: |
+          python scripts/manual_tests/check_endpoints.py || (argocd app rollback dashboard-prod && exit 1)
