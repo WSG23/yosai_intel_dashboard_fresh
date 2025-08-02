@@ -17,4 +17,5 @@ pip-audit
 mlflow
 boto3
 flask-apispec<0.12
+locust
 -r requirements-test.txt
