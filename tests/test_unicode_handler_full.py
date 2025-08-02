@@ -157,7 +157,7 @@ class TestChunkedUnicodeProcessor:
         assert result == "Test\U0001f600Content" * 500
 
 
-class TestUnifiedCallbackController:
+class TestTrulyUnifiedCallbacks:
     def test_callback_registration_and_firing(self):
         controller = TrulyUnifiedCallbacks()
         controller._callbacks.clear()
