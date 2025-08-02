@@ -5,7 +5,7 @@ from tests.config import FakeConfiguration
 from tests.import_helpers import safe_import, import_optional
 
 fake_cfg = FakeConfiguration()
-from core.performance import get_performance_monitor
+from yosai_intel_dashboard.src.core.performance import get_performance_monitor
 from yosai_intel_dashboard.src.services.data_processing.common import process_dataframe
 from yosai_intel_dashboard.src.services.data_processing.file_handler import process_file_simple
 

@@ -7,7 +7,7 @@ from sklearn.linear_model import LogisticRegression
 pytest.importorskip("shap")
 pytest.importorskip("lime")
 
-from services.explainability_service import ExplainabilityService
+from yosai_intel_dashboard.src.services.explainability_service import ExplainabilityService
 
 
 def _make_dataset():

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from services.mapping.models import load_rules
+from yosai_intel_dashboard.src.services.mapping.models import load_rules
 
 spec = importlib.util.spec_from_file_location(
     "ai_column_mapper",

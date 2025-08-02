@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from core.unicode import UnicodeSQLProcessor
+from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
 
 
 def encode_query(query: Any, processor: Optional[object] = None) -> str:

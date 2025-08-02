@@ -6,8 +6,8 @@ from typing import Any, Iterable, Optional
 
 import pandas as pd  # type: ignore[import]
 
-from core.unicode import UnicodeProcessor as _UnicodeProcessor
-from core.unicode import UnicodeSQLProcessor, sanitize_dataframe
+from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor as _UnicodeProcessor
+from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor, sanitize_dataframe
 
 
 class UnicodeProcessor:

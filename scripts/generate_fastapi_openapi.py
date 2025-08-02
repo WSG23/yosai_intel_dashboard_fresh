@@ -187,7 +187,7 @@ def load_app(path: Path, module_name: str):
 def main() -> None:
     if "JWT_SECRET" not in os.environ:
         try:
-            from services.common.secrets import get_secret
+            from yosai_intel_dashboard.src.services.common.secrets import get_secret
 
             os.environ["JWT_SECRET"] = get_secret("secret/data/jwt#secret")
         except Exception as exc:  # noqa: BLE001

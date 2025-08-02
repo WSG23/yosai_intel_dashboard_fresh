@@ -1,8 +1,8 @@
 import pandas as pd
 import pytest
 
-from services.analytics.security_metrics import SecurityMetrics
-from services.analytics.security_patterns import SecurityPatternsAnalyzer
+from yosai_intel_dashboard.src.services.analytics.security_metrics import SecurityMetrics
+from yosai_intel_dashboard.src.services.analytics.security_patterns import SecurityPatternsAnalyzer
 
 
 def test_security_metrics_validation():

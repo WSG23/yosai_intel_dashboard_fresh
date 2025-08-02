@@ -10,8 +10,8 @@ from typing import Iterable
 
 import requests
 
-from services.kafka.avro_consumer import AvroConsumer
-from services.kafka.avro_producer import AvroProducer
+from yosai_intel_dashboard.src.services.kafka.avro_consumer import AvroConsumer
+from yosai_intel_dashboard.src.services.kafka.avro_producer import AvroProducer
 
 SCHEMA_MAP = {
     "schemas/avro/access_event_v1.avsc": [

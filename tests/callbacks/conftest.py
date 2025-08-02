@@ -13,11 +13,11 @@ try:
     import dash
 except ModuleNotFoundError:
     dash = types.SimpleNamespace(no_update=None)
-    safe_import('dash', dash)
+    safe_import('dash', lambda: dash)
 
 # Provide dash.exceptions.PreventUpdate when dash isn't installed
 if "dash.exceptions" not in sys.modules:
-    safe_import('dash.exceptions', types.SimpleNamespace(PreventUpdate=Exception))
+    safe_import('dash.exceptions', lambda: types.SimpleNamespace(PreventUpdate=Exception))
 
 # Ensure dash.no_update is defined for tests
 if not hasattr(dash, "no_update"):

@@ -1,4 +1,4 @@
-from services.summary_reporter import SummaryReporter
+from yosai_intel_dashboard.src.services.summary_reporter import SummaryReporter
 
 
 class FakeDB:

@@ -1,7 +1,7 @@
 import warnings
 
-from core import performance
-from core.deprecation import deprecated
+from yosai_intel_dashboard.src.core import performance
+from yosai_intel_dashboard.src.core.deprecation import deprecated
 
 
 class Dummy:

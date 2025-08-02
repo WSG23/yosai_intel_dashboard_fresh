@@ -14,7 +14,7 @@ def final_method_fix():
     print("=== FINAL STEP 2 FIX ===")
 
     try:
-        from services.upload_processing import UploadAnalyticsProcessor
+        from yosai_intel_dashboard.src.services.upload_processing import UploadAnalyticsProcessor
 
         # Add summarize_dataframe method properly to the class
         if not hasattr(UploadAnalyticsProcessor, "summarize_dataframe"):

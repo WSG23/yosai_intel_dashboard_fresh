@@ -54,7 +54,7 @@ async def explore_mapping_services(file_path: str, verbose: bool = False) -> dic
 
         # Explore AI Suggestions in detail
         logger.info("=== AI SUGGESTIONS DETAILED ===")
-        from services.data_enhancer.mapping_utils import get_ai_column_suggestions
+        from yosai_intel_dashboard.src.services.data_enhancer.mapping_utils import get_ai_column_suggestions
 
         suggestions = get_ai_column_suggestions(df)
 
@@ -63,7 +63,7 @@ async def explore_mapping_services(file_path: str, verbose: bool = False) -> dic
 
         # Explore DeviceLearningService methods with correct parameters
         logger.info("=== DEVICE LEARNING SERVICE EXPLORATION ===")
-        from services.device_learning_service import DeviceLearningService
+        from yosai_intel_dashboard.src.services.device_learning_service import DeviceLearningService
 
         device_service = DeviceLearningService()
 

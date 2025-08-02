@@ -104,7 +104,7 @@ def generate_patch(file: str, entries: List[Tuple[int, str, int]]) -> str:
         lines.insert(idx, decorator)
 
     # Ensure import
-    import_stmt = "from core.error_handling import with_error_handling as handle_errors"
+    import_stmt = "from yosai_intel_dashboard.src.core.error_handling import with_error_handling as handle_errors"
     if not any("handle_errors" in line and "import" in line for line in lines):
         insert_pos = 0
         for i, line in enumerate(lines):

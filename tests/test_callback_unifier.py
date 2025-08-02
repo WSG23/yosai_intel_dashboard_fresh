@@ -16,7 +16,7 @@ class CallbackOutput:  # type: ignore[misc]
 # The legacy core modules are no longer available in this slimmed repository.
 # Provide minimal fallbacks when imports fail so the tests remain runnable.
 try:  # pragma: no cover - executed only when old modules exist
-    from core.callback_registry import CallbackRegistry
+    from yosai_intel_dashboard.src.core.callback_registry import CallbackRegistry
 except Exception:  # pragma: no cover - graceful degradation
     class CallbackRegistry:  # type: ignore[misc]
         """Minimal stub tracking registered callbacks."""
@@ -34,7 +34,7 @@ except Exception:  # pragma: no cover - graceful degradation
         register_handler = unified_callback
 
 try:  # pragma: no cover
-    from core.plugins.decorators import unified_callback as _real_unified_callback
+    from yosai_intel_dashboard.src.core.plugins.decorators import unified_callback as _real_unified_callback
     raise Exception  # force fallback
 except Exception:  # pragma: no cover
     def unified_callback(target, *cb_args, **cb_kwargs):  # type: ignore[misc]

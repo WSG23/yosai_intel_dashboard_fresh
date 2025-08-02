@@ -1,7 +1,7 @@
 import pytest
 
-from services.migration.validators.integrity_checker import IntegrityChecker
-from services.optimized_queries import OptimizedQueryService
+from yosai_intel_dashboard.src.services.migration.validators.integrity_checker import IntegrityChecker
+from yosai_intel_dashboard.src.services.optimized_queries import OptimizedQueryService
 
 
 class RecordingConn:

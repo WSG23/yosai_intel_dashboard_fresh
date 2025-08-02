@@ -4,7 +4,7 @@ from types import SimpleNamespace
 # The full app factory isn't available in this trimmed environment.  Provide a
 # minimal stub that exposes only the bits the test relies on.
 try:  # pragma: no cover
-    from core.app_factory import create_app
+    from yosai_intel_dashboard.src.core.app_factory import create_app
 except Exception:  # pragma: no cover
     def create_app(*_args, **_kwargs):  # type: ignore[misc]
         server = SimpleNamespace(

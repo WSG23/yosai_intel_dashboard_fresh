@@ -1,4 +1,4 @@
-from services.database.query_optimizer import DatabaseQueryOptimizer
+from yosai_intel_dashboard.src.services.database.query_optimizer import DatabaseQueryOptimizer
 
 
 def test_postgresql_hint_injection_and_cache():

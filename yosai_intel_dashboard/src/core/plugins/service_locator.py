@@ -18,7 +18,7 @@ class _LocatorMeta(type):
                 DeprecationWarning,
                 stacklevel=2,
             )
-            from core import unicode as _unicode  # type: ignore
+            from yosai_intel_dashboard.src.core import unicode as _unicode  # type: ignore
 
             return lambda: _unicode
         raise AttributeError(name)
@@ -135,7 +135,7 @@ def __getattr__(name: str):
             DeprecationWarning,
             stacklevel=2,
         )
-        from core import unicode as _unicode  # type: ignore
+        from yosai_intel_dashboard.src.core import unicode as _unicode  # type: ignore
 
         return lambda: _unicode
     raise AttributeError(name)

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from services.result_formatting import (
+from yosai_intel_dashboard.src.services.result_formatting import (
     apply_regular_analysis,
     prepare_regular_result,
 )

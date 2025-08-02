@@ -1,7 +1,7 @@
 import pandas as pd
 
-import core.unicode as handler
-from core.unicode import UnicodeProcessor, sanitize_dataframe
+import yosai_intel_dashboard.src.core as core.unicode as handler
+from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor, sanitize_dataframe
 
 
 def test_unicode_handler_centralization():

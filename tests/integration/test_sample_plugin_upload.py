@@ -31,8 +31,8 @@ safe_import('scipy.stats', types.ModuleType("scipy.stats"))
 sys.modules["scipy"].stats = sys.modules["scipy.stats"]
 
 from config import create_config_manager
-from core.events import EventBus
-from core.plugins.auto_config import setup_plugins
+from yosai_intel_dashboard.src.core.events import EventBus
+from yosai_intel_dashboard.src.core.plugins.auto_config import setup_plugins
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
@@ -53,8 +53,8 @@ def _build_plugin(tmp_path):
     plugin_code = """
 from dash import Output, Input
 from dash.exceptions import PreventUpdate
-from core.protocols.plugin import PluginMetadata
-from core.plugins.callback_unifier import CallbackUnifier
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata
+from yosai_intel_dashboard.src.core.plugins.callback_unifier import CallbackUnifier
 
 class SamplePlugin:
     metadata = PluginMetadata(
@@ -138,7 +138,7 @@ def test_plugin_upload_event_sse_ws(
     cfg = create_config_manager()
     cfg.config.plugin_settings["sample_plugin"] = {"enabled": True}
 
-    from services.websocket_server import AnalyticsWebSocketServer
+    from yosai_intel_dashboard.src.services.websocket_server import AnalyticsWebSocketServer
 
     ws_server = AnalyticsWebSocketServer(
         event_bus=event_bus, host="127.0.0.1", port=8765
