@@ -1,11 +1,19 @@
 """Simple cache manager implementations."""
 
+from __future__ import annotations
+
 import logging
 import os
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-from yosai_intel_dashboard.src.core.intelligent_multilevel_cache import IntelligentMultiLevelCache
+from yosai_intel_dashboard.src.core.hierarchical_cache_manager import (
+    HierarchicalCacheConfig,
+    HierarchicalCacheManager,
+)
+from yosai_intel_dashboard.src.core.intelligent_multilevel_cache import (
+    IntelligentMultiLevelCache,
+)
 
 from .constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
 
@@ -90,6 +98,8 @@ def get_cache_manager() -> Any:
         return RedisCacheManager(cfg)
     if cfg.type == "intelligent":
         return IntelligentMultiLevelCache(cfg)
+    if cfg.type == "hierarchical":
+        return HierarchicalCacheManager(HierarchicalCacheConfig())
     return MemoryCacheManager(cfg)
 
 
@@ -97,6 +107,8 @@ __all__ = [
     "MemoryCacheManager",
     "RedisCacheManager",
     "IntelligentMultiLevelCache",
+    "HierarchicalCacheManager",
+    "HierarchicalCacheConfig",
     "CacheConfig",
     "from_environment",
     "get_cache_manager",
