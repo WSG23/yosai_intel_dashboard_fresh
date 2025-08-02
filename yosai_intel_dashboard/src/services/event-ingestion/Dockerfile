@@ -5,6 +5,9 @@ WORKDIR /app
 RUN pip install --no-cache-dir fastapi uvicorn kafka-python prometheus-fastapi-instrumentator opentelemetry-instrumentation-fastapi
 
 COPY . .
+RUN python scripts/create_symlinks.py
+
+ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
 
 EXPOSE 8000
 
