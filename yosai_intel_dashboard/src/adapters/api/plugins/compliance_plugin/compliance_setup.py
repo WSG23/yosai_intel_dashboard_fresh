@@ -272,8 +272,18 @@ def create_compliance_enabled_app(config_name: str = None):
 # Data retention automation (scheduled task)
 def setup_data_retention_scheduler():
     """
-    Setup automated data retention cleanup
-    Call this to schedule regular data cleanup based on retention policies
+    Setup automated data retention cleanup.
+
+    Uses the :mod:`schedule` library to run ``cleanup_expired_data`` every day
+    at 02:00, ensuring data is purged according to configured retention rules
+    (e.g., "biometric_templates" retained 30 days per GDPR Art.5(1)(e)).
+
+    A cron-based deployment could instead add an entry such as::
+
+        0 2 * * * /usr/bin/python manage.py run_retention_cleanup
+
+    Either approach enforces the legal bases defined for each data type and
+    jurisdiction.
     """
     import time
     from threading import Thread

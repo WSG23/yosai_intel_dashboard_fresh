@@ -85,6 +85,31 @@ def create_app(config_name: str = None) -> Flask:
     # Data retention service
     retention_service = create_data_retention_service(db, audit_logger)
     container.register('data_retention_service', retention_service)
+
+    # ------------------------------------------------------------------
+    # Retention rules per data type and jurisdiction
+    # Example rules reference legal bases such as GDPR Art.5(1)(e)
+    # and Japan's APPI Art.19
+    # ------------------------------------------------------------------
+    retention_rules = {
+        "EU": {
+            "biometric_templates": {
+                "days": 30,
+                "legal_basis": "GDPR Art.5(1)(e)"
+            },
+            "access_logs": {
+                "days": 365,
+                "legal_basis": "GDPR Art.30"
+            }
+        },
+        "JP": {
+            "biometric_templates": {
+                "days": 60,
+                "legal_basis": "APPI Art.19"
+            }
+        }
+    }
+    retention_service.load_rules(retention_rules)  # pseudo-call enforcing rules
     
     # DPIA service
     dpia_service = create_dpia_service(db, audit_logger)
@@ -108,6 +133,10 @@ def create_app(config_name: str = None) -> Flask:
     
     # 6. Setup automated data retention (background processing)
     setup_data_retention_scheduler()
+    # Scheduler enforces retention policies
+    # schedule.every().day.at("02:00").do(retention_service.cleanup_expired_data)
+    # Cron equivalent:
+    # 0 2 * * * /usr/bin/python manage.py run_retention_cleanup
     
     # =========================================================================
     # Your existing service registrations go here
