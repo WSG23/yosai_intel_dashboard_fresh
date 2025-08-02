@@ -29,7 +29,10 @@ from yosai_intel_dashboard.src.infrastructure.config.compliance_setup import (
     setup_data_retention_scheduler
 )
 from controllers.compliance_controller import register_compliance_routes
-from plugins.compliance_plugin.services.breach_notification_service import create_breach_notification_service
+from plugins.compliance_plugin.services.breach_notification_service import (
+    create_breach_notification_service,
+    BreachCategory,
+)
 from plugins.compliance_plugin.services.cross_border_transfer_service import create_cross_border_transfer_service
 from plugins.compliance_plugin.services.compliance_dashboard import create_compliance_dashboard
 from plugins.compliance_plugin.services.data_retention_service import create_data_retention_service
@@ -236,6 +239,65 @@ class EnhancedAnalyticsService:
         )
         
         return analysis_data
+
+
+# Example: Automatic breach notification when anomalies are detected
+def handle_security_anomaly(anomaly_event):
+    """Trigger breach notification workflow for detected anomalies"""
+    container = Container()
+    breach_service = container.get('breach_notification_service')
+    audit_logger = container.get('audit_logger')
+
+    # Report the potential breach
+    breach_id = breach_service.report_breach(
+        breach_description=anomaly_event.description,
+        affected_data_types=anomaly_event.data_types,
+        estimated_affected_individuals=len(anomaly_event.affected_users),
+        detection_timestamp=anomaly_event.detected_at,
+        breach_category=BreachCategory.CONFIDENTIALITY_BREACH,
+        initial_assessment={'identity_theft_risk': True},
+        detected_by='security_monitoring'
+    )
+
+    # Send mandatory notifications
+    breach_service.notify_supervisory_authority(
+        breach_id,
+        {'authority_name': 'EU DPA', 'method': 'online_portal'},
+        notified_by='system'
+    )
+    breach_service.notify_affected_individuals(
+        breach_id,
+        notification_method='email',
+        affected_user_ids=anomaly_event.affected_users,
+        notification_content='Unauthorized access detected. Please reset your credentials.',
+        notified_by='system'
+    )
+
+    # Record audit entry for full workflow
+    audit_logger.log_action(
+        actor_user_id='system',
+        action_type='BREACH_WORKFLOW_COMPLETED',
+        resource_type='security_event',
+        resource_id=breach_id,
+        description='Breach reported and notifications sent',
+        legal_basis='breach_notification_obligation'
+    )
+
+
+BREACH_AUDIT_LOG_EXAMPLE = """
+2024-05-18T10:15:02Z [BREACH_DETECTED] incident=BREACH-20240518-ABCD1234 actor=system severity=high
+2024-05-18T10:20:15Z [SUPERVISORY_AUTHORITY_NOTIFIED] incident=BREACH-20240518-ABCD1234 authority=EU DPA
+2024-05-18T10:21:03Z [AFFECTED_INDIVIDUALS_NOTIFIED] incident=BREACH-20240518-ABCD1234 users=42
+"""
+
+
+ESCALATION_PATH = """
+1. Anomaly detected and breach reported via breach_notification_service
+2. Security team reviews incident in compliance dashboard
+3. Notify supervisory authority within 72 hours
+4. Notify affected users without undue delay
+5. Escalate to DPO and legal team if status remains unresolved after 24 hours
+"""
 
 
 # =============================================================================
