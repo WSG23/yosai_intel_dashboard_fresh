@@ -176,17 +176,33 @@ helm upgrade yosai-intel ./helm/yosai-intel \
   --set image.tag=<new-tag> --set color=green
 ```
 
-### Rollback
+### Rollback Procedures
 
-If the new deployment fails its health checks, revert immediately:
+If the new deployment fails its health checks, revert immediately using one of
+the following options:
+
+#### Automated rollback
 
 ```bash
-# send traffic back to the previous deployment
-kubectl patch service yosai-dashboard -p '{"spec":{"selector":{"app":"yosai-dashboard","color":"blue"}}}'
-# rollback the deployment to the previous replica set
 kubectl rollout undo deployment/yosai-dashboard -n yosai-dev
-# or use the provided helper script
-scripts/rollback.sh
+kubectl rollout status deployment/yosai-dashboard -n yosai-dev
+```
+
+#### Manual rollback script
+
+```bash
+./rollback.sh [service] [namespace]
+```
+
+The script switches the service selector between blue and green deployments. It
+defaults to the `yosai-dashboard` service in the `default` namespace.
+
+#### Manual image reversion
+
+```bash
+kubectl set image deployment/yosai-dashboard \
+  yosai-dashboard=ghcr.io/wsg23/yosai-dashboard:<previous-tag> -n yosai-dev
+kubectl rollout status deployment/yosai-dashboard -n yosai-dev
 ```
 
 Then scale down or delete the faulty pods once the service is stable.
