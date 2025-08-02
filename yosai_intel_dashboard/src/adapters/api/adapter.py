@@ -77,7 +77,19 @@ def create_api_app() -> "FastAPI":
         service.log.error("Failed to initialize RBAC service: %s", exc)
         app.config["RBAC_SERVICE"] = None
 
-    app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+    secret_key = os.getenv("SECRET_KEY")
+    if not secret_key:
+        try:  # pragma: no cover - best effort
+            from yosai_intel_dashboard.src.services.common.secrets import get_secret
+
+            secret_key = get_secret("SECRET_KEY")
+        except Exception:
+            secret_key = None
+    if not secret_key:
+        raise RuntimeError(
+            "SECRET_KEY is not set; configure it via environment or Vault"
+        )
+    app.config["SECRET_KEY"] = secret_key
 
     csrf.init_app(app)
 
