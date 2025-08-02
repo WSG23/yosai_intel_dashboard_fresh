@@ -64,6 +64,9 @@ data/learned_mappings.json
 !yosai_intel_dashboard/src/adapters/ui/tsconfig.json
 !dashboards/grafana/*.json
 !dashboards/performance/*.json
+!monitoring/grafana/*.json
+!yosai_intel_dashboard/src/infrastructure/monitoring/grafana/*.json
+!k8s/monitoring/dashboards/*.json
 !config/schema.json
 !gateway/internal/config/circuitbreakers_schema.json
 logs/
