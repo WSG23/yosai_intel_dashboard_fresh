@@ -9,6 +9,7 @@ import warnings
 from typing import Optional
 
 from yosai_intel_dashboard.src.infrastructure.config import get_monitoring_config
+
 from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (
     ModelMetrics,
     get_model_performance_monitor,
@@ -48,6 +49,7 @@ class ModelMonitoringService:
         if self._thread and self._thread.is_alive():
             return
         self._stop.clear()
+
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
 
@@ -68,6 +70,7 @@ class ModelMonitoringService:
     # ------------------------------------------------------------------
     def evaluate_active_models(self) -> None:
         """Evaluate all active models and record metrics with resiliency."""
+
         records = self.registry.list_models()
         for rec in records:
             if not getattr(rec, "is_active", False):
@@ -131,6 +134,7 @@ class ModelMonitoringService:
                     getattr(rec, "name", "unknown"),
                     getattr(rec, "version", "unknown"),
                 )
+
 
 
 __all__ = ["ModelMonitoringService"]

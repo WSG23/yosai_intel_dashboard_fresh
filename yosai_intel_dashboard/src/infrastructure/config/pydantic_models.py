@@ -92,6 +92,22 @@ class MonitoringModel(BaseModel):
     error_reporting_enabled: bool = True
     sentry_dsn: Optional[str] = None
     log_retention_days: int = 30
+    model_check_interval_minutes: int = Field(
+        default=60,
+        json_schema_extra={"env": "MODEL_CHECK_INTERVAL_MINUTES"},
+    )
+    drift_threshold_ks: float = Field(
+        default=0.1,
+        json_schema_extra={"env": "DRIFT_THRESHOLD_KS"},
+    )
+    drift_threshold_psi: float = Field(
+        default=0.1,
+        json_schema_extra={"env": "DRIFT_THRESHOLD_PSI"},
+    )
+    drift_threshold_wasserstein: float = Field(
+        default=0.1,
+        json_schema_extra={"env": "DRIFT_THRESHOLD_WASSERSTEIN"},
+    )
 
 
 class CacheModel(BaseModel):

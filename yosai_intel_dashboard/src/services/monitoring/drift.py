@@ -6,6 +6,8 @@ from typing import Dict
 
 import numpy as np
 import pandas as pd
+from scipy.stats import ks_2samp
+from scipy.stats import wasserstein_distance as _wasserstein_distance
 
 
 def population_stability_index(
@@ -37,4 +39,39 @@ def compute_psi(
     return metrics
 
 
-__all__ = ["population_stability_index", "compute_psi"]
+def kolmogorov_smirnov(base: pd.Series, current: pd.Series) -> float:
+    """Return the Kolmogorov-Smirnov statistic for two samples."""
+    base = base.dropna()
+    current = current.dropna()
+    statistic, _ = ks_2samp(base, current)
+    return float(statistic)
+
+
+def wasserstein_distance(base: pd.Series, current: pd.Series) -> float:
+    """Return the first Wasserstein distance between two samples."""
+    base = base.dropna()
+    current = current.dropna()
+    return float(_wasserstein_distance(base, current))
+
+
+def detect_drift(
+    base: pd.DataFrame, current: pd.DataFrame, *, bins: int = 10
+) -> Dict[str, Dict[str, float]]:
+    """Return PSI, KS, and Wasserstein metrics for common columns."""
+    metrics: Dict[str, Dict[str, float]] = {}
+    for col in base.columns.intersection(current.columns):
+        metrics[col] = {
+            "psi": population_stability_index(base[col], current[col], bins=bins),
+            "ks": kolmogorov_smirnov(base[col], current[col]),
+            "wasserstein": wasserstein_distance(base[col], current[col]),
+        }
+    return metrics
+
+
+__all__ = [
+    "population_stability_index",
+    "compute_psi",
+    "kolmogorov_smirnov",
+    "wasserstein_distance",
+    "detect_drift",
+]

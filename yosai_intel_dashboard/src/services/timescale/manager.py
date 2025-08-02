@@ -7,8 +7,11 @@ import time
 
 import asyncpg
 
-from yosai_intel_dashboard.src.core.error_handling import ErrorCategory, with_async_error_handling
 from database.metrics import queries_total, query_errors_total
+from yosai_intel_dashboard.src.core.error_handling import (
+    ErrorCategory,
+    with_async_error_handling,
+)
 from yosai_intel_dashboard.src.services.common.secrets import get_secret
 
 logger = logging.getLogger(__name__)
@@ -124,6 +127,31 @@ class TimescaleDBManager:
         )
         await conn.execute(
             "SELECT add_retention_policy('access_events', INTERVAL $1 || ' days', if_not_exists => TRUE)",
+            retention_days,
+        )
+
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS model_monitoring_events (
+                time TIMESTAMPTZ NOT NULL,
+                model_name VARCHAR(100),
+                version VARCHAR(50),
+                metric VARCHAR(50),
+                value DOUBLE PRECISION,
+                drift_type VARCHAR(50),
+                status VARCHAR(20)
+            )
+            """,
+        )
+        await conn.execute(
+            "SELECT create_hypertable('model_monitoring_events', 'time', if_not_exists => TRUE)"
+        )
+        await conn.execute(
+            "SELECT add_compression_policy('model_monitoring_events', INTERVAL $1 || ' days', if_not_exists => TRUE)",
+            compression_days,
+        )
+        await conn.execute(
+            "SELECT add_retention_policy('model_monitoring_events', INTERVAL $1 || ' days', if_not_exists => TRUE)",
             retention_days,
         )
 

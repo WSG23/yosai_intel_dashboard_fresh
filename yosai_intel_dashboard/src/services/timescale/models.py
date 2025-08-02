@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import Column, DateTime, Integer, MetaData, String, text
+from sqlalchemy import Column, DateTime, Float, Integer, MetaData, String, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.engine import Connection
 from sqlalchemy.orm import declarative_base
@@ -57,6 +57,20 @@ class AccessEventHourly(Base):
     event_count = Column(Integer)
 
 
+class ModelMonitoringEvent(Base):
+    """Recorded model evaluation metrics."""
+
+    __tablename__ = "model_monitoring_events"
+
+    time = Column(DateTime(timezone=True), primary_key=True)
+    model_name = Column(String(100), index=True)
+    version = Column(String(50))
+    metric = Column(String(50))
+    value = Column(Float)
+    drift_type = Column(String(50))
+    status = Column(String(20))
+
+
 # ---------------------------------------------------------------------------
 # Helper functions
 # ---------------------------------------------------------------------------
@@ -103,4 +117,5 @@ __all__ = [
     "AccessEvent",
     "AccessEvent5Min",
     "AccessEventHourly",
+    "ModelMonitoringEvent",
 ]
