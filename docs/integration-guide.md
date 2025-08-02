@@ -625,6 +625,30 @@ Emergency Contact: legal-emergency@yourcompany.com
 
 
 # =============================================================================
+# Troubleshooting
+# =============================================================================
+
+TROUBLESHOOTING = """
+=== Troubleshooting ===
+
+**Common integration errors and fixes**
+
+- *Compliance schema fails to initialize*: verify database connectivity and review the [observability logs](observability.md#viewing-logs).
+- *Missing audit or consent records*: ensure services are registered and consult the [troubleshooting runbook](troubleshooting_runbook.md).
+
+**Performance tuning and scaling strategies**
+
+- Monitor resource usage and set alert thresholds as described in the [monitoring guide](monitoring.md).
+- Scale services horizontally and optimize database indexes for heavy compliance queries.
+
+**Handling regulatory updates and schema migrations**
+
+- Track policy changes and run migrations using the [schema evolution guide](schema_evolution.md) and [migrations documentation](migrations.md).
+- Subscribe to alerting channels to be notified of required updates and review audit logs after each migration.
+"""
+
+
+# =============================================================================
 # FINAL IMPLEMENTATION CHECKLIST
 # =============================================================================
 
