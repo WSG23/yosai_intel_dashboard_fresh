@@ -4,18 +4,34 @@ import asyncio
 import base64
 import os
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Response as FastAPIResponse, status
-from fastapi.middleware.wsgi import WSGIMiddleware
-
+from fastapi import (
+    APIRouter,
+    Depends,
+    FastAPI,
+    File,
+    HTTPException,
+    Request,
+    Response,
+    UploadFile,
+    status,
+)
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 
+from api.analytics_router import init_cache_manager
+from api.analytics_router import router as analytics_router
+from api.explanations import router as explanations_router
+from api.monitoring_router import router as monitoring_router
+from middleware.performance import TimingMiddleware
 from yosai_framework.service import BaseService
+from yosai_intel_dashboard.src.core.container import container
 from yosai_intel_dashboard.src.core.rbac import create_rbac_service
 from yosai_intel_dashboard.src.core.secrets_validator import validate_all_secrets
 from yosai_intel_dashboard.src.infrastructure.config import get_security_config
+from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
 from yosai_intel_dashboard.src.services.security import verify_service_jwt
 
 bearer_scheme = HTTPBearer()
@@ -29,14 +45,6 @@ def verify_token(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized"
         )
-
-from api.analytics_router import init_cache_manager
-from api.analytics_router import router as analytics_router
-from api.monitoring_router import router as monitoring_router
-from api.explanations import router as explanations_router
-from middleware.performance import TimingMiddleware
-from yosai_intel_dashboard.src.core.container import container
-from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
 
 
 def create_api_app() -> "FastAPI":
@@ -71,7 +79,7 @@ def create_api_app() -> "FastAPI":
         service.app.state.rbac_service = asyncio.run(create_rbac_service())
     except Exception as exc:  # pragma: no cover - best effort
         service.log.error("Failed to initialize RBAC service: %s", exc)
-        app.config["RBAC_SERVICE"] = None
+        service.app.state.rbac_service = None
 
     secret_key = os.getenv("SECRET_KEY")
     if not secret_key:
@@ -85,23 +93,13 @@ def create_api_app() -> "FastAPI":
         raise RuntimeError(
             "SECRET_KEY is not set; configure it via environment or Vault"
         )
-    app.config["SECRET_KEY"] = secret_key
-
-    csrf.init_app(app)
-
-    @app.before_request
-    def enforce_csrf() -> None:
-        if request.method not in {"GET", "HEAD", "OPTIONS"}:
-            csrf.protect()
-
-    settings = get_security_config()
-    CORS(app, origins=settings.cors_origins)
+    service.app.state.secret_key = secret_key
 
     # Helper dependency used for deprecated unversioned routes
-    def add_deprecation_warning(response: FastAPIResponse) -> None:
-        response.headers[
-            "Warning"
-        ] = "299 - Deprecated API path; please use versioned '/v1' routes"
+    def add_deprecation_warning(response: Response) -> None:
+        response.headers["Warning"] = (
+            "299 - Deprecated API path; please use versioned '/v1' routes"
+        )
 
     # Third-party analytics demo endpoints (FastAPI router)
     service.app.add_event_handler("startup", init_cache_manager)
@@ -126,9 +124,11 @@ def create_api_app() -> "FastAPI":
 
     # Core upload and related endpoints implemented directly with FastAPI
     file_processor = container.get("file_processor")
-    file_handler = container.get("file_handler") if container.has("file_handler") else None
+    file_handler = (
+        container.get("file_handler") if container.has("file_handler") else None
+    )
 
-    serializer = URLSafeTimedSerializer(os.environ["SECRET_KEY"])
+    serializer = URLSafeTimedSerializer(secret_key)
 
     from yosai_intel_dashboard.src.services.upload.upload_endpoint import (
         StatusSchema,
@@ -142,21 +142,29 @@ def create_api_app() -> "FastAPI":
         response.set_cookie("csrf_token", token, httponly=True)
         return {"csrf_token": token}
 
-    @service.app.post("/v1/upload", response_model=UploadResponseSchema, status_code=202)
-    async def upload_files(
-        request: Request,
-        payload: UploadRequestSchema,
-        files: list[UploadFile] = File([]),
-    ) -> dict:
+    def verify_csrf(request: Request) -> None:
         token = (
             request.headers.get("X-CSRFToken")
             or request.headers.get("X-CSRF-Token")
             or request.cookies.get("csrf_token")
         )
+        if not token:
+            raise HTTPException(status_code=400, detail="Missing CSRF token")
         try:
             serializer.loads(token, max_age=3600)
         except BadSignature:
             raise HTTPException(status_code=400, detail="Invalid CSRF token")
+
+    @service.app.post(
+        "/v1/upload",
+        response_model=UploadResponseSchema,
+        status_code=202,
+        dependencies=[Depends(verify_csrf)],
+    )
+    async def upload_files(
+        payload: UploadRequestSchema,
+        files: list[UploadFile] = File([]),
+    ) -> dict:
 
         contents: list[str] = []
         filenames: list[str] = []
@@ -217,11 +225,11 @@ def create_api_app() -> "FastAPI":
         return settings_data
 
     # Token refresh endpoint
+    from yosai_intel_dashboard.src.services.security import refresh_access_token
     from yosai_intel_dashboard.src.services.token_endpoint import (
         AccessTokenResponse,
         RefreshRequest,
     )
-    from yosai_intel_dashboard.src.services.security import refresh_access_token
 
     @service.app.post(
         "/v1/token/refresh", response_model=AccessTokenResponse, status_code=200
