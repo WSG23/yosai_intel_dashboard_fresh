@@ -38,7 +38,8 @@ from yosai_intel_dashboard.src.services.monitoring.prometheus.model_metrics impo
 start_model_metrics_server(port=9104)
 ```
 
-`model_accuracy`, `model_precision` and `model_recall` gauges will then be
+`model_accuracy`, `model_precision`, `model_recall`, `model_f1_score`,
+`model_latency_ms`, `model_throughput` and `model_drift_score` gauges will then be
 available on `/metrics`.
 
 ## Automated Model Monitoring
@@ -166,3 +167,4 @@ registry.activate("fraud-model", "1.2.0")
 - [Prometheus metrics](http://localhost:9104/metrics)
 - [WebSocket stream](ws://localhost:6789)
 - [REST metrics](http://localhost:8000/api/metrics)
+
