@@ -6,6 +6,50 @@
 
 An AI-powered modular security intelligence dashboard for physical access control monitoring.
 
+## Migration Status
+
+The clean architecture migration is **COMPLETE**. All source code now resides under `yosai_intel_dashboard/src/` and requires **Python 3.11+**. Legacy import paths remain available via a compatibility layer but will be removed in **v2.0**.
+
+## Clean Architecture Structure
+
+```
+yosai_intel_dashboard/
+└── src/
+    ├── core/              # Business logic & domain models
+    │   ├── domain/        # Entities, value objects
+    │   ├── use_cases/     # Application business rules
+    │   └── interfaces/    # Repository interfaces
+    ├── adapters/          # Interface adapters
+    │   ├── api/           # REST controllers
+    │   ├── ui/            # Web UI components
+    │   └── persistence/   # Database implementations
+    ├── infrastructure/    # External frameworks & tools
+    │   ├── config/        # Configuration management
+    │   ├── security/      # Auth & security
+    │   ├── monitoring/    # Metrics & logging
+    │   └── validation/    # Input validation
+    └── services/          # Deployable microservices
+```
+
+This separation improves testability, maintainability, and deployment flexibility.
+
+### Backward Compatibility Layer
+
+Legacy imports continue to work via symlinks:
+
+- `./api` → `yosai_intel_dashboard/src/adapters/api`
+- `./components` → `yosai_intel_dashboard/src/adapters/ui/components`
+- `./config` → `yosai_intel_dashboard/src/infrastructure/config`
+- `./core` → `yosai_intel_dashboard/src/core`
+- `./models` → `yosai_intel_dashboard/src/core/domain/entities`
+- `./monitoring` → `yosai_intel_dashboard/src/infrastructure/monitoring`
+- `./pages` → `yosai_intel_dashboard/src/adapters/ui/pages`
+- `./security` → `yosai_intel_dashboard/src/infrastructure/security`
+- `./services` → `yosai_intel_dashboard/src/services`
+- `./validation` → `yosai_intel_dashboard/src/infrastructure/validation`
+
+Please migrate to the new paths; this compatibility layer will be removed in v2.0.
+
 ## Architecture Overview
 
 This project follows a fully modular design built around a dependency injection container.  Detailed diagrams explain how the pieces fit together:
@@ -42,6 +86,8 @@ This project follows a fully modular design built around a dependency injection 
 - [Feature Store](docs/feature_store.md)
 - [Async Patterns](docs/async_patterns.md)
 - [API Adapter](docs/api.md)
+- [Clean Architecture Guide](docs/developer_guide_clean_arch.md)
+- [Migration Guide](docs/migration_guide.md)
 
 <p align="center">
   <img src="docs/architecture.svg" alt="High-level architecture diagram" width="600" />
@@ -54,20 +100,6 @@ provided, allowing tests to supply lightweight mocks. See
 patterns and lifetime options.
 
 The dashboard is extensible through a lightweight plugin system. Plugins live in the `plugins/` directory and are loaded by a `PluginManager`. See [docs/plugins.md](docs/plugins.md) for discovery, configuration details and a simple **Hello World** example. The [plugin lifecycle diagram](docs/plugin_lifecycle.md) illustrates how plugins are discovered, dependencies resolved and health checks performed. Pass `fail_fast=True` to the manager if plugin import failures should abort startup instead of merely being logged.
-
-```
-yosai_intel_dashboard/
-├── start_api.py               # Development entrypoint
-├── src/
-│   ├── app.py                # Dash application factory
-│   ├── adapters/             # External service adapters
-│   ├── core/                 # Shared utilities and DI container
-│   ├── infrastructure/       # Platform integrations
-│   ├── models/               # Business entities
-│   ├── services/             # Business logic layer
-│   └── utils/                # Helper functions
-└── tests/                    # Unit and integration tests
-```
 
 ### Navbar Icons
 
@@ -93,6 +125,9 @@ python -m tools.debug assets
 You can override the default links and icons when creating the navbar:
 
 ```python
+# Legacy path (supported in v1.x)
+from components.ui.navbar import create_navbar_layout
+# New path
 from yosai_intel_dashboard.src.adapters.ui.components.ui.navbar import create_navbar_layout
 
 links = [('/admin', 'Admin'), ('/reports', 'Reports')]
@@ -106,13 +141,13 @@ Pass icon names after the command to check custom files.
 
 ### Development Setup
 
-Python 3.8 or later is required. All pinned dependency versions are compatible
+Python 3.11 or later is required. All pinned dependency versions are compatible
 with this Python release and newer.
 
 1. **Clone and enter the project:**
    ```bash
    git clone <repository>
-   cd yosai_intel_dashboard
+   cd yosai_intel_dashboard_fresh
    ```
 
 2. **Create virtual environment:**
@@ -235,9 +270,18 @@ actions and role assignment.
    uwsgi --module wsgi:server
    ```
 8. **Access the dashboard:**
-   Open http://127.0.0.1:8050 in your browser.
-   The server runs over HTTP by default but will automatically serve HTTPS
-   whenever certificates are available.
+  Open http://127.0.0.1:8050 in your browser.
+  The server runs over HTTP by default but will automatically serve HTTPS
+  whenever certificates are available.
+
+## Working with the Clean Architecture
+
+- Domain logic and entities live under `core`
+- Interface adapters such as APIs and UI components live under `adapters`
+- External frameworks and system concerns belong in `infrastructure`
+- Deployable services reside in `services`
+
+Refer to the [Clean Architecture Guide](docs/developer_guide_clean_arch.md) for examples and best practices.
 
 ### Docker Compose Development Environment
 
@@ -254,6 +298,8 @@ docker-compose \
 file exists or pass the required values via `--env-file` when running the
 container. If you override the default command in Docker Compose, invoke
 `./start.sh` so the variables are loaded correctly.
+
+The Dockerfiles add `yosai_intel_dashboard/src` to the container `PYTHONPATH` so services load the clean architecture modules.
 
 web UI on `http://localhost:8080`, pgAdmin on `http://localhost:5050`, and the API gateway on `http://localhost:8081`.
 
@@ -401,7 +447,9 @@ The container entrypoint runs `start.sh`, which sources the `.env` file before
 launching Gunicorn. Make sure the file exists or supply one via Docker's
 `--env-file` option.
 When deploying manually or via Kubernetes, execute `start.sh` to ensure
-environment variables from `.env` are available to the app.
+environment variables from `.env` are available to the app. The script also
+adds `yosai_intel_dashboard/src` to `PYTHONPATH` so the application can locate
+modules in the clean architecture layout.
 Whenever you modify the code, rebuild the Docker image with `docker-compose build` (or `docker-compose up --build`) so the running container picks up your changes.
 Docker Compose expects the database password and Flask secret key to be
 provided via Docker secrets or environment variables. Create
@@ -661,6 +709,10 @@ caches during start-up. This avoids expensive database queries on the first
 request.
 
 ```python
+# Legacy paths
+from core.cache_warmer import IntelligentCacheWarmer
+from core.hierarchical_cache_manager import HierarchicalCacheManager
+# New paths
 from yosai_intel_dashboard.src.core.cache_warmer import IntelligentCacheWarmer
 from yosai_intel_dashboard.src.core.hierarchical_cache_manager import HierarchicalCacheManager
 
@@ -732,8 +784,12 @@ resolved from anywhere:
 
 
 ```python
-from yosai_intel_dashboard.src.simple_di import ServiceContainer
+# Legacy paths
+from simple_di import ServiceContainer
 from config import create_config_manager
+# New paths
+from yosai_intel_dashboard.src.simple_di import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 
 container = ServiceContainer()
 container.register("config", create_config_manager())
@@ -744,7 +800,10 @@ config = container.get("config")
 A short example without the container:
 
 ```python
+# Legacy path
 from config import create_config_manager
+# New path
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 
 config = create_config_manager()
 db_cfg = config.get_database_config()
@@ -884,8 +943,12 @@ previous `config_manager.py` have been removed. Create a container and access
 the new unified configuration through it instead:
 
 ```python
-from yosai_intel_dashboard.src.simple_di import ServiceContainer
+# Legacy paths
+from simple_di import ServiceContainer
 from config import create_config_manager
+# New paths
+from yosai_intel_dashboard.src.simple_di import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 
 container = ServiceContainer()
 container.register("config", create_config_manager())
@@ -928,6 +991,9 @@ Use `EnhancedThreadSafePluginManager` to track plugin load times and
 resource usage:
 
 ```python
+# Legacy path
+from core.plugins.performance_manager import EnhancedThreadSafePluginManager
+# New path
 from yosai_intel_dashboard.src.core.plugins.performance_manager import EnhancedThreadSafePluginManager
 manager = EnhancedThreadSafePluginManager(container, config)
 data = manager.get_plugin_performance_metrics()
@@ -946,7 +1012,13 @@ The `/v1/plugins/performance` endpoint exposes metrics for dashboards.
    `UnicodeProcessor` for parameters
 - Connection pooling through `connection_pool.py`
 ```python
+# Legacy path
 from config.database_manager import EnhancedPostgreSQLManager, DatabaseConfig
+# New path
+from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
+    EnhancedPostgreSQLManager,
+    DatabaseConfig,
+)
 manager = EnhancedPostgreSQLManager(DatabaseConfig(type="postgresql"))
 manager.execute_query_with_retry("SELECT 1")
 ```
@@ -965,6 +1037,10 @@ manager.execute_query_with_retry("SELECT 1")
   Register an instance with the container to access analytics operations:
 
   ```python
+    # Legacy paths
+    from simple_di import ServiceContainer
+    from services.analytics_service import create_analytics_service
+    # New paths
     from yosai_intel_dashboard.src.simple_di import ServiceContainer
     from yosai_intel_dashboard.src.services.analytics_service import create_analytics_service
 
@@ -1005,7 +1081,10 @@ manager.execute_query_with_retry("SELECT 1")
 Use `SecurityValidator` to sanitize query parameters in both Flask and Dash routes. Example:
 
 ```python
+# Legacy path
 from validation.security_validator import SecurityValidator
+# New path
+from yosai_intel_dashboard.src.infrastructure.validation.security_validator import SecurityValidator
 
 validator = SecurityValidator()
 
@@ -1187,6 +1266,9 @@ callbacks.trigger_event(
 
 Performance metrics can be retrieved via:
 ```python
+# Legacy path
+from core.performance import get_performance_monitor
+# New path
 from yosai_intel_dashboard.src.core.performance import get_performance_monitor
 summary = get_performance_monitor().get_metrics_summary()
 ```
@@ -1200,7 +1282,10 @@ clean_df = standardize_column_names(df)
 ```
 ### Using the mapping service
 ```python
+# Legacy path
 from mapping import create_mapping_service
+# New path
+from yosai_intel_dashboard.src.mapping import create_mapping_service
 
 service = create_mapping_service(storage_type="memory")
 result = service.process_upload(df, "sample.csv")
