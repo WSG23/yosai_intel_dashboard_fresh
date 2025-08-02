@@ -786,6 +786,44 @@ def update_compliance_metrics(n):
     except Exception as e:
         return "Error", "Error", "Error", "Error"
 
+# -----------------------------------------------------------------------------
+# DPIA assessment workflow
+# -----------------------------------------------------------------------------
+
+from database.secure_exec import execute_command
+
+def demo_dpia_workflow():
+    """Example flow for creating and approving a DPIA"""
+    container = Container()
+    dpia_service = container.get('dpia_service')
+    db = container.get('database')
+
+    # 1. Create assessment with built-in risk scoring
+    assessment = dpia_service.assess_processing_activity(
+        activity_name="facial_recognition_pipeline",
+        data_types=["biometric_templates", "facial_recognition_data"],
+        processing_purposes=["security_monitoring"],
+        data_subjects_count=5000,
+        geographic_scope=["EU"],
+        automated_processing=True,
+        third_party_sharing=False,
+        retention_period_months=12,
+    )
+
+    # 2. Generate DPIA report from template
+    report = dpia_service.generate_dpia_report(assessment["assessment_id"])
+
+    # 3. Review and approve assessment
+    execute_command(
+        db,
+        """UPDATE dpia_reports
+            SET status = 'approved', approved_by = %s
+            WHERE dpia_id = %s""",
+        ("dpo_user", report["dpia_id"]),
+    )
+
+    return report
+
 
 # =============================================================================
 # STEP 6: Deployment configuration
