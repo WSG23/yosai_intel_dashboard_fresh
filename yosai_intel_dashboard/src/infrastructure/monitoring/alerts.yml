@@ -11,3 +11,5 @@ groups:
       severity: warning
     annotations:
       summary: Replication lag to TimescaleDB exceeds 60 seconds
+      channels:
+        - performance-alerts
