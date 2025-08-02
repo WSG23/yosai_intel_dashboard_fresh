@@ -193,6 +193,14 @@ class DynamicConfigManager(BaseConfigLoader):
         if ai_threshold is not None:
             self.performance.ai_confidence_threshold = int(ai_threshold)
 
+        profiling_enabled = os.getenv("PERFORMANCE_PROFILING_ENABLED")
+        if profiling_enabled is not None:
+            self.performance.profiling_enabled = profiling_enabled.lower() in (
+                "1",
+                "true",
+                "yes",
+            )
+
         mem_thresh = os.getenv("MEMORY_THRESHOLD_MB")
         if mem_thresh is not None:
             value = int(mem_thresh)
