@@ -1,7 +1,7 @@
 import os
 import time
 
-from core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
+from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
 
 manager = InMemoryCacheManager(CacheConfig())
 

@@ -1,4 +1,4 @@
-from core.performance import profiler, get_performance_monitor
+from yosai_intel_dashboard.src.core.performance import profiler, get_performance_monitor
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 
 

@@ -87,7 +87,7 @@ if "flask_apispec" not in sys.modules:
         doc=lambda *a, **k: (lambda f: f)
     )
 
-from error_handling import ErrorHandler
+from yosai_intel_dashboard.src.error_handling import ErrorHandler
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from yosai_intel_dashboard.src.services import mappings_endpoint
 

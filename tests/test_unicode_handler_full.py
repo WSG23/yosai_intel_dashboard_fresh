@@ -6,7 +6,7 @@ import pandas as pd
 
 from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
-from core.unicode import (
+from yosai_intel_dashboard.src.core.unicode import (
     ChunkedUnicodeProcessor,
     UnicodeProcessor,
     clean_unicode_text,

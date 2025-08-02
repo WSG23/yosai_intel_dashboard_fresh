@@ -20,7 +20,7 @@ spec.loader.exec_module(_cfg_module)  # type: ignore
 create_config_manager = _cfg_module.create_config_manager
 
 from yosai_intel_dashboard.src.infrastructure.config.config_validator import ConfigValidator
-from core.exceptions import ConfigurationError
+from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
 
 
 def _write(tmp_path, text: str) -> str:

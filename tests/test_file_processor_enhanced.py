@@ -7,7 +7,7 @@ from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 from tests.import_helpers import safe_import, import_optional
 
 fake_cfg = FakeConfiguration()
-from services.data_enhancer.mapping_utils import (
+from yosai_intel_dashboard.src.services.data_enhancer.mapping_utils import (
     apply_fuzzy_column_matching,
     get_mapping_suggestions,
 )

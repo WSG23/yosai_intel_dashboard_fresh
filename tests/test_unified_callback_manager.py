@@ -4,8 +4,8 @@ import time
 import pytest
 from dash import Dash
 
-from core import TrulyUnifiedCallbacks
-from core.error_handling import error_handler
+from yosai_intel_dashboard.src.core import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.core.error_handling import error_handler
 
 pytestmark = pytest.mark.usefixtures("fake_dash")
 

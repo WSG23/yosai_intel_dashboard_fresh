@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from core.monitoring.user_experience_metrics import AlertConfig, AlertDispatcher
+from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import AlertConfig, AlertDispatcher
 
 
 class DummyResp:

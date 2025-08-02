@@ -1,6 +1,6 @@
 import pytest
 
-from services.analytics import timescale_queries as tq
+from yosai_intel_dashboard.src.services.analytics import timescale_queries as tq
 
 
 def test_build_queries():

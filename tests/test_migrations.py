@@ -1,6 +1,6 @@
 import pytest
 
-from services.database.migrations import MigrationManager
+from yosai_intel_dashboard.src.services.database.migrations import MigrationManager
 
 
 class Dummy:

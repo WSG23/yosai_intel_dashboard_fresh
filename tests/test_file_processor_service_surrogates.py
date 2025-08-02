@@ -10,7 +10,7 @@ spec = importlib.util.spec_from_file_location(
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 FileProcessorService = module.FileProcessorService
-from core.unicode import sanitize_unicode_input
+from yosai_intel_dashboard.src.core.unicode import sanitize_unicode_input
 
 
 def test_decode_with_surrogate_pairs():

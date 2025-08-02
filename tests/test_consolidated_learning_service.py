@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from services.learning.src.api.consolidated_service import ConsolidatedLearningService
+from yosai_intel_dashboard.src.services.learning.src.api.consolidated_service import ConsolidatedLearningService
 
 
 class TestConsolidatedLearningService:
@@ -85,7 +85,7 @@ class TestConsolidatedLearningService:
 
     def test_apply_to_global_store(self):
         """Applying learned mappings should update the global store."""
-        from services.ai_mapping_store import ai_mapping_store
+        from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
 
         df = pd.DataFrame({"door_id": ["door_1"]})
         mappings = {"door_1": {"floor": 2}}

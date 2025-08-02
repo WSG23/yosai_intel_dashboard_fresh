@@ -23,7 +23,7 @@ sys.modules["yosai_intel_dashboard"].__path__ = [str(Path(__file__).resolve().pa
 import werkzeug
 from flask import Flask, jsonify
 
-from error_handling import ErrorHandler
+from yosai_intel_dashboard.src.error_handling import ErrorHandler
 from tests.stubs.flask_wtf import CSRFProtect, generate_csrf
 
 

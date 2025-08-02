@@ -5,7 +5,7 @@ Complete Integration Tests for Analytics System
 import pandas as pd
 import pytest
 
-from services import create_analytics_service, get_analytics_service
+from yosai_intel_dashboard.src.services import create_analytics_service, get_analytics_service
 from yosai_intel_dashboard.src.core.domain.entities import ModelFactory
 
 
@@ -45,7 +45,7 @@ def test_model_factory_absent(monkeypatch):
     """ModelFactory gracefully handles missing registry entry"""
     from importlib import reload
 
-    import services.registry as reg
+    import yosai_intel_dashboard.src.services as services.registry as reg
 
     original = reg.get_service
 

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from core import performance
+from yosai_intel_dashboard.src.core import performance
 
 spec = importlib.util.spec_from_file_location(
     "ai_processor",
@@ -12,7 +12,7 @@ spec = importlib.util.spec_from_file_location(
 ai_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ai_module)
 AIColumnMapperAdapter = ai_module.AIColumnMapperAdapter
-from services.mapping.metrics import get_mapping_accuracy_summary
+from yosai_intel_dashboard.src.services.mapping.metrics import get_mapping_accuracy_summary
 
 
 class DummyAdapter:

@@ -17,7 +17,7 @@ def add_missing_analytics_methods():
 
     try:
         # First, let's check what methods are currently in UploadAnalyticsProcessor
-        from services.upload_processing import UploadAnalyticsProcessor
+        from yosai_intel_dashboard.src.services.upload_processing import UploadAnalyticsProcessor
 
         processor = UploadAnalyticsProcessor()
         current_methods = [

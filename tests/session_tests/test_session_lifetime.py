@@ -43,7 +43,7 @@ class FakeConfiguration(ConfigurationProtocol):
         return {"valid": True}
 
 
-from core.auth import User, _apply_session_timeout, _determine_session_timeout
+from yosai_intel_dashboard.src.core.auth import User, _apply_session_timeout, _determine_session_timeout
 
 
 def test_determine_session_timeout(monkeypatch):

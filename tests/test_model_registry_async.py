@@ -11,7 +11,7 @@ stub_pkg = types.ModuleType("services")
 stub_pkg.__path__ = [str(services_path)]
 safe_import('services', stub_pkg)
 
-from services.common.model_registry import ModelRegistry
+from yosai_intel_dashboard.src.services.common.model_registry import ModelRegistry
 
 
 class DummyResponse:

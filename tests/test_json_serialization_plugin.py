@@ -12,13 +12,13 @@ import pytest
 from flask import Flask
 
 from config import create_config_manager
-from core.json_serialization_plugin import (
+from yosai_intel_dashboard.src.core.json_serialization_plugin import (
     JsonCallbackService,
     JsonSerializationConfig,
     JsonSerializationPlugin,
     JsonSerializationService,
 )
-from core.plugins.manager import ThreadSafePluginManager as PluginManager
+from yosai_intel_dashboard.src.core.plugins.manager import ThreadSafePluginManager as PluginManager
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 # Legacy DI tests were skipped previously. Run them now.
