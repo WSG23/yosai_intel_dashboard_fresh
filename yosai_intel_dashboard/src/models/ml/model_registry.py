@@ -48,6 +48,19 @@ class ModelRecord(Base):
     is_active = Column(Boolean, default=False)
 
 
+class PredictionExplanationRecord(Base):
+    """ORM model for storing prediction explanations."""
+
+    __tablename__ = "prediction_explanations"
+
+    id = Column(Integer, primary_key=True)
+    prediction_id = Column(String(64), unique=True, nullable=False)
+    model_name = Column(String(128), nullable=False)
+    model_version = Column(String(20), nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    explanation = Column(JSON, nullable=False)
+
+
 class ModelRegistry:
     """Simple model registry using SQLAlchemy and S3 storage."""
 
@@ -242,9 +255,52 @@ class ModelRegistry:
 
         return compute_psi(base, current, bins=bins)
 
+    # --------------------------------------------------------------
+    def log_explanation(
+        self,
+        prediction_id: str,
+        model_name: str,
+        model_version: str,
+        explanation: Dict[str, Any],
+    ) -> None:
+        """Persist a SHAP explanation record."""
+        session = self._session()
+        try:
+            record = PredictionExplanationRecord(
+                prediction_id=prediction_id,
+                model_name=model_name,
+                model_version=model_version,
+                explanation=explanation,
+            )
+            session.add(record)
+            session.commit()
+        finally:
+            session.close()
+
+    def get_explanation(self, prediction_id: str) -> Dict[str, Any] | None:
+        """Retrieve a stored explanation by prediction id."""
+        session = self._session()
+        try:
+            stmt = select(PredictionExplanationRecord).where(
+                PredictionExplanationRecord.prediction_id == prediction_id
+            )
+            record = session.execute(stmt).scalar_one_or_none()
+            if record is None:
+                return None
+            return {
+                "prediction_id": record.prediction_id,
+                "model_name": record.model_name,
+                "model_version": record.model_version,
+                "timestamp": record.timestamp,
+                "explanation": record.explanation,
+            }
+        finally:
+            session.close()
+
 
 __all__ = [
     "ModelRegistry",
     "ModelRecord",
+    "PredictionExplanationRecord",
     "Base",
 ]
