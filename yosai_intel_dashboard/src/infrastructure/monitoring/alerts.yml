@@ -11,3 +11,14 @@ groups:
       severity: warning
     annotations:
       summary: Replication lag to TimescaleDB exceeds 60 seconds
+- name: performance-budgets
+  rules:
+  # Alert when a request's latency exceeds its configured budget
+  - alert: PerformanceBudgetExceeded
+    expr: increase(performance_budget_violation_total[5m]) > 0
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: >-
+        Performance budget exceeded for {{ $labels.endpoint }} at {{ $labels.percentile }}

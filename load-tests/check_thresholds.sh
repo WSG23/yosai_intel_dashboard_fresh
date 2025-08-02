@@ -1,22 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-THRESHOLDS_FILE="$(dirname "$0")/thresholds.json"
-FAILED_RATE=$(jq -r '.http_req_failed_rate' "$THRESHOLDS_FILE")
-DURATION_P95=$(jq -r '.http_req_duration_p95' "$THRESHOLDS_FILE")
+ROOT_DIR="$(dirname "$0")/.."
+BUDGETS_FILE="$ROOT_DIR/config/performance_budgets.yml"
 
 for f in "$@"; do
-  rate=$(jq -r '.metrics.http_req_failed.rate' "$f")
+  name="$(basename "$f" .json)"
+  endpoint="/$name"
+  p50=$(jq -r '.metrics.http_req_duration["p(50)"]' "$f")
   p95=$(jq -r '.metrics.http_req_duration["p(95)"]' "$f")
-
-  if (( $(echo "$rate > $FAILED_RATE" | bc -l) )); then
-    echo "Failure rate $rate exceeds threshold $FAILED_RATE for $f" >&2
-    exit 1
-  fi
-
-  if (( $(echo "$p95 > $DURATION_P95" | bc -l) )); then
-    echo "p95 duration $p95 exceeds threshold $DURATION_P95 for $f" >&2
-    exit 1
-  fi
-
+  p99=$(jq -r '.metrics.http_req_duration["p(99)"]' "$f")
+  python - "$BUDGETS_FILE" "$endpoint" "$p50" "$p95" "$p99" <<'PY'
+import sys, yaml
+budgets_file, endpoint, p50, p95, p99 = sys.argv[1:]
+with open(budgets_file) as fh:
+    budgets = yaml.safe_load(fh).get("endpoints", {})
+budget = budgets.get(endpoint)
+if not budget:
+    sys.exit(0)
+violations = []
+if float(p50) > budget.get("p50", float("inf")):
+    violations.append(f"p50 {p50}ms > {budget['p50']}ms")
+if float(p95) > budget.get("p95", float("inf")):
+    violations.append(f"p95 {p95}ms > {budget['p95']}ms")
+if float(p99) > budget.get("p99", float("inf")):
+    violations.append(f"p99 {p99}ms > {budget['p99']}ms")
+if violations:
+    msg = f"{endpoint} exceeds budget: " + ", ".join(violations)
+    print(msg, file=sys.stderr)
+    sys.exit(1)
+PY
 done

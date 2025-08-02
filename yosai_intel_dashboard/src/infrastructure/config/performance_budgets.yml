@@ -1,0 +1,13 @@
+endpoints:
+  /health:
+    p50: 50
+    p95: 100
+    p99: 200
+  /analytics:
+    p50: 100
+    p95: 200
+    p99: 400
+  /events:
+    p50: 20
+    p95: 50
+    p99: 100
