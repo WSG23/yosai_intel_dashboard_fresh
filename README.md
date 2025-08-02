@@ -1192,7 +1192,7 @@ The running application exposes Swagger-based API docs at `http://<host>:<port>/
 - Ops reference: [docs/operations_guide.md](docs/operations_guide.md)
 - Callback migration: [docs/migration_callback_system.md](docs/migration_callback_system.md)
 
-Update the spec by running `go run ./api/openapi` which writes `docs/openapi.json` for the UI.
+Update the spec by running `go run ./api/openapi` which writes `docs/api/v2/openapi.json` for the UI.
 
 ### API Examples
 

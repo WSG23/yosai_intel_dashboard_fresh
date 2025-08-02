@@ -2,7 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
 from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager
@@ -26,18 +26,35 @@ class AnalyticsQuery(BaseModel):
     facility_id: Optional[str] = Query(default="default")
     range: Optional[str] = Query(default="30d")
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"facility_id": "fac-123", "range": "7d"}
+            ]
+        }
+    )
+
 
 @router.get("/patterns")
 async def get_patterns_analysis(
     query: AnalyticsQuery = Depends(),
     _: None = Depends(require_permission("analytics.read")),
 ):
+    """Summarize access patterns.
+
+    Fetch aggregated analytics for the requested ``facility_id`` and time ``range``
+    and return the cached summary payload.
+    """
     data = _cached_service.get_analytics_summary_sync(query.facility_id, query.range)
     return JSONResponse(content=data)
 
 
 @router.get("/sources")
 async def get_data_sources(_: None = Depends(require_permission("analytics.read"))):
+    """List available analytics sources.
+
+    Currently returns a static list with test values for demonstration purposes.
+    """
     return JSONResponse(
         content={"sources": [{"value": "test", "label": "Test Data Source"}]}
     )
@@ -45,6 +62,11 @@ async def get_data_sources(_: None = Depends(require_permission("analytics.read"
 
 @router.get("/health")
 async def analytics_health(_: None = Depends(require_permission("analytics.read"))):
+    """Report analytics service health.
+
+    Provides a minimal health payload indicating the analytics component is
+    reachable.
+    """
     return JSONResponse(content={"status": "healthy", "service": "minimal"})
 
 
@@ -54,6 +76,14 @@ async def get_chart_data(
     query: AnalyticsQuery = Depends(),
     _: None = Depends(require_permission("analytics.read")),
 ):
+    """Retrieve formatted chart data.
+
+    Parameters:
+    - **chart_type**: Either ``patterns`` or ``timeline`` specifying the desired
+      chart variant.
+    - **query**: Common analytics filters including ``facility_id`` and
+      reporting ``range``.
+    """
     data = _cached_service.get_analytics_summary_sync(query.facility_id, query.range)
     if chart_type == "patterns":
         return JSONResponse(content={"type": "patterns", "data": data})

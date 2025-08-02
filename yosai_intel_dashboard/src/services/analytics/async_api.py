@@ -33,6 +33,7 @@ from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
 )
+from shared.errors.types import ErrorCode, ErrorResponse
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,14 @@ app = FastAPI(dependencies=[Depends(require_permission("analytics.read"))])
 register_health_check(app, "cache", lambda _: True)
 register_health_check(app, "event_bus", lambda _: True)
 setup_health_checks(app)
+
+
+ERROR_RESPONSES = {
+    400: {"model": ErrorResponse, "description": "Bad Request"},
+    401: {"model": ErrorResponse, "description": "Unauthorized"},
+    404: {"model": ErrorResponse, "description": "Not Found"},
+    500: {"model": ErrorResponse, "description": "Internal Server Error"},
+}
 
 
 async def get_service() -> CachedAnalyticsService:
@@ -118,7 +127,7 @@ class ReportRequest(BaseModel):
     params: dict[str, Any] | None = None
 
 
-@app.get("/api/v1/analytics/patterns")
+@app.get("/api/v1/analytics/patterns", responses=ERROR_RESPONSES)
 async def get_patterns_analysis(
     query: AnalyticsQuery = Depends(),
     service: CachedAnalyticsService = Depends(get_service),
@@ -127,19 +136,19 @@ async def get_patterns_analysis(
     return JSONResponse(content=data)
 
 
-@app.get("/api/v1/analytics/sources")
+@app.get("/api/v1/analytics/sources", responses=ERROR_RESPONSES)
 async def get_data_sources() -> JSONResponse:
     return JSONResponse(
         content={"sources": [{"value": "test", "label": "Test Data Source"}]}
     )
 
 
-@app.get("/api/v1/analytics/health")
+@app.get("/api/v1/analytics/health", responses=ERROR_RESPONSES)
 async def analytics_health() -> JSONResponse:
     return JSONResponse(content={"status": "healthy", "service": "minimal"})
 
 
-@app.get("/api/v1/analytics/chart/{chart_type}")
+@app.get("/api/v1/analytics/chart/{chart_type}", responses=ERROR_RESPONSES)
 async def get_chart_data(
     chart_type: str,
     query: AnalyticsQuery = Depends(),
@@ -155,7 +164,7 @@ async def get_chart_data(
     raise http_error(ErrorCode.INVALID_INPUT, "Unknown chart type", 400)
 
 
-@app.get("/api/v1/export/analytics/json")
+@app.get("/api/v1/export/analytics/json", responses=ERROR_RESPONSES)
 async def export_analytics_json(
     query: AnalyticsQuery = Depends(),
     service: CachedAnalyticsService = Depends(get_service),
@@ -168,7 +177,7 @@ async def export_analytics_json(
     )
 
 
-@app.get("/api/v1/export/formats")
+@app.get("/api/v1/export/formats", responses=ERROR_RESPONSES)
 async def get_export_formats() -> JSONResponse:
     formats = [
         {"type": "csv", "name": "CSV", "description": "Comma-separated values"},
@@ -178,7 +187,7 @@ async def get_export_formats() -> JSONResponse:
     return JSONResponse(content={"formats": formats})
 
 
-@app.get("/api/v1/analytics/all")
+@app.get("/api/v1/analytics/all", responses=ERROR_RESPONSES)
 async def get_all_analytics(
     query: AnalyticsQuery = Depends(),
     service: CachedAnalyticsService = Depends(get_service),
@@ -187,7 +196,7 @@ async def get_all_analytics(
     return JSONResponse(content=data)
 
 
-@app.post("/api/v1/analytics/report")
+@app.post("/api/v1/analytics/report", responses=ERROR_RESPONSES)
 async def generate_report(
     req: ReportRequest,
     _: None = Depends(require_permission("analytics.read")),
