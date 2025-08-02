@@ -160,7 +160,7 @@ Aggregated counts are returned via `get_performance_monitor().get_deprecation_co
 Prioritise migrations by addressing functions with the highest counts first.
 Example alerting rules live in `monitoring/prometheus/rules/deprecation_alerts.yml`
 and a companion Grafana dashboard in
-`monitoring/grafana/dashboards/deprecation-usage.json`.
+`dashboards/grafana/deprecation-usage.json`.
 
 ### Logstash
 
