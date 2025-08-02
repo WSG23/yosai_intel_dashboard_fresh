@@ -1,0 +1,117 @@
+# Complete Compliance Framework Integration Guide
+
+## Overview
+
+This guide provides a consolidated approach for integrating compliance features adhering to the **General Data Protection Regulation (GDPR)** and the **Act on the Protection of Personal Information (APPI)**.
+
+### GDPR Highlights
+- Requires lawful, transparent processing of personal data.
+- Grants individuals rights such as access, rectification, deletion, and portability.
+- Mandates documentation and audit trails for data processing activities.
+
+### APPI Highlights
+- Applies to businesses handling personal information in Japan.
+- Emphasizes purpose limitation, security control measures, and anonymization procedures.
+- Grants data subjects rights to request disclosure, correction, and deletion of their data.
+
+## Integration Steps
+1. **Assess Requirements** – Identify data flows and classify personal data.
+2. **Install Plugin** – Place the `compliance_plugin` directory under the `plugins` folder.
+3. **Configure Database** – Apply the provided schema migrations.
+4. **Expose APIs** – Enable compliance endpoints in the service configuration.
+5. **Implement Consent Logic** – Utilize helper functions shown below.
+6. **Set Up Logging** – Forward audit logs to your central logging system.
+7. **Test and Monitor** – Execute automated tests and monitor for anomalies.
+
+## Database Schema
+```sql
+CREATE TABLE user_consent (
+    user_id UUID PRIMARY KEY,
+    consent_given BOOLEAN NOT NULL,
+    consent_timestamp TIMESTAMP NOT NULL
+);
+
+CREATE TABLE data_retention_policies (
+    policy_id SERIAL PRIMARY KEY,
+    data_category TEXT NOT NULL,
+    retention_period_days INT NOT NULL
+);
+
+CREATE TABLE audit_log (
+    log_id SERIAL PRIMARY KEY,
+    user_id UUID,
+    action TEXT NOT NULL,
+    timestamp TIMESTAMP NOT NULL,
+    details JSONB
+);
+```
+
+## API Endpoints
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET`  | `/compliance/consent/{user_id}` | Retrieve consent status |
+| `POST` | `/compliance/consent/{user_id}` | Update consent status |
+| `GET`  | `/compliance/retention/{category}` | Get retention policy |
+| `DELETE` | `/compliance/data/{user_id}` | Trigger data deletion |
+| `GET` | `/compliance/portability/{user_id}` | Export user data |
+| `GET` | `/compliance/audit` | Query audit logs |
+
+## Code Examples
+### Consent Management
+```python
+from compliance import consent
+
+# Record consent
+def record_consent(user_id: str):
+    consent.set_consent(user_id, True)
+```
+
+### Data Retention
+```python
+from compliance import retention
+
+# Apply retention policy
+retention.apply_policy("transactions")
+```
+
+### Right to Deletion
+```python
+from compliance import deletion
+
+def delete_user(user_id: str):
+    deletion.erase_user(user_id)
+```
+
+### Data Portability
+```python
+from compliance import portability
+
+# Generate portable data package
+portability.export_user_data(user_id)
+```
+
+### Audit Logging
+```python
+from compliance import audit
+
+audit.log_action(user_id, "export", {"size": "10MB"})
+```
+
+## Configuration
+```yaml
+compliance:
+  enable: true
+  audit_log_destination: syslog
+  retention_check_interval: "24h"
+```
+
+## Testing Guidelines
+- Run unit tests with `pytest plugins/compliance_plugin`.
+- Validate API endpoints using integration tests or Postman collections.
+- Simulate user requests for data access and deletion.
+
+## Troubleshooting
+- **Missing Tables**: Ensure migrations have run and the database is reachable.
+- **Permission Errors**: Verify service accounts have read/write access to compliance tables.
+- **Failed Exports**: Check connectivity to storage where export files are written.
+
