@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Simple hierarchical cache with two levels."""
+"""Simple hierarchical cache with three levels and basic metrics."""
 
 import asyncio
 import logging
@@ -10,16 +10,32 @@ from typing import Any, Dict, Optional
 from .base_model import BaseModel
 
 
+@dataclass
+class HierarchicalCacheConfig:
+    """Configuration for :class:`HierarchicalCacheManager`.
+
+    Values are loaded from environment variables with sensible defaults.
+    """
+
+    type: str = "hierarchical"
+    l1_size: int = int(os.getenv("CACHE_L1_SIZE", "1024"))
+    l2_host: str = os.getenv("CACHE_L2_HOST", "localhost")
+    l2_port: int = int(os.getenv("CACHE_L2_PORT", "6379"))
+    l2_ttl: int = int(os.getenv("CACHE_L2_TTL", "300"))
+    l3_path: str = os.getenv("CACHE_L3_PATH", "/tmp/yosai_cache.db")
+    l3_ttl: int = int(os.getenv("CACHE_L3_TTL", "3600"))
+
+
 class HierarchicalCacheManager(BaseModel):
-    """Manage a two-level in-memory cache."""
+    """Manage a three-level in-memory cache and record basic stats."""
+
 
     def __init__(
         self,
-        config: Optional[Any] = None,
+        config: HierarchicalCacheConfig | None = None,
         db: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
     ) -> None:
-        """Create the cache manager with optional config, DB and logger."""
         super().__init__(config, db, logger)
         self._level1: Dict[str, tuple[Any, Optional[float]]] = {}
         self._level2: Dict[str, tuple[Any, Optional[float]]] = {}
@@ -39,6 +55,7 @@ class HierarchicalCacheManager(BaseModel):
             if expiry is None or time.time() <= expiry:
                 return value
             del self._level2[key]
+
         return None
 
     async def set(
@@ -67,8 +84,58 @@ class HierarchicalCacheManager(BaseModel):
 
     async def clear(self) -> None:
         """Clear all cache levels."""
+
         self._level1.clear()
         self._level2.clear()
+        self._level3.clear()
+
+    def evict(self, key: str, *, level: int | None = None) -> None:
+        if level is None:
+            for lvl in (1, 2, 3):
+                self.evict(key, level=lvl)
+            return
+        cache = {1: self._level1, 2: self._level2, 3: self._level3}[level]
+        if key in cache:
+            del cache[key]
+            self._evictions[f"l{level}"] += 1
+
+    def stats(self) -> Dict[str, Dict[str, int]]:
+        return {
+            "l1": {
+                "hits": self._hits["l1"],
+                "misses": self._misses["l1"],
+                "evictions": self._evictions["l1"],
+            },
+            "l2": {
+                "hits": self._hits["l2"],
+                "misses": self._misses["l2"],
+                "evictions": self._evictions["l2"],
+            },
+            "l3": {
+                "hits": self._hits["l3"],
+                "misses": self._misses["l3"],
+                "evictions": self._evictions["l3"],
+            },
+        }
+
+
+    async def warm(self, keys: list[str], loader: Callable[[str], Any]) -> None:
+        """Pre-populate all cache tiers for the specified *keys*.
+
+        The *loader* callable is used to retrieve the value for each key. It can
+        be either a synchronous function or an async coroutine. Values are stored
+        in both cache levels.
+        """
+
+        async def _populate(key: str) -> None:
+            if inspect.iscoroutinefunction(loader):
+                value = await loader(key)
+            else:
+                value = await asyncio.to_thread(loader, key)
+            self.set(key, value, level=1)
+            self.set(key, value, level=2)
+
+        await asyncio.gather(*(_populate(k) for k in keys))
 
     def get_lock(self, key: str, timeout: int = 10) -> asyncio.Lock:
         """Return an asyncio lock for ``key``."""
@@ -100,4 +167,4 @@ class HierarchicalCacheManager(BaseModel):
         return asyncio.run(self.delete(key))
 
 
-__all__ = ["HierarchicalCacheManager"]
+__all__ = ["HierarchicalCacheConfig", "HierarchicalCacheManager"]

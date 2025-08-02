@@ -52,3 +52,4 @@ def test_sync_helpers():
     assert manager.get_sync("key") == "value"
     assert manager.delete_sync("key") is True
     assert manager.get_sync("key") is None
+
