@@ -30,3 +30,10 @@ if "services.resilience.metrics" not in sys.modules:
     )
     metrics_mod.circuit_breaker_state = lambda *a, **k: None
     sys.modules["services.resilience.metrics"] = metrics_mod
+
+if "hvac" not in sys.modules:
+    hvac_mod = importlib.util.module_from_spec(
+        importlib.machinery.ModuleSpec("hvac", None)
+    )
+    hvac_mod.Client = object  # minimal stub for tests
+    sys.modules["hvac"] = hvac_mod
