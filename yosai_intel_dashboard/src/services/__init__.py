@@ -38,6 +38,7 @@ else:
     from .event_publisher import publish_event
     from .explainability_service import ExplainabilityService
     from .helpers.database_initializer import initialize_database
+    from .query_optimizer import QueryOptimizer
     from .microservices_architect import MicroservicesArchitect, ServiceBoundary
     from .publishing_service import PublishingService
     from yosai_intel_dashboard.src.core.container import container
@@ -127,4 +128,5 @@ else:
         "ServiceBoundary",
         "ModelABTester",
         "ExplainabilityService",
+        "QueryOptimizer",
     ]

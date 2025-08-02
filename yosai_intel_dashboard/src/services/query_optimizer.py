@@ -1,75 +1,101 @@
-"""N+1 query detection utilities."""
-
 from __future__ import annotations
 
-import logging
-import traceback
-from collections import defaultdict
-from contextvars import ContextVar
-from typing import Dict, List
+"""Analyze query plans and suggest potential indexes."""
 
-from yosai_intel_dashboard.src.core.performance import profiler
+import logging
+import re
+from typing import Any, Dict, Iterable, List, Sequence
+
+from database.secure_exec import execute_query
 
 
 logger = logging.getLogger(__name__)
 
 
-# Context variable to store queries executed during a request
-_request_queries: ContextVar[Dict[str, List[str]]] = ContextVar(
-    "n_plus_one_queries", default=None
-)
+class QueryOptimizer:
+    """Basic query plan analyzer that recommends indexes."""
+
+    def __init__(self, connection: Any | None = None) -> None:
+        if connection is None:
+            from database.connection import create_database_connection
+
+            connection = create_database_connection()
+        self.connection = connection
+
+    # ------------------------------------------------------------------
+    def analyze_plan(self, query: str) -> List[str]:
+        """Return the raw query plan for ``query``."""
+        try:
+            conn = self.connection
+            name = conn.__class__.__name__
+            if name == "SQLiteConnection":
+                rows = execute_query(conn, f"EXPLAIN QUERY PLAN {query}")
+                return [row.get("detail", "") for row in rows]
+            if name == "PostgreSQLConnection":
+                rows = execute_query(conn, f"EXPLAIN {query}")
+                return [row.get("QUERY PLAN", "") for row in rows]
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.warning("Failed to analyze plan: %s", exc)
+        return []
+
+    # ------------------------------------------------------------------
+    def suggest_indexes(self, query: str) -> List[str]:
+        """Return CREATE INDEX statements based on the query plan."""
+        plan = self.analyze_plan(query)
+        table, columns = self._extract_table_and_columns(query)
+        statements: List[str] = []
+        for col in columns:
+            if self._needs_index(table, col, plan):
+                statements.append(f"CREATE INDEX idx_{table}_{col} ON {table} ({col})")
+        return statements
+
+    # ------------------------------------------------------------------
+    def generate_regression_report(self, query: str) -> Dict[str, Any]:
+        """Return a regression report including index suggestions."""
+        plan = self.analyze_plan(query)
+        suggestions = self.suggest_indexes(query)
+        return {"query": query, "plan": plan, "suggested_indexes": suggestions}
+
+    # ------------------------------------------------------------------
+    _TABLE_RE = re.compile(r"FROM\s+([\w\.]+)", re.IGNORECASE)
+    _WHERE_RE = re.compile(r"WHERE\s+(.+)", re.IGNORECASE)
+    _COND_RE = re.compile(r"\b(\w+)\s*=\s*[^\s]+", re.IGNORECASE)
+
+    def _extract_table_and_columns(self, query: str) -> tuple[str, Sequence[str]]:
+        table_match = self._TABLE_RE.search(query)
+        table = table_match.group(1) if table_match else ""
+        where_match = self._WHERE_RE.search(query)
+        cols: List[str] = []
+        if where_match:
+            for cond in where_match.group(1).split("AND"):
+                m = self._COND_RE.search(cond)
+                if m:
+                    cols.append(m.group(1))
+        return table, cols
+
+    # ------------------------------------------------------------------
+    def _needs_index(self, table: str, column: str, plan: Iterable[str]) -> bool:
+        for line in plan:
+            if column in line and "INDEX" in line.upper():
+                return False
+        try:
+            sql = (
+                f"SELECT COUNT(DISTINCT {column}) AS distinct, COUNT(*) AS total "
+                f"FROM {table}"
+            )
+            stats = execute_query(self.connection, sql)
+            if not stats:
+                return False
+            row = stats[0]
+            distinct = row.get("distinct") or row.get("DISTINCT") or 0
+            total = row.get("total") or row.get("TOTAL") or 0
+            if not total:
+                return False
+            return (distinct / total) > 0.1
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.warning("Failed to fetch stats for %s.%s: %s", table, column, exc)
+            return False
 
 
-def _normalize_query(query: str) -> str:
-    """Normalize query string to compare structural similarity."""
-    import re
+__all__ = ["QueryOptimizer"]
 
-    normalized = re.sub(r"'[^']*'", "'?'", query)
-    normalized = re.sub(r"\b\d+\b", "?", normalized)
-    normalized = re.sub(r"\s+", " ", normalized).strip()
-    return normalized
-
-
-def start_request_tracking() -> None:
-    """Begin tracking queries for the current request."""
-    _request_queries.set(defaultdict(list))
-
-
-def track_query(query: str) -> None:
-    """Record a query execution for N+1 detection."""
-    queries = _request_queries.get()
-    if queries is None:
-        return
-
-    pattern = _normalize_query(query)
-    stack = "".join(traceback.format_stack(limit=5))
-    queries[pattern].append(stack)
-
-
-def end_request_tracking(endpoint: str) -> Dict[str, List[str]]:
-    """Stop tracking and report any N+1 query patterns.
-
-    Returns mapping of offending query pattern to stack traces.
-    """
-
-    queries = _request_queries.get()
-    if not queries:
-        return {}
-
-    n_plus_one = {q: stacks for q, stacks in queries.items() if len(stacks) > 1}
-    if n_plus_one:
-        for query, stacks in n_plus_one.items():
-            profiler.record_n_plus_one(endpoint, query, stacks)
-            logger.warning("N+1 query detected on %s: %s", endpoint, query)
-            for stack in stacks:
-                logger.debug("Stack trace:\n%s", stack)
-
-    _request_queries.set(None)
-    return n_plus_one
-
-
-__all__ = [
-    "start_request_tracking",
-    "track_query",
-    "end_request_tracking",
-]
