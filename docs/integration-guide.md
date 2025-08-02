@@ -173,6 +173,57 @@ def upgrade_existing_people_table():
     return upgrade_sql
 
 
+
+# =============================================================================
+# Cross-Border Transfer Tracking
+# =============================================================================
+
+def create_cross_border_transfer_table():
+    """
+    SQL schema for tracking cross-border data transfers.
+    """
+    schema_sql = """
+    CREATE TABLE IF NOT EXISTS cross_border_transfer (
+        id SERIAL PRIMARY KEY,
+        destination VARCHAR(100) NOT NULL,
+        safeguard VARCHAR(255) NOT NULL,
+        approval BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+    """
+    return schema_sql
+
+from plugins.compliance_plugin.services.cross_border_transfer_service import (
+    TransferMechanism,
+)
+
+def example_transfer_assessment():
+    """
+    Demonstrate assessing a transfer and using SCC templates.
+    """
+    container = Container()
+    transfer_service = container.get('cross_border_transfer_service')
+
+    assessment = transfer_service.assess_transfer_legality(
+        destination_country='BR',
+        data_types=['profile_data'],
+        transfer_purpose='analytics',
+        data_subject_count=1000,
+        recipient_entity='AnalyticsPartner',
+        transfer_relationship='controller_to_processor',
+    )
+
+    if assessment['has_adequacy_decision']:
+        print('Destination covered by adequacy decision')
+    else:
+        scc_template = transfer_service._scc_templates['controller_to_processor']
+        transfer_service.register_transfer_activity(
+            assessment_id=assessment['assessment_id'],
+            transfer_mechanism=TransferMechanism.STANDARD_CONTRACTUAL_CLAUSES,
+            transfer_details={'scc_template': scc_template},
+            authorized_by='dpo@yourcompany.com',
+        )
+
 # =============================================================================
 # STEP 3: Enhanced service layer with compliance integration
 # =============================================================================
