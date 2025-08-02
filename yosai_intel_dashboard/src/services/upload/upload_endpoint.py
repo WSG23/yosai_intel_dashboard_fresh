@@ -45,7 +45,11 @@ def create_upload_blueprint(
     @validate_input(UploadRequestSchema)
     @validate_output(UploadResponseSchema)
     def upload_files(payload: UploadRequestSchema):
-        """Handle file upload and return expected structure for React frontend"""
+        """Process an uploaded file.
+
+        Validates the incoming data or multipart upload, stores the contents for
+        background processing and returns a job identifier.
+        """
         try:
             token = (
                 request.headers.get("X-CSRFToken")
@@ -119,7 +123,11 @@ def create_upload_blueprint(
     )
     @validate_output(StatusSchema)
     def upload_status(job_id: str):
-        """Return background processing status for ``job_id``."""
+        """Fetch upload processing status.
+
+        Looks up the current state for the provided ``job_id`` and returns the
+        processing metadata.
+        """
         status = file_processor.get_job_status(job_id)
         return status
 
