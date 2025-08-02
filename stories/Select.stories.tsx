@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { Select } from '../yosai_intel_dashboard/src/adapters/ui/components/shared/Select';
+import { Select } from '../yosai_intel_dashboard/src/adapters/ui/components/select/Select';
 
 const fruitOptions = [
   { value: 'apple', label: 'Apple' },
