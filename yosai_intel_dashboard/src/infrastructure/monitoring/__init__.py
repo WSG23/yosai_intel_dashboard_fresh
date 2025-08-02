@@ -15,6 +15,7 @@ __all__ = [
     "ModelMonitoringService",
     "ModelMetrics",
     "get_model_performance_monitor",
+    "ModelPerformanceTracker",
     "RealTimeUIMonitor",
     "get_ui_monitor",
     "check_cluster_health",
@@ -24,6 +25,7 @@ __all__ = [
     "InferenceDriftJob",
     "request_duration",
     "ABTest",
+
 ]
 
 
@@ -68,6 +70,10 @@ def __getattr__(name: str):
         )
 
         return locals()[name]
+    if name == "ModelPerformanceTracker":
+        from .model_performance_tracker import ModelPerformanceTracker
+
+        return ModelPerformanceTracker
     if name == "ModelMonitoringService":
         from .model_monitoring_service import ModelMonitoringService
 
@@ -100,4 +106,5 @@ def __getattr__(name: str):
         from .ab_testing import ABTest
 
         return ABTest
+
     raise AttributeError(name)

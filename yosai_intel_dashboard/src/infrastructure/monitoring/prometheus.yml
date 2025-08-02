@@ -33,6 +33,10 @@ scrape_configs:
   static_configs:
   - targets: ['event-processing:2112']
 
+- job_name: 'model-metrics'
+  static_configs:
+  - targets: ['model-metrics:8005']
+
 - job_name: 'grafana'
   kubernetes_sd_configs:
   - role: pod

@@ -49,6 +49,14 @@ from yosai_intel_dashboard.src.core.performance import PerformanceMonitor
 
 This consolidation reduces duplication and ensures a single canonical import path.
 
+Legacy top-level packages such as `adapters`, `file_processing`,
+`infrastructure`, `models`, and `utils` have now been removed. Import these
+modules via the canonical package instead, for example:
+
+```python
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
+```
+
 ## Architecture Overview
 
 This project follows a fully modular design built around a dependency injection container.  Detailed diagrams explain how the pieces fit together:
