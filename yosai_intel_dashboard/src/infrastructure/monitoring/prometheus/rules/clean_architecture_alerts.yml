@@ -1,0 +1,24 @@
+groups:
+- name: clean_architecture
+  rules:
+  - alert: HighImportErrorRate
+    expr: rate(import_errors_total[5m]) > 0.1
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: High import error rate detected
+  - alert: CleanArchitectureValidationFailing
+    expr: structure_validation_status == 0
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Clean architecture validation failing
+  - alert: LegacyImportUsageIncreasing
+    expr: rate(legacy_import_usage_total[5m]) > 0
+    for: 10m
+    labels:
+      severity: info
+    annotations:
+      summary: Legacy import usage detected

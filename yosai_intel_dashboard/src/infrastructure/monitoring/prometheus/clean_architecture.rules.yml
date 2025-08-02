@@ -1,0 +1,13 @@
+groups:
+- name: clean_architecture_metrics
+  rules:
+  - record: import_resolution_seconds:p95
+    expr: histogram_quantile(0.95, rate(import_resolution_seconds_bucket[5m]))
+  - record: module_loading_error_rate:5m
+    expr: rate(module_loading_errors_total[5m])
+  - record: clean_architecture_validation_status
+    expr: structure_validation_status
+  - record: legacy_import_usage_rate:5m
+    expr: rate(legacy_import_usage_total[5m])
+  - record: api_response_time_p95:5m
+    expr: histogram_quantile(0.95, rate(api_response_seconds_bucket[5m]))

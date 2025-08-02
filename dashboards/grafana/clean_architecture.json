@@ -1,0 +1,48 @@
+{
+  "uid": "clean-arch",
+  "title": "Clean Architecture Migration",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Import Resolution Time (p95)",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "import_resolution_seconds:p95", "legendFormat": "p95"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Module Loading Errors",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "module_loading_error_rate:5m", "legendFormat": "errors/s"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Legacy vs New Import Usage",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "rate(legacy_import_usage_total[5m])", "legendFormat": "legacy"},
+        {"expr": "rate(clean_import_usage_total[5m])", "legendFormat": "new"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "System Resource Usage",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "sum(rate(container_cpu_usage_seconds_total{pod=~\"yosai-dashboard.*\"}[5m]))", "legendFormat": "cpu"},
+        {"expr": "sum(container_memory_usage_bytes{pod=~\"yosai-dashboard.*\"})", "legendFormat": "memory"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "API Response Time P95",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "api_response_time_p95:5m", "legendFormat": "p95"}
+      ]
+    }
+  ]
+}
