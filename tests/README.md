@@ -24,6 +24,15 @@ pip install -r tests/requirements-extra.txt
 
 When the optional packages are missing, tests depending on them are automatically skipped.
 
+## Test Configuration
+
+The test environment is initialised by `tests/config.py`. Importing this module
+adds the project root to `sys.path`, sets a few required environment variables
+and registers lightweight stubs for optional dependencies like `hvac`,
+`cryptography` and `boto3`. `tests/conftest.py` loads it automatically so the
+fixtures it exposes (for example `fake_unicode_processor` and `temp_dir`) are
+available to all tests.
+
 ## Migrating Test Imports
 
 The helper script `tools/migrate_tests.py` updates test files to use the
@@ -40,11 +49,10 @@ Remove the flag to apply changes to the repository:
 python tools/migrate_tests.py
 ```
 
-Before running the suite locally, enable the lightweight service mode so heavy
-dependencies are stubbed out:
+`tests/config.py` enables the lightweight service mode by default so heavy
+dependencies are stubbed out. Run the suite with:
 
 ```bash
-export LIGHTWEIGHT_SERVICES=1
 pytest
 ```
 

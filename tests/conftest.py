@@ -4,7 +4,7 @@ from __future__ import annotations
 import importlib.util
 import warnings
 
-from . import optional_dependency_config  # registers stubs
+pytest_plugins = ["tests.config"]
 
 _missing_packages = [
     pkg for pkg in ("yaml", "psutil") if importlib.util.find_spec(pkg) is None

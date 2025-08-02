@@ -91,15 +91,20 @@ repository root is on `PYTHONPATH` or install the project in editable mode:
 pip install -e .
 ```
 
+The module `tests/config.py` – loaded automatically by `pytest` – appends the
+project root to `sys.path`, sets minimal environment variables and registers
+lightweight stubs for optional dependencies. Importing it manually is rarely
+necessary, but it can be handy when running individual files.
+
 Without one of these steps you may encounter `ModuleNotFoundError` during test
 collection.
 
 ## 3. Run the Tests
 
-Execute the full suite with coverage reporting. Enable the lightweight service
-implementations so heavy optional dependencies are not required:
+Execute the full suite with coverage reporting. `tests/config.py` enables the
+lightweight service implementations so heavy optional dependencies are not
+required:
 ```bash
-export LIGHTWEIGHT_SERVICES=1
 pytest --cov --cov-fail-under=80
 ```
 
