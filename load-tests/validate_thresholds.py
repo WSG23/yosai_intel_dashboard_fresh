@@ -4,13 +4,13 @@ from __future__ import annotations
 """Validate Locust metrics against threshold targets."""
 
 import csv
-import json
 import sys
-from pathlib import Path
+
+import yaml
 
 
-def load_metrics(csv_path: str):
-    metrics = {}
+def load_metrics(csv_path: str) -> dict[str, dict[str, float]]:
+    metrics: dict[str, dict[str, float]] = {}
     with open(csv_path, newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -27,7 +27,7 @@ def load_metrics(csv_path: str):
 
 def main(csv_path: str, thresholds_path: str) -> int:
     metrics = load_metrics(csv_path)
-    thresholds = json.load(open(thresholds_path)).get("endpoints", {})
+    thresholds = yaml.safe_load(open(thresholds_path)).get("endpoints", {})
 
     for ep, limits in thresholds.items():
         if ep not in metrics:
@@ -43,6 +43,6 @@ def main(csv_path: str, thresholds_path: str) -> int:
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: validate_thresholds.py <csv_metrics> <thresholds.json>")
+        print("Usage: validate_thresholds.py <csv_metrics> <performance_budgets.yml>")
         raise SystemExit(1)
     raise SystemExit(main(sys.argv[1], sys.argv[2]))

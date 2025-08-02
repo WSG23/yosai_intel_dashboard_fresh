@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-THRESHOLDS_FILE="$(dirname "$0")/thresholds.json"
-FAILED_RATE=$(jq -r '.http_req_failed_rate' "$THRESHOLDS_FILE")
-DURATION_P95=$(jq -r '.http_req_duration_p95' "$THRESHOLDS_FILE")
+SCRIPT_DIR="$(dirname "$0")"
+REPO_ROOT="$SCRIPT_DIR/.."
+BUDGETS_FILE="$REPO_ROOT/config/performance_budgets.yml"
+FAILED_RATE=$(python -c "import yaml,sys;print(yaml.safe_load(open('$BUDGETS_FILE'))['http_req_failed_rate'])")
+DURATION_P95=$(python -c "import yaml,sys;print(yaml.safe_load(open('$BUDGETS_FILE'))['http_req_duration_p95'])")
 
 for f in "$@"; do
   rate=$(jq -r '.metrics.http_req_failed.rate' "$f")
@@ -21,5 +23,4 @@ for f in "$@"; do
 
 done
 
-REPO_ROOT="$(dirname "$0")/.."
 python "$REPO_ROOT/tools/performance_report.py" "$@"
