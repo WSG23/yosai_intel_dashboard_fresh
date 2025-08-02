@@ -1,16 +1,37 @@
 from __future__ import annotations
 
 import html
+import json
 import os
 import re
-from typing import Iterable
+from typing import Callable, Iterable, Mapping
 
 from yosai_intel_dashboard.src.core.exceptions import ValidationError
-# Import dynamically inside methods to avoid circular imports during module init
 
 from .core import ValidationResult
 from .file_validator import FileValidator
 from .rules import CompositeValidator, ValidationRule
+
+# Import dynamically inside methods to avoid circular imports during module init
+
+
+def _regex_validator(
+    pattern: re.Pattern[str], issue: str
+) -> Callable[[str], ValidationResult]:
+    def _validate(data: str) -> ValidationResult:
+        if pattern.search(data):
+            return ValidationResult(False, data, [issue])
+        return ValidationResult(True, data)
+
+    return _validate
+
+
+def _json_validator(data: str) -> ValidationResult:
+    try:
+        parsed = json.loads(data)
+    except Exception:
+        return ValidationResult(False, data, ["json"])
+    return ValidationResult(True, json.dumps(parsed, ensure_ascii=False))
 
 
 class XSSRule(ValidationRule):
@@ -38,6 +59,27 @@ class SecurityValidator(CompositeValidator):
         base_rules = list(rules or [XSSRule(), SQLRule()])
         super().__init__(base_rules)
         self.file_validator = FileValidator()
+        self._type_validators: Mapping[str, Callable[[str], ValidationResult]] = {
+            "sql": _regex_validator(SQLRule.PATTERN, "sql_injection"),
+            "nosql": _regex_validator(
+                re.compile(r"\$(where|gt|lt|ne|eq|or)", re.IGNORECASE),
+                "nosql_injection",
+            ),
+            "ldap": _regex_validator(
+                re.compile(r"[\*\(\)\|&]", re.IGNORECASE),
+                "ldap_injection",
+            ),
+            "xpath": _regex_validator(
+                re.compile(r"[\"']\s*or\s*[\"']1\s*=\s*[\"']1", re.IGNORECASE),
+                "xpath_injection",
+            ),
+            "command": _regex_validator(
+                re.compile(r"[;&|`]"),
+                "command_injection",
+            ),
+            "html": lambda v: ValidationResult(True, html.escape(v)),
+            "json": _json_validator,
+        }
 
     def sanitize_filename(self, filename: str) -> str:
         """Return a safe filename stripped of path components."""
@@ -66,7 +108,16 @@ class SecurityValidator(CompositeValidator):
 
         return {"valid": not issues, "issues": issues, "filename": sanitized}
 
-    def validate_input(self, value: str, field_name: str = "input") -> dict:
+    def validate_input(
+        self, value: str, field_name: str = "input", *, input_type: str | None = None
+    ) -> dict:
+        if input_type:
+            validator = self._type_validators.get(input_type)
+            if validator:
+                specialized = validator(value)
+                if not specialized.valid:
+                    raise ValidationError("; ".join(specialized.issues or []))
+                value = specialized.sanitized or value
         result = self.validate(value)
         if not result.valid:
             raise ValidationError("; ".join(result.issues or []))
