@@ -9,7 +9,8 @@ This file is auto-generated from `deprecation.yml`.
 
 ## Migration Guides
 
-Migration instructions for deprecated components will appear here.
+- [Legacy Auth Migration](migration/legacy-auth.md)
+- [New Dashboard Migration](migration/new-dashboard.md)
 
 ## Impact Analysis
 
