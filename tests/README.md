@@ -24,6 +24,22 @@ pip install -r tests/requirements-extra.txt
 
 When the optional packages are missing, tests depending on them are automatically skipped.
 
+## Migrating Test Imports
+
+The helper script `tools/migrate_tests.py` updates test files to use the
+current import layout and adds `pytest.importorskip()` checks for optional
+dependencies. Run it in dry‑run mode to preview edits:
+
+```bash
+python tools/migrate_tests.py --dry-run
+```
+
+Remove the flag to apply changes to the repository:
+
+```bash
+python tools/migrate_tests.py
+```
+
 Before running the suite locally, enable the lightweight service mode so heavy
 dependencies are stubbed out:
 
