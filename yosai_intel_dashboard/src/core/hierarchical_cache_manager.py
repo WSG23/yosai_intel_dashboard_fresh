@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-"""Three-level hierarchical cache manager.
+"""Simple hierarchical cache with three levels and basic metrics."""
+
 
 This implementation coordinates an in-memory L1 cache, a Redis based L2 cache
 and a disk backed L3 cache. Items are automatically promoted and demoted
@@ -39,9 +40,8 @@ class HierarchicalCacheConfig:
 
 
 class HierarchicalCacheManager(BaseModel):
-    """Manage a hierarchical cache with three storage levels."""
+    """Manage a three-level in-memory cache and record basic stats."""
 
-    _PROMOTION_THRESHOLD = 2
 
     def __init__(
         self,
@@ -50,19 +50,13 @@ class HierarchicalCacheManager(BaseModel):
         logger: Optional[logging.Logger] = None,
     ) -> None:
         super().__init__(config, db, logger)
-        self.config = config or HierarchicalCacheConfig()
+        self._level1: Dict[str, Any] = {}
+        self._level2: Dict[str, Any] = {}
+        self._level3: Dict[str, Any] = {}
+        self._hits = {"l1": 0, "l2": 0, "l3": 0}
+        self._misses = {"l1": 0, "l2": 0, "l3": 0}
+        self._evictions = {"l1": 0, "l2": 0, "l3": 0}
 
-        # L1 memory cache with LRU eviction
-        self._l1: "OrderedDict[str, Any]" = OrderedDict()
-        # access counters used for promotion
-        self._counts: Dict[str, int] = defaultdict(int)
-        # per-key locks for cache_with_lock compatibility
-        self._locks: Dict[str, threading.Lock] = {}
-
-        # L2 Redis client (initialised in start)
-        self._redis: Optional[redis.Redis] = None
-        # L3 disk cache (shelve database)
-        self._disk: Optional[shelve.DbfilenameShelf] = None
 
         # Automatically start so existing usages continue to work
         self.start()
@@ -111,20 +105,30 @@ class HierarchicalCacheManager(BaseModel):
 
     # ------------------------------------------------------------------
     def get(self, key: str) -> Optional[Any]:
-        """Retrieve *key* from the cache hierarchy."""
+        if key in self._level1:
+            self._hits["l1"] += 1
+            return self._level1[key]
+        self._misses["l1"] += 1
 
-        if key in self._l1:
-            self._counts[key] += 1
-            value = self._l1.pop(key)
-            self._l1[key] = value  # maintain LRU order
-            return value
+        if key in self._level2:
+            self._hits["l2"] += 1
+            return self._level2[key]
+        self._misses["l2"] += 1
 
-        value = self._get_l2(key)
-        if value is not None:
-            self._counts[key] += 1
-            if self._counts[key] >= self._PROMOTION_THRESHOLD:
-                self._promote_to_l1(key, value)
-            return value
+        if key in self._level3:
+            self._hits["l3"] += 1
+            return self._level3[key]
+        self._misses["l3"] += 1
+        return None
+
+    def set(self, key: str, value: Any, *, level: int = 1) -> None:
+        if level == 1:
+            self._level1[key] = value
+        elif level == 2:
+            self._level2[key] = value
+        else:
+            self._level3[key] = value
+
 
         value = self._get_l3(key)
         if value is not None:
@@ -182,83 +186,42 @@ class HierarchicalCacheManager(BaseModel):
 
     # ------------------------------------------------------------------
     def clear(self) -> None:
-        """Clear all cached data."""
+        self._evictions["l1"] += len(self._level1)
+        self._evictions["l2"] += len(self._level2)
+        self._evictions["l3"] += len(self._level3)
+        self._level1.clear()
+        self._level2.clear()
+        self._level3.clear()
 
-        self._l1.clear()
-        self._counts.clear()
-        if self._redis is not None:
-            try:
-                self._redis.flushdb()
-            except Exception:  # pragma: no cover - best effort
-                pass
-        if self._disk is not None:
-            for k in list(self._disk.keys()):
-                del self._disk[k]
-            self._disk.sync()
-
-    # ------------------------------------------------------------------
-    # Internal helper methods
-    # ------------------------------------------------------------------
-    def _promote_to_l1(self, key: str, value: Any) -> None:
-        self._l1[key] = value
-        self._l1.move_to_end(key)
-        self._enforce_l1_size()
-
-    def _enforce_l1_size(self) -> None:
-        while len(self._l1) > self.config.l1_size:
-            old_key, old_val = self._l1.popitem(last=False)
-            # Demote evicted item to L2
-            self._set_l2(old_key, old_val, self.config.l2_ttl)
-            self._set_l3(old_key, old_val, self.config.l3_ttl)
-
-    # L2 helpers --------------------------------------------------------
-    def _get_l2(self, key: str) -> Optional[Any]:
-        if self._redis is None:
-            return None
-        try:
-            data = self._redis.get(key)
-            if data is None:
-                return None
-            return json.loads(data.decode("utf-8"))
-        except Exception:  # pragma: no cover - best effort
-            return None
-
-    def _set_l2(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
-        if self._redis is None:
+    def evict(self, key: str, *, level: int | None = None) -> None:
+        if level is None:
+            for lvl in (1, 2, 3):
+                self.evict(key, level=lvl)
             return
-        try:
-            payload = json.dumps(value).encode("utf-8")
-            if ttl:
-                self._redis.setex(key, ttl, payload)
-            else:
-                self._redis.set(key, payload)
-        except Exception:  # pragma: no cover - best effort
-            pass
+        cache = {1: self._level1, 2: self._level2, 3: self._level3}[level]
+        if key in cache:
+            del cache[key]
+            self._evictions[f"l{level}"] += 1
 
-    # L3 helpers --------------------------------------------------------
-    def _get_l3(self, key: str) -> Optional[Any]:
-        if self._disk is None or key not in self._disk:
-            return None
-        try:
-            data = json.loads(self._disk[key])
-        except Exception:
-            del self._disk[key]
-            return None
+    def stats(self) -> Dict[str, Dict[str, int]]:
+        return {
+            "l1": {
+                "hits": self._hits["l1"],
+                "misses": self._misses["l1"],
+                "evictions": self._evictions["l1"],
+            },
+            "l2": {
+                "hits": self._hits["l2"],
+                "misses": self._misses["l2"],
+                "evictions": self._evictions["l2"],
+            },
+            "l3": {
+                "hits": self._hits["l3"],
+                "misses": self._misses["l3"],
+                "evictions": self._evictions["l3"],
+            },
+        }
 
-        expiry = data.get("expiry")
-        if expiry and time.time() > expiry:
-            del self._disk[key]
-            self._disk.sync()
-            return None
-        return data.get("value")
-
-    def _set_l3(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
-        if self._disk is None:
-            return
-        expiry = time.time() + ttl if ttl else None
-        record = json.dumps({"value": value, "expiry": expiry})
-        self._disk[key] = record
-        self._disk.sync()
 
 
 __all__ = ["HierarchicalCacheConfig", "HierarchicalCacheManager"]
